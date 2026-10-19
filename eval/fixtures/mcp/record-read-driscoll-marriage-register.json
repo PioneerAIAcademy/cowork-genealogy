@@ -1,0 +1,75 @@
+{
+  "tool": "record_read",
+  "description": "The Drouin marriage register entry attached to Cornelius Driscoll (GJ72-9WD) as SD-DRIS-B, and this corpus's unambiguous indexing error — the source `index_error_source` names and the detach guard protects. It indexes the marriage as 9 June 1845 against the profile's 9 June 1849: same day, same month, same bride (Margaret Hayes), same parish (St. Patrick's, Sherbrooke), one digit out in the year. A marriage register entry states its date, so four years is not the estimated-age variance a census age carries; it is a transcription error. The collection is 'database with images', so the remedy here IS a re-read of the original page — unlike the Hole corpus's index-only death index, where no image exists. Detaching would discard a record that is plainly this marriage over one bad field.",
+  "args": {
+    "recordId": "~DRIS-002"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Cornelius",
+            "surname": "Driscoll",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Marriage",
+            "date": "9 June 1845",
+            "place": "St. Patrick's, Sherbrooke, Canada East"
+          }
+        ],
+        "ark": "ark:/61903/1:1:DRIS-002",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Quebec, Vital and Church Records (Drouin Collection), 1621-1968"
+          }
+        ]
+      },
+      {
+        "id": "P2",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "Margaret",
+            "surname": "Hayes",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F2",
+            "type": "Marriage",
+            "date": "9 June 1845",
+            "place": "St. Patrick's, Sherbrooke, Canada East"
+          }
+        ]
+      }
+    ],
+    "places": [],
+    "relationships": [
+      {
+        "type": "Couple",
+        "person1": "P1",
+        "person2": "P2"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Quebec, Vital and Church Records (Drouin Collection), 1621-1968",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:DRIS-002"
+      }
+    ]
+  }
+}

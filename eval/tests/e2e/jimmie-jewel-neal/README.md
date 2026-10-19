@@ -8,6 +8,16 @@ all committed e2e fixtures to be about deceased persons.)
 
 > Who were the maternal grandparents of Jimmie Jewel Neal (born 10 July 1884 in Hillsboro, Hill, Texas, died 7 March 1938 in Carlsbad, Eddy, New Mexico)?
 
+## Bundled captures (`provided-documents/`)
+
+One Find a Grave page is committed here to give the harness access to Jimmie's memorial and obituary without a live browser session (issue #2083):
+
+| File | Source | What it shows |
+|------|--------|---------------|
+| `findagrave-jimmie-jewel-yarbro-154846291.pdf` | findagrave.com | Memorial #154846291 — Jimmie Jewel Neal Yarbro, born 10 Jul 1884 Hillsboro, Texas; died 7 Mar 1938 Carlsbad, New Mexico; buried Carlsbad Cemetery. Includes the 8 March 1938 obituary from the Daily Current-Argus naming surviving family members. |
+
+This is an authentic page saved from findagrave.com in a credentialed browser. It confirms Jimmie's identity and death details. The memorial does not name her maternal grandparents; the expected answers (J. H. and Louisa Sampson) remain recoverable only through her 1875 marriage record and the 1870/1880 censuses.
+
 ## What was removed from the starting tree
 
 - Removed person P1: J. H. Sampson

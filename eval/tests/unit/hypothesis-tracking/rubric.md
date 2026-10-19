@@ -20,8 +20,8 @@ Are supporting and contradicting assertions correctly linked? Each linked assert
 
 ## Status transitions
 
-Are status transitions justified? A hypothesis should move to "supported" only with direct evidence and no unresolved contradictions. "Ruled out" requires affirmative refutation, not just lack of evidence.
+A hypothesis moves to "supported" only when no conflict naming its linked assertions is still unresolved, and either one supporting assertion is direct or two are indirect from two different sources. "Ruled out" requires affirmative refutation, not just lack of evidence.
 
-- **pass:** Status transitions match the research-schema-spec.md §5.9 rules — `supported` only with direct positive evidence and no unresolved contradictions; `ruled_out` only with affirmative refutation; `ruled_out_reason` populated when `ruled_out: true`.
-- **partial:** Transition is plausible but the threshold is debatable (status moved to `supported` on the strength of indirect evidence alone).
+- **pass:** Status transitions match the hypotheses status-transitions rules in research-schema-spec.md — `supported` only when every `conflicts[]` entry naming its supporting/contradicting assertions is `resolved` or `moot`, and either one supporting assertion is direct or two are indirect citing two distinct `source_id`s; `ruled_out` only with affirmative refutation; `ruled_out_reason` populated when `ruled_out: true`.
+- **partial:** Transition is plausible but the threshold is debatable: for example `supported` declared on two or more indirect assertions that all cite the same `source_id`, where the argument should conclude through `proof-conclusion`'s assertions route instead of being promoted.
 - **fail:** Hypothesis moved to `ruled_out` due to lack of evidence rather than refuting evidence, or `supported` declared in the face of unresolved contradictions.

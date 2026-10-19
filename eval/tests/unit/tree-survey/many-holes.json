@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_tree_survey_014",
+    "skill": "tree-survey",
+    "name": "Ranks six holes by fitting signal, suggests at most five",
+    "type": "positive",
+    "description": "tree_gaps returns six holes. Only TGAP-H3A (generation 3) has a pending hint, and its record type fits the hole. The agent must rank it first, ahead of the nearer holes that have no signal, suggest at most five people, and repeat no person.",
+    "tags": [
+      "survey",
+      "many-holes",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "What should I research in my tree?\n\npersonId: TGAP-ROT"
+  },
+  "mcp_fixtures": [
+    "tree-gaps-many-holes"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation is relayed verbatim. No project exists in this test, so the agent must not look for research.json, create a project, or call any writer tool (it holds none).",
+    "tree_gaps returns SIX holes, a hole with a fitting pending hint first and the rest nearest the root first: TGAP-H3A (missing parents, `pendingHints` fitting 1), then TGAP-H1A (no death date), TGAP-H1B (no spouse), TGAP-H2A (missing parents), TGAP-H4A (no birth info), TGAP-H5A (missing surname). Only TGAP-H3A has a pending hint. The other checks return empty results.",
+    "The first suggestion must be TGAP-H3A's person, the hole tree_gaps lists first because it has a fitting hint, however far from the root. At most five people are suggested and no person is suggested twice; a deterministic validator checks all three, so do not re-grade the order yourself. Grade the questions: each must be a single fact, name the person, and scope place and years.",
+    "The agent's return should end with the summary_for_user block: a `---` line followed by plain prose with no label, and no identifiers, file names, tool names or field names in it."
+  ]
+}

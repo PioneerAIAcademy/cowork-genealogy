@@ -1,16 +1,18 @@
 # `feedback.json` Submission Spec
 
 **Project:** Cowork Genealogy
-**Repo that implements this spec:** `cowork-genealogy-ui` (the
-Electron viewer). Specifically `src/main/feedback.ts` and the
-submission dialog.
-**Repo that consumes this spec:** `cowork-genealogy` (this repo).
-The feedback workflow (`docs/specs/feedback-case-spec.md`) and two
-Claude Code skills (`/compare-state`, `/mine-unit-test`) read
-`feedback.json` from inside the submitted zip.
 
-This spec is the contract between the two repos. The viewer must
-emit it; the workflow may rely on it.
+This spec is the contract between the two **producers** that emit
+`feedback.json` and the triage workflow that reads it — all in this
+repo. The producers are the Electron viewer
+(`apps/electron/src/main/feedback.ts`), the hosted web workbench
+(`apps/server/app/feedback.py`), and the submission dialog they share
+(`packages/viewer-ui/src/components/shared/FeedbackDialog.tsx`). The
+consumers are the feedback workflow
+(`docs/specs/feedback-case-spec.md`) and two Claude Code skills
+(`/compare-state`, `/mine-unit-test`), which read `feedback.json` from
+inside the submitted zip. The producers must emit it; the consumers may
+rely on it. §3 states the same split ("Two producers, one schema").
 
 ---
 
@@ -46,6 +48,12 @@ readable form. The viewer must produce both; the workflow reads
   _feedback/
     feedback.json            ← THIS SPEC
     session-log.jsonl        ← optional; see §6
+    subagents/               ← optional; see §6
+      agent-<id>.jsonl       ← one transcript per subagent
+      agent-<id>.meta.json   ← names the parent Agent call that spawned it
+    sessions/<session-id>/   ← optional; any session other than the newest,
+      session-log.jsonl        shipped with its own subagents/ beneath it
+      subagents/…
 ```
 
 The `_feedback/` directory exists to keep feedback-specific files
@@ -60,7 +68,9 @@ related additions (manifest, screenshots) go inside `_feedback/`.
 {
   "schema_version": 1,
   "submitted_at": "2026-05-25T18:22:31Z",
-  "viewer_version": "0.4.2",
+  "viewer_version": "1.0.0+2026-09-18.abc12345",
+  "build_date": "2026-09-18",
+  "git_sha": "abc12345",
   "email": "user@example.com",
   "user_prompt": "Find a marriage record for John Smith born 1850 in Ohio.",
   "agent_did": "The agent searched the 1860 census and reported no results, then stopped.",
@@ -76,9 +86,9 @@ related additions (manifest, screenshots) go inside `_feedback/`.
 **Two producers, one schema.** The Electron viewer
 (`apps/electron/src/main/feedback.ts`) and the hosted web workbench
 (`apps/server/app/feedback.py`) both emit this file, and the triage workflow
-consumes either unchanged. The web producer additionally emits `build_date` and
-`git_sha` (below) and sets `platform` to the literal `"web"`; everything else is
-identical.
+consumes either unchanged. Both producers emit `build_date` and `git_sha`
+(below; the viewer since #2126 — before that only the web producer did), and the
+web producer sets `platform` to the literal `"web"`; everything else is identical.
 
 ### Field reference
 
@@ -86,7 +96,7 @@ identical.
 |---|---|---|---|
 | `schema_version` | integer | yes | Currently `1`. Bump on breaking changes; see §5. |
 | `submitted_at` | string (ISO 8601, UTC, with `Z` suffix) | yes | Time the user clicked submit. Used by the dev team for triage ordering. |
-| `viewer_version` | string | yes | The Electron viewer's semantic version (`package.json::version`). Used by devs to know which build the user was on. |
+| `viewer_version` | string | yes | Which build produced the bundle. Electron: the build stamp `<package.json version>+<YYYY-MM-DD>.<sha>[.dirty]` (e.g. `1.0.0+2026-09-18.abc12345`), `+dev` when the build ran outside a git checkout, with `-dev` appended for an unpackaged run; computed at build time by `electron.vite.config.ts` and read through `src/main/build-info.ts`. Web: `web <build_date> (<git_sha>)`. Bundles from before #2126 carry the frozen `1.0.0` / `1.0.0-dev`, which identifies nothing. |
 | `email` | string | yes | May be empty string for anonymous submissions. Not used by the workflow's automation; included so devs can follow up. |
 | `user_prompt` | string | yes | Verbatim text of the prompt the user typed when the bad result occurred. The Claude Code session re-issues this verbatim in §3.2 of the workflow spec. Always present; **empty string when the user left the box blank — the submission dialog does not require it, so an empty value is legitimate and must not be treated as a malformed submission.** When the bundle carries `session-log.jsonl`, that usually has the prompt; but §6 makes that file strictly optional, a Cowork submission has none, and over the 20 MB cap the log keeps the NEWEST entries, so on a long session the opening prompt is the first thing dropped (the bundle's `_truncation_note` records how many went) -- so a blank here can mean the prompt is recorded nowhere. |
 | `agent_did` | string | yes | The user's free-text description of what the agent actually did wrong. Read by `/compare-state --against=what-went-wrong` to confirm repro. Always present; **empty string when the user left the box blank — the submission dialog does not require it, so an empty value is legitimate and must not be treated as a malformed submission.** With it blank, `/compare-state --against=what-went-wrong` has nothing to compare and returns a plain result rather than aborting; the transcript in `session-log.jsonl` is the fallback when the bundle has one. |
@@ -96,8 +106,9 @@ identical.
 | `project_folder_path` | string | yes | Absolute path of the project folder the user was working in when they submitted. Lets devs disambiguate when one user has multiple projects open and helps correlate with the user's filesystem layout. Mild PII; included because the diagnostic value outweighs the leak (the same path is already in `FEEDBACK.md` today). Empty string if the viewer cannot determine it. |
 | `correct_answer` | string | yes | The user's free-text description of the right answer *and the evidence for it*, for when the agent reached a **wrong conclusion** rather than an unproven one. Read by `/mine-unit-test` as attested ground truth when non-empty. Always present; empty string when the user left the field blank — and blank is the correct answer when the defect is the reasoning rather than the result, so consumers must not treat empty as a malformed submission. |
 | `platform` | string | yes | Which runtime produced the bundle. Electron sends `process.platform` (e.g. `"darwin"`, `"linux"`, `"win32"`); the hosted web workbench sends the literal `"web"`. Empty string if unknown. This is the field that tells a triager which product the report came from. |
-| `build_date` | string | web only | Build date of the hosted server that produced the bundle. Absent from Electron submissions — the viewer's `viewer_version` is its whole build identity. |
-| `git_sha` | string | web only | Commit sha of the hosted server that produced the bundle, so a triager can pin the exact checkout. Absent from Electron submissions. |
+| `dropped_transcripts` | array of strings | yes | Transcripts the producer could not include, each a zip-relative path with the reason in parentheses (over the transcript size budget; no conversation entries; its session's parent transcript is missing). Written by **both** producers, `[]` when nothing was left out, so a consumer can tell "nothing was dropped" from "we could not see". `FEEDBACK.md` names the same drops in prose, but this is the field a program reads: the guardrail report holds every agent-owned arm at `unknown` while it is non-empty (`docs/specs/guardrail-enforcement-spec.md`). **Absent from bundles produced before 2026-09-01**, which consumers must go on tolerating. Added in schema_version 1 without a bump (§5: new fields old consumers ignore don't bump). |
+| `build_date` | string | both producers | Build date (`YYYY-MM-DD`) of the server or viewer that produced the bundle; `dev` when the build had no git to ask. Absent from Electron bundles produced before #2126, which consumers must tolerate. |
+| `git_sha` | string | both producers | Commit sha of the server or viewer that produced the bundle, so a triager can pin the exact checkout; `dev` when unknown. Absent from Electron bundles produced before #2126. |
 
 ### Constraints
 
@@ -178,9 +189,10 @@ If the form's set of fields ever diverges between `feedback.json`
 and `FEEDBACK.md`, `feedback.json` is authoritative.
 
 The template above is a **suggestion**, not a requirement. The
-current `cowork-genealogy-ui` template in `src/main/feedback.ts`
-uses slightly different headings (`## What it should have done`,
-extra metadata bullets, a "Skipped files" section). The spec does
+templates in `apps/electron/src/main/feedback.ts` and
+`apps/server/app/feedback.py` use slightly different headings
+(`## What it should have done`, extra metadata bullets, a
+section listing dropped files). The spec does
 not mandate a specific Markdown layout — render whatever is most
 readable for the human reader. Only `feedback.json` is contractual.
 
@@ -199,7 +211,7 @@ readable for the human reader. Only `feedback.json` is contractual.
   was submitted under. The workflow reads `schema_version` and
   refuses zips it doesn't know how to handle (it'll fail loudly
   rather than silently misinterpret a future schema).
-- Version bumps are coordinated between the two repos via a paired
+- A version bump changes both producers and the triage readers in one
   PR.
 
 ---
@@ -236,6 +248,48 @@ consuming skills can rely on it:
   `claude-opus-4-7`). `feedback.json` does not duplicate this
   field — the model can vary per turn within a session, so a
   single top-level value would be misleading.
+
+### Subagent transcripts (separate files, not merged)
+
+Work the agent delegates to a subagent is written by Claude Code to its **own**
+transcript, one level down at `<session-id>/subagents/agent-*.jsonl`, with a
+four-key `agent-*.meta.json` (`agentType`, `description`, `toolUseId`,
+`spawnDepth`) beside each. The viewer includes them under
+`_feedback/subagents/`, and any session other than the newest under
+`_feedback/sessions/<session-id>/` with its own parent log, since a subagent
+transcript is only usable beside the parent holding the `Agent` call that
+spawned it — `toolUseId` is that call's id.
+
+Three decisions worth recording, because the obvious alternatives are all
+wrong:
+
+- **They are separate optional files, and `schema_version` does not move.**
+  §5 bumps on a removed, renamed or re-meaning `feedback.json` field, and a
+  bump changes both producers and every consumer at once.
+- **Merging the sidechain entries into `session-log.jsonl` was rejected.** It
+  breaks that file's shape contract above (entries limited to `user` and
+  `assistant`, filtered to the submitting project's `cwd`) and would therefore
+  force the bump. It is also wrong on the merits: a consumer must splice a
+  subagent's calls in at the index of the `Agent` call that spawned them, not
+  concatenate them, or a protected write lands hundreds of calls from its own
+  skill invocation and reads as a violation that never happened.
+- **No `agentType` filter.** Every subagent transcript ships, including
+  general-purpose stand-ins. The failure this evidence is most needed for is
+  the model silently falling back to a general-purpose subagent that binds
+  none of the declared agent's tools (issue #939) — an allow-list of known
+  agent names drops exactly that transcript.
+
+A transcript the viewer leaves out (size budget, or it filtered to no
+conversation entries) is named in `FEEDBACK.md` **and** in `feedback.json`'s
+`dropped_transcripts` array, so a consumer counting findings can tell
+"nothing happened" from "we could not see". Both producers write that array
+on every bundle, `[]` when nothing was left out — a field only written when
+non-empty cannot be told from a producer that never writes it at all.
+
+`_feedback/session-log.jsonl` itself is not guaranteed even when the bundle
+carries transcripts: the active session can filter to nothing while an older
+session's group ships. `FEEDBACK.md` says which case it is rather than naming
+a file that is not there.
 
 ### Omission policy
 
@@ -279,7 +333,22 @@ Every SKILL.md must be safe to re-invoke against state containing
 its own prior output. If a specific class of failure makes this
 intolerable in practice, revisit.
 
-### 7.2 Runtime version manifest — deferred
+### 7.2 Runtime version manifest — un-deferred as a build stamp, not a manifest
+
+**Status (2026-09-17):** the deferral below rested on two premises that
+no longer hold — `viewer_version` is a frozen `1.0.0`, so it reconstructs
+nothing, and a live alpha incident (two desktop sessions, stale advertised
+tool schemas; issue #2126) could not be triaged without a build id. The
+lead's 2026-09-07 ruling replaces the manifest idea with a **build stamp**:
+every build of the MCP server carries `<base>+<date>.<sha>[.dirty]`
+(`docs/specs/mcpb-package-spec.md` § Versioning), advertised as
+`serverInfo.version` and returned as `buildId` on every branch of
+`project_context` and `auth_status` — so the agent can quote it mid-session
+and a tester can read it back. The viewer carries the same stamp in
+`viewer_version` and emits `build_date` / `git_sha` like the web producer
+(§3), so the bundle records it. No
+`research.json` field and no `_feedback/manifest.json`; the original
+reasoning is kept below as history.
 
 A `_feedback/manifest.json` capturing plugin / MCP / Cowork /
 model versions at submission time was considered. Rejected for
@@ -324,61 +393,11 @@ when the actual failure categories are observable.
 
 ---
 
-## 8. Implementation checklist for `cowork-genealogy-ui`
-
-Concrete tasks for the UI repo:
-
-1. In `src/main/feedback.ts::buildFeedbackZip`, after the current
-   `FEEDBACK.md` write, also write `_feedback/feedback.json` with
-   the schema in §3. Field values come from the same form state
-   already used to build `FEEDBACK.md`. Sources for the
-   non-form-field values:
-   - `submitted_at`: `new Date().toISOString()`
-   - `viewer_version`: `app.getVersion()`
-   - `platform`: `process.platform`
-   - `project_folder_path`: the same value already used to
-     populate `FEEDBACK.md`'s "Project folder" line
-2. Enforce 10,000-char max on the user-typed text fields
-   (`user_prompt`, `agent_did`, `agent_should_have`, `notes`) in
-   **two** places:
-   - The dialog blocks submit with a clear error message when any
-     field exceeds the limit.
-   - `buildFeedbackZip` validates field lengths and throws on
-     violation, so the limit can't be bypassed by future callers
-     of the function. Single source of truth: the same constant
-     used by both checks.
-3. Add a unit test (or update the existing one) for
-   `buildFeedbackZip` that asserts:
-   - The zip contains `_feedback/feedback.json`.
-   - The JSON parses.
-   - All required fields are present (including `notes`,
-     `project_folder_path`, `platform` — even when empty).
-   - `schema_version` is `1`.
-   - The field values round-trip the form data without
-     transformation (modulo whitespace trim and `email`
-     lowercasing).
-   - Over-length fields throw rather than silently truncate.
-4. `viewer_version` from `app.getVersion()` may report `'0.0.0'` or
-   `'1.0.0'` in unpackaged dev builds. Decide whether that's
-   acceptable (devs can filter on it in triage) or whether dev
-   submissions should be marked distinctly (e.g. append `-dev`).
-   Either is fine for v1; just commit to one.
-5. Coordinate with this repo (`cowork-genealogy`) on the cutover.
-   The dev workflow can't run until at least one zip with
-   `feedback.json` exists, but old zips without it are explicitly
-   not supported (per `feedback-case-spec.md`).
-6. Nothing else in §7 is in scope for v1. If you find yourself
-   wanting any of the deferred items, ping the consuming repo
-   (`cowork-genealogy`) first — most of them have downstream
-   implications for the workflow.
-
----
-
-## 9. Out of scope for this spec
+## 8. Out of scope for this spec
 
 - The zip's overall layout (which project files are included, how
-  they're packaged) — that's already established in the existing
-  `feedback.ts`.
+  they're packaged) — that's already established in
+  `apps/electron/src/main/feedback.ts`.
 - The Drive upload mechanism — already in place.
 - Anything the dev tooling does with `feedback.json` after reading
   it — that's `feedback-case-spec.md`.

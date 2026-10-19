@@ -1,6 +1,7 @@
 import type { GedcomxPerson } from '../../lib/schema'
 import { getPreferredName, getPrimaryFact } from '../../lib/schema'
-import { openExternal } from '../../lib/external'
+import { openFamilySearch } from '../../lib/external'
+import { resolveFamilySearchTarget } from '../../lib/familysearch-url'
 import styles from './PersonCard.module.css'
 
 interface PersonCardProps {
@@ -13,14 +14,35 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
   const birth = getPrimaryFact(person, 'Birth')
   const death = getPrimaryFact(person, 'Death')
 
-  const handleArkClick = (e: React.MouseEvent<HTMLAnchorElement>): void => {
-    e.preventDefault()
-    openExternal(person.ark)
-  }
+  // Rendered only when the value actually resolves. `tree_edit` stores
+  // `input.ark` unvalidated and `toArk` returns its input unchanged on no match,
+  // so a person CAN carry a non-FamilySearch URL. Before the destination policy
+  // such a value opened; now it is refused — and a button labelled "View on
+  // FamilySearch" that silently does nothing is worse than no button. Opening it
+  // anyway is not the alternative: that is the phishing path this closes.
+  const arkTarget = person.ark ? resolveFamilySearchTarget(person.ark) : null
 
   return (
     <div className={styles.personCard}>
-      <div className={styles.name}>{name}</div>
+      <div className={styles.nameRow}>
+        <div className={styles.name}>{name}</div>
+        {/* A <button>, not an <a href>. Middle-click fires auxclick (not click),
+            so an onClick handler never runs and the raw href is followed unchecked
+            — the poisoned case when ark holds an https:// value. (Ctrl+click does
+            fire click, and the handler's preventDefault stops it; an earlier
+            version of this comment claimed otherwise.) */}
+        {arkTarget && (
+          <button
+            type="button"
+            onClick={() => openFamilySearch(person.ark)}
+            className={styles.ark}
+            title={person.ark}
+            aria-label="View on FamilySearch"
+          >
+            View on FamilySearch
+          </button>
+        )}
+      </div>
       {relationship && <div className={styles.relationship}>{relationship}</div>}
       <div className={styles.facts}>
         {birth && (
@@ -39,14 +61,6 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
       </div>
       <div className={styles.meta}>
         {person.gender} · {person.facts?.length ?? 0} facts
-        {person.ark && (
-          <>
-            {' · '}
-            <a href={person.ark} onClick={handleArkClick} className={styles.ark} title={person.ark}>
-              View on FamilySearch
-            </a>
-          </>
-        )}
       </div>
     </div>
   )

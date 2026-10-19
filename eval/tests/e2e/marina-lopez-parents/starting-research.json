@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_marina_lopez_parents",
+    "objective": "Who were the parents of Marina López, wife of Juan de Dios Pichardo Chalas of San José de Ocoa, and when was she born and married?",
+    "subject_person_ids": [
+      "P874-7BV"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

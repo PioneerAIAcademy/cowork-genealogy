@@ -545,7 +545,7 @@ Out of scope for the harness entirely. Tracked in
 ### 13. Skill discovery on Linux
 
 The Agent SDK has historically had bugs with skill discovery on Linux
-(testing-plan Appendix F, issue #268). On the affected versions,
+(testing-plan Appendix F). On the affected versions,
 `skills_invoked` can be empty even when the skill ran, false-failing
 positive tests.
 

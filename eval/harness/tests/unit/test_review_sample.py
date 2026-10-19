@@ -4,6 +4,8 @@ import math
 
 from harness.review_sample import (
     is_gradeable,
+    is_mandatory,
+    review_dimensions,
     select_review_sample,
     zero_dimension_test_ids,
 )
@@ -44,11 +46,11 @@ def _suite(n, **kw):
 
 
 def test_zero_dimension_tests_are_not_sampled():
-    """A test whose judge was skipped has no dimensions, so rule 3 would demand
-    zero corrections for it — sampling one wastes a slot. All such tests in the
-    corpus failed or aborted, which is what `is_mandatory` matches, so without
-    this filter the mandatory slot is biased toward tests with nothing to
-    annotate."""
+    """A test with no REVIEW dimensions -- aborted, or the judge raised -- has
+    rule 3 demand zero corrections for it — sampling one wastes a slot. All
+    such tests in the corpus failed or aborted, which is what `is_mandatory`
+    matches, so without this filter the mandatory slot is biased toward tests
+    with nothing to annotate."""
     tests = _suite(4)
     tests.append(
         _test_entry("ut_empty", dims=[], outcome="aborted", expected_outcome="pass")
@@ -57,6 +59,57 @@ def test_zero_dimension_tests_are_not_sampled():
     assert "ut_empty" not in out["tests"]
     assert not is_gradeable(tests[-1])
     assert zero_dimension_test_ids(tests) == ["ut_empty"]
+
+
+def _validator_failed_entry(test_id="ut_vf_001"):
+    """A test whose only judged run failed a validator, as the harness writes
+    it: `fail`, `aggregated_dimensions` empty by ruling (#2057), the judge's
+    scores in `review_dimensions`."""
+    entry = _test_entry(test_id, outcome="fail", dims=[])
+    entry["outcome_summary"]["review_dimensions"] = [
+        _dim("Correctness", score=2, rationale="graded for diagnosis"),
+        _dim("Completeness", score=3),
+    ]
+    return entry
+
+
+def test_review_dimensions_prefers_the_field_and_falls_back_to_the_aggregate():
+    written = _validator_failed_entry()
+    assert [d["score"] for d in review_dimensions(written)] == [2, 3]
+
+    # A run log written before the field existed: the aggregate is the rule it
+    # was annotated under, and must stay so — 11 tests in 6 committed logs are
+    # this shape and their annotations are complete as released.
+    legacy = _test_entry("ut_legacy", dims=[_dim(score=3)])
+    assert [d["score"] for d in review_dimensions(legacy)] == [3]
+    assert review_dimensions({"test_id": "ut_bare"}) == []
+
+
+def test_a_validator_failing_test_reaches_the_sample():
+    """The mandatory slot is 'every failing test', and a validator failure is
+    the one class it structurally missed: `outcome: fail`, judge-scored, and
+    filtered out by `is_gradeable` before the slot ran, because the aggregate
+    it read is empty for exactly this class. 4 of the 7 non-passing tests on
+    one record-extraction run were this shape.
+
+    30 clean tests, not 4, for the reason `test_a_coerced_test_still_reaches_
+    the_sample` gives: the chosen slots must be a minority of the pool, so
+    membership can only come from the mandatory slot."""
+    vf = _validator_failed_entry()
+    assert is_gradeable(vf) is True
+    assert is_mandatory(vf) is True
+    pool = [vf] + _suite(30)
+    sample = select_review_sample(tests=pool, seed=0)
+    assert len(sample["tests"]) < len(pool)
+    assert "ut_vf_001" in sample["tests"], sample["tests"]
+
+    # The control: the same test as an OLD harness wrote it — no
+    # `review_dimensions` — is still ungradeable, which is what keeps every
+    # committed annotation complete under the rule it was written to.
+    legacy = _validator_failed_entry()
+    del legacy["outcome_summary"]["review_dimensions"]
+    assert is_gradeable(legacy) is False
+    assert "ut_vf_001" not in select_review_sample(tests=[legacy] + _suite(30), seed=0)["tests"]
 
 
 def test_empty_suite_returns_empty_sample():
@@ -407,25 +460,55 @@ def test_a_failed_test_with_clean_dimensions_is_mandatory():
     assert _FREE_ID in select_review_sample(tests=suite, seed=0)["tests"]
 
 
-def test_a_declared_xfail_is_not_mandatory_but_an_xpass_is():
-    """Pins both halves of `_NON_FAILING_OUTCOMES` against each other.
+def test_a_declared_xfail_failure_is_not_mandatory_but_an_unexpected_pass_is():
+    """Pins both halves of `_is_non_failing` against each other (issue #2842).
 
-    `xfail` is a failure someone declared in advance, so it must NOT be
-    mandatory — otherwise every suite carrying one pays for it on every run
-    forever, and the slot is uncapped. `xpass` is the same test unexpectedly
-    passing, which must be. Narrowing the set to `{"pass"}` — or rewriting the
-    check as `outcome != "pass"`, which looks like a simplification — breaks the
-    first half, and nothing else in the suite notices.
+    A declared-xfail test that FAILED as declared (`outcome: fail` +
+    `expected_outcome: xfail`) is a failure someone declared in advance, so it
+    must NOT be mandatory — otherwise every suite carrying one pays for it on
+    every run forever, and the slot is uncapped. The same test unexpectedly
+    PASSING (`outcome: pass` + the marker) must be. Narrowing the non-failing
+    rule to a plain `outcome == "pass"`, or to `expected_outcome == "xfail"`
+    alone, breaks one half, and nothing else in the suite notices.
     """
     suite = _clean_15()
     entry = next(t for t in suite if t["test_id"] == _FREE_ID)
     entry["expected_outcome"] = "xfail"
 
-    entry["outcome"] = "xfail"
+    # Declared-xfail failure: suppressed, not mandatory.
+    entry["outcome"] = "fail"
+    assert is_mandatory(entry) is False
     assert _FREE_ID not in select_review_sample(tests=suite, seed=0)["tests"]
 
-    entry["outcome"] = "xpass"
+    # Declared-xfail that passed: an unexpected pass, mandatory.
+    entry["outcome"] = "pass"
+    assert is_mandatory(entry) is True
     assert _FREE_ID in select_review_sample(tests=suite, seed=0)["tests"]
+
+
+def test_a_declared_xfail_partial_or_aborted_is_still_mandatory():
+    """The suppression covers only a declared FAILURE. A declared-xfail test that
+    lands `partial` or `aborted` is neither a suppressed failure nor an ordinary
+    pass, so it stays mandatory (issue #2842 preserves this row unchanged)."""
+    suite = _clean_15()
+    entry = next(t for t in suite if t["test_id"] == _FREE_ID)
+    entry["expected_outcome"] = "xfail"
+
+    for outcome in ("partial", "aborted"):
+        entry["outcome"] = outcome
+        assert is_mandatory(entry) is True, outcome
+
+
+def test_an_ordinary_pass_without_a_marker_is_not_mandatory():
+    """The non-failing rule must not swallow an ordinary pass into mandatory, nor
+    treat a plain pass as an unexpected pass when no xfail marker is present."""
+    suite = _clean_15()
+    entry = next(t for t in suite if t["test_id"] == _FREE_ID)
+    entry["expected_outcome"] = "pass"
+    entry["outcome"] = "pass"
+    assert is_mandatory(entry) is False
+    entry["outcome"] = "fail"
+    assert is_mandatory(entry) is True
 
 
 def test_mandatory_picks_count_toward_the_sweep_cursor():
@@ -477,3 +560,251 @@ def test_the_targeted_degradation_skips_a_test_the_mandatory_slot_takes():
     assert "ut_003" in got, "the mandatory slot must still take it"
     assert "ut_004" in got, "the degraded slot must spend on a non-mandatory test"
     assert len(got) == 6
+
+
+# --- Third mandatory trigger: a coerced routing-negative cell (#2196) --------
+
+
+def _coerced_entry(test_id="ut_c_001", *, kind="coerced_routing_negative_to_na"):
+    """A test whose only signal is the coercion warning.
+
+    Deliberately the hardest shape for `is_mandatory` to catch: outcome `pass`
+    (routing decided it), and every dimension null or 3 — so neither of the two
+    original triggers fires. This is exactly what coercion manufactures.
+    """
+    entry = _test_entry(
+        test_id,
+        test_type="negative",
+        outcome="pass",
+        dims=[
+            _dim("Correctness", score=None, rationale="[coerced-to-na] ..."),
+            _dim("Completeness", score=None, rationale="[coerced-to-na] ..."),
+            _dim("Tool Arguments", score=None, rationale="no calls"),
+        ],
+    )
+    entry["runs"] = [{
+        "validators": {"passed": True, "results": []},
+        "output": {"warnings": [{
+            "kind": kind,
+            "advisory": "judge scored Correctness 1 ...; coerced to null",
+            "name": "Correctness",
+            "score": 1,
+            "rationale": "did nothing",
+        }]},
+    }]
+    return entry
+
+
+def test_a_coerced_routing_negative_is_mandatory():
+    """Without this trigger the coercion silently deletes the highest-
+    correction-rate class in the corpus from human review.
+
+    `is_mandatory`'s first trigger keys on `score in (1, 2)` and the second on a
+    non-pass outcome. Coercion turns the diagnostic 1 into null — neither 1 nor
+    2 — on a test whose outcome is `pass` by design. So both original triggers
+    go blind on exactly the cells measured at a 17.28% (14/81) correction rate,
+    against 4.28% for gating tests with a 1 or 2.
+    """
+    assert is_mandatory(_coerced_entry()) is True
+
+
+def test_the_third_trigger_is_specific_to_its_own_kind():
+    """A different warning kind must not make a test mandatory — otherwise the
+    trigger is really 'any warning at all' and would drag in every
+    prose_observation and uncovered_tool_call in the corpus."""
+    assert is_mandatory(_coerced_entry(kind="prose_observation")) is False
+    assert is_mandatory(_coerced_entry(kind="uncovered_tool_call")) is False
+
+
+def test_is_mandatory_survives_entries_with_no_runs_or_no_output():
+    """The read must be defensive at every level, not a subscript chain.
+
+    Warnings live at `entry["runs"][i]["output"]["warnings"]`, and there is no
+    `entry["output"]`. But a test entry has no `runs` key at all until a run is
+    recorded, and this file's own `_test_entry` builds run dicts as
+    `{"validators": {...}}` with no `output` key. A literal
+    `entry["runs"][i]["output"]["warnings"]` KeyErrors across most of this file.
+    """
+    no_runs = _test_entry("ut_c_002", dims=[_dim(score=3)])
+    assert "runs" not in no_runs
+    assert is_mandatory(no_runs) is False
+
+    no_output = _test_entry("ut_c_003", dims=[_dim(score=3)], validators=[])
+    assert "output" not in no_output["runs"][0]
+    assert is_mandatory(no_output) is False
+
+    empty_runs = _test_entry("ut_c_004", dims=[_dim(score=3)])
+    empty_runs["runs"] = []
+    assert is_mandatory(empty_runs) is False
+
+    null_output = _test_entry("ut_c_005", dims=[_dim(score=3)])
+    null_output["runs"] = [{"output": None}, {"output": {"warnings": None}}]
+    assert is_mandatory(null_output) is False
+
+
+def test_a_coerced_test_still_reaches_the_sample():
+    """The trigger is worthless if `is_gradeable` filters the test out first.
+
+    Every slot in `select_review_sample` draws from `[t for t in tests if
+    is_gradeable(t)]`, and `is_gradeable` is `bool(review_dimensions(t))`. A
+    coerced entry's dimensions are present with null scores, so the array is
+    non-empty and it survives the filter.
+    """
+    coerced = _coerced_entry("ut_c_010")
+    assert is_gradeable(coerced) is True
+    # 30 clean tests, not 4. With only 5 eligible tests against 3+1+1 slots every
+    # test is sampled whatever is_mandatory says, so the membership assertion
+    # below would hold with the third trigger deleted. That is how this test
+    # first shipped. 30 makes the chosen slots a minority of the pool, so the
+    # coerced test can only be there via the mandatory slot.
+    pool = [coerced] + _suite(30)
+    sample = select_review_sample(tests=pool, seed=0)
+    assert len(sample["tests"]) < len(pool), (
+        "the pool must be bigger than the sample or membership proves nothing"
+    )
+    assert "ut_c_010" in sample["tests"], sample["tests"]
+
+    # And the control: with the warning renamed away it drops out of the sample.
+    import copy
+    unflagged = copy.deepcopy(coerced)
+    for r in unflagged["runs"]:
+        for w in r["output"]["warnings"]:
+            w["kind"] = "prose_observation"
+    assert is_mandatory(unflagged) is False
+    sample2 = select_review_sample(tests=[unflagged] + _suite(30), seed=0)
+    assert "ut_c_010" not in sample2["tests"], (
+        "without the coercion warning the test must NOT be pulled in by the "
+        "mandatory slot - otherwise the assertion above is about pool size, "
+        "not about the trigger"
+    )
+
+
+# --- The corpus replay: #2196's own acceptance requirement -------------------
+#
+# The card is explicit: "The acceptance check must fail on `main` against real
+# data, not a hand-built dict." Every other test in this file builds a dict, and
+# on committed data the third trigger fires ZERO times (no run log carries a
+# coerced_routing_negative_to_na warning yet, because nothing emitted one before
+# this change). So without this replay nothing distinguishes a correct third
+# trigger from one that never fires at all.
+
+
+def _committed_unit_logs():
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[3] / "runlogs" / "unit"
+    if not root.is_dir():  # pragma: no cover - layout guard
+        return []
+    return sorted(p for p in root.glob("*/*.json") if not p.name.endswith(".ann.json"))
+
+
+def _simulate_coercion(entry):
+    """Apply this PR's coercion to a COMMITTED test entry.
+
+    Wherever a run carries the retired `routing_negative_judge_fail` warning,
+    rewrite that warning to the new kind and null the matching dimension scores
+    (per-run and aggregated), which is exactly what
+    `orchestrator.flag_routing_negative_judge_fail` now does at run time.
+    """
+    import copy
+    e = copy.deepcopy(entry)
+    touched = False
+    for r in e.get("runs") or []:
+        ws = (r.get("output") or {}).get("warnings") or []
+        names = {w.get("name") for w in ws if w.get("kind") == "routing_negative_judge_fail"}
+        if not names:
+            continue
+        touched = True
+        for w in ws:
+            if w.get("kind") == "routing_negative_judge_fail":
+                w["kind"] = "coerced_routing_negative_to_na"
+        for d in (r.get("judge") or {}).get("dimensions") or []:
+            if d.get("name") in names and d.get("score") == 1:
+                d["score"] = None
+        for d in (e.get("outcome_summary") or {}).get("aggregated_dimensions") or []:
+            if d.get("name") in names and d.get("score") == 1:
+                d["score"] = None
+    return e, touched
+
+
+def _strip_the_new_kind(entry):
+    """The same entry with the coercion warning renamed away, i.e. what the
+    corpus would look like if the third trigger did not exist."""
+    import copy
+    e = copy.deepcopy(entry)
+    for r in e.get("runs") or []:
+        for w in ((r.get("output") or {}).get("warnings") or []):
+            if w.get("kind") == "coerced_routing_negative_to_na":
+                w["kind"] = "__not_a_registered_kind__"
+    return e
+
+
+def test_the_third_trigger_returns_exactly_what_coercion_removes():
+    """Over every committed unit run log: coercion must not shrink the set of
+    tests a human is required to read.
+
+    Three assertions, and the third is the one that stops this being vacuous:
+    the mandatory total must be unchanged, no sampled-id set may move, and a
+    meaningful number of tests must be kept mandatory BY THIS TRIGGER
+    SPECIFICALLY — verified by renaming the warning away and watching them drop
+    out. A trigger that keeps nothing would satisfy the first two on its own.
+    """
+    import json
+    logs = _committed_unit_logs()
+    assert logs, "no committed unit run logs found - the replay would be vacuous"
+
+    touched = kept_by_trigger = 0
+    mand_before = mand_after = 0
+    moved_samples = []
+
+    for path in logs:
+        d = json.loads(path.read_text(encoding="utf-8"))
+        tests = d.get("tests") or []
+        if not tests:
+            continue
+        coerced, flags = [], []
+        for t in tests:
+            c, hit = _simulate_coercion(t)
+            coerced.append(c); flags.append(hit)
+        touched += sum(flags)
+
+        mand_before += sum(1 for t in tests if is_gradeable(t) and is_mandatory(t))
+        mand_after += sum(1 for t in coerced if is_gradeable(t) and is_mandatory(t))
+
+        for c, hit in zip(coerced, flags):
+            if hit and is_gradeable(c) and is_mandatory(c) \
+                    and not is_mandatory(_strip_the_new_kind(c)):
+                kept_by_trigger += 1
+
+        if d.get("review_sample") is not None:
+            seed = d["review_sample"].get("seed", 0)
+            b = select_review_sample(tests=tests, prior_sample=None, seed=seed)
+            a = select_review_sample(tests=coerced, prior_sample=None, seed=seed)
+            if set(b["tests"]) != set(a["tests"]):
+                moved_samples.append(path.name)
+
+    assert touched > 0, (
+        "no committed log still carries routing_negative_judge_fail. The kind is "
+        "retired and its population only shrinks with pruning, so this replay has "
+        "aged out - delete this test rather than trying to restore the corpus."
+    )
+    assert mand_after == mand_before, (
+        f"coercion changed how many tests a human must read: "
+        f"{mand_before} -> {mand_after}"
+    )
+    assert not moved_samples, (
+        f"coercion moved the sampled-id set for {len(moved_samples)} run log(s): "
+        f"{moved_samples[:5]}"
+    )
+    # RELATIVE to the population this run actually found, not a hard floor. A
+    # hard 40 against a measured 49 does not survive routine use: every full
+    # skill run prunes to the newest 5 candidates, and four `make eval-skill
+    # SKILL=timeline` runs take it to 39 and red the suite with no code change.
+    # The population can only shrink, never grow -- _simulate_coercion counts
+    # entries carrying the RETIRED warning kind, and every log written after
+    # this lands carries the new one.
+    assert kept_by_trigger >= touched - 2, (
+        f"only {kept_by_trigger} of {touched} affected entries are kept mandatory "
+        f"by the third trigger (47 of 49 on 2026-09-15). A number near zero means "
+        f"the trigger is not doing the work it was added for, and the two "
+        f"assertions above would pass anyway."
+    )

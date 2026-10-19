@@ -19,8 +19,11 @@ on `test["tags"]`.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
+from harness.skill_runner import agent_return_text
 from validators_lib import (
     assert_foreign_keys_valid,
     assert_no_section_deletions,
@@ -108,6 +111,76 @@ def test_ruled_out_requires_reason(before_state, after_state):
             )
 
     assert not errors, "ruled_out without reason:\n" + "\n".join(errors)
+
+
+def test_supported_requires_evidence_floor(before_state, after_state):
+    """Per research-schema-spec.md §5.9 (issue #1644), a hypothesis at
+    `status: "supported"` must clear a mechanical floor: no conflict naming
+    its own supporting/contradicting assertions is still unresolved, and
+    either one supporting assertion is direct or at least two are indirect
+    and cite at least two distinct `source_id` values.
+
+    One-directional: this only flags a hypothesis that IS supported and
+    fails the floor. A hypothesis that clears the floor but was left
+    `active` is not a violation — the third gate condition (evidence
+    consistency, e.g. no logical/geographic impossibility) is a judgment
+    call a genealogist may legitimately decide either way, and this
+    validator does not attempt it.
+
+    Conflicts are matched by assertion overlap, never by shared
+    `question_id` — `eval/fixtures/scenarios/flynn-unresolved-conflict`
+    is the fixture that separates the two: its h_001 is `supported` while
+    c_001 is unresolved and blocks the same question, but c_001 names
+    entirely different assertions than h_001 does.
+    """
+    after = after_state.get("research_json")
+    if after is None:
+        pytest.skip("No research.json in output")
+
+    assertions_by_id = {a.get("id"): a for a in after.get("assertions", [])}
+    conflicts = after.get("conflicts", [])
+
+    errors = []
+    for h in after.get("hypotheses", []):
+        if h.get("status") != "supported":
+            continue
+        hid = h.get("id", "?")
+        supporting = h.get("supporting_assertion_ids") or []
+        contradicting = h.get("contradicting_assertion_ids") or []
+        linked = set(supporting) | set(contradicting)
+
+        unresolved = [
+            c.get("id") for c in conflicts
+            if linked & set(c.get("competing_assertion_ids") or [])
+            and c.get("status") not in ("resolved", "moot")
+        ]
+        if unresolved:
+            errors.append(
+                f"hypotheses[{hid}]: supported but conflict(s) {unresolved} "
+                f"naming its assertions are unresolved"
+            )
+            continue  # the evidence floor is moot once this already fails
+
+        direct_count = 0
+        indirect_sources: set = set()
+        for aid in supporting:
+            a = assertions_by_id.get(aid)
+            if a is None:
+                continue
+            if a.get("record_basis") == "stated":
+                direct_count += 1
+            elif a.get("record_basis") == "inferred":
+                indirect_sources.add(a.get("source_id"))
+
+        if direct_count < 1 and len(indirect_sources) < 2:
+            errors.append(
+                f"hypotheses[{hid}]: supported with no direct supporting "
+                f"assertion and only {len(indirect_sources)} distinct "
+                f"indirect source(s) (needs >=1 direct or >=2 distinct "
+                f"indirect sources)"
+            )
+
+    assert not errors, "supported evidence floor violated:\n" + "\n".join(errors)
 
 
 # --- Tag-gated regression checks ---
@@ -211,4 +284,54 @@ def test_h001_not_ruled_out_when_adding_identity_hypotheses(
     assert h001.get("ruled_out") is not True, (
         "h_001 had ruled_out=true set while adding alternative identity "
         "hypotheses."
+    )
+
+
+# --- Step 0 scope gate: hand back, write nothing (tag-gated) ---
+
+_HANDBACK_TAG_PREFIX = "handback-to-"
+
+
+def test_scope_handback_writes_nothing(
+    tool_calls, before_state, after_state, text_response, test, agent_returns=None
+):
+    """Tag-gated (`scope-handback`): the agent's Step 0 gate on an
+    out-of-scope delegation.
+
+    The deterministic verdict for the direct hand-back test that replaced the
+    three description-routing negatives deleted in issue #2792. Step 0 answers
+    an out-of-scope delegation with one line, "Hand-back: <name> — <clause>",
+    and makes no tool call, so the invariant is state plus the named
+    destination. The destination comes from a `handback-to-<name>` tag, so the
+    validator stays generic across the three Step 0 rows.
+
+    Fails iff the run:
+      - made a `research_append` call,
+      - changed `research.json` at all, or
+      - did not name the tagged destination in a `Hand-back:` line of the
+        agent's own return (`agent_return_text`, the text the judge grades),
+        falling back to `text_response` only when the agent returned nothing.
+    """
+    tags = test.get("tags", [])
+    if "scope-handback" not in tags:
+        pytest.skip("not a scope-handback scenario")
+
+    writes = [tc for tc in (tool_calls or []) if tc.get("tool", "").endswith("research_append")]
+    assert not writes, (
+        "an out-of-scope delegation must be handed back, not worked; got "
+        f"research_append call(s) with args: {[c.get('args') for c in writes]}"
+    )
+    assert before_state.get("research_json") == after_state.get("research_json"), (
+        "an out-of-scope delegation must leave research.json unchanged"
+    )
+
+    destinations = [t[len(_HANDBACK_TAG_PREFIX):] for t in tags if t.startswith(_HANDBACK_TAG_PREFIX)]
+    assert len(destinations) == 1, (
+        f"a scope-handback test needs exactly one `{_HANDBACK_TAG_PREFIX}<name>` tag; got {destinations}"
+    )
+    expected = destinations[0]
+    reply = agent_return_text(agent_returns, "hypothesis-tracking") or (text_response or "")
+    named = re.findall(r"Hand-back:\s*`?([a-z][a-z0-9-]*)", reply)
+    assert expected in named, (
+        f"expected a `Hand-back: {expected}` line; the reply named {named or 'no hand-back'}"
     )

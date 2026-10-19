@@ -13,9 +13,10 @@ The agent file itself lives at
 
 `gps-mentor` is a Board for Certification of Genealogists (BCG)-style
 senior genealogist who reviews the researcher's work and tells them
-what to address next. It runs at three checkpoints in the `/research`
-flow (pre-exhaustiveness, conclusion-readiness, proof-critique) and
-on-demand when the user asks for a review.
+what to address next. `/research` never invokes it on its own; it runs
+only when the user asks for a review ("second opinion", "review my work",
+"is this defensible?"), with `focus: on-demand`, including on a completed
+project.
 
 Unlike a tool, this agent has structured side effects on the project
 folder:
@@ -156,10 +157,12 @@ no longer exist on your machine, recreate them:
       "created": "2026-06-02",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     }
   ],
@@ -402,8 +405,16 @@ Expected: no diff. Anything other than `evaluations[]` is a violation.
 
 ### Verify the refusal path
 
-Edit `~/cowork-test-mentor/research.json` to make `q_001` have an
-empty plan (or set a plan item to `status: "in_progress"`), then ask:
+Edit `~/cowork-test-mentor/research.json` to set a plan item to
+`status: "in_progress"`, then ask:
+
+(An **empty** plan used to serve here too, and no longer does. A plan with an
+empty `items` array is invalid, so the hand edit leaves a project that
+`validate_research_schema` reports as invalid and that every writer tool answers
+with a "pre-existing schema error" warning. Writes still succeed — the
+introduced-error diff tolerates drift the call did not cause — so the hand edit
+does not block the test; it just adds a second failure to read past instead of
+the plan state this step is about.)
 
 > "Review q_001 before exhaustiveness."
 
@@ -415,8 +426,11 @@ audit trail.
 
 ### Verify the narrative-craft path (spec §6.4)
 
-No automated suite covers this today: the unit harness keys every test
-to a skill directory, and `gps-mentor` is an agent. The agent itself is
+An automated suite now covers part of this: `eval/tests/unit/gps-mentor/`
+reaches the agent through the direct-agent arm, so the harness no longer
+requires a skill directory. It exercises the craft refusal and craft
+supersession; the rest of this guide is still the verification for everything
+it does not reach. The agent itself is
 staged and observable in e2e runs (spec §17.1), so this is a missing
 suite rather than an impossible one — but until it exists, a genealogist
 reading real output is the verification. Run **both** halves; the

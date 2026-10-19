@@ -1,0 +1,10 @@
+{
+  "tool": "wiki_read",
+  "description": "Cuba_Naming_Customs does NOT exist in the wiki corpus. Verified live 2026-09-23: `wiki_read` on that URL returns this error, and Cuba_Genealogy's own sidebar carries no Naming Customs entry where Spain's does. Used by ut_search_full_text_009, whose subject is Cuban and whose pre-work bullet therefore resolves to a page that is not there. This fixture exercises SKILL.md's documented gap path: \"On `No wiki page found` ... report the gap and search the variants you do have. Do not fill it from memory.\" It replaces an over-matching Spain fixture that silently served Spain's page to this Cuban call (PR #2770 review).",
+  "args": {
+    "url": "~Cuba_Naming_Customs"
+  },
+  "response": {
+    "error": "No wiki page found for \"Cuba_Naming_Customs\". The page may not exist in the corpus."
+  }
+}

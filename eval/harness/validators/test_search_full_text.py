@@ -15,6 +15,7 @@ signature contract. The `test` argument is the parsed test JSON dict
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 
@@ -129,17 +130,132 @@ FILTER_KEYS = (
     "recordType", "yearFrom", "yearTo", "collectionId",
 )
 
-# The subset SKILL.md's decision ladder adds only after an unfiltered look
-# (step 5: 50-500 hits -> add Year/RecordType; >500 -> add a second term or
-# place). collectionId is deliberately excluded: it is not a "wait, then
-# add" filter at all -- SKILL.md forbids it on every call, full stop ("Do
-# NOT scope a full-text search to a record collectionId"), so it gets its
-# own always-applies check below rather than living in the first-call-only
-# one.
+# Place, date, and record-type filters are allowed on any call, but a filtered
+# search that returns zero results must be followed by an unfiltered retry
+# (checked by test_filtered_nil_is_followed_by_unfiltered_retry below).
+# `place` (q.recordPlace) narrows by collection metadata like recordPlace*, so a
+# nil under it owes the same retry. collectionId is excluded: its guard is
+# test_fulltext_search_never_scopes_to_collection_id, not this one.
 POST_SEARCH_FILTER_KEYS = (
+    "place",
     "recordPlace0", "recordPlace1", "recordPlace2", "recordPlace3",
     "recordType", "yearFrom", "yearTo",
 )
+
+
+def test_wiki_prework_fetch_runs_when_required(tool_calls, test):
+    """A test tagged `wiki-prework` must actually issue the wiki_read calls
+    SKILL.md step 3 declares REQUIRED for it (ADR-0012, "Name the fetch so
+    it runs").
+
+    Tag-gated, not corpus-wide, because the block is CONDITIONAL by design:
+    the triggers are a non-English record, a compound or patronymic surname,
+    a pre-1850 or non-Latin script, and an era place-name. A plain US deed
+    search fires none of them, and asserting a wiki fetch on every
+    search-full-text test would demand an upstream leg that buys nothing and
+    would red the whole suite.
+
+    This asserts only that the call HAPPENED. That is deliberately the weaker
+    half: a call whose page was then ignored passes here. Whether the page's
+    content reached the answer is the judge's, against a fixture marker no
+    model can produce from memory -- the split the locality-guide pair
+    (ut_locality_guide_022/_023) established, and the reason this docstring
+    says so rather than leaving the gap implicit.
+    """
+    if "wiki-prework" not in (test.get("tags") or []):
+        pytest.skip("not a wiki-prework test")
+
+    reads = [
+        tc for tc in (tool_calls or [])
+        if (tc.get("tool") or "").endswith("wiki_read")
+    ]
+    assert reads, (
+        "SKILL.md step 3 declares wiki_read fetches as unconditional members of "
+        "the pre-work block for this search, and none was issued. The query was "
+        "therefore built from memory rather than from the page: a variant that "
+        "was not fetched is a variant that cannot be searched."
+    )
+
+
+# Maps a tagged test id to the topical fixture stems its `mcp_fixtures`
+# name ahead of the wiki-read-any/wiki-search-any catch-alls. Hardcoded
+# rather than read from the test spec: the `test` fixture carries only the
+# inner "test" block, not top-level `mcp_fixtures` (validator_runner.py).
+# Add an entry whenever "topical-fixture-required" is added to a test.
+#
+# Same shape as `test_historical_context.py`'s `_TOPICAL_FIXTURE_BY_TEST_ID`
+# (issue #2283), widened to a tuple because each of these tests declares two
+# topical pages rather than one.
+#
+# `ut_search_full_text_009` lists the word list ONLY. Its subject is "Jose
+# Maria Garcia", a single surname, so SKILL.md's `{Country}_Naming_Customs`
+# bullet -- which triggers on "a compound or patronymic surname" -- does not
+# fire for it. Its one REQUIRED page is the word list, because the record is
+# not in English.
+#
+# It still DECLARES `wiki-read-cuba-naming-customs-not-found`, which is not
+# asserted here. Cuba_Naming_Customs does not exist in the corpus (verified
+# live 2026-09-23), so the fixture's job is to answer truthfully if the model
+# reaches for it, rather than let an over-matching Spain fixture serve another
+# jurisdiction's page as it did in v1_2026-09-22_22-33-05. Declaring is the
+# guard; requiring the call is not, and asserting it here failed the
+# 2026-09-23 09:16 run on a page the test never had reason to fetch.
+_TOPICAL_FIXTURES_BY_TEST_ID = {
+    "ut_search_full_text_009": ("wiki-read-spanish-word-list",),
+    "ut_search_full_text_013": (
+        "wiki-read-spain-naming-customs",
+        "wiki-read-spanish-word-list",
+    ),
+}
+
+
+def test_topical_fixture_actually_used(tool_calls, test):
+    """A test tagged `topical-fixture-required` declares subject-matter wiki
+    fixtures ahead of the `wiki-read-any` / `wiki-search-any` catch-alls.
+
+    `test_wiki_prework_fetch_runs_when_required` above asserts only that SOME
+    `wiki_read` happened, which a fall-through to the catch-all satisfies just
+    as well as the right page does. That is the gap issue #2283 closed for
+    `historical-context` in the reviewer's own words: "If the model's phrasing
+    ever drifts off matching [the predicate], this silently falls back to the
+    generic fixture with no signal anywhere that it happened."
+
+    It was not theoretical here. `wiki-read-spain-naming-customs` matched on
+    `~Naming_Customs`, an unscoped substring, so `ut_search_full_text_009`'s
+    `Cuba_Naming_Customs` call was served Spain's page and the judge scored it
+    3, reasoning it was "correct per the fixture"
+    (`v1_2026-09-22_22-33-05`).
+
+    Asserts every expected stem appears among the run's `response_fixture`
+    values. A miss means the judge graded against catch-all content rather
+    than the page the test exists to exercise.
+    """
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    # Map -> tag direction BEFORE the skip, or the skip swallows it: a
+    # ValidatorRunResult keeps `passed=True` on a skip, so dropping the tag
+    # from a spec would silently disarm this guard while the run log still
+    # reads `passed`.
+    assert test_id not in _TOPICAL_FIXTURES_BY_TEST_ID or (
+        "topical-fixture-required" in tags
+    ), (
+        f"{test_id} has a _TOPICAL_FIXTURES_BY_TEST_ID entry but no "
+        "'topical-fixture-required' tag - restore the tag or delete the entry"
+    )
+    if "topical-fixture-required" not in tags:
+        pytest.skip("not a topical-fixture-required test")
+    expected = _TOPICAL_FIXTURES_BY_TEST_ID.get(test_id)
+    assert expected, (
+        f"{test_id} carries 'topical-fixture-required' but has no entry in "
+        "_TOPICAL_FIXTURES_BY_TEST_ID -- add one naming its topical fixture stems"
+    )
+    hit = [c.get("response_fixture") for c in (tool_calls or []) if c.get("response_fixture")]
+    missing = [stem for stem in expected if stem not in hit]
+    assert not missing, (
+        f"{test_id}: topical fixture(s) {missing} never matched a tool call -- the "
+        f"model's arguments missed the fixture predicate and fell through to a "
+        f"catch-all instead. Fixtures actually hit: {hit or '(none)'}"
+    )
 
 
 def _fts_tool_calls(tool_calls):
@@ -203,50 +319,138 @@ def test_log_query_traces_to_fulltext_search_call(before_state, after_state, too
     assert not errors, "Log entries claiming an unsent filter:\n  - " + "\n  - ".join(errors)
 
 
-# --- First look at a query must be unscoped ----------------------------
+# --- Filtered nil must be followed by an unfiltered retry --------------
 
-def test_first_fulltext_search_call_is_unscoped(tool_calls):
-    """SKILL.md step 4: Search by name only first; apply place as a
-    post-search filter. The decision ladder in step 5 only ever adds a
-    Year/RecordType/place filter once the unfiltered hit count is known
-    (50-500 add Year/RecordType; over 500 add a second term or place) so
-    the FIRST fulltext_search call in a turn must carry none of them
-    (deep-dive #1651 finding 2). collectionId is intentionally not part of
-    this check -- see test_fulltext_search_never_scopes_to_collection_id,
-    which covers every call, not just the first.
+_RECORD_PLACE_KEYS = ("recordPlace0", "recordPlace1", "recordPlace2", "recordPlace3")
+# A place filterParam from an includeFacets response: a level id, a comma, the
+# name (e.g. "10,Pennsylvania"). Anything else is plain text.
+_FACET_PLACE_FORM = re.compile(r"^\d+,")
 
-    Checks only the literal first call, not every later first look at an
-    independent target within the same turn (e.g. two names searched in
-    parallel) -- a known narrower scope than the full rule, chosen to keep
-    false positives at zero; widening it needs a way to tell a new target
-    apart from the same target narrowed, which is a judgment call, not a
-    mechanical one."""
+
+def test_record_place_filters_use_facet_form(tool_calls):
+    """`recordPlace*` (`f.recordPlace*`) accepts only a place filterParam from an
+    includeFacets response; a plain-text value silently returns zero
+    (fulltext-search-tool-spec.md, place parameter behaviour, measured
+    2026-09-10). A named jurisdiction in plain text belongs in `place`.
+
+    Deterministic because the unit eval cannot see it any other way: the
+    fixtures match on keywords alone, so a plain-text `recordPlace1` is served
+    results the live index would never return (issue #1828 review).
+    """
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
-    first_args = calls[0]["args"]
-    present = [k for k in POST_SEARCH_FILTER_KEYS if k in first_args]
-    assert not present, (
-        f"first fulltext_search call ({first_args.get('keywords') or first_args.get('nlQuery')!r}) "
-        f"includes post-search filter(s) before any unfiltered hit count was observed: {present}"
+    plain = [
+        (k, c["args"][k])
+        for c in calls
+        for k in _RECORD_PLACE_KEYS
+        if c.get("args", {}).get(k) not in (None, "")
+        and not _FACET_PLACE_FORM.match(str(c["args"][k]))
+    ]
+    assert not plain, (
+        "plain-text recordPlace* values silently return zero on the live index; "
+        "use the `place` field for a named jurisdiction, or a place filterParam "
+        f"from includeFacets (e.g. '10,Pennsylvania'). Got: {plain}"
+    )
+
+
+def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
+    """SKILL.md step 4 / query-syntax.md: when a fulltext_search call carries
+    post-search filters and returns zero results, the next call for the same
+    topic (same keywords/nlQuery handle) must omit those filters — a nil under
+    a filter may be a metadata mismatch, not a true negative. Spelling and
+    abbreviation variants are not exempt (SKILL.md step 4)."""
+    calls = _fts_tool_calls(tool_calls)
+    if not calls:
+        pytest.skip("no fulltext_search calls this turn")
+
+    by_handle: dict = {}
+    for c in calls:
+        args = c["args"]
+        handle = args.get("keywords") or args.get("nlQuery") or ""
+        by_handle.setdefault(handle, []).append(c)
+
+    errors = []
+    for handle, handle_calls in by_handle.items():
+        for i, c in enumerate(handle_calls):
+            args = c["args"]
+            # Name-field searches use a different nil-recovery path (switch to
+            # keywords), not filter removal; their retry has a different handle.
+            if "name" in args:
+                continue
+            present_filters = [k for k in POST_SEARCH_FILTER_KEYS if k in args]
+            if not present_filters:
+                continue
+            resp = c.get("response") or {}
+            results = resp.get("results")
+            total_hits = resp.get("totalResults")
+            is_zero = (
+                (isinstance(results, list) and len(results) == 0) or
+                (total_hits is not None and int(total_hits) == 0)
+            )
+            if not is_zero:
+                continue
+            later_calls = handle_calls[i + 1:]
+            retry_found = any(
+                {k for k in POST_SEARCH_FILTER_KEYS if k in lc["args"]} < set(present_filters)
+                for lc in later_calls
+            )
+            if not retry_found:
+                errors.append(
+                    f"fulltext_search for topic {handle!r} sent filter(s) "
+                    f"{present_filters} and returned zero results, but no "
+                    f"unfiltered retry for that topic follows in this turn"
+                )
+    assert not errors, (
+        "Filtered nil not followed by unfiltered retry:\n  - " + "\n  - ".join(errors)
     )
 
 
 def test_fulltext_search_never_scopes_to_collection_id(tool_calls):
-    """SKILL.md: "Do NOT scope a full-text search to a record collectionId"
-    -- an absolute rule, unlike place/date/recordType, which only wait for
-    the first unfiltered look (see test_first_fulltext_search_call_is_unscoped,
-    which checks call 0 only and never mentions collectionId). Without this
-    check, collectionId sent on a second-or-later call had no coverage
-    anywhere in the suite (task review on PR #1758, chrisedeson)."""
+    """collectionId is allowed only when a prior fulltext_search call in
+    the same turn sent includeFacets=true AND the value matches a filterParam
+    from that response's facets array. A borrowed collectionId silently
+    excludes the FTS partition holding the answer.
+    Safe path: pass includeFacets=true on the first call and use the
+    filterParam values from the response's facets array on a follow-up."""
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
-    offenders = [c["args"] for c in calls if "collectionId" in c["args"]]
-    assert not offenders, (
-        f"fulltext_search must never send collectionId; offending call(s): "
-        f"{[(a.get('keywords') or a.get('nlQuery'), a.get('collectionId')) for a in offenders]}"
-    )
+
+    # facets_seen is per-turn, not per-topic. A false negative is still possible
+    # if topic A's includeFacets=true call is followed by a borrowed collectionId
+    # for unrelated topic B. That case is not detectable without topic-boundary
+    # parsing. The filterParam check below catches the most common case: using
+    # an ID that was never returned in any prior facet response this turn.
+    facets_seen = False
+    allowed_filter_params: set = set()
+    errors = []
+    for c in calls:
+        args = c["args"]
+        if "collectionId" in args:
+            cid = args["collectionId"]
+            if not facets_seen:
+                errors.append(
+                    f"fulltext_search sent collectionId={cid!r} "
+                    f"without a prior includeFacets=true call in this turn "
+                    f"(query: {(args.get('keywords') or args.get('nlQuery'))!r})"
+                )
+            elif cid not in allowed_filter_params:
+                errors.append(
+                    f"fulltext_search sent collectionId={cid!r} which was not "
+                    f"among the filterParam values from any prior includeFacets "
+                    f"response this turn (allowed: {sorted(allowed_filter_params)!r}; "
+                    f"query: {(args.get('keywords') or args.get('nlQuery'))!r})"
+                )
+        if args.get("includeFacets"):
+            facets_seen = True
+            resp = c.get("response") or {}
+            for group in (resp.get("facets") or []):
+                for item in (group.get("items") or []):
+                    fp = item.get("filterParam")
+                    if fp:
+                        allowed_filter_params.add(fp)
+    assert not errors, "collectionId not from a prior filterParam:\n  - " + "\n  - ".join(errors)
 
 
 # --- A plan item only completes via its own search ----------------------

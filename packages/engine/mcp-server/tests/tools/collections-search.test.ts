@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -10,6 +11,7 @@ import {
   standardPlaceToCollectionsQuery,
   fetchAllCollections,
   clearCollectionsCache,
+  type CollectionsSearchInput,
 } from "../../src/tools/collections-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
@@ -122,7 +124,7 @@ describe("collectionsSearchTool with standardPlace", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await collectionsSearchTool({ standardPlace: "Alabama" });
+    const result = await collectionsSearchTool({ standardPlace: "Alabama" }, LOCAL);
 
     expect(result.query).toEqual({ standardPlace: "Alabama" });
     expect(result.scope).toBe("Alabama");
@@ -139,7 +141,7 @@ describe("collectionsSearchTool with standardPlace", () => {
 
     const result = await collectionsSearchTool({
       standardPlace: "Birmingham, Jefferson, Alabama, United States",
-    });
+    }, LOCAL);
 
     // The tool derived "Alabama" (the state) from the full standardPlace and
     // matched the Alabama collection; the input is echoed in query, the derived
@@ -159,7 +161,7 @@ describe("collectionsSearchTool with standardPlace", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await collectionsSearchTool({ standardPlace: "alabama" });
+    const result = await collectionsSearchTool({ standardPlace: "alabama" }, LOCAL);
 
     expect(result.totalForPlace).toBe(1);
     expect(result.results[0].id).toBe("1234");
@@ -172,7 +174,7 @@ describe("collectionsSearchTool with standardPlace", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await collectionsSearchTool({ standardPlace: "Narnia" });
+    const result = await collectionsSearchTool({ standardPlace: "Narnia" }, LOCAL);
 
     expect(result.totalForPlace).toBe(0);
     expect(result.results).toEqual([]);
@@ -185,7 +187,7 @@ describe("collectionsSearchTool with standardPlace", () => {
       json: async () => mockApiResponse,
     });
 
-    const result = await collectionsSearchTool({ standardPlace: "Census" });
+    const result = await collectionsSearchTool({ standardPlace: "Census" }, LOCAL);
 
     expect(result.totalForPlace).toBe(1);
     expect(result.results[0].id).toBe("9999");
@@ -222,7 +224,7 @@ describe("collectionsSearchTool date filter", () => {
       standardPlace: "Census",
       startYear: 1890,
       endYear: 1920,
-    });
+    }, LOCAL);
 
     expect(result.query).toEqual({
       standardPlace: "Census",
@@ -238,7 +240,7 @@ describe("collectionsSearchTool date filter", () => {
 
   it("rejects endYear < startYear", async () => {
     await expect(
-      collectionsSearchTool({ standardPlace: "Census", startYear: 1920, endYear: 1890 })
+      collectionsSearchTool({ standardPlace: "Census", startYear: 1920, endYear: 1890 }, LOCAL)
     ).rejects.toThrow(/endYear must be greater than or equal to startYear/);
   });
 });
@@ -283,7 +285,7 @@ describe("collectionsSearchTool error handling", () => {
       new Error("User is not logged in to FamilySearch. Call the login tool to authenticate.")
     );
 
-    await expect(collectionsSearchTool({ standardPlace: "Alabama" })).rejects.toThrow(
+    await expect(collectionsSearchTool({ standardPlace: "Alabama" }, LOCAL)).rejects.toThrow(
       "User is not logged in to FamilySearch. Call the login tool to authenticate."
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -291,13 +293,14 @@ describe("collectionsSearchTool error handling", () => {
 
   it("throws on non-OK API response", async () => {
     mockedGetValidToken.mockResolvedValueOnce("test-token");
-    mockFetch.mockResolvedValueOnce({
+    mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
+      headers: new Headers(),
     });
 
-    await expect(collectionsSearchTool({ standardPlace: "Alabama" })).rejects.toThrow(
+    await expect(collectionsSearchTool({ standardPlace: "Alabama" }, LOCAL)).rejects.toThrow(
       "FamilySearch collections API error: 500 Internal Server Error"
     );
   });
@@ -309,17 +312,37 @@ describe("collectionsSearchTool error handling", () => {
       json: async () => ({}),
     });
 
-    const result = await collectionsSearchTool({ standardPlace: "Alabama" });
+    const result = await collectionsSearchTool({ standardPlace: "Alabama" }, LOCAL);
 
     expect(result.totalForPlace).toBe(0);
     expect(result.results).toEqual([]);
   });
 
   it("throws when standardPlace is not provided", async () => {
-    await expect(collectionsSearchTool({ standardPlace: "" })).rejects.toThrow(
+    await expect(collectionsSearchTool({ standardPlace: "" }, LOCAL)).rejects.toThrow(
       /collections_search requires a standardPlace/
     );
   });
+
+  it.each(["recordType", "record_type", "recordTypes", "recordTypeGroup", "recordTypeGroups"])(
+    "refuses %s rather than returning the place's whole list unfiltered",
+    async (alias) => {
+      const input = {
+        standardPlace: "New York, United States",
+        [alias]: alias.endsWith("s") ? ["Probate"] : "probate",
+      } as unknown as CollectionsSearchInput;
+
+      await expect(collectionsSearchTool(input, LOCAL)).rejects.toThrow(
+        new RegExp(
+          `no record-type filter: it lists every collection for the place, so ${alias} ` +
+            "cannot narrow it.*volume_search's recordTypeGroups.*Valid groups: Genealogies, .*Probate",
+          "s"
+        )
+      );
+      expect(mockedGetValidToken).not.toHaveBeenCalled();
+      expect(mockFetch).not.toHaveBeenCalled();
+    }
+  );
 });
 
 describe("collectionsSearchTool field mapping", () => {
@@ -344,7 +367,7 @@ describe("collectionsSearchTool field mapping", () => {
       }),
     });
 
-    const result = await collectionsSearchTool({ standardPlace: "Alabama" });
+    const result = await collectionsSearchTool({ standardPlace: "Alabama" }, LOCAL);
 
     expect(result.results[0]).toEqual({
       id: "1234",
@@ -366,11 +389,11 @@ describe("collectionsSearchTool — User-Agent contract", () => {
       json: async () => mockApiResponse,
     });
 
-    await collectionsSearchTool({ standardPlace: "Alabama" });
+    await collectionsSearchTool({ standardPlace: "Alabama" }, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = init.headers as Record<string, string>;
-    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("User-Agent")).toBe(BROWSER_USER_AGENT);
   });
 });

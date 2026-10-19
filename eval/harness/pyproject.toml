@@ -45,7 +45,13 @@ dev = [
 select = ["F821"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+# `.claude/skills/lib/tests` is out of tree on purpose: this is the repo's only
+# pytest suite, and eval/harness/scripts/check_slot_queue.py imports
+# .claude/skills/lib/touches.py — so a CI check now depends on a module no job
+# tested. Running `python3 .claude/skills/lib/tests/test_touches.py` directly
+# exits 0 having run NOTHING (that file has no __main__ block), so a bare-python
+# CI job would have read as coverage while being a no-op.
+testpaths = ["tests", "../../.claude/skills/lib/tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*", "report_*"]
 asyncio_mode = "auto"

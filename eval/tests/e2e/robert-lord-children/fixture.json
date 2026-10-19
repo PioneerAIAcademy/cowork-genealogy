@@ -1,0 +1,19 @@
+{
+  "id": "robert-lord-children",
+  "name": "Robert Lord — children James and Betsy in the 1911 Rochdale census",
+  "genre": "record-hint",
+  "source_pid": "GSPY-NFZ",
+  "captured": "2026-09-07",
+  "researcher_question": "Is the Robert Brierley enumerated at Rochdale in 1911 with wife Ellen and children James and Betsy the same man as Robert Lord (b. 1858, son of Abel Brierley), and did he have those two children?",
+  "tags": {
+    "question_type": "children",
+    "era": "1910s",
+    "geography": "GB-ENG"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 9, hint-samples.csv row 332, flags adds_son/adds_daughter/adds_marriage, confidence 3). Adjudicated 2026-09-16: false match. The 1911 Rochdale census Robert Brierley (b. 1866) is a different man from tree person Robert Lord (GSPY-NFZ, b. 1858) — 8-year birth gap, different father (Robert Brierley vs Abel Brierley), and Robert Lord found separately in 1901 as Single (ark:/61903/1:1:X9LD-V5K)."
+}

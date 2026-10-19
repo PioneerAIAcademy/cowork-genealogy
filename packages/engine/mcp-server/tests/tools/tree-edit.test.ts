@@ -18,9 +18,10 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
-import { treeEdit } from "../../src/tools/tree-edit.js";
+import { treeEdit, checkWarningGate } from "../../src/tools/tree-edit.js";
 import { treeCorrect } from "../../src/tools/tree-correct.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
+import { validateProject } from "../../src/validation/validator.js";
 
 const minimalResearch = {
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -61,7 +62,13 @@ describe("tree_edit", () => {
         names: [{ id: "N1", given: "John", surname: "Smith", preferred: true }],
         // Pre-existing (legacy) ref-less fact — tolerated; the delta guard fires
         // only on NEWLY-authored content, never on this one.
-        facts: [{ id: "F1", type: "Birth", date: "1850", primary: true }],
+        //
+        // Born 1820, not 1850: the Couple fixtures below marry I1 in 1843-1852,
+        // which against an 1850 birth is a marriage at age -7 to 2. That passed
+        // only while hasEarlyMarriage14 could not see a Marriage on the Couple
+        // edge. It can now, and tree_edit refuses an unjustified warning, so the
+        // fixture has to be a person who could actually have married.
+        facts: [{ id: "F1", type: "Birth", date: "1820", primary: true }],
       },
     ],
     relationships: [],
@@ -109,7 +116,7 @@ describe("tree_edit", () => {
     expect(refless).toBe(0);
   };
 
-  it("add_fact: assigns the next F id, resolves standard_place, swaps the primary, writes only the tree + .bak", async () => {
+  it("add_fact: assigns the next F id, resolves standard_place, swaps the primary, writes only the tree and no .bak", async () => {
     await writeProject(onePersonSourced());
     const researchBefore = await readFile(join(dir, "research.json"), "utf-8");
 
@@ -134,7 +141,7 @@ describe("tree_edit", () => {
     // the old Birth lost its primary (one primary per type)
     expect(facts.find((f: any) => f.id === "F1").primary).toBeUndefined();
 
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(researchBefore);
   });
 
@@ -152,6 +159,267 @@ describe("tree_edit", () => {
     expect(f1.date).toBe("1849");
     expect(f1.standard_place).toBe("Schuylkill, Pennsylvania, United States");
     expect(f1.id).toBe("F1");
+  });
+
+  // ─── #2472: the assertion backlink is stamped, never supplied, and detaches ──
+
+  describe("assertion_id backlink (#2472)", () => {
+    const backlinked = () => {
+      const t = onePerson();
+      (t.persons[0].facts[0] as any).assertion_id = "a_011";
+      return t;
+    };
+
+    it("update_fact drops the backlink when a correction sets a mirrored attribute, and warns", async () => {
+      await writeProject(backlinked());
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { date: "1849" },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f1 = (await readTree()).persons[0].facts[0];
+      expect(f1.date).toBe("1849");
+      expect(f1.assertion_id).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/no longer linked to assertion 'a_011'/);
+    });
+
+    it("update_fact drops it on a `standard_date` correction too — the trigger is all of FACT_STRING_FIELDS", async () => {
+      // `standard_date` is not one of the four mirrored attributes, but a
+      // human's standard form must not survive beside a later assertion `date`
+      // rewrite landing on the same fact.
+      await writeProject(backlinked());
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { standard_date: "1849" },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect((await readTree()).persons[0].facts[0].assertion_id).toBeUndefined();
+    });
+
+    it("update_fact KEEPS the backlink when the correction touches no fact string field", async () => {
+      // The other direction: clearing `primary` is not a re-reading of the
+      // record, so the fact is still the one that assertion minted.
+      await writeProject(backlinked());
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { primary: false },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const f1 = (await readTree()).persons[0].facts[0];
+      expect(f1.primary).toBeUndefined();
+      expect(f1.assertion_id).toBe("a_011");
+    });
+
+    it("KEEPS the backlink when the op re-states a field at the value it already holds", async () => {
+      // The conclude-a-fact shape: `primary` plus an echo of the existing date.
+      // Nothing was corrected, so nothing should be detached. 7 of the 31
+      // detaching ops in the committed e2e corpus carry `primary` alongside a
+      // string field, which is where this rides.
+      await writeProject(backlinked());
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { date: "1820", primary: true },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const f1 = (await readTree()).persons[0].facts[0];
+      expect(f1.date).toBe("1820");
+      expect(f1.assertion_id).toBe("a_011");
+      expect(r.validation.warnings.join(" ")).not.toMatch(/no longer linked/);
+    });
+
+    it("drops it when ONLY the resolved standard_place changes, which fixes the detach's position", async () => {
+      // The op re-states `place` at the value the fact already holds, so the
+      // assignment loop changes nothing; the only change is the `standard_place`
+      // maybeResolvePlace fills in. The detach therefore has to run AFTER
+      // resolution. Placed before it, this case sees no change and keeps a
+      // backlink on a fact whose sidecar the resolver just rewrote.
+      const t = onePersonSourced();
+      (t.persons[0].facts[0] as any).assertion_id = "a_011";
+      (t.persons[0].facts[0] as any).place = "Schuylkill County, Pennsylvania";
+      await writeProject(t);
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { place: "Schuylkill County, Pennsylvania" },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const f1 = (await readTree()).persons[0].facts[0];
+      expect(f1.standard_place).toBe("Schuylkill, Pennsylvania, United States");
+      expect(f1.assertion_id).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/no longer linked to assertion 'a_011'/);
+    });
+
+    it("drops the backlink on a RETYPE, which no string field covers", async () => {
+      // `type` is not one of the string fields, so a re-classification kept the
+      // backlink. That is the most consequential correction there is, and it
+      // also moves the fact across the event / value-bearing line that decides
+      // whether the assertion's `value` may be written to it at all. Left
+      // attached, the fact and its assertion disagree about their own type and
+      // no later correction can reach it.
+      const t = onePerson();
+      (t.persons[0].facts[0] as any).assertion_id = "a_011";
+      (t.persons[0].facts[0] as any).type = "Occupation";
+      await writeProject(t);
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { type: "Residence" },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const f1 = (await readTree()).persons[0].facts[0];
+      expect(f1.type).toBe("Residence");
+      expect(f1.assertion_id).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/no longer linked to assertion 'a_011'.*type/);
+    });
+
+    it("rejects a caller-supplied assertion_id on add_person and add_relationship inline facts", async () => {
+      // requireFactShape runs on all four fact write paths; the two above cover
+      // add_fact/update_fact, these are the other two.
+      const tree = onePersonSourced();
+      // A real second person: the edge's endpoints must differ, or the
+      // self-Couple refusal answers first and this case proves nothing about
+      // `assertion_id`.
+      tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
+      await writeProject(tree);
+      const person = await treeEdit({
+        projectPath: dir,
+        operation: "add_person",
+        person: {
+          gender: "Female",
+          names: [{ given: "Mary", surname: "Doyle" }],
+          facts: [{ type: "Birth", date: "1830", assertion_id: "a_011", sources: [{ ref: "S1" }] }],
+        } as any,
+      });
+      expect(person.ok).toBe(false);
+      if (!person.ok) expect(JSON.stringify(person)).toMatch(/`assertion_id` is not settable/);
+
+      const rel = await treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          // The edge's own mandatory-ref check runs BEFORE requireFactShape, so
+          // without this the call is refused for the wrong reason and the case
+          // proves nothing.
+          sources: [{ ref: "S1" }],
+          facts: [{ type: "Marriage", date: "1850", assertion_id: "a_011", sources: [{ ref: "S1" }] }],
+        } as any,
+      });
+      expect(rel.ok).toBe(false);
+      if (!rel.ok) expect(JSON.stringify(rel)).toMatch(/`assertion_id` is not settable/);
+    });
+
+    it("detaches a RELATIONSHIP-held fact too, not just a person fact", async () => {
+      // update_fact accepts relationshipId as well as personId, and the tree
+      // schema gives couple facts the same shape.
+      const t = onePersonSourced();
+      (t as any).persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Doyle" }] });
+      (t as any).relationships = [
+        {
+          id: "R1",
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          facts: [{ id: "F9", type: "Marriage", date: "1850", assertion_id: "a_011", sources: [{ ref: "S1" }] }],
+        },
+      ];
+      await writeProject(t);
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          relationshipId: "R1",
+          factId: "F9",
+          fact: { date: "1851" },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const f9 = (await readTree()).relationships[0].facts[0];
+      expect(f9.date).toBe("1851");
+      expect(f9.assertion_id).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/no longer linked to assertion 'a_011'/);
+    });
+
+    it("rejects a caller-supplied assertion_id on update_fact", async () => {
+      await writeProject(onePerson());
+      const r = await treeCorrect({
+        projectPath: dir,
+        operation: "update_fact",
+        personId: "I1",
+        factId: "F1",
+        fact: { assertion_id: "a_011" } as any,
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(JSON.stringify(r)).toMatch(/`assertion_id` is not settable/);
+    });
+
+    it("rejects a caller-supplied assertion_id on add_fact", async () => {
+      await writeProject(onePersonSourced());
+      const r = await treeEdit({
+        projectPath: dir,
+        operation: "add_fact",
+        personId: "I1",
+        fact: { type: "Death", date: "1900", assertion_id: "a_011", sources: [{ ref: "S1" }] } as any,
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(JSON.stringify(r)).toMatch(/`assertion_id` is not settable/);
+    });
+  });
+
+  it("add_fact: resolves a bare place against the places of the holder's other facts", async () => {
+    await writeProject(onePersonSourced());
+    const add = (place: string) =>
+      treeEdit({
+        projectPath: dir,
+        operation: "add_fact",
+        personId: "I1",
+        fact: { type: "Residence", place, sources: [{ ref: "S1" }] },
+      });
+    expect((await add("Borough of Shenandoah, County of Schuylkill")).ok).toBe(true);
+    expect((await add("Shenandoah")).ok).toBe(true);
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Shenandoah", {
+      contextPlaces: expect.arrayContaining(["Borough of Shenandoah, County of Schuylkill"]),
+    });
   });
 
   it("add_fact: nulls an AUTO-RESOLVED standard_place that contradicts the place text's country, with a warning", async () => {
@@ -337,6 +605,627 @@ describe("tree_edit", () => {
     expect(rel.facts[0]).toMatchObject({ id: "F2", type: "Marriage", date: "12 May 1843" });
   });
 
+  // ── Decision 37: a matching edge is corroborated, not duplicated ──────────
+  //
+  // A refusal would leave the writer to re-route the same evidence by hand
+  // through `add_fact`, dropping the new edge's own sources on the way. These
+  // pin that one edge survives and the new sources land on it.
+
+  const twoPersons = () => {
+    const t = onePersonSourced();
+    (t as any).persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] });
+    (t as any).sources.push({ id: "S2", title: "1860 U.S. Federal Census" });
+    return t;
+  };
+
+  // ── a couple event belongs on the Couple edge, never on a person ──────
+  //
+  // Replayed over the committed corpus this fires 6 times in 4 runs. The
+  // clearest is wilkins-marriage: in one batch the agent wrote the same
+  // "December 1834" Marriage onto BOTH spouses, then added the Couple edge
+  // between them carrying NO facts — the edge left factless and the event
+  // duplicated, which is exactly what this refuses.
+
+  it.each([
+    "Marriage", "Divorce", "MarriageBanns", "Annulment",
+    // spellings only the folded matcher knows; an exact six-name list misses them
+    "marriage_banns", "MarriageLicense", "Marriage Intention",
+  ])(
+    "add_fact refuses a %s on a person and names the Couple route",
+    async (type) => {
+      await writeProject(twoPersons());
+      const r = await treeEdit({
+        projectPath: dir, operation: "add_fact", personId: "I1",
+        fact: { type, date: "1850", sources: [{ ref: "S1" }] },
+      } as any);
+      expect(r.ok).toBe(false);
+      if (!r.ok) {
+        expect(JSON.stringify(r)).toMatch(/belongs on the Couple relationship/);
+        expect(JSON.stringify(r)).toMatch(/add_relationship/);
+      }
+    },
+  );
+
+  it("must not fire: the same Marriage on the Couple edge is where it belongs", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] }];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir, operation: "add_fact", relationshipId: "R1",
+      fact: { type: "Marriage", date: "1850", sources: [{ ref: "S1" }] },
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("must not fire: update_fact retyping a Couple edge's fact into a Marriage", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [{
+      id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }],
+      facts: [{ id: "F9", type: "Residence", date: "1850", sources: [{ ref: "S1" }] }],
+    }];
+    await writeProject(t);
+    const r = await treeCorrect({
+      projectPath: dir, operation: "update_fact", relationshipId: "R1", factId: "F9",
+      fact: { type: "Marriage" },
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("add_person refuses a non-array `facts` by name, single and batched", async () => {
+    await writeProject(twoPersons());
+    const person = { names: [{ given: "Bridget", surname: "Doyle" }], facts: { type: "Birth" } };
+    const single = await treeEdit({ projectPath: dir, operation: "add_person", person } as any);
+    expect(single.ok).toBe(false);
+    if (!single.ok) expect(JSON.stringify(single)).toMatch(/`person.facts` must be an array/);
+    const batch = await treeEdit({ projectPath: dir, ops: [{ operation: "add_person", person }] } as any);
+    expect(batch.ok).toBe(false);
+    if (!batch.ok) expect(JSON.stringify(batch)).toMatch(/ops\[0\]: add_person `person.facts` must be an array/);
+    expect((await readTree()).persons).toHaveLength(2);
+  });
+
+  it("add_person refuses an inline couple event", async () => {
+    await writeProject(twoPersons());
+    const r = await treeEdit({
+      projectPath: dir, operation: "add_person",
+      person: {
+        names: [{ given: "Bridget", surname: "Doyle" }],
+        facts: [{ type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }],
+      },
+    } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/belongs on the Couple relationship/);
+  });
+
+  it("update_fact refuses RETYPING a person's fact into a couple event", async () => {
+    await writeProject(twoPersons());
+    const r = await treeCorrect({
+      projectPath: dir, operation: "update_fact", personId: "I1", factId: "F1",
+      fact: { type: "Marriage" },
+    } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/belongs on the Couple relationship/);
+  });
+
+  // 14 person-level couple-event facts sit in 9 committed e2e starting trees.
+  // Legacy documents are read, never repaired, and refusing their correction
+  // would strand data the agent is meant to be able to fix, so an edit to one
+  // already there is admitted.
+  it("update_fact ADMITS editing a person-level couple event that is already there", async () => {
+    const t = twoPersons();
+    (t as any).persons[0].facts = [{ id: "F1", type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }];
+    await writeProject(t);
+    // `type` is RE-STATED, not omitted. Omitting it leaves the guard unengaged
+    // (it keys on `input.fact.type !== undefined`), so a test without it passes
+    // whether or not the already-there exemption exists — it would prove nothing.
+    const r = await treeCorrect({
+      projectPath: dir, operation: "update_fact", personId: "I1", factId: "F1",
+      fact: { type: "Marriage", date: "1851" },
+    } as any);
+    expect(r.ok).toBe(true);
+    const f = ((await readTree()) as any).persons[0].facts[0];
+    expect(f.date).toBe("1851");
+    expect(f.type).toBe("Marriage");
+  });
+
+  it("add_relationship refuses a Couple whose two persons are the same", async () => {
+    await writeProject(twoPersons());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "Couple", person1: "I1", person2: "I1", sources: [{ ref: "S1" }] },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/a Couple cannot join 'I1' to themselves/);
+  });
+
+  it("an untyped add_relationship on a pair with a Biological edge corroborates into that edge, which stays Biological", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", subtype: "Biological", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S2" }] },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(single(r).assignedIds?.relationship).toBe("R1");
+    const tree = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].subtype).toBe("Biological");
+    // The point of corroborating rather than refusing: the new record's ref lands.
+    expect(tree.relationships[0].sources.map((s: any) => s.ref).sort()).toEqual(["S1", "S2"]);
+  });
+
+  it("a Biological add_relationship on an untyped edge corroborates into it, leaves it untyped and says so", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2", subtype: "Biological", sources: [{ ref: "S2" }] },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(single(r).assignedIds?.relationship).toBe("R1");
+    const tree = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    // Retyping is update_relationship's job: silently adopting the subtype would
+    // turn an untyped import into a biological claim with nothing behind it.
+    expect(tree.relationships[0].subtype).toBeUndefined();
+    if (r.ok) expect(r.validation.warnings.join(" ")).toMatch(/update_relationship to retype it to 'Biological'/);
+  });
+
+  it("a Step edge added beside a Biological edge creates a second edge", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", subtype: "Biological", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2", subtype: "Step", sources: [{ ref: "S2" }] },
+    });
+    expect(r.ok).toBe(true);
+    const tree = await readTree();
+    expect(tree.relationships).toHaveLength(2);
+    expect(tree.relationships.map((x: any) => x.subtype).sort()).toEqual(["Biological", "Step"]);
+  });
+
+  it("a second Couple on a pair that already has one, given in either order, corroborates into it and returns its id", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      // Endpoints reversed: a Couple is unordered.
+      relationship: { type: "Couple", person1: "I2", person2: "I1", sources: [{ ref: "S2" }] },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(single(r).assignedIds?.relationship).toBe("R1");
+    const tree = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].sources.map((s: any) => s.ref).sort()).toEqual(["S1", "S2"]);
+  });
+
+  it("must not fire: a Couple on a different pair creates a new edge", async () => {
+    const t = twoPersons();
+    (t as any).persons.push({ id: "I3", gender: "Male", names: [{ id: "N3", given: "John", surname: "Doe", preferred: true }], facts: [] });
+    (t as any).relationships = [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "Couple", person1: "I1", person2: "I3", sources: [{ ref: "S2" }] },
+    });
+    expect(r.ok).toBe(true);
+    expect((await readTree()).relationships).toHaveLength(2);
+  });
+
+  it("a retried add_relationship carrying the same Marriage fact leaves one edge and one Marriage fact", async () => {
+    await writeProject(twoPersons());
+    const call = () =>
+      treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          sources: [{ ref: "S1" }],
+          facts: [{ type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }],
+        },
+      });
+    const first = await call();
+    expect(first.ok).toBe(true);
+    const second = await call();
+    expect(second.ok).toBe(true);
+    const tree = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    // The identical fact is not added twice — its sources merge into the one there.
+    expect(tree.relationships[0].facts).toHaveLength(1);
+    expect(tree.relationships[0].facts[0].type).toBe("Marriage");
+  });
+
+  it("a corroborating Marriage with a different date is a second fact, not folded into the first", async () => {
+    // Two records giving different marriage dates are two facts, so the
+    // researcher can see the disagreement rather than have one silently win.
+    // This case does NOT on its own justify strict equality over the merge
+    // tool's `factsEquivalent` — measured: that helper's range-containment
+    // check already separates 1850 from 1852. The case below is the one that
+    // discriminates.
+    await writeProject(twoPersons());
+    const add = (date: string, ref: string) =>
+      treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          sources: [{ ref }],
+          facts: [{ type: "Marriage", date, sources: [{ ref }] }],
+        },
+      });
+    expect((await add("1850", "S1")).ok).toBe(true);
+    expect((await add("1852", "S2")).ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].facts.map((f: any) => f.date).sort()).toEqual(["1850", "1852"]);
+  });
+
+  it("a corroborating Marriage with no date does not swallow the dated one already there", async () => {
+    // THE discriminating case for strict equality (Decision 31). The merge
+    // tool's `factsEquivalent` treats an absent date as matching any date, so
+    // the undated second record folds into the dated fact and the tree reads as
+    // if only one record existed. Verified by substituting `factsEquivalent`
+    // for `sameFactValue`: this test goes red and the differing-dates one above
+    // does not.
+    await writeProject(twoPersons());
+    expect(
+      (await treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }],
+          facts: [{ type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }],
+        },
+      })).ok,
+    ).toBe(true);
+    expect(
+      (await treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S2" }],
+          facts: [{ type: "Marriage", sources: [{ ref: "S2" }] }],
+        },
+      })).ok,
+    ).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships[0].facts).toHaveLength(2);
+    expect(tree.relationships[0].facts.some((f: any) => f.date === "1850")).toBe(true);
+  });
+
+  it("a retried add_relationship whose Marriage fact has a resolvable place still leaves one fact", async () => {
+    // The twin lookup runs BEFORE maybeResolvePlace, so the stored fact carries
+    // a resolved standard_place and the retried one carries none. Comparing
+    // standard_place made this write a SECOND Marriage fact — the opposite of
+    // the idempotence Decision 37 buys. The place-less retry case above cannot
+    // reach this: it needs a place the resolver actually standardizes.
+    await writeProject(twoPersons());
+    const call = () =>
+      treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          sources: [{ ref: "S1" }],
+          facts: [{ type: "Marriage", date: "1850", place: "Schuylkill County, Pennsylvania", sources: [{ ref: "S1" }] }],
+        },
+      });
+    expect((await call()).ok).toBe(true);
+    expect((await call()).ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].facts).toHaveLength(1);
+    // And the resolution the first call did is still there.
+    expect(tree.relationships[0].facts[0].standard_place).toBe("Schuylkill, Pennsylvania, United States");
+  });
+
+  it("update_relationship retypes an edge", async () => {
+    // The op `add_relationship`'s corroboration warning names. Without it that
+    // warning tells the agent to call something tree_correct refuses.
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeCorrect({
+      projectPath: dir,
+      operation: "update_relationship",
+      relationshipId: "R1",
+      subtype: "Step",
+    } as any);
+    expect(r.ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0]).toMatchObject({ id: "R1", subtype: "Step" });
+  });
+
+  it("update_relationship refuses a retype that would duplicate an edge already on the pair", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", subtype: "Biological", sources: [{ ref: "S1" }] },
+      { id: "R2", type: "ParentChild", parent: "I1", child: "I2", subtype: "Step", sources: [{ ref: "S2" }] },
+    ];
+    await writeProject(t);
+    const r = await treeCorrect({
+      projectPath: dir,
+      operation: "update_relationship",
+      relationshipId: "R2",
+      subtype: "Biological",
+    } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/would duplicate 'R1'/);
+  });
+
+  it("update_relationship refuses a non-string subtype rather than throwing", async () => {
+    // The batch loop re-throws anything that is not a TreeEditError, so a bare
+    // `.trim()` on a malformed op escaped as an unhandled TypeError instead of
+    // a refusal naming the op. Every other check in the switch is a truthiness
+    // test or `===`, which are safe on any value; this is the one method call.
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    for (const subtype of [5, true, { a: 1 }, ["Step"]]) {
+      const r = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype } as any);
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(JSON.stringify(r)).toMatch(/`subtype` must be a string/);
+    }
+    expect(((await readTree()) as any).relationships[0].subtype).toBeUndefined();
+  });
+
+  it("update_relationship refuses an empty subtype", async () => {
+    // `relationshipMatches` reads any DEFINED subtype as explicit, so "" would
+    // match an absent subtype but never match 'Biological' — an edge that pairs
+    // with nothing. Measured: matches({}, {subtype:""}) is true and
+    // matches({subtype:""}, {Biological}) is false.
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", subtype: "Biological", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    for (const subtype of ["", "   "]) {
+      const r = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype } as any);
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(JSON.stringify(r)).toMatch(/`subtype` must not be empty/);
+    }
+    // and the edge is untouched
+    expect((await readTree() as any).relationships[0].subtype).toBe("Biological");
+  });
+
+  it("must not fire: add_relationship does not swap primary on a newly created edge", async () => {
+    // The plan scopes the primary swap to the MATCHED edge, and main never
+    // swapped on a new one. Keeping both here is main's behaviour, and
+    // `primary` is about to become load-bearing (Decision 34).
+    await writeProject(twoPersons());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        sources: [{ ref: "S1" }],
+        facts: [
+          { type: "Marriage", date: "1850", primary: true, sources: [{ ref: "S1" }] },
+          { type: "Marriage", date: "1852", primary: true, sources: [{ ref: "S2" }] },
+        ],
+      },
+    });
+    expect(r.ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships[0].facts.filter((f: any) => f.primary === true)).toHaveLength(2);
+  });
+
+  // ── remove {factId} scopes to one holder ──────────────────────────────────
+  //
+  // FamilySearch reuses fact ids across the persons an import touches: 65 of
+  // the 136 committed e2e starting trees carry one id on two or more holders,
+  // one of them on 15. Removing unscoped deleted every copy.
+
+  const sharedFactTree = () => {
+    const t = twoPersons();
+    (t as any).persons[0].facts = [{ id: "F1", type: "Birth", date: "1820", sources: [{ ref: "S1" }] }];
+    (t as any).persons[1].facts = [{ id: "F1", type: "Birth", date: "1822", sources: [{ ref: "S1" }] }];
+    return t;
+  };
+
+  it("remove of a fact id two persons share is refused unscoped, and removes only the scoped person's fact", async () => {
+    await writeProject(sharedFactTree());
+    const unscoped = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1" } as any);
+    expect(unscoped.ok).toBe(false);
+    if (!unscoped.ok) expect(JSON.stringify(unscoped)).toMatch(/carried by 2 holders/);
+    // Nothing was written by the refusal.
+    expect(((await readTree()) as any).persons.every((p: any) => p.facts.length === 1)).toBe(true);
+
+    const scoped = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", personId: "I1" } as any);
+    expect(scoped.ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "I1").facts).toHaveLength(0);
+    // I2 keeps its own Birth — the whole point.
+    expect(tree.persons.find((p: any) => p.id === "I2").facts).toHaveLength(1);
+    expect(tree.persons.find((p: any) => p.id === "I2").facts[0].date).toBe("1822");
+  });
+
+  it("must not fire: remove of an unshared fact id needs no scope", async () => {
+    const t = twoPersons();
+    (t as any).persons[0].facts = [{ id: "F1", type: "Birth", date: "1820", sources: [{ ref: "S1" }] }];
+    await writeProject(t);
+    const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1" } as any);
+    expect(r.ok).toBe(true);
+    expect(((await readTree()) as any).persons[0].facts).toHaveLength(0);
+  });
+
+  it("remove with a factId and a relationshipId removes that relationship's fact and keeps the edge", async () => {
+    const t = twoPersons();
+    (t as any).persons[0].facts = [{ id: "F1", type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }];
+    (t as any).relationships = [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }],
+        facts: [{ id: "F1", type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }] },
+    ];
+    await writeProject(t);
+    const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", relationshipId: "R1" } as any);
+    expect(r.ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].facts ?? []).toHaveLength(0);
+    // The person's same-id fact is untouched.
+    expect(tree.persons.find((p: any) => p.id === "I1").facts).toHaveLength(1);
+  });
+
+  it("a remove carrying both personId and relationshipId is refused", async () => {
+    await writeProject(sharedFactTree());
+    const r = await treeCorrect({
+      projectPath: dir, operation: "remove", factId: "F1", personId: "I1", relationshipId: "R1",
+    } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/not both/);
+  });
+
+  it("remove scoped to an id that is not in the tree is refused", async () => {
+    // I3 is absent from sharedFactTree(), so this is the not-found arm — NOT
+    // the "says who does" one, which needs a person who exists and simply does
+    // not carry the fact. That case is the test below; without it, disabling
+    // the "it is on ..." throw left all 103 tests green.
+    await writeProject(sharedFactTree());
+    const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", personId: "I3" } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/person 'I3' not found in tree/);
+  });
+
+  it("remove scoped to a person who does not carry the fact names who does", async () => {
+    const t = sharedFactTree();
+    (t as any).persons.push({ id: "I3", names: [{ id: "N3", full: "Third Person" }], facts: [] });
+    await writeProject(t);
+    const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", personId: "I3" } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(JSON.stringify(r)).toMatch(/is not carried by person 'I3'/);
+      expect(JSON.stringify(r)).toMatch(/person 'I1'/);
+      expect(JSON.stringify(r)).toMatch(/person 'I2'/);
+    }
+    // The refusal wrote nothing: both real holders keep their fact.
+    expect(((await readTree()) as any).persons.filter((p: any) => (p.facts ?? []).length === 1)).toHaveLength(2);
+  });
+
+  it("remove carrying both scopes and no factId complains about the scopes, not about persons", async () => {
+    await writeProject(sharedFactTree());
+    const r = await treeCorrect({
+      projectPath: dir, operation: "remove", personId: "I1", relationshipId: "R1",
+    } as any);
+    expect(r.ok).toBe(false);
+    // Not "remove does not delete persons" — that would send the caller to
+    // merge_tree_persons when the mistake was passing two scopes.
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/not both/);
+  });
+
+  it("add_relationship corroborating an existing edge swaps primary onto the new fact", async () => {
+    // The positive twin of the must-not-fire case above: on the matched edge the
+    // swap add_fact performs does run, so one Marriage stays primary.
+    const t = twoPersons();
+    (t as any).relationships = [
+      {
+        id: "R1",
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        sources: [{ ref: "S1" }],
+        facts: [{ id: "F1", type: "Marriage", date: "1850", primary: true, sources: [{ ref: "S1" }] }],
+      },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        sources: [{ ref: "S2" }],
+        facts: [{ type: "Marriage", date: "1852", primary: true, sources: [{ ref: "S2" }] }],
+      },
+    });
+    expect(r.ok).toBe(true);
+    const facts: any[] = (await readTree() as any).relationships[0].facts;
+    expect(facts).toHaveLength(2);
+    expect(facts.find((f) => f.id === "F1").primary).toBeUndefined();
+    expect(facts.find((f) => f.id !== "F1").primary).toBe(true);
+  });
+
+  it("add_relationship corroborating an existing edge keeps the caller's notes", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", notes: ["from the tree"], sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I1",
+        child: "I2",
+        notes: ["1860 census lists her as step-daughter", "from the tree"],
+        sources: [{ ref: "S2" }],
+      },
+    });
+    expect(r.ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].notes).toEqual(["from the tree", "1860 census lists her as step-daughter"]);
+  });
+
+  it("update_relationship retypes an edge from a batch", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeCorrect({
+      projectPath: dir,
+      ops: [{ operation: "update_relationship", relationshipId: "R1", subtype: "Adopted" }],
+    } as any);
+    expect(r.ok).toBe(true);
+    expect((await readTree() as any).relationships[0].subtype).toBe("Adopted");
+  });
+
+  it("update_relationship refuses a Couple, which carries no subtype", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Step" } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/only a ParentChild edge carries a subtype/);
+    expect((await readTree() as any).relationships[0].subtype).toBeUndefined();
+  });
+
   it("add_relationship: rejects a caller-supplied fact id", async () => {
     const tree = onePersonSourced();
     tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
@@ -474,7 +1363,7 @@ describe("tree_edit", () => {
     expect(await exists("tree.gedcomx.json.bak")).toBe(false);
   });
 
-  it("add_source: assigns the next S id, rejects a caller-supplied id, writes only the tree + .bak", async () => {
+  it("add_source: assigns the next S id, rejects a caller-supplied id, writes only the tree and no .bak", async () => {
     await writeProject(onePerson());
     const researchBefore = await readFile(join(dir, "research.json"), "utf-8");
 
@@ -492,7 +1381,7 @@ describe("tree_edit", () => {
     expect(tree.sources).toHaveLength(1);
     expect(tree.sources[0]).toMatchObject({ id: "S1", title: "1850 U.S. Federal Census" });
 
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
     // research.json is never touched by a source add
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(researchBefore);
 
@@ -987,7 +1876,7 @@ describe("tree_edit (batch ops)", () => {
     sources: [],
   });
 
-  it("(a/c) applies a heterogeneous batch (source + person + fact) in one write, sequencing ids, one .bak", async () => {
+  it("(a/c) applies a heterogeneous batch (source + person + fact) in one write, sequencing ids, no .bak", async () => {
     await writeProject(onePerson());
     const r = await treeEdit({
       projectPath: dir,
@@ -1004,7 +1893,7 @@ describe("tree_edit (batch ops)", () => {
     expect(r.results[1].assignedIds?.person).toBe("I2");
     expect(r.results[2].assignedIds?.fact).toBe("F2");
     expect(r.filesWritten).toEqual(["tree.gedcomx.json"]);
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
     const tree = await readTree();
     expect(tree.sources.map((s: any) => s.id)).toEqual(["S1"]);
     expect(tree.persons.map((p: any) => p.id)).toEqual(["I1", "I2"]);
@@ -1166,7 +2055,7 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
       information_quality: "primary" as const,
       informant: "unknown",
       informant_proximity: "official_duty" as const,
-      evidence_type: "direct" as const,
+      record_basis: "stated" as const,
       extracted_for_question_ids: [] as string[],
       ...over,
     };
@@ -1206,7 +2095,7 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
   });
 
   it("indirect evidence resolves a lower ref quality (2), not 3", async () => {
-    await writeProject(twoPersons(), research([relationshipAssertion({ evidence_type: "indirect" })]));
+    await writeProject(twoPersons(), research([relationshipAssertion({ record_basis: "inferred" })]));
 
     const r = await treeEdit({
       projectPath: dir,
@@ -1221,7 +2110,7 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
     expect(rel.sources).toEqual([{ ref: "S1", quality: 2 }]);
   });
 
-  it("rejects a sourceAssertionId that is not a 'relationship' assertion", async () => {
+  it("rejects a sourceAssertionId that establishes no relationship (a 'birth' assertion)", async () => {
     await writeProject(
       twoPersons(),
       research([relationshipAssertion({ id: "a_002", fact_type: "birth" })]),
@@ -1236,7 +2125,83 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/is a 'birth' assertion, not a 'relationship' assertion/);
+    expect(r.errors.join(" ")).toMatch(
+      /is a 'birth' assertion, which establishes no link between two parties/,
+    );
+    // The refusal names the accepted set, so the model can correct itself.
+    expect(r.errors.join(" ")).toContain("parentage");
+  });
+
+  // A marriage register IS the assertion that establishes a Couple, and it is
+  // the type the commonest Couple edge carries. While this arm accepted only
+  // `relationship`, both this tool's description and materialize_facts's told
+  // the caller to source that edge "with the same assertion via
+  // sourceAssertionId" — an instruction the engine then refused.
+  it("accepts a PascalCase fact_type and a parentage assertion — the SHARED predicate, from tree_edit's own call site", async () => {
+    // The shared set is read through `isRelationshipEstablishing`, which folds
+    // case, because `fact_type` is an open enum and models emit PascalCase for
+    // it. Without a test on THIS side, replacing the predicate with a raw
+    // `.has()` at this call site leaves the whole suite green, so the "both
+    // tools agree" claim rests on nothing. This is that test.
+    for (const factType of ["Marriage", "parentage", "ParentChild", "Relationship"]) {
+      await writeProject(
+        twoPersons(),
+        research([
+          relationshipAssertion({
+            id: "a_007",
+            fact_type: factType,
+            record_role: "groom",
+            structured_value: null,
+          }),
+        ]),
+      );
+      const r = await treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: { type: "Couple", person1: "I1", person2: "I2" } as any,
+        sourceAssertionId: "a_007",
+      });
+      expect(r.ok, factType).toBe(true);
+      if (!r.ok) continue;
+      expect((await readTree()).relationships[0].sources, factType).toEqual([
+        { ref: "S1", quality: 3 },
+      ]);
+    }
+  });
+
+  it("accepts a 'marriage' assertion — the Couple edge's own provenance", async () => {
+    await writeProject(
+      twoPersons(),
+      research([
+        relationshipAssertion({
+          id: "a_005",
+          fact_type: "marriage",
+          record_role: "groom",
+          value: "Thomas Flynn married Mary Doyle, 12 May 1843",
+          structured_value: null,
+        }),
+      ]),
+    );
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        facts: [{ type: "Marriage", date: "12 May 1843" }],
+      } as any,
+      sourceAssertionId: "a_005",
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const rel = (await readTree()).relationships[0];
+    expect(rel.type).toBe("Couple");
+    expect(rel.sources).toEqual([{ ref: "S1", quality: 3 }]);
+    // A Couple fact with no sources of its own inherits the resolved ref.
+    expect(rel.facts[0].sources).toEqual([{ ref: "S1", quality: 3 }]);
   });
 
   it("rejects an unknown sourceAssertionId", async () => {
@@ -1330,5 +2295,561 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
     expect(r.results[0].assignedIds?.relationship).toBe("R1");
     const rel = (await readTree()).relationships[0];
     expect(rel.sources).toEqual([{ ref: "S1", quality: 3 }]);
+  });
+});
+
+describe("tree_edit — warning gate integration (issue #2840)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "tree-edit-wg-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeProject(tree: any, research: any = minimalResearch) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+
+  // Person born 1800 with a death 1950 — a >120-year lifespan triggers
+  // hasAgeRangeGreaterThan120, which is NOT in GATE_EXEMPT_TYPES.
+  const longLifeTree = () => ({
+    persons: [
+      {
+        id: "I1",
+        gender: "Male",
+        names: [{ id: "N1", given: "John", surname: "Smith", preferred: true }],
+        facts: [{ id: "F1", type: "Birth", date: "1800", primary: true }],
+      },
+    ],
+    relationships: [],
+    sources: [{ id: "S1", title: "Parish Register" }],
+  });
+
+  // A child with one father, and a second father to add. Both men and the child
+  // are individually plausible; the impossibility is purely relational, which is
+  // why only a gate that SEES the parentage edge can catch it.
+  const twoFathersTree = () => ({
+    persons: [
+      {
+        id: "I1",
+        gender: "Male",
+        names: [{ id: "N1", given: "John", surname: "Smith", preferred: true }],
+        facts: [{ id: "F1", type: "Birth", date: "1900", primary: true }],
+      },
+      {
+        id: "I2",
+        gender: "Male",
+        names: [{ id: "N2", given: "Peter", surname: "Brown", preferred: true }],
+        facts: [{ id: "F2", type: "Birth", date: "1902", primary: true }],
+      },
+      {
+        id: "I3",
+        gender: "Female",
+        names: [{ id: "N3", given: "Mary", surname: "Smith", preferred: true }],
+        facts: [{ id: "F3", type: "Birth", date: "1930", primary: true }],
+      },
+    ],
+    relationships: [{ id: "R1", type: "ParentChild", parent: "I1", child: "I3" }],
+    sources: [{ id: "S1", title: "Parish Register" }],
+  });
+
+  it("refuses a second biological father on a child (the parentage edge the gate used to miss)", async () => {
+    // Returned ok: true on main. `computeTouchedPersonIds` read relationship
+    // endpoints from `person1`/`person2` only -- the Couple pair -- so adding a
+    // ParentChild edge, which carries `parent`/`child`, marked NOBODY as
+    // touched and the gate computed warnings for no one. Over the committed e2e
+    // final trees every ParentChild edge uses parent/child and none uses
+    // person1/person2 (re-derive with dev/measure-parentage-gate-rate.ts).
+    await writeProject(twoFathersTree());
+    const treeBefore = await readTree();
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I2",
+        child: "I3",
+        sources: [{ ref: "S1" }],
+      },
+    } as any);
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    expect(JSON.stringify((r as any).warnings)).toMatch(/tooManyFathers2/);
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("lands an adoptive second father by its subtype, never by a justified re-call", async () => {
+    // The accept direction: the gate narrows, it does not forbid. An adoptive
+    // second father goes in with its subtype, which no biological count reads.
+    // A second biological father is routed to conflict-resolution instead, so a
+    // justified re-call is refused (#2525).
+    await writeProject(twoFathersTree());
+    const refused = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I2", child: "I3", sources: [{ ref: "S1" }] },
+    } as any);
+    expect(refused.ok).toBe(false);
+
+    const ok = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I2", child: "I3", sources: [{ ref: "S1" }] },
+      warningJustifications: (refused as any).warnings.map((w: any) => ({
+        warningId: w.warningId,
+        justification: "Adoptive father, recorded on the 1940 decree.",
+      })),
+    } as any);
+    expect(ok.ok).toBe(false);
+    expect((ok as any).conflicts_surfaced?.map((c: any) => c.personId)).toEqual(["I3"]);
+
+    const adoptive = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I2", child: "I3", subtype: "Adoptive", sources: [{ ref: "S1" }] },
+    } as any);
+    expect(adoptive.ok).toBe(true);
+    const rels = (await readTree()).relationships.filter((r: any) => r.type === "ParentChild");
+    expect(rels).toHaveLength(2);
+  });
+
+  // A parent born 30 years AFTER their child. `earliestChildBirthToBirth12` is
+  // the only check that fires on this, and it was on the exempt list, so every
+  // gated writer accepted it. Exempting it was reading the tag as a
+  // child-bearing-age prior like its cutoff-14 gendered siblings; at cutoff 12
+  // it is also the sole guard against an outright impossibility.
+  const invertedGenerationsTree = () => ({
+    persons: [
+      {
+        id: "I1",
+        gender: "Female",
+        names: [{ id: "N1", given: "Mary", surname: "Smith", preferred: true }],
+        facts: [{ id: "F1", type: "Birth", date: "1900", primary: true }],
+      },
+      {
+        id: "I2",
+        gender: "Male",
+        names: [{ id: "N2", given: "John", surname: "Smith", preferred: true }],
+        facts: [{ id: "F2", type: "Birth", date: "1930", primary: true }],
+      },
+    ],
+    relationships: [],
+    sources: [{ id: "S1", title: "Parish Register" }],
+  });
+
+  it("refuses a parent born after their own child", async () => {
+    await writeProject(invertedGenerationsTree());
+    const treeBefore = await readTree();
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I2",
+        child: "I1",
+        sources: [{ ref: "S1" }],
+      },
+    } as any);
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    expect(JSON.stringify((r as any).warnings)).toMatch(
+      /earliestChildBirthToBirth12/,
+    );
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("accepts an ordinary parentage edge — un-exempting the tag did not refuse every parent", async () => {
+    // The other direction. Same two people, same operation, generations the
+    // right way round: a guard that refuses this is worse than no guard.
+    const tree = invertedGenerationsTree();
+    tree.persons[1].facts[0].date = "1870";
+    await writeProject(tree);
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I2",
+        child: "I1",
+        sources: [{ ref: "S1" }],
+      },
+    } as any);
+
+    expect(r.ok).toBe(true);
+    const rels = (await readTree()).relationships.filter(
+      (x: any) => x.type === "ParentChild",
+    );
+    expect(rels).toHaveLength(1);
+  });
+
+  it("refuses a write that introduces a >120-year-lifespan warning, tree unchanged", async () => {
+    await writeProject(longLifeTree());
+    const treeBefore = await readTree();
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+    });
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    expect((r as any).warnings.length).toBeGreaterThan(0);
+    const treeAfter = await readTree();
+    expect(treeAfter).toEqual(treeBefore);
+  });
+
+  it("re-call with the returned warningId lands, persists justifications, and validates", async () => {
+    await writeProject(longLifeTree());
+
+    // First call: refused
+    const refused = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+    });
+    expect(refused.ok).toBe(false);
+    const warnId = (refused as any).warnings[0].warningId;
+    expect(warnId).toBeTruthy();
+
+    // Re-call with justification
+    const justified = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+      warningJustifications: [
+        { warningId: warnId, justification: "Death date confirmed in probate record" },
+      ],
+    });
+
+    expect(justified.ok).toBe(true);
+    if (!justified.ok) return;
+    expect(justified.filesWritten).toContain("research.json");
+
+    // Persisted justification
+    const research = await readResearch();
+    expect(research.warning_justifications).toHaveLength(1);
+    expect(research.warning_justifications[0].warning_id).toBe(warnId);
+    expect(research.warning_justifications[0].justification).toBe(
+      "Death date confirmed in probate record",
+    );
+    expect(research.warning_justifications[0].recorded_at).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    // Project validates
+    const validation = await validateProject(dir);
+    expect(validation.valid).toBe(true);
+  });
+
+  it("re-call with blank justification is refused", async () => {
+    await writeProject(longLifeTree());
+
+    const refused = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+    });
+    expect(refused.ok).toBe(false);
+    const warnId = (refused as any).warnings[0].warningId;
+
+    const blank = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+      warningJustifications: [{ warningId: warnId, justification: "" }],
+    });
+
+    expect(blank.ok).toBe(false);
+    expect((blank as any).reason).toBe("unjustified_warnings");
+  });
+
+  // Issue #2525: competing biological parentage is gated on its own finding,
+  // read from the trees. These go through the real tree_edit, not the
+  // detector alone.
+  const parentage = () => ({
+    persons: ["Patrick:Male:1845", "Thomas:Male:1815", "John:Male:1818", "Mary:Female:1820"].map((s, i) => {
+      const [given, gender, birth] = s.split(":");
+      return {
+        id: `I${i + 1}`,
+        gender,
+        names: [{ id: `N${i + 1}`, given, surname: "Flynn", preferred: true }],
+        facts: [{ id: `F${i + 1}`, type: "Birth", date: birth, primary: true }],
+      };
+    }),
+    relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1", sources: [{ ref: "S1" }] }],
+    sources: [{ id: "S1", title: "1850 census" }],
+  });
+  const addParent = (parent: string, extra: object = {}) =>
+    treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent, child: "I1", sources: [{ ref: "S1" }] },
+      ...extra,
+    } as any);
+
+  it("refuses a ParentChild edge that gives the child a second father, tree unchanged", async () => {
+    await writeProject(parentage());
+    const treeBefore = await readTree();
+
+    const r = await addParent("I3");
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    // The competing-parentage finding replaces the count warning for this
+    // child, so the caller is asked once, under the finding's id. The issue
+    // type stays tooManyFathers2; only the warningId is the finding's.
+    expect((r as any).warnings.map((w: any) => [w.issueType, w.personId])).toEqual([["tooManyFathers2", "I1"]]);
+    expect((r as any).warnings[0].warningId).toMatch(/^competingParentage|I1|Male|/);
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("lets a ParentChild edge to a parent of the other sex through", async () => {
+    await writeProject(parentage());
+
+    const r = await addParent("I4");
+
+    expect(r.ok).toBe(true);
+    expect((await readTree()).relationships).toHaveLength(2);
+    expect((r as any).conflicts_surfaced).toBeUndefined();
+  });
+
+  // Issue #2525: the refusal is the detector, and it names the route.
+  const parentageResearch = {
+    ...minimalResearch,
+    sources: [{ id: "src_001", gedcomx_source_description_id: "S1" }],
+    assertions: [
+      { id: "a_001", source_id: "src_001", fact_type: "relationship" },
+      { id: "a_002", source_id: "src_001", fact_type: "relationship" },
+    ],
+    person_evidence: [
+      { id: "pe_001", assertion_id: "a_001", person_id: "I2", confidence: "probable", rationale: "x", created: "2026-01-01" },
+    ],
+  };
+  const addParentFrom = (parent: string, sourceAssertionId: string, extra: object = {}) =>
+    treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent, child: "I1" },
+      sourceAssertionId,
+      ...extra,
+    } as any);
+
+  it("refuses a second father with conflicts_surfaced naming both claims and the route", async () => {
+    await writeProject(parentage(), parentageResearch);
+
+    const r = await addParentFrom("I3", "a_002");
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.conflicts_surfaced).toEqual([
+      {
+        personId: "I1",
+        factType: "ParentChild",
+        values: ["I2 Thomas Flynn (a_001)", "I3 John Flynn (a_002)"],
+      },
+    ]);
+    expect(r.message).toMatch(/^This write gives a child a second biological parent of one sex\./);
+    expect(r.message).toContain("warningJustifications cannot pass it");
+    expect(r.message).toContain("add that edge with its subtype");
+    expect(r.message).toContain("send each conflicts_surfaced entry to conflict-resolution");
+    expect(r.message).not.toContain("Justify every other warningId");
+    expect(r.errors).toEqual([r.message]);
+  });
+
+  it("refuses a competing parent even when its warning is justified, and writes nothing", async () => {
+    await writeProject(parentage(), parentageResearch);
+    const treeBefore = await readTree();
+    const refused = await addParentFrom("I3", "a_002");
+    const warningId = (refused as any).warnings[0].warningId;
+
+    const r = await addParentFrom("I3", "a_002", {
+      warningJustifications: [{ warningId, justification: "conflict c_001 recorded" }],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toBe("unjustified_warnings");
+    expect(r.conflicts_surfaced?.map((c) => c.personId)).toEqual(["I1"]);
+    expect(r.message).toContain("warningJustifications cannot pass it");
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("still refuses the chosen father once the conflict is resolved, naming the way through", async () => {
+    const resolved = {
+      ...parentageResearch,
+      conflicts: [
+        {
+          id: "c_001",
+          conflict_type: "identity",
+          description: "Two candidate fathers for I1",
+          disputed_attribute: "father",
+          identity_question: "Is I1's father I2 or I3?",
+          competing_assertion_ids: ["a_001", "a_002"],
+          independence_analysis: "x",
+          weighing_analysis: "x",
+          preferred_assertion_id: "a_002",
+          resolution_rationale: "x",
+          status: "resolved",
+          blocks_question_ids: [],
+        },
+      ],
+    };
+    await writeProject(parentage(), resolved);
+
+    const r = await addParentFrom("I3", "a_002");
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.message).toContain("remove the rejected parent's edge with tree_correct before adding the chosen one");
+    expect(r.message).not.toContain("until it is resolved");
+  });
+
+  it("lands the chosen father once the rejected father's edge is gone", async () => {
+    const t = parentage();
+    t.relationships = (t.relationships as any[]).filter(
+      (rel) => !(rel.type === "ParentChild" && rel.parent === "I2" && rel.child === "I1"),
+    ) as any;
+    await writeProject(t, parentageResearch);
+
+    const r = await addParentFrom("I3", "a_002");
+
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+  });
+
+  it("asks to justify the other warnings only when the refusal carries some", async () => {
+    const t = parentage();
+    t.persons[2].facts[0].date = "1840";
+    await writeProject(t, parentageResearch);
+
+    const r = await addParentFrom("I3", "a_002");
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const ids = (r.warnings ?? []).map((w) => w.warningId ?? "");
+    expect(ids.some((id) => id.startsWith("competingParentage|"))).toBe(true);
+    expect(ids.some((id) => !id.startsWith("competingParentage|"))).toBe(true);
+    expect(r.message).toMatch(/^This write gives a child a second biological parent of one sex\./);
+    expect(r.message).toContain("Justify every other warningId");
+  });
+
+  it("refuses a new biological father even when tooManyFathers2 already stood", async () => {
+    const t = parentage();
+    t.persons.push({
+      id: "I5",
+      gender: "Male",
+      names: [{ id: "N5", given: "James", surname: "Flynn", preferred: true }],
+      facts: [{ id: "F5", type: "Birth", date: "1816", primary: true }],
+    });
+    (t.relationships as any[]).push({ id: "R2", type: "ParentChild", parent: "I3", child: "I1", subtype: "Adoptive", sources: [{ ref: "S1" }] });
+    await writeProject(t, parentageResearch);
+
+    const treeBefore = await readTree();
+
+    const r = await addParentFrom("I5", "a_002");
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.conflicts_surfaced).toEqual([
+      {
+        personId: "I1",
+        factType: "ParentChild",
+        values: ["I2 Thomas Flynn (a_001)", "I5 James Flynn (a_002)"],
+      },
+    ]);
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("refuses a gender change that makes a parent a second father", async () => {
+    const t = parentage();
+    t.persons[3].gender = "Unknown";
+    (t.relationships as any[]).push({ id: "R2", type: "ParentChild", parent: "I4", child: "I1", sources: [{ ref: "S1" }] });
+    await writeProject(t, parentageResearch);
+    const treeBefore = await readTree();
+
+    const r = await treeCorrect({ projectPath: dir, operation: "update_person", personId: "I4", gender: "Male" } as any);
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.conflicts_surfaced?.map((c) => c.personId)).toEqual(["I1"]);
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("gates materialize_facts too: a gender it fills in can make a second father", async () => {
+    const before = parentage() as any;
+    before.persons[3].gender = "Unknown";
+    before.relationships.push({ id: "R2", type: "ParentChild", parent: "I4", child: "I1", sources: [{ ref: "S1" }] });
+    const after = structuredClone(before);
+    after.persons[3].gender = "Male";
+
+    const r = await checkWarningGate(before, after, parentageResearch, dir, undefined, "materialize_facts");
+
+    expect(r && "ok" in r && r.ok === false).toBe(true);
+    expect((r as any).conflicts_surfaced?.map((c: any) => c.personId)).toEqual(["I1"]);
+  });
+
+  it("a justification of any id, stale or real, leaves a competing parent refused with the route", async () => {
+    await writeProject(parentage(), parentageResearch);
+    const refused = await addParentFrom("I3", "a_002");
+    const ids = (refused as any).warnings.map((w: any) => w.warningId);
+
+    const r = await addParentFrom("I3", "a_002", {
+      warningJustifications: [
+        ...ids.map((warningId: string) => ({ warningId, justification: "recorded as c_001" })),
+        { warningId: "not-a-real-id", justification: "x" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).not.toContain("Stale warningId");
+    expect(r.errors[0]).toContain("send each conflicts_surfaced entry to conflict-resolution");
+    expect(r.conflicts_surfaced?.map((c) => c.personId)).toEqual(["I1"]);
+  });
+
+  it("never surfaces an adoptive second father as competing parentage", async () => {
+    // tooManyFathers2 counts only biological parents, so an adoptive father
+    // beside a biological one is the ordinary record of an adoption: it lands.
+    await writeProject(parentage(), parentageResearch);
+
+    const r: any = await addParent("I3", { relationship: { type: "ParentChild", parent: "I3", child: "I1", subtype: "Adoptive", sources: [{ ref: "S1" }] } });
+
+    expect(r.ok).toBe(true);
+    expect(r.conflicts_surfaced).toBeUndefined();
+  });
+
+  it("the stale-justification refusal carries errors too", async () => {
+    await writeProject(longLifeTree());
+    const fact = { type: "Death", date: "1950", sources: [{ ref: "S1" }] };
+    const refused = await treeEdit({ projectPath: dir, operation: "add_fact", personId: "I1", fact });
+    const real = (refused as any).warnings[0].warningId;
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact,
+      warningJustifications: [
+        { warningId: real, justification: "probate confirms it" },
+        { warningId: "not-a-real-id", justification: "x" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors).toHaveLength(1);
+    expect(r.errors[0]).toContain("Stale warningId");
   });
 });

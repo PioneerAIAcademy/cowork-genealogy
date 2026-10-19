@@ -1,8 +1,8 @@
 """Skill-specific validators for the search-external-sites skill.
 
-search-external-sites generates pre-filled search URLs for commercial
-genealogy sites (Ancestry, MyHeritage, FindMyPast, FindAGrave,
-Newspapers.com) and walks the user through the click-capture workflow.
+search-external-sites generates pre-filled search URLs for the fifteen
+external sites `build_external_search_url` supports (five subscription sites
+and ten free archives) and walks the user through the click-capture workflow.
 
 URL composition quality and capture-guidance narrative live in the
 rubric — graded by the LLM judge. Mechanical checks (a log entry was
@@ -16,12 +16,25 @@ signature contract. The `test` argument is the parsed test JSON dict
 
 from __future__ import annotations
 
+import json
+import re
+
 import pytest
+from harness.skill_runner import agent_return_text
 
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import (
     assert_capture_pending_item_not_terminal as _assert_capture_pending_item_not_terminal,
 )
+from validators_lib import assert_log_append_only as _assert_log_append_only
+from validators_lib import (
+    assert_only_writes_to_sections as _assert_only_writes_to_sections,
+)
+from validators_lib import as_mapping as _as_mapping
+from validators_lib import bare_tool_name as _bare_tool_name
+from validators_lib import filter_claim_findings as _filter_claim_findings
+from validators_lib import hashable_key as _hashable_key
+from validators_lib import tool_input_keys as _tool_input_keys
 
 
 # --- Structural rules from SKILL.md -----------------------------------
@@ -79,50 +92,379 @@ def test_url_generation_log_entry_shape(before_state, after_state, test):
     assert not errors, "URL-generation log-shape violations:\n  - " + "\n  - ".join(errors)
 
 
+def _place_matches_rejected(birth_place: str, rejected_place: str) -> bool:
+    """True when `birth_place` names the same place as `rejected_place`: the
+    same string, the rejected place with broader jurisdiction appended by a
+    resolver ("Pennsylvania" vs "Pennsylvania, United States"), or the rejected
+    place with a finer unit prepended ("Philadelphia, Pennsylvania" encodes the
+    rejected "Pennsylvania" at a finer grain), or both at once — the shape a
+    place resolver actually returns ("Philadelphia, Pennsylvania, United
+    States"). Compared casefolded as a contiguous run of exactly as many
+    comma-segments as `rejected_place` itself has, at any offset — so two
+    different places sharing only a leaf name ("Paris, Texas, United States"
+    vs the rejected "Paris, France", a common pair for towns named after Old
+    World cities) do not collide: the rejected value's own context has to
+    line up too."""
+    rejected = _place_key(rejected_place)
+    segments = _place_key(birth_place)
+    n = len(rejected)
+    if len(segments) < n:
+        return False
+    return any(segments[i : i + n] == rejected for i in range(len(segments) - n + 1))
+
+
+def _place_key(place: str) -> tuple[str, ...]:
+    """A place string's comma-segments, stripped and casefolded."""
+    return tuple(s.strip().casefold() for s in place.split(","))
+
+
+#: The attributes that reach a *birthplace* slot, per site, in the order the
+#: tool's own table falls back through them (spec §4). Only the sites with a
+#: fallback are listed; every other site is `("birthPlace",)`.
+#:
+#: `birthPlace` is judged on EVERY site, including the six whose table has no
+#: place field at all. That is deliberate and is pinned by
+#: `test_fires_on_any_site_regardless_of_its_own_url_parameter_name`: passing
+#: a rejected birthplace is the model asserting a fact the project already
+#: resolved against, and it is that judgement this check grades — not whether
+#: the target site happened to have a slot to drop it into. A review pass
+#: read the no-slot sites as false positives and was wrong on exactly this
+#: point.
+#:
+#: The narrowing applies only to the FALLBACK fields. `deathPlace` is a
+#: correct fact in this fixture (Patrick died in Pennsylvania, the rejected
+#: BIRTHplace), so it is judged only where the tool's own `?? deathPlace`
+#: makes it become the birthplace slot. A site's generic event-scope place
+#: (newspapers' `searchPlace`, chronicling_america's `usState`) is excluded
+#: for the same reason.
+#: `archives_gov` is NOT here, and its absence is load-bearing. Its place
+#: parameter (`geographicReference`) was removed from the tool after live
+#: measurement showed it empties the result set (spec §9, correction #4), so
+#: `deathPlace` now reaches no slot on that site at all — the tool reports it
+#: as an unused attribute. Leaving it in this table made the validator FAIL a
+#: legitimate, tool-generated archives_gov call carrying a death place, which
+#: is the over-rejection direction. This table is a hand-maintained mirror of
+#: `siteWideParams`; the TypeScript side guards its own copy with a recording
+#: Proxy (`RECOGNIZED_KEYS`) and nothing guards this one, so a future change to
+#: a site's place parameters must be mirrored here by hand.
+_PLACE_SLOT_CHAIN = {
+    "findmypast": ("birthPlace", "marriagePlace", "deathPlace", "residencePlace"),
+    "antenati": ("birthPlace", "deathPlace"),
+    "american_ancestors": ("birthPlace", "deathPlace"),
+}
+
+
+def _effective_place_field(site, attrs, accepted_keys=frozenset()):
+    """The one attribute whose value actually reaches the site's birthplace
+    slot, or None when nothing does — the same first-present rule the tool
+    applies.
+
+    `birthPlace` is always judged: naming a place there IS the birthplace
+    assertion, whatever the site does with it.
+
+    A FALLBACK field is judged only when its value is not a place the project
+    itself accepts. That exemption is what the module docstring above is about:
+    this fixture's accepted death and residence places are all "Schuylkill
+    County, Pennsylvania", which contains the rejected birthplace
+    "Pennsylvania", so without it a legitimate marriage, death or residence
+    search on a fallback site is flagged for naming its own correct place.
+    `tests/tools/build-external-search-url.test.ts` asserts that exact call is
+    correct ("lets a FindMyPast marriage search name its place through
+    keywordsplace"), so the two halves of this PR contradicted each other
+    (review round 5). Bare "Pennsylvania" through a fallback still fires: it
+    matches no accepted assertion.
+    """
+    chain = _PLACE_SLOT_CHAIN.get(site, ("birthPlace",))
+    for field in chain:
+        value = attrs.get(field)
+        if not (isinstance(value, str) and value.strip()):
+            continue
+        if field != "birthPlace" and _place_key(value) in accepted_keys:
+            return None
+        return field
+    return None
+
+
+def test_resolved_birthplace_conflict_rejected_value_not_encoded(
+    before_state, after_state, tool_calls, test
+):
+    """Mechanical form of SKILL.md's "check conflicts[] before encoding a
+    place or date" rule, scoped to resolved `birthplace` conflicts.
+
+    The rubric already grades this from prose, which makes it a single-run
+    judgment call the skill can miss (issue #1980's own corpus: `mid-research
+    -flynn`'s `conflicts[]` c_001 resolves birthplace as Ireland against a
+    rejected Pennsylvania, and a model has been observed encoding the
+    rejected value). Encoding a rejected fact is a genealogically wrong URL,
+    not a stylistic slip, so this makes the specific failure a hard,
+    deterministic fail rather than leaving it to the judge alone.
+
+    Reads the `build_external_search_url` call's own `attributes.birthPlace`
+    argument directly — option 2 of issue #1950's 2026-08-27 lead ruling
+    ("V1 checks the tool call's arguments instead of the URL string"),
+    available now that this tool exists. An earlier draft parsed the
+    generated URL string instead, which needed a per-site table of which
+    query parameter carries the birthplace value and was vulnerable to a
+    substring false positive: this fixture's `residencePlace` ("Schuylkill
+    County, Pennsylvania") legitimately contains the rejected value
+    ("Pennsylvania"), which a whole-URL substring search would have flagged
+    as if it were the birthplace parameter. Reading the structured argument
+    the model actually passed needs neither.
+
+    "Rejected" is decided by comparing each competing assertion's `place`
+    value against the *preferred assertion's own value*, not by id: this
+    fixture's `competing_assertion_ids` for c_001 lists three assertions, two
+    of which (a_002, a_009) independently say "Ireland" — only the third
+    (a_012, "Pennsylvania") actually disagrees. Treating every non-preferred
+    id as rejected flagged a_009's own "Ireland" as if it were a rejected
+    value, which a synthetic test against this exact fixture caught before
+    this landed.
+
+    Deliberately narrow to `disputed_attribute == "birthplace"` — the
+    general case (any disputed attribute) is issue #1950/V1's fuller scope.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests generate URLs")
+    research = before_state.get("research_json")
+    if research is None:
+        pytest.skip("no research.json in scenario")
+
+    resolved_birthplace_conflicts = [
+        c for c in (research.get("conflicts") or [])
+        if c.get("conflict_type") == "fact"
+        and c.get("status") == "resolved"
+        and c.get("disputed_attribute") == "birthplace"
+    ]
+    if not resolved_birthplace_conflicts:
+        pytest.skip("no resolved birthplace conflict in this scenario")
+
+    assertions_by_id = {a.get("id"): a for a in (research.get("assertions") or [])}
+
+    calls = [
+        c for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool")) == "build_external_search_url"
+    ]
+    if not calls:
+        pytest.skip("no build_external_search_url call")
+
+    errors: list[str] = []
+    for c in resolved_birthplace_conflicts:
+        preferred_id = c.get("preferred_assertion_id")
+        preferred_assertion = assertions_by_id.get(preferred_id) or {}
+        preferred_place = preferred_assertion.get("place")
+        if not preferred_place:
+            continue
+        # A competing id is not automatically a rejected VALUE: two assertions
+        # can independently support the same preferred value from different
+        # sources (this fixture's a_002/a_009 both say "Ireland" — only a_012's
+        # "Pennsylvania" actually disagrees), so the comparison is by place
+        # value against the preferred assertion's own value, not by id.
+        # Compared by normalized place key, not raw string: a competing
+        # assertion reading "IRELAND" (a census transcription) agrees with a
+        # preferred "Ireland" and must not become a rejected value that then
+        # casefold-matches the correctly encoded one.
+        preferred_key = _place_key(preferred_place)
+        rejected_places = {
+            assertions_by_id[i]["place"]
+            for i in (c.get("competing_assertion_ids") or [])
+            if i in assertions_by_id
+            and isinstance(assertions_by_id[i].get("place"), str)
+            and _place_key(assertions_by_id[i]["place"]) != preferred_key
+        }
+        if not rejected_places:
+            continue
+        # Places the project holds as facts, for the fallback-field exemption
+        # in `_effective_place_field`: every assertion place for this scenario
+        # that is not one of THIS conflict's rejected values. Keyed, so the
+        # comparison matches the one the rejected set uses.
+        rejected_keys = {_place_key(p) for p in rejected_places}
+        accepted_keys = {
+            _place_key(a["place"])
+            for a in assertions_by_id.values()
+            if isinstance(a.get("place"), str) and a["place"].strip()
+            and _place_key(a["place"]) not in rejected_keys
+        }
+        # A place-resolution tool commonly hands back a broader-context
+        # string ("Pennsylvania, United States") for what the fixture's own
+        # assertion records as the bare place name ("Pennsylvania") — the
+        # same rejected fact, differently formatted. An exact-string
+        # comparison missed this on a live run: the model encoded the
+        # reformatted value and only the LLM judge caught it.
+        # `_place_matches_rejected` catches that reformatting without needing
+        # the URL-string substring match this validator deliberately avoids
+        # (see the module docstring above on `residencePlace` false
+        # positives) — it only ever looks at the `birthPlace` argument's own
+        # value, never the rendered URL. It also anchors on the rejected
+        # value's own segment count, not just its first segment, so a
+        # different place that merely shares a leading token with the
+        # rejected one ("Paris, Texas" vs. rejected "Paris, France") cannot
+        # collide with it.
+        for call in calls:
+            args = _as_mapping(call.get("args"))
+            attrs = _as_mapping(args.get("attributes"))
+            # Only the attribute that actually reaches the site's place slot
+            # is judged — birthPlace where present, else the first fallback the
+            # tool's own table applies (`_PLACE_SLOT_CHAIN`). A rejected value
+            # routed through a fallback reaches the URL exactly as if passed
+            # as birthPlace; anywhere else a death place naming the rejected
+            # BIRTHplace is a correct death search (this fixture's own accepted
+            # death is in Pennsylvania). A non-string value (`birthPlace:
+            # 1845`) is real live input the tool notes; it is skipped here.
+            field = _effective_place_field(args.get("site"), attrs, accepted_keys)
+            if field is not None:
+                value = attrs[field]
+                if any(_place_matches_rejected(value, p) for p in rejected_places):
+                    errors.append(
+                        f"build_external_search_url call's attributes.{field}="
+                        f"{value!r} is the value conflict {c.get('id')} "
+                        f"rejected (preferred: {preferred_id})"
+                    )
+    assert not errors, "resolved birthplace-conflict rejected value passed to the tool:\n  - " + "\n  - ".join(errors)
+
+
+def test_no_hand_composed_external_site_url(before_state, after_state, tool_calls, test):
+    """Issue #1980 asks explicitly for "one that checks the skill called the
+    tool rather than hand-writing a URL" — no such deterministic check
+    existed; the rule lived only in rubric.md's Tool selection dimension,
+    graded by the judge alone. A hand-composed URL is exactly the failure
+    mode this tool exists to make unnecessary: every documented correction
+    (the dead qs, the retired legacy host, the missing dl=page) applies only
+    to a URL `build_external_search_url` actually built.
+
+    Fires when a new `external_site` log entry presents a freshly generated
+    URL — a non-empty `url_generated`, not a re-log of an already-presented
+    one — but no `build_external_search_url` call appears anywhere in this
+    run's tool calls at all. Does not try to match a specific log entry to a
+    specific call (a run can legitimately call the tool more than once, e.g.
+    a curated-link fetch plus a site-wide fallback for the same or a
+    different search) — only whether the tool was used at all, which is
+    what "hand-wrote instead of calling the tool" actually means.
+
+    Grades only step 4's own entry — `outcome: "partial"`, no capture — the
+    same scoping the sibling `test_url_generation_log_entry_shape` uses. Every
+    step-6 re-log (the capture arrival, the user-reported nil with no capture,
+    the no-access `error` entry) carries the step-4 URL again without
+    generating one, and rubric.md grades the tool as not expected on those
+    turns.
+
+    Also excludes `site: "familysearch_web"` — the one `external_site` enum
+    value the tool has no template for (its SUPPORTED_SITES is a subset of
+    the enum). An ad-hoc URL to a site outside the fifteen is logged under
+    it without any tool call, by design, so there is nothing hand-composed
+    there to flag.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests generate URLs")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+
+    new_entries = _new_external_entries(before_state, after_state, "external_site")
+
+    # A step-6 re-log carries an EARLIER entry's URL again. That is what makes
+    # it a re-log, and it is the property to test — not the outcome.
+    #
+    # This gate used to be `outcome != "partial"`, which excluded every
+    # `negative` entry. The sibling `test_the_url_logged_is_the_url_presented`
+    # says in terms why that is wrong ("the autonomous-defer path logs
+    # 'negative' and DOES present the URL, where this holds on 10 of 10
+    # committed runs", #2345 review), and it was measured wrong here too:
+    # in v1_2026-09-15_09-57-05.json, ut_search_external_sites_013 and _008
+    # each logged a single `negative` entry carrying a freshly generated URL,
+    # and this check skipped both — 2 of 13 positive tests. Neither was a real
+    # violation (the tool was called in both), so nothing escaped; the hole was
+    # that the check issue #1980 asks for by name did not grade that path at
+    # all. Re-log detection closes it without re-admitting the cases the three
+    # tests below pin (review round 5).
+    prior_log = ((before_state.get("research_json") or {}).get("log") or [])
+    seen_before = {
+        (e.get("external_site") or {}).get("url_generated")
+        for e in prior_log
+        if isinstance((e.get("external_site") or {}).get("url_generated"), str)
+    }
+
+    def _is_fresh_url_generation(entry):
+        detail = entry.get("external_site") or {}
+        url = detail.get("url_generated")
+        if not isinstance(url, str) or not url.strip():
+            return False
+        # `capture_received: True` is NOT an exemption on its own. It was one
+        # until #2207 added the in-window read route, which makes
+        # `capture_received: true` the NORMAL state of the arrival entry — so a
+        # blanket exemption left every in-window turn permanently unable to fail
+        # this check, and `ut_search_external_sites_iwc` passed twice while the
+        # skill hand-composed its URL. The two clauses below already exempt the
+        # case the blanket rule was reaching for: a capture that re-logs a URL
+        # from a prior turn (`seen_before`) or from an earlier entry this run.
+        # An arrival carrying a URL that appears nowhere else IS a fresh
+        # generation, whoever captured it.
+        if entry.get("outcome") == "error":
+            return False
+        if detail.get("site") == "familysearch_web":
+            return False
+        # Already in the log before this run, or re-logged alongside the entry
+        # that generated it this run: a re-log either way.
+        if url in seen_before:
+            return False
+        # Only an EARLIER entry suppresses this one. A symmetric test made two
+        # entries sharing a URL exclude each other, emptying the candidate list
+        # and skipping the whole check at exit 0 — measured: one `partial` on a
+        # hand-composed URL fires, two identical ones skipped. `new_log_entries`
+        # iterates `after["log"]` in array order and the log is append-only, so
+        # position is a reliable proxy for "logged first".
+        #
+        # "any earlier entry", not "any earlier candidate": the suppressing
+        # sibling is routinely one this function already excluded — a captured
+        # re-log is the pinned case
+        # (test_hand_composed_check_skips_a_negative_relog_beside_a_captured_sibling).
+        # Filtering against candidates would let the later entry through.
+        for other in new_entries:
+            if other is entry:
+                break
+            if (other.get("external_site") or {}).get("url_generated") == url:
+                return False
+        return True
+
+    url_generation_entries = [e for e in new_entries if _is_fresh_url_generation(e)]
+    if not url_generation_entries:
+        pytest.skip("no URL-generation external_site log entry this run")
+
+    called_tool = any(
+        _bare_tool_name(c.get("tool")) == "build_external_search_url"
+        for c in (tool_calls or [])
+    )
+    assert called_tool, (
+        "a URL-generation external_site log entry exists "
+        f"(log id(s): {[e.get('id') for e in url_generation_entries]}) but "
+        "build_external_search_url was never called this run — the URL was "
+        "hand-composed instead of built by the tool"
+    )
+
+
 # --- Tag-gated no-harm invariant (grade_on_invariant negatives) ------
 
 def test_no_external_search_or_log_on_routeaway_negative(
     before_state, after_state, tool_calls, test
 ):
     """Tag-gated (no-search-no-write): the search-external-sites no-harm
-    invariant for any negative whose correct answer is to route away.
+    invariant for a delegation the agent must hand back.
 
-    search-external-sites executes a chosen external-site search — it
-    generates a pre-filled URL and logs the step to research.json. A request
-    that belongs to another skill must not cause a search to be EXECUTED or
-    logged. This is the deterministic gate for two grade_on_invariant
-    negatives:
+    The agent executes a chosen external-site search: it builds a pre-filled
+    URL and logs the step to research.json. A request that belongs to another
+    agent or skill (planning, a FamilySearch search, a record already in hand)
+    must not cause a search to be EXECUTED or logged. This is the deterministic
+    gate for the direct hand-back negative `ut_search_external_sites_hbk`.
 
-      - `ut_search_external_sites_011` — a planning question that belongs to
-        research-plan.
-      - `ut_search_external_sites_012` — a single record already in hand,
-        which belongs to record-extraction (issue #1519).
-
-    Both were flaky for the same reason: the decline is correct every run, but
-    its phrasing and length vary, and a longer decline that names the right
-    skill was read by the activation heuristic as substantive output. Under
-    grade_on_invariant the phrasing no longer decides the outcome; only
-    executing or logging a search does. See docs/specs/unit-test-spec.md and
-    the sibling test_search_records.py::test_no_search_or_writes_on_planning_request.
+    It previously gated the two description-routing negatives `_011` and
+    `_012`, deleted when the skill became an agent (issue #2802). On the direct
+    arm there is no router that could legitimately write a log entry of its
+    own, so the strict form applies: any new entry is the agent's.
 
     Fails iff the run:
-      - made an `external_links_search` MCP call (a search was executed), or
-      - appended a new **`external_site`** `log` entry (this skill records
-        every external-site search it runs).
+      - made an `external_links_search` or `build_external_search_url` MCP call
+        (a search was executed), or
+      - appended any new `log` entry.
 
-    **The log check narrows only for 012, via `route-away-writes-own-log`.**
-    011's accepted route is research-plan, which never writes `log` at all, so
-    ANY new entry there means a search skill ran and the strict form is the
-    real gate. 012's accepted route is record-extraction, which holds
-    `research_log_append` and may legitimately write a non-`external_site`
-    entry for the record it was handed — flagging that would fail 012 for
-    routing correctly. Narrowing both would have silently dropped 011's gate
-    (issue #1519), so the loosening is carried
-    by a tag on 012 alone rather than by the shared `no-search-no-write` gate.
-
-    Deliberately does NOT flag other research.json writes: routing to
-    research-plan legitimately writes `plans`/`questions`, and record-extraction
-    legitimately writes `sources`/`assertions`. Both are correct behavior.
+    Deliberately does NOT flag other research.json writes.
     """
     if "no-search-no-write" not in test.get("tags", []):
         pytest.skip("not a no-search-no-write scenario")
@@ -130,28 +472,78 @@ def test_no_external_search_or_log_on_routeaway_negative(
     # 1. No external-site search executed.
     searched = [
         c for c in (tool_calls or [])
-        if c.get("tool", "").split("__")[-1] == "external_links_search"
+        if c.get("tool", "").split("__")[-1] in ("external_links_search", "build_external_search_url")
     ]
     assert not searched, (
-        "a route-away request must not execute an external-site search; got "
-        f"external_links_search call(s) with args: "
-        f"{[c.get('args') for c in searched]}"
+        "a hand-back must not execute an external-site search; got "
+        f"call(s): {[(c.get('tool'), c.get('args')) for c in searched]}"
     )
 
-    # 2. No new search log entry. Which entries count depends on what the
-    #    accepted route is allowed to write, so the narrowing is opt-in per
-    #    test rather than applied to both.
+    # 2. No new log entry.
     new_entries = _new_log_entries(before_state, after_state)
-    if "route-away-writes-own-log" in test.get("tags", []):
-        offending = [e for e in new_entries if e.get("tool") == "external_site"]
-        detail = "external_site search log entry"
-    else:
-        offending = new_entries
-        detail = "search log entry"
-    assert not offending, (
-        f"a route-away request must not append a {detail}; new log ids: "
-        f"{[e.get('id') for e in offending]}"
+    assert not new_entries, (
+        f"a hand-back must not append a log entry; new log ids: "
+        f"{[e.get('id') for e in new_entries]}"
     )
+
+
+def _open_handoffs(research):
+    """`project_context`'s `awaitingUser` rule, read off a persisted research.json:
+    partial + capture_received false, with no LATER non-partial entry on its URL."""
+    log = [e for e in ((research or {}).get("log") or []) if isinstance(e, dict)]
+    out = []
+    for i, e in enumerate(log):
+        ext = e.get("external_site") or {}
+        if e.get("tool") != "external_site" or e.get("outcome") != "partial" or ext.get("capture_received") is not False:
+            continue
+        url = ext.get("url_generated")
+        if any(
+            (later.get("external_site") or {}).get("url_generated") == url and later.get("outcome") != "partial"
+            for later in log[i + 1:] if later.get("tool") == "external_site"
+        ):
+            continue
+        out.append(e)
+    return out
+
+
+def test_triage_closes_its_open_handoff(before_state, after_state, test):
+    """Tag-gated (triage-closes-handoff): a returned capture closes the hand-off
+    it answers. The closing entry must carry the open row's `url_generated`
+    exactly, or `awaitingUser` keeps listing it and the researcher is asked for
+    the same capture again (alpha feedback, the re-raise loop)."""
+    if "triage-closes-handoff" not in test.get("tags", []):
+        pytest.skip("not a triage-closes-handoff scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    opened = _open_handoffs(before)
+    assert opened, "fixture defect: the scenario holds no open hand-off to close"
+    still_open = {e.get("id") for e in _open_handoffs(after)} & {e.get("id") for e in opened}
+    assert not still_open, (
+        f"hand-off(s) {sorted(still_open)} are still open after the triage: no later "
+        f"non-partial external_site entry carries their url_generated"
+    )
+    closing = [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "external_site" and (e.get("external_site") or {}).get("capture_received") is True
+    ]
+    assert closing, "the triage logged no external_site entry with capture_received true"
+
+
+def test_archion_browse_handoff(tool_calls, test):
+    """Tag-gated (archion-browse): the parish page goes to the builder as
+    `baseUrl`, with `projectPath`, so the hand-off is logged by the tool once."""
+    if "archion-browse" not in test.get("tags", []):
+        pytest.skip("not an archion-browse scenario")
+    calls = [c for c in (tool_calls or []) if _bare_tool_name(c.get("tool")) == "build_external_search_url"]
+    archion = [c for c in calls if (c.get("args") or {}).get("site") == "archion"]
+    assert archion, f"no build_external_search_url call with site 'archion'; calls: {[c.get('args') for c in calls]}"
+    args = archion[0].get("args") or {}
+    assert "archion.de" in str(args.get("baseUrl") or ""), (
+        f"the archion call carried no Archion parish page as baseUrl: {args.get('baseUrl')!r}"
+    )
+    assert args.get("projectPath"), "the archion call omitted projectPath, so the hand-off was not logged by the tool"
 
 
 # --- Tag-gated site-specific checks ----------------------------------
@@ -226,8 +618,592 @@ def test_log_site_newspapers(before_state, after_state, test):
     )
 
 
+def test_log_site_digital_newspaper_archive(before_state, after_state, test):
+    """Tag-gated: when the scenario targets a caller-supplied newspaper archive,
+    the new external_site log entry's `external_site.site` must be
+    `digital_newspaper_archive`.
+
+    This site is the one reachable only through a caller-supplied `baseUrl`, so
+    the plausible miss is different from its siblings': not a typo, but the
+    model filing the search under whichever named site it thinks the host
+    resembles (`newspapers`, `chronicling_america`). That would put a
+    subscription archive's search under a site whose `access` value is a
+    measured fact rather than a class default, which is the distinction the
+    tool's hedge note exists to preserve."""
+    if "log-site-digital_newspaper_archive" not in test.get("tags", []):
+        pytest.skip("not a log-site-digital_newspaper_archive scenario")
+    new_entries = _new_log_entries(before_state, after_state)
+    external = [e for e in new_entries if e.get("tool") == "external_site"]
+    assert external, "no external_site log entry to check"
+    sites = [(e.get("external_site") or {}).get("site") for e in external]
+    assert "digital_newspaper_archive" in sites, (
+        "expected an external_site log entry with site='digital_newspaper_archive'; "
+        f"got sites={sites}"
+    )
+
+
 def test_capture_pending_item_not_terminal(before_state, after_state, test):
     """Issue #1226 — a plan item awaiting an external-site capture must not be
     `completed`/`skipped`. Shared with the other suite that can reach this
     state; the assertion lives in validators_lib."""
     _assert_capture_pending_item_not_terminal(before_state, after_state, test)
+
+
+# --- #1950 Half 1: V2, V3, V4, V6, V7, V8 ------------------------------
+#
+# FIELD NAMES ARE snake_case HERE, NOT the camelCase issue #1950 quotes.
+# The issue states each rule in the MCP tool's parameter spelling
+# (`stagedResultsRef`, `resultsExamined`, `planItemId`), because that is what a
+# `research_log_append` call carries. These validators read `after_state`, the
+# PERSISTED document, and CLAUDE.md's casing rule makes the tool boundary the
+# seam between the two. Mapping taken from
+# `docs/specs/schemas/research.schema.json`, not guessed:
+#
+#   stagedResultsRef -> results_ref      (NOT staged_results_ref)
+#   resultsExamined  -> results_examined
+#   planItemId       -> plan_item_id
+#   externalSite     -> external_site
+#
+# `results_ref` is the one that bites: writing the issue's name verbatim gives a
+# validator that never fires, which is the silently-green failure its own "what
+# proves this worked" section warns about — nothing in CI runs these against a
+# real run.
+#
+# `external_site` and `results_ref` are both nullable in the schema, so "must
+# not carry" is a truthiness check: absent and explicitly-null are the same
+# thing to a reader of the audit trail.
+
+
+def _new_external_entries(before_state, after_state, tool):
+    """New log entries for one tool, or [] — shared preamble of V2/V3/V4."""
+    return [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == tool
+    ]
+
+
+def _plan_items(state):
+    """Every plan item in a state, keyed by id."""
+    research = state.get("research_json") or {}
+    return {
+        item.get("id"): item
+        for plan in (research.get("plans") or [])
+        for item in (plan.get("items") or [])
+        if item.get("id")
+    }
+
+
+def test_log_entries_do_not_carry_each_others_fields(before_state, after_state, test):
+    """V2. SKILL.md step 4 writes two entries per search, each owning one field.
+
+    The `external_links_search` entry carries the staged handle and must not
+    carry `external_site` (SKILL.md: "Do not pass externalSite here - that field
+    is only for external_site entries"); the `external_site` entry carries the
+    site detail and must not carry the handle ("that handle belongs on the
+    external_links_search entry above").
+
+    No corpus violation yet - this guards a rule the skill states twice and
+    nothing enforced.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+
+    errors = []
+    for entry in _new_external_entries(before_state, after_state, "external_links_search"):
+        if entry.get("external_site"):
+            errors.append(
+                f"log[{entry.get('id')}] is an external_links_search entry but "
+                f"carries external_site - that field belongs only on an "
+                f"external_site entry"
+            )
+    for entry in _new_external_entries(before_state, after_state, "external_site"):
+        if entry.get("results_ref"):
+            errors.append(
+                f"log[{entry.get('id')}] is an external_site entry but carries "
+                f"results_ref - the staged handle belongs on the "
+                f"external_links_search entry"
+            )
+    assert not errors, (
+        "log entries carrying each other's fields:\n  - " + "\n  - ".join(errors)
+    )
+
+
+# V3 (`test_curated_links_fetch_with_results_is_not_logged_as_nil`) was removed:
+# `research_log_append` now REFUSES the write it graded — an
+# `external_links_search` entry with `results_examined > 0` and a non-positive
+# outcome throws `LogAppendError`, and `ownership.json` gives `log` no other
+# writer — so the validator could only ever fire on a hand-edited research.json.
+# A grader that cannot fire reads as coverage while asserting nothing. The rule
+# is pinned where it now lives, by the writer's own unit tests.
+
+def test_the_url_logged_is_the_url_presented(
+    before_state, after_state, text_response, test, agent_returns=None
+):
+    """V4. external_site.url_generated must appear verbatim in the reply.
+
+    The log entry is the audit trail; the link is what the user clicks. If they
+    differ, research.json records a search nobody ran and the user runs a search
+    nobody recorded - and every other validator still passes, because each half
+    is individually well-formed. This is the guard that makes the other seven
+    mean something.
+
+    On the direct arm the reply is the agent's own return (`agent_return_text`,
+    the text the judge grades), not the bare main thread's relay of it; a routed
+    or legacy run with no agent return falls back to `text_response`.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+
+    reply = agent_return_text(agent_returns, "search-external-sites") or (text_response or "")
+    errors = []
+    for entry in _new_external_entries(before_state, after_state, "external_site"):
+        detail = entry.get("external_site") or {}
+        # Step 6 appends a NEW entry that re-logs the step-4 URL without
+        # presenting it: the capture-arrival entry (SKILL.md:439), whose reply
+        # analyses the returned PDF, and the no-access entry (SKILL.md:584,
+        # outcome "error"), whose reply asks whether to skip the site. The
+        # schema requires url_generated on both, so without this they read as
+        # a URL logged but never shown. Not scoped on outcome == "partial"
+        # instead: the autonomous-defer path logs "negative" and DOES present
+        # the URL, where this holds on 10 of 10 committed runs (#2345 review).
+        if detail.get("capture_received") is True or entry.get("outcome") == "error":
+            continue
+        url = detail.get("url_generated")
+        if not isinstance(url, str) or not url.strip():
+            continue  # shape is test_url_generation_log_entry_shape's job
+        if url not in reply:
+            errors.append(
+                f"log[{entry.get('id')}].external_site.url_generated is not in "
+                f"the reply the user sees: {url}"
+            )
+    assert not errors, "URL logged but never presented:\n  - " + "\n  - ".join(errors)
+
+
+def test_no_plan_item_status_written_when_no_entry_names_one(
+    before_state, after_state, test
+):
+    """V6. When every new log entry has plan_item_id null, no plan item's status
+    may change.
+
+    **Gating, and the COMPLEMENT of the writer-tool rule — not its mirror.**
+    `research_append` refuses a `plan_items` write that leaves an item at
+    `completed` when no `log[]` entry carries its id. This predicate is
+    deliberately different on both axes, and must not be rewritten to match:
+
+    - **Coarser on attribution.** It skips as soon as any new log entry names
+      any plan item, where the tool asks whether an entry names *this* item.
+    - **Broader on status.** It refuses any status change, where the tool
+      refuses `completed` only. That reach is the point: it covers
+      `in_progress` and `skipped` moves, which the tool rule never refuses —
+      and in this skill, whose 2 corpus `completed` writes both log
+      `planItemId` first, the tool rule refuses nothing.
+
+    ADR-0011's "Production beats eval-only" makes this the complement of the
+    gate rather than a second copy of it: what the tool cannot see from one
+    call's arguments, this sees from the before/after state of a whole run.
+
+    Promoted from `report_` to `test_` by the 2026-09-22 ruling recorded in
+    ADR-0011's "Rulings that generalize": "no SKILL.md states it" does not
+    settle the question. The rule is decidable from the project documents
+    alone, which is what step 1 asks.
+
+    **No committed run can tell you what this would have refused, and that is
+    a stronger caveat than a fire count.** `as_dicts` (`validator_runner.py`)
+    filters on `if not r.reporting_only`, which drops a reporting-only result
+    whether it passed OR fired — and a fired one goes to the judge as an
+    observation, which the run log does not persist either. So its absence from
+    all 5 committed `search-external-sites` run logs (the function name appears
+    0 times under either spelling) is not evidence that it never fired. The unit
+    run logs carry no before/after state, so no replay is possible from anything
+    committed, and the direction that matters for a newly-gating check — does it
+    wrongly fail a correct run? — rests on the three synthetic cases in
+    `eval/harness/tests/unit/test_search_external_sites_validator.py`.
+
+    Promotion also flips `state_derived` to False, which removes its fired
+    findings from the judge's state-observation list. That is correct once it
+    gates — a gating failure is a run failure, not an observation for the judge
+    to weigh — and is recorded here rather than left to be discovered.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+
+    new_entries = _new_log_entries(before_state, after_state)
+    if not new_entries:
+        pytest.skip("no new log entries")
+    if any(e.get("plan_item_id") for e in new_entries):
+        pytest.skip("a new log entry names a plan item - status writes are in scope")
+
+    before_items = _plan_items(before_state)
+    changed = [
+        item_id
+        for item_id, item in _plan_items(after_state).items()
+        if item_id in before_items
+        and item.get("status") != before_items[item_id].get("status")
+    ]
+    assert not changed, (
+        f"no new log entry names a plan item, but these plan items had their "
+        f"status changed: {sorted(changed)}. A search that matches no plan item "
+        f"records no plan progress."
+    )
+
+
+def test_plan_items_are_updated_never_appended(before_state, after_state, test):
+    """V7. The skill may update an existing plan item's status; never append one.
+
+    An executing skill records what it did. It does not add work to the plan,
+    and it certainly does not add work in order to have something to mark
+    finished - a manufactured item marked `skipped` reads downstream as an
+    avenue considered and closed (#1226, with the item invented as well).
+
+    **No committed run reproduces this today — measured 0 across all 80 runs
+    in the five logs on this branch (2026-09-10).** An earlier draft cited
+    v1_2026-08-20_22-45-06 and v1_2026-08-27_00-08-56 at "roughly two runs in
+    five"; both have since been pruned by the newest-five retention this file
+    describes above, so that claim can no longer be checked from anything
+    committed and is not repeated here. The guard stays because the defect it
+    describes is real when it happens (#1226, where the item was invented as
+    well), not because the corpus currently shows it.
+
+    Deliberately NOT assert_only_writes_to_sections(owned={"log","plans"}),
+    which the issue originally specified: that permits ANY write to `plans`,
+    appends included, so it would pass the defect this exists to catch. The
+    helper is wired separately below as the adjacent boundary check.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+
+    before_ids = set(_plan_items(before_state))
+    appended = sorted(set(_plan_items(after_state)) - before_ids)
+    assert not appended, (
+        f"search-external-sites appended plan item(s) {appended}. It may update "
+        f"the status of an item that already existed; it may never add one."
+    )
+
+
+def test_writes_only_to_log_and_plans(before_state, after_state, test):
+    """V7, second half. The adjacent boundary: a write to `sources` or
+    `assertions` is out of this skill's lane entirely.
+
+    Gives assert_only_writes_to_sections its first call site repo-wide - it had
+    zero before this. Separate from the append check above, which it cannot
+    substitute for.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+    _assert_only_writes_to_sections(
+        before_state.get("research_json") or {},
+        after_state.get("research_json") or {},
+        owned={"log", "plans"},
+        skill_name="search-external-sites",
+    )
+
+
+def test_the_log_is_append_only(before_state, after_state, test):
+    """V8. SKILL.md says it three times: append a new entry, never edit a prior
+    one. This skill writes two entries per turn and appends a third when a
+    capture returns, so it has more opportunity to violate this than any other.
+
+    Gives assert_log_append_only its second call site repo-wide.
+    """
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+    _assert_log_append_only(
+        before_state.get("research_json") or {},
+        after_state.get("research_json") or {},
+    )
+
+
+# --- #2521 Half 2: collection-ID provenance (reporting-only) ----------
+
+#: Case-INSENSITIVE. Case A base URLs arrive verbatim from `external_links_search`
+#: curated links and the tool never re-encodes them (spec §3.2), so the host and
+#: path casing is whatever the curator wrote. A case-sensitive pattern made
+#: `https://www.Ancestry.com/...` skip the whole check silently, and a tier-2
+#: skip is indistinguishable from a clean run in the run log.
+_COLLECTION_URL = re.compile(r"ancestry\.[a-z.]+/search/collections/(\d+)", re.I)
+
+#: Field names that ARE a collection id, so the value needs no prose context.
+#: `research_log_append` writes `query.collectionId`; a source may carry
+#: `collection_id`. Matching only prose scored the structured field that
+#: actually records provenance as no provenance at all, while free text counted.
+_ID_FIELD_NAMES = frozenset({"collectionid", "collection_id"})
+
+#: The collection-naming token must sit IMMEDIATELY before the id, allowing
+#: only a separator ("collection 8054", "collections/8054", "col. no. 8054").
+#: Two weaker rules were tried and both admitted coincidences: matching the
+#: token anywhere in the string let "Collection of 8054 letters, Smith family
+#: papers" back collection 8054, and so did a 24-character proximity window,
+#: because "Collection of " is only 14 characters wide. Word order is what
+#: separates a backing from a count that happens to follow the word.
+_CTX_WINDOW = 24
+_CTX_TOKEN = re.compile(r"(?:collections?|col\.)\s*/?\s*(?:no\.?|#)?\s*$", re.I)
+
+#: Sections whose mention of a collection id counts as backing. `questions` and
+#: `proof_summaries` are excluded: both are written downstream of the search, so
+#: a mention there restates the URL rather than recording where the collection
+#: came from.
+_TRACE_SECTIONS = ("assertions", "sources", "plans", "localities", "log")
+
+
+def _mentions_collection(path, value, cid, bound):
+    """Does this one leaf record that `cid` is a collection?
+
+    Three accepted shapes, each measured against the committed corpus and the
+    `search-external-sites` fixtures:
+
+    - a field whose NAME is a collection id (`query.collectionId`);
+    - the `record_id` form `ancestry:<cid>:<slug>`, which record-extraction
+      writes and `mid-research-flynn` carries — note the cid must be in the
+      collection position, so `ancestry:1234:john-8054` does NOT back 8054;
+    - prose naming a collection within `_CTX_WINDOW` characters before the id.
+    """
+    leaf = path.rsplit(".", 1)[-1].split("[")[0].lower()
+    if leaf in _ID_FIELD_NAMES and str(value).strip() == cid:
+        return True
+    if not isinstance(value, str):
+        return False
+    match = bound.search(value)
+    if match is None:
+        return False
+    if re.search(r"ancestry:" + re.escape(cid) + r":", value, re.I):
+        return True
+    return _CTX_TOKEN.search(value[max(0, match.start() - _CTX_WINDOW):match.start()]) is not None
+
+
+def _collection_id_is_backed(research, cid, owner_prefix, leaves=None):
+    """Is `cid` recorded as a collection anywhere outside the owner entry?
+
+    Returns the first matching path, or None. `leaves` is an optional
+    pre-flattened [(path, value)] list — the caller builds it once and reuses it
+    across every URL in the run rather than re-walking the document per id.
+
+    Two exclusions carry the design:
+
+    - **The owner entry.** `research_log_append` writes `query.collectionId`
+      into the SAME entry as `external_site.url_generated`, so counting it makes
+      every id self-backing and the check vacuous.
+    - **Every `url_generated`, on any entry.** A second entry emitting a URL
+      against the same collection is the repeat-search case this check exists to
+      catch — one run searching a collection for two people, or regenerating a
+      URL after a failed capture. Excluding only the owner let two such entries
+      back each other and the check went silent on exactly that shape.
+    """
+    cid = str(cid)
+    bound = re.compile(r"(?<!\d)" + re.escape(cid) + r"(?!\d)")
+    for path, value in (leaves if leaves is not None else _flatten(research)):
+        if path.startswith(owner_prefix) or path.endswith(".url_generated"):
+            continue
+        if not path.startswith(_TRACE_SECTIONS):
+            continue
+        if _mentions_collection(path, value, cid, bound):
+            return path
+    return None
+
+
+def _flatten(node, path=""):
+    """[(dotted path, leaf)] for the whole document, built once per run."""
+    out = []
+    stack = [(node, path)]
+    while stack:
+        cur, cur_path = stack.pop()
+        if isinstance(cur, dict):
+            for k, v in cur.items():
+                stack.append((v, f"{cur_path}.{k}" if cur_path else str(k)))
+        elif isinstance(cur, list):
+            for i, v in enumerate(cur):
+                stack.append((v, f"{cur_path}[{i}]"))
+        else:
+            out.append((cur_path, cur))
+    return out
+
+
+def report_collection_scoped_url_with_no_backed_collection_id(
+    before_state, after_state, test
+):
+    """#2521 Half 2, ruling C (lead 2026-09-24): measure, do not yet enforce.
+
+    A `build_external_search_url` call can emit a perfectly-formed URL that
+    searches the wrong collection — the tester's report on the feedback bundle
+    got Michigan marriages for a New York death query. The tool cannot know: on
+    the Case A path it appends parameters to a caller-supplied baseUrl and has
+    no idea which collection an id names.
+
+    **Reporting-only on purpose.** `report_*` is tier 2
+    (`validator_runner.split_observations`): it hands the judge an anonymous
+    observation and cannot gate a run. The accept-set is re-decided by the lead
+    on the count this produces, so a gating `test_*` would enforce a rule nobody
+    has chosen and red the skill's next paid eval on 4 committed instances.
+
+    **Judges only the entries THIS run appended.** Every positive test in the
+    suite runs on a scenario whose seeded log already carries a
+    collection-scoped URL, so reading the whole after-state made the check
+    evaluate a URL the agent never wrote, on every test. That also means a crash
+    here is not merely a bad observation: `validator_runner` builds a crash
+    result WITHOUT `reporting_only` ("a crash is a validator bug, so it gates
+    whatever the prefix"), so an unguarded `.get()` on a malformed entry gates a
+    paid run. Every access below is isinstance-guarded for that reason.
+
+    **What this knowingly lets through.** It asks whether the collection id is
+    recorded elsewhere in the document, which is NOT the origin question. Two
+    corpus entries carry a trace whose own prose says the id was never staged —
+    `johann-widmer-vitals` log_021 ("not in the curated inline set") and
+    `maria-fuenmayor-parents` log_037 ("No Ancestry-specific curated links
+    returned") — and both pass. The origin question is not answerable from
+    committed artifacts at all: no collection id on a generated URL appears in
+    any `external_links_search` `response_summary`, 49 of 245 committed calls
+    are `_summary_truncated`, the staged sidecar is not committed, and
+    `validators/conftest.py` exposes no sidecar fixture.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests generate URLs")
+    research = after_state.get("research_json")
+    if not isinstance(research, dict):
+        pytest.skip("no research.json in scenario")
+
+    new_ids = {
+        e.get("id") for e in _new_log_entries(before_state, after_state)
+        if isinstance(e, dict)
+    }
+    log = research.get("log")
+    log = log if isinstance(log, list) else []
+    leaves = _flatten(research)
+
+    considered, unbacked = 0, []
+    for index, entry in enumerate(log):
+        if not isinstance(entry, dict) or entry.get("id") not in new_ids:
+            continue
+        detail = _as_mapping(entry.get("external_site"))
+        url = detail.get("url_generated") if isinstance(detail, dict) else None
+        if not isinstance(url, str):
+            continue
+        match = _COLLECTION_URL.search(url)
+        if match is None:
+            continue
+        cid = match.group(1)
+        considered += 1
+        # Evaluated per ENTRY, deliberately uncached. The answer depends on
+        # `owner_prefix`, which changes every time round this loop, so keying a
+        # cache on the collection id alone reuses the first entry's answer for
+        # every later entry naming the same collection — wrong in both
+        # directions. With the backing text in the first entry it fires on two
+        # when one is unbacked; with the text in the second it passes
+        # everything, and that second entry's only backing is its own notes,
+        # which is exactly the self-backing the owner exclusion exists to
+        # reject. `leaves` is already flattened once per run, so this costs one
+        # pass over a flat list.
+        if _collection_id_is_backed(research, cid, f"log[{index}].", leaves) is None:
+            unbacked.append((entry.get("id"), cid))
+
+    # Skip ONLY when there was nothing of this shape to judge, rather than
+    # whenever `unbacked` is empty.
+    #
+    # Be clear about what this does and does not buy. Outside this repo's unit
+    # suite the two are indistinguishable: `validator_runner.as_dicts` drops
+    # every `reporting_only` result and `split_observations` forwards only
+    # tier-2 results that FAILED, so a clean pass and a skip both reach the
+    # judge and the run log as nothing at all. The distinction is enforceable
+    # only here, by `skip_blind.expect_passes` in the companion suite — which is
+    # the point: it is what stops a skip gate that over-matches from reading as
+    # a clean run forever. It does not make a retired check visible in
+    # production, and nothing in this design does.
+    if considered == 0:
+        pytest.skip("this run appended no collection-scoped external-site URL")
+    if not unbacked:
+        return
+
+    named = ", ".join(f"{cid} (entry {eid})" for eid, cid in unbacked)
+    plural = "s" if len(unbacked) > 1 else ""
+    raise AssertionError(
+        f"{len(unbacked)} collection-scoped Ancestry URL{plural} generated this "
+        f"run name{'' if plural else 's'} collection {named}, and no plan item, "
+        "assertion, source, locality or other log entry in research.json records "
+        "that id as a collection — so nothing in the project says where the "
+        "collection came from"
+    )
+
+
+def report_log_query_traces_to_url_tool_call(before_state, after_state, tool_calls, test):
+    """A new `external_site` log entry's `query` should name only search
+    attributes the `build_external_search_url` call it documents actually sent.
+
+    Reports two classes, labelled: a claimed attribute the call never sent (the
+    class `research_log_append` refuses for a staged search, which an external
+    site never is), and a value that differs from the one sent (mostly place
+    normalization, never a gate). Only keys in the tool's own `attributes`
+    vocabulary count, read from the compiled schema: most keys in these entries
+    are descriptive context the tool has no parameter for (`recordType`,
+    `collection`), and checking every key flags nearly every test.
+
+    Paired exactly where it can be: the call whose returned `url` is the entry's
+    `external_site.url_generated`, so a step-6 re-log of the same URL pairs with
+    the same call. Otherwise site-keyed and positional among calls no entry has
+    claimed; an entry past the last call for its site is left alone.
+
+    **Reporting-only.** The skill's body is due to be replaced by an agent, and
+    promoting this to a gate without a prose rule to go with it would fail the
+    next paid run for behaviour nobody was asked for.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    entries = [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "external_site" and _as_mapping(e.get("query"))
+    ]
+    if not entries:
+        pytest.skip("no new external_site log entries with a query")
+    calls = [c for c in tool_calls if _bare_tool_name(c.get("tool")) == "build_external_search_url"]
+    if not calls:
+        pytest.skip("no build_external_search_url calls this turn")
+    vocabulary = _tool_input_keys("build_external_search_url", "attributes")
+    if vocabulary is None:
+        pytest.skip("the compiled tool schema is unavailable, so the attribute vocabulary is unknown")
+
+    by_url: dict[str, dict] = {}
+    for c in calls:
+        url = (c.get("response") or {}).get("url") if isinstance(c.get("response"), dict) else None
+        if isinstance(url, str) and url:
+            by_url.setdefault(url, c)
+
+    pairs: list[tuple[dict, dict, str]] = []
+    claimed: set[int] = set()
+    unpaired: list[dict] = []
+    for e in entries:
+        call = by_url.get(_as_mapping(e.get("external_site")).get("url_generated"))
+        if call is not None:
+            pairs.append((e, call, "same url"))
+            claimed.add(id(call))
+        else:
+            unpaired.append(e)
+    free: dict[str, list[dict]] = {}
+    for c in calls:
+        if id(c) not in claimed:
+            free.setdefault(_hashable_key(_as_mapping(c.get("args")).get("site")), []).append(c)
+    positions: dict[str, int] = {}
+    for e in unpaired:
+        site = _as_mapping(e.get("external_site")).get("site")
+        group = _hashable_key(site)
+        i = positions.get(group, 0)
+        positions[group] = i + 1
+        pool = free.get(group, [])
+        if i < len(pool):
+            pairs.append((e, pool[i], f"position {i} among unpaired {site} calls"))
+
+    errors = []
+    for e, call, how in pairs:
+        sent = _as_mapping(_as_mapping(call.get("args")).get("attributes"))
+        never_sent, differs = _filter_claim_findings(e.get("query"), sent, vocabulary)
+        for claim in never_sent:
+            errors.append(f"log entry {e.get('id')} ({how}) claims {claim}, which the call never sent")
+        for claim in differs:
+            errors.append(f"log entry {e.get('id')} ({how}) value differs — {claim}")
+    assert not errors, "external_site log queries that do not trace to their call:\n  - " + "\n  - ".join(errors)

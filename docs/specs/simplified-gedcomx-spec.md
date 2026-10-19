@@ -109,8 +109,9 @@ whatever their id looks like.
 
 Which kind a given document uses is the writer's call, made once per
 document: `person_read` snapshots (e.g. e2e fixture trees) preserve FS PIDs;
-project trees built by `init-project` deliberately synthesize `I` ids for
-**all** persons, FS-seeded ones included (see `init-project/SKILL.md`). Both
+project trees deliberately synthesize `I` ids for **all** persons, FS-seeded
+ones included; `project_create` assigns them when it builds the starting tree
+from a staged `person_read` (`project-create-tool-spec.md` §4). Both
 are valid documents under this spec.
 
 ---
@@ -125,9 +126,11 @@ Array of person objects.
 |-------|------|----------|-------------|
 | `id` | string | yes | Person ID. In snapshot-derived documents, the FamilySearch PID when the person is in the FS tree (`KNS4-P6W`), otherwise a synthesized id (`I1`); project trees synthesize `I` ids for all persons. See Section 3 |
 | `gender` | string | yes | `Male`, `Female`, or `Unknown` |
+| `principal` | boolean | no — record-only, rejected on tree persons | True when the person is the principal (focus) persona on a historical record. Set by `record_read` and `record_search` (via `toSimplified`); absent on tree persons. Stripped by `sanitizeCandidate` before merge — a tree person has no record role |
 | `living` | boolean | no | True when FamilySearch reports the person as living. `person_read` sets it on every person it returns; hand-built trees may omit it. Living people must never appear in a committed e2e fixture (FamilySearch ToS) — the living-person gate in `eval/harness/e2e/author.py` treats both `true` **and** a missing field as a refusal |
 | `names` | object[] | yes | At least one name. See below |
 | `facts` | object[] | no | Person facts (birth, death, etc.). May be empty or omitted for stub persons |
+| `sources` | object[] | no | Source references (Section 4.4) to the sources attached to the person as a whole. `person_read` carries FamilySearch's person-level attachments here |
 | `ark` | string | no | Persistent FamilySearch ARK in canonical form (e.g. `ark:/61903/4:1:KGS8-LY1`). The flat lift of full GedcomX's `identifiers["http://gedcomx.org/Persistent"][0]`, with the resolver-URL prefix stripped. Required by tools whose API responses reference persons by ARK (`matchTwoExamples`, future `person_read`/`cets`). Omit on synthesized stub persons with no real-world FS persona. See Section 4.6 |
 
 **Stub persons:** A minimal valid person requires `id`, `gender` (which may be `Unknown`), and one name with at least a `surname`. `given` may be an empty string when only the surname is known. `facts` may be omitted entirely. Example: `{ "id": "I1", "gender": "Unknown", "names": [{ "id": "N1", "preferred": true, "given": "", "surname": "Flynn" }] }`
@@ -157,6 +160,7 @@ Array of person objects.
 | `place` | string | no | Place description as a human-readable string (the verbatim original text) |
 | `standard_place` | string | no | Standardized place name (the snake_case data-format spelling of `standardPlace` from `place_search`). Populated by the converter from raw `place.normalized`, or resolved from `place` via `place_search` by `toSimplifiedStandardized`. Dropped on reverse conversion, like `standard_date` |
 | `value` | string | no | A qualifier carrying the meaning of the fact when `type + date + place` isn't enough — e.g. `"Newpaper Editor"` for an Occupation fact, `"United States"` for a Citizenship fact, `"Continental Congress"` for a `data:,Elected` fact. Preserved verbatim from raw GedcomX |
+| `assertion_id` | string | no | The `research.json` assertion this fact was minted from. Stamped by `materialize_facts` on the **mint** branch only — never on corroboration, never inferred from a match, never accepted from a caller (`tree_edit` rejects it). It is what lets a later correction to that assertion find the fact it produced (`tree-materialization-spec.md` §4.4). Dropped when a human corrects the fact directly and when a merge folds facts that do not all carry the same backlink. Dropped on reverse conversion, like `standard_date` |
 | `sources` | object[] | no | Source references for this fact |
 
 ### 4.2 `relationships`
@@ -210,10 +214,12 @@ Array of source description objects. These are the simplified equivalents of Ged
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | Source ID. The FamilySearch PID when FS supplied one (`MS88-FLK`), otherwise synthesized (`S1`). See Section 3 |
+| `resource_type` | string | no — record-only, rejected on tree sources | The kind of digital artifact (e.g. `DigitalArtifact`). Stripped URI prefix from raw GedcomX's `resourceType`. Present only on record-derived sources; stripped by `sanitizeCandidate` before merge |
 | `title` | string | yes | Human-readable title of the source |
 | `citation` | string | no | Formatted citation string. Populated by the proof-conclusion workflow at upload time (copied from `research.json` `sources[].citation`). Omit during active research |
 | `author` | string | no | Creator, agency, or author |
 | `url` | string | no | URL to the digital source |
+| `coverage` | object | no — record-only, rejected on tree sources | Volume-level metadata from the digital artifact's first coverage entry (FamilySearch coverage is an array; only `coverage[0]` is taken — no probed record has returned more than one entry). Describes the scanned volume the image sits in, not the individual record's event. Present only on record-derived sources; stripped by `sanitizeCandidate` before merge. Fields: `standard_place` (resolved place name via `repIdToStandardPlace`; live `record_read` only — a sidecar read returns before resolution runs, so it carries the bare numeric `place_rep_id` with no `standard_place`), `place_rep_id` (FamilySearch place description/rep id), `date_range` (temporal coverage: `temporal.original` when present, else the GEDCOM formal `temporal.formal`), `record_type` (stripped URI prefix, e.g. `Census`) |
 
 **`person_read` returns are not directly persistable.** The tool's sources
 may additionally carry a `notes` string array (user-attached FamilySearch
@@ -225,22 +231,32 @@ for fixture authoring, and both validation gates reject a verbatim copy.
 
 **Legacy documents are healed at read, not rejected.** Trees persisted before
 the validator closed these shapes (`preferred: false` written by the old
-merge core, top-level `places[]`, person-level `sources`, unknown keys,
-missing ids, string quality values) are repaired in memory by every engine
+merge core, top-level `places[]`, unknown keys, missing ids, string quality
+values, a person-level ref that names no source) are repaired in memory by every engine
 tool that reads `tree.gedcomx.json` (`src/validation/tree-sanitize.ts`), with
 one warning per healed class; the next successful tree write persists the
-healed document. Only unambiguous repairs are made — dangling references,
-swapped relationship endpoint keys, and duplicate ids still fail validation.
+healed document. Only unambiguous repairs are made — dangling references on
+names, facts and relationships, swapped relationship endpoint keys, and
+duplicate ids still fail validation. A dangling person-level ref is dropped:
+it attests no particular value, and the healer used to drop every person-level
+ref, so dropping only the ones that resolve to nothing loses less.
 
 ### 4.4 Source References
 
-Source references appear on names, facts, and relationships — deliberately
-**not** on persons. Full GedcomX allows person-level source references (a
-FamilySearch record persona typically carries one pointing at its record),
-but in the tree format every reference hangs off the specific name, fact, or
-relationship it attests; the merge tools strip person-level refs from
-candidates rather than carry them (see `merge-gedcomx-spec.md` §6.3). They
-link an assertion to a source description with a locator.
+Source references appear on persons, names, facts, and relationships, and link
+the holder to a source description with a locator.
+
+**On a person, a ref says only that the source is attached to that person.**
+FamilySearch attributes sources at the person level, on relationships, and
+essentially nowhere else (lead probe, 2026-09-20: 25 of 25 persons carry them,
+0 of 157 facts and 0 of 31 names), so `person_read` carries a person's here,
+and a relationship's on its edges (`person-read-tool-spec.md`, "5.
+Relationships"), rather than discard either. FamilySearch's `tags` on these refs are not carried: a
+`Name` tag says the record carries *a* name for the person, not *this* name,
+so it cannot attest a value, and 86% of refs carry none. Which source supports
+which name or fact is not decided here; that is source evaluation's job. The
+merge tools carry person-level refs and fold them on a collapse
+(`merge-gedcomx-spec.md` §6.3).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -253,7 +269,7 @@ link an assertion to a source description with a locator.
 Each fact carries two date fields:
 
 - **`date`** — the date string as it was originally written. Whatever a contributor typed in the raw GedcomX (`fact.date.original`) is preserved here verbatim. LLM-authored stub facts populate `date` directly with a human-readable string.
-- **`standard_date`** — a canonical GEDCOM-form sidecar produced by the converter (e.g. `12 Mar 1908`, `Abt 1850`, `Bef Oct 1855`, `Bet 1917 and 1918`). Downstream tools that need to compare or order dates should read `standard_date` rather than re-parsing `date` each time. Omitted when the standardizer cannot parse the input.
+- **`standard_date`** — a canonical GEDCOM-form sidecar produced by the converter (e.g. `12 Mar 1908`, `Abt 1850`, `Bef Oct 1855`, `Bet 1917 and 1918`). Downstream tools that need to compare or order dates should read `standard_date` rather than re-parsing `date` each time. Omitted when the standardizer cannot parse the input. **It never emits a partial:** if any word of `date` is unrecognized, `standard_date` is omitted rather than built from the words it did read, and it never carries a day without a month. So `13 ene 1752` gives `13 Jan 1752` and `1872 AGE 3 YRS` gives no sidecar, never `3 1872`. Connector words the date vocabulary knows, such as English `of` and `on` and Spanish and Portuguese `de` in `22 de abril de 1838`, count as read, and the legal idioms `on or about`, `on or before` and `on or after` read as `Abt`, `Bef` and `Aft`. A trailing parenthetical is an annotation, not part of the date, and is carried through verbatim (`~1845 (?)` gives `Abt 1845 (?)`).
 
 The standardizer recognizes the patterns below (and many freeform variants). LLM-authored skills should prefer these patterns in `date`; the converter will produce a matching `standard_date` when it can:
 
@@ -266,7 +282,7 @@ The standardizer recognizes the patterns below (and many freeform variants). LLM
 | `before YYYY` | `before 1850` | `/+1850` | Before a date |
 | `after YYYY` | `after 1840` | `+1840/` | After a date |
 | `YYYY-YYYY` | `1840-1850` | `+1840/+1850` | Date range |
-| Free text | `about Spring 1845` | (best-effort) | Unstructured — conversion function attempts to extract year and qualifier |
+| Free text | `about Spring 1845` | (none) | Unstructured. Any word the standardizer does not recognize (here `Spring`) omits `standard_date`; `date` still keeps the text verbatim |
 
 Reverse conversion (simplified → raw): only `date` is restored into `fact.date.original`. `standard_date` is dropped — it is a simplified-format-only sidecar.
 
@@ -378,12 +394,43 @@ catches is otherwise invisible: a lowercase `birth` copied across from
 `research.json` looks like a plausible value, passes every enum check that
 treats the list as open, and then hard-fails `tree_edit` mid-run. Name types
 carry no such constraint, but should follow the same PascalCase convention.
+A FamilySearch custom fact type is a label a user typed, so it can start with a
+lowercase letter, a quote or a digit; the converter tidies it to meet this rule
+before any tree is built from it (gedcomx-convert-spec.md §5.5).
 
 ---
 
 ## 6. Design Decisions
 
 **Why `preferred` and `primary` are omit-when-false, not always-present.** The simplified format optimizes for token count. A person with three names only needs `preferred: true` on one; the other two need no `preferred` field at all. This saves tokens across the file. The convention: presence of the boolean means true; absence means false. Do not write `"preferred": false`.
+
+**`primary: false` at the tool boundary is an instruction, not a stored value.**
+The convention above governs what is *persisted*; `tree_edit add_fact` and
+`tree_correct update_fact` accept `primary: false` and delete the key before the
+write, so the document still never carries a false and `checkTrueFlag` is
+unchanged. Without it there is no way to retire a primary at all —
+`clearPrimaryOfType` fires only as a side effect of designating a replacement, so
+the flag could move but never be cleared. The state that needs it is ordinary:
+`materialize_facts` never sets `primary` and surfaces a conflict when a second
+fact of a vital type lands, so a pre-existing flag keeps asserting a concluded
+value while the conflict is open (10 such persons across the committed e2e final
+trees, measured 2026-09-10). On `add_fact` it means "add this without a primary"
+and leaves any existing primary of that type alone; it never clears the type.
+**A later merge re-marks it, and that is intended.** `mergeFacts`
+(`src/utils/merge-gedcomx.ts`) marks the most complete fact of every vital type
+primary unconditionally, so a person whose primary was cleared comes out of
+`merge_tree_persons` — or out of folding a FamilySearch candidate document —
+with the flag restored, and a vital type that never carried one gains it.
+**Ruled intended 2026-09-11**: a merge concludes, so it is entitled to name the
+best fact of a type; gating the re-mark on the group having already had a
+primary was considered and rejected. Three tests in
+`tests/utils/merge-gedcomx.test.ts` specify the current behaviour by name,
+including "marks a lone vital fact primary even when nothing was merged into
+it" — do not treat them as stale. The operational consequence is the only thing
+to carry: if the conflict is still open after a merge, clear the flag again.
+
+`preferred` on names has the same shape and no equivalent, because nothing has
+needed one.
 
 **Why `quality` on source references, and its limitations.** The `quality` field is a quick relevance signal for the LLM, not a GPS analytical input. It maps to GEDCOM's QUAY scale and is populated when the research pipeline has classified the evidence. However, QUAY collapses three independent GPS axes (source classification, information quality, evidence type) into a single integer. Two source references with `quality: 2` may have fundamentally different GPS profiles — e.g., an original source with indirect evidence vs. an original source with a secondary informant providing direct evidence. For actual GPS reasoning — conflict resolution, independence analysis, informant evaluation — the LLM must consult `research.json` assertions, which carry the full three-layer classification. `quality` is useful for quick scanning ("which sources are strongest?") but insufficient for analytical decisions. Populate it when available; omit it when the classification hasn't been done yet (e.g., on facts populated before the analysis step).
 

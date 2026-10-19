@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_arc",
+    "skill": "search-external-sites",
+    "name": "Archion browse hand-off: the parish link, what it settles, what to look for, an offer",
+    "type": "positive",
+    "description": "Issue #2802's done-when in executable form (alpha feedback of 2026-09-22/23): a plan item that ends at Archion. The delegation carries the parish page as baseUrl. The agent must build the archion URL from it (with projectPath, so the hand-off is logged once), and the reply must give the link, what the register would settle, what to look for, and an offer to walk the researcher through capture and upload. Gated by test_archion_browse_handoff.",
+    "tags": [
+      "archion",
+      "external-site",
+      "church",
+      "url-generation",
+      "archion-browse",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Execute plan item pli_001: Katharina Seeger's baptism, about 1843, in the Baiersbronn Protestant parish registers on Archion.\n\nplanItemId: pli_001\nbaseUrl: https://www.archion.de/de/alle-archive/baden-wuerttemberg/evangelisches-archiv-baden-und-wuerttemberg-wuerttemberg/dekanat-freudenstadt/baiersbronn\nuserPresent: yes\nprojectPath: <workspace>",
+    "scenario": "archion-baiersbronn"
+  },
+  "mcp_fixtures": [
+    "place-search-baiersbronn",
+    "external-links-search-baiersbronn",
+    "collections-search-baiersbronn"
+  ],
+  "judge_context": [
+    "Archion is a browse site, not a search: the correct URL is the parish page itself, unchanged. Do not penalize the absence of name or year parameters.",
+    "The reply must give the hand-off in full: the link; what the register would settle (here, Katharina's parents, from the baptism entry or the family register); what to look for (the baptism register or Familienregister covering 1843, and the entry for Katharina Seeger); and an offer to walk the researcher through capturing the page and uploading it. A bare 'go to Archion' with no link, or with no offer, fails Capture guidance.",
+    "Archion viewing needs a paid pass; the reply must say so, from the tool's access value, not from memory.",
+    "pli_001 must end in_progress: the link was handed over and no capture is back."
+  ]
+}

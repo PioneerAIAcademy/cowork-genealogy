@@ -9,11 +9,12 @@
       "hypothesis-creation",
       "competing-hypotheses",
       "alternative-relationship",
-      "claim-clarity"
+      "claim-clarity",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I've been thinking about our Thomas Flynn hypothesis. The 1850 and 1860 census records show Patrick in Thomas's household, but those censuses don't state relationships. What if Thomas was actually Patrick's uncle rather than his father? The death certificate names Thomas as father, but the informant was a son-in-law who might have assumed the household head was the father. Can you create a competing hypothesis that Thomas was Patrick's uncle so we can track and test both possibilities?",
+    "delegation": "I've been thinking about our Thomas Flynn hypothesis. The 1850 and 1860 census records show Patrick in Thomas's household, but those censuses don't state relationships. What if Thomas was actually Patrick's uncle rather than his father? The death certificate names Thomas as father, but the informant was a son-in-law who might have assumed the household head was the father. Can you create a competing hypothesis that Thomas was Patrick's uncle so we can track and test both possibilities?\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn",
     "scenario_notes": null
   },

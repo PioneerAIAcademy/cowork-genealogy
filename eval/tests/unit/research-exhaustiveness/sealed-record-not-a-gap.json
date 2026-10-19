@@ -14,8 +14,8 @@
     ]
   },
   "input": {
-    "user_message": "The census and marriage searches for q_001 are done and the parents are established. Assess whether the research on q_001 is reasonably exhaustive.",
-    "scenario": "recent-birth-sealed"
+    "scenario": "recent-birth-sealed",
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and declining without a write if they are not. The researcher reports the census and marriage searches done and the parents established.\n\nquestionId: q_001\nprojectPath: <workspace>"
   },
   "judge_context": [
     "The one undone plan item (pli_004) — Alan's own 1936 Utah birth certificate — is privacy-sealed: Utah seals birth records for ~100 years (public ~2036), released before then only to the registrant or a direct heir on request. This is documented in pli_004's rationale and in log_004. The skill must treat it as a record that is NOT reasonably available, not as an outstanding search gap.",
@@ -24,11 +24,14 @@
     "Contrast (do not conflate): a record that is merely unsearched-but-accessible WOULD gate a declaration under the decisive-record rule. This birth certificate is unobtainable by privacy law, so it does NOT gate the declaration. The distinction is exactly the point of this test.",
     "The skill must NOT claim the birth certificate was examined or invent its contents.",
     "Acceptable pass: (a) declares q_001 reasonably exhaustive, noting the sealed birth record as an access limitation rather than a gap; OR (b) if it declines for a DIFFERENT legitimate reason, it still does not cite the sealed birth certificate as the outstanding searchable gap and does not recommend obtaining it.",
-    "Tool Arguments: if the skill declares, it writes via research_append (and may call validate_research_schema); a review/decline with no MCP tool call → Tool Arguments is N/A."
+    "Tool Arguments: if the skill declares, it writes via research_append (and may call validate_research_schema). A review/decline still makes MCP calls — `## 1. Gather evidence` names a wiki_read unconditionally — so grade this dimension on the calls that were made."
   ],
   "execution": {
     "max_turns": 40,
     "max_wall_clock_seconds": 900,
     "sdk_message_silence_seconds": 600
-  }
+  },
+  "mcp_fixtures": [
+    "wiki-read-utah-vital-records"
+  ]
 }

@@ -16,17 +16,23 @@ const canonicalPath = join(repoRoot, "plugin", "references", "places-guidance.md
 
 // Skills that carry a byte-identical copy of the canonical places guidance. Add
 // a skill here (and copy the file) when it starts using place tools or writing
-// places.
-const SKILLS_WITH_PLACES_GUIDANCE = [
-  "locality-guide",
-  "historical-context",
-  "search-external-sites",
-  "timeline",
-  "conflict-resolution",
-  "record-extraction",
-  "tree-edit",
-  "init-project",
-];
+// places. `timeline` left when issue #2797 converted it to an agent (moved to
+// AGENTS_WITH_PLACES_GUIDANCE below); `conflict-resolution` left when issue
+// #3036 did the same, but its new agent body does not inline this guidance at
+// all, so it is not in either list. `record-extraction` left when issue #3312
+// deleted the skill entirely (its agent, `record-structurer`, does not inline
+// this guidance either) -- no skill carries this guidance any more.
+const SKILLS_WITH_PLACES_GUIDANCE: string[] = [];
+
+// Agents that inline the canonical places guidance verbatim in their body
+// (CLAUDE.md "No playbook/reference files for agents": an agent carries its own
+// doctrine, so the guidance is inlined rather than loaded from a references/
+// file). The canonical file carries a leading HTML comment describing the
+// skill-copy mechanism, which does not apply inside an agent, so the agent
+// inlines the canonical BODY (comment stripped) and this arm asserts that body
+// appears verbatim. historical-context moved here from the skills list when
+// issue #2800 converted it to an agent, and timeline when issue #2797 did.
+const AGENTS_WITH_PLACES_GUIDANCE = ["historical-context", "timeline"];
 
 // Skills whose copy is deliberately specialized, so byte-identical is the wrong
 // contract for them. Each needs a reason — this list is not an escape hatch for
@@ -45,18 +51,12 @@ const SKILLS_WITH_PLACES_GUIDANCE = [
 //
 // To recompute: shasum -a 256 <path>  (CRLF is normalized to LF first, so a
 // Windows checkout with core.autocrlf=true hashes the same as a Unix one).
+//
+// research-plan's specialized copy was deleted with issue #2251 (issue #1112's
+// ruling); the rules it needed are inlined in that SKILL.md.
+// init-project's went with issue #2122: the skill is now an agent, and
+// project_create standardizes its places.
 const SKILLS_WITH_SPECIALIZED_COPY: Array<{ skill: string; why: string; sha256: string }> = [
-  {
-    skill: "research-plan",
-    // 8bf43be2 (2026-07-20) split place work by function: locality-guide owns
-    // the place FACTS, research-plan owns record DISCOVERY. It dropped
-    // wiki_search / wiki_place_page / place_population from research-plan's
-    // allowed-tools (place_distance was never there), so its copy reframes
-    // those four as "locality-guide's tools — you read their findings from the
-    // localities entry, you do not call them here."
-    why: "delegates place-fact fetching to locality-guide; canonical names four tools it cannot call",
-    sha256: "0521723c5e9de12e2277909a23963ff1f32e691e3620b31a9351dc7151cad78d",
-  },
 ];
 
 // LF-normalized, matching the eval snapshot's text rule (eval/CLAUDE.md
@@ -89,6 +89,27 @@ describe("places-guidance drift lint", () => {
       const copy = readFileSync(copyPath, "utf8");
       // Byte-identical: edit the canonical, then re-copy into every skill.
       expect(copy).toBe(canonical);
+    });
+  }
+
+  // The canonical body (the leading HTML comment, which only describes the
+  // skill-copy mechanism, stripped) must appear verbatim in each agent that
+  // inlines the guidance. LF-normalized so a CRLF checkout matches.
+  const canonicalBody = canonical
+    .replace(/\r\n/g, "\n")
+    .replace(/^<!--[\s\S]*?-->\n*/, "")
+    .trim();
+
+  for (const agent of AGENTS_WITH_PLACES_GUIDANCE) {
+    it(`${agent} agent inlines the canonical places-guidance body verbatim`, () => {
+      const agentPath = join(repoRoot, "plugin", "agents", `${agent}.md`);
+      expect(existsSync(agentPath), `missing agent: ${agentPath}`).toBe(true);
+      const body = readFileSync(agentPath, "utf8").replace(/\r\n/g, "\n");
+      expect(
+        body.includes(canonicalBody),
+        `${agent}.md no longer contains the canonical places-guidance body ` +
+          `verbatim. Edit the canonical, then re-inline it into the agent.`,
+      ).toBe(true);
     });
   }
 

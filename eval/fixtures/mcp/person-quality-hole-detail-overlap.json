@@ -1,0 +1,95 @@
+{
+  "tool": "person_quality",
+  "description": "CONSTRUCTED for issue #2796 finding 3 (the checklist block overlapping the findings), from person-quality-hole-detail: same four-fact profile and the same two COMPLETENESS/VERIFIABILITY issues, plus two CONSISTENCY DATE_MISMATCH issues rendered from that issueType's template in person-quality-templates.ts. Each one restates a finding the audit makes from the records: the death-date mismatch against the Minnesota Death Index is the index-error finding (1954 indexed, 1945 on the profile), and the birth-date mismatch against the 1885 state census is one field of the misattribution finding. Printed verbatim under 'suggestions, not errors', the first would call the index error a suggestion and the second would reopen a source the audit has already assigned to KD96-WX7. No other fixture carries a CONSISTENCY or COHERENCE issue.",
+  "args": {
+    "personId": "KD96-TV2",
+    "detail": true
+  },
+  "response": {
+    "personId": "KD96-TV2",
+    "segment": "GREEN",
+    "overallScore": 0.93,
+    "issueCount": 4,
+    "categories": [
+      {
+        "scoreType": "COMPLETENESS",
+        "count": 1,
+        "score": 0.96
+      },
+      {
+        "scoreType": "VERIFIABILITY",
+        "count": 1,
+        "score": 0.95
+      },
+      {
+        "scoreType": "CONSISTENCY",
+        "count": 2,
+        "score": 0.88
+      },
+      {
+        "scoreType": "COHERENCE",
+        "count": 0,
+        "score": 1.0
+      }
+    ],
+    "issues": [
+      {
+        "sentence": "A marriage place is missing a city.",
+        "conclusionType": "MARRIAGE",
+        "conclusionId": "c1f4a2be-70d1-4a19-9a55-2c0b8e4d7f31",
+        "scoreType": "COMPLETENESS"
+      },
+      {
+        "sentence": "The marriage has no tagged sources.",
+        "conclusionType": "MARRIAGE",
+        "conclusionId": "c1f4a2be-70d1-4a19-9a55-2c0b8e4d7f31",
+        "scoreType": "VERIFIABILITY"
+      },
+      {
+        "sentence": "This person has a death date of 10 June 1945, which does not match the date 10 June 1954. Minnesota Death Index, 1908-2002",
+        "conclusionType": "DEATH",
+        "conclusionId": "5b7e0c3a-91d2-4f6e-a8c4-3e2f1d9b7a60",
+        "scoreType": "CONSISTENCY"
+      },
+      {
+        "sentence": "This person has a birth date of 1875, which does not match the date 1852. Minnesota State Census, 1885",
+        "conclusionType": "BIRTH",
+        "conclusionId": "8a2d4f61-3c9e-4b7a-9e15-6f0c2b8d4e93",
+        "scoreType": "CONSISTENCY"
+      }
+    ],
+    "detail": {
+      "facts": [
+        {
+          "conclusionId": "c1f4a2be-70d1-4a19-9a55-2c0b8e4d7f31",
+          "conclusionType": "MARRIAGE",
+          "score": 0.91,
+          "issues": [
+            "A marriage place is missing a city.",
+            "The marriage has no tagged sources."
+          ],
+          "sources": []
+        },
+        {
+          "conclusionId": "5b7e0c3a-91d2-4f6e-a8c4-3e2f1d9b7a60",
+          "conclusionType": "DEATH",
+          "score": 0.86,
+          "issues": [
+            "This person has a death date of 10 June 1945, which does not match the date 10 June 1954. Minnesota Death Index, 1908-2002"
+          ],
+          "sources": []
+        },
+        {
+          "conclusionId": "8a2d4f61-3c9e-4b7a-9e15-6f0c2b8d4e93",
+          "conclusionType": "BIRTH",
+          "score": 0.9,
+          "issues": [
+            "This person has a birth date of 1875, which does not match the date 1852. Minnesota State Census, 1885"
+          ],
+          "sources": []
+        }
+      ],
+      "conflicts": []
+    }
+  }
+}

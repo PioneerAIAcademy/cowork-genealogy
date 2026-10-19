@@ -9,6 +9,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { scenariosDir, testsUnitDir } from '../paths';
 import type { ScenarioInfo, UnitTestFile } from '../types';
+import { resolveWithin, PathEscapeError } from './safe-path';
 
 export interface ScenarioListEntry {
   name: string;
@@ -76,7 +77,17 @@ export async function listScenarios(): Promise<ScenarioListEntry[]> {
 }
 
 export async function readScenario(name: string): Promise<ScenarioInfo | null> {
-  const dir = path.join(scenariosDir(), name);
+  // `name` is the `[name]` route segment. Same shape as `readFixture`, and worse
+  // in one respect: the files read below (README.md, research.json,
+  // tree.gedcomx.json) are the exact names a real genealogy project uses
+  // elsewhere on the same machine.
+  let dir: string;
+  try {
+    dir = resolveWithin(scenariosDir(), name);
+  } catch (e) {
+    if (e instanceof PathEscapeError) return null;
+    throw e;
+  }
   const stat = await fs.stat(dir).catch(() => null);
   if (!stat?.isDirectory()) return null;
   return {

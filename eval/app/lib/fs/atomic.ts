@@ -19,6 +19,12 @@ const RENAME_BACKOFF_MS = 50;
 
 const RETRYABLE_RENAME_ERRORS = new Set(['EBUSY', 'EPERM', 'EACCES']);
 
+// Monotonic within a process. Appended to the temp-file suffix so two writes
+// to the same target inside one millisecond (Date.now() resolution) get
+// distinct temp paths instead of colliding on one, which corrupted the target
+// (both open O_TRUNC from offset 0; one rename wins, the other ENOENTs).
+let tmpCounter = 0;
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -36,10 +42,12 @@ export async function atomicWriteText(filePath: string, content: string): Promis
   const dir = path.dirname(filePath);
   await fs.mkdir(dir, { recursive: true });
 
-  // Suffix with PID + counter to avoid collisions if two processes
-  // happen to write the same target concurrently (very rare in this
-  // single-editor app, but cheap insurance).
-  const tmpPath = `${filePath}.tmp-${process.pid}-${Date.now()}`;
+  // Suffix with PID + timestamp + counter to avoid collisions if two writes
+  // hit the same target concurrently. Two saves within one millisecond share a
+  // Date.now() value, so the counter is what actually keeps their temp paths
+  // apart — without it the shorter payload overwrites the head of the longer
+  // and the target ends up holding two spliced JSON documents.
+  const tmpPath = `${filePath}.tmp-${process.pid}-${Date.now()}-${tmpCounter++}`;
   await fs.writeFile(tmpPath, content, 'utf8');
 
   let attempts = 0;

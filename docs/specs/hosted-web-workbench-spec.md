@@ -51,7 +51,7 @@ Verified against `apps/server/app/`, `apps/web/src/`, `packages/viewer-ui/src/`,
 | 6.2 | WebSocket protocol | **shipped differently** — same message vocabulary, different endpoint and host; `auth_required` never built |
 | 6.3 | Database tables | **shipped differently** — 4 of 6 tables, with different columns |
 | 6.4 | Durable project storage | **not built** |
-| 7 | Agent runtime in the sandbox | **shipped as specced** (27 skills, not 28); the object-store sync half is not built |
+| 7 | Agent runtime in the sandbox | **shipped as specced** (27 skills against the spec's 28 when this was measured; 28 as of 2026-08-31); the object-store sync half is not built |
 | 7.1 | Sandbox image | **shipped as specced** |
 | 8 | Web client | **shipped as specced** |
 | 9 | Electron app | **shipped as specced** |
@@ -156,10 +156,12 @@ correspondingly-numbered general sections below. The general spec remains the
   `research_updated` / `gedcomx_updated` / `sidecar_updated` over the WS. This
   viewer path is control-plane↔E2B and is independent of the chat channel.
 - **FamilySearch token (overrides §5.2 option choice):** option **(a)** — the
-  control plane writes the token to `~/.familysearch-mcp/tokens.json` **inside the
-  sandbox** after OAuth (zero MCP code change); the in-sandbox MCP server refreshes
-  it; it persists across hibernation. *Initial* OAuth still needs a hosted/tunneled
-  redirect URI registered with FamilySearch.
+  control plane writes an **access token only** (no refresh token) to
+  `~/.familysearch-mcp/tokens.json` **inside the sandbox** after OAuth (zero MCP
+  code change). The control plane is the sole refresh owner; the sandbox cannot
+  refresh on its own. The token persists across hibernation, and a
+  fresh token is re-injected on every `/connect`. *Initial* OAuth still needs a
+  hosted/tunneled redirect URI registered with FamilySearch.
 - **Feedback (refines §11):** the control plane reads the in-sandbox Agent SDK
   transcript (`~/.claude/projects/<…>/*.jsonl`) + `/project` files via E2B
   `files.read` and bundles them — the existing `feedback.ts` logic, repointed at
@@ -177,10 +179,13 @@ correspondingly-numbered general sections below. The general spec remains the
   token cost — fine for comparison, watch the bill).
 - **New-session onboarding = conversational.** "New session" creates a fresh
   sandbox with an empty `/project`, starts `agent_runner`, and the client
-  **auto-sends an opening turn** ("start a new genealogy research project") that
-  triggers the existing **`init-project`** skill — researcher-profile interview +
-  FamilySearch-person seeding, in chat, reusing the skill as-is (no new onboarding
-  UI). The session is titled provisionally and renamed once the objective is set.
+  **prefixes the canned opener** ("Let's start a new genealogy research
+  project.") onto the user's first message on the wire, so the existing
+  **`init-project`** agent runs and reads the person and objective from that one
+  turn — FamilySearch-person seeding in chat, reusing the skill as-is (no new
+  onboarding UI; the researcher profile is fixed and nothing about the
+  researcher is asked). The bubble shows only what the user typed. The session is
+  titled provisionally and renamed once the objective is set.
 
 ---
 
@@ -276,7 +281,10 @@ and web (WebSocket transport).
 > 3. **The chat WS is not proxied.** The browser opens **one authenticated WSS
 >    straight to the sandbox** — `POST /api/sessions/{id}/connect` resumes it,
 >    exposes port 8080, mints a per-sandbox HMAC token, and returns
->    `{wssUrl, token, familysearch}`; the control plane is then out of the
+>    `{wssUrl, token, familysearch}` — except for a session more than 72 h past
+>    `projects.created`, which it refuses with 410 before resuming
+>    (`SESSION_MAX_AGE` in `app/sessions.py`; `/resume` and the read endpoints
+>    stay open, so an ended session's research can still be read); the control plane is then out of the
 >    streaming path entirely (affinity-free, the AWS-no-sticky requirement). The
 >    in-sandbox server is `apps/server/app/sandbox_server.py`. Full rationale:
 >    `docs/realtime-architecture.md`.
@@ -362,7 +370,7 @@ interface ResearchTransport {
 
 ~90% of the renderer (App, 11 sections, shared components, `lib/schema.ts`,
 `progress.ts`, `relationship-label.ts`) moves into `viewer-ui` unchanged. **11 is
-the count that actually moved** (PR #293, 2026-06-07); two sections were added
+the count that actually moved** (2026-06-07); two sections were added
 later, so the package holds **13** today.
 
 > **As built, verified 2026-08-02.** The interface shipped essentially verbatim
@@ -379,7 +387,7 @@ later, so the package holds **13** today.
 >
 > **The "11 sections" above is correct and must not be changed to 13.** Exactly
 > 11 section components existed when this was written, and exactly those 11 moved
-> in the extraction (PR #293, `371e5db5`). `KnownInformationSection` (2026-06-14)
+> in the extraction (`371e5db5`). `KnownInformationSection` (2026-06-14)
 > and `LocalitiesSection` (2026-07-15) were built afterwards, in `viewer-ui`
 > directly — they were never part of the migration this sentence describes. The
 > package holds 13 today; the migration moved 11.
@@ -418,20 +426,18 @@ later, so the package holds **13** today.
 > `PUBLIC_URL` scheme). A non-allowlisted account leaves no user row and no
 > persisted token.
 >
-> **Two login paths exist that this section does not describe:**
+> **One login path exists that this section does not describe:**
 > - **dev-login** — enter any email, no round-trip. Guarded twice: only when FS
 >   OAuth is unconfigured *and* `PUBLIC_URL` is not https, so it can never be
 >   exposed by a deploy that forgot to configure FamilySearch.
-> - **`/v1` bearer keys** — a public REST chat API for an external chatbot team
->   (`apps/server/app/v1.py`), authenticated by operator-granted keys in the
->   `API_KEYS` env. Deliberately **not** subject to the allowlist: presence in the
->   key map *is* the grant. This surface postdates the spec entirely and has no
->   section of its own.
+>
+> There were two. `/v1` bearer keys were **removed 2026-09-22: the surface was
+> sandbox-WebSocket-bound and had no live grant.**
 
 ### 5.2 Data auth: per-user FamilySearch OAuth (the big refactor)
 The current MCP auth (`packages/engine/mcp-server/src/auth/`) is **single-user, single-machine**:
 `login.ts` runs a **localhost:1837** callback and writes one
-`~/.familysearch-mcp/tokens.json`; every tool calls `getValidToken()` which reads
+`~/.familysearch-mcp/tokens.json`; every tool calls `getValidToken(principal)` which reads
 that **one global file** — there is **no per-request/per-env token path**. For
 multi-tenant web this must change:
 
@@ -447,20 +453,24 @@ multi-tenant web this must change:
    - **(a) Minimal:** write `~/.familysearch-mcp/tokens.json` inside the sandbox
      (matches today's MCP server exactly — zero MCP code change). Simple, works,
      but couples to the file format.
-   - **(b) Clean:** refactor `getValidToken()` to accept a token from an env var
+   - **(b) Clean:** refactor `getValidToken(principal)` to accept a token from an env var
      / per-session config the MCP server reads (`FAMILYSEARCH_ACCESS_TOKEN`),
      and the control plane refreshes centrally. Preferred long-term.
    Recommendation: ship (a) for v1 speed, plan (b).
 4. **Onboarding gate** — a user who hasn't connected FamilySearch is prompted to
    before any research tool runs.
 
-> **As built, verified 2026-08-02 — shipped as specced.** Steps 1–3 are in the
-> code: hosted redirect with PKCE (`fs_oauth.py`), per-user tokens in the
-> `familysearch_tokens` table with server-side refresh (`auth.fresh_fs_token`),
-> and **option (a)** injection — the control plane writes
-> `~/.familysearch-mcp/tokens.json` into the sandbox, zero MCP change
-> (`fs_oauth.write_tokens`). Option (b) was not pursued; `getValidToken()` still
-> reads the file. Two implementation details worth knowing:
+> **As built, verified 2026-08-02; updated 2026-09-28.** Steps 1–3
+> are in the code: hosted redirect with PKCE (`fs_oauth.py`), per-user tokens in
+> the `familysearch_tokens` table with server-side refresh
+> (`auth.fresh_fs_token`), and **option (a)** injection — the control plane
+> writes **an access token only** (no refresh token) to
+> `~/.familysearch-mcp/tokens.json` inside the sandbox, zero MCP change
+> (`fs_oauth.write_tokens`). The control plane is the sole refresh owner;
+> concurrent refreshes are serialized with a per-user `asyncio.Lock`, and a
+> successful refresh pushes the new token to every live sandbox the user has.
+> Option (b) was not pursued; `getValidToken(principal)` still reads the file.
+> Two implementation details worth knowing:
 >
 > - **The redirect reuses the desktop OAuth registration**, so the callback lives
 >   at a top-level `/callback` rather than `/familysearch/callback`, and the web
@@ -561,8 +571,46 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   protocol pings are not reliably counted as activity by the edge proxy, and a
 >   silent long turn was getting the socket dropped), and a capped replay buffer
 >   so a reconnect or a second tab rebuilds the chat history.
+> - **`seq` + `epoch` on recorded frames:** every frame that enters the replay
+>   buffer (`agent_event`, `user_msg`) is stamped with a per-session monotonic
+>   `seq` (from 1) and a per-server-process random `epoch` before it is sent.
+>   The client keeps a `lastSeq` cursor, drops any stamped frame at or below it
+>   — so the whole-history replay on a silent reconnect no longer re-folds the
+>   transcript — and resets the cursor when `epoch` changes, because a
+>   replacement server process counts from 1 again. Frames without a `seq`
+>   (`status`, the snapshot frames, `ping`, and everything from a pre-stamp
+>   server) are never deduped and pass through unchanged.
 > - `research_updated`/`gedcomx_updated` always carry the **full** document; the
 >   "or patch" option was never taken.
+> - **Lay mode: the server answers the hand-back itself (lead
+>   ruling 2026-09-18).** Every hand-back the prompts produce ends with the
+>   literal `Next: <step>. Continue?` (terminal `Research complete.`).
+>   Whether anyone has to click is a control-plane setting, not a prompt
+>   rule: when a turn's final main-thread text ends with the literal, the
+>   in-sandbox runner (`app/agent/runner.py`, `AutoContinue`) starts the next
+>   turn with `Yes.` itself.
+>   Two new `agent_event` kinds ride the socket and the replay buffer:
+>   `{kind:"auto_continue", text:"Yes.", step, max_steps}` before each
+>   synthetic turn, and `{kind:"auto_continue_paused", reason:"budget", step,
+>   max_steps}` when the budget is spent. The web folds `auto_continue` as a
+>   bubble boundary (`chatEvents.ts`), so each auto-continued step is its own
+>   reply and no `Yes.` bubble ever appears; the web ignores `auto_continue_paused`.
+>   The chain stops when: the turn ends with
+>   anything but the literal (a real question, `Research complete.`, an error,
+>   an interrupted turn); the budget of **consecutive auto steps since the last
+>   real user message** is spent (`AUTO_CONTINUE_MAX_STEPS`, default 30 — it
+>   bounds one unattended chain, not the session); or the user typed something
+>   meanwhile, in which case their message runs next and no `Yes.` is injected.
+>   Settings: `Settings.auto_continue` (default on) and
+>   `Settings.auto_continue_max_steps`, passed to the sandbox as
+>   `AUTO_CONTINUE` / `AUTO_CONTINUE_MAX_STEPS` by both providers. A `user_msg`
+>   frame may carry `auto_continue: false` to opt its whole chain out. The
+>   literal regex is `HAND_BACK_RE` in `app/agent/hand_back.py`, pinned by
+>   `apps/server/tests/test_runner_auto_continue.py`. Since continuous work shipped
+>   (2026-09-23) no plugin body emits the literal, so the chain does not start and
+>   the web has no Continue button. Per-session on/off lands with
+>   the experience-level user setting. Cowork desktop has no control plane we
+>   own; the user clicks there.
 
 ### 6.3 Database (Postgres) — minimum tables
 - `users` (id, google_sub, email, created)
@@ -582,15 +630,34 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 > - **`familysearch_tokens`** — shipped, columns `access_token` / `refresh_token`
 >   / `expires_at` / `updated`. **Encrypted at rest** via `crypto.EncryptedStr` (see §5.2).
 > - **`projects`** — shipped, minus **`objstore_prefix`** (no object store, §6.4)
->   and plus four columns this spec didn't foresee: `model` (the per-session model
->   knob from §0.5), `status` (`active`/`archived`), and `turn_locked_at` — a
->   guarded-UPDATE turn lock that makes the `/v1` API's one-turn-at-a-time rule
->   correct across control-plane instances without any in-memory state.
+>   and plus two columns this spec didn't foresee: `model` (the per-session model
+>   knob from §0.5) and `status` (`active`/`archived`).
+>   `turn_locked_at` was a third until 2026-09-22, when the `/v1` API it locked for
+>   was removed. It is gone from the model; only the live database still carries it,
+>   as a dead nullable, because `create_all` never drops a column.
 > - **`sessions`** — **not built**; the signed cookie is self-contained, which is
 >   the "or stateless JWT" branch this bullet allowed for.
-> - **`usage`** — **not built.** Per-turn cost/tokens are streamed to an
->   alpha-gated meter in the web client and are never persisted, so there is no
->   basis for the budgets §13 calls for.
+> - **`usage`** — built as **`turn_costs`** (project_id, user_id, model, cost_usd,
+>   input_tokens, output_tokens, build, continuations, created), one row per completed
+>   turn. The sandbox POSTs each turn's cost to `/api/turn-cost`, authenticated by its
+>   Anthropic proxy token; no foreign keys, so a deleted session's spend stays. Only
+>   production (proxy active) reports. `build` is the sandbox image's own commit, so a
+>   sandbox that outlives a deploy is billed to the code it runs; `continuations` counts
+>   the stops the Stop hook overrode that turn. `create_all` never alters a live table, so
+>   `init_db` adds any nullable column the model has and the table lacks
+>   (`db.add_missing_columns`). Only sandboxes built from 2026-10-12 on report, so it
+>   misses every older session still in use.
+>   **`api_calls`** (project_id, user_id, model, the four token counts, cost_usd,
+>   session_age_s, created) covers them: one row per `POST /v1/messages` the credential
+>   proxy relays with a 200, its usage read off the response on the way back
+>   (`anthropic_proxy._UsageMeter`: `message_start` and the last `message_delta` when
+>   streamed, the body's `usage` when not) and priced at the calling model's own rates
+>   (`app/agent/spend.py` `rates_for`). Its daily total is the alpha's whole bill.
+>   `session_age_s` is the session's age at the call, which separates a reopened old
+>   session's spend from a new one's. `make alpha-costs` prints both tables, in whole UTC
+>   days: every call by day, by model, by token type and the most expensive sessions,
+>   then turns by day, by build and by session. Nothing enforces against either: the
+>   alpha has no spend limit (lead ruling 2026-09-25).
 
 ### 6.4 Durable project storage (object store)
 - One prefix per project (`projects/<project_id>/`) holding `research.json`,
@@ -627,6 +694,74 @@ Per `docs/specs/sandbox-provider-spec.md`. Key points for this spec:
   (we never depend on microVM memory snapshots).
 - After each turn it pushes file deltas over WS **and** syncs `/project` to the
   object store.
+- **The SDK message stream stays drained while background subagents are still
+  running, and what the drain reads is discarded.** Background subagents keep
+  streaming after the parent turn's `ResultMessage` — the SDK holds stdin open
+  for exactly that — and those messages land in a stream whose
+  `max_buffer_size=100` is hardcoded in the SDK, not an option we can pass. With
+  `include_partial_messages=True` and several subagents emitting deltas, it fills
+  in seconds; once full the SDK's transport read loop blocks, and that same loop
+  dispatches the CLI's `control_request` frames, so every `PreToolUse` callback
+  goes unanswered and the session cannot run **any** tool call. A live session on
+  2026-08-25 died this way and lost 4 of 8 extractions, and it recurred twice in
+  the following week.
+
+  Three properties of `RealAgent._drain_background` are load-bearing rather than
+  incidental:
+
+  - **One reader at a time, by explicit handoff.** `Query.receive_messages`
+    iterates one `anyio` memory object stream, which hands each item to exactly
+    one receiver, so a drainer still running when the next turn starts would take
+    that turn's `ResultMessage` and hang `handle_turn` forever. Every path about
+    to read the stream calls `_stop_drain()` first, and the drainer closes the
+    iterator rather than leaving it suspended.
+  - **Outside the turn.** `runner._run_turn` emits exactly one `turn_done` when
+    the generator finishes and `runner.serve` drops any `user_msg` while the turn
+    task is alive, so draining *inside* the turn loop would leave the UI spinning
+    and Send disabled until the last subagent finished — the symptom that was
+    reported, not a fix for it.
+  - **Discarded, after an operator log line.** Delivering these events to the
+    browser was considered and deferred: it would extend the change into
+    `runner.py`, `sandbox_server.py`, the WS replay buffer and `apps/web`, and
+    reopen the one-`turn_done`-per-turn contract that `_run_turn` owns. That
+    contract is real - `_run_turn` emits it unconditionally at the end and its
+    own docstring says "exactly one" - but no test pins it:
+    `test_runner_interrupt.py` asserts `events[-1] == {"kind": "turn_done"}`
+    three times, which is "ends with", and carries no count assertion. The user-visible half is owned separately and stays open: a wedged
+    session and a finished turn look identical in the status line, and the event
+    mapper drops `is_error`. So the post-turn subagent prose is still not shown —
+    a known, owned gap rather than an oversight.
+
+  The in-process signal for "subagents still running" is
+  `RealAgent._live_tasks`, a set of `task_id` - not the SDK's private
+  `_inflight_tasks`, and not `_tasks`, which is a separate `tool_use_id` ->
+  label map used only for attribution. The split is deliberate:
+  `TaskStartedMessage.tool_use_id` is `str | None`, so keying liveness on it
+  meant a Task without one registered nothing and no drainer started, while
+  `task_id` is a required `str`.
+  It is filled on `TaskStartedMessage` and cleared on a terminal status from
+  **either** a `TaskNotificationMessage` or a `TaskUpdatedMessage` - the SDK
+  states a terminal state can arrive only on the latter, with the notification
+  "sometimes suppressed", so a task stopped via `TaskStop` reports
+  `status="killed"` there and nowhere else.
+  **It does not gate the drainer's START.** That gate was removed: the set is
+  legitimately empty at turn end when a terminal update lands inside the turn,
+  or when a `TaskStartedMessage` lands after the `ResultMessage`, and both
+  orderings stranded the post-turn messages this section is about. The drainer
+  starts whenever a client exists and `_stop_drain` owns its lifetime.
+
+  **No CI job reaches this path.** `apps/server/tests/test_background_drain.py`
+  asserts at unit scale that more than `max_buffer_size` post-`ResultMessage`
+  messages are consumed and that the next turn loses none of its own, over a fake
+  transport with the same bounded-buffer shape, and carries a negative control
+  that fails if the bound stops being modelled. It does **not** prove the real
+  CLI's `control_request` path recovers; that needs the manual run — launch two
+  or more subagents, let the parent turn end, then make one tool call. Because
+  `apps/server/app/agent/*` is baked into the
+  `genealogy-agent` E2B image and `make server-e2b` does not rebuild it (`make
+  deploy` does), verify with `make server-dev` (which runs the repo's copy) or
+  build a dev template first:
+  `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image`.
 
 ### 7.1 Sandbox image (`apps/server` build target)
 A template/image bundling: Node + Python + `claude-agent-sdk`, the genealogy MCP
@@ -645,7 +780,7 @@ build time.
 >   plugin (`plugins=[{"type":"local", …}]`) instead, and the plugin's **agents**
 >   are additionally staged into `<project>/.claude/agents/` because plugin
 >   loading registers them only under the namespaced `genealogy-research:<agent>`
->   spelling that no SKILL.md asks for (issue #939).
+>   spelling that no SKILL.md asks for (ADR-0004).
 > - **The FamilySearch token does not arrive by env var.** Option (a) won: the
 >   control plane writes `~/.familysearch-mcp/tokens.json` into the sandbox, and
 >   the operator Anthropic key comes from a per-connect secrets file at
@@ -655,8 +790,10 @@ build time.
 >   deltas are pushed over WS; nothing is synced anywhere.
 >
 > §7.1 is accurate — `apps/server/sandbox/e2b.Dockerfile` bakes Python 3.12 +
-> `claude-agent-sdk`, Node 22, the engine prod tree, and the plugin, built by
-> `apps/server/sandbox/build-image.sh` (`make sandbox-image`).
+> `claude-agent-sdk`, Node 22, the engine prod tree, the plugin, and a
+> `BUILD_INFO.json` provenance stamp (the commit the image was built from, plus a
+> dirty flag), built by `apps/server/sandbox/build-image.sh` (`make sandbox-image`,
+> and `make deploy`, which runs it).
 
 ### 7.2 What a user is allowed to read when this runtime fails
 
@@ -720,9 +857,6 @@ every healthy session.
 > new session auto-sends an opening turn that triggers `init-project` (§0.5) —
 > and the §7.4 this section twice points at **does not exist**; the spec has no
 > §7.4. It means §0.5's onboarding bullet.
->
-> `docs/plan/3-pane-workbench-ui.md` proposes replacing this two-pane layout; as
-> of this audit none of that plan has landed.
 
 ---
 
@@ -753,7 +887,7 @@ every healthy session.
 > **As built, verified 2026-08-02 — shipped as specced, and this is the load-bearing
 > one.** Both artifacts still build from the one engine, the packaging drift tests
 > still guard manifest/skill sync, and nothing is forked: the hosted sandbox image
-> copies `packages/engine/{mcp-server/build,plugin}` straight in. The build scripts
+> copies `packages/engine/mcp-server/build/` and `packages/engine/plugin/` straight in. The build scripts
 > are `scripts/build-mcpb.mjs` and `scripts/package-plugin.mjs` (Node, not the
 > `.sh` names above — the `.sh` wrappers still exist), driven by `make mcpb` /
 > `make plugin`.
@@ -839,7 +973,7 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
   of user-readable space where feasible.
 - **Production preflight (shipped 2026-08-05):** the control plane refuses
   to boot when it is configured as production but still holds development defaults —
-  `session_secret`, `ws_signing_key`, or an unset `DATABASE_URL`
+  `session_secret`, `ws_signing_key`, `anthropic_proxy_signing_key`, `fs_token_enc_key`, or an unset `DATABASE_URL`
   (`config.assert_production_config`, first statement of `main.py`'s lifespan).
   - *Why an https `PUBLIC_URL` is the production discriminant:* it is the signal
     `auth.cookie_secure()` already uses, it lives in `deploy/fly.toml`'s `[env]` rather
@@ -853,7 +987,7 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
   - *Why `ANTHROPIC_API_KEY` / `E2B_API_KEY` are deliberately excluded:* their absence
     already fails loudly on the first session create. The gate is for silent failures
     only; widening it past that would make it a second, drifting copy of the env table.
-  - The durable home for this is here until a `docs/specs/hosted-deploy-spec.md`
+  - The durable home for this is here until a hosted-deploy spec under `docs/specs/`
     exists to own it.
 - **`validate_research_schema` path-traversal:** the tool takes a user-influenced
   `projectPath` and reads files — in multi-tenant it must be constrained to the
@@ -894,9 +1028,9 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
 > - **Cost controls — idle suspension shipped, budgets did not.** `SandboxSpec`
 >   defaults to `auto_suspend_seconds: 900` and `E2BProvider` creates with
 >   `lifecycle={"on_timeout":"pause","auto_resume":True}`. There are **no** token
->   or sandbox-second budgets, no rate limits, and no auto-archive — there is no
->   `usage` table to enforce them against (§6.3). Per-turn cost is displayed to
->   the user and discarded. The allowlist remains the only real cap.
+>   or sandbox-second budgets, no rate limits, and no auto-archive. Each API call's cost
+>   is recorded in `api_calls` and each turn's in `turn_costs` (§6.3), but nothing
+>   enforces against either. The allowlist remains the only real cap.
 
 ---
 
@@ -943,7 +1077,7 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
 
 > **Progress as of 2026-08-02.**
 >
-> 1. **Done.** Monorepo + `viewer-ui` extraction landed in PR #293
+> 1. **Done.** Monorepo + `viewer-ui` extraction landed
 >    (`371e5db5`, 2026-06-07); Electron works through the IPC adapter.
 > 2. **Done**, with two substitutions: the login is FamilySearch, not Google, and
 >    the read API reads the sandbox rather than durable storage. The "read-only
@@ -968,7 +1102,7 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
   residency/retention/compliance out of scope for now.
 - FamilySearch token injection = **(a) file on the sandbox FS** (no MCP change).
 - Control plane hosted on **Dallan's local server, exposed via Tailscale Funnel**.
-- Onboarding = **conversational** (`init-project` skill), not a custom form.
+- Onboarding = **conversational** (`init-project` agent), not a custom form.
 - **Still to confirm (not blocking):** FamilySearch dev-key supports the web
   redirect flow + a handful of external alpha users; Funnel is enabled for the two
   sidecar endpoints.

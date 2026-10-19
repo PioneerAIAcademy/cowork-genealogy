@@ -1,0 +1,1170 @@
+import { describe, it, expect } from "vitest";
+import { readFileSync, readdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+// A delegated agent must not inherit its caller's read of the artifact.
+//
+// The rule this file freezes: a delegation carries the artifact, the ids, and
+// observations about the INPUT. It never carries a conclusion in the callee's
+// own lane. Record content yes, identity confidence no. A `looking_for` search
+// key yes, "confirm the father is Adam Schreck" no.
+//
+// That line is not "the artifact and nothing else" — three parameters we pass
+// on purpose are caller judgements about the input (a suspect-transcription
+// flag, an Old Style date reading, `looking_for`), and a rule phrased as
+// "nothing else" would forbid all three. The line is LANE OWNERSHIP: whatever
+// the callee is spawned to decide, the caller does not decide for it.
+//
+// Two incidents are why this is guarded rather than assumed, both recorded in
+// the skill bodies below:
+//
+//   - Corrective framing ("fix the tree", "correct these dates") induced
+//     DESTRUCTIVE edits from record-extractor.
+//   - A delegation that ordered an identity confidence produced "a fabricated
+//     identity link carrying a match score no tool had computed". That one also
+//     got a write-boundary fix — `extraction_append` refuses the
+//     `person_evidence` section outright — because, in `agents/record-extractor.md`'s
+//     own words (:844), "a delegation once argued a prose version of this rule
+//     down". That is the AGENT body, not the skill: this file's whole premise is
+//     `caller | agent`, so attributing an agent's sentence to "that skill" is the
+//     one confusion it cannot afford.
+//
+// ─── What this test can and cannot do ───
+//
+// It cannot judge whether a delegation is well framed. No lint can read intent.
+//
+// What it does is make the rule impossible to drop silently, in the two ways it
+// would otherwise be dropped:
+//
+//   1. **A new call site ships with no framing rule at all.** DELEGATION_EDGES
+//      below is the full set of caller→callee pairs *written as `@plugin:`*;
+//      adding either end fails this test until the author registers the pair and
+//      says where its handling lives. This is the same argument as
+//      AGENT_PERMISSIONS in `agent-tool-names.test.ts`: without the pin, the new
+//      thing simply is not looped over.
+//
+//      A brand-new agent is already caught by AGENT_PERMISSIONS whatever
+//      spelling its delegation uses, so what the edge set uniquely buys is the
+//      SECOND-CALLER case — and that is exactly what a delegation written some
+//      other way ("delegate to the record-extractor subagent") would evade.
+//      `no SKILL.md names an agent it is not a registered caller for` below
+//      closes that, for the three agent names that are unambiguous.
+//   2. **The rule is quietly reworded away.** Each edge pins a VERBATIM excerpt
+//      from the file that carries it. Deleting or softening the sentence fails
+//      here, in the same commit, as a diff a reviewer sees.
+//
+// Registering a new edge is ordinary work. Editing this file is how you say you
+// meant it — and the excerpt you pin is the sentence you are claiming holds the
+// rule, so pin the one that actually states it, not the nearest heading.
+
+const here = dirname(fileURLToPath(import.meta.url));
+const mcpRoot = join(here, "..", "..");
+const pluginRoot = join(mcpRoot, "..", "plugin");
+const agentsDir = join(pluginRoot, "agents");
+const skillsDir = join(pluginRoot, "skills");
+
+type Side = "caller" | "agent";
+
+interface Edge {
+  /** Where the framing rule is stated, and the exact sentence stating it. */
+  pins: { side: Side; excerpt: string }[];
+  /**
+   * An edge with no rule on one side, and why that is currently acceptable.
+   * Shrink-only: when the side gains a rule, pin it and delete the exemption.
+   *
+   * `mitigation` is what stops the reason being an unchecked prose claim. If
+   * the reason credits a construction in a file — "the delegation names both
+   * outcomes" — that construction must be pinned here, verbatim, and it is
+   * asserted exactly like a pin. Without it the exemption was length-checked
+   * only: the entire quoted construction was deleted from
+   * skills/proof-conclusion/SKILL.md and the full engine suite stayed green,
+   * so the header's "each edge pins a VERBATIM excerpt" was not true of the
+   * two caller-side exemptions.
+   *
+   * Staleness is now partly detected too — see the exemption assertion below,
+   * which fails when the exempt side's file gains one of the caller-pressure
+   * idioms its siblings pin.
+   */
+  exempt?: {
+    side: Side;
+    reason: string;
+    /** The construction `reason` credits, pinned in the file that carries it. */
+    mitigation?: { side: Side; excerpt: string };
+  };
+}
+
+// Keyed `<caller skill>/SKILL.md -> <callee agent>`.
+const DELEGATION_EDGES: Record<string, Edge> = {
+  "forget-and-rederive -> record-structurer": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "research -> record-structurer": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "search-records -> record-structurer": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "search-records -> image-reader": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Never tailor, trim, or slant the transcription toward an expected answer.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller asks only for a page's text, keyed by the result's id, and composes no " +
+        "expected answer. The agent-side pin forbids slanting the transcription toward one, " +
+        "which is the guarantee; this caller carries no rule of its own yet.",
+    },
+  },
+
+
+  // "search-images -> search-images" was here until the thin-skill deletion
+  // (issue #2268). The routing skill is gone. research/SKILL.md reached the
+  // agent by a bare-name routing cell until issue #2116 spelled it
+  // `@plugin:search-images`; that edge is registered below.
+
+  // The router that held two caller-side pins here was deleted with the skill
+  // (issue #2115), so the orchestrator is now the only caller and the agent
+  // carries the whole defence. The history below is why that pin is agent-side.
+  // Added with the "Bounded request or job" section (#2813 item 1): a bounded
+  // transcription goes straight to the agent that owns it instead of walking the
+  // routing table. The caller side is exempt because the whole delegation is one
+  // clause naming a destination -- it forwards no expected answer for the agent
+  // to slant toward, which is the pressure the sibling record-extraction edge
+  // pins against. If the router ever gains a sentence telling this agent what to
+  // look for, that sentence is a caller pin and this exemption must go.
+  "research -> image-reader": {
+    pins: [
+      {
+        side: "agent",
+        excerpt:
+          "Never\ntailor, trim, or slant the transcription toward an expected answer.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The router states the destination and nothing about the content: it " +
+        "passes no looking_for, no expected answer, and no framing of what the " +
+        "page should say. Deciding whether the page holds what was wanted is " +
+        "the caller's job on return, which the agent-side pin already states.",
+      mitigation: {
+        side: "caller",
+        excerpt: "transcription to `@plugin:image-reader`",
+      },
+    },
+  },
+
+  "research -> question-selection": {
+    pins: [
+      // Added after the first direct-arm run (issue #2115). The exemption this
+      // replaces claimed the agent needed no rule because the fold was verbatim.
+      // The run refuted it: three adversarially-phrased twins ran, and two --
+      // d01 (told to add while work was in flight) and d04 (told to pursue an
+      // explicitly out-of-scope person) -- complied. All 11 routed originals
+      // passed, so the caller-side rule alone was invisible to the suite. The
+      // agent now carries its own, on the research-exhaustiveness pattern.
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that tells you to add a question is a destination, not a finding.**",
+      },
+    ],
+  },
+  // "research-exhaustiveness -> research-exhaustiveness" was the self-delegation
+  // from the thin skills/research-exhaustiveness/ SKILL.md to
+  // agents/research-exhaustiveness.md. That skill directory was deleted in issue
+  // #2738; the direct caller is now `research`, which holds the sole caller-side
+  // pin for this agent below.
+
+  // "person-evidence -> person-evidence" was the self-delegation from the thin
+  // skills/person-evidence/ SKILL.md to agents/person-evidence.md. That skill
+  // directory was deleted in the agent-conversion; the direct caller is now
+  // `research`, which holds the sole caller-side pin for this agent below.
+
+  "research -> gps-mentor": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "invoke `@plugin:gps-mentor` with a delegation message naming the focus\nand target_id",
+      },
+    ],
+    exempt: {
+      // Staleness here is NOT detected — if gps-mentor.md gains a rule, nothing
+      // fails. Pin it and delete this entry when it does.
+      side: "agent",
+      reason:
+        "gps-mentor states no caller-pressure rule. The caller side is the narrowest " +
+        "delegation we ship — focus and target_id only, no artifact and no framing — " +
+        "and the mentor reads the project documents itself, so there is little for a " +
+        "caller to slant. The residual case is an on-demand invocation ('review my " +
+        "work'), where the main session composes the message and nothing constrains " +
+        "what it puts there. Not fixed here: an agent body is billed on every " +
+        "invocation and gps-mentor sits behind a paid eval gate, so the edit belongs " +
+        "with a run that can measure it.",
+    },
+  },
+
+  // The three rows /research routes by spawning the agent directly (#2075).
+  // All three share one caller-side paragraph, because the failure they guard
+  // against is the same one: on the direct route the agent's own body is not
+  // loaded in the caller's context, so every rule the THIN SKILL used to state
+  // to the orchestrator is off. The paragraph puts those rules back on the only
+  // side that still reads them.
+  "research -> research-exhaustiveness": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt: "A delegation that tells you to declare is a destination, not a finding",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "Read what you need from\nthe project yourself — do not expect the caller to have gathered it.",
+      },
+    ],
+  },
+
+  "research -> proof-conclusion": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      // The third of the three caller rules. Pinned here because it was
+      // otherwise unpinned across all four new edges — deletable with the whole
+      // engine suite green, which is the "quietly reworded away" case this
+      // file's header exists to stop.
+      {
+        side: "caller",
+        excerpt: "Relay the agent's return as-is.",
+      },
+      {
+        side: "agent",
+        excerpt: "**Including when your own delegation message tells you to write one.**",
+      },
+    ],
+  },
+
+  "research -> conflict-resolution": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "caller",
+        excerpt: "Relay the agent's return as-is.",
+      },
+    ],
+    exempt: {
+      // Staleness here is NOT detected beyond the idiom check below — pin the
+      // agent's rule and delete this entry when the body gains one.
+      side: "agent",
+      reason:
+        "conflict-resolution.md is the skill folded verbatim, and the fold states no " +
+        "caller-pressure rule: the skill was always entered by the researcher's own words, " +
+        "never by a delegation that could pre-state a winner. The conversion adds no doctrine " +
+        "(the first body change after the unchanged-fold run is naming the resolution kind), " +
+        "so the rule is owed to the next paid run of this agent. Until then what binds is the " +
+        "write boundary, not the prose: research_append refuses a resolve that does not say " +
+        "how it was settled, and the plugin hook routes a conflict's analysis to this agent alone.",
+    },
+  },
+
+  "research -> hypothesis-tracking": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a status** — \"h_001 is supported now\", \"rule\n  out h_002\" — does not make it so.",
+      },
+    ],
+  },
+
+  // The agent-conversion (issue #2802) deleted skills/search-external-sites/,
+  // so its three callers became spawns of `@plugin:search-external-sites`.
+  "research -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
+  "search-records -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "and the plan item — never a value you expect it to find —",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
+  // "research-plan -> search-external-sites" was here until issue #2116
+  // deleted the research-plan skill. The agent hands a search back by name
+  // instead of spawning it, so the edge left with the skill file.
+
+  // The routing cell for a browse-only record set named `search-images` bare
+  // after issue #2268 deleted that skill, which by research/SKILL.md's own rule
+  // ("every other entry is a Skill call") routed browsing to nothing. Flipped to
+  // `@plugin:search-images` in issue #2116; research shares its caller paragraph.
+  "research -> search-images": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt: "## A delegation is a request for work, never a finding about the work",
+      },
+    ],
+  },
+
+  // Converted from a skill (issue #2116). The orchestrator spawns it from its
+  // routing table and its bounded-request line; research's row shares the
+  // caller paragraph locality-guide pins. The agent-side pin is the mode gate a
+  // delegation phrased as "write the next plan" must not settle.
+  "research -> research-plan": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "A delegation that tells you which mode to take — \"create the next plan\", \"the current plan is finished\", \"write pl_003\" — does not settle it.",
+      },
+      // Dispose mode is entered only on a named `planItemIds` line, so both
+      // sides of that key are pinned.
+      {
+        side: "caller",
+        excerpt: "a `planItemIds:` line with the `pli_` ids research-exhaustiveness named",
+      },
+      {
+        side: "agent",
+        excerpt: "research-exhaustiveness refused a declaration and names `planItemIds`, take",
+      },
+    ],
+  },
+  // search-records spawns it when the user asks whether research on a question
+  // is complete (issue #2116; research-plan would only hand that back).
+  "search-records -> research-exhaustiveness": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "never your own view of whether it is done",
+      },
+      {
+        side: "agent",
+        excerpt: "A delegation that tells you to declare is a destination, not a finding",
+      },
+    ],
+  },
+  // search-records spawns it for a strategy question and when a boundary nil
+  // needs re-planning (issue #2116).
+  "search-records -> research-plan": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "never the plan or record type you expect it to choose",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "A delegation that tells you which mode to take — \"create the next plan\", \"the current plan is finished\", \"write pl_003\" — does not settle it.",
+      },
+    ],
+  },
+
+  "research -> person-evidence": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "**always the agent, never inline.**",
+      },
+      {
+        side: "caller",
+        excerpt:
+          "Do not\n   override a decline: when an agent blocks on a precondition, route to the\n   destination it names",
+      },
+      // Agent-side, and NOT exempt. A first draft of this entry claimed
+      // person-evidence.md "states no caller-pressure rule" and credited
+      // extraction_append's section refusal as the mitigation. Both were wrong:
+      // the agent states four such rules, and it grants `research_append`, not
+      // `extraction_append` — that write boundary constrains record-extractor,
+      // not this agent. The rules below match the former `person-evidence ->
+      // person-evidence` self-delegation edge (deleted when the thin skill was
+      // removed; `research` is now the sole caller for this agent).
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation is a request for work, never a finding about the work's\npreconditions.**",
+      },
+      {
+        side: "agent",
+        excerpt: "**A caller-supplied confidence is not a confidence.**",
+      },
+    ],
+  },
+  // Converted from a skill (issue #2117). Both callers spawn it directly; the
+  // research row shares the caller paragraph the three rows above pin.
+  "research -> locality-guide": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt: "**A delegation is a request for work, never a finding.**",
+      },
+    ],
+  },
+
+  // Converted from a skill (issue #2122). Both callers spawn it when no project
+  // exists; research's row shares the caller paragraph locality-guide pins.
+  "research -> init-project": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt: "**A delegation is a request for work, never a finding.**",
+      },
+    ],
+  },
+  // Added with the agent (issue #3273). Spawned only when no project exists and
+  // the message states no objective; it writes nothing, so the pins are the
+  // shared caller paragraph and the agent's own framing rule.
+  "research -> tree-survey": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt: "## A delegation is a request for work, never a finding about the work",
+      },
+    ],
+  },
+  "forget-and-rederive -> init-project": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "**A delegation is a request for work, never a finding.**",
+      },
+    ],
+  },
+  // Added with the agent (issue #2029). Two spawns, because an agent returns
+  // once: triage, then the researcher's verdicts. The caller pin is the one
+  // that keeps a triage recommendation from being passed back as a verdict.
+  "research -> search-hints": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Never pass a verdict the\nresearcher did not state — a triage recommendation is not one.",
+      },
+      {
+        side: "agent",
+        excerpt: "**Verdicts are the researcher's.**",
+      },
+    ],
+  },
+
+};
+
+// A SKILL.md that names an agent WITHOUT delegating to it, mapped to the
+// EXCERPT that proves it. The excerpt is what makes this safe to honour in both
+// arms, and it was added after review: a plain Set silenced arm 1 too, so one
+// line suppressed a REAL delegation. Reproduced on this file's own code — a
+// corrective-framing `@plugin:record-extractor` added to a non-caller skill
+// failed two arms, and the remedy the failure message itself offers ("if it is
+// prose, add it to PROSE_MENTIONS") turned both green with the delegation still
+// in the file. Both arms fire together on a real delegation, so the guard was
+// pointing the author straight down the bypass.
+//
+//   ""        a BARE-NAME mention. It spells no `@plugin:` token, so it never
+//             reaches discoverEdges() and there is nothing to suppress.
+//   "<text>"  the sentence that shows the mention is a prohibition rather than
+//             a delegation. ONLY a quoted entry suppresses arm 1, so dropping
+//             the rule shows up in the same commit as a diff a reviewer sees,
+//             which is the standard the rest of this file already holds pins to.
+//
+// Held to a real discipline below (`PROSE_MENTIONS is not stale`): a dead entry
+// fails, an entry shadowing a registered edge fails, and an entry whose skill
+// spells the token fails unless it quotes a sentence that carries the token and
+// clears PIN_FLOOR.
+//
+// TWO RESIDUAL LIMITS, both measured, neither closable by a lint:
+//
+//   - Prohibition and delegation are not decidable from the token, so quoting a
+//     REAL delegation's own sentence does satisfy this check. What the excerpt
+//     buys is not detection, it is that the claim is verbatim in the diff a
+//     reviewer reads — the same standard every pin in this file is held to, and
+//     the reason the plain Set was wrong: that needed no claim at all.
+//   - `normalize` collapses whitespace, so an "excerpt" spanning two paragraphs
+//     would satisfy the quote check. Already true of every pin here, so it is a
+//     property of the mechanism rather than something this adds.
+//
+// THE `citation` ROWS ARE A DIFFERENT SHAPE, and worth reading before adding
+// more like them. `citation` (issue #2799) is the first agent whose name is
+// also an ordinary English word, and `namesAgent` tokenizes and matches any
+// token CONTAINING the name — so "citation", "citations" and "inline citation
+// of individual claims" all trip arm 2 in skills that have nothing to do with
+// the agent. Of the six below, only `record-extraction` means the agent
+// (boundary prose: "format citations (use citation)"); the other five are the
+// common noun. All six are bare-name mentions, so all six take `""` and
+// none can suppress a real delegation.
+//
+// The arm still earns its place for `gps-mentor`, `image-reader` and
+// `record-extractor`, whose names no one writes by accident. It does not
+// discriminate for `citation` — a single-word agent name whose bare form can
+// appear in ordinary prose.
+const PROSE_MENTIONS = new Map<string, string>([
+  ["research -> citation", ""],
+  // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
+  // prose arm only since issue #2822 deleted the routing skill and made the
+  // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
+  // is a delegation being silenced -- verified per file before listing.
+  // (A research-exhaustiveness row left when issue #2738 deleted that skill
+  // directory on 2026-10-08, a timeline row left when issue #2797 deleted its
+  // skill directory on 2026-10-06, and a conflict-resolution row left when
+  // issue #3036 deleted ITS skill directory on 2026-10-13 -- all three are
+  // agent files now, outside this arm's skillFiles scan, so none of their
+  // mentions is checked here any more.)
+  // Bare-name mentions of `conflict-resolution`, visible to the prose arm since
+  // issue #1852 deleted the skill and made the name unambiguous. Boundary
+  // prose ("use conflict-resolution", "route to conflict-resolution"), not a
+  // delegation -- does not spell `@plugin:conflict-resolution` -- verified per
+  // file before listing.
+  ["search-records -> conflict-resolution", ""],
+  // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
+  // name is not an ordinary English word, so the arm DOES discriminate for it,
+  // and the one mention below is boundary prose telling the reader this is the
+  // other lane — "→ search-wikipedia, not translation". It is not a
+  // delegation: under the lead's 2026-09-23 hand-back ruling nothing spawns this
+  // agent from a skill body. #2795 decided to leave the wording alone — the
+  // name survives as the agent's name, and rewording it would flip skills'
+  // eval snapshots for no behavioural gain. (Rows from search-familysearch-wiki,
+  // locality-guide, and translation left when issues #2794, #2117, and #2804
+  // deleted those skills — no skill mentions it now.)
+  // search-familysearch-wiki entered agentOnly when issue #2794 deleted its
+  // skill. The row is routing-boundary prose naming it as the owner of a
+  // FamilySearch-wiki request, not a delegation, and does not spell
+  // `@plugin:search-familysearch-wiki`. (A locality-guide row left when issue
+  // #2117 deleted that skill.)
+  // person-evidence gained a skills/<name>/ directory before the agent
+  // conversion; when the skill was deleted the name entered agentOnly and
+  // every SKILL.md that references it now needs a registration. All are
+  // bare-name mentions — none spell `@plugin:person-evidence`.
+  ["forget-and-rederive -> person-evidence", ""],
+  ["search-records -> person-evidence", ""],
+  // check-warnings (issue #2118): boundary mentions ("use check-warnings",
+  // "that is check-warnings' job"), none a delegation. The two real callers,
+  // init-project and tree-edit, were registered edges; tree-edit's left when
+  // issue #2805 deleted its skill, init-project's when issue #2122 did.
+  ["search-records -> check-warnings", ""],
+  // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
+  // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
+  // not a delegation; it does not spell `@plugin:tree-edit`.
+  // convert-dates entered agentOnly when issue #2790 deleted its skill. All
+  // three are routing-boundary prose naming it as the owner of a calendar
+  // conversion ("use convert-dates", "route to convert-dates"), none spells
+  // `@plugin:convert-dates`.
+  // question-selection's skill was deleted (issue #2115), so the name entered
+  // agentOnly. Every mention below is bare-name boundary or next-step prose;
+  // the one delegation, research's routing table, spells `@plugin:` and is a
+  // registered edge above.
+  ["forget-and-rederive -> question-selection", ""],
+  // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
+  // directory. The conflict-resolution and timeline mentions both left this
+  // scan when those two skills converted to agents in turn (issues #3036 and
+  // #2797) -- outside this arm's skillFiles scan now, like the other
+  // conversions noted above.
+  // search-external-sites entered agentOnly when issue #2802 deleted its skill.
+  // The one entry (record-extraction's, routing-boundary prose naming it as
+  // the owner of an external-site search) left this scan too when issue
+  // #3312 deleted the record-extraction skill directory -- no entries remain
+  // for this agent.
+  // search-full-text entered agentOnly when issue #2120 deleted its skill
+  // directory. All mentions below are bare-name boundary prose ("use
+  // search-full-text", "search-full-text skill") — none spells
+  // `@plugin:search-full-text`.
+  ["search-records -> search-full-text", ""],
+  // source-evaluation entered agentOnly when issue #2796 deleted its skill.
+  // Its one mention was init-project's boundary prose, which left this scan
+  // entirely when issue #2122 deleted skills/init-project/ in turn (the
+  // merged-in main branch's own conversion) -- the entry is deleted, not kept,
+  // per the staleness check below.
+  //
+  // timeline entered agentOnly when issue #2797 deleted its skill directory.
+  // Routing-boundary mention of the AGENT, verified per file —
+  // forget-and-rederive listing it among the sections a forget touches.
+  // (A project-status row left when issue #2793 deleted that skill
+  // directory, a question-selection row left when issue #2115 deleted that
+  // skill directory, an init-project row left when issue #2122 deleted that
+  // skill directory, and a conflict-resolution row -- "build a timeline (use
+  // timeline)" and "(timeline)" -- left when issue #3036 did the same -- all
+  // four are agent files now, outside this arm's skillFiles scan.)
+  ["forget-and-rederive -> timeline", ""],
+  // research-exhaustiveness entered agentOnly when issue #2738 deleted its
+  // skill directory. No entries remain: research-plan's went with that skill
+  // when issue #2116 deleted it, search-external-sites' when issue #2802
+  // deleted that one, and search-records now spawns
+  // `@plugin:research-exhaustiveness`, a registered edge.
+]);
+
+const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
+  .filter((d) => d.isDirectory())
+  .map((d) => d.name)
+  .filter((name) => {
+    try {
+      readFileSync(join(skillsDir, name, "SKILL.md"), "utf8");
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+// `@plugin:<name>` in a SKILL.md body. THE CHARACTER CLASS IS SHARED: it must
+// match `_AGENT_REF_RE` in eval/harness/harness/snapshot.py:42 and
+// `AGENT_REF_RE` in eval/app/lib/snapshot.ts:29 — both of which carry explicit
+// must-match comments and shared test vectors — plus
+// eval/harness/scripts/check_rubric_tool_drift.py:122 and
+// apps/server/tests/test_plugin_agents.py:106. This file was a fifth copy with
+// a divergent class (`[a-z][a-z0-9-]*`), which would disagree with the snapshot
+// scanners on any name the two classes read differently.
+const AGENT_REF_RE = /@plugin:([a-z0-9-]+)/g;
+
+/**
+ * Does `text` spell `@plugin:<agent>` EXACTLY? Never a substring: the review
+ * that produced this arm had its own first patch broken by
+ * `@plugin:image-reader-opus` containing `@plugin:image-reader`, which is the
+ * same class this file's `namesAgent` exists for, reintroduced in the remedy.
+ * Uses AGENT_REF_RE so this and discoverEdges() cannot disagree about what a
+ * delegation token is.
+ */
+function spellsAgent(text: string, agent: string): boolean {
+  return [...text.matchAll(AGENT_REF_RE)].some((m) => m[1] === agent);
+}
+
+/** Every `<skill> -> <agent>` pair a SKILL.md actually delegates. */
+function discoverEdges(): string[] {
+  const edges = new Set<string>();
+  for (const skill of skillFiles) {
+    const text = readFileSync(join(skillsDir, skill, "SKILL.md"), "utf8");
+    for (const m of text.matchAll(AGENT_REF_RE)) {
+      const edge = `${skill} -> ${m[1]}`;
+      // Only a QUOTED prose mention suppresses the edge. `.get()` not `.has()`:
+      // an entry with "" is a bare-name mention that never spells a token, so
+      // it must not silence one — that difference is the whole guard. Trimmed,
+      // so truthiness agrees with the staleness arm below: "   " is truthy in
+      // JS, so untrimmed a whitespace-only excerpt suppressed arm 1 here while
+      // the staleness arm rejected the same entry. Only one of the two caught
+      // it, which is one failure away from neither.
+      if (!(PROSE_MENTIONS.get(edge) || "").trim()) edges.add(edge);
+    }
+  }
+  return [...edges].sort();
+}
+
+/**
+ * Collapse runs of whitespace so a pin survives reflowing, and drop inline
+ * emphasis so it survives bold becoming italic with no word changed. Applied to
+ * BOTH the pin and the haystack, so it cannot make a pin match text that says
+ * something else. Same treatment as `corpus-figures.test.ts` (which strips
+ * ``[*`_]`` before searching spec prose).
+ */
+function normalize(text: string): string {
+  return text
+    .replace(/[*`_~]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Does `text` name `agent`? A hit is skipped ONLY when the whole kebab token at
+ * that position is a DIFFERENT agent's name, so `image-reader-opus` is not read
+ * as a mention of `image-reader`, while `record-extractors` and
+ * `sub-image-reader` still are. Loses nothing `includes` catches, and adds a
+ * markdown hyphen hard-wrap. Builds no RegExp from a filename, so an odd
+ * basename cannot throw. Case-SENSITIVE on purpose: gps-mentor.md's "# GPS
+ * Mentor" heading is prose, and a capitalised `@plugin:` spelling would not
+ * resolve at runtime anyway.
+ *
+ * Four attempts at this function regressed on first pass. A plain
+ * `includes(agent)` false-fails a legitimate `image-reader-opus` edge; a
+ * `(?<![a-z0-9-])name(?![a-z0-9-])` boundary silently stopped matching plurals;
+ * widening only the tail silently dropped left-extended mentions. Both losses
+ * were in the arm whose whole job is catching prose delegations, so any change
+ * here must be diffed against `includes` on the same corpus, not merely checked
+ * for a green repo.
+ */
+function namesAgent(textRaw: string, agent: string, all: string[]): boolean {
+  const text = textRaw.replace(/-\r?\n\s*/g, "-");
+  const others = new Set(all.filter((x) => x !== agent));
+  for (const m of text.matchAll(/[a-z0-9]+(?:-[a-z0-9]+)*/g)) {
+    const tok = m[0];
+    if (!tok.includes(agent)) continue;
+    if (tok !== agent && others.has(tok)) continue;
+    return true;
+  }
+  return false;
+}
+
+function fileForSide(edge: string, side: Side): { path: string; label: string } {
+  const [caller, callee] = edge.split(" -> ");
+  return side === "caller"
+    ? { path: join(skillsDir, caller, "SKILL.md"), label: `skills/${caller}/SKILL.md` }
+    : { path: join(agentsDir, `${callee}.md`), label: `agents/${callee}.md` };
+}
+
+/**
+ * Floor for a pinned excerpt, in NORMALIZED characters.
+ *
+ * Measured, not guessed: the shortest genuine pin in this file normalizes to 40
+ * ("never an assertion of what the page says"), and `excerpt: "the"` — which
+ * used to pass clean — normalizes to 3. 24 sits between them with 16 characters
+ * of headroom under the real minimum, so a reflow of the shortest pin cannot
+ * turn this into a CI failure. Set at 39 it would pass by one character, which
+ * is a guard that breaks on the next line-wrap.
+ *
+ * It cannot judge whether a sentence states a rule. `research -> gps-mentor`
+ * clears it at 81 while pinning only the bare invocation line, which states no
+ * constraint on delegation content — that edge is effectively unguarded on both
+ * sides and still satisfies "states the rule on at least one side". No lint
+ * closes that; it needs the caller sentence to say something.
+ */
+const PIN_FLOOR = 24;
+
+/**
+ * Sentences that only exist to resist caller pressure. Their presence in a file
+ * means that side HAS a rule, so an exemption claiming it has none is stale.
+ * Sourced from the pins already in this file, so the list cannot drift away from
+ * what the repo actually writes.
+ */
+const CALLER_PRESSURE_IDIOMS = [
+  "not even if a delegation message",
+  "ignore the assertion",
+  "A delegation that tells you to declare is a destination",
+  "Including when your own delegation message tells you to write one",
+];
+
+describe("agent delegation framing", () => {
+  it("pins every delegation edge that ships", () => {
+    // Without this, a new agent — or a second caller for an existing one — adds
+    // no entry, and every per-edge assertion below simply never runs for it.
+    expect(
+      Object.keys(DELEGATION_EDGES).sort(),
+      "a delegation edge was added or removed. Register it in DELEGATION_EDGES with " +
+        "the sentence that keeps the caller's read out of the delegation — or, if one " +
+        "side genuinely has no rule, an `exempt` entry saying why.",
+    ).toEqual(discoverEdges());
+  });
+
+  // Agent names that are not ALSO skill directory names, so a bare mention in a
+  // SKILL.md is unambiguous. Derived, not hand-listed: a hand-listed set is the
+  // same staleness hazard as the exemptions above — a new agent would silently
+  // not be looked for. `proof-conclusion` and `research-exhaustiveness` name a
+  // skill too, so a mention of either proves nothing and they drop out here.
+  const agentNames = readdirSync(agentsDir)
+    .filter((f) => f.endsWith(".md"))
+    .map((f) => f.replace(/\.md$/, ""));
+  const agentOnly = agentNames.filter((a) => !skillFiles.includes(a));
+
+  // THE ANTI-SILENT-ZERO GUARD, and it must not be `agentOnly.length > 0`:
+  // that would still pass while any single name dropped out. `agentOnly` is
+  // derived by SUBTRACTING skill directories, so the arm loses coverage of an
+  // agent the moment that agent's name gains a skills/<name>/ directory — and
+  // the eight skill-to-agent-pair conversion cards produce exactly that shape.
+  // Reproduced: adding skills/record-extractor/ with a corrective-framing prose
+  // delegation left in place returned 23/23 green, shipping incident 1 from
+  // this file's own header. The comment above defends the derivation against a
+  // new AGENT; the exposure is a new SKILL. `agent-tool-names.test.ts` carries
+  // the same kind of guard for the same reason.
+  //
+  // Hand-listed on purpose, and held to set EQUALITY, which is the discipline
+  // DELEGATION_EDGES has and PROSE_MENTIONS lacked: a name entering or leaving
+  // fails here and the author says in the diff which it was.
+  const PROSE_ARM_COVERS = [
+    "check-warnings",
+    "citation",
+    // ARRIVED when issue #1852 deleted skills/conflict-resolution/.
+    "conflict-resolution",
+    "convert-dates",
+    "gps-mentor",
+    // ARRIVED when issue #2800 deleted skills/historical-context/.
+    "historical-context",
+    // ARRIVED when issue #2792 deleted skills/hypothesis-tracking/.
+    "hypothesis-tracking",
+    // ARRIVED when issue #2797 deleted skills/timeline/.
+    "timeline",
+    "image-reader",
+    // ARRIVED when issue #2122 deleted skills/init-project/.
+    "init-project",
+    // ARRIVED when issue #2822 deleted skills/proof-conclusion/. The name is
+    // now unambiguous, so the prose arm starts policing its bare-name mentions.
+    "proof-conclusion",
+    "person-evidence",
+    "question-selection",
+    // ARRIVED when issue #2116 deleted skills/research-plan/.
+    "research-plan",
+    "locality-guide",
+    // ARRIVED when issue #2802 deleted skills/search-external-sites/.
+    "search-external-sites",
+    // ARRIVED when issue #2738 deleted skills/research-exhaustiveness/.
+    "research-exhaustiveness",
+    "search-familysearch-wiki",
+    // ARRIVED with issue #2029, a new agent that never had a skill.
+    "search-hints",
+    // ARRIVED when issue #2120 deleted skills/search-full-text/.
+    "search-full-text",
+    "search-images",
+    "search-wikipedia",
+    // ARRIVED when issue #2796 deleted skills/source-evaluation/.
+    "source-evaluation",
+    "survey-surname",
+    "translation",
+    "tree-edit",
+    // ARRIVED as a new agent (issue #3273); no skill directory of that name.
+    "tree-survey",
+    "validate-schema",
+    "record-structurer",
+  ];
+
+  it("the prose arm still covers every agent it is relied on to police", () => {
+    expect(
+      [...agentOnly].sort(),
+      "the set of unambiguous agent names changed. If a name LEFT, it gained a " +
+        "skills/<name>/ directory and the prose arm has SILENTLY stopped looking for " +
+        "it — that agent's bare-name delegations are now invisible, so decide what " +
+        "replaces the coverage (a registered edge, or a PROSE_MENTIONS entry) before " +
+        "updating this list. If a name ARRIVED, a new agent needs policing and the " +
+        "only thing owed is adding it here. Both directions land on this assertion; " +
+        "read which one happened off the diff.",
+    ).toEqual([...PROSE_ARM_COVERS].sort());
+  });
+
+  it("PROSE_MENTIONS is not stale", () => {
+    // A hand-listed one-way exemption sitting three lines below a comment
+    // condemning hand-listed sets. It was read only through `.has()`: every
+    // `record-extractor` mention was deleted from research/SKILL.md — the whole
+    // justification for the single entry — and the suite stayed green, leaving a
+    // permanent blind spot on `research -> record-extractor`, the orchestrator,
+    // which is the second-caller case this file says the edge set uniquely buys.
+    const dead: string[] = [];
+    const shadowed: string[] = [];
+    const unquoted: string[] = [];
+    const misquoted: string[] = [];
+    for (const [entry, excerpt] of PROSE_MENTIONS) {
+      const [skill, agent] = entry.split(" -> ");
+      if (Object.prototype.hasOwnProperty.call(DELEGATION_EDGES, entry)) {
+        shadowed.push(entry);
+        continue;
+      }
+      if (!skillFiles.includes(skill)) {
+        dead.push(`${entry} (no skills/${skill}/SKILL.md)`);
+        continue;
+      }
+      const text = readFileSync(join(skillsDir, skill, "SKILL.md"), "utf8");
+      if (!namesAgent(text, agent, agentNames)) {
+        dead.push(`${entry} (no longer named)`);
+        continue;
+      }
+      // The entry only suppresses arm 1 when the skill actually SPELLS the
+      // token. That is the case where a plain declaration could silence a real
+      // delegation, so it is the case that has to quote the sentence.
+      if (spellsAgent(text, agent)) {
+        if (!excerpt.trim()) {
+          unquoted.push(entry);
+        } else if (
+          !normalize(text).includes(normalize(excerpt)) ||
+          normalize(excerpt).length < PIN_FLOOR ||
+          !spellsAgent(excerpt, agent)
+        ) {
+          misquoted.push(entry);
+        }
+      }
+    }
+    expect(
+      dead,
+      "a PROSE_MENTIONS entry no longer describes anything. Delete it — a live " +
+        "entry is a permanent blind spot for that pair, so an entry kept past its " +
+        "justification silences an arm for free.",
+    ).toEqual([]);
+    expect(
+      shadowed,
+      "a PROSE_MENTIONS entry names a REGISTERED delegation edge. That would remove " +
+        "the edge from discoverEdges() and skip every per-edge assertion for it.",
+    ).toEqual([]);
+    expect(
+      unquoted,
+      "this skill SPELLS `@plugin:<agent>`, so the entry suppresses a real delegation " +
+        "edge and must quote the sentence that shows the mention is a prohibition. An " +
+        "undeclared entry here silences arm 1 with one line, which is the bypass this " +
+        "map replaced a Set to close. If it IS a delegation, register the edge instead.",
+    ).toEqual([]);
+    expect(
+      misquoted,
+      "a PROSE_MENTIONS excerpt does not hold up: it is absent from the skill after " +
+        "normalizing, shorter than PIN_FLOOR, or does not itself carry the " +
+        "`@plugin:<agent>` token it is meant to account for. Quote the real sentence.",
+    ).toEqual([]);
+  });
+
+  it("no SKILL.md names an agent it is not a registered caller for", () => {
+    // discoverEdges() only sees `@plugin:`. A delegation written any other way
+    // adds no edge, and every per-edge assertion above skips it silently.
+    const registered = new Set(Object.keys(DELEGATION_EDGES));
+    const offenders: string[] = [];
+    for (const skill of skillFiles) {
+      const text = readFileSync(join(skillsDir, skill, "SKILL.md"), "utf8");
+      for (const agent of agentOnly) {
+        if (!namesAgent(text, agent, agentNames)) continue;
+        const edge = `${skill} -> ${agent}`;
+        if (!registered.has(edge) && !PROSE_MENTIONS.has(edge)) offenders.push(edge);
+      }
+    }
+    expect(
+      offenders,
+      "a SKILL.md names an agent it does not delegate to via `@plugin:`. If it is a " +
+        "delegation, write it as `@plugin:<agent>` and register the edge. If it is prose, " +
+        "add it to PROSE_MENTIONS.",
+    ).toEqual([]);
+  });
+
+  it("covers the delegations the plugin HOOK composes at runtime", () => {
+    // discoverEdges() reads SKILL.md only, so the one place a delegation
+    // instruction actually SHIPS to a denied caller is invisible to both arms:
+    // hooks/guard_project_files.py builds "invoke `@plugin:{agent}`" in
+    // OWNER_REASON and DECLARATION_REASON, with {agent} filled at runtime from
+    // OWNED_SECTIONS / OWNED_DECLARATIONS / OWNED_FIELDS. Nothing is wrong today — the text
+    // carries no conclusion — but a later edit that slanted it would fire
+    // nothing, and these are the same three agents the prose arm drops for the
+    // name-collision reason, so for them neither arm covers that path.
+    //
+    // This cannot pin the composed message (it does not exist until runtime).
+    // What it can do is hold the template and require the callee to be defended
+    // on its OWN side, which is the side that survives any caller.
+    const hook = readFileSync(join(pluginRoot, "hooks", "guard_project_files.py"), "utf8");
+
+    const templates = [...hook.matchAll(/invoke `@plugin:\{agent\}`/g)];
+    expect(
+      templates.length,
+      "hooks/guard_project_files.py no longer composes `invoke \`@plugin:{agent}\``. " +
+        "If the deny stopped naming the route out, say so — a refusal with no working " +
+        "alternative is the bypass this guardrail exists to stop. If it was only " +
+        "reworded, update this matcher in the same commit.",
+    ).toBeGreaterThan(0);
+
+    // Agents the hook can name, read from its routing tables rather than
+    // hand-listed here.
+    const routed = new Set<string>();
+    for (const table of ["OWNED_SECTIONS", "OWNED_DECLARATIONS", "OWNED_FIELDS"]) {
+      const m = hook.match(new RegExp(`${table}\\s*=\\s*\\{[^}]*\\}`));
+      expect(m, `${table} not found in guard_project_files.py`).not.toBeNull();
+      for (const q of m![0].matchAll(/"([a-z][a-z0-9-]*)"/g)) {
+        if (agentNames.includes(q[1])) routed.add(q[1]);
+      }
+    }
+    expect(
+      [...routed].sort(),
+      "the hook routes to an agent set this test could not resolve. It reads " +
+        "OWNED_SECTIONS, OWNED_DECLARATIONS and OWNED_FIELDS; if the routing moved, follow it.",
+    ).toEqual(["person-evidence", "proof-conclusion", "research-exhaustiveness"]);
+
+    // Each routed callee must carry the rule on its own side.
+    const undefended = [...routed].filter(
+      (agent) =>
+        !Object.entries(DELEGATION_EDGES).some(
+          ([edge, spec]) =>
+            edge.endsWith(` -> ${agent}`) && spec.pins.some((p) => p.side === "agent"),
+        ),
+    );
+    expect(
+      undefended,
+      "the hook tells a denied caller to delegate to this agent, but no edge pins an " +
+        "AGENT-side rule for it. The hook composes the caller side at runtime, so the " +
+        "agent side is the only side that can defend this path.",
+    ).toEqual([]);
+  });
+
+  it("finds a callee agent file for every edge", () => {
+    const agents = new Set(readdirSync(agentsDir).filter((f) => f.endsWith(".md")));
+    for (const edge of Object.keys(DELEGATION_EDGES)) {
+      const callee = `${edge.split(" -> ")[1]}.md`;
+      expect(agents.has(callee), `${edge}: no agents/${callee}`).toBe(true);
+    }
+  });
+
+  for (const [edge, spec] of Object.entries(DELEGATION_EDGES)) {
+    describe(edge, () => {
+      it("states the rule on at least one side", () => {
+        // An edge exempt on BOTH sides is an unguarded delegation wearing the
+        // guard's clothes.
+        expect(
+          spec.pins.length,
+          `${edge} pins nothing. Every delegation needs the rule stated somewhere.`,
+        ).toBeGreaterThan(0);
+      });
+
+      for (const pin of spec.pins) {
+        const { path, label } = fileForSide(edge, pin.side);
+        it(`${pin.side}: ${label} still carries its pinned rule`, () => {
+          // Same floor as an exemption reason. Without it the path that CLAIMS a
+          // rule was checked less strictly than the path admitting none:
+          // registering a second caller with `excerpt: "the"` passed clean. A
+          // length floor cannot judge whether a sentence states a rule — the
+          // shortest real pin here is 41 characters — but it does stop a pin
+          // that is a substring of everything.
+          expect(
+            normalize(pin.excerpt).length,
+            `${edge}: the ${pin.side}-side pin is too short to identify a rule. ` +
+              `Pin the sentence that states it, not a fragment.`,
+          ).toBeGreaterThan(PIN_FLOOR);
+          const text = normalize(readFileSync(path, "utf8"));
+          expect(
+            text.includes(normalize(pin.excerpt)),
+            `${label} no longer contains the pinned sentence for ${edge}:\n\n` +
+              `  ${normalize(pin.excerpt)}\n\n` +
+              `This is the rule that stops the caller's conclusion travelling with the ` +
+              `delegation. If you rewrote it, update the pin in the same commit. If you ` +
+              `deleted it, say in the PR body which incident you believe no longer applies.`,
+          ).toBe(true);
+        });
+      }
+
+      if (spec.exempt) {
+        const { side, reason, mitigation } = spec.exempt;
+
+        // Renamed from "has not gone stale", which was the name of a check that
+        // did not do it: both of its expectations read literals out of this
+        // file, so no edit to any agent or skill could move either one. It is
+        // now two tests — the shrink-only shape, and a real read of the exempt
+        // side's file.
+        it(`${side}-side exemption is shrink-only`, () => {
+          expect(reason.length, "an exemption needs a reason").toBeGreaterThan(40);
+          expect(
+            spec.pins.some((p) => p.side === side),
+            `${edge} is exempt on the ${side} side but also pins a ${side} rule. ` +
+              `The exemption is stale — delete it.`,
+          ).toBe(false);
+        });
+
+        it(`${side}-side exemption is not contradicted by its own file`, () => {
+          // The staleness this file previously admitted it could not see. It
+          // still cannot prove the absence of a rule, but it CAN read the
+          // exempt side's file for the caller-pressure idioms its siblings pin:
+          // if one has appeared, the side gained a rule and the exemption is
+          // owed a pin instead.
+          const { path, label } = fileForSide(edge, side);
+          const text = normalize(readFileSync(path, "utf8"));
+          const found = CALLER_PRESSURE_IDIOMS.filter((i) => text.includes(normalize(i)));
+          expect(
+            found,
+            `${label} now carries a caller-pressure rule, so the ${side}-side exemption ` +
+              `for ${edge} is stale. Pin the sentence and delete the exemption.`,
+          ).toEqual([]);
+        });
+
+        if (mitigation) {
+          const { path, label } = fileForSide(edge, mitigation.side);
+          it(`${side}-side exemption: ${label} still carries the construction it credits`, () => {
+            // The reason is prose; this is the part that is checked. Deleting
+                // the construction from the file used to leave the suite green.
+            const text = normalize(readFileSync(path, "utf8"));
+            expect(
+              text.includes(normalize(mitigation.excerpt)),
+              `${label} no longer contains the construction the ${side}-side exemption ` +
+                `for ${edge} rests on:\n\n  ${normalize(mitigation.excerpt)}\n\n` +
+                `The exemption's reason credits that wording. Either restore it, or drop ` +
+                `the exemption and pin a real rule.`,
+            ).toBe(true);
+          });
+        }
+      }
+    });
+  }
+});

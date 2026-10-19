@@ -1,0 +1,87 @@
+{
+  "tool": "record_read",
+  "description": "The Catholic parish baptism attached to Cornelius Driscoll (GJ72-9WD) as SD-DRIS-A, and the corpus's precision-refinement case. It states 12 March 1814 at Skibbereen, Co. Cork where the profile states '1814' and 'Ireland'. Nothing here contradicts the profile: the precise date falls inside the vague year and the precise parish inside the vague country, so the record refines the conclusion rather than disagreeing with it. Reporting it as a finding is the over-reporting this record exists to catch — an improvement the researcher can adopt is not a defect in a source. The father Timothy and mother Mary appear nowhere on the profile, which is a completeness gap rather than a conflict.",
+  "args": {
+    "recordId": "~DRIS-001"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Cornelius",
+            "surname": "Driscoll",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Christening",
+            "date": "12 March 1814",
+            "place": "Skibbereen, Cork, Ireland"
+          }
+        ],
+        "ark": "ark:/61903/1:1:DRIS-001",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Ireland, Catholic Parish Registers, 1655-1915"
+          }
+        ]
+      },
+      {
+        "id": "P2",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "Timothy",
+            "surname": "Driscoll",
+            "type": "BirthName"
+          }
+        ],
+        "facts": []
+      },
+      {
+        "id": "P3",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N3",
+            "preferred": true,
+            "given": "Mary",
+            "surname": "Driscoll",
+            "type": "BirthName"
+          }
+        ],
+        "facts": []
+      }
+    ],
+    "places": [],
+    "relationships": [
+      {
+        "type": "ParentChild",
+        "parent": "P2",
+        "child": "P1"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "P3",
+        "child": "P1"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Ireland, Catholic Parish Registers, 1655-1915",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:DRIS-001"
+      }
+    ]
+  }
+}

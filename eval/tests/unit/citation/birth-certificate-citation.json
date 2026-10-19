@@ -9,11 +9,12 @@
       "birth-certificate",
       "vital-records",
       "1905",
-      "src_007"
+      "src_007",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Refine the citation for src_007, Mary Elizabeth Flynn's birth certificate.",
+    "delegation": "Refine the citation on src_007, Mary Elizabeth Flynn's birth certificate.\n\nsourceId: src_007\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

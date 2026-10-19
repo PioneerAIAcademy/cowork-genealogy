@@ -11,17 +11,20 @@
 // alone. The tree-encoding completion gate (issue #1490) diffs the final tree
 // against the write-once `starting-tree.gedcomx.json` baseline to tell a
 // conclusion this session encoded from a fact that was already seeded (see
-// `research-append.ts`); the viewer and `project_status` want the same session
+// `research-append.ts`); the viewer and a status answer want the same session
 // delta for display. Rather than each re-deriving a diff — and getting the
 // relationship landmines wrong — they call this.
 //
 // IDENTITY, and the landmines it steps around:
 //   - Persons key on `id`.
-//   - Relationships key on their ENDPOINTS, never on `id`: a ParentChild carries
-//     `parent`/`child`, a Couple carries `person1`/`person2` (unordered). Some
-//     seeded trees point a relationship at a PID-TODO placeholder the agent
-//     re-points during the run, so an `id` key would read a genuinely re-pointed
-//     relationship as unchanged. Shared with the merge tool via `relationshipKey`.
+//   - Relationships key on their ENDPOINTS AND SUBTYPE, never on `id`: a
+//     ParentChild carries `parent`/`child`, a Couple carries `person1`/`person2`
+//     (unordered). Some seeded trees point a relationship at a PID-TODO
+//     placeholder the agent re-points during the run, so an `id` key would read a
+//     genuinely re-pointed relationship as unchanged. Shared with the merge tool
+//     via `relationshipKey`. The subtype is part of the key because a Step and a
+//     Biological parent on one pair are two relationships: without it the two
+//     collided and an added Step edge read as no change at all.
 //   - A `Marriage`/`Divorce` fact lives on the Couple relationship's `facts[]`,
 //     not on a person, so relationship facts are diffed on both added and
 //     already-present relationships.
@@ -32,6 +35,7 @@
 // network, so it is safe to call from the gate mid-write.
 
 import { relationshipKey } from "../utils/merge-gedcomx.js";
+import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -145,14 +149,6 @@ function relationshipMap(
     out.set(relationshipKey(r), r);
   }
   return out;
-}
-
-function relationshipEndpoints(r: SimplifiedRelationship): string[] {
-  const ends: string[] = [];
-  for (const e of [r.parent, r.child, r.person1, r.person2]) {
-    if (typeof e === "string" && e) ends.push(e);
-  }
-  return ends;
 }
 
 export function treeDiff(input: TreeDiffInput): TreeDiffResult {

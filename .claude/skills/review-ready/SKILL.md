@@ -31,7 +31,7 @@ code edits, no eval runs, and no board moves — promotion and demotion belong t
 Repo `PioneerAIAcademy/cowork-genealogy`, project **1**.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000
 ```
 
 ## 1. Pick the candidates
@@ -87,7 +87,7 @@ answers this for every candidate at once — this is the whole standing-pool que
 # and are raw untriaged bundles, and reviewing one costs ~110k tokens to learn
 # nothing. `/triage-feedback` drops the label on the way to Backlog, so anything
 # still carrying it has not been triaged and this filter is the whole guard.
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 | jq -r '
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 | jq -r '
   .items[]
   | select(.status == "Ready" and (.assignees | length) == 0
            and ((.labels | index("developer")) or (.labels | index("genealogist")))
@@ -172,6 +172,23 @@ question answered twice:
 Settle the smaller forks yourself and write each one into its issue body as a
 stated assumption. An assumption that lives only in your report is invisible to
 the junior who picks the issue up.
+
+**Gate every surviving question on the agent's four-way test before you write a
+block.** A fork is the lead's only if one live option spends money the card does
+not budget, sets doctrine or precedent, adds hard-to-reverse surface, or touches
+a prior ruling. If none applies, the agent should have decided it; write its
+recommendation into the body as `**Decided (review-ready, <date>): A, <the
+consequence>.** B considered: <one line>.` and treat the verdict as `ready`. A
+fork whose every live option is $0, reversible, precedent-free and clear of any
+prior ruling is never a question for him.
+
+**Grep the comments for `Ruling` and `Decision` first.** A question already
+ruled in a comment gets the ruling applied, not a block and a label, unless a
+fact it rested on has since changed (`CLAUDE.md`, "A ruling binds only while its
+premises hold"). Then write the block, naming the change.
+
+**`needs-decision` routes to the lead and nobody else.** To reach a senior
+reviewer on a PR question, @-mention them on the issue. Do not use the label.
 
 Write each surviving question into the issue **body**, above the reviewed marker:
 
@@ -284,9 +301,13 @@ Rules on the writes:
 - **Never answer a fork yourself, and never record one as answered.** Every
   surviving question gets written down and labelled `needs-decision`.
   `/make-decisions` is the only place a ruling is taken and applied.
-- **Never apply both `senior` and `needs-decision`.** They are different states
-  with different remedies (`fill-ready` §6): one wants a person, the other wants
-  an answer. An item carrying both tells the board neither.
+- **`senior` and `needs-decision` are orthogonal — apply both when both are
+  true.** They answer different questions (`fill-ready` §6): `senior` says *who*
+  does the work once it is startable, `needs-decision` says *what* is blocking it
+  now. An item can be hard **and** waiting on one answer; label it both, and it
+  stays out of the ranking until the answer lands, then goes to a senior.
+  What you must not do is reach for `senior` on an item that is merely
+  undecided — that sends a sentence looking for a scarce person.
 
 Deleting an issue needs the lead to say so for that specific issue. Never batch
 a delete under a general approval.

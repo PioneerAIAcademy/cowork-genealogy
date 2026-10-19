@@ -153,7 +153,7 @@ const censusAssertion = (id: string, role: string) => ({
   information_quality: "primary",
   informant: "unknown",
   informant_proximity: "official_duty",
-  evidence_type: "direct",
+  record_basis: "stated",
   extracted_for_question_ids: [] as string[],
 });
 
@@ -184,6 +184,11 @@ const materializedResearch = {
   ...minimalResearch,
   sources: [censusSource],
   assertions: personaRoles.map(([, role], i) => censusAssertion(`a_${i}`, role)),
+  person_evidence: personaRoles.map(([treeId], i) => ({
+    id: `pe_${i}`, assertion_id: `a_${i}`, person_id: treeId, confidence: "probable",
+    rationale: "Household position matches.", match_score: null, created: "2026-01-01",
+    superseded_by: null,
+  })),
 };
 const treeWithSource: SimplifiedGedcomX = {
   ...startingTree,

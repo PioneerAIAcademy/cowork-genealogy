@@ -38,6 +38,9 @@ if exist eval\app\node_modules rmdir /s /q eval\app\node_modules
 
 echo.
 echo Installing the pnpm workspace ^(web, electron, viewer-ui, schema^)...
+REM Before pnpm, not as its preinstall hook -- pnpm plans its linking first,
+REM so a tree removed during preinstall leaves eval\app unlinked on that run.
+call node scripts\drop-npm-managed-trees.mjs
 call pnpm install
 if errorlevel 1 (
   echo.
@@ -68,18 +71,9 @@ if errorlevel 1 (
 )
 cd ..\..\..
 
-echo.
-echo Installing the eval CRUD UI deps...
-cd eval\app
-call npm install
-if errorlevel 1 (
-  echo.
-  echo ERROR: npm install in eval\app failed. Reinstall aborted.
-  cd ..\..
-  pause
-  exit /b 1
-)
-cd ..\..
+REM No separate eval CRUD UI install: eval\app is a pnpm workspace member
+REM (#1488), so the "pnpm install" above already covers it. npm cannot parse its
+REM "workspace:*" dependency and would fail with EUNSUPPORTEDPROTOCOL.
 
 echo.
 echo === Reinstall complete ===

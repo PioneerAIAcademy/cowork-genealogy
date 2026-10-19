@@ -1,0 +1,396 @@
+{
+  "persons": [
+    {
+      "id": "LZDC-MJN",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "William",
+          "surname": "Mc Allister"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "ABT 1844",
+          "standard_date": "Abt 1844",
+          "place": "Scotland",
+          "standard_place": "Scotland, United Kingdom"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K8SF-V85",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Mary Jane",
+          "surname": "Magee"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K8PX-M88",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Robert James Magee",
+          "surname": "Mc Callion"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "29 Apr 1873",
+          "standard_date": "29 Apr 1873",
+          "place": "Dervock, Ant, Ireland",
+          "standard_place": "Dervock, Derrykeighan, County Antrim, Ireland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9N9P-MGH",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "James H.",
+          "surname": "Mc Collister"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0590b254-9c0c-444c-b98d-af27463a6425",
+          "type": "Birth",
+          "date": "1813",
+          "standard_date": "1813",
+          "place": "Springfield Township, Ross, Ohio, United States",
+          "standard_place": "Springfield Township, Ross, Ohio, United States"
+        },
+        {
+          "id": "95da1f9c-e0eb-4186-a2c9-4060169c5c21",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Ohio, Clermont, Ohio, United States",
+          "standard_place": "Ohio Township, Clermont, Northwest Territory, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "93C7-GLN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Jane",
+          "surname": "Mc Callion"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "25 Oct 1870",
+          "standard_date": "25 Oct 1870",
+          "place": "Antrim, Ireland",
+          "standard_place": "County Antrim, Ireland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9DP7-MHX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Thomas",
+          "surname": "Mc Callion"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "13 Jan 1869",
+          "standard_date": "13 Jan 1869",
+          "place": "Antrim, Ireland",
+          "standard_place": "County Antrim, Ireland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9JM5-48T",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Mary",
+          "surname": "Mc Allister"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "24 FEB 1870",
+          "standard_date": "24 Feb 1870",
+          "place": "Scotland",
+          "standard_place": "Scotland, United Kingdom"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LZDC-MTY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Mary Jane",
+          "surname": "Magee"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1844",
+          "standard_date": "1844",
+          "place": "Ireland",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "719d5cf2-120d-4ebf-b8c3-22cc1f826501",
+          "type": "Christening",
+          "date": "5 September 1844",
+          "standard_date": "5 Sep 1844",
+          "place": "Balbriggan, County Dublin, Ireland",
+          "standard_place": "Balbriggan, Balrothery, County Dublin, Ireland"
+        },
+        {
+          "id": "de1a65b8-d2ae-4b64-abbb-4c59beecf06f",
+          "type": "Immigration",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "United States of America",
+          "standard_place": "United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "21 June 1903",
+          "standard_date": "21 Jun 1903",
+          "place": "Killinchy, Down, Ireland",
+          "standard_place": "Killinchy, County Down, Ireland"
+        },
+        {
+          "id": "0637acca-2016-44c0-9257-f7efe502b204",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Brick, 120, Ocean, New Jersey, United States",
+          "standard_place": "Brick Township, Ocean, New Jersey, United States"
+        }
+      ]
+    },
+    {
+      "id": "9DP7-MHK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Mary Jane",
+          "surname": "Magee"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LZDC-MJN",
+      "person2": "LZDC-MTY"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "LZDC-MJN",
+      "person2": "9DP7-MHK"
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "LZDC-MJN",
+      "person2": "K8SF-V85"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "9N9P-MGH",
+      "child": "LZDC-MJN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "LZDC-MJN",
+      "child": "9DP7-MHX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "9DP7-MHK",
+      "child": "9DP7-MHX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "LZDC-MJN",
+      "child": "9JM5-48T",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LZDC-MJN",
+      "child": "93C7-GLN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "LZDC-MTY",
+      "child": "93C7-GLN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "LZDC-MJN",
+      "child": "K8PX-M88",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "K8SF-V85",
+      "child": "K8PX-M88",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "9QH3-BCK",
+      "title": "William Mc Ferran in entry for Mary Jane Mc Ferran, \"Ireland, Births and Baptisms, 1620-1881\"",
+      "citation": "\"Ireland, Births and Baptisms, 1620-1881\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FRW4-3J4 : 15 February 2020), William Mc Ferran in entry for Mary Jane Mc Ferran, 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FRW4-3J4"
+    },
+    {
+      "id": "932Y-RCB",
+      "title": "William Mc Ferran in entry for Mary Jane Mc Ferran, \"Ireland, Births and Baptisms, 1620-1881\"",
+      "citation": "\"Ireland, Births and Baptisms, 1620-1881\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FRWM-LH5 : 15 February 2020), William Mc Ferran in entry for Mary Jane Mc Ferran, 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FRWM-LH5"
+    },
+    {
+      "id": "935C-ZRQ",
+      "title": "William McFerran in entry for Thomas John McFerran, \"Ireland, Births and Baptisms, 1620-1881\"",
+      "citation": "\"Ireland, Births and Baptisms, 1620-1881\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FRQY-WQD : 15 February 2020), William McFerran in entry for Thomas John McFerran, 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FRQY-WQD"
+    },
+    {
+      "id": "93GF-CSV",
+      "title": "William Mc Callion in entry for Thomas Mc Callion, \"Ireland, Births and Baptisms, 1620-1881\"",
+      "citation": "\"Ireland, Births and Baptisms, 1620-1881\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FR7Y-FRC : 15 February 2020), William Mc Callion in entry for Thomas Mc Callion, 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FR7Y-FRC"
+    },
+    {
+      "id": "93L2-BJ7",
+      "title": "William McFerran in entry for William McFerran, \"Ireland, Births and Baptisms, 1620-1881\"",
+      "citation": "\"Ireland, Births and Baptisms, 1620-1881\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F521-VV8 : 15 February 2020), William McFerran in entry for William McFerran, 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F521-VV8"
+    },
+    {
+      "id": "932H-HMK",
+      "title": "William McFerran in entry for James McFerran, \"Ireland, Births and Baptisms, 1620-1881\"",
+      "citation": "\"Ireland, Births and Baptisms, 1620-1881\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F521-VNG : 15 February 2020), William McFerran in entry for James McFerran, 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F521-VNG"
+    },
+    {
+      "id": "9QML-JDP",
+      "title": "William Mc Callion in entry for Robert James Magee Mc Callion, \"Ireland, Births and Baptisms, 1620-1881\"",
+      "citation": "\"Ireland, Births and Baptisms, 1620-1881\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FRCC-PY4 : 15 February 2020), William Mc Callion in entry for Robert James Magee Mc Callion, 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FRCC-PY4"
+    },
+    {
+      "id": "9Q42-ZL9",
+      "title": "William Mc Callion in entry for Jane Mc Callion, \"Ireland, Births and Baptisms, 1620-1881\"",
+      "citation": "\"Ireland, Births and Baptisms, 1620-1881\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F5GN-YQ5 : 15 February 2020), William Mc Callion in entry for Jane Mc Callion, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F5GN-YQ5"
+    },
+    {
+      "id": "9Q86-GDF",
+      "title": "William Mc Callion in entry for Robert James Magee Mc Callion, \"Ireland, Births and Baptisms, 1620-1881\"",
+      "citation": "\"Ireland, Births and Baptisms, 1620-1881\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FRCC-6JK : 15 February 2020), William Mc Callion in entry for Robert James Magee Mc Callion, 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FRCC-6JK"
+    },
+    {
+      "id": "93YL-VDL",
+      "title": "William McFerran in entry for Eliza McFerran, \"Ireland, Births and Baptisms, 1620-1881\"",
+      "citation": "\"Ireland, Births and Baptisms, 1620-1881\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FR4H-X2X : 15 February 2020), William McFerran in entry for Eliza McFerran, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FR4H-X2X"
+    }
+  ]
+}

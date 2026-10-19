@@ -73,6 +73,7 @@ from e2e.validate_fixture import (
     index_tree,
     tree_integrity_errors,
 )
+from harness.dates import extract_year
 from harness.schema_validator import (
     SCHEMAS_DIR,
     validate_research_json,
@@ -101,16 +102,14 @@ PRESUMED_LIVING_YEARS = 110
 DEATH_FACT_TYPES = frozenset({"Death", "Burial", "Cremation"})
 BIRTH_FACT_TYPES = frozenset({"Birth", "Christening", "Baptism"})
 
-_YEAR = re.compile(r"\b(1\d{3}|20\d{2})\b")
-
 # Field allow-lists, in the key order we emit. Mirrors
-# docs/specs/schemas/tree-gedcomx.schema.json. Persons carry no `sources` —
-# in the tree format, source references hang off names/facts/relationships.
-_PERSON_FIELDS = ("id", "ark", "gender", "living", "names", "facts")
+# docs/specs/schemas/tree-gedcomx.schema.json. Persons carry `sources`: the
+# refs FamilySearch attaches at the person level, which person_read carries.
+_PERSON_FIELDS = ("id", "ark", "gender", "living", "names", "facts", "sources")
 _NAME_FIELDS = ("id", "preferred", "given", "surname", "prefix", "suffix", "type", "sources")
 _FACT_FIELDS = (
     "id", "type", "primary", "date", "standard_date", "place",
-    "standard_place", "value", "sources",
+    "standard_place", "value", "assertion_id", "sources",
 )
 _PARENT_CHILD_FIELDS = ("id", "type", "parent", "child", "subtype", "notes", "sources")
 _COUPLE_FIELDS = ("id", "type", "person1", "person2", "facts", "notes", "sources")
@@ -149,7 +148,7 @@ def _read_json(path: Path) -> dict[str, Any]:
         return json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as e:
         raise AuthorError(f"missing required file: {path}") from e
-    except json.JSONDecodeError as e:
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
         raise AuthorError(f"{path.name} did not parse: {e}") from e
 
 
@@ -289,15 +288,20 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
       relationships, which `person_read` does not identify, sometimes for
       facts. Ids are never re-minted; nothing reads meaning out of an id's
       shape (simplified-gedcomx-spec §3);
-    * drops fields the schema forbids (`source.notes`, person-level
-      `sources`, facts on a `ParentChild`);
+    * drops fields the schema forbids (`source.notes`, facts on a
+      `ParentChild`), and source refs (person, name, fact, relationship)
+      whose target is not in `sources`;
     * PascalCases fact types (`move` -> `Move`);
-    * drops relationships whose endpoints aren't in `persons` — `person_read
-      --relatives` returns edges to grandparents and in-laws whose person
-      records it did not include, and those are dangling references;
+    * drops relationships whose endpoints aren't in `persons`. NOTE the cause
+      moved: `person_read --relatives` used to return edges to grandparents and
+      in-laws whose person records it did not include, and since #2593 it drops
+      those itself before returning. The rule stays because this function also
+      takes hand-authored and pre-#2593 captured input, where such edges still
+      arrive — but on the PID path below, which shells out to the live tool,
+      it can no longer fire;
     * de-duplicates identical relationships;
-    * warns on duplicate incoming ids — preserved verbatim, so a duplicate
-      makes `strip`'s selectors ambiguous (and `apply_strip` refuses).
+    * warns on duplicate incoming ids — person and relationship ids
+      globally, fact ids per holder (matching `apply_strip`'s scope).
 
     Returns the tree and a list of WARN strings. Lenient by design — it
     warns rather than raising on structurally odd but iterable input; the
@@ -312,13 +316,24 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     for kind, id_list in (
         ("person", [str(p.get("id")) for p in persons_in if isinstance(p, dict) and p.get("id")]),
         ("relationship", [str(r.get("id")) for r in rels_in if isinstance(r, dict) and r.get("id")]),
-        ("fact", [str(f.get("id")) for f in _all_facts(raw) if isinstance(f, dict) and f.get("id")]),
     ):
         for dup, n in sorted(Counter(id_list).items()):
             if n > 1:
                 warnings.append(
                     f"duplicate {kind} id {dup!r} appears {n} times — ids must be "
                     f"unique, and strip will refuse this tree until they are"
+                )
+    for holder in persons_in + rels_in:
+        if not isinstance(holder, dict):
+            continue
+        hid = holder.get("id", "?")
+        fact_ids = [str(f.get("id")) for f in holder.get("facts") or []
+                    if isinstance(f, dict) and f.get("id")]
+        for dup, n in sorted(Counter(fact_ids).items()):
+            if n > 1:
+                warnings.append(
+                    f"duplicate fact id {dup!r} on {hid} appears {n} times — "
+                    f"strip will refuse this tree until they are unique"
                 )
     name_ids = _backfill_ids("N", _ids_in(n for p in persons_in for n in p.get("names") or []))
     fact_ids = _backfill_ids("F", _ids_in(_all_facts(raw)))
@@ -367,6 +382,8 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
             person["facts"] = facts
         else:
             person.pop("facts", None)
+
+        _fix_source_refs(person, src_map, dropped, f"person {pid}", warnings)
 
         persons.append({k: person[k] for k in _PERSON_FIELDS if k in person})
 
@@ -428,8 +445,9 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     if dangling:
         warnings.append(
             f"dropped {dangling} relationship(s) pointing at persons not in the "
-            f"tree — `person_read --relatives` returns edges to kin one hop "
-            f"beyond the persons it includes"
+            f"tree. Since #2593 `person_read --relatives` drops these itself, so "
+            f"on the PID path this cannot fire; seeing it means the input was "
+            f"hand-authored or captured before that change"
         )
     for key, n in sorted(dropped.items()):
         warnings.append(f"dropped {n} unsupported field(s) named {key!r} (not in the tree schema)")
@@ -462,9 +480,9 @@ def _birth_year(person: dict[str, Any]) -> int | None:
         if str(fact.get("type", "")) not in BIRTH_FACT_TYPES:
             continue
         for value in (fact.get("standard_date"), fact.get("date")):
-            match = _YEAR.search(str(value or ""))
-            if match:
-                return int(match.group(1))
+            year = extract_year(str(value or ""))
+            if year is not None:
+                return int(year)
     return None
 
 
@@ -638,12 +656,13 @@ def render_index(tree: dict[str, Any]) -> str:
         for fact in rel.get("facts") or []:
             lines.append(_fact_line(fact, 6, widths))
 
-    # Back-references, when the tree has any. `person_read` emits none; a
-    # converted project tree can carry them on facts and names.
+    # Back-references, when the tree has any. `person_read` emits them on the
+    # person itself (FamilySearch's attachments); a converted project tree can
+    # also carry them on facts and names.
     cites: dict[str, list[str]] = {}
     for person in persons:
         pid = str(person.get("id", "?"))
-        holders = [*(person.get("names") or []), *(person.get("facts") or [])]
+        holders = [person, *(person.get("names") or []), *(person.get("facts") or [])]
         for holder in holders:
             for ref in holder.get("sources") or []:
                 bucket = cites.setdefault(str(ref.get("ref")), [])
@@ -688,6 +707,9 @@ def _comparable_person(person: dict[str, Any]) -> Any:
             for n in person.get("names") or []
         ),
         "facts": _comparable_facts(person),
+        # Source ids are FamilySearch's, preserved verbatim, so a ref moving
+        # between persons upstream is a real change, not id noise.
+        "sources": sorted(str(r.get("ref")) for r in person.get("sources") or [] if isinstance(r, dict)),
     }
 
 
@@ -702,7 +724,12 @@ def diff_trees(old: dict[str, Any], new: dict[str, Any]) -> list[str]:
     for pid in sorted(old_p.keys() - new_p.keys()):
         report.append(f"person gone upstream: {pid} ({_display_name(old_p[pid])})")
     for pid in sorted(old_p.keys() & new_p.keys()):
-        if _comparable_person(old_p[pid]) != _comparable_person(new_p[pid]):
+        old_c, new_c = _comparable_person(old_p[pid]), _comparable_person(new_p[pid])
+        # A fixture snapshotted before person_read carried person-level refs
+        # (#2696) has no `sources` key at all: "not recorded", not a change.
+        if "sources" not in old_p[pid]:
+            new_c = {**new_c, "sources": old_c["sources"]}
+        if old_c != new_c:
             report.append(f"person changed upstream: {pid} ({_display_name(new_p[pid])})")
 
     def rel_map(tree: dict[str, Any]) -> dict[tuple[str, ...], list[tuple[str, ...]]]:
@@ -1156,8 +1183,20 @@ def cmd_strip(args: argparse.Namespace) -> int:
         # `starting-tree.gedcomx.json` does not exist yet, and on a re-run the
         # file is the *previous* strip.
         suspects = check_stripping(findings, tree)
+        # --none IS the record-hint signal at strip time, and
+        # fixture_genre() returns "strip" WITHOUT raising when fixture.json is
+        # absent (scaffold can legitimately run after strip). So decide from
+        # --none first: routing through fixture_genre would hand a
+        # record-hint author the strip wording the genre forbids.
+        if args.none:
+            strip_genre = "record-hint"
+        else:
+            try:
+                strip_genre = fixture_genre(fixture_dir)
+            except (AuthorError, OSError):
+                strip_genre = "strip"
         for suspect in suspects:
-            print(format_suspect(args.slug, suspect), file=sys.stderr)
+            print(format_suspect(args.slug, suspect, strip_genre), file=sys.stderr)
 
     if args.dry_run:
         print("\n--dry-run: wrote nothing.")
@@ -1374,7 +1413,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
     suspects = check_stripping(findings, starting)
     _emit(warnings)
     for suspect in suspects:
-        print(format_suspect(args.slug, suspect), file=sys.stderr)
+        print(format_suspect(args.slug, suspect, genre), file=sys.stderr)
 
     if errors:
         _emit(errors, "ERROR")

@@ -28,7 +28,11 @@ export default function PlansSection(): React.JSX.Element {
     return (
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Plans</h2>
-        <p className={styles.empty}>No plans defined yet.</p>
+        <p className={styles.empty}>
+          No plans defined yet. A research plan — the questions to pursue and
+          the sources to search for each — is drawn up during the research-plan
+          step.
+        </p>
       </div>
     )
   }
@@ -69,6 +73,12 @@ export default function PlansSection(): React.JSX.Element {
                         )}
                         {item.rationale && (
                           <div className={styles.itemRationale}><Linkify text={item.rationale} /></div>
+                        )}
+                        {item.status === 'skipped' && (item.skip_category || item.skip_reason) && (
+                          <div className={styles.itemRationale}>
+                            {item.skip_category && <StatusBadge value={item.skip_category} />}
+                            {item.skip_reason && <Linkify text={item.skip_reason} />}
+                          </div>
                         )}
                       </li>
                     ))}

@@ -6,11 +6,11 @@
     "type": "positive",
     "holdout": true,
     "description": "User asks how to find probate or will records. Tests that the skill handles a legal-record how-to query.",
-    "tags": ["fs-wiki", "how-to", "probate", "wills", "expects-file-probate-will-records"]
+    "tags": ["fs-wiki", "how-to", "probate", "wills", "direct-arm"]
   },
   "input": {
-    "user_message": "Search the FamilySearch wiki for how to find probate or will records for a deceased ancestor",
-    "scenario": null
+    "delegation": "Search the FamilySearch wiki for how to find probate or will records for a deceased ancestor\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": ["wiki-search-probate-records"],
   "judge_context": [

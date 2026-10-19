@@ -1,0 +1,37 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Fernando Suarez Franco married Maria de Jesus Ramirez on 11 November 1891 at the parish of the Inmaculada Concepción, Aguadas, Caldas, Colombia; the entry indexes him as Fernando Franco, son of Manuela Franco, with no father named.",
+      "details": {
+        "subject_person": "Fernando Suarez Franco (GZ6S-8MW)",
+        "fact_type": "Marriage",
+        "date": "11 November 1891",
+        "place": "Inmaculada Concepción, Aguadas, Aguadas, Caldas, Colombia"
+      },
+      "supporting_sources": [
+        "ark:/61903/1:1:QG2B-LVHQ — deciding marriage record, INDEX (Colombia, registros parroquiales y diocesanos, 1576-2019): Fernando Franco married Maria de Jesus Ramirez, 11 Nov 1891; the record's own event place is Inmaculada Concepción, Aguadas, Aguadas, Caldas, Colombia; groom's mother Manuela Franco named, no father",
+        "ark:/61903/1:1:6DDW-L7XF — corroborating, INDEX: Fernando Suárez as father in daughter Julia Rosa's 21 Jun 1896 Caramanta baptism, already attached to tree person GZ6S-8MW; its index names his parents Juan de Dios Juárez [sic, an indexing variant of Suárez] and \"Manue la\" Franco [indexing split of Manuela Franco] and the mother María's parents Luís Ramírez and Juana Henao, so the maternal grandparents match the 1891 bride's parents exactly and the paternal pair supplies the father the marriage index omitted — tying the tree's Fernando and his wife to the marriage record on indexes alone"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "The bride, Maria Jesus Ramirez Henao, was the daughter of Luis Ramirez and Juana Henao.",
+      "details": {
+        "subject_person": "Maria Jesus Ramirez Henao (GZ6S-XXF)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Luis Ramirez and Juana Henao"
+        }
+      },
+      "supporting_sources": [
+        "ark:/61903/1:1:QG2B-LVHQ — marriage INDEX naming the bride Maria de Jesus Ramirez's parents Luis Ramirez and Juana Henao",
+        "ark:/61903/1:1:6DDW-L7XF — Julia Rosa's 1896 Caramanta baptism INDEX independently names the same maternal grandparents Luís Ramírez and Juana Henao"
+      ],
+      "required": false
+    }
+  ]
+}

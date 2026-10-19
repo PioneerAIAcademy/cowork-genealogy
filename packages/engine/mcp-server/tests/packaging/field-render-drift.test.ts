@@ -70,6 +70,10 @@ const COMPONENTS = join(
  * grows past a dozen, the lint is asking the wrong question.
  */
 const NOT_RENDERED: Record<string, string> = {
+  "researcher_profile.experience_level":
+    "init-project writes a fixed `novice` on every project, so the label tells the researcher nothing, and a tester read it as a judgment about them.",
+  "researcher_profile.narration_guidance":
+    "The instruction the agent reads for its narration style — a model instruction, never user content. The lay user must not see it on the Overview (lay-mode plan, 2026-09-18).",
   "timeline.generated":
     "Tool-set generation timestamp. Bookkeeping — the viewer shows the timeline, not when it was built.",
   "timeline_event.standard_place":
@@ -78,10 +82,12 @@ const NOT_RENDERED: Record<string, string> = {
     "Same sidecar relationship as timeline_event.standard_place — `place` is rendered.",
   "assertion.extracted_for_question_ids":
     "Provenance FK used by projections and the exhaustiveness check; the assertion is already shown under its question.",
-  "exhaustive_declaration.justification":
-    "Long free text. Surfaced in the proof summary rather than inline on the declaration.",
-  "exhaustive_declaration.log_entry_ids":
-    "FK list backing the declaration; the log entries render in their own section.",
+  "search_stop.justification":
+    "Long free text. Surfaced in the proof summary rather than inline on the stop decision.",
+  "search_stop.log_entry_ids":
+    "FK list backing the stop decision; the log entries render in their own section.",
+  "not_reached_entry.log_entry_id":
+    "FK to the log entry that documented the source being unreachable. The log renders in its own section.",
   "evaluation_entry.file_path":
     "Host-side path to the mentor's prose artifact. The viewer cannot read it, and it is the reason this section shows the verdict rather than the critique (#1223).",
   "log_entry.plan_item_id":
@@ -99,7 +105,7 @@ const NOT_RENDERED: Record<string, string> = {
  */
 const RENDERED_GENERICALLY: Record<string, string> = {
   stop_criteria:
-    "QuestionsSection maps Object.entries(exhaustive_declaration.stop_criteria), so every criterion renders without its name appearing in the source.",
+    "QuestionsSection maps Object.entries(search_stop.stop_criteria), so every criterion renders without its name appearing in the source.",
 };
 
 type SchemaObject = { properties?: Record<string, unknown> };

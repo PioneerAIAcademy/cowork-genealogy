@@ -10,6 +10,11 @@
 
 import { questionStates, type QuestionStatus } from "../utils/question-state.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readExternalCollections } from "../utils/external-collections-store.js";
+import { readBuildInfo } from "../utils/build-info.js";
+import { preferredName } from "../utils/name-helpers.js";
+import { getStandardDate } from "../utils/fact-helpers.js";
+import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -27,6 +32,10 @@ export interface ProjectContextPerson {
   name: string | null;
   gender: string | null;
   sourceRefs: string[];
+  spouseIds: string[];
+  parentIds: string[];
+  childIds: string[];
+  diedByYear: number | null;
 }
 
 export interface ProjectContextSource {
@@ -49,21 +58,74 @@ export interface ProjectContextLocality {
   pagesRead: string[];
 }
 
+/** An external-site URL handed to the user and not yet answered (spec §2.3). */
+export interface ProjectContextAwaitingUser {
+  logId: string;
+  site: string;
+  urlGenerated: string;
+  planItemId: string | null;
+  performed: string | null;
+}
+
+export interface ProjectContextCollectionCounts {
+  total: number;
+  byRecordType: Record<string, number>;
+}
+
+/** Counts from the stored lists; `undefined` when there is nothing to report. Never
+ *  throws: a missing or unreadable file must not fail the whole projection. */
+async function externalCollectionCounts(
+  projectPath: string,
+): Promise<Record<string, ProjectContextCollectionCounts> | undefined> {
+  let doc;
+  try {
+    doc = await readExternalCollections(projectPath);
+  } catch {
+    return undefined;
+  }
+  if (!doc) return undefined;
+  const out: Record<string, ProjectContextCollectionCounts> = {};
+  for (const place of Object.keys(doc.places).sort()) {
+    const rows = Array.isArray(doc.places[place]?.rows) ? doc.places[place].rows : [];
+    const byRecordType: Record<string, number> = {};
+    for (const row of rows) {
+      for (const t of Array.isArray(row?.record_types) ? row.record_types : []) {
+        byRecordType[t] = (byRecordType[t] ?? 0) + 1;
+      }
+    }
+    const sortedTypes: Record<string, number> = {};
+    for (const t of Object.keys(byRecordType).sort()) sortedTypes[t] = byRecordType[t];
+    out[place] = { total: rows.length, byRecordType: sortedTypes };
+  }
+  return out;
+}
+
 export type ProjectContextResult =
   | {
       ok: true;
+      /** The engine build (`<base>+<date>.<sha>[.dirty]` or `<base>+dev`) — on every branch, #2126. */
+      buildId: string;
       projectStatus: string | null;
+      /** research.project.objective verbatim; null when absent. No other tool returns it (#3026). */
+      objective: string | null;
       openQuestions: ProjectContextQuestion[];
       /** Advisory per-question state and next step. Nothing gates on it. */
       questionStatuses: QuestionStatus[];
       persons: ProjectContextPerson[];
       sources: ProjectContextSource[];
       localities: ProjectContextLocality[];
+      /** Open external-site hand-offs: the user was sent a URL and nothing has come back. */
+      awaitingUser: ProjectContextAwaitingUser[];
+      /** Per place stored in external-collections.json: how many curated collections,
+       *  and how many per FamilySearch record type. Counts only, never rows — read the
+       *  rows with research_query({section: "external_collections"}). Absent when no
+       *  list is stored or the file cannot be read. */
+      externalCollections?: Record<string, ProjectContextCollectionCounts>;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  | { ok: false; errors: string[]; reason?: "no_project"; buildId: string };
 
 function truncateQuestion(text: string): string {
   if (text.length <= QUESTION_TRUNCATE_AT) return text;
@@ -73,8 +135,8 @@ function truncateQuestion(text: string): string {
 /** Preferred names entry (first entry when none is flagged) as "given surname". */
 function preferredDisplayName(person: any): string | null {
   const names = Array.isArray(person?.names) ? person.names.filter((n: any) => n && typeof n === "object") : [];
-  if (names.length === 0) return null;
-  const preferred = names.find((n: any) => n.preferred === true) ?? names[0];
+  const preferred = preferredName(names);
+  if (preferred === undefined) return null;
   const parts = [preferred.given, preferred.surname].filter(
     (p: unknown): p is string => typeof p === "string" && p.trim() !== "",
   );
@@ -98,7 +160,53 @@ function collectSourceRefs(person: any): string[] {
   return refs;
 }
 
+function externalSiteOf(entry: any): any | null {
+  if (!entry || typeof entry !== "object" || entry.tool !== "external_site") return null;
+  const ext = entry.external_site;
+  return ext && typeof ext === "object" && typeof ext.url_generated === "string" ? ext : null;
+}
+
+/**
+ * Whether a later log entry ends the hand-off at `url` (spec §2.3): any entry
+ * for the same URL whose outcome is not `partial`, whether or not a capture
+ * came back. "I have no access" is logged as `error` with no capture, and after
+ * it the user is not holding a link from us.
+ */
+function closesHandOff(entry: any, url: string): boolean {
+  const ext = externalSiteOf(entry);
+  return ext !== null && ext.url_generated === url && entry.outcome !== "partial";
+}
+
+/**
+ * Every in-flight hand-off still waiting on the user: an `external_site` entry
+ * with `outcome: "partial"` and `capture_received: false` that no LATER entry
+ * closes. Keyed on `partial`, not on `capture_received` alone: a `positive`
+ * entry logged with `capture_received: false` already had its results in hand
+ * (alpha feedback #2864, `log_012`/`log_013`) and is not waiting on anyone.
+ */
+function awaitingUserHandOffs(log: unknown): ProjectContextAwaitingUser[] {
+  const entries: any[] = Array.isArray(log) ? log : [];
+  const open: ProjectContextAwaitingUser[] = [];
+  entries.forEach((entry, i) => {
+    const ext = externalSiteOf(entry);
+    if (ext === null || entry.outcome !== "partial" || ext.capture_received !== false) return;
+    if (typeof entry.id !== "string") return;
+    if (entries.slice(i + 1).some((later) => closesHandOff(later, ext.url_generated))) return;
+    open.push({
+      logId: entry.id,
+      site: typeof ext.site === "string" ? ext.site : "",
+      urlGenerated: ext.url_generated,
+      planItemId: typeof entry.plan_item_id === "string" ? entry.plan_item_id : null,
+      performed: typeof entry.performed === "string" ? entry.performed : null,
+    });
+  });
+  return open;
+}
+
 export async function projectContext(input: ProjectContextInput): Promise<ProjectContextResult> {
+  // Primary surface for "which build is this?" — 8 skills call project_context,
+  // 0 call auth_status — so it rides on every return branch, no-project included.
+  const buildId = readBuildInfo().version;
   let research: any;
   let tree: any;
   try {
@@ -108,8 +216,8 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     // The other READ issue #1695 calls out: a skill that looks at project state
     // before answering must not surface a path error to a user who simply is
     // not in a project.
-    if (e instanceof NoProjectError) return noProjectResult("read");
-    return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
+    if (e instanceof NoProjectError) return { ...noProjectResult("read"), buildId };
+    return { ok: false, errors: [e instanceof Error ? e.message : String(e)], buildId };
   }
 
   // Open questions: everything not yet resolved (open / in_progress /
@@ -122,14 +230,20 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     openQuestions.push({ id: q.id, question: truncateQuestion(typeof q.question === "string" ? q.question : "") });
   }
 
+  const family = familyIndex(tree);
   const persons: ProjectContextPerson[] = [];
   for (const p of Array.isArray(tree?.persons) ? tree.persons : []) {
     if (!p || typeof p !== "object" || typeof p.id !== "string") continue;
+    const f = family.get(p.id);
     persons.push({
       id: p.id,
       name: preferredDisplayName(p),
       gender: typeof p.gender === "string" ? p.gender : null,
       sourceRefs: collectSourceRefs(p),
+      spouseIds: f ? [...f.spouseIds] : [],
+      parentIds: f ? [...f.parentIds] : [],
+      childIds: f ? [...f.childIds] : [],
+      diedByYear: diedByYear(p),
     });
   }
 
@@ -200,40 +314,135 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     research?.project && typeof research.project === "object" && typeof research.project.status === "string"
       ? research.project.status
       : null;
+  const objective =
+    research?.project && typeof research.project === "object" && typeof research.project.objective === "string"
+      ? research.project.objective
+      : null;
 
   // Advisory only — nothing gates on this. It tells the router what each
   // question is waiting on, computed from the document rather than from
   // session history (the only durable state this system has). The gates in
   // research_append compute their own preconditions independently.
-  const questionStatuses = questionStates(research);
+  const questionStatuses = questionStates(research, tree);
 
-  return { ok: true, projectStatus, openQuestions, questionStatuses, persons, sources, localities };
+  const awaitingUser = awaitingUserHandOffs(research?.log);
+  const externalCollections = await externalCollectionCounts(input.projectPath);
+
+  return {
+    ok: true,
+    buildId,
+    projectStatus,
+    objective,
+    openQuestions,
+    questionStatuses,
+    persons,
+    sources,
+    localities,
+    awaitingUser,
+    ...(externalCollections ? { externalCollections } : {}),
+  };
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
 
+/** Each tree person's one-hop family from `tree.relationships`: Couple edges
+ *  give spouses, ParentChild edges give parents and children. The type is
+ *  matched on its last segment, so the bare `Couple` and the
+ *  `http://gedcomx.org/Couple` URI both count. Ids are distinct, in edge order. */
+function familyIndex(tree: any): Map<string, { spouseIds: string[]; parentIds: string[]; childIds: string[] }> {
+  const index = new Map<string, { spouseIds: string[]; parentIds: string[]; childIds: string[] }>();
+  const entry = (id: string) => {
+    let e = index.get(id);
+    if (!e) {
+      e = { spouseIds: [], parentIds: [], childIds: [] };
+      index.set(id, e);
+    }
+    return e;
+  };
+  const add = (list: string[], id: unknown) => {
+    if (typeof id === "string" && id !== "" && !list.includes(id)) list.push(id);
+  };
+  for (const r of Array.isArray(tree?.relationships) ? tree.relationships : []) {
+    if (!r || typeof r !== "object" || typeof r.type !== "string") continue;
+    const kind = r.type.split("/").pop();
+    if (kind === "Couple" && typeof r.person1 === "string" && typeof r.person2 === "string") {
+      add(entry(r.person1).spouseIds, r.person2);
+      add(entry(r.person2).spouseIds, r.person1);
+    } else if (kind === "ParentChild" && typeof r.parent === "string" && typeof r.child === "string") {
+      add(entry(r.parent).childIds, r.child);
+      add(entry(r.child).parentIds, r.parent);
+    }
+  }
+  return index;
+}
+
+/** The year the person was certainly dead by: the earliest of the latest
+ *  possible years of their dated Death and Burial facts, or null when none is
+ *  dated. The latest year, not the earliest, so a death "Bef 1870" or "Abt 1861"
+ *  never reads as before an 1865 or 1860 household the person may still be in.
+ *  A date with no upper bound ("Aft 1850") gives no year: it never says when. */
+function diedByYear(p: any): number | null {
+  let by: number | null = null;
+  for (const f of Array.isArray(p?.facts) ? p.facts : []) {
+    const kind = typeof f?.type === "string" ? f.type.split("/").pop() : "";
+    if (kind !== "Death" && kind !== "Burial") continue;
+    const std = getStandardDate(f);
+    const y = std === null || latestIsUnbounded(std) ? null : latestYear(std);
+    if (y !== null && (by === null || y < by)) by = y;
+  }
+  return by;
+}
+
 export const projectContextSchema = {
   name: "project_context",
   description:
+    "When the user asks where the project stands (\"where are we?\", \"summarize " +
+    "progress\", \"what have we found?\") or reopens a project, call this and answer " +
+    "from it in exactly ONE plain-language paragraph and nothing else: the objective, " +
+    "what is established, what is open or waiting on the researcher, and the next " +
+    "step, stated rather than asked. No lead-in line (\"Here's where things stand:\"), " +
+    "no line breaks, headings, tables, lists or bold, no closing question, " +
+    "and no identifiers, file names, tool names or field names: " +
+    "say \"the proof summary\" or \"the parentage question\", never q_001 or ps_001. " +
+    "nextStep values name ids and agents; restate them in plain words. " +
+    "Do not read the project files and do not delegate. " +
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. Returns projectStatus; " +
+    "objective (research.project.objective verbatim, including any stated doubt " +
+    "about its premise); " +
     "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
-    "[{id, name, gender, sourceRefs}] — every tree person with the distinct S ids " +
-    "it already cites; and sources [{id, repository, " +
+    "[{id, name, gender, sourceRefs, spouseIds, parentIds, childIds, diedByYear}] — every " +
+    "tree person with the distinct S ids it already cites, its one-hop family from " +
+    "the tree's Couple and ParentChild edges, and the year it was certainly dead " +
+    "by from its dated Death or Burial facts (null if none); and sources [{id, repository, " +
     "gedcomxSourceDescriptionId, recordIds, assertionCount}] — every research " +
     "source with the record ids its assertions cover; and localities [{id, place, " +
     "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
-    "[{id, state, nextStep, openConflictIds}] — per question, how far it has got " +
-    "(framed / planned / searching / evidence-gathered / concluded / critiqued) and " +
-    "what it is waiting on. questionStatuses is ADVISORY: it reports what the " +
+    "[{id, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
+    "competingParentSets}] — per question, how far it " +
+    "has got (framed / planned / searching / evidence-gathered / concluded / critiqued — " +
+    "critiqued means an on-demand gps-mentor review exists and is never a step to take), " +
+    "what it is waiting on, and storedStatus, the question's own questions[].status " +
+    "verbatim (null when absent or not a string). state is DERIVED from the documents " +
+    "and storedStatus " +
+    "is REPORTED, so the two can disagree — a question can read state 'concluded' on a " +
+    "proof summary while its storedStatus is still 'in_progress'; that is not a " +
+    "contradiction. questionStatuses is ADVISORY: it reports what the " +
     "documents already show, nothing is gated on it, and a null nextStep means the " +
-    "question needs nothing further. One call gives the context " +
+    "question needs nothing further. awaitingUser [{logId, site, urlGenerated, " +
+    "planItemId, performed}] lists external-site URLs already handed to the user that " +
+    "nothing has answered yet — do not raise them again; when the user brings back a " +
+    "capture, or says they cannot access the site, log that as the row's closing " +
+    "entry with the same urlGenerated. externalCollections counts stored curated " +
+    "collections per place by record type (rows: research_query external_collections). " +
+    "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
-    "record); the writer tools handle every mechanical lookup themselves. Writes " +
-    "nothing.",
+    "record); the writer tools handle every mechanical lookup themselves. Also " +
+    "returns buildId, the engine build (version+date.sha) — quote it when reporting " +
+    "a problem. Writes nothing.",
   inputSchema: {
     type: "object" as const,
     properties: {

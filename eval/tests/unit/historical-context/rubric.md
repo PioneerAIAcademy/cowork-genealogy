@@ -2,6 +2,8 @@
 
 Grading dimensions for historical-context unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+Inside a project the agent ends with two `research_log_append` calls, one logging its lookups and one the overview; those entries appear in the file changes summary, and their shape is checked by validators, not by you. Most tests in this suite run with **no project**. There its first `research_log_append` call answers `ok: false`, `reason: "no_project"`: it is how the agent learns there is no project, and is correct behavior, not a failed tool call or a wrong argument. Do not mark Tool Arguments or any other dimension down for it, and `(no file changes)` is the correct outcome on those tests.
+
 ## Relevance to research
 
 Did the skill provide historical context directly relevant to the genealogical research question, not just general history of the time period?
@@ -12,22 +14,35 @@ Did the skill provide historical context directly relevant to the genealogical r
 
 ## Source quality
 
-Did the skill draw from reliable historical sources? Context should be factual, not speculative or fabricated.
+Did the skill draw from reliable historical sources? Context should be
+factual, not speculative or fabricated.
 
-- **pass:** Claims are factual and consistent with mainstream historical scholarship. Any claim the skill could not verify through a tool call is explicitly flagged as unconfirmed general knowledge, not asserted as settled fact.
-- **partial:** Mostly factual, but at least one claim is stated with more certainty than the tool results support, without being flagged as unconfirmed.
+Grade the disclosure at **block** granularity, not per claim. One flag
+covering a contiguous passage of unverified material — the form `SKILL.md`
+prescribes, "the following comes from general knowledge and should be
+verified" — satisfies this dimension for every claim inside that passage.
+Tagging each individual claim is a bonus, not what this dimension requires:
+do not mark down a flagged passage because a sentence within it reads as
+confident. What falls short is unverified material with no flag covering
+it, or a flag so far from the material that a reader would not connect the
+two.
+
+- **pass:** Claims are factual and consistent with mainstream historical scholarship. Every passage the skill could not verify through a tool call carries an explicit flag that it is unconfirmed general knowledge, rather than being asserted as settled fact.
+- **partial:** Mostly factual, but at least one passage is stated with more certainty than the tool results support, with no flag covering it.
 - **fail:** Claims are speculative, fabricated, or contradicted by mainstream scholarship.
 
 ## Citation completeness
 
-If any wiki/Wikipedia tool was called, does the response end with a "Sources
+If any wiki/Wikipedia tool was called, does the narrative end with a "Sources
 consulted" list — one bullet per page actually used, title linked to its
 actual URL (`source_url` on `wiki_search` results, `url` from
-`wiki_read`/`wikipedia_search`)? This is a distinct check from Source
-quality above — a response can be fully accurate (clean Source quality)
-while still failing to link its sources, and vice versa. Grade the
-end-of-response list, not inline citation — inline citation of individual
-claims is a bonus, not what this dimension requires.
+`wiki_read`/`wikipedia_search`)? The list sits at the end of the narrative,
+directly above the `### Search implications` block and the plain-language
+paragraphs after `---`; it does not have to be the last thing in the reply.
+This is a distinct check from Source quality above — a response can be fully
+accurate (clean Source quality) while still failing to link its sources, and
+vice versa. Grade the end-of-narrative list, not inline citation — inline
+citation of individual claims is a bonus, not what this dimension requires.
 
 - **pass:** A "Sources consulted" (or equivalently named) list is present and every wiki/Wikipedia page the response actually drew from appears in it with its real URL, not just its title.
 - **partial:** A sources list is present but omits at least one page the response actually drew from, or lists a page by title with no URL.

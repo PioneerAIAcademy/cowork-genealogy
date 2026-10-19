@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_init_project_q7b",
+    "skill": "init-project",
+    "name": "Import a relative's timeline impossibility unchanged, and leave it unreviewed",
+    "type": "positive",
+    "description": "init-project imports the tree and reports the import; it reviews nothing (lead ruling on issue #2122, 2026-10-08: error checking is check-warnings', gaps are question-selection's). The fixture's wife, Bridget Doyle, carries a genuine timeline impossibility (Death 1875, Residence 1880) on a NON-subject relative: both facts must reach the tree unchanged, and the reply must not analyse them, correct them, or hand them to check-warnings.",
+    "tags": [
+      "initialization",
+      "objective-stated",
+      "familysearch",
+      "identity-conflation",
+      "relatives",
+      "no-review",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Start a new research project to identify the origins of Thomas Doyle, born around 1830 in Ireland and died 1895 in Northumberland County, Pennsylvania. His FamilySearch person ID is MKVT-7XR.\n\nprojectPath: <workspace>",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "person-read-doyle-relative-impossibility"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "Should import the read and report the import only. The agent does not run, invoke or hand back to check-warnings, and its reply carries no `Hand-back: check-warnings` line: error checking is not this agent's job.",
+    "The reply must not analyse Bridget Doyle's 1875 Death against her 1880 Residence — no 'error', 'inconsistency', 'conflict' or 'impossibility' framing, and no explanation of how both could be true. Reporting the import faithfully is the whole job.",
+    "Should NOT reason about identity conflation, split points, posthumous mentions or clustered warnings in its own prose — that doctrine belongs to check-warnings.",
+    "Should create the complete tree from the read -- Thomas, Bridget, John, Kate, the Couple relationship with its Marriage fact, all four ParentChild relationships, and both source descriptions all reach tree.gedcomx.json with quality: 1 refs.",
+    "Bridget Doyle's Death (1875) and Residence (1880) facts must both be carried through with their standard_date/standard_place sidecars exactly as the fixture returned them -- init-project must not 'fix' or drop either fact because check-warnings flagged them as inconsistent."
+  ],
+  "judge_reads_files": true
+}

@@ -98,14 +98,17 @@ to survive a pause, or to detect liveness.
    └──────────────────────────────────────────────────────────────┘
 ```
 
-- **Control plane** is run-state-stateless: it always `provider.connect(sandbox_id)`
-  (idempotent auto-resume) before returning a URL. It holds **no** `Process`,
+- **Control plane** is run-state-stateless: it calls `provider.resume(sandbox_id)`
+  before returning a URL, and a paused sandbox wakes either way — `connect()`
+  auto-resumes it on a handle-cache miss, and on a cached handle the first inbound
+  request does (`auto_resume`). It holds **no** `Process`,
   watch, or per-session connection. Any instance serves any request; killing an
   instance mid-session never touches the browser↔sandbox link, because the control
   plane is not in the data path. That is the affinity fix — affinity removed, not
   routed around.
 - **Sandbox = the per-session server.** Today's relay (`ws.py` +
-  `live_session.py` + the `local.py:195` `rglob`-mtime `/project` watch) is
+  `live_session.py` + the `rglob`-mtime `/project` watch, `sandbox_server.py`'s
+  `_watch_loop`) is
   **relocated** to run inside the sandbox as its boot command, exposing one
   authenticated WSS port. Inside the sandbox the relay is *simpler* than on the
   control plane: no `SandboxProvider` indirection, `/project` is local, and a
@@ -145,9 +148,10 @@ today); reconnect re-syncs via `GET /state`.
   delete a session a user is in. `retention_days` default 30. It runs daily-ish,
   not per-session, so it is **not** the per-session reaper we removed — and for
   alpha it can be a manual or in-process job.
-- The control plane is run-state-stateless: it always `connect(sandbox_id)`
-  (idempotent auto-resume) before handing out a URL, so it never needs to track
-  running-vs-paused.
+- The control plane is run-state-stateless: a paused sandbox wakes whether or not
+  `provider.resume()` finds its handle cached (`connect()` auto-resumes on a miss;
+  otherwise the first inbound request does, through `auto_resume`), so it never
+  needs to track running-vs-paused.
 
 ---
 
@@ -162,10 +166,68 @@ today); reconnect re-syncs via `GET /state`.
   `/ping` timer are removed.
 - **Reconnect-on-resume:** on socket close (a pause), the client re-`POST /connect`
   (which auto-resumes in ~1 s) and reconnects, showing a brief "resuming…" state.
-  This is E2B's prescribed reconnect pattern, not an error path.
+  This is E2B's prescribed reconnect pattern, not an error path. The server
+  replays its whole transcript buffer to every (re)connect; recorded frames
+  carry `seq`/`epoch` stamps and `WsSessionConnection` keeps a `lastSeq` cursor
+  so the replay is deduped instead of re-folded (issue #3387 — the wire contract
+  is in `docs/specs/hosted-web-workbench-spec.md` §6.2).
 - `SessionView.tsx` already constructs the connection async; shape unchanged.
   `ChatPane` and `WsResearchTransport` consume the `SessionConnection` interface
   and are untouched.
+
+### 4.1 The credentials fetch is bounded, and a hang is not a refusal
+
+`WsSessionConnection.connect()` guards its await window with a `connecting` flag,
+cleared only when the credentials provider settles. **A provider that never
+settles left that flag `true` forever**, so every later `connect()` returned at
+the guard: no socket, no retry, and no `chat_error` either. The chat panel sat on
+"Connecting to the agent…" indefinitely. That is one of only two paths that can
+produce an indefinite placeholder; the other is a socket that opens but never
+receives `chat_ready`.
+
+The fetch now has a 30-second bound (`CREDENTIALS_TIMEOUT_MS`), and it lives in
+`WsSessionConnection` rather than on `api.req` or at the `connectSession` call
+site. Two reasons: `req` is the shared REST helper and `resumeSession` plus the
+viewer's `/state` hydration resume the same paused sandbox and are just as slow,
+so a blanket timeout there would abort them too; and the flag that actually
+wedges lives in this class, so the bound belongs where the invariant is.
+
+**A hang gets a tighter ceiling than a refusal (`MAX_CREDENTIAL_TIMEOUTS = 2`
+against `MAX_RETRIES = 20`), and the asymmetry is the point.** A refused socket
+is cheap and fast. Each credentials attempt is a full `POST /connect`: an E2B
+resume (~1 s), `write_secrets`, `merge_config`, a FamilySearch token refresh over
+the network, and `expose_port` (`sessions.py` `connect_session`). Giving a hang
+the full 20-retry budget would multiply that against a control plane already
+failing to answer — trading a wedge for a stampede. Two attempts, then
+`chat_error`, which `ChatPane` renders as "Chat unavailable: …".
+
+**A 410 from `/connect` is terminal, and it is not `chat_error`.** The control
+plane answers 410 for a session more than 72 hours past `projects.created`, and
+will never answer otherwise. The connection marks itself closed, never retries,
+does not reconnect on focus, and emits one `status: session_expired` frame;
+`ChatPane` replaces the composer with "This session is more than 72 hours old and
+can't be continued." It is checked before the `hidden` guard, so a refusal that
+lands in a background tab still ends the session. Pinned by the 410 cases in
+`SessionConnection.test.ts`.
+
+**Worst case the user waits about 60 seconds** before "Chat unavailable"
+appears: two 30-second bounds plus the retry delay between them. That is the
+trade against an indefinite "Connecting to the agent…" placeholder, and it is
+stated here rather than left to be derived from three constants, because it is
+the first thing a reader asks of them.
+
+Bounded by `apps/web/src/transport/__tests__/SessionConnection.test.ts`, whose
+two wedge cases fail when the bound is removed while its rejection, retry-ceiling
+and happy-path cases pass either way — that asymmetry is what shows the retry
+semantics were not altered.
+
+Two further cases pin the budget's own arithmetic, because the guard is
+otherwise removable in silence: a success between two hangs must reset the
+budget (deleting that reset left every other test green), and a focus event must
+**not** reset it (adding a reset there also left every other test green).
+`credentialTimeouts` is deliberately not symmetric with `attempts`, which
+`onVisibility` does reset on focus — resetting the budget there would let
+tabbing away and back re-arm the stampede the ceiling exists to prevent.
 
 ---
 
@@ -196,15 +258,15 @@ but did not say:
 
 - *Optional, alpha-skippable:* the sandbox server pauses proactively **between
   turns** near ~55 min so the forced pause never lands mid-turn. Resume restores
-  processes but — *this part is asserted, never measured* — possibly **not** their
-  open sockets, in which case a mid-turn pause drops the agent's Anthropic-API and
-  MCP connections and breaks that turn.
+  processes, but a mid-turn pause can break that turn: *measured in #3305*, where
+  an alpha session froze four times mid-turn and three of the four calls in flight
+  failed on resume (`image_transcribe` aborted after 15,061 s; `API Error: Failed
+  to parse JSON`, twice).
 
-  **Measure this before acting on it.** It is the only thing that sets the real
-  cost of staying on Hobby: if a forced pause does not break the turn, the cap is
-  a non-event; if it does, proactive between-turn pausing is worth building — and
-  that is the same work as pausing idle sandboxes, which is wanted anyway on cost
-  grounds. Nothing in the tier upgrade fixes it either way.
+  That settles the question that sets the real cost of staying on Hobby: a forced
+  pause can break the turn, so the cap is not a non-event. Proactive between-turn
+  pausing is the same work as pausing idle sandboxes, which is wanted anyway on
+  cost grounds. Nothing in the tier upgrade changes what a pause does to a turn.
 - **Hobby → Pro later = a plan upgrade + a one-line timeout bump (1h → 24h), zero
   rework.** Auto-pause-on-idle and reconnect-on-resume are wanted on Pro too; only
   the cap number changes.
@@ -243,11 +305,12 @@ Durability splits in two; only one half is deferred.
 - New: a signed session-token mint + verify helper, shared with the sandbox server.
 
 **Sandbox**
-- A thin WSS server (reuse `ws.py` + `live_session.py` + the `local.py:195` watch),
+- A thin WSS server (reuse `ws.py` + `live_session.py` + the `/project` watch,
+  `sandbox_server.py`'s `_watch_loop`),
   set as the sandbox boot command (`apps/server/sandbox/e2b.Dockerfile` `CMD`).
   Verifies the token at handshake. **No Ably SDK** — no broker.
-- `app/agent/runner.py`: implement `interrupt` (currently ignored at `runner.py:65`)
-  — a priority path that cancels the in-flight `ClaudeSDKClient` turn.
+- `app/agent/runner.py`: the `interrupt` priority path (the `mtype == "interrupt"`
+  branch) that cancels the in-flight `ClaudeSDKClient` turn.
 
 **Client (`apps/web`)**
 - `makeSessionConnection` points `WsSessionConnection` at `wssUrl`; reconnect-on-
@@ -353,9 +416,10 @@ the reset.
 
 - `WsSessionConnection`, `makeSessionConnection` (`apps/web/src/transport`) — reused,
   just a different URL.
-- `ws.py` relay + `live_session.py` + `local.py:195` watch — **relocated** into the
+- `ws.py` relay + `live_session.py` + the `/project` watch (`sandbox_server.py`'s
+  `_watch_loop`) — **relocated** into the
   sandbox, not rewritten.
-- `Project.sandbox_id` + `last_active` (`apps/server/app/models.py:45,52`) — the
+- `Project.sandbox_id` + `last_active` (`apps/server/app/models.py`, `class Project`) — the
   janitor's keys; no new persistence.
 - `local_ws` realtime + `/ws/sessions/{id}` — kept for local dev.
 - `viewer-ui` `ResearchTransport` — socket-agnostic, untouched.

@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Tests cross-continental vitals recovery: Swiss birth record (Hausen, Bellikon, Aargau) + US death/burial records (Naples, Ontario County, NY). Also flag to team: person_read --relatives returns shared/compact fact ids across relatives in this tree (e.g. most children share the subject's own Birth/Death fact ids) -- did not block this strip since strip disambiguates by (person, fact-id), but worth a look for future fixtures stripping a relative's fact."
+  "notes": "Bundled capture (provided-documents/): Find a Grave memorial #136852260 — Johann Frederich Widmer, died 4 Jul 1914, buried Rose Ridge Cemetery, Naples, Ontario County, NY — gives the agent access to the burial finding without a live browser session (issue #2083). Tests cross-continental vitals recovery: Swiss birth record (Hausen, Bellikon, Aargau) + US death/burial records (Naples, Ontario County, NY). Also flag to team: person_read --relatives returns shared/compact fact ids across relatives in this tree (e.g. most children share the subject's own Birth/Death fact ids) -- did not block this strip since strip disambiguates by (person, fact-id), but worth a look for future fixtures stripping a relative's fact."
 }

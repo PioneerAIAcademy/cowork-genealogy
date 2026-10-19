@@ -4,22 +4,18 @@
 // host-side and returns text) build on one resolver + fetcher instead of
 // duplicating the token/UA/content-type plumbing.
 
-import { getValidToken } from "../auth/refresh.js";
+import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "./http.js";
-import { toArk, arkToUrl } from "./ark.js";
+import { fsFetchWithTimeout } from "./fs-fetch.js";
+import { toArk, arkToUrl, isDocumentImageArk, findDocumentImageArk, IMAGE_ID_PATTERN, UNPREFIXED_IMAGE_ID_RE } from "./ark.js";
 
 // fetchWithTimeout's budget covers headers and body together, and a full-size
 // page scan at typical throughput needs more than the 30s default to finish
-// streaming. A measured download of one takes ~7s, so 90s is deliberate
+// streaming. The download leg measures p50 1.9s / max 8.0s, so 90s is deliberate
 // headroom — this is the download leg only, and it is budgeted separately
 // from the OCR call it feeds (image-transcribe.ts's OCR_TIMEOUT_MS).
 const IMAGE_FETCH_TIMEOUT_MS = 90_000;
-
-// An imageId is a digitized-image identifier of the form NUMBER_NUMBER
-// (an image group number, an underscore, and an image sequence number,
-// e.g. "004884748_02613").
-const IMAGE_ID_PATTERN = /^\d+_\d+$/;
 
 // `ark` accepts either an already-resolved distribution URL (the pre-#267
 // input shapes, for callers that already have one) or a FamilySearch
@@ -32,7 +28,6 @@ const IMAGE_ID_PATTERN = /^\d+_\d+$/;
 const ARK_PATTERN = /^https:\/\/sg30p0\.familysearch\.org\/.+\/\$dist$/;
 const DGS_URL_PATTERN =
   /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
-const DOCUMENT_IMAGE_ARK_PATTERN = /^ark:\/61903\/3:[12]:[A-Za-z0-9.-]+$/;
 
 // A `3:1:`/`3:2:` ARK is not always self-sufficient: some are waypoints into
 // a multi-image film/register, and the bare resolver redirect can land on an
@@ -49,7 +44,7 @@ const DOCUMENT_IMAGE_ARK_PATTERN = /^ark:\/61903\/3:[12]:[A-Za-z0-9.-]+$/;
 // rather than assuming forwarding these params is always correct.
 const IMAGE_CONTEXT_PARAMS = ["i", "cc", "groupId"] as const;
 
-function extractImageContextQuery(raw: string): string {
+export function extractImageContextQuery(raw: string): string {
   let url: URL;
   try {
     url = new URL(raw);
@@ -68,6 +63,45 @@ function extractImageContextQuery(raw: string): string {
 export interface FsImageInput {
   imageId?: string;
   ark?: string;
+  /** A FamilySearch *memory* artifact URL (the `about` of a memory
+   *  sourceDescription). Unlike imageId/ark, this is already a direct bytes
+   *  URL, so it is passed through rather than resolved. Host-validated below. */
+  memoryArtifactUrl?: string;
+}
+
+// A memory artifact URL, as served by the memories API's `about`. Measured
+// 2026-09-15 over the 221-memory / 3-person probe corpus: 221 of 221 sat on
+// sg30p0.familysearch.org with a path ending `/dist.<ext>` and a `ctx` query
+// param. Validated rather than trusted because it arrives as data from an
+// upstream response; an unvalidated URL here would be a fetch of an
+// arbitrary host driven by an external service's payload.
+const MEMORY_ARTIFACT_PATTERN =
+  /^https:\/\/sg30p0\.familysearch\.org\/.+\/dist\.[A-Za-z0-9]+(\?.*)?$/;
+
+/**
+ * The single host check for a memory artifact URL, shared by both legs that
+ * fetch one. The image leg validated and the story leg did not, which left the
+ * two reading the SAME upstream field (`sourceDescriptions[].about`) under
+ * different rules. Neither leg attaches a credential, so this is defence in
+ * depth rather than a live hole -- but a host check that only one caller
+ * performs is one refactor away from being no check at all.
+ */
+export function isMemoryArtifactUrl(url: string): boolean {
+  return MEMORY_ARTIFACT_PATTERN.test(url);
+}
+
+// Memory artifacts are NOT all images: the same corpus carried application/pdf
+// (29 of 221), and a PDF is exactly the high-value record type here (wills,
+// certificates, compiled histories). Measured 2026-09-15: the OCR model reads a
+// PDF handed to it as an ordinary `image_url` data URL — 1222 chars off the
+// smallest one — so no separate request shape is needed, only permission to
+// carry the bytes this far. audio/* and video/* never reach here: memories.ts
+// drops them before the artifact is ever resolved.
+const MEMORY_ARTIFACT_CONTENT_TYPES = ["image/", "application/pdf"];
+
+function isAcceptableArtifactType(contentType: string, memoryShape: boolean): boolean {
+  if (contentType.startsWith("image/")) return true;
+  return memoryShape && MEMORY_ARTIFACT_CONTENT_TYPES.some((t) => contentType.startsWith(t));
 }
 
 function imageIdToUrl(imageId: string): string {
@@ -85,19 +119,129 @@ function arkToImageUrl(ark: string): { url: string; fallbackUrl?: string } {
     return { url: ark };
   }
   const canonical = toArk(ark);
-  if (DOCUMENT_IMAGE_ARK_PATTERN.test(canonical)) {
+  if (isDocumentImageArk(canonical)) {
     const base = arkToUrl(canonical);
     const query = extractImageContextQuery(ark);
     // Only offer a fallback when we actually appended context params — if
     // there's nothing to strip, primary and fallback would be identical.
     return query ? { url: base + query, fallbackUrl: base } : { url: base };
   }
+  const unprefixed = ark.trim();
+  if (UNPREFIXED_IMAGE_ID_RE.test(unprefixed)) {
+    return { url: arkToUrl(`ark:/61903/3:1:${unprefixed}`) };
+  }
   throw new Error(
     "Unrecognized ark. Expected a FamilySearch document-image ARK " +
-      "(ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, or a " +
-      "resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), " +
-      "or a DGS distribution URL (dgs:.../dist.jpg)."
+      "(ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, an " +
+      "unprefixed XXXX-XXXX-XXXX-X id (treated as 3:1:), or a resolver URL " +
+      "for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS " +
+      "distribution URL (dgs:.../dist.jpg). Pass the FamilySearch page URL or " +
+      "ARK exactly as the user gave it, including its 3:1:/3:2: prefix; do not " +
+      "build an imageId from a groupId or an i= index."
   );
+}
+
+/**
+ * The keys a call carried, for the error that finds no image input among
+ * them: an unrecognized key reads as no input at all, and naming it is what
+ * shows the caller which name it got wrong.
+ */
+export function receivedKeys(input: object | null | undefined): string {
+  const keys = Object.entries(input ?? {}).map(([key, value]) =>
+    value === "" ? `${key} (empty)` : typeof value === "string" ? key : `${key} (not a string)`,
+  );
+  return keys.length > 0 ? `Received keys: ${keys.join(", ")}.` : "Received no keys.";
+}
+
+/**
+ * Respell an `ark` whose query string or fragment would otherwise stop
+ * arkToImageUrl from recognizing it. A distribution URL loses the query; a
+ * bare `3:1:`/`3:2:` id or an unprefixed id becomes its canonical ARK with the
+ * query kept, so its i=/cc=/groupId= are forwarded exactly as they are for the
+ * canonical spelling. A spelling arkToImageUrl already reads (a canonical ARK,
+ * a resolver URL) is returned unchanged, so its label and saved-image key do
+ * not move.
+ */
+function respellArk(ark: string): string {
+  const trimmed = ark.trim();
+  const cut = trimmed.search(/[?#]/);
+  if (cut === -1 || isDocumentImageArk(toArk(trimmed))) return ark;
+  const path = trimmed.slice(0, cut);
+  if (ARK_PATTERN.test(path) || DGS_URL_PATTERN.test(path)) return path;
+  const query = trimmed.slice(cut);
+  const canonical = toArk(path);
+  if (isDocumentImageArk(canonical)) return canonical + query;
+  if (UNPREFIXED_IMAGE_ID_RE.test(path)) return `ark:/61903/3:1:${path}${query}`;
+  return ark;
+}
+
+/**
+ * Which of `ark` and `imageArk` to read when both are given, or null when they
+ * do not name the same image. `ark` when the two would fetch the same URL.
+ * When they are one ARK and only one side carries i=/cc=/groupId= (that side's
+ * fallback URL is the other side's URL), the side carrying them, whichever key
+ * it came in on: on a multi-image waypoint ARK `i=` picks the page, so the bare
+ * side could read a different image.
+ */
+function sameImageChoice(ark: string, imageArk: string): string | null {
+  if (ark.trim() === imageArk.trim()) return ark;
+  try {
+    const fromArk = arkToImageUrl(respellArk(ark));
+    const fromAlias = arkToImageUrl(respellArk(imageArk));
+    if (fromArk.url === fromAlias.url || fromArk.fallbackUrl === fromAlias.url) return ark;
+    if (fromAlias.fallbackUrl === fromArk.url) return imageArk;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function kindOf(value: unknown): string {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "an array";
+  return typeof value === "object" ? "an object" : `a ${typeof value}`;
+}
+
+/**
+ * The `ark` a caller meant, settled before the input forms are counted.
+ * `imageArk` is record_read's name for a page image and the key
+ * research_log_append logs an image entry under, so callers carry it forward;
+ * nothing refuses an unknown key, so without this fold the value was dropped
+ * and the call failed as if no image had been named. When both name the same
+ * image, sameImageChoice says which is read; two that do not are refused
+ * rather than one being picked, and so is an `ark` that is not a string, which
+ * would otherwise be dropped for `imageArk` without a word. The resulting
+ * `ark` is respelled by respellArk.
+ */
+export function foldImageArkInput<T extends { ark?: string; imageArk?: string }>(
+  given: T,
+  caller: string,
+): T {
+  // A call with no arguments arrives as undefined; read it as no keys so the
+  // no-input error can say so.
+  const input = given ?? ({} as T);
+  const rawArk: unknown = input.ark;
+  if (rawArk !== undefined && typeof rawArk !== "string") {
+    throw new Error(
+      `${caller} was given an ark that is not a string (${kindOf(rawArk)}). Pass ark as a ` +
+        "string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given.",
+    );
+  }
+  let folded = input;
+  const alias = input.imageArk;
+  if (typeof alias === "string" && alias.trim() !== "") {
+    const { imageArk: _alias, ...rest } = input;
+    const ark = typeof input.ark === "string" && input.ark.trim() !== "" ? input.ark : undefined;
+    const chosen = ark === undefined ? alias : sameImageChoice(ark, alias);
+    if (chosen === null) {
+      throw new Error(
+        `${caller} was given both ark ('${ark}') and imageArk ('${alias}'), which do not ` +
+          "name the same image. imageArk is another name for ark: pass only one.",
+      );
+    }
+    folded = { ...rest, ark: chosen } as T;
+  }
+  return typeof folded.ark === "string" ? { ...folded, ark: respellArk(folded.ark) } : folded;
 }
 
 /**
@@ -114,18 +258,45 @@ function arkToImageUrl(ark: string): { url: string; fallbackUrl?: string } {
 export function resolveFsImageInput(
   input: FsImageInput,
   caller: string
-): { url: string; label: string; fallbackUrl?: string } {
-  if (input.imageId !== undefined && input.ark !== undefined) {
-    throw new Error("Provide either imageId or ark, not both.");
+): { url: string; label: string; fallbackUrl?: string; memoryShape: boolean } {
+  const given = [input.imageId, input.ark, input.memoryArtifactUrl].filter(
+    (v) => v !== undefined
+  ).length;
+  if (given > 1) {
+    throw new Error(
+      "Provide exactly one of imageId, ark, or memoryArtifactUrl."
+    );
+  }
+  if (input.memoryArtifactUrl !== undefined) {
+    if (!MEMORY_ARTIFACT_PATTERN.test(input.memoryArtifactUrl)) {
+      throw new Error(
+        "Unrecognized memoryArtifactUrl. Expected either a FamilySearch memory " +
+          "artifact URL on sg30p0.familysearch.org ending in /dist.<ext>, or " +
+          "(image_transcribe only) a Memories page URL " +
+          "https://www.familysearch.org/photos/artifacts/<id> or " +
+          "https://www.familysearch.org/memories/<id>, where <id> is digits."
+      );
+    }
+    return {
+      url: input.memoryArtifactUrl,
+      label: input.memoryArtifactUrl,
+      memoryShape: true,
+    };
   }
   if (input.imageId !== undefined) {
-    return { url: imageIdToUrl(input.imageId), label: input.imageId };
+    return {
+      url: imageIdToUrl(input.imageId),
+      label: input.imageId,
+      memoryShape: false,
+    };
   }
   if (input.ark !== undefined) {
     const { url, fallbackUrl } = arkToImageUrl(input.ark);
-    return { url, label: input.ark, fallbackUrl };
+    return { url, label: input.ark, fallbackUrl, memoryShape: false };
   }
-  throw new Error(`${caller} requires either imageId or ark.`);
+  throw new Error(
+    `${caller} requires one of imageId, ark, or memoryArtifactUrl. ${receivedKeys(input)}`
+  );
 }
 
 export interface FetchedFsImage {
@@ -153,24 +324,28 @@ interface FetchAttempt {
 
 async function attemptFsImageFetch(
   url: string,
-  token: string
+  principal: Principal | null,
+  memoryShape: boolean,
+  /** Lower the per-attempt budget; defaults to the multi-MB scan size. */
+  timeoutMs: number = IMAGE_FETCH_TIMEOUT_MS
 ): Promise<FetchAttempt> {
-  const response = await fetchWithTimeout(
-    url,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "image/*,*/*",
-        "User-Agent": BROWSER_USER_AGENT,
-      },
-    },
-    IMAGE_FETCH_TIMEOUT_MS
-  );
+  // A memory artifact is served publicly: measured 2026-09-15, the same
+  // artifact returned 200 with no headers at all, with a UA only, and
+  // with bearer+UA alike. No token is requested for this shape, so a
+  // caller with no FamilySearch session can still read one -- and no
+  // credential is sent to a URL that arrived in a response body.
+  const fetchHeaders: Record<string, string> = {
+    Accept: memoryShape ? "image/*,application/pdf,*/*" : "image/*,*/*",
+    "User-Agent": BROWSER_USER_AGENT,
+  };
+  const response = principal
+    ? await fsFetchWithTimeout(principal, url, { headers: fetchHeaders }, timeoutMs)
+    : await fetchWithTimeout(url, { headers: fetchHeaders }, timeoutMs);
   if (!response.ok) {
     return { ok: false, status: response.status, statusText: response.statusText };
   }
   const rawContentType = response.headers.get("content-type") ?? "image/jpeg";
-  if (!rawContentType.startsWith("image/")) {
+  if (!isAcceptableArtifactType(rawContentType, memoryShape)) {
     return {
       ok: false,
       status: response.status,
@@ -192,7 +367,7 @@ async function attemptFsImageFetch(
 
 /**
  * Fetch the raw bytes of a FamilySearch distribution image, authenticated.
- * Reuses getValidToken() + BROWSER_USER_AGENT. Throws on non-2xx or a
+ * Reuses getValidToken(principal) + BROWSER_USER_AGENT. Throws on non-2xx or a
  * non-image content-type. Imposes no size cap — callers decide what to do
  * with the bytes (image_read refuses oversize inline; image_transcribe
  * streams them to OCR host-side, where no transport cap applies).
@@ -208,26 +383,85 @@ async function attemptFsImageFetch(
  */
 export async function fetchFsImageBytes(
   url: string,
-  fallbackUrl?: string
+  fallbackUrl: string | undefined,
+  principal: Principal,
+  memoryShape = false,
+  /** Lower the per-attempt budget. A probe must fit inside Cowork's 60s call
+   *  abort alongside two other legs (volume-bisect-tool-spec.md §8); the default
+   *  is a hang-catcher sized for a multi-MB scan, not for a probe. */
+  opts: { timeoutMs?: number } = {}
 ): Promise<FetchedFsImage> {
-  const token = await getValidToken();
+  // A memory artifact needs no credential (measured), and asking for one would
+  // make a public read fail for an unauthenticated caller with an auth error.
+  const authedPrincipal = memoryShape ? null : principal;
 
-  let attempt = await attemptFsImageFetch(url, token);
+  let attempt = await attemptFsImageFetch(url, authedPrincipal, memoryShape, opts.timeoutMs);
   let resolvedUrl = url;
   if (!attempt.ok && fallbackUrl) {
-    attempt = await attemptFsImageFetch(fallbackUrl, token);
+    attempt = await attemptFsImageFetch(fallbackUrl, authedPrincipal, memoryShape, opts.timeoutMs);
     resolvedUrl = fallbackUrl;
   }
 
   if (!attempt.ok || !attempt.bytes || attempt.contentType === undefined) {
     if (attempt.nonImageContentType !== undefined) {
       throw new Error(
-        `Expected an image response but got content-type: ${attempt.nonImageContentType}`
+        `Expected ${memoryShape ? "an image or PDF" : "an image"} response ` +
+          `but got content-type: ${attempt.nonImageContentType}`
       );
     }
-    throw new Error(
-      `FamilySearch image fetch failed: ${attempt.status} ${attempt.statusText}`
-    );
+    // On a 400/404 for a URL carrying a 3:1:/3:2: document-image ARK, name the
+    // likely cause. The agent's most common mistake is constructing an image
+    // ARK from a record ARK by changing the type prefix — the resulting id is
+    // syntactically valid but belongs to a different (or non-existent) entity.
+    //
+    // Deliberately only those two statuses, not the whole 4xx range: they are
+    // the ones that mean the identifier itself is wrong. The rest mean the ARK
+    // is real and the caller cannot have it right now — 401/403 is a
+    // rights-restricted image, 429 a rate limit — and re-fetching from
+    // record_read returns the same ARK, so the guidance sends the agent in a
+    // circle. 403 outnumbers 400 among ark failures in the committed runlogs —
+    // creszentia-haas-birth's are restricted images, and issue #2392 carved
+    // that cause out explicitly. Re-derive with `make e2e-transcribe-failures
+    // SINCE=all` rather than trusting a count written here: eval/runlogs/ grows
+    // on nearly every PR, and the report's stripped tally is what says how much
+    // of the corpus is classifiable at all. The 400s this guidance is for are
+    // pedro-chaves-spouse's; the 404s are ids that resolve to nothing, which is
+    // the same defect.
+    //
+    // Memory artifacts are excluded for the same reason: person_read's
+    // artifact_url carries a 3:1: ARK (eval/fixtures/mcp/
+    // person-read-flynn-family.json) that appears in neither record_read's
+    // imageArk nor image_search, so naming those two would be a dead end.
+    // statusText is routinely EMPTY on the very failure this targets: the
+    // corpus records the live text as "FamilySearch image fetch failed: 400 "
+    // with nothing after the code, so interpolating it unconditionally left a
+    // stray "400 ." once a sentence was appended.
+    const failed = attempt.statusText
+      ? `FamilySearch image fetch failed: ${attempt.status} ${attempt.statusText}`
+      : `FamilySearch image fetch failed: ${attempt.status}`;
+
+    // Keyed on the URL's SHAPE, not only the memoryShape flag: a memory
+    // artifact URL reaches this function with memoryShape false whenever it
+    // arrives through `ark` rather than `memoryArtifactUrl` (it fails
+    // ARK_PATTERN, so arkToImageUrl resolves its embedded 3:1: ark), and the
+    // guidance would then name two tools that can never return it.
+    const isMemory = memoryShape || isMemoryArtifactUrl(resolvedUrl);
+
+    if (!isMemory && (attempt.status === 400 || attempt.status === 404)) {
+      const ark = findDocumentImageArk(resolvedUrl);
+      if (ark) {
+        throw new Error(
+          `${failed}. The ark ${ark} may not be a valid document-image ` +
+            "identifier. Use record_read's imageArk field — do not construct " +
+            "one from a record ark by changing the type prefix. If the ark came " +
+            "from a page URL carrying i=/cc=/groupId=, pass that full URL rather " +
+            "than the bare ark: some arks are waypoints into a multi-image film " +
+            "and do not resolve without it. (image_search returns image ids, not " +
+            "arks, and needs an imageGroupNumber from volume_search.)"
+        );
+      }
+    }
+    throw new Error(failed);
   }
 
   return {

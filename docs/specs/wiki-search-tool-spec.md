@@ -77,18 +77,19 @@ Example:
 |-----------|----------|
 | Missing `wikiApiUrl` in config | Throw LLM-instruction error: `"wiki-query-api MCP not configured. Create ~/.familysearch-mcp/config.json with { \"wikiApiUrl\": \"http://localhost:8000\" } and start the wiki-query-api server."` |
 | 5xx from API | Throw: `"wiki-query-api error: {status}"` |
-| Network failure | Throw: `"Could not reach wiki-query-api at {url}. Is the server running?"` |
+| Network failure | Throw: `"Could not reach wiki-query-api at {url} ({cause})."` — `{cause}` from `describeFetchError` (`src/utils/http.ts`) |
 
-Match the LLM-instruction error pattern used by `getValidToken()` in
+Match the LLM-instruction error pattern used by `getValidToken(principal)` in
 `src/auth/refresh.ts` — error messages must tell Claude what to do next.
 
 ### Timeout
 
-`WIKI_SEARCH_TIMEOUT_MS` = **60s**, passed as `fetchWithTimeout`'s third
+`WIKI_SEARCH_TIMEOUT_MS` = **60s**, passed as `fetchWithRetry`'s third
 argument, rather than the shared 30s default. RAG retrieval over the wiki
-corpus is slower than a plain JSON read, and this is a single un-retried
-request — a slow success becomes a hard failure at the default with nothing
-behind it. Across the committed e2e run logs, 5 of 47 calls ran past 30s, the
+corpus is slower than a plain JSON read. The call is retried by `fetchWithRetry`
+(up to 3 attempts, 10s budget), but a 60s timeout exhausts the budget on the
+first attempt, so timeouts are effectively single-attempt — a slow success
+becomes a hard failure at the default with nothing behind it. Across the committed e2e run logs, 5 of 47 calls ran past 30s, the
 slowest at 56s. Re-measure rather than re-guess if the sidecar's retrieval
 changes; the method is in `image-transcribe-tool-spec.md`'s timeout-budget
 section.
@@ -158,10 +159,10 @@ wikiApiUrl?: string;
 
 ### `packages/engine/mcp-server/src/auth/config.ts`
 
-Add a `getWikiApiUrl()` helper modeled on `getClientId()`:
+Add a `getWikiApiUrl(principal)` helper modeled on `getClientId()`:
 
 ```typescript
-export async function getWikiApiUrl(): Promise<string>
+export async function getWikiApiUrl(principal): Promise<string>
 ```
 
 Throws an LLM-instruction error if the field is missing. This is the

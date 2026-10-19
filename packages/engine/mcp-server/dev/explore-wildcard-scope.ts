@@ -19,6 +19,7 @@
  *
  * Nothing here is recorded to measured-figures.json; this only picks the scope.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 
@@ -82,7 +83,7 @@ const scopes: Array<[string, string]> = [
 ];
 
 async function main(): Promise<void> {
-  token = await getValidToken();
+  token = await getValidToken(LOCAL);
   const f = (n: number | null): string => (n === null ? "ERR" : n.toLocaleString("en-US"));
   console.log(
     "scope                            Smyth+ex   Smith fz   Smith+ex   Sm?th fz   Sm?th+ex   usable?"

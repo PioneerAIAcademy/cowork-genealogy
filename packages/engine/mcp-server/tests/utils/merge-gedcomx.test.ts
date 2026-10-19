@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { mergeGedcomx } from "../../src/utils/merge-gedcomx.js";
-import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
+import type { SimplifiedGedcomX, SimplifiedRelationship } from "../../src/types/gedcomx.js";
 
 /**
  * Assert the document is internally consistent: every relationship endpoint
@@ -213,6 +213,63 @@ describe("mergeGedcomx — mode 1 relationships / sources / carry-over", () => {
     expect(pc.parent).toBe(mary.id);
     expect(pc.child).toBe("I1");
     assertIntegrity(out);
+  });
+
+  // ── Relationship identity carries the subtype (plan Decision 11) ──────────
+  //
+  // `relationshipKey` keys on type, endpoints AND subtype, so a Step and a
+  // Biological edge on one pair stay two relationships. `dedupRelationships`
+  // folds by the looser `relationshipMatches`, where an absent subtype is a
+  // less specific statement of the same edge.
+
+  const pair = (over: Partial<SimplifiedRelationship>): SimplifiedRelationship =>
+    ({ type: "ParentChild", parent: "I1", child: "I2", ...over }) as SimplifiedRelationship;
+
+  it("a Step and a Biological edge on one pair both survive dedup", () => {
+    const target: SimplifiedGedcomX = { persons: [{ id: "I1" }, { id: "I2" }] };
+    const candidate: SimplifiedGedcomX = {
+      persons: [{ id: "I1" }, { id: "I2" }],
+      relationships: [
+        pair({ id: "R1", subtype: "Biological" }),
+        pair({ id: "R2", subtype: "Step" }),
+      ],
+    };
+    const out = mergeGedcomx(target, candidate, [["I1", "I1"], ["I2", "I2"]]);
+    expect(out.relationships).toHaveLength(2);
+    expect((out.relationships ?? []).map((r) => r.subtype).sort()).toEqual(["Biological", "Step"]);
+  });
+
+  it("an untyped edge folds into a typed edge on the same pair, whichever comes first, and keeps the subtype", () => {
+    for (const order of [["Biological", undefined], [undefined, "Biological"]] as const) {
+      const candidate: SimplifiedGedcomX = {
+        persons: [{ id: "I1" }, { id: "I2" }],
+        relationships: [
+          pair({ id: "R1", subtype: order[0] }),
+          pair({ id: "R2", subtype: order[1] }),
+        ],
+      };
+      const out = mergeGedcomx({ persons: [{ id: "I1" }, { id: "I2" }] }, candidate, [["I1", "I1"], ["I2", "I2"]]);
+      expect(out.relationships).toHaveLength(1);
+      // The surviving edge takes the more specific statement either way round,
+      // so two merges of the same facts in a different order agree.
+      expect(out.relationships![0].subtype).toBe("Biological");
+    }
+  });
+
+  it("notes survive dedup", () => {
+    const candidate: SimplifiedGedcomX = {
+      persons: [{ id: "I1" }, { id: "I2" }],
+      relationships: [
+        pair({ id: "R1", notes: ["from the 1850 census"] }),
+        pair({ id: "R2", subtype: "Biological", notes: ["from the 1860 census"] }),
+      ],
+    };
+    const out = mergeGedcomx({ persons: [{ id: "I1" }, { id: "I2" }] }, candidate, [["I1", "I1"], ["I2", "I2"]]);
+    expect(out.relationships).toHaveLength(1);
+    expect((out.relationships![0].notes ?? []).sort()).toEqual([
+      "from the 1850 census",
+      "from the 1860 census",
+    ]);
   });
 
   it("dedups sources by title and rewrites every source ref to the surviving id", () => {
@@ -554,21 +611,73 @@ describe("mergeGedcomx — mode 2 (same document)", () => {
 // ────────────────────────────────────────────────────────────────────
 
 describe("mergeGedcomx — robustness", () => {
-  it("does not fold candidate person-level source refs — they are not tree format (spec §6.3)", () => {
+  it("dedups a carried person's refs when two candidate sources collapse to one title (#2696)", () => {
+    const target: SimplifiedGedcomX = { persons: [{ id: "I1" }], sources: [] };
+    const candidate: SimplifiedGedcomX = {
+      persons: [
+        { id: "C1" },
+        { id: "C2", sources: [{ ref: "X1" }, { ref: "X2" }] },
+      ],
+      sources: [
+        { id: "X1", title: "Census" },
+        { id: "X2", title: "Census" }, // same title -> the same tree source as X1
+      ],
+    };
+
+    const out = mergeGedcomx(target, candidate, [["I1", "C1"]]);
+
+    const census = out.sources!.find((s) => s.title === "Census")!.id;
+    const carried = out.persons!.find((p) => p.id !== "I1")!;
+    expect(carried.sources).toEqual([{ ref: census }]);
+    assertIntegrity(out);
+  });
+
+  it("folds candidate person-level source refs, remapped and deduped (#2696)", () => {
     const target: SimplifiedGedcomX = {
-      persons: [{ id: "I1" }],
+      persons: [{ id: "I1", sources: [{ ref: "S1" }] }],
       sources: [{ id: "S1", title: "Census" }],
     };
     const candidate: SimplifiedGedcomX = {
-      persons: [{ id: "I1", sources: [{ ref: "S1" }] }],
-      sources: [{ id: "S1", title: "Census" }], // same title → same source
+      persons: [
+        { id: "C1", sources: [{ ref: "X1" }, { ref: "X2", page: "p. 2" }] },
+        { id: "C2", sources: [{ ref: "X2" }] },
+      ],
+      sources: [
+        { id: "X1", title: "Census" }, // same title → S1
+        { id: "X2", title: "Will" }, // new → a fresh S id
+      ],
     };
 
-    const out = mergeGedcomx(target, candidate, [["I1", "I1"]]);
+    const out = mergeGedcomx(target, candidate, [["I1", "C1"]]);
 
-    // The tool layer strips person-level sources before merging; the core
-    // must not re-introduce them from an unsanitized candidate either.
-    expect(out.persons![0].sources).toBeUndefined();
+    const will = out.sources!.find((s) => s.title === "Will")!.id;
+    // Collapsed: the union, with X1 → S1 deduped against the survivor's own ref.
+    expect(out.persons!.find((p) => p.id === "I1")!.sources).toEqual([
+      { ref: "S1" },
+      { ref: will, page: "p. 2" },
+    ]);
+    // Carried: its refs remapped to the new id.
+    const carried = out.persons!.find((p) => p.id !== "I1")!;
+    expect(carried.sources).toEqual([{ ref: will }]);
+    assertIntegrity(out);
+  });
+
+  it("same-document merge keeps the collapsed person's person-level sources (#2696)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "I1", sources: [{ ref: "S1" }] },
+        { id: "I2", sources: [{ ref: "S1" }, { ref: "S2" }] },
+      ],
+      sources: [
+        { id: "S1", title: "Census" },
+        { id: "S2", title: "Will" },
+      ],
+    };
+
+    const out = mergeGedcomx(tree, null, [["I1", "I2"]]);
+
+    expect(out.persons!.map((p) => p.id)).toEqual(["I1"]);
+    expect(out.persons![0].sources).toEqual([{ ref: "S1" }, { ref: "S2" }]);
     assertIntegrity(out);
   });
 
@@ -771,5 +880,83 @@ describe("mergeGedcomx — id uniqueness under same-id arrays", () => {
     expect(couples).toHaveLength(1);
     expect((couples[0].facts ?? []).filter((f) => f.type === "Marriage")).toHaveLength(2); // non-equivalent → both kept
     assertIntegrity(out); // would fail if both kept id "F9"
+  });
+});
+
+describe("assertion_id across a fact merge (#2472)", () => {
+  /** Two persons whose Birth facts merge, each backlinked as `ids` says. */
+  const doc = (ids: [string | undefined, string | undefined]): SimplifiedGedcomX => ({
+    persons: [
+      {
+        id: "I1",
+        names: [{ id: "N1", given: "John", surname: "Smith" }],
+        facts: [
+          {
+            id: "F1",
+            type: "Birth",
+            date: "1850",
+            // Shorter place chain, so the merge takes I2's place instead.
+            place: "Pennsylvania, United States",
+            ...(ids[0] !== undefined ? { assertion_id: ids[0] } : {}),
+            sources: [{ ref: "S1" }],
+          },
+        ],
+      },
+      {
+        id: "I2",
+        names: [{ id: "N2", given: "John", surname: "Smith" }],
+        facts: [
+          {
+            id: "F2",
+            type: "Birth",
+            date: "1850",
+            place: "Schuylkill County, Pennsylvania, United States",
+            ...(ids[1] !== undefined ? { assertion_id: ids[1] } : {}),
+            sources: [{ ref: "S1" }],
+          },
+        ],
+      },
+    ],
+    relationships: [],
+    sources: [{ id: "S1", title: "1850 U.S. Census" }],
+  });
+
+  const mergedBirth = (ids: [string | undefined, string | undefined]) => {
+    const out = mergeGedcomx(doc(ids), null, [["I1", "I2"]]);
+    assertIntegrity(out);
+    const facts = out.persons!.find((p) => p.id === "I1")!.facts!;
+    expect(facts).toHaveLength(1);
+    return facts[0];
+  };
+
+  it("drops the backlink when the members disagree", () => {
+    // `mergeFactGroup` clones members[0] but takes the best place from whichever
+    // member has the longer chain — here I2's. Keeping I1's backlink would leave
+    // the fact claiming to come from an assertion whose place it no longer
+    // carries: drift to the agreement check, and the next correction to that
+    // assertion would overwrite the merged, most-specific value.
+    const f = mergedBirth(["a_001", "a_002"]);
+    expect(f.place).toBe("Schuylkill County, Pennsylvania, United States");
+    expect(f.assertion_id).toBeUndefined();
+  });
+
+  it("drops it when only one member carries one, and that conservatism is the point", () => {
+    // The tempting narrowing is "drop only when two members carry DIFFERENT
+    // non-empty backlinks". It is wrong, and this case is why: I1 carries the
+    // backlink, I2 carries none, and the merge takes I2's longer place chain.
+    // Under that rule the survivor would keep a_001 while carrying a place
+    // a_001 never asserted, which is precisely the drift the agreement check
+    // reports. The merge cannot consult research.json to tell the benign case
+    // apart, so it drops the link rather than guess.
+    const f = mergedBirth(["a_001", undefined]);
+    expect(f.place).toBe("Schuylkill County, Pennsylvania, United States");
+    expect(f.assertion_id).toBeUndefined();
+    expect(mergedBirth([undefined, "a_002"]).assertion_id).toBeUndefined();
+  });
+
+  it("KEEPS it when every member agrees", () => {
+    // The other direction: a merge of two facts minted from the same assertion
+    // is still that assertion's fact, and must stay updatable.
+    expect(mergedBirth(["a_001", "a_001"]).assertion_id).toBe("a_001");
   });
 });

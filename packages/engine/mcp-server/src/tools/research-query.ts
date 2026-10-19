@@ -22,8 +22,15 @@
 // record_search's structured-params-not-free-text-query design), validated
 // against a per-section allow-list — supplying a filter a section doesn't
 // support is a clear error, not a silent no-op.
+//
+// The four id keys in PLURAL_KEYS also take a list (T2.3): one call answers a
+// walk of one call per id. Lists of ids, never lists of sections — one section
+// per call is the 2026-10-10 ruling (research-query-tool-spec.md §3).
 
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readExternalCollections } from "../utils/external-collections-store.js";
+import { placeSegments } from "../utils/place-resolver.js";
+import { unregisteredDisagreements, type UnregisteredDisagreement } from "../utils/question-state.js";
 
 const MAX_ITEMS = 50;
 
@@ -39,23 +46,71 @@ export const RESEARCH_QUERY_SECTIONS = [
   "timelines",
   "proof_summaries",
   "evaluations",
+  "localities",
+  "external_collections",
 ] as const;
 
+/** Served from `external-collections.json`, not `research.json`: the curated
+ *  external collections `external_links_search` keeps per place. Deliberately NOT
+ *  a schema section (see external-links-search-tool-spec.md, "Stored list"), so it
+ *  is not in RESEARCH_QUERY_OPTIONAL_SECTIONS either. Its items are the stored rows,
+ *  each carrying its own `place`. */
+export const EXTERNAL_COLLECTIONS_SECTION = "external_collections";
+
 export type ResearchQuerySection = (typeof RESEARCH_QUERY_SECTIONS)[number];
+
+/** Sections the schema does not list as `required`, so absence is legitimate.
+ *
+ *  `localities` postdates most projects: 90 of the 102 committed fixtures have
+ *  no `localities` key at all. Erroring on those reproduces the issue #2864
+ *  failure — an agent that wrote locality findings could not read them back —
+ *  on nearly every real project, so for these sections a missing key answers
+ *  `count: 0` instead of throwing.
+ *
+ *  Narrow on purpose. A section that is PRESENT but not an array is a corrupt
+ *  document and still throws, and so does a `research.json` that is not an
+ *  object at all. See the guard at the read site for why that second case
+ *  needs saying. */
+export const RESEARCH_QUERY_OPTIONAL_SECTIONS: ReadonlySet<string> = new Set([
+  "localities",
+]);
+
+/** Array sections deliberately NOT served, and why.
+ *
+ *  Read by the completeness test, which requires every top-level array section
+ *  of `research.schema.json` to be either queryable or listed here — so a
+ *  section added later cannot be silently unreadable, which is the defect this
+ *  whole card is about.
+ *
+ *  `project` and `researcher_profile` are absent from both lists because they
+ *  are objects, not arrays, and this tool pages arrays. */
+export const RESEARCH_QUERY_EXCLUDED: Readonly<Record<string, string>> = {
+  known_holdings:
+    "write-only; issue #2069 deletes it from the schema, so exposing it here " +
+    "would create a contract that card then has to remove",
+  warning_justifications:
+    "writer-tool only; persisted by the warning gate as a side-effect of a " +
+    "justified write. Read by gps-mentor for audit, not by research_query",
+};
 
 export interface ResearchQueryInput {
   projectPath: string;
   section: ResearchQuerySection;
-  recordId?: string;
+  /** PLURAL_KEYS: one id, or a list of ids (a JSON-array string is accepted as one). */
+  recordId?: string | string[];
   recordRole?: string;
-  sourceId?: string;
+  sourceId?: string | string[];
   questionId?: string;
-  personId?: string;
-  assertionId?: string;
+  personId?: string | string[];
+  assertionId?: string | string[];
   planItemId?: string;
   status?: string;
   targetId?: string;
   focus?: string;
+  /** external_collections: the place and every enclosing jurisdiction. */
+  place?: string;
+  /** external_collections: case-insensitive substring of a row's record type. */
+  recordType?: string;
   /** Pagination, not a filter: skip the first `offset` matches, then return up
    *  to MAX_ITEMS. Applies to every section; absent ⇒ 0 (the whole first page). */
   offset?: number;
@@ -72,6 +127,16 @@ export type ResearchQueryResult =
        *  items.length`) — page with `offset` (or narrow the filter) rather than
        *  relying on this being everything. */
       truncated: boolean;
+      /** List calls only: `{id: n}` for every requested id, zeros included,
+       *  over the whole match set (identical on every page). On a contains-mode
+       *  section an item naming two ids counts under both, so the values can
+       *  sum above `count`. */
+      countById?: Record<string, number>;
+      /** `conflicts` only: linked assertions that disagree with no entry naming
+       *  the pair. `count` covers registered entries, so a router reading
+       *  `count: 0` as "no conflicts present" skipped conflict-resolution while
+       *  these sat unregistered (ut_research_h22). */
+      unregisteredDisagreements?: UnregisteredDisagreement[];
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -103,16 +168,32 @@ type FilterKey =
   | "planItemId"
   | "status"
   | "targetId"
-  | "focus";
+  | "focus"
+  | "place"
+  | "recordType";
 
 /** One filter's match rule: `field` (or the first-matching of `fields`) on
  *  each item, compared by `mode` — `exact` equality, or `contains` /
  *  `contains-any` when the item's field is an array (e.g. an assertion's
- *  `extracted_for_question_ids`, a hypothesis's `supporting_assertion_ids`). */
+ *  `extracted_for_question_ids`, a hypothesis's `supporting_assertion_ids`).
+ *  `plan-question` is a cross-section filter: the item's `field` must be one of
+ *  the item ids of the plans whose `question_id` is the value — it lets one
+ *  `log` call replace the walk of one `planItemId` call per plan item (T2.1).
+ *  `question-conflict` is the other cross-section filter: a conflict matches
+ *  when its `blocks_question_ids` names the question, or when one of its
+ *  `competing_assertion_ids` is an assertion whose `extracted_for_question_ids`
+ *  names it — the link the completion gate derives (`question-state.ts`). */
 interface FilterRule {
   field?: string;
   fields?: string[];
-  mode: "exact" | "contains" | "contains-any";
+  mode:
+    | "exact"
+    | "contains"
+    | "contains-any"
+    | "place-or-enclosing"
+    | "contains-substring-ci"
+    | "plan-question"
+    | "question-conflict";
 }
 
 /** Per-section allow-list of supported filter keys — the whole point of not
@@ -120,7 +201,9 @@ interface FilterRule {
  *  parameters are accepted, and only on the sections where they mean
  *  something. Supplying `recordId` against `section: "proof_summaries"` is a
  *  clear error, not a silently-ignored no-op. */
-const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, FilterRule>>> = {
+// Exported for the schema-field guard in tests/tools/research-query.test.ts:
+// a rule naming a field its section does not have matches nothing, ever.
+export const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, FilterRule>>> = {
   questions: {
     questionId: { field: "id", mode: "exact" },
     status: { field: "status", mode: "exact" },
@@ -131,11 +214,26 @@ const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, Fi
   },
   log: {
     planItemId: { field: "plan_item_id", mode: "exact" },
+    questionId: { field: "plan_item_id", mode: "plan-question" },
   },
   sources: {
     sourceId: { field: "id", mode: "exact" },
   },
   assertions: {
+    // `id`, not `assertion_id` — an assertion object has no `assertion_id`
+    // key (that is person_evidence's POINTER to one, below). A rule on
+    // `assertion_id` here is accepted by the tool and matches nothing, ever.
+    //
+    // NOTE the overload this creates. On every OTHER section `assertionId`
+    // means "entries REFERENCING this assertion"; here alone it means "the
+    // assertion itself". The allow-list throw used to be what separated them:
+    // a model that meant `person_evidence` and slipped the section got a loud
+    // error and self-corrected (observed in hypothesis-tracking's
+    // v1_2026-09-18_15-42-44 run). It now gets a plausible `count: 1` holding
+    // the assertion body — no `person_id`, no `confidence` — which reads as
+    // "already linked" to person-evidence's "an empty result IS the answer"
+    // idiom. Recorded in the spec's §3; there is no cheap guard for it.
+    assertionId: { field: "id", mode: "exact" },
     recordId: { field: "record_id", mode: "exact" },
     recordRole: { field: "record_role", mode: "exact" },
     sourceId: { field: "source_id", mode: "exact" },
@@ -147,7 +245,11 @@ const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, Fi
   },
   conflicts: {
     assertionId: { field: "competing_assertion_ids", mode: "contains" },
-    questionId: { field: "blocks_question_ids", mode: "contains" },
+    // Any status. A resolved conflict has emptied `blocks_question_ids`, and a
+    // caller asking what was settled for a question needs it still:
+    // ut_search_external_sites_013 filtered by questionId, got 0, and searched
+    // on the birthplace the resolved conflict had rejected.
+    questionId: { fields: ["blocks_question_ids", "competing_assertion_ids"], mode: "question-conflict" },
     status: { field: "status", mode: "exact" },
   },
   hypotheses: {
@@ -176,6 +278,15 @@ const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, Fi
     targetId: { field: "target_id", mode: "exact" },
     focus: { field: "focus", mode: "exact" },
   },
+  // No filters, deliberately. No existing filter key maps onto a locality
+  // field, and there is one entry per place-jurisdiction, so the whole section
+  // fits inside a single 50-item page. The empty object routes to the
+  // "(this section takes no filters)" branch below.
+  localities: {},
+  external_collections: {
+    place: { field: "place", mode: "place-or-enclosing" },
+    recordType: { field: "record_types", mode: "contains-substring-ci" },
+  },
 };
 
 const FILTER_KEYS: FilterKey[] = [
@@ -189,22 +300,132 @@ const FILTER_KEYS: FilterKey[] = [
   "status",
   "targetId",
   "focus",
+  "place",
+  "recordType",
 ];
 
-function matches(item: any, rule: FilterRule, value: string): boolean {
+/** The id keys that take a list as well as one id. Each keeps its per-section
+ *  rule; a list matches an item when ANY of its ids would. */
+export const PLURAL_KEYS: readonly FilterKey[] = ["personId", "assertionId", "sourceId", "recordId"];
+
+/** One filter's value as the ids to match, and whether the caller sent a list.
+ *  Never coerces: a non-string, an empty or mixed list, or a malformed
+ *  JSON-array string is an error, because each used to answer a silent
+ *  `count: 0`. */
+function filterValues(key: FilterKey, value: unknown): { values: string[]; isList: boolean } {
+  const plural = PLURAL_KEYS.includes(key);
+  let list: unknown = value;
+  if (typeof value === "string") {
+    if (!value.trim().startsWith("[")) return { values: [value], isList: false };
+    try {
+      list = JSON.parse(value);
+    } catch {
+      list = undefined;
+    }
+    if (!Array.isArray(list) && !plural) return { values: [value], isList: false };
+    if (!Array.isArray(list)) {
+      throw new ResearchQueryError(
+        `'${key}' starts with '[' but is not a JSON array (got ${JSON.stringify(value)}). ` +
+          `Send one id as a string, or a list of ids such as ["a_001","a_002"].`,
+      );
+    }
+  }
+  if (!Array.isArray(list)) {
+    throw new ResearchQueryError(
+      `'${key}' must be a string${plural ? " or a list of strings" : ""} (got ${JSON.stringify(value)}).`,
+    );
+  }
+  if (!plural) {
+    throw new ResearchQueryError(
+      `'${key}' must be a string; only ${PLURAL_KEYS.join(", ")} take a list.`,
+    );
+  }
+  if (list.length === 0) {
+    throw new ResearchQueryError(`'${key}' is an empty list. Send at least one id.`);
+  }
+  if (!list.every((v) => typeof v === "string" && v.length > 0)) {
+    throw new ResearchQueryError(
+      `'${key}' must list non-empty id strings (got ${JSON.stringify(list)}).`,
+    );
+  }
+  const ids = [...new Set(list as string[])];
+  if (ids.length > MAX_ITEMS) {
+    throw new ResearchQueryError(
+      `'${key}' lists ${ids.length} ids; the limit is ${MAX_ITEMS} per call. Split the list.`,
+    );
+  }
+  return { values: ids, isList: true };
+}
+
+/** "Venango, Pennsylvania, United States" -> itself, "Pennsylvania, United States",
+ *  "United States": a county's lookup also reaches its state's rows. */
+function placeAndEnclosing(place: string): string[] {
+  const parts = placeSegments(place);
+  return parts.map((_, i) => parts.slice(i).join(", "));
+}
+
+/** True when `item` matches ANY of `values`. Only PLURAL_KEYS reach here with
+ *  more than one value, and they use the exact and contains modes; the other
+ *  modes are single-valued and read `values[0]`. */
+function matches(item: any, rule: FilterRule, values: string[], scope?: Set<string>): boolean {
   const fields = rule.fields ?? (rule.field ? [rule.field] : []);
+  const value = values[0];
+  if (rule.mode === "plan-question") {
+    const id = item?.[fields[0]];
+    return typeof id === "string" && scope !== undefined && scope.has(id);
+  }
+  if (rule.mode === "question-conflict") {
+    const blocks = item?.[fields[0]];
+    if (Array.isArray(blocks) && blocks.includes(value)) return true;
+    const competing = item?.[fields[1]];
+    return Array.isArray(competing) && scope !== undefined && competing.some((id) => scope.has(id));
+  }
   if (rule.mode === "exact") {
-    return item && item[fields[0]] === value;
+    return Boolean(item) && values.includes(item[fields[0]]);
+  }
+  if (rule.mode === "place-or-enclosing") {
+    return typeof item?.[fields[0]] === "string" && placeAndEnclosing(value).includes(item[fields[0]]);
+  }
+  if (rule.mode === "contains-substring-ci") {
+    const arr = item?.[fields[0]];
+    const needle = value.toLowerCase();
+    return Array.isArray(arr) && arr.some((v) => typeof v === "string" && v.toLowerCase().includes(needle));
   }
   if (rule.mode === "contains") {
     const arr = item?.[fields[0]];
-    return Array.isArray(arr) && arr.includes(value);
+    return Array.isArray(arr) && values.some((v) => arr.includes(v));
   }
   // contains-any
   return fields.some((f) => {
     const arr = item?.[f];
-    return Array.isArray(arr) && arr.includes(value);
+    return Array.isArray(arr) && values.some((v) => arr.includes(v));
   });
+}
+
+/** The unregistered disagreements a `conflicts` read is asking about: the
+ *  question's own assertions under `questionId` (project_context's scope),
+ *  otherwise every assertion; narrowed to those naming any of `assertionIds`. */
+function disagreementsInScope(
+  research: any,
+  input: ResearchQueryInput,
+  assertionIds: string[] | undefined,
+): UnregisteredDisagreement[] {
+  const assertions = Array.isArray(research?.assertions) ? research.assertions : [];
+  const scope = new Set<string>(
+    assertions
+      .filter(
+        (a: any) =>
+          input.questionId === undefined ||
+          (Array.isArray(a?.extracted_for_question_ids) &&
+            a.extracted_for_question_ids.includes(input.questionId)),
+      )
+      .map((a: any) => a?.id)
+      .filter((id: unknown): id is string => typeof id === "string"),
+  );
+  const found = unregisteredDisagreements(research, scope);
+  return assertionIds === undefined
+    ? found
+    : found.filter((d) => assertionIds.some((id) => d.assertionIds.includes(id)));
 }
 
 export async function researchQuery(input: ResearchQueryInput): Promise<ResearchQueryResult> {
@@ -212,8 +433,20 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
 
   try {
     if (!RESEARCH_QUERY_SECTIONS.includes(section)) {
+      // JSON.stringify keeps a string visibly quoted (so a JSON-encoded '"log"'
+      // reads as a string, not an enum member) and renders undefined as
+      // `undefined` rather than a bare, misleading value. Detect the plural
+      // near-miss key too: `sections` is the mistake the model actually makes,
+      // and the bare `section 'undefined'` message gave it no way to learn the
+      // parameter is singular.
+      const near =
+        section === undefined &&
+        (input as unknown as Record<string, unknown>).sections !== undefined
+          ? " The parameter is 'section' (singular) and takes one value at a time — you sent 'sections'."
+          : "";
       throw new ResearchQueryError(
-        `section '${section}' is not one of: ${RESEARCH_QUERY_SECTIONS.join(", ")}`,
+        `section ${JSON.stringify(section)} is not one of: ${RESEARCH_QUERY_SECTIONS.join(", ")}.` +
+          `${near} Send one section name as a string.`,
       );
     }
 
@@ -237,9 +470,10 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     }
 
     const allowed = SECTION_FILTERS[section];
-    const activeFilters: { key: FilterKey; rule: FilterRule; value: string }[] = [];
+    const activeFilters: { key: FilterKey; rule: FilterRule; values: string[] }[] = [];
+    let listFilter: { key: FilterKey; rule: FilterRule; values: string[] } | undefined;
     for (const key of FILTER_KEYS) {
-      const value = input[key];
+      const value: unknown = input[key];
       if (value === undefined) continue;
       const rule = allowed[key];
       if (!rule) {
@@ -249,28 +483,141 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
             (supported.length > 0 ? ` (supported: ${supported.join(", ")})` : " (this section takes no filters)"),
         );
       }
-      activeFilters.push({ key, rule, value });
+      const { values, isList } = filterValues(key, value);
+      const filter = { key, rule, values };
+      if (isList) {
+        if (listFilter) {
+          throw new ResearchQueryError(
+            `only one filter may be a list per call (got lists on '${listFilter.key}' and '${key}').`,
+          );
+        }
+        listFilter = filter;
+      }
+      activeFilters.push(filter);
+    }
+
+    if (section === EXTERNAL_COLLECTIONS_SECTION) {
+      let doc;
+      try {
+        doc = await readExternalCollections(projectPath);
+      } catch (e) {
+        if (e instanceof NoProjectError) throw e;
+        throw new ResearchQueryError(e instanceof Error ? e.message : String(e));
+      }
+      // Place-key then row-key order, sorted here rather than read from the file:
+      // a jsonb-backed store does not keep the written key order.
+      const rows = doc
+        ? Object.keys(doc.places)
+            .sort()
+            .flatMap((place) =>
+              (Array.isArray(doc.places[place]?.rows) ? [...doc.places[place].rows] : []).sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)),
+            )
+        : [];
+      const hits = rows.filter((item) => activeFilters.every(({ rule, values }) => matches(item, rule, values)));
+      const from = input.offset ?? 0;
+      return {
+        ok: true,
+        section,
+        count: hits.length,
+        items: hits.slice(from, from + MAX_ITEMS),
+        truncated: hits.length > from + MAX_ITEMS,
+      };
     }
 
     const research = await readJson(projectPath, "research.json");
 
     const arr = research?.[section];
     if (!Array.isArray(arr)) {
+      // An optional section that is simply ABSENT from a real document is an
+      // empty result, not an error — see RESEARCH_QUERY_OPTIONAL_SECTIONS.
+      //
+      // All three conditions are load-bearing. `research?.[section]` is
+      // `undefined` for `null`, `[]`, `"x"` and `42` as well as for a missing
+      // key, because `readProjectJson` throws only on invalid JSON and hands
+      // back whatever else parsed. Keying the empty result on `undefined`
+      // alone would answer a confident `count: 0` on a file that is not a
+      // research document at all — the issue #2864 failure inverted. So the
+      // document must be a non-null, non-array object, and the section must be
+      // genuinely absent from it.
+      //
+      // `in` rather than `Object.hasOwn` walks the prototype chain, which errs
+      // toward the throw here: a collision would refuse rather than silently
+      // answer empty. No section name collides with an Object.prototype key.
+      const isDocument =
+        typeof research === "object" && research !== null && !Array.isArray(research);
+      if (RESEARCH_QUERY_OPTIONAL_SECTIONS.has(section) && isDocument && !(section in research)) {
+        return { ok: true, section, count: 0, items: [], truncated: false };
+      }
       throw new ResearchQueryError(`research.json '${section}' is missing or not an array`);
     }
 
-    const filtered = arr.filter(
-      (item) => activeFilters.every(({ rule, value }) => matches(item, rule, value)),
+    // A `plan-question` filter reads `plans` once to learn which plan items
+    // belong to the question. `plans` is a required section, so its absence is
+    // a corrupt document — an error, never a confident empty answer.
+    const planItemsFor = new Map<string, Set<string>>();
+    for (const { rule, values } of activeFilters) {
+      const value = values[0];
+      if (rule.mode !== "plan-question" || planItemsFor.has(value)) continue;
+      const plans = research?.plans;
+      if (!Array.isArray(plans)) {
+        throw new ResearchQueryError("research.json 'plans' is missing or not an array");
+      }
+      const ids = new Set<string>();
+      for (const plan of plans) {
+        if (plan?.question_id !== value || !Array.isArray(plan?.items)) continue;
+        for (const planItem of plan.items) {
+          if (typeof planItem?.id === "string") ids.add(planItem.id);
+        }
+      }
+      planItemsFor.set(value, ids);
+    }
+
+    // A `question-conflict` filter reads `assertions` once for the question's
+    // own assertion ids. A required section, so its absence is an error too.
+    const assertionsFor = new Map<string, Set<string>>();
+    for (const { rule, values } of activeFilters) {
+      const value = values[0];
+      if (rule.mode !== "question-conflict" || assertionsFor.has(value)) continue;
+      const assertions = research?.assertions;
+      if (!Array.isArray(assertions)) {
+        throw new ResearchQueryError("research.json 'assertions' is missing or not an array");
+      }
+      const ids = new Set<string>();
+      for (const a of assertions) {
+        if (typeof a?.id === "string" && Array.isArray(a?.extracted_for_question_ids) && a.extracted_for_question_ids.includes(value)) {
+          ids.add(a.id);
+        }
+      }
+      assertionsFor.set(value, ids);
+    }
+
+    const filtered = arr.filter((item) =>
+      activeFilters.every(({ rule, values }) =>
+        matches(item, rule, values, rule.mode === "question-conflict" ? assertionsFor.get(values[0]) : planItemsFor.get(values[0])),
+      ),
     );
 
     const start = input.offset ?? 0;
-    return {
-      ok: true,
+    const page: Extract<ResearchQueryResult, { ok: true }> = {
+      ok: true as const,
       section,
       count: filtered.length,
       items: filtered.slice(start, start + MAX_ITEMS),
       truncated: filtered.length > start + MAX_ITEMS,
     };
+    // Per id over the whole match set, so a page answers "0 means none" for
+    // every id it was asked about, not only for the ids its items carry.
+    if (listFilter) {
+      const { rule, values } = listFilter;
+      page.countById = Object.fromEntries(
+        values.map((id) => [id, filtered.filter((item) => matches(item, rule, [id])).length]),
+      );
+    }
+    if (section !== "conflicts" || (input.status !== undefined && input.status !== "unresolved")) {
+      return page;
+    }
+    const assertionIds = activeFilters.find((f) => f.key === "assertionId")?.values;
+    return { ...page, unregisteredDisagreements: disagreementsInScope(research, input, assertionIds) };
   } catch (e) {
     if (e instanceof NoProjectError) return noProjectResult("read");
     if (e instanceof ResearchQueryError) return { ok: false, errors: [e.message] };
@@ -295,24 +642,38 @@ export const researchQuerySchema = {
     "items 51+).\n" +
     "\n" +
     "Supported filters per section: `questions` (questionId, status), `plans` " +
-    "(questionId, status), `log` (planItemId), `sources` (sourceId), `assertions` " +
-    "(recordId, recordRole, sourceId, questionId — matches extracted_for_question_ids), " +
+    "(questionId, status), `log` (planItemId, questionId — every entry for any plan item " +
+    "of that question's plans), `sources` (sourceId), `assertions` " +
+    "(recordId, recordRole, sourceId, questionId — matches " +
+    "extracted_for_question_ids, assertionId — matches the assertion's own id), " +
     "`person_evidence` (personId, assertionId), `conflicts` (assertionId — matches " +
-    "competing_assertion_ids, questionId — matches blocks_question_ids, status), " +
+    "competing_assertion_ids, questionId — matches blocks_question_ids or a competing " +
+    "assertion of that question, at any status; status), " +
     "`hypotheses` (questionId — matches " +
     "related_question_ids, assertionId — matches supporting/contradicting_assertion_ids, " +
     "status), `timelines` (personId — matches person_ids), `proof_summaries` " +
     "(questionId, assertionId — matches supporting_assertion_ids), `evaluations` " +
-    "(targetId, focus). Note for `evaluations`: there is no filter for " +
+    "(targetId, focus), `localities` (no filters), `external_collections` (place — also " +
+    "its enclosing places, recordType). Note for `evaluations`: there is no filter for " +
     "`superseded_by` — narrow with targetId/focus, then pick the entry whose " +
     "`superseded_by` is null yourself.\n" +
+    "\n" +
+    "`personId`, `assertionId`, `sourceId` and `recordId` also take a list (≤50 ids): one call " +
+    "returns items matching any, plus `countById` per id.\n" +
     "\n" +
     "Returns `{ section, count, items, truncated }` — `count` is the total match " +
     "count before the 50-item page cap and any `offset`; `truncated` is true when " +
     "matches remain beyond the returned page, so advance `offset` by items.length " +
     "and call again until it is false. `items` is camelCase-untouched (the " +
     "section's native snake_case fields, verbatim) since this is a read " +
-    "projection, not a persisted document.",
+    "projection, not a persisted document.\n" +
+    "\n" +
+    "`conflicts` also returns `unregisteredDisagreements` — `[{personId, fact, " +
+    "assertionIds}]`, linked assertions that disagree on a birth or death place or " +
+    "year with no conflicts entry naming them. These are evidence conflicts present " +
+    "but not yet registered: `count: 0` does not mean the evidence agrees. Scoped to " +
+    "the question's own assertions under `questionId`, narrowed by `assertionId`, " +
+    "omitted under a `status` other than 'unresolved'.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -323,12 +684,15 @@ export const researchQuerySchema = {
       section: {
         type: "string",
         enum: [...RESEARCH_QUERY_SECTIONS],
-        description: "Which research.json array section to query.",
+        description:
+          "Which research.json array section to query. `external_collections`: the curated " +
+          "collections external_links_search stored per place.",
       },
-      recordId: { type: "string", description: "assertions: matches record_id." },
+      recordId: { type: ["string", "array"], items: { type: "string" }, description: "assertions: matches record_id." },
       recordRole: { type: "string", description: "assertions: matches record_role." },
       sourceId: {
-        type: "string",
+        type: ["string", "array"],
+        items: { type: "string" },
         description: "sources: matches id. assertions: matches source_id.",
       },
       questionId: {
@@ -336,16 +700,21 @@ export const researchQuerySchema = {
         description:
           "questions/plans/proof_summaries: matches question_id (or id, for questions itself). " +
           "assertions: matches extracted_for_question_ids (contains). hypotheses: matches " +
-          "related_question_ids (contains). conflicts: matches blocks_question_ids (contains).",
+          "related_question_ids (contains). conflicts: matches blocks_question_ids (contains), or " +
+          "a competing_assertion_ids entry whose extracted_for_question_ids contains it. " +
+          "log: entries whose plan_item_id is an item of a plan for this question.",
       },
       personId: {
-        type: "string",
+        type: ["string", "array"],
+        items: { type: "string" },
         description: "person_evidence: matches person_id. timelines: matches person_ids (contains).",
       },
       assertionId: {
-        type: "string",
+        type: ["string", "array"],
+        items: { type: "string" },
         description:
-          "person_evidence: matches assertion_id. proof_summaries: matches " +
+          "assertions: matches id. person_evidence: matches assertion_id. " +
+          "proof_summaries: matches " +
           "supporting_assertion_ids (contains). conflicts: matches competing_assertion_ids " +
           "(contains). hypotheses: matches supporting_assertion_ids OR " +
           "contradicting_assertion_ids (contains either).",
@@ -362,6 +731,14 @@ export const researchQuerySchema = {
       focus: {
         type: "string",
         description: "evaluations: matches focus (e.g. 'proof-critique', 'on-demand').",
+      },
+      place: {
+        type: "string",
+        description: "external_collections: a standard place; also matches its enclosing places.",
+      },
+      recordType: {
+        type: "string",
+        description: "external_collections: record-type substring, case-insensitive.",
       },
       offset: {
         type: "number",

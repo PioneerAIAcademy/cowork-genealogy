@@ -169,14 +169,14 @@ def test_ownership_table_blocks_cross_skill_writes():
         "hypotheses": [], "timelines": [], "proof_summaries": [],
     }
     research_after = dict(research_before)
-    # record-extraction wrote to conflicts — it owns sources/assertions/log,
-    # NOT conflicts. The universal validator must catch this.
+    # extraction-append wrote to conflicts — extraction writes sources,
+    # assertions and log, NOT conflicts. The universal validator must catch this.
     research_after = {**research_before, "conflicts": [
         {"id": "c_1", "status": "unresolved"}
     ]}
 
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state={
             "research_json": research_before, "tree_gedcomx_json": None,
@@ -187,13 +187,13 @@ def test_ownership_table_blocks_cross_skill_writes():
             "tree_gedcomx": None, "files": {},
         },
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
     )
     ownership = next((r for r in results if r.name == "test_ownership_table"), None)
     assert ownership is not None
     assert ownership.passed is False
     assert "conflicts" in (ownership.error or "")
-    assert "record-extraction" in (ownership.error or "")
+    assert "extraction-append" in (ownership.error or "")
 
 
 def test_ownership_table_allows_owned_writes():
@@ -247,12 +247,12 @@ def _classification_state(assertions):
 def _run_expected_classifications(assertions, matchers):
     before, after = _classification_state(assertions)
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": [], "expected_classifications": matchers},
     )
     result = next(
@@ -271,7 +271,7 @@ def test_expected_classifications_pass_when_matchers_satisfied():
             "id": "a_1",
             "record_role": "deceased",
             "fact_type": "age",
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
             "informant_proximity": "family_not_present",
             "information_quality": "secondary",
         },
@@ -279,7 +279,7 @@ def test_expected_classifications_pass_when_matchers_satisfied():
             "id": "a_2",
             "record_role": "deceased",
             "fact_type": "death",
-            "evidence_type": "direct",
+            "record_basis": "stated",
             "informant_proximity": "official_duty",
         },
     ]
@@ -289,13 +289,13 @@ def test_expected_classifications_pass_when_matchers_satisfied():
             {
                 "record_role": "deceased",
                 "fact_type": "age",
-                "evidence_type": "indirect",
+                "record_basis": "inferred",
                 "informant_proximity": "family_not_present",
             },
             {
                 "record_role": "deceased",
                 "fact_type": "death",
-                "evidence_type": "direct",
+                "record_basis": "stated",
                 "informant_proximity": "official_duty",
             },
         ],
@@ -312,7 +312,7 @@ def test_expected_classifications_fail_names_assertion_field_got_expected():
             "id": "a_1",
             "record_role": "deceased",
             "fact_type": "age",
-            "evidence_type": "direct",  # doctrine says indirect
+            "record_basis": "stated",  # doctrine says indirect
             "informant_proximity": "family_not_present",
         },
     ]
@@ -322,13 +322,13 @@ def test_expected_classifications_fail_names_assertion_field_got_expected():
             {
                 "record_role": "deceased",
                 "fact_type": "age",
-                "evidence_type": "indirect",
+                "record_basis": "inferred",
                 "informant_proximity": "family_not_present",
             }
         ],
     )
     assert result.passed is False
-    for fragment in ("a_1", "evidence_type", "direct", "indirect"):
+    for fragment in ("a_1", "record_basis", "stated", "inferred"):
         assert fragment in (result.error or ""), (
             f"failure message missing {fragment!r}: {result.error}"
         )
@@ -339,11 +339,11 @@ def test_expected_classifications_fail_when_pair_missing_and_skip_when_absent():
     carries fails the existence half; a test without the block skips."""
     result = _run_expected_classifications(
         [],
-        [{"record_role": "deceased", "fact_type": "age", "evidence_type": "indirect"}],
+        [{"record_role": "deceased", "fact_type": "age", "record_basis": "inferred"}],
     )
     assert result.passed is False
-    assert "no new assertion" in (result.error or "")
-    assert "record_role='deceased'" in (result.error or "")
+    assert "no assertion carried" in (result.error or "")
+    assert "'deceased'" in (result.error or "")
 
     skipped = _run_expected_classifications([], [])
     assert skipped.passed is True
@@ -363,7 +363,7 @@ def test_expected_classifications_normalizes_pascalcase_fact_types():
             "id": "a_1",
             "record_role": "deceased",
             "fact_type": "CauseOfDeath",
-            "evidence_type": "direct",
+            "record_basis": "stated",
             "informant_proximity": "official_duty",
         },
         {
@@ -371,7 +371,7 @@ def test_expected_classifications_normalizes_pascalcase_fact_types():
             "record_role": "Deceased",
             "fact_type": "Birth",
             "place": "Ireland",
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
             "informant_proximity": "family_not_present",
         },
     ]
@@ -381,14 +381,14 @@ def test_expected_classifications_normalizes_pascalcase_fact_types():
             {
                 "record_role": "deceased",
                 "fact_type": "cause_of_death",
-                "evidence_type": "direct",
+                "record_basis": "stated",
                 "informant_proximity": "official_duty",
             },
             {
                 "record_role": "deceased",
                 "fact_type": "birth",
                 "attribute": "place",
-                "evidence_type": "indirect",
+                "record_basis": "inferred",
                 "informant_proximity": "family_not_present",
             },
         ],
@@ -403,54 +403,54 @@ def test_expected_classifications_optional_skips_existence_but_checks_classifica
     # Absent + optional → passes (no existence requirement).
     absent = _run_expected_classifications(
         [{"id": "a_1", "record_role": "deceased", "fact_type": "death",
-          "evidence_type": "direct"}],
+          "record_basis": "stated"}],
         [{"record_role": "father_of_deceased", "fact_type": "name", "optional": True,
-          "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
     )
     assert absent.passed is True, f"unexpected failure: {absent.error}"
 
     # Present + optional + WRONG classification → still fails (teeth on classification).
     wrong = _run_expected_classifications(
         [{"id": "a_1", "record_role": "father_of_deceased", "fact_type": "name",
-          "evidence_type": "direct"}],  # doctrine says indirect
+          "record_basis": "stated"}],  # doctrine says indirect
         [{"record_role": "father_of_deceased", "fact_type": "name", "optional": True,
-          "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
     )
     assert wrong.passed is False
-    assert "evidence_type" in (wrong.error or "")
+    assert "record_basis" in (wrong.error or "")
 
     # Absent WITHOUT optional → fails existence (the default, unchanged).
     required = _run_expected_classifications(
         [{"id": "a_1", "record_role": "deceased", "fact_type": "death",
-          "evidence_type": "direct"}],
+          "record_basis": "stated"}],
         [{"record_role": "father_of_deceased", "fact_type": "name",
-          "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
     )
     assert required.passed is False
-    assert "expected at least one" in (required.error or "")
+    assert "no assertion carried" in (required.error or "")
 
 
 def test_expected_classifications_value_pins_the_fact_value():
     """`value` (#1108) checks the fact VALUE, not a layer. The ut_013 leak —
     Patrick's birthplace persisted 'Pennsylvania' where the record says
-    'Ireland' — is `direct` either way, so only a value matcher catches it.
+    'Ireland' — is `stated` either way, so only a value matcher catches it.
     Substring + case-insensitive, read from the attribute-relevant field."""
     # Correct value → passes.
     ok = _run_expected_classifications(
         [{"id": "a_1", "record_role": "child_2", "fact_type": "birth",
-          "place": "Ireland", "evidence_type": "direct"}],
+          "place": "Ireland", "record_basis": "stated"}],
         [{"record_role": "child_2", "fact_type": "birth", "attribute": "place",
-          "value": "Ireland", "evidence_type": "direct"}],
+          "value": "Ireland", "record_basis": "stated"}],
     )
     assert ok.passed is True, f"unexpected failure: {ok.error}"
 
-    # The ut_013 leak: wrong birthplace value, still classified `direct` → the
-    # value matcher fails where the evidence_type facet alone would pass.
+    # The ut_013 leak: wrong birthplace value, still classified `stated` → the
+    # value matcher fails where the record_basis facet alone would pass.
     leak = _run_expected_classifications(
         [{"id": "a_1", "record_role": "child_2", "fact_type": "birth",
-          "place": "Pennsylvania", "evidence_type": "direct"}],
+          "place": "Pennsylvania", "record_basis": "stated"}],
         [{"record_role": "child_2", "fact_type": "birth", "attribute": "place",
-          "value": "Ireland", "evidence_type": "direct"}],
+          "value": "Ireland", "record_basis": "stated"}],
     )
     assert leak.passed is False
     for frag in ("a_1", "Ireland", "Pennsylvania"):
@@ -460,16 +460,16 @@ def test_expected_classifications_value_pins_the_fact_value():
     std = _run_expected_classifications(
         [{"id": "a_1", "record_role": "child_3", "fact_type": "birth",
           "place": "Pennsylvania", "standard_place": "Pennsylvania, United States",
-          "evidence_type": "direct"}],
+          "record_basis": "stated"}],
         [{"record_role": "child_3", "fact_type": "birth", "attribute": "place",
-          "value": "Pennsylvania", "evidence_type": "direct"}],
+          "value": "Pennsylvania", "record_basis": "stated"}],
     )
     assert std.passed is True, f"unexpected failure: {std.error}"
 
 
 def test_expected_classifications_attribute_facet_separates_birth_claims():
-    """A `birth` place-claim (place set, `direct`) and a `birth` date-claim
-    (date set, `indirect`) share the `birth` fact_type but are independently
+    """A `birth` place-claim (place set, `stated`) and a `birth` date-claim
+    (date set, `inferred`) share the `birth` fact_type but are independently
     checkable via `attribute`: the place matcher grades only the place-claim,
     the date matcher only the date-claim — even though a naive fact_type-only
     match would conflate them and fail the census direct/indirect split."""
@@ -479,23 +479,23 @@ def test_expected_classifications_attribute_facet_separates_birth_claims():
             "record_role": "head_of_household",
             "fact_type": "birth",
             "place": "Ireland",
-            "evidence_type": "direct",
+            "record_basis": "stated",
         },
         {
             "id": "a_date",
             "record_role": "head_of_household",
             "fact_type": "birth",
             "date": "~1818",
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
         },
     ]
     result = _run_expected_classifications(
         assertions,
         [
             {"record_role": "head_of_household", "fact_type": "birth",
-             "attribute": "place", "evidence_type": "direct"},
+             "attribute": "place", "record_basis": "stated"},
             {"record_role": "head_of_household", "fact_type": "birth",
-             "attribute": "date", "evidence_type": "indirect"},
+             "attribute": "date", "record_basis": "inferred"},
         ],
     )
     assert result.passed is True, f"unexpected failure: {result.error}"
@@ -510,7 +510,7 @@ def test_expected_classifications_role_prefix_matches_of_form():
             "id": "a_1",
             "record_role": "father",
             "fact_type": "Name",
-            "evidence_type": "indirect",
+            "record_basis": "inferred",
             "informant_proximity": "family_not_present",
         },
     ]
@@ -520,7 +520,7 @@ def test_expected_classifications_role_prefix_matches_of_form():
             {
                 "record_role": "father_of_deceased",
                 "fact_type": "name",
-                "evidence_type": "indirect",
+                "record_basis": "inferred",
                 "informant_proximity": "family_not_present",
             }
         ],
@@ -541,12 +541,12 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
                 "id": "a_1",
                 "record_role": "witness",
                 "fact_type": "name",
-                "evidence_type": "indirect",
+                "record_basis": "inferred",
                 "informant_proximity": "family_not_present",
             }
         ],
         [{"record_role": "father_of_deceased", "fact_type": "name",
-          "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
     )
     assert wrong_role.passed is False
     assert "record_role='father_of_deceased'" in (wrong_role.error or "")
@@ -560,12 +560,12 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
                 "record_role": "deceased",
                 "fact_type": "Birth",
                 "date": "~1845",  # a date-claim, no place
-                "evidence_type": "indirect",
+                "record_basis": "inferred",
                 "informant_proximity": "family_not_present",
             }
         ],
         [{"record_role": "deceased", "fact_type": "birth", "attribute": "place",
-          "evidence_type": "indirect"}],
+          "record_basis": "inferred"}],
     )
     assert wrong_facet.passed is False
     assert "attribute='place'" in (wrong_facet.error or "")
@@ -579,18 +579,314 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
                 "record_role": "father",
                 "fact_type": "Birth",
                 "place": "Ireland",
-                "evidence_type": "direct",  # doctrine says indirect
+                "record_basis": "stated",  # doctrine says indirect
                 "informant_proximity": "family_not_present",
             }
         ],
         [{"record_role": "father_of_deceased", "fact_type": "birth",
-          "attribute": "place", "evidence_type": "indirect"}],
+          "attribute": "place", "record_basis": "inferred"}],
     )
     assert wrong_value.passed is False
-    for fragment in ("a_1", "evidence_type", "direct", "indirect"):
+    for fragment in ("a_1", "record_basis", "stated", "inferred"):
         assert fragment in (wrong_value.error or ""), (
             f"failure message missing {fragment!r}: {wrong_value.error}"
         )
+
+
+# --- expected_classifications: record_role as list ---
+
+
+def test_expected_classifications_record_role_as_list():
+    """record_role may be a list — any element matching (OR semantics)."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "head_of_household",
+            "fact_type": "name",
+            "record_basis": "stated",
+            "informant_proximity": "self",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": ["head_of_household", "head"], "fact_type": "name",
+          "record_basis": "stated"}],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_record_role_list_fails_when_no_role_matches():
+    """A list where NO element matches any new assertion's role → fails
+    with a 'no assertion carried' message."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "witness",
+            "fact_type": "name",
+            "record_basis": "stated",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": ["head", "deceased"], "fact_type": "name",
+          "record_basis": "stated"}],
+    )
+    assert result.passed is False
+    assert "no assertion carried" in (result.error or "")
+
+
+def test_expected_classifications_record_role_list_prefix_of_still_works():
+    """Prefix-of matching applies per element: `father` in the list matches
+    a persisted `father_of_deceased`."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "father_of_deceased",
+            "fact_type": "name",
+            "record_basis": "inferred",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": ["father", "mother"], "fact_type": "name",
+          "record_basis": "inferred"}],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_record_role_list_wrong_classification_still_fails():
+    """Role matches via list but wrong record_basis still fails (teeth)."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "child_1",
+            "fact_type": "name",
+            "record_basis": "stated",  # matcher says indirect
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": ["child_1", "child_2", "daughter_1"], "fact_type": "name",
+          "record_basis": "inferred"}],
+    )
+    assert result.passed is False
+    assert "record_basis" in (result.error or "")
+    assert "stated" in (result.error or "")
+
+
+def test_expected_classifications_record_role_list_fact_type_mismatch():
+    """Role present but fact_type doesn't match → diagnostic message says
+    role was found but facets didn't match, not 'no assertion carried'."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "deceased",
+            "fact_type": "age",
+            "record_basis": "inferred",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": ["deceased"], "fact_type": "death",
+          "record_basis": "stated"}],
+    )
+    assert result.passed is False
+    assert "but none matched" in (result.error or "")
+    assert "no assertion carried" not in (result.error or "")
+
+
+def test_expected_classifications_record_role_empty_list_does_not_crash():
+    """Defensive: an empty list (rejected by schema) should fail existence
+    gracefully, not crash."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "deceased",
+            "fact_type": "age",
+            "record_basis": "inferred",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": [], "fact_type": "age", "record_basis": "inferred"}],
+    )
+    assert result.passed is False
+    assert "no assertion carried" in (result.error or "")
+
+
+def test_expected_classifications_record_role_null_does_not_crash():
+    """Defensive: null record_role (rejected by schema) should fail
+    existence gracefully, not crash."""
+    result = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "deceased", "fact_type": "age",
+          "record_basis": "inferred"}],
+        [{"record_role": None, "fact_type": "age", "record_basis": "inferred"}],
+    )
+    assert result.passed is False
+    assert "no assertion carried" in (result.error or "")
+
+
+# --- expected_classifications: relationship_type facet ---
+
+
+def test_expected_classifications_relationship_type_facet_filters_by_category():
+    """relationship_type facet narrows to assertions whose
+    structured_value.relationship_type matches via _relationship_category."""
+    assertions = [
+        {
+            "id": "a_child",
+            "record_role": "child_1",
+            "fact_type": "relationship",
+            "value": "daughter of Thomas Flynn",
+            "structured_value": {"relationship_type": "daughter"},
+            "record_basis": "stated",
+        },
+        {
+            "id": "a_spouse",
+            "record_role": "wife",
+            "fact_type": "relationship",
+            "value": "wife of Thomas Flynn",
+            "structured_value": {"relationship_type": "wife"},
+            "record_basis": "stated",
+        },
+    ]
+    # Child-category matcher → matches only a_child (daughter maps to child).
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "child_1", "fact_type": "relationship",
+          "relationship_type": "child", "record_basis": "stated"}],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_relationship_type_facet_inferred_suffix():
+    """_inferred suffix is stripped: `child_inferred` matches a
+    relationship_type: 'child' matcher."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "child_1",
+            "fact_type": "relationship",
+            "value": "child of Thomas Flynn (inferred)",
+            "structured_value": {"relationship_type": "child_inferred"},
+            "record_basis": "inferred",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "child_1", "fact_type": "relationship",
+          "relationship_type": "child", "record_basis": "inferred"}],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_relationship_type_facet_rejects_wrong_category():
+    """A spouse matcher must NOT match a child assertion — should fail
+    with a facet-mismatch message."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "child_1",
+            "fact_type": "relationship",
+            "value": "son of Thomas Flynn",
+            "structured_value": {"relationship_type": "son"},
+            "record_basis": "stated",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "child_1", "fact_type": "relationship",
+          "relationship_type": "spouse", "record_basis": "stated"}],
+    )
+    assert result.passed is False
+    assert "but none matched" in (result.error or "")
+    assert "relationship_type='spouse'" in (result.error or "")
+
+
+def test_expected_classifications_relationship_type_facet_absent_means_no_filter():
+    """Omitting relationship_type from the matcher → no facet constraint,
+    same as omitting attribute."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "child_1",
+            "fact_type": "relationship",
+            "value": "daughter of Thomas Flynn",
+            "structured_value": {"relationship_type": "daughter"},
+            "record_basis": "stated",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "child_1", "fact_type": "relationship",
+          "record_basis": "stated"}],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_relationship_type_facet_unknown_category_literal_match():
+    """Matcher value not in _RELATION_CATEGORY (e.g. stepfather) falls back
+    to literal base comparison after stripping _inferred."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "head",
+            "fact_type": "relationship",
+            "value": "stepfather of Charles",
+            "structured_value": {"relationship_type": "stepfather_inferred"},
+            "record_basis": "inferred",
+        },
+    ]
+    # stepfather matches stepfather_inferred (both bases equal after strip).
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "head", "fact_type": "relationship",
+          "relationship_type": "stepfather", "record_basis": "inferred"}],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_relationship_type_facet_unknown_category_literal_mismatch():
+    """Unknown-category literal fallback must reject different base strings."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "head",
+            "fact_type": "relationship",
+            "value": "uncle of Charles",
+            "structured_value": {"relationship_type": "uncle"},
+            "record_basis": "inferred",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "head", "fact_type": "relationship",
+          "relationship_type": "stepfather", "record_basis": "inferred"}],
+    )
+    assert result.passed is False
+    assert "but none matched" in (result.error or "")
+
+
+def test_expected_classifications_relationship_type_facet_no_structured_value():
+    """Assertion with no structured_value does not match a relationship_type
+    facet (returns False, not a crash)."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "child_1",
+            "fact_type": "relationship",
+            "value": "daughter of Thomas Flynn",
+            "record_basis": "stated",
+            # no structured_value key at all
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "child_1", "fact_type": "relationship",
+          "relationship_type": "child", "record_basis": "stated"}],
+    )
+    assert result.passed is False
+    assert "but none matched" in (result.error or "")
 
 
 # --- compound birth assertions (year smuggled into a birthplace value) ---
@@ -599,12 +895,12 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
 def _run_birth_year_rule(assertions):
     before, after = _classification_state(assertions)
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": []},
     )
     result = next(
@@ -629,14 +925,14 @@ def _birth_assertion(**overrides):
         "value": "Ohio",
         "place": "Ohio, United States",
         "date": None,
-        "evidence_type": "direct",
+        "record_basis": "stated",
     }
     base.update(overrides)
     return base
 
 
 def test_birth_year_rule_flags_dateless_compound_value():
-    """The defect (#1407): a place-keyed `direct` birth assertion carrying a
+    """The defect (#1407): a place-keyed `stated` birth assertion carrying a
     year in `value` and NO structured `date` — two facts in one assertion,
     invisible to every structured matcher."""
     result = _run_birth_year_rule(
@@ -694,7 +990,7 @@ def test_birth_year_rule_exempts_a_year_the_before_state_already_stated():
     that adds only the birthplace — it smuggled nothing."""
     seeded = _birth_assertion(
         id="seed_1", value="about 1845", place=None, date="~1845",
-        evidence_type="indirect",
+        record_basis="inferred",
     )
     before = _empty_research_state()
     before["files"] = {}
@@ -708,12 +1004,12 @@ def test_birth_year_rule_exempts_a_year_the_before_state_already_stated():
         "assertions": [seeded, _birth_assertion(value="born about 1845, Ohio")],
     }
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": []},
     )
     result = next(
@@ -726,8 +1022,8 @@ def test_birth_year_rule_exempts_a_year_the_before_state_already_stated():
 
 def test_birth_year_rule_exempts_a_year_stated_by_a_sibling_assertion():
     """The ut_028 shape, from the 2026-08-14 paid run. The party gets TWO
-    atomic birth assertions — a `direct` place-claim whose label redundantly
-    repeats the year, beside an `indirect` date-claim that states it
+    atomic birth assertions — a `stated` place-claim whose label redundantly
+    repeats the year, beside an `inferred` date-claim that states it
     structurally. Atomicity is correct and nothing is lost, so this must not
     fail; the pre-fix rule reddened it."""
     result = _run_birth_year_rule(
@@ -738,7 +1034,7 @@ def test_birth_year_rule_exempts_a_year_stated_by_a_sibling_assertion():
                 value="about 1887, Cincinnati, Ohio",
                 place="Cincinnati, Ohio",
                 date=None,
-                evidence_type="direct",
+                record_basis="stated",
             ),
             _birth_assertion(
                 id="a_2",
@@ -746,7 +1042,7 @@ def test_birth_year_rule_exempts_a_year_stated_by_a_sibling_assertion():
                 value="about 1887",
                 place=None,
                 date="~1887",
-                evidence_type="indirect",
+                record_basis="inferred",
             ),
         ]
     )
@@ -764,7 +1060,7 @@ def test_birth_year_rule_exemption_is_scoped_to_the_same_role():
             ),
             _birth_assertion(
                 id="a_2", record_role="bride", value="about 1845",
-                place=None, date="~1845", evidence_type="indirect",
+                place=None, date="~1845", record_basis="inferred",
             ),
         ]
     )
@@ -782,7 +1078,7 @@ def test_birth_year_rule_exemption_is_scoped_to_the_same_record():
     smuggled["record_id"] = "recB"
     other = _birth_assertion(
         id="a_2", value="about 1845", place=None, date="~1845",
-        evidence_type="indirect",
+        record_basis="inferred",
     )
     other["record_id"] = "recA"
     result = _run_birth_year_rule([smuggled, other])
@@ -794,7 +1090,8 @@ def test_birth_year_rule_tolerates_a_second_year_in_the_label():
     """A label carrying an enumeration year besides the birth year must not
     fire when the birth year IS captured on a sibling. `search` took the FIRST
     year, so "1870 census: born in Ohio" failed on 1870 even though ~1845 sat
-    correctly on the sibling — and a validator failure suppresses the judge,
+    correctly on the sibling — and a validator failure fails the test outright
+    and drops its scores from aggregated_dimensions,
     so that false positive cost the whole test's grade."""
     result = _run_birth_year_rule(
         [
@@ -803,7 +1100,7 @@ def test_birth_year_rule_tolerates_a_second_year_in_the_label():
             ),
             _birth_assertion(
                 id="a_2", value="about 1845", place=None, date="~1845",
-                evidence_type="indirect",
+                record_basis="inferred",
             ),
         ]
     )
@@ -821,10 +1118,10 @@ def test_birth_year_rule_ignores_indirect_and_placeless_assertions():
     assert _run_birth_year_rule(
         [_birth_assertion(value="born about 1845", place=None, date=None)]
     ).passed is True
-    # indirect: place-keyed and dateless, spared only by evidence_type.
+    # indirect: place-keyed and dateless, spared only by record_basis.
     assert _run_birth_year_rule(
         [_birth_assertion(value="born about 1845, Ohio", date=None,
-                          evidence_type="indirect")]
+                          record_basis="inferred")]
     ).passed is True
     # non-birth fact_type, likewise place-keyed, dateless and direct.
     assert _run_birth_year_rule(
@@ -839,12 +1136,12 @@ def test_birth_year_rule_ignores_indirect_and_placeless_assertions():
 def _run_pre1880_rule(assertions, tags):
     before, after = _classification_state(assertions)
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": tags},
     )
     result = next(
@@ -859,31 +1156,31 @@ def _run_pre1880_rule(assertions, tags):
     return result
 
 
-def _relationship(rel_type, evidence_type="indirect"):
+def _relationship(rel_type, record_basis="inferred"):
     return {
         "id": "a_1",
         "record_role": "child_1",
         "fact_type": "relationship",
         "value": "child of Thomas Flynn",
         "structured_value": {"relationship_type": rel_type},
-        "evidence_type": evidence_type,
+        "record_basis": record_basis,
     }
 
 
 @pytest.mark.parametrize(
-    "rel_type,evidence_type",
+    "rel_type,record_basis",
     [
-        ("child_inferred", "indirect"),  # the OLD policy's correct output
-        ("spouse_inferred", "indirect"),
-        ("child", "direct"),  # and the plainly-wrong one
+        ("child_inferred", "inferred"),  # the OLD policy's correct output
+        ("spouse_inferred", "inferred"),
+        ("child", "stated"),  # and the plainly-wrong one
     ],
 )
-def test_pre_1880_rule_rejects_any_relationship_assertion(rel_type, evidence_type):
-    """The `_inferred`/`indirect` form is rejected too — that is the whole
+def test_pre_1880_rule_rejects_any_relationship_assertion(rel_type, record_basis):
+    """The `_inferred`/`inferred` form is rejected too — that is the whole
     reversal (#1626, decided 2026-08-15). Labelling the doubt is still
     asserting the relationship."""
     result = _run_pre1880_rule(
-        [_relationship(rel_type, evidence_type)], ["census", "1870"]
+        [_relationship(rel_type, record_basis)], ["census", "1870"]
     )
     assert result.passed is False
     assert "no relationship column" in (result.error or ""), result.error
@@ -898,14 +1195,14 @@ def test_pre_1880_rule_passes_when_only_stated_facts_are_written():
                 "record_role": "child_1",
                 "fact_type": "name",
                 "value": "John Baker",
-                "evidence_type": "direct",
+                "record_basis": "stated",
             },
             {
                 "id": "a_2",
                 "record_role": "head_of_household",
                 "fact_type": "residence",
                 "place": "Cincinnati, Hamilton, Ohio",
-                "evidence_type": "direct",
+                "record_basis": "stated",
             },
         ],
         ["census", "1870"],
@@ -930,9 +1227,9 @@ def test_pre_1880_rule_gate_derives_the_year_from_tags(tags):
     ],
 )
 def test_pre_1880_rule_skips_everything_it_should_not_gate(tags):
-    """1880+ census relationships are STATED and stay `direct`; a
+    """1880+ census relationships are STATED and stay `stated`; a
     non-census record is out of scope entirely."""
-    result = _run_pre1880_rule([_relationship("child", "direct")], tags)
+    result = _run_pre1880_rule([_relationship("child", "stated")], tags)
     assert result.passed is True, result.error
 
 
@@ -942,12 +1239,12 @@ def test_pre_1880_rule_skips_everything_it_should_not_gate(tags):
 def _run_bare_name_rule(assertions):
     before, after = _classification_state(assertions)
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": []},
     )
     result = next(
@@ -969,7 +1266,7 @@ def test_bare_name_rule_flags_the_persona_collapse_shape():
                 "record_role": "groom",
                 "fact_type": "name",
                 "value": "John Becker (father of Frank Becker)",
-                "evidence_type": "direct",
+                "record_basis": "stated",
             }
         ]
     )
@@ -989,7 +1286,7 @@ def test_bare_name_rule_flags_a_relational_note_even_under_the_right_role():
                 "record_role": "daughter_in_law_1",
                 "fact_type": "name",
                 "value": "Linda (given name only; spouse of Robert Whitaker)",
-                "evidence_type": "direct",
+                "record_basis": "stated",
             }
         ]
     )
@@ -1006,7 +1303,8 @@ def test_bare_name_rule_flags_a_relational_note_even_under_the_right_role():
         # Relation words that are really surnames or titles, OUTSIDE brackets.
         # All three fired under the first version of this rule (senior review,
         # 2026-08-16). A false positive costs the test's whole grade, because a
-        # failing validator suppresses the judge.
+        # failing validator fails the test outright and drops its scores from
+        # aggregated_dimensions.
         "Joseph Parent of Quebec",   # Parent is a common surname
         "Julia Child of Boston",     # Child is a surname
         "Mary, Mother of Sorrows",   # a devotional name
@@ -1022,7 +1320,7 @@ def test_bare_name_rule_leaves_legitimate_name_values_alone(value):
                 "record_role": "bride",
                 "fact_type": "name",
                 "value": value,
-                "evidence_type": "direct",
+                "record_basis": "stated",
             }
         ]
     )
@@ -1053,7 +1351,7 @@ def test_bare_name_rule_catches_the_wider_relation_vocabulary(value, expected):
                 "record_role": "groom",
                 "fact_type": "name",
                 "value": value,
-                "evidence_type": "direct",
+                "record_basis": "stated",
             }
         ]
     )
@@ -1074,7 +1372,7 @@ def test_bare_name_rule_exempts_negative_evidence():
                 # the exemption it names (which is what it did before #1631's
                 # review — deleting the exemption left all 16 tests green).
                 "value": "not recorded (father of the bride)",
-                "evidence_type": "negative",
+                "record_basis": "absent",
             }
         ]
     )
@@ -1105,12 +1403,12 @@ def test_bare_name_rule_only_scans_name_facts():
 def _run_rel_agreement(assertions):
     before, after = _classification_state(assertions)
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": []},
     )
     result = next(
@@ -1125,7 +1423,7 @@ def _rel(rel_type, value):
     return [{
         "id": "a_1", "record_role": "child_1", "fact_type": "relationship",
         "value": value, "structured_value": {"relationship_type": rel_type},
-        "evidence_type": "direct",
+        "record_basis": "stated",
     }]
 
 
@@ -1182,13 +1480,143 @@ def test_rel_agreement_accepts_category_equivalents(rel_type, value):
 def test_rel_agreement_skips_what_it_cannot_compare(rel_type, value):
     """Fails OPEN. An unrecognised relationship_type or a value naming no
     relation is not evidence of disagreement, and guessing would cost the whole
-    test's grade — a failing validator suppresses the judge."""
+    test's grade — a failing validator fails the test outright and drops its
+    scores from aggregated_dimensions."""
     result = _run_rel_agreement(_rel(rel_type, value))
     assert result.passed is True, result.error
 
 
+@pytest.mark.parametrize(
+    "rel_type,value",
+    [
+        # The value LABELS the other party rather than stating the
+        # subject's role. Comparing relation words without regard to
+        # position refused 22 of the 37 it flagged over the e2e run logs,
+        # which is how two earlier guards here got their refusal rates.
+        ("child", "father named as Casper A. Battermiller on death cert"),
+        ("child", "mother named as Mary Mehlman on death certificate"),
+        ("child", "father: Jan Roelfs Harkema"),
+        # Carries " of ", so the role guard keeps it out: `groom` is a
+        # role word, not a name.
+        ("child", "Father of groom named as Tellef Aadnesen in 1840"),
+        # Carries " of " AND a label marker: only the label guard catches
+        # this one. No corpus assertion has the shape today, so without
+        # this case that guard is a branch no test can reach.
+        ("child", "father of the bride: Jan Roelfs Harkema"),
+        # The relation word is not the value's opening claim.
+        ("child", "named in the will of his brother John Grice"),
+    ],
+)
+def test_rel_agreement_reads_position_not_mere_presence(rel_type, value):
+    """Only a leading `<relation> of <name>` states the SUBJECT's own role.
+
+    `relationship_type` is the record subject's own role and
+    `related_person_role` is the other party's (research-schema-spec 5.6.1),
+    so a value that names the other party says nothing to disagree with.
+    Every case here was flagged by the previous word-anywhere rule and is
+    correct data."""
+    result = _run_rel_agreement(_rel(rel_type, value))
+    assert result.passed is True, f"false positive on {rel_type}/{value}: {result.error}"
+
+
+@pytest.mark.parametrize(
+    "rel_type,value,states",
+    [
+        # The live, reproducing defect: 5 sightings across the three
+        # current record-extraction run logs (three of the five), every one typed `child`.
+        ("child", "sibling of Grace (Whitaker) Tolman", "sibling"),
+        # Its committed shape carries the `_inferred` suffix, which must be
+        # stripped before the category lookup or all three are missed.
+        ("child_inferred", "brother of John Grice (inferred)", "sibling"),
+    ],
+)
+def test_rel_agreement_catches_the_sibling_typed_as_a_child(rel_type, value, states):
+    """The half of issue #2535 that reproduces today. `sibling` was never
+    named as a legal `relationship_type` in the agent body, so the extractor
+    picked the nearest of the three values it had been given."""
+    result = _run_rel_agreement(_rel(rel_type, value))
+    assert result.passed is False
+    assert states in (result.error or ""), result.error
+
+
+def test_relationship_direction_cases_match_the_shared_table():
+    """The Python half of a cross-language pact (issue #2535).
+
+    The rule exists twice -- here and in TypeScript at
+    `src/tools/research-append.ts` -- because the harness and the engine
+    share no runtime (CLAUDE.md, "Don't try to share code at runtime").
+    Duplication is forced; unpinned duplication is not. Both sides assert
+    against one table, so either drifting reds its own suite. The TS half is
+    `tests/packaging/relationship-direction-drift.test.ts`."""
+    import json
+    import sys
+    from pathlib import Path
+
+    # `extraction_validators` imports `validators_lib` as a sibling, which
+    # resolves only with the validators dir itself on the path. Every other
+    # test in this block reaches the module through `run_validators`, which
+    # arranges that; this one imports it directly, so it must arrange it
+    # too or it passes only when a neighbour ran first.
+    sys.path.insert(0, str(VALIDATORS_DIR))
+    try:
+        from validators.extraction_validators import (
+            _RELATION_CATEGORY,
+            _subject_role_in_value,
+        )
+    finally:
+        sys.path.remove(str(VALIDATORS_DIR))
+
+    table = json.loads(
+        (Path(__file__).resolve().parents[2]
+         / "validators" / "relationship_direction_cases.json")
+        .read_text(encoding="utf-8")
+    )
+    # The value predicate is only half the rule -- see the note in the
+    # shared file. Pin the category table too, or a spelling added to one
+    # language alone passes both suites.
+    assert table.get("categories"), "shared table has no 'categories'"
+    assert _RELATION_CATEGORY == table["categories"], (
+        "python's relation-word table differs from the shared one -- the "
+        "two implementations have drifted"
+    )
+
+    from validators.extraction_validators import _relationship_category
+
+    cat_cases = table.get("category_cases") or []
+    assert len(cat_cases) >= 5, (
+        "the shared file carries no category cases -- a renamed key would "
+        "make the loop below vacuous while the suite stayed green"
+    )
+    for c in cat_cases:
+        assert c.get("why"), (
+            "category case %r has no reason" % c["relationship_type"]
+        )
+        got = _relationship_category(c["relationship_type"])
+        assert got == c["category"], (
+            "%r: python reads category %r, the shared table says %r -- the "
+            "two implementations have drifted"
+            % (c["relationship_type"], got, c["category"])
+        )
+
+    cases = table["cases"]
+    # A table that shrank to nothing would make every assertion below
+    # vacuous while the suite stayed green.
+    assert len(cases) >= 15
+    assert sum(1 for c in cases if c["states"] is not None) >= 5
+    assert sum(1 for c in cases if c["states"] is None) >= 5
+    for c in cases:
+        assert c.get("why"), "case %r has no reason" % c["value"]
+        assert _subject_role_in_value(c["value"]) == c["states"], (
+            "%r: python reads %r, the shared table says %r -- the two "
+            "implementations have drifted"
+            % (c["value"], _subject_role_in_value(c["value"]), c["states"])
+        )
+
+
 def test_rel_agreement_accepts_a_value_naming_several_relations():
-    """`want in found` — the type only has to match one of them."""
+    """Only the value's OPENING claim is compared, so a second relation
+    named later does not contradict it. The rule this replaced compared
+    every relation word in the value and accepted when any matched."""
     result = _run_rel_agreement(
         _rel("child", "child of Thomas Flynn and brother of Mary Flynn")
     )
@@ -1230,12 +1658,12 @@ def _run_persona_id_set(assertions, persona_ids=("p_1", "p_2", "p_3")):
     after["files"] = dict(before["files"])
     after["research_json"] = {**after["research_json"], "assertions": assertions}
     results = run_validators(
-        skill="record-extraction",
+        skill="extraction-append",
         validators_dir=VALIDATORS_DIR,
         before_state=before,
         after_state=after,
         tool_calls=[],
-        skill_frontmatter={"name": "record-extraction"},
+        skill_frontmatter={"name": "extraction-append"},
         test={"tags": []},
     )
     result = next(
@@ -1370,6 +1798,31 @@ def test_hand_edit_detector_passes_when_writer_tool_called():
     assert result.passed is True, f"unexpected failure: {result.error}"
 
 
+def test_hand_edit_detector_counts_the_url_builder_only_with_projectpath():
+    """`build_external_search_url` writes its hand-off log entry only when it
+    carries a projectPath, so only then may it account for a research.json change."""
+    with_path = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__build_external_search_url",
+                "args": {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/p"},
+            }
+        ],
+    )
+    assert with_path.passed is True, f"unexpected failure: {with_path.error}"
+    without_path = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__build_external_search_url",
+                "args": {"site": "findagrave", "attributes": {"surname": "Flynn"}},
+            }
+        ],
+    )
+    assert without_path.passed is False
+
+
 def test_hand_edit_detector_fails_on_change_with_zero_writer_calls():
     """(b) research.json changed + ZERO writer-tool calls → fail, naming
     the file and pointing at the writer tools (the ut_012 incident: empty
@@ -1419,11 +1872,13 @@ def test_as_dicts_shape():
     items = [
         ValidatorRunResult(name="a", passed=True, error=None),
         ValidatorRunResult(name="b", passed=False, error="boom"),
+        ValidatorRunResult(name="c", passed=True, error="skipped: nope", skipped=True),
     ]
     out = as_dicts(items)
     assert out == [
-        {"name": "a", "passed": True, "error": None},
-        {"name": "b", "passed": False, "error": "boom"},
+        {"name": "a", "passed": True, "error": None, "outcome": "passed"},
+        {"name": "b", "passed": False, "error": "boom", "outcome": "failed"},
+        {"name": "c", "passed": True, "error": "skipped: nope", "outcome": "skipped"},
     ]
 
 
@@ -1498,18 +1953,55 @@ def test_full_validation_catches_cross_file_subject_person_id():
 
 
 @pytest.mark.requires_engine_build
-def test_validator_crash_is_not_reported_as_missing_build():
-    # #987 review finding 1: a node crash (non-zero exit, empty stdout) must NOT
-    # be reported as None ("build missing") and silently passed. A bare string in
-    # persons trips a TypeError in the TS validator — exactly the malformed tree
-    # this feature exists to catch.
+def test_validator_crash_is_not_reported_as_missing_build(monkeypatch):
+    # #987 review finding 1: a node crash (non-zero exit, no parseable stdout)
+    # must NOT be reported as None ("build missing") and silently passed.
+    #
+    # This used to induce the crash with `crash_tree = {"persons": ["I1"]}`, a
+    # bare string that tripped a TypeError in the TS validator. The validator no
+    # longer crashes on ANY malformed document — it reports the shape instead —
+    # so that fixture stopped reaching this branch and started passing on the
+    # SUCCESS path, green and covering nothing. Induce the crash at the boundary
+    # the branch is actually about: node ran, exited non-zero, and produced no
+    # parseable stdout. The guard no longer depends on the validator staying
+    # fragile, which is what made it silently rot in the first place.
+    from harness import ts_validator
+
+    class _CrashedProc:
+        returncode = 1
+        stdout = ""
+        stderr = "TypeError: Cannot read properties of undefined (reading 'x')"
+
+    monkeypatch.setattr(ts_validator.subprocess, "run", lambda *a, **k: _CrashedProc())
+
+    research = _empty_research_state()["research_json"]
+    result = ts_validator.validate_parsed(
+        research, {"persons": [], "relationships": [], "sources": []}
+    )
+    assert result is not None, "a crash must not be reported as missing-build (None)"
+    assert result, "a crash must surface a non-empty error"
+    assert any("bridge crashed" in e for e in result), result
+    assert any("Cannot read properties" in e for e in result), (
+        "node's stderr must reach the caller, or a crash is undiagnosable"
+    )
+
+
+@pytest.mark.requires_engine_build
+def test_malformed_tree_is_reported_not_crashed():
+    # The counterpart, and the reason the fixture above had to move: a bare
+    # string in `persons` is now REPORTED by the TS validator rather than
+    # crashing it. Asserting it here keeps the old fixture's value as a
+    # guarantee instead of leaving it as an assumption nothing checks.
     from harness.ts_validator import validate_parsed
 
     research = _empty_research_state()["research_json"]
-    crash_tree = {"persons": ["I1"], "relationships": [], "sources": []}
-    result = validate_parsed(research, crash_tree)
-    assert result is not None, "a crash must not be reported as missing-build (None)"
-    assert result, "a crash must surface a non-empty error"
+    malformed = {"persons": ["I1"], "relationships": [], "sources": []}
+    result = validate_parsed(research, malformed)
+    assert result is not None, "the build is present, so this must not be None"
+    assert any("must be an object" in e for e in result), result
+    assert not any("bridge crashed" in e for e in result), (
+        "a malformed document must not reach the crash branch any more"
+    )
 
 
 # --- V1: write-then-validate -------------------------------------------
@@ -1656,6 +2148,238 @@ def test_creator_not_in_custody_fails_when_author_in_parenthetical():
     assert "County Recorder of Deeds" in (result.error or "")
 
 
+# --- V6: unknown markers must name framework elements only ---------------
+
+def _v6_states(marker_text, field):
+    """State pair for V6 tests.  Places *marker_text* in the given
+    citation_detail *field* of a single source."""
+    src_before = {
+        "id": "src_001",
+        "citation": "",
+        "citation_detail": {"who": "", "where": "FamilySearch.org"},
+    }
+    cd_after = dict(src_before["citation_detail"])
+    cd_after[field] = marker_text
+    src_after = {**src_before, "citation_detail": cd_after}
+
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src_before]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [src_after]
+    return before, after
+
+
+def test_v6_fires_when_marker_is_entire_where():
+    """V6: a marker that IS the entire citation_detail.where value fails —
+    no access point was recorded at all."""
+    before, after = _v6_states("[CREATOR NOT RECORDED]", "where")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "entire" in (result.error or "").lower()
+
+
+def test_v6_passes_when_marker_accompanies_access_point():
+    """V6: a non-custody marker inside `where` alongside a present access
+    point is NOT a position violation — only a bare marker (= entire value)
+    is.  [CREATOR NOT RECORDED] is not a custody keyword, so the content
+    rule also passes."""
+    before, after = _v6_states(
+        "FamilySearch.org ([CREATOR NOT RECORDED])", "where"
+    )
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v6_matches_bare_not_recorded():
+    """V6: bare [NOT RECORDED] matches _MARKER_RE (zero chars before NOT).
+    As the entire `where` value it is a position violation."""
+    before, after = _v6_states("[NOT RECORDED]", "where")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "entire" in (result.error or "").lower()
+
+
+def test_v6_passes_bare_not_recorded_inside_where():
+    """V6: bare [NOT RECORDED] inside a longer `where` value is a custody
+    pattern — the element name sits outside the brackets.  Custody markers
+    in `where` are the field working as designed (Edmond ruling)."""
+    before, after = _v6_states(
+        "FamilySearch.org; original repository [NOT RECORDED]", "where"
+    )
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v6_passes_custody_marker_in_where_with_access_point():
+    """V6: [PHYSICAL REPOSITORY NOT RECORDED] alongside an access point
+    in `where` is a custody marker — the field working as designed
+    (Edmond ruling).  Exempt from checks 2 + 3."""
+    before, after = _v6_states(
+        "FamilySearch.org ([PHYSICAL REPOSITORY NOT RECORDED])", "where"
+    )
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v6_fires_on_custody_marker_in_other_field():
+    """V6: [ARCHIVE NOT RECORDED] in citation_detail.who fails — custody
+    keyword, regardless of field position."""
+    before, after = _v6_states("[ARCHIVE NOT RECORDED]", "who")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "custody" in (result.error or "").lower()
+
+
+def test_v6_passes_custody_marker_in_citation_string():
+    """V6: a custody keyword marker in the assembled `citation` string is
+    exempt — citation embeds the where layer, and custody notation there
+    is the field working as designed (Edmond ruling)."""
+    src_before = {
+        "id": "src_001",
+        "citation": "",
+        "citation_detail": {"who": "", "where": "FamilySearch.org"},
+    }
+    src_after = {
+        **src_before,
+        "citation": (
+            "Pennsylvania Department of Health, birth certificate no. 12345; "
+            "FamilySearch.org ([ORIGINAL REPOSITORY NOT RECORDED])"
+        ),
+    }
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src_before]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [src_after]
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v6_fires_on_bare_not_recorded_in_who():
+    """V6: bare [NOT RECORDED] in citation_detail.who names no framework
+    element — the empty-element rule fires.  Proves V6 can still catch
+    defects after the custody exemption scoped checks off `where`."""
+    before, after = _v6_states("[NOT RECORDED]", "who")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "bare" in (result.error or "").lower()
+
+
+def test_v6_passes_on_framework_marker():
+    """V6: [CREATOR NOT RECORDED] in citation_detail.who is a legitimate
+    framework marker and passes."""
+    before, after = _v6_states("[CREATOR NOT RECORDED]", "who")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
 # --- V10: informant not in who ------------------------------------------
 
 def _v10_states(informant_in_who):
@@ -1749,6 +2473,79 @@ def test_informant_not_in_who_ignores_preexisting_informant():
     assert result.passed is True, (
         f"false positive on pre-existing informant data: {result.error}"
     )
+
+
+def test_informant_not_in_who_ignores_preexisting_citation_informant():
+    """The citation-string arm's novelty guard, which nothing pinned.
+
+    The `who` arm has ignores_preexisting_informant; the citation arm had
+    coverage for firing but none for NOT firing, so removing
+    `citation != before_citation` passed the whole 3200-test suite. Without
+    the guard, any run that leaves an already-'informant' citation untouched
+    is a false positive — the same shape as the mid-research-flynn null run.
+    """
+    src = {
+        "id": "src_004",
+        "citation": "Pennsylvania Department of Health; informant: James Brown",
+        "citation_detail": {"who": "Pennsylvania Department of Health"},
+        "notes": "Informant is son-in-law James Brown.",
+    }
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [dict(src)]  # identical — skill changed nothing
+
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_informant_not_in_who"), None
+    )
+    assert result is not None, "test_informant_not_in_who did not run"
+    assert result.passed is True, (
+        f"false positive on a pre-existing citation-string informant: {result.error}"
+    )
+
+
+def test_informant_not_in_who_fires_on_citation_string():
+    """V10: the citation-string arm fires when 'informant' is introduced
+    in the citation field (not citation_detail.who)."""
+    src_before = {
+        "id": "src_001",
+        "citation": "",
+        "citation_detail": {"who": "Pennsylvania Department of Health"},
+        "notes": "Informant is son-in-law James Brown.",
+    }
+    src_after = {
+        **src_before,
+        "citation": "Pennsylvania Department of Health; informant: James Brown",
+    }
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src_before]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [src_after]
+
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_informant_not_in_who"), None
+    )
+    assert result is not None, "test_informant_not_in_who did not run"
+    assert result.passed is False
+    assert "citation string" in (result.error or "").lower()
+
+
 # --- text_response plumbing (#1662) ------------------------------------
 #
 # A validator that reads the reply is inert if the harness stops supplying it.
@@ -1942,7 +2739,14 @@ def test_report_and_test_coexist(tmp_path):
 # --- V8: Activated run must produce a response ---------------------------
 
 def test_v8_fires_on_dead_activated_run():
-    """V8: activated=True, num_turns=0, output_tokens=0, short response → fail."""
+    """V8: activated=True, num_turns=0, output_tokens=0, short response → fail.
+
+    Uses skills_invoked=["search-familysearch-wiki"] and
+    test={"skill": "search-familysearch-wiki"} — the state the orchestrator
+    actually produces when a skill activates (derive_activated requires skill
+    in skills_invoked).  The skill under test is the only invoked skill, so
+    the handoff check does not skip.
+    """
     state = _empty_research_state()
     results = run_validators(
         skill="search-familysearch-wiki",
@@ -1955,7 +2759,8 @@ def test_v8_fires_on_dead_activated_run():
         output_tokens=0,
         text_response="Short.",
         aborted_reason=None,
-        skills_invoked=[],
+        skills_invoked=["search-familysearch-wiki"],
+        test={"skill": "search-familysearch-wiki"},
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None, "test_activated_run_produces_response did not run"
@@ -1997,7 +2802,8 @@ def test_v8_passes_on_long_response_despite_missing_telemetry():
         output_tokens=0,
         text_response="A" * 200,
         aborted_reason=None,
-        skills_invoked=[],
+        skills_invoked=["search-familysearch-wiki"],
+        test={"skill": "search-familysearch-wiki"},
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None
@@ -2024,12 +2830,20 @@ def test_v8_skips_when_not_activated():
     assert "skipped" in (result.error or "").lower()
 
 
-def test_v8_passes_when_skills_invoked():
-    """V8: a run that invoked a sub-skill is not a dead run, even with zero
-    telemetry — skills_invoked is the direct signal."""
+def test_v8_passes_on_handoff_to_another_skill():
+    """V8: a run that handed off to another skill is not a dead run.
+
+    Uses skills_invoked=["search-external-sites", "research-plan"] with
+    test={"skill": "search-external-sites"} — the state the orchestrator
+    produces when a negative test routes correctly.  The handoff check
+    sees {"research-plan"} after subtracting the skill under test, so it
+    returns early.  This is the exact shape of the two
+    ut_search_external_sites_011 corpus runs that the previous guard
+    wrongly failed.
+    """
     state = _empty_research_state()
     results = run_validators(
-        skill="search-familysearch-wiki",
+        skill="search-external-sites",
         validators_dir=VALIDATORS_DIR,
         before_state=state,
         after_state=state,
@@ -2037,9 +2851,10 @@ def test_v8_passes_when_skills_invoked():
         activated=True,
         num_turns=0,
         output_tokens=0,
-        text_response="Short routing announcement.",
+        text_response="Short routing decline.",
         aborted_reason=None,
-        skills_invoked=["citation"],
+        skills_invoked=["search-external-sites", "research-plan"],
+        test={"skill": "search-external-sites"},
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None
@@ -2066,10 +2881,11 @@ def test_judge_observations_carry_text_not_validator_names():
             error="skipped: not applicable", reporting_only=True,
         ),
     ]
-    obs = split_observations(results)
-    assert obs == ["the response names a volume"]
+    response_obs, state_obs = split_observations(results)
+    assert response_obs == ["the response names a volume"]
+    assert state_obs == []
     # The function name must never leak into observation text
-    assert not any("report_" in o for o in obs)
+    assert not any("report_" in o for o in response_obs)
 
 
 def _broken_validator_results(tmp_path, body: str):
@@ -2112,7 +2928,7 @@ def test_report_with_bad_signature_gates_and_is_not_an_observation(tmp_path):
     # It gates, it is recorded, and the judge is told nothing about it.
     assert compute_validators_passed(results, intentionally_invalid=False) is False
     assert "report_typo" in {d["name"] for d in as_dicts(results)}
-    assert split_observations(results) == []
+    assert split_observations(results) == ([], [])
 
 
 def test_report_that_crashes_gates_and_is_not_an_observation(tmp_path):
@@ -2131,7 +2947,7 @@ def test_report_that_crashes_gates_and_is_not_an_observation(tmp_path):
     assert broken[0].reporting_only is False
     assert "TypeError" in (broken[0].error or "")
     assert compute_validators_passed(results, intentionally_invalid=False) is False
-    assert split_observations(results) == []
+    assert split_observations(results) == ([], [])
 
 
 def test_a_genuine_report_finding_still_reports(tmp_path):
@@ -2148,8 +2964,96 @@ def test_a_genuine_report_finding_still_reports(tmp_path):
     fired = [r for r in results if r.name == "report_real_finding"]
     assert fired and fired[0].reporting_only is True
     assert compute_validators_passed(results, intentionally_invalid=False) is True
-    assert split_observations(results) == ["the response names a volume"]
+    response_obs, state_obs = split_observations(results)
+    assert response_obs == ["the response names a volume"]
+    assert state_obs == []
     assert "report_real_finding" not in {d["name"] for d in as_dicts(results)}
+
+
+def test_state_derived_observation_lands_in_state_list(tmp_path):
+    """A report_* taking only before_state/after_state/test (no response-derived
+    args) is state-derived and its observation lands in the state list."""
+    (tmp_path / "test_universal.py").write_text(
+        "def test_ok():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "test_example.py").write_text(
+        "def report_state_check(before_state, after_state, test):\n"
+        "    raise AssertionError('field X is missing from research.json')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="example", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+        text_response="hello",
+    )
+    response_obs, state_obs = split_observations(results)
+    assert state_obs == ["field X is missing from research.json"]
+    assert response_obs == []
+
+
+def test_response_derived_observation_lands_in_response_list(tmp_path):
+    """A report_* taking text_response is response-derived and its observation
+    lands in the response list, not the state list."""
+    (tmp_path / "test_universal.py").write_text(
+        "def test_ok():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "test_example.py").write_text(
+        "def report_text_check(before_state, text_response, test):\n"
+        "    raise AssertionError('response mentions a volume')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="example", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+        text_response="hello",
+    )
+    response_obs, state_obs = split_observations(results)
+    assert response_obs == ["response mentions a volume"]
+    assert state_obs == []
+
+
+def test_non_state_non_response_arg_lands_in_response_list(tmp_path):
+    """A report_* taking before_state + num_turns is NOT state-derived: num_turns
+    is outside _STATE_ARGS.  This pins the positive predicate — the old negative
+    form (\"no response args\") would misclassify it as state-derived."""
+    (tmp_path / "test_universal.py").write_text(
+        "def test_ok():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "test_example.py").write_text(
+        "def report_run_shape(before_state, num_turns):\n"
+        "    raise AssertionError('run used too many turns')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="example", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+        text_response="hello", num_turns=5,
+    )
+    response_obs, state_obs = split_observations(results)
+    assert response_obs == ["run used too many turns"]
+    assert state_obs == []
+
+
+def test_neutral_only_signature_lands_in_response_list(tmp_path):
+    """A report_* taking only (test) — a tolerated neutral with no before_state
+    or after_state — is NOT state-derived.  This pins the _READS_STATE clause:
+    without it, the subset test alone would misroute this into the state slot."""
+    (tmp_path / "test_universal.py").write_text(
+        "def test_ok():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "test_example.py").write_text(
+        "def report_no_state_read(test):\n"
+        "    raise AssertionError('the test JSON declares no scenario')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="example", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+        text_response="hello", test={"id": "ut_example_001"},
+    )
+    response_obs, state_obs = split_observations(results)
+    assert response_obs == ["the test JSON declares no scenario"]
+    assert state_obs == []
 
 
 def test_standalone_pytest_collects_report_validators():
@@ -2506,7 +3410,12 @@ def test_v4_persisted_does_not_fire_on_digit_superstring():
 
 
 def test_v4_persisted_fires_on_exact_example_value():
-    """V4 persisted: an exact example value from SKILL.md → fail."""
+    """V4 persisted: an exact example value from the agent body → fail.
+
+    Doubles as the proof that `_harvest_skill_examples` still resolves after
+    #2799 deleted `skills/citation/`: `Will Book 9` and `p. 113` are harvested
+    out of `agents/citation.md`, and an empty deny-list would make this skip.
+    """
     before = _empty_research_state()
     after = _empty_research_state()
     # The source must exist in before (empty fields) so V4 checks its after
@@ -2534,7 +3443,7 @@ def test_v4_persisted_fires_on_exact_example_value():
     if result is None:
         pytest.skip("V4 validator did not run (SKILL.md may be absent)")
     assert result.passed is False
-    assert "example values from SKILL.md" in (result.error or "")
+    assert "example values from the citation agent body" in (result.error or "")
 
 
 def test_v4_persisted_passes_when_example_value_on_file_in_log():
@@ -2641,3 +3550,122 @@ def test_v12_passes_when_fewer_than_three_labels():
     result = _named(results, "report_no_framework_walkthrough")
     assert result is not None
     assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+# --- a skip is not a pass (three-state outcome) ---------------------------
+
+
+def test_skip_records_outcome_skipped_while_staying_non_gating(tmp_path):
+    """End to end through a real `pytest.skip()`, not a hand-built dataclass.
+
+    Both halves matter. `passed` must stay True — a validator that does not
+    apply may not fail a test — and `outcome` must say `skipped`, because
+    `passed` alone cannot distinguish "the property holds" from "nothing
+    looked". Across the committed unit corpus 18,220 of 48,704 recorded
+    results are skips, so that distinction covers most of the apparatus.
+    """
+    v = tmp_path / "test_universal.py"
+    v.write_text(
+        "import pytest\n"
+        "def test_does_not_apply(before_state):\n"
+        "    pytest.skip('not this scenario')\n"
+        "def test_really_runs(before_state):\n"
+        "    assert True\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="x", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+    )
+    by_name = {r.name: r for r in results}
+
+    skipped = by_name["test_does_not_apply"]
+    assert skipped.passed is True, "a skip must not fail the test"
+    assert skipped.skipped is True
+    assert skipped.outcome == "skipped"
+
+    # The other direction: a validator that genuinely ran is not mislabelled.
+    ran = by_name["test_really_runs"]
+    assert ran.passed is True and ran.skipped is False
+    assert ran.outcome == "passed"
+
+
+def test_skip_reason_keeps_its_prefix_for_pre_outcome_run_logs(tmp_path):
+    """`outcome` is absent from every run log committed before it existed, so
+    the "skipped: " prefix stays the fallback a corpus-wide count reads. If
+    this ever changes, every such count needs two rules instead of one."""
+    v = tmp_path / "test_universal.py"
+    v.write_text(
+        "import pytest\n"
+        "def test_x(before_state):\n"
+        "    pytest.skip('no research.json in output')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="x", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+    )
+    assert results[0].error == "skipped: no research.json in output"
+
+
+def test_a_failing_validator_is_not_recorded_as_skipped(tmp_path):
+    """The third state must not swallow the second."""
+    v = tmp_path / "test_universal.py"
+    v.write_text(
+        "def test_x(before_state):\n"
+        "    assert False, 'intentional'\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="x", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+    )
+    assert results[0].passed is False
+    assert results[0].skipped is False
+    assert results[0].outcome == "failed"
+
+
+# --- record_id form: the stored form of the assertion's own log entry ---
+
+_BARE_ARK = "ark:/61903/1:1:ABCD-123"
+
+
+def _run_record_id_form(record_id, log_entry_id):
+    """log_001 is the search sidecar (full arkUrl); log_002 a record_read
+    sidecar of the same record, stored by the bare ARK it was read by."""
+    import json
+
+    before = _empty_research_state()
+    before["files"] = _persona_sidecar_files(["p_1"])
+    after = _empty_research_state()
+    after["files"] = {
+        **before["files"],
+        "results/log_002.json": json.dumps({
+            "log_id": "log_002", "tool": "record_read",
+            "payload": {"results": [{"recordId": _BARE_ARK, "gedcomx": {"persons": [{"id": "p_1"}]}}]},
+        }),
+    }
+    after["research_json"] = {**after["research_json"], "assertions": [
+        {"id": "a_1", "record_id": record_id, "log_entry_id": log_entry_id,
+         "record_role": "principal", "record_persona_id": "p_1"},
+    ]}
+    results = run_validators(
+        skill="extraction-append", validators_dir=VALIDATORS_DIR,
+        before_state=before, after_state=after, tool_calls=[],
+        skill_frontmatter={"name": "extraction-append"}, test={"tags": []},
+    )
+    return next(r for r in results if r.name == "test_record_persona_id_set")
+
+
+@pytest.mark.parametrize("record_id,log_entry_id", [(_BARE_ARK, "log_002"), (_PERSONA_ARK, "log_001")],
+                         ids=["record-read-bare", "search-full-url"])
+def test_record_id_in_its_own_sidecars_form_passes(record_id, log_entry_id):
+    result = _run_record_id_form(record_id, log_entry_id)
+    assert result.passed is True, result.error
+
+
+@pytest.mark.parametrize("record_id,log_entry_id", [(_BARE_ARK, "log_001"), (_PERSONA_ARK, "log_002"), (_BARE_ARK, None)],
+                         ids=["bare-on-search-entry", "full-url-on-read-entry", "no-log-entry"])
+def test_record_id_not_in_its_own_sidecars_form_fails(record_id, log_entry_id):
+    result = _run_record_id_form(record_id, log_entry_id)
+    assert result.passed is False and "record_id" in (result.error or "")

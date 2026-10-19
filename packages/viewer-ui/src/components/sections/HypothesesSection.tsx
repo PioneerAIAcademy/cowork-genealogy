@@ -13,7 +13,10 @@ export default function HypothesesSection(): React.JSX.Element {
     return (
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Hypotheses</h2>
-        <p className={styles.empty}>No hypotheses recorded.</p>
+        <p className={styles.empty}>
+          No hypotheses recorded. Candidate explanations to test are proposed
+          and tracked during the hypothesis-tracking step.
+        </p>
       </div>
     )
   }

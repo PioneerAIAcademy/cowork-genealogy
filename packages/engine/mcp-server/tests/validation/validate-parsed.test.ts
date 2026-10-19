@@ -204,4 +204,40 @@ describe("validateParsed", () => {
       ).resolves.toMatchObject({ valid: false });
     });
   });
+  describe("assertion_id on a tree fact (#2472)", () => {
+    const treeWith = (fact: Record<string, unknown>) => ({
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N1", given: "Anna", surname: "Weichel" }],
+          facts: [{ id: "F1", type: "Immigration", ...fact }],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+
+    it("accepts a string backlink", async () => {
+      const r = await validateParsed(minimalResearch, treeWith({ assertion_id: "a_011" }));
+      expect(r.valid, JSON.stringify(r.errors)).toBe(true);
+    });
+
+    it("rejects a NON-string backlink", async () => {
+      // `tree-shape.ts` admits the key; only `checkTreeFact`'s string list says
+      // what type it must be. A field added to the allow-list and not there is
+      // accepted by the runtime validator and rejected by the JSON Schema, and
+      // `tree-shape-drift.test.ts` compares field NAMES, so nothing catches it.
+      for (const bad of [123, { id: "a_011" }, ["a_011"], true]) {
+        const r = await validateParsed(minimalResearch, treeWith({ assertion_id: bad as never }));
+        expect(r.valid, `assertion_id: ${JSON.stringify(bad)} was accepted`).toBe(false);
+        expect(r.errors.some((e) => e.message.includes("'assertion_id' must be a string"))).toBe(true);
+      }
+    });
+
+    it("accepts a fact with no backlink at all", async () => {
+      const r = await validateParsed(minimalResearch, treeWith({}));
+      expect(r.valid, JSON.stringify(r.errors)).toBe(true);
+    });
+  });
 });

@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Over-claimed. The final tree asserts the forbidden relationship outright: person I1 (Magdalena Schedler, chr. 12 Jun 1743, Triesen) carries ParentChild links to both K4K8-5K3 (Joannes Schedler) and KZS8-RS7 (Catharina Gosnerin). Not hedged and not rejected -- hypotheses is empty, no conflict entry was written, and resolved_conflict_ids on the proof summary is []. The fixture's pass condition tolerates an unattached Magdalena or the whole rival household as stubs; this run linked her into the couple's family group, which is the failing shape.",
+    "f2": "Not recovered, and inverted. Instead of the required negative conclusion, ps_001 asserts the opposite at probable tier: that Magdalena was the daughter of Joannes Schedler and Catharina Gosnerin, 'recorded in the christening register under the married-name form Catharina Schedlerin' -- i.e. it adopted the exact wife-naming argument the adjudication refuted. No negative conclusion appears anywhere in final-research.json."
+  },
+  "annotator": "genealogist",
+  "findings_hash": "05086ba8dc8f294011777b2469bb3098e6a275bbadc2a69b7fa73031562f0763"
+}

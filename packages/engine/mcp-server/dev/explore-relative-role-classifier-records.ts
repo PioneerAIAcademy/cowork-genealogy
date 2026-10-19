@@ -61,6 +61,7 @@
  * Run: `npx tsx dev/explore-relative-role-classifier-records.ts` from
  * `packages/engine/mcp-server`.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchRetry, sleep } from "./http-retry.js";
@@ -118,7 +119,7 @@ async function runPool(POOL: string, label: string, crossTab: boolean): Promise<
   const CAP = 500;   // vocabulary only — NOT an enumeration, and the report says so
   for (let offset = 0; offset < CAP; offset += 100) {
     await sleep(700);
-    const token = await getValidToken();
+    const token = await getValidToken(LOCAL);
     // `fetchRetry` owns the 429 backoff, and its attempt counter is per-CALL: the
     // pool-scoped counter this loop used to keep never reset on a successful page,
     // so scattered 429s across the pages of one pool could accumulate past the

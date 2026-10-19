@@ -13,6 +13,13 @@ main-thread call and only meaningful once spec §11's ledger-attribution lands;
 older runlogs simply lack the keys) plus the project's persisted
 `research.json`/`tree.gedcomx.json`.
 
+A guardrail skill counts as invoked on either of two routes: a `Skill` call
+naming it, or a typed `Agent`/`Task` spawn whose `subagent_type` (plugin
+namespace stripped) names it — the direct spawn of a paired agent is the
+sanctioned in-loop route (docs/specs/guardrail-enforcement-spec.md §2, the
+third shape). `invoked_skill_name` is that rule; an untyped spawn credits
+nothing.
+
 Three consumers, all described in the plan:
   - `owning_skills` + `recently_succeeded` — the live, shadow-mode caller-id
     check (§4.1): before a protected write is allowed to proceed, was its
@@ -27,6 +34,7 @@ Three consumers, all described in the plan:
 
 from __future__ import annotations
 
+import json
 import re
 from collections import Counter
 from typing import Any
@@ -55,6 +63,33 @@ def skill_name_if_skill_call(tool: str, args: dict[str, Any] | None) -> str | No
     return name if isinstance(name, str) and name else None
 
 
+def skill_name_if_typed_spawn(tool: str, args: dict[str, Any] | None) -> str | None:
+    """The bare agent name if this tool call is a typed `Agent`/`Task` spawn,
+    else None.
+
+    A sibling of `skill_name_if_skill_call`, not a widening of it: two
+    consumers (`skill_episode_report`, `guardrail_shadow_report`) genuinely mean
+    a literal `Skill` call. The plugin namespace is stripped because Cowork and
+    hosted feedback bundles log `genealogy-research:<agent>` while every
+    committed e2e value is bare. An untyped spawn returns None — it is a
+    recorded bypass shape, not a route.
+    """
+    if tool not in ("Agent", "Task"):
+        return None
+    name = strip_agent_namespace((args or {}).get("subagent_type"))
+    return name if name else None
+
+
+def invoked_skill_name(tool: str, args: dict[str, Any] | None) -> str | None:
+    """The guardrail name this call invokes, on either sanctioned route: a
+    `Skill` call, or a typed `Agent`/`Task` spawn credited by its stripped
+    `subagent_type`. Both names are namespace-stripped, since Cowork lists
+    plugin skills as `genealogy-research:<skill>` too. Callers keep their own
+    errored-call gate."""
+    skill = strip_agent_namespace(skill_name_if_skill_call(tool, args))
+    return skill or skill_name_if_typed_spawn(tool, args)
+
+
 def _iter_ops(args: dict[str, Any]) -> list[dict[str, Any]]:
     """Normalize a tool call's single-op vs batch-op (`ops: [...]`) form."""
     ops = args.get("ops")
@@ -74,6 +109,21 @@ def _question_id_from_skill_call(args: dict[str, Any] | None) -> str | None:
         return None
     m = _QUESTION_ID_RE.search(text)
     return m.group(0) if m else None
+
+
+def _question_id_from_spawn(args: dict[str, Any] | None) -> str | None:
+    """Best-effort question id from a typed spawn's free-text `description` and
+    `prompt` (an `Agent` entry carries no structured question field). Used only
+    when exactly one distinct id appears; zero or several return None, which
+    callers treat as "unknown," the same contract as
+    `_question_id_from_skill_call`."""
+    args = args or {}
+    ids: set[str] = set()
+    for key in ("description", "prompt"):
+        text = args.get(key)
+        if isinstance(text, str):
+            ids.update(_QUESTION_ID_RE.findall(text))
+    return next(iter(ids)) if len(ids) == 1 else None
 
 
 def _question_id_from_op(op: dict[str, Any]) -> str | None:
@@ -122,8 +172,13 @@ def owning_skills(tool: str, args: dict[str, Any] | None) -> list[str]:
                 owners.append("conflict-resolution")
             elif section == "questions":
                 fields = op.get("fields") if isinstance(op.get("fields"), dict) else op.get("entry")
+                ss = (fields or {}).get("search_stop") if isinstance(fields, dict) else None
+                _GATE = {"question_answered", "record_exhausted", "nothing_further_reachable"}
+                new_gate = isinstance(ss, dict) and ss.get("stopped_because") in _GATE
+                # Legacy shape: exhaustive_declaration.declared = true (pre-#2539 runs)
                 ed = (fields or {}).get("exhaustive_declaration") if isinstance(fields, dict) else None
-                if isinstance(ed, dict) and ed.get("declared") is True:
+                legacy_gate = isinstance(ed, dict) and ed.get("declared") is True
+                if new_gate or legacy_gate:
                     owners.append("research-exhaustiveness")
     elif bare == "materialize_facts":
         for op in _iter_ops(args):
@@ -157,24 +212,100 @@ def recently_succeeded(
     question_id: str | None = None,
 ) -> bool:
     """Was `skill` successfully invoked within `window` calls before
-    `before_index`? When `question_id` is given AND a candidate `Skill` call's
-    own question id is derivable, they must match; when either side's
-    question id can't be derived, falls back to a skill-only match (the
-    "generous, not per-question-airtight" behavior documented in the plan)."""
+    `before_index`, by a `Skill` call or a typed spawn (`invoked_skill_name`)?
+    When `question_id` is given AND a candidate call's own question id is
+    derivable, they must match; when either side's question id can't be
+    derived, falls back to a skill-only match (the "generous, not
+    per-question-airtight" behavior documented in the plan)."""
     lo = max(0, before_index - window)
     for i in range(lo, before_index):
         entry = tool_calls[i]
         if entry.get("is_error") is True:
             continue
-        name = skill_name_if_skill_call(entry.get("tool", ""), entry.get("args"))
+        tool = entry.get("tool", "")
+        name = invoked_skill_name(tool, entry.get("args"))
         if name != skill:
             continue
         if question_id is None:
             return True
-        candidate_q = _question_id_from_skill_call(entry.get("args"))
+        if tool == "Skill":
+            candidate_q = _question_id_from_skill_call(entry.get("args"))
+        else:
+            candidate_q = _question_id_from_spawn(entry.get("args"))
         if candidate_q is None or candidate_q == question_id:
             return True
     return False
+
+
+def response_text(entry: dict[str, Any]) -> str:
+    """The tool call's response payload as a string, whichever tier recorded it.
+
+    THE TWO TIERS USE DIFFERENT KEYS, and a predicate that reads only one is
+    silently dead in the other. The e2e tier records `response_summary`
+    (`e2e/feedback_transcript_adapter.py`, and `_summarize_tool_response` in
+    `e2e/orchestrator.py`). The unit tier records `response`: `mock_mcp.py`
+    appends `entry["response"] = <dict>` at every one of its `call_log.append`
+    sites, `skill_runner` passes `call_log` through as `tool_calls`, and
+    `validator_runner` hands it to the validators unchanged.
+
+    Measured, not assumed: `eval/runlogs/unit/person-evidence/
+    v1_2026-10-05_03-04-24.json` carries 206 tool calls whose keys are
+    `tool`/`args`/`expected_args`/`matched`/`response_fixture`/`response` and
+    ZERO `response_summary` — including one real `materialize_facts` refusal
+    (`{"ok": false, "reason": "unjustified_warnings", ...}`) that a
+    `response_summary`-only read cannot see.
+
+    Returns a string so callers keep doing substring matching, which is what
+    `did_not_land` documents at length: the payload arrives single-encoded,
+    double-encoded and truncated across the corpus, and a parse fails on shapes
+    a substring handles.
+    """
+    # FALSY, not just None. A producer that sets `response_summary` to "" rather
+    # than omitting the key would otherwise shadow a populated `response` and
+    # reopen the tier-blindness this function exists to close. The scannability
+    # check in `guardrail_shadow_report.missing_for_warnings` uses truthiness on
+    # the same field, and the two must agree on what "recorded" means.
+    raw = entry.get("response_summary") or entry.get("response")
+    if raw is None or raw == "":
+        return ""
+    if isinstance(raw, str):
+        return raw
+    try:
+        return json.dumps(raw)
+    except (TypeError, ValueError, RecursionError):
+        # `orchestrator._serialize_result` guards the same call for the same
+        # reason, with the comment "Letting it escape aborts a run costing
+        # $7-25". This function is reached live at the end of a billed run via
+        # `did_not_land` -> `find_unguarded_protected_writes`, from a
+        # shadow-mode detector whose contract is that it never fails a run.
+        return repr(raw)
+
+
+def _normalized_response(entry: dict[str, Any]) -> str:
+    """`response_text` with the envelope escaping flattened and `ok` spacing
+    normalised, for matchers that key on a QUOTED JSON key.
+
+    `did_not_land` documents why this is needed and matches the bare name
+    `no_project` to dodge it: `_summarize_tool_response` passes any response
+    under 500 chars through VERBATIM as the raw MCP envelope, where the tool's
+    document is an escaped string — `{\\"ok\\": false}` — so a quoted-key
+    match finds nothing. `ok` is too short to match bare the way `no_project`
+    can, so the escaping is flattened first instead, which is what
+    `e2e/image_transcribe_report.py` does for the same reason.
+
+    Measured over the committed corpus, counting per tool-call payload rather
+    than per raw file byte: of 851 `ok:false` occurrences, 107 (13%) are in the
+    escaped shape — and the escaping is concentrated in the e2e tier, where 102
+    of 480 (21%) are escaped and the unit tier has none. A quoted-key matcher
+    is blind to all of them, and this arm CREDITS a call, so each blind spot is
+    a silent miss.
+    """
+    unescaped = response_text(entry).replace('\\"', '"')
+    # One canonical spacing. A plain `.replace('"ok":', '"ok": ')` doubles the
+    # space on the ALREADY-spaced shape and the matcher then misses it -- which
+    # is how the first version of this silently passed two of the corpus's four
+    # real spellings.
+    return re.sub(r'"ok"\s*:\s*', '"ok": ', unescaped)
 
 
 def did_not_land(entry: dict[str, Any]) -> bool:
@@ -211,7 +342,7 @@ def did_not_land(entry: dict[str, Any]) -> bool:
     """
     if entry.get("is_error") is True:
         return True
-    return "no_project" in str(entry.get("response_summary") or "")
+    return "no_project" in response_text(entry)
 
 
 def find_unguarded_protected_writes(
@@ -220,7 +351,13 @@ def find_unguarded_protected_writes(
     window: int,
 ) -> list[dict[str, Any]]:
     """Shadow-mode scan (§4.1): every protected write with no matching
-    successful skill invocation in its trailing window. Returns violation
+    successful skill invocation in its trailing window. A write made BY the
+    owning agent (its own stripped `agent_type` equals the owner) is that
+    owner doing its own work and is never flagged whatever the window holds.
+    For `proof_summaries`, `person_evidence` and the exhaustiveness
+    declaration the hook also routes the write to that caller; the tree writes
+    (including a `materialize_facts` mint) are not hook-routed, and the
+    exemption rests on the writer's identity alone. Returns violation
     records (never denies anything itself — that's the caller's call, and the
     plan mandates shadow mode — log, don't deny — until the false-positive
     rate is measured)."""
@@ -238,7 +375,10 @@ def find_unguarded_protected_writes(
             qid = _question_id_from_op(op)
             if qid:
                 break
+        bare_agent_type = strip_agent_namespace(entry.get("agent_type"))
         for owner in owners:
+            if bare_agent_type == owner:
+                continue
             if not recently_succeeded(owner, tool_calls, before_index=i, window=window, question_id=qid):
                 violations.append(
                     {
@@ -251,7 +391,7 @@ def find_unguarded_protected_writes(
     return violations
 
 
-# The four optional `conflict` fields that are conflict-resolution's analytical
+# The six optional `conflict` fields that are conflict-resolution's analytical
 # PRODUCT rather than the mere record that a conflict exists. Several skills
 # legitimately open a conflicts entry — person-evidence (#738's mandatory entry
 # when identity rests on one uncorroborated read), proof-conclusion,
@@ -259,14 +399,17 @@ def find_unguarded_protected_writes(
 # the schema's required fields (id / conflict_type / description /
 # competing_assertion_ids / status / blocks_question_ids). These four are
 # optional in `research.schema.json` and, across the whole plugin, are written
-# ONLY by `conflict-resolution/SKILL.md` and by `research/SKILL.md` — i.e. the
-# orchestrator that is supposed to *delegate* to it. So their presence is the
-# effect, and their absence is why "a conflict was recorded" alone must not fire.
+# ONLY by the `conflict-resolution` agent — the plugin hook denies them to every
+# other caller (`OWNED_CLAIMS` in guard_project_files.py). So their presence is
+# the effect, and their absence is why "a conflict was recorded" alone must not
+# fire. `resolution_kind` and `resolved_value` joined with the kind gate.
 CONFLICT_ANALYSIS_FIELDS = (
     "independence_analysis",
     "weighing_analysis",
     "preferred_assertion_id",
     "resolution_rationale",
+    "resolution_kind",
+    "resolved_value",
 )
 
 
@@ -302,9 +445,10 @@ def _relationship_key(r: dict[str, Any]) -> tuple[Any, ...]:
     the endpoint tuple, never on `id`: 7 fixtures seed a relationship pointing at
     a PID-TODO placeholder that the agent resolves during the run, and an `id`
     key would read that genuinely-re-pointed relationship as seeded — a false
-    negative in the gates that diff against the starting tree. Shared by
-    `find_effects_without_invocation` (§8 hard gate) and
-    `find_relationship_writes_without_warnings_check` (§7 shadow).
+    negative in the gates that diff against the starting tree. Used by
+    `find_effects_without_invocation` (§8 hard gate). The §7 warnings check was
+    a second consumer until issue #2840 retargeted it onto the write boundary;
+    it diffs no relationships now and reads `tool_calls` alone.
     """
     return (r.get("type"), r.get("person1"), r.get("person2"), r.get("parent"), r.get("child"))
 
@@ -314,9 +458,7 @@ def _relationship_conclusion_signature(r: dict[str, Any]) -> tuple[Any, ...]:
     INTO an existing relationship — a marriage fact dated onto a seeded couple, a
     parentage re-classified Biological->Adopted — which `_relationship_key` alone
     cannot see (issue #1569, was #1368). Used only by
-    `find_effects_without_invocation`'s proof-conclusion arm;
-    `find_relationship_writes_without_warnings_check` asks a different question (was a
-    NEW edge written) and keeps using the plain endpoint key.
+    `find_effects_without_invocation`'s proof-conclusion arm.
 
     Ignores `id` for the same reason `_relationship_key` does, and ignores fact ORDER —
     a harmless re-serialization must not register as a new conclusion, the exact disease
@@ -415,18 +557,25 @@ def find_effects_without_invocation(
     for entry in tool_calls:
         if entry.get("is_error") is True:
             continue
-        name = skill_name_if_skill_call(entry.get("tool", ""), entry.get("args"))
+        name = invoked_skill_name(entry.get("tool", ""), entry.get("args"))
         if name:
             invoked.add(name)
 
     questions = research.get("questions") if isinstance(research.get("questions"), list) else []
-    if any(
-        isinstance(q, dict) and (q.get("exhaustive_declaration") or {}).get("declared") is True
-        for q in questions
-    ) and "research-exhaustiveness" not in invoked:
+    _STOP_GATE = {"question_answered", "record_exhausted", "nothing_further_reachable"}
+    def _has_stop_gate(q: dict) -> bool:
+        # New shape (search_stop.stopped_because is a gate string).
+        if (q.get("search_stop") or {}).get("stopped_because") in _STOP_GATE:
+            return True
+        # Legacy shape (exhaustive_declaration.declared is True) for pre-#2539 run logs.
+        if (q.get("exhaustive_declaration") or {}).get("declared") is True:
+            return True
+        return False
+    if any(isinstance(q, dict) and _has_stop_gate(q) for q in questions) and "research-exhaustiveness" not in invoked:
         violations.append(
-            "research.json has a question with exhaustive_declaration.declared=true "
+            "research.json has a question with a stop-gate search_stop.stopped_because "
             "but 'research-exhaustiveness' was never successfully invoked in this run"
+            " (no Skill call and no typed Agent/Task spawn of that name)"
         )
 
     proof_summaries = research.get("proof_summaries") if isinstance(research.get("proof_summaries"), list) else []
@@ -489,6 +638,7 @@ def find_effects_without_invocation(
             "research.json/tree.gedcomx.json shows a proof_summaries entry and/or an encoded "
             "conclusion (a primary fact, or a ParentChild/Couple relationship) new this run but "
             "'proof-conclusion' was never successfully invoked in this run"
+            " (no Skill call and no typed Agent/Task spawn of that name)"
         )
 
     person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
@@ -522,6 +672,7 @@ def find_effects_without_invocation(
             f"tree.gedcomx.json has {len(unlinked)} person(s) with new facts/names this run and no "
             "person_evidence entry linking them (e.g. materialize_facts minting a person directly) "
             "but 'person-evidence' was never successfully invoked in this run"
+            " (no Skill call and no typed Agent/Task spawn of that name)"
         )
 
     conflicts = research.get("conflicts") if isinstance(research.get("conflicts"), list) else []
@@ -532,54 +683,19 @@ def find_effects_without_invocation(
             "research.json has a conflict carrying conflict-resolution's analytical product "
             f"({', '.join(CONFLICT_ANALYSIS_FIELDS)}, or status='resolved') but "
             "'conflict-resolution' was never successfully invoked in this run"
+            " (no Skill call and no typed Agent/Task spawn of that name)"
         )
 
     return violations
 
 
-def find_missing_mentor_verdicts(research: dict[str, Any] | None) -> list[str]:
-    """Every `ps_id` a resolved question references must carry a matching
-    `evaluations[]` entry (`focus: "proof-critique"`, `target_id: <ps_id>`) —
-    research/SKILL.md's own final completion check, and per docs/plan/
-    guardrail-enforcement-spec.md §8/§10, this gate is itself just
-    another routing-table step the orchestrator could silently skip under the
-    same context pressure as the four guardrail skills.
-
-    Deliberately reads `research.json`'s `evaluations[]` directly rather than
-    inferring from `tool_calls` — the durable record of whether the gate ran
-    IS the evaluations entry (`gps-mentor` writes only there, per the schema
-    spec's "append-only ownership"), so there's no invocation-log inference
-    needed here the way there is for the four in-session guardrail skills.
-    """
-    research = research or {}
-    questions = research.get("questions") if isinstance(research.get("questions"), list) else []
-    proof_summaries = research.get("proof_summaries") if isinstance(research.get("proof_summaries"), list) else []
-    evaluations = research.get("evaluations") if isinstance(research.get("evaluations"), list) else []
-
-    resolved_question_ids = {
-        q.get("id") for q in questions if isinstance(q, dict) and q.get("status") == "resolved"
-    }
-    referenced_ps_ids = {
-        ps.get("id")
-        for ps in proof_summaries
-        if isinstance(ps, dict) and ps.get("question_id") in resolved_question_ids
-    }
-    verdicted_ps_ids = {
-        ev.get("target_id")
-        for ev in evaluations
-        if isinstance(ev, dict) and ev.get("focus") == "proof-critique"
-    }
-    missing = sorted(pid for pid in (referenced_ps_ids - verdicted_ps_ids) if pid)
-    return [
-        f"proof_summaries entry '{ps_id}' is referenced by a resolved question but has no "
-        "'proof-critique' evaluations[] verdict on record (the mandatory gps-mentor gate)"
-        for ps_id in missing
-    ]
-
-
 def same_person_scored_ids(tool_calls: list[dict[str, Any]]) -> set[str]:
-    """Every record/tree id a SUCCESSFUL `same_person` call has scored so far
-    (its `primaryId1`/`primaryId2` args). When one side of a call is the tree,
+    """Every record/tree id a SUCCESSFUL `same_person` call has scored so far.
+
+    Two call shapes, both credited: the explicit form's `primaryId1`/
+    `primaryId2`, and the project-relative form's `treePersonId` (plus whichever
+    of `recordPersonaId`/`recordRole` named the record party). When one side of a
+    call is the tree,
     that side's `primaryId` equals the tree `person_id` (see
     `find_person_evidence_missing_same_person` for the confirmed-live basis of
     that equality), so this doubles as "which tree persons have been scored."
@@ -602,7 +718,18 @@ def same_person_scored_ids(tool_calls: list[dict[str, Any]]) -> set[str]:
         if bare_tool_name(entry.get("tool", "")) != "same_person":
             continue
         args = entry.get("args") or {}
+        # The explicit two-document form.
         for key in ("primaryId1", "primaryId2"):
+            v = args.get(key)
+            if isinstance(v, str):
+                scored.add(v)
+        # The project-relative form (issue #1731). It names the two sides by
+        # REFERENCE — the tool assembles both documents itself — so a call in
+        # this shape carries no `primaryId1`/`primaryId2` at all. Without this
+        # arm every such call is invisible here and the detector flags 100% of
+        # newly linked persons the moment the agent adopts the cheap call, which
+        # would also invalidate the corpus re-measurement PR B is gated on.
+        for key in ("treePersonId", "recordPersonaId", "recordRole"):
             v = args.get(key)
             if isinstance(v, str):
                 scored.add(v)
@@ -685,7 +812,10 @@ def _persona_reachable(
     - `record_read` — it returns a `SimplifiedGedcomX` with a persons array,
       so a persona was in hand when the assertion was extracted;
     - `record_search` with a retained `results_ref` — the sidecar result
-      carries the record's `gedcomx`.
+      carries the record's `gedcomx`;
+    - `person_record_matches` — an accepted FamilySearch hint (search-hints'
+      record mode). Its ark is a `1:1:` record persona that `record_read`
+      opens, which is how record-extraction fetched it.
 
     Everything else is unreachable: image-, external-site- and PDF-sourced
     assertions, a search whose sidecar was not retained, and **every**
@@ -727,7 +857,7 @@ def _persona_reachable(
     if not isinstance(entry, dict):
         return True  # no log entry — provenance unknown
     tool = entry.get("tool")
-    if tool == "record_read":
+    if tool in ("record_read", "person_record_matches"):
         return True
     if tool == "record_search" and entry.get("results_ref"):
         return True
@@ -818,7 +948,7 @@ def find_person_evidence_missing_same_person(
     receives a **scoreable** `person_evidence` link must have been the subject
     of at least one `same_person` call somewhere in the run.
 
-    The authority is `person-evidence/SKILL.md`, the skill that owns the
+    The authority is `agents/person-evidence.md`, the agent that owns the
     identity decision — not `research/SKILL.md`'s one-line orchestrator
     paraphrase ("scores every cross-record link with `same_person` before it
     links"), which this docstring used to cite. The narrower owning contract
@@ -956,8 +1086,7 @@ def check_guardrail_compliance(
 
     docs/specs/guardrail-enforcement-spec.md §8. A guardrail skill's
     effect present in the FINAL project state with no matching successful
-    invocation anywhere in the run, or a resolved question's proof_summary
-    missing its mandatory gps-mentor proof-critique verdict. Mirrors the unit
+    invocation anywhere in the run. Mirrors the unit
     harness's `test_positive_fails_when_skill_not_in_skills_invoked`, which
     had no e2e equivalent. Unlike §4.1's shadow-mode recency check, this only
     asks whether the skill ran AT ALL across the whole run, so it is far less
@@ -974,12 +1103,11 @@ def check_guardrail_compliance(
     specific required tool for the specific person instead of the skill's mere
     presence in the run.
 
-    Note this is NOT vacuous on a treeless run: `find_missing_mentor_verdicts`
-    takes no tree at all, and the exhaustiveness arm reads only
-    `research["questions"]`. That is why compliance is always a real result
+    Note this is NOT vacuous on a treeless run: the exhaustiveness arm reads
+    only `research["questions"]`. That is why compliance is always a real result
     and never "not checked" for a run this harness performed.
 
-    Lives here beside the three detectors it composes so `e2e.corpus_report`
+    Lives here beside the two detectors it composes so `e2e.corpus_report`
     can import it without dragging `claude_agent_sdk` into its pure-analysis
     posture (issue #1484); `e2e.orchestrator` re-exports it so `run_e2e_test`
     and the `monkeypatch.setattr(orchestrator, ...)` tests keep resolving it as
@@ -990,7 +1118,6 @@ def check_guardrail_compliance(
         find_effects_without_invocation(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
-        + find_missing_mentor_verdicts(final_research)
         + find_person_evidence_missing_same_person(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
@@ -1011,9 +1138,15 @@ def check_guardrail_compliance(
 # The count is derivable — `ls packages/engine/plugin/agents/*.md` — so this
 # comment does not state one. It said "four" over a set of five for the four
 # days after proof-conclusion was added.
+#: The agents whose `extraction_append` is legitimate. `record-structurer`
+#: ships; `record-extractor` was retired, and stays so that committed runs,
+#: which replay through this detector, keep the verdict they were graded under.
+#: No new run can carry it, because no plugin file declares it.
+EXTRACTION_AGENT_NAMES = frozenset({"record-structurer", "record-extractor"})
+
 DEDICATED_AGENT_NAMES = frozenset(
     {
-        "record-extractor",
+        "record-structurer",
         "image-reader",
         "gps-mentor",
         # Added when proof_summaries moved behind the hook's caller check: the
@@ -1023,9 +1156,161 @@ DEDICATED_AGENT_NAMES = frozenset(
         # exactly the runs that did the right thing.
         "proof-conclusion",
         # Same shape, for the exhaustiveness claim (issue #1335, Phase 4): the
-        # hook routes `exhaustive_declaration.declared: true` to this agent, so
+        # hook routes a stop-gate search_stop.stopped_because to this agent, so
         # every legitimate declaration now arrives from it.
         "research-exhaustiveness",
+        # Same shape again, section-scoped, for identity links (issue #1853):
+        # the hook routes the whole `person_evidence` section to this agent, so
+        # every legitimate link now arrives from it.
+        "person-evidence",
+        # NOT the same shape (issue #2121). This pair is cost-motivated, not
+        # attribution-motivated: no hook routes anything to it, and it writes no
+        # protected section — only `log` entries and a plan item's `status`. It
+        # is listed because the set is asserted equal to the shipped agent files,
+        # and because a browse log arriving from it is legitimate rather than an
+        # unnamed-delegate bypass. Do not read its presence here as evidence that
+        # a hook route exists.
+        "search-images",
+        # Same shape as search-images, and for the same reason (issue #2799):
+        # `citation` is a converted skill, not a hook-routed pair. No hook
+        # routes anything to it. It is listed because the set is asserted equal
+        # to the shipped agent files, and because a `sources` refinement
+        # arriving from it is legitimate -- `ownership.json` names
+        # `agent:citation` on that row -- rather than an unnamed-delegate
+        # bypass. Do not read its presence here as evidence of a hook route.
+        "citation",
+        # Same shape as search-images and citation, and NOT a hook route
+        # (issue #2115). This conversion is cost- and context-motivated: the
+        # folded body stops occupying the orchestrator's context on every run
+        # that touches question selection, and a cheaper model can be pinned per
+        # agent. No hook routes anything to this agent. It writes `questions`,
+        # which does carry a routed claim -- a stop-gate `search_stop.stopped_because`
+        # belongs to research-exhaustiveness -- but creating a question
+        # writes `stopped_because: null`, which the guard explicitly permits, so no
+        # route was added and none is needed. It is listed because the set is
+        # asserted equal to the shipped agent files, and so a legitimate
+        # `research_append` of a new question from this agent does not read as
+        # an unnamed-delegate bypass. Do not read its presence here as evidence
+        # of a hook route.
+        "question-selection",
+        # A converted skill that writes nothing at all (issue #2118): its only
+        # MCP tool is the read-only `person_warnings`. Listed solely because the
+        # set is asserted equal to the shipped agent files.
+        "check-warnings",
+        # Same shape as `search-images` and `citation` (issue #2795): a
+        # cost-motivated conversion, no hook route. It writes only one `log`
+        # entry per lookup through `research_log_append` (#3244 option L), the
+        # article summary in `notes`. It is listed because the set is asserted
+        # equal to the shipped agent files, and so a log entry arriving from it
+        # is not read as an unnamed-delegate bypass. Do not read its presence
+        # here as evidence of a hook route.
+        "search-wikipedia",
+        # Same shape again (issue #2797): a converted skill, no hook route.
+        # It writes one `timelines` entry, which `ownership.json` names
+        # `agent:timeline` on. Listed because the set is asserted equal to
+        # the shipped agent files.
+        "timeline",
+        # Same shape as search-images, and for the same reason (issue #2790):
+        # a converted skill, not a hook-routed pair. It writes nothing at all,
+        # so no hook routes anything to it and `ownership.json` names it on no
+        # row. Listed because the set is asserted equal to the shipped agent
+        # files.
+        "convert-dates",
+        # Same shape again (issue #2794): a converted skill with no hook route.
+        # It writes only one `log` entry per search through
+        # `research_log_append` (#3244 option L), the guidance in `notes`.
+        # Listed because the set is asserted equal to the shipped agent files,
+        # and so a log entry arriving from it is not read as an
+        # unnamed-delegate bypass.
+        "search-familysearch-wiki",
+        # A new agent, not a conversion (issue #2029), and no hook route: it
+        # writes only `log` entries, one per researcher verdict on a hint. Listed
+        # because the set is asserted equal to the shipped agent files, and so a
+        # log entry arriving from it is not read as an unnamed-delegate bypass.
+        "search-hints",
+        # Same shape as `citation` (issue #2792): a converted skill, no hook
+        # route. It is listed because the set is asserted equal to the shipped
+        # agent files, and because a `hypotheses` write arriving from it is
+        # legitimate -- `ownership.json` names `agent:hypothesis-tracking` on
+        # that row. Do not read its presence here as evidence of a hook route.
+        "hypothesis-tracking",
+        # Same shape as `search-images`, `citation`, and `search-wikipedia`
+        # (issue #2804): a cost-motivated conversion, no hook route, and it
+        # writes no project state. Listed because the set is asserted equal to
+        # the shipped agent files. Do not read its presence here as evidence of
+        # a hook route.
+        "translation",
+        # Same shape as citation (issue #2805): a converted skill, not a
+        # hook-routed pair. It writes tree persons, relationships and sources,
+        # and `ownership.json` names `agent:tree-edit` on those rows as the
+        # subject of its own unit suite. No hook routes anything to it. Listed
+        # because the set is asserted equal to the shipped agent files.
+        "tree-edit",
+        # Same shape as convert-dates (issue #2798): a converted skill with no
+        # hook route. It writes nothing at all, so `ownership.json` names it on
+        # no row. Listed because the set is asserted equal to the shipped agent
+        # files.
+        "validate-schema",
+        # Same shape as convert-dates (issue #2796): a converted skill with no
+        # hook route. It writes nothing at all, so `ownership.json` names it on
+        # no row. Listed because the set is asserted equal to the shipped agent
+        # files.
+        "source-evaluation",
+        # Same shape as citation (issue #2117): a converted skill. The hook lanes
+        # it to `localities` and routes nothing to it; `ownership.json` names
+        # `agent:locality-guide` on that row.
+        "locality-guide",
+        # Same shape as search-images (issue #2802): a converted skill, not a
+        # hook-routed pair. It writes `log` entries (one through
+        # build_external_search_url) and a plan item's `status`, and
+        # `ownership.json` names `agent:search-external-sites` on those rows.
+        # Listed because the set is asserted equal to the shipped agent files.
+        "search-external-sites",
+        # Same shape as search-wikipedia (issue #2800): a converted skill with
+        # no hook route. It writes only `log` entries through
+        # `research_log_append` (#3244 option L) -- one per wiki/Wikipedia lookup
+        # and one `historical_context` entry, the overview in `notes`. Listed
+        # because the set is asserted equal to the shipped agent files, and so a
+        # log entry arriving from it is not read as an unnamed-delegate bypass.
+        "historical-context",
+        # The proof-conclusion shape, claim-scoped (issue #1852): the hook
+        # routes a conflict's analytical product -- a resolve, or any of
+        # CONFLICT_ANALYSIS_FIELDS -- to this agent, so every legitimate
+        # resolution now arrives from it.
+        "conflict-resolution",
+        # Same shape as search-images (issue #2065): a new agent, not a
+        # converted skill. It writes only `log` entries through
+        # `research_log_append`: one per search page, plus one carrying the
+        # household table in `notes` (#3244 option L, issue #3414). No hook
+        # routes anything to it. Listed because the set is asserted equal to
+        # the shipped agent files, and so a log entry arriving from it is not
+        # read as an unnamed-delegate bypass. `ownership.json` names
+        # `agent:survey-surname` on the `log` row.
+        "survey-surname",
+        # A new agent (issue #3273): it surveys a tree before any project exists,
+        # so it writes nothing and no hook routes to it. Listed because the set is
+        # asserted equal to the shipped agent files. `ownership.json` names it on
+        # no row.
+        "tree-survey",
+        # Same shape as search-images and citation (issue #2120): a
+        # cost-motivated conversion, no hook route. It writes `log` entries via
+        # `research_log_append` and updates `plan_items` status via
+        # `research_append`. No hook routes anything to it. Listed because the
+        # set is asserted equal to the shipped agent files. `ownership.json`
+        # names `agent:search-full-text` on the `plan_items` and `log` rows.
+        "search-full-text",
+        # Same shape as citation (issue #2122): a converted skill. The hook lanes
+        # it to `project`, `researcher_profile`, `known_holdings` and `sources` and routes
+        # nothing to it; `ownership.json` names `agent:init-project` on those
+        # rows, the `project` row, and the three tree rows `project_create` writes.
+        "init-project",
+        # Same shape as search-images and citation (issue #2116): a
+        # cost-motivated conversion, no hook route. It writes `plans` and
+        # `plan_items` through `research_append`; the hook lanes it to those two
+        # sections and routes nothing to it. `ownership.json` names
+        # `agent:research-plan` as their owner. Listed because the set is
+        # asserted equal to the shipped agent files.
+        "research-plan",
     }
 )
 
@@ -1079,36 +1364,22 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     e.g. `find_effects_without_invocation`), and `extraction_append` is not
     one of the four guardrail skills' writes at all — it's hard-restricted at
     the TypeScript layer to exactly `sources`/`assertions`
-    (`extraction-append.ts`), and `record-extractor.md` is the only agent
-    file that even declares the tool. So its legitimate caller is narrower
-    than "any dedicated agent": only `agent_type == "record-extractor"`
-    exactly — a wrong dedicated agent (e.g. `gps-mentor`) holding this tool
-    is not a case any agent's own `tools:`/`disallowedTools` declaration is
-    set up to permit, and is itself worth flagging.
+    (`extraction-append.ts`), and `record-structurer.md` is the only agent
+    file that declares the tool. So its legitimate delegate is narrower than
+    "any dedicated agent": only `agent_type == "record-structurer"` exactly —
+    a wrong dedicated agent (e.g. `gps-mentor`) holding this tool is not a
+    case any agent's own `tools:` declaration is set up to permit, and is
+    itself worth flagging.
 
-    The "or main thread" clause above is, for `extraction_append`, a
-    classification statement (a main-thread call is not an *unnamed-delegate*
-    bypass) — NOT a claim that the record-extraction router may do the
-    extraction itself. It may not: a main-thread `extraction_append` is
-    hard-denied upstream at PreToolUse by the #942 guard
-    (`e2e/orchestrator.py::is_main_thread_subagent_only_tool` in e2e,
-    `context_policy.subagent_only_violation` in the unit harness; e2e-test-spec
-    §6.1.1), so it never executes. The attempt still reaches this function —
-    `tool_calls` is appended before the PreToolUse decision — but it exits at
-    the `agent_id is None` branch on the classification above: a main-thread
-    call (denied or not) is not an *unnamed-delegate* bypass, full stop. It is
-    not counted, and that classification stands on its own regardless of
-    whether the denied call also carries `is_error: true` — this detector
-    reads `is_error` nowhere (issue #1569): the rule here is about who called,
-    not whether the call succeeded, so a caller that should not have made this
-    decision is a violation whether the write landed, was rejected by
-    validation, or was denied outright.
+    The "or main thread" clause is, for `extraction_append`, legitimate work:
+    the research router and search-records call it directly with `recordIds`.
+    This detector reads `is_error` nowhere (issue #1569): the rule is about
+    who called, not whether the call succeeded.
 
-    Note what the two layers do and do not compose to. The main-thread half is
-    DENIED; this delegate half is only LOGGED — it is shadow-mode, deliberately
-    not read by `E2eResult.__post_init__` until its false-positive rate is
-    calibrated. So a `general-purpose` delegate's `extraction_append`
-    still succeeds today; what this detector buys is that it is recorded.
+    It is shadow-mode, deliberately not read by `E2eResult.__post_init__`
+    until its false-positive rate is calibrated. So a `general-purpose`
+    delegate's `extraction_append` still succeeds today; what this detector
+    buys is that it is recorded.
 
     Confirmed live in `ogletree-children/run-2026-07-21_13-24-05.json` (a
     committed, judge-`pass` run): `tool_calls[266]`, an `Agent` call with no
@@ -1132,10 +1403,10 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     calls earlier in the same span (275-277) attach facts to already-known
     `personId`s and are correctly NOT owned by any guardrail skill under
     `owning_skills`'s "no personId == mint" rule; they are not part of this
-    violation. The run's `subagents[12]` (`agent_type: "record-extractor"`,
-    extracting the same death certificate) makes several `extraction_append`
-    calls in the preceding span — a legitimate, correctly-attributed control
-    case this function must NOT flag.
+    violation. The run's `subagents[12]` (the since-retired
+    `record-extractor`, extracting the same death certificate) makes several
+    `extraction_append` calls in the preceding span — a control case that its
+    successor, `record-structurer`, now occupies.
 
     `gps-mentor` legitimately declares `research_append` and uses it in
     dozens of committed runs, but only to append to `evaluations[]` — a
@@ -1150,7 +1421,7 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     This treats ANY of `DEDICATED_AGENT_NAMES` as sufficient for a
     `GUARDRAIL_SKILLS`-owned write, unlike `extraction_append`'s tighter
     single-name check. It was a no-op while the set held only agents that
-    could not reach such a section: `record-extractor` disallows
+    could not reach such a section: `record-structurer` holds no
     `research_append` and never declares `materialize_facts`/`tree_edit`, the
     two image readers hold no writer tool at all, and `gps-mentor`'s only
     writer tool is structurally exempted via the `evaluations[]` carve-out
@@ -1182,40 +1453,46 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
         args = entry.get("args") or {}
         agent_id = entry.get("agent_id")
         agent_type = entry.get("agent_type")
-        # Compare on the namespace-stripped name (Cowork logs "<plugin>:record-extractor";
+        # Compare on the namespace-stripped name (Cowork logs "<plugin>:record-structurer";
         # the harness logs bare) but keep the RAW agent_type in the messages below. See
         # strip_agent_namespace for the #650/#698/#939 rationale and the over-flag safety.
         bare_agent_type = strip_agent_namespace(agent_type)
 
         if bare_tool_name(tool) == "extraction_append":
-            if agent_id is None or bare_agent_type == "record-extractor":
+            if agent_id is None or bare_agent_type in EXTRACTION_AGENT_NAMES:
                 continue
             violations.append(
                 f"tool_calls[{i}] extraction_append was made by agent_type="
                 f"{agent_type!r} (agent_id={agent_id!r}) — only the dedicated "
-                "'record-extractor' agent may hold this tool"
+                "'record-structurer' agent may hold this tool"
             )
             continue
 
         if bare_tool_name(tool) == "research_append":
             # #1273 Item 4: research_append to `sources`/`assertions` is the same
-            # protected write extraction_append is denied for. record-extraction
-            # creates these and citation refines `sources` (ownership.json); because
+            # protected write extraction_append makes. extraction_append creates
+            # these and citation refines `sources` (ownership.json); because
             # owning_skills does not attribute those sections, without this branch an
             # unnamed delegate writes them through the broad tool unflagged. The
             # legitimate callers are exactly the sibling extraction_append arm's: the
             # main thread (agent_id None; citation refines `sources` there, exempt for
-            # free) and the `record-extractor` agent alone — NOT every dedicated
-            # agent, because sources/assertions are not owning_skills sections, so a
+            # free) and the citation agent alone — NOT every dedicated agent,
+            # because sources/assertions are not owning_skills sections, so a
             # gps-mentor/proof-conclusion/research-exhaustiveness delegate writing
-            # them is out of lane exactly as it is for extraction_append (which uses
-            # the same tight `== record-extractor`). Uses `bare_agent_type` (the
-            # shared namespace strip #1856 added) so the namespaced spelling of
-            # record-extractor is exempt too. Shadow only. No `continue`: a batch may
+            # them is out of lane. The retired record-extractor is exempt for the
+            # same replay reason as in EXTRACTION_AGENT_NAMES; record-structurer
+            # holds no research_append. Uses `bare_agent_type` (the shared
+            # namespace strip #1856 added) so a namespaced spelling is matched
+            # too. Shadow only. No `continue`: a batch may
             # ALSO touch an owning_skills section, still checked below. One violation
             # per offending CALL (not per op), matching the sibling arms' granularity
             # so a batch does not inflate the shadow signal.
-            if agent_id is not None and bare_agent_type != "record-extractor":
+            # `citation` joins the exemption because it became an agent and is a
+            # declared caller of `sources` in ownership.json. This branch runs
+            # BEFORE the DEDICATED_AGENT_NAMES check below, so membership there
+            # does not reach it -- every legitimate citation refinement would
+            # otherwise be shadow-reported as an unnamed-delegate bypass.
+            if agent_id is not None and bare_agent_type not in ("record-extractor", "citation"):
                 sections = sorted(
                     {
                         op.get("section")
@@ -1227,8 +1504,8 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
                     violations.append(
                         f"tool_calls[{i}] research_append to {'/'.join(sections)} was "
                         f"made by agent_type={agent_type!r} (agent_id={agent_id!r}) — "
-                        "this is record-extraction/citation's protected write, made "
-                        "by neither the main thread nor the record-extractor agent"
+                        "this is extraction's and citation's protected write, made "
+                        "by neither the main thread nor the citation agent"
                     )
 
         owners = owning_skills(tool, args)
@@ -1261,13 +1538,25 @@ CITATION_NULLING_KIND = "citation_nulling"
 # (and with it the Claude Agent SDK) just to learn one string.
 PERSON_EVIDENCE_DENY_KIND = "person_evidence_deny"
 
-# Marks a #1193 warnings-unchecked shadow entry in the shared
-# `guardrail_shadow_violations` list: a run wrote a new ParentChild/Couple
-# relationship but never called the (free, deterministic) `person_warnings`
-# guardrail. `guardrail_shadow_report.py` keys on it to count this class in its
+# Marks a warnings-unchecked shadow entry in the shared
+# `guardrail_shadow_violations` list: a tree writer returned
+# `unjustified_warnings` and nothing landed after it, so the write was blocked
+# and the agent gave up. The NAME IS HISTORICAL — under #1193 this meant a
+# parentage write with no `person_warnings` call, and every entry stored before
+# the #2840 retarget still carries that retired meaning, which is why
+# `format_warnings_unchecked` prints the stored count under its own caveat.
+# `guardrail_shadow_report.py` keys on it to count this class in its
 # own bucket. Lives here beside its siblings so the report can read it without
 # importing the orchestrator (and the Claude Agent SDK) for one string.
-WARNINGS_UNCHECKED_KIND = "warnings_unchecked"
+# Bumped when the check was retargeted onto the engine gate. The pre-retarget
+# entries already in the committed corpus answer a DIFFERENT question -- a
+# parentage write with no `person_warnings` call -- and keeping one bucket would
+# mix two incompatible meanings with nothing to tell them apart, which is what
+# made the "STORED -- pre-retarget semantics" caveat on the §7 line true only
+# until the next panel run. Readers that want the history still match the old
+# value, which is retained for exactly that.
+WARNINGS_UNCHECKED_KIND_LEGACY = "warnings_unchecked"
+WARNINGS_UNCHECKED_KIND = "unresolved_warning_refusal"
 
 
 def find_citation_nulling_in_conclusions(
@@ -1404,13 +1693,13 @@ def find_citation_nulling_in_tree_sources(
     ``proof-conclusion/SKILL.md`` — that body moved to the delegated agent when
     the skill became a skill-agent pair — but
     ``packages/engine/plugin/agents/proof-conclusion.md`` step 3, "Source entries
-    (upload-time citation + conclusion-gated upload)":
+    (upload-time citation)":
 
         copy the finalized ``research.json`` ``sources[].citation`` string into
-        the **``citation``** field … **Upload is conclusion-gated:** the working
-        tree carries *all* sourced evidence facts (materialized at link time by
-        person-evidence), but **only ``primary``/proof-backed facts upload to
-        FamilySearch** — un-concluded evidence stays out.
+        the **``citation``** field … **What the tree surfaces about upload
+        readiness:** the working tree carries *all* sourced evidence facts
+        (materialized at link time by person-evidence); marking a fact
+        ``primary`` is what records that a conclusion stands behind it.
 
     THE GATE IS THAT SENTENCE, both clauses. A tree source is held to a citation
     only when (1) the run wrote a ``proof_summaries`` entry, and (2) the source is
@@ -1531,6 +1820,7 @@ _NO_CONFLICT_SUBSTRINGS = (
     "no unresolved conflict",
     "no discrepanc",  # "no discrepancy" / "no discrepancies"
     "without conflict",
+    "no resolution",  # "no resolution was required" — nothing was resolved
 )
 # Whole-field values (stripped, lowercased) that mean the same thing. Matched
 # exactly rather than as substrings so a bare "none"/"n/a" can't false-negative
@@ -1538,7 +1828,7 @@ _NO_CONFLICT_SUBSTRINGS = (
 _NO_CONFLICT_EXACT = {"", "none", "n/a", "na", "not applicable"}
 
 # `stop_criteria.conflict_resolution` is a REQUIRED field on every declared
-# exhaustive_declaration (research.schema.json), so it is always populated —
+# search_stop (research.schema.json), so it is always populated when stop-gate —
 # "doesn't match the negative list" therefore defaults to FIRE, which over-fires
 # badly on the real corpus (senior review of PR #1438: 18 of 38 firing strings
 # explicitly negated a resolution — "UNRESOLVED.", "Not met —", …). So the check
@@ -1546,33 +1836,45 @@ _NO_CONFLICT_EXACT = {"", "none", "n/a", "na", "not applicable"}
 # language: an opener that negates a resolution is skipped, and a field with no
 # resolution marker at all is skipped. The `\b` on the marker is what stops
 # `resolved` matching inside `unresolved`.
+#
+# ASCII semantics and an explicit whitespace set, on purpose: the research_append
+# port (`unpersistedConflictResolutionInvariants`) runs in JavaScript, whose `\b`
+# and `\d` are ASCII-only, and the two must agree on every input — Python's
+# Unicode-aware defaults made "Naïve … resolved" fire here and not there.
+_ASCII_WHITESPACE = " \t\n\r\f\v"
 _RESOLUTION_MARKER_RE = re.compile(
     r"\b(resolv(?:ed|es|ing)|resolution|reconcil(?:ed|es|ing)|outweigh(?:s|ed|ing)?"
     r"|adjudicated|preferred assertion)\b",
-    re.I,
+    re.I | re.ASCII,
 )
 _NON_RESOLUTION_OPENER_RE = re.compile(
-    r"^\s*(unresolved|not met|partial|partially met|n/?a\b|not applicable|none)", re.I
+    r"^[ \t\n\r\f\v]*(unresolved|not met|partial|partially met|n/?a\b|not applicable|none)",
+    re.I | re.ASCII,
 )
 # `c_NNN` ids named in a stop-criterion's prose, e.g. "resolved (c_001, preferred
 # a_019 …)". Used to tell a conclusion that names the conflict it relied on from
 # one that names none — a resolved conflicts[] entry the conclusion *names* backs
 # it even when it is not cited on resolved_conflict_ids (senior review, PR #1438).
-_CONFLICT_ID_RE = re.compile(r"\bc_\d+\b", re.I)
+_CONFLICT_ID_RE = re.compile(r"\bc_\d+\b", re.I | re.ASCII)
+
+
+# A conflict at either status is settled for every gate that reads status, and
+# the validator accepts either on a proof_summary's resolved_conflict_ids.
+_SETTLED_CONFLICT_STATUSES = frozenset({"resolved", "moot"})
 
 
 def find_unpersisted_conflict_resolutions(
     research: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
-    """Shadow-mode post-hoc detector (issue #1317): a WRITTEN CONCLUSION relies on
-    a conflict it says was resolved, but no structured ``conflicts[]`` entry backs
-    it — the resolution lives only in prose, so the viewer's Conflicts section is
-    blank. This is the "concluded-in-prose-but-not-persisted-structurally" class,
+    """Post-hoc detector (issue #1317): a WRITTEN CONCLUSION relies on a conflict
+    it says was resolved, but ``conflicts[]`` holds no entry that could be the
+    record of it — the resolution lives only in prose, so the viewer's Conflicts
+    section is blank. This is the "concluded-in-prose-but-not-persisted-structurally" class,
     the conflict-side sibling of ``find_citation_nulling_in_conclusions``.
 
     THE EVIDENCED FAILURE (issue #1317, john-applegarth-family): a research.json
     with 25 assertions and 2 ``proof_summaries`` whose narrative carried a full
-    "Conflict Discussion" and whose ``exhaustive_declaration.stop_criteria.
+    "Conflict Discussion" and whose ``search_stop.stop_criteria.
     conflict_resolution`` read "Ella Chase marriage conflict resolved …" — yet
     ``conflicts`` was ``[]`` and every ``resolved_conflict_ids`` was ``[]``. The
     conflict was reasoned through by ``proof-conclusion`` / ``research-exhaustiveness``
@@ -1583,29 +1885,43 @@ def find_unpersisted_conflict_resolutions(
     exists — a run that legitimately stops before concluding has an empty
     ``conflicts[]`` by design and must not fire. For each concluded question, the
     reliance signal is a non-trivial ``conflict_resolution`` stop-criterion on that
-    question's ``exhaustive_declaration`` (a *structured* field with bounded
+    question's ``search_stop`` (a *structured* field with bounded
     vocabulary — deliberately NOT the free ``narrative_markdown``, which cannot be
     parsed reliably). A ``conflict_resolution`` that says there was no conflict
     (``_NO_CONFLICT_SUBSTRINGS`` / ``_NO_CONFLICT_EXACT``) is skipped.
 
-    The reliance is BACKED, and no violation fires, when a ``status == "resolved"``
-    ``conflicts[]`` entry is linked to the conclusion any of four ways: cited on the
-    proof_summary's ``resolved_conflict_ids``; naming this question in its own
-    ``blocks_question_ids``; NAMED (its ``c_`` id) in the stop-criterion prose; or —
-    when the prose names no ``c_`` id at all — simply existing. Each means the
-    conflict was written to ``conflicts[]``, so the viewer's Conflicts section is
-    populated and this is not the #1317 miss. A fire therefore means **no resolved
-    conflict backs this conclusion**: either ``conflicts[]`` holds no resolved entry
-    at all, or the stop-criterion names a ``c_`` id that is not resolved. The fourth
-    way is what keeps that true — ``blocks_question_ids`` is schema-required but
-    legitimately empty, so without it a resolved conflict could exist, populate the
-    viewer, and still be reported as unpersisted.
+    The question is PERSISTENCE, not resolution. The reliance is BACKED, and no
+    violation fires, when: a SETTLED (``resolved`` or ``moot``) conflict is cited on
+    the proof_summary's ``resolved_conflict_ids`` or names this question in its own
+    ``blocks_question_ids``; or a ``c_`` id the stop-criterion prose NAMES exists in
+    ``conflicts[]`` at any status; or the prose names no ``c_`` id and ``conflicts[]``
+    holds any entry at all — an open one, or one about another question, included,
+    which is wider than the pre-graduation rule (a resolved entry). Each means
+    something was written to ``conflicts[]``,
+    so the viewer's Conflicts section is populated and this is not the #1317 miss. A
+    fire therefore means **nothing in ``conflicts[]`` can be the record of the
+    resolution the conclusion relies on**: ``conflicts[]`` is empty, or the prose
+    names only ``c_`` ids it does not hold. Ids compare case-insensitively.
 
-    SHADOW MODE ONLY: returns records shaped to share ``guardrail_shadow_violations``
-    (int ``index``, string ``tool``, ``kind == CONFLICT_UNPERSISTED_KIND``). Never
-    fails a run. Because the reliance signal is a text heuristic on one structured
-    field, this ships shadow-first to measure the fire rate before any promotion to
-    a hard gate — exactly how the citation-nulling detector (#1358) is staged.
+    A RECORDED BUT OPEN conflict does not fire, deliberately. ``proof-conclusion``
+    is told to write a ``not_proved`` summary while a conflict is recorded and
+    still open, and a stop-criterion such as "resolution not possible (c_001)"
+    matches the positive marker, so reading "resolved" instead of "persisted" would
+    refuse that prescribed write at the writer tool. An open conflict under a tier
+    it forbids is ``conflictedSourceInvariants``' and the completion gate's job.
+
+    TWO PLANES. ``research_append`` refuses the ``proof_summaries`` write this
+    detects (``unpersistedConflictResolutionInvariants`` in
+    ``packages/engine/mcp-server/src/tools/research-append.ts``), scoped to the
+    summary being written; this function stays as the document-plane check, which
+    also sees documents the writer tool never did (a hand edit, a hosted import, a
+    replayed fixture). Both replay one labelled case file,
+    ``packages/engine/mcp-server/tests/guard-cases/unpersisted-conflict-resolution.json``,
+    and must agree on every case in it (``eval/harness/tests/unit/test_guard_case_files.py``).
+    Returns records shaped to share ``guardrail_shadow_violations`` (int ``index``,
+    string ``tool``, ``kind == CONFLICT_UNPERSISTED_KIND``, plus the
+    ``proof_summary_id`` the case replay joins on); in the e2e harness it reports
+    and never fails a run.
     """
     research = research or {}
     proof_summaries = (
@@ -1618,11 +1934,24 @@ def find_unpersisted_conflict_resolutions(
 
     questions = research.get("questions") if isinstance(research.get("questions"), list) else []
     conflicts = research.get("conflicts") if isinstance(research.get("conflicts"), list) else []
-    questions_by_id = {q.get("id"): q for q in questions if isinstance(q, dict) and q.get("id")}
-    resolved_conflict_ids = {
-        c.get("id")
+    # First question with an id wins, as the port's `Array.find` does.
+    questions_by_id: dict[Any, dict[str, Any]] = {}
+    for q in questions:
+        if isinstance(q, dict) and q.get("id"):
+            questions_by_id.setdefault(q.get("id"), q)
+
+    def _cid(value: Any) -> str | None:
+        return value.lower() if isinstance(value, str) and value else None
+
+    recorded_conflict_ids = {
+        _cid(c.get("id")) for c in conflicts if isinstance(c, dict) and _cid(c.get("id"))
+    }
+    settled_conflict_ids = {
+        _cid(c.get("id"))
         for c in conflicts
-        if isinstance(c, dict) and c.get("status") == "resolved" and c.get("id")
+        if isinstance(c, dict)
+        and c.get("status") in _SETTLED_CONFLICT_STATUSES
+        and _cid(c.get("id"))
     }
     # A resolved conflict can back a question WITHOUT being cited on the
     # proof_summary's resolved_conflict_ids — via its own schema field
@@ -1631,25 +1960,30 @@ def find_unpersisted_conflict_resolutions(
     # conflict[] entry — the viewer's Conflicts section populated, exactly what
     # #1317 asks for — and then emitted a factually false "no resolved entry backs
     # it". So a question blocked by a resolved conflict counts as backed too.
-    resolved_blocked_qids = {
+    settled_blocked_qids = {
         q
         for c in conflicts
-        if isinstance(c, dict) and c.get("status") == "resolved"
-        for q in (c.get("blocks_question_ids") or [])
+        if isinstance(c, dict)
+        and c.get("status") in _SETTLED_CONFLICT_STATUSES
+        and isinstance(c.get("blocks_question_ids"), list)
+        for q in c["blocks_question_ids"]
     }
 
     def _resolution_claimed(question: dict[str, Any]) -> str | None:
         """The stop-criterion text if it asserts a resolution, else None."""
-        decl = question.get("exhaustive_declaration")
+        decl = question.get("search_stop")
         if not isinstance(decl, dict):
-            return None
+            # Legacy shape: exhaustive_declaration.stop_criteria (pre-#2539 run logs).
+            decl = question.get("exhaustive_declaration")
+            if not isinstance(decl, dict):
+                return None
         crit = decl.get("stop_criteria")
         if not isinstance(crit, dict):
             return None
         cr = crit.get("conflict_resolution")
         if not isinstance(cr, str):
             return None
-        crl = cr.strip().lower()
+        crl = cr.strip(_ASCII_WHITESPACE).lower()
         if crl in _NO_CONFLICT_EXACT:
             return None
         if any(s in crl for s in _NO_CONFLICT_SUBSTRINGS):
@@ -1678,24 +2012,21 @@ def find_unpersisted_conflict_resolutions(
         claimed = _resolution_claimed(question)
         if claimed is None:
             continue  # no conflict claimed (or explicitly "no conflicts") — nothing owed
-        # A resolved conflicts[] entry backs this conclusion when it is cited on the
-        # proof_summary, blocks this question, is NAMED in the conclusion's prose (a
-        # resolved c_ id in the stop-criterion text), or — when the prose names no
-        # conflict id at all — simply exists. Any of these means the conflict was
-        # written to conflicts[] and the viewer's Conflicts section is populated, so
-        # the #1317 miss this detector catches (nothing persisted) does not apply.
+        # Backed (see the docstring): a settled conflict cited on the proof_summary
+        # or blocking this question; a named c_ id that conflicts[] holds at any
+        # status; or, when the prose names no id, any conflicts[] entry at all.
         # blocks_question_ids alone is too weak: it is schema-required but
         # legitimately empty, so most resolved conflicts do not carry it (senior
         # review, PR #1438 — mary-dwyer-father / jimmie-jewel-neal wrote a resolved
         # c_001 with blocks_question_ids: [] and were wrongly reported as unpersisted).
-        named_ids = set(_CONFLICT_ID_RE.findall(claimed))
+        named_ids = {m.lower() for m in _CONFLICT_ID_RE.findall(claimed)}
         if (
-            any(rc in resolved_conflict_ids for rc in rcids)
-            or qid in resolved_blocked_qids
-            or bool(named_ids & resolved_conflict_ids)
-            or (not named_ids and bool(resolved_conflict_ids))
+            any(_cid(rc) in settled_conflict_ids for rc in rcids)
+            or qid in settled_blocked_qids
+            or bool(named_ids & recorded_conflict_ids)
+            or (not named_ids and bool(recorded_conflict_ids))
         ):
-            continue  # a resolved conflicts[] entry backs it — persisted, not the #1317 miss
+            continue  # conflicts[] holds its record — persisted, not the #1317 miss
         key = (ps_id, qid)
         if key in seen:
             continue
@@ -1706,17 +2037,111 @@ def find_unpersisted_conflict_resolutions(
                 "tool": "research.json",
                 "required_skill": "conflict-resolution",
                 "question_id": qid,
+                "proof_summary_id": ps_id,
                 "kind": CONFLICT_UNPERSISTED_KIND,
                 "detail": (
                     f"proof_summary {ps_id} (question {qid}) relies on a resolved "
-                    "conflict per its exhaustive_declaration.stop_criteria."
-                    "conflict_resolution, but no resolved conflicts[] entry is linked "
-                    "to it (not cited on resolved_conflict_ids, not named in the "
-                    "stop-criterion, and no resolved conflict blocks this question)"
+                    "conflict per its search_stop.stop_criteria."
+                    "conflict_resolution, but conflicts[] holds no record of it "
+                    "(empty, or not holding the c_ id the stop-criterion names)"
                 ),
             }
         )
     return violations
+
+
+TREE_WRITER_TOOLS = frozenset(
+    {"tree_edit", "tree_correct", "merge_tree_persons", "materialize_facts"}
+)
+
+# The engine's STALE-JUSTIFICATION branch returns the same
+# `reason: "unjustified_warnings"` as a genuine refusal while meaning the
+# opposite: the agent sent a warningId matching no introduced warning, and the
+# gate is telling it to re-call WITHOUT justifications to get the current ids.
+# That is a round-trip the agent is expected to make, not a refusal it
+# abandoned, so counting it inflates the fire rate the promotion decision reads
+# (`guardrail-enforcement-spec.md`). The `reason` cannot discriminate the two,
+# so the message must — and because that couples this module to a string in
+# `src/tools/tree-edit.ts`, `test_stale_justification_marker_matches_the_engine`
+# reads the engine source and fails if the wording moves.
+STALE_JUSTIFICATION_MARKER = "Stale warningId"
+
+
+def unresolved_warning_refusal(tool_calls: list[dict[str, Any]] | None) -> bool:
+    """True when a tree writer returned `unjustified_warnings` (issue #2840's
+    engine gate) and nothing resolved it — the write was blocked and the agent
+    gave up.
+
+    One caller today: this module's shadow detector. It was written three
+    times — here and in the `tree-edit` / `person-evidence` validators — and
+    carried the same defects in each copy, which is why it was shared; both
+    validators were then deleted (`guardrail-enforcement-spec.md`, "No eval
+    validator asserts this gate"), leaving this the single consumer.
+
+    ORDER IS LOAD-BEARING. Asking whether *any* writer call succeeded credits
+    one that landed BEFORE the refusal, so a run that wrote op A, was refused
+    on op B and abandoned it reads as clean. Take the LAST refusal and require
+    a success after it.
+
+    SUCCESS IS `did_not_land`, never a bare `is_error`. The no-project answer
+    returns `reason: "no_project"` deliberately WITHOUT `is_error` (issue
+    #1695), so an `is_error` test counts a write that never happened as the
+    success that resolves the refusal — and this arm CREDITS a call rather than
+    skipping it, so a wrong credit is a MISSED violation, and a missed
+    violation here reports nothing at all.
+
+    A SUCCESS MUST SAY SO: `"ok": true` present, never merely `"ok": false`
+    absent. `did_not_land` knows two non-landing shapes, `is_error` and
+    `no_project`; the writers return their commoner failure — validate-before-
+    persist errors, and the stale-justification branch — as an ordinary result
+    with neither, so an absence test credits a re-call that failed for an
+    unrelated reason. Absence also credits a call with NO RECORDED RESPONSE AT
+    ALL (`response_text` returns `""`), which is what a run truncated by the
+    wall-clock or turn cap leaves behind — the write never completed, and the
+    refusal reads as resolved. Requiring the positive marker costs nothing:
+    across the 67 runs the replay scans, all 351 writer calls carry an explicit
+    `ok` (316 true, 35 false) and none is response-less, so this manufactures
+    no violation on today's corpus while closing the shape for future runs.
+
+    READ BOTH RESPONSE KEYS (`response_text`). Keying on `response_summary`
+    alone made this predicate constantly False in the unit tier, where
+    `mock_mcp` records `response` — so both validators returned early 100% of
+    the time while their unit tests, which hand-build `response_summary`,
+    passed. A check that cannot fail reads as coverage; CLAUDE.md forbids one.
+
+    A STALE-JUSTIFICATION ANSWER IS NEITHER. The engine returns the same
+    `reason` for it (`STALE_JUSTIFICATION_MARKER`), so it is excluded from the
+    refusals; and it carries `"ok": false`, so it cannot pass as the resolving
+    success either. Both arms have to agree on that or the exclusion just moves
+    the miscount from one side to the other.
+
+    KNOWN IMPRECISION, deliberately not guessed at: any later landed writer
+    call clears the refusal, including one for an unrelated op. Tying the
+    success to the refused op is not generally decidable here — the agent may
+    resolve it with `warningJustifications`, or by amending the write so it
+    introduces no warning at all, and only the first is visible in the args.
+    This errs toward missing a violation rather than manufacturing one, which
+    is the right direction for a shadow detector.
+    """
+    calls = tool_calls or []
+
+    def _is_writer(call: Any) -> bool:
+        return isinstance(call, dict) and bare_tool_name(call.get("tool") or "") in TREE_WRITER_TOOLS
+
+    def _is_refusal(call: dict[str, Any]) -> bool:
+        text = response_text(call)
+        return "unjustified_warnings" in text and STALE_JUSTIFICATION_MARKER not in text
+
+    refusals = [i for i, call in enumerate(calls) if _is_writer(call) and _is_refusal(call)]
+    if not refusals:
+        return False
+    return not any(
+        _is_writer(call)
+        and not _is_refusal(call)
+        and not did_not_land(call)
+        and '"ok": true' in _normalized_response(call)
+        for call in calls[refusals[-1] + 1 :]
+    )
 
 
 def find_relationship_writes_without_warnings_check(
@@ -1725,85 +2150,47 @@ def find_relationship_writes_without_warnings_check(
     *,
     starting_tree: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    """Shadow-mode post-hoc detector (issue #1193): the run wrote a NEW
-    ``ParentChild``/``Couple`` relationship but never called ``person_warnings``,
-    the cheapest guardrail in the system (deterministic, no LLM — it reads
-    ``tree.gedcomx.json`` and evaluates ~75 predicates, so a call costs one tool
-    round-trip). Two runs of the same fixture, same skills, diverged only on
-    whether the parentage write was delegated to ``proof-conclusion`` (which
-    carries the "run check-warnings after tree writes" step) or inlined by the
-    orchestrator (which does not) — and nothing recorded that the guardrail was
-    never consulted. This makes that omission visible.
+    """Shadow-mode post-hoc detector (issue #1193, retargeted by issue #2840).
 
-    GATED ON A NEW RELATIONSHIP THIS RUN. Fires only when a ``ParentChild`` or
-    ``Couple`` relationship in the final tree is absent from the starting tree
-    (diffed on the endpoint tuple, not ``id`` — see ``_relationship_key``). 99 of
-    104 fixtures seed such relationships, so an ungated check would fire on seed
-    state alone; the diff is what limits it to this run's own product. When no
-    starting tree is given, treat everything as new (best-effort), matching
-    ``find_effects_without_invocation``.
+    Since PR 1 of #2840, the four tree writer tools (``tree_edit``,
+    ``tree_correct``, ``merge_tree_persons``, ``materialize_facts``) refuse a
+    write that introduces an unjustified genealogical warning at the engine
+    level. The prose "run check-warnings after writes" step is redundant and
+    has been removed.
 
-    KEYED ON THE TOOL, not the ``check-warnings`` skill. The #1193 signal is
-    literally "the guardrail tool never ran", so it must catch a direct/ToolSearch
-    ``person_warnings`` call and a ``check-warnings`` skill that launches but fails
-    before reaching the tool alike. Sub-agent / inside-skill MCP calls surface in
-    the flat e2e ``tool_calls`` stream, so a tool-name scan sees ``person_warnings``
-    even when it fired inside ``check-warnings``. A call counts as consulting the
-    guardrail only if it succeeded (``is_error`` falsy) — a failed call left the
-    tree unchecked.
+    This detector is now retargeted: instead of checking whether
+    ``person_warnings`` was ever called (the old prose-compliance signal), it
+    checks whether any writer call returned ``unjustified_warnings`` and was
+    never followed by a successful re-call — i.e., the engine gate blocked a
+    write and the agent gave up.
 
-    SHADOW MODE ONLY: returns violation records shaped to share
-    ``guardrail_shadow_violations`` with the other shadow sources (an ``int``
-    ``index`` and string ``tool`` so ``guardrail_shadow_report``'s formatters
-    never hit a ``None`` format spec; ``kind == WARNINGS_UNCHECKED_KIND`` so that
-    report counts this class in its own bucket). Never fails a run. Promotion to a
-    hard gate — or a mandatory pre/post-write call in the ``/research``
-    orchestrator so an inlined write is still gated — is a deliberate follow-up
-    (issue #1193, question b), gated on measuring this fire rate across the corpus.
+    Still SHADOW MODE ONLY: returns violation records shaped for
+    ``guardrail_shadow_violations``.
     """
-    tree = tree or {}
-    relationships = tree.get("relationships") if isinstance(tree.get("relationships"), list) else []
-
-    starting_relationship_keys = {
-        _relationship_key(r)
-        for r in ((starting_tree or {}).get("relationships") or [])
-        if isinstance(r, dict) and r.get("type") in ("ParentChild", "Couple")
-    }
-    new_relationship = any(
-        isinstance(r, dict)
-        and r.get("type") in ("ParentChild", "Couple")
-        and (starting_tree is None or _relationship_key(r) not in starting_relationship_keys)
-        for r in relationships
-    )
-    if not new_relationship:
-        return []  # the gate: nothing was written that a warnings check should have preceded
-
-    # NOTE the polarity: unlike every other `is_error` gate in this module, this
-    # one CREDITS a call rather than skipping it — a successful person_warnings
-    # means the tree was checked. So the no-project answer has to be excluded
-    # from `consulted`, not added to a skip. Get it backwards and a warnings
-    # check that never ran is credited as done, which is a MISSED violation and
-    # therefore silent (issue #1695).
-    consulted = any(
-        isinstance(call, dict)
-        and bare_tool_name(call.get("tool") or "") == "person_warnings"
-        and not did_not_land(call)
-        for call in (tool_calls or [])
-    )
-    if consulted:
-        return []
+    # NO TREE GATE. The pre-#2840 predicate asked "was a relationship written
+    # without a person_warnings call", so gating on a new ParentChild/Couple
+    # edge was the question. The retargeted one asks "was a writer refused and
+    # the agent gave up" — and a refused write never lands, so the very runs
+    # this hunts leave NOTHING in the final tree to gate on. Keeping the gate
+    # made the detector fire only when some unrelated edge happened to land,
+    # and never at all for a refusal on a fact write (`tree_correct` on a date,
+    # `materialize_facts`), which creates no edge by construction. `tree` and
+    # `starting_tree` are kept in the signature for the two call sites and the
+    # record shape; they no longer decide anything.
+    if not unresolved_warning_refusal(tool_calls):
+        return []  # no refusal, or one the run went on to resolve
 
     return [
         {
-            "index": -1,  # post-hoc final-state read; there is no tool-call index
+            "index": -1,
             "tool": "tree.gedcomx.json",
-            "required_skill": "check-warnings",
+            "required_skill": None,
             "question_id": None,
             "kind": WARNINGS_UNCHECKED_KIND,
             "detail": (
-                "a new ParentChild/Couple relationship was written this run but "
-                "person_warnings (the free deterministic guardrail) was never "
-                "successfully called"
+                "a tree writer returned unjustified_warnings but the agent "
+                "never re-called with warningJustifications — the write was "
+                "blocked and the warning gate was not satisfied"
             ),
         }
     ]
@@ -1982,4 +2369,190 @@ def find_conclusions_without_tree_encoding(
                 ),
             }
         )
+    return out
+
+
+# ─── tree-fact/assertion agreement measurement (issues #2472, #2558) ─────────
+
+# Shares the guardrail_shadow_violations bucket, keyed on this kind.
+TREE_FACT_ASSERTION_KIND = "tree_fact_assertion_disagreement"
+
+# The attributes a materialized fact copies from the assertion it was minted
+# from, and the only ones compared. A fact's `type` is not among them: a type
+# that no longer matches is a NON-COMPARABILITY signal, handled below, not a
+# disagreement.
+_AGREEMENT_FIELDS = ("place", "standard_place", "date", "value")
+
+
+def _agreement_text(value: Any) -> str | None:
+    """The comparable form of a field, or None when there is nothing to compare.
+
+    Whitespace-only collapses to None, so a blank on either side is skipped
+    rather than reported: a fact carrying "   " asserts nothing about the
+    assertion's value.
+    """
+    return value.strip() if isinstance(value, str) and value.strip() else None
+
+
+def _owned_facts(container: Any):
+    """(owner id, fact) for every fact on every dict in `container`.
+
+    Reads `.facts`, so it serves persons and relationships alike. Every level is
+    `isinstance`-guarded rather than `or []`-guarded: `or []` keeps a non-list
+    truthy value (a stray `9`) and then raises `TypeError` iterating it, and this
+    module never raises -- the e2e caller reads these documents off disk on the
+    paid path, where a raise aborts the run before any result file is written.
+    """
+    for item in container if isinstance(container, list) else []:
+        if not isinstance(item, dict):
+            continue
+        facts = item.get("facts")
+        for fact in facts if isinstance(facts, list) else []:
+            if isinstance(fact, dict):
+                yield item.get("id"), fact
+
+
+def find_tree_facts_disagreeing_with_assertions(
+    research: dict[str, Any] | None,
+    tree: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """A materialized tree fact that disagrees with the assertion it came from.
+
+    Issue #2472: a place corrected on a `research.json` assertion did not reach
+    the tree fact already materialised from the earlier reading. The stale value
+    stayed on the fact and nothing reported the divergence -- in the run that
+    produced the card, person I1's Immigration fact kept "Wellburn, Thames
+    Centre, Middlesex, Ontario, Canada" and a `standard_place` of "Thames Centre
+    Township, Middlesex, Ontario, Canada" while the assertion already held the
+    corrected "Odessa, Francis No. 127, Saskatchewan, Canada". A wrong reading
+    reached a place-AUTHORITY value, not only a display string, so anything
+    joining on `standard_place` put her in the wrong province.
+
+    That was uncheckable until the fact carried a backlink. With `assertion_id`
+    on it, "this fact disagrees with its own source assertion" is a computable
+    property, and this is it.
+
+    **One predicate, three call sites, two behaviours** (issue #2558).
+    `test_universal.py`'s `test_tree_facts_agree_with_linked_assertions` ASSERTS
+    the returned list is empty on the unit plane. The other two REPORT, both on
+    the e2e side and both shadow-mode, failing nothing: `e2e/orchestrator.py`'s
+    `collect_post_hoc_shadow` emits into `guardrail_shadow_violations` under
+    `TREE_FACT_ASSERTION_KIND` as a run happens, and
+    `e2e/guardrail_shadow_report.py`'s `replay_post_hoc` recomputes the same
+    findings offline from committed sidecars, which is what covers runs made
+    before this shipped. The rule lives here once because a rule stated twice
+    diverges at the first correction to either copy.
+
+    Compared only where BOTH sides hold a non-empty string, only on a fact
+    citing a SINGLE source, and only while the fact's type still matches its
+    assertion's. Five false-positive directions, all legitimate:
+
+      - assertion side absent: the corroboration branch can fill an attribute on
+        a backlinked fact from a DIFFERENT assertion, so "fact has it, linked
+        assertion does not" is not drift.
+      - fact side absent: an event fact never carries the assertion's `value`
+        (#711, `factCandidate`), so comparing it would fail every event fact --
+        and skipping means this needs no copy of `EVENT_TREE_TYPES` in Python.
+      - `assertion_id` naming nothing: there is no assertion to compare against,
+        so it is skipped rather than failed. Referential integrity for this field
+        is not this check's job.
+      - MORE THAN ONE SOURCE REF: the corroboration branch can fill an attribute
+        from another assertion, and `research_append`'s rewrite then refuses to
+        overwrite it (that would destroy the other source's evidence). The fact
+        legitimately holds a value its own backlink never asserted, and there is
+        no tool that can reconcile the two without destroying one of them, so
+        firing here would be red forever on correct work. That is the population
+        `tree-materialization-spec.md` section 4.4 already bounds and accepts; it
+        owns the count and the method for recounting it, so this docstring does
+        not carry a second copy to go stale (the one it used to carry had, by a
+        sixth). A single-ref fact holds exactly what its own assertion said, which
+        is where the reported defect lives (the run that produced the card has
+        one ref on the diverging fact).
+      - fact type no longer matching its assertion's: the rewrite refuses such a
+        fact precisely because the two no longer describe the same thing, so
+        firing here would report the refusal as drift.
+
+    Facts corrected by hand (`tree_correct`) and facts merged from differently
+    backlinked members carry no `assertion_id` by then -- both writers drop it --
+    so neither reads as drift here.
+
+    Scans relationship facts as well as person facts. Nothing can stamp a
+    relationship fact today, so that arm cannot fire; a detector with a blind
+    spot is worse than one that is silent where nothing happens, and a backlink
+    appearing there is exactly the thing worth being told about.
+
+    Returns violation records shaped like the other shadow sources (int `index`,
+    string `tool`, `kind`), each carrying the owner, fact and assertion ids and
+    the field that diverged. A malformed or absent document yields `[]` rather
+    than raising: the e2e caller reads both files off disk, where either can be
+    missing or unparseable, and a crash there would abort a paid run. The unit
+    caller skips on those shapes before it ever calls this.
+    """
+    if not isinstance(research, dict) or not isinstance(tree, dict):
+        return []
+
+    # Reuses the module's own assertion index rather than rebuilding one: it
+    # already keys only on STRING ids, which a bare `.get(id)` cannot survive
+    # when a document carries an unhashable one. The log half is discarded.
+    by_id, _ = _provenance_index(research)
+
+    out: list[dict[str, Any]] = []
+    for owner_id, fact in [
+        *_owned_facts(tree.get("persons")),
+        *_owned_facts(tree.get("relationships")),
+    ]:
+        linked_id = fact.get("assertion_id")
+        # An EMPTY backlink names nothing, and is skipped before the lookup
+        # rather than by it: `_lookup_assertion` guards the type but not the
+        # emptiness, and `_provenance_index` will happily index an assertion
+        # whose own id is "", so a document carrying both would be compared and
+        # would render as "assertion  has ...". Schema-invalid on both sides, and
+        # skipped here so this function stays exactly as selective as the inline
+        # scan it replaced.
+        if not linked_id:
+            continue
+        # `_lookup_assertion` is the module's guarded lookup: a non-string
+        # backlink (a list, say) is unhashable and would raise TypeError out of a
+        # bare dict lookup instead of producing a verdict. The schema check in
+        # test_universal.py already rejects that shape; this one must not crash
+        # on the way.
+        assertion = _lookup_assertion(by_id, linked_id)
+        if assertion is None:
+            continue
+        sources = fact.get("sources")
+        refs = [r for r in (sources if isinstance(sources, list) else []) if isinstance(r, dict)]
+        if len(refs) > 1:
+            continue
+        # PascalCase the assertion's snake_case fact_type the way `toTreeFactType`
+        # does, so `fact_type: "immigration"` and `type: "Immigration"` match.
+        fact_type = fact.get("type")
+        want_type = "".join(
+            w[:1].upper() + w[1:]
+            for w in re.split(r"[_\s]+", str(assertion.get("fact_type") or ""))
+            if w
+        )
+        if want_type and isinstance(fact_type, str) and fact_type != want_type:
+            continue
+        for field in _AGREEMENT_FIELDS:
+            on_fact = _agreement_text(fact.get(field))
+            on_assertion = _agreement_text(assertion.get(field))
+            if on_fact is None or on_assertion is None:
+                continue
+            if on_fact != on_assertion:
+                out.append(
+                    {
+                        "index": -1,
+                        "tool": "tree.gedcomx.json",
+                        "kind": TREE_FACT_ASSERTION_KIND,
+                        "owner_id": owner_id,
+                        "fact_id": fact.get("id"),
+                        "assertion_id": linked_id,
+                        "field": field,
+                        "detail": (
+                            f"{owner_id}/{fact.get('id')} {field}: fact has "
+                            f"'{on_fact}' but assertion {linked_id} has "
+                            f"'{on_assertion}'"
+                        ),
+                    }
+                )
     return out

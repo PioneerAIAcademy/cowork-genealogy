@@ -1,6 +1,6 @@
 ---
 name: find-big-wins
-description: Use when the lead wants structural bets rather than the next increment — "find the big ideas", "what would change the shape of this system", "we keep hill-climbing", "what should we stop doing", "propose something structural", or a bare "/find-big-wins". Run it after /audit-board and consume that pass rather than repeating it. Reads three layers — the board as a symptom of recurring cost, the repo's own measured evidence (the e2e corpus, run logs, annotations, judge audits, feedback, the `nothing-checks` register, the ADRs), and deliberately OUTSIDE the repo, because internal evidence shows where the walls are and can never show the next hill. Reads the `needs-decision` queue as evidence of missing doctrine, but never drains it — `/make-decisions` does that daily. Hunts subtractions as hard as additions: retiring a mechanism, dropping a guarantee, deleting a lane. Every proposal names the constraint it removes or the class of work it eliminates, what we would observe if it worked, and the cheapest probe that could kill it in a day. No target count — two or twelve or zero, ranked, with its own confidence stated. Proposes; the lead decides each idea one at a time, and the result of a deep dive is a well-scoped `cross-cutting` issue he assigns. Never starts the work and never writes the plan.
+description: Use when the lead wants structural bets rather than the next increment — "find the big ideas", "what would change the shape of this system", "we keep hill-climbing", "what should we stop doing", "propose something structural", or a bare "/find-big-wins". Run it after /audit-board and consume that pass rather than repeating it. Reads three layers — the board as a symptom of recurring cost, the repo's own measured evidence (the e2e corpus, run logs, annotations, judge audits, feedback, the `nothing-checks` register, the ADRs), and deliberately OUTSIDE the repo, because internal evidence shows where the walls are and can never show the next hill. Reads the `needs-decision` queue as evidence of missing doctrine, but never drains it — `/make-decisions` does that daily. Hunts subtractions as hard as additions: retiring a mechanism, dropping a guarantee, deleting a lane. Every proposal names the constraint it removes or the class of work it eliminates, what we would observe if it worked, and the cheapest probe that could kill it in a day. No target count — two or twelve or zero, ranked, with its own confidence stated. Proposes; the lead decides each idea one at a time, and the result of a deep dive is a well-scoped `senior` issue that whoever takes it self-assigns. Never starts the work and never writes the plan.
 allowed-tools:
   - Read
   - Edit
@@ -39,17 +39,17 @@ grant. `Bash` can write any file, so it does not widen it — editing anything e
 — a skill, a spec, an issue body on disk, another ADR — is outside it even though
 the tools would let you. Nothing mechanical enforces this; it is on you.
 
-## The boundary against `/audit-board`
+## The boundary against the board passes
 
 They read the same board and answer different questions.
 
-| | `/audit-board` | this skill |
+| | `/audit-board`, `/merge-issues` | this skill |
 |---|---|---|
 | Asks | What is the best handling of these issues, **given the current design**? | What change to the **design** stops this class of issue existing? |
 | Moves | merge, batch, sequence, close | remove a constraint, eliminate a class, delete a mechanism |
 | Output | a disposition per issue | a bet, with a probe that could kill it |
 
-Six issues about one skill's eval slot: `/audit-board` merges them into two so
+Six issues about one skill's eval slot: `/merge-issues` merges them into two so
 one paid run carries three. This skill asks why landing a prose edit costs a
 paid run at all.
 
@@ -68,10 +68,21 @@ named. Each `next run: <skill>` issue is a queue that exists only because of the
 paid-run tax — both are *symptoms already localized for you*.
 
 The **paid-run tax table** lives only in `/audit-board`'s report, not on disk.
-If the lead has this week's output to hand, take the table from it. If not, do
-**not** rebuild it: derive queue depth from the `next run:` issues, and say in
-your report that the tax table was not re-derived and which numbers are
-therefore unavailable.
+If the lead has this week's output to hand, take the table from it. If not,
+rebuild only its queue-depth column, which is on disk:
+
+```sh
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 400 \
+  --json number,title,body,labels,assignees,createdAt > /tmp/open.json
+gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
+  --json number,title,files > /tmp/prs.json
+python3 .claude/skills/merge-issues/slots.py /tmp/board.json /tmp/open.json /tmp/prs.json
+```
+
+A slot still deep after `/merge-issues` has run is a queue nobody could merge —
+the strongest single symptom this layer offers. Say in your report which of the
+table's other columns you could not re-derive.
 
 ## How this run is scoped
 
@@ -124,7 +135,7 @@ scheduling constraint someone hit repeatedly.
 
 **The same undone thing re-filed three times.** The tell is a repeated
 *sentence*, not a repeated file: "measure this before graduating," "we need to
-decide X first," "this exists so we don't repeat #N." `/audit-board` merges
+decide X first," "this exists so we don't repeat #N." `/merge-issues` merges
 those. This skill asks what mechanism is missing such that three people
 independently re-derived the same undone task.
 
@@ -486,7 +497,7 @@ when he asks.** Nobody starts the work in any of them.
 |---|---|---|
 | **1. PROPOSE** | this skill | breadth, pre-verified claims, ranked |
 | **2. RESEARCH** | the lead and Claude together | the probe run or the design worked through — **and a finished issue body** |
-| **3. ISSUE** | the lead | a `gh` issue labelled `cross-cutting`, assigned to a named person |
+| **3. ISSUE** | the lead | a `gh` issue labelled `senior`, unassigned like everything else |
 
 ### The boundary that matters: he writes the issue, they write the plan
 
@@ -543,7 +554,7 @@ success.
 
 ```sh
 gh issue create --repo PioneerAIAcademy/cowork-genealogy \
-  --label cross-cutting --label developer \
+  --label senior --label developer \
   --title "…" --body-file <file>
 ```
 
@@ -551,11 +562,11 @@ Use `--body-file`, not an inline `--body`: these bodies are long, and the shell
 mangles the ones written inline. Open the body with a `**Touches:**` line naming
 the files the work would change, per `CLAUDE.md`.
 
-Keep the `developer` or `genealogist` label alongside `cross-cutting` so the lane
-stays visible. The lead assigns it; `/fill-ready` exempts assigned
-`cross-cutting` items from its seniority routing and its Ready depth targets, and
-holds each person to **one active `cross-cutting` item at a time** — these are
-multi-week structural projects, not weekly items.
+Keep the `developer` or `genealogist` label alongside `senior` so the lane stays
+visible. **Do not assign it** — nobody assigns work on this board, the lead
+included. `/fill-ready` ranks it in its lane's pool with the rest of the senior
+work and a senior (or the lead) picks it up from Ready. Its multi-week shape is
+carried by the body, not by a label.
 
 ### Writing the ledger
 

@@ -227,3 +227,123 @@ def test_a_batched_plan_item_update_past_the_cut_finds_its_target():
         ]}]},
     )
     assert [i["status"] for i in r.research["plans"][0]["items"]] == ["completed", "skipped"]
+
+def _with_a011():
+    """Starting state holding the assertion the updates below target. Without it
+    `_apply_op` reports `update:no-such-id` and the op never applies, which would
+    make these tests pass for the wrong reason."""
+    return {"assertions": [{"id": "a_011", "place": "Wellburn, Ontario, Canada"}]}
+
+
+OK_A11 = '[{"type": "text", "text": "{\\n  \\"ok\\": true,\\n  \\"entryId\\": \\"a_011\\"\\n}"}]'
+
+
+def test_an_assertion_update_reports_its_unmodelled_tree_half():
+    """#2472: an assertion `update` touching a mirrored attribute also rewrites
+    the tree fact minted from it. The research half IS applied here, so the call
+    must not be reported as wholly unmodelled -- but a consumer needing tree
+    state would otherwise silently read the pre-call tree as current.
+
+    `applied == 1` is true whether or not the gap is reported, so on its own it
+    is a check that cannot fail. The `unmodelled` assertion is the one that
+    works; the sibling test above says the same about the whole-tool case.
+    """
+    r = replay([_call("research_append",
+                      {"section": "assertions", "op": "update", "entryId": "a_011",
+                       "fields": {"place": "Odessa, Saskatchewan, Canada"}},
+                      OK_A11)], starting_research=_with_a011())
+    assert r.applied == 1
+    assert r.unmodelled == {"tree:research_append:fact-rewrite": 1}
+
+
+def test_extraction_append_reports_the_same_tree_half():
+    """It routes through the same module, so it writes the tree the same way."""
+    r = replay([_call("extraction_append",
+                      {"section": "assertions", "op": "update", "entryId": "a_011",
+                       "fields": {"standard_place": "Odessa, Saskatchewan, Canada"}},
+                      OK_A11)], starting_research=_with_a011())
+    assert r.unmodelled == {"tree:extraction_append:fact-rewrite": 1}
+
+
+def test_an_assertion_update_touching_no_mirrored_field_reports_nothing():
+    """The other direction. An update that cannot have rewritten a fact must not
+    claim a coverage gap, or the counter becomes noise nobody reads."""
+    r = replay([_call("research_append",
+                      {"section": "assertions", "op": "update", "entryId": "a_011",
+                       "fields": {"informant": "official"}},
+                      OK_A11)], starting_research=_with_a011())
+    assert r.applied == 1
+    assert r.unmodelled == {}
+
+
+def test_an_assertion_APPEND_reports_nothing():
+    """Only `update` reaches the rewrite; an append mints an assertion with no
+    fact to rewrite yet.
+
+    Carries `fields` rather than the `entry` a real append uses, deliberately:
+    with `entry` this passes on the `fields` type check alone and says nothing
+    about the `op == "update"` condition it claims to pin. Dropping that
+    condition must redden this test, and with `entry` it did not.
+    """
+    r = replay([_call("research_append",
+                      {"section": "assertions", "op": "append",
+                       "fields": {"place": "Odessa, Saskatchewan, Canada"}},
+                      OK_A11)])
+    assert r.unmodelled == {}
+
+
+def test_a_batch_reports_once_per_qualifying_op():
+    """The gap is per-op, not per-call: two corrected assertions are two facts."""
+    r = replay([_call("research_append",
+                      {"ops": [
+                          {"section": "assertions", "op": "update", "entryId": "a_011",
+                           "fields": {"place": "Odessa, Saskatchewan, Canada"}},
+                          {"section": "assertions", "op": "update", "entryId": "a_012",
+                           "fields": {"date": "1925"}},
+                          {"section": "questions", "op": "update", "entryId": "q_001",
+                           "fields": {"status": "resolved"}},
+                      ]},
+                      OK_A11)],
+                 starting_research={"assertions": [{"id": "a_011"}, {"id": "a_012"}],
+                                    "questions": [{"id": "q_001"}]})
+    assert r.unmodelled == {"tree:research_append:fact-rewrite": 2}
+
+
+_HAND_OFF_URL = "https://www.findagrave.com/memorial/search?lastname=Flynn"
+OK_HAND_OFF = (
+    '[{"type": "text", "text": "{\n  \\"ok\\": true,\n  \\"url\\": \\"' + _HAND_OFF_URL + '\\",'
+    '\n  \\"access\\": \\"free\\",\n  \\"logId\\": \\"log_001\\"\n}"}]'
+)
+OK_NO_LOG = (
+    '[{"type": "text", "text": "{\n  \\"ok\\": true,\n  \\"url\\": \\"' + _HAND_OFF_URL + '\\",'
+    '\n  \\"access\\": \\"free\\"\n}"}]'
+)
+
+
+def test_a_builder_hand_off_replays_as_its_log_entry():
+    """The builder writes the in-flight external_site entry when given projectPath."""
+    args = {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/p", "planItemId": "pli_002"}
+    r = replay([_call("build_external_search_url", args, OK_HAND_OFF)])
+    (entry,) = r.research["log"]
+    assert entry["id"] == "log_001"
+    assert entry["plan_item_id"] == "pli_002"
+    assert entry["outcome"] == "partial"
+    assert entry["query"] == {"surname": "Flynn"}
+    assert entry["external_site"] == {"site": "findagrave", "url_generated": _HAND_OFF_URL, "capture_received": False}
+    assert r.synthesised_ids == 0
+    assert not r.unmodelled
+
+
+def test_a_builder_call_without_projectpath_replays_as_nothing():
+    """No projectPath, no write — and no invented id, which the generic path would mint."""
+    r = replay([_call("build_external_search_url", {"site": "findagrave", "attributes": {"surname": "Flynn"}}, OK_NO_LOG)])
+    assert r.research.get("log", []) == []
+    assert r.synthesised_ids == 0
+    assert not r.unmodelled
+
+
+def test_a_builder_call_whose_ledger_lost_the_logid_is_not_invented():
+    args = {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/p"}
+    r = replay([_call("build_external_search_url", args, OK_NO_LOG)])
+    assert r.research.get("log", []) == []
+    assert r.synthesised_ids == 0

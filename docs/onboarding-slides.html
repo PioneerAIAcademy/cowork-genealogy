@@ -392,7 +392,7 @@
           <li>Conflict notes and resolutions</li>
           <li>Hypotheses and competing candidates</li>
           <li>Proof summaries and exhaustiveness declarations</li>
-          <li>Researcher profile (experience level, subscriptions)</li>
+          <li>Researcher profile (fixed narration style; subscriptions only if volunteered)</li>
         </ul>
       </div>
       <div class="box">
@@ -459,7 +459,7 @@
         </div>
         <div class="gps-step">
           <div class="gps-num">10</div>
-          <div class="gps-body"><strong>Gate: is the research exhaustive?</strong> <span>research-exhaustiveness → GPS 5 threshold questions + 7-point stop criteria. If no, loop back to step 3.</span></div>
+          <div class="gps-body"><strong>Gate: is the research exhaustive?</strong> <span>research-exhaustiveness → the seven stop criteria. If no, loop back to step 3.</span></div>
         </div>
         <div class="gps-step">
           <div class="gps-num">11</div>
@@ -477,7 +477,7 @@
     <div class="three-col">
       <div class="box">
         <h3>FamilySearch Records <span class="tag">OAuth required</span></h3>
-        <span class="pill red">record_search</span><span class="pill red">record_read</span><span class="pill red">person_search</span><span class="pill red">person_read</span><span class="pill red">person_ancestors</span><span class="pill red">fulltext_search</span><span class="pill red">collections_search</span><span class="pill red">collection_read</span><span class="pill red">image_search</span><span class="pill red">image_read</span><span class="pill red">volume_search</span><span class="pill red">same_person</span><span class="pill red">source_attachments</span><span class="pill red">person_record_matches</span><span class="pill red">record_person_matches</span><span class="pill red">person_person_matches</span><span class="pill red">record_record_matches</span>
+        <span class="pill red">record_search</span><span class="pill red">record_read</span><span class="pill red">person_search</span><span class="pill red">person_read</span><span class="pill red">person_ancestors</span><span class="pill red">fulltext_search</span><span class="pill red">collections_search</span><span class="pill red">image_search</span><span class="pill red">image_read</span><span class="pill red">volume_search</span><span class="pill red">same_person</span><span class="pill red">source_attachments</span><span class="pill red">person_record_matches</span><span class="pill red">record_person_matches</span><span class="pill red">person_person_matches</span><span class="pill red">record_record_matches</span>
       </div>
       <div class="box">
         <h3>Places &amp; Reference <span class="tag blue">No auth</span></h3>
@@ -531,30 +531,18 @@
   <div class="slide" id="s9">
     <span class="slide-num">9 / 16</span>
     <h2>Researcher Profile</h2>
-    <p style="margin-bottom:18px;">When you start a new project, <code>init-project</code> asks two short questions. The answers live in <code>research.json</code> and every skill reads them to adapt its behavior.</p>
+    <p style="margin-bottom:18px;">When you start a new project, <code>init-project</code> asks one thing: what you want to find out. It asks nothing about you. The profile it writes to <code>research.json</code> is the same for every project, and every skill reads it to set its narration.</p>
     <div class="two-col">
       <div class="box">
-        <h3>Question 1 — Experience level</h3>
-        <ul class="arrow">
-          <li><strong>Just starting out</strong> — step-by-step narration, terms defined, "why I'm doing this" for each action</li>
-          <li><strong>Some research under my belt</strong> — moderate narration</li>
-          <li><strong>Experienced</strong> — concise reporting, no hand-holding</li>
-          <li><strong>Professional or certified</strong> — terse; full GPS vocabulary assumed</li>
-        </ul>
-        <p style="font-size:0.85rem; margin-top:10px;">The level maps to a <code>narration_guidance</code> string in <code>research.json</code>. Every SKILL.md opens with an instruction to read and apply it.</p>
+        <h3>A fixed profile</h3>
+        <p style="font-size:0.9rem;"><code>experience_level</code> is <code>novice</code> and <code>narration_guidance</code> is one house-style string:</p>
+        <p style="font-size:0.85rem; margin-top:8px;"><em>Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.</em></p>
+        <p style="font-size:0.85rem; margin-top:10px;">Every SKILL.md opens with an instruction to read and apply it. A user setting may reintroduce the level later; onboarding never asks.</p>
       </div>
       <div class="box">
-        <h3>Question 2 — Access</h3>
-        <p style="font-size:0.9rem;">Ancestry, MyHeritage, FindMyPast, Newspapers.com, GenealogyBank, FindAGrave-Plus, or none.</p>
-        <p style="font-size:0.9rem; margin-top:8px;">Free access counts and is recorded as its own value: <code>FamilySearch-Partner</code> for a partner subscription through a FamilySearch account, <code>LibraryAccess</code> for a library, family history centre or affiliate library. A plain FamilySearch account is the baseline and is not recorded.</p>
-        <p style="font-size:0.9rem; margin-top:8px;">Drives <code>search-external-sites</code> URL prioritization — subscribed sites land first, unsubscribed sites are still searchable but flagged. The two access routes name no site, so they soften the paywall flag rather than matching one.</p>
-        <h3 style="margin-top:16px;">Mid-session overrides</h3>
-        <p style="font-size:0.9rem;">You can adjust narration on the fly without re-running the interview:</p>
-        <ul class="arrow">
-          <li>"Be more verbose" / "explain that step"</li>
-          <li>"Skip the explanations" / "just do it"</li>
-          <li>"Define genealogy terms when you use them"</li>
-        </ul>
+        <h3>Access</h3>
+        <p style="font-size:0.9rem;">Not asked. Every site is assumed reachable — Ancestry, MyHeritage, FindMyPast, Newspapers.com, GenealogyBank, FindAGrave-Plus, a partner subscription through FamilySearch, a library or family history centre.</p>
+        <p style="font-size:0.9rem; margin-top:8px;">A site the researcher mentions unprompted is recorded on the closed enum and drives <code>search-external-sites</code> URL prioritization; otherwise the field stays absent.</p>
       </div>
     </div>
   </div>
@@ -596,7 +584,7 @@
       <div>
         <h3>Read these docs</h3>
         <ul class="check">
-          <li><code>README.md</code> — tools, skills, and the full GPS workflow. The most important doc.</li>
+          <li><code>README.md</code> — what it does, its limits, and how to install it. <code>docs/catalog.md</code> — every tool, skill and agent, and the full GPS workflow.</li>
           <li><code>DEVELOPMENT.md</code> — how to build, test, and add tools/skills. Install instructions too.</li>
           <li><code>eval/README.md</code> — how the eval harness works; how to run and add cases.</li>
         </ul>
@@ -716,7 +704,7 @@
         </ul>
         <h3 style="margin-top:20px;">Start today</h3>
         <ul class="check">
-          <li>Open <code>README.md</code> — read the intro and the skills table</li>
+          <li>Read <code>README.md</code>, then skim <code>docs/catalog.md</code></li>
           <li>Update the repo (<code>git pull</code>) and run <code>make install</code></li>
           <li>Try one skill in Cowork once your license arrives</li>
         </ul>

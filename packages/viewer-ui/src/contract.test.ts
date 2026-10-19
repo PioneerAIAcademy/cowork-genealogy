@@ -15,6 +15,7 @@ function makeInMemoryTransport(): ResearchTransport {
     subscribe: () => () => {},
     readSidecar: async () => null,
     openExternal: () => {},
+    openFamilySearch: () => {},
     submitFeedback: async () => ({ ok: true }),
     getFeedbackContext: async () => ({ files: [], sessionLogSize: 0, hasSessionLog: false })
   }

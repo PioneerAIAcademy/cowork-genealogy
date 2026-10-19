@@ -5,10 +5,10 @@
     "name": "Find possible duplicate tree persons using person_person_matches",
     "type": "positive",
     "description": "User invokes tree-edit to check for possible duplicate tree persons for Patrick Flynn (LZNY-BRF) before merging. Tests that tree-edit calls person_person_matches, surfaces the one pending duplicate candidate, and advises the user to confirm identity via proof-conclusion before merging.",
-    "tags": ["tree-edit", "person-person-matches", "merge-candidates", "no-op-edit"]
+    "tags": ["tree-edit", "person-person-matches", "merge-candidates", "no-op-edit", "direct-arm"]
   },
   "input": {
-    "user_message": "tree-edit: Check for possible duplicate persons for Patrick Flynn (FamilySearch ID LZNY-BRF). Are there any merge candidates in the tree I should know about?",
+    "delegation": "Check for possible duplicate persons for Patrick Flynn (FamilySearch ID LZNY-BRF). Are there any merge candidates in the tree I should know about?\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["person-person-matches-flynn"],

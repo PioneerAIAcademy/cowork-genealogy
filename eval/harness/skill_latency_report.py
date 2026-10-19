@@ -3,8 +3,8 @@
 Phase 0 (see e2e/latency_report.py + docs/plan/research-latency-baseline-*.md)
 established that ~98% of an e2e run's active loop is the model generating, so the
 dominant latency lever is **output tokens generated** (turns × tokens/turn). A
-full e2e run costs $3-10 and ~30-70 min and needs live FamilySearch auth — far
-too heavy to gate every SKILL.md prose edit.
+full e2e run takes about an hour and single-digit dollars, with a long tail, and
+needs live FamilySearch auth — far too heavy to gate every SKILL.md prose edit.
 
 But every *unit* run log already records the model's output-token count (and, for
 newer logs, `num_turns` and `duration_api_ms`) per test and per skill. Editing a
@@ -23,9 +23,11 @@ Two modes:
 Pure analysis over committed JSON — no live run, no API. `analyze_runlog` /
 `diff_skill` are pure and unit-tested; the CLI locates run logs and prints.
 
-Caveat carried in every number: unit tests run `runs_per_test=1`, and the skill
-run itself is not temperature-pinned (only the judge is — eval/CLAUDE.md), so a
-single test's token count carries run-to-run variance. Trust the *direction* and
+Caveat carried in every number: committed unit run logs are single-run (test
+files pin `runs_per_test=1`; the `--runs-per-test` override only writes scratch
+logs this report does not read), and the skill run itself is not
+temperature-pinned (only the judge is — eval/CLAUDE.md), so a single test's
+token count carries run-to-run variance. Trust the *direction* and
 the *aggregate across a skill's tests*, not a single test's exact percentage.
 
 CLI (from eval/harness/):
@@ -385,6 +387,12 @@ def _diff_paths(before_path: Path, after_path: Path) -> LatencyDiff:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
+    # and dies on the arrows and box glyphs this module prints; the team it is
+    # written for is on Windows. Guarded by tests/unit/test_encoding_lint.py.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="Per-skill unit-runlog latency report / diff.")
     ap.add_argument("files", nargs="*", help="two run-log paths => diff them")
     ap.add_argument("--skill", help="report the latest run log for this skill")

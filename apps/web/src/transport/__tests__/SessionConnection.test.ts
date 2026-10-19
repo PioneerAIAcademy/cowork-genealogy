@@ -1,0 +1,492 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { WsSessionConnection, type SessionCredentials, type WsMessage } from '../SessionConnection'
+import { ApiError } from '../../api'
+
+/**
+ * `WsSessionConnection`'s connection state machine — the half of issue #1729
+ * that is reachable from the client.
+ *
+ * WHY THIS FILE EXISTS. An indefinite "Connecting to the agent…" has only two
+ * causes, and one of them is here: `connecting` guards the await window inside
+ * `connect()` and is cleared only when the credentials provider settles. A
+ * provider that never settles leaves it `true` forever, so every later
+ * `connect()` returns at the guard — no socket, no retry, and no `chat_error`
+ * either, which is what makes it a silent wedge rather than a visible failure.
+ * The card was routed `senior` partly because nothing tested this class at all:
+ * the one file that mentioned `SessionConnection` imported only its *type* for a
+ * `fakeConn()` stub.
+ *
+ * `environment: 'node'` (apps/web/vitest.config.ts), so there is no DOM. The
+ * class guards on `typeof document !== 'undefined'`, so it constructs fine
+ * without one; `WebSocket` is stubbed per test. Deliberately not adding jsdom.
+ */
+
+const CREDENTIALS_TIMEOUT_MS = 30_000 // mirrors the module constant
+const MAX_RETRIES = 20 // mirrors the module constant
+
+class FakeSocket {
+  static instances: FakeSocket[] = []
+  onopen: (() => void) | null = null
+  onmessage: ((ev: { data: string }) => void) | null = null
+  onclose: (() => void) | null = null
+  onerror: (() => void) | null = null
+  sent: string[] = []
+  constructor(public url: string) {
+    FakeSocket.instances.push(this)
+  }
+  send(raw: string): void {
+    this.sent.push(raw)
+  }
+  close(): void {
+    this.onclose?.()
+  }
+}
+
+/** Collect every message the connection emits to its listeners. */
+function listen(conn: WsSessionConnection): WsMessage[] {
+  const seen: WsMessage[] = []
+  conn.on((m) => seen.push(m))
+  return seen
+}
+
+const errors = (seen: WsMessage[]): WsMessage[] =>
+  seen.filter((m) => m.type === 'status' && m.state === 'chat_error')
+
+// `conn_state`, not `status` — `emitConn` and `fail` use different frame types,
+// and filtering on the wrong one reads as "never emitted" rather than as a bug
+// in the filter.
+const reconnecting = (seen: WsMessage[]): WsMessage[] =>
+  seen.filter((m) => m.type === 'conn_state' && m.state === 'reconnecting')
+
+beforeEach(() => {
+  vi.useFakeTimers()
+  FakeSocket.instances = []
+  ;(globalThis as { WebSocket?: unknown }).WebSocket = FakeSocket
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+  delete (globalThis as { WebSocket?: unknown }).WebSocket
+})
+
+describe('a credentials fetch that never settles', () => {
+  it('does not wedge: it surfaces chat_error instead of leaving the panel connecting', async () => {
+    // THE REGRESSION. Before the bound, this test hangs on a placeholder
+    // forever: `connecting` stays true, so no retry and no error ever happen.
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return new Promise<SessionCredentials>(() => {}) // never settles
+    })
+    const seen = listen(conn)
+
+    conn.connect()
+    expect(calls).toBe(1)
+    expect(errors(seen)).toHaveLength(0)
+
+    // First bound elapses -> retried rather than abandoned.
+    await vi.advanceTimersByTimeAsync(CREDENTIALS_TIMEOUT_MS + 10)
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(calls).toBe(2)
+    expect(errors(seen)).toHaveLength(0)
+
+    // Second bound elapses -> the user is told.
+    await vi.advanceTimersByTimeAsync(CREDENTIALS_TIMEOUT_MS + 10)
+    expect(errors(seen)).toHaveLength(1)
+    expect(String(errors(seen)[0].message)).toMatch(/not responding|timed out/i)
+    expect(FakeSocket.instances).toHaveLength(0)
+  })
+
+  it('does not stampede the control plane: a hang costs 2 attempts, not MAX_RETRIES', async () => {
+    // Each attempt is a full server-side E2B resume + secret write + config
+    // merge + FamilySearch token refresh. Giving a hang the same 20-retry budget
+    // as a cheap socket refusal would trade a wedge for a stampede against a
+    // control plane already failing to answer.
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return new Promise<SessionCredentials>(() => {})
+    })
+    const seen = listen(conn)
+    conn.connect()
+    for (let i = 0; i < MAX_RETRIES + 5; i++) {
+      await vi.advanceTimersByTimeAsync(CREDENTIALS_TIMEOUT_MS + 10)
+      await vi.advanceTimersByTimeAsync(2000)
+    }
+    expect(calls).toBe(2)
+    expect(errors(seen)).toHaveLength(1)
+  })
+
+  it('a success between two hangs resets the budget, so an intermittent control plane does not accumulate', async () => {
+    // The reset on success is what keeps a long, mostly-healthy session from
+    // reaching the ceiling on two timeouts an hour apart. Nothing pinned it:
+    // deleting `this.credentialTimeouts = 0` from connect()'s success path left
+    // all 21 tests green, including the one whose NAME claims to cover it.
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      if (calls === 2) return Promise.resolve({ wssUrl: 'ws://x', token: 't' })
+      return new Promise<SessionCredentials>(() => {}) // calls 1 and 3 hang
+    })
+    const seen = listen(conn)
+
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(CREDENTIALS_TIMEOUT_MS + 10) // hang #1
+    await vi.advanceTimersByTimeAsync(2000)                        // retry -> succeeds
+    expect(FakeSocket.instances).toHaveLength(1)
+    FakeSocket.instances[0].onopen?.()
+
+    // Socket drops; the next attempt hangs too. With the budget reset by the
+    // success that is timeout #1 again, not #2, so no terminal error.
+    FakeSocket.instances[0].close()
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(calls).toBe(3)
+    await vi.advanceTimersByTimeAsync(CREDENTIALS_TIMEOUT_MS + 10) // hang #2
+    expect(errors(seen)).toHaveLength(0)
+  })
+
+  it('focus does not reset the credential-timeout budget', async () => {
+    // The budget deliberately survives a visibility change, unlike `attempts`,
+    // which onVisibility does reset. Resetting it on focus would let tabbing
+    // away and back re-arm the stampede the ceiling exists to prevent -- a
+    // cheaper route to the failure than the one this card is about.
+    //
+    // Unpinned before this: adding `this.credentialTimeouts = 0` beside the
+    // `attempts` reset in onVisibility left all 22 tests green, so the comment
+    // asserting the asymmetry was the only thing holding it.
+    const conn = new WsSessionConnection(
+      () => new Promise<SessionCredentials>(() => {}) // always hangs
+    )
+    const seen = listen(conn)
+
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(CREDENTIALS_TIMEOUT_MS + 10) // timeout #1
+
+    // A focus event between the two timeouts. This suite runs with
+    // `environment: 'node'`, so `document` is undefined and `onVisibility`
+    // returns at its own `typeof document === 'undefined'` guard -- calling it
+    // bare makes this test pass whatever the code does. Found by break-testing:
+    // adding the focus reset left it green. Stub the minimum it reads.
+    ;(globalThis as { document?: unknown }).document = { visibilityState: 'visible' }
+    try {
+      ;(conn as unknown as { onVisibility: () => void }).onVisibility()
+    } finally {
+      delete (globalThis as { document?: unknown }).document
+    }
+
+    await vi.advanceTimersByTimeAsync(2000)
+    await vi.advanceTimersByTimeAsync(CREDENTIALS_TIMEOUT_MS + 10) // timeout #2
+    expect(errors(seen)).toHaveLength(1)
+  })
+})
+
+describe('a credentials fetch that is rejected', () => {
+  it('retries with backoff and eventually surfaces chat_error', async () => {
+    // A rejection is an ANSWER: cheap and fast, so it keeps the full retry
+    // budget. The distinction from a hang is deliberate.
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return Promise.reject(new Error('session is gone'))
+    })
+    const seen = listen(conn)
+
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(errors(seen)).toHaveLength(0)
+
+    for (let i = 0; i < MAX_RETRIES + 2; i++) await vi.advanceTimersByTimeAsync(2000)
+
+    expect(errors(seen)).toHaveLength(1)
+    expect(String(errors(seen)[0].message)).toMatch(/could not reach the agent/i)
+    // The ceiling is real: attempts stop rather than spinning.
+    const settled = calls
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(calls).toBe(settled)
+  })
+
+  it('holds the retry ceiling at MAX_RETRIES attempts', async () => {
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return Promise.reject(new Error('nope'))
+    })
+    const seen = listen(conn)
+    conn.connect()
+    for (let i = 0; i < MAX_RETRIES + 10; i++) await vi.advanceTimersByTimeAsync(2000)
+    expect(calls).toBe(MAX_RETRIES + 1) // the first attempt, then MAX_RETRIES retries
+    expect(errors(seen)).toHaveLength(1)
+  })
+  it('tells the UI it is retrying, on every attempt, not just at the end', async () => {
+    // The panel showed one static line for the whole window: this path retried
+    // silently, so a failing `/connect` was indistinguishable from a healthy
+    // slow one until it gave up.
+    const conn = new WsSessionConnection(() => Promise.reject(new Error('500')))
+    const seen = listen(conn)
+
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    const afterFirst = reconnecting(seen).length
+    expect(afterFirst).toBeGreaterThan(0)
+    expect(errors(seen)).toHaveLength(0)
+
+    for (let i = 0; i < MAX_RETRIES + 2; i++) await vi.advanceTimersByTimeAsync(2000)
+
+    // It keeps saying so as the backoff runs, rather than going quiet after one.
+    expect(reconnecting(seen).length).toBeGreaterThan(afterFirst)
+  })
+
+  it('stays silent while the tab is hidden', async () => {
+    // The `hidden` guard sits above the new emit, so a backgrounded tab still
+    // says nothing — otherwise this chatters at a tab nobody is looking at.
+    const conn = new WsSessionConnection(() => Promise.reject(new Error('500')))
+    const seen = listen(conn)
+    ;(conn as unknown as { hidden: boolean }).hidden = true
+
+    conn.connect()
+    for (let i = 0; i < MAX_RETRIES + 2; i++) await vi.advanceTimersByTimeAsync(2000)
+
+    expect(reconnecting(seen)).toHaveLength(0)
+  })
+
+})
+
+describe('the happy path still works', () => {
+  it('opens a socket, flushes the outbox, and does not count a slow success as a timeout', async () => {
+    // The other direction. A bound that fires on a healthy connect would be
+    // worse than the wedge, so this asserts the normal path is untouched.
+    const conn = new WsSessionConnection(async () => ({ wssUrl: 'ws://x', token: 't' }))
+    const seen = listen(conn)
+
+    conn.send({ type: 'user_msg', text: 'queued before open' })
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(FakeSocket.instances).toHaveLength(1)
+    const sock = FakeSocket.instances[0]
+    expect(sock.url).toContain('token=t')
+    sock.onopen?.()
+
+    expect(sock.sent).toHaveLength(1)
+    expect(JSON.parse(sock.sent[0]).text).toBe('queued before open')
+    expect(seen.some((m) => m.type === 'conn_state' && m.state === 'open')).toBe(true)
+    expect(errors(seen)).toHaveLength(0)
+
+    // A slow-but-successful connect must not be counted as a timeout. This is
+    // the INCREMENT direction only: it says nothing about resetting a budget
+    // that is already nonzero, which is why deleting the reset left it green.
+    // That direction is pinned in the never-settles block above.
+    await vi.advanceTimersByTimeAsync(CREDENTIALS_TIMEOUT_MS * 3)
+    expect(errors(seen)).toHaveLength(0)
+  })
+
+  it('a connect slower than nothing-in-particular but under the bound still opens', async () => {
+    const conn = new WsSessionConnection(
+      () =>
+        new Promise<SessionCredentials>((resolve) =>
+          setTimeout(() => resolve({ wssUrl: 'ws://x', token: 't' }), CREDENTIALS_TIMEOUT_MS - 5_000)
+        )
+    )
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(CREDENTIALS_TIMEOUT_MS - 4_000)
+    expect(FakeSocket.instances).toHaveLength(1)
+    expect(errors(seen)).toHaveLength(0)
+  })
+
+
+})
+
+describe('a 410 from /connect (session more than 72 h old, #3406)', () => {
+  const expiredEvents = (seen: WsMessage[]): WsMessage[] =>
+    seen.filter((m) => m.type === 'status' && m.state === 'session_expired')
+
+  function focus(conn: WsSessionConnection): void {
+    // `environment: 'node'` has no document, so onVisibility returns at its own
+    // guard unless one is stubbed -- the trap the focus-budget test documents.
+    ;(globalThis as { document?: unknown }).document = { visibilityState: 'visible' }
+    try {
+      ;(conn as unknown as { onVisibility: () => void }).onVisibility()
+    } finally {
+      delete (globalThis as { document?: unknown }).document
+    }
+  }
+
+  it('is terminal: one session_expired, no retry, no chat_error, even after focus', async () => {
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return Promise.reject(new ApiError(410, 'This session is more than 72 hours old'))
+    })
+    const seen = listen(conn)
+
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    for (let i = 0; i < 5; i++) await vi.advanceTimersByTimeAsync(2000)
+    focus(conn)
+    await vi.advanceTimersByTimeAsync(60_000)
+
+    expect(calls).toBe(1)
+    expect(expiredEvents(seen)).toHaveLength(1)
+    expect(String(expiredEvents(seen)[0].message)).toMatch(/more than 72 hours old/)
+    expect(errors(seen)).toHaveLength(0)
+    expect(seen.some((m) => m.type === 'conn_state' && m.state === 'reconnecting')).toBe(false)
+  })
+
+  it('a 410 that lands while the tab is hidden still ends it, so focus does not ask again', async () => {
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return Promise.reject(new ApiError(410, 'expired'))
+    })
+    const seen = listen(conn)
+    ;(conn as unknown as { hidden: boolean }).hidden = true
+
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    focus(conn)
+    await vi.advanceTimersByTimeAsync(60_000)
+
+    expect(calls).toBe(1)
+    expect(expiredEvents(seen)).toHaveLength(1)
+  })
+
+  it('a 404 (session deleted) is not read as expired', async () => {
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return Promise.reject(new ApiError(404, 'Session not found'))
+    })
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    for (let i = 0; i < 3; i++) await vi.advanceTimersByTimeAsync(2000)
+    expect(calls).toBeGreaterThan(1)
+    expect(expiredEvents(seen)).toHaveLength(0)
+  })
+
+  it('any other ApiError status still retries', async () => {
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return Promise.reject(new ApiError(503, 'unavailable'))
+    })
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    for (let i = 0; i < 3; i++) await vi.advanceTimersByTimeAsync(2000)
+    expect(calls).toBeGreaterThan(1)
+    expect(expiredEvents(seen)).toHaveLength(0)
+  })
+})
+
+describe('a 410 that lands before anyone subscribes', () => {
+  it('is replayed once to a listener that attaches later', async () => {
+    const conn = new WsSessionConnection(() =>
+      Promise.reject(new ApiError(410, 'This session is more than 72 hours old'))
+    )
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    const seen = listen(conn)
+    expect(seen.filter((m) => m.state === 'session_expired')).toHaveLength(1)
+  })
+})
+
+describe('replay dedupe across reconnect (#3387)', () => {
+  // The server replays its whole history to every (re)connect, stamping each
+  // recorded frame with seq+epoch. The connection keeps a lastSeq cursor that
+  // survives the socket drop, so a silent reconnect inside the same mounted
+  // pane drops the replay instead of appending the transcript again.
+
+  async function openConn(): Promise<WsMessage[]> {
+    const conn = new WsSessionConnection(async () => ({ wssUrl: 'ws://x', token: 't' }))
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    FakeSocket.instances[0].onopen?.()
+    return seen
+  }
+
+  const frame = (seq: number, epoch: string, text: string): { data: string } => ({
+    data: JSON.stringify({ type: 'agent_event', seq, epoch, event: { kind: 'text', text } })
+  })
+
+  const textsOf = (seen: WsMessage[]): string[] =>
+    seen
+      .filter((m) => m.type === 'agent_event')
+      .map((m) => String((m.event as Record<string, unknown>).text))
+
+  it('frames seen live and then replayed after a drop reach the listener once', async () => {
+    const seen = await openConn()
+    const sock = FakeSocket.instances[0]
+    sock.onmessage?.(frame(1, 'e1', 'a'))
+    sock.onmessage?.(frame(2, 'e1', 'b'))
+    sock.onmessage?.(frame(3, 'e1', 'c'))
+
+    // Drop; the retry opens a second socket, and the server replays history.
+    sock.close()
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(FakeSocket.instances).toHaveLength(2)
+    const sock2 = FakeSocket.instances[1]
+    sock2.onopen?.()
+    sock2.onmessage?.(frame(1, 'e1', 'a'))
+    sock2.onmessage?.(frame(2, 'e1', 'b'))
+    sock2.onmessage?.(frame(3, 'e1', 'c'))
+    sock2.onmessage?.(frame(4, 'e1', 'd')) // new work after the replay
+
+    expect(textsOf(seen)).toEqual(['a', 'b', 'c', 'd'])
+  })
+
+  it('a replay under a new epoch is delivered in full', async () => {
+    // LocalProvider.ensure_server replaces a dead server, and the fresh
+    // process counts seq from 1 again — without the epoch reset a client
+    // holding lastSeq=3 would silently drop every new frame.
+    const seen = await openConn()
+    const sock = FakeSocket.instances[0]
+    sock.onmessage?.(frame(1, 'e1', 'a'))
+    sock.onmessage?.(frame(2, 'e1', 'b'))
+    sock.onmessage?.(frame(3, 'e1', 'c'))
+
+    sock.close()
+    await vi.advanceTimersByTimeAsync(2000)
+    const sock2 = FakeSocket.instances[1]
+    sock2.onopen?.()
+    sock2.onmessage?.(frame(1, 'e2', 'x'))
+    sock2.onmessage?.(frame(2, 'e2', 'y'))
+
+    expect(textsOf(seen)).toEqual(['a', 'b', 'c', 'x', 'y'])
+  })
+
+  it('frames with no seq are always delivered, even repeated', async () => {
+    // Old sandboxes keep running pre-#3387 server code for up to 72 h
+    // (sessions.py SESSION_MAX_AGE) and stamp nothing; their frames — and
+    // status/snapshot/ping from any server — must pass through as today.
+    const seen = await openConn()
+    const sock = FakeSocket.instances[0]
+    sock.onmessage?.(frame(5, 'e1', 'a'))
+    const status = { data: JSON.stringify({ type: 'status', state: 'turn_active' }) }
+    sock.onmessage?.(status)
+    sock.onmessage?.(status)
+    const bare = { data: JSON.stringify({ type: 'agent_event', event: { kind: 'text', text: 'old' } }) }
+    sock.onmessage?.(bare)
+    sock.onmessage?.(bare)
+
+    expect(seen.filter((m) => m.type === 'status' && m.state === 'turn_active')).toHaveLength(2)
+    expect(textsOf(seen)).toEqual(['a', 'old', 'old'])
+  })
+
+  it('a non-finite seq cannot poison the cursor', async () => {
+    // JSON.parse accepts 1e999 as Infinity and typeof Infinity === 'number'.
+    // If it reached the cursor, lastSeq=Infinity would drop every later frame
+    // for good. It is treated as unstamped instead: delivered, cursor untouched.
+    const seen = await openConn()
+    const sock = FakeSocket.instances[0]
+    sock.onmessage?.({
+      data: '{"type":"agent_event","seq":1e999,"epoch":"e1","event":{"kind":"text","text":"inf"}}'
+    })
+    sock.onmessage?.(frame(1, 'e1', 'a'))
+    sock.onmessage?.(frame(1, 'e1', 'a')) // the cursor must still dedupe after it
+
+    expect(textsOf(seen)).toEqual(['inf', 'a'])
+  })
+})

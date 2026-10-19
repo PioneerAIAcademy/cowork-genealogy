@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f2": "Label true rests on the 1910 and 1920 census links, which carry maternity directly. The maiden name Westby is an inference: it comes from the Iowa county birth record for Lillie Florence Spriggs, who is treated as a sibling on the parent name pair alone, is not in the tree, and whose Iowa county was never matched to John William's birth county in Winneshiek. The proof narrative states it as settled."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "8282b99585e85550c9a239b680abd2df42e7db75ad8ad2b1401ef4324ac71eda"
+}

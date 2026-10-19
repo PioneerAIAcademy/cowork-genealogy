@@ -28,11 +28,11 @@ need.
 
 | Fact | Source |
 |------|--------|
-| Sole entry point: `validateProject(projectPath: string): Promise<ValidationResult>` | `packages/engine/mcp-server/src/validation/validator.ts:104` |
-| It reads + `JSON.parse`s both files, reports parse failure, **returns early** if invalid, then runs the checks | `validator.ts:104–153` |
-| Four private check functions: `validateResearch` (pure), `validateGedcomx` (pure), `validateCrossFile` (pure), `validateSidecars` (**async, reads `results/` from disk**) | `validator.ts:236, 737, 871, 953` |
+| Sole entry point: `validateProject(projectPath: string): Promise<ValidationResult>` | `validateProject` (`packages/engine/mcp-server/src/validation/validator.ts`) |
+| It reads + `JSON.parse`s both files, reports parse failure, **returns early** if invalid, then runs the checks | `validateProject` |
+| Four private check functions: `validateResearch` (pure), `validateGedcomx` (pure), `validateCrossFile` (pure), `validateSidecars` (**async, reads `results/` from disk**) | `validateResearch` / `validateGedcomx` / `validateCrossFile` / `validateSidecars` in `validator.ts` |
 | `ValidationResult = { valid, errors[], warnings[] }`; report helpers `createReport` / `addError` / `isValid` | `src/validation/types.ts` |
-| Consumers: the `validate_research_schema` tool and the validator test suite (~35 cases) | `src/tools/validate-research-schema.ts:20`, `tests/validation/validator.test.ts` |
+| Consumers: the `validate_research_schema` tool and the validator test suite (~35 cases) | `validateResearchSchema` (`await validateProject(projectPath)`), `tests/validation/validator.test.ts` |
 | No Python validator port remains in the plugin (the `validator.ts` header comment is historical) | grep `plugin/**/validate*.py` → none |
 
 The key structural fact: of the four checks, **only `validateSidecars` touches the
@@ -187,19 +187,35 @@ the only `writeFile`s anywhere are auth tokens). That makes the write path a
 corrupt-the-user's-project blast radius, so its primitives should be lifted to
 shared, **independently unit-tested** utils rather than reimplemented in each tool:
 
-- `atomicWriteJson(path, obj)` — single-file temp-write + rename
+- `atomicWriteJson(projectPath, ref, obj)` — single-file temp-write + rename
   (`research_log_append`, `merge_record_into_tree`).
-- `atomicWriteBoth(...)` — two-file both-or-neither, used by `merge_tree_persons`,
+- `atomicWriteBoth(projectPath, writes)` — two-file both-or-neither, used by `merge_tree_persons`,
   which rewrites tree + research together. Note: two renames are **not** truly atomic
   on POSIX; the contract is write-both-temps → rename-both back-to-back to shrink the
   window, with validate-on-next-open as the backstop. Test it with an injectable
   failure point between the two renames.
 - `assertInsideProject(projectPath, ref)` — the path-traversal guard currently
-  inlined at `validator.ts:988` and re-described by `research-log-editor-spec.md` §8
+  inlined in `validateSidecars` (the `isInsideProject` guard) and re-described by `research-log-editor-spec.md` §8
   and `search-result-staging-spec.md` §6. One implementation, one test.
 
+These utils own the classification, the error wording and the no-project contract;
+the I/O behind them is the `ProjectStore` seam (`src/store/project-store.ts`), and
+every argument that names a file is a **project-relative ref**, not an absolute
+path. `FsProjectStore` is the file backend described above (temp-write + rename,
+the per-project mutex, the dot-prefixed temp name); `withProjectLock` is its
+`withTransaction`, which a database backend implements as one connection holding
+the project's advisory lock — the reason `validateParsed` runs inside the lock,
+not after it. `validateProject` and the sidecar pass read through the same store,
+so a backend that is not a directory validates the same documents. The seam is
+total by lint (`tests/packaging/no-fs-outside-store.test.ts`), and a second
+backend proves itself against `tests/store/conformance.ts` — which
+`PgS3ProjectStore` (`src/store/pg-s3-project-store.ts`: documents in Postgres
+jsonb, blobs and staged results in S3 behind a Postgres index, one project per
+store instance) does under `make proto-store-test`, with `writeJsonBoth` as one
+transaction and `withTransaction` as the advisory lock described above.
+
 Additionally, **export `validateGedcomx`** (today a private function at
-`validator.ts:737`; it already takes a parsed tree + a report and no `projectPath`).
+`validateGedcomx`; it already takes a parsed tree + a report and no `projectPath`).
 `merge_record_into_tree` must validate its inline `candidateGedcomx` argument
 (`merge-gedcomx-spec.md` §8) and should reuse this, not hand-roll a parallel check —
 `validateParsed` validates a research+tree *pair*, so it does not cover the

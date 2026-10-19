@@ -21,6 +21,19 @@ Say which one in your PR description.
 
 ---
 
+## Pick a card
+
+Ready is a self-serve menu, two pools (`developer`, `genealogist`), and the
+`senior` label says which cards are not yours. One more label orders the rest:
+**take a `high-priority` card in your lane before any other.** It is a soft
+ordering — finish what you have started; do not drop it for one. The card's
+body opens with a `> **High priority (date):**` line saying why (critical path
+to a milestone, live harm, a skill slot three or more issues wait on, or a
+lead's call).
+`/fill-ready` applies and removes the label; nobody files with it.
+
+---
+
 ## Ask early
 
 **When you aren't confident, ask a senior. At any step, about anything.** A
@@ -127,8 +140,10 @@ exactly the person whose job is catching it.
 **Stop and go to the lead** — don't re-plan around it — if the change turns out
 to do any of these:
 
-- Changes `research.json` or simplified-GedcomX **schema** — a new field, a new
-  value on a closed enum, or a tree-shape change. Site lists:
+- Changes `research.json` or simplified-GedcomX **schema** — a required field, a
+  new section, a new value on a closed enum, or a renamed or removed field. A new
+  optional field on an existing section doesn't stop: a senior reviewer approves
+  it after checking every site on the list. Site lists:
   [`CLAUDE.md`](../CLAUDE.md) § "Researcher profile in `research.json`".
 - Touches `packages/engine/mcp-server/src/auth/`, or anything holding a credential.
 - Reverses something in [`docs/adrs/`](./adrs/) or contradicts a `CLAUDE.md` rule.
@@ -151,8 +166,9 @@ Plus whatever you actually touched:
 | If you changed | Also run |
 |---|---|
 | An MCP tool | `npx tsx dev/try-<tool>.ts` from `packages/engine/mcp-server/` against the live API — write one if it doesn't exist, and run `dev/try-login.ts` first for an authenticated tool. Then read your implementation against `docs/specs/<tool>-tool-spec.md`, quoting both sides. |
-| Any file in a skill's run-log **snapshot** — `packages/engine/plugin/skills/<skill>/`, an agent it delegates to, `eval/tests/unit/<skill>/`, or a scenario/fixture it references | `make eval-skill SKILL=<name>`, and commit the run log **and its `.ann.json`**. `check-runlogs.yml` blocks merge otherwise — a comment or a typo counts, because the whole skill dir is in the snapshot. For a behaviour-neutral edit, ask a senior for the `eval-cosmetic-skip` label instead of burning a paid run. Rules and the exact snapshot set: [`eval/CLAUDE.md`](../eval/CLAUDE.md) § "Snapshot model" and § "GitHub Action rules". |
-| Plugin agent frontmatter, hooks, tool binding, or the MCP-unavailable abort path | `make agent-smoke`. **It exits 0 when it skips**, so confirm the output lists resolved agents rather than `1 skipped` — that means no API key was reachable. |
+| Any file in a skill's run-log **snapshot** — `packages/engine/plugin/skills/<skill>/`, an agent it delegates to, `eval/tests/unit/<skill>/`, or a scenario/fixture it references | `make eval-skill SKILL=<name>`, and commit the run log **and its `.ann.json`**. `check-runlogs.yml` blocks merge otherwise — a comment or a typo counts, because the whole skill dir is in the snapshot. For a behavior-neutral edit, ask a senior for the `eval-cosmetic-skip:<skill>` label (one per skill) instead of burning a paid run. Rules and the exact snapshot set: [`eval/CLAUDE.md`](../eval/CLAUDE.md) § "Snapshot model" and § "GitHub Action rules". |
+| Plugin agent frontmatter, tool binding, or the MCP-unavailable abort path | `make agent-smoke`. **It exits 0 when it skips**, so confirm the output lists resolved agents rather than `1 skipped` — that means no API key was reachable. |
+| `packages/engine/plugin/hooks/` — `hooks.json`'s matcher or `guard_project_files.py` | `make hook-smoke` for the **binding** (does a runtime load `hooks.json` and block?), `make engine-test` for the script's **decisions**. `agent-smoke` used to be named here and cannot see a hook at all — it reads the init handshake, which carries nothing hook-shaped. `hook-smoke` hard-errors without a key rather than skipping. It proves the **hosted** loader only; Cowork's is reachable only by a human in a live session. |
 | An e2e fixture | `make e2e-validate TEST=<slug>` |
 | Anything user-facing | Run it. `make server` / `make web`, or the Claude Desktop install path. |
 | An HTTP route or `apps/server/` auth/allowlist code, anything that reads a token or writes to `~/.familysearch-mcp/`, or anything that renders user-supplied data in the viewer | `/security-review` |
@@ -243,10 +259,18 @@ branch.
 
 Keep PRs small. A forty-file PR turns both review steps into rubber stamps.
 
-### 9. Peer review, then senior review — on the paths that need it
+### 9. Review your own diff, then senior review — on the paths that need it
 
-Peer review is another developer, and it is now **sufficient to merge** on
-files no rule in [`.github/CODEOWNERS`](../.github/CODEOWNERS) claims.
+**Round one is yours.** Before asking anyone else to look, read your own diff
+file by file and leave a review on your own PR (Files changed → Review changes
+→ Comment) saying what you found, or that you found nothing. GitHub refuses an
+author's *Approve* on their own PR, so it must be a Comment review — and
+`senior-queue.yml` will not surface the PR to a senior until it exists.
+
+This replaced the junior peer review on 2026-09-16. **One approval is required
+now, not two**, so on files no rule in
+[`.github/CODEOWNERS`](../.github/CODEOWNERS) claims, a single approval from any
+developer merges it — and nobody else is coming to catch what you skip.
 Senior review is a member of either senior team, or the lead, and branch
 protection requires one on code and infrastructure file types —
 `.ts`/`.tsx`/`.js`/`.mjs`/`.cjs`/`.py`/`.json`/`.yml`/`.yaml`, repo-wide —
@@ -266,7 +290,7 @@ time a senior looks at a PR everything mechanical should be settled, so their
 time goes to whether the approach is right.
 
 **A ready PR shows a `ready-for-senior-*` label.** `senior-queue.yml` adds it
-once CI is green, a peer has approved, and no review thread is outstanding —
+once CI is green, the author has self-reviewed, and no review thread is outstanding —
 `ready-for-senior-developer` or `ready-for-senior-genealogist`, whichever team
 owns the changed paths. It is on the PR list itself, so a senior scanning
 `is:open is:pr` sees what is waiting for them without filtering for it. Saying
@@ -340,8 +364,9 @@ returns as an input to your review, never as your review.
    directly: does this implementation match what was agreed, and what does it do
    that nobody asked for?
 4. **Two things aren't yours to approve.** A diff that hits step 4's stop rule —
-   schema, credentials, an ADR reversal, anything hard to undo — needs the lead,
-   whatever the code looks like. And check `.github/CODEOWNERS`: on the paths it
+   a schema change other than a new optional field, credentials, an ADR
+   reversal, anything hard to undo — needs the lead, whatever the code looks
+   like. And check `.github/CODEOWNERS`: on the paths it
    lists, your approval doesn't unblock merge. Say which is still owed rather
    than leaving the author to discover it at the merge button.
 5. **Pushing a small fix to their branch is fine.** It costs nobody a
@@ -356,9 +381,9 @@ Three rules can each hold a green, approved PR. Check them in this order:
 
 - **An unresolved conversation.** Every review thread must be marked resolved.
   Resolve the ones you answered; the reviewer resolves the ones they raised.
-- **No senior has approved yet.** On the paths `.github/CODEOWNERS` claims, one
-  of the two approvals must come from a senior team — either one. Four approvals
-  from four juniors is still zero against that rule.
+- **No senior has approved yet.** On the paths `.github/CODEOWNERS` claims, the
+  single required approval must come from a senior team — either one. Any number
+  of junior approvals is still zero against that rule.
 - **A review request left over from an older CODEOWNERS.** Owners are computed
   when the PR opens; editing `.github/CODEOWNERS` later never re-runs against an
   open PR, and GitHub never withdraws a request it has already made. So a PR can
@@ -366,10 +391,10 @@ Three rules can each hold a green, approved PR. Check them in this order:
   believing the request, and clear a dead one with
   `gh api -X DELETE /repos/{owner}/{repo}/pulls/{n}/requested_reviewers -f 'team_reviewers[]=<team>'`.
   This works only for a team the current file no longer claims. While
-  `require_code_owner_review` is on, the same call against a team CODEOWNERS
-  *does* still mandate returns HTTP 200 and does nothing — no error, and the team
-  is still listed on a fresh read (verified three ways, 2026-08-11). Re-read the
-  PR before believing the 200.
+  `require_code_owner_review` is on, the same call against a team **still
+  mandated by CODEOWNERS returns HTTP 200 and does nothing** — no error, and the
+  team is still listed on a fresh read (verified three ways, 2026-08-11). Re-read
+  the PR before believing the 200.
 
 ---
 
@@ -410,7 +435,8 @@ git fetch origin && git checkout -b <branch> origin/main
 # 5. verify
 make test-all                        # everything; == scripts/test.sh
 make eval-skill SKILL=<name>         # anything in a skill's run-log snapshot
-make agent-smoke                     # plugin agent frontmatter / hooks / tool binding / MCP abort
+make agent-smoke                     # plugin agent frontmatter / tool binding / MCP abort
+make hook-smoke                      # plugin PreToolUse hook actually binds (hosted loader)
 make e2e-validate TEST=<slug>        # an e2e fixture changed
 /security-review                     # route, auth, token, or user state touched
 

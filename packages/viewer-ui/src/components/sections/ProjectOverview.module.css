@@ -63,14 +63,6 @@
   flex-wrap: wrap;
 }
 
-.profileBadge {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--accent-gold);
-}
-
 .profileSubs {
   font-size: 12px;
   color: var(--text-secondary);
@@ -89,8 +81,8 @@
   line-height: 1.5;
 }
 
-/* Distinguishes intended_audience from narration_guidance, which shares the
-   .profileGuidance styling and would otherwise read as one run-on note. */
+/* Labels intended_audience so it reads as a stated fact about the researcher,
+   not a bare instruction; narration_guidance no longer renders here. */
 .profileLabel {
   color: var(--text-tertiary);
   text-transform: uppercase;

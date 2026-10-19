@@ -1,0 +1,19 @@
+{
+  "id": "john-nielssen-birth",
+  "name": "John Nielssen — birth 1844, Bygland or Åseral, Norway",
+  "genre": "record-hint",
+  "source_pid": "KHKC-867",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where was John Nielssen born, the husband of Anne Torjusdatter whose children Ingeborg (1870) and Nils (1872) were baptized in Bygland, Aust-Agder, Norway?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1840s",
+    "geography": "NO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 18, hint-samples.csv row 616, flag adds_birth, confidence 3). Resolved 2026-10-14 (#3339): true match, fuller answer (outcome 2). The hint's 1846 is corrected to 1844, with the birthplace given as Bygland or Åseral because the records conflict. The sources are the 1875 census Klep household (Digitalarkivet pf01052207002762), the 1865 census (ark:/61903/1:1:DDCG-V3ZM) and the 1844 Bygland baptism (ark:/61903/1:1:683T-XFQ9). Decided from indexes and Digitalarkivet's transcription; no page image read."
+}

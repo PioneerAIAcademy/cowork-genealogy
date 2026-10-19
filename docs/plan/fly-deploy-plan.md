@@ -10,8 +10,9 @@ This is the first hosted deploy of the POC. It replaces the local-server +
 Tailscale-Funnel trick with a public Fly URL as the OAuth-redirect target and
 browser ingress. E2B runs the per-user sandboxes (outbound from the container).
 
-> **Status (2026-06-08): partially shipped + amended. Read the deltas before
-> following the body below.** Since this plan was written, three things landed on
+> **Status: Superseded by [`search-agent-prototype.md`](./search-agent-prototype.md)**
+> (no Fly, no E2B in the replacement). The delta bullets below describe what
+> shipped under the original alpha deploy. Since this plan was written, three things landed on
 > `main` that change it:
 > - **DB is Neon Postgres, not SQLite-on-a-volume.** The `neon-postgres-plan.md`
 >   migration (#296) made the backend env-driven via `DATABASE_URL`. **There is no
@@ -31,6 +32,11 @@ browser ingress. E2B runs the per-user sandboxes (outbound from the container).
 >   `E2BProvider` is fully implemented (not the stub the Caveats imply). What
 >   remains is operational: create the app, set secrets, register the FS redirect,
 >   build the E2B template image, deploy.
+> - **`make deploy` builds the E2B agent image (#1489).** It is no longer a
+>   separate step you perform before deploying: `sandbox-image` is a prerequisite
+>   of `deploy`, so the template is built and pushed and then `fly deploy` runs.
+>   The Prerequisites and step 3 below are updated; a raw `fly deploy` ships the
+>   control plane alone and is no longer the procedure.
 
 ---
 
@@ -124,12 +130,15 @@ Notes for the reviewer:
 ## Prerequisites
 
 - `flyctl` installed and `fly auth login` done.
-- An E2B account + `E2B_API_KEY`, and the genealogy sandbox **template image
-  built** (`make sandbox-image` / `apps/server/sandbox/build-image.sh`):
-  Node + Python + `claude-agent-sdk` + the MCP `build/` + the 28 skills +
-  `agent_runner` + the pre-crawled wiki markdown. The control-plane container
+- An E2B account + `E2B_API_KEY`, and the `e2b` CLI. `make deploy` now builds and
+  pushes the genealogy sandbox **template image** itself, so this is a dependency
+  of the deploy rather than a separate step (`make sandbox-image` /
+  `apps/server/sandbox/build-image.sh` still builds it alone):
+  Node + Python + `claude-agent-sdk` + the MCP `build/` + the skills +
+  `agent_runner`. (No wiki corpus: the wiki tools are HTTP clients of the hosted
+  wiki-query-api, so nothing wiki-related is baked.) The control-plane container
   does not run the agent, so the template is the gate on real turns, not this
-  image. (`E2BProvider` itself is still a stub — see Caveats.)
+  image.
 - An Anthropic operator key (`ANTHROPIC_API_KEY`).
 - A FamilySearch web dev key whose **redirect URI is registered against the
   public Fly hostname** as `https://<public-host>/callback` (see "OAuth redirect"
@@ -162,6 +171,7 @@ Non-secret config ships in `deploy/fly.toml` `[env]`. Secrets go via
 | `SESSION_SECRET` | secret | yes | Replaces the `dev-insecure-secret-change-me` default; signs the session cookie **and** the FamilySearch OAuth `state`. **Boot-enforced** (below) |
 | `WS_SIGNING_KEY` | secret | yes | Replaces the `dev-ws-signing-key-change-me` default; HMAC master key for per-sandbox WS handshake tokens. **Boot-enforced** (below) |
 | `FS_TOKEN_ENC_KEY` | secret | yes | Replaces the `dev-insecure-fs-token-key-change-me` default; master key the FamilySearch tokens are encrypted under at rest (`crypto.EncryptedStr`, issue #1128). Rotating it makes stored tokens undecryptable — users reconnect once. **Boot-enforced** (below) |
+| `ANTHROPIC_PROXY_SIGNING_KEY` | secret | yes | Random hex; HMAC master key for per-sandbox proxy tokens. Same rotation caveat as `WS_SIGNING_KEY` (orphans existing sandboxes). **Boot-enforced** (below) |
 | `DATABASE_URL` | secret | yes | Neon Postgres, DIRECT (non-pooler) URL. Unset → SQLite on ephemeral rootfs (there is no Fly volume), losing every row on restart. **Boot-enforced** (below) |
 
 **Boot-enforced** (issue #1123): because `PUBLIC_URL` is https, the app calls
@@ -187,6 +197,7 @@ fly secrets set \
   SESSION_SECRET="$(openssl rand -hex 32)" \
   WS_SIGNING_KEY="$(openssl rand -hex 32)" \
   FS_TOKEN_ENC_KEY="$(openssl rand -hex 32)" \
+  ANTHROPIC_PROXY_SIGNING_KEY="$(openssl rand -hex 32)" \
   DATABASE_URL="postgresql://USER:PASS@ep-xxx.REGION.aws.neon.tech/DBNAME?sslmode=require" \
   ALLOWED_EMAILS="dallan@quass.org"
 ```
@@ -208,10 +219,12 @@ fly launch --no-deploy --copy-config --name genealogy-workbench \
 
 # 2. Set secrets (see above) — including DATABASE_URL + WS_SIGNING_KEY.
 
-# 3. Deploy (build context = repo root, config + Dockerfile under deploy/).
-#    --ha=false: fly deploy provisions TWO machines by default; we must stay at
-#    count = 1 until init_db moves to a release_command (see Horizontal-scaling).
-fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false
+# 3. Deploy. `make deploy` is the command: it also rebuilds and pushes the
+#    genealogy-agent E2B image, which a raw `fly deploy` does not (issue #1489).
+#    Build context = repo root, config + Dockerfile under deploy/. --ha=false:
+#    fly deploy provisions TWO machines by default; we must stay at count = 1
+#    until init_db moves to a release_command (see Horizontal-scaling).
+make deploy
 ```
 
 Local sanity-check of the image before deploying:
@@ -284,8 +297,10 @@ affinity-free. Ably is dropped (it would unpin only the *fanout*, not the
 ## Smoke-test checklist (after deploy)
 
 1. `fly status` — one Machine, `started`; volume attached.
-2. `curl https://<host>/api/health` → `{"ok":true,"agentMode":"real","provider":"e2b","db":"postgres"}`
-   (the health payload reports `db`, not `realtime` — that field was removed).
+2. `curl https://<host>/api/health` → `{"ok":true,"agentMode":"real","provider":"e2b","db":"postgres","sandboxImageCommit":null}`
+   (the health payload reports `db`, not `realtime` — that field was removed.
+   `sandboxImageCommit` is the E2B agent image's baked commit, null until this
+   process has created its first session.)
 3. `https://<host>/` loads the web client (StaticFiles mount serving `dist`).
 4. **Sign in with FamilySearch** completes and returns to the app: the FS OAuth
    round-trip lands on `/callback` (redirect URI matches), the allowlist check

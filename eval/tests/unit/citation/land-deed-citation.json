@@ -10,12 +10,13 @@
       "deed",
       "1881",
       "src_008",
-      "grantor-grantee"
+      "grantor-grantee",
+      "direct-arm"
     ],
     "holdout": true
   },
   "input": {
-    "user_message": "Refine the citation for src_008, the 1881 deed from Thomas Flynn to Patrick Flynn.",
+    "delegation": "Refine the citation on src_008, the 1881 deed from Thomas Flynn to Patrick Flynn.\n\nsourceId: src_008\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

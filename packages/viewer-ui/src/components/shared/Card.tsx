@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import DetailPanel from './DetailPanel'
@@ -16,6 +16,8 @@ interface CardProps {
   className?: string
 }
 
+const DRAG_THRESHOLD = 4
+
 export default function Card({
   id,
   title,
@@ -28,10 +30,20 @@ export default function Card({
 }: CardProps): React.JSX.Element {
   const [expanded, setExpanded] = useState(false)
   const { devMode } = useResearchData()
+  const downPos = useRef({ x: 0, y: 0 })
 
   return (
     <div id={id} className={`${styles.card} ${className ?? ''}`}>
-      <div className={styles.header} onClick={() => setExpanded(!expanded)}>
+      <div
+        className={styles.header}
+        onMouseDown={(e) => { downPos.current = { x: e.clientX, y: e.clientY } }}
+        onClick={(e) => {
+          const dx = e.clientX - downPos.current.x
+          const dy = e.clientY - downPos.current.y
+          if (dx * dx + dy * dy > DRAG_THRESHOLD * DRAG_THRESHOLD) return
+          setExpanded(!expanded)
+        }}
+      >
         <div className={styles.title}>{title}</div>
         <div className={styles.badges}>
           {badges}

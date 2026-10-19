@@ -16,7 +16,7 @@ there.
 
 | Make target | Windows wrapper | What it does |
 |---|---|---|
-| `make install` | `scripts\windows\install.bat` | Install everything: pnpm workspace, server venv, engine build, eval-ui deps |
+| `make install` | `scripts\windows\install.bat` | Install everything: pnpm workspace (incl. eval-ui), server venv, engine build |
 | `make reinstall` | `scripts\windows\reinstall.bat` | `clean-deps` then `install`, from scratch |
 | `make clean-deps` | `scripts\windows\clean-deps.bat` | Remove every `node_modules` |
 | `make server-install` | `scripts\windows\server-install.bat` | Create the FastAPI server venv (uv sync) |
@@ -33,11 +33,13 @@ there.
 | `make typecheck` | `scripts\windows\typecheck.bat` | TypeScript typecheck (turbo) |
 | `make server-test` | `scripts\windows\server-test.bat` | Control-plane tests (pytest) |
 | `make engine-test` | `scripts\windows\engine-test.bat` | Engine unit tests (vitest) |
-| `make eval-ui-test` | `scripts\windows\eval-ui-test.bat` | Eval CRUD UI tests (vitest) |
+| `make eval-ui-test` | `scripts\windows\eval-ui-test.bat` | Eval CRUD UI typecheck + tests (tsc + vitest) |
 | `make judge-report` | `scripts\windows\judge-report.bat` | Non-discrimination scan of the unit eval judge over committed run logs (no API calls) |
+| `make conflict-verdicts` | `scripts\windows\conflict-verdicts.bat` | Run logs whose own tests reach opposite verdicts on one conflict (no API calls) |
 | `make harness-test` | `scripts\windows\harness-test.bat` | Eval harness tests (pytest) |
 | `make harness-lint` | `scripts\windows\harness-lint.bat` | Harness ruff check |
 | `make agent-smoke` | `scripts\windows\agent-smoke.bat` | Plugin agent registration + dead-stub abort smoke test |
+| `make hook-smoke` | `scripts\windows\hook-smoke.bat` | Live probe: does the plugin's `PreToolUse` hook actually bind in the hosted SDK loader? (issue #1160). **Needs a real `python3` on PATH** — `hooks.json` shells that exact name and stock Windows resolves it to a Microsoft Store alias, so this voids at the preflight unless you are on WSL or have a `python3.exe` installed. |
 | `make deploy-status` | `scripts\windows\deploy-status.bat` | Health-check the deployed control plane |
 
 Pass parameters as environment variables, the same names the make targets use:

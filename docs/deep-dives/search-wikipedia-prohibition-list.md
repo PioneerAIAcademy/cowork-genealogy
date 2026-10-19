@@ -1,8 +1,27 @@
 # search-wikipedia — prohibition list (Step 1 of the deep-dive guide)
 
+> **Subject moved 2026-09-27 (issue #2795).** `search-wikipedia` is now an
+> **agent**, `packages/engine/plugin/agents/search-wikipedia.md`, and the skill
+> directory this list was built from no longer exists. Every rule below still
+> describes the shipped behaviour, with three changes the reader has to carry:
+> the template is inlined in the agent body rather than read from
+> `templates/wiki-summary.md`; the scope guard's second arm is now a **hand-back**
+> that names the owning agent rather than a decline; and the old "step 5, one
+> sentence only" is the agent's `## Return contract`, which is **one line naming
+> the saved file and nothing else** -- or, on a decline or hand-back, the two
+> short sentences from the scope section. The agent carries no `---` separator
+> and no `summary_for_user` paragraphs: it is on the PENDING list in
+> `tests/packaging/agent-return-contract.test.ts`, because two paragraphs of
+> researcher-facing prose written straight after reading the article measured as
+> space the extract flowed into. Rule 18's
+> no-narration instrument is unchanged and still the reason this agent carries no
+> `**Narration:**` line. Section and rule numbering is left as it was — this is a
+> dated audit record, not a live spec.
+
 Built from `packages/engine/plugin/skills/search-wikipedia/SKILL.md` and
-`templates/wiki-summary.md` as this PR leaves them (branched from `main` at
-`fde53f1b`; step 4 gains the transliteration clause here, see rule 15). Every line
+`templates/wiki-summary.md` as they stood when this list was written (branched
+from `main` at `fde53f1b`; step 4 gains the transliteration clause here, see
+rule 15). Every line
 below is checkable by eye against a run-log transcript (`output.text_response`,
 `output.tool_calls`, `output.files_created`) or against the workspace snapshot the
 validators receive (`after_state["files"]`, which holds the saved file's **full
@@ -87,7 +106,21 @@ rebuilding it.**
     write the filled template…"), and no restating, summarizing or paraphrasing
     of the article content. The article content goes in the file, not the chat.
 
+    The no-narration half of this rule is now **explicit in the body**, in two
+    places rather than inferred from "One sentence only": a standalone line at
+    the top of `## What to do` ("Do not announce a step before doing it") and a
+    clause under `## Return contract` (since #2795: the return is exactly one
+    line, "not a list, not a heading, not a second sentence"). It sits in both
+    because every observed violation is a `Now I'll …` preamble emitted while
+    executing steps 3–4, i.e. before the model reaches step 5.
+
+    `test_reply_does_not_narrate_pending_step`
+    (`eval/harness/validators/test_search_wikipedia.py`) is the instrument for
+    this rule; the `Reply economy` rubric dimension grades it as well, not
+    instead. The validator concatenates every assistant text block, so a
+    mid-workflow preamble fails it even when the closing sentence is clean.
+
 ## F. State
 
-19. This skill writes no project state. No `research.json` write, no
+19. This agent writes no project state. No `research.json` write, no
     `tree.gedcomx.json` write, no `results/` sidecar. Safe to re-invoke.

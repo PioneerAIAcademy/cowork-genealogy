@@ -155,7 +155,7 @@ function assertionFor(id: string, over: Record<string, unknown>) {
     id, source_id: "src_001", record_id: "REC", record_role: "principal", record_persona_id: null,
     fact_type: "birth", value: "", date: null, place: null, standard_place: null,
     information_quality: "primary", informant: "unknown", informant_proximity: "official_duty",
-    evidence_type: "direct", extracted_for_question_ids: [],
+    record_basis: "stated", extracted_for_question_ids: [],
     ...over,
   };
 }

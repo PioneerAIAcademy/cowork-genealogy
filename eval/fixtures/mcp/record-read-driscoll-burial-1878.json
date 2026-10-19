@@ -1,0 +1,60 @@
+{
+  "tool": "record_read",
+  "description": "The Catholic parish burial entry attached to Cornelius Driscoll (GJ72-9WD) as SD-DRIS-C, and one half of this corpus's source-vs-source conflict. It records a burial on 14 April 1878 at St. Patrick's Cemetery, Sherbrooke, with a death that April. Its partner, SD-DRIS-D (record-read-driscoll-death-1885), registers a death on 2 February 1885. The two cannot both be right, and a seven-year gap is not the estimated-age variance a census carries — both are records whose dates are exact. What makes this a CONFLICT rather than a defect in one source: the profile records no death date at all, so neither record disagrees with the profile, they disagree with each other; and both carry an indexed birth of 1814 and the same parish, so neither is plainly the wrong man. The indexed birth is how this corpus expresses a stated age at death — no fixture in the repo uses an Age fact type. The audit's job is to characterise the disagreement and route it onward, not to pick a winner, recommend a detach, or write anything. Its collection is deliberately NOT the Drouin one that carries the marriage register: `index_error_source` is the substring \"Drouin Collection\", and a shared collection title would scope the detach guard to two unrelated sources at once.",
+  "args": {
+    "recordId": "~DRIS-003"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Cornelius",
+            "surname": "Driscoll",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Burial",
+            "date": "14 April 1878",
+            "place": "St. Patrick's Cemetery, Sherbrooke, Quebec, Canada"
+          },
+          {
+            "id": "F2",
+            "type": "Death",
+            "date": "April 1878",
+            "place": "Sherbrooke, Quebec, Canada"
+          },
+          {
+            "id": "F3",
+            "type": "Birth",
+            "date": "1814",
+            "place": "Ireland"
+          }
+        ],
+        "ark": "ark:/61903/1:1:DRIS-003",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Quebec, Catholic Parish Registers, 1621-1979"
+          }
+        ]
+      }
+    ],
+    "places": [],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Quebec, Catholic Parish Registers, 1621-1979",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:DRIS-003"
+      }
+    ]
+  }
+}

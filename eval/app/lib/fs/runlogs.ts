@@ -11,6 +11,7 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { resolveWithin, PathEscapeError } from './safe-path';
 import { repoRoot, runlogsUnitDir } from '../paths';
 import { diffSnapshotVsDisk, hashFile } from '../snapshot';
 import { classify, sortNewestFirst } from '../versioning';
@@ -110,10 +111,13 @@ async function readAnnotationAt(filePath: string): Promise<AnnotationFile | null
 
 function rawToRunLog(raw: unknown): RunLogFile {
   // Pass-through with a shallow type assertion — nothing validates at read
-  // time. `lib/schema/run-log.ts` is generated from the JSON Schema but has no
-  // importers, and wiring it now would reject the pre-v3 logs still on
-  // in-flight branches. The harness validates on write (`validate_run_log`),
-  // which is where a malformed envelope is actually caught.
+  // time, and gen-zod no longer emits a run-log schema (nothing imported it;
+  // lead ruling 2026-09-18). Read-time validation was rejected: the committed
+  // logs under eval/runlogs/unit/ still include schema_version 2 and
+  // validators.results[] entries without `outcome`, both of which
+  // run-log.schema.json rejects. Count them over `git ls-files`, not a
+  // filesystem walk. The harness validates on write (`validate_run_log`);
+  // whoever re-adds the schema to SCHEMAS must handle both legacy shapes.
   return raw as RunLogFile;
 }
 
@@ -176,7 +180,18 @@ export async function listRunLogs(opts: ListRunLogsOptions = {}): Promise<ListRu
 export async function readRunLogById(
   id: string,
 ): Promise<{ runLog: RunLogFile; filePath: string } | null> {
-  const filePath = path.join(runlogsUnitDir(), `${id}.json`);
+  // `id` is built from catch-all URL segments and reaches a read whose parsed
+  // contents are returned. Same containment as the write side in release.ts.
+  let filePath: string;
+  try {
+    filePath = resolveWithin(runlogsUnitDir(), `${id}.json`);
+  } catch (e) {
+    // Narrowed: an untyped catch here also swallows an `evalDir()`
+    // misconfiguration, turning a broken environment into a silent "not found".
+    // Only a refused path is expected; anything else stays loud.
+    if (!(e instanceof PathEscapeError)) throw e;
+    return null;
+  }
   try {
     const raw = JSON.parse(await fs.readFile(filePath, 'utf8'));
     return { runLog: rawToRunLog(raw), filePath };
@@ -207,7 +222,12 @@ export async function readSnapshotFiles(
   await Promise.all(
     Object.keys(snapshot).map(async (rel) => {
       try {
-        out[rel] = await fs.readFile(path.join(root, rel), 'utf8');
+        // `rel` is a snapshot KEY, declared as an arbitrary string by the schema
+        // and arriving from a run log another contributor committed. Unlike the
+        // comparison in snapshot.ts this returns file CONTENT, so an uncontained
+        // key here discloses rather than merely probes. Skipped, not thrown, so
+        // one bad key cannot blank the whole view.
+        out[rel] = await fs.readFile(resolveWithin(root, rel), 'utf8');
       } catch {
         // omitted — consumers treat a missing key as "nothing to show"
       }
@@ -222,7 +242,16 @@ export async function readSnapshotFiles(
 export async function listRunLogsForSkill(
   skill: string,
 ): Promise<{ runs: Array<{ id: string; log: RunLogFile; filePath: string; filename: string }>; corrupt: string[] }> {
-  const dir = path.join(runlogsUnitDir(), skill);
+  // `skill` arrives from the `?skill=` query param, then drives readdir +
+  // readFile + JSON.parse. `readRunLogById` and `readSnapshotFiles` in this file
+  // were contained; this one was missed.
+  let dir: string;
+  try {
+    dir = resolveWithin(runlogsUnitDir(), skill);
+  } catch (e) {
+    if (e instanceof PathEscapeError) return { runs: [], corrupt: [] };
+    throw e;
+  }
   let files: string[];
   try {
     files = await fs.readdir(dir);

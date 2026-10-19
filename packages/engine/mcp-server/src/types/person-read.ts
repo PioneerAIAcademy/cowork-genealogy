@@ -12,19 +12,34 @@ import type {
   GedcomXFact,
   GedcomXPerson,
   GedcomXSourceDescription,
+  GedcomXSourceReference,
 } from "./gedcomx.js";
 
 // ─── Tool I/O ─────────────────────────────────────────────────────────────
 
 export interface PersonReadToolInput {
   personId: string;
+  /** Accepted and ignored: relatives are always read. */
   relatives?: boolean;
+  /** Accepted and ignored: attached sources (and, for a non-living subject,
+   *  memories) are always read. */
   sourceDescriptions?: boolean;
+  /** Absolute project-folder path. When given, a memory scan transcribed during
+   *  this read is retained under images/ and its ref returned as the source's
+   *  `image_ref`. A path is not a mode flag, so decision 1's "no third flag"
+   *  does not reach it. The read itself is also staged there (see
+   *  `PersonReadResult.staged`). */
+  projectPath?: string;
 }
 
 export interface TreeName {
+  id?: string;
   given: string;
   surname: string;
+  // Schema-side `preferred` is `const: true`, so the flag is present-or-absent
+  // rather than a two-valued boolean.
+  preferred?: true;
+  type?: string;
   prefix?: string;
   suffix?: string;
 }
@@ -42,12 +57,24 @@ export interface TreeFact {
   value?: string;
 }
 
+/** A tree source reference: `ref` names an id in the result's `sources[]`. */
+export interface TreeSourceRef {
+  ref: string;
+  page?: string;
+  quality?: number;
+}
+
 export interface TreePerson {
   id: string;
+  ark?: string;
   gender: string;
   living: boolean;
   names: TreeName[];
   facts?: TreeFact[];
+  /** The sources FamilySearch attached to this person, as refs into the
+   *  result's `sources[]`. Only refs that resolve there are kept; absent when
+   *  none do. */
+  sources?: TreeSourceRef[];
 }
 
 export interface TreeRelationship {
@@ -58,6 +85,11 @@ export interface TreeRelationship {
   person1?: string;
   person2?: string;
   facts?: TreeFact[];
+  /** The sources FamilySearch attached to this relationship, as refs into the
+   *  result's `sources[]`. Only refs that resolve there are kept; absent when
+   *  none do. One child-and-parents relationship is two ParentChild edges, and
+   *  both carry its refs. */
+  sources?: TreeSourceRef[];
 }
 
 export interface TreeSource {
@@ -65,13 +97,62 @@ export interface TreeSource {
   title: string;
   citation?: string;
   url?: string;
+  /**
+   * The memory artifact's own URL, when this source is a memory.
+   *
+   * `url` is the human `/memories/<id>` page. `image_transcribe` now accepts it
+   * as `memoryArtifactUrl` and resolves it; `image_read` still does not. The
+   * artifact URL is kept in the response anyway, because it saves the lookup
+   * and is what a budget-skipped memory's retry note names. MUST NEVER REACH `tree.gedcomx.json` -- it is absent from
+   * `TREE_SOURCE_FIELDS`, which is what strips it on the write.
+   */
+  artifact_url?: string;
   notes?: string[];
+  /**
+   * A memory's text: a story's own words, or OCR of a scan the filter kept.
+   *
+   * Named `text`, not `transcription`, deliberately: the destination field in
+   * `research.json` is `transcription`, but a story told by a family member is
+   * not a transcription of anything, and the spec row says so.
+   *
+   * MUST NEVER REACH `tree.gedcomx.json`. `TREE_SOURCE_FIELDS` is
+   * `{id, title, citation, author, url}` and `project_create` validates with
+   * `validateParsed` WITHOUT sanitizing, so one stray key aborts the whole
+   * project write -- the `notes` defect PR #1800 fixed (finding F7, validator
+   * V6). `project_create`'s host build drops it (`utils/person-read-tree.ts`
+   * keeps only `TREE_SOURCE_FIELDS`).
+   */
+  text?: string;
+  /**
+   * Project-relative path of a retained memory scan (images/<key>.jpg), set only
+   * when `person_read` was given `projectPath` and the save succeeded. It is
+   * what a retained source's `image_filename` wants.
+   *
+   * MUST NEVER REACH `tree.gedcomx.json`, for the same reason as `text` above:
+   * `TREE_SOURCE_FIELDS` is `{id, title, citation, author, url}` and
+   * `project_create` validates without sanitizing, so one stray key aborts the
+   * whole project write.
+   */
+  image_ref?: string;
 }
 
 export interface PersonReadResult {
   persons: TreePerson[];
   relationships: TreeRelationship[];
   sources: TreeSource[];
+  /** Present ONLY when something was silently dropped from this response.
+   *  Absent on a clean read, so the top-level shape is unchanged for every
+   *  caller that never triggers one. @chesworthrm's merge condition on #2593:
+   *  endpoint closure turns a loud `project_create` refusal into a quiet
+   *  partial loss, and "a quiet partial loss of the subject's own parentage is
+   *  worse than the refusal it replaces if nobody can see it happened." */
+  notes?: string[];
+  /** Set when `projectPath` was given: the handle of this read staged under
+   *  results/.staging/, or `null` when staging failed (`stagingError` says why).
+   *  Absent without `projectPath`. Response-only, like `notes` -- never a tree
+   *  key (`TREE_TOP_LEVEL_FIELDS`). */
+  staged?: { resultsRef: string; returnedCount: number } | null;
+  stagingError?: string;
 }
 
 // ─── FS-extended GEDCOMX (raw API response) ───────────────────────────────
@@ -96,6 +177,8 @@ export interface FSChildAndParentsRelationship {
   child?: FSResourceRef;
   parent1Facts?: FSFact[];
   parent2Facts?: FSFact[];
+  /** Sent only in a read of a person this relationship names (issue #3229). */
+  sources?: GedcomXSourceReference[];
 }
 
 // FS relationship entries in `relationships[]` (couples, bare
@@ -108,6 +191,8 @@ export interface FSRelationship {
   person1?: FSResourceRef;
   person2?: FSResourceRef;
   facts?: FSFact[];
+  /** Sent only in a read of a person this relationship names (issue #3229). */
+  sources?: GedcomXSourceReference[];
 }
 
 export interface FSSourceDescription extends GedcomXSourceDescription {

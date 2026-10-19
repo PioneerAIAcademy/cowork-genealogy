@@ -4,12 +4,34 @@ import { join } from "path";
 import { tmpdir } from "os";
 import {
   stageSearchResults,
+  consumeStagedResults,
   finalizeStagedResults,
   unloggedStagedSearches,
+  stripQueryPlumbing,
+  readStagedEnvelopeQuery,
+  resolveStagedRef,
+  readStagedResults,
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
+import { backingStore } from "../helpers/store-backend.js";
+import { runWithProjectStore, type ProjectStore } from "../../src/store/project-store.js";
+import { STAGING_CAPABLE_TOOLS, STAGING_SEARCH_TOOLS } from "../../src/utils/results-staging.js";
+
 describe("results-staging", () => {
+  describe("the two producer sets (#2048)", () => {
+    it("every search producer is a capable producer, and the three acquisition producers are capable too", () => {
+      for (const t of STAGING_SEARCH_TOOLS) expect(STAGING_CAPABLE_TOOLS.has(t)).toBe(true);
+      expect(STAGING_CAPABLE_TOOLS.has("image_transcribe")).toBe(true);
+      expect(STAGING_CAPABLE_TOOLS.has("record_read")).toBe(true);
+      expect(STAGING_CAPABLE_TOOLS.has("person_read")).toBe(true);
+      // The notes stay search semantics: the acquisition producers are NOT search-shaped.
+      expect(STAGING_SEARCH_TOOLS.has("image_transcribe")).toBe(false);
+      expect(STAGING_SEARCH_TOOLS.has("record_read")).toBe(false);
+      expect(STAGING_SEARCH_TOOLS.has("person_read")).toBe(false);
+    });
+  });
+
   let dir: string;
 
   beforeEach(async () => {
@@ -26,6 +48,49 @@ describe("results-staging", () => {
       return [];
     }
   };
+
+  describe("an absolute staged handle reaches the store project-relative", () => {
+    // PgS3ProjectStore keys rows by ref and refuses an absolute one, where the
+    // file store resolves it; every reader must hand the store the relative
+    // spelling, or an absolute handle the guard accepted reads as "never staged".
+    const keyedStore = (): ProjectStore => {
+      const inner = backingStore();
+      const refuseAbsolute = (ref: string) => {
+        if (ref.startsWith("/")) throw new Error(`absolute ref '${ref}' reached the store`);
+      };
+      return new Proxy(inner, {
+        get(target, prop, receiver) {
+          const value = Reflect.get(target, prop, receiver);
+          if (typeof value !== "function") return value;
+          return (projectPath: string, ref: unknown, ...rest: unknown[]) => {
+            // As the Postgres store answers: `exists` says no, the rest throw.
+            if (prop === "exists" && typeof ref === "string" && ref.startsWith("/")) return Promise.resolve(false);
+            if (typeof ref === "string") refuseAbsolute(ref);
+            return value.call(target, projectPath, ref, ...rest);
+          };
+        },
+      });
+    };
+
+    it("finalize, the envelope query, readStagedResults and consume all accept it", async () => {
+      const response = { query: { surname: "Smith" }, results: [{ recordId: "R1" }] };
+      const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response });
+      const absolute = join(dir, handle!.resultsRef);
+      await runWithProjectStore(keyedStore(), async () => {
+        expect((await readStagedEnvelopeQuery(dir, absolute))?.tool).toBe("record_search");
+        expect(await readStagedResults(dir, absolute)).toHaveLength(1);
+        const fin = await finalizeStagedResults({
+          projectPath: dir,
+          stagedResultsRef: absolute,
+          logId: "log_001",
+          expectedTool: "record_search",
+        });
+        expect(fin.returnedCount).toBe(1);
+        await consumeStagedResults(dir, [absolute]);
+      });
+      expect(await stagingFiles()).toEqual([]);
+    });
+  });
 
   describe("stageSearchResults", () => {
     it("stages a hit and returns a handle", async () => {
@@ -90,6 +155,43 @@ describe("results-staging", () => {
     });
   });
 
+  describe("stripQueryPlumbing / readStagedEnvelopeQuery (#1779)", () => {
+    it("strips projectPath and subjectId and keeps every other key", () => {
+      expect(stripQueryPlumbing({ surname: "A", recordType: "birth", projectPath: "/p", subjectId: "I1" })).toEqual({
+        surname: "A",
+        recordType: "birth",
+      });
+    });
+
+    it.each([["null", null], ["a string", "{}"], ["an array", []], ["undefined", undefined]])(
+      "returns undefined for %s",
+      (_label, value) => {
+        expect(stripQueryPlumbing(value)).toBeUndefined();
+      },
+    );
+
+    it("reads a staged handle's tool and stripped query without consuming it", async () => {
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: { surname: "A", projectPath: "/p" }, results: [{ recordId: "R1" }] },
+      });
+      expect(await readStagedEnvelopeQuery(dir, handle!.resultsRef)).toEqual({
+        tool: "record_search",
+        query: { surname: "A" },
+      });
+      expect(await stagingFiles()).toHaveLength(1);
+    });
+
+    it("returns undefined for a ref outside the staging dir, a missing file, or a traversal", async () => {
+      await mkdir(join(dir, "results"), { recursive: true });
+      await writeFile(join(dir, "results", "log_001.json"), JSON.stringify({ tool: "record_search", payload: { query: {} } }));
+      expect(await readStagedEnvelopeQuery(dir, "results/log_001.json")).toBeUndefined();
+      expect(await readStagedEnvelopeQuery(dir, `${STAGING_SUBDIR}/missing.json`)).toBeUndefined();
+      expect(await readStagedEnvelopeQuery(dir, "../outside.json")).toBeUndefined();
+    });
+  });
+
   describe("unloggedStagedSearches", () => {
     // A project the reader will accept: classifyProjectPath wants research.json
     // present before it will read anything out of the folder.
@@ -115,6 +217,25 @@ describe("results-staging", () => {
       expect(await unloggedStagedSearches(dir)).toHaveLength(2);
     });
 
+    it("does not count a staged acquisition file with no log entry", async () => {
+      // record-extraction logs an upload as `user_provided` and a record_read with
+      // no stagedResultsRef, so neither file can ever pair; counting it would nag
+      // the next search about a read that was logged correctly.
+      await writeResearch([]);
+      await stage("image_transcribe");
+      await stage("record_read");
+      await stage("person_read");
+      expect(await unloggedStagedSearches(dir)).toEqual([]);
+    });
+
+    it("still counts an unlogged search staged beside an acquisition file", async () => {
+      await writeResearch([]);
+      await stage("image_transcribe");
+      await stage("record_search");
+      const unlogged = await unloggedStagedSearches(dir);
+      expect(unlogged.map((u) => u.tool)).toEqual(["record_search"]);
+    });
+
     it("returns handles the model can hand straight back as stagedResultsRef", async () => {
       // A bare count is unusable to the session that lost the ref, which is the
       // session this note exists for. The ref must come back with it.
@@ -126,13 +247,15 @@ describe("results-staging", () => {
       expect(unlogged.tool).toBe("record_search");
       expect(Date.parse(unlogged.retrieved)).not.toBeNaN();
 
-      // And it is a ref finalizeStagedResults actually accepts.
+      // And it is a ref finalizeStagedResults actually accepts; research_log_append
+      // then consumes it once its research.json write commits.
       await finalizeStagedResults({
         projectPath: dir,
         stagedResultsRef: unlogged.ref,
         logId: "log_009",
         expectedTool: unlogged.tool,
       });
+      await consumeStagedResults(dir, [unlogged.ref]);
       expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
 
@@ -141,13 +264,15 @@ describe("results-staging", () => {
       const handle = await stage();
       expect(await unloggedStagedSearches(dir)).toHaveLength(1);
 
-      // The real path: research_log_append finalizes, which unlinks the staged file.
+      // The real path: research_log_append finalizes, commits research.json, and
+      // only then consumes the staged file.
       await finalizeStagedResults({
         projectPath: dir,
         stagedResultsRef: handle!.resultsRef,
         logId: "log_001",
         expectedTool: "record_search",
       });
+      await consumeStagedResults(dir, [handle!.resultsRef]);
       expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
 
@@ -260,7 +385,7 @@ describe("results-staging", () => {
   });
 
   describe("finalizeStagedResults", () => {
-    it("wraps the staged file into results/<logId>.json, recomputes count, and unlinks the staged file", async () => {
+    it("wraps the staged file into results/<logId>.json, recomputes count, and KEEPS the staged file", async () => {
       const handle = await stageSearchResults({
         projectPath: dir,
         tool: "record_search",
@@ -281,8 +406,41 @@ describe("results-staging", () => {
       expect(sidecar).toMatchObject({ log_id: "log_005", tool: "record_search", returned_count: 3 });
       expect(sidecar.payload.results).toHaveLength(3);
 
-      // staged file consumed.
+      // Not consumed: research_log_append removes it only after its commit, so a
+      // call refused after finalizing leaves it for the corrected re-send.
+      expect(await stagingFiles()).toHaveLength(1);
+    });
+
+    it("consumeStagedResults removes the staged file, and an absent ref is not an error", async () => {
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: {}, results: [{ recordId: "A" }] },
+      });
+      await consumeStagedResults(dir, [handle!.resultsRef, `${STAGING_SUBDIR}/never-staged.json`]);
       expect(await stagingFiles()).toEqual([]);
+    });
+
+    it("names what to do when the staged ref is missing, and says invalid JSON when it is unparseable", async () => {
+      await expect(
+        finalizeStagedResults({
+          projectPath: dir,
+          stagedResultsRef: `${STAGING_SUBDIR}/gone.json`,
+          logId: "log_001",
+          expectedTool: "record_search",
+        }),
+      ).rejects.toThrow(/stagedResultsRef '.*gone\.json' is not in results\/\.staging\/ — each staged ref can be logged once/);
+
+      await mkdir(join(dir, STAGING_SUBDIR), { recursive: true });
+      await writeFile(join(dir, STAGING_SUBDIR, "bad.json"), "{not json", "utf-8");
+      await expect(
+        finalizeStagedResults({
+          projectPath: dir,
+          stagedResultsRef: `${STAGING_SUBDIR}/bad.json`,
+          logId: "log_001",
+          expectedTool: "record_search",
+        }),
+      ).rejects.toThrow(/stagedResultsRef '.*bad\.json' is invalid JSON/);
     });
 
     it("rejects a ref outside results/.staging/", async () => {
@@ -323,5 +481,87 @@ describe("results-staging", () => {
         }),
       ).rejects.toThrow(/does not match log entry tool/);
     });
+  });
+});
+
+// The cases reproduce the copy errors a corpus-wide scan of the committed run
+// logs found (11 of 3,636 ref-carrying calls): the init-project k8d pair is
+// verbatim; for the others the differing characters are the real ones and the
+// rest of the UUID is filled in.
+describe("resolveStagedRef", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "resolve-ref-test-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const stage = async (...names: string[]) => {
+    await mkdir(join(dir, STAGING_SUBDIR), { recursive: true });
+    for (const n of names) await writeFile(join(dir, STAGING_SUBDIR, `${n}.json`), "{}");
+  };
+  const at = (n: string) => `${STAGING_SUBDIR}/${n}.json`;
+
+  it("returns an exact ref unchanged, with no correction", async () => {
+    await stage("dbef78b1-1e5f-438a-ac1d-9bee233874f9");
+    expect(await resolveStagedRef(dir, at("dbef78b1-1e5f-438a-ac1d-9bee233874f9"))).toEqual({
+      ref: at("dbef78b1-1e5f-438a-ac1d-9bee233874f9"),
+    });
+  });
+
+  it.each([
+    ["a dropped character (init-project k8d)", "dbef78b1-1e5f-438a-ac1d-9ee233874f9", "dbef78b1-1e5f-438a-ac1d-9bee233874f9"],
+    ["one character changed (pedro-chaves-spouse)", "0b7e5f0c-61d4-4b8e-88a8-2173d1390cb4", "0b7e5f0c-61d4-4b8e-88a8-2273d1390cb4"],
+    ["one character changed (anders-monsen)", "5d2c3a10-7c1e-4d55-a1b2-9824097a7245", "5d2c3a10-7c1e-4d55-a1b2-9824099a7245"],
+    ["two characters changed (anders-monsen)", "87521b4-0e6f-4a8b-9c1d-2e3f4a5b6c7d", "87521cd4-0e6f-4a8b-9c1d-2e3f4a5b6c7d"],
+  ])("maps a near-copy onto the one staged file — %s", async (_label, bad, good) => {
+    await stage(good, "11111111-2222-4333-8444-555555555555");
+    expect(await resolveStagedRef(dir, at(bad))).toEqual({ ref: at(good), correctedFrom: at(bad) });
+  });
+
+  it.each([
+    ["a bare UUID", "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b"],
+    ["a bare UUID with .json", "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b.json"],
+    ["a .staging/ prefix with no results/", ".staging/6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b.json"],
+  ])("restores a dropped results/.staging/ prefix — %s", async (_label, bad) => {
+    await stage("6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b");
+    expect(await resolveStagedRef(dir, bad)).toEqual({
+      ref: at("6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b"),
+      correctedFrom: bad,
+    });
+  });
+
+  it("completes a name cut short to a unique prefix of 8 or more characters", async () => {
+    await stage("e2e868d0-91aa-4c2b-8f3e-0a1b2c3d4e5f", "77777777-2222-4333-8444-555555555555");
+    expect(await resolveStagedRef(dir, at("e2e868d0"))).toEqual({
+      ref: at("e2e868d0-91aa-4c2b-8f3e-0a1b2c3d4e5f"),
+      correctedFrom: at("e2e868d0"),
+    });
+  });
+
+  it.each([
+    ["two staged files are both near it", ["aaaaaaaa-1111-4222-8333-444444444444", "aaaaaaaa-1111-4222-8333-444444444445"], at("aaaaaaaa-1111-4222-8333-44444444444")],
+    ["it is more than three edits from every file", ["aaaaaaaa-1111-4222-8333-444444444444"], at("aaaaaaaa-1111-4222-8333-4444444xxxx4")],
+    ["a prefix shorter than 8 characters", ["e2e868d0-91aa-4c2b-8f3e-0a1b2c3d4e5f"], at("e2e868d")],
+    ["it names a finalized sidecar, not a staged file", ["aaaaaaaa-1111-4222-8333-444444444444"], "results/log_027.json"],
+    ["it names another directory", ["aaaaaaaa-1111-4222-8333-444444444444"], "elsewhere/aaaaaaaa-1111-4222-8333-444444444444.json"],
+    ["it walks out of the project", ["aaaaaaaa-1111-4222-8333-444444444444"], "../aaaaaaaa-1111-4222-8333-444444444444.json"],
+  ])("never guesses when %s", async (_label, names, bad) => {
+    await stage(...(names as string[]));
+    expect(await resolveStagedRef(dir, bad as string)).toEqual({ ref: bad });
+  });
+
+  it("returns the ref unchanged when there is no staging directory at all", async () => {
+    expect(await resolveStagedRef(dir, at("dbef78b1-1e5f-438a-ac1d-9ee233874f9"))).toEqual({
+      ref: at("dbef78b1-1e5f-438a-ac1d-9ee233874f9"),
+    });
+  });
+
+  it("reads a near-copy through readStagedResults, and still refuses a ref near nothing", async () => {
+    const good = "dbef78b1-1e5f-438a-ac1d-9bee233874f9";
+    await mkdir(join(dir, STAGING_SUBDIR), { recursive: true });
+    await writeFile(join(dir, STAGING_SUBDIR, `${good}.json`), JSON.stringify({ payload: { results: [{ id: "R1" }] } }));
+    expect(await readStagedResults(dir, at("dbef78b1-1e5f-438a-ac1d-9ee233874f9"))).toEqual([{ id: "R1" }]);
+    await expect(readStagedResults(dir, at("00000000-0000-4000-8000-000000000000"))).rejects.toThrow("does not exist");
   });
 });

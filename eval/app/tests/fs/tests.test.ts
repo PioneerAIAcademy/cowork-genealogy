@@ -1,3 +1,4 @@
+import os from 'node:os';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -74,6 +75,42 @@ describe('tests — listTests', () => {
     const { tests } = await listTests();
     expect(tests[0].blocked).toEqual({ kind: 'missing-scenario', scenario: 'does-not-exist' });
     await handle2.cleanup();
+  });
+
+  it('reports a TRAVERSING scenario as missing rather than probing for it', async () => {
+    // `computeBlockedReason` calls fs.access on a caller-supplied name, so an
+    // uncontained value is an existence oracle for any path on the machine.
+    //
+    // The traversal must reach something that EXISTS or the test cannot fail:
+    // uncontained, fs.access succeeds and `blocked` is null; contained, the path
+    // is refused and reported missing. My first version aimed at a path that did
+    // not exist and stayed green with the guard removed.
+    const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'oracle-scenario-'));
+    const handle2 = await makeFixtureTree({
+      tests: [
+        { skill: 'locality-guide', filename: 'trav.json', body: makeTest({ id: 'ut_locality_guide_001', skill: 'locality-guide', input: { user_message: 'x', scenario: '../'.repeat(12) + outside.replace(/^\//, '') } }) },
+      ],
+    });
+    process.env.EVAL_DIR = handle2.root;
+    const { tests } = await listTests();
+    expect(tests[0].blocked?.kind).toBe('missing-scenario');
+    await handle2.cleanup();
+    await fs.rm(outside, { recursive: true, force: true });
+  });
+
+  it('reports a TRAVERSING fixture as missing rather than probing for it', async () => {
+    const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'oracle-fixture-'));
+    await fs.writeFile(path.join(outside, 'real.json'), '{}', 'utf8');
+    const handle2 = await makeFixtureTree({
+      tests: [
+        { skill: 'locality-guide', filename: 'trav2.json', body: makeTest({ id: 'ut_locality_guide_001', skill: 'locality-guide', mcp_fixtures: ['../'.repeat(12) + path.join(outside, 'real').replace(/^\//, '')] }) },
+      ],
+    });
+    process.env.EVAL_DIR = handle2.root;
+    const { tests } = await listTests();
+    expect(tests[0].blocked?.kind).toBe('missing-fixture');
+    await handle2.cleanup();
+    await fs.rm(outside, { recursive: true, force: true });
   });
 
   it('flags blocked when fixture is missing', async () => {
@@ -276,6 +313,13 @@ describe('tests — hasGradingRelevantChange', () => {
     expect(hasGradingRelevantChange(a, b)).toBe(true);
   });
 
+  it('detects tag edit (tags are no longer cosmetic, issue #2694)', () => {
+    const a = makeTest({});
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    b.test.tags = ['grade:trigger'];
+    expect(hasGradingRelevantChange(a, b)).toBe(true);
+  });
+
   it('detects holdout toggle (it survives snapshot normalization)', () => {
     const a = makeTest({});
     const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
@@ -318,6 +362,25 @@ describe('tests — hasGradingRelevantChange', () => {
     const a = makeTest({});
     const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
     b.test.expected_outcome = 'pass';
+    expect(hasGradingRelevantChange(a, b)).toBe(false);
+  });
+
+  it('flags an edited delegation on a direct-agent test', () => {
+    // The delegation is the whole instruction the run receives, and the harness
+    // asserts the recorded Agent spawn carries it verbatim (issue #2246).
+    // Editing it changes what the run was, so the run log is stale.
+    const a = makeTest({});
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    a.input = { delegation: 'Assess q_001.' };
+    b.input = { delegation: 'Declare q_001 exhaustive.' };
+    expect(hasGradingRelevantChange(a, b)).toBe(true);
+  });
+
+  it('does not flag an unchanged delegation', () => {
+    const a = makeTest({});
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    a.input = { delegation: 'Assess q_001.' };
+    b.input = { delegation: 'Assess q_001.' };
     expect(hasGradingRelevantChange(a, b)).toBe(false);
   });
 });

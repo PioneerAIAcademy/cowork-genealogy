@@ -22,7 +22,7 @@ the agent's written GPS proof statement sound, graded from the research
 log (an advisory score that does not gate the verdict). The harness adds a
 third, non-judge axis: **compliance** — did the GPS guardrail skills
 actually run (§7.5). Recall and compliance are reported separately and
-combined into an `outcome` gate (§7.2.1). Per-PR
+reported beside an `outcome` gate that carries the genealogical verdict (§7.2.1). Per-PR
 regression coverage is the job of unit tests (see `unit-test-spec.md`);
 e2e is run on demand, one test at a time.
 
@@ -135,6 +135,7 @@ Test metadata.
 | `id` | string | yes | Unique slug matching the directory name |
 | `name` | string | yes | Short human-readable name |
 | `genre` | enum | no | `strip` (default) or `record-hint` — see §3.6 |
+| `image_basis` | boolean | no | Record-hint fixtures only. `true` when the resolution rests on reading the original page images; `false`/absent when it rests on indexes alone. When `true`, `expected-findings.json` must cite an image ark — see §3.6.1. A non-boolean value is a hard `ERROR`. |
 | `source_pid` | string | yes | FamilySearch PID the fixture was captured from |
 | `captured` | string (YYYY-MM-DD) | yes | Date the snapshot was taken |
 | `researcher_question` | string | yes | Natural-language question that becomes the `/research` user message |
@@ -179,9 +180,9 @@ matters when hand-authoring:
     "updated": "2026-05-26T00:00:00Z"
   },
   "researcher_profile": {
-    "experience_level": "intermediate",
+    "experience_level": "novice",
     "subscriptions": [],
-    "narration_guidance": "concise"
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
   },
   "questions": [], "plans": [], "log": [], "sources": [],
   "assertions": [], "person_evidence": [], "conflicts": [],
@@ -260,7 +261,17 @@ stripped starting tree, then reviewed and pruned by the author.
 
 Most findings should be `required: true` for v1. The `false` lever
 exists for cases where the author is unsure whether a finding is
-truly part of the answer.
+truly part of the answer — and, second, for an `avoid` finding whose
+guard is *structurally dead*: one whose name tokens unavoidably collide
+with a person the starting tree legitimately contains, which
+`apply_avoid_guard` force-fails on every run including a perfect one
+(§3.4.1). At `required: true` that makes `pass` unreachable and the
+fixture ungradable. A fixture using the lever this way must say so in
+its README and name what the dead guard costs: the `recall_total`
+ceiling, a permanent `avoid_guard.forced_false` entry in every run log,
+and one structural judge-vs-human disagreement per annotated run
+against `calibrate_judge`'s `PER_FINDING_TARGET`. Worked example:
+`eval/tests/e2e/hinrich-burmeister-spouse/README.md`.
 
 #### 3.4.1 Negative findings (`polarity: "avoid"`)
 
@@ -298,9 +309,19 @@ linter's own matcher, given+surname token overlap plus fact type for
 recall fractions are recomputed, and the verdict is recomputed
 **downgrade-only**. What was forced is recorded under the result's
 `judge_output.avoid_guard.forced_false` and in the finding's `notes`.
-The judge still grades the subjective half (is the claim present "only
-as an explicitly rejected hypothesis"?); the guard only prevents a
-model grader from excusing the objective half. Authoring gates treat
+The guard is **unconditional on presence**: it overrides the
+rejected-hypothesis allowance rather than preserving it. A target that
+appears in the agent's final tree is forced to `matched: "false"`
+however the agent annotated it — including as an explicitly rejected
+candidate, which is the outcome the allowance exists to permit.
+Measured against the shipped guard with every judge label set to `true`:
+a clean final tree scores the avoid finding `true`, and the same tree
+plus the avoided person written in as a rejected candidate scores it
+`false`. So an `avoid` finding must not promise a pass route through the
+tree. Word its pass condition to put a rejected candidate in the
+research log (`research.json`) and keep it out of `tree.gedcomx.json`;
+a finding whose text offers the tree route describes a pass that cannot
+be taken. Authoring gates treat
 `avoid` findings accordingly: the presence mirror skips them (the
 claim was never in the tree), while the stripping linter still warns
 when an avoided claim is already present in the *starting* tree — a
@@ -311,6 +332,36 @@ exactly like a recover finding (`matched: "true"` = correctly
 avoided). Pair a required `avoid` guard with a required positive
 finding that the agent *documented* the negative conclusion, so a run
 that does nothing at all does not pass by default.
+
+**Word that paired finding so an absence cannot satisfy it.** Every
+`avoid` finding passes by non-assertion, so on a fixture whose findings
+are all negative the paired positive finding is the only thing standing
+between a zero-research run and `pass`. A bar phrased as "the hint is
+reported as unsupported" is met literally by a run that searched
+nothing and wrote "I could not confirm this". Require instead that the
+conclusion **rest on a named conflicting record** — the disproving
+record of §3.6.1 — and say in the finding that a conclusion resting
+only on failure to confirm does not satisfy it.
+
+**Open doctrine call: guards that can never go green (as of 2026-09-18).**
+Three committed fixtures — `antonio-lucas-spouse`,
+`thomas-seaver-other-wife` and `heinrich-zinsmeister-death` — carry a
+`required: true` avoid finding whose name tokens collide with a
+non-exempt person in their own starting tree, so `apply_avoid_guard`
+force-fails it on every run and their ceiling is `partial`, a perfect run
+included. Four remedies have been named and none adopted: relax the guard
+so it matches on more than name tokens, drop `required` on the colliding
+findings, re-author those findings so their target names no longer
+collide, or exclude guard-forced findings from `calibrate_judge`'s
+denominator. Which one to take is the lead's call, not the fixture
+author's. Until it is made the set is pinned by
+`test_no_new_fixture_becomes_unpassable_via_the_avoid_guard`
+(`eval/harness/tests/unit/test_e2e_fixture_corpus.py`), which fails in
+**both** directions — a fourth fixture entering the state fails it, and
+fixing one of the three fails it too — so the defect can neither spread
+nor be silently repaired while the call is open. The mirror-image defect —
+a guard that can never go *red* — is a different thing and is tracked
+separately.
 
 #### 3.4.2 Relationship findings: `matched` is derived, not trusted
 
@@ -378,6 +429,15 @@ Scope and record-keeping:
   otherwise miss. `fact` stays excluded from the *derivation* on its own
   2026-08-10 measurement, but the drift check still reports its disagreements.
   Whoever proposes widening the derivation again is standing here.
+- **Re-typing a `fact` finding to `relationship`, so the derivation and the
+  relationship rules cover it, is rejected too.** It is the obvious way to
+  bring a marriage-with-date finding under the backstop, and it would reach a
+  real population — but the type lives in
+  `expected-findings.json`, so changing it changes that fixture's
+  `findings_hash`, which the calibration loader treats as a hard error on
+  every annotation for the slug. That buys a re-grade of every graded run
+  across those fixtures, to relocate a grading rule that can instead be
+  stated once in the judge prompt. The date rule in §7.1 is that rule.
 - What was overridden is recorded under
   `judge_output.component_derivation.overrides` (each with `finding_id`,
   the model's `model` label and the `derived` one), the model's original
@@ -437,8 +497,20 @@ stripped:
   assert, plus a `required` recover finding that the agent documented
   the negative conclusion (§3.4.1). Say in the fixture README which
   state the fixture is in.
+- **The adjudicator may use `packages/engine/mcp-server/dev/try-*.ts`
+  against live FamilySearch to *retrieve* records** — collections search,
+  record search, record read, image read. **The identity judgement stays
+  human:** no tool output decides whether a hint record concerns the tree
+  person. A tool path for this retrieval does exist and is permitted; any
+  statement that there is "no tool shortcut" describes the judgement, not
+  the retrieval. The alternative this beat was hand-only retrieval, meant
+  to keep a fixture's ground truth independent of the tool path the
+  benchmark measures; the required ark plus a human identity call already
+  carry that load, at a fraction of the per-card cost. Record in the
+  fixture README that retrieval was tool-assisted, so the next reader can
+  weigh it.
 
-#### 3.6.1 Citation shape for documented negatives (decision, issue #1025)
+#### 3.6.1 Citation shape for documented negatives (decision)
 
 A resolved-negative (outcome (c) above) makes two different claims,
 and they do not take the same citation:
@@ -450,8 +522,8 @@ and they do not take the same citation:
 - **The absence** — "no record in the collection establishes X." By
   definition there is nothing to point an ark at.
 
-Once a resolvable ark is required on record-hint resolutions (issue
-#970), that requirement attaches to the **disproving record only**.
+Once a resolvable ark is required on record-hint resolutions, that
+requirement attaches to the **disproving record only**.
 Write it into the `avoid` finding's or the paired required finding's
 `supporting_sources` as a literal `ark:/61903/...`. The absence claim
 itself is written as plain prose — ideally naming the collection and
@@ -462,7 +534,7 @@ carries the disproving record's ark — the absence sentence riding
 alongside it with no ark is not a gap.
 
 **The ark must be the full `ark:/61903/...` path — not the bare
-`XXXX-XXXX` id** (decision, issue #970, 2026-08-02). A naive
+`XXXX-XXXX` id** (decision, 2026-08-02). A naive
 `\b[A-Z0-9]{4}-[A-Z0-9]{2,4}\b` id-shaped token matches on collection
 date ranges alone (`Czech Republic, Church Books, 1552-1981` reads as
 one), and a FamilySearch tree PID is shape-identical to a record ark
@@ -473,6 +545,26 @@ full-path form for this reason; it cannot verify the ark actually
 resolves to the record claimed (CI holds no FamilySearch token) —
 what it buys is that a false citation becomes checkable in one click
 by a human reviewer instead of invisible.
+
+**When the resolution rests on reading the original page images**, the
+fixture declares it with `"image_basis": true` in `fixture.json`, and
+then the full-ark requirement above is raised to an **image** ark:
+at least one `supporting_sources` entry, on some finding, must carry an
+image ark. The ark taxonomy is settled — image arks are `3:1:` or
+`3:2:` in their two path segments, while `1:1:`, `1:2:`, `2:5:` and
+`4:1:` are indexes, not images (the first segment is what distinguishes
+an image; `1:1:` vs `1:2:` is a difference in indexing, not the
+index/image split). An index ark, or an image ark that appears only in
+the fixture's `README.md`, does not satisfy the flag — the image ark
+must be in `expected-findings.json`, since that is the ground truth the
+judge and a reviewer read. This is a **declared** flag rather than a
+detector run over README prose: a prose claim that an image was read
+can be satisfied in prose, so the author asserts the image basis
+explicitly and the linter checks the citation that backs it. When the
+flag is `false` or absent the bar is unchanged — one full ark anywhere.
+A non-boolean `image_basis` (`"true"`, `1`, `null`) is a hard `ERROR`,
+because truthiness-coercing it would let `"false"` enable the check and
+a typo'd string silently disable it.
 
 ---
 
@@ -504,19 +596,25 @@ user message of the form:
 /research --autonomous <researcher_question>
 ```
 
-The `--autonomous` flag instructs the skill body to proceed without
-pausing for the user. No test-mode system prompt is added; the
-e2e test exercises the production code path.
+The harness still sends `--autonomous`, but since the continuous-work change to
+`research/SKILL.md` (2026-09-23) **no plugin body reads it**: proceeding without pausing
+is now what every run does, with or without the string. It is kept in the
+message because it is a listed trigger in `research/SKILL.md`'s description,
+and because removing it would change what every committed run log was
+produced under. No test-mode system prompt is added; the e2e test exercises
+the production code path.
 
 `/research` is specified separately. For the contract that matters
 here:
 
 - It primes the agent on the GPS workflow (question-selection →
-  research-plan → search-records → record-extraction →
+  research-plan → search-records → `extraction_append` (text sources via
+  `record-structurer`) →
   conflict-resolution → proof-conclusion, iterating as needed)
 - It instructs the agent to read `research.json` and decide the
   next sub-skill based on state
-- Under `--autonomous`, it does not pause for clarifying questions
+- It does not pause for clarifying questions, and that no longer depends on
+  the flag
 
 ---
 
@@ -570,12 +668,13 @@ the `max_cost_usd` note in §6 step 5.
    | Project completed | `completed` | `research.json::project.status == "completed"` |
    | Inactivity | `inactivity` | No SDK message at all for `caps.inactivity_seconds` (silence), OR no *progress* — no assistant text and no tool call/result — for `caps.progress_stall_seconds` while the stream stays alive (the **progress watchdog**: a stall can keep emitting non-progress messages, so a plain silence timer misses it) |
    | Wall-clock cap | `timeout` | **Active** (monotonic) elapsed time > `caps.wall_clock_seconds` |
-   | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls` |
+   | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls`. The run ends at the first SDK message after the crossing call, and the label outranks a `cost_cap` the final message would set. |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
-   | Cost cap | `cost_cap` | Final cost > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
-   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress) — see note below |
+   | Cost cap | `cost_cap` | Final cost (the last CLI process's, on a resumed run) > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
+   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress), or with `research.json` missing or unreadable, which is never nudged. The terminal hand-back is classified and counted in `usage.hand_back_classes` — the first two are the gate-False reasons that ARE agent defects; the last is counted as `terminal_ok` — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
+   | **Host slept** | `host_slept` | The heartbeat (`SleepDetector`) counted `usage.counted_sleep_seconds >= caps.inactivity_seconds` of host sleep. Outranks the cap/watchdog reason it replaces (`timeout` / `inactivity`) and `completed`, because on Windows `time.monotonic()` advances through Modern Standby, so the sleep is billed against the wall-clock cap and the run is cut mid-standby. **This run IS committed but is not graded and is excluded from outcome rates — see the retention rule below.** |
 
    The `caps.*` values default to those in
    `eval/harness/e2e/orchestrator.py` (`FixtureCaps`), which a fixture may
@@ -645,12 +744,31 @@ the `max_cost_usd` note in §6 step 5.
    claude.ai connectors, which routinely report `needs-auth`. Thresholds and
    their calibration against the incident: `e2e/mcp_health.py`.
 
+   **`host_slept` retention: committed, ungraded, rate-excluded** (lead ruling
+   2026-09-29). Unlike `mcp_unavailable`, a slept run *is* committed
+   — the `run-` prefix, so the operator can see why a run dropped out of the
+   rates — but the judge is skipped (`verdict: "skipped"`), so it costs no opus
+   call and books no genealogical grade. It is excluded from outcome rates the
+   same way every `skipped` run is (it sits in the `skipped` recall/gate bucket,
+   out of pass/fail); `corpus_report.py` additionally names how many of those
+   skips were `host_slept` so a slept host is not read as that many agent
+   crashes. Why relabel rather than rescue: on Windows `time.monotonic()`
+   advances through Modern Standby, so the sleep is billed against the wall-clock
+   cap and the run is cut mid-standby with only a fraction of its budget spent on
+   real work — grading it would measure the power settings, not the agent.
+   Extending the cap and resuming was rejected: surviving a long standby is
+   unverified, and it rewrites the wait loop. The caps and watchdogs stay on raw
+   monotonic; only the *label* changes, decided by the pure `sleep_relabel`
+   helper (`orchestrator.py`) so the stop decision is unit-testable without the
+   SDK loop. **Nothing checks the live behaviour** — no CI job sleeps a Windows
+   machine; the guarantee rests on the injected-clock unit tests alone.
+
    **`cost_cap` is a post-hoc label, not an enforced cap.** The check reads
    `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
    the message that arrives once the run has *already finished* and the money
-   is already spent. All **nine** `cost_cap` runs in the corpus ended with the
+   is already spent. All **eleven** `cost_cap` runs in the corpus ended with the
    SDK's own `end_turn` and `is_error: false`; none was interrupted — spend ran
-   to **$15.86–$21.50** (median $17.12) against a $15 cap. Two things block real
+   to **$15.78–$21.50** (median $16.99) against a $15 cap. Two things block real
    enforcement, so
    it was left as-is rather than half-built: there is no per-model price table
    for agent models (`judge.py::JUDGE_PRICING` covers judge models only, and a
@@ -669,7 +787,7 @@ the `max_cost_usd` note in §6 step 5.
    run's effort level, repinning that agent — its model, its effort, or both —
    is the change that does not move every other step too. **When the repin below
    was made, effort was believed to be session-wide, so the model was the only
-   lever available; it is not any more.** `record-extractor` was repinned `claude-sonnet-5`
+   lever available; it is not any more.** `record-extractor` (since retired) was repinned `claude-sonnet-5`
    → `claude-sonnet-4-6` on 2026-07-18 for exactly this: sonnet-5 hangs as a
    subagent at Cowork/e2e `effortLevel: high` — adaptive-thinking runaway, not a
    model defect, and fine at default effort. Capping its output at 8k instead was
@@ -677,20 +795,68 @@ the `max_cost_usd` note in §6 step 5.
    call or runs away across turns (0 pass, ~20 min per test). The pin's known
    cost is ~0.24/3 mean judge score, concentrated in GPS classification nuance —
    the existing "blank columns produce no assertions" rule, and
-   `informant_proximity` / `evidence_type` calls; recovering that is issue #1131.
-   **Anyone running the reasoning-effort A/B (#1136) must account for this**: a
+   `informant_proximity` / `record_basis` calls; later record-extraction work
+   added classification examples aimed at that drop.
+   **Anyone running the reasoning-effort A/B (`gh issue list --state open --search
+   "reasoning-effort A/B"`) must account for this**: a
    sweep that lowers effort changes the conditions that forced this pin, and a
    sweep that keeps `high` must not also repin the extractor back to sonnet-5.
 
-   **Continue-nudge on premature yield.** An autonomous `/research` run
-   must end at `project.status == "completed"`; instead the agent
-   occasionally narrates the next step and yields mid-loop (a known
-   orchestration stall, not a real stop). A `Stop` hook intercepts that
-   voluntary yield: while the project is unfinished it vetoes the stop
-   (`decision: "block"`) and instructs the agent to re-read `research.json`
-   and invoke the next sub-skill. The nudge is bounded by
-   `caps.max_continue_nudges` plus a no-progress guard. That cap is generous
-   by design — a full GPS proof yields after each of ~10+ sub-skill steps, so
+   **Continue-nudge on a hand-back.** An autonomous `/research` run must end at
+   `project.status == "completed"`. A `Stop` hook vetoes every voluntary yield before
+   that (except on a session with no `research.json`) with **one** reply, the prototype
+   worker's `CONTINUE_REASON`
+   (`apps/server/app/agent/continue_policy.py`) verbatim, so a paired grade compares
+   two stacks under one Stop policy (handoff U17; `test_continue_policy_parity.py` pins
+   the copy). Before replying, the hook classifies the agent's closing words
+   (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) for telemetry only. The
+   class is the FORM; the key counted in `usage.hand_back_classes` is the OUTCOME, and
+   for a completion claim the two differ — no run log ever carries a
+   `completion_claim` key:
+
+   | class | form | counted as |
+   |---|---|---|
+   | `step` | ends with the literal `Next: <step>. Continue?` — the agent asking the patron | `step` |
+   | `completion_claim` | ends with the literal `Research complete.` | `false_completion`, or `terminal_completed` when the project really is completed |
+   | `silent` | anything else | `silent` |
+
+   Runs from 2026-09-20 until U17 answered a `step` with **"Yes."** and a false
+   completion with a request to verify with `research_query`; their
+   `continue_nudges` count those replies too.
+
+   **Hand-back form.** A fixed closing line (lead ruling, 2026-09-07), matched
+   literally and nothing else. Free-prose matching was set aside: the predicate it
+   replaced caught 15 of 41 real yields. On 2026-09-27 the line was retired
+   from every prompt (`test_every_shipped_hand_back_literal_classifies`
+   requires zero), so `step` should read **0** on runs since then and a non-zero is
+   the model asking anyway; earlier runs carry it from `init-project` and
+   `question-selection`. Do not loosen the pattern, and note that markdown emphasis
+   around the line (`**Research complete.**`) does not match.
+
+   **A declared blocker reads as `silent`.** `research/SKILL.md` names a genuine
+   logged blocker as a third legitimate autonomous stop, but it names no next step,
+   so the three-class taxonomy has no separate slot for it. Recorded here rather than
+   left implicit; a fourth class is a live option if the distinction starts mattering.
+
+   **What is NOT counted as a defect.** `should_continue_run` returns False for five
+   reasons and only two are about the agent: budget exhausted and no-progress. A stop
+   on `project.status == "completed"` is the successful path (134 of the 181 committed
+   run logs), `mcp_unavailable` is an infrastructure failure rather than agent
+   behaviour, and a missing or unreadable `research.json` leaves no project for a
+   hand-back to be a defect against; all three are recorded as
+   `terminal_completed` / `terminal_mcp_unavailable` / `terminal_ok` and none counts
+   as a hand-back defect. In particular a `completion_claim` on a project that *is*
+   completed is a **truthful** completion, never a `false_completion`. The nudge is bounded by
+   `caps.max_continue_nudges` (**40**, raised from 20) plus a no-progress guard. The
+   raise is sized for the regime in which the skill emits the hand-back line, where a
+   well-formed hand-back at every step boundary consumes a nudge and a full GPS proof
+   runs ten-plus of them — **not** because the old cap was observed binding: the single run that
+   reached 20/20 was an MCP-unavailable run from 2026-08-05, and `should_continue_run`
+   has short-circuited that case since 2026-08-07. The observed ceiling over the
+   14-day window is 4. The cost of the raise is that a stall which defeats the
+   no-progress guard (one tool call between nudges) can now burn 40 turns instead of
+   20 before `natural_end`, bounded only by `max_wall_clock_seconds` / `max_cost_usd`.
+   That cap is generous by design — a full GPS proof yields after each of ~10+ sub-skill steps, so
    a stingy one ends the loop before proof-conclusion; it only bounds the
    worst case, and the no-progress check is the real backstop against a
    genuinely idle agent. If a nudge produces no tool call, or the budget is
@@ -699,23 +865,68 @@ the `max_cost_usd` note in §6 step 5.
    reason is procedural only (no research hints), so it cannot affect
    recall; the number of nudges used is recorded in
    `usage.continue_nudges`, so a run that needed many pokes reads as weaker
-   signal. The decision logic is `should_continue_run` in
+   signal. `usage.hand_back_classes` sits beside it and counts hand-backs **including the
+   terminal one that ends the run**, so where a run ends through the Stop hook it
+   carries one more entry than `continue_nudges`. It is **not** universally larger: a run
+   killed by the wall clock, the tool cap, inactivity or an error never reaches the
+   hook at all and records no terminal class. (A count is deliberately not quoted —
+   `cost_cap` is a post-hoc label applied at the `ResultMessage`, so grouping by
+   `stop_reason` alone does not cleanly separate the two populations.) `continue_nudges` stays the count of nudges actually issued.
+   Both are additive — branch on key presence, no `harness_schema_version` bump. The decision logic is `should_continue_run` in
    `eval/harness/e2e/stop_checker.py`.
 
    **Stall-detect + resume.** The progress watchdog above doesn't only abort:
    with `--resume-on-stall` (default ON; `RESUME_ON_STALL=0` to disable) the
-   harness tears down the hung `query()` and **resumes the same session**
+   harness closes the hung stream, waits for its CLI to exit, and only then
+   **resumes the same session**
    (`fork_session=False`), bounded to 2 attempts — but only in a provably-safe
    state (no in-flight tool call), else it fails fast. The safe-state gate means
    a resume can't double-apply a non-idempotent write. Resumes are recorded in
    `usage.resumes`; the captured `usage.session_id` is what resume reloads.
 
-   **Clocks.** The wall-clock cap, the inactivity/progress timers, and the
-   reported `usage.wall_clock_seconds` all use `time.monotonic()`, which on
-   macOS/Linux does **not** advance while the machine sleeps — so a sleeping
-   laptop can't masquerade as a stall and can't inflate the metric. The literal
-   elapsed `time.time()` is recorded separately as `usage.real_clock_seconds`,
-   and their gap as `usage.slept_seconds` (≈ time asleep). See eval/README.md
+   **Clocks.** The wall-clock cap and the inactivity/progress timers use
+   `time.monotonic()`. On macOS/Linux it does **not** advance while the machine
+   sleeps, so there a sleeping laptop can't masquerade as a stall and can't
+   inflate the metric. On Windows it **does** advance through Modern Standby
+   (S0 low-power idle), so there the caps and timers count standby: a sleep would
+   otherwise end a run as `timeout`, or as `inactivity` / a resumed stall. The
+   caps and timers still run on raw monotonic, but a run whose heartbeat counted
+   `>= caps.inactivity_seconds` of sleep is **relabeled `host_slept`** (§6.5) at
+   the abort — and, at the inactivity/progress resume decision, is stopped rather
+   than resumed-as-a-stall. So the failure this section once warned
+   was undecided — a slept laptop booked as a capability `timeout`/`inactivity`,
+   or resumed as if it had stalled — no longer happens: it becomes an ungraded,
+   rate-excluded `host_slept` instead.
+
+   Detection is a heartbeat. While `_consume()` runs, a task ticks
+   every 5 s and reads `time.monotonic()`. A gap between ticks above 60 s is
+   sleep monotonic counted (the Windows case), and `gap - 5 s` of it is added to
+   `usage.counted_sleep_seconds`, so one late tick adds nothing. Sleep monotonic
+   left out (macOS/Linux) shows no such gap and is measured instead by the
+   difference between the literal elapsed `time.time()`, recorded as
+   `usage.real_clock_seconds`, and the monotonic elapsed. So:
+
+   - `usage.slept_seconds` = `(real - monotonic) + counted_sleep_seconds`
+     (≈ time asleep, on every platform);
+   - `usage.wall_clock_seconds` = `monotonic - counted_sleep_seconds`, active
+     time on every platform.
+
+   A heartbeat was chosen over a third OS clock. `QueryUnbiasedInterruptTime`
+   through `ctypes` is Windows-only, and whether it pauses in Modern Standby
+   rather than only in S3 is unverified. The Kernel-Power 506/507 standby events
+   need a subprocess and parsing, and are Windows-only too. The heartbeat is
+   stdlib-only and OS-independent, and is unit-tested with injected clocks.
+
+   Limits. A blocked event loop produces the same gap as a sleep, and no
+   heartbeat can tell them apart; the guarantee is structural instead: the
+   heartbeat starts with `_consume()` and is cancelled before `_run_agent`
+   returns, and nothing inside `_consume()` or the SDK hooks it drives blocks
+   for anywhere near 60 s. The one blocking wait there is the MCP-unavailable
+   abort's stderr read (`read_mcp_stderr_lines`, up to nine 0.3 s `time.sleep`
+   retries), which ends the run anyway. A longer blocking call added there later
+   would be counted as sleep. And on Windows a standby **outside**
+   `_consume()`, during workspace build or the judge call, is not detected: it
+   still inflates `wall_clock_seconds` and `judge_seconds`. See eval/README.md
    "Keep the machine awake during a run".
 
 6. **Regardless of which signal fired**, the harness reads the final
@@ -747,6 +958,10 @@ The harness **denies these tools for the entire run**:
   PID with no searching
 - `person_person_matches` — surfaces tree persons matched to the subject
   (can leak a stripped relative in a parents/siblings fixture)
+- `person_quality` — reads FamilySearch's quality issues for the subject's
+  live profile; several issue sentences interpolate values off that profile
+  (`{originalDate}`, `{originalPlace}`), so a stripped date or place can be
+  returned verbatim
 
 The agent must recover everything through **records** (`record_search`,
 `record_read`, `fulltext_search`, `image_search`, `image_read`,
@@ -754,7 +969,8 @@ The agent must recover everything through **records** (`record_search`,
 because they don't surface the answer off the subject: `record_person_matches`
 / `record_record_matches` (keyed off a *record* the agent already found),
 `source_attachments` (confirms a found record's attachment — real GPS
-work), and `person_warnings` (reads the *local* stripped tree).
+work), and `person_warnings` (reads the local stripped tree only — no live
+mode; lead ruling 2026-09-27).
 
 > **The block is necessary but not sufficient.** Records that prove the
 > answer may *already be attached* to the live subject, so `record_search`
@@ -792,7 +1008,9 @@ does not run, does not count toward the tool-call cap, and does not stop
 the run** — the agent is told to use records instead and continues. Every
 denied attempt is recorded in the run log's `blocked_tree_reads` array
 (`{tool, args, blocked_by}` per entry, `blocked_by` ∈ `"tree"` |
-`"fixture"`), so a reviewer can see whether the agent *tried* to
+`"fixture"` | `"shell"` | `"path"` — the last two are the opt-in
+filesystem denials below; both add `reason`, and `"path"` adds the resolved
+`path`), so a reviewer can see whether the agent *tried* to
 shortcut research and which block source denied it. A non-empty
 `blocked_tree_reads` doesn't invalidate a `pass` (the answer was still
 earned from records, since the read was blocked), but it's worth a look.
@@ -813,6 +1031,24 @@ apart. Note the asymmetry this creates with production (`/research`
 normally has the tool) and keep the list minimal — blocking a tool the
 answer does NOT leak through just handicaps the benchmark.
 
+**Filesystem denials (`--deny-shell`, `--deny-project-reads`).** Two
+opt-in flags, both off by default, applied by the same `PreToolUse` hook
+with the same semantics (the denied call doesn't run, doesn't count toward
+the cap, doesn't stop the run). `--deny-shell` denies `Bash` and
+`PowerShell`, recorded as `"blocked_by": "shell"`. `--deny-project-reads`
+denies a `Read`, `Grep` or `Glob` whose target is under the project folder
+— except under its `.claude/`, which holds the staged skills and agents —
+and always allows `$CLAUDE_CONFIG_DIR/projects/**/tool-results/**`, where
+the CLI spills an oversized tool result for the model to read back; a
+`Glob` with no `path` is treated as the project root. Recorded as
+`"blocked_by": "path"` with the resolved `path`. Both entries carry the
+`reason` the agent was shown, which names the MCP route that replaces the
+read: `record_read({recordId, resultsRef})` for a `results/` sidecar,
+`sidecar_read({projectPath, ref})` for a verdict body under `evaluations/` or a
+text upload under `uploads/`, `research_query` for `research.json`,
+`project_context` otherwise. Each flag is recorded in the `usage` block (§8.1) because a run
+with it on is not comparable to one without.
+
 **Consequence for authoring:** a fixture is only valid if its answer is
 recoverable *from records alone*. A real validity run (§14) proves
 this — a run can only pass with these tools blocked, so an
@@ -820,53 +1056,69 @@ answer reachable only via the tree will fail and the fixture won't validate.
 
 ### 6.1.1 Main-thread subagent-only tool block
 
-The same `PreToolUse` hook enforces the per-context tool policy in e2e: neither
-member of `SUBAGENT_ONLY_TOOLS` (`extraction_append`, `image_read`) may be called
-on the main thread. Each is a Task-spawned subagent's private tool (writing
-extracted assertions and sources for `record-extractor`; returning a page scan
-for the image reader); a main-thread call is the router substituting for a
+The same `PreToolUse` hook enforces the per-context tool policy in e2e: no
+member of `SUBAGENT_ONLY_TOOLS` — today just `image_read` — may be called
+on the main thread. It is a Task-spawned subagent's private tool (returning a
+page scan as inline base64); a main-thread call is the router substituting for a
 *failed* spawn and doing the work itself — a shape observed in production.
 
-The discriminator is `agent_id` alone: **no skill declares `extraction_append`**
-in its `allowed-tools` — it lives only on `agents/record-extractor.md` — so the
-subagent is its only legitimate caller and every legitimate call carries
-`agent_id`. The unit harness's third clause (the skill declared the tool itself)
-can never fire for it. The block keys on `SUBAGENT_ONLY_TOOLS` membership
+**`extraction_append` is no longer in this set.** Extraction of a
+FamilySearch-indexed record runs as code called from the main thread, and
+`research/SKILL.md` declares the tool in its own `allowed-tools`, so a deny
+would refuse the shipped route on every e2e run. The guard that retired with it
+— catching the router substituting for a failed delegated spawn on the
+unindexed path (now `record-structurer`) — is on the `nothing-checks` register
+(`docs/architecture.md` §9.4 keeps that register as a label, not a table).
+
+The discriminator is `agent_id` alone: **no skill declares `image_read`** in its
+`allowed-tools`, so a delegated subagent is its only legitimate caller and every
+legitimate call carries `agent_id`. The unit harness's third clause (the skill
+declared the tool itself) can never fire for it. The block keys on
+`SUBAGENT_ONLY_TOOLS` membership
 (`is_main_thread_subagent_only_tool`) rather than the full per-skill
 `subagent_only_violation`, which takes a `declared_tools` argument e2e cannot
 supply. So e2e carries no declared-tools exemption: a future skill that
 legitimately declares a guarded tool would be denied here too, and closing
 that needs the predicate widened by hand.
 
-Both members are enforced. Neither `extraction_append` nor `image_read` is
-declared by any skill — `image_read` is declared by no agent at all since
-the `image-reader-opus` agent was retired
+Every member is enforced. The one member, `image_read`, is
+declared by no skill and by no agent at all since
+the `image-reader-opus` agent was retired, and
 since `search-images` moved to `@plugin:image-reader` (2026-07-17) — so `agent_id`
-presence alone discriminates for each, and a third tool added to the set is
+presence alone discriminates for it, and a second tool added to the set is
 covered here automatically.
 
 Semantics match the tree block — the denied call doesn't run, doesn't count
 toward the cap, and doesn't stop the run. Here, continuing is the **intended**
-response: the denial reason names a reachable recovery — delegate the record to
-`@plugin:record-extractor`, and if that spawn fails again on the same record, skip
-it and note it in the run summary — not an unreachable "stop" the Stop hook would
-override anyway. The router must never extract the record itself or retry another
-way (a deny that leaves the goal in place just relocates the substitution). Denied attempts are
+response: the denial reason names a reachable recovery — delegate the read to
+`@plugin:image-reader`, which returns a text transcription — not an unreachable
+"stop" the Stop hook would override anyway. The router must never read the scan
+itself or retry another way (a deny that leaves the goal in place just relocates the substitution). Denied attempts are
 recorded in a separate `blocked_context_calls` array
 (`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
 because this is a write denied by a different guard.
 
-This is harness-only. The plugin ships a `PreToolUse` hook that does bind in
-Cowork and on the hosted path (`packages/engine/plugin/hooks/hooks.json`; a deny
-binds even under `bypassPermissions`), but its matcher covers the raw file-write
-tools and the device bridge's `device_commit_files` — it never sees an
-`extraction_append`-shaped MCP tool call. Porting the per-context policy there
-is pending, and would mean widening the matcher to the MCP tool names as well as
-adding the rule; the harness comments carry the pointer.
+This is harness-only. The plugin ships a `PreToolUse` hook that binds on the
+hosted path — **measured**, by `make hook-smoke` — and binds in Cowork, probed
+live on 2026-07-30 (ADR-0005) for `Write`/`Bash` under a broader matcher. The
+`.*research_append` arm entered the matcher 2026-08-21 and is unmeasured there;
+Cowork is a different loader and has no instrument but a live
+session (`packages/engine/plugin/hooks/hooks.json`; a deny binds even under
+`bypassPermissions`). Its matcher is
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`: the raw
+file-write tools, the device bridge's `device_commit_files`, and — since the
+caller-ownership rules shipped — `research_append`. It still never sees an
+`extraction_append`-shaped MCP tool call. Porting the tool-level policy there was
+**declined by lead ruling 2026-08-17** (ADR-0006) — declined, not pending. That
+decline is scoped to `image_read`: do not re-file *it* without evidence the
+sub-700 KB band is being hit. §6.1.1 covers `extraction_append` too, and ADR-0006
+rules on neither it nor the band criterion, which an `extraction_append` port
+could never satisfy.
 
 This guard covers only the *main-thread* half of the `extraction_append`
 policy. The complementary *delegate* half — a general-purpose or otherwise
-unnamed subagent (anything but `record-extractor`) making the write — is caught
+unnamed subagent (anything but `record-structurer`, or the retired
+`record-extractor` on a replayed run) making the write — is caught
 post-hoc by `find_protected_writes_by_unnamed_delegate`
 (guardrail-enforcement-spec §11). That detector lists a main-thread
 call among its "legitimate" cases, but only as an attribution class (a
@@ -881,7 +1133,7 @@ The two halves are not enforced alike, and the difference matters when reading a
 run: the main-thread half is **denied**, the delegate half is only **logged**.
 `protected_writes_by_unnamed_delegate` is shadow-mode — deliberately not read by
 `E2eResult.__post_init__`, so it never moves the compliance axis until its
-false-positive rate is calibrated. A non-`record-extractor` delegate's
+false-positive rate is calibrated. A non-`record-structurer` delegate's
 `extraction_append` therefore still succeeds today; it is recorded, not blocked.
 The same detector now also records such a delegate's `research_append` to
 `sources` or `assertions` — the same protected write by another door
@@ -889,6 +1141,34 @@ The same detector now also records such a delegate's `research_append` to
 Beyond the detector itself, `make e2e-guardrail-shadow` reports this family across
 the committed corpus, stored plus a `REPLAY=1` recompute, with the
 attribution denominator; it stays a reported signal, not a graduation count.
+
+### 6.1.2 Owned-section write block
+
+The second arm that appends to `blocked_context_calls[]`, and the only one with
+entries in the committed corpus. `research_append` writes a named section, and
+`OWNED_SECTIONS` reserves some sections to an owning agent.
+
+**This arm is caller-scoped, not main-thread-scoped**, which is the trap: it is
+easy to describe as "the router doing a delegate's job" because that is the
+`routed` rule, and miss that `owner_denied` has **four**. `out_of_lane` fires
+for a **named** subagent reaching outside the lanes `AGENT_WRITABLE_SECTIONS`
+grants it; `declaration` fires on a routed claim, field-scoped rather than
+section-scoped; and `owned_field` fires on a routed field keyed on presence
+rather than on a claim value (`project.status`). All reach this array — the append happens before the rule
+branch — so an entry here does not imply a main-thread caller. Most committed
+entries are `routed`; at least one is `out_of_lane` (6 and 1 of 7 — measured at
+7315364c).
+
+**Unlike §6.1.1, this is not harness-only.** The shipped plugin hook holds the
+same rule in Cowork and on the hosted path: `hooks/hooks.json` matches
+`.*research_append`, and the harness does not reimplement the decision — it
+imports the production predicates directly (`owner_denied`, `OWNED_SECTIONS`
+from `harness/context_policy.py`, annotated at the import as "the SHIPPED hook's
+predicate, not a copy"). So a denial here is the same denial a user would hit.
+
+Entries carry `blocked_by: "context"`, exactly as §6.1.1's do. **Only `tool`
+discriminates which of the two guards fired** — a reader cannot infer the arm
+from `blocked_by`.
 
 ### 6.2 Provided documents (bundled external evidence)
 
@@ -946,6 +1226,37 @@ The judge grades **two axes**:
   for "Robert Smith" rather than matching a hinted one). Recall is
   graded **from the tree only**: a finding that appears only in
   `proof_summaries` and not in the tree does not count.
+
+  **Dates and places are graded by denotation, not by overlap.** Formatting tolerance
+  covers different spellings of the same value (`~1820`, `abt. 1820`,
+  `approximately 1820`); it does not cover a difference in precision or
+  qualification. A tree date is `supported` only when it denotes the claimed
+  date: a bounded or qualified date that merely *contains* the claim is
+  `unsupported`, however tightly, including a range whose endpoint equals the
+  claim. A tree date more precise than the claim and consistent with it
+  (claim `1912`, tree `13 January 1912`) is `supported`. Where the finding
+  itself states an approximate or bounded date, an equivalent approximation
+  in the tree is `supported`. The same rule governs places: a broader
+  jurisdiction that merely contains the claim — `Zulia, Venezuela` against a
+  claimed `Maracaibo, Zulia, Venezuela` — is `unsupported`, and a more
+  specific place consistent with the claim is `supported`. A renamed place at
+  the same level is the same place: a tree carrying the modern
+  `Salt Lake, Salt Lake, Utah` denotes a claimed
+  `Great Salt Lake, Great Salt Lake, Utah Territory` and is `supported`.
+
+  The rule is general, and the prompt states it once for every finding type.
+  It matters most on `fact` findings, which the component derivation (§3.4.2)
+  does not cover: there the judge's own `matched` is final, so the prompt also
+  gives `fact` findings their rollup — every component scores, tagged
+  `kind: "link"`, then any component contradicted makes the finding `"false"`,
+  none supported `"false"`, some supported and some unsupported `"partial"`,
+  all supported `"true"`. That is the same arithmetic the relationship table
+  applies to `link` components; on a `fact` finding there is no `detail` tier
+  to exclude. The rollup is scoped to non-`avoid` findings, as the derivation
+  is (§3.4.2): on an `avoid` finding `matched: "true"` means correctly avoided
+  (§3.4.1), which no component tally expresses.
+  A bounded tree date reading as `supported` is how a run whose agent reached
+  the opposite conclusion from the fixture came back `pass`.
 - **Proof quality (advisory).** Grade the soundness of the agent's
   written proof statement (`proof_summaries`) for the question:
   exhaustiveness of search, conflict resolution, independent
@@ -1019,9 +1330,9 @@ as an *agent* failure to act on, not a judge bug to ignore.
 | `components[]` | The claims the finding makes, each `kind` (`link`/`detail`) and `status` (`supported`/`unsupported`/`contradicted`), marked from the tree. Only `link` entries score; a date the finding requires is tagged `link` (§3.4.2) |
 | `matched_model` | Present only when derivation overrode the judge: the label the model originally emitted |
 | `agent_evidence` | Pointer into `final_tree` showing where the match was found (free text) |
-| `recall_required` | Fraction of `required: true` findings that matched (treat `partial` as 0.5) |
-| `recall_total` | Fraction across all findings |
-| `verdict` | `pass` if all required matched; `partial` if some required matched (or matched/partial); `fail` if none |
+| `recall_required` | Fraction of `required: true` findings that matched (treat `partial` as 0.5). **Derived by the harness** from `per_finding` on every graded run (`_recall(required_only=True)`), not taken from the judge — see below |
+| `recall_total` | Fraction across all findings. **Derived by the harness** the same way (`_recall(required_only=False)`) — see below |
+| `verdict` | `pass` if all required matched; `partial` if some required matched (or matched/partial); `fail` if none. **Derived by the harness** from `per_finding` (`derive_verdict`), not taken from the judge — see below |
 | `rationale` | Free-text summary |
 
 A fourth verdict value, **`skipped`**, is written by the *harness* rather
@@ -1047,21 +1358,36 @@ downgrade-only. `matched` on a non-`avoid` `relationship` finding is
 therefore a derived field: read `matched_model` to see what the judge
 itself said.
 
+Independent of both guards, the run-level roll-up itself —
+`recall_required`, `recall_total`, `verdict` — is derived by the harness
+from `per_finding` on **every** graded run, inside
+`apply_component_derivation`, whether or not either guard changed a label
+(neither guard fires on a fact-only fixture, so without this step the
+recompute was skipped and the model's self-reported roll-up shipped
+unchecked). When the recompute disagrees with what the model reported, the
+persisted `judge_output` carries `verdict_derivation`
+(`{"model": {...}, "derived": {...}}`, naming only the fields that
+changed — `verdict`, `recall_required` and/or `recall_total`, the two
+recall fractions compared with a `0.011` tolerance so a model's rounded
+`0.67` for an exact 2/3 is not recorded as a disagreement). Runs committed
+before this derivation was added are not rewritten; 19 of 188 committed
+runs carried a verdict the deterministic layer disagrees with.
+
 ### 7.2.1 The three axes
 
 A run is graded on **two independent axes**, and reported with a third field
 that combines them. They are separate because a run can get the genealogy
 completely right while bypassing the process guardrails, and collapsing that
-into one boolean made a correct run and a wrong one read identically
-(GitHub issue #972).
+into one boolean made a correct run and a wrong one read identically —
+which the compliance/correctness axis split fixed.
 
 | field | values | meaning |
 |---|---|---|
 | `verdict` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **Genealogical.** The judge's recall conclusion (§7.1), `ungraded` when the judge raised an exception (tree exists but was never graded — can be re-graded), or `skipped` when the judge didn't run (no tree). Never modified by anything else. |
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
-| `outcome` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
-| `harness_schema_version` | integer | `4` for the shape above — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**, with one exception: the no-project answer (`reason: "no_project"`) returns `{ok: false}` and is deliberately **not** marked, because the user simply is not in a research project. Ask "did this call land?" with `did_not_land` in `harness/skill_invocation.py`, never with a bare `is_error` gate — a bare gate counts a write that never happened, silently. At `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
+| `outcome` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **The gate**, and it is the `verdict` — nothing else. Through `harness_schema_version` 5 it was `fail` whenever `compliance` failed, else the verdict; the §8 post-run compliance detectors were demoted from the gate on 2026-09-25 and now report on the compliance axis alone. The process exit code still keys on this, so a run that bypasses a guardrail exits green and the exit code reveals the verdict — the accepted cost, recorded in `guardrail-enforcement-spec.md` §8. A log at 5 or below stores the old fused value; readers re-derive rather than reading the stored key (`axes_from_runlog`). |
+| `harness_schema_version` | integer | `8` for the current shape. At `8`, an `Agent`/`Task` call's `response_summary` carries the subagent's **full** return rather than its first 500 characters (bounds `_RUNLOG_AGENT_STRING_MAX` 8,000 and `_RUNLOG_AGENT_MAX_CHARS` 12,000, that tool only). The two are indistinguishable from the entry shape, so **branch on the version** before treating a v7-or-earlier `Agent` summary as complete — a relay-fidelity reader that does not will score the log's own truncation as content the relay dropped. Measured at bb3ee21c0 over the 203 committed e2e runs: 834 `Agent` strings truncated, median 2,274 / p95 7,092 / max 21,578. At `7`, `compliance` is strictly **looser** than at `6`: a typed `Agent`/`Task` spawn of a guardrail arm's name credits that arm as a `Skill` call does, a namespaced `Skill` name (`genealogy-research:<skill>`) credits too, and a protected write made by its owning agent is never a shadow violation, so a v1–v6 log can store a "was never successfully invoked" violation this code no longer raises (`corpus_report.py --recompute` re-derives it and lists the run as "stored N -> recomputed M" under "TODAY's detector clears a violation the run recorded" — the detector got looser, not the run better). `outcome` does not move across `7`. At `6` and above, `outcome` is the `verdict` alone; at `5` and below it is the old fusion (`fail` whenever `compliance` failed), so a v1–v5 log stores a value this code does not agree with and every reader re-derives it. At `5` **and above**, `response_summary` for `image_transcribe` calls preserves the full `transcription` field, bypassing both the per-string cap (`_RUNLOG_STRING_MAX`, 500 chars) and the backstop (`_RUNLOG_MAX_CHARS`, 4000 chars). At `4` and below, that field was truncated at 500 chars, though the transcriptions were often many times longer — so extraction-accuracy audits could not see what was read (`make e2e-transcription-join SINCE=all` reports the current count of truncated captures over its window). The two are indistinguishable from the entry shape — `response_summary` stays a string — so **branch on the version before treating a v4 `image_transcribe` summary as complete**. A `4` log **may or may not** carry `tool_calls[].result_chars`, `usage.message_usage`, `usage.thread_windows`, `usage.hand_back_classes` or `usage.betas`: those were added without a bump because they are additive and no existing field changed meaning, so branch on key presence, not on the version — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**, with one exception: the no-project answer (`reason: "no_project"`) returns `{ok: false}` and is deliberately **not** marked, because the user simply is not in a research project. Ask "did this call land?" with `did_not_land` in `harness/skill_invocation.py`, never with a bare `is_error` gate — a bare gate counts a write that never happened, silently. At `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped at main `4541a4c5` without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance` and the §7 shadow violation counts are not comparable across that boundary** — `outcome` is, since it is the verdict and those arms never touched it. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on logs predating the compliance/correctness axis split. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
 through `e2e.result.axes_from_runlog`, which resolves all four shapes the
@@ -1141,6 +1467,9 @@ A human grade is a per-run annotation committed **beside the run log it grades**
 }
 ```
 
+A prototype run has no run log; its grade sits beside the `run-<ts>.final-*` files
+copied from its export (`/grade-e2e-run`, "Grading a prototype run").
+
 | Field | Required | Notes |
 |-------|----------|-------|
 | `per_finding` | yes | `true` / `partial` / `false` per fixture finding id — the recall gate. For an `avoid` finding, `true` = correctly avoided (§3.4.1). |
@@ -1148,11 +1477,12 @@ A human grade is a per-run annotation committed **beside the run log it grades**
 | `notes` | no | Sparse `{finding_id: text}` map, surfaced on that finding's disagreement line. |
 | `annotator` | no | Provenance; git blame on the committed file is the fallback. |
 | `findings_hash` | no | sha256 of the normalized `expected-findings.json` this grade was produced against, so a later edit to a finding's body cannot silently invalidate the grade while its id stays put. Written by `/grade-e2e-run`'s stamp step, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. |
+| `blind_bundle_digest` | no | sha256 of the normalized content of the 4 files the blind grader reads (`expected-findings.json`, `fixture.json`, `final-tree.gedcomx.json`, `final-research.json`), stamped by `/grade-e2e-run`'s step 7, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. Covers the full grading surface: `findings_hash` catches edits to expected-findings only; this catches edits to any of the four. |
 
 There is **no `verdict` field** — the per-run verdict is derived from `per_finding`
 + the findings' `required` flags by the §7.2 rule.
 
-Three integrity rules make the agreement number trustworthy:
+Four integrity rules make the agreement number trustworthy:
 
 - **Never auto-created.** A run does not emit an annotation; a human grades it
   with the `/grade-e2e-run` skill (which reads the fixture + the two `final-*`
@@ -1163,15 +1493,22 @@ Three integrity rules make the agreement number trustworthy:
   the whole path from run to grade, not just of which files the grader opens:
   the same person usually runs the fixture and then grades it, so **the console
   must not print the grade either**. `run_e2e.py` reports `stop_reason`, the
-  compliance axis, and — when the judge reached no conclusion at all — a
+  compliance axis, a `[blocked context call] N` count when that array is
+  non-empty, and — when the judge reached no conclusion at all — a
   `no grade:` line saying which cause it was, and stops there; `verdict`,
   `outcome` and `proof_quality` are deferred to `/interpret-e2e-result`, which
   is itself blind to them.
 
-  That third line is on the harness-fact side of this rule, not an exception to
-  it. It distinguishes a judge that raised (quoting the judge's own error text)
-  from an agent that produced no final tree, from `--skip-judge`; none of those
-  is a genealogical conclusion, and the presence of an error says nothing about
+  The count line and the `no grade:` line are both on the harness-fact side of
+  this rule, not exceptions to it. A denied tool call is a thing the harness
+  refused, not a judgement about the research, and it moves no gate —
+  `compliance` is derived from `guardrail_bypass_violations` alone.
+
+  It distinguishes a judge that raised (quoting the judge's own error
+  text)
+  from an agent that produced no final tree, from a host that slept past the
+  inactivity cap (`host_slept`, whose tree is intact), from `--skip-judge`; none
+  of those is a genealogical conclusion, and the presence of an error says nothing about
   what the agent recovered. It exists because the previous single fixed string
   printed the same words for all three, directly beneath
   `stop_reason: completed`, so a judge crash read as "this run succeeded and
@@ -1195,11 +1532,21 @@ Three integrity rules make the agreement number trustworthy:
   > ages out as new blind annotations replace them.
   >
   > **Residual leak: the exit code.** `run_e2e.py` still exits non-zero
-  > when the combined gate fails (fail/skipped/ungraded) and zero when it
-  > passes (pass/partial), so with compliance clean, the exit code leaks
+  > when the gate fails (fail/skipped/ungraded) and zero when it
+  > passes (pass/partial). Since the §8 demotion `outcome` IS the verdict, so
+  > unconditionally — not only with compliance clean — the exit code leaks
   > the verdict in both directions. The exit code is retained because a
   > batch shell loop has no other signal for failure. This is a known,
   > accepted residual — not a bug to fix.
+- **Bundle-provenance stamped.** `/grade-e2e-run`'s step 7 stamps
+  `blind_bundle_digest` — a sha256 over the normalized content of the 4 files
+  the blind grader reads (`expected-findings.json`, `fixture.json`,
+  `final-tree.gedcomx.json`, `final-research.json`). The loader checks
+  this digest: a present stamp that no longer matches is a hard error
+  (re-grade or delete); an absent stamp is grandfathered (included but reported
+  unverifiable). This is the wider counterpart to `findings_hash`, which covers
+  only `expected-findings.json`. A stamp is optional: an unstamped annotation,
+  new or old, is accepted and only counted as unverifiable.
 - **Incomplete never counts.** Any `null` `per_finding` value marks the grade
   unfinished; it is warned about and skipped.
 
@@ -1286,7 +1633,7 @@ invoking `person-evidence`, `conflict-resolution`, `proof-conclusion` or
 enforce, however good the answer looks. The unit harness has always failed a
 positive test whose skill was never invoked; this is the e2e equivalent.
 
-After the agent stops, the harness runs three deterministic, **non-windowed**
+After the agent stops, the harness runs two deterministic, **non-windowed**
 checks over the final project state and the run's tool-call log
 (`e2e.orchestrator.check_guardrail_compliance`, implemented in
 `harness/skill_invocation.py`):
@@ -1294,40 +1641,57 @@ checks over the final project state and the run's tool-call log
 1. **`find_effects_without_invocation`** — a guardrail skill's documented
    effect is present in `research.json` or `tree.gedcomx.json` (a
    `proof_summaries` entry, `person_evidence` link, resolved `conflicts`
-   entry, `exhaustive_declaration.declared`, or a tree write one of them
-   owns) with no successful `Skill` call for it anywhere in the run.
-2. **`find_missing_mentor_verdicts`** — a resolved question's
-   `proof_summaries` entry has no matching `proof-critique` entry in
-   `evaluations[]`, i.e. the mandatory `gps-mentor` gate never fired.
-3. **`find_person_evidence_missing_same_person`** — a brand-new tree person
+   entry, `search_stop.stopped_because`, or a tree write one of them
+   owns) with no successful invocation of it anywhere in the run. Either
+   route counts: a `Skill` call naming the skill, or a typed `Agent`/`Task`
+   spawn whose `subagent_type`, plugin namespace stripped, names it (the
+   direct spawn of a paired agent is the sanctioned in-loop route;
+   `guardrail-enforcement-spec.md` §2). An untyped or errored spawn credits
+   nothing. The message reads `'<arm>' was never successfully invoked in this
+   run (no Skill call and no typed Agent/Task spawn of that name)` for every
+   arm.
+2. **`find_person_evidence_missing_same_person`** — a brand-new tree person
    received a **scoreable** `person_evidence` link without a single
    `same_person` call for it. Narrower than check 1 on purpose: a run can
    invoke `person-evidence` somewhere and still skip identity scoring for the
-   person that matters. "Scoreable" means a record persona is reachable — a
-   non-null `record_persona_id`, a `record_read`-sourced assertion, or a search
-   whose sidecar was retained; links that provably cannot be scored are skipped
-   and counted separately (`guardrail-enforcement-spec.md` §4). A null
-   `record_persona_id` alone does **not** exempt a link.
+   person that matters. "Scoreable" is a narrowing the detector still applies
+   from what a run RETAINED — a non-null `record_persona_id`, a
+   `record_read`-sourced assertion, or a search whose sidecar was retained; a
+   null `record_persona_id` alone does **not** exempt a link, and links it
+   treats as unscoreable are skipped and counted separately
+   (`guardrail-enforcement-spec.md` §4).
 
-Any violation sets `compliance: fail`, which forces `outcome: fail`. The
-checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
-and check 1's exhaustiveness arm reads only `research.json` — so every run the
+   **That narrowing is now conservative rather than true.** `same_person`'s
+   project-relative arm derives the record side from the record's own extracted
+   assertions when it cannot fetch a document, so an image-transcribed page, a
+   PDF, an external site and a sidecar-less search are all scorable in practice.
+   The detector has deliberately NOT been widened to match: doing so in the same
+   change that told the agent to adopt the new call would make the resulting
+   measurement unreadable — a rise in flagged links could not be told apart from
+   the agent failing to adopt it. The widening belongs with the writer-side
+   requirement, whose own evidence is a run at the new call shape. Until then
+   this check under-reports, which is the safe direction.
+
+Any violation sets `compliance: fail`. Since the §8 detectors were demoted
+it does not move `outcome`, which is the `verdict`. The
+checks are **not** vacuous on a treeless run — check 1's exhaustiveness arm
+reads only `research.json` — so every run the
 harness performs gets a real compliance result.
 
-**Check 3 has a live pre-write sibling, and one run mode makes check 3 itself
+**Check 2 has a live pre-write sibling, and one run mode makes check 2 itself
 vacuous.** The sibling runs in `pretool_hook` and asks the stricter question —
 was the identity scored *before* the link, not anywhere in the run — recording
 into `guardrail_shadow_violations` without denying. It can be switched to a real
 deny for **one** fixture with `make e2e-run TEST=<slug>
 PERSON_EVIDENCE_GUARD=deny` (default `shadow`), which is how the recovery
 evidence its graduation needs gets gathered; it fires in roughly 80% of runs that
-link a person, so this is not a suite-wide setting. **Under `deny`, check 3
+link a person, so this is not a suite-wide setting. **Under `deny`, check 2
 passes vacuously**: the blocked write never lands, so there is no
 `person_evidence` entry left for it to read. `usage.person_evidence_guard`
 records the mode — read it before comparing a run's `compliance` to another's.
 Design, limits, and the loop valve: `docs/specs/guardrail-enforcement-spec.md` §4.
 
-**A fourth check runs in shadow mode only: citation-string
+**A third check runs in shadow mode only: citation-string
 nulling.** `find_citation_nulling_in_conclusions` (in
 `harness/skill_invocation.py`) reads the final `research.json` and flags a
 source that **backs a written conclusion** — i.e. one a `proof_summaries`
@@ -1338,12 +1702,12 @@ cover: a null *source-ref* on authored tree content is already unrepresentable
 (the mandatory-ref golden in `materialize-facts.test.ts` / `tree-edit.test.ts`),
 but the citation *string* is explicitly out of scope there
 (`tree-materialization-spec.md`, "The ESM citation string is out of scope
-here"), and none of the three checks above read it. It is the cruz "11/14
+here"), and neither check above reads it. It is the cruz "11/14
 citation-less tree sources" / birkeland "F1/F2 citation-less conclusion facts"
 class from `record-extraction-consolidation-closing-report.md` §4, invisible to
 the judge.
 
-Unlike the three hard checks, this one **logs to
+Unlike the two hard checks, this one **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`** — the
 repository's shadow → measure → graduate posture (same as the `same_person`
 provenance check). **Not** the same as §7's recency check, which shares the
@@ -1382,50 +1746,77 @@ referenced sources here, across 50 of the same 159 runs**. This one is shadow
 too, and deliberately not graduated: part of that 111 is
 legitimately-not-yet-uploaded evidence only a genealogist can price.
 
-**A fifth check runs in shadow mode only: a conclusion relies on a resolved
-conflict that was never persisted.** `find_unpersisted_conflict_resolutions` (in
-`harness/skill_invocation.py`) reads the final `research.json` and, for each
-written `proof_summaries` conclusion, flags a question whose
-`exhaustive_declaration.stop_criteria.conflict_resolution` asserts a resolution
-(positive resolution language, not merely the absence of "no conflict" wording —
-a required field that is always populated would otherwise default to firing) that
-**no resolved `conflicts[]` entry is *linked* to the conclusion** — neither cited
-on the proof_summary's `resolved_conflict_ids`, nor naming the question in a
-resolved conflict's `blocks_question_ids`, nor named by its `c_` id in the
-stop-criterion prose (and, when the prose names no `c_` id, no resolved entry
-exists at all). A resolved conflict that exists but is linked to nothing fires
-only when the stop-criterion names a `c_` id that is not resolved; when it names
-no id, an existing resolved entry silences the check. So read the count as **"no
-resolved conflict backs this conclusion"** — every firing on the committed corpus
-today has an empty `conflicts[]`. The alpha-tester case is that same shape: the
-viewer's Conflicts section stayed blank because nothing structured was persisted.
-Gated on a written conclusion so an honest partial run does not fire. Like the citation-nulling check it **logs to
-`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
-entries carry `kind: "conflict_unpersisted"` for their own bucket
-(`make e2e-guardrail-shadow`). The reliance signal is a text heuristic on one
-structured field, so it ships shadow-first; **promotion to a hard check — or to a
-`proof-conclusion` decline-and-route nudge so a conflict entry actually gets
-written — is gated on reading the fire rate across the corpus first**, not decided
-here.
+**A fifth check reports here, and is enforced at the writer tool: a conclusion
+relies on a resolved conflict that was never persisted.**
+`find_unpersisted_conflict_resolutions` (in `harness/skill_invocation.py`) reads
+the final `research.json` and, for each written `proof_summaries` conclusion,
+flags a question whose `search_stop.stop_criteria.conflict_resolution`
+asserts a resolution (positive resolution language, not merely the absence of "no
+conflict" wording — a required field that is always populated would otherwise
+default to firing) while `conflicts[]` holds no record of it: the array is empty,
+or it does not hold the `c_` id the stop-criterion names. A settled (`resolved`
+or `moot`) conflict cited on the summary or blocking the question also backs it.
+The check asks whether the conflict was **persisted**, not whether it was
+resolved: a recorded but open conflict does not fire, because `proof-conclusion`
+is told to write a `not_proved` summary in exactly that state. The alpha-tester
+case is the empty-array shape: the viewer's Conflicts section stayed blank
+because nothing structured was persisted. Gated on a written conclusion, so an
+honest partial run does not fire.
 
-**A sixth check runs in shadow mode only: the warnings guardrail was never
-consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
-(in `harness/skill_invocation.py`) flags a run whose final tree has a **new**
-`ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
-relationships do not count) for which `person_warnings` — the cheapest, LLM-free
-guardrail — was never successfully called. It keys on the `person_warnings`
-**tool** across all server spellings, not the `check-warnings` skill, so it
-catches a direct-tool path and a skill that launches but fails before reaching the
-tool. Like the citation-nulling check it **logs to
-`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
-entries carry `kind: "warnings_unchecked"` for its own bucket
-(`make e2e-guardrail-shadow`). It exists because two runs of the same fixture
-diverged only on whether the parentage write was delegated to `proof-conclusion`
-(which carries the check-warnings step) or inlined by the orchestrator (which does
-not), and nothing recorded that the guardrail was skipped. **Promotion — to a hard
-check, or to a mandatory `person_warnings` call in the `/research` orchestrator so
-an inlined write is still gated — is gated on reading this fire rate across the
-corpus first**; not decided here.
+It **graduated on 2026-09-28**: `research_append` now refuses the
+`proof_summaries` write itself (`unpersistedConflictResolutionInvariants`,
+`guardrail-enforcement-spec.md` §5), and in the e2e harness the detector stays
+as the document-plane reading. It logs to `guardrail_shadow_violations` and never
+touches `compliance`/`outcome`; its entries carry `kind: "conflict_unpersisted"`
+and a `proof_summary_id` for their own bucket (`make e2e-guardrail-shadow`). The
+two planes share one labelled case file,
+`packages/engine/mcp-server/tests/guard-cases/unpersisted-conflict-resolution.json`,
+and must agree on every case in it. A live run now hits the refusal before the
+summary lands, so a stored entry from a run after the graduation means one of
+two things: a document the writer tool never checked, or the one ordering the
+refusal cannot see — a resolution claim written to the question after the
+summary.
+
+**A sixth check runs in shadow mode only: a tree write was refused for
+unjustified warnings and the agent gave up.** `find_relationship_writes_without_warnings_check`
+(in `harness/skill_invocation.py`) flags a run in which one of the four tree
+writers — `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts`
+— returned `{ ok: false, reason: "unjustified_warnings" }` and no later writer
+call landed to resolve it. It keys on those tools across all server spellings.
+Like the citation-nulling check it **logs to `guardrail_shadow_violations` and
+never touches `compliance`/`outcome`**; its entries carry
+`kind: "unresolved_warning_refusal"` for its own bucket
+(`make e2e-guardrail-shadow`). Entries stored before the retarget carry the old
+`"warnings_unchecked"`, and the report reads both.
+
+**Retargeted when the gate moved to the write boundary, and the name is now
+historical.** It originally
+asked whether `person_warnings` was called after a parentage write, because the
+obligation lived in prose and two runs of the same fixture diverged only on
+whether the write was delegated to `proof-conclusion` (which carried the step)
+or inlined by the orchestrator (which did not). The writer tools now refuse
+such a write outright,
+so the prose step — and the question this check used to ask — went with it.
+
+**It reads `tool_calls` and nothing else.** It takes `tree`/`starting_tree` for
+the call sites and the record shape, but gates on neither, and this is
+load-bearing rather than incidental: a refused write never lands, so the runs
+it hunts leave no new relationship behind. The retarget first shipped with the
+old tree gate still in front of it, which made it fire only when an unrelated
+edge happened to land, and never at all for a refusal on a fact write. For the
+same reason `missing_for_warnings` no longer skips a run for a missing tree.
+
+**Promotion is gated on reading this fire rate across the corpus first**; not
+decided here. Read the rate only from runs recorded after the retarget — every
+earlier run was graded by the `person_warnings` question and is not comparable.
+
+**This numbered list stopped at six and the check set did not.** The ordinals
+are filing order, not a census: the tree-side citation arm is written up above
+without one, and tree-encoding and tree-fact/assertion agreement ship with their
+own `kind` and their own bucket and no block here at all. The roster is the
+shadow-to-graduate table in `docs/specs/guardrail-enforcement-spec.md`, which
+carries a row per check; when you add a kind, add the row, because this section
+is not where a reader will find it.
 
 **Historical runs.** These checks landed 2026-07-27; runs before that were
 never subject to them, and two runs from the days after predate later
@@ -1438,7 +1829,7 @@ for work in progress: a replay only means something if the checks are pinned to
 the version each run actually executed, and nothing records that version per run.
 Recording it is the prerequisite for any corpus-wide compliance number.
 
-**Check 3 got LOOSER when the persona-reachability narrowing landed.** A run's
+**Check 2 got LOOSER when the persona-reachability narrowing landed.** A run's
 stored violation count can therefore exceed what today's detector recomputes
 from the same trace — the opposite direction from the `is_error` join below, and
 the correct reading rather than a bug. `make e2e-corpus RECOMPUTE=1` names every
@@ -1446,7 +1837,9 @@ such run in its `regressed` list. No `harness_schema_version` bump: the runlog
 payload shape did not change, and the counter exists for a field whose *meaning*
 shifts while its name does not.
 
-**`compliance` and `outcome` are not comparable across the `is_error` join.**
+**`compliance` is not comparable across the `is_error` join.** (`outcome` no
+longer moves with it: since the §8 demotion the gate is the `verdict`, which the
+join does not touch.)
 Before it, `tool_calls[]` carried no `is_error` key, so the
 `entry.get("is_error") is True` gates in `skill_invocation.py` never fired and an
 **errored** tool call counted as a successful invocation. After it, both hard
@@ -1459,7 +1852,7 @@ the correct reading — an errored call was never a successful invocation — so
 compliance delta across the boundary is not a regression signal.
 
 **The boundary is a commit, not cleanly a version — check both.** The join
-shipped in PR #1255 (main `4541a4c5`) with `harness_schema_version` left at `2`,
+shipped at main `4541a4c5` with `harness_schema_version` left at `2`,
 on the argument that adding a key is additive. It is not, for a reader: `2` now
 means *no `is_error`* before `4541a4c5` and *`is_error` present* after it, which
 is exactly the keeps-its-name-while-its-meaning-changes case the counter exists
@@ -1525,6 +1918,8 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
 | `run-<timestamp>.ann.json` | *Optional.* A human's calibration grade of this run — present only when someone grades it, never auto-emitted (see §7.4) |
+| `reports/run-<timestamp>.txt` | *Gitignored, regenerable.* A plain-text reading of the run log — the main researcher's tokens, cost and busiest moment, every helper launch with its cost, time, busiest moment and squeezes, and a closing summary (`e2e/run_report.py`). Helper time is `subagents[].duration_seconds`, else the `duration_ms` in that helper's Agent-call trailer (joined on `agentId`; gone once the 14-day strip drops `response_summary`). Written after every `run-` run (never a `scratch_` one); `make e2e-report` backfills; only the newest five per fixture are kept. **Carries no verdict, recall or per-finding result until the run's `.ann.json` exists** (§7.4 — it sits in the folder the blind grader works from); `make e2e-report` re-renders it once graded. |
+| `comparison/NN_comparison.txt` | *Gitignored.* Two runs side by side — `make e2e-compare TEST=<slug>` (the two newest) or `BEFORE=`/`AFTER=`; numbered upward, newest five kept. Names whether the plugin skills + agents (`skills_hash`) and the recorded run settings differ. Verdict and recall only when **both** runs are graded (§7.4). |
 
 ### 8.1 `run-<timestamp>.json` fields
 
@@ -1537,34 +1932,49 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `verdict` | The judge's **genealogical** conclusion. See §7.2.1. |
 | `compliance` | Whether the GPS guardrail skills actually ran. §7.5. |
 | `guardrail_bypass_violations` | The specific bypasses, when `compliance` is `fail`. |
-| `outcome` | **The gate** — `fail` when compliance failed, else `verdict`. |
+| `outcome` | **The gate** — the `verdict`. It was `fail` when compliance failed until the §8 detectors were demoted (2026-09-25). |
 | `harness_schema_version` | Which shape this log is. Branch on it; see §7.2.1. |
 | `stop_reason` | Why the run ended. §6.5. |
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
-| `tool_calls[]` | Every tool call attempted, in order — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, is_error, agent_id, agent_type }`. See 8.1.1. |
-| `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
-| `blocked_context_calls[]` | Denied main-thread calls to a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read`) — the router substituting for a failed subagent spawn. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1. |
-| `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
+| `tool_calls[]` | Every tool call attempted — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, result_chars, is_error, agent_id, agent_type }`. Main-stream entries are in chronological order; a **background** subagent's calls are appended after them from its transcript, so the array is **not** chronological across agents. See 8.1.1. |
+| `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }` with `blocked_by` ∈ `tree` / `fixture` / `shell` / `path`; the `shell` and `path` entries (the §6.1 opt-in filesystem denials) also carry `reason`, and `path` entries the resolved `path`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
+| `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`image_read` — §6.1.1; `extraction_append` was the other, until indexed-record extraction moved to a main-thread call), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
+| `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }` — plus `thread` (`main` / `sub`) on `assistant` entries from `harness_schema_version` 8, since a subagent's own messages stream through the same branch. The nine `harness` / `blocked` append sites have no message in scope and carry no `thread`, so select on `kind == "assistant"` **and** `thread == "main"`, never on the absence of the key. `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
-| `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |
-| `wall_clock_seconds` | Active/monotonic — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `judge_seconds`. |
+| `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative, except on a run with more than one query, where its tokens, turns and `duration_ms` cover the last query and its cost and `duration_api_ms` the last CLI process, §8.1.5) or `streamed_fallback` (it did not). |
+| `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
+| `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
+| `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, all with the same continue text (U17). The weak-signal reading belongs to `silent`, `step` and `false_completion` in `hand_back_classes`, not to this total. |
+| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` / `terminal_ok` for the three gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is the retired hand-back line, so 0 on runs since 2026-09-27. See the Continue-nudge note in §6. |
+| `wall_clock_seconds` | Active time: monotonic minus `counted_sleep_seconds` — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `counted_sleep_seconds` (sleep the heartbeat counted because monotonic did not leave it out, the Windows case), `judge_seconds`. |
 | `resumes`, `session_id` | §6 "Stall-detect + resume". |
 | `agent_model` | Effective parent model. |
 | `subagent_model_override` | Non-null when `--agent-model` forced every staged subagent off its own `.md` pin. Null = each used its pin. |
 | `effort_level` | Pinned via a project setting; default `high`. |
 | `max_output_tokens` | Via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`; null = CLI default. |
-| `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. |
-| `person_evidence_guard` | `shadow` (default) or `deny` — how the §7.5 check-3 *live* sibling behaved (`--person-evidence-guard`). **Read this before comparing a run's `compliance`:** under `deny` the blocked write never lands, so check 3 finds no `person_evidence` entry for that person and passes **vacuously**. Deny-mode provenance entries also carry `kind: "person_evidence_deny"` and are excluded from `guardrail_shadow_report`'s stored scan. |
-| `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
-| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. |
+| `betas` | SDK betas the run requested (`--context-1m` → `["context-1m-2025-08-07"]`); `[]` when off. **A run with a non-empty `betas` is not comparable to the corpus** — a 1M window changes the compaction count and the cache-gap structure, which is what `e2e-compaction` and `e2e-cache-window` measure. Not one of the five reasoning-config fields below: it changes the context budget, not the reasoning. **Enforced:** `check_e2e_fixtures.py` rejects a PR-added-or-renamed run log under `eval/runlogs/e2e/` whose `betas` is non-empty. |
+| `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. Read from the init message's `claude_code_version` (the key CLI 2.1.139 writes), falling back to `version` / `cli_version`; `null` on every run before that read was added. |
+| `tool_search` | `true` (default) / `false` — what `--tool-search` / `--no-tool-search` asked for, sent to the CLI as `ENABLE_TOOL_SEARCH`. Absent on runs before the flag. **A run with this `false` is not comparable to the corpus:** every tool schema is loaded up front, so its first call's context, its cache figures and its ToolSearch count all move. `run_e2e.py` refuses `--no-tool-search` under the default run-log root, and the mid-run dead-server backstop (`tool_search_miss_streak`) is inert under it (no ToolSearch reply to count). **Enforced:** `check_e2e_fixtures.py` rejects a PR-added-or-renamed run log under `eval/runlogs/e2e/` whose `tool_search` or `tool_search_offered` is `false`. |
+| `tool_search_offered` | Whether the FIRST init message's `tools` list included `ToolSearch`; `null` when that init carried no list. **Listed at init; blind to the per-model gate — `false` proves off, `true` does not prove on:** a model on the CLI's unsupported list (default `["haiku"]`) defers nothing yet is still offered ToolSearch. The only proof that tool search took effect is the size of the first `"main"` row of `message_usage`. |
+| `person_evidence_guard` | `shadow` (default) or `deny` — how the §7.5 check-2 *live* sibling behaved (`--person-evidence-guard`). **Read this before comparing a run's `compliance`:** under `deny` the blocked write never lands, so check 2 finds no `person_evidence` entry for that person and passes **vacuously**. Deny-mode provenance entries also carry `kind: "person_evidence_deny"` and are excluded from `guardrail_shadow_report`'s stored scan. |
+| `deny_shell` | `true` / `false` (default) — whether `--deny-shell` refused `Bash` and `PowerShell` for the run (§6.1 filesystem denials). **A run with this on is not comparable to one without:** the agent had no shell, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "shell"`. |
+| `deny_project_reads` | `true` / `false` (default) — whether `--deny-project-reads` refused `Read`/`Grep`/`Glob` of the project folder (§6.1 filesystem denials). **A run with this on is not comparable to one without:** its project reads were rerouted through the MCP tools, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "path"`. |
+| `timeline[]` | Per-message `[elapsed_seconds, kind, tool_names, wall_ts, message_id]`, plus the `caps` used. Five columns since 2026-10-02; rows written before that are three wide and the earliest are two, so **index, never unpack**. `wall_ts` is ISO-8601 UTC with milliseconds (`2026-09-18T06:52:42.431Z`), matching byte-for-byte what a subagent transcript record and the copied `.session.jsonl` write, so lining a row up against either is a match rather than a conversion. It is derived as `run_started_wall + (now - run_started)` so column 0 keeps its monotonic clock, which cannot jump backwards over an NTP correction mid-run. `message_id` is the SDK's own id on an assistant row and `null` on every other kind. **Neither join target is committed** — the session transcript is gitignored and the subagent cache is ephemeral — so on a committed run log these two columns join to a locally held artifact or to nothing. The offsets are raw monotonic, so on Windows they include standby: compare them with `wall_clock_seconds + counted_sleep_seconds`, not `wall_clock_seconds` (§6 "Clocks"). |
+| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, `usage` (the four token fields, see §8.1.5), per-turn `stop_reason` / `output_tokens` / block shape, `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call), `duration_seconds` (earliest to latest record timestamp in its transcript — earliest/latest, since `queued_command` attachments can step backwards; `null` with fewer than two; within 0.1 s of the CLI's own `duration_ms` on the 16 helpers measured), `peak_window_tokens` (the tallest single window the subagent read — `input` + `cache_read` + `cache_creation` of one message, the **max** over its messages, 0 when none carries usage), `compactions` (one `{trigger, pre_tokens, post_tokens}` per `system`/`compact_boundary` record in the subagent's own transcript; a missing or non-numeric figure is `null`, never 0; the **count** is the signal — `pre_tokens` saturates at the trigger like the peak does), and `models` (the distinct model ids its messages ran on, first-seen order, `<synthetic>` excluded). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. **Read `subagent_capture_status` before concluding anything from an empty list.** |
+| `subagent_capture_status` | Why `subagents[]` is empty, so `[]` stops meaning three distinct things. `captured` — at least one transcript summarized. `matched_no_transcripts` — the directory resolved but held no subagent transcript. **This is the ordinary "no subagent ran" value**: a session that started always leaves its own parent transcript in that directory, so the directory exists whether or not any subagent was dispatched. It also covers a transcript that is present but unusable. `no_cache_dir` — no candidate spelling of the cache directory exists at all; the cache was cleaned, or the run never reached the agent. `error` — the lookup itself failed; recorded, never raised, because capture must not cost a completed run its log. `unknown` — nobody recorded one; the default, and not a claim that capture succeeded. The field is absent altogether on runs logged before it existed. |
 | `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
 | `skills_hash` | One sha256 over the sorted `{path: hash}` of every skill + agent **source** file the run stages. Ties the run to the prompt that produced it — and unlike `git_sha` catches an **uncommitted** SKILL.md edit. Does not move with `--agent-model` (read `subagent_model_override` alongside it). §8.1.3. |
 
-Together the five reasoning-config fields (`agent_model` through `cli_version`)
+Together the five reasoning-config fields (`agent_model` through `cli_version`; `betas` sits outside the set — see its row)
 make an A/B across model × effort × output-budget self-describing from the log
 alone. `person_evidence_guard` is a sixth self-describing field but not a
 reasoning knob — it records an enforcement posture, and is the one field here
-that changes what a *verdict* means rather than what produced it.
+that changes what a *verdict* means rather than what produced it. `deny_shell`
+and `deny_project_reads` are the same kind of field — an enforcement posture,
+not a reasoning knob — and are there so a run that had no shell, or no direct
+project reads, is never compared against one that did. `tool_search` and
+`tool_search_offered` sit outside the reasoning set too, like `betas`: they change
+what the context carries, not the reasoning.
 
 #### 8.1.1 `tool_calls[]` — the joined keys
 
@@ -1572,7 +1982,31 @@ that changes what a *verdict* means rather than what produced it.
 `ToolResultBlock` arrives, so an entry whose result never arrived — any aborted
 or wall-clock-capped run — carries none of the three. `response_summary` is the
 exception: the entry literal initializes it, so it is present-but-`null` there
-rather than absent.
+rather than absent. At `harness_schema_version` 5 and above, the tool name
+(`entry["tool"]`) is threaded into `_summarize_tool_response` so that per-key
+exemptions (`_RUNLOG_EXEMPT_KEYS`) can bypass the per-string and backstop caps
+for specific (tool, response_key) pairs — `image_transcribe`'s `transcription`
+is the first exemption.
+
+**Background subagents are the one exception to that join.** A subagent spawned
+in the background ("Async agent launched") runs in its own sub-session, so its
+calls never reach the main message stream the keys above are joined from. They
+are instead recovered at run end from the subagent's transcript
+(`backfill_background_tool_calls`, the same `agent-<id>.jsonl`
+`subagent_capture.collect_subagents` reads) and **appended after** the
+main-stream entries — which is why the array is not chronological across agents
+(§8 row). Their provenance differs: `agent_id` comes from the transcript
+filename, `agent_type` from its `meta.json`, and `is_error` from the transcript's
+own `tool_result` — so a backfilled entry carries `agent_id`/`agent_type` **even
+when its result never arrived**, unlike the main-stream "result never came" case
+above. Only agents the log announced as background (an `Agent`/`Task` result
+reading "Async agent launched … agentId: `<id>`") are backfilled, so a
+synchronous subagent is never backfilled, even when its stream entries carry no
+`agent_id` — which they do not when its result never arrived or its call was
+refused before the hook ran. These entries are **recorded, not
+re-scored** — the guardrail and `same_person` scanners run before the backfill,
+so a background subagent's calls land in `tool_calls` but were (and remain)
+invisible to compliance grading.
 
 A PreToolUse **deny** does reach this array: the denied call appears with the
 deny reason as its `response_summary` and `is_error: true`. `blocked_tree_reads`
@@ -1588,6 +2022,77 @@ list is where the fire-rate measurement is read from, so a second copy would
 have to be excluded from every count anyway. A reader looking for it should
 filter `guardrail_shadow_violations` on that `kind`, not scan the `blocked_*`
 lists.
+
+#### 8.1.5 `usage.whole_run_usage` — the main thread plus its subagents
+
+`usage.usage` counts the **main thread only**. Subagent turns run in their own SDK
+sub-session and never enter it, so until the fields below existed an agent's cost
+could only be inferred as total-minus-main — a residual, not a measurement. One
+published claim over this corpus turned out to be nothing but that gap restated,
+and is retracted in `docs/plan/cost-latency-10x.md` appendix A3.
+
+Two sibling fields now carry the whole-run figure:
+
+| field | what |
+|---|---|
+| `usage.whole_run_usage` | The four priced token fields, `usage.usage` plus the sum of every `subagents[].usage`. Carries exactly those four keys — the unsummable siblings (`server_tool_use`, `service_tier`, `cache_creation`, `iterations`) are dropped. |
+| `usage.whole_run_cost_usd_estimated` | `pricing.estimate_cost_usd` over that block. **Corpus basis** — a flat Sonnet table with cache writes at the 1-hour rate. The production (5-minute) basis is about 8% lower. State the basis next to any figure lifted from it. Flat by design, so the committed corpus is never re-based; per-model figures are computed at report time from tokens and `models`, never persisted. |
+| `usage.model_usage` | The SDK's own per-model ledger (`ResultMessage.model_usage`), helpers included, keyed by model id. Present only when the `ResultMessage` carried it — absent on every abort path, never null or `{}`. Like `usage.usage` it comes from the last `ResultMessage`, so on a multi-query run it covers the last query only. Its `costUSD` is the CLI's own arithmetic (CLI 2.1.139 prices every cache write at the 5-minute rate and does not know every model), so it is a reconciliation source, not the price of record. |
+
+**`usage.usage` is deliberately left alone.** It is what `corpus_report`'s spend
+tally and the cost calibration read, so widening it in place would have moved every
+historical comparison underneath them.
+
+Both fields are `null`, never a plausible substitute, in four cases:
+
+- **`usage_source` is `streamed_fallback`.** That path's `output_tokens` is a
+  start-of-message snapshot, and since commit `76bc0655b` its accumulator already
+  holds subagent messages that surfaced on the main stream — so adding subagent
+  totals would double-count them on top of a field that is already wrong. Null
+  follows the precedent §8.1.2 sets.
+- **Any `subagents[]` entry carries no `usage` object.** Every run committed before
+  this change is that shape. Do **not** fall back to summing `subagents[].turns[]`:
+  those are one entry per content *block*, each repeating its message's totals, so
+  the sum roughly doubles cache reads. Unknown is unknown.
+- **No main-thread token block at all.**
+- **The run had more than one query.** The SDK's `ResultMessage` reports `usage`,
+  `num_turns` and `duration_ms` for the last query of a session, and a query starts
+  at each `system:init` row in `usage.timeline`: a stall-resume starts one, and so
+  does a background subagent's `task_notification` followed by a fresh
+  `system:init` (compaction emits `system:compact_boundary`, so a long run is still
+  one query). On such a run `usage.usage`, `num_turns` and `duration_ms` describe
+  the last query only. `total_cost_usd` and `duration_api_ms` are per CLI process:
+  they span the run when `resumes` is 0, and cover only the last process when it
+  is not, because a stall-resume starts a new one. The test is
+  `result_message_covers_last_query_only` in `e2e/result.py`. `make e2e-latency`
+  (its whole-run summary and Markdown table), `make e2e-cache-window` and the cost
+  calibration exclude these runs by name (`multi-query`), and `make e2e-corpus`
+  says its `recorded` spend is a floor when a resumed run is in it.
+
+A single-query run with no subagents, and one whose capture failed
+(`subagent_capture_status` non-ok, which yields an empty list), both merge to
+exactly `usage.usage`.
+
+**Why `subagents[].usage` is counted per message, not per record.** Claude Code
+writes one record per content block and every one repeats its message's usage, so
+`subagent_usage` keys on `message["id"]` and lets the last write win — the same
+rule `_accumulate_usage` already applies on the main thread, where the docstring
+records a naive sum reporting 358,610 output tokens against a true 106,661.
+`turns[]` stays one entry per record, because the runaway readers and
+`max_output_tokens` need per-record shape.
+
+`make e2e-agent-spend` reads these fields and reports spend per agent. It counts a
+spawn with no `usage` object as uncovered rather than as zero, and prints no table
+at all when nothing in the corpus is priced. It also reports, per agent, the models
+seen, the max and median `peak_window_tokens`, and how many measured spawns
+compacted; a spawn with no `peak_window_tokens` predates the field and is left out
+of those columns, never counted as a 0 peak. The price column is per model
+(`agent_spend_report.price_helper`, T1.11): a spawn recording exactly one model is
+priced at that model's rate (`pricing.MODEL_RATES`, cache writes at the 1-hour
+rate); a spawn recording no model predates the field and keeps the flat Sonnet
+table, labelled; a spawn on a model the table does not know, or on more than one
+model, is listed as unpriced with its reason — never as $0 and never at the Sonnet
+rate. An agent that ran on more than one model gets a sub-row per model.
 
 #### 8.1.2 `usage` when the `ResultMessage` never arrived
 
@@ -1681,6 +2186,44 @@ change before diffing across it — see §15, "Evidence to read, in order", step
 
 ---
 
+#### 8.1.4 `usage.message_usage` and `usage.thread_windows`
+
+Written on **every** run — both the `result_message` and `streamed_fallback`
+paths — from the same per-message accumulator the fallback block sums.
+
+`message_usage` is one row per deduped assistant message,
+`[thread, input, cache_read, cache_creation]`. The three token fields are the
+**context window** that message was sent against: what the model had to read to
+produce it. `thread_windows` summarises them per thread — `main` carries
+`peak_window_tokens` (the **max** of that thread's windows, not the sum) and
+`message_count`; `sub` carries `message_count` only.
+
+Three things a reader has to know:
+
+- **There is no output column, deliberately.** The stream reports per-message
+  `output_tokens` as a message-*start* snapshot — 1–33 tokens on every message
+  across the four runs this shape was recovered from, against a real
+  main-thread emit of ~27,500 tokens a run. A per-message output figure
+  measures nothing on either thread, so none is persisted.
+- **`sub` carries no peak.** It would be computed over only those subagent
+  messages that surface on the main SDK stream — measured at 150–250× below the
+  real subagent totals captured in `subagents[].turns[]`. `sub.message_count`
+  counts **subagent messages that reached the main stream**, not subagent turns:
+  it exists to show the thread tag populated at all, not to size subagent work.
+  A subagent's true peak is `subagents[].peak_window_tokens`, read from its own
+  transcript.
+- **The thread tag is exact.** It reads `AssistantMessage.parent_tool_use_id`:
+  `None` on the main thread, the spawning Task's id on a subagent. Confirmed on
+  a real run (`ogletree-children`, 2026-09-15): **95 main / 98 subagent
+  messages**. A trivial one-subagent probe against the same CLI showed no tagged
+  `AssistantMessage` at all and is a **false negative** — a subagent that
+  answers in one turn does not produce enough stream traffic to surface one.
+  Do not re-probe this with a toy task. This is *not* the
+  `system:task_progress` adjacency heuristic in `e2e/cache_window.py` — that one
+  exists because `cache_window` reads committed logs, which carry no message
+  object to ask. **A zero `sub.message_count` means no subagent message reached
+  the accumulator, never that no subagent ran.**
+
 ## 9. Roll-up Report
 
 At the end of a `run_e2e.py` invocation the harness prints a console summary of
@@ -1694,7 +2237,9 @@ omitted to preserve blind grading (§7.4):
 ```
 
 The compliance line is always printed — a silent compliance line puts us back
-to one number meaning two things (§7.2.1). Verdict-bearing totals (recall,
+to one number meaning two things (§7.2.1). When a run resumed after a stall, a
+note under the cost line says the figures are a floor: its cost covers the last
+CLI process only (§8.1.5). Verdict-bearing totals (recall,
 gate, by-tag) are available via `make e2e-corpus` (below), which reads
 committed run logs and is not part of the grading path.
 
@@ -1702,33 +2247,28 @@ For totals **across** runs, use `make e2e-corpus`
 (`eval/harness/e2e/corpus_report.py`), which reads each committed run log in
 the window through `axes_from_runlog` and reports all three axes, holding
 `not_checked` compliance separate from clean, then the violation detail
-beneath them:
+beneath them.
+
+Note what the sample below shows: `gate (outcome)` is identical to
+`recall (genealogy)`, because since the §8 detectors were demoted the gate IS
+the genealogical verdict. `compliance` is the axis that still moves on its own
+— 20 of these 21 runs failed it — and it is reported rather than folded in:
 
 ```
 $ make e2e-corpus
-Window: runs on/after 2026-07-21 — 82 of 142 run(s), 60 older run(s) excluded. Pass --since all for the whole corpus.
-82 committed run(s)
-  recall (genealogy): 49 pass / 10 partial / 23 fail
-  compliance:         21 fail / 61 not_checked
-  gate (outcome):     38 pass / 8 partial / 36 fail
-  NOTE: 61 run(s) have unknown compliance — written before the guardrail
-        detector existed, or by a version of it that cannot be pinned. They are
-        NOT counted as clean. See e2e.result.axes_from_runlog.
-  violations:         67 across 21 decidable run(s); 61 unknown recorded none
-    same_person (per person)            50
-    exhaustiveness                       6
-    proof-conclusion                     6
-    conflict-resolution                  5
+Window: runs on/after 2026-09-14 — 21 of 194 run(s), 173 older run(s) excluded. Pass --since all for the whole corpus.
+21 committed run(s)
+  recall (genealogy): 7 pass / 3 partial / 8 fail / 3 ungraded
+  compliance:         1 pass / 20 fail
+  gate (outcome):     7 pass / 3 partial / 8 fail / 3 ungraded
+  violations:         106 across 21 decidable run(s)
+    same_person (per person)            78
+    proof-conclusion                    15
+    exhaustiveness                       9
+    person-evidence (no link)            2
+    conflict-resolution                  2
   concentration:
-    jimmie-jewel-neal                   19  (28% of all violations)
-    elisabetha-sugecz-parents            7  (10% of all violations)
-    cornelius-booysen-death              5  (7% of all violations)
-    … 14 further fixture(s) not shown, 36 violation(s) (54%)
-    NOTE: `jimmie-jewel-neal` alone accounts for 28% of violations (4.8x its even
-          share across 17 contributing fixtures). Any headline is substantially
-          this one fixture's behavior.
-  runs w/ >=1 violation: 21/21 of DECIDABLE runs (100%) — but no run is known
-                         clean, so this is a floor on incidence, not a rate.
+    cruz-corona-ancestry                20  (19% of all violations)
   spend:
     recorded    $1,142.74  over 133 run(s) carrying total_cost_usd
     estimated   $122.62  over 11 null-cost run(s) with token counts (~0.90x recorded, median over 133 calibrating run(s))
@@ -1751,7 +2291,8 @@ prevent.
 **Spend, and recomputed violations.** The report always prints a `spend:` line —
 recorded cost, estimated cost, and the count of runs with neither — as three
 numbers, never one blend: abort-path cost is estimated (§8.1.2) and must not be
-folded into the authoritative recorded total. Beside the estimate is its
+folded into the recorded total. When a recorded run resumed after a stall, one
+more line says `recorded` is a floor (§8.1.5). Beside the estimate is its
 measured accuracy (median estimated/recorded); `CALIBRATE=1`
 (`--calibrate-cost`) adds the full median + range. `RECOMPUTE=1` (`--recompute`)
 additionally re-derives violations from each run's committed `tool_calls` +
@@ -1804,10 +2345,9 @@ console output is also the artifact stakeholders see.
 
 ## 10. Privacy
 
-All fixtures use deceased-person data only. FamilySearch's terms
-permit this for FS-sponsored work, which covers this project. Each
-fixture's `README.md` states the PID and confirms the person is
-deceased. No additional anonymization for v1.
+All fixtures use deceased-person data only. Each fixture's `README.md`
+states the PID and confirms the person is deceased. No additional
+anonymization for v1.
 
 **This is mechanically enforced, not just a documentation convention.**
 `e2e/author.py`'s `living_gate()` refuses to snapshot a person marked
@@ -1844,7 +2384,8 @@ acting.
   axis (§7) is a single rubric-graded score, not a multi-layer
   human-verified grade
 - CI integration of the *live run* — e2e runs are too expensive to gate
-  PRs. (One cheap artifact check runs in CI — a blocking grading gate;
+  PRs. (Two cheap artifact checks run in CI — a blocking grading gate and a
+  blocking 1M-window gate;
   fixture validity is a non-CI authoring practice, see §14.)
 - Multi-run statistical scoring (N=3) — single run, accepted noise.
   **At project start this is a deliberate "good enough to catch the big
@@ -1884,12 +2425,14 @@ log under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** Validity
 is a claim about the *fixture* — is this answer recoverable from live
 FamilySearch? — so it keys on the **genealogical** axis (§7.5) alone. A run
 that recovered the answer while bypassing a GPS guardrail skill still proves
-the fixture solvable; it fails the `outcome` gate for a reason that says
+the fixture solvable. Validity is argued from the genealogical axis alone —
+the gate is now that same axis, and `compliance` records the bypass for a reason that says
 nothing about the fixture.
 
-> **Reading a pre-#972 run log for this:** in logs written before the axis
+> **Reading a run log written before the compliance/correctness axis split for
+> this:** in logs written before the axis
 > split, a guardrail bypass overwrote the top-level `verdict` with `fail`, so
-> four committed runs read `"verdict": "fail"` on disk while being
+> seventeen committed runs are in this shape; nine read `"verdict": "fail"` on disk while being
 > genealogically `pass`. Resolve any log through
 > `e2e.result.axes_from_runlog` (or just run `make e2e-corpus`) rather than
 > reading the raw field, or the same fixture validates or doesn't depending
@@ -1912,11 +2455,19 @@ flag an unvalidated fixture — an earlier advisory `check-e2e-fixtures`
 warning was removed because it re-flagged every un-run fixture in the repo on
 every e2e PR (pure noise).
 
-The `check-e2e-fixtures` workflow instead runs only the **blocking grading
-gate** (§7.4): a run log *added in the PR* that produced a final tree must
-ship its `run-<ts>.ann.json` in the same PR (a treeless crash/skip run is
-exempt). It reads only committed files and does **not** trigger a live e2e
-run (those stay out of CI per §12).
+The `check-e2e-fixtures` workflow instead runs four **blocking** run-log
+checks (plus annotation validation). Three are scoped to run logs *added in the
+PR, or renamed into it*. The **grading gate**: one that produced a final tree
+must ship its `run-<ts>.ann.json` in the same PR (a treeless crash/skip run is
+exempt). The **1M-window gate**: one whose `usage.betas` is non-empty — a run
+made with `--context-1m` — is rejected, because a 1M window is not comparable to
+the rest of the corpus; keep it in a sibling directory outside
+`eval/runlogs/e2e/`. The **tool-search-off gate**: one whose `usage.tool_search`
+or `usage.tool_search_offered` is `false` is rejected for the same reason —
+every tool schema was loaded up front. The fourth, the **credential gate**, also
+reads run logs *modified* in the PR, and rejects one carrying a live credential.
+All four read only committed files and none triggers a live e2e run (those stay
+out of CI per §12).
 
 ---
 
@@ -1938,7 +2489,9 @@ changing anything, because the fix differs completely by cause.
 
 1. **`run-<ts>.json::narration` alongside `::tool_calls`** — the agent's
    reasoning in order. Each narration entry is
-   `{tool_calls_before, kind, text}` with `kind` one of `assistant` (the
+   `{tool_calls_before, kind, text}` — and, on `assistant` entries written at
+   `harness_schema_version` 8 and above, `thread` (`main` / `sub`) — with
+   `kind` one of `assistant` (the
    agent's own prose), `blocked` (a denied tool), or `harness` (a
    continue-nudge, or a harness-side status note — every run carries one at
    `tool_calls_before: 0` recording whether the genealogy MCP surface was
@@ -1956,7 +2509,7 @@ changing anything, because the fix differs completely by cause.
    looping — look for repeated similar tool calls near the end.
 4. **For a regression, diff `run-<ts>.json::tool_calls` against the last
    passing run.** Each entry carries `tool`, `args`, `response_summary`,
-   `is_error`, `agent_id`, and `agent_type`:
+   `result_chars`, `is_error`, `agent_id`, and `agent_type`:
    - different collection IDs touched → the agent took a different path;
    - different hit counts on the same search → FS may have reindexed;
    - **same calls, different `response_summary` → likely an agent or skill
@@ -1989,10 +2542,31 @@ changing anything, because the fix differs completely by cause.
    > and every call — including errored ones — read as successful to the
    > guardrail detectors. Diffing `tool_calls` across it shows a new key on every
    > entry; that is a capture change, not a regression. It also moves
-   > `compliance`/`outcome`, which the shadow/violation counts above do not —
+   > `compliance` — but no longer `outcome`, which since the §8 demotion is the
+   > `verdict` — which the shadow/violation counts above do not —
    > though by ~1 entry corpus-wide. The boundary is main `4541a4c5`, not
    > cleanly a version number: see §7.5 "Historical runs" for the table and the
    > measurement.
+   >
+   > **A third boundary: `image_transcribe` transcription completeness
+   > (v4 → v5).** At v4 and below, `response_summary` for `image_transcribe`
+   > calls was truncated at 500 chars, well under the length of many
+   > transcriptions (`make e2e-transcription-join SINCE=all` reports the
+   > current count of truncated captures over its window). At v5 and above, the
+   > `transcription` key is preserved in full, bypassing
+   > both the per-string cap and the backstop. The entry shape is unchanged —
+   > `response_summary` stays a string — so **branch on
+   > `harness_schema_version` before treating a v4 `image_transcribe` summary
+   > as a complete transcription**. A v4 summary ending in
+   > `[truncated by harness for prompt size; full length N chars]` is confirmed
+   > truncated; one ending in `...` may be backstop-truncated; only a v5-or-later entry
+   > is guaranteed complete.
+   >
+   > **A fourth boundary: `Agent` return completeness (v7 → v8).** At v7 and
+   > below an `Agent`/`Task` call's `response_summary` held the subagent's return
+   > cut at 500 chars; at v8 and above it holds the full return (up to
+   > `_RUNLOG_AGENT_STRING_MAX`). A diff of an `Agent` summary across it is the
+   > capture change, not a different return.
    >
    > Two format details that matter when diffing or grepping. Captures at or under
    > 500 chars are passed through verbatim, so they keep the raw MCP envelope in
@@ -2007,7 +2581,11 @@ changing anything, because the fix differs completely by cause.
 
 Unlike the unit-test run log, the e2e run log records no structured list of
 which sub-skills ran. To reconstruct the chain, filter `tool_calls` for
-entries whose `tool` is `Skill` and read `args.skill`. Stated here because an
+entries whose `tool` is `Skill` (read `args.skill`) **and** entries whose
+`tool` is `Agent` or `Task` (read `args.subagent_type`, stripping any
+`genealogy-research:` prefix), in order. The orchestrator spawns most
+destinations as agents, so a `Skill`-only filter misses most of the chain and
+reads a paired agent reached directly as a skipped step. Stated here because an
 absence cannot be inferred from §8's field enumeration.
 
 ### Recording what you learned

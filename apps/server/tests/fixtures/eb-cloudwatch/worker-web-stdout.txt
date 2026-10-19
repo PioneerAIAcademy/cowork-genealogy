@@ -1,0 +1,6 @@
+Oct 07 15:42:37 ip-172-31-86-36.ec2.internal systemd[1]: Started web.service - This is web daemon.
+Oct 07 15:42:40 ip-172-31-86-36.ec2.internal web[14864]: {"ev":"prepare","step":"agents","agents":["check-warnings","citation"]}
+Oct 07 15:42:40 ip-172-31-86-36.ec2.internal web[14864]: {"ev":"start","port":8000,"pg_dsn":"<rds-endpoint>:5432/genealogy","cwd":"/project","provider":"anthropic","dev_paths":false,"sqsd_max_retries":5,"sqs_credentials":"default chain (iam-role)","sqs_region":"us-east-1"}
+Oct 07 15:42:40 ip-172-31-86-36.ec2.internal web[14864]: {"ev":"prepare","step":"schema","at":"009_grant_session.sql"}
+Oct 07 16:33:04 ip-172-31-86-36.ec2.internal web[15120]: {"ev":"turn","turn_id":"turn-u13-forged-1","msgid":"198d67b0-0169-48a8-be54-3d5289c9d27d","receive_count":1,"status":400,"error":"stub turns are disabled"}
+Oct 07 16:47:41 ip-172-31-86-36.ec2.internal web[16010]: Traceback (most recent call last): {not json

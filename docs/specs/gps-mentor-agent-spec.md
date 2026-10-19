@@ -36,9 +36,9 @@ things when the evidence demands it.
 
 | File | Action | Notes |
 |------|--------|-------|
-| `packages/engine/plugin/agents/gps-mentor.md` | Done | Implemented and conformant. The original pre-spec draft (commit `c533ce9`) has been brought into full conformance: it now includes the existing-verdict skip logic (§10), `mode`/`force_reevaluate` handling, `evaluations[]` indexing (§8/§12), and the deterministic fallback priority order (§3.3). The shipped plugin zip carries the agent (`scripts/package-plugin.sh`); the eval e2e harness stages it into the workspace's `.claude/agents/` via `eval/harness/e2e/orchestrator.py::build_workspace` so the real agent (not an improvised generic subagent) runs under `/research`. |
+| `packages/engine/plugin/agents/gps-mentor.md` | Done | Implemented and conformant. The original pre-spec draft (commit `c533ce9`) has been brought into full conformance: it now includes the existing-verdict skip logic (§10), `force_reevaluate` handling, `evaluations[]` indexing (§8/§12), and the deterministic fallback priority order (§3.3). The shipped plugin zip carries the agent (`scripts/package-plugin.sh`); the eval e2e harness stages it into the workspace's `.claude/agents/` via `eval/harness/e2e/orchestrator.py::build_workspace` so the real agent (not an improvised generic subagent) runs under `/research`. |
 | `docs/specs/research-schema-spec.md` | Modify | Add §5.12 `evaluations` section and update §3 ID prefix table and §6 cross-reference map. Also carries `researcher_profile.intended_audience` (§5.1.1), which §6.4's audience check reads. |
-| `researcher_profile.intended_audience` | Done | Optional string added for §6.4. Five sites per CLAUDE.md: both `research.schema.json` mirrors, the §5.1.1 prose table, `validator.ts` (allow-list + type check), and `packages/schema/src/index.ts`. Not written by `init-project` — its opening-turn interview covers objective, experience level, and access only. |
+| `researcher_profile.intended_audience` | Done | Optional string added for §6.4. Five sites per CLAUDE.md: both `research.schema.json` mirrors, the §5.1.1 prose table, `validator.ts` (allow-list + type check), and `packages/schema/src/index.ts`. Not written by `init-project` — its opening turn asks the objective only; the profile is fixed. |
 | `docs/specs/schemas/research.schema.json` | Modify | Add `evaluations` to `required` list and `properties`, add `$defs/evaluation_entry`. |
 | `CLAUDE.md` | Modify | Document `packages/engine/plugin/agents/` directory and the Cowork plugin agent pattern. |
 
@@ -48,8 +48,8 @@ things when the evidence demands it.
 
 ### 3.1 Trigger phrases
 
-The agent is invoked from the `/research` orchestrator skill at defined GPS checkpoints, or
-directly by the user. Trigger phrases for direct invocation:
+The agent is invoked on the user's request — directly, or by the `/research` orchestrator
+skill when the user asks it for a review. Trigger phrases for direct invocation:
 
 - "review my work"
 - "is this defensible?"
@@ -74,7 +74,6 @@ The invoker (orchestrator or user) supplies parameters in the delegation message
 ```
 focus: "<focus_mode>"
 target_id: "<id>"
-mode: "interactive" | "autonomous"      # optional, default: interactive
 force_reevaluate: true                  # optional, default: false
 ```
 
@@ -82,7 +81,6 @@ force_reevaluate: true                  # optional, default: false
 |-----------|----------|--------|-------------|
 | `focus` | no (see §3.3) | `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`, `on-demand` | Which rubric to apply |
 | `target_id` | no (see §3.3) | `q_` ID, `ps_` ID, or `"project"` | What to evaluate |
-| `mode` | no | `interactive`, `autonomous` | Controls verdict-handling protocol (§11). Defaults to `interactive`. |
 | `force_reevaluate` | no | `true` | When present and `true`, bypasses the existing-verdict skip logic (§10) and always runs a fresh evaluation. Intended for orchestrator use when the researcher has addressed prior findings. |
 
 ### 3.3 Missing or ambiguous input
@@ -123,18 +121,19 @@ knows what was evaluated.
 
 ### 3.4 Orchestrator checkpoints
 
-`/research` **auto-invokes** gps-mentor at **one** checkpoint, advisory, supplying explicit `focus` and `target_id`:
+`/research` does **not** auto-invoke gps-mentor at any checkpoint. The mentor runs only
+when the user asks for it ("second opinion", "review my work", "is this defensible?"),
+with `focus: "on-demand"`, including on a completed project. `proof-conclusion`'s
+closing summary tells the user they can ask for a second opinion.
 
-| Checkpoint | focus | target_id |
-|------------|-------|-----------|
-| After proof summary written | `proof-critique` | the proof summary's `ps_` ID |
-
-The `pre-exhaustiveness` and `conclusion-readiness` focuses remain supported for **on-demand**
-use ("am I ready to conclude?"), but `/research` no longer auto-gates on them: they duplicated
+All four focuses remain supported for **on-demand** use. `pre-exhaustiveness` and
+`conclusion-readiness` were dropped from auto-gating first: they duplicated
 `research-exhaustiveness`'s own 7-point check and `proof-conclusion`'s tier analysis, the
 read-only mentor cannot verify exhaustiveness without search tools, and their forced rework
-starved the proof step (per the e2e latency analysis).
-The single `proof-critique` gate is identical in interactive and `--autonomous` mode and never
+starved the proof step (per the e2e latency analysis). The `proof-critique` checkpoint after
+each proof summary followed: across 34 committed e2e runs from 2026-09-01 its verdict was
+`address_first` on 27 of 31 live critiques, the router acted on it in only 2 of 28 finished
+runs, and taking it off saves about 6–8% of wall-clock and 3–5% of cost per run. No verdict
 blocks the flow — see §11.
 
 ---
@@ -149,27 +148,22 @@ name: gps-mentor
 description: >-
   BCG-style senior genealogist who reviews research work and tells the
   user what to address to improve it. Returns a structured verdict plus a
-  mentoring narrative. Invoked by /research once per proof — a mandatory
-  `proof-critique` after `proof-conclusion` writes a summary (must be
-  invoked and recorded; its recommendation stays advisory, never forcing
-  rework) — and on-demand when the user says "review my work", "is this
-  defensible?", "mentor", "second opinion", "is this a good read",
-  "polish this for my family". Never modifies research.json
+  mentoring narrative. Invoked on request, when the user says "review my
+  work", "is this defensible?", "mentor", "second opinion",
+  "is this a good read", "polish this for my family". Never modifies research.json
   (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for
   schema validation (use validate-schema), to execute new searches (use
   search-records or search-external-sites), or to write proof conclusions
   (use proof-conclusion). A user-driven GPS review of an existing proof
   summary ("does my proof meet the GPS", "assess ps_NNN against the GPS
-  components") goes through the proof-conclusion skill, which invokes this
-  mentor.
+  components") goes through proof-conclusion.
 model: claude-sonnet-5
 tools:
-  - Read
-  # Then these ten, each under all three server spellings:
-  #   research_query, project_context, research_append, validate_research_schema,
-  #   place_search, place_distance, collections_search, external_links_search,
-  #   wiki_place_page, wiki_search
-  # The full 31-entry list is NOT repeated here. The authoritative copy is the
+  # These eleven, each under all three server spellings:
+  #   research_query, project_context, sidecar_read, research_append,
+  #   validate_research_schema, place_search, place_distance, collections_search,
+  #   external_links_search, wiki_place_page, wiki_search
+  # The full 33-entry list is NOT repeated here. The authoritative copy is the
   # agent file, packages/engine/plugin/agents/gps-mentor.md — nothing lints
   # spec-to-agent agreement, so a second literal copy goes stale silently (it
   # already has). Spellings and rationale: ADR-0004.
@@ -193,15 +187,29 @@ qualified name is equally wrong: `mcp__genealogy__*` resolves under
 `.mcpb` either through a remote-device bridge as
 `mcp__remote-devices__Genealogy_Research__*` or under the bare `display_name` as
 `mcp__Genealogy_Research__*` — and the spelling a Cowork session exposes has been
-observed to move (bare live in #1341 on 2026-08-04/05, absent in the 2026-08-15
+observed to move (bare spelling live 2026-08-04/05, absent in the 2026-08-15
 censuses; see ADR-0004). Entries are matched exactly with no fallback, and an
 agent whose entries all miss is refused a spawn outright — which is what happened
 to `record-extractor` when its entries missed the live spelling, before
 the third spelling was added. Unrecognized entries are ignored so long as one
 resolves, so
 listing all three is safe. Enforced by
-`tests/packaging/agent-tool-names.test.ts`. `Read` is a built-in Cowork
-tool, not an MCP tool, so it stays bare.
+`tests/packaging/agent-tool-names.test.ts`.
+
+**No built-in tool since 2026-09-14.** `Read` — a built-in Cowork tool, listed
+bare — left the list when `sidecar_read` (`docs/specs/sidecar-read-tool-spec.md`)
+took over the one read it still served, the verdict body under `evaluations/`.
+Two consequences, both deliberate. First, the mentor now holds **no route to a
+project file**: `research.json` and the tree reach it only as `project_context` /
+`research_query` projections, and a verdict body only through
+`sidecar_read({ projectPath, ref })`, which serves `evaluations/` and `uploads/`
+and nothing else. Second, every entry is now an MCP tool, so the agent is
+**exposed to a registrar move exactly as the other MCP-only agents are** — the
+bare `Read` used to resolve under every registrar, which meant a session whose
+spelling missed every MCP entry would still spawn the mentor, holding
+`Read` alone, instead of refusing it outright. That guaranteed spawn is gone;
+what protects the mentor now is the same three-spelling insurance that protects
+every other MCP-only agent.
 
 **Model requirement:** `claude-sonnet-5`. The gates read and cross-reference large research
 files with careful analytical reasoning. Sonnet 5 — released after this spec was first written —
@@ -212,20 +220,24 @@ model; do not silently downgrade below Sonnet-5-class analytical reasoning.
 
 **Tools list is closed:** The agent does not have `record_search`, `fulltext_search`,
 `person_read`, or any write tool. It evaluates evidence the researcher has gathered; it
-does not gather new evidence itself. `research_query` and `project_context` are not an
-exception — they are read-only projections of what the researcher already recorded.
+does not gather new evidence itself. `research_query`, `project_context` and `sidecar_read`
+are not an exception — the first two are read-only projections of what the researcher
+already recorded, and the third returns only verdicts already written.
 
-**Why the two read tools are on the list (added 2026-07-31, issue #693).** Without
+**Why the two read tools are on the list (added 2026-07-31).** Without
 them the agent's only way to see project state was `Read`, and its body told it to
 read `research.json` directly. Measured across 24 e2e runs (2026-07-25 → 07-30), that
 made the mentor the **largest single reader of `research.json` in the system — 112 of
 178 reads (63%), 92 of them hand-paginated**, in a linear front-to-back scan issued
-once per proof, at the point in a run where the file is largest. One captured
+once per proof (when the mentor still ran on every proof summary), at the point in a run where the file is largest. One captured
 delegation (`wilkins-marriage`) spent 15 reads before its single write. In 10 of 10
 captured delegations the agent's first tool call was a bare `Read(research.json)`. The
-grant plus the **Reading project state** section of the agent body replaces that scan;
-`Read` stays for the rare body no projection carries (a verdict file under
-`evaluations/`, an entry already located by id).
+grant plus the **Reading project state** section of the agent body replaces that scan.
+`Read` stayed for the rare body no projection carries (a verdict file under
+`evaluations/`, an entry already located by id) until 2026-09-14, when `sidecar_read`
+took the verdict read and the by-id case became a `research_query` on the entry's
+section, paged with `offset` and matched on `id` by the agent (only `questions` and
+`sources` carry an own-id filter).
 
 **What the scan was silently providing, and how it is preserved.** A whole-file read
 also showed the agent *project-wide absences* — the `wilkins-marriage` verdict's
@@ -647,10 +659,10 @@ The narrative is a markdown document printed to the conversation as the agent's 
 user-facing output. It must follow this structure:
 
 ```markdown
-# Mentor review: <focus> on <target_id>
+# Mentor review: <what was reviewed, in plain words>
 
 ## What you've done well
-[Specific praise, naming assertion IDs, conflict IDs, and standards]
+[Specific praise, in plain words]
 
 ## What to address before moving on
 [must_address items framed as next-step guidance — omit this section if none]
@@ -662,6 +674,15 @@ user-facing output. It must follow this structure:
 [For each must_address item, the specific evidence or analysis that would resolve it
 — omit this section if must_address is empty]
 ```
+
+The heading may carry a `q_`/`ps_` id but never a focus name (`proof-critique`,
+`pre-exhaustiveness`, …), which is our vocabulary rather than the researcher's. In the
+narrative a tier is named as the viewer shows it — well established, likely, tentative,
+not established, ruled out (`StatusBadge.tsx`) — and the narrative never says GPS, proof,
+proved or exhaustive. It says genealogy standards, a finding (a conclusion once well
+established), and what we searched and what we could not reach; the researcher's
+`narration_guidance` carries the same rule. Numbered standards stay in the structured `standard` fields, which are for the
+machine; the narrative praises and advises in plain words.
 
 For a craft-only `on-demand` run, the required scope sentence of §6.4 comes first —
 before the `# Mentor review:` heading — so the reader meets it before any praise. The
@@ -700,11 +721,11 @@ focus. A refusal writes a verdict with `verdict: "refused"` and a one-line
 
 | Focus | Refuse when | Refusal message (narrative_for_user) |
 |-------|-------------|--------------------------------------|
-| `pre-exhaustiveness` | Any plan item for the question has `status: "in_progress"` | "Plan items still in progress: [list pli_ IDs]. Complete them before pre-exhaustiveness review." |
+| `pre-exhaustiveness` | Any plan item for the question has `status: "in_progress"` | "Some planned searches are still in progress: [list pli_ IDs]. Finish them, then ask me to review whether the searching is complete." |
 | `pre-exhaustiveness` | No plan exists for the question | "No plan exists for q_XXX. Invoke research-plan first." |
-| `conclusion-readiness` | Question is not at `status: "exhaustive_declared"` | "This question is at status '<current>'. Run pre-exhaustiveness review first, then declare exhaustive via research-exhaustiveness, then return for conclusion-readiness review." |
-| `proof-critique` | No `proof_summaries[id == target_id]` in research.json | "No proof summary with id <target_id> exists. Did you mean conclusion-readiness on a question, or proof-critique on a different ps_id?" |
-| `on-demand`, narrative-craft request (§6.4) | No proof summary exists to read | "There's no written proof summary to read yet, and a craft review needs finished prose. Run proof-conclusion first, then ask me how it reads." |
+| `conclusion-readiness` | Question is not at `status: "exhaustive_declared"` | "This question is not ready for a conclusion review yet. First record what we searched and what we could not reach (research-exhaustiveness), then come back for the review." |
+| `proof-critique` | No `proof_summaries[id == target_id]` in research.json | "There is no written-up finding <target_id>. Did you mean a review of a question, or a different finding?" |
+| `on-demand`, narrative-craft request (§6.4) | No proof summary exists to read | "There's no written-up finding to read yet, and a craft review needs finished prose. Run proof-conclusion first, then ask me how it reads." |
 
 The narrative-craft row is a direct extension of the `proof-critique` row above it,
 not a fresh decision: both refuse for the same reason — there is no written
@@ -724,8 +745,10 @@ focus + target_id combination:
 research_query({ projectPath, section: "evaluations", targetId, focus })
 ```
 
-It then selects the entry whose `superseded_by` is `null` and `Read`s that entry's
-`file_path` for the prior verdict body.
+It then selects the entry whose `superseded_by` is `null` and calls
+`sidecar_read({ projectPath, ref: <that entry's file_path> })` for the prior verdict
+body — `ref` is the `file_path` string exactly as stored, and a body longer than one
+page is followed with `offset: nextOffset` while `truncated` is `true`.
 
 **The null check is the agent's step, not the tool's** — deliberately.
 `research_query`'s filter layer compares a string against a field, and
@@ -749,23 +772,10 @@ verdict that never looked at the prose. The user asked for a craft read by name;
 them one.
 
 This exempts the *skip*, not all reading of prior verdicts: §12.3 still has the craft
-run open the candidate entry's sidecar to check its `craft` flag before deciding
-supersession.
+run call `sidecar_read` on the candidate entry's `file_path` to check its `craft`
+flag before deciding supersession.
 
-### 10.1 Interactive mode behavior
-
-If an existing verdict file is found:
-
-1. Print a brief summary of the prior verdict:
-   - File name, timestamp, and prior `verdict` value
-   - First strength and (if any) first `must_address` issue
-2. Ask the user: "Re-evaluate now, or surface the existing verdict?"
-3. If the user chooses to surface the existing: print the prior `narrative_for_user` and
-   stop. Do not write a new file.
-4. If the user chooses to re-evaluate: proceed normally and write a new verdict file.
-   Do not overwrite the prior file — the timestamp in the filename keeps them distinct.
-
-### 10.2 Autonomous mode behavior
+### 10.1 Behaviour on an existing verdict
 
 If an existing verdict file is found and the verdict was `looks_solid` or
 `consider_addressing` (not blocking), surface the existing verdict and stop. Do not
@@ -775,19 +785,19 @@ delegation message.
 If the prior verdict was `address_first` or `refused`, re-evaluate — the researcher may
 have addressed the issues since then.
 
-### 10.3 Identifying the mode
+Never stop to ask which of the two to do. The timestamp in the filename keeps
+re-evaluations distinct, so a prior verdict is never overwritten.
 
-The orchestrator sets the mode by including one of the following in the delegation message:
+### 10.2 There is no mode parameter
 
-```
-mode: interactive
-```
-or
-```
-mode: autonomous
-```
+Until the continuous-work change to `research/SKILL.md` (2026-09-23) this section had two halves selected by
+a `mode: interactive | autonomous` parameter, defaulting to `interactive`, whose rule was
+to **ask the user** "Re-evaluate now, or surface the existing verdict?".
 
-If `mode` is absent, default to `interactive`.
+Nothing ever passed that parameter — `grep -rn "mode: *\"\?interactive" packages/engine/`
+returns only the agent body and this spec — so the asking branch was the live path. Under
+continuous work no one is waiting to answer it, so the ask was a stall with no way out.
+The parameter is gone and the former autonomous behaviour above is unconditional.
 
 ---
 
@@ -795,21 +805,21 @@ If `mode` is absent, default to `interactive`.
 
 After the agent returns its verdict, the caller handles the result as follows.
 
-### 11.1 Interactive mode
+### 11.1 What the agent does
 
-The agent prints `narrative_for_user` and stops. The orchestrator surfaces it to the user
-and pauses. The user decides what to do next — resume the `/research` flow, invoke a
-specific skill, or dismiss the review and continue.
+The agent prints `narrative_for_user` and stops. The orchestrator surfaces it and carries
+on; it does not pause for the researcher, who reads the narrative on the feed while the
+run continues.
 
-### 11.2 Verdict handling (advisory — identical in interactive and autonomous)
+### 11.2 Verdict handling (advisory)
 
-The `proof-critique` gate runs *after* the answer is already persisted, so no verdict blocks
-the flow or re-opens the resolved question. After the verdict is returned:
+The mentor runs on request, after any answer it reviews is already persisted, so no verdict
+blocks the flow or re-opens a resolved question. After the verdict is returned:
 
 | Verdict | Orchestrator action |
 |---------|---------------------|
 | `looks_solid` / `consider_addressing` | Surface the narrative; log `consider_addressing` items for later review; continue. |
-| `address_first` | Surface the narrative and record each `must_address` item to the audit trail. Do NOT route to a remediation skill or re-open the question. In interactive mode a watching researcher may choose to act; under `--autonomous`, log and continue. |
+| `address_first` | Surface the narrative and record each `must_address` item to the audit trail. Do NOT route to a remediation skill or re-open the question. Log it and continue; a watching researcher may choose to act on it. |
 | `refused` | Surface the refusal message; it names the correct target. |
 
 The gps-mentor agent is not responsible for the orchestrator routing decision. It writes
@@ -875,12 +885,13 @@ leaves a craft one alone. They share the `on-demand` focus but review different 
 and marking an evidence review superseded by a style review — or the reverse — would
 misreport the audit trail.
 
-**How to tell them apart.** Read the candidate entry's `file_path` sidecar and check
-its `craft` flag (§7.1). This is the one place a craft run must open a prior verdict,
-and it is why the flag exists: focus + target_id cannot discriminate. A sidecar written
-before the flag existed, or unreadable, counts as **not** craft — so an old evidentiary
-verdict is left alone, which is the safe direction. This costs one `Read`; it is not a
-reason to skip the check and supersede blindly.
+**How to tell them apart.** Call `sidecar_read({ projectPath, ref: <candidate
+file_path> })` and check the body's `craft` flag (§7.1). This is the one place a craft
+run must open a prior verdict, and it is why the flag exists: focus + target_id cannot
+discriminate. A sidecar written before the flag existed, or one the tool cannot return
+(`ok: false` — `not_found`, `not_text`, `invalid_ref`), counts as **not** craft — so an
+old evidentiary verdict is left alone, which is the safe direction. This costs one
+`sidecar_read`; it is not a reason to skip the check and supersede blindly.
 
 ### 12.4 research-schema-spec.md changes
 
@@ -971,7 +982,7 @@ specific, not as a box-checking ritual.
 |------|-------------|
 | `project_context` | The opening call of every invocation — project status, open questions, tree persons with the sources they cite, sources with their record ids, locality knowledge. Replaces the orientation the agent used to get by scanning `research.json`. |
 | `research_query` | Every specific state lookup, one section per call (`assertions`, `person_evidence`, `conflicts`, `hypotheses`, `proof_summaries`, `questions`, `plans`, `log`, `timelines`, `evaluations`). Two required habits: run `conflicts` and `hypotheses` **unfiltered** to catch project-wide absences, and check `count` against the 50-item cap before calling a set complete. |
-| `Read` | Exception only — a body no projection carries (a verdict file under `evaluations/`, an entry already located by id). **Never** `research.json` front-to-back. |
+| `sidecar_read` | A prior verdict body only — `ref` is the `evaluations[]` entry's `file_path` as stored; page with `offset: nextOffset` while `truncated`. It serves `evaluations/` and `uploads/` and refuses every other path (`invalid_ref`), so it is not a route back to `research.json`, the tree, `results/`, or images. Spec: `docs/specs/sidecar-read-tool-spec.md`. An entry already located by id is a `research_query` on its section, paged with `offset` and matched on `id` by the agent. |
 | `collections_search` | When flagging a missing record type — quote the specific collection name FamilySearch offers for the jurisdiction. "FamilySearch has 'Pennsylvania Probate Records, 1683–1994'" beats "consider probate." |
 | `wiki_place_page` (`section: "online_records"`) | When auditing topical breadth (pre-exhaustiveness rubric check 1). |
 | `wiki_place_page` (`section: "research_tips"`) | When flagging repository diversity gaps or suggesting strategy improvements. |
@@ -1014,7 +1025,7 @@ These rules are absolute and must be reflected in the agent implementation:
 | Agent disagrees with `research-exhaustiveness` declaration | Verdict is `address_first`. The mechanical 7-point check can pass on a plan that was too narrow. The genealogist (agent) is the final judge. |
 | Agent disagrees with `proof-conclusion`'s tier | Same — `address_first` with `must_address` naming the tier mismatch. |
 | `target_id` references a `q_` ID that does not exist in research.json | Return `refused` with message: "No question with id <target_id> found in research.json." |
-| `target_id` for `proof-critique` is a `q_` ID, not a `ps_` ID | Return `refused`: "proof-critique requires a ps_ ID. Did you mean conclusion-readiness on q_XXX?" |
+| `target_id` for `proof-critique` is a `q_` ID, not a `ps_` ID | Return `refused`: "q_XXX is a question, not a written-up finding. Did you mean a review of whether it is ready for a conclusion?" |
 | research.json fails schema validation | Surface the schema errors as `must_address` items (no standard citation needed — just list the validation errors). Still write the verdict file. |
 | `evaluations/` directory cannot be created (permissions, etc.) | Report the error explicitly in the narrative; do not silently skip the file write. |
 
@@ -1028,14 +1039,17 @@ These items are acknowledged but not specified here. They belong in future issue
 |------|-------|
 | Wiring into `/research` orchestrator skill | Depends on `/research` landing on main. DallanQ noted this explicitly in the implementation commit. |
 | Commit pending per-action approval | Not yet understood well enough to specify. Defer to DallanQ for clarification. |
-| Reducing per-gate mentor cost | Largely shipped — see §17.1. Do not defer or sample the surviving `proof-critique` gate to chase speed. |
+| Reducing per-gate mentor cost | Shipped — see §17.1. No mentor gate remains on the default `/research` path. |
 | `narrative-craft` as its own `focus` value | Deferred, not dropped — with a stated trigger for revisiting. See §17.2. |
 
 ### 17.1 Per-gate mentor cost — what shipped, and what is not a lever
 
-**Done.** The three auto-gates were collapsed to the single `proof-critique`
-gate. §3.4 is the current contract, and it records why the two early focuses
-were dropped from auto-gating: they duplicated `research-exhaustiveness`'s own
+**Done.** The three auto-gates were first collapsed to a single `proof-critique`
+gate, and that gate was then taken off the default path too: `/research` no
+longer auto-invokes the mentor at all, and `research_append` no longer requires a
+`proof-critique` verdict before `project.status = "completed"`. §3.4 is the
+current contract, and it records why each auto-gate was dropped. The two early focuses
+were dropped: they duplicated `research-exhaustiveness`'s own
 7-point check and `proof-conclusion`'s tier analysis, the read-only mentor
 cannot verify exhaustiveness without search tools, and their forced rework
 starved the proof step. `pre-exhaustiveness` and `conclusion-readiness` remain
@@ -1046,40 +1060,36 @@ adopted" and prescribed a three-step sequence before it could even be
 considered. Both prerequisites in that sequence had in fact already landed —
 the agent is conformant (§2), and `build_workspace`
 (`eval/harness/e2e/orchestrator.py`) stages `packages/engine/plugin/agents/*.md`
-into the workspace's `.claude/agents/`, so e2e exercises the gate — and the
+into the workspace's `.claude/agents/`, so e2e exercised the gate — and the
 decision step was subsequently taken. That text is removed rather than struck
 through, because a spec section forbidding work that has already shipped reads
 as live policy and will be obeyed as such.
 
-**Also done, and load-bearing for cost:** the gate is invoked at most once per
-proof summary. `/research` first checks `evaluations/` for a
-`proof-critique-<ps_id>-*.json` newer than the last edit to that summary and
-acts on the existing verdict rather than re-invoking. Before that cache, real
+**Historical:** while the gate existed it was invoked at most once per
+proof summary, via a check of `evaluations/` for a
+`proof-critique-<ps_id>-*.json` newer than the last edit to that summary. Before that cache, real
 runs showed **3–4 mentor invocations per answering question at ~40–84 s each
 (≈3.5–4 min per question)** on the critical path, because the parent blocks on
 every gate. The model half of the same lever is banked too: the agent was
 repinned `claude-opus-4-8` → `claude-sonnet-5`.
 
-**Not a lever: the surviving ~138 s `proof-critique` call itself.** It is
-doctrine-required — a real second model call, in fresh context, reviewing the
-written conclusion — and there is no eval judge in production Cowork, so it is
-the only adversarial proof-quality check a real user ever receives. Carry it as
-a known fixed cost in any latency re-measurement rather than mistaking it for
-waste. Do not defer or sample it to chase wall-clock.
+**The ~138 s `proof-critique` call is now on request only.** It remains the only
+adversarial proof-quality check a real user can receive — there is no eval judge
+in production Cowork — so it stays one request away: the user asks for a second
+opinion and gets a fresh-context review of the written conclusion.
 
 ### 17.2 `narrative-craft` as its own focus mode (deferred, not dropped)
 
 The narrative-craft checks of §6.4 could instead have been a fifth `focus`
 value (`"narrative-craft"` or `"publication-readiness"`) alongside the four that
-exist, and — unlike three of those four — one the orchestrator actually invokes
-(§3.4 auto-invokes `proof-critique` only). **Not adopted**, for two reasons:
+exist (§3.4: the orchestrator auto-invokes none of them). **Not adopted**, for two reasons:
 
 1. **`focus` is a closed enum in three places** — `$defs/evaluation_entry.focus`
    in *both* schema trees (§12.5), the `evaluation_focus` set in `validator.ts`
    (§12.6), and the mirrored TS union in `packages/schema/src/index.ts`. That is
    real multi-file cost for a check nobody has run yet.
 2. **It forces a decision too early.** A standing mode has to answer whether it
-   can *block* progress the way `proof-critique`'s `address_first` does. Under
+   can *block* progress, as the `proof-critique` gate's `address_first` was once meant to. Under
    §6.4 the answer is settled and cheap — advisory, always. Deciding "mandatory
    gate or not" before the check has been used once would be assumed, not earned.
 

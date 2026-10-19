@@ -1,0 +1,52 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "William",
+          "surname": "Ashford",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1838",
+          "place": "Canterbury, Kent, England",
+          "sources": [
+            {
+              "ref": "S1",
+              "page": "reg. Canterbury"
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "primary": true,
+          "date": "1874",
+          "place": "Canterbury, Kent, England",
+          "sources": [
+            {
+              "ref": "S1",
+              "page": "reg. Canterbury 1874"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "Canterbury, Kent civil registration & census"
+    }
+  ]
+}

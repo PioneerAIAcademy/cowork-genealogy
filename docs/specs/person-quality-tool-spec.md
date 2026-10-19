@@ -23,15 +23,71 @@ code is HTTP-only — it does not import any FamilySearch internal code.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `personId` | string | Yes | FamilySearch tree-person ID (e.g. `"KD96-TV2"`). camelCase at the MCP boundary, per repo convention. |
+| `personId` | string | Yes | Tree-person id. A FamilySearch person id (e.g. `"KD96-TV2"`) is scored; any other id is answered without a network call — see "Non-FamilySearch ids" below. camelCase at the MCP boundary, per repo convention. |
+| `projectPath` | string | No | Absolute path of the project folder. With it, a project's own tree id is resolved to the person's FamilySearch link — see "Non-FamilySearch ids" below. |
+| `detail` | boolean | No | Opt in to the per-fact and per-source breakdown. Defaults to `false`, and when it is off the response is byte-identical to what it was before the flag existed. |
 
 Example:
 ```json
 { "personId": "KD96-TV2" }
+{ "personId": "KD96-TV2", "detail": true }
 ```
 
 > Unlike `person_ancestors`, `personId` is **required** — there is no
 > "current user" default. Quality scoring always targets a named person.
+
+---
+
+## Non-FamilySearch ids
+
+Before any token is read or network call made, the tool decides what to score
+(`resolvePersonQualityTarget`, exported so the eval harness runs the same code):
+
+| Input | Answer |
+|---|---|
+| `personId` is a FamilySearch person id | scored as given |
+| a project id, `projectPath` given, the person's `ark` is a `4:1:` tree link | scored under the FamilySearch id inside that link |
+| a project id, `projectPath` given, no `4:1:` link, the person has a name | `{ ok: false, reason: "not_familysearch_id", errors: ["<Name> isn't linked to FamilySearch, so there's no FamilySearch quality score."] }` |
+| anything else — no `projectPath`, person not in the tree, tree unreadable, no name, or a `4:1:` link whose id is not a FamilySearch id (a link exists, so "isn't linked" would be false) | the same shape with `"No FamilySearch quality score was retrieved for this person."` |
+
+**What counts as a FamilySearch person id.** Four characters, a hyphen, three
+characters, drawn from A–Z and 0–9 minus the vowels, compared case-insensitively
+after trimming (`isFamilySearchPersonId`, `src/utils/fs-id.ts`, shared with
+`match-engine.ts`). Every FamilySearch-shaped person id across the eval scenarios,
+the e2e fixtures and the person-quality/person-read MCP fixtures passes (846, none
+rejected, 2026-09-24).
+
+**Why a project id is resolved.** `init-project` gives each person it imports from
+FamilySearch a local id **and** keeps the FamilySearch link in `ark`
+(`{"id": "I1", "ark": "ark:/61903/4:1:MKVT-7XR"}`, 21 of 25 imported people in its
+newest committed run), and callers pass the local id. Without resolution those
+people never got a score. Only a `4:1:` link is a tree person; a `1:1:` link is a
+record persona and has no quality score.
+
+**Why the answer for an unlinked person is a sentence, by name.** A caller relaying
+the answer needs a true reason. With only "no score was retrieved", the check-warnings
+skill (before it dropped this tool) supplied its own reason in 4 of 4 runs, in id jargon ("I1 is a local project
+ID, not a FamilySearch person ID"), and once falsely ("does not have a FamilySearch
+ID"). With the project tree in hand the tool can state the true reason in plain
+words. It names the person, never the id or its type; the name is built from the
+preferred name's given and surname, not `getPersonName`, whose fallback prints the
+id.
+
+**Why before the token, and never a throw.** FamilySearch's quality service scores a
+person it already holds; asked for `I1` it answers
+`400 Invalid j-encoded identifier: I1`, and POSTing a person to `/quality/person`,
+`/quality/person/scores` or `/quality` returns 404 (probed 2026-09-24). Answering
+first means a researcher who is not logged in is never told to log in for such a
+person. A quality call must not fail because of project state, so an unreadable
+tree falls back to the neutral sentence.
+
+**The FamilySearch 400 path is unchanged.** An id that passes the shape check but
+that FamilySearch still refuses (a mistyped real id) keeps the existing error.
+
+**Blocked in the e2e benchmark.** The benchmark's starting trees carry each
+subject's FamilySearch id, and several issue sentences interpolate values off the
+live profile (`{originalDate}`, `{originalPlace}`), so the tool is on
+`BLOCKED_TREE_TOOLS` (`e2e-test-spec.md` §6.1).
 
 ---
 
@@ -50,7 +106,7 @@ below. A clean captured sample lives at
 not shipped).
 
 > Note: dev testing exercised the beta-bearer-token path against `sg30p0`. The
-> tool uses `getValidToken()` (production `familysearch.org` OAuth tokens) at
+> tool uses `getValidToken(principal)` (production `familysearch.org` OAuth tokens) at
 > runtime; a full production-token run through OAuth login was not exercised in
 > design, but `sg30p0` is the sanctioned host per review.
 
@@ -60,7 +116,7 @@ not shipped).
 
 ### Auth & headers
 
-- **Token:** `getValidToken()` from `src/auth/refresh.ts` — the single
+- **Token:** `getValidToken(principal)` from `src/auth/refresh.ts` — the single
   entry point. It auto-refreshes and throws the standard LLM-instruction
   error ("Call the login tool to authenticate.") when no valid session
   exists; the handler lets that propagate. Do **not** re-implement token
@@ -91,8 +147,10 @@ Top level: `{ isValid, personScores, visibility }`. All data is under
 | `personScores.overallDisplayScore` / `overallRawScore` | Overall 0–1 score (e.g. `0.97`). |
 | `personScores.segment` | Cohort the score benchmarks against (e.g. `"Norway 1816 - 1920"`). |
 | `personScores.pid`, `lang`, `visibility` | Person ID, language, and visibility (`PUBLIC` for a normal visible person). Not included in the output. |
-| `personScores.conclusionScores[]` | A **per-fact score breakdown**: one entry per conclusion (each NAME, BIRTH, BURIAL, …) giving that single fact's four sub-scores, plus `affectingIssueIds` = which issues are dragging that fact's score down (e.g. the BURIAL conclusion's completeness is lowered by its `MISSING_EVENT_DATE` issue). It's the granular "why" behind the category scores. **Not included in the output.** |
-| `personScores.sourceClusters[]` | The **attached-sources list**: each source (title + ark URI) and which of the person's conclusions it touches, with `agreesWithSource` true/false. It's the evidence behind consistency scoring (does this census/record agree with the tree?). **Excluded from output (decided in review — not important to include).** |
+| `personScores.conclusionScores[]` | A **per-fact score breakdown**: one entry per conclusion (each NAME, BIRTH, BURIAL, …) giving that single fact's four sub-scores, plus `affectingIssueIds` = which issues are dragging that fact's score down (e.g. the BURIAL conclusion's completeness is lowered by its `MISSING_EVENT_DATE` issue). It's the granular "why" behind the category scores. **Included only when `detail: true`** (it was excluded outright until the flag existed). 14 entries on `KD96-TV2`; `relationshipId` is present on the 2 MARRIAGE entries only, and absent from entries 0–2, so a reader sampling the first entry will miss it. Every one of the 7 non-empty `affectingIssueIds` joins onto `issues[].id` with no misses. |
+| `personScores.sourceClusters` | **An object, not an array** — `{ sourceClusters: [...], conflicts: [...] }`. This row read `sourceClusters[]` and was wrong; a type written from the old row does not compile against the live body. Verified against `KD96-TV2` by `dev/probe-person-quality-detail.ts`. **Included only when `detail: true`.** |
+| `personScores.sourceClusters.sourceClusters[]` | The **attached-sources list**: clusters of sources, each source carrying `uri`, `title`, and the conclusions it touches with `agreesWithSource` true/false. It's the evidence behind consistency scoring (does this census/record agree with the tree?). 21 clusters / 28 sources on `KD96-TV2`, sizes `[6, 3, 1×19]`. A single source may repeat the same conclusion id inside its own `conclusions[]` — 13 of the 28 did — so any per-conclusion inversion must dedupe. |
+| `personScores.sourceClusters.conflicts[]` | **Which two attached sources disagree, and about what**: `{ sourceUris: [a, b], conflictingFields: [{ name, values }] }`, e.g. `name: "Birth Date"`, `values: ["+1877", "+1876-10-02"]` (values carry a leading `+`, GedcomX formal-date syntax, not a typo). `sourceUris` is always exactly two. Undocumented upstream, and unmodeled here until the flag existed. **Pairwise and heavily duplicated**: 50 entries on `KD96-TV2` encode 5 real disagreements, since one disagreement is restated once per source pair. **Included only when `detail: true`**, and reduced — see Output. |
 
 Each `issues[]` element carries the fields below. The first six rows were
 **observed** in the `KD96-TV2` sample; the *Use* column is the proposed
@@ -227,6 +285,73 @@ value off as official. Add a band later if the true thresholds are confirmed.
 *Alternatives considered, not chosen:* sentences-only (a flat `string[]`, no
 summary or traceability) and this shape + every raw numeric score.
 
+### The opt-in `detail` block
+
+`detail` is **absent** from the result unless the caller passes `detail: true` —
+absent, not empty, so the default payload is byte-identical to what it was before
+the flag existed. That is the whole point of the flag: a per-person summary wants
+a lean answer, while a tree audit (`source-evaluation`, the tool's only caller since
+check-warnings dropped it) wants to
+know *which fact* and *which source*, and one tool serves both without either
+paying for the other's context.
+
+```json
+"detail": {
+  "facts": [
+    {
+      "conclusionId": "d57d443f-…",
+      "conclusionType": "BURIAL",
+      "score": 0.86,
+      "issues": ["The burial date is missing."],
+      "sources": [
+        { "title": "Christian Peder Hole, \"Minnesota, Deaths, 1887-2001\"",
+          "uri": "https://familysearch.org/ark:/61903/1:1:…",
+          "agrees": true }
+      ]
+    },
+    { "conclusionId": "…", "conclusionType": "MARRIAGE", "relationshipId": "M5PN-FXR",
+      "score": 1, "issues": [], "sources": [] }
+  ],
+  "conflicts": [
+    { "field": "Birth Date",
+      "values": ["+1876-10-02", "+1877"],
+      "sources": [ { "title": "…", "uri": "…", "agrees": null } ] }
+  ]
+}
+```
+
+**`facts[]` — one entry per `conclusionScores` entry.** `score` is the upstream
+`combinedDisplayScore`. `relationshipId` is present only where upstream sends one
+(the MARRIAGE conclusions). Expect the result to be **sparse**: only 5 of
+`KD96-TV2`'s 14 conclusions have any attached source, so 9 carry `sources: []`.
+
+**`issues[]` inside a fact holds rendered sentences, not ids.** Upstream gives
+`affectingIssueIds`, which join onto `issues[].id` — and `id` is not part of this
+tool's issue output, so passing the ids through would hand the caller keys that
+join to nothing. The join is resolved here and the sentence emitted, which
+extends the existing traceability guarantee above rather than inventing a second one.
+
+**`sources[]` is deduped by source `uri`.** Upstream nests source → conclusions,
+and one source may list the same conclusion id twice (13 of 28 sources on
+`KD96-TV2`). Inverting to conclusion → sources turns that into one source listed
+twice under one fact. Deduping by uri is lossless here: of the 21 duplicate
+`(conclusion, uri)` pairs, **none** disagreed on `agreesWithSource`.
+
+**`conflicts[]` is reduced, not passed through.** Upstream restates a single
+disagreement once per source pair, so the raw list grows quadratically with the
+number of sources holding the field — `KD96-TV2` returns **50** entries encoding
+**5** real disagreements. Entries are grouped by `(field name, sorted value set)`
+and carry every source that took part. Passing the raw list through would flood
+the context, which is the failure the original exclusion was guarding against.
+
+**`agrees: false` has never been observed.** Every `agreesWithSource` on the one
+person probed so far was `true`, so the disagreement branch is **unverified** —
+this spec deliberately says nothing about how it renders. `agrees` is `null`, not
+`false`, when upstream omits the field, so an absent value is never reported as
+disagreement. On `conflicts[].sources` it is always `null`: the conflict list
+names source URIs, not per-conclusion agreement. Probe a person carrying a
+disagreement before writing that branch down.
+
 **OPEN — include friendly category labels?** The API returns only
 `scoreType`. FamilySearch's UI shows friendlier names. Current behavior:
 omit them, return `scoreType`. If we later decide to include them, they'd be
@@ -256,10 +381,10 @@ inferred from the schema.
 | Condition | Behavior |
 |-----------|----------|
 | `personId` missing / empty | MCP input schema rejects (`required`); also validate for a clear message. |
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error ("Call the login tool…"). |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error ("Call the login tool…"). |
 | API returns **401** | Throw: `"FamilySearch rejected the access token (401). The session may have expired or been revoked — call the login tool to re-authenticate."` |
 | API returns **200** with `visibility: "CALCULATING"`, `isValid: false` (no `personScores`) | The score is computed **asynchronously** and isn't ready yet. **Retry** after a short delay (tool: up to 5 attempts, 2 s apart); the score lands on a later request. If still calculating after the retries, throw `"FamilySearch is still calculating the quality score for ${personId}. Try again in a few seconds."` |
-| API returns **200** with `visibility: "TOMBSTONED"` (no `personScores`) | The person was **deleted or merged** into another profile (confirmed with FS). **Terminal — do not retry** (unlike CALCULATING). Throw: `"Person ${personId} is tombstoned in the FamilySearch tree — it has been deleted or merged into another profile — so it has no quality score."` Note: a *merge* may instead surface the surviving profile with a link; a bare `TOMBSTONED` (as observed on `KD96-TV5`) is a true delete. Contrast `NOT_FOUND` (never existed). |
+| API returns **200** with `visibility: "TOMBSTONED"` (no `personScores`) | The person was **deleted or merged** into another profile (confirmed with FS). **Terminal — do not retry** (unlike CALCULATING). Throw: `"Person ${personId} is tombstoned in the FamilySearch tree — it has been deleted or merged into another profile — so it has no quality score."` Note: a *merge* may instead surface the surviving profile with a link; a bare `TOMBSTONED` does not by itself distinguish delete from merge — `KD96-TV5` was read this way initially, but the tree-persons redirect (`301` + `Location`) later established that it is a merge into a restricted survivor, not a delete. Contrast `NOT_FOUND` (never existed). |
 | API returns **200** with `visibility: "NOT_FOUND"` (no `personScores`) | Person does not exist (or is not visible). Throw a clear message, e.g. `"No quality scores found for person ${personId} (not found or not visible)."` (Do **not** treat as a clean zero-issue person — that case has `personScores` present, see last row.) |
 | API returns **400** (malformed ID) | Body is **empty**; read the `warning` response header for detail. Throw: `"FamilySearch rejected the person ID '${personId}' (400): ${warningHeader ?? "invalid identifier"}."` Do not attempt `parseUpstreamErrorBody` on the empty body. |
 | API returns other non-OK | Throw: `"FamilySearch quality API error: ${status}."` |

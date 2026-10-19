@@ -5,7 +5,7 @@ that take some subset of `before_state`, `after_state`, `tool_calls`,
 and `skill_frontmatter`, then raise `AssertionError` on failure.
 
 The first two seed validators (test_conflict_resolution.py,
-test_record_extraction.py) duplicated diff logic, append-only checks,
+extraction_validators.py) duplicated diff logic, append-only checks,
 and foreign-key reference checks across files. As the corpus grows to
 23 skills, that drift compounds — a fix in one file silently misses
 the others. These helpers centralise the patterns.
@@ -19,9 +19,27 @@ small and lets each validator file decide how to handle missing state.
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import pytest
+
+# Re-exported for back-compat with existing `from validators_lib import
+# extract_year` callers; the canonical definitions live in harness/dates.py so
+# both validators/ and e2e/ can share them without pulling in this module's
+# pytest dependency.
+from harness.dates import EMBEDDED_YEAR_RE, extract_year  # noqa: F401
+
+
+def bare_tool_name(tool: str) -> str:
+    """Bare tool name, whatever server prefix the run exposed it under.
+
+    A run records MCP calls under whichever of the three server spellings the
+    session resolved (CLAUDE.md, "Dual-spelled tool names"), so a validator
+    that matches a qualified name matches nothing on two thirds of runs.
+    """
+    tool = tool or ""
+    return tool.split("__")[-1] if "__" in tool else tool
 
 
 def assert_no_section_deletions(
@@ -125,6 +143,67 @@ def assert_foreign_keys_valid(
     assert not errors, "Dangling references:\n  - " + "\n  - ".join(errors)
 
 
+def new_section_entries(
+    before_state: dict[str, Any],
+    after_state: dict[str, Any],
+    section: str,
+    *,
+    include_modified: bool = False,
+) -> list[dict]:
+    """Entries of `section` present in `after_state` but not `before_state`, by id
+    — or, when `include_modified` is set, also entries with the same id whose
+    content changed in place (research_append op:"update").
+
+    The general form of `new_log_entries` below, which is now a thin alias for
+    `section="log"`. Generalised rather than copied when `extraction_validators`
+    needed the same diff over `sources`; `include_modified` was added for
+    `localities`, which locality-guide can rewrite in place, so an update is not
+    silently skipped. `include_modified` defaults False, so `new_log_entries` and
+    the `sources` caller are unchanged.
+
+    An earlier draft of this docstring called that copy "the fifth" and credited
+    the `isinstance` guard to "the four earlier ones". Both were wrong, and the
+    reviewer who supplied the error corrected it (#2390 round 2). By the time
+    this PR began, `new_log_entries` was already a single shared helper on main
+    **carrying the guard** — the four byte-identical copies it was lifted from
+    were gone, and what remains is four *importing* files
+    (`test_search_full_text`, `test_search_records`, `test_search_external_sites`,
+    `test_search_images`). So the thing avoided here was a second helper beside
+    the first, not a fifth copy beside four.
+
+    Takes the wrapped per-run state dicts ({"research_json": {...}, ...}), not
+    the unwrapped research.json dict `assert_log_append_only` and its neighbours
+    above take — see `new_log_entries` for why that mismatch is deliberate.
+    """
+    before = before_state.get("research_json") or {}
+    after = after_state.get("research_json") or {}
+    # `or []`, not `.get(section, [])`: an explicit `"log": null` satisfies the
+    # default and then raises TypeError on iteration. This is NEW here — the
+    # shared helper on main used `after.get("log", [])` — so it is not, as an
+    # earlier draft said, pre-existing in copies this replaced (#2390 round 2).
+    # It fires on 0 of the 2130 committed unit runs across 27 skills, so it is
+    # hardening rather than a fix; the section being caller-supplied is what
+    # widens the set of shapes that reach here. (2130 drifts as runs land — the
+    # 0 is the claim.)
+    # `prior` is a dict {id: entry}, not the set of ids the pre-`include_modified`
+    # helper kept: `include_modified` needs the entry itself to compare against.
+    # One consequence beyond the "default unchanged" claim above: duplicate ids in
+    # `before` collapse to the LAST occurrence, so a same-id pair there is compared
+    # only against its last member. No section reaching this holds duplicate ids
+    # today (research_append assigns them), so it is latent, not live.
+    prior = {
+        e.get("id"): e for e in (before.get(section) or []) if isinstance(e, dict)
+    }
+    out = []
+    for e in (after.get(section) or []):
+        if not isinstance(e, dict):
+            continue
+        eid = e.get("id")
+        if eid not in prior or (include_modified and prior[eid] != e):
+            out.append(e)
+    return out
+
+
 def new_log_entries(before_state: dict[str, Any], after_state: dict[str, Any]) -> list[dict]:
     """Log entries present in `after_state` but not `before_state`, by id.
 
@@ -138,13 +217,7 @@ def new_log_entries(before_state: dict[str, Any], after_state: dict[str, Any]) -
     with no logic change, rather than matching the unwrapped convention
     the two helpers above use.
     """
-    before = before_state.get("research_json") or {}
-    after = after_state.get("research_json") or {}
-    before_ids = {e.get("id") for e in before.get("log", []) if isinstance(e, dict)}
-    return [
-        e for e in after.get("log", [])
-        if isinstance(e, dict) and e.get("id") not in before_ids
-    ]
+    return new_section_entries(before_state, after_state, "log")
 
 
 def assert_log_append_only(
@@ -232,7 +305,16 @@ def assert_capture_pending_item_not_terminal(
                     out[item["id"]] = item.get("status")
         return out
 
+    def _skip_categories(doc: dict) -> dict[str, str]:
+        out: dict[str, str] = {}
+        for plan in doc.get("plans") or []:
+            for item in plan.get("items") or []:
+                if item.get("id"):
+                    out[item["id"]] = item.get("skip_category")
+        return out
+
     before_items, after_items = _items(before), _items(after)
+    after_categories = _skip_categories(after)
     changed = {
         pid
         for pid, status in after_items.items()
@@ -281,9 +363,300 @@ def assert_capture_pending_item_not_terminal(
         if (pid, *key) in captured or (None, *key) in captured:
             continue
         status = after_items.get(pid)
+        # Two documented skips are exempt, matching the writer-tool guard
+        # `planItemCapturePendingInvariants` (CAPTURE_PENDING_SKIP_EXEMPT):
+        # `search-external-sites.md` step 4 marks the item `skipped` when no
+        # user can make the capture or the site is unreachable (`inaccessible`)
+        # or the user asked to skip it (`user_declined`). Refusing those would
+        # fail the skill's own documented path and stall an autonomous run.
+        if status == "skipped" and after_categories.get(pid) in (
+            "inaccessible",
+            "user_declined",
+        ):
+            continue
         assert status not in ("completed", "skipped"), (
             f"plan item {pid} is '{status}' but its latest external_site log "
             f"entry ({entry.get('id')}) has capture_received="
             f"{site.get('capture_received')!r} — the capture never arrived, so "
-            f"the search did not happen. Expected 'in_progress'. See #1226."
+            f"the search did not happen. Expected 'in_progress' (or skipped with "
+            f"skip_category inaccessible/user_declined). See #1226."
         )
+
+
+def as_mapping(value: Any) -> dict:
+    """A tool argument a model may have serialized as a JSON string.
+
+    Production tools recover a stringified object argument themselves
+    (`coerceJsonArg`), so the call SUCCEEDS; reading it raw here raised
+    `AttributeError` instead of grading, and a crash in a validator is not an
+    observation. Anything that is not a mapping after one parse attempt reads as
+    absent, which is what an omitted argument does, so this never invents a
+    value and cannot turn a passing call into a firing one.
+    """
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except (ValueError, TypeError):
+            return {}
+    return value if isinstance(value, dict) else {}
+
+
+def tool_input_keys(tool: str, nested: str | None = None) -> frozenset[str] | None:
+    """Input property names of `tool` from the compiled MCP build, the schema
+    production advertises, or of its object property `nested` (e.g.
+    `build_external_search_url`'s `attributes`). None when the build is not
+    readable: a validator that cannot know the vocabulary must skip, not guess.
+
+    Imported lazily: `harness.mock_mcp` pulls in the agent SDK and the fixture
+    loader, and every validator module imports this file.
+    """
+    from harness.mock_mcp import _load_build_tool_catalog
+
+    schema = (_load_build_tool_catalog().get(tool) or {}).get("inputSchema") or {}
+    props = schema.get("properties")
+    if nested is not None:
+        props = ((props or {}).get(nested) or {}).get("properties")
+    return frozenset(props) if isinstance(props, dict) and props else None
+
+
+# Inputs a search tool echoes that are not filters: host plumbing, and paging /
+# response-shape controls. Mirrors NOT_A_FILTER in
+# packages/engine/mcp-server/src/tools/research-log-append.ts; a claim about one
+# of these is not a claim about which records a search matched.
+NOT_A_FILTER: frozenset[str] = frozenset({"projectPath", "subjectId", "count", "offset", "includeFacets"})
+
+
+def filter_claim_findings(query: Any, sent: Any, vocabulary: frozenset[str]) -> tuple[list[str], list[str]]:
+    """Compare a log entry's `query` with the arguments its call sent.
+
+    `sent` is what reached the search: for `record_search`, pass it through
+    `record_search_sent` first.
+
+    Returns `(never_sent, differs)`: filter keys the entry claims with a value
+    that the call did not send at all, and keys both carry with different
+    values. Only keys in `vocabulary` that are filters count; a `None` or `""`
+    claim claims nothing. The `never_sent` class is the one
+    `research_log_append` refuses for a staged entry; `differs` is mostly place
+    normalization and is observed, never refused.
+    """
+    query, sent = as_mapping(query), as_mapping(sent)
+    never_sent: list[str] = []
+    differs: list[str] = []
+    for key, claimed in query.items():
+        if claimed is None or claimed == "" or key in NOT_A_FILTER or key not in vocabulary:
+            continue
+        # An `*Exact` flag reaches the search only when true; `false` is the default.
+        if claimed is False and key.endswith("Exact"):
+            continue
+        if key not in sent:
+            never_sent.append(f"{key}={claimed!r}")
+        elif sent[key] != claimed:
+            differs.append(f"{key}: logged {claimed!r}, sent {sent[key]!r}")
+    return never_sent, differs
+
+
+def record_search_sent(args: Any) -> dict:
+    """`record_search`'s arguments as searched: it fills the missing half of an
+    alternate name before building the query. Mirrors `applyAltNameAutoPair` in
+    packages/engine/mcp-server/src/tools/record-search.ts, which the tool's own
+    refusal calls directly; a Python validator cannot, so this is the one copy."""
+    out = dict(as_mapping(args))
+    if out.get("surnameAlt") and not out.get("givenNameAlt") and out.get("givenName"):
+        out["givenNameAlt"] = out["givenName"]
+    if out.get("givenNameAlt") and not out.get("surnameAlt") and out.get("surname"):
+        out["surnameAlt"] = out["surname"]
+    return out
+
+
+def hashable_key(value: Any) -> str:
+    """A grouping key for any JSON value, so a list-valued field cannot crash a
+    validator that groups by it."""
+    return json.dumps(value, sort_keys=True, default=str)
+
+
+def assert_topical_fixture_used(
+    tool_calls: list[dict],
+    test: dict,
+    fixture_by_test_id: dict[str, str],
+    *,
+    tag: str = "topical-fixture-required",
+    map_name: str = "the topical-fixture map",
+    prefix_match: bool = False,
+) -> str | None:
+    """Assert a tagged test actually consumed its subject-matter fixture.
+
+    Shared by `test_historical_context` and `test_search_records`: both stock a
+    topical fixture ahead of a generic fallback, and without this the model's
+    phrasing can drift off the topical predicate and silently fall through, so
+    the judge grades against fallback content the test exists not to use.
+
+    Checks the map -> tag direction BEFORE skipping, or the skip swallows it:
+    `ValidatorRunResult` keeps `passed=True` on a skip, so dropping a tag from a
+    test spec would disarm the guard while the run log still reads `passed`.
+
+    `prefix_match` accepts a stem that STARTS WITH the expected one, for a
+    caller whose fixture family shares a prefix. Returns the expected stem so
+    the caller can make further assertions (ordering, for instance), or None
+    when the test is not in scope.
+    """
+    import pytest  # local: keep the module importable outside a pytest run
+
+    tags = test.get("tags", [])
+    test_id = test.get("id")
+    assert test_id not in fixture_by_test_id or tag in tags, (
+        f"{test_id} has an entry in {map_name} but no '{tag}' tag - "
+        "restore the tag or delete the entry"
+    )
+    if tag not in tags:
+        pytest.skip(f"not a {tag} test")
+    expected = fixture_by_test_id.get(test_id)
+    assert expected is not None, (
+        f"{test_id} carries '{tag}' but has no entry in {map_name}"
+    )
+    hit = [c.get("response_fixture") for c in (tool_calls or []) if c.get("response_fixture")]
+    # A run that never activated has no fixture-backed call to inspect, and
+    # non-activation is reported elsewhere. Both callers skipped here before
+    # this helper existed; dropping it turned a skip into a FAILURE for a
+    # historical-context run that never activates, which is a behaviour change
+    # inside what was described as a pure refactor.
+    if not hit:
+        pytest.skip("no fixture-backed tool calls - non-activation is reported elsewhere")
+
+    def matches(stem: object) -> bool:
+        if not isinstance(stem, str):
+            return False
+        return stem.startswith(expected) if prefix_match else stem == expected
+
+    assert any(matches(s) for s in hit), (
+        f"{test_id}: expected fixture '{expected}' was never served - the call "
+        f"fell through to a fallback. Fixtures actually served: {sorted(set(s for s in hit if isinstance(s, str)))}"
+    )
+    return expected
+
+
+# --- Shared: no-exhaustive-declaration guard ----------------------------
+
+
+def _questions_by_id(state: dict) -> dict[str, dict]:
+    return {q.get("id"): q for q in (state or {}).get("questions") or [] if q.get("id")}
+
+
+def check_no_gate_stop(before_state: dict, after_state: dict) -> list[str]:
+    """Return a list of violation messages when a test tagged
+    ``no-exhaustive-declaration`` writes a declaration it should not.
+
+    Shared between the ``research-exhaustiveness`` and ``research``
+    validator suites (issue #2738).  Each caller gates on the tag itself
+    so that ``tag_gated_validator_tags`` can parse the gate line with AST,
+    and each caller also skips when either state has no ``research_json``
+    BEFORE calling this.  Keep that skip in the callers: an empty list here
+    means "no violation found", and ``validator_runner`` records that as
+    ``outcome: "passed"`` -- which is not what an unreadable or absent
+    research.json should report.  ``workspace.snapshot_files`` sets the key
+    to None on a JSONDecodeError as well as on a missing file.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        return []
+    _STOP_GATE_VALUES = frozenset(
+        {"question_answered", "record_exhausted", "nothing_further_reachable"}
+    )
+    before_by_id = _questions_by_id(before)
+    bad: list[str] = []
+    for q in (after.get("questions") or []):
+        qid = q.get("id")
+        prev = before_by_id.get(qid, {})
+        prev_gate = (prev.get("search_stop") or {}).get("stopped_because") in _STOP_GATE_VALUES
+        new_sb = (q.get("search_stop") or {}).get("stopped_because")
+        new_gate = new_sb in _STOP_GATE_VALUES
+        if not prev_gate and new_gate:
+            bad.append(f"{qid}: set stop-gate stopped_because={new_sb!r} when decline expected")
+        if prev.get("status") != "exhaustive_declared" and q.get("status") == "exhaustive_declared":
+            bad.append(f"{qid}: status set to exhaustive_declared when decline expected")
+    return bad
+
+
+# --- Shared: plans a run added -------------------------------------------
+
+
+def new_plan_ids(before: dict, after: dict) -> list[str]:
+    """The `pl_` ids in research.json ``after`` that ``before`` lacked.
+
+    Shared between the ``research-plan`` and ``research`` validator suites
+    (issue #2116 moved ``ut_research_plan_003`` into ``research`` as
+    ``ut_research_rpn``). Each caller gates on its own tag and skips on a
+    missing research.json first, as ``check_no_gate_stop``'s callers do.
+    """
+    before_ids = {p.get("id") for p in (before.get("plans") or [])}
+    return [
+        p.get("id")
+        for p in (after.get("plans") or [])
+        if p.get("id") and p.get("id") not in before_ids
+    ]
+
+
+# --- Shared: changes to plans that already existed ---------------------------
+
+
+def existing_plan_changes(before: dict, after: dict) -> list[str]:
+    """Every change a run made to a plan that existed before it, one message each.
+
+    Appended, deleted or edited items, and any changed plan-level field. A
+    whole new plan is not reported here (``new_plan_ids`` reports it), so a
+    caller wanting "nothing written to plans" checks both. Moved out of
+    ``test_research.py::test_no_plan_writes_when_resolved`` (issue #2116) so the
+    research-plan suite's review-mode gate reads plans the same way.
+    """
+    before_plans = {
+        p.get("id"): p for p in (before.get("plans") or []) if p.get("id")
+    }
+    errors: list[str] = []
+    for plan in after.get("plans") or []:
+        prior = before_plans.get(plan.get("id"))
+        if prior is None:
+            # A whole new plan is new_plan_ids' finding; reporting it here
+            # too would double-count the same defect.
+            continue
+        if plan == prior:
+            continue
+
+        # Compare the WHOLE prior plan object, not just the items present in
+        # the after-state. Walking only `after`'s items cannot see a deletion —
+        # a removed item simply isn't there to check — and misses plan-level
+        # fields entirely. With `grade_on_invariant` on ut_003, that gap scored
+        # "wiped every item from pl_002" and "flipped pl_002 back to active" as
+        # a PASS, which is the opposite of what this validator exists for.
+        before_items = {
+            i.get("id"): i for i in (prior.get("items") or []) if i.get("id")
+        }
+        after_items = {
+            i.get("id"): i for i in (plan.get("items") or []) if i.get("id")
+        }
+        pid = plan.get("id")
+        # Accumulate PER PLAN. Checking the shared `errors` for emptiness would
+        # let a second damaged plan slip through unnamed once the first has
+        # reported — the assert still fires, but you fix pl_001, re-run, and
+        # only then learn pl_002 was wrong too.
+        plan_errors: list[str] = []
+        for gone in before_items.keys() - after_items.keys():
+            plan_errors.append(f"{pid}: item {gone} DELETED from an existing plan")
+        for added in after_items.keys() - before_items.keys():
+            plan_errors.append(f"{pid}: item {added} added to an existing plan")
+        for both in before_items.keys() & after_items.keys():
+            if before_items[both] != after_items[both]:
+                plan_errors.append(f"{pid}: item {both} modified in place")
+        for field in set(prior) | set(plan):
+            if field == "items":
+                continue
+            if prior.get(field) != plan.get(field):
+                plan_errors.append(
+                    f"{pid}: plan field '{field}' changed "
+                    f"{prior.get(field)!r} -> {plan.get(field)!r}"
+                )
+        if not plan_errors:  # differs, but no rule above named it — never silent
+            plan_errors.append(
+                f"{pid}: plan object changed in a way this check did not classify"
+            )
+        errors.extend(plan_errors)
+    return errors

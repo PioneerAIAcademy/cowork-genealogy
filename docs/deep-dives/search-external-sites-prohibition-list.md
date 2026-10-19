@@ -48,12 +48,13 @@ instead of rebuilding it.**
 
 ## B. Tools
 
-8. Only five MCP tools may ever be called: `place_search`,
-   `collections_search`, `external_links_search`, `research_log_append`,
-   `research_append`. Anything else violates `allowed-tools:`.
-9. Must not fetch, load, scrape, or otherwise open any of the five supported
-   sites. The sites have no public API and prohibit automated access; the
-   user's browser is the only access path.
+8. Only six MCP tools may ever be called: `place_search`,
+   `collections_search`, `external_links_search`, `build_external_search_url`,
+   `research_log_append`, `research_append`. Anything else violates
+   `allowed-tools:`.
+9. Must not fetch, load, scrape, or otherwise open any of the fifteen supported
+   sites. Whatever a site's own terms or APIs allow, this skill's only access
+   path is the user's browser: it hands over a URL and reads back a capture.
 10. Must not call `validate_research_schema` — `research_log_append` and
     `research_append` validate before persisting.
 11. Must not hand-edit `research.json`. Every write goes through
@@ -127,9 +128,12 @@ instead of rebuilding it.**
     a side.
 35. Must use the documented per-site parameter names exactly
     (`birthplace` not `birth_place` on Ancestry; `birth_place` not
-    `birthplace` on MyHeritage; `keywordsplace` on FindMyPast; `location` on
-    FindAGrave; `query` on Newspapers.com). A swapped parameter name produces
-    a URL that loads and silently ignores the filter.
+    `birthplace` on MyHeritage; `keywordsplace` on FindMyPast; `query` on
+    Newspapers.com). A swapped parameter name produces a URL that loads and
+    silently ignores the filter. FindAGrave has no place parameter at all —
+    its `location` field was removed (issue #1980 review): live verification
+    found the visible location box does not filter results at all, so naming
+    it here would itself be the exact defect this rule warns against.
 36. Must not invent a parameter the site's template does not list. **Confirmed
     live 2026-08-26:** `_004` emitted `yearofbirthrange=5` on FindMyPast; the
     site ignored it and applied its ±2yr default. The real spelling is
@@ -165,8 +169,11 @@ instead of rebuilding it.**
     `externalSite.captureFilename: null`.
 46. Must not pass `stagedResultsRef` on the `external_site` entry — no
     sidecar exists until the capture arrives.
-47. `externalSite.site` must be one of `ancestry | myheritage | findmypast |
-    findagrave | newspapers`, and must match the site actually targeted.
+47. `externalSite.site` must be one of the `external_site` enum's values
+    (`research-schema-spec.md`) and must match the site actually targeted.
+    For a URL `build_external_search_url` built, that is the same `site`
+    argument passed to it; the enum also carries `familysearch_web`, which
+    the tool has no template for and which is logged without a tool call.
 48. The `log[]` is append-only. Must never edit or delete a prior entry. A
     capture that comes back gets a **new** entry, not an amendment.
 49. Two runs of the same search correctly produce two entries. Must not

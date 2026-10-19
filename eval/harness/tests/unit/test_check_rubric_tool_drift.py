@@ -4,13 +4,22 @@ Covers the pure Path-in/set-out helpers the script's main() composes:
 loading the tool vocabulary, finding whole-word tool mentions in prose,
 parsing a skill's/agent's declared tools, and scanning rubric.md /
 judge_context / agent bodies for mentions outside that declared set.
+
+Also covers the SUPPRESSIONS mechanism (issue #1522) end-to-end through
+main(): a suppressed entry does not mask an unrelated genuine hit (the
+same tool in a different file survives), and a stale entry (one whose
+(file, tool) no longer fires) fails loudly.
 """
 
 from __future__ import annotations
 
 import importlib.util
 import json
+import re
+import unicodedata
 from pathlib import Path
+
+import pytest
 
 _SPEC = importlib.util.spec_from_file_location(
     "check_rubric_tool_drift",
@@ -18,6 +27,21 @@ _SPEC = importlib.util.spec_from_file_location(
 )
 check_rubric_tool_drift = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(check_rubric_tool_drift)
+
+# The gh_annotations module object the script imported its `gh_warning` FROM is
+# the one that records warnings. Read the recording off that reference: a second
+# `spec_from_file_location` load of the same file is a DIFFERENT module object
+# with its own empty `_warnings` list, so every assertion would pass vacuously.
+# Same pattern as test_check_slot_queue.py.
+_recorded = check_rubric_tool_drift.gh_warning.__globals__["recorded_warnings"]
+_reset = check_rubric_tool_drift.gh_warning.__globals__["reset"]
+
+
+@pytest.fixture(autouse=True)
+def _clean_warnings():
+    _reset()
+    yield
+    _reset()
 
 
 def test_load_manifest_tools_reads_name_field(tmp_path: Path) -> None:
@@ -282,3 +306,224 @@ def test_delegated_tools_no_delegation_returns_empty(tmp_path: Path) -> None:
     skill_md = tmp_path / "SKILL.md"
     skill_md.write_text("---\nname: search-records\n---\nNo delegation.\n", encoding="utf-8")
     assert check_rubric_tool_drift.delegated_tools(skill_md, tmp_path / "agents") == set()
+
+
+# ── SUPPRESSIONS mechanism tests (issue #1522) ───────────────────────
+#
+# These exercise main() end-to-end via recorded_warnings(), not just the
+# is_suppressed() predicate: a mutation at the call site (e.g. replacing
+# the check with `if False:`) would be caught because main()'s emitted
+# warnings would still include the suppressed pair.
+
+
+def _warning_file_tool_pairs() -> set[tuple[str, str]]:
+    """(file, tool) pairs extracted from the warnings main() emitted.
+
+    Tool names are pulled from the message by looking for the first
+    backtick-quoted word after 'mentions `' or 'mentioning `' (rubric
+    warnings say "mentions", judge_context warnings say "mentioning").
+    """
+    pairs: set[tuple[str, str]] = set()
+    for f, m in _recorded():
+        if f is None:
+            continue
+        match = re.search(r"mention(?:s|ing) `(\w+)`", m)
+        if match:
+            pairs.add((f, match.group(1)))
+    return pairs
+
+
+def test_suppression_is_selective_end_to_end(monkeypatch) -> None:
+    """Direction (a): suppressing (file_A, tool_X) through main() must not
+    suppress (file_A, tool_Y) or (file_B, tool_X).
+
+    Calls main() with a real SUPPRESSIONS entry, then verifies the emitted
+    warnings via recorded_warnings(). The suppressed pair must be absent
+    and the same tool in different files must survive."""
+    # Run main() once with no suppression to get the full hit set.
+    # Clear SUPPRESSIONS first so the baseline is unsuppressed — main()
+    # applies suppressions, so any populated entry would be invisible here
+    # and would cause the target lookup to skip.
+    real = list(check_rubric_tool_drift.SUPPRESSIONS)
+    monkeypatch.setattr(check_rubric_tool_drift, "SUPPRESSIONS", [])
+    check_rubric_tool_drift.main()
+    all_pairs = _warning_file_tool_pairs()
+    _reset()
+    monkeypatch.setattr(check_rubric_tool_drift, "SUPPRESSIONS", real)
+
+    # Pick a real (file, tool) pair that fires. validate_research_schema in
+    # tree-edit's rubric is the most durable — but NOT because it is drift.
+    # It is a suppressed false positive (issue #2745): the rubric says the
+    # call is "neither required nor available to this skill", which is the
+    # not-needed shape, and it has read that way since 2026-07-30. That is
+    # exactly what makes it a stable target: prose already corrected is prose
+    # nobody is coming back to correct again. The baseline above clears
+    # SUPPRESSIONS, so the pair is still visible here despite being
+    # suppressed in the shipped list.
+    target = ("eval/tests/unit/tree-edit/rubric.md", "validate_research_schema")
+    if target not in all_pairs:
+        pytest.skip("expected baseline hit not present — corpus changed")
+
+    # Find another file that also mentions validate_research_schema
+    # (different file, same tool) to verify it survives.
+    same_tool_other_file = {
+        (f, t)
+        for f, t in all_pairs
+        if t == "validate_research_schema" and f != target[0]
+    }
+    if not same_tool_other_file:
+        pytest.skip("no second file mentions the same tool — cannot test selectivity")
+
+    # Run again with the one entry suppressed.
+    monkeypatch.setattr(
+        check_rubric_tool_drift,
+        "SUPPRESSIONS",
+        [{"file": target[0], "tool": target[1], "reason": "test: selective suppression proof"}],
+    )
+    check_rubric_tool_drift.main()
+    suppressed_pairs = _warning_file_tool_pairs()
+
+    # The suppressed pair is gone.
+    assert target not in suppressed_pairs
+    # Same tool in other files survived (direction a).
+    for pair in same_tool_other_file:
+        assert pair in suppressed_pairs, (
+            f"{pair} should not have been suppressed — only {target} was"
+        )
+
+
+def test_no_stale_suppressions(monkeypatch) -> None:
+    """Direction (b): every SUPPRESSIONS entry must match a (file, tool)
+    main() would otherwise warn about. An entry that stopped matching means
+    the drift it excused was fixed and the entry should be removed.
+
+    Trivially passes while the list is empty; arms itself when PR 2
+    populates it.
+    """
+    # Collect the unsuppressed hit set: clear SUPPRESSIONS so main() emits
+    # every warning, including the ones that would normally be suppressed.
+    real = list(check_rubric_tool_drift.SUPPRESSIONS)
+    monkeypatch.setattr(check_rubric_tool_drift, "SUPPRESSIONS", [])
+    check_rubric_tool_drift.main()
+    all_pairs = _warning_file_tool_pairs()
+    stale = [
+        s
+        for s in real
+        if (s["file"], s["tool"]) not in all_pairs
+    ]
+    assert stale == [], (
+        "SUPPRESSIONS has entries that no longer match a hit — the drift was "
+        "fixed and the entry should be removed:\n  "
+        + "\n  ".join(f'{s["file"]}:{s["tool"]}' for s in stale)
+    )
+
+
+def test_every_suppression_carries_a_reason() -> None:
+    """Same >20-char convention as UNREACHED_PENDING_ADJUDICATION in
+    skill-reference-reachability.test.ts."""
+    for s in check_rubric_tool_drift.SUPPRESSIONS:
+        assert len(s.get("reason", "").strip()) > 20, (
+            f'SUPPRESSIONS entry ({s["file"]}, {s["tool"]}) needs a reason '
+            f"longer than 20 characters — not a dumping ground"
+        )
+
+
+# ── Quote fidelity (PR #2881 review) ─────────────────────────────────
+#
+# Each entry's "quotes" are the evidence for its verdict: the span of the
+# file that makes the mention a false positive. Six entries once carried a
+# SIBLING file's wording — every verdict was right, but a reader checking
+# the entry against the file would not have found the text. Nothing caught
+# it, because the quote lived inside the prose "reason" where no check
+# could reach it. "quotes" exists to be checked.
+
+
+def _normalize(text: str) -> str:
+    """Compare on content, not typography.
+
+    judge_context strings and agent bodies use em/en dashes and curly
+    quotes; a reason retyped with ASCII is not a defect. Whitespace is
+    collapsed because a Markdown body wraps mid-sentence, so a quote that
+    is one line in the entry spans two in the file.
+    """
+    text = unicodedata.normalize("NFKD", text)
+    for fancy, plain in (
+        ("\u2014", "-"), ("\u2013", "-"),
+        ("\u2019", "'"), ("\u2018", "'"),
+        ("\u201c", '"'), ("\u201d", '"'),
+    ):
+        text = text.replace(fancy, plain)
+    return " ".join(text.split())
+
+
+def _searchable_text(rel_path: str) -> str:
+    """The text a suppression's quote must be found in.
+
+    For a test JSON that is the judge_context strings only — the same text
+    the script scans — not the whole file, so a quote cannot be satisfied
+    by an unrelated field.
+    """
+    path = check_rubric_tool_drift.REPO_ROOT / rel_path
+    if rel_path.endswith(".json"):
+        context = json.loads(path.read_text(encoding="utf-8")).get("judge_context", [])
+        return "\n".join(s for s in context if isinstance(s, str))
+    return path.read_text(encoding="utf-8")
+
+
+def test_every_suppression_quote_is_verbatim() -> None:
+    """Every quote must appear in the file its entry names."""
+    missing: list[str] = []
+    for entry in check_rubric_tool_drift.SUPPRESSIONS:
+        haystack = _normalize(_searchable_text(entry["file"]))
+        for quote in entry["quotes"]:
+            if _normalize(quote) not in haystack:
+                missing.append(f'{entry["file"]}:{entry["tool"]}\n      {quote}')
+    assert missing == [], (
+        "SUPPRESSIONS entries whose quote is not in the file they name — the "
+        "verdict may still be right, but the quote is the proof a reviewer "
+        "checks, so it must be the text that is actually there:\n  "
+        + "\n  ".join(missing)
+    )
+
+
+def test_every_suppression_has_a_nonempty_quote() -> None:
+    """A quote-less entry would pass the verbatim test vacuously."""
+    for entry in check_rubric_tool_drift.SUPPRESSIONS:
+        quotes = entry.get("quotes")
+        assert isinstance(quotes, list) and quotes, (
+            f'SUPPRESSIONS entry ({entry["file"]}, {entry["tool"]}) has no '
+            f"quotes — the verbatim check would pass it without reading "
+            f"anything"
+        )
+        for quote in quotes:
+            assert len(quote.strip()) > 20, (
+                f'SUPPRESSIONS entry ({entry["file"]}, {entry["tool"]}) has a '
+                f"quote too short to identify a sentence: {quote!r}"
+            )
+
+
+def test_agent_keyed_suites_are_scanned_once(monkeypatch) -> None:
+    """A skill folded into an agent and deleted still has a suite to scan, once.
+
+    Walking SKILLS_DIR alone skipped `citation`'s rubric and judge_context from
+    the day its skill was deleted, with no signal. Two fixes for that landed
+    independently (issues #2115 and #2822) and briefly coexisted after a merge,
+    which scans every agent-keyed suite twice and doubles its hit count. Both
+    directions are pinned: agent-keyed suites produce hits, and no (file, tool)
+    pair is warned about more than once.
+    """
+    monkeypatch.setattr(check_rubric_tool_drift, "SUPPRESSIONS", [])
+    check_rubric_tool_drift.main()
+    emitted = []
+    for f, m in _recorded():
+        match = re.search(r"mention(?:s|ing) `(\w+)`", m)
+        if f is not None and match:
+            emitted.append((f, match.group(1)))
+    _reset()
+    agent_suite_files = {
+        f for f, _ in emitted
+        if f.startswith(("eval/tests/unit/citation/", "eval/tests/unit/question-selection/"))
+    }
+    assert agent_suite_files, "no agent-keyed suite produced a hit: the scan skips them"
+    duplicates = sorted({p for p in emitted if emitted.count(p) > 1})
+    assert duplicates == [], duplicates

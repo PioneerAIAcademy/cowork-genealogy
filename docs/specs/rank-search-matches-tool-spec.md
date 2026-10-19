@@ -7,8 +7,9 @@ score** against the research subject, replacing FamilySearch's unreliable search
 ranker with its authoritative person matcher. It reads the host-side staged
 results file, scores **every** staged candidate against the subject with the
 `matchTwoExamples` engine (the same one `same_person` uses), writes the full
-score set to a calibration log, and returns the **top 10 by match score** as
-compact, gedcomx-free stubs.
+score set to a calibration log, and returns **every scored candidate, ordered
+by match score**, as compact, gedcomx-free stubs. `top` narrows that only when
+the caller asks.
 
 It exists to fix two coupled failures of the raw search flow, both confirmed on
 live FamilySearch data (see **Design notes**):
@@ -78,7 +79,7 @@ needs-review band; it does not accept/reject. (Design notes, guardrails.)
 | `projectPath` | string | yes | Absolute path to the active project directory. |
 | `stagedResultsRef` | string | yes | The `staged.resultsRef` handle from `record_search` (`results/.staging/<uuid>.json`). A finalized `results/<log_id>.json` ref is also accepted. |
 | `subjectId` | string | yes | A `persons[].id` in the project's `tree.gedcomx.json` — the research subject to match against. |
-| `top` | number | no | How many top-ranked stubs to return. **Default 10.** Fixed count, not a score threshold (a good threshold is not yet known — see the score log). |
+| `top` | number | no | Cap on how many top-ranked stubs to return. **Omit for every scored candidate**, which is the default. A fixed count, not a score threshold (a good threshold is not yet known — see the score log). **There is ONE row list.** `matches` comes back annotated with the match score and ordered best first, so `top` shortens that list from the bottom: the rows it cuts are the worst-scoring ones, not a second hidden copy. |
 | `checkAttachments` | boolean | no | Default `false`. When `true`, fold one batch `source_attachments` call in host-side to set `attachedToSubject` / `attachedToOther` on the returned stubs. |
 
 `subjectId`, `projectPath`, `stagedResultsRef` are camelCase (MCP wire
@@ -92,7 +93,7 @@ snake_case envelope it reads.
    resolved path to be **either** under `results/.staging/` (a staged handle)
    **or** a top-level `results/<log_id>.json` (a finalized sidecar). This is a
    *looser* guard than `finalizeStagedResults`, which hard-rejects anything
-   outside `results/.staging/` (`results-staging.ts:108-114`) — reuse
+   outside `results/.staging/` (`finalizeStagedResults` in `src/utils/results-staging.ts`) — reuse
    `assertInsideProject` but write the dual-location check yourself; do **not**
    call finalize's guard. Then `JSON.parse(await readFile(...))`. **Read-only;
    never `unlink`** (so `research_log_append` can still finalize a staged
@@ -100,14 +101,15 @@ snake_case envelope it reads.
    `{ tool, retrieved, returned_count, payload }`; finalized sidecar =
    `{ log_id, tool, retrieved, returned_count, payload }` — read `payload.results`
    from either. The finalized-ref path is only reachable *after* the search is
-   logged (finalize unlinks the staged file); it exists for re-ranking a logged
+   logged (a committed `research_log_append` removes the staged file); it exists
+   for re-ranking a logged
    search.
 2. **Build the subject doc.** Read the project's `tree.gedcomx.json`, locate the
    person whose `id === subjectId`, and assemble a minimal simplified-GedcomX
    doc `{ persons: [subject] }` (v1), used directly as `gedcomx2`. `same_person`
    is designed to work **without real FS IDs** — it mints a conforming FS id so
    `matchTwoExamples` never chokes on a malformed/absent id, and the score is
-   unaffected because **FS matches on document content** (`same-person.ts:199-206`).
+   unaffected because **FS matches on document content** (`buildRawWithAnchor` in `src/utils/match-engine.ts`).
    The live probe confirmed an ark-less subject scores 0.99999 on the correct
    record. **The determinant is content richness, not the id.**
 
@@ -131,8 +133,8 @@ snake_case envelope it reads.
    `subjectResolvable: false` in the output so the skill treats it as *no match
    signal* (fall back to the manual `same_person` / cross-check path) rather than
    promoting a meaningless order as authoritative.
-3. **Score every candidate.** One `getValidToken()`. Wrap each pair in a per-item
-   `try/catch` (as `same_person`'s relatives mode does, `same-person.ts:67-91`),
+3. **Score every candidate.** One `getValidToken(principal)`. Wrap each pair in a per-item
+   `try/catch` (as `same_person`'s relatives mode does — the `mapWithConcurrency(pairs, PAIR_CONCURRENCY` loop in `src/tools/same-person.ts`),
    and **skip candidates with no `gedcomx` or no `primaryId`** (both optional on
    `RecordSearchResult`) with `matchScore: null` and **no FS call** — a
    person-less doc is a certain-400 and must not burn three retries. For the
@@ -140,10 +142,10 @@ snake_case envelope it reads.
    token)` via `mapWithConcurrency(results, 10, …)` + `withRetry`
    (`place-resolver.ts`). **Concurrency 10** — confirmed with the
    `matchTwoExamples` developer; it deliberately overrides `same_person`'s
-   conservative `PAIR_CONCURRENCY = 5` (`same-person.ts:22`), and there is no
+   conservative `PAIR_CONCURRENCY = 5` (`PAIR_CONCURRENCY` in `src/tools/same-person.ts`), and there is no
    batch endpoint. **Candidate ceiling:** the pool is bounded by the
    `record_search` `count` the skill passes (**50**, per the design) — higher
-   than relatives-mode's `MAX_PAIR_CALLS = 30` (`relatives.ts:34`), so 50 is the
+   than relatives-mode's `MAX_PAIR_CALLS = 30` (`MAX_PAIR_CALLS` in `src/utils/relatives.ts`), so 50 is the
    deliberate per-rank ceiling; do not rerank an unbounded set. A pair that still
    fails after retries is kept with `matchScore: null` + `scoringErrors++` —
    **never dropped**. **No local pre-filter**: score every candidate in the pool
@@ -157,8 +159,8 @@ snake_case envelope it reads.
    `source_attachments({ uris: recordIds })`; map `attachedToSubject` /
    `attachedToOther` onto the stubs. (Deriving `attachedToSubject` needs the
    local-`subjectId`→FamilySearch-PID mapping — see Owner decisions.)
-7. **Return** the top `top` (default 10) stubs (below). Bulk gedcomx is never in
-   the return.
+7. **Return** every scored stub (below), or the first `top` when the caller
+   supplied one. Bulk gedcomx is never in the return.
 
 ## Score log (calibration)
 
@@ -203,7 +205,7 @@ across real searches and a match-score threshold can be chosen later from data.
   `recordId` **verbatim** (e.g. `ark:/61903/1:1:QPRC-WPBZ`). Note the assertion
   side may be stored in any of several forms (resolver URL, full ARK, `1:1:X`,
   bare `X`); the validator matches them by reducing both to a **bare 8-char id**
-  via `arkToBareId` (`validator.ts:1100-1114`). So the calibration join is **not**
+  via `arkToBareId` (the `arkToBareId(r.recordId) === recordKey` join in `validateSidecars`). So the calibration join is **not**
   string equality — the analysis script must `arkToBareId`-normalize *both* sides.
   Logging the full ARK verbatim is the safe choice (it reduces cleanly); do
   **not** pre-normalize, shorten, or reformat it in the log.
@@ -219,6 +221,7 @@ Sorted by `matchScore` descending; no gedcomx.
   "returnedCount": 10,        // min(top, scoredCount)
   "scoringErrors": 0,         // pairs whose FS call kept failing (kept, matchScore null)
   "scoreLogError": null,      // present only if the calibration append failed
+  "subjectTooThin": true,     // only when the subject lacks a narrow date AND a named relative
   "matches": [
     {
       "matchRank": 1,
@@ -232,7 +235,7 @@ Sorted by `matchScore` descending; no gedcomx.
       "collectionTitle": "Find A Grave Index",
       "recordArk": "ark:/61903/1:2:…",
       "matchScore": 0.99999,       // 0–1; null on persistent FS-call failure — never dropped
-      "matchConfidence": 5,        // 1–10; omitted on no-match
+      "matchConfidence": 5,        // 1–5; omitted on no-match
       "attachedToSubject": false,  // only when checkAttachments
       "attachedToOther": true,
       "relativeTerms": {           // only when the search anchored on a relative
@@ -240,13 +243,31 @@ Sorted by `matchScore` descending; no gedcomx.
       },
       "batchNumber": "M01048-5"    // only when the record traces to an extraction batch
     }
-    // … up to `top` (default 10)
+    // … one per scored candidate (or the first `top`, when given)
   ]
 }
 ```
 
-Each stub is ~150 bytes. Returning the top 10 keeps the model-facing payload
-small while the full scored set lives in the score log and the staged file.
+On a subject-named `record_search` there is ONE row list: `results` comes back
+ANNOTATED in place with `matchScore` / `matchRank` / `searchRank` /
+`attachedTo*` and ordered best first, and `ranked` carries metadata only
+(ruled 2026-09-15). Measured on this branch at 50 rows, and pinned by
+`tests/utils/staged-compaction.test.ts` so it cannot go stale silently: the
+rejected drop shape is 36,956 bytes, the shipped one 35,206 — 4.7% smaller.
+
+The saving is STRUCTURAL rather than a leaner row. The drop shape's stub
+reintroduced `collectionTitle` on every scored row, immediately after
+compaction had hoisted it into `collections`; the shipped shape has no stub, so
+it cannot reintroduce anything. An earlier pass of this paragraph quoted
+34,147 → 32,585 (−4.6%) for a stub that also carried `events`, `collectionId`,
+`recordTitle` and `treeMatches`. Both the fields and the figure are gone: those
+four were removed with the drop shape, and the figure was measured on a fixture
+with no `collectionTitle` to duplicate, so it priced a saving the real shape
+never had — against production's shape the drop design was about 2.7% BIGGER.
+
+The full scored set still lives in the score log and the staged file. The staged
+sidecar is NOT re-sorted: it is written before ranking runs and is an audit
+record of what the repository returned.
 
 ### `relativeTerms` — carried, and called out; never scored
 
@@ -305,18 +326,115 @@ routinely returns hits both with and without one. See
 `record-search-tool-spec-v2.md` § `batchNumber` for where it is read from and why
 it is matched on `labelId`.
 
+### `subjectTooThin` — namesake gate flag
+
+Present and `true` when the subject has **no date narrower than a year** **AND**
+no named spouse, parent or child — in the tree or in the `research.json`
+evidence linked to the subject — i.e. nothing that separates this person from
+any same-named individual. Omitted otherwise; never `false`. It is computed from
+the subject, not the pool, so it is set on an empty staged set as well.
+
+**A sibling does not count: it only narrows the query through the parents it
+shares, who already count on their own.** `record_search` does take an
+`otherGivenName` / `otherSurname` pair that could carry a sibling, but a named
+sibling only reaches the subject through parents — any discriminating value a
+sibling adds is already picked up by naming the parents instead. A child, by
+contrast, counts for a reason sibling cannot borrow: a named child yields a
+second search in the other direction (the child's own records, with the
+subject as father or mother).
+
+**Place is not a discriminator here: it is already in the query, so it cannot
+separate same-named people within the same place.** The namesake problem is two
+people of the same name in the *same* place, and only a date or a named
+relative cuts between them. This is the asymmetry with the withholding branch
+in `record-search-tool-spec-v2.md` ("`rankingSkipped`"): that branch fires when
+the subject carries no dated OR placed fact — nothing at all — so place is read
+as a signal there, and neither test strictly contains the other.
+
+- **Narrow date.** A date counts when its day span, measured with
+  `getDayRange` (`src/utils/date-helpers.ts`) after `stdDate`, is shorter than
+  a bare year's. So a month, quarter or day counts, while "1829", "Abt 1829",
+  "Bef 1855", "Bet 1917 and 1918", "1829-1830" and an unparseable date do not.
+  "Abt 4 Dec 1917" and "Est 4 Dec 1917" do not count either — `getDayRange`
+  widens `Abt` by a year each side and `Est` by about ten years each side, so
+  both span more than a bare year's 364 days; "Cal 4 Dec 1917" does. GedcomX formal ranges are restated
+  first: open on one side (`/+1917-12-04`, `+1917-12-04/`) as `Bef`/`Aft`, so
+  they do not count; closed (`+1917-12-04/+1917-12-10`) as `Bet A and B`, so a
+  narrow one counts. An alternative ("Dec 1917 or Jan 1918") spans both sides.
+- **Dates read.** A fact's `standard_date` and its `date`, each on its own, on
+  the subject (after `research.json` enrichment) and on any Couple or
+  ParentChild relationship the subject is in (a marriage date counts even when
+  the spouse is unnamed). Plus every assertion linked to the subject through a
+  live `person_evidence` row, whatever its `fact_type`: its `date` qualified by
+  its `date_certainty` (`approximate` → Abt, `estimated` → Est, `calculated` →
+  Cal, `before` → Bef, `after` → Aft, `between` → Bet), its
+  `structured_value.date`, and any date written in its `value`. A prose date is
+  "4 Dec 1917", "December 4th, 1917", "Dec 1917" or "1917-12-04", in any month
+  vocabulary `date-constants.ts` knows, measured with the qualifier written
+  before it ("abt.", "before", "c."; "Int." is read as "interred", not as a
+  qualifier). One inside a written range ("between …",
+  "… or 5 Jan 1919") is dropped. A month word that is also a name or word
+  ("May", "Mai", "Gen") is read only beside a day number, so "Mary May 1850" is
+  no date.
+- **Named relative.** A parent, spouse or child resolved through
+  `gatherRelatives` (`src/utils/relatives.ts`) that has at least one name with a
+  real given name. A surname-only stub does not count, since it repeats what the
+  subject's own name says. Nor does a placeholder: a given name is a placeholder
+  when, dots removed, the whole of it ("N. N.") or every word of it ("Infant
+  Son", "Baby Girl", "Unknown Male") is one of "Unknown", "NN", "Mrs.",
+  "Living", "Infant", "Wife", "Stillborn", …. A relationship whose other end is
+  missing from `persons[]` does not count.
+- **Named relative in evidence.** A linked assertion counts too: a `marriage`
+  whose `structured_value.spouse_given` is a real given name or whose `spouse`
+  is a full name with one; or a `relationship` whose `relationship_type`
+  (`_inferred` stripped) is a parent, spouse or child role — not a sibling,
+  uncle or godparent — and whose `related_person_name`, `father`, `mother` or
+  `spouse`, or whose `value` in the extraction house form "<role> of <Given>
+  <Surname>" ("child of Dorothea [Gajdosch]"), is a full name with a real given
+  name. A full name's given part is every word before the last, so "child of
+  Blyeberg" and "child of N. N. Blyeberg" do not count. The name must not be
+  one of the subject's own (given and surname, accents, dots and brackets
+  ignored; for `spouse_given`, the given name alone): one relationship
+  assertion is linked to both parties, so "child of Thomas Flynn" is also
+  evidence for Thomas and names no relative of his.
+- **Live evidence only.** A `person_evidence` row with `superseded_by` set and
+  negative evidence (`record_basis: "absent"`) are skipped: none says anything about this person. Scoring
+  enrichment, which folds the same linked assertions into the subject document
+  before scoring, applies the same filter.
+- **Never fails the call.** Malformed tree entries are skipped, each assertion
+  is read on its own so one malformed entry cannot hide the rest, and if the
+  test itself throws, the flag is omitted. Consumers read the flag as a
+  two-value signal — "thin" vs "not thin" — and treat a missing flag as "not
+  thin"; an aborted computation looks identical to a well-identified subject,
+  which is the correct direction to fail (ranks everyone, never silently gates
+  them).
+
+Independent of the withholding branch (`subjectResolvable: false` +
+`matches: []`), which fires on zero dated/placed facts. A subject with a
+city-only residence has a placed fact (withholding does not fire) but may still
+be `subjectTooThin` (no narrow date, no relative). Both can be true
+simultaneously — the desired semantics for the namesake gate in search-records,
+which will read the flag regardless of whether matches were returned. That gate
+is not built yet, so nothing reads the flag today.
+
+The **stricter form** — ignore facts the query already filtered on, since every
+result shares those by construction — is not built: the base rule shipped alone
+by a review-ready decision of 2026-09-30. It is buildable when wanted, since the
+staged envelope carries the producing tool's echoed `query`
+(`readStagedEnvelopeQuery` in `src/utils/results-staging.ts`).
+
 ## Tool schema
 
 Standard `allToolSchemas` entry. `name: "rank_search_matches"`, description
 summarizing "re-rank staged record_search results by match score against a tree
-subject; returns the top-N matches." `inputSchema` with the five Input fields;
+subject; returns every scored candidate." `inputSchema` with the five Input fields;
 `projectPath`, `stagedResultsRef`, `subjectId` required. `additionalProperties:
 false`.
 
 ## Authentication
 
 Authenticated tool — obtains the FamilySearch token via
-`getValidToken()` (one token reused across the whole fan-out). No new token
+`getValidToken(principal)` (one token reused across the whole fan-out). No new token
 plumbing; goes through `src/auth/` like every other authenticated tool. Sends
 `BROWSER_USER_AGENT`.
 
@@ -333,7 +451,7 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
   (not an error).
 - **Score-log write failure** → `scoreLogError` note in the return; call
   succeeds.
-- **No valid session** → the standard `getValidToken()` "call the login tool"
+- **No valid session** → the standard `getValidToken(principal)` "call the login tool"
   error.
 
 ## Files
@@ -413,9 +531,10 @@ Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
   second death index FS ranked 15th.
 - **Surface for review, not accept/reject (guardrail 1).** A *different*
   same-name/same-state person scored 0.716 — inside the match band. No single
-  threshold cleanly separates, which is why v1 returns a fixed **top 10** for the
-  skill to confirm, and why the score log exists (to choose a threshold from
-  real data later).
+  threshold cleanly separates, which is why the tool returns **every scored
+  candidate ordered by score** for the skill to confirm rather than cutting the
+  pool itself, and why the score log exists (to choose a threshold from real
+  data later).
 - **Sparse records are low-signal (guardrail 2).** Dateless stubs scored
   unstably (0.086 vs 0.668 on a middle-initial difference); the skill must not
   treat a low score on a thin record as a definitive non-match.
@@ -426,8 +545,9 @@ Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
 
 ## Owner decisions (deferred)
 
-1. **Threshold** — intentionally none in v1 (fixed top-10). Set later from
-   `results/match-scores.jsonl`.
+1. **Threshold** — intentionally none, and no host-side cut either: every
+   scored candidate is returned, ordered. Set a threshold later
+   from `results/match-scores.jsonl`.
 2. **`checkAttachments` in v1** — needs a local-`subjectId`→FS-PID map
    (`source_attachments` keys on entity PIDs). Build now or defer to the existing
    separate `source_attachments` call.

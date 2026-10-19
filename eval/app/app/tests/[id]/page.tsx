@@ -3,7 +3,7 @@
 import { use } from 'react';
 import Link from 'next/link';
 import { Anchor, Button, Group, Loader, Stack, Text, Title } from '@mantine/core';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { notifications } from '@mantine/notifications';
 import { TestForm } from '@/components/forms/TestForm';
@@ -12,6 +12,7 @@ import type { UnitTestFile } from '@/lib/types';
 export default function EditTestPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const query = useQuery<{ test: UnitTestFile; filePath: string }>({
     queryKey: ['test', id],
@@ -28,8 +29,13 @@ export default function EditTestPage({ params }: { params: Promise<{ id: string 
       const res = await fetch(`/api/tests/${encodeURIComponent(id)}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(await res.text());
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       notifications.show({ color: 'gray', title: 'Deleted', message: `${id} removed.` });
+      // Cache rule: docs/specs/eval-crud-ui-spec.md §7 "API routes" (issue #1605).
+      // The remove comes last, right before the push — this page's observer is
+      // still mounted.
+      await queryClient.invalidateQueries({ queryKey: ['tests'], refetchType: 'all' });
+      queryClient.removeQueries({ queryKey: ['test', id] });
       router.push('/tests');
     },
     onError: (err) => {

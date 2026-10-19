@@ -1,0 +1,19 @@
+{
+  "id": "mari-nagy-marriage",
+  "name": "Mári Nagy — marriage in January 1875, Egyházasrádóc, Vas, Hungary",
+  "genre": "record-hint",
+  "source_pid": "G549-JNM",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Mári Nagy marry János Szőke, the father of her children István (born 1881), Terézia (1884), Julianna (1886), Ferenc (1889) and Anna (1891) Szőke?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1870s",
+    "geography": "HU"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 28, hint-samples.csv row 922, flags adds_birth/adds_marriage, confidence 3). Resolved 2026-10-16 as a true match: the 17 Jan 1875 Egyházasrádóc, Vas marriage (ark:/61903/1:1:6N3C-X3Y2) is corroborated by Egyházasrádóc baptisms of every dated tree child to János Szöke and Mária Nagy, and by Teréz Szőke's 1907 Vas marriage naming her mother Mári Nagy."
+}

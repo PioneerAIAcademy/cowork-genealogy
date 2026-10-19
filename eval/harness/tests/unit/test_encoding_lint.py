@@ -54,7 +54,6 @@ Generated / vendored trees we neither own nor can fix are skipped.
 from __future__ import annotations
 
 import ast
-import warnings
 from pathlib import Path
 
 # <repo>/eval/harness/tests/unit/test_encoding_lint.py -> parents[4] == <repo>.
@@ -219,19 +218,31 @@ def _offenders_in(source: str) -> list[tuple[int, str]]:
     return offenders
 
 
-def _scan_tree(root: Path) -> tuple[list[str], list[str]]:
-    """Scan all .py files under *root*, returning (offenders, unparseable)."""
+def _scan_tree(
+    root: Path,
+    offenders_in=None,
+    message: str = '{name}() has no encoding= (add encoding="utf-8")',
+    scanned: set[str] | None = None,
+) -> tuple[list[str], list[str]]:
+    """Scan all .py files under *root*, returning (offenders, unparseable).
+
+    *offenders_in* defaults to this lint's rule; the Unix-only import lint passes
+    its own, with *message* formatted from ``name``. When *scanned* is given, each
+    parsed file's relative path is added to it."""
+    offenders_in = offenders_in or _offenders_in
     offenders: list[str] = []
     unparseable: list[str] = []
     for path in _iter_python_files(root):
         rel = path.relative_to(root).as_posix()
         try:
-            hits = _offenders_in(path.read_text(encoding="utf-8"))
+            hits = offenders_in(path.read_text(encoding="utf-8"))
         except (SyntaxError, ValueError, UnicodeDecodeError) as exc:
             unparseable.append(f"{rel}: {type(exc).__name__}: {exc}")
             continue
+        if scanned is not None:
+            scanned.add(rel)
         for lineno, name in hits:
-            offenders.append(f'{rel}:{lineno}: {name}() has no encoding= (add encoding="utf-8")')
+            offenders.append(f"{rel}:{lineno}: " + message.format(name=name))
     return offenders, unparseable
 
 
@@ -243,12 +254,10 @@ def test_no_bare_text_mode_file_io():
 
     offenders, unparseable = _scan_tree(REPO_ROOT)
 
-    if unparseable:
-        warnings.warn(
-            "encoding lint could not parse and skipped these files (not scanned):\n  "
-            + "\n  ".join(sorted(unparseable)),
-            stacklevel=2,
-        )
+    assert not unparseable, (
+        "encoding lint could not parse these files, so it did not scan them:\n  "
+        + "\n  ".join(sorted(unparseable))
+    )
 
     assert not offenders, (
         'bare text-mode I/O found -- CLAUDE.md requires encoding="utf-8" on every '
@@ -369,3 +378,224 @@ def test_pep695_file_is_parsed_and_scanned(tmp_path):
     assert not unparseable, f"PEP 695 file was not parsed: {unparseable}"
     assert len(offenders) == 1
     assert "open()" in offenders[0]
+
+
+# ---------------------------------------------------------------------------
+# The output half of the same failure class: stdout encoding.
+#
+# The rules above cover DECODING what we read. This one covers ENCODING what we
+# print. A Windows console defaults to cp1252, so `print()`-ing a character
+# outside that codepage raises UnicodeEncodeError and kills the process
+# mid-report -- the same "green on macOS/Linux, broken for the Windows
+# genealogist team" shape, one direction over.
+#
+# Found 2026-08-31: `make e2e-agent-tools` died at
+# `agent_tool_usage_report.py`'s `print(format_report(...))` on the U+2192 in
+# its own `Limits` footer, which prints unconditionally. Eleven runnable modules
+# had the defect; `eval/harness/run_tests.py`, `skill_gate.py`,
+# `e2e/author.py` and `e2e/guardrail_shadow_report.py` already carried the fix,
+# under two different spellings -- which is why this matches `reconfigure` as a
+# name rather than one exact idiom.
+#
+# Scope: a module is in scope only if it is RUNNABLE (`__main__`) and contains a
+# character cp1252 cannot encode. A library module cannot be the process that
+# dies, and a runnable module with pure-ASCII output has nothing to fail on. The
+# check is deliberately an over-approximation in one direction: the offending
+# character may sit in a comment or docstring rather than a printed string, and
+# proving reachability to `print` statically is not worth it when the fix is
+# three lines and harmless. It is repo-wide (same SKIP set as above) rather than
+# harness-only, so no tree is excluded from its own lint.
+
+
+def _cp1252_unencodable(source: str) -> set[str]:
+    """Characters in *source* that a cp1252 console cannot encode."""
+    out: set[str] = set()
+    for ch in set(source):
+        if ord(ch) < 128:
+            continue
+        try:
+            ch.encode("cp1252")
+        except UnicodeEncodeError:
+            out.add(ch)
+    return out
+
+
+def _needs_stdout_guard(source: str) -> set[str]:
+    """The offending characters when *source* is a runnable module that prints
+    them without reconfiguring stdout; empty set when it is fine or out of scope."""
+    if "__main__" not in source:
+        return set()
+    if "reconfigure" in source:  # any spelling of the guard
+        return set()
+    return _cp1252_unencodable(source)
+
+
+def test_runnable_modules_that_print_non_cp1252_reconfigure_stdout():
+    assert REPO_ROOT.joinpath("CLAUDE.md").is_file(), (
+        f"repo-root detection is wrong: {REPO_ROOT} has no CLAUDE.md; "
+        "the lint would scan the wrong tree (a false green)."
+    )
+
+    offenders: list[str] = []
+    for path in _iter_python_files(REPO_ROOT):
+        try:
+            source = path.read_text(encoding="utf-8")
+        except (ValueError, UnicodeDecodeError):
+            continue
+        bad = _needs_stdout_guard(source)
+        if bad:
+            offenders.append(
+                f"{path.relative_to(REPO_ROOT).as_posix()}: prints "
+                f"{''.join(sorted(bad))!r} with no stdout reconfigure"
+            )
+
+    assert not offenders, (
+        "runnable module(s) print characters a cp1252 console cannot encode and "
+        "do not reconfigure stdout, so they die with UnicodeEncodeError on "
+        "Windows. Add the house pattern as the first statement of main():\n"
+        '    if hasattr(sys.stdout, "reconfigure"):\n'
+        '        sys.stdout.reconfigure(encoding="utf-8")\n'
+        '        sys.stderr.reconfigure(encoding="utf-8")\n'
+        "offenders:\n  " + "\n  ".join(sorted(offenders))
+    )
+
+
+def test_stdout_guard_rule_catches_and_clears_the_real_shapes():
+    """Unit-level proof the rule fires and can be satisfied -- the repo-wide test
+    above is green once the tree is clean, so on its own it cannot show that."""
+    runnable_bad = 'if __name__ == "__main__":\n    print("a → b")\n'
+    assert _needs_stdout_guard(runnable_bad) == {"→"}
+
+    # The two guard spellings that exist in this repo both clear it.
+    house = (
+        'if hasattr(sys.stdout, "reconfigure"):\n'
+        '    sys.stdout.reconfigure(encoding="utf-8")\n'
+    )
+    loop = (
+        "for _s in (sys.stdout, sys.stderr):\n"
+        '    if hasattr(_s, "reconfigure"):\n'
+        '        _s.reconfigure(encoding="utf-8")\n'
+    )
+    assert _needs_stdout_guard(house + runnable_bad) == set()
+    assert _needs_stdout_guard(loop + runnable_bad) == set()
+
+    # A library module is out of scope: it is never the process that dies.
+    assert _needs_stdout_guard('print("a → b")\n') == set()
+    # A runnable module with cp1252-safe output has nothing to fail on. The
+    # em-dash and smart quotes ARE encodable in cp1252 -- only the arrows, box
+    # glyphs and mathematical symbols are not.
+    assert _needs_stdout_guard('if __name__ == "__main__":\n    print("a — b")\n') == set()
+
+
+# --- the catch side of the same class --------------------------------------
+# The rules above govern how we WRITE the encoding= argument. This one governs
+# what happens when a file arrives in the wrong encoding anyway: `read_text`
+# raises `UnicodeDecodeError` BEFORE `json` ever sees the bytes, so a handler
+# that catches only `json.JSONDecodeError` (and/or `OSError`) does not catch it,
+# and one cp1252 file takes down whatever report was scanning the corpus instead
+# of being named and skipped. Same failure, same population (the Windows
+# genealogist team), one file later.
+#
+# Scoped to handlers whose own `try` body actually decodes a file. A handler
+# around `json.loads(some_string)` cannot raise it, and demanding the exception
+# there would be noise. `UnicodeDecodeError` subclasses `ValueError`, so a
+# handler already catching `ValueError` is compliant and is not flagged.
+#
+# KNOWN LIMIT, stated rather than implied: a handler that names a CONSTANT
+# (`except UNREADABLE_FILE:`) is not inspected, because the constant's members
+# are not resolvable from this file's AST alone. Such a constant is covered
+# where it lives instead -- see
+# `test_guardrail_shadow_report.py::test_no_reader_in_the_report_module_narrows_the_unreadable_tuple`.
+# If a second module adopts that pattern it needs the same module-local guard,
+# or this lint needs constant resolution.
+
+_DECODING_CALLS = ("read_text", "open(", ".read()")
+
+
+def _exception_names(node: ast.expr | None) -> list[str]:
+    """Every name in an `except` clause, whether bare, dotted or a tuple."""
+    found: list[str] = []
+
+    def walk(inner: ast.AST) -> None:
+        if isinstance(inner, ast.Name):
+            found.append(inner.id)
+        elif isinstance(inner, ast.Attribute):
+            found.append(inner.attr)
+        elif isinstance(inner, ast.Tuple):
+            for element in inner.elts:
+                walk(element)
+
+    if node is not None:
+        walk(node)
+    return found
+
+
+def _narrow_json_handlers(source: str) -> list[tuple[int, str]]:
+    """(lineno, clause) for each handler that decodes a file, catches
+    JSONDecodeError, and would let UnicodeDecodeError through."""
+    out: list[tuple[int, str]] = []
+    lines = source.splitlines()
+    for node in ast.walk(ast.parse(source)):
+        if not isinstance(node, ast.Try) or not node.handlers:
+            continue
+        body = ast.get_source_segment(source, node) or ""
+        try_body = "\n".join(body.splitlines()[: node.handlers[0].lineno - node.lineno])
+        if not any(marker in try_body for marker in _DECODING_CALLS):
+            continue
+        for handler in node.handlers:
+            caught = _exception_names(handler.type)
+            if "JSONDecodeError" not in caught:
+                continue
+            if "UnicodeDecodeError" in caught or "ValueError" in caught:
+                continue
+            out.append((handler.lineno, lines[handler.lineno - 1].strip()))
+    return out
+
+
+def test_no_json_handler_lets_a_decode_error_through():
+    """A handler that reads a file and catches only JSONDecodeError is a crash
+    waiting for the first non-UTF-8 file in the corpus."""
+    assert REPO_ROOT.joinpath("CLAUDE.md").is_file(), "repo-root detection is wrong"
+    offenders: list[str] = []
+    harness_root = REPO_ROOT / "eval" / "harness"
+    for path in _iter_python_files(harness_root):
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        try:
+            hits = _narrow_json_handlers(path.read_text(encoding="utf-8"))
+        except (SyntaxError, ValueError, UnicodeDecodeError):
+            continue
+        for lineno, clause in hits:
+            offenders.append(
+                f"{rel}:{lineno}: `{clause}` reads a file but lets "
+                "UnicodeDecodeError through; add it to the tuple"
+            )
+    assert offenders == [], "\n".join(offenders)
+
+
+def test_the_decode_error_lint_flags_a_narrow_handler():
+    """Positive control. Without this the lint above could match nothing at all
+    and still read as coverage."""
+    hits = _narrow_json_handlers(
+        "import json\n"
+        "from pathlib import Path\n"
+        "try:\n"
+        "    json.loads(Path('x').read_text(encoding='utf-8'))\n"
+        "except json.JSONDecodeError:\n"
+        "    pass\n"
+    )
+    assert len(hits) == 1
+    assert "JSONDecodeError" in hits[0][1]
+
+
+def test_the_decode_error_lint_accepts_the_compliant_shapes():
+    """The other direction, which is what stops this lint being `skip`ped later:
+    a tuple that names it, a handler that catches ValueError (its base class),
+    a shared constant, and a handler over a string that never decodes a file."""
+    compliant = [
+        "import json\nfrom pathlib import Path\ntry:\n    json.loads(Path('x').read_text(encoding='utf-8'))\nexcept (json.JSONDecodeError, UnicodeDecodeError):\n    pass\n",
+        "import json\nfrom pathlib import Path\ntry:\n    json.loads(Path('x').read_text(encoding='utf-8'))\nexcept (json.JSONDecodeError, ValueError):\n    pass\n",
+        "import json\nfrom pathlib import Path\nUNREADABLE = (json.JSONDecodeError, UnicodeDecodeError, OSError)\ntry:\n    json.loads(Path('x').read_text(encoding='utf-8'))\nexcept UNREADABLE:\n    pass\n",
+        "import json\ntry:\n    json.loads(payload)\nexcept json.JSONDecodeError:\n    pass\n",
+    ]
+    for source in compliant:
+        assert _narrow_json_handlers(source) == [], source

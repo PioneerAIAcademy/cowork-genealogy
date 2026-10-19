@@ -1,7 +1,7 @@
 ---
 name: resolve-record-hint
 model: claude-sonnet-4-6
-description: Resolves a draft `genre: "record-hint"` e2e fixture that was assigned via a GitHub issue titled "test <slug>". The fixture's expected-findings.json currently just transcribes an unverified FamilySearch hint record; this skill walks the genealogist through confirming or refuting the hint (the research itself is done by hand on familysearch.org — this skill never fetches anything), then writes the correct expected-findings.json, updates the README's "Notes for reviewers" and fixture.json's notes, and validates the result. Use when the user says "resolve this fixture", "adjudicate this fixture", "I was assigned test <slug>", "review this record hint", pastes a "test <slug>" GitHub issue, or asks to encode the outcome in expected-findings.json for a record-hint fixture. Do NOT use to author a brand-new fixture from a FamilySearch PID or research document (use author-e2e-fixture), to interpret or grade a completed e2e run (use interpret-e2e-result / grade-e2e-run), or to mine a unit test from a miss (use mine-unit-test).
+description: Resolves a draft `genre: "record-hint"` e2e fixture that was assigned via a GitHub issue titled "test <slug>". The fixture's expected-findings.json currently just transcribes an unverified FamilySearch hint record; this skill walks the genealogist through confirming or refuting the hint (retrieval may be tool-assisted, but the identity judgement is the genealogist's — this skill never fetches anything itself), then writes the correct expected-findings.json, updates the README's "Notes for reviewers" and fixture.json's notes, and validates the result. Use when the user says "resolve this fixture", "adjudicate this fixture", "I was assigned test <slug>", "review this record hint", pastes a "test <slug>" GitHub issue, or asks to encode the outcome in expected-findings.json for a record-hint fixture. Do NOT use to author a brand-new fixture from a FamilySearch PID or research document (use author-e2e-fixture), to interpret or grade a completed e2e run (use interpret-e2e-result / grade-e2e-run), or to mine a unit test from a miss (use mine-unit-test).
 allowed-tools:
   - Read
   - Write
@@ -41,8 +41,12 @@ neither.
 
 ## Step 2 — Send the genealogist to do the research
 
-Give them the two URLs from the issue and tell them to work in this order, by
-hand on **familysearch.org**:
+Give them the two URLs from the issue and tell them to work in this order,
+on **familysearch.org** or with the `packages/engine/mcp-server/dev/try-*.ts`
+scripts against live FamilySearch (`make e2e-login` first, or `eval\Login.bat`
+on Windows) — collections search,
+record search, record read, image read are all permitted for **retrieval**
+(spec §3.6):
 
 1. **The tree person first** — read the sources already attached to them. That
    is the baseline the hint has to be consistent with, and it is how they catch
@@ -52,8 +56,23 @@ hand on **familysearch.org**:
    the person, checking dates, places and family members against what the tree
    already has.
 
-This is the actual GPS work the benchmark exists to measure; there is no tool
-shortcut for it, and this skill does not fetch either page for them.
+When any image in this research is read rather than its index text taken —
+the hint record's or any other, by `image_transcribe`,
+`dev/try-image-transcribe.ts`, a model or a person reading the scan — that
+reading is checked first: read two other entries on the same page that the
+FamilySearch index already holds and compare child, father, mother and date.
+Both match: the reading is licensed for those fields. Either differs: discard
+everything that transcription read from the page. Fewer than two other
+indexed entries on the page: the reading is unlicensed, and the README says so. The check never
+licenses a farm, residence or occupation; those need a separate indexed source
+such as a church-census household. A higher-resolution image does not rescue a
+reading that failed the check. The README names the two entries checked and the
+result.
+
+The **identity judgement** is the actual GPS work the benchmark exists to
+measure, and there is no tool shortcut for *that*: no tool output decides
+whether the hint record concerns the tree person. Retrieval is a different
+act and may be tool-assisted. Record in the README which was used.
 
 If the call is borderline, tell them to ask a genealogist for a second
 opinion rather than guess alone.
@@ -88,6 +107,12 @@ don't ask the genealogist to invent one, and don't accept a tree PID or the
 fixture's own `source_pid` as a substitute (issue #970's rejected shortcut —
 it carries no record provenance). See spec §3.6.1 (issue #1025).
 
+If the resolution rested on reading the original **page images** (not the
+indexes alone), also ask for the confirming/disproving record's **image** ark —
+`ark:/61903/3:1:...` or `3:2:...`, distinct from the `1:1:` index ark. The
+fixture will declare `"image_basis": true` and that image ark must land in
+`expected-findings.json` (spec §3.6.1, issue #2877).
+
 ## Step 4 — Write the files
 
 - **`expected-findings.json`**
@@ -117,15 +142,26 @@ it carries no record provenance). See spec §3.6.1 (issue #1025).
   it anyway.
 
 - **`README.md`** — replace the "DRAFT PENDING ADJUDICATION" paragraph under
-  "Notes for reviewers" with the genealogist's conclusion and reasoning. No
-  fixture has been resolved yet, so there is no example to imitate; write the
+  "Notes for reviewers" with the genealogist's conclusion and reasoning. Most
+  record-hint fixtures have been resolved this way (drafts remaining:
+  `comm -12 <(grep -rl '"genre": "record-hint"' eval/tests/e2e/*/fixture.json |
+  xargs -n1 dirname | sort) <(grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/ |
+  xargs -n1 dirname | sort -u) | wc -l`);
+  `eval/tests/e2e/chresten-nielsen-daughter/README.md`'s
+  "Notes for reviewers" is a worked example (re-adjudicated after a graded
+  run, the closest match to a correction-not-rejection outcome). Write the
   paragraph so the next person can re-derive the call without redoing the
   research — the verdict, what evidence decided it, and what was searched and
   came up empty. Remove the marker text itself: it is the only signal that
   distinguishes a resolved fixture from a draft.
 
 - **`fixture.json`** — update `notes` if it still describes the fixture as
-  an unverified draft.
+  an unverified draft. If the resolution rested on reading the original page
+  images, set `"image_basis": true` (a boolean, never the string `"true"`),
+  and make sure the record's image ark (`ark:/61903/3:1:` or `3:2:`) is in an
+  `expected-findings.json` `supporting_sources` entry — `make e2e-validate`
+  hard-fails an `image_basis: true` fixture that cites only index arks
+  (issue #2877). Leave the flag off when the indexes alone settled it.
 
 **Never touch** `starting-tree.gedcomx.json`, `unstripped-tree.gedcomx.json`,
 or `starting-research.json` — this task only edits the three files above;

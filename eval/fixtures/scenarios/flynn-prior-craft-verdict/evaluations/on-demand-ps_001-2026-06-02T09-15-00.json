@@ -1,0 +1,27 @@
+{
+  "focus": "on-demand",
+  "target_id": "ps_001",
+  "target_type": "proof_summary",
+  "verdict": "consider_addressing",
+  "craft": true,
+  "strengths": [
+    "The conclusion arrives in the second sentence, before any evidence is laid out, so a reader knows what is being argued before being asked to follow it."
+  ],
+  "must_address": [],
+  "consider_addressing": [
+    {
+      "standard": "Craft — audience calibration",
+      "issue": "The prose leans on proof vocabulary a reader outside genealogy would not have: 'Original Source' on each of the three records, 'indirect evidence' twice in the evidence summary and again in the Assessment, 'secondary informant' for James Brown, and 'the GPS preponderance hierarchy' carrying the whole birthplace argument. No audience is stated on the project, so I read it as written for family rather than for a journal; on that reading these are the terms that would stop someone.",
+      "specific_action": "Say what each one means in place — that the census pages are the original records rather than later copies, and that a son-in-law reporting his father-in-law's parentage was told it rather than witnessing it."
+    },
+    {
+      "standard": "Craft — engagement",
+      "issue": "The Evidence Summary is three numbered records, each opening with the census year and closing with a classification. The shape is a catalogue rather than an argument, and Patrick appears as a row in a household rather than as a person.",
+      "specific_action": "Lead the section with the question the three records answer together, and let the 1850 and 1860 entries run as one thread about a boy in his father's household rather than two parallel catalogue rows."
+    }
+  ],
+  "non_blocking_notes": [
+    "The point that the relationship column was not introduced until 1880 is made twice in nearly the same words — under the 1860 census and again in the Assessment. One of them is enough."
+  ],
+  "narrative_for_user": "I read this for how it reads, not for whether the evidence holds up — that is what a proof-critique does. The opening does the hardest thing right: the conclusion is there in the second sentence, so nobody has to read to the end to find out what you are arguing.\n\nTwo things would change the reading. The first is vocabulary: 'Original Source', 'indirect evidence', 'secondary informant' and 'the GPS preponderance hierarchy' are doing real work here, and a reader who has not done genealogy will not know what any of them mean. Nothing on the project says who this is for, so I have assumed family rather than a journal — if that is wrong, tell me and most of this falls away. The second is shape: the Evidence Summary reads as a catalogue of three records rather than an argument, and Patrick comes through as a row in a household rather than as a boy of five and then fifteen in his father's house. Leading with the question the three records answer together would carry the reader further than numbering them does.\n\nOne small thing: the note about the relationship column arriving in 1880 is made twice, once under the 1860 census and once in the Assessment."
+}

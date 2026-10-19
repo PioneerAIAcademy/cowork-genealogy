@@ -1,0 +1,19 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/specs/schemas/*.schema.json",
+        "$TURBO_ROOT$/eval/Start.bat",
+        "$TURBO_ROOT$/packages/viewer-ui/src/components/shared/StatusBadge.tsx"
+      ]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/docs/specs/schemas/*.schema.json"]
+    }
+  }
+}

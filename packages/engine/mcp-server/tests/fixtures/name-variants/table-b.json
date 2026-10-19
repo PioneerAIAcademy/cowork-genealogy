@@ -1,0 +1,4 @@
+{
+  "_meta": { "description": "test fixture, table B — deliberately does not contain 'onlyintablea'" },
+  "groups": [["onlyintableb", "aformnotina"]]
+}

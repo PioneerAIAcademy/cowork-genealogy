@@ -1,0 +1,530 @@
+{
+  "persons": [
+    {
+      "id": "GRS9-MCH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Adelaida",
+          "surname": "Martinez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2fc30407-43ca-4a40-8f2f-af89936c33db",
+          "type": "Birth",
+          "date": "25 diciembre 1871",
+          "standard_date": "25 Dec 1871",
+          "place": "Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        },
+        {
+          "id": "09852467-e885-4189-9284-b8ec0492930c",
+          "type": "Death"
+        },
+        {
+          "id": "3edbdb89-ea55-4d36-ae1e-8649410791a9",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        },
+        {
+          "id": "0285ab0e-dd1b-4249-a4c9-f3f4fcce0efb",
+          "type": "Christening",
+          "date": "11 febrero 1872",
+          "standard_date": "11 Feb 1872",
+          "place": "Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        },
+        {
+          "id": "31e4aeb2-3ebb-4c65-bbc3-8901d8bc172e",
+          "type": "Marriage Registration",
+          "place": "Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        }
+      ]
+    },
+    {
+      "id": "MZ2B-L7P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Juan",
+          "surname": "Moreira Martinez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "94a820a4-3458-46bb-9b34-b16c7e163781",
+          "type": "Birth",
+          "date": "12 marzo 1897",
+          "standard_date": "12 Mar 1897",
+          "place": "Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "1946",
+          "standard_date": "1946",
+          "place": "Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        }
+      ]
+    },
+    {
+      "id": "L793-DMK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Juan",
+          "surname": "Martinez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MVXS-3V2",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Josefa",
+          "surname": "Segovia"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4fbe8622-ee81-403a-a6b7-a2e02e721289",
+          "type": "Birth",
+          "date": "1845",
+          "standard_date": "1845",
+          "place": "Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9694-3T2",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Eduardo Rufino",
+          "surname": "Moreira"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ca9f8fca-6302-427c-9615-c4c48b5b9006",
+          "type": "Birth",
+          "date": "1901",
+          "standard_date": "1901"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        },
+        {
+          "id": "ca9e7a64-7dd4-40ad-be7a-1fefe70a69b2",
+          "type": "Birth Registration",
+          "place": "Soriano, Uruguay",
+          "standard_place": "Soriano, Uruguay"
+        }
+      ]
+    },
+    {
+      "id": "L4PP-DDP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Francisco Pilar",
+          "surname": "Carmona"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "5 Apr 1859",
+          "standard_date": "5 Apr 1859",
+          "place": "San José, Gualeguaychú, Gualeguaychú, Entre Ríos, Argentina",
+          "standard_place": "Catedral de San José, Gualeguaychú, Gualeguaychú, Entre Ríos, Argentina"
+        },
+        {
+          "id": "c0184a7e-356e-41fc-9558-bcc5342fa356",
+          "type": "Baptism",
+          "date": "05 Apr 1859",
+          "standard_date": "5 Apr 1859",
+          "place": "San José, Gualeguaychú, Gualeguaychú, Entre Ríos, Argentina",
+          "standard_place": "Catedral de San José, Gualeguaychú, Gualeguaychú, Entre Ríos, Argentina"
+        },
+        {
+          "id": "d8cdec9e-8bbb-463a-9bd0-0c2a68802438",
+          "type": "Birth",
+          "date": "2 abr 1860",
+          "standard_date": "2 1860",
+          "place": "Gualeguaychú, Gualeguaychú, Entre Ríos, Argentina",
+          "standard_place": "Gualeguaychú, Gualeguaychú, Entre Ríos, Argentina"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "5 Oct 1917",
+          "standard_date": "5 Oct 1917"
+        },
+        {
+          "id": "222a60f5-2e56-4198-9661-6d57b7e8946e",
+          "type": "Baptism",
+          "place": "San José",
+          "standard_place": "San José, Costa Rica"
+        },
+        {
+          "id": "45bd5c46-04c2-4b15-9401-9b857f04b8b3",
+          "type": "Death Registration",
+          "place": "Gualeguaychú, Gualeguaychú, Entre Ríos, Argentina",
+          "standard_place": "Gualeguaychú, Gualeguaychú, Entre Ríos, Argentina"
+        }
+      ]
+    },
+    {
+      "id": "L8G2-HJZ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Rufino",
+          "surname": "Moreira Cruz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "acfa896a-d32e-4e29-96f8-d0b087c7225e",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        },
+        {
+          "id": "88432101-993b-430d-b99d-e59c5b77a4b6",
+          "type": "Birth",
+          "date": "6 noviembre 1870",
+          "standard_date": "6 Nov 1870",
+          "place": "Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        },
+        {
+          "id": "00d69c32-8a35-4b73-bf4a-cdb973b87992",
+          "type": "Christening",
+          "date": "9 enero 1872",
+          "standard_date": "9 Jan 1872",
+          "place": "Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "12 November 1903",
+          "standard_date": "12 Nov 1903",
+          "place": "Mercedes, Soriano, Uruguay",
+          "standard_place": "Mercedes, Soriano, Uruguay"
+        },
+        {
+          "id": "caf2fcd3-ebbd-419a-bc9b-f50c60dd3b78",
+          "type": "Occupation",
+          "value": "jornalero"
+        },
+        {
+          "id": "6112adb3-5270-456f-b1db-d605970e37be",
+          "type": "Nationality",
+          "value": "venezolano"
+        },
+        {
+          "id": "a93ad86d-e973-4bcf-8b77-fca5bc5712d2",
+          "type": "Marriage Registration",
+          "place": "Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        }
+      ]
+    },
+    {
+      "id": "L8G2-16M",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Basilio",
+          "surname": "Moreira Martinez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "14 Jun 1900",
+          "standard_date": "14 Jun 1900",
+          "place": "Departamento Soriano, Uruguay",
+          "standard_place": "Soriano, Uruguay"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        },
+        {
+          "id": "cdb4c438-7bbf-48e1-9dd5-72b54d244d6b",
+          "type": "Birth Registration",
+          "place": "Soriano, Uruguay",
+          "standard_place": "Soriano, Uruguay"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "L8G2-HJZ",
+      "person2": "GRS9-MCH",
+      "facts": [
+        {
+          "id": "b2d3d0da-2782-41f2-b441-917136ca3995",
+          "type": "Marriage",
+          "date": "09 Apr 1896",
+          "standard_date": "9 Apr 1896",
+          "place": "Nuestra Senora De Los Dolores, Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "L4PP-DDP",
+      "person2": "GRS9-MCH",
+      "facts": [
+        {
+          "id": "c3ad61f2-a0fc-435d-aa17-f16d7b4ae8c7",
+          "type": "Marriage",
+          "date": "12 ago 1914",
+          "standard_date": "12 1914",
+          "place": "San José, Gualeguaychú, Gualeguaychú, Entre Ríos, Argentina",
+          "standard_place": "Catedral de San José, Gualeguaychú, Gualeguaychú, Entre Ríos, Argentina"
+        },
+        {
+          "id": "f6b4fef9-09e6-4109-960f-33fcf211263c",
+          "type": "Marriage",
+          "date": "12 Aug 1914",
+          "standard_date": "12 Aug 1914",
+          "place": "Argentina",
+          "standard_place": "Argentina"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "L793-DMK",
+      "person2": "MVXS-3V2",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "26 Dec 1866",
+          "standard_date": "26 Dec 1866",
+          "place": "Nuestra Senora De Los Dolores, Dolores, Soriano, Uruguay",
+          "standard_place": "Dolores, Soriano, Uruguay"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L793-DMK",
+      "child": "GRS9-MCH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "MVXS-3V2",
+      "child": "GRS9-MCH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "L8G2-HJZ",
+      "child": "MZ2B-L7P"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GRS9-MCH",
+      "child": "MZ2B-L7P"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "L8G2-HJZ",
+      "child": "L8G2-16M"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GRS9-MCH",
+      "child": "L8G2-16M"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "L8G2-HJZ",
+      "child": "9694-3T2"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "GRS9-MCH",
+      "child": "9694-3T2"
+    }
+  ],
+  "sources": [
+    {
+      "id": "9JJL-Q5C",
+      "title": "Adelaida Martinez, \"Uruguay, registro civil, 1879-2020\"",
+      "citation": "\"Uruguay, registro civil, 1879-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VRH9-TPB : Wed Sep 17 18:15:05 UTC 2025), Entry for Basilio Moreira and Rufino Moreira, 14 Jun 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VRH9-TPY"
+    },
+    {
+      "id": "9JJL-V3Y",
+      "title": "Adela Natividad Martinez, \"Uruguay, Baptisms, 1750-1900\"",
+      "citation": "\"Uruguay, bautismos, 1750-1900\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F2BL-3XN : 10 February 2020), Adela Natividad Martinez, 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2BL-3XN"
+    },
+    {
+      "id": "QCCR-42C",
+      "title": "Adela Natividad, \"Uruguay, registros parroquiales, 1726-2000\"",
+      "citation": "\"Uruguay, registros parroquiales, 1726-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68XP-GBGW : Thu Jan 01 07:54:37 UTC 2026), Entry for Adela Natividad and Juan Natividad An Martínez, 11 de febrero de 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68XP-GBGW"
+    },
+    {
+      "id": "7H2Z-94K",
+      "title": "Adelaida Martinez, \"Uruguay, Índice del Registro Civil, 1900-1937\"",
+      "citation": "\"Uruguay, Índice del Registro Civil, 1900-1937\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGTP-P9S2 : Wed Sep 02 14:35:03 UTC 2026), Entry for Bazilio Moreira Martinez and Rufino Moreira.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGTP-P934"
+    },
+    {
+      "id": "7HTG-5Y2",
+      "title": "Adelaida Martínez, \"Uruguay, registros parroquiales, 1726-2000\"",
+      "citation": "\"Uruguay, registros parroquiales, 1726-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68XP-X4TF : Thu Jan 01 00:33:12 UTC 2026), Entry for Eduardo Rufino and Rufino Moreira, 18 de diciembre de 1904.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68XP-X4TJ"
+    },
+    {
+      "id": "7HTG-RCV",
+      "title": "María Martínez, \"Uruguay, registros parroquiales, 1726-2000\"",
+      "citation": "\"Uruguay, registros parroquiales, 1726-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68XP-X4TF : Thu Jan 01 00:33:12 UTC 2026), Entry for Eduardo Rufino and Rufino Moreira, 18 de diciembre de 1904.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68XP-X4TK"
+    },
+    {
+      "id": "7F4R-B5C",
+      "title": "Adela Martínez, \"Uruguay, registros parroquiales, 1726-2000\"",
+      "citation": "\"Uruguay, registros parroquiales, 1726-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS61-CNF3 : Tue Dec 30 19:15:13 UTC 2025), Entry for Rufino Goenaga Ignacio Galarragan Calbora and Fortunato Goenaga Ignacio Galarragan Calbora, 9 de abril de 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS61-CNFW"
+    },
+    {
+      "id": "9MM6-74T",
+      "title": "Adela Natividad Martinez, \"Uruguay, Baptisms, 1750-1900\"",
+      "citation": "\"Uruguay, bautismos, 1750-1900\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FLSQ-VWB : 10 February 2020), Adela Natividad Martinez, 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLSQ-VWB"
+    },
+    {
+      "id": "7FP2-MXC",
+      "title": "Adelaida Martinez de Moreira, \"Uruguay, registro civil, 1879-2020\"",
+      "citation": "\"Uruguay, registro civil, 1879-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSX3-1LMS : Wed Feb 05 12:33:10 UTC 2025), Entry for Eduardo Rufino Moreira and Rufino Moreira, 27 de septiembre de 1904.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSX3-1LMQ"
+    },
+    {
+      "id": "9M9C-GVF",
+      "title": "Adela Martinez in entry for Rufino Moreyra, \"Uruguay, Marriages, 1840-1900\"",
+      "citation": "\"Uruguay, matrimonios, 1840-1900\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FLMQ-Q3L : 10 February 2020), Adela Martinez in entry for Rufino Moreyra, 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLMQ-Q3L"
+    },
+    {
+      "id": "QT67-FZT",
+      "title": "Adela Martinez, \"Argentina, Entre Ríos, Civil Registration, 1833-1965\"",
+      "citation": "\"Argentina, Entre Ríos, Civil Registration, 1833-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DMJK-BWMM : Fri Jul 26 11:43:38 UTC 2024), Entry for Francisco Pilar Carmona and Bonifacio Pilar Carmona.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DMJK-BW6Z"
+    },
+    {
+      "id": "WW12-64D",
+      "title": "Adela Martinez, \"Argentina, Entre Ríos, registros parroquiales, 1764-2011\"",
+      "citation": "\"Argentina, Entre Ríos, registros parroquiales, 1764-2011\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL9F-THST : Sun Dec 07 00:08:59 UTC 2025), Entry for Francisco Pilar Carmona and Adela Martinez, 12 Aug 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL9F-TH3H"
+    },
+    {
+      "id": "9JJL-SNN",
+      "title": "Adela Martinez, \"Uruguay, registro civil, 1879-2020\"",
+      "citation": "\"Uruguay, registro civil, 1879-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VRH9-287 : Tue Sep 16 13:55:27 UTC 2025), Entry for Juan Moreira and Rufino Moreira, 12 Mar 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VRH9-28Q"
+    },
+    {
+      "id": "743G-FCK",
+      "title": "Adelaida Martinez, \"Uruguay, registro civil, 1879-2020\"",
+      "citation": "\"Uruguay, registro civil, 1879-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6T7H-NT3P : Tue Mar 26 00:16:09 UTC 2024), Entry for Eduardo Rufino Moreira Martinez and Rufino Moreira, 25 Nov 1948.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6T7H-NT3R"
+    },
+    {
+      "id": "7K4B-7LG",
+      "title": "Adelaida Martínez, \"Uruguay, registro civil, 1879-2020\"",
+      "citation": "\"Uruguay, registro civil, 1879-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSXM-ZRP1 : Mon Dec 29 21:41:06 UTC 2025), Entry for Higino Moreira and Fortunato Moreira, día de ayer.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSXM-ZR5S"
+    },
+    {
+      "id": "9L9G-1GB",
+      "title": "Adela Martínez, \"Argentina, Entre Ríos, registros parroquiales, 1764-1983\"",
+      "citation": "\"Argentina, Entre Ríos, registros parroquiales, 1764-2011\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL9F-THST : Sun Dec 07 00:08:59 UTC 2025), Entry for Francisco Pilar Carmona and Adela Martinez, 12 Aug 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL9F-TH3H"
+    },
+    {
+      "id": "QT67-FCT",
+      "title": "\"Computer-Generated Trees,\" entry for Adela Martinez.",
+      "citation": "\"Computer-Generated Trees,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/2:5:7ZXN-JRS : accessed 7 September 2026), entry for Adela Martinez, cites sources; \"Argentina Computer-Generated Tree by FamilySearch\" file (2:5:2:MMNB-YD1), submitted 19 May 2023 by Genealogies Data Admin.",
+      "url": "https://familysearch.org/ark:/61903/2:5:7ZXN-JRS"
+    },
+    {
+      "id": "7HTJ-99F",
+      "title": "Adelaida, \"Uruguay, Índice del Registro Civil, 1900-1937\"",
+      "citation": "\"Uruguay, Índice del Registro Civil, 1900-1937\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGTP-JRHL : Wed Sep 02 14:35:04 UTC 2026), Entry for Eduardo Rufino Moreira Martinez and Rufino.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGTP-JRHY"
+    },
+    {
+      "id": "7F3P-T36",
+      "title": "Adelaida Martinez, \"Uruguay, registro civil, 1879-2020\"",
+      "citation": "\"Uruguay, registro civil, 1879-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSXW-3GX9 : Tue Dec 30 08:55:59 UTC 2025), Entry for Eduardo Rufino Moreira and Rufino Moreira, 5 de junio de 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSXW-3GX3"
+    }
+  ]
+}

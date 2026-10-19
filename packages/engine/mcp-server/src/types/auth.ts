@@ -11,6 +11,8 @@ export interface LoginResult {
 
 export interface AuthStatusResult {
   loggedIn: boolean;
+  /** The engine build (`<base>+<date>.<sha>[.dirty]` or `<base>+dev`), on every branch — #2126. */
+  buildId: string;
   expiresAt?: string;
   expiresInMinutes?: number;
   hasRefreshToken?: boolean;

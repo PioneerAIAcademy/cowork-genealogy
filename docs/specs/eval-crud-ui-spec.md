@@ -93,7 +93,7 @@ Form fields mapped to the unit test JSON schema (see `docs/specs/unit-test-spec.
 | description | Text area | |
 | tags | Tag input (autocomplete from existing tags) | |
 | holdout | Switch | Reserves the test as a skill-improver generalization check (schema default `false`). Off by default; only persisted when on. See `docs/skill-lifecycle.md`. |
-| expected_outcome | Dropdown: pass / xfail | Schema default `pass`; only persisted when `xfail`. Marks a known-failing test so its failures report as `xfail` rather than `fail`, and a recovery reports as `xpass`. |
+| expected_outcome | Dropdown: pass / xfail | Schema default `pass`; only persisted when `xfail`. Marks a known-failing test: its `outcome` stays `fail` but is read as a suppressed (non-regressing) failure, and a recovery (`outcome: pass` beside the marker) is flagged as an unexpected pass. |
 | xfail_reason | Text area | Shown and **required** only when expected_outcome = `xfail` (the schema makes it conditionally required and nothing validates the file server-side, so the form is the enforcement point). Cleared from the file when the test goes back to `pass`. |
 | user_message | Text area | |
 | scenario | Dropdown + "Create new" button | Shows scenario README description on hover/select |
@@ -105,7 +105,7 @@ Form fields mapped to the unit test JSON schema (see `docs/specs/unit-test-spec.
 
 The form displays the skill's rubric dimensions (from rubric.md) in a sidebar or info panel so the genealogist knows what's already covered and can write additional_criteria that don't duplicate the rubric.
 
-**Hash-change warning on edit.** When the junior edits an existing test and changes a grading-relevant field (`user_message`, `scenario`, `mcp_fixtures`, `additional_criteria`, `negative`, `holdout`, `expected_outcome`, `xfail_reason`), the UI shows an inline warning: "This edit changes the test's content hash — it will be excluded from cross-PR comparison for one PR. Continue?" Cosmetic edits (`name`, `description`, `tags`) don't trigger the warning. The warning is advisory only — the junior may proceed. The senior reviewing the PR sees the diff and decides whether to ask for a revert. Per plan §2.4.
+**Hash-change warning on edit.** When the junior edits an existing test and changes a grading-relevant field (`user_message`, `scenario`, `mcp_fixtures`, `additional_criteria`, `negative`, `holdout`, `expected_outcome`, `xfail_reason`, `tags`), the UI shows an inline warning: "This edit changes the test's content hash — it will be excluded from cross-PR comparison for one PR. Continue?" Cosmetic edits (`name`, `description`) don't trigger the warning. The warning is advisory only — the junior may proceed. The senior reviewing the PR sees the diff and decides whether to ask for a revert. Per plan §2.4.
 
 ### Validation
 
@@ -167,7 +167,7 @@ Per the per-PR review workflow (`docs/per-pr-review-workflow.md`), the team subm
 
 The Results section opens to a dashboard with two panels:
 
-- **Recent run logs widget.** Top 5–10 run logs across all skills, sorted by timestamp descending. Each row shows: skill, model, timestamp, weighted-mean score, annotation status (annotated / unannotated). Color-coded outcome (green = pass, yellow = partial, red = fail/aborted, gray = xfail, orange = xpass — xfail is neutral because it is a declared, non-regressing failure, and xpass is flagged because it means the marker is likely stale). Click a row to jump to the run detail view. This is the junior's primary "is there new work?" landing.
+- **Recent run logs widget.** Top 5–10 run logs across all skills, sorted by timestamp descending. Each row shows: skill, model, timestamp, weighted-mean score, annotation status (annotated / unannotated). Color-coded outcome (green = pass, yellow = partial, red = fail/aborted; a declared-xfail failure — a `fail` beside an `expected_outcome: xfail` marker — is gray, neutral because it is a declared, non-regressing failure, and an unexpected pass — a `pass` beside that marker — is orange, flagged because the marker is likely stale). Click a row to jump to the run detail view. This is the junior's primary "is there new work?" landing.
 - **Filter + full list** below the widget — same filters as before (skill, model version, date range, annotation status).
 
 **Refresh-on-focus.** When the browser tab regains focus (e.g., the junior alt-tabs from a terminal where `RunTests.bat` just finished), the Results section auto-refreshes its run-log list. Implemented via `visibilitychange` event listener — when the document becomes visible, refetch the run-log index. This closes the "did my run finish?" loop without polling.
@@ -183,15 +183,16 @@ The Results section opens to a dashboard with two panels:
 - Full run log content: test metadata, skill output, deterministic results, LLM judge scores per dimension
 - Side-by-side: skill output vs expected behavior (criteria + rubric dimensions)
 - **Tool calls panel.** For each MCP tool call, renders a per-param table (`param | expected | actual | match indicator`). Expected comes from the matched fixture's `args` block (also shown as `expected_args` on the call record); actual comes from what Claude passed. The match indicator is computed deterministically using the same `~`-substring / exact-equality rule the dispatcher uses, so the table is at-a-glance scannable for juniors even before they look at the LLM's Tool Arguments score. Extra args Claude added that the fixture didn't declare are surfaced too (marked `+`), so the junior can see whether they were reasonable additions or noise.
-- **Partial-judge guard:** if any test in the run log has `judge.skipped: true` with an error (LLM judge crashed on that test), the annotation view refuses to open. A clear message explains that the team must re-run the harness until every test has judge scores before annotating. Per plan §2.13.
+- **Partial-judge guard:** if any test in the run log has `judge.skipped: true` with an error (LLM judge crashed on that test), the annotation view refuses to open. A clear message explains that the team must re-run the harness until every test has judge scores before annotating. Per plan §2.13. **Not yet implemented** (no such check exists in `eval/app/app/api/runlogs/[...id]/route.ts`), and the remedy needs rewording before it is: a validator-failing run is graded but excluded from `aggregated_dimensions`, so "every test has judge scores" is unsatisfiable for such a test by design — the guard must key on `judge.error`, not on an empty aggregate.
+- **Corrupt-annotation guard:** if the `.ann.json` file exists but is corrupt — unparseable JSON (e.g. a temp-name collision spliced two saves together) or parseable-but-off-schema — the run-log route returns a structured `422` carrying the file path (mirroring the annotation route) rather than a bare `500`, and the annotation view refuses to open — following the partial-judge guard above. The page shows a blocking message naming the corrupt file's full path and the `rm <path>` line that recovers it (delete and re-annotate from the start). Deliberately **no delete button**, and `deleteAnnotation` stays uncalled: a one-click, unrecoverable destructive action on up to 35 written comments does not belong on the page where the annotator is already confused. Auto-healing to `annotation: null` is likewise rejected — it would silently discard the annotator's prior corrections, the exact failure the loud throw exists to stop. The cause of the corruption is a temp-file **name collision** in `atomicWriteText` (two saves within one millisecond shared a temp path and spliced together), not a missing lock and not weaker validation — both were already present and neither would have prevented it; the fix is a per-write counter in the temp suffix, so a lock is not re-derived here.
 
 ### Annotation view
 
-- Each rubric dimension and additional criterion shown with the LLM judge's score (`1` = fail, `2` = partial, `3` = pass, `null` = N/A). N/A is emitted by the **Tool Arguments** base dimension when zero MCP tool calls happened, and by any rubric dimension with an N/A criterion (e.g. `check-warnings`' *Actionability* / *Severity classification* when the project is clean). The score is read directly from the run log — no enum-to-integer mapping happens at display time.
-- For each dimension, an editable `corrected_score` field defaults to the LLM's score; the junior changes only the dimensions they disagree with. The picker exposes a fourth `N/A` button whenever the judge scored the dimension `null` (so the junior can *agree* with N/A instead of being forced to pick `3`), plus on the nullable base dimension (Tool Arguments) so N/A can be set or overridden explicitly. See `dimensionAllowsNa` in `eval/app/lib/types.ts`.
+- Each rubric dimension and additional criterion shown with the LLM judge's score (`1` = fail, `2` = partial, `3` = pass, `null` = N/A). N/A is emitted by the **Tool Arguments** base dimension when zero MCP tool calls happened, by **Correctness** and **Completeness** when the harness coerced a correctly-routed negative test's `1` (`coerced_routing_negative_to_na`), and by any rubric dimension with an N/A criterion (e.g. `check-warnings`' *Actionability* / *Severity classification* when the project is clean). The score is read directly from the run log — no enum-to-integer mapping happens at display time.
+- For each dimension, an editable `corrected_score` field defaults to the LLM's score; the junior changes only the dimensions they disagree with. The picker exposes a fourth `N/A` button whenever the judge scored the dimension `null` (so the junior can *agree* with N/A instead of being forced to pick `3`), on the nullable base dimension (Tool Arguments) so N/A can be set or overridden explicitly, **and on every dimension of a test whose `dimensions_gate_outcome` is `false`** (a `routing` or `invariant` test, where the dimensions are diagnostic and an N/A asserts nothing about pass/fail). The third case is what makes an already-committed diagnostic `1` correctable to N/A: on such a log the judge score is a recorded `1`, so neither of the first two cases matches and the button would never appear. See `dimensionAllowsNa` in `eval/app/lib/types.ts`.
 - `comment` text area per dimension — **required on a sampled dimension that is not a confirmed pass** (judge 3, reviewer agrees 3), and optional elsewhere.
-- Save writes `<run-log-timestamp>.ann.json` alongside the run log. Schema: `docs/specs/schemas/ann.schema.json`.
-- Every dimension of each test named in the run log's `review_sample` gets an entry — 3 rotation + 1 targeted + 1 random, plus every test that failed or scored a 1 or 2 on any dimension, so the count varies by run; a run log without that field (every one written before sampling shipped) owes every dimension of every test. Agreement (`corrected_score == llm_score`) is computed, not stored as a separate flag.
+- Save uses **PATCH** for individual dimension corrections (one keyed upsert per dimension) and **PUT** for bulk operations (`agreeAll`). The PATCH endpoint reads the existing file, applies `upsertCorrection`, and writes back; the PUT endpoint requires an explicit `corrections` array and rejects a body without one. Both preserve the file's existing `annotator` and stamp identity only on file creation. Schema: `docs/specs/schemas/ann.schema.json`.
+- Every dimension of each test named in the run log's `review_sample` gets an entry — 3 rotation + 1 targeted + 1 random, plus every test that failed, scored a 1 or 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning, so the count varies by run; a run log without that field (every one written before sampling shipped) owes every dimension of every test. Agreement (`corrected_score == llm_score`) is computed, not stored as a separate flag.
 
 ### Comparison view (cross-PR)
 
@@ -220,7 +221,7 @@ The app reads and writes directly to the eval/ directory on disk. No database �
 
 ### Authentication
 
-TBD. At minimum, the app needs to know the current user's GitHub username (for annotation filenames). Options range from a simple username prompt to GitHub OAuth.
+No login, by design. The app is single-operator and local: `next dev` / `next start` bind `127.0.0.1`, and `eval/app/middleware.ts` refuses any `/api` request whose `Host` is not loopback, plus any state-changing request whose `Origin` does not match that `Host`. Enforced locality replaces authentication — do not change the binding without reading that file. Annotator identity is separate and is not a login: `lib/identity.ts` returns `eval/app/.local/identity.json`'s `annotator` if set, else `git config user.email`, else null, in which case the annotation write route returns 409 `identity_unresolved`.
 
 ### API routes
 
@@ -230,6 +231,27 @@ Next.js API routes for:
 - Cross-reference queries (which tests use scenario X?)
 - Run log listing and filtering
 - Annotation and adjudication creation
+
+Every mutation in the Tests section invalidates the queries that read it — `['tests']`, and
+`['test', id]` on an edit — with `refetchType: 'all'`, awaited **before** the `router.push`, because
+the pages read through react-query with `staleTime: 5_000` and a `router.push` keeps the
+QueryClient (the default `'active'` refetch only marks an unmounted list stale, so its next mount
+would still paint the pre-save copy first); the results-section mutations get away without it only
+because they navigate with `window.location.href`, a full document load that discards the cache.
+
+### Testing
+
+Three testing layers, each covering a different failure class:
+
+1. **Vitest (unit, `pnpm --filter cowork-genealogy-eval-app test`)** runs in Node with no DOM. Covers data-layer logic, API route behavior, snapshot normalization, and schema validation. Cannot render a component or detect layout issues.
+
+2. **Playwright (e2e, `pnpm --filter cowork-genealogy-eval-app test:e2e`)** runs in Chromium against a real Next.js dev server pointed at a temp fixture tree (`EVAL_DIR`). Covers layout/CSS bugs that are invisible to the other two layers. The fixture tree is created synchronously at config load time by `createFixtureSync` in `tests/e2e/create-fixture.ts`, before the web server starts, and removed by `globalTeardown`. It is built independently of `tests/helpers/fixtureTree.ts`, whose `makeFixtureTree` is async and so cannot run at config load. Tests never touch repository data.
+
+3. **Manual browser check** remains necessary for interaction flows (annotation save round-trip, keyboard shortcuts, drag-to-resize) that are not yet automated. One interaction flow is automated: `tests/e2e/holdout-persistence.spec.ts` saves, creates and deletes a test through the UI against the temp tree and asserts the list and edit page show the persisted value on their **first render** — by holding the list's refetch behind a 2 s route delay and asserting with a bounded 1 s timeout, since Playwright's `{ timeout: 0 }` means *no* deadline, not "now".
+
+**Why Playwright geometry assertions, not `toBeVisible()`.** An element pushed outside an `overflow: hidden` ancestor (the dimension `Card`) is still "visible" to Playwright and its text is still reachable by locators. Measured 2026-09-14: `isVisible()` returned `true` on a score picker whose bounding box extended 379px past the card's right edge. Only a `boundingBox()` comparison (picker right edge vs. card right edge) separates the clipped state from the correct state.
+
+**Why not jsdom/testing-library.** jsdom implements no layout engine: `getBoundingClientRect()` returns all fields as `0` and `offsetWidth` is `0`. A `.tsx` render-test suite cannot detect the overflow bug or any regression of it. A component render harness may be worth having for other reasons; it must not be what closes this gap.
 
 ---
 

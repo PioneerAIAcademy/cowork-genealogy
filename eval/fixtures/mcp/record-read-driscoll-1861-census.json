@@ -1,0 +1,81 @@
+{
+  "tool": "record_read",
+  "description": "The 1861 Census of Canada entry attached to Cornelius Driscoll (GJ72-9WD) as SD-DRIS-G, and this corpus's deliberate NON-finding — the discriminator the conflict test is graded against. It indexes his birth as 1816, about two years off the profile's 1814 and off the 1814 stated by the baptism record (SD-DRIS-A). Census ages were estimated and reported by whoever answered the door, so a two-year drift is ordinary variance in this record type. It must not be reported as an indexing error against the profile, and it must not be reported as a source-vs-source conflict against the baptism either — a report that characterises this pair alongside the genuinely irreconcilable death pair has failed to tell the two apart. Everything else fits: Sherbrooke, the wife Margaret, the Irish birthplace. Saying nothing about it is acceptable; explaining it as ordinary census variance is correct.",
+  "args": {
+    "recordId": "~DRIS-006"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Cornelius",
+            "surname": "Driscoll",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "1816",
+            "place": "Ireland"
+          },
+          {
+            "id": "F2",
+            "type": "Residence",
+            "date": "1861",
+            "place": "Sherbrooke, Canada East"
+          }
+        ],
+        "ark": "ark:/61903/1:1:DRIS-006",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Census of Canada, 1861"
+          }
+        ]
+      },
+      {
+        "id": "P2",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "Margaret",
+            "surname": "Driscoll",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F3",
+            "type": "Residence",
+            "date": "1861",
+            "place": "Sherbrooke, Canada East"
+          }
+        ]
+      }
+    ],
+    "places": [],
+    "relationships": [
+      {
+        "type": "Couple",
+        "person1": "P1",
+        "person2": "P2"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Census of Canada, 1861",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:DRIS-006"
+      }
+    ]
+  }
+}

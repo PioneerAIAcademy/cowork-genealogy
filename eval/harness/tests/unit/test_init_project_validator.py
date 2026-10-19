@@ -83,8 +83,7 @@ def test_the_profile_and_holdings_calls_alone_are_not_enough():
 
 def test_project_create_alone_is_enough():
     """It writes both documents, so there is no second call to require. A
-    project with no volunteered holdings and no answered interview legitimately
-    makes exactly one call."""
+    project with no volunteered holdings legitimately makes exactly one call."""
     check([call("project_create", projectPath="/p", objective="x")], NO_PROFILE, POSITIVE)
 
 

@@ -21,10 +21,29 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * #1323 then added 426 characters to `isPrincipal` (438 -> 864, so `record_search`
  * 14,043 -> 14,469), putting the combined figure at 19,472. That is 218 ABOVE the
  * 19,254 the family started at, so the 208 saving is spent and then some: do not
- * read the paragraph above as a standing claim. The ruling on #1323 was to name
+ * read the paragraph above as a standing claim.
+ *
+ * #2071 then added the particle-surname clause to BOTH `surname` descriptions
+ * (`record_search` 14,469 -> 14,872, `person_search` 5,003 -> 5,292), combined
+ * 20,164.
+ *
+ * #1212 then added a `top` clause to `record_search` alone (14,872 -> 15,344,
+ * +472), combined 20,636. That clause described the REJECTED drop design, where
+ * `top` decided whether rows were visible at all, and was then corrected to the
+ * shipped shape (15,347 -> 15,486). Both figures are history: DallanQ's ruling
+ * on #2657 removed `top` from `record_search` outright — every candidate is
+ * scored either way, so the slice only cut what came BACK — and the clause went
+ * with it. (`top` survives on `rank_search_matches`, which this lint does not
+ * measure.) What #1212 leaves on this tool is +8 for a `count` reword: 14,939
+ * -> the 14,947 pinned below.
+ *
+ * The ruling on #1323 was to name
  * both roles and when each applies instead of recommending omission, and naming
  * the relative-discovery route is what that guidance exists to do. Recorded as an
  * increase rather than argued away.
+ *
+ * #2367/#2336 added 67 characters to `isPrincipal` (mentioning `role` on search
+ * results and `principal` on record_read persons), `record_search` 14,872 -> 14,939.
  *
  * #1771 brought `record_search.birthYearExact` from 475 down to 214
  * (the year behaviour is now measured, so its paragraph collapses to a one-liner)
@@ -133,8 +152,41 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14469],
-  ["person_search", 5003],
+  // 14947 -> 16605: the tool-level description gained the event-family, date-
+  // granularity and place-expansion rules when issue #2123 deleted
+  // search-records/references/place-date-mechanics.md, which was the only place
+  // that stated them and which no agent can read. Stated once at tool level
+  // rather than per parameter, exactly as the CEILING rule below requires.
+  // 16605 -> 16819: the place clause first carried the deleted file's NOMINAL
+  // "within 3 jurisdiction levels" figure, which that same file's measured
+  // section contradicts ("far broader than '3 levels' suggests"); it now states
+  // the measured behaviour instead. Measured independently (2455 tool-level +
+  // 14364 params), not copied from the failure message.
+  // 16819 -> 17042: the DATES clause stopped recommending options the tool does
+  // not expose. It had said to send a range "rather than relying on a single
+  // year" when every `*YearFrom` must already be sent with its `*YearTo`, and
+  // that a day or month is "accepted and discarded" when neither can be sent at
+  // all; it now names the five `*YearExact` parameters, which are the actual
+  // single-year mechanism. `recordSubdivision` also stopped misstating which
+  // place question the spec leaves open: county -> state, not subdivision ->
+  // country (record-search-tool-spec-v2.md line 1511).
+  // 17042 -> 17082: the DATES clause had then recommended `*YearExact` INSTEAD
+  // of a range, which is incoherent -- it is a boolean that narrows a range to
+  // indexed dates inside it, so sent alone it pins nothing. It now says to send
+  // `*YearFrom` = `*YearTo` together with `*YearExact: true`. The same edit
+  // dropped the unsourced "fuzzes outward ~2 years / ~5 for any and residence"
+  // figure, which `measured-figures.json` does not carry and which contradicts
+  // the estimate-overlap mechanism stated in `birthYearExact`'s own description
+  // and in the spec's `<event>Year` row -- the same defect as the retired
+  // "3 jurisdiction levels". Measured independently (2695 tool-level + 14387
+  // params), not copied from the failure message.
+  ["record_search", 17082],
+  // 5292 -> 5302: the tool-level description gained "siblings, " when the
+  // sibling fan-out landed (#2593). 5302 -> 5281: it lost " with relatives:
+  // true" when person_read started ignoring that flag (#2696). Measured
+  // independently (1230 tool-level + 4051 params), not copied from the failure
+  // message.
+  ["person_search", 5281],
 ];
 
 /**

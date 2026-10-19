@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listRunLogsForSkill, readRunLogById, readSnapshotFiles } from '@/lib/fs/runlogs';
-import { readAnnotation } from '@/lib/fs/annotations';
+import { readAnnotation, annPathForRunLog } from '@/lib/fs/annotations';
 import { deleteCandidate, releaseRunLog } from '@/lib/release';
 
 /**
@@ -14,10 +14,27 @@ import { deleteCandidate, releaseRunLog } from '@/lib/release';
  */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {
   const { id } = await params;
-  const runLogId = id.map(decodeURIComponent).join('/');
+  // Next has ALREADY decoded these catch-all segments. Decoding again turned a
+  // double-encoded separator into a real one AFTER normalisation had run, so a
+  // traversal reached the path sinks looking clean. Join what Next gave us.
+  const runLogId = id.join('/');
   const found = await readRunLogById(runLogId);
   if (!found) return NextResponse.json({ error: 'not found' }, { status: 404 });
-  const annotation = await readAnnotation(runLogId);
+  let annotation;
+  try {
+    annotation = await readAnnotation(runLogId);
+  } catch (err) {
+    // The annotation file exists but is corrupt — either spliced by a
+    // temp-name collision (unparseable JSON) or off-schema. Surface it as a
+    // structured 422 — mirroring the sibling annotation route — so the page
+    // can explain it instead of dying with a bare 500 and no way back. Carry
+    // the file path explicitly rather than making the page parse it out of the
+    // message, so the recovery `rm` line renders for both throw shapes.
+    return NextResponse.json(
+      { error: 'invalid_annotation', message: (err as Error).message, filePath: annPathForRunLog(runLogId) },
+      { status: 422 },
+    );
+  }
 
   // Used by the client to decide whether Delete is offered: only candidates
   // whose version is above the latest release are deletable from the UI.
@@ -45,7 +62,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {
   const { id } = await params;
-  const runLogId = id.map(decodeURIComponent).join('/');
+  // Next has ALREADY decoded these catch-all segments. Decoding again turned a
+  // double-encoded separator into a real one AFTER normalisation had run, so a
+  // traversal reached the path sinks looking clean. Join what Next gave us.
+  const runLogId = id.join('/');
 
   let body: { action?: string };
   try {

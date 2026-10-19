@@ -18,7 +18,7 @@ const stages = [
   { name: 'search_records', label: 'Search Records', section: 'log' },
   { name: 'extraction', label: 'Extraction', section: 'assertions' },
   { name: 'analysis', label: 'Analysis', section: 'conflicts' },
-  { name: 'proof_summary', label: 'Proof Summary', section: 'proof_summaries' }
+  { name: 'proof_summary', label: 'Findings', section: 'proof_summaries' }
 ] as const
 
 /** A stage counts as reached only when its section is a non-empty ARRAY.

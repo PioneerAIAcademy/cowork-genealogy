@@ -5,10 +5,10 @@
     "name": "Scotland 1600-1752 hybrid — Julian day shift only, no year correction",
     "type": "positive",
     "description": "Convert a Scottish date between 1600 and 1752. Scotland changed its legal year-start to 1 January in 1600 (152 years before England), but kept the Julian calendar for the day-count until 1752. So Scottish dates in this window need the day-shift correction but NOT the year correction — distinct logic path from English dates of the same period.",
-    "tags": ["julian-gregorian", "scotland", "1600-1752", "year-start", "hybrid-calendar", "requires-tool-conversion"]
+    "tags": ["julian-gregorian", "scotland", "1600-1752", "year-start", "hybrid-calendar", "requires-tool-conversion", "direct-arm"]
   },
   "input": {
-    "user_message": "Convert this Scottish marriage record date to the modern Gregorian calendar: '14 February 1730, Edinburgh'. Was the year-start change in 1752 relevant for Scotland?",
+    "delegation": "Convert this Scottish marriage record date to the modern Gregorian calendar: '14 February 1730, Edinburgh'. Was the year-start change in 1752 relevant for Scotland?\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "judge_context": [

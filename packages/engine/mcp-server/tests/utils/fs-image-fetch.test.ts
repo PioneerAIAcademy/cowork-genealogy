@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -7,6 +8,8 @@ vi.mock("../../src/auth/refresh.js", () => ({
 import {
   resolveFsImageInput,
   fetchFsImageBytes,
+  foldImageArkInput,
+  receivedKeys,
 } from "../../src/utils/fs-image-fetch.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 
@@ -120,6 +123,158 @@ describe("resolveFsImageInput — ark URL query-param forwarding", () => {
   });
 });
 
+describe("resolveFsImageInput — unprefixed image-ARK id", () => {
+  it("treats an XXXX-XXXX-XXXX-X id as 3:1:", () => {
+    const result = resolveFsImageInput({ ark: "3QS7-89Q6-89S6-Y" }, "test");
+    expect(result.url).toBe("https://www.familysearch.org/ark:/61903/3:1:3QS7-89Q6-89S6-Y");
+    expect(result.fallbackUrl).toBeUndefined();
+  });
+
+  it("trims whitespace around the id", () => {
+    const result = resolveFsImageInput({ ark: "  3QS7-89Q6-89S6-Y\n" }, "test");
+    expect(result.url).toBe("https://www.familysearch.org/ark:/61903/3:1:3QS7-89Q6-89S6-Y");
+  });
+
+  it("still resolves an already-prefixed 3:2: id as 3:2:", () => {
+    const result = resolveFsImageInput({ ark: "3:2:3Q9M-CSNL-S98H-M" }, "test");
+    expect(result.url).toBe("https://www.familysearch.org/ark:/61903/3:2:3Q9M-CSNL-S98H-M");
+  });
+
+  it.each([
+    ["a persona-shaped XXXX-XXXX id", "QPRC-WPBZ"],
+    ["a tree-shaped XXXX-XXX id", "KGS8-LY1"],
+    ["a 4-3-3 id", "KGS8-LY1-XYZ"],
+    ["a 4-4-3 image-shaped id", "33SQ-GYYR-9ZL"],
+    ["an id under a non-image type prefix", "1:1:3QS7-89Q6-89S6-Y"],
+    ["an id with a character before it", "X3QS7-89Q6-89S6-Y"],
+    ["a 4:1: resolver URL", "https://www.familysearch.org/ark:/61903/4:1:3QS7-89Q6-89S6-Y"],
+    ["a lowercase id", "3qs7-89q6-89s6-y"],
+    ["a 2-character last group", "3QS7-89Q6-89S6-YY"],
+  ])("rejects %s and says to pass the link as given", (_label, ark) => {
+    expect(() => resolveFsImageInput({ ark }, "test")).toThrow(/Unrecognized ark/);
+    expect(() => resolveFsImageInput({ ark }, "test")).toThrow(/exactly as the user gave it/);
+  });
+});
+
+describe("foldImageArkInput — imageArk and query strings", () => {
+  const ARK = "ark:/61903/3:1:3Q9M-CSNL-S98H-M";
+
+  it("folds imageArk (record_read's field) into ark and drops the alias", () => {
+    expect(foldImageArkInput({ imageArk: ARK, projectPath: "/p" }, "test")).toEqual({
+      ark: ARK,
+      projectPath: "/p",
+    });
+  });
+
+  it("keeps an explicit ark when imageArk names the same image in another spelling", () => {
+    const folded = foldImageArkInput(
+      { ark: ARK, imageArk: `https://www.familysearch.org/${ARK}?lang=en` },
+      "test",
+    );
+    expect(folded).toEqual({ ark: ARK });
+  });
+
+  it("refuses ark and imageArk that name different images", () => {
+    expect(() =>
+      foldImageArkInput({ ark: ARK, imageArk: "ark:/61903/3:1:3Q9M-C9PT-V9Q2-2" }, "image_read"),
+    ).toThrow(
+      /image_read was given both ark \('ark:\/61903\/3:1:3Q9M-CSNL-S98H-M'\) and imageArk \('ark:\/61903\/3:1:3Q9M-C9PT-V9Q2-2'\), which do not name the same image/,
+    );
+  });
+
+  it("refuses two values whose image-context params select different pages", () => {
+    expect(() => foldImageArkInput({ ark: `${ARK}?i=4`, imageArk: `${ARK}?i=5` }, "test")).toThrow(
+      /do not name the same image/,
+    );
+  });
+
+  it.each([
+    ["a bare ark beside an imageArk carrying i=4", ARK, `${ARK}?i=4`, "?i=4"],
+    ["an ark carrying i=4 beside a bare imageArk", `${ARK}?i=4`, ARK, "?i=4"],
+    ["a bare ark beside record_read's ?cc= imageArk", ARK, `${ARK}?cc=2363041`, "?cc=2363041"],
+    ["a page URL carrying i= beside a bare imageArk", `https://www.familysearch.org/${ARK}?lang=en&i=112`, ARK, "?i=112"],
+    ["an unprefixed id beside a ?cc= imageArk", "3Q9M-CSNL-S98H-M", `${ARK}?cc=2363041`, "?cc=2363041"],
+  ])("reads %s from the side carrying the context params", (_label, ark, imageArk, query) => {
+    const resolved = resolveFsImageInput(foldImageArkInput({ ark, imageArk }, "test"), "test");
+    expect(resolved.url).toBe(`https://www.familysearch.org/${ARK}${query}`);
+    expect(resolved.fallbackUrl).toBe(`https://www.familysearch.org/${ARK}`);
+  });
+
+  it("refuses a pair that both carry image-context params, when those differ", () => {
+    expect(() =>
+      foldImageArkInput({ ark: `${ARK}?cc=2363041`, imageArk: `${ARK}?cc=2363041&i=5` }, "test"),
+    ).toThrow(/do not name the same image/);
+  });
+
+  it.each([
+    [123, "a number"],
+    [null, "null"],
+    [[ARK], "an array"],
+    [{ ark: ARK }, "an object"],
+  ])("refuses an ark that is not a string (%j), with or without imageArk", (ark, kind) => {
+    const input = (value: object) => value as { ark?: string; imageArk?: string };
+    expect(() => foldImageArkInput(input({ ark, imageArk: ARK }), "image_read")).toThrow(
+      `image_read was given an ark that is not a string (${kind}).`,
+    );
+    expect(() => foldImageArkInput(input({ ark }), "image_read")).toThrow(
+      `image_read was given an ark that is not a string (${kind}).`,
+    );
+  });
+
+  it("leaves an empty imageArk in place, so the no-input error can name it", () => {
+    expect(foldImageArkInput({ imageArk: "" }, "test")).toEqual({ imageArk: "" });
+  });
+
+  it.each([
+    ["a bare 3:1: id", "3:1:3Q9M-CSNL-S98H-M?cc=2363041", `${ARK}?cc=2363041`],
+    ["a bare 3:2: id", "3:2:3Q9M-CSNL-S98H-M?i=3", "ark:/61903/3:2:3Q9M-CSNL-S98H-M?i=3"],
+    ["an unprefixed id", "3QS7-89Q6-89S6-Y?cc=2363041", "ark:/61903/3:1:3QS7-89Q6-89S6-Y?cc=2363041"],
+    [
+      "a DGS distribution URL",
+      "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg?cc=2363041",
+      "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg",
+    ],
+    [
+      "a DeepZoomCloud distribution URL",
+      "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:3Q9M-CSNL-S98H-M/$dist?cc=1",
+      "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:3Q9M-CSNL-S98H-M/$dist",
+    ],
+  ])("respells %s whose query string would otherwise be refused", (_label, ark, expected) => {
+    expect(foldImageArkInput({ ark }, "test").ark).toBe(expected);
+    expect(() => resolveFsImageInput({ ark }, "test")).toThrow(/Unrecognized ark/);
+    expect(() => resolveFsImageInput({ ark: expected }, "test")).not.toThrow();
+  });
+
+  it.each([
+    ["a canonical ARK", `${ARK}?cc=2363041`],
+    ["a resolver URL", `https://www.familysearch.org/${ARK}?lang=en&i=112`],
+    ["an ARK with no query", ARK],
+    ["an unrecognized value", "https://www.familysearch.org/search/film/007621224?i=586"],
+  ])("leaves %s as given", (_label, ark) => {
+    expect(foldImageArkInput({ ark }, "test").ark).toBe(ark);
+  });
+
+  it("forwards the query a respelled bare id carried, with the bare resolver URL as the fallback", () => {
+    const { ark } = foldImageArkInput({ ark: "3:1:3Q9M-CSNL-S98H-M?i=7&cc=2363041" }, "test");
+    const resolved = resolveFsImageInput({ ark }, "test");
+    expect(resolved.url).toBe(`https://www.familysearch.org/${ARK}?i=7&cc=2363041`);
+    expect(resolved.fallbackUrl).toBe(`https://www.familysearch.org/${ARK}`);
+  });
+});
+
+describe("receivedKeys", () => {
+  it("names every key, marking an empty or non-string value", () => {
+    expect(receivedKeys({ imageUrl: "x", ark: "", page: 3 })).toBe(
+      "Received keys: imageUrl, ark (empty), page (not a string).",
+    );
+  });
+
+  it("says so when there are none", () => {
+    expect(receivedKeys({})).toBe("Received no keys.");
+    expect(receivedKeys(undefined)).toBe("Received no keys.");
+  });
+});
+
 describe("fetchFsImageBytes — fallback retry", () => {
   // Regression coverage for the review finding on #1203: forwarding i=/cc=/
   // groupId= unconditionally broke single-image documents where i= is out of
@@ -133,7 +288,7 @@ describe("fetchFsImageBytes — fallback retry", () => {
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=999";
     const fallback = "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X";
 
-    const result = await fetchFsImageBytes(primary, fallback);
+    const result = await fetchFsImageBytes(primary, fallback, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledTimes(2);
     expect(mockFetch.mock.calls[0][0]).toBe(primary);
@@ -148,9 +303,10 @@ describe("fetchFsImageBytes — fallback retry", () => {
     await expect(
       fetchFsImageBytes(
         "https://www.familysearch.org/ark:/61903/3:1:BAD?i=999",
-        "https://www.familysearch.org/ark:/61903/3:1:BAD"
+        "https://www.familysearch.org/ark:/61903/3:1:BAD",
+        LOCAL
       )
-    ).rejects.toThrow(/FamilySearch image fetch failed/);
+    ).rejects.toThrow(/FamilySearch image fetch failed.*may not be a valid/);
 
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
@@ -159,7 +315,7 @@ describe("fetchFsImageBytes — fallback retry", () => {
     mockHtmlResponse();
 
     await expect(
-      fetchFsImageBytes("https://www.familysearch.org/ark:/61903/3:1:X?i=999")
+      fetchFsImageBytes("https://www.familysearch.org/ark:/61903/3:1:X?i=999", undefined, LOCAL)
     ).rejects.toThrow(/Expected an image response/);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -170,10 +326,304 @@ describe("fetchFsImageBytes — fallback retry", () => {
 
     const result = await fetchFsImageBytes(
       "https://www.familysearch.org/ark:/61903/3:1:X?i=1",
-      "https://www.familysearch.org/ark:/61903/3:1:X"
+      "https://www.familysearch.org/ark:/61903/3:1:X",
+      LOCAL
     );
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(result.contentType).toBe("image/jpeg");
+  });
+});
+
+/**
+ * Memory-artifact shape — issue #1689.
+ *
+ * Measured 2026-09-15 over the 221-memory probe corpus: every `about` URL is on
+ * sg30p0.familysearch.org ending /dist.<ext>, the bytes serve with no auth at
+ * all, and 29 of the 221 are application/pdf — which the OCR model reads
+ * directly, so the fetcher must carry them rather than reject on content-type.
+ */
+describe("fs-image-fetch — memory artifacts", () => {
+  const ARTIFACT =
+    "https://sg30p0.familysearch.org/ark:/61903/3:1:ABCD/v2/12345/dist.jpg?ctx=x";
+
+  function mockTypedResponse(contentType: string) {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      headers: {
+        get: (name: string) =>
+          name.toLowerCase() === "content-type" ? contentType : null,
+      },
+      arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+    });
+  }
+
+  it("resolves a memory artifact URL as-is and flags the shape", () => {
+    const out = resolveFsImageInput({ memoryArtifactUrl: ARTIFACT }, "t");
+    expect(out.url).toBe(ARTIFACT);
+    expect(out.memoryShape).toBe(true);
+    expect(out.fallbackUrl).toBeUndefined();
+  });
+
+  it("refuses an artifact URL on any other host", () => {
+    for (const bad of [
+      "https://evil.example.com/a/v2/1/dist.jpg",
+      "https://sg30p0.familysearch.org.evil.com/v2/1/dist.jpg",
+      "http://sg30p0.familysearch.org/v2/1/dist.jpg",
+      "https://sg30p0.familysearch.org/v2/1/notdist.exe",
+    ]) {
+      expect(() =>
+        resolveFsImageInput({ memoryArtifactUrl: bad }, "t"),
+      ).toThrow(/Unrecognized memoryArtifactUrl/);
+    }
+  });
+
+  it("sends NO Authorization header for a memory artifact", async () => {
+    mockTypedResponse("image/jpeg");
+    await fetchFsImageBytes(ARTIFACT, undefined, LOCAL, true);
+    const headers = new Headers(mockFetch.mock.calls[0][1].headers as HeadersInit);
+    expect(headers.get("Authorization")).toBeNull();
+    // and it never even asks for a token, so an unauthenticated caller works
+    expect(mockedGetValidToken).not.toHaveBeenCalled();
+  });
+
+  it("sends NO Authorization header for a url the Memories RESOLVER produced", async () => {
+    // The shape dev/probe-memory-page.ts saw live on all 5 artifacts, which is
+    // not the shape ARTIFACT above invents. A page url reaches the fetcher only
+    // after resolveMemoryPageUrl, and the bearer used for THAT lookup must not
+    // follow the url it returned — that url arrived inside a response body.
+    const RESOLVED =
+      "https://sg30p0.familysearch.org/service/records/storage/dascloud/patron/v2/TH-7768-103723-9979-62/dist.jpg?ctx=ArtCtxPublic";
+    mockTypedResponse("image/jpeg");
+    await fetchFsImageBytes(RESOLVED, undefined, LOCAL, true);
+    const headers = new Headers(mockFetch.mock.calls[0][1].headers as HeadersInit);
+    expect(headers.get("Authorization")).toBeNull();
+    expect(mockedGetValidToken).not.toHaveBeenCalled();
+  });
+
+  it("still sends Authorization for a page scan", async () => {
+    mockedGetValidToken.mockResolvedValue("tok");
+    mockTypedResponse("image/jpeg");
+    await fetchFsImageBytes("https://example.org/x", undefined, LOCAL);
+    const headers = new Headers(mockFetch.mock.calls[0][1].headers as HeadersInit);
+    expect(headers.get("Authorization")).toBe("Bearer tok");
+  });
+
+  it("accepts application/pdf for a memory artifact", async () => {
+    mockTypedResponse("application/pdf");
+    const out = await fetchFsImageBytes(ARTIFACT, undefined, LOCAL, true);
+    expect(out.contentType).toBe("application/pdf");
+  });
+
+  it("still rejects application/pdf for a page scan", async () => {
+    mockedGetValidToken.mockResolvedValue("tok");
+    mockTypedResponse("application/pdf");
+    await expect(
+      fetchFsImageBytes("https://example.org/x", undefined, LOCAL),
+    ).rejects.toThrow(/Expected an image response/);
+  });
+
+  it("rejects an audio artifact even in the memory shape", async () => {
+    mockTypedResponse("audio/mpeg");
+    await expect(
+      fetchFsImageBytes(ARTIFACT, undefined, LOCAL, true),
+    ).rejects.toThrow(/Expected an image or PDF response/);
+  });
+
+  it("refuses more than one input shape", () => {
+    expect(() =>
+      resolveFsImageInput(
+        { imageId: "1_2", memoryArtifactUrl: ARTIFACT },
+        "t",
+      ),
+    ).toThrow(/exactly one of/);
+  });
+});
+
+// ─── Bad-identifier ark guidance (400/404 only) ───────────────────────────
+
+// The guidance ("that ark may not be a valid document-image identifier — get
+// one from record_read's imageArk or image_search") is only true when the ark
+// itself is wrong. It fires on 400 and 404 and nothing else: 401/403 is a
+// rights-restricted image and 429 a rate limit, where the ark is real and
+// re-fetching it from record_read hands back the same one. Memory artifacts
+// carry a 3:1: ark too (person_read's artifact_url) that neither named tool
+// can ever return, so they are excluded whatever the status.
+//
+// Every generic-message assertion below is ANCHORED. A substring matcher
+// cannot fail here: the guidance message BEGINS with the generic text, so
+// `.toThrow("FamilySearch image fetch failed: 400 Bad Request")` passes even
+// when the guidance leaks into the case the test exists to keep it out of.
+describe("fetchFsImageBytes — bad-identifier ark guidance", () => {
+  const ARK_URL_31 = "https://www.familysearch.org/ark:/61903/3:1:QJRM-GV8V";
+  const GENERIC_400 = /^FamilySearch image fetch failed: 400 Bad Request$/;
+
+  it("names the ark and directs to imageArk on a 400 for a 3:1: ark URL", async () => {
+    mockErrorResponse(400, "Bad Request");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(
+      /3:1:QJRM-GV8V may not be a valid document-image identifier.*imageArk/
+    );
+  });
+
+  it("names the ark on a 400 for a 3:2: ark URL", async () => {
+    mockErrorResponse(400, "Bad Request");
+
+    await expect(
+      fetchFsImageBytes(
+        "https://www.familysearch.org/ark:/61903/3:2:77TJ-PXCN",
+        undefined,
+        LOCAL
+      )
+    ).rejects.toThrow(/3:2:77TJ-PXCN may not be a valid/);
+  });
+
+  it("names the ark on a 404 for a 3:1: ark URL", async () => {
+    mockErrorResponse(404, "Not Found");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(/3:1:QJRM-GV8V may not be a valid/);
+  });
+
+  it("uses the generic message on a 400 for a non-ark URL", async () => {
+    mockErrorResponse(400, "Bad Request");
+
+    await expect(
+      fetchFsImageBytes(
+        "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg",
+        undefined,
+        LOCAL
+      )
+    ).rejects.toThrow(GENERIC_400);
+  });
+
+  it("uses the generic message on a 5xx (not 4xx) even for an ark URL", async () => {
+    mockErrorResponse(500, "Internal Server Error");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(
+      /^FamilySearch image fetch failed: 500 Internal Server Error$/
+    );
+  });
+
+  // Every ark failure in creszentia-haas-birth's committed runlog is a 403 on
+  // a real, rights-restricted image — issue #2392 carved that cause out in the
+  // same words. Telling the agent the ark may be invalid and to re-fetch it
+  // from record_read sends it round the same loop.
+  it("uses the generic message on a 403 for an ark URL (restricted, not invalid)", async () => {
+    mockErrorResponse(403, "Forbidden");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 403 Forbidden$/);
+  });
+
+  it("uses the generic message on a 401 for an ark URL", async () => {
+    mockErrorResponse(401, "Unauthorized");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 401 Unauthorized$/);
+  });
+
+  it("uses the generic message on a 429 for an ark URL", async () => {
+    mockErrorResponse(429, "Too Many Requests");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(
+      /^FamilySearch image fetch failed: 429 Too Many Requests$/
+    );
+  });
+
+  // The live 400 this whole guidance exists for carries an EMPTY statusText:
+  // eval/runlogs/e2e/pedro-chaves-spouse records it as "FamilySearch image
+  // fetch failed: 400 " with nothing after the code. Interpolating it blindly
+  // and then appending a sentence produced "400 . The ark ...".
+  it("renders no stray separator when statusText is empty (the live 400 shape)", async () => {
+    mockErrorResponse(400, "");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 400\. The ark /);
+  });
+
+  it("renders no stray separator on a generic empty-statusText failure", async () => {
+    mockErrorResponse(503, "");
+
+    await expect(
+      fetchFsImageBytes("https://familysearch.org/das/v2/dgs:1_2/dist.jpg", undefined, LOCAL)
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 503$/);
+  });
+
+  // image_search takes an imageGroupNumber from volume_search and returns
+  // image IDs — it has no way to return an ark, so an agent told to get one
+  // there has nowhere to go.
+  it("does not tell the agent an image ark comes from image_search", async () => {
+    mockErrorResponse(400, "Bad Request");
+
+    const err = await fetchFsImageBytes(ARK_URL_31, undefined, LOCAL).then(
+      () => {
+        throw new Error("expected the fetch to reject");
+      },
+      (e: unknown) => e as Error,
+    );
+    expect(err.message).not.toMatch(/ark comes from .*image_search/);
+    expect(err.message).toMatch(/image_search returns image ids, not arks/);
+    expect(err.message).toMatch(/imageGroupNumber from volume_search/);
+  });
+
+  // A waypoint ark into a multi-image film needs its i=/cc=/groupId= context;
+  // without it FamilySearch may not resolve the document at all. Telling the
+  // agent only to re-fetch the ark loops it through the same bare form.
+  it("names the i=/cc=/groupId= remedy, not just the ark", async () => {
+    mockErrorResponse(404, "Not Found");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toThrow(/i=\/cc=\/groupId=/);
+  });
+
+  // A memory artifact reaches the fetcher with memoryShape FALSE whenever it
+  // arrives through `ark` rather than `memoryArtifactUrl`: it fails
+  // ARK_PATTERN, so arkToImageUrl resolves the 3:1: ark embedded in its path.
+  // Keying the carve-out on the flag alone missed this arm entirely.
+  it("uses the generic message for a memory artifact URL passed via ark", async () => {
+    mockErrorResponse(404, "Not Found");
+
+    await expect(
+      fetchFsImageBytes(
+        "https://sg30p0.familysearch.org/ark:/61903/3:1:175960782/v2/175960782/dist.jpg",
+        undefined,
+        LOCAL,
+        false,
+      )
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 404 Not Found$/);
+  });
+
+  // A memory artifact URL carries a 3:1: ark of its own — see
+  // eval/fixtures/mcp/person-read-flynn-family.json, whose artifact_url is
+  // https://sg30p0.familysearch.org/ark:/61903/3:1:175960782/v2/175960782/dist.jpg.
+  // That ark comes from person_read and appears in neither record_read's
+  // imageArk nor image_search, so the guidance would name two dead ends.
+  it("uses the generic message for a memory artifact, ark in the URL or not", async () => {
+    const artifact =
+      "https://sg30p0.familysearch.org/ark:/61903/3:1:175960782/v2/175960782/dist.jpg";
+
+    for (const [status, text, expected] of [
+      [404, "Not Found", /^FamilySearch image fetch failed: 404 Not Found$/],
+      [400, "Bad Request", GENERIC_400],
+    ] as const) {
+      mockErrorResponse(status, text);
+      await expect(
+        fetchFsImageBytes(artifact, undefined, LOCAL, true)
+      ).rejects.toThrow(expected);
+    }
   });
 });

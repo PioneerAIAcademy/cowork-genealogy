@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from e2e.stop_checker import (
+    COUNTED_TERMINAL_REASONS,
+    classify_hand_back,
+    hand_back_key,
+    terminal_reason,
     derive_stop_reason,
     project_completed,
     read_research_json,
@@ -37,6 +42,29 @@ def test_read_tree_json_parses_valid(tmp_path: Path):
     (tmp_path / "tree.gedcomx.json").write_text(json.dumps({"persons": []}), encoding="utf-8")
     parsed = read_tree_json(tmp_path)
     assert parsed == {"persons": []}
+
+
+def test_read_tree_json_returns_none_for_a_json_array(tmp_path: Path):
+    """A tree parsing to an ARRAY is not None, so without the isinstance guard it
+    passed every `is None` test its three callers make and then raised
+    AttributeError on `.get(...)`. Same guard `read_research_json` documents."""
+    (tmp_path / "tree.gedcomx.json").write_text("[1, 2]", encoding="utf-8")
+    assert read_tree_json(tmp_path) is None
+
+
+def test_read_tree_json_returns_none_on_invalid_utf8(tmp_path: Path):
+    """`UnicodeDecodeError` is a ValueError, not an OSError, so a tree written in
+    cp1252 -- the Windows default, and this team runs on Windows -- propagated
+    out of every caller instead of degrading. `collect_post_hoc_shadow` reads
+    this file on the paid e2e path, where a raise aborts the run before any
+    result file is written.
+
+    Written as raw bytes because the point is a file this process would not have
+    produced."""
+    (tmp_path / "tree.gedcomx.json").write_bytes(
+        json.dumps({"persons": [{"id": "I1", "place": "Od\u00e9ssa"}]}, ensure_ascii=False).encode("cp1252")
+    )
+    assert read_tree_json(tmp_path) is None
 
 
 def test_project_completed_true_when_status_completed():
@@ -134,6 +162,26 @@ def test_derive_stop_reason_mcp_unavailable_beats_completed():
     )
 
 
+def test_derive_stop_reason_host_slept():
+    assert (
+        derive_stop_reason(sdk_aborted_reason="host_slept", research=None)
+        == "host_slept"
+    )
+
+
+def test_derive_stop_reason_host_slept_beats_completed():
+    """#2974: like mcp_unavailable, a slept host must outrank a self-declared
+    `completed` — the sleep consumed the budget, so whatever status the run left
+    is not a graded outcome."""
+    assert (
+        derive_stop_reason(
+            sdk_aborted_reason="host_slept",
+            research={"project": {"status": "completed"}},
+        )
+        == "host_slept"
+    )
+
+
 def test_derive_stop_reason_completed_when_no_abort_and_status_set():
     assert (
         derive_stop_reason(
@@ -212,9 +260,153 @@ def test_should_continue_allows_when_mcp_unavailable():
     ) is False
 
 
+def test_should_continue_allows_when_there_is_no_research_json():
+    """#3274. Every other input says "nudge it onward" — budget left, progress since the
+    last nudge — and a missing or unreadable research.json still wins: there is no
+    project to resume, and the nudge tells the agent to re-read it."""
+    assert should_continue_run(
+        research=None, nudges_used=1, max_nudges=5,
+        tool_count=12, tool_count_at_last_nudge=8,
+    ) is False
+
+
 def test_mcp_unavailable_defaults_false_so_existing_callers_are_unchanged():
     """The flag is opt-in: the same inputs that vetoed a stop before still do."""
     assert should_continue_run(
         research=_INCOMPLETE, nudges_used=1, max_nudges=5,
         tool_count=12, tool_count_at_last_nudge=8,
     ) is True
+
+
+# --- hand-back classification (#2328) ----------------------------------------
+
+
+def test_classify_hand_back_one_case_per_class():
+    assert classify_hand_back("Next: research-plan. Continue?") == "step"
+    assert classify_hand_back("Research complete.") == "completion_claim"
+    assert classify_hand_back("I'll look at the 1900 census now.") == "silent"
+
+
+def test_classify_hand_back_normalises_whitespace_itself():
+    """Both callers must agree: the orchestrator passes a whole TextBlock, the report
+    passes narration text. A predicate anchored to the end would otherwise diverge."""
+    assert classify_hand_back("  Next: research-plan.\n\n  Continue?  ") == "step"
+    assert classify_hand_back("Research\ncomplete.") == "completion_claim"
+
+
+def test_classify_hand_back_rejects_free_prose_that_merely_names_a_step():
+    """The lead set free-prose matching aside on 2026-09-07: the old ANNOUNCE_RE caught
+    15 of 41 real yields. Only the literal form counts."""
+    for prose in (
+        "Proceeding to person-evidence.",
+        "Handing off to search-records.",
+        "Next up I will build the timeline.",
+        "The research is complete.",
+    ):
+        assert classify_hand_back(prose) == "silent", prose
+
+
+def test_classify_hand_back_takes_no_research_argument():
+    """Form only: whether a completion claim is true is hand_back_key's question."""
+    import inspect
+
+    assert list(inspect.signature(classify_hand_back).parameters) == ["text"]
+
+
+def test_a_truthful_completion_is_not_a_false_completion():
+    """The defect is claiming done while the project is NOT completed. 134 of the 181
+    committed run logs stop on `completed`; counting those would make the rate
+    dominated by runs that did exactly the right thing."""
+    assert hand_back_key("completion_claim", project_is_completed=True) == "terminal_completed"
+    assert hand_back_key("completion_claim", project_is_completed=False) == "false_completion"
+
+
+def test_hand_back_key_is_a_counter_key_and_nothing_else():
+    """No class carries a reply any more: the hook answers every vetoed stop with the
+    worker's CONTINUE_REASON (U17). A tuple coming back here is the old "Yes." branch."""
+    assert hand_back_key("step", project_is_completed=False) == "step"
+    assert hand_back_key("silent", project_is_completed=False) == "silent"
+
+
+def test_terminal_reason_mirrors_should_continue_run_precedence():
+    """should_continue_run returns a bare bool for five reasons and only two are
+    defects. These must agree on order or the counts attribute the wrong cause."""
+    done = {"project": {"status": "completed"}}
+    assert terminal_reason(research=done, nudges_used=0, max_nudges=40, mcp_unavailable=False) == "completed"
+    # mcp_unavailable outranks everything, exactly as should_continue_run has it
+    assert terminal_reason(research=done, nudges_used=0, max_nudges=40, mcp_unavailable=True) == "mcp_unavailable"
+    # An unfinished project, so the budget and the no-progress fall-through are what is
+    # being told apart. With no research.json neither is reachable (below).
+    assert terminal_reason(research=_INCOMPLETE, nudges_used=40, max_nudges=40, mcp_unavailable=False) == "budget"
+    assert terminal_reason(research=_INCOMPLETE, nudges_used=1, max_nudges=40, mcp_unavailable=False) == "no_progress"
+    # No research.json (#3274): `ok`, and ahead of the budget, which is spent here.
+    assert terminal_reason(research=None, nudges_used=40, max_nudges=40, mcp_unavailable=False) == "ok"
+
+    # and only the two defect reasons are counted
+    assert COUNTED_TERMINAL_REASONS == {"budget", "no_progress"}
+    assert "completed" not in COUNTED_TERMINAL_REASONS
+    assert "mcp_unavailable" not in COUNTED_TERMINAL_REASONS
+
+
+def test_project_completed_still_short_circuits_should_continue_run():
+    """The card notes the completion-claim-while-completed path was unreachable because
+    this gate fires first. Classification now happens ABOVE the gate, so it IS
+    reachable — which is exactly why hand_back_key must not call it a defect."""
+    assert should_continue_run(
+        research={"project": {"status": "completed"}},
+        nudges_used=0,
+        max_nudges=40,
+        tool_count=5,
+        tool_count_at_last_nudge=0,
+    ) is False
+
+
+SKILLS = Path(__file__).resolve().parents[4] / "packages/engine/plugin/skills"
+
+# A hand-back literal as a SKILL.md instructs the model to emit it: quoted in
+# backticks, starting with the lead-in. Anchored on the lead-in so a prose fragment
+# like "end with `Continue?`" is not read as a literal, while a malformed literal
+# (`Next: foo — continue?`) still is, and still has to classify.
+HAND_BACK_LITERAL_RE = re.compile(r"`((?:Next: |Research complete)[^`]*)`")
+
+
+def test_every_shipped_hand_back_literal_classifies():
+    """Binds the classifier's literal to the prose the skills actually emit.
+
+    Any skill can close the main thread's turn, so every SKILL.md is scanned, not
+    only research/SKILL.md. It fires when a closing line appears with wording
+    classify_hand_back does not match — markdown emphasis alone
+    (`**Research complete.**`) already fails the literal. That is the case in
+    which `step: 0` looks correct on every surface while the classifier is
+    silently broken, and nothing else in the suite can tell the two apart.
+
+    **The expected count is now ZERO, and that is the assertion.** This used to
+    require `seen >= 2`, naming init-project and question-selection, which carried
+    the literal since PR #2649. PR #2870 retired it outright ("Prose is
+    flaky; the Stop hook is the mechanism") and both bodies
+    dropped it, so the old floor pinned exactly the population the ruling deletes.
+    Requiring zero is what makes a re-introduction fail here rather than pass
+    silently.
+
+    The loop above therefore has no input today, so it cannot be this test's
+    coverage of the classifier — `test_classify_hand_back_one_case_per_class` and
+    its siblings own that, and the classifier itself stays, because the committed
+    e2e run logs that predate the ruling still contain the literal and are still
+    read.
+    """
+    assert SKILLS.is_dir(), SKILLS
+    seen = 0
+    for skill_md in sorted(SKILLS.glob("*/SKILL.md")):
+        for ln in skill_md.read_text(encoding="utf-8").splitlines():
+            for literal in HAND_BACK_LITERAL_RE.findall(ln):
+                seen += 1
+                assert classify_hand_back(literal) in ("step", "completion_claim"), (
+                    f"{skill_md.parent.name}/SKILL.md emits a closing line the "
+                    f"classifier does not match, so `step` will stay 0 and read as "
+                    f"expected: {ln!r}"
+                )
+    assert seen == 0, (
+        f"{seen} shipped SKILL.md still emit the retired `Next: … Continue?` hand-back "
+        f"literal. PR #2870 retired it — the Stop hook is the mechanism now, and "
+        f"a body that stops to ask is a stall."
+    )

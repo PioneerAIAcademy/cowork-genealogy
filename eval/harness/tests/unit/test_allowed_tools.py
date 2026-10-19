@@ -1,9 +1,10 @@
 """Tests for harness.allowed_tools — per-skill declared-tool computation.
 
 The session grants every registered MCP tool (issue #1748). The declared
-set computed by ``compute_allowed_tools`` is advisory: it feeds the
-``test_tool_allowlist`` validator (which warns but does not gate) and the
-``ValueError`` guard on ``run_skills``. These tests verify the declared
+set computed by ``compute_allowed_tools`` is advisory: it feeds
+``allowed_tools_override`` at the SDK call and the ``ValueError`` guard on
+``run_skills``. It does NOT feed ``test_tool_allowlist``, which builds its own
+set from the frontmatter it is handed (corrected in PR #2782 review). These tests verify the declared
 set is accurate, NOT that it narrows the SDK session.
 """
 
@@ -11,7 +12,13 @@ from pathlib import Path
 
 import pytest
 
-from harness.allowed_tools import compute_allowed_tools
+from harness.allowed_tools import (
+    bare_tool_names,
+    compute_allowed_tools,
+    declared_tools,
+    load_suite_frontmatter,
+    suite_body_path,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -145,14 +152,6 @@ def test_referenced_but_missing_agent_is_ignored(tmp_path):
 # silently restoring a 700 KB-capped path.
 
 
-def test_record_extraction_does_not_union_image_read():
-    tools = compute_allowed_tools("record-extraction", PLUGIN_SKILLS)
-    # Non-vacuity: the union must have actually run and picked up the surviving
-    # reader, or `not in` below would pass on an empty set.
-    assert "mcp__genealogy__image_transcribe" in tools
-    assert "mcp__genealogy__image_read" not in tools
-
-
 def test_search_images_does_not_union_image_read():
     tools = compute_allowed_tools("search-images", PLUGIN_SKILLS)
     assert "mcp__genealogy__image_transcribe" in tools
@@ -165,21 +164,59 @@ def test_search_images_does_not_union_image_read():
 # so the callee's tool calls are checked against the CALLER's allowlist. Before
 # this union, search-external-sites ran inside search-records holding neither
 # place_search nor external_links_search — and the failure was silent: the model
-# invented an Ancestry URL from prose rather than erroring. These run against
-# the real plugin files, not a tmp_path fixture, because the bug was a real gap
-# between two real skills and a synthetic pair would not have caught it.
+# invented an Ancestry URL from prose rather than erroring. These ran against
+# the real plugin files while a real skill-to-skill pair existed: first
+# search-records -> search-external-sites, then search-records -> research-plan.
+# Both callees are agents now (issues #2802 and #2116), and search-records'
+# only remaining `Skill()` name, project-status, has no skill directory either.
+# So the union is exercised on a constructed pair of the same shape:
+# `_skill_pair` builds a caller that names two skill callees by `Skill()` and
+# one agent by `@plugin:`, and a callee that delegates to an agent of its own.
 
 
-def test_skill_refs_finds_every_declared_callee():
+def _write(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def _skill_pair(tmp_path: Path) -> tuple[Path, Path]:
+    """`(skills_dir, agents_dir)` for a caller, two skill callees and two agents.
+
+    - `caller` declares `record_search`, spawns `@plugin:caller-agent` and
+      names `Skill("callee")` and `Skill("other")`.
+    - `callee` declares `place_search_all`, `volume_search` and
+      `collections_search` and delegates to `@plugin:callee-agent`, whose
+      tool `wiki_read` (mocked, so the preflight checks it) it does not declare.
+    - `other` declares `catalog_search` only.
+    """
+    skills = tmp_path / "skills"
+    agents = tmp_path / "agents"
+    _write(skills / "caller" / "SKILL.md",
+           "---\nname: caller\nallowed-tools:\n  - record_search\n---\n"
+           'Spawn `@plugin:caller-agent`. Hand off with Skill("callee") '
+           'or Skill("other").\n')
+    _write(skills / "callee" / "SKILL.md",
+           "---\nname: callee\nallowed-tools:\n  - place_search_all\n"
+           "  - volume_search\n  - collections_search\n---\n"
+           "Delegates to @plugin:callee-agent for the URL.\n")
+    _write(skills / "other" / "SKILL.md",
+           "---\nname: other\nallowed-tools:\n  - catalog_search\n---\nOther.\n")
+    _write(agents / "caller-agent.md",
+           "---\nname: caller-agent\ntools:\n  - mcp__genealogy__external_links_search\n---\nA.\n")
+    _write(agents / "callee-agent.md",
+           "---\nname: callee-agent\ntools:\n  - mcp__genealogy__wiki_read\n---\nB.\n")
+    return skills, agents
+
+
+def test_skill_refs_finds_every_declared_callee(tmp_path):
     from harness.allowed_tools import skill_refs_for_skill
 
-    callees = skill_refs_for_skill(PLUGIN_SKILLS / "search-records" / "SKILL.md")
-    assert callees == [
-        "project-status",
-        "record-extraction",
-        "research-plan",
-        "search-external-sites",
-    ]
+    # The real file: search-external-sites (issue #2802) and research-plan
+    # (issue #2116) left this list when each became an agent that search-records
+    # spawns, and project-status left when issue #3112 deleted that agent.
+    assert skill_refs_for_skill(PLUGIN_SKILLS / "search-records" / "SKILL.md") == []
+    skills, _ = _skill_pair(tmp_path)
+    assert skill_refs_for_skill(skills / "caller" / "SKILL.md") == ["callee", "other"]
 
 
 def test_skill_refs_accepts_both_quote_styles():
@@ -230,26 +267,23 @@ def test_skill_refs_for_missing_file_is_empty(tmp_path):
     assert skill_refs_for_skill(tmp_path / "absent" / "SKILL.md") == []
 
 
-def test_run_skills_callee_brings_its_own_agents_tools():
+def test_run_skills_callee_brings_its_own_agents_tools(tmp_path):
     """The union follows the AGENT axis one level down, not just the skill's.
 
-    `record-extraction` delegates to `@plugin:record-extractor`. Union only its
-    `allowed-tools` and the callee runs holding eight fewer tools than it does
+    `callee` delegates to `@plugin:callee-agent`. Union only its
+    `allowed-tools` and the callee runs holding fewer tools than it does
     standalone — and the failure is silent improvisation, not an error, which
     is the whole bug #1012 closed one level up (#1225 review).
-
-    Asserted against the real plugin rather than a synthetic pair: the gap was
-    between two real files, and a constructed fixture would have passed while
-    production drifted.
     """
+    skills, agents = _skill_pair(tmp_path)
     as_callee = set(
-        compute_allowed_tools(
-            "search-records", PLUGIN_SKILLS, run_skills={"record-extraction"}
-        )
+        compute_allowed_tools("caller", skills, agents_dir=agents, run_skills={"callee"})
     )
-    standalone = set(compute_allowed_tools("record-extraction", PLUGIN_SKILLS))
+    standalone = set(compute_allowed_tools("callee", skills, agents_dir=agents))
 
-    assert "mcp__genealogy__extraction_append" in as_callee
+    # The callee's agent's tool, which the callee does not declare.
+    assert "mcp__genealogy__wiki_read" in standalone
+    assert "mcp__genealogy__wiki_read" in as_callee
     assert not (standalone - as_callee), (
         "a run_skills callee must hold every tool it holds standalone; "
         f"missing: {sorted(t.split('__')[-1] for t in standalone - as_callee)}"
@@ -295,7 +329,7 @@ def test_uncovered_callee_fixtures_sees_the_callees_agent_tools(tmp_path):
     assert missing == [("callee", "agent_only_tool")]
 
 
-def test_callee_tools_absent_until_the_test_opts_in():
+def test_callee_tools_absent_until_the_test_opts_in(tmp_path):
     """Opt-in, not automatic: every test that does not declare `run_skills`
     keeps the declared set it had before #1012.
 
@@ -303,29 +337,31 @@ def test_callee_tools_absent_until_the_test_opts_in():
     `uncovered_callee_fixtures` still uses the declared set for its
     preflight — an unstocked callee would abort the run 20 turns in.
     """
-    tools = compute_allowed_tools("search-records", PLUGIN_SKILLS)
-    assert "mcp__genealogy__place_search" not in tools
-    assert "mcp__genealogy__external_links_search" not in tools
-
-
-def test_opting_in_unions_that_callees_tools():
-    tools = compute_allowed_tools(
-        "search-records", PLUGIN_SKILLS, run_skills={"search-external-sites"}
-    )
-    # The two search-external-sites needs and search-records lacks.
-    assert "mcp__genealogy__place_search" in tools
+    skills, agents = _skill_pair(tmp_path)
+    tools = compute_allowed_tools("caller", skills, agents_dir=agents)
+    # The caller's own `@plugin:` agent IS unioned unconditionally (agents run
+    # in their own context); the two below belong to a `Skill()` callee only.
     assert "mcp__genealogy__external_links_search" in tools
+    assert "mcp__genealogy__place_search_all" not in tools
+    assert "mcp__genealogy__volume_search" not in tools
+
+
+def test_opting_in_unions_that_callees_tools(tmp_path):
+    skills, agents = _skill_pair(tmp_path)
+    tools = compute_allowed_tools("caller", skills, agents_dir=agents, run_skills={"callee"})
+    # Two tools the callee holds that the caller and its agent lack.
+    assert "mcp__genealogy__place_search_all" in tools
+    assert "mcp__genealogy__volume_search" in tools
     # The caller's own tools survive the union.
     assert "mcp__genealogy__record_search" in tools
 
 
-def test_opting_in_to_one_callee_does_not_grant_another():
-    tools = compute_allowed_tools(
-        "search-records", PLUGIN_SKILLS, run_skills={"search-external-sites"}
-    )
-    # volume_search belongs to research-plan / record-extraction, not to
-    # search-external-sites. Declaring one callee must not widen to the rest.
-    assert "mcp__genealogy__volume_search" not in tools
+def test_opting_in_to_one_callee_does_not_grant_another(tmp_path):
+    skills, agents = _skill_pair(tmp_path)
+    tools = compute_allowed_tools("caller", skills, agents_dir=agents, run_skills={"callee"})
+    # Declaring callee widens to callee's tools only, never to `other`'s.
+    assert "mcp__genealogy__place_search_all" in tools
+    assert "mcp__genealogy__catalog_search" not in tools
 
 
 def test_declaring_a_callee_the_skill_never_invokes_is_an_error():
@@ -338,21 +374,23 @@ def test_declaring_a_callee_the_skill_never_invokes_is_an_error():
 # --- Preflight: permission is not existence --------------------------------
 
 
-def test_preflight_flags_a_live_callee_with_no_fixtures():
+def test_preflight_flags_a_live_callee_with_no_fixtures(tmp_path):
     from harness.allowed_tools import uncovered_callee_fixtures
 
+    skills, agents = _skill_pair(tmp_path)
     missing = uncovered_callee_fixtures(
-        "search-records",
-        PLUGIN_SKILLS,
+        "caller",
+        skills,
         stubbed_skills=set(),
         registered_tools={"record_search"},
+        agents_dir=agents,
     )
-    pairs = {(c, t) for c, t in missing if c == "search-external-sites"}
-    assert ("search-external-sites", "place_search") in pairs
-    assert ("search-external-sites", "external_links_search") in pairs
+    pairs = {(c, t) for c, t in missing if c == "callee"}
+    assert ("callee", "place_search_all") in pairs
+    assert ("callee", "wiki_read") in pairs
 
 
-def test_preflight_is_satisfied_once_the_fixtures_are_stocked():
+def test_preflight_is_satisfied_once_the_fixtures_are_stocked(tmp_path):
     """Derives the stocked set from the callee's own frontmatter rather than
     hardcoding it.
 
@@ -367,37 +405,43 @@ def test_preflight_is_satisfied_once_the_fixtures_are_stocked():
     """
     from harness.allowed_tools import load_skill_frontmatter, uncovered_callee_fixtures
 
-    callee_fm = load_skill_frontmatter(
-        PLUGIN_SKILLS / "search-external-sites" / "SKILL.md"
-    )
+    skills, agents = _skill_pair(tmp_path)
+    callee_fm = load_skill_frontmatter(skills / "callee" / "SKILL.md")
+    agent_fm = load_skill_frontmatter(agents / "callee-agent.md")
     stocked = {
-        t.rsplit("__", 1)[-1] for t in (callee_fm.get("allowed-tools") or [])
+        t.rsplit("__", 1)[-1]
+        for t in (callee_fm.get("allowed-tools") or []) + (agent_fm.get("tools") or [])
     } | {"record_search"}
     assert "collections_search" in stocked, (
         "sanity: the callee's frontmatter should be the source of this set"
     )
 
     missing = uncovered_callee_fixtures(
-        "search-records",
-        PLUGIN_SKILLS,
+        "caller",
+        skills,
         stubbed_skills=set(),
         registered_tools=stocked,
+        agents_dir=agents,
     )
-    assert [(c, t) for c, t in missing if c == "search-external-sites"] == []
+    assert [(c, t) for c, t in missing if c == "callee"] == []
 
 
-def test_preflight_ignores_a_stubbed_callee():
+def test_preflight_ignores_a_stubbed_callee(tmp_path):
     """A stubbed callee never executes, so it never calls a tool and needs
-    no fixtures. This is why ut_search_records_018 stays green unchanged."""
+    no fixtures. This is why ut_search_records_018 stayed green unchanged."""
     from harness.allowed_tools import uncovered_callee_fixtures
 
+    skills, agents = _skill_pair(tmp_path)
     missing = uncovered_callee_fixtures(
-        "search-records",
-        PLUGIN_SKILLS,
-        stubbed_skills={"search-external-sites"},
+        "caller",
+        skills,
+        stubbed_skills={"callee"},
         registered_tools={"record_search"},
+        agents_dir=agents,
     )
-    assert all(c != "search-external-sites" for c, _ in missing)
+    assert all(c != "callee" for c, _ in missing)
+    # Not vacuous: the unstubbed sibling is still checked.
+    assert ("other", "catalog_search") in missing
 
 
 def test_preflight_message_names_both_remedies():
@@ -464,7 +508,7 @@ def test_session_grants_every_registered_mcp_tool(tmp_path, monkeypatch):
             )
         ])
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     asyncio.run(sr.run_skill(
         user_message="go",
         workspace=tmp_path,
@@ -549,3 +593,171 @@ def test_tool_allowlist_warns_on_attempted_mcp_calls_only():
     assert any("secret_tool" in m for m in msgs), (
         f"expected a warning about secret_tool from attempted_mcp_calls; got: {msgs}"
     )
+
+
+# ---- an agent-keyed suite declares the AGENT's tools (issue #1253) --------
+
+
+def _agent_keyed_repo(tmp_path: Path) -> tuple[Path, Path]:
+    """A plugin tree with one real skill and one agent that has no skill dir."""
+    skills = tmp_path / "skills"
+    (skills / "router").mkdir(parents=True)
+    (skills / "router" / "SKILL.md").write_text(
+        "---\nname: router\nallowed-tools:\n"
+        "  - mcp__genealogy__research_query\n---\nbody\n",
+        encoding="utf-8",
+    )
+    agents = tmp_path / "agents"
+    agents.mkdir(parents=True)
+    (agents / "gps-mentor.md").write_text(
+        "---\nname: gps-mentor\ntools:\n"
+        "  - mcp__genealogy__sidecar_read\n"
+        "  - mcp__genealogy__research_append\n---\nagent body\n",
+        encoding="utf-8",
+    )
+    # A same-named agent beside a REAL skill, to pin that the fallback does not
+    # fire there.
+    (agents / "router.md").write_text(
+        "---\nname: router\ntools:\n  - mcp__genealogy__tree_edit\n---\nagent body\n",
+        encoding="utf-8",
+    )
+    return skills, agents
+
+
+def test_agent_keyed_suite_declares_the_agents_own_tools(tmp_path: Path):
+    """`gps-mentor` has an agent file and no skill directory, so the SKILL.md
+    scan yields nothing and the declared set would otherwise be the baseline
+    alone — making `test_tool_allowlist` warn on every test in the suite."""
+    skills, agents = _agent_keyed_repo(tmp_path)
+    tools = compute_allowed_tools("gps-mentor", skills, agents_dir=agents)
+    assert "mcp__genealogy__sidecar_read" in tools
+    assert "mcp__genealogy__research_append" in tools
+
+
+def test_real_skill_does_not_inherit_a_same_named_agents_tools(tmp_path: Path):
+    """The fallback fires only when the skill directory is ABSENT. A real skill
+    whose SKILL.md declares a tool set has said what it holds, and must not
+    silently gain the tools of a same-named agent it never delegates to."""
+    skills, agents = _agent_keyed_repo(tmp_path)
+    tools = compute_allowed_tools("router", skills, agents_dir=agents)
+    assert "mcp__genealogy__research_query" in tools
+    assert "mcp__genealogy__tree_edit" not in tools
+
+
+def test_unknown_name_with_neither_skill_nor_agent_is_just_the_baseline(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    tools = compute_allowed_tools("not-a-thing", skills, agents_dir=agents)
+    assert not [t for t in tools if t.startswith("mcp__")]
+
+
+# ---- load_suite_frontmatter / declared_tools / bare_tool_names (#1253) -----
+
+
+def test_load_suite_frontmatter_prefers_the_skill(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    fm = load_suite_frontmatter("router", skills, agents_dir=agents)
+    assert fm["name"] == "router"
+    assert "allowed-tools" in fm and "tools" not in fm
+
+
+def test_load_suite_frontmatter_falls_back_to_the_agent(tmp_path: Path):
+    """The whole point: an agent-keyed suite has no SKILL.md, so every site
+    resolving one got `{}` and silently lost both the declared tools and
+    `name` — which `test_ownership_table` skips on rather than fails."""
+    skills, agents = _agent_keyed_repo(tmp_path)
+    fm = load_suite_frontmatter("gps-mentor", skills, agents_dir=agents)
+    assert fm["name"] == "gps-mentor"
+    assert fm["tools"]
+
+
+def test_load_suite_frontmatter_does_not_fall_back_for_an_empty_skill_block(tmp_path: Path):
+    """Gated on the skill FILE being absent, not on the frontmatter being
+    empty: a skill that declares nothing has said so."""
+    skills, agents = _agent_keyed_repo(tmp_path)
+    (skills / "gps-mentor").mkdir(parents=True)
+    (skills / "gps-mentor" / "SKILL.md").write_text(
+        "---\nname: gps-mentor\n---\nbody\n", encoding="utf-8"
+    )
+    fm = load_suite_frontmatter("gps-mentor", skills, agents_dir=agents)
+    assert "tools" not in fm
+
+
+def test_load_suite_frontmatter_unknown_name_is_empty(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    assert load_suite_frontmatter("not-a-thing", skills, agents_dir=agents) == {}
+
+
+def test_declared_tools_reads_either_spelling():
+    assert declared_tools({"allowed-tools": ["a"]}) == ["a"]
+    assert declared_tools({"tools": ["b"]}) == ["b"]
+    assert declared_tools({}) == []
+
+
+def test_bare_tool_names_reduces_qualified_and_drops_builtins():
+    assert bare_tool_names(["mcp__genealogy__record_read"]) == ["record_read"]
+    assert bare_tool_names(["mcp__remote-devices__Genealogy_Research__record_read"]) == [
+        "record_read"
+    ]
+    assert bare_tool_names(["record_read"]) == ["record_read"]
+    # Built-ins never appear in tool_calls, so comparing against them would
+    # only produce false "undeclared" findings.
+    assert bare_tool_names(["Read", "Glob"]) == []
+
+
+# ---- the body and the frontmatter resolve to ONE file (#1253) -------------
+#
+# LATENT, not live: no agent body carries an `@plugin:` reference today
+# (`grep -rn "@plugin:" packages/engine/plugin/agents/` is empty), so these
+# exercise a population of zero in the real corpus and are written against a
+# tmp fixture for that reason. They exist because the frontmatter and the body
+# are now resolved by the same rule, and a site that read one from the agent
+# and scanned the other from a SKILL.md that does not exist is the exact
+# inconsistency this pair of helpers was introduced to remove.
+
+
+def _agent_that_delegates(tmp_path: Path) -> tuple[Path, Path]:
+    skills = tmp_path / "skills"
+    skills.mkdir(parents=True)
+    agents = tmp_path / "agents"
+    agents.mkdir(parents=True)
+    (agents / "gps-mentor.md").write_text(
+        "---\nname: gps-mentor\ntools:\n  - mcp__genealogy__sidecar_read\n---\n"
+        "Hand the page to `@plugin:image-reader` when it needs transcribing.\n",
+        encoding="utf-8",
+    )
+    (agents / "image-reader.md").write_text(
+        "---\nname: image-reader\ntools:\n  - mcp__genealogy__image_transcribe\n---\n"
+        "Agent body.\n",
+        encoding="utf-8",
+    )
+    return skills, agents
+
+
+def test_suite_body_path_prefers_the_skill(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    assert suite_body_path("router", skills, agents_dir=agents).name == "SKILL.md"
+
+
+def test_suite_body_path_falls_back_to_the_agent(tmp_path: Path):
+    skills, agents = _agent_keyed_repo(tmp_path)
+    assert suite_body_path("gps-mentor", skills, agents_dir=agents).name == "gps-mentor.md"
+
+
+def test_agent_keyed_suite_widens_by_its_own_delegations(tmp_path: Path):
+    """An agent-keyed suite's `@plugin:` refs live in the AGENT body, since
+    there is no SKILL.md to hold them. Scanning the missing skill path found
+    none, so such a suite was never widened by what it delegates to."""
+    skills, agents = _agent_that_delegates(tmp_path)
+    tools = compute_allowed_tools("gps-mentor", skills, agents_dir=agents)
+    assert "mcp__genealogy__sidecar_read" in tools  # its own
+    assert "mcp__genealogy__image_transcribe" in tools  # unioned from the delegate
+
+
+def test_a_real_skill_still_widens_from_its_skill_md(tmp_path: Path):
+    """The accept direction: resolution is unchanged wherever a SKILL.md
+    exists, which is every skill in the corpus."""
+    skills, agents = _make_skill_and_agent(
+        tmp_path, body="Delegate to `@plugin:spike-echo` for the lookup.\n"
+    )
+    tools = compute_allowed_tools("router", skills, agents_dir=agents)
+    assert "mcp__genealogy__wikipedia_search" in tools

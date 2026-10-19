@@ -1,4 +1,4 @@
-import { getValidToken } from "../auth/refresh.js";
+import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import {
   toSimplified,
@@ -43,14 +43,17 @@ import {
   UNLOGGED_SEARCHES_NOTE,
   NIL_SEARCH_NEEDS_LOG_NOTE,
 } from "../utils/results-staging.js";
-import { compactStagedRecordSearch } from "../utils/staged-compaction.js";
+import {
+  compactStagedRecordSearch,
+  annotateResultsWithRanking,
+} from "../utils/staged-compaction.js";
 import { readProjectJson } from "../utils/project-io.js";
-import { withRetry } from "../utils/place-resolver.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import {
   isSubCountryPlace,
   marriageJurisdictionCandidates,
 } from "../utils/marriage-jurisdictions.js";
+import { searchFoundNobody, surnameVariantHints } from "../utils/surname-variant-hints.js";
 import { rankSearchMatches } from "./rank-search-matches.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
@@ -62,8 +65,8 @@ const FS_SEARCH_URL =
 // Per-attempt ceiling for the FamilySearch search fetch. FS search can be slow;
 // without a timeout a stalled connection hangs until the OS/transport kills it,
 // which surfaces upstream as a dead turn mid-search rather than an actionable
-// error (issue #1316). Retried up to 3× by fetchSearchWithRetry, so worst-case
-// wall time before the terminal error is ~3×25s plus backoff.
+// error (issue #1316). Retried by fetchWithRetry (default 3 attempts within a
+// 10s budget), so worst-case wall time is ~25s + budget.
 const SEARCH_TIMEOUT_MS = 25_000;
 
 const PAGINATION_CAP = 4999;
@@ -153,7 +156,9 @@ const KIN_GROUPS: KinGroup[] = [
  *  session therefore paid for deep pools it never triaged.
  *
  *  Coupling the default to `subjectId` makes the pair inseparable by
- *  construction: a deep pool is only fetched when something will cut it back.
+ *  construction: a deep pool is only fetched when something will order it and
+ *  score every row. Since #1212 ranking no longer CUTS the pool back — it
+ *  returns every scored candidate — so `count` is what bounds the response.
  *  See docs/plan/research-performance-2026-07-27.md §5.3. */
 export function defaultCount(input: RecordSearchInput): number {
   return input.subjectId && input.projectPath ? 50 : 20;
@@ -209,9 +214,11 @@ export function validateInput(input: RecordSearchInput): void {
       throw new Error("offset must be non-negative.");
     }
   }
-  // Ranking active (subjectId supplied) justifies a deep pool: the re-ranker
-  // cuts it back host-side, so the model never sees 50 raw stubs. Without
-  // ranking a deep pool is pure context waste, so the default stays 20. See
+  // Ranking active (subjectId supplied) justifies a deep pool: every row comes
+  // back scored and ordered, so the model never triages 50 raw stubs by hand.
+  // (It is not cut back host-side — since #1212 ranking returns every scored
+  // candidate.) Without ranking a deep pool is pure context waste, so the
+  // default stays 20. See
   // docs/plan/research-performance-2026-07-27.md §5.3 — the two are coupled.
   const count = input.count ?? defaultCount(input);
   const offset = input.offset ?? 0;
@@ -354,9 +361,14 @@ export function buildSearchUrl(input: RecordSearchInput): string {
   // reference documents was unexecutable from this skill.
   if (input.batchNumber) add("q.batchNumber", input.batchNumber);
   if (input.recordCountry) add("q.recordCountry", input.recordCountry);
+  // `f.`, not `q.`: verified live 2026-10-14 (probe section G), the `q.` form
+  // returns 0 for every hyphenated subdivision (`Aust-Agder`, `Sør-Trøndelag`)
+  // while the `f.` facet filter honours them, and the two agree on every other
+  // value measured (totals and page-1 ids), including a nonexistent one, which
+  // still returns 0.
   if (input.recordSubdivision && input.recordCountry) {
     add(
-      "q.recordSubcountry",
+      "f.recordSubcountry",
       `${input.recordCountry},${input.recordSubdivision}`
     );
   }
@@ -861,6 +873,8 @@ export function mapEntry(
   const batchNumber = extractBatchNumber(rawGedcomx);
   if (batchNumber) result.batchNumber = batchNumber;
 
+  if (display?.role) result.role = display.role;
+
   // Resolved HERE, before the staged slim block deletes `result.gedcomx`, so the
   // finding survives into both the inline response and the staged sidecar
   // (#1324). Resolving it downstream of the slim would be resolving against
@@ -876,45 +890,9 @@ export function mapEntry(
   return result;
 }
 
-/**
- * One FamilySearch search fetch with a per-attempt timeout, shaped for retry by
- * `withRetry` (#1316). The retryable-vs-terminal decision is made by throw-vs-return,
- * so `withRetry`'s "retry every thrown error" contract is exactly right and needs no
- * predicate:
- *   - THROW on transient states — 429, 5xx, and any `fetch` rejection (network error
- *     or the AbortSignal.timeout firing) — so `withRetry` retries them.
- *   - RETURN the response for 2xx and for permanent 4xx (400/401/403/404), so the
- *     caller's `!response.ok` block handles them once, without retrying.
- * `fetchWithTimeout` creates a fresh `AbortSignal.timeout` on every call, i.e. per
- * attempt, because `withRetry` invokes this function anew each time (an aborted
- * signal can't be reused).
- */
-async function fetchSearchWithRetry(
-  url: string,
-  token: string
-): Promise<Response> {
-  const response = await fetchWithTimeout(
-    url,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-        "Accept-Language": "en",
-        "User-Agent": BROWSER_USER_AGENT,
-      },
-    },
-    SEARCH_TIMEOUT_MS
-  );
-  if (response.status === 429 || response.status >= 500) {
-    throw new Error(
-      `FamilySearch search API error: ${response.status} ${response.statusText}`
-    );
-  }
-  return response;
-}
-
 export async function recordSearchTool(
-  input: RecordSearchInput
+  input: RecordSearchInput,
+  principal: Principal
 ): Promise<RecordSearchToolResponse> {
   validateInput(input);
 
@@ -924,27 +902,29 @@ export async function recordSearchTool(
   }
   const paired = applyAltNameAutoPair(normalizedInput);
 
-  const token = await getValidToken();
   const url = buildSearchUrl(paired);
 
-  // #1316: a timed-out or transiently-failed search must surface as an explicit,
-  // distinguishable error the agent reacts to — never as a short/empty result set
-  // that reads like an exhaustive search. A bare fetch had no timeout (a slow FS
-  // connection hung the turn) and no retry (one blip was fatal). fetchSearchWithRetry
-  // adds a per-attempt timeout and THROWS on transient states (429/5xx, network,
-  // timeout) so withRetry retries them; permanent 4xx (400/401/403) are RETURNED
-  // and handled unchanged by the `!response.ok` block below (retrying them is
-  // pointless). getValidToken() stays outside the retry so an auth failure surfaces
-  // immediately without re-authenticating per attempt.
+  // #1316 / #2054: fsFetch wraps fetchWithRetry with automatic retry
+  // of transient failures (429/5xx, network errors, timeouts) and handles
+  // Authorization internally. On a 401 under LOCAL it re-reads tokens.json once.
   let response: Response;
   try {
-    response = await withRetry(() => fetchSearchWithRetry(url, token), {
-      attempts: 3,
-    });
+    response = await fsFetch(
+      principal,
+      url,
+      {
+        headers: {
+          Accept: "application/json",
+          "Accept-Language": "en",
+          "User-Agent": BROWSER_USER_AGENT,
+        },
+      },
+      SEARCH_TIMEOUT_MS,
+    );
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `FamilySearch record search did not complete after 3 attempts ` +
+      `FamilySearch record search did not complete after retries ` +
         `(network timeout or transient error): ${detail}. This is a transient ` +
         `failure, NOT an empty result — coverage is unknown.`
     );
@@ -976,9 +956,19 @@ export async function recordSearchTool(
         `FamilySearch search rejected the query (400 ${response.statusText}).`
       );
     }
-    // Only NON-retryable non-OK statuses reach here (e.g. 404). 429/5xx are
-    // intercepted and thrown inside fetchSearchWithRetry, so they are retried
-    // and, if still failing, surface via the terminal error above — never here.
+    if (response.status === 429) {
+      throw new Error(
+        "FamilySearch rate limit reached and did not clear within the retry budget. " +
+          "Wait a minute and try again.",
+      );
+    }
+    if (response.status >= 500) {
+      throw new Error(
+        `FamilySearch record search did not complete after retries ` +
+          `(FamilySearch search API error: ${response.status} ${response.statusText}). ` +
+          `This is a transient failure, NOT an empty result — coverage is unknown.`
+      );
+    }
     throw new Error(
       `FamilySearch search API error: ${response.status} ${response.statusText}`
     );
@@ -1129,15 +1119,24 @@ export async function recordSearchTool(
   // no partial-failure state.
   if (out.staged && input.subjectId && input.projectPath) {
     try {
-      out.ranked = await rankSearchMatches({
-        projectPath: input.projectPath,
-        stagedResultsRef: out.staged.resultsRef,
-        subjectId: input.subjectId,
-        checkAttachments: true,
-      });
+      out.ranked = await rankSearchMatches(
+        {
+          projectPath: input.projectPath,
+          stagedResultsRef: out.staged.resultsRef,
+          subjectId: input.subjectId,
+          checkAttachments: true,
+        },
+        principal,
+      );
     } catch (error) {
       out.rankingError = error instanceof Error ? error.message : String(error);
     }
+    // Annotate the rows with the ranking and return them best first. One row
+    // list, never two (#1212 ruling). Outside the try/catch because a failure
+    // to annotate is not a ranking failure and must not be reported as one —
+    // and `out.ranked` is simply never assigned when ranking threw, so this
+    // no-ops there regardless of where it sits.
+    annotateResultsWithRanking(out);
   }
 
   // A nil marriage search is a prompt, not a finding. Same reasoning as the
@@ -1153,7 +1152,7 @@ export async function recordSearchTool(
   // Fires on a search that did not find the subject here — either literally no
   // hits, or hits that ranking judged to hold no match (`subjectResolvable`
   // false). The ranker sets that in TWO branches — a scoreable subject against a
-  // pool with no match, and a subject too thin to discriminate — and the hint
+  // pool with no match, and a subject with no dated or placed fact — and the hint
   // fires on both deliberately; see the spec's `subjectResolvable` paragraph.
   // Nil-only was too narrow: in one verification run it fired once, at 121 of 180
   // minutes. A search that returned rows but matched nobody is an equally good
@@ -1174,8 +1173,7 @@ export async function recordSearchTool(
     input.marriageYearFrom !== undefined ||
     input.marriageYearTo !== undefined;
 
-  const foundNobody =
-    out.totalMatches === 0 || out.ranked?.subjectResolvable === false;
+  const foundNobody = searchFoundNobody(out);
 
   // The place that was just searched is not always `marriagePlace`. In practice
   // the caller usually scopes a marriage search with `recordCountry` +
@@ -1234,7 +1232,35 @@ export async function recordSearchTool(
     }
   }
 
+  // A nil search on a -datter/-dotter patronymic is a prompt to try the
+  // abbreviated forms the index may hold (issue #3054). The rule — trigger and
+  // content — lives in `surnameVariantHints` so the eval mock can run the same
+  // function. Computed after ranking because `subjectResolvable` is part of the
+  // trigger, and after staging so it never reaches the sidecar: it is advice, not
+  // what the search returned. Serialized BEFORE `results`, which is what a size
+  // bound drops first — that matters on the rows-present `subjectResolvable:
+  // false` branch.
+  const surnameHints = surnameVariantHints(input, out);
+  if (surnameHints) {
+    return withKeyBeforeResults(out, "surnameVariantHints", surnameHints);
+  }
+
   return out;
+}
+
+/** `out` with `key` inserted immediately before `results`, every other key in
+ *  its original order. */
+function withKeyBeforeResults<K extends keyof RecordSearchToolResponse>(
+  out: RecordSearchToolResponse,
+  key: K,
+  value: RecordSearchToolResponse[K],
+): RecordSearchToolResponse {
+  const reordered: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(out)) {
+    if (k === "results") reordered[key] = value;
+    reordered[k] = v;
+  }
+  return reordered as unknown as RecordSearchToolResponse;
 }
 
 export const recordSearchToolSchema = {
@@ -1255,7 +1281,31 @@ export const recordSearchToolSchema = {
     "value drops surname-empty records outright. Setting a flag " +
     "excludes what its own field admits, so it only ever narrows and can drop " +
     "the target. Years and places differ — see `birthYearExact` and " +
-    "`birthPlaceExact`.",
+    "`birthPlaceExact`. " +
+    "EVENT FAMILIES: a `birth*` parameter matches birth, christening, baptism " +
+    "and naming; `death*` matches death, burial and cremation; `marriage*` " +
+    "matches marriage, engagement, licence and banns; `residence*` matches " +
+    "census, directory, tax and land residence; `any*` matches every event " +
+    "type. A typed date+place pair must match the SAME event, so reach for " +
+    "`anyYearFrom`/`anyYearTo` with `anyPlace` when the event type is " +
+    "uncertain rather than guessing a family. " +
+    "DATES: only the YEAR is matched, and this tool takes years only — every " +
+    "`*YearFrom` must be sent with its `*YearTo`, and a range is INCLUSIVE on " +
+    "both ends. An unqualified range also matches by ESTIMATE OVERLAP: a record " +
+    "carrying no date of its own gets an estimated range from the dated people " +
+    "on it, and comes back whenever that overlaps yours. To exclude those, send " +
+    "the range AND the matching `*YearExact` — it is a boolean that narrows a " +
+    "range to indexed dates inside it, not a year of its own, so to pin a single " +
+    "year send `*YearFrom` = `*YearTo` together with `*YearExact: true`. " +
+    "PLACES: pass the full hierarchical standardized string when you have one " +
+    "(`'Lehi, Utah County, Utah, United States'`); a non-standardized string " +
+    "falls back to brittle string matching. Unqualified, a place field also " +
+    "matches places ABOVE the one given, and measurably far wider than the " +
+    "nominal three jurisdiction levels: a county scope barely discriminates at " +
+    "all, and the WRONG county returned a total within about a tenth of a " +
+    "percent of the right one. Read a county-level total as saying almost " +
+    "nothing about whether the records are in that county. Whether an `*Exact` " +
+    "place still descends to CHILD localities is NOT established.",
   // The `*Exact` descriptions below state only what is specific to each
   // parameter; the rule they share lives in the tool-level description above and
   // is deliberately not repeated per parameter. They cover the effect on the
@@ -1285,7 +1335,7 @@ export const recordSearchToolSchema = {
   inputSchema: {
     type: "object",
     properties: {
-      surname: { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname`, `recordCountry` or `batchNumber` must be supplied." },
+      surname: { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname`, `recordCountry` or `batchNumber` must be supplied. Send a particle surname as written, spaces and all (`van der Linde`). Quotes are stripped server-side, and spacing, case and the particle itself carry no signal — `vanderlinde`, `Van Der Linde` and `Linde` all return the identical set. The one form that differs is the INVERTED `Linde, van der` (how Dutch and Belgian indexes often alphabetise): send that only if the record itself is written that way." },
       givenName: { type: "string", description: "Given (first) name of the searched person." },
       surnameAlt: { type: "string", description: "Alternate family name (e.g., a woman's maiden name when also searching by married surname). Triggers a UNION search — results match either `surname` OR `surnameAlt`. The tool auto-fills `givenNameAlt = givenName` if only this side is supplied." },
       givenNameAlt: { type: "string", description: "Alternate given name. UNION with `givenName`. The tool auto-fills `surnameAlt = surname` if only this side is supplied." },
@@ -1348,13 +1398,13 @@ export const recordSearchToolSchema = {
       batchNumber: { type: "string", description: "IGI batch number (e.g., `\"M01048-5\"`), the extraction batch behind a legacy parish register. OBTAIN ONE from the `batchNumber` field on a previous result (search the collection by name, then scan the hits for one that carries it — most records carry none, and a hit without one says nothing about the collection); `ranked[]` stubs carry it too. A very strong filter and the canonical way to enumerate one parish: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It anchors by itself — adding `recordCountry` or `recordSubdivision` is REJECTED by the tool, because a country that does not match the batch silently returns 0 (a batch number carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored. Paging stops at `offset + count = 4999`, so a batch bigger than that cannot be walked end to end — partition it with `surname`, not by paging deeper. Shape varies: a batch may lead with a digit or with a letter, and may carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5`, and the all-numeric `8317102`. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive." },
       imageGroupNumber: { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `volume_search` tool first to find the image group number for a place and date range." },
       recordCountry: { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname`, `recordCountry` or `batchNumber` must be supplied. Combining it (or `recordSubdivision`) with `batchNumber` is REJECTED (the batch anchors on its own): a country that does not match the batch silently returns 0, which is indistinguishable from a wrong batch." },
-      recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
+      recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it. Both this and `recordCountry` are ALREADY STRICT — a nonexistent country or subdivision returns 0 rather than being ignored, so no `*Exact` qualifier exists for either and none is needed. Reading a nil: a nil at one place level does NOT settle another. Whether dropping to a STATE-level scope rescues a search that nils at COUNTY level is a separate, unfinished place investigation, so re-run at the wider level rather than concluding the record is absent." },
       recordType: { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
       maritalStatus: { type: "string", enum: ["Married", "Single", "Divorced", "Widowed"], description: "Marital status of the searched person. Case-sensitive — must be supplied with the exact capitalization shown. Many records leave this field unfilled, so filtering on it excludes records where the field is blank." },
-      isPrincipal: { type: "boolean", description: "Filter by the searched person's role in the record. `true` returns only records where the matched person is the principal subject (e.g., the deceased on a death certificate, the bride/groom on a marriage). `false` returns only records where the matched person is mentioned but is not the principal (e.g., as a parent, witness, sibling). Pick by intent, do not default to omitting. Records ABOUT a person (their own birth/marriage/death) take `true` — a heavy filter, which is the point: it drops incidental mentions. Finding a relative THROUGH a person you already know is `false` — the response does not mark who the principal is, so `record_read` a hit and read its `persons`/`relationships` for the relative. It matches on the known person's own name, where `fatherGivenName`/`spouseGivenName` match on the target's indexed relative fields. Omit to return both." },
+      isPrincipal: { type: "boolean", description: "Filter by the searched person's role in the record. `true` returns only records where the matched person is the principal subject (e.g., the deceased on a death certificate, the bride/groom on a marriage). `false` returns only records where the matched person is mentioned but is not the principal (e.g., as a parent, witness, sibling). Pick by intent, do not default to omitting. Records ABOUT a person (their own birth/marriage/death) take `true` — a heavy filter, which is the point: it drops incidental mentions. Finding a relative THROUGH a person you already know is `false`. Each result now carries a `role` field (\"Principal\", \"Father\", \"Mother\", \"Spouse\", \"Other\") naming the matched person's relationship to the record — read it before inferring the role from the relationship graph. `record_read` carries `principal` (boolean) but not the role string; for the string, use the search result's `role`. Omit to return both." },
 
       subjectId: { type: "string", description: "A `persons[].id` from the project's tree.gedcomx.json (e.g. `\"I1\"`). Supply it together with `projectPath` and the tool ALSO ranks the results against that subject with FamilySearch's own matcher and returns them under `ranked` — match-scored, attachment-checked, best first. This replaces a separate `rank_search_matches` call. Supply it for any search where you know which tree person you are looking for, which is nearly all of them. Ranking never fails the search: on a ranking error you still get `results`, plus `rankingError`. Omit it only when the search is not about a specific tree person (a broad survey, or a person not yet in the tree)." },
-      count: { type: "number", description: "Number of results per page. Max 100. Default 50 when `subjectId` is supplied — ranking cuts a deep pool back host-side, so fetching one is worth it — and 20 otherwise, since an unranked deep pool is just more stubs for you to read. Override only for a deliberate reason." },
+      count: { type: "number", description: "Number of results per page. Max 100. Default 50 when `subjectId` is supplied — every row comes back scored and ordered, so fetching a deep pool is worth it — and 20 otherwise, since an unranked deep pool is just more stubs for you to read. Override only for a deliberate reason." },
       offset: { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." },
 
       projectPath: { type: "string", description: "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. Stubs DO keep `relativeTerms` when you searched on a relative's name: it reports, per result, whether that relative is actually named on the record (`present`, with their name), definitely not on it (`absent`), or undetermined (`unknown`). Check it before writing that a record confirms a relationship — `absent` means the record is merely consistent with that relative, not evidence for them. The full-fidelity rows live in the staged file, so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Only omit `projectPath` for a throwaway exploratory search you are certain you will not log: results come back inline at full fidelity but nothing reaches disk, and logging such a search anyway leaves a log entry whose raw response is gone for good (`research_log_append` warns when that happens)." },

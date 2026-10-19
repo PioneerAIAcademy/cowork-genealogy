@@ -21,7 +21,12 @@ import type {
 } from "../types/gedcomx.js";
 import { stdDate } from "./date-standardize.js";
 import { toArk, arkToBareId } from "./ark.js";
-import { resolveStandardPlace, mapWithConcurrency } from "./place-resolver.js";
+import {
+  resolveStandardPlace,
+  mapWithConcurrency,
+  countryConsistency,
+  isNonPlacePhrase,
+} from "./place-resolver.js";
 
 const URI_PREFIX = "http://gedcomx.org/";
 const CITATION_DETAIL = "http://gedcomx.org/CitationDetail";
@@ -63,33 +68,61 @@ function stripUri(uri: string | undefined): string | undefined {
   return uri.startsWith(URI_PREFIX) ? uri.slice(URI_PREFIX.length) : uri;
 }
 
-// Reduce a fact-type string to a clean short name:
+// Reduce a fact-type string to a clean short name the tree accepts:
 //   "http://gedcomx.org/Birth"                  → "Birth"
 //   "data:,Baptism"                             → "Baptism"
 //   "data:,Military%20Draft%20Registration"     → "Military Draft Registration"
+//   "data:,Military+Draft+Registration"         → "Military Draft Registration"
+//   "data:,will"                                → "Will"
+//   "data:,%22Presented+to+Society%22"          → "Presented to Society"
+//   "data:,100%25+english"                      → "Custom 100% english"
 //   "http://familysearch.org/v1/Foo"            → "Foo"
 //   "Foo" (already short)                       → "Foo"
 // Strips known URI prefixes, takes the trailing path segment otherwise,
-// then URL-decodes the result. Returns the input unchanged if decoding
-// throws on a malformed percent sequence.
+// then URL-decodes the result, keeping it undecoded if decoding throws on a
+// malformed percent sequence, and tidies it with `treeFactType`.
 function stripFactTypeUri(uri: string | undefined): string | undefined {
   if (typeof uri !== "string") return undefined;
   let stripped: string;
   if (uri.startsWith(URI_PREFIX)) {
     stripped = uri.slice(URI_PREFIX.length);
   } else if (uri.startsWith("data:,")) {
-    stripped = uri.slice("data:,".length);
+    // A space arrives as `+` as often as `%20`: one tree held both
+    // "Previous+Residence" and "Previous%20Residence". A literal plus is `%2B`.
+    stripped = uri.slice("data:,".length).replace(/\+/g, " ");
   } else if (uri.includes("://")) {
     const lastSlash = uri.lastIndexOf("/");
     stripped = lastSlash >= 0 ? uri.slice(lastSlash + 1) : uri;
   } else {
     stripped = uri;
   }
+  let decoded: string;
   try {
-    return decodeURIComponent(stripped);
+    decoded = decodeURIComponent(stripped);
   } catch {
-    return stripped;
+    decoded = stripped;
   }
+  return treeFactType(decoded);
+}
+
+// A `data:,` type is a label a FamilySearch user typed for a custom event, and
+// the tree requires every fact type to start with an uppercase letter
+// (`checkTreeFact` in validation/validator.ts). Labels such as "will",
+// "scholastic-achievement" or a quoted "Presented to Society" do not, and one
+// such fact on any relative made `project_create` refuse the whole starting
+// tree (KNDX-MKG, 2026-10-09). So: trim, drop one pair of wrapping quotes,
+// raise a lowercase first letter, and keep a label that still cannot start
+// with an uppercase letter ("100% english") whole behind a "Custom " prefix
+// rather than lose the fact. No colon after "Custom": `addUri` reads a leading
+// `word:` as a URI scheme, so "Custom: ..." would not round-trip under
+// `http://gedcomx.org/` the way every other custom type does.
+function treeFactType(label: string): string {
+  let out = label.trim();
+  const quoted = /^["'“‘](.*)["'”’]$/s.exec(out);
+  if (quoted) out = quoted[1].trim();
+  if (/^[a-z]/.test(out)) out = out[0].toUpperCase() + out.slice(1);
+  if (/^[A-Z]/.test(out)) return out;
+  return out === "" ? "Custom" : `Custom ${out}`;
 }
 
 function addUri(value: string | undefined): string | undefined {
@@ -152,6 +185,8 @@ function simplifyPerson(person: GedcomXPerson): SimplifiedPerson {
   if (Array.isArray(persistent) && typeof persistent[0] === "string" && persistent[0].length > 0) {
     out.ark = toArk(persistent[0]);
   }
+
+  if (person.principal === true) out.principal = true;
 
   const gender = simplifyGender(person.gender);
   if (gender !== undefined) out.gender = gender;
@@ -294,8 +329,10 @@ function simplifyFact(fact: GedcomXFact): SimplifiedFact {
     // straight from the raw GedcomX `normalized` values when present — pure, no
     // network. Free-text places that lack a normalized value are filled later
     // by the document-level standardization pass (toSimplifiedStandardized).
+    // A non-place phrase ("Same House") keeps no standard form, even one
+    // FamilySearch supplies.
     const standard = pickNormalizedPlace(fact.place.normalized);
-    if (standard) out.standard_place = standard;
+    if (standard && !isNonPlacePhrase(out.place ?? "")) out.standard_place = standard;
   }
 
   // Preserve the fact-level value (the qualifier carrying the meaning of
@@ -372,7 +409,15 @@ function simplifySourceRef(
   ref: GedcomXSourceReference,
 ): SimplifiedSourceReference {
   const out: SimplifiedSourceReference = {};
-  const refId = stripFragment(ref.description);
+  // `descriptionId` first, `description` second. They agree wherever both appear,
+  // but `description` is a full URL on a RELATIVE's ref -- a URL never equals the
+  // bare id a fetched description carries, so `keepResolvableSourceRefs`
+  // (exact string match) would drop every relative source however many we fetch.
+  // Preferring the id upstream already sends is what makes issue #1689 Half 3
+  // work at all, and it cannot drift from the id it names the way parsing the
+  // URL's last segment could. Subject refs are `#<id>` fragments and are
+  // unaffected -- `stripFragment` already produced the same bare id for them.
+  const refId = ref.descriptionId ?? stripFragment(ref.description);
   if (refId !== undefined) out.ref = refId;
 
   const qualifiers = Array.isArray(ref.qualifiers) ? ref.qualifiers : [];
@@ -394,11 +439,18 @@ function simplifySourceRef(
   return out;
 }
 
-function simplifySourceDescription(
+/** Exported for `person-read`, which converts the descriptions a relative's own
+ *  `/sources` read returns before shaping them. Same GedcomX shape as the tree body's,
+ *  so converting them any other way would be a parallel copy of this that drifts. */
+export function simplifySourceDescription(
   desc: GedcomXSourceDescription,
 ): SimplifiedSourceDescription {
   const out: SimplifiedSourceDescription = {};
   if (desc.id !== undefined) out.id = desc.id;
+
+  if (typeof desc.resourceType === "string") {
+    out.resource_type = desc.resourceType.replace(/.*\//, "");
+  }
 
   if (Array.isArray(desc.titles) && desc.titles.length > 0) {
     out.title = desc.titles[0].value;
@@ -409,6 +461,35 @@ function simplifySourceDescription(
   }
 
   if (typeof desc.about === "string") out.url = desc.about;
+
+  if (Array.isArray(desc.coverage) && desc.coverage.length > 0) {
+    const cov = desc.coverage[0];
+    const simplified: SimplifiedSourceDescription["coverage"] = {};
+    let hasCoverage = false;
+
+    if (cov.spatial?.description) {
+      const placeIdMatch = cov.spatial.description.match(/(\d+)$/);
+      if (placeIdMatch) {
+        simplified.place_rep_id = placeIdMatch[1];
+        hasCoverage = true;
+      }
+    }
+
+    if (cov.temporal?.original) {
+      simplified.date_range = cov.temporal.original;
+      hasCoverage = true;
+    } else if (cov.temporal?.formal) {
+      simplified.date_range = cov.temporal.formal;
+      hasCoverage = true;
+    }
+
+    if (cov.recordType) {
+      simplified.record_type = cov.recordType.replace(/.*\//, "");
+      hasCoverage = true;
+    }
+
+    if (hasCoverage) out.coverage = simplified;
+  }
 
   return out;
 }
@@ -711,7 +792,28 @@ export async function standardizePlaces(
         standard = null; // resolver is best-effort; never fail the conversion
       }
       if (standard) {
-        for (const f of group.facts) f.standard_place = standard;
+        for (const f of group.facts) {
+          // Country-contradiction guard, same check the write paths run
+          // (research_append errors, tree_edit clears + warns). This is a READ
+          // path with no warning channel back to the model, so the only option
+          // is to omit the value — which matches record_read's rule: leaving
+          // standard_place unset is correct, never fabricate a wrong one.
+          //
+          // Until this existed, the four highest-volume standardisation
+          // consumers — record_search, person_read, person_search,
+          // person_ancestors — wrote every resolved place unchecked, while both
+          // write paths checked. Measured firing rate is low (contradictions are
+          // 1.3% of distinct corpus pairs, 0.4% of occurrences, and the ones on
+          // record predate the phrase-quote fix), so this is a guard against a
+          // class of failure rather than a fix for a live one.
+          if (
+            f.place &&
+            countryConsistency(f.place, standard) === "contradiction"
+          ) {
+            continue;
+          }
+          f.standard_place = standard;
+        }
       }
     },
   );

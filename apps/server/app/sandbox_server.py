@@ -13,7 +13,7 @@ Env (injected at sandbox create / by LocalProvider):
   WS_TOKEN_SECRET  per-sandbox HMAC secret; clients present a signed token at
                    handshake (?token=<exp>.<hmac>). Empty disables auth (dev).
   PROJECT_DIR      project dir (default /project)
-  AGENT_MODE, MODEL, ANTHROPIC_API_KEY, HOME, ENGINE_MCP_BUILD, ENGINE_PLUGIN_DIR
+  AGENT_MODE, MODEL, HOME, ENGINE_MCP_BUILD, ENGINE_PLUGIN_DIR
                    passed straight through to agent_runner (this process's env).
 """
 from __future__ import annotations
@@ -31,17 +31,20 @@ from pathlib import Path
 
 from websockets.asyncio.server import serve
 
+from .agent.continue_policy import env_float, env_int
 from .agent.errors import classify, operator_log
 from .agent.real_agent import TRANSIENT_KINDS
 
-PORT = int(os.environ.get("WS_PORT", "8080"))
+# Guarded: read at module scope inside the sandbox, so a malformed value would
+# raise before the WS server binds and leave the browser with nothing to connect to.
+PORT = env_int("WS_PORT", 8080)
 SECRET = os.environ.get("WS_TOKEN_SECRET", "")
 PROJECT_DIR = Path(os.environ.get("PROJECT_DIR", "/project"))
 _WATCH_INTERVAL = 0.7
 _HISTORY_MAX = 1000  # transcript events kept for replay-on-reconnect
 # Seconds between keepalive frames (see _heartbeat_loop). Env-overridable so the
 # test can assert the behaviour without a 15s sleep.
-_HEARTBEAT_INTERVAL = float(os.environ.get("WS_HEARTBEAT_INTERVAL", "15"))
+_HEARTBEAT_INTERVAL = env_float("WS_HEARTBEAT_INTERVAL", 15.0)
 # A token-locked client reconnects on a tight loop (and re-arms on every tab
 # focus), so a naive "one line per rejection" fills the 20 KB /logs window with
 # identical lines and evicts the agent activity timeline — which is exactly what
@@ -90,6 +93,11 @@ class Hub:
         # connection so a page reload rebuilds the chat (the agent's own memory
         # persists in the sandbox; this restores the *UI* history). Capped.
         self._history: list[dict] = []
+        # Replay-dedupe cursor (#3387): every frame that enters _history is
+        # stamped via _stamp before it is broadcast, so the client can drop a
+        # replayed copy it has already folded.
+        self._next_seq = 1
+        self._epoch = os.urandom(8).hex()
         # Whether a turn is running right now. The client's "working" state is
         # otherwise purely local to the browser that hit Send, so a reload mid-turn
         # loses it and the UI looks idle while the agent is still working (the
@@ -101,7 +109,31 @@ class Hub:
         self._rej_count = 0
         self._rej_last = 0.0
 
+    def _stamp(self, msg: dict) -> dict:
+        """Only called by _record, which runs BEFORE the broadcast at every
+        call site — so the wire copy of a recorded frame already carries its
+        seq, and the client can drop the replayed copy it has already folded
+        (#3387). Stamping inside _record (rather than beside each call) makes
+        the invariant structural: a future _record call site cannot produce an
+        unstamped history frame, which the client would re-fold on every
+        reconnect. Record-then-broadcast with no await between also keeps
+        _history order identical to seq order; stamping before an awaited
+        broadcast let a concurrent user_msg record jump the queue, and a
+        replay out of seq order makes the client's cursor drop real frames.
+
+        The epoch rides with every seq because LocalProvider.ensure_server
+        starts a fresh sandbox_server when the old one has died, and a fresh
+        process counts from 1 again — a still-mounted client holding a high
+        lastSeq would silently drop every new frame. A changed epoch tells it
+        to reset its cursor to 0 instead.
+        """
+        msg["seq"] = self._next_seq
+        self._next_seq += 1
+        msg["epoch"] = self._epoch
+        return msg
+
     def _record(self, msg: dict) -> None:
+        self._stamp(msg)
         self._history.append(msg)
         if len(self._history) > _HISTORY_MAX:
             del self._history[: len(self._history) - _HISTORY_MAX]
@@ -206,6 +238,8 @@ class Hub:
                     detail = f"{ev.get('agent', '')}: {str(ev.get('summary', ev.get('status', '')))[:140]}".strip()
                 elif kind == "error":
                     detail = str(ev.get("text", ""))[:200]
+                elif kind in ("auto_continue", "auto_continue_paused"):
+                    detail = f"step {ev.get('step', '?')}/{ev.get('max_steps', '?')}"
                 else:
                     detail = ""
                 # A log line must never kill the pump: this coroutine relays
@@ -217,14 +251,36 @@ class Hub:
                     print(f"{_ts()} [agent] {kind} {detail}".rstrip(), flush=True)
                 except UnicodeEncodeError:
                     pass
+            if kind == "turn_start":
+                # A turn is starting. Hold the busy gate across the backlog:
+                # `turn_done` fires once per TURN, not once per backlog, so
+                # clearing on it left the UI idle while messages were still
+                # waiting - and the client's busy gate is what is supposed to
+                # stop a backlog forming.
+                self._turn_active = True
+                # ANNOUNCE IT, do not just set it. `_turn_active` is sent to a
+                # client only at CONNECT time, so an already-connected client -
+                # precisely the one that built the backlog - never learns the
+                # gate was re-armed. It receives the raw `turn_start` frame, and
+                # ChatPane deliberately ignores that kind: it sets busy in
+                # send() and on a `turn_active` status, and clears it on
+                # `turn_done`. (It ignores it explicitly, not by omission --
+                # falling through appended an empty assistant bubble.)
+                # So without this broadcast the first `turn_done` drops that UI
+                # to idle for the whole backlog, which is the bug the gate
+                # exists to prevent. Asserting `_turn_active is True` does not
+                # catch it: the flag is true and the UI is still idle.
+                await self.broadcast({"type": "status", "state": "turn_active"})
             if kind == "turn_done":
                 self._turn_active = False
-            await self.broadcast(msg)
             # Deltas and task_progress are live-only. Recording them would evict
             # the real conversation from the capped replay buffer within a single
             # streamed turn, so a reconnect would rebuild an empty chat.
+            # Record (which stamps seq+epoch) before broadcasting, so the live
+            # copy carries the same seq as the replayed copy — see _stamp.
             if not transient:
                 self._record(msg)
+            await self.broadcast(msg)
         code = proc.poll()
         print(f"{_ts()} [ws] agent_runner exited (code={code})", flush=True)
         # The live agent died — surface it + unstick the UI instead of hanging on
@@ -244,7 +300,17 @@ class Hub:
                 "text": "The agent stopped unexpectedly. Nothing you did caused "
                         "this — send another message to restart it, and report "
                         "it if it keeps happening."}})
-            await self.broadcast({"type": "agent_event", "event": {"kind": "turn_done"}})
+            # _record as well as broadcast, or history keeps a `turn_start`
+            # whose `turn_done` exists nowhere. `turn_start` is not in
+            # TRANSIENT_KINDS, so it IS replayed on every reconnect, and
+            # `_history` is never cleared -- only trimmed at _HISTORY_MAX, so
+            # the orphan is replayed to every later client until 1000 events
+            # push the frame out. `broadcast` does not touch `_record`,
+            # and this is the one turn_done that does not come through the
+            # runner's recorded path (runner.py:73 is the sole other source).
+            _turn_done = {"type": "agent_event", "event": {"kind": "turn_done"}}
+            self._record(_turn_done)
+            await self.broadcast(_turn_done)
             await self.broadcast({"type": "status", "state": "chat_error",
                                   "message": "the agent stopped unexpectedly"})
 
@@ -260,7 +326,7 @@ class Hub:
         """Emit a frame every _HEARTBEAT_INTERVAL so an idle-looking socket stays
         open through the edge proxy the browser reaches this server through.
 
-        A turn can be silent for minutes — a record-extraction subagent runs long
+        A turn can be silent for minutes — an extraction subagent runs long
         and, because `include_partial_messages` is off, its blocks only reach the
         pump when each assistant message completes. Protocol-level pings are not
         reliably counted as activity by the proxy, so without an application frame
@@ -306,7 +372,30 @@ class Hub:
             except OSError:
                 pass
 
+    @staticmethod
+    def _is_internal(rel: str) -> bool:
+        """Whether a project-relative ref is engine bookkeeping the viewer must
+        never be told about.
+
+        The watch loop walks the project RECURSIVELY (`rglob`), while the
+        hydration snapshot lists `results/` one level deep. So anything the
+        engine keeps in a dot-directory under `results/` is invisible at
+        hydration but broadcast on every write, which reaches the viewer as a
+        `sidecar_updated` naming a log id that does not exist —
+        `.scores/<sha256>`.
+
+        Two such directories exist. `results/.staging/` has leaked this way
+        since staging shipped; it went unnoticed because a staged file is
+        consumed or pruned within 24h. `results/.scores/` (the `same_person`
+        attestation, issue #1731) persists and accumulates one entry per scored
+        record, so the same leak would be permanent. Keyed on a dot SEGMENT
+        rather than either name, so the next one is covered when it lands.
+        """
+        return any(part.startswith(".") for part in rel.replace("\\", "/").split("/"))
+
     async def _emit_change(self, rel: str) -> None:
+        if self._is_internal(rel):
+            return
         if rel == "research.json":
             d = _read_json(PROJECT_DIR / rel)
             if d is not None:
@@ -354,14 +443,33 @@ class Hub:
                 print(f"[ws] rejected connection: bad/expired token{extra}", flush=True)
             await ws.close(4401, "unauthorized")
             return
-        self._clients.add(ws)
-        print(f"{_ts()} [ws] client connected ({len(self._clients)} total)", flush=True)
+        print(f"{_ts()} [ws] client connected ({len(self._clients) + 1} total)", flush=True)
         try:
-            await self.ensure_started()
             await self.send_snapshot(ws)
             # Replay the transcript so a (re)connect rebuilds the chat history.
-            for item in list(self._history):
-                await self.send_one(ws, item)
+            # The socket joins the live fan-out only AFTER the replay: it is in
+            # neither _clients nor the loop below's past when a live stamped
+            # frame goes out, so a high-seq live frame cannot reach the client
+            # ahead of the replay and set its lastSeq cursor past every
+            # replayed frame — which would drop the whole rebuilt transcript.
+            # The loop re-reads _history until no new frames were recorded
+            # while the previous pass was being sent (seq-keyed, so a trim of
+            # the capped buffer mid-replay cannot shift what "new" means), and
+            # there is no await between the final check and _clients.add, so
+            # no frame can fall between replay and live fan-out. A frame
+            # delivered by both (recorded during the last pass, broadcast
+            # after the add) arrives twice with the same seq; the client
+            # cursor drops the second copy.
+            replayed_upto = 0
+            while True:
+                pending = [m for m in self._history if m["seq"] > replayed_upto]
+                if not pending:
+                    break
+                for item in pending:
+                    await self.send_one(ws, item)
+                replayed_upto = pending[-1]["seq"]
+            self._clients.add(ws)
+            await self.ensure_started()
             # Tell THIS client it can chat — every connection, not just the one
             # that spawned the agent. Without this a reconnect after pause/resume
             # (agent already alive → ensure_started returns early) would sit on
@@ -378,6 +486,9 @@ class Hub:
                 except json.JSONDecodeError:
                     continue
                 if msg.get("type") == "user_msg":
+                    # Recorded (which stamps it) but never broadcast — the
+                    # stamp lets its replayed copy be deduped like any other
+                    # history frame.
                     self._record({"type": "user_msg", "text": msg.get("text", "")})
                     self._turn_active = True  # a turn is about to run (see connect note)
                     await self.send_input(raw)
@@ -391,6 +502,12 @@ class Hub:
 
 
 async def main() -> None:
+    # The house pattern (`eval/harness/e2e/author.py`). A Windows console defaults
+    # to cp1252 and dies on the arrows and box glyphs this module prints; the team
+    # it is written for is on Windows. Guarded by test_encoding_lint.py.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     hub = Hub()
     async with serve(hub.handle, "0.0.0.0", PORT):
         print(f"{_ts()} sandbox_server listening on :{PORT}", flush=True)

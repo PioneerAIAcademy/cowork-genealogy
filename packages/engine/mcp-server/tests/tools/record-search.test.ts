@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -133,12 +134,12 @@ describe("recordSearchTool happy path", () => {
       makeOkResponse({ results: 432, index: 0, entries: [lincolnEntry()] })
     );
 
-    const result = await recordSearchTool({ surname: "Lincoln", givenName: "Abraham" });
+    const result = await recordSearchTool({ surname: "Lincoln", givenName: "Abraham" }, LOCAL);
 
     expect(result.totalMatches).toBe(432);
     expect(result.returned).toBe(1);
-    expect(result.results[0].recordId).toBe("ark:/61903/1:1:QPRC-WPBZ");
-    expect(result.results[0].personName).toBe("Abraham Lincoln");
+    expect(result.results![0].recordId).toBe("ark:/61903/1:1:QPRC-WPBZ");
+    expect(result.results![0].personName).toBe("Abraham Lincoln");
     expect(result.paginationCappedAt).toBe(4999);
   });
 
@@ -148,7 +149,7 @@ describe("recordSearchTool happy path", () => {
     const result = await recordSearchTool({
       recordCountry: "United States",
       givenName: "John",
-    });
+    }, LOCAL);
     expect(result.results).toEqual([]);
     const url = mockFetch.mock.calls[0][0];
     expect(url).toContain("q.recordCountry=United%20States");
@@ -160,7 +161,7 @@ describe("recordSearchTool happy path", () => {
       givenName: "Mary",
       surname: "Lincoln",
       surnameAlt: "Todd",
-    });
+    }, LOCAL);
     const url = mockFetch.mock.calls[0][0] as string;
     expect(url).toContain("q.surname.1=Todd");
     expect(url).toContain("q.givenName.1=Mary");
@@ -172,7 +173,7 @@ describe("recordSearchTool happy path", () => {
       givenName: "Mary",
       surname: "Lincoln",
       givenNameAlt: "May",
-    });
+    }, LOCAL);
     const url = mockFetch.mock.calls[0][0] as string;
     expect(url).toContain("q.givenName.1=May");
     expect(url).toContain("q.surname.1=Lincoln");
@@ -182,7 +183,7 @@ describe("recordSearchTool happy path", () => {
 describe("recordSearchTool input validation", () => {
   it("5. throws when no anchor is supplied", async () => {
     await expect(
-      recordSearchTool({ givenName: "John", birthPlace: "Kentucky" })
+      recordSearchTool({ givenName: "John", birthPlace: "Kentucky" }, LOCAL)
     ).rejects.toThrow(/at least one anchor/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -235,22 +236,22 @@ describe("recordSearchTool input validation", () => {
 
   it("6. throws when count > 100 or count < 1", async () => {
     await expect(
-      recordSearchTool({ surname: "Lincoln", count: 200 })
+      recordSearchTool({ surname: "Lincoln", count: 200 }, LOCAL)
     ).rejects.toThrow(/count must be between 1 and 100/);
     await expect(
-      recordSearchTool({ surname: "Lincoln", count: 0 })
+      recordSearchTool({ surname: "Lincoln", count: 0 }, LOCAL)
     ).rejects.toThrow(/count must be between 1 and 100/);
   });
 
   it("7. throws when offset + count > 4999", async () => {
     await expect(
-      recordSearchTool({ surname: "Lincoln", offset: 4998, count: 3 })
+      recordSearchTool({ surname: "Lincoln", offset: 4998, count: 3 }, LOCAL)
     ).rejects.toThrow(/offset \+ count must be <= 4999/);
   });
 
   it("8. throws when YearFrom is supplied without YearTo", async () => {
     await expect(
-      recordSearchTool({ surname: "Lincoln", birthYearFrom: 1809 })
+      recordSearchTool({ surname: "Lincoln", birthYearFrom: 1809 }, LOCAL)
     ).rejects.toThrow(/birthYearFrom and birthYearTo must be provided together/);
   });
 
@@ -260,38 +261,38 @@ describe("recordSearchTool input validation", () => {
         surname: "Lincoln",
         birthYearFrom: 1850,
         birthYearTo: 1849,
-      })
+      }, LOCAL)
     ).rejects.toThrow(/birthYearFrom must be <= birthYearTo/);
   });
 
   it("10. throws when recordSubdivision is supplied without recordCountry", async () => {
     await expect(
-      recordSearchTool({ surname: "Lincoln", recordSubdivision: "Alabama" })
+      recordSearchTool({ surname: "Lincoln", recordSubdivision: "Alabama" }, LOCAL)
     ).rejects.toThrow(/recordSubdivision requires recordCountry/);
   });
 
   it("11. throws on sex outside Male/Female/Unknown", async () => {
     await expect(
-      recordSearchTool({ surname: "Lincoln", sex: "M" })
+      recordSearchTool({ surname: "Lincoln", sex: "M" }, LOCAL)
     ).rejects.toThrow(/sex must be 'Male', 'Female', or 'Unknown'/);
   });
 
   it("11b. accepts case-insensitive sex", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
-    await recordSearchTool({ surname: "Lincoln", sex: "male" });
+    await recordSearchTool({ surname: "Lincoln", sex: "male" }, LOCAL);
     const url = mockFetch.mock.calls[0][0] as string;
     expect(url).toContain("q.sex=Male");
   });
 
   it("12. throws on maritalStatus outside the four allowed values", async () => {
     await expect(
-      recordSearchTool({ surname: "Lincoln", maritalStatus: "married" })
+      recordSearchTool({ surname: "Lincoln", maritalStatus: "married" }, LOCAL)
     ).rejects.toThrow(/maritalStatus must be exactly one of/);
   });
 
   it("13. throws on recordType outside the eight allowed values", async () => {
     await expect(
-      recordSearchTool({ surname: "Lincoln", recordType: "wedding" as never })
+      recordSearchTool({ surname: "Lincoln", recordType: "wedding" as never }, LOCAL)
     ).rejects.toThrow(/recordType must be one of/);
   });
 
@@ -346,6 +347,34 @@ describe("buildSearchUrl param mapping", () => {
     expect(url).toContain("q.birthLikePlace=Kentucky");
   });
 
+  // Issue #2071. A particle surname is passed through VERBATIM, percent-encoded
+  // and unquoted. No unit test passed a surname containing a space before this.
+  //
+  // This pins the STRING THE TOOL BUILDS, which is the only half CI can see
+  // (spec row 20a). That FamilySearch honours it is a separate, live claim, and
+  // it is measured in section K of dev/probe-search-qualifiers.ts, not here.
+  //
+  // The probe is also why this test asserts the ABSENCE of quotes rather than
+  // adding them: `name-search-mechanics.md` prescribes literal quotes, and the
+  // server strips them before matching (bare and unbalanced-quote queries both
+  // return 900,650). Quoting is inert, so emitting it would add an encoded pair
+  // of `%22`s to every multi-word surname for no measured gain.
+  it("15a. a particle surname is sent verbatim, space-encoded and unquoted", () => {
+    const url = buildSearchUrl({ surname: "van der Linde" });
+    expect(url).toContain("q.surname=van%20der%20Linde");
+    expect(url).not.toContain("%22");
+    // Not split into surname + surnameAlt, and not concatenated.
+    expect(url).not.toContain("q.surname.1=");
+    expect(url).not.toContain("vanderLinde");
+  });
+
+  it("15b. the space survives round-tripping the built URL", () => {
+    const url = buildSearchUrl({ surname: "van der Linde", givenName: "Marinus" });
+    const parsed = new URL(url);
+    expect(parsed.searchParams.get("q.surname")).toBe("van der Linde");
+    expect(parsed.searchParams.get("q.givenName")).toBe("Marinus");
+  });
+
   it("15. surnameExact + surnameAlt emits both .exact=on and .exact.1=on", () => {
     const url = buildSearchUrl({
       surname: "Smith",
@@ -376,15 +405,25 @@ describe("buildSearchUrl param mapping", () => {
     expect(url).toContain("q.birthLikePlace.exact=on");
   });
 
-  it("18. recordSubdivision composes into q.recordSubcountry=country,subdivision", () => {
+  it("18. recordSubdivision composes into f.recordSubcountry=country,subdivision", () => {
     const url = buildSearchUrl({
       surname: "Smith",
       recordCountry: "United States",
       recordSubdivision: "Alabama",
     });
     expect(url).toContain(
-      "q.recordSubcountry=United%20States%2CAlabama"
+      "f.recordSubcountry=United%20States%2CAlabama"
     );
+    expect(url).not.toContain("q.recordSubcountry");
+  });
+
+  it("18b. a hyphenated recordSubdivision is sent as the f. facet filter", () => {
+    const url = buildSearchUrl({
+      surname: "Olsen",
+      recordCountry: "Norway",
+      recordSubdivision: "Aust-Agder",
+    });
+    expect(url).toContain("f.recordSubcountry=Norway%2CAust-Agder");
   });
 
   it("19. recordType=marriage maps to f.recordType=1", () => {
@@ -446,7 +485,7 @@ describe("recordSearchTool error propagation", () => {
       )
     );
     await expect(
-      recordSearchTool({ surname: "Lincoln" })
+      recordSearchTool({ surname: "Lincoln" }, LOCAL)
     ).rejects.toThrow(/not logged in/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -461,7 +500,7 @@ describe("recordSearchTool error propagation", () => {
       }),
     });
     await expect(
-      recordSearchTool({ surname: "Lincoln" })
+      recordSearchTool({ surname: "Lincoln" }, LOCAL)
     ).rejects.toThrow(/invalid q.foo; bar required/);
   });
 
@@ -475,7 +514,7 @@ describe("recordSearchTool error propagation", () => {
       },
     });
     await expect(
-      recordSearchTool({ surname: "Lincoln" })
+      recordSearchTool({ surname: "Lincoln" }, LOCAL)
     ).rejects.toThrow(/400 Bad Request/);
   });
 
@@ -485,7 +524,7 @@ describe("recordSearchTool error propagation", () => {
       status: 401,
       statusText: "Unauthorized",
     });
-    await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
+    await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
       /session not accepted; call the login tool/
     );
   });
@@ -496,7 +535,7 @@ describe("recordSearchTool error propagation", () => {
       status: 403,
       statusText: "Forbidden",
     });
-    await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
+    await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
       /User-Agent header was rejected by the WAF/
     );
   });
@@ -505,7 +544,7 @@ describe("recordSearchTool error propagation", () => {
   // FamilySearch connection can't hang the turn.
   it("passes an AbortSignal timeout to fetch", async () => {
     mockFetch.mockResolvedValue(makeOkResponse(emptyResponse()));
-    await recordSearchTool({ surname: "Lincoln" });
+    await recordSearchTool({ surname: "Lincoln" }, LOCAL);
     const init = mockFetch.mock.calls[0][1] as RequestInit;
     expect(init.signal).toBeInstanceOf(AbortSignal);
   });
@@ -515,52 +554,66 @@ describe("recordSearchTool error propagation", () => {
     mockFetch
       .mockRejectedValueOnce(new Error("fetch failed"))
       .mockResolvedValueOnce(makeOkResponse(emptyResponse()));
-    const result = await recordSearchTool({ surname: "Lincoln" });
+    const result = await recordSearchTool({ surname: "Lincoln" }, LOCAL);
     expect(result.returned).toBe(0);
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
-  // #1316 (REPLACES the old single-500 "throws on other non-OK statuses" test):
-  // 5xx is now transient — retried 3× and, when still failing, surfaced as the
-  // explicit terminal error, NEVER as a short/empty result set.
-  it("retries 5xx and throws the terminal transient-failure error when exhausted", async () => {
+  // #1316 / #2054: 5xx is transient — retried by fetchWithRetry then, when
+  // exhausted, the last Response is returned and falls through to !response.ok.
+  it("retries 5xx and throws the generic API-error when exhausted", async () => {
     mockFetch.mockResolvedValue({
       ok: false,
       status: 503,
       statusText: "Service Unavailable",
+      headers: new Headers(),
     });
-    await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
-      /did not complete after 3 attempts.*transient failure, NOT an empty result/s
+    await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
+      /coverage is unknown/
     );
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
 
-  // #1316: 429 is the OTHER transient status. The 5xx test above proves the
-  // retry machinery, but 429 is a separate operand of `status === 429 || status
-  // >= 500` — only an explicit 429 case guards that arm. Without it a regression
-  // dropping the `=== 429` check would fall through to the generic error below,
-  // never retry, and the 5xx test would still pass.
-  it("retries 429 and throws the terminal transient-failure error when exhausted", async () => {
+  // #2054: 429 then 200 → returns the successful result
+  it("recovers from a transient 429 and returns the search result", async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: "Too Many Requests",
+        headers: new Headers(),
+      })
+      .mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const result = await recordSearchTool({ surname: "Lincoln" }, LOCAL);
+    expect(result.returned).toBe(0);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  // #1316 / #2054: 429 is retried alongside 5xx by fetchWithRetry.
+  it("retries 429 and throws when exhausted", async () => {
     mockFetch.mockResolvedValue({
       ok: false,
       status: 429,
       statusText: "Too Many Requests",
+      headers: new Headers(),
     });
-    await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
-      /did not complete after 3 attempts.*transient failure, NOT an empty result/s
+    await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
+      /rate limit/
     );
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
 
-  // #1316: a timeout (AbortSignal firing → fetch rejects) is transient too.
+  // #1316 / #2054: a timeout (AbortSignal firing → fetch rejects) is transient
+  // too. fetchWithRetry re-throws the last error after exhaustion, caught by
+  // the try/catch in recordSearchTool.
   it("retries a timeout and throws the terminal error when exhausted", async () => {
     mockFetch.mockRejectedValue(
       Object.assign(new Error("The operation timed out"), {
         name: "TimeoutError",
       })
     );
-    await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
-      /did not complete after 3 attempts.*network timeout or transient error/s
+    await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
+      /did not complete after retries.*network timeout or transient error/s
     );
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
@@ -573,7 +626,7 @@ describe("recordSearchTool error propagation", () => {
       status: 404,
       statusText: "Not Found",
     });
-    await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
+    await expect(recordSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
       /API error: 404 Not Found/
     );
     expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -583,7 +636,7 @@ describe("recordSearchTool error propagation", () => {
 describe("recordSearchTool response shape", () => {
   it("26. returns empty results when entries is empty", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
-    const result = await recordSearchTool({ surname: "Nobody" });
+    const result = await recordSearchTool({ surname: "Nobody" }, LOCAL);
     expect(result.results).toEqual([]);
     expect(result.returned).toBe(0);
     expect(result.hasMore).toBe(false);
@@ -633,8 +686,8 @@ describe("recordSearchTool response shape", () => {
         ],
       })
     );
-    const result = await recordSearchTool({ surname: "Doe" });
-    const r = result.results[0];
+    const result = await recordSearchTool({ surname: "Doe" }, LOCAL);
+    const r = result.results![0];
     expect(r.personName).toBe("John Doe");
     expect(r.sex).toBe("Male");
     expect(r.birthDate).toBe("1880");
@@ -647,8 +700,8 @@ describe("recordSearchTool response shape", () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] })
     );
-    const result = await recordSearchTool({ surname: "Lincoln" });
-    const matches = result.results[0].treeMatches;
+    const result = await recordSearchTool({ surname: "Lincoln" }, LOCAL);
+    const matches = result.results![0].treeMatches;
     expect(matches).toEqual([
       { treePersonId: "GQWZ-GPX", stars: 5 },
       { treePersonId: "GQWZ-AAA", stars: 3 },
@@ -701,7 +754,7 @@ describe("recordSearchTool response shape", () => {
         links: { next: { href: "https://...&offset=20" } },
       })
     );
-    const result = await recordSearchTool({ surname: "Lincoln" });
+    const result = await recordSearchTool({ surname: "Lincoln" }, LOCAL);
     expect(result.hasMore).toBe(true);
   });
 
@@ -709,7 +762,7 @@ describe("recordSearchTool response shape", () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({ results: 17, index: 0, entries: [] })
     );
-    const result = await recordSearchTool({ surname: "Lincoln" });
+    const result = await recordSearchTool({ surname: "Lincoln" }, LOCAL);
     expect(result.totalMatches).toBe(17);
     expect(result.paginationCappedAt).toBe(4999);
   });
@@ -833,18 +886,53 @@ describe("helpers", () => {
       })
     ).toBe("a; b");
   });
+
+  it("parseUpstreamErrorBody reads the Catalog's RFC7807 detail", () => {
+    expect(
+      parseUpstreamErrorBody({
+        detail: "Validation failure",
+        instance: "/v3/search",
+        status: 400,
+        title: "Bad Request",
+      })
+    ).toBe("Validation failure");
+  });
+
+  it("parseUpstreamErrorBody falls through to detail when errors yields nothing", () => {
+    // PRESENT but unusable is not the same as absent. Branching on the
+    // array's shape up front returned null and lost the only readable
+    // explanation the body carried.
+    expect(
+      parseUpstreamErrorBody({
+        errors: [{ code: 400 }],
+        detail: "Validation failure",
+      })
+    ).toBe("Validation failure");
+  });
+
+  it("parseUpstreamErrorBody prefers errors[] over a generic detail", () => {
+    // Pins the ORDER. `detail` is generic ("Bad Request"); errors[].message
+    // names the offending parameter, which is what three callers' messages
+    // were built around. Checking detail first silently swapped them.
+    expect(
+      parseUpstreamErrorBody({
+        detail: "Bad Request",
+        errors: [{ message: "q.birthLikeDate.from must precede .to" }],
+      })
+    ).toBe("q.birthLikeDate.from must precede .to");
+  });
 });
 
 describe("recordSearchTool — User-Agent contract", () => {
   it("sends the shared BROWSER_USER_AGENT header", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
 
-    await recordSearchTool({ surname: "Lincoln" });
+    await recordSearchTool({ surname: "Lincoln" }, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = init.headers as Record<string, string>;
-    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("User-Agent")).toBe(BROWSER_USER_AGENT);
   });
 });
 
@@ -870,13 +958,13 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     it("emits the unlogged-search note when a prior staged search was never finalized", async () => {
       await writeResearch([]);
       mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
-      const first = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      const first = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
       expect(first.staged).toBeTruthy();
       // Nothing logged that first search, so the second one says so.
       expect(first.unloggedSearches).toBeUndefined();
 
       mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
-      const second = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      const second = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
       expect(second.unloggedSearches).toContain("1 earlier staged search");
       expect(second.unloggedSearches).toContain("research_log_append");
     });
@@ -884,7 +972,7 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     it("counts the backlog before this call stages, so a first search never accuses itself", async () => {
       await writeResearch([]);
       mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
-      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
       expect(out.staged).toBeTruthy();
       expect(out.unloggedSearches).toBeUndefined();
     });
@@ -892,14 +980,14 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     it("serializes both notes before results", async () => {
       await writeResearch([]);
       mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
-      await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
 
       // Nil second search: both notes fire at once, and both must precede the
       // largest field — a trailing field is the first thing a size bound drops.
       mockFetch.mockResolvedValueOnce(
         makeOkResponse({ results: 0, index: 0, entries: [] }),
       );
-      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
       expect(out.unloggedSearches).toBeTruthy();
       expect(out.nilSearchNeedsLog).toBeTruthy();
 
@@ -913,7 +1001,7 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
       mockFetch.mockResolvedValueOnce(
         makeOkResponse({ results: 0, index: 0, entries: [] }),
       );
-      const out = await recordSearchTool({ surname: "Nonesuch", projectPath: dir });
+      const out = await recordSearchTool({ surname: "Nonesuch", projectPath: dir }, LOCAL);
       expect(out.staged).toBeNull();
       expect(out.nilSearchNeedsLog).toContain('outcome: "negative"');
     });
@@ -932,7 +1020,7 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
           entries: [{ id: undefined } as unknown as FSSearchEntry],
         }),
       );
-      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
 
       expect(out.results).toHaveLength(0);
       expect(out.totalMatches).toBe(812);
@@ -943,7 +1031,7 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
       mockFetch.mockResolvedValueOnce(
         makeOkResponse({ results: 0, index: 0, entries: [] }),
       );
-      const out = await recordSearchTool({ surname: "Nonesuch" });
+      const out = await recordSearchTool({ surname: "Nonesuch" }, LOCAL);
       expect(out.nilSearchNeedsLog).toBeUndefined();
       expect(out.unloggedSearches).toBeUndefined();
     });
@@ -951,10 +1039,10 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     it("withholds both notes from the staged payload", async () => {
       await writeResearch([]);
       mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
-      await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
 
       mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
-      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
       expect(out.unloggedSearches).toBeTruthy();
 
       const envelope = JSON.parse(
@@ -972,24 +1060,24 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     const out = await recordSearchTool({
       surname: "Lincoln",
       projectPath: dir,
-    });
+    }, LOCAL);
 
     // Staging happened, so the inline gedcomx is dropped unconditionally (no
     // opt-in flag); the flat stub survives for triage.
     expect(out.staged).toBeTruthy();
     expect(out.results).toHaveLength(1);
-    expect(out.results[0].gedcomx).toBeUndefined();
-    expect(out.results[0].recordId).toBeTruthy();
-    expect(out.results[0].primaryId).toBe("p_1");
+    expect(out.results![0].gedcomx).toBeUndefined();
+    expect(out.results![0].recordId).toBeTruthy();
+    expect(out.results![0].primaryId).toBe("p_1");
   });
 
   it("slims the inline stub when staged: no collectionUrl, no empty treeMatches, title hoisted", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
 
     expect(out.staged).toBeTruthy();
-    const r = out.results[0];
+    const r = out.results![0];
     // Derivable / repeated fields are gone from the INLINE projection.
     expect(r.collectionUrl).toBeUndefined();
     expect(r.collectionTitle).toBeUndefined();
@@ -1013,7 +1101,7 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     );
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" });
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" }, LOCAL);
 
     // The deep pool is requested only because ranking will cut it back.
     expect(mockFetch.mock.calls[0][0]).toContain("count=50");
@@ -1022,10 +1110,29 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(out.rankingError).toBeUndefined();
   });
 
+  it.each([
+    ["1900", true],
+    ["4 Dec 1900", undefined],
+  ])("carries ranked.subjectTooThin through the folded path (birth %j → %j)", async (date, flag) => {
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [{ id: "I1", names: [{ preferred: true, given: "A", surname: "B" }], facts: [{ type: "Birth", date, place: "X" }] }],
+      }),
+      "utf-8",
+    );
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" }, LOCAL);
+
+    expect(out.rankingError).toBeUndefined();
+    expect(out.ranked!.subjectTooThin).toBe(flag);
+  });
+
   it("keeps count at 20 when there is no subject to rank against", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+    await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
 
     // An unranked deep pool is just more stubs to read — the two are coupled.
     expect(mockFetch.mock.calls[0][0]).toContain("count=20");
@@ -1035,7 +1142,7 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     // No tree.gedcomx.json in this project dir → buildSubjectDoc throws.
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" });
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" }, LOCAL);
 
     expect(out.ranked).toBeUndefined();
     expect(out.rankingError).toBeTruthy();
@@ -1048,7 +1155,7 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
   it("does not rank when nothing was staged", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    const out = await recordSearchTool({ surname: "Lincoln", subjectId: "I1" });
+    const out = await recordSearchTool({ surname: "Lincoln", subjectId: "I1" }, LOCAL);
 
     expect(out.ranked).toBeUndefined();
     expect(out.rankingError).toBeUndefined();
@@ -1061,20 +1168,20 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
       makeOkResponse({ results: 1, index: 0, entries: [noHints] }),
     );
 
-    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
-    expect(out.results[0].treeMatches).toBeUndefined();
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
+    expect(out.results![0].treeMatches).toBeUndefined();
   });
 
   it("leaves the staged sidecar at full fidelity even though the inline copy is slimmed", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
-    expect(out.results[0].collectionUrl).toBeUndefined();
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
+    expect(out.results![0].collectionUrl).toBeUndefined();
 
     const staged = JSON.parse(
       await readFile(join(dir, out.staged!.resultsRef), "utf-8"),
     );
-    const row = staged.payload.results[0];
+    const row = staged.payload.results![0];
     // The sidecar is what rank_search_matches, record_read and the viewer read.
     expect(row.gedcomx).toBeTruthy();
     expect(row.collectionUrl).toBeTruthy();
@@ -1089,12 +1196,12 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     const out = await recordSearchTool({
       surname: "Lincoln",
       projectPath: join(dir, "does-not-exist"),
-    });
+    }, LOCAL);
 
     expect(out.staged).toBeNull();
     expect(out.stagingError).toBeTruthy();
     // Never strip when nothing was retained to re-read from.
-    expect(out.results[0].gedcomx).toBeDefined();
+    expect(out.results![0].gedcomx).toBeDefined();
   });
 
   it("keeps inline gedcomx for an exploratory search with no projectPath", async () => {
@@ -1103,10 +1210,10 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     // No projectPath → no staging → full gedcomx returned inline as before.
     const out = await recordSearchTool({
       surname: "Lincoln",
-    });
+    }, LOCAL);
 
     expect(out.staged).toBeUndefined();
-    expect(out.results[0].gedcomx).toBeDefined();
+    expect(out.results![0].gedcomx).toBeDefined();
   });
 });
 
@@ -1175,7 +1282,7 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
       marriagePlace: "Hill, Texas, United States",
       projectPath: dir,
       subjectId: "I2",
-    });
+    }, LOCAL);
 
     expect(out.jurisdictionHints).toBeDefined();
     expect(out.jurisdictionHints?.searchedPlace).toBe(
@@ -1202,7 +1309,7 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
       marriagePlace: "Hill, Texas, United States",
       projectPath: dir,
       subjectId: "I2",
-    });
+    }, LOCAL);
 
     expect(out.totalMatches).toBe(1);
     expect(out.ranked?.subjectResolvable).toBe(false);
@@ -1224,7 +1331,7 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
       recordSubdivision: "Texas",
       projectPath: dir,
       subjectId: "I2",
-    });
+    }, LOCAL);
 
     expect(out.jurisdictionHints).toBeDefined();
     expect(out.jurisdictionHints?.searchedPlace).toBe("Texas, United States");
@@ -1245,7 +1352,7 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
       recordType: "marriage",
       projectPath: dir,
       subjectId: "I2",
-    });
+    }, LOCAL);
 
     expect(out.jurisdictionHints).toBeUndefined();
   });
@@ -1259,7 +1366,7 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
       recordCountry: "United States",
       projectPath: dir,
       subjectId: "I2",
-    });
+    }, LOCAL);
 
     expect(out.jurisdictionHints).toBeUndefined();
   });
@@ -1273,7 +1380,7 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
       marriagePlace: "Nowhere At All",
       projectPath: dir,
       subjectId: "I2",
-    });
+    }, LOCAL);
 
     expect(out.jurisdictionHints?.candidates.length).toBeLessThanOrEqual(8);
   });
@@ -1286,7 +1393,7 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
       recordType: "census",
       projectPath: dir,
       subjectId: "I2",
-    });
+    }, LOCAL);
 
     expect(out.jurisdictionHints).toBeUndefined();
   });
@@ -1299,7 +1406,7 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
       recordType: "marriage",
       marriagePlace: "Hill, Texas, United States",
       projectPath: dir,
-    });
+    }, LOCAL);
 
     expect(out.jurisdictionHints).toBeUndefined();
   });
@@ -1314,7 +1421,7 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
       marriagePlace: "Hill, Texas, United States",
       projectPath: dir,
       subjectId: "I2",
-    });
+    }, LOCAL);
 
     // Advisory only: an unreadable tree must never turn a good search into an error.
     expect(out.jurisdictionHints).toBeUndefined();
@@ -1347,7 +1454,7 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
   it("emits the note when projectPath was given but subjectId was not", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
 
     expect(out.rankingSkipped).toBeTruthy();
     expect(out.ranked).toBeUndefined();
@@ -1374,7 +1481,7 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
     );
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" });
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" }, LOCAL);
 
     expect(out.rankingSkipped).toBeUndefined();
     expect(out.ranked).toBeTruthy();
@@ -1383,7 +1490,7 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
   it("stays absent with no projectPath — nothing was on offer to skip", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    const out = await recordSearchTool({ surname: "Lincoln" });
+    const out = await recordSearchTool({ surname: "Lincoln" }, LOCAL);
 
     expect(out.rankingSkipped).toBeUndefined();
   });
@@ -1391,7 +1498,7 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
   it("fires on a search that DID find results — the condition is the args, not the outcome", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
 
     expect(out.totalMatches).toBeGreaterThan(0);
     expect(out.rankingSkipped).toBeTruthy();
@@ -1411,7 +1518,7 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
       surname: "Lincoln",
       projectPath: dir,
       subjectId: "I1",
-    });
+    }, LOCAL);
 
     expect(out.totalMatches).toBe(0);
     expect(out.staged).toBeNull();
@@ -1422,7 +1529,7 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
   it("treats a falsy subjectId the same way the ranking gate does", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "" });
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "" }, LOCAL);
 
     // The ranking gate is `input.subjectId &&`, so an empty string skips ranking.
     // The note has to agree with it or it would report the opposite of what ran.
@@ -1437,7 +1544,7 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
     // searches. The live response must still carry it — that is where it is read.
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
 
     expect(out.rankingSkipped).toBeTruthy();
     expect(out.staged).toBeTruthy();
@@ -1453,7 +1560,7 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
   it("serializes BEFORE results, so a size-bounded runlog cannot drop it", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
 
     // This is the whole point of the field's position. `results` is the largest
     // field in the response; anything after it is what a head bound cuts first,
@@ -1725,21 +1832,21 @@ describe("#1324 relativeTerms", () => {
     const withTerm = await recordSearchTool({
       surname: "Sugecz",
       fatherGivenName: "Wm.",
-    });
-    expect(withTerm.results[0].relativeTerms).toEqual({
+    }, LOCAL);
+    expect(withTerm.results![0].relativeTerms).toEqual({
       father: { status: "present", name: "Wm. Neal" },
     });
 
-    const withoutTerm = await recordSearchTool({ surname: "Sugecz" });
-    expect(withoutTerm.results[0].relativeTerms).toBeUndefined();
+    const withoutTerm = await recordSearchTool({ surname: "Sugecz" }, LOCAL);
+    expect(withoutTerm.results![0].relativeTerms).toBeUndefined();
 
     // An `*Exact` boolean alone sends no q.fatherGivenName, so no father
     // constraint was applied and there is nothing to report on.
     const exactOnly = await recordSearchTool({
       surname: "Sugecz",
       fatherGivenNameExact: true,
-    });
-    expect(exactOnly.results[0].relativeTerms).toBeUndefined();
+    }, LOCAL);
+    expect(exactOnly.results![0].relativeTerms).toBeUndefined();
   });
 
   it("50. resolves `other` by name match against co-people on the record", async () => {
@@ -1751,8 +1858,8 @@ describe("#1324 relativeTerms", () => {
       fatherGivenName: "Wm.",
       otherGivenName: "Anna",
       otherSurname: "Kovacs",
-    });
-    expect(result.results[0].relativeTerms).toEqual({
+    }, LOCAL);
+    expect(result.results![0].relativeTerms).toEqual({
       father: { status: "present", name: "Wm. Neal" },
       other: { status: "present", name: "Anna Kovacs" },
     });
@@ -1810,17 +1917,17 @@ describe("#1324 relativeTerms", () => {
         surname: "Sugecz",
         fatherGivenName: "Wm.",
         projectPath: dir,
-      });
+      }, LOCAL);
 
-      expect(result.results[0].gedcomx).toBeUndefined();
-      expect(result.results[0].relativeTerms).toEqual({
+      expect(result.results![0].gedcomx).toBeUndefined();
+      expect(result.results![0].relativeTerms).toEqual({
         father: { status: "present", name: "Wm. Neal" },
       });
 
       const staged = JSON.parse(
         await readFile(join(dir, result.staged!.resultsRef), "utf-8"),
       );
-      expect(staged.payload.results[0].relativeTerms).toEqual({
+      expect(staged.payload.results![0].relativeTerms).toEqual({
         father: { status: "present", name: "Wm. Neal" },
       });
     } finally {
@@ -1911,26 +2018,88 @@ describe("#1592 batchNumber on results", () => {
       mockFetch.mockResolvedValueOnce(
         makeOkResponse({ results: 1, index: 0, entries: [entryWithBatch("UdeBatchNbr")] }),
       );
-      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
 
       // gedcomx is stripped inline — if the batch lived only in there, the
       // enumeration loop would work solely in unlogged exploratory searches.
       expect(out.staged).toBeTruthy();
-      expect(out.results[0].gedcomx).toBeUndefined();
-      expect(out.results[0].batchNumber).toBe("M01048-5");
+      expect(out.results![0].gedcomx).toBeUndefined();
+      expect(out.results![0].batchNumber).toBe("M01048-5");
 
       // …and it reaches the sidecar the viewer and rank_search_matches read.
       const ref = out.staged!.resultsRef;
       const staged = JSON.parse(
         await readFile(join(dir, ref.replace(/^\.\//, "")), "utf-8"),
       );
-      expect(staged.payload.results[0].batchNumber).toBe("M01048-5");
+      expect(staged.payload.results![0].batchNumber).toBe("M01048-5");
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
   });
 
-  it("reaches the ranked stubs, the projection a subjectId search actually reads", async () => {
+  it("keeps treeMatches on the annotated row, the shape a subjectId search reads", async () => {
+    // record_search advertises "Family-Tree-person match suggestions" in its own
+    // tool description, and a subject-named search reads `ranked`, not
+    // `results`. Before the stub carried treeMatches, the dominant call shape
+    // silently had none.
+    const dir = await mkdtemp(join(tmpdir(), "record-search-rank-hints-"));
+    try {
+      await writeFile(
+        join(dir, "tree.gedcomx.json"),
+        JSON.stringify({
+          persons: [
+            {
+              id: "I1",
+              names: [{ preferred: true, given: "Abraham", surname: "Lincoln" }],
+              facts: [{ type: "Birth", date: "1809", place: "Hardin, Kentucky, United States" }],
+            },
+          ],
+        }),
+        "utf-8",
+      );
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
+      );
+
+      const out = await recordSearchTool({
+        surname: "Lincoln",
+        projectPath: dir,
+        subjectId: "I1",
+      }, LOCAL);
+
+      // Under the #1212 ruling the row IS the row: treeMatches stays where it
+      // always was, and the row now also carries the score. `ranked` has no
+      // matches list to carry it onto.
+      expect(out.results[0].treeMatches?.length).toBeGreaterThan(0);
+      expect(out.results[0].matchScore).not.toBeUndefined();
+      expect((out.ranked as { matches?: unknown }).matches).toBeUndefined();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("survives the staged slim block alongside role", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "record-search-role-slim-"));
+    try {
+      const entry = lincolnEntry();
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 1, index: 0, entries: [entry] }),
+      );
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
+      expect(out.results[0].gedcomx).toBeUndefined();
+      expect(out.results[0].role).toBe("Principal");
+
+      const ref = out.staged!.resultsRef;
+      const staged = JSON.parse(
+        await readFile(join(dir, ref.replace(/^\.\//, "")), "utf-8"),
+      );
+      expect(staged.payload.results[0].role).toBe("Principal");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("reaches the annotated row, the shape a subjectId search actually reads", async () => {
     const dir = await mkdtemp(join(tmpdir(), "record-search-batch-rank-"));
     try {
       await writeFile(
@@ -1954,12 +2123,163 @@ describe("#1592 batchNumber on results", () => {
         surname: "Lincoln",
         projectPath: dir,
         subjectId: "I1",
-      });
+      }, LOCAL);
 
       expect(out.ranked).toBeTruthy();
-      expect(out.ranked!.matches[0].batchNumber).toBe("M01048-5");
+      expect(out.results[0].batchNumber).toBe("M01048-5");
+      expect(out.results[0].matchRank).toBe(1);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("#2367/#2336 role on results", () => {
+  it("populates role from display.role", () => {
+    const r = mapEntry(lincolnEntry());
+    expect(r!.role).toBe("Principal");
+  });
+
+  it("omits role when display.role is absent", () => {
+    const entry = lincolnEntry();
+    delete entry.content!.gedcomx!.persons![0].display!.role;
+    const r = mapEntry(entry);
+    expect(r!.role).toBeUndefined();
+    expect("role" in r!).toBe(false);
+  });
+
+  it("carries a non-Principal role through unchanged", () => {
+    const entry = lincolnEntry();
+    entry.content!.gedcomx!.persons![0].display!.role = "Mother";
+    const r = mapEntry(entry);
+    expect(r!.role).toBe("Mother");
+  });
+});
+
+// Issue #3054. The tool-level half of the proof the issue asks for: the hint is
+// emitted for ut_search_records_023's exact inputs, and not for nils that do not
+// qualify. The rule itself is unit-tested in tests/utils/surname-variant-hints.test.ts.
+describe("recordSearchTool — surnameVariantHints on a search that did not find the subject", () => {
+  it("emits the abbreviated forms for ut_search_records_023's inputs, with no project", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+
+    const out = await recordSearchTool(
+      { surname: "Halsteinsdatter", givenName: "Unna", collectionId: "1468080" },
+      LOCAL,
+    );
+
+    expect(out.surnameVariantHints?.fields).toEqual([
+      {
+        field: "surname",
+        searched: "Halsteinsdatter",
+        variants: ["Halsteinsdr", "Halsteinsdtr", "Halsteinsd"],
+      },
+    ]);
+  });
+
+  // The shape the real index answers: the bride is not indexed as a principal,
+  // only as the groom's spouse (eval/tests/e2e/anders-monsen-ancestry/README.md).
+  it("emits on spouseSurname when the bride is the secondary party", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+
+    const out = await recordSearchTool(
+      {
+        surname: "Monsen",
+        givenName: "Anders",
+        spouseSurname: "Halsteinsdatter",
+        collectionId: "1468080",
+      },
+      LOCAL,
+    );
+
+    expect(out.surnameVariantHints?.fields.map((e) => e.field)).toEqual(["spouseSurname"]);
+  });
+
+  it("is serialized before results", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+
+    const out = await recordSearchTool({ surname: "Halsteinsdatter" }, LOCAL);
+
+    const keys = Object.keys(out);
+    expect(keys.indexOf("surnameVariantHints")).toBeGreaterThan(-1);
+    expect(keys.indexOf("surnameVariantHints")).toBe(keys.indexOf("results") - 1);
+  });
+
+  it("stays silent on a nil search whose surname is not a -datter/-dotter patronymic", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const neal = await recordSearchTool({ surname: "Neal", recordType: "marriage" }, LOCAL);
+    expect(neal.surnameVariantHints).toBeUndefined();
+
+    // -son is deliberately not covered (it ends ordinary English surnames).
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const johnson = await recordSearchTool({ surname: "Johnson" }, LOCAL);
+    expect(johnson.surnameVariantHints).toBeUndefined();
+  });
+
+  it("stays silent when the search found records and no ranking ran", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
+    );
+
+    const out = await recordSearchTool({ surname: "Halsteinsdatter" }, LOCAL);
+
+    expect(out.totalMatches).toBe(1);
+    expect(out.surnameVariantHints).toBeUndefined();
+  });
+
+  describe("rows returned but ranking matched nobody", () => {
+    let dir: string;
+    const TREE = {
+      persons: [
+        {
+          id: "I2",
+          names: [{ given: "Unna", surname: "Halsteinsdatter" }],
+          facts: [
+            {
+              type: "Birth",
+              date: "May 1745",
+              place: "Meland, Hordaland, Norway",
+              standard_place: "Meland, Hordaland, Norway",
+            },
+          ],
+        },
+      ],
+      relationships: [],
+    };
+
+    beforeEach(async () => {
+      dir = await mkdtemp(join(tmpdir(), "record-search-surname-hint-"));
+      await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(TREE), "utf-8");
+    });
+    afterEach(async () => {
+      await rm(dir, { recursive: true, force: true });
+    });
+
+    // The only branch that stages a sidecar, so the only one where "never staged"
+    // can be shown. The note must not claim the rows are empty: one of them may
+    // be the subject under a different spelling.
+    it("fires, says 'did not identify the subject', precedes results, and is not staged", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
+      );
+
+      const out = await recordSearchTool(
+        { surname: "Halsteinsdatter", projectPath: dir, subjectId: "I2" },
+        LOCAL,
+      );
+
+      expect(out.totalMatches).toBe(1);
+      expect(out.ranked?.subjectResolvable).toBe(false);
+      expect(out.surnameVariantHints?.fields[0].variants[0]).toBe("Halsteinsdr");
+      expect(out.surnameVariantHints?.note).toMatch(/did not identify the subject/);
+      expect(out.surnameVariantHints?.note).not.toMatch(/found nobody|no results/i);
+      const keys = Object.keys(out);
+      expect(keys.indexOf("surnameVariantHints")).toBe(keys.indexOf("results") - 1);
+
+      const staged = JSON.parse(
+        await readFile(join(dir, out.staged!.resultsRef), "utf-8"),
+      );
+      expect(JSON.stringify(staged)).not.toContain("surnameVariantHints");
+    });
   });
 });

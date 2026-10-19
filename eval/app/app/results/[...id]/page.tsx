@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { parseAgentReturns, splitAgentReturns } from '@/lib/agentReturns';
 import Link from 'next/link';
 import {
   Accordion,
@@ -27,12 +28,13 @@ import {
   Tooltip,
   UnstyledButton,
 } from '@mantine/core';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { HSplit } from '@/components/layout/HSplit';
 import { JsonViewer } from '@/components/common/JsonViewer';
 import { ScenarioViewer } from '@/components/scenario/ScenarioViewer';
 import { findScenarioData } from '@/lib/scenarioSnapshot';
 import { findFixtureResponse, findTestJson } from '@/lib/snapshotFiles';
+import { deriveOutcomeExplanation, outcomeColor } from '@/lib/outcomeExplanation';
 import type {
   AnnotationCorrection,
   AnnotationFile,
@@ -43,6 +45,7 @@ import type {
 import {
   dimensionAllowsNa,
   isConfirmedNonFailing,
+  reviewDimensions,
   sampledTestIds,
   uncommentedSampledCorrections,
 } from '@/lib/types';
@@ -67,6 +70,18 @@ interface DimensionId {
   name: string;
 }
 
+/**
+ * Strip any prior pasted PR-comment block from a junior comment so a
+ * copy→paste→copy round-trip cannot nest blocks indefinitely.
+ * Keeps only text the annotator typed *before* the pasted block.
+ */
+function stripPrBlock(text: string): string {
+  // The block starts with **`ut_…`** — `source` / `name` and includes the
+  // LLM: → Junior: header, the quoted rationale, and the trailing Junior: line.
+  // Strip everything from the first **` header through the end.
+  return text.replace(/\*\*`ut_[^]*$/s, '').trim();
+}
+
 function buildPrComment(opts: {
   test_id: string;
   source: string;
@@ -77,161 +92,20 @@ function buildPrComment(opts: {
   juniorComment: string;
 }): string {
   const fmt = (s: 1 | 2 | 3 | null) => (s === null ? 'N/A' : String(s));
+  const cleaned = stripPrBlock(opts.juniorComment);
   const lines = [
     `**\`${opts.test_id}\`** — \`${opts.source}\` / \`${opts.name}\``,
     `LLM: ${fmt(opts.llmScore)} → Junior: ${fmt(opts.correctedScore)}`,
     '',
     '> ' + (opts.judgeRationale || '(no rationale)').replace(/\n/g, '\n> '),
     '',
-    `Junior: ${opts.juniorComment || '(no comment)'}`,
+    `Junior: ${cleaned || '(no comment)'}`,
   ];
   return lines.join('\n');
 }
 
-interface OutcomeExplanation {
-  /** Mantine color for the Alert (red = hard gate, orange = routing). */
-  color: string;
-  title: string;
-  body: string;
-}
-
-/**
- * Explain a fail/aborted outcome that the dimension rows below do NOT
- * account for.
- *
- * The harness decides each run's outcome through a sequence of gates that
- * run *before* the dimension scores are consulted (see `_compute_outcome`
- * in eval/harness/harness/orchestrator.py): aborted → validators →
- * judge-skipped → activation/routing → dimensions. When an earlier gate
- * fires, every dimension can still read "pass" (3) yet the outcome is
- * "fail" — e.g. a positive test where Claude routed to a *different* skill,
- * so the skill under test never ran. Without this, that fail looks
- * mysterious on screen: all-green dimensions, a red outcome, no reason.
- *
- * Returns null for pass/partial, and for fails the dimension rows already
- * explain (some dimension scored 1) where no earlier gate fired.
- *
- * xfail/xpass get their own explanation: those outcomes come from the
- * test's `expected_outcome` marking, not from anything visible in the
- * dimension rows, so without a note an xfail reads as "green-ish failure"
- * and an xpass reads as an unexplained oddity.
- */
-function deriveOutcomeExplanation(
-  entry: TestEntry,
-  skillUnderTest: string,
-): OutcomeExplanation | null {
-  if (entry.outcome === 'xfail') {
-    return {
-      color: 'gray',
-      title: 'Expected failure (xfail)',
-      body:
-        'This test is marked expected_outcome: xfail, so its failure is not counted as a ' +
-        'regression. The reason lives on the test definition — open the test to see it, and ' +
-        'remove the marker once the underlying issue is fixed.',
-    };
-  }
-  if (entry.outcome === 'xpass') {
-    return {
-      color: 'orange',
-      title: 'Unexpected pass (xpass)',
-      body:
-        'This test is marked expected_outcome: xfail but it passed. Either the underlying ' +
-        'issue is fixed — in which case clear the marker so future failures register as ' +
-        'regressions — or the test no longer exercises what its xfail reason describes.',
-    };
-  }
-  if (entry.outcome !== 'fail' && entry.outcome !== 'aborted') return null;
-
-  // Pick the run that actually exhibited the test-level outcome; fall back
-  // to the first run (single-run tests are the common case).
-  const run = entry.runs.find((r) => r.outcome === entry.outcome) ?? entry.runs[0];
-  if (!run) return null;
-
-  const output = run.output as
-    | { activated?: boolean; skills_invoked?: string[] }
-    | undefined;
-  const activated = output?.activated;
-  const skillsInvoked = output?.skills_invoked ?? [];
-  const validators = run.validators as
-    | { passed?: boolean; results?: Array<{ name: string; passed: boolean }> }
-    | undefined;
-
-  // Gate order mirrors _compute_outcome.
-  if (run.aborted_reason) {
-    return { color: 'red', title: 'Run aborted', body: run.aborted_reason };
-  }
-  if (validators?.passed === false) {
-    const failed = (validators.results ?? [])
-      .filter((r) => !r.passed)
-      .map((r) => r.name);
-    return {
-      color: 'red',
-      title: 'Validator failure',
-      body:
-        (failed.length
-          ? `Deterministic validators failed: ${failed.join(', ')}. `
-          : 'A deterministic validator failed. ') +
-        'Validators gate the outcome before the dimension scores below are considered.',
-    };
-  }
-  if (entry.test_type === 'positive' && run.judge?.skipped) {
-    return {
-      color: 'red',
-      title: 'Judge did not grade',
-      body:
-        (run.judge.error
-          ? `The judge raised an error (${run.judge.error}). `
-          : 'The judge was skipped. ') +
-        'A positive test cannot be scored pass without judge dimensions.',
-    };
-  }
-  if (entry.test_type === 'positive') {
-    if (activated === false || !skillsInvoked.includes(skillUnderTest)) {
-      const others = skillsInvoked.filter((s) => s !== skillUnderTest);
-      const routedTo = others.length
-        ? `Claude routed to ${others.map((s) => `"${s}"`).join(', ')} instead.`
-        : 'No skill fired at all.';
-      return {
-        color: 'orange',
-        title: `Routing miss — "${skillUnderTest}" did not activate`,
-        body:
-          `This is a positive test: it expects the "${skillUnderTest}" skill to handle the request. ` +
-          `${routedTo} A positive test fails when the skill under test never activates — ` +
-          `regardless of how the dimensions below scored.`,
-      };
-    }
-  } else if (activated) {
-    return {
-      color: 'orange',
-      title: `"${skillUnderTest}" activated on a negative test`,
-      body:
-        `This is a negative test: the "${skillUnderTest}" skill should have declined, but it activated. ` +
-        `That fails the test regardless of the dimensions below.`,
-    };
-  }
-  return null;
-}
-
-/**
- * Mantine color per test outcome. xfail is deliberately neutral (it is a
- * declared, non-regressing failure) and xpass is orange rather than green —
- * a passing xfail test is a prompt to investigate the stale marker, not a
- * clean result. Everything else is the usual green/yellow/red.
- */
-function outcomeColor(outcome: TestEntry['outcome']): string {
-  switch (outcome) {
-    case 'pass':
-      return 'green';
-    case 'partial':
-      return 'yellow';
-    case 'xfail':
-      return 'gray';
-    case 'xpass':
-      return 'orange';
-    default:
-      return 'red';
-  }
-}
+// deriveOutcomeExplanation + outcomeColor live in a pure lib module so they can
+// be unit-tested without importing this 'use client' page and its Mantine deps.
 
 type ScoreOrNull = 1 | 2 | 3 | null;
 
@@ -320,6 +194,7 @@ const DimensionRow = memo(function DimensionRow({
   judgeRationale,
   correction,
   owesComments,
+  dimensionsGateOutcome,
   onUpdate,
   onFocus,
   onBlur,
@@ -329,6 +204,11 @@ const DimensionRow = memo(function DimensionRow({
   dim: RunLogDimension;
   judgeRationale: string;
   correction: AnnotationCorrection | undefined;
+  /** From the run log's `dimensions_gate_outcome`. `false` means routing or a
+   *  tag-gated validator decided this test, so an N/A here asserts nothing
+   *  about pass/fail and the picker must offer it even on a recorded 1.
+   *  `undefined` on a run log written before the field shipped. */
+  dimensionsGateOutcome: boolean | undefined;
   /** This test is in a TRUSTED review sample, so every reviewed dimension of it
    *  needs a comment unless it is a confirmed pass or N/A. False on a
    *  pre-sampling run log, where CI asks for no comments at all. */
@@ -350,6 +230,8 @@ const DimensionRow = memo(function DimensionRow({
   // commitComment below. `draft` re-syncs to `persistedComment` whenever the
   // correction changes from outside this row (e.g. "Agree All").
   const [draft, setDraft] = useState(persistedComment);
+  const draftRef = useRef(draft);
+  useEffect(() => { draftRef.current = draft; }, [draft]);
   const lastSyncedRef = useRef(persistedComment);
   if (persistedComment !== lastSyncedRef.current) {
     lastSyncedRef.current = persistedComment;
@@ -374,7 +256,12 @@ const DimensionRow = memo(function DimensionRow({
     !draft.trim() &&
     !confirmedPass &&
     (owesComments || disagrees);
-  const allowNa = dimensionAllowsNa(dim.source, dim.name, dim.score);
+  const allowNa = dimensionAllowsNa(
+    dim.source,
+    dim.name,
+    dim.score,
+    dimensionsGateOutcome,
+  );
 
   const setScore = (s: ScoreOrNull) => {
     onUpdate({
@@ -419,16 +306,22 @@ const DimensionRow = memo(function DimensionRow({
     }
     commitComment(draft);
   };
+  const commitCommentRef = useRef(commitComment);
+  useEffect(() => { commitCommentRef.current = commitComment; });
   useEffect(() => () => {
-    if (commitTimer.current) clearTimeout(commitTimer.current);
+    if (commitTimer.current) {
+      clearTimeout(commitTimer.current);
+      // Latest commitComment and draft, not the mount-time closures.
+      commitCommentRef.current(draftRef.current);
+    }
   }, []);
 
   const handleFocus = () => onFocus({ test_id, source: dim.source, name: dim.name });
 
   return (
     <Card withBorder padding="xs">
-      <Group justify="space-between" align="flex-start" wrap="nowrap">
-        <Box style={{ flex: 1 }}>
+      <Group justify="space-between" align="flex-start" wrap="wrap">
+        <Box style={{ flex: '1 1 240px', minWidth: 0 }}>
           <Group gap={6} mb={2}>
             <Badge color="gray" variant="outline" size="xs">{dim.source}</Badge>
             <Text fw={500}>{dim.name}</Text>
@@ -438,11 +331,11 @@ const DimensionRow = memo(function DimensionRow({
               <Badge color="orange" variant="outline" size="xs">unreviewed</Badge>
             )}
           </Group>
-          <Text size="xs" c="dimmed" style={{ whiteSpace: 'pre-wrap' }}>
+          <Text size="xs" c="dimmed" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
             {judgeRationale || '(no rationale)'}
           </Text>
         </Box>
-        <Stack gap={4} align="flex-end">
+        <Stack gap={4} align="flex-end" style={{ flex: '0 0 auto' }}>
           <Group gap={4}>
             <Text size="xs" c="dimmed">LLM:</Text>
             <Tooltip label={SCORE_SCALE_HINT} openDelay={600} withArrow>
@@ -582,6 +475,7 @@ function ToolArgsTable({
 function GradesPane({
   entry,
   skillUnderTest,
+  isDirect,
   annotation,
   sampled,
   onSetCorrection,
@@ -593,6 +487,8 @@ function GradesPane({
 }: {
   entry: TestEntry;
   skillUnderTest: string;
+  /** Direct-agent test (#2246): `skills_invoked` is empty by construction. */
+  isDirect: boolean;
   annotation: AnnotationFile | null;
   /** Tests the annotation must cover, or null for all of them. */
   sampled: Set<string> | null;
@@ -611,7 +507,7 @@ function GradesPane({
     return m;
   }, [annotation]);
 
-  const dims = entry.outcome_summary.aggregated_dimensions;
+  const dims = reviewDimensions(entry);
   // A test outside the sample is not unreviewed — nothing is asked of it.
   // Without this the header paints "6 unreviewed" on the very test the sidebar
   // labels `not sampled`.
@@ -634,15 +530,20 @@ function GradesPane({
     if (isConfirmedNonFailing(c.llm_score, c.corrected_score)) return false;
     return owesComments || c.corrected_score !== c.llm_score;
   });
-  const explanation = deriveOutcomeExplanation(entry, skillUnderTest);
+  const explanation = deriveOutcomeExplanation(
+    entry,
+    skillUnderTest,
+    isDirect,
+  );
 
   return (
     <Stack gap="sm" p="md" h="100%">
       <Group justify="space-between" wrap="nowrap">
         <Group gap="xs">
           <Title order={4}>{entry.test_id}</Title>
-          <Badge color={outcomeColor(entry.outcome)}>
+          <Badge color={outcomeColor(entry.outcome, entry.expected_outcome)}>
             {entry.outcome}
+            {entry.expected_outcome === 'xfail' ? ' (xfail-marked)' : ''}
           </Badge>
           {entry.flaky ? <Badge color="orange">flaky</Badge> : null}
           {!inSample ? (
@@ -711,6 +612,23 @@ function GradesPane({
         </Group>
       ) : null}
 
+      {entry.dimensions_gate_outcome === false ? (
+        <Alert color="blue" variant="light" title="Dimensions are diagnostic on this test">
+          <Text size="xs">
+            {entry.grading_mode === 'invariant'
+              ? 'grading_mode: invariant — a tag-gated validator decided this outcome.'
+              : entry.grading_mode === 'routing'
+                ? 'grading_mode: routing — which skill fired decided this outcome.'
+                : 'Something other than these scores decided this outcome.'}{' '}
+            The scores below did not change it. A `1` here is a diagnostic
+            signal, not a failure, and it may be a dimension the harness
+            truncated at the hand-off: N/A is offered on every row for that
+            reason. Read the judge&apos;s rationale before agreeing with a
+            score.
+          </Text>
+        </Alert>
+      ) : null}
+
       <Stack gap="xs" style={{ flex: 1 }}>
         {dims.map((d) => {
           const key = `${entry.test_id}|${d.source}|${d.name}`;
@@ -723,6 +641,7 @@ function GradesPane({
               dim={d}
               judgeRationale={d.rationale}
               correction={correctionsByKey.get(key)}
+              dimensionsGateOutcome={entry.dimensions_gate_outcome}
               onUpdate={onSetCorrection}
               onFocus={onDimensionFocus}
               onBlur={onDimensionBlur}
@@ -774,6 +693,12 @@ const TracePane = memo(function TracePane({
     [output],
   );
 
+  // Hook, so it must sit above the `if (!run)` early return with the others.
+  // The graded/ungraded split is a plain derivation further down, where
+  // `testInput` exists. Both live in lib/agentReturns.ts so the gating rule is
+  // unit-tested: a mislabelled panel reads exactly like a correct one.
+  const agentReturns = useMemo(() => parseAgentReturns(output?.agent_returns), [output]);
+
   // Hooks must run unconditionally; we early-return below if !run.
   const testJson = useMemo(
     () => findTestJson(files, skill, entry.test_id),
@@ -816,13 +741,38 @@ const TracePane = memo(function TracePane({
   const attempts = run.skill_attempts ?? 1;
   const judgeSec = (run.judge?.duration_ms ?? 0) / 1000;
 
+  // A direct-agent test has no user turn; the delegation is what the run was
+  // given, so it is what belongs in the trace panel.
+  const testInput = testJson?.input as Record<string, unknown> | undefined;
   const userMessage =
-    (testJson?.input as Record<string, unknown> | undefined)?.user_message as string | undefined;
+    (testInput?.user_message as string | undefined) ??
+    (testInput?.delegation as string | undefined);
   const scenarioNotes =
     (testJson?.input as Record<string, unknown> | undefined)?.scenario_notes as string | undefined;
   const judgeContext = (testJson?.judge_context as string[] | undefined) ?? [];
 
+  // What the JUDGE actually graded.
+  //
+  // On a direct-agent test the judge scores the agent's own return, not
+  // `text_response` -- which is the main thread relaying it, and which
+  // paraphrases. An annotator shown only the relay is confirming a score
+  // against text the grader never saw: in v1_2026-09-28_17-09-14 the relay for
+  // `_009` restates the whole Kirchenbuch article while the graded text is one
+  // line. That applies to every suite with direct tests, not just this one.
+  //
+  // The rule here is the judge's own (`orchestrator.py` ->
+  // `skill_runner.agent_return_text`): only a DIRECT test, and only returns
+  // from the agent under test. A routed run can spawn agents too
+  // (`ut_timeline_008` spawns `record-extractor`) and the judge still grades
+  // `text_response` there, so gating on "any agent return" would mislabel it.
+  const { graded: gradedReturns, other: otherReturns } = splitAgentReturns(
+    agentReturns,
+    typeof testInput?.delegation === 'string',
+    skill,
+  );
+
   const defaultOpen = ['user', 'tools', 'response'];
+  if (gradedReturns.length > 0) defaultOpen.push('agent-return');
   if (judgeContext.length > 0) defaultOpen.push('judge');
   if (filesCreated.length > 0) defaultOpen.push('files');
 
@@ -957,14 +907,55 @@ const TracePane = memo(function TracePane({
           </Accordion.Panel>
         </Accordion.Item>
 
+        {gradedReturns.length > 0 ? (
+          <Accordion.Item value="agent-return">
+            <Accordion.Control>Agent return (what the judge graded)</Accordion.Control>
+            <Accordion.Panel>
+              <Stack gap={6}>
+                {gradedReturns.map((r, i) => (
+                  <Code key={i} block style={{ whiteSpace: 'pre-wrap' }}>
+                    {r.text}
+                  </Code>
+                ))}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
+        ) : null}
+
         <Accordion.Item value="response">
-          <Accordion.Control>Text response</Accordion.Control>
+          <Accordion.Control>
+            {gradedReturns.length > 0
+              ? 'Text response (main-thread relay \u2014 not graded)'
+              : 'Text response'}
+          </Accordion.Control>
           <Accordion.Panel>
             <Code block style={{ whiteSpace: 'pre-wrap' }}>
               {text}
             </Code>
           </Accordion.Panel>
         </Accordion.Item>
+
+        {otherReturns.length > 0 ? (
+          <Accordion.Item value="other-returns">
+            <Accordion.Control>
+              Other agent returns (not graded) ({otherReturns.length})
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Stack gap={6}>
+                {otherReturns.map((r, i) => (
+                  <div key={i}>
+                    <Text size="xs" c="dimmed">
+                      {r.subagent_type}
+                    </Text>
+                    <Code block style={{ whiteSpace: 'pre-wrap' }}>
+                      {r.text}
+                    </Code>
+                  </div>
+                ))}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
+        ) : null}
 
         {filesCreated.length > 0 ? (
           <Accordion.Item value="files">
@@ -1042,7 +1033,7 @@ function TestsPane({
   selectedTestId: string | null;
   onSelect: (test_id: string) => void;
 }) {
-  // The run-log snapshot strips test.name/description/tags (they're
+  // The run-log snapshot strips test.name/description (they're
   // "cosmetic" per eval/CLAUDE.md). Fetch current names from /api/tests
   // so the sidebar shows something a genealogist can read at a glance.
   const namesQuery = useQuery<{ tests: Array<{ id: string; name: string }> }>({
@@ -1071,10 +1062,10 @@ function TestsPane({
       // and paint an orange badge on every test the annotator must not open.
       const total = sampled && !sampled.has(t.test_id)
         ? 0
-        : t.outcome_summary.aggregated_dimensions.length;
+        : reviewDimensions(t).length;
       const reviewed = total === 0
         ? 0
-        : t.outcome_summary.aggregated_dimensions.filter((d) =>
+        : reviewDimensions(t).filter((d) =>
             have.has(`${t.test_id}|${d.source}|${d.name}`),
           ).length;
       out[t.test_id] = { reviewed, total };
@@ -1172,13 +1163,31 @@ export default function RunLogDetailPage({
   params: Promise<{ id: string[] }>;
 }) {
   const { id } = use(params);
-  const runLogId = id.map(decodeURIComponent).join('/');
-  const qc = useQueryClient();
+  // Next has ALREADY decoded these catch-all segments; decoding again turns
+  // `%252e%252e` into `..` after normalisation has run. The four route handlers
+  // were fixed; this fifth site was missed.
+  const runLogId = id.join('/');
 
   const query = useQuery<Detail>({
     queryKey: ['runlog', runLogId],
     queryFn: async () => {
       const res = await fetch(`/api/runlogs/${runLogId}`);
+      if (res.status === 422) {
+        // The annotation file is corrupt (e.g. a temp-name collision spliced
+        // two saves together, or an off-schema file). There is no in-product
+        // repair — explain and give the recovery line, per the
+        // corrupt-annotation guard in eval-crud-ui-spec.md. No delete button:
+        // an unrecoverable destructive action on the annotator's written
+        // comments does not belong on the page where they are already
+        // confused. The route hands us the file path directly.
+        const body = await res.json().catch(() => ({}));
+        const msg: string = body.message ?? 'Annotation file is corrupt.';
+        const filePath: string | undefined = body.filePath;
+        const recovery = filePath
+          ? `\n\nTo recover, delete the corrupt file and re-annotate from the start:\n\n    rm ${filePath}\n\n(Copy it somewhere first if you want to keep the partial content.)`
+          : '';
+        throw new Error(msg + recovery);
+      }
       if (!res.ok) throw new Error(`GET /api/runlogs/${runLogId} → ${res.status}`);
       return res.json();
     },
@@ -1228,25 +1237,79 @@ export default function RunLogDetailPage({
     (next: AnnotationFile) => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(async () => {
+        saveTimer.current = null;
         setSaving('saving');
         try {
+          // Send the latest local state, not the snapshot from when the timer
+          // was set: a PATCH may have landed in the 400ms since.
           const res = await fetch(`/api/runlogs/annotation/${runLogId}`, {
             method: 'PUT',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(next),
+            body: JSON.stringify(localAnnRef.current ?? next),
           });
           if (!res.ok) {
             setSaving('error');
             return;
           }
           setSaving('saved');
-          qc.invalidateQueries({ queryKey: ['runlog', runLogId] });
         } catch {
           setSaving('error');
         }
       }, 400);
     },
-    [runLogId, qc],
+    [runLogId],
+  );
+
+  // Flush the pending save timer on unmount and on tab close.
+  useEffect(() => {
+    const onBeforeUnload = () => {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+        const pending = localAnnRef.current;
+        if (pending) {
+          // Best-effort synchronous send — navigator.sendBeacon cannot set
+          // Content-Type to application/json, so use a keepalive fetch.
+          fetch(`/api/runlogs/annotation/${runLogId}`, {
+            method: 'PUT',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(pending),
+            keepalive: true,
+          }).catch(() => {});
+        }
+      }
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
+    };
+  }, [runLogId]);
+
+  // Per-correction save via PATCH — avoids the full-document race that PUT has
+  // and skips the refetch that clobbers in-progress edits (issue #2487).
+  const patchCorrection = useCallback(
+    async (c: AnnotationCorrection) => {
+      setSaving('saving');
+      try {
+        const res = await fetch(`/api/runlogs/annotation/${runLogId}`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(c),
+        });
+        if (!res.ok) {
+          setSaving('error');
+          return;
+        }
+        setSaving('saved');
+      } catch {
+        setSaving('error');
+      }
+    },
+    [runLogId],
   );
 
   const setCorrection = useCallback(
@@ -1261,9 +1324,14 @@ export default function RunLogDetailPage({
         corrections: c ? [...filtered, c] : filtered,
       };
       setLocalAnn(next);
-      persist(next);
+      if (c) {
+        patchCorrection(c);
+      } else {
+        // Deletion — needs full-document PUT since PATCH only upserts.
+        persist(next);
+      }
     },
-    [persist],
+    [patchCorrection, persist],
   );
 
   const agreeAll = (test_id: string) => {
@@ -1271,7 +1339,7 @@ export default function RunLogDetailPage({
     const test = query.data.runLog.tests.find((t) => t.test_id === test_id);
     if (!test) return;
     const filtered = localAnn.corrections.filter((c) => c.test_id !== test_id);
-    const additions: AnnotationCorrection[] = test.outcome_summary.aggregated_dimensions.map((d) => {
+    const additions: AnnotationCorrection[] = reviewDimensions(test).map((d) => {
       const existing = localAnn.corrections.find(
         (c) =>
           c.test_id === test_id &&
@@ -1302,6 +1370,7 @@ export default function RunLogDetailPage({
       ? tests.findIndex((t) => t.test_id === selectedTestId)
       : -1;
     const nextIdx = currentIdx >= 0 && currentIdx < tests.length - 1 ? currentIdx + 1 : 0;
+    setFocusedDim(null);
     setSelectedTestId(tests[nextIdx].test_id);
   }, [query.data, selectedTestId]);
 
@@ -1332,7 +1401,7 @@ export default function RunLogDetailPage({
         const score = Number(e.key) as 1 | 2 | 3;
         const tests = query.data?.runLog.tests;
         const test = tests?.find((t) => t.test_id === focusedDim.test_id);
-        const dim = test?.outcome_summary.aggregated_dimensions.find(
+        const dim = (test ? reviewDimensions(test) : []).find(
           (d) => d.source === focusedDim.source && d.name === focusedDim.name,
         );
         if (!dim) return;
@@ -1361,7 +1430,11 @@ export default function RunLogDetailPage({
     return <Loader />;
   }
   if (query.isError || !query.data) {
-    return <Alert color="red">{(query.error as Error)?.message ?? 'failed to load'}</Alert>;
+    return (
+      <Alert color="red" style={{ whiteSpace: 'pre-wrap' }}>
+        {(query.error as Error)?.message ?? 'failed to load'}
+      </Alert>
+    );
   }
 
   const log = query.data.runLog;
@@ -1373,7 +1446,7 @@ export default function RunLogDetailPage({
   const allDimensions = log.tests
     .filter((t) => !sampled || sampled.has(t.test_id))
     .flatMap((t) =>
-      t.outcome_summary.aggregated_dimensions.map((d) => ({ t: t.test_id, d })),
+      reviewDimensions(t).map((d) => ({ t: t.test_id, d })),
     );
   const reviewedCount = allDimensions.filter(({ t, d }) =>
     ann?.corrections.some(
@@ -1475,9 +1548,13 @@ export default function RunLogDetailPage({
           </Group>
         </Stack>
         <Group gap="xs">
-          <Text size="xs" c="dimmed">
-            {saving === 'saving' ? 'saving…' : saving === 'saved' ? 'saved' : saving === 'error' ? '⚠ save failed' : ''}
-          </Text>
+          {saving === 'error' ? (
+            <Badge color="red" variant="filled" size="sm">⚠ save failed</Badge>
+          ) : (
+            <Text size="xs" c="dimmed">
+              {saving === 'saving' ? 'saving…' : saving === 'saved' ? 'saved' : ''}
+            </Text>
+          )}
           <Tooltip label="Keyboard shortcuts (?)">
             <Button size="xs" variant="subtle" onClick={() => setHelpOpen(true)}>?</Button>
           </Tooltip>
@@ -1528,12 +1605,21 @@ export default function RunLogDetailPage({
             annotation={localAnn}
             sampled={sampled}
             selectedTestId={selectedEntry?.test_id ?? null}
-            onSelect={(id) => setSelectedTestId(id)}
+            onSelect={(id) => { setFocusedDim(null); setSelectedTestId(id); }}
           />
           {selectedEntry ? (
             <GradesPane
               entry={selectedEntry}
               skillUnderTest={log.skill}
+              isDirect={Boolean(
+                (
+                  findTestJson(
+                    query.data.snapshotFiles ?? {},
+                    log.skill,
+                    selectedEntry.test_id,
+                  )?.input as Record<string, unknown> | undefined
+                )?.delegation,
+              )}
               annotation={localAnn}
               sampled={sampled}
               onSetCorrection={setCorrection}

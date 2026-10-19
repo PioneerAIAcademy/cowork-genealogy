@@ -5,6 +5,7 @@ import type { SimplifiedGedcomX } from "./gedcomx.js";
 import type { RankSearchMatchesResult } from "./rank-search-matches.js";
 import type { RelativeTerms } from "./relative-terms.js";
 import type { JurisdictionCandidate } from "../utils/marriage-jurisdictions.js";
+import type { SurnameVariantHints } from "../utils/surname-variant-hints.js";
 
 export interface FSDisplay {
   name?: string;
@@ -217,10 +218,12 @@ export interface RecordSearchInput {
   isPrincipal?: boolean;
 
   // Results per page. Default 50 when `subjectId` is supplied (ranking is
-  // active, so a deep pool is worth fetching — the re-ranker cuts it back);
-  // otherwise 20. The two are deliberately coupled: a deep pool without
-  // ranking is 50 raw stubs for the model to triage by hand, which is the
-  // waste this default exists to avoid, not create.
+  // active, so a deep pool is worth fetching — every row comes back scored and
+  // ordered); otherwise 20. The two are deliberately coupled: a deep pool
+  // without ranking is 50 raw stubs for the model to triage by hand, which is
+  // the waste this default exists to avoid, not create. Ranking no longer
+  // truncates the pool host-side (#1212) — it orders it and says how good each
+  // row is, so `count` is the only thing that bounds how much comes back.
   count?: number;
   offset?: number;
 }
@@ -251,12 +254,48 @@ export interface RecordSearchResult {
   deathDate?: string;
   deathPlace?: string;
   events: RecordSearchEvent[];
+  // ── Ranking annotations ─────────────────────────────────────────────────
+  // Present only when the search ranked (subjectId + projectPath + staged).
+  // They live on the row rather than on a parallel list because two lists of
+  // the same records, in two shapes, is what the #1212 ruling removed.
+  //
+  // `score`/`confidence` above are FAMILYSEARCH's own search score. These are
+  // the MATCHER's, computed against the subject — different numbers from a
+  // different system, which is why they do not share a name.
+  /** 1-based rank by match score; the order `results` is returned in. */
+  matchRank?: number;
+  /**
+   * The row's original 1-based position in FamilySearch's search order.
+   *
+   * This is what makes the re-ordering AUDITABLE rather than lossy: the
+   * response is sorted by match score, so without this the order the
+   * repository actually returned would be unrecoverable from the response.
+   * The staged sidecar preserves it too, by keeping search order.
+   */
+  searchRank?: number;
+  /** 0-1 match score; null when the FS call kept failing (the row is kept). */
+  matchScore?: number | null;
+  /** 1-5 confidence bucket; omitted on a no-match or a scoring failure. */
+  matchConfidence?: number;
+  /** How many facts this candidate carries that discriminate one human from
+   *  another. A low count means the score is unstable in either direction —
+   *  reported, never thresholded. */
+  candidateFactCount?: number;
+  /** Only set when attachment-checking ran and the batch call succeeded. */
+  attachedToSubject?: boolean;
+  attachedToOther?: boolean;
+  // ────────────────────────────────────────────────────────────────────────
   collectionId?: string;
   collectionTitle?: string;
   collectionUrl?: string;
   recordTitle?: string;
   // The source record/image ARK (the 1:2: entry), e.g.
   // "ark:/61903/1:2:HSJG-CLNF". Canonical ARK form.
+  //
+  // NOT accepted by record_read, which takes the 1:1: persona ARK in
+  // `recordId`. The two id suffixes are unrelated — passing this one used to
+  // return a different, unrelated record as a success (#2061) and is now
+  // refused at the tool boundary.
   recordArk?: string;
   treeMatches: TreeMatch[];
   // Simplified-GedcomX document for this entry, derived from the raw
@@ -286,6 +325,15 @@ export interface RecordSearchResult {
   // Absence means "this record does not trace to a batch", NEVER "this
   // collection has none".
   batchNumber?: string;
+  // FamilySearch's own label for the represented persona's role on this record
+  // ("Principal", "Father", "Mother", "Spouse", "Other"). Flat and top-level
+  // for the same reason as relativeTerms and batchNumber: the staged slim block
+  // strips gedcomx, and a role the model cannot see in the staged case is the
+  // one case that matters. This is FamilySearch's vocabulary, not a
+  // research.json record_role value — an absent role means unknown, never
+  // "principal". Present on 100% of search personas (measured 2026-09-14,
+  // dev/probe-persona-role-coverage.ts).
+  role?: string;
 }
 
 export interface RecordSearchToolResponse {
@@ -295,16 +343,24 @@ export interface RecordSearchToolResponse {
   returned: number;
   offset: number;
   hasMore: boolean;
+  // ALWAYS present. There is one row list, never two: when ranking runs the
+  // rows are ANNOTATED IN PLACE with the score fields and re-ordered best
+  // first, and `ranked` carries metadata only (#1212 ruling, 2026-09-15).
+  // An earlier shape dropped this block whenever `ranked` was usable; that
+  // needed a four-branch conditional and a parity guard to hold two row
+  // shapes in step, and both are gone with it.
   results: RecordSearchResult[];
   // collectionId → collectionTitle for every collection in `results`, present
   // only on a STAGED response. The per-result `collectionTitle` repeats one of a
   // handful of strings on every row (9.4% of inline row bytes, measured); hoisting
   // it here says the same thing once. The staged sidecar keeps the per-row copy.
   collections?: Record<string, string>;
-  // Present only when `subjectId` was supplied and ranking succeeded: the
-  // candidates re-ordered by FamilySearch match score against the subject,
-  // carrying `matchScore` / `matchRank` / `searchRank`. `results` is left in
-  // FamilySearch's own search order so nothing that reads it changes meaning.
+  // Present only when `subjectId` was supplied and ranking succeeded. Carries
+  // METADATA ONLY — `scoredCount`, `returnedCount`, the subject and the
+  // diagnostics — because the rows themselves are annotated in `results` above
+  // and ordered best first, not duplicated here. Every scored candidate is
+  // annotated, not a top-N (#1212). `annotateResultsWithRanking` deletes
+  // `matches` off this block once it has moved the scores onto the rows.
   ranked?: RankSearchMatchesResult;
   // Set only when ranking was requested and failed — the search itself
   // succeeded, and `results` is usable unranked. Ranking degrading must never
@@ -358,4 +414,10 @@ export interface RecordSearchToolResponse {
     candidates: JurisdictionCandidate[];
     note: string;
   };
+  // Present only on a search that did not find the subject — no hits, or hits
+  // ranking judged to hold no match — where a surname field ends in -datter or
+  // -dotter. Lists the abbreviated forms the index may hold (Halsteinsdatter →
+  // Halsteinsdr), one entry per qualifying field. Advisory only; serialized
+  // BEFORE `results` and never staged. See `utils/surname-variant-hints.ts`.
+  surnameVariantHints?: SurnameVariantHints;
 }

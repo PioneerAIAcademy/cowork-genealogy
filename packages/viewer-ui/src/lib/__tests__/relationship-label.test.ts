@@ -263,9 +263,13 @@ describe('orderPersons', () => {
 })
 
 describe('fixture exercises new schema fields', () => {
-  it('attaches an ARK to Patrick (I1)', () => {
+  it('attaches an ARK to Patrick (I1), in canonical bare form', () => {
+    // Canonical per simplified-gedcomx-spec.md §4.1: the resolver-URL prefix
+    // is stripped. A full URL here is the same fixture-shape bug PR #2089
+    // fixed on the fulltext sidecar fixture — it would let a test pass while
+    // production (which expects the bare form) stays broken.
     const patrick = patrickFlynnGedcomx.persons.find((p) => p.id === 'I1')
-    expect(patrick?.ark).toMatch(/^https:\/\/familysearch\.org\/ark:/)
+    expect(patrick?.ark).toMatch(/^ark:\/61903\/4:1:/)
   })
 
   it('carries subtype and notes on the Bridget→Patrick relationship', () => {

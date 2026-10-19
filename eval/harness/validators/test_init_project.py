@@ -19,7 +19,10 @@ criteria-demotion rollout.
 
 from __future__ import annotations
 
+import json
 import re
+
+from collections import Counter
 
 import pytest
 
@@ -39,6 +42,28 @@ def test_both_project_files_created(before_state, after_state, test):
         assert False, "init-project did not create research.json"
     if after_state.get("tree_gedcomx_json") is None:
         assert False, "init-project did not create tree.gedcomx.json"
+
+
+_INIT_TOOLS = ("person_read", "person_search", "project_create")
+
+
+def test_existing_project_is_not_reinitialized(before_state, after_state, tool_calls, test):
+    """Tag-gated on `refuse-if-exists`: with a project already in the folder,
+    init-project's work must not run, whichever skill or agent the request
+    routes to. The negative test grades on this invariant because the right
+    destination may be an agent, and agents are not in `skills_invoked`."""
+    if "refuse-if-exists" not in test.get("tags", []):
+        pytest.skip("not a refuse-if-exists scenario")
+    called = sorted({_tool(c) for c in tool_calls or []} & set(_INIT_TOOLS))
+    assert not called, f"an existing project was re-initialized: called {called}"
+    before = (before_state.get("research_json") or {}).get("project") or {}
+    after = (after_state.get("research_json") or {}).get("project") or {}
+    assert before, "refuse-if-exists needs a scenario with an existing research.json"
+    for key in ("id", "created", "objective"):
+        assert after.get(key) == before.get(key), (
+            f"project.{key} changed from {before.get(key)!r} to {after.get(key)!r}: "
+            "the existing project was replaced"
+        )
 
 
 # --- Opening-turn defaults, checked exactly (tag-gated) -----------------
@@ -71,13 +96,66 @@ def test_objective_default_verbatim(after_state, test):
     )
 
 
+#: Words an objective may use that the user's message need not contain: function
+#: words, and the connectives a sentence of the user's own words needs.
+_OBJECTIVE_FUNCTION_WORDS = frozenset({
+    "about", "after", "also", "and", "around", "before", "from", "into", "that",
+    "their", "them", "then", "there", "these", "they", "this", "were", "what",
+    "when", "where", "which", "while", "with", "came",
+})
+
+
+def _content_words(text: str) -> list[str]:
+    return [w for w in re.findall(r"[a-z0-9]+", text.lower())
+            if len(w) > 3 and w not in _OBJECTIVE_FUNCTION_WORDS]
+
+
+def test_objective_kept_in_the_users_words(after_state, test):
+    """Tag-gated on `objective-stated`: when the user's message states an
+    objective, the stored `project.objective` is that objective in their own
+    words. It is never the generic default, and it adds no direction the user
+    did not state: every content word in it appears in the user's message."""
+    if "objective-stated" not in test.get("tags", []):
+        pytest.skip("not an objective-stated scenario")
+    stated = test.get("delegation") or test.get("user_message") or ""
+    assert stated, "objective-stated requires the user's message"
+    research = after_state.get("research_json")
+    assert research is not None, "objective-stated requires research.json to exist"
+    objective = (research.get("project") or {}).get("objective") or ""
+    assert objective and objective != _DEFAULT_OBJECTIVE, (
+        f"the user stated an objective, so the generic default must not replace it; got: {objective!r}"
+    )
+    said = set(re.findall(r"[a-z0-9]+", stated.lower()))
+    added = sorted({w for w in _content_words(objective) if w not in said})
+    assert not added, (
+        f"the objective adds words the user did not say ({', '.join(added)}); "
+        f"store it in the user's own words. Objective: {objective!r}"
+    )
+
+
 def test_profile_defaults_when_all_default(after_state, test):
     """Tag-gated on `opening-turn-all-defaults`: when the test's premise is
-    that the user answered none of the three opening-turn questions,
-    `researcher_profile.experience_level` and `.subscriptions` must hold
-    the documented defaults exactly -- `intermediate` and `["none"]` -- not
-    be left absent (the pre-#1510 dead-edge-case behavior) and not hold
-    anything else."""
+    that the user answered nothing, `researcher_profile.experience_level` must
+    hold the fixed value -- `novice` (lead ruling 2026-09-18: the profile is
+    never asked) -- not be left absent (the pre-#1510 dead-edge-case behavior)
+    and not hold anything else.
+
+    `subscriptions` is checked in the OPPOSITE direction to the deleted
+    `== ["none"]` assertion: it must be absent, OR carry values the researcher
+    volunteered. The site-access question was dropped from the interview on
+    2026-08-31 and the field is no longer defaulted.
+
+    Deleting the old check outright would have left the behaviour this change
+    exists to produce with no durable guard, so a later edit could reintroduce
+    the default and nothing would fail. Schema validity cannot carry it: absent,
+    `[]` and `["none"]` are all schema-valid.
+
+    Deliberately NOT a blanket "must be absent". That would contradict the
+    ruling, which dropped the question and kept the field -- a researcher who
+    volunteers access unprompted still gets it recorded, and
+    `test_volunteered_subscriptions_do_not_fail` pins that. The regression being
+    guarded is the DEFAULT coming back, so `["none"]` and a defaulted `[]` fail
+    while a volunteered `["Ancestry"]` passes."""
     if "opening-turn-all-defaults" not in test.get("tags", []):
         pytest.skip("not an all-defaults scenario")
     research = after_state.get("research_json")
@@ -89,13 +167,54 @@ def test_profile_defaults_when_all_default(after_state, test):
         "proceeds, so this section should always be written, even when every "
         "answer defaults"
     )
-    assert profile.get("experience_level") == "intermediate", (
-        f"experience_level should default to 'intermediate', got: "
-        f"{profile.get('experience_level')!r}"
+    assert profile.get("experience_level") == _DEFAULT_LEVEL, (
+        f"experience_level is fixed at {_DEFAULT_LEVEL!r} (the profile is never "
+        f"asked), got: {profile.get('experience_level')!r}"
     )
-    assert profile.get("subscriptions") == ["none"], (
-        f"subscriptions should default to ['none'], got: "
-        f"{profile.get('subscriptions')!r}"
+    subs = profile.get("subscriptions")
+    assert subs is None or (isinstance(subs, list) and subs and subs != ["none"]), (
+        "researcher_profile.subscriptions must be ABSENT unless the researcher "
+        "volunteered access unprompted -- site access is no longer asked, so "
+        'nothing may default it. `["none"]` is the specific pre-2026-08-31 '
+        "default this guards against: it asserts the researcher told us they "
+        "have nothing, the opposite of what is now assumed. `[]` is a defaulted "
+        f"empty and is equally wrong. got: {subs!r}"
+    )
+
+
+def test_volunteered_subscriptions_normalized(after_state, test):
+    """Tag-gated on `volunteered-access`: when the researcher volunteers site
+    access unprompted, it is normalized onto the closed `subscriptions` enum and
+    persisted. A local family history centre is `LibraryAccess` (not `other`); a
+    bare FamilySearch account is dropped (it is the baseline every researcher on
+    this product has, not a value on the enum).
+
+    This is the deterministic guard the docstring of
+    `test_profile_defaults_when_all_default` promises but does not itself apply:
+    that check is gated on `opening-turn-all-defaults` and only pins the DEFAULT
+    direction (absent / not `["none"]` / not `[]`). The exact normalized set is
+    fixed by the scenario, so pinning it here takes the field off the flaky judge
+    -- the test's judge_context tells the grader this validator owns it."""
+    if "volunteered-access" not in test.get("tags", []):
+        pytest.skip("not a volunteered-access scenario")
+    research = after_state.get("research_json")
+    if research is None:
+        assert False, "volunteered-access requires research.json to exist"
+    profile = research.get("researcher_profile") or {}
+    subs = profile.get("subscriptions")
+    assert isinstance(subs, list), (
+        "researcher_profile.subscriptions must be written when the researcher "
+        f"volunteered access unprompted, got: {subs!r}"
+    )
+    assert "FamilySearch" not in subs, (
+        "a bare FamilySearch account is the baseline every researcher has and is "
+        f"not a value on the closed enum -- it must not be stored, got: {subs!r}"
+    )
+    assert set(subs) == {"Ancestry", "LibraryAccess"}, (
+        "the volunteered access (Ancestry, plus a local family history centre) "
+        "normalizes onto the closed enum as exactly Ancestry + LibraryAccess -- "
+        "the family history centre is `LibraryAccess`, not `other`, and nothing "
+        f"else is added or dropped, got: {subs!r}"
     )
 
 
@@ -112,20 +231,92 @@ _INIT_EMPTY_SECTIONS = (
 )
 
 
-def test_init_empty_sections(after_state, test):
+def test_init_empty_sections(after_state, test, tool_calls):
     """Tag-gated: at init time, every research.json array section must be
     empty. The init-project workflow surveys known information but does
-    not formulate questions or plans — those are downstream skills."""
+    not formulate questions or plans — those are downstream skills.
+
+    `sources` IS ALLOWED to carry memory transcriptions, and only those. A
+    memory's text is not something the skill formulated — it arrives with the
+    tree read, like the tree sources themselves — and the lead ruled it is
+    persisted at init, to `sources[].transcription`. Every other section, and
+    this one on a person with no memories, is unchanged.
+
+    The exemption is deliberately narrow: an entry qualifies only if its
+    `transcription` is VERBATIM one of the texts `person_read` actually
+    returned. So the skill cannot write a source it invented, and the same check
+    doubles as the verbatim requirement.
+
+    A NULL TRANSCRIPTION IS NO LONGER ALLOWED (decision 5, 2026-09-17). An
+    untranscribed memory gets no `sources` entry at all: it is already in
+    `tree.gedcomx.json` with its title and URL, so the lead survives, and what a
+    `sources` entry would add is the assertion that someone examined it -- the
+    one thing that is not true. Acceptance 14 is the case this pins: on a person
+    whose kept memories all came back untranscribed, `sources` is empty.
+
+    GATED ON MEMORIES RETURNED, NOT ON TEXT RETURNED. Gating on text alone was
+    wrong in both directions. A person whose memories all miss the budget or all
+    fail OCR returns no text at all, so the exemption never engaged and the
+    validator red-flagged a skill doing exactly what SKILL.md tells it to --
+    acceptance 11 is precisely that case. And with one text present the null
+    branch was unbounded, so any number of invented `transcription: null`
+    entries passed. `artifact_url` is the discriminator because `person_read`
+    puts it on every memory source and on nothing else; the count of them is
+    also the ceiling, since research.json cannot hold more memory-derived
+    sources than there were memories.
+    """
     if "init-empty-sections" not in test.get("tags", []):
         pytest.skip("not an init-empty-sections scenario")
     research = after_state.get("research_json")
     if research is None:
         assert False, "init-empty-sections requires research.json to exist"
+
+    memory_sources = [
+        s
+        for response in _responses(tool_calls, "person_read")
+        for s in (response.get("sources") or [])
+        if isinstance(s, dict)
+        and (
+            s.get("artifact_url")
+            or (isinstance(s.get("text"), str) and s["text"].strip())
+        )
+    ]
+    returned_texts = {
+        s["text"]
+        for s in memory_sources
+        if isinstance(s.get("text"), str) and s["text"].strip()
+    }
+
     non_empty = []
     for section in _INIT_EMPTY_SECTIONS:
         value = research.get(section, [])
-        if value:
-            non_empty.append(f"{section} ({len(value)} entries)")
+        if not value:
+            continue
+        if section == "sources" and memory_sources:
+            if len(value) > len(memory_sources):
+                non_empty.append(
+                    f"sources ({len(value)} entries, but person_read returned "
+                    f"only {len(memory_sources)} memories -- the exemption "
+                    f"cannot admit more entries than there were memories)"
+                )
+                continue
+            stray = [
+                e.get("gedcomx_source_description_id") or "<no id>"
+                for e in value
+                if not isinstance(e, dict)
+                # `None not in returned_texts` is what retires the null branch:
+                # a null-transcription entry is now stray like any other.
+                or e.get("transcription") not in returned_texts
+            ]
+            if not stray:
+                continue
+            non_empty.append(
+                f"sources ({len(stray)} entries whose transcription is not "
+                f"verbatim from person_read, or is null for a memory that was "
+                f"never transcribed and so gets no entry at all: {stray})"
+            )
+            continue
+        non_empty.append(f"{section} ({len(value)} entries)")
     assert not non_empty, (
         f"research.json sections not empty at init: {non_empty}. "
         f"init-project should leave questions/plans/log/sources/assertions/"
@@ -144,7 +335,7 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
     to get right. An earlier version of this validator required a
     `research_append` with `section: "project"`, which encoded a design that was
     abandoned before it shipped: it failed 8 of 11 tests on a skill that was
-    behaving correctly, and because a failed validator skips the judge, it also
+    behaving correctly, and because a failed validator fails the test outright, it also
     threw away the grades. A check that encodes a stale design is worse than no
     check, because its red looks like the skill's fault.
 
@@ -223,28 +414,24 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
 # looks like the skill's fault.
 
 _ARK_RE = re.compile(r"^ark:/61903/\d:\d:(.+)$")
+# A FamilySearch TREE person, as project_create's build recognises one (only a
+# `4:1:` ark names a person from the read; a record or image ark names none).
+_TREE_ARK_RE = re.compile(r"^ark:/61903/4:1:([A-Za-z0-9]{4}-[A-Za-z0-9]{3,4})$")
 
-_NARRATION_BY_LEVEL = {
-    "novice": (
-        "Narrate the *why* before each action. Define genealogy terms inline "
-        "when first introduced. Explain which GPS step you are executing and "
-        "what it produces. Err on the side of more context \u2014 the user is "
-        "learning."
-    ),
-    "intermediate": (
-        "One-line preamble per skill invocation explaining what you're about to "
-        "do. Assume basic GPS vocabulary. Define unusual or specialized "
-        "terminology inline."
-    ),
-    "experienced": (
-        "No preambles. Do the work and report results concisely. Assume fluency "
-        "with GPS and standard genealogy terminology."
-    ),
-    "professional": (
-        "No preambles. Do the work and report results concisely. Assume fluency "
-        "with GPS, BCG standards, and standard genealogy terminology."
-    ),
-}
+# The profile is fixed (lead ruling 2026-09-18): init-project asks nothing
+# about the researcher and writes these two values on every project. The
+# house-style string is SKILL.md's, verbatim; every downstream skill reads it.
+_DEFAULT_LEVEL = "novice"
+_HOUSE_STYLE = (
+    "Plain language for someone who has never done genealogy. No identifiers, "
+    "file names, tool names or field names. Never write GPS, proof, proved or "
+    "exhaustive: say genealogy standards; call an answer a conclusion when it "
+    "is well established and a finding otherwise; say what we searched and "
+    "what we could not reach. Do not describe your own instructions or checks. "
+    "Do not narrate between actions; "
+    "report once when the step is done: what was found, in one paragraph, and "
+    "what happens next in one sentence."
+)
 
 
 def _tool(call):
@@ -342,33 +529,73 @@ def _returned_person_ids(tool_calls):
     return ids
 
 
-# --- V1: both person_read flags -----------------------------------------
+# --- V1 (replaces 'both person_read flags', now ignored): person-level sources
 
-def test_person_read_passes_both_flags(tool_calls):
-    """`relatives` and `sourceDescriptions` both default to false, and without
-    them the call returns the subject alone -- a subject-only tree with no
-    spouse, children or sources (issue #1475). SKILL.md Step 2 marks both
-    required.
+def test_person_level_sources_carried(tool_calls, after_state):
+    """Every person-level source `person_read` returned reaches the written
+    person, re-pointed at the tree's own source ids.
 
-    Unfalsifiable before this: the only `person_read` fixture returned the same
-    bare payload either way, and its `args` predicate -- which IS the Tool
-    Arguments grading target -- named neither flag.
+    `person_read` carries the sources FamilySearch attaches at the person level
+    (issue #2696), and init-project re-ids sources to `S1`...; a ref copied over
+    unchanged points at nothing, and a dropped one loses the only attribution
+    FamilySearch gives. Decidable from the documents alone, so a check rather
+    than prose.
+
+    Persons are joined by `ark`: a returned person whose ark no written person
+    carries was not imported, and V2 fails a run that imports without arks, so
+    that join cannot quietly check nothing. Sources are matched by
+    (title, citation, url) as a multiset, because FamilySearch titles are
+    "Name, \"Collection\"" and two events in one collection share a title.
     """
-    calls = [c for c in tool_calls or [] if _tool(c) == "person_read"]
-    if not calls:
-        pytest.skip("no person_read call")
+    tree = _written_tree(after_state)
+    if not tree.get("persons"):
+        pytest.skip("no tree written")
+    by_ark = {
+        p.get("ark"): p for p in tree.get("persons") or [] if isinstance(p, dict)
+    }
+
+    def _key(src):
+        return (src.get("title"), src.get("citation"), src.get("url"))
+
+    tree_sources = {
+        s.get("id"): _key(s) for s in tree.get("sources") or [] if isinstance(s, dict)
+    }
+    checked = 0
     bad = []
-    for call in calls:
-        args = call.get("args") or {}
-        missing = [
-            flag for flag in ("relatives", "sourceDescriptions")
-            if args.get(flag) is not True
-        ]
-        if missing:
-            bad.append(f"{args.get('personId')!r} missing {missing}")
+    for response in _responses(tool_calls, "person_read"):
+        sources = {
+            s.get("id"): _key(s)
+            for s in response.get("sources") or []
+            if isinstance(s, dict) and s.get("id")
+        }
+        for person in response.get("persons") or []:
+            if not isinstance(person, dict) or not person.get("id"):
+                continue
+            want = Counter(
+                sources[r.get("ref")]
+                for r in person.get("sources") or []
+                if isinstance(r, dict) and r.get("ref") in sources
+            )
+            written = by_ark.get(f"ark:/61903/4:1:{person['id']}")
+            if not want or written is None:
+                continue
+            checked += 1
+            refs = [r for r in written.get("sources") or [] if isinstance(r, dict)]
+            dangling = [r.get("ref") for r in refs if r.get("ref") not in tree_sources]
+            got = Counter(tree_sources[r.get("ref")] for r in refs if r.get("ref") in tree_sources)
+            missing = want - got
+            if dangling:
+                bad.append(f"{written.get('id')} ({person['id']}): refs {dangling} name no tree source")
+            if missing:
+                bad.append(
+                    f"{written.get('id')} ({person['id']}): missing person-level sources "
+                    f"{sorted(k[0] or '' for k in missing.elements())}"
+                )
+    if not checked:
+        pytest.skip("no imported person carries person-level sources")
     assert not bad, (
-        "person_read must pass relatives: true AND sourceDescriptions: true -- "
-        "without them the import is silently subject-only: " + "; ".join(bad)
+        "person-level sources returned by person_read did not reach the tree "
+        "re-pointed at its source ids: " + "; ".join(bad)
     )
 
 
@@ -407,13 +634,13 @@ def test_tree_ark_is_canonical_and_traceable(after_state, tool_calls):
     for pid, name_key in returned.items():
         candidates = written_by_name.get(name_key) or []
         if not candidates:
-            continue  # not imported; V1 and the judge cover what was dropped
+            continue  # not imported; the judge covers what was dropped
         expected = f"ark:/61903/4:1:{pid}"
         # ANY same-named written person carrying this pid's ark satisfies it. A
         # single person per name would blame a Sr./Jr. pair -- or same-named
         # siblings, which #1689 adds to the family fixture -- for each other's
         # pid, failing a correct import and costing the test its whole grade
-        # (a failed validator skips the judge).
+        # (a failed validator fails the test outright; the judge still grades it, for diagnosis).
         if any(p.get("ark") == expected for p in candidates):
             continue
         given, surname = name_key
@@ -452,14 +679,60 @@ def test_tree_ark_is_canonical_and_traceable(after_state, tool_calls):
 
 # --- V3: standard_place provenance --------------------------------------
 
+def _relationship_owner(rel, pid_of):
+    """A relationship's identity as (type, endpoint PIDs), a Couple unordered.
+
+    `pid_of` maps an endpoint as the document spells it to a FamilySearch PID:
+    identity for a person_read response, the person's ark for a written tree.
+    """
+    if rel.get("type") == "Couple":
+        ends = tuple(sorted(str(pid_of(rel.get(k))) for k in ("person1", "person2")))
+    else:
+        ends = (str(pid_of(rel.get("parent"))), str(pid_of(rel.get("child"))))
+    return (rel.get("type"), ends)
+
+
+def _tree_fact_owners(tree):
+    """(owner, fact) for every tree fact, the owner named by FamilySearch PID:
+    a person by its tree ark, a relationship by its type and endpoint arks. A
+    fact on a person with no tree ark (none, or a record/image ark) gets owner
+    None and matches no returned fact."""
+    pid_by_id = {}
+    for person in tree.get("persons") or []:
+        match = _TREE_ARK_RE.match(person.get("ark") or "")
+        pid_by_id[person.get("id")] = match.group(1) if match else None
+    for person in tree.get("persons") or []:
+        for fact in person.get("facts") or []:
+            if isinstance(fact, dict):
+                yield pid_by_id.get(person.get("id")), fact
+    for rel in tree.get("relationships") or []:
+        owner = _relationship_owner(rel, pid_by_id.get)
+        for fact in rel.get("facts") or []:
+            if isinstance(fact, dict):
+                yield owner, fact
+
+
 def test_standard_place_came_from_a_tool(after_state, tool_calls):
     """`standard_place` means "FamilySearch's standardized name", so a value no
     place authority returned is a claim about FamilySearch's vocabulary that
     FamilySearch did not make.
 
-    Two legitimate origins: carried from a `person_read` fact that already had
-    one, or taken from a `place_search` result. A copy of the fact's own
-    free-text `place` is neither -- that is the 56-value defect this closes.
+    Three legitimate origins: carried from a `person_read` fact that already
+    had one; taken from a `place_search` result; or, when `project_create` built
+    the tree from a staged read (`personReadRef`, issue #2944), resolved by its
+    host-side retry for a fact that read (the one the ref named, never a second
+    `person_read`) returned with a `place` and no `standard_place`. The third is
+    matched on the fact's owner (by FamilySearch PID), type and raw `place`,
+    which the build carries unchanged, and only for facts that really arrived
+    unresolved, and only for the value the build wrote into the write-once
+    `starting-tree.gedcomx.json`. Fourth: every hand-entered place (the whole
+    tree without `personReadRef`, an addition with one) `project_create`
+    standardizes itself and reports in `placesFilled`, once per place however
+    else it was spelled (trimmed, case-folded, spaces collapsed); such a value
+    is accepted for that place only, and only as written into the starting
+    tree. A copy of the
+    fact's own free-text `place` is none of these -- that is the 56-value defect
+    this closes.
     """
     tree = _written_tree(after_state)
     written = [
@@ -476,11 +749,82 @@ def test_standard_place_came_from_a_tool(after_state, tool_calls):
         for result in response.get("results") or []:
             if result.get("standardPlace"):
                 allowed.add(result["standardPlace"])
+    # Only a ref call that SUCCEEDED built the tree; a refused one built nothing.
+    # And the host retry covered only the read that ref named, never a second
+    # person_read whose people joined as additions.
+    # By staged file name: project_create accepts `./results/...`, an absolute
+    # path and other spellings of one ref, and every staged name is a fresh uuid.
+    def staged_name(ref):
+        return ref.strip().replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
+
+    built_refs = {
+        staged_name(c["args"]["personReadRef"])
+        for c in tool_calls or []
+        if _tool(c) == "project_create"
+        and isinstance((c.get("args") or {}).get("personReadRef"), str)
+        and isinstance(c.get("response"), dict)
+        and c["response"].get("ok") is True
+    }
+    # Every returned fact, not `_returned_person_facts`: that keys on
+    # (owner, type) and keeps one fact per type, so a second Residence, or a
+    # second Couple's Marriage, would be lost.
+    # Keyed on the owner too: a fact the read left unresolved on one person
+    # must not exempt an invented value on another person's fact of that type.
+    host_filled = set()
+    for response in _responses(tool_calls, "person_read"):
+        staged = response.get("staged")
+        if isinstance(staged, dict) and isinstance(staged.get("resultsRef"), str) \
+                and staged_name(staged["resultsRef"]) in built_refs:
+            holders = [
+                *((p.get("id"), p) for p in response.get("persons") or []),
+                *(
+                    (_relationship_owner(r, lambda v: v), r)
+                    for r in response.get("relationships") or []
+                ),
+            ]
+            for owner, holder in holders:
+                for f in holder.get("facts") or []:
+                    if isinstance(f, dict) and f.get("place") and not f.get("standard_place"):
+                        host_filled.add((owner, f.get("type"), f.get("place")))
+    # What a successful project_create resolved itself, by place as its
+    # resolver groups them.
+    def place_key(place):
+        return " ".join(place.lower().split()) if isinstance(place, str) else place
+
+    hand_filled = set()
+    for c in tool_calls or []:
+        resp = c.get("response")
+        if _tool(c) == "project_create" and isinstance(resp, dict) and resp.get("ok") is True:
+            for item in resp.get("placesFilled") or []:
+                if isinstance(item, dict):
+                    hand_filled.add((place_key(item.get("place")), item.get("standardPlace")))
+    owner_of = {id(f): owner for owner, f in _tree_fact_owners(tree)}
+    # What the host build actually wrote: the write-once starting tree. A value
+    # on that fact now that differs from it (a copy of `place`, or anything a
+    # later `tree_edit` invented) is not the host's fill.
+    baseline = set()
+    raw = (after_state.get("files") or {}).get("starting-tree.gedcomx.json")
+    try:
+        starting = json.loads(raw) if isinstance(raw, str) else None
+    except ValueError:
+        starting = None
+    if isinstance(starting, dict):
+        baseline = {
+            (owner, f.get("type"), f.get("place"), f.get("standard_place"))
+            for owner, f in _tree_fact_owners(starting)
+        }
 
     bad = []
     for pid, fact in written:
         value = fact["standard_place"]
         if value in allowed:
+            continue
+        # A resolved name can equal the raw text ("Ireland"), so no copy check
+        # here: the fact arrived unresolved and the host resolver filled it.
+        key = (owner_of.get(id(fact)), fact.get("type"), fact.get("place"))
+        if key in host_filled and (*key, value) in baseline:
+            continue
+        if (place_key(fact.get("place")), value) in hand_filled and (*key, value) in baseline:
             continue
         note = (
             " (a copy of the fact's own free-text place)"
@@ -543,25 +887,20 @@ def test_every_fact_and_relationship_is_sourced(after_state, test):
     relationship, at `quality: 1`. On the objective-only path the researcher's
     own statement is the source, and the rule is unchanged.
 
+    Since issue #2944 `project_create` writes these refs itself: from a staged
+    `person_read` every fact and relationship gets the FamilySearch-tree ref, and
+    on the objective-only path anything unsourced is cited to the researcher's
+    statement. So this now checks the tool's build, not the skill's prose.
+
     `test_id_references_resolve` already checks that a ref which EXISTS
     resolves. Nothing checked that one exists -- and on the objective-only path
     the tree landed with `sources: []` and facts carrying no `sources` key at
     all, in four of four runs.
 
-    KNOWN CONTRADICTION, quality only. `SKILL.md` is unambiguous ("Source every
-    FamilySearch fact with `quality: 1`", and the researcher's own statement the
-    same), and every run in the corpus writes 1 -- but
-    `references/simplified-gedcomx-summary.md` still documents the field as
-    optional and illustrates it with a `2`, since it describes the format
-    generically rather than this skill's use of it. A model that follows the
-    reference instead of the body would fail here.
-
-    Kept strict rather than relaxed, because the presence-and-resolution half is
-    what the defect was and dropping the value check would also stop catching an
-    overstated quality on unverified tree data. Aligning the reference's three
-    example values is the correct companion fix and is DEFERRED: that file is
-    snapshot-tracked, so editing it invalidates the run log this PR bought. It
-    rides the next run that touches the skill dir, together with V7's tag.
+    Kept strict on the value (`quality: 1`, as `SKILL.md` and
+    `references/simplified-gedcomx-summary.md` both say), because dropping the
+    value check would also stop catching an overstated quality on unverified
+    tree data.
     """
     if test.get("type") != "positive":
         pytest.skip("sourcing rules apply only to positive tests")
@@ -601,10 +940,17 @@ def test_every_fact_and_relationship_is_sourced(after_state, test):
 # --- V6: the note is dropped, not the source ----------------------------
 
 def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
-    """`person_read` emits `notes` on a source; `TREE_SOURCE_FIELDS` rejects the
-    field, so a verbatim copy fails the `project_create` write. The plausible
-    wrong fix is to drop the whole source -- silently losing evidence the survey
-    found. Drop the note, keep the source.
+    """`person_read` emits fields a tree source may not carry -- `notes`, and now
+    `text`, `image_ref` and `artifact_url` on a memory; `TREE_SOURCE_FIELDS`
+    rejects them, so a verbatim copy fails the `project_create` write. The plausible wrong fix is to
+    drop the whole source -- silently losing evidence the survey found. Drop the
+    extra field, keep the source.
+
+    Checked against the ALLOW-LIST rather than against a list of known-bad names:
+    `notes` was the first field to do this and `text`/`image_ref`/`artifact_url`
+    followed, so a name-by-name check would go stale the next time person_read
+    grows a field -- as it just did, and this check needed no edit to cover it. Mirrors TREE_SOURCE_FIELDS in
+    packages/engine/mcp-server/src/validation/tree-shape.ts.
 
     Joined on `title`, because the skill re-ids sources to S1... on the way in.
     """
@@ -618,8 +964,12 @@ def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
     written = _written_tree(after_state).get("sources") or []
     titles = {s.get("title") for s in written}
 
+    allowed = {"id", "title", "citation", "author", "url"}
     bad = [
-        f"{s.get('id')}: has notes {s['notes']!r}" for s in written if s.get("notes")
+        f"{s.get('id')}: carries {sorted(set(s) - allowed)!r}, which "
+        f"project_create rejects"
+        for s in written
+        if isinstance(s, dict) and set(s) - allowed
     ]
     bad += [
         f"{s.get('id')} {s.get('title')!r}: returned by person_read but absent "
@@ -627,21 +977,24 @@ def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
         for s in returned if s.get("title") not in titles
     ]
     assert not bad, (
-        "drop the note, keep the source -- the survey found it: " + "; ".join(bad)
+        "drop the extra field, keep the source -- the survey found it: "
+        + "; ".join(bad)
     )
 
 
-# --- V5: narration_guidance verbatim ------------------------------------
+# --- V5: the fixed profile, verbatim ------------------------------------
 
-def test_narration_guidance_is_verbatim_for_the_level(after_state):
-    """A closed four-way mapping: `experience_level` keys one fixed string, and
-    SKILL.md calls it verbatim ("stored verbatim, not paraphrased").
+def test_narration_guidance_is_the_house_style(after_state):
+    """One fixed profile: `novice` plus the house-style string, stored verbatim
+    ("stored verbatim, not paraphrased"). Nothing about the researcher is asked
+    (lead ruling 2026-09-18), so any other level -- including one the user
+    volunteered -- is a defect: a user setting will own the level later.
 
     Its twin -- the objective's verbatim default -- already has a validator
     (`test_objective_default_verbatim`, issue #1510, added precisely so the
-    check lived in code rather than in judge interpretation). This one did not.
-    Every downstream SKILL.md reads this field as its narration style, so a
-    paraphrase degrades every later invocation in the project.
+    check lived in code rather than in judge interpretation). Every downstream
+    SKILL.md reads this field as its narration style, so a paraphrase degrades
+    every later invocation in the project.
     """
     research = after_state.get("research_json") or {}
     profile = research.get("researcher_profile") or {}
@@ -649,13 +1002,13 @@ def test_narration_guidance_is_verbatim_for_the_level(after_state):
     guidance = profile.get("narration_guidance")
     if not level and not guidance:
         pytest.skip("no researcher_profile written")
-    assert level in _NARRATION_BY_LEVEL, (
-        f"experience_level {level!r} is not one of {sorted(_NARRATION_BY_LEVEL)}"
+    assert level == _DEFAULT_LEVEL, (
+        f"experience_level must be {_DEFAULT_LEVEL!r} -- the profile is fixed and "
+        f"never asked; got {level!r}"
     )
-    expected = _NARRATION_BY_LEVEL[level]
-    assert guidance == expected, (
-        f"narration_guidance for {level!r} must be the SKILL.md table text "
-        f"verbatim.\n  expected: {expected!r}\n  got:      {guidance!r}"
+    assert guidance == _HOUSE_STYLE, (
+        "narration_guidance must be the SKILL.md house-style text "
+        f"verbatim.\n  expected: {_HOUSE_STYLE!r}\n  got:      {guidance!r}"
     )
 
 
@@ -673,15 +1026,9 @@ def test_search_before_stubs(tool_calls, after_state, test):
     prose would have failed `ut_init_project_002`, which the 2026-08-20
     annotation confirmed as a pass.
 
-    DORMANT ON THE CURRENT SUITE, deliberately: no init-project test carries the
-    tag, so this skips on all twelve. `new-project-from-search`
-    (`ut_init_project_004`) is its right home -- "I don't have his FamilySearch
-    ID", no claim of absence, and it does search -- but adding a tag edits a
-    snapshot-tracked test file, which would invalidate the run log this PR just
-    bought and cost another paid run. Tag it on the next run that touches that
-    file. Until then the firing behaviour is held by the mutation tests rather
-    than by the suite, which is worth knowing when reading a run log where this
-    line says "skipped".
+    Armed on `new-project-from-search` (`ut_init_project_004`): "I don't have his
+    FamilySearch ID", no claim of absence, and it does search. Every other
+    init-project test skips it.
     """
     if "expects-person-search" not in test.get("tags", []):
         pytest.skip("not an expects-person-search scenario")

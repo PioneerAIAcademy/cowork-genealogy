@@ -1,0 +1,334 @@
+{
+  "run_log": "v1_2026-09-18_21-06-39.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_citation_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified James Brown as a secondary informant for the father's name on src_004. The conclusion was directly supported by the persisted assertion data (a_013), which explicitly classified the informant as secondary and explained the basis: a son-in-law reporting information about his father-in-law’s parentage. The response accurately used the available evidence and did not introduce unsupported interpretations."
+    },
+    {
+      "test_id": "ut_citation_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response fully answered the user’s factual question about the informant classification on src_004. It correctly identified James Brown as the secondary informant, explained his relationship as son-in-law, and accurately described why the information is considered secondary (reporting inherited family knowledge rather than firsthand knowledge). The use of assertion a_013 supports the conclusion, and the comparison with the physician as a primary informant provided relevant context without detracting from the answer. No required elements were omitted."
+    },
+    {
+      "test_id": "ut_citation_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. The single mcp__genealogy__research_query call used valid arguments, including the correct project path, section='assertions', and sourceId='src_004'. The call successfully returned the relevant assertions, including a_013, which contained the informant classification needed to answer the question. No argument errors or tool misuse occurred."
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly analyzed the citation-replication problem and accurately identified the major gaps, including the missing ARK, incomplete source identification, and insufficient date precision. The reasoning about what needed verification was sound. However, the suggested corrected citation introduced an unsupported concrete detail: the year range “1906–1967” for the Pennsylvania Death Certificates collection. Because that date range was not present in the project data (research.json or tree.gedcomx.json), it was an invented value and violated the requirement not to add unsupported citation details. The main analysis was strong, but the fabricated year range prevents a full score."
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response fully addressed the user’s request by applying the Evidence Explained replication test across the relevant citation elements. It identified the strengths and weaknesses of the citation, explained why missing elements such as the ARK/permalink, collection identification, and date precision affect reproducibility, provided a clear replication assessment, and supplied a corrected citation format. The analysis covered the full scope of the task and did not omit any required component."
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was correct and appropriate. The skill made a valid research_query call with the correct projectPath, section='sources', and sourceId='src_004'. The call successfully retrieved the needed source record, matched the live fixture behavior, and provided the information required for the citation replication analysis. No argument errors or tool misuse occurred."
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly identified most of the Evidence Explained elements present in the src_004 citation: creator, record type, specific identifier, and subject name. It also correctly noticed that the citation uses only a year rather than the more precise full date. However, it did not fully distinguish between a missing element in the formatted citation and an element that exists elsewhere in the project data. The collection title “Pennsylvania Death Certificates” was available in tree.gedcomx.json, so the analysis should have acknowledged that the information was on file but omitted from the citation string. The response’s gap identification was directionally correct, but its treatment of the collection-title issue was incomplete."
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly applied the replication threshold by recognizing that the certificate number, jurisdiction, and year provide enough specificity to locate the record. However, it missed several important on-file details that should have been incorporated into the evaluation. The collection title “Pennsylvania Death Certificates” was available in tree.gedcomx.json and should have been recognized as usable citation information rather than treated only as a missing element. The response also failed to note additional available strengthening details, including the exact death date (12 March 1908) and death location (Schuylkill County, Pennsylvania). Additionally, the corrected citation introduced the unsupported year range “1906–1967,” which violated the requirement to avoid invented citation details. The core replication reasoning was correct, but the citation reconstruction introduced unsupported information and missed available evidence."
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly distinguishes between the source-level classification of the death certificate as an original source and the quality of information provided by different informants. It properly separates the record type from the reliability of individual assertions, recognizing that James Brown’s information is secondary for Patrick Flynn’s birth details but may be primary for facts directly within his own knowledge, such as the death circumstances. No conflation between source classification and information quality occurred."
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Source fidelity — no fabricated detail",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response’s evaluation of the existing citation was accurate and faithful to the available project data. It correctly recognized the supported elements, including the collection title, ARK, and access date. However, the corrected citation introduced the unsupported year range “1906–1967” for the Pennsylvania Death Certificates collection. That value was not present in research.json or tree.gedcomx.json, making it an invented locator detail and a violation of source fidelity requirements. The main analysis was sound, but the fabricated citation detail prevents a full score."
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — the write path",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly limited its actions to the requested replication analysis. It retrieved the necessary source information using research_query and did not make unnecessary changes to research.json or tree.gedcomx.json. Since no write operation occurred, a validation call was not required. The workflow was appropriate and respected the task boundaries."
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly identified and corrected the citation issues in src_002 while maintaining source fidelity. It accurately changed the description from “digital image” to “digital index” to reflect the derivative nature of the source, removed the unsupported wording from the what field, added the collection name to where, and added the family identifier to where_within. All updates were traceable to the available source data, and no unsupported or fabricated citation details were introduced. The resulting citation follows the appropriate derivative-index citation pattern."
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully completed the required citation correction workflow. It addressed all required fixes from the user request and per-test context: corrected the source type designation, added the missing family number to where_within, included the collection name, regenerated the citation using the correct derivative-index pattern, and ran validate_research_schema after the write. No required correction steps were missed, and the workflow was completed correctly."
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool usage was correct and followed the expected workflow. The research_append operation properly used op: \"update\" with the correct entryId (src_002) and limited the changes to the relevant citation fields (citation, citation_detail, and notes). The subsequent validate_research_schema call used the correct project path and appropriately verified the updated project state. No unnecessary or incorrect tool actions were taken."
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly identifies and evaluates all five Who/What/When/Where/Where-within elements for a derivative index source. The elements are appropriately populated: the original record creator is identified, the record type is specified, the creation and access dates are distinguished, the digital repository and collection are included, and the internal location details provide a clear path to the specific entry. The citation structure is appropriate for a derivative census index source, with no unsupported additions or missing required elements."
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the citation’s locator completeness and source fidelity. It confirms that all available locators from the source data are included, including dwelling 84, family 91, and the Thomas Flynn entry identifier. It also correctly notes that page, sheet, or line numbers were not added because they were not present in the available data, avoiding invented details. The citation provides sufficient information for another researcher to locate the same derivative index record."
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly maintains the distinction between source classification and information quality. It keeps the source classified as derivative because the census record is being accessed through a derivative index rather than the original record image. It does not confuse the nature of the source with the reliability of individual assertions extracted from it. The classification is appropriate and the methodology is correctly applied."
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Source fidelity — no fabricated detail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the citation’s source fidelity. The cited details are traceable to the available source data, including the dwelling number, family number, Thomas Flynn household entry, and access date. It appropriately avoids adding unsupported locators such as page numbers or other invented identifiers. The citation remains honest about what information is available and provides enough detail for another researcher to locate the same record."
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — the write path",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The workflow execution was correct. The skill used research_append with op: \"update\" on src_002 and limited the changes to the required fields (citation, citation_detail, and notes). The subsequent validate_research_schema call was correctly performed and returned a valid result with no errors. The reported validation status matches the tool results, and no unauthorized tools or unnecessary operations were used."
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the refined citation and maintains source fidelity. It accurately identifies the recorder as the source creator based on the GedcomX author field, preserves the documented grantor-to-grantee relationship, and retains the correct year from the source entry. It appropriately marks missing deed details (such as book/page and execution or recording dates) as unknown rather than inventing values. No unsupported details were introduced into the citation fields."
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully completed the deed citation refinement requirements. It corrected the who field, preserved the documented grantor–grantee relationship, and completed all five Evidence Explained elements (who, what, when, where, where-within) with appropriate detail or explicit unknown markers where information was unavailable. It also correctly identified the remaining gaps—such as the Deed Book locator and execution/recording dates—so they can be supplied later from the original record image rather than being guessed. The citation_detail structure was complete and properly populated."
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The MCP tool usage was fully correct. The research_append call properly used op: \"update\" on src_008, applied the refined citation fields, and included the required documentation in the notes. The subsequent validate_research_schema call used the correct project path and confirmed the updated structure. No fixture_not_found errors occurred, and all arguments matched the expected tool behavior."
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the citation against the five Evidence Explained elements. Each element is appropriately populated: the recording office is correctly identified as the creator, the deed type and parties are clearly stated, the year is retained from the available evidence, the repository is identified, and the missing deed book/page locator is honestly marked with an unknown indicator rather than invented. The citation framework is complete, and the handling of missing information follows good source-citation practice."
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly applied the replication standard by distinguishing between available and unavailable citation details. It accurately recognized that src_008 only provides the year, parties, and jurisdiction, while deed book/page details and execution or recording dates are not present in the available data. The use of explicit unknown-markers and the recommendation to obtain missing details from the original deed image demonstrate proper source fidelity. No unsupported locators or invented citation details were introduced, so the citation passes the replication requirement."
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Source fidelity — no fabricated detail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill demonstrates strong source fidelity. Every concrete value in the citation and explanation is traceable to the available source data or user-provided context. It correctly uses the GedcomX author information for the recorder, preserves the documented grantor–grantee relationship, retains the supported year and access date, and avoids inventing missing deed locators. The unknown-markers are appropriately used for unavailable details, and the notes properly distinguish inferred information from verified facts. No unsupported sample values or fabricated citation details were introduced."
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly recognizes that the source classification was not changed and that no source-type/information-quality conflation occurred. The deed remains properly classified as an original source, consistent with the nature of a contemporaneous recorded deed created by the recording office. The skill refined the existing source in place rather than creating a new source, so the identified failure mode did not apply. The evaluation is accurate and supports a full score."
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — the write path",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The write workflow was executed correctly. The skill used the appropriate research_append operation with op: \"update\" to modify src_008, rather than using unsupported write methods or external scripts. The update was followed by the required validate_research_schema step, which returned valid: true with no errors. The reported validation status matches the tool results, and no unauthorized tools or incorrect workflow steps were used."
+    },
+    {
+      "test_id": "ut_citation_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "If this evaluation dimension is defined to score only the final routed behavior of a correctly handled negative test, then Correctness is N/A because the expected outcome is determined by routing alone."
+    },
+    {
+      "test_id": "ut_citation_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "If this dimension is evaluated only for the correctly routed negative test case, Completeness is N/A because the expected outcome is determined by whether the skill declined and routed correctly, not by whether it completed the underlying search-records task."
+    },
+    {
+      "test_id": "ut_citation_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "If the scoring dimension is limited strictly to MCP tool argument correctness, then the tool calls should receive a full score. All calls used valid arguments, correct project paths, and appropriate sections/parameters. The image_transcribe reference to the src_006 ARK in the log append was correctly formed."
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly evaluated src_001 and appropriately made no changes because the citation was already compliant. The assessment accurately reflects the source state: all five Evidence Explained elements (Who, What, When, Where, Where-within) are present and correctly represented in both the citation string and citation_detail fields. The verdict aligns with the available data, and avoiding unnecessary edits was the correct action."
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the citation review task. It evaluated src_001 against Evidence Explained standards, verified the required citation detail elements, applied the replication test, and reached the correct compliance conclusion. No required review component was omitted, and the response remained consistent with the available source data."
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This criterion is not applicable. The skill performed a review-only task and correctly determined that no changes were required to src_001. Since no write operation or schema validation was needed, there was no generated update, question, or action to evaluate under this dimension."
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates all five Evidence Explained elements for src_001. It accurately distinguishes the original record creator (U.S. Census Bureau) from the repository, correctly identifies the census record type, preserves the creation and access dates, includes the repository and microfilm information, and provides the specific internal location details. The citation_detail fields align with the citation string and follow the expected Evidence Explained census citation structure. No required elements are missing, and no unsupported details are introduced."
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the citation’s replication quality. It confirms that all available locators are included: NARA microfilm publication M432, roll 810, Schuylkill County, dwelling 84, and family 91. It correctly recognizes that these details provide sufficient specificity for another researcher to locate the same census entry and that no additional locators are missing from the source entry. The analysis follows source fidelity requirements and does not introduce unsupported citation details."
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly applies the rubric for a review-only run. No source was created or modified, so the source-classification failure mode did not arise. The existing source_classification value (original) is appropriate for the 1850 census record, and no corrective action was required. The decision to leave the source unchanged was the correct behavior."
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source fidelity — no fabricated detail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates source fidelity. The skill made no changes to src_001 and did not introduce any additional citation details beyond what was already supported by the source entry. The listed citation elements—dwelling 84, family 91, NARA M432, roll 810, Schuylkill County, 1850, and FamilySearch.org—are traceable to the available data. No invented locators, dates, or identifiers were added, so the citation remains faithful to the source record."
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — the write path",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response correctly evaluates the workflow for a review-only task. No changes were made to research.json, so no research_append or validate_research_schema calls were required. The skill correctly recognized that src_001 was already compliant and appropriately avoided unnecessary persistence actions. The reported status (“No changes made”) matches the tool ledger, and the behavior aligns with the expected process."
+    },
+    {
+      "test_id": "ut_citation_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly followed the required boundary. It declined to perform the citation/source-creation task because the necessary record details were not available. It did not create a source entry, generate unsupported citation details, or write changes to research.json or tree.gedcomx.json. Requesting the missing information before proceeding was the appropriate action and avoided introducing fabricated data."
+    },
+    {
+      "test_id": "ut_citation_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill correctly recognized that it should not proceed with source creation or citation refinement without the necessary record details. It appropriately avoided fabricating a source entry or citation and requested additional information."
+    },
+    {
+      "test_id": "ut_citation_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The MCP tool usage assessment is correct. No MCP tool calls were made, and that was the appropriate behavior for this negative test because the skill was expected to decline rather than execute its own workflow. Avoiding unnecessary tool invocation prevented unsupported source creation or persistence actions. The absence of tool calls is therefore a pass for this dimension."
+    }
+  ]
+}

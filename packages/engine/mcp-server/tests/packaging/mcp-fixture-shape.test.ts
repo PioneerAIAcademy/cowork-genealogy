@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -37,7 +38,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  *     `node` is absent. That is the exact silent-skip this check exists to
  *     avoid, sitting under the one assertion the whole thing rests on. Here the
  *     reader is native — `typescript` is a devDependency and two packaging tests
- *     already read `src/index.ts` through its AST — so there is no bridge to
+ *     already read `src/server.ts` through its AST — so there is no bridge to
  *     degrade and no hand-maintained per-tool field list to drift.
  *   - `engine-tests.yml` also runs UNGATED on every PR, by an explicit decision
  *     recorded in its header, so nothing can scope this check dark later.
@@ -91,7 +92,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  *
  * NOTHING HAND-MAINTAINED. Both halves are derived from source, so a new tool
  * or a renamed field is covered without editing this file:
- *   1. `src/index.ts` dispatch arm  ->  the handler it awaits
+ *   1. `src/server.ts` dispatch arm  ->  the handler it awaits
  *   2. the handler's annotated `Promise<T>`  ->  T's top-level members
  * A tool whose chain does not resolve FAILS (see the meta-assertions at the
  * bottom); it is never skipped, because a silent skip is how a check that
@@ -195,7 +196,7 @@ walkSrc(join(mcpRoot, "src"));
  * Every arm is `if (request.params.name === "<tool>") { … }`. Inside, the
  * handler is the function whose awaited result is serialized for the model:
  *
- *   const result = await recordSearchTool(args);
+ *   const result = await recordSearchTool(args, LOCAL);
  *   return { content: [{ type: "text", text: JSON.stringify(result) }] };
  *
  * Two real variants the extraction has to survive, so neither is a special
@@ -210,12 +211,12 @@ function dispatchHandlers(): {
   dispatchedTools: Set<string>;
   projectingArms: string[];
 } {
-  const file = parse(join(mcpRoot, "src", "index.ts"));
+  const file = parse(join(mcpRoot, "src", "server.ts"));
 
   // Every `request.params.name === "<tool>"` comparison, and the `if` body it
   // belongs to. `toolNames` is the superset (any comparison, so a refactor into
   // a `||` or a `switch` still counts as dispatched); `arms` is the if-parented
-  // subset, all 48 today.
+  // subset, all 50 today.
   const toolNames: string[] = [];
   const arms: Array<{ tool: string; statement: ts.Statement }> = [];
   const findArms = (node: ts.Node): void => {
@@ -622,6 +623,20 @@ const advertisedTools = new Set(allToolSchemas.map((s) => s.name));
  */
 const ASPIRATIONAL_TOOLS = new Set<string>();
 
+/**
+ * Keys a fixture's `response` may carry that the tool never returns inline,
+ * because the mock STAGES them and strips them before answering.
+ *
+ * `record_read` stages `indexFields` beside `gedcomx` in its sidecar
+ * (`record-read.ts`) and never returns it. A canned live read that should
+ * behave like a real one therefore needs somewhere to hold it, and the mock's
+ * `_stage_record_read` (eval/harness/harness/mock_mcp.py) takes it from here
+ * and removes it from the inline response. Nothing else is allowed through.
+ */
+const MOCK_STAGED_ONLY_KEYS: Record<string, readonly string[]> = {
+  record_read: ["indexFields"],
+};
+
 const fixtures: Fixture[] = fixturePaths(fixturesDir).map((rel) => {
   const raw = JSON.parse(readFileSync(join(fixturesDir, rel), "utf8")) as Record<
     string,
@@ -638,9 +653,9 @@ const fixtures: Fixture[] = fixturePaths(fixturesDir).map((rel) => {
 });
 
 /**
- * The failure envelope. All 48 dispatch arms catch identically and return
+ * The failure envelope. All 49 dispatch arms catch identically and return
  * `JSON.stringify({ error: message })`, with no other error shape anywhere in
- * `src/index.ts`, so `{error: <string>}` is a response EVERY tool can return.
+ * `src/server.ts`, so `{error: <string>}` is a response EVERY tool can return.
  * Modelled here rather than exempted per file: `{error, message, status}` —
  * which `unit-test-spec.md` used to recommend — still fails.
  */
@@ -728,7 +743,7 @@ describe("eval/fixtures/mcp response shapes match the tools' return types", () =
     ];
     expect(
       unknownTools,
-      "these fixtures mock a tool with no dispatch arm in src/index.ts. If the " +
+      "these fixtures mock a tool with no dispatch arm in src/server.ts. If the " +
         "tool is aspirational (fixtures before source), declare the fixture's " +
         "own `input_schema` AND add the name to ASPIRATIONAL_TOOLS — the harness " +
         "honours the schema, and the name is what stops a renamed or misspelled " +
@@ -754,9 +769,11 @@ describe("eval/fixtures/mcp response shapes match the tools' return types", () =
         );
         continue;
       }
-      const reasons = alternatives.map((alt) =>
-        mismatch(response as Record<string, unknown>, alt),
+      const stagedOnly = new Set(MOCK_STAGED_ONLY_KEYS[fixture.tool] ?? []);
+      const served = Object.fromEntries(
+        Object.entries(response as Record<string, unknown>).filter(([k]) => !stagedOnly.has(k)),
       );
+      const reasons = alternatives.map((alt) => mismatch(served, alt));
       if (reasons.every((r) => r !== null)) {
         failures.push(`${fixture.name} (${fixture.tool}): ${reasons.join(" | ")}`);
       }
@@ -775,7 +792,7 @@ describe("eval/fixtures/mcp response shapes match the tools' return types", () =
     expect(
       handlers.size,
       'no `if (request.params.name === "…")` arms resolved to a handler in ' +
-        "src/index.ts — if dispatch was refactored, rewrite this extraction " +
+        "src/server.ts — if dispatch was refactored, rewrite this extraction " +
         "rather than deleting the test",
     ).toBeGreaterThan(0);
   });

@@ -1,3 +1,4 @@
+import { LOCAL } from "../src/auth/principal.js";
 import { recordSearchTool } from "../src/tools/record-search.js";
 import type { RecordSearchInput } from "../src/types/record-search.js";
 
@@ -162,7 +163,7 @@ const argv = process.argv.slice(2);
 if (argv.length === 0) usage();
 
 const { input, termsOnly } = parseArgs(argv);
-const result = await recordSearchTool(input);
+const result = await recordSearchTool(input, LOCAL);
 
 if (termsOnly) {
   // The distribution `record-search-tool-spec-v2.md` § relativeTerms cannot get
@@ -171,14 +172,14 @@ if (termsOnly) {
   // falls back to `principal` (which forces `unknown` on every prefix and is
   // not derivable from a staged sidecar, since `entry.id` is never persisted).
   const tally: Record<string, Record<string, number>> = {};
-  for (const r of result.results) {
+  for (const r of result.results ?? []) {
     for (const [prefix, finding] of Object.entries(r.relativeTerms ?? {})) {
       tally[prefix] ??= { present: 0, absent: 0, unknown: 0 };
       tally[prefix][finding.status] += 1;
     }
   }
-  const withTerms = result.results.filter((r) => r.relativeTerms).length;
-  console.log(`results: ${result.results.length}  (with relativeTerms: ${withTerms})`);
+  const withTerms = (result.results ?? []).filter((r) => r.relativeTerms).length;
+  console.log(`results: ${(result.results ?? []).length}  (with relativeTerms: ${withTerms})`);
   for (const [prefix, counts] of Object.entries(tally)) {
     const parts = Object.entries(counts).map(([k, v]) => `${k} ${v}`);
     console.log(`  ${prefix.padEnd(7)} ${parts.join("  ")}`);

@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Clearly recovered. The infant's identity, birth (1 Aug 1905), death (12 Aug 1905), registration (13 Aug 1905) and both parent relationships (R22 from KNYF-2Z8, R23 from Carmen Morales) are all represented in the final tree and supported by the original 1905 records, both of which the agent read as images.",
+    "f2": "Upgraded from 'partial' on the pre-revision grade. Carmen Morales is recovered as the mother in the tree (I1, Couple R21, ParentChild R23) and is independently linked as mother of Jose Luis Bardales Morales (R25), which the agent found on its own. The revised finding's 1924 marriage entry adds corroboration even though the agent never opened that record. The 'solteros' / pre-marital claim is NOT required to appear as a separate tree fact — it is appropriately handled in the proof narrative, so its absence from the tree is not a shortfall. Her carrying no facts was the basis of the earlier 'partial' and is no longer treated as one. Proof quality 2/3: the evidence work is substantial and the original 1905 images were read, but the proof stays below fully persuasive — the Clara Amelia Palacios Oliva marriage was never independently established, and the agent's own treatment of the pre-marital claim remained probable rather than proved."
+  },
+  "annotator": "Emruthwill",
+  "findings_hash": "aa7142bc7e9addd9fb8e769fcb4864a05b175ad602d9214aa790f290cb474453"
+}

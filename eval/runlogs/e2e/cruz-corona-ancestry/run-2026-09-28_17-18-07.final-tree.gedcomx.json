@@ -1,0 +1,978 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Mauro",
+          "surname": "Cruz Corona",
+          "id": "PID-TODO-name-1",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "preferred": true
+        },
+        {
+          "id": "N10",
+          "given": "Mauro",
+          "surname": "Cruz",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-mauro-residence-1930",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "standard_place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico"
+        },
+        {
+          "id": "fact-mauro-death",
+          "type": "Death",
+          "date": "21 April 1999",
+          "standard_date": "21 Apr 1999",
+          "place": "Nueva Italia, Michoac\u00e1n, Mexico",
+          "standard_place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "primary": true
+        },
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "1910-11-22",
+          "assertion_id": "a_003",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "place": "La Uni\u00f3n, M\u00e9xico",
+          "standard_place": "La Uni\u00f3n de Isidoro Montes de Oca, Guerrero, Mexico",
+          "primary": true
+        },
+        {
+          "id": "F2",
+          "type": "BirthRegistration",
+          "date": "1910-12-06",
+          "place": "Montes de Oca, Guerrero, M\u00e9xico",
+          "standard_place": "Montes de Oca, Guerrero, Mexico",
+          "value": "registered 6 December 1910 at Montes de Oca, Guerrero, M\u00e9xico",
+          "assertion_id": "a_005",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_033",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "type": "Birth",
+          "date": "1914",
+          "assertion_id": "a_034",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "assertion_id": "a_036",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p-sibling-miguel",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Miguel",
+          "surname": "Cruz",
+          "id": "p-sibling-miguel-name-1"
+        },
+        {
+          "id": "N11",
+          "given": "Migel",
+          "surname": "Cruz",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-miguel-birth",
+          "type": "Birth",
+          "date": "24 April 1913",
+          "standard_date": "24 Apr 1913",
+          "place": "El Coco, La Uni\u00f3n, Guerrero, Mexico",
+          "standard_place": "La Uni\u00f3n, Guerrero, Mexico",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "fact-miguel-residence-1930",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "standard_place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico"
+        },
+        {
+          "id": "F13",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_050",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "type": "Birth",
+          "date": "1916",
+          "assertion_id": "a_051",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p-sibling-liborio",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Liborio",
+          "surname": "Cruz",
+          "id": "p-sibling-liborio-name-1"
+        },
+        {
+          "id": "N12",
+          "given": "Libario",
+          "surname": "Cruz",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-liborio-birth",
+          "type": "Birth",
+          "date": "23 July 1916",
+          "standard_date": "23 Jul 1916",
+          "place": "Pochutla, Coahuayutla, Guerrero, Mexico",
+          "standard_place": "Coahuayutla, Guerrero, Mexico",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "fact-liborio-residence-1930",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "standard_place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico"
+        },
+        {
+          "id": "F15",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_055",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "type": "Birth",
+          "date": "1918",
+          "assertion_id": "a_056",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p-sibling-facundo",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Facundo",
+          "surname": "Cruz",
+          "id": "p-sibling-facundo-name-1",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-facundo-birth",
+          "type": "Birth",
+          "date": "27 November 1918",
+          "standard_date": "27 Nov 1918",
+          "place": "Rosario, Coahuayutla, Guerrero, Mexico",
+          "standard_place": "Coahuayutla, Guerrero, Mexico",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "fact-facundo-residence-1930",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "standard_place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico"
+        },
+        {
+          "id": "F17",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_060",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F18",
+          "type": "Birth",
+          "date": "1920",
+          "assertion_id": "a_061",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "given": "S\u00f3stenes",
+          "surname": "Cruz",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N4",
+          "given": "S\u00f3stenes",
+          "surname": "Cr\u00faz",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "given": "Apolinar",
+          "surname": "Corona",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_039",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Birth",
+          "date": "1881",
+          "assertion_id": "a_040",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "place": "Guerrero, Mexico",
+          "standard_place": "Guerrero, Mexico"
+        },
+        {
+          "id": "F7",
+          "type": "MaritalStatus",
+          "value": "Widowed",
+          "assertion_id": "a_042",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N5",
+          "given": "Primitivo",
+          "surname": "Corona",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N9",
+          "given": "Primitivo",
+          "surname": "Cruz",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Birth",
+          "date": "~1910",
+          "assertion_id": "a_016",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "place": "Guerrero, Mexico",
+          "standard_place": "Guerrero, Mexico"
+        },
+        {
+          "id": "F8",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_045",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "Birth",
+          "date": "1908",
+          "assertion_id": "a_046",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N6",
+          "given": "Hilaria",
+          "surname": "Guillen",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Birth",
+          "date": "~1914",
+          "assertion_id": "a_024",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N7",
+          "given": "Camilo",
+          "surname": "Ibarra",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N8",
+          "given": "Emiteria",
+          "surname": "Rosas",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N13",
+          "given": "Feliciano",
+          "surname": "Anguiano",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F19",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_065",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I9",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N14",
+          "given": "Senaida",
+          "surname": "Ferrel",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F20",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_068",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I10",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N15",
+          "given": "Erculano",
+          "surname": "Hern\u00e1ndez",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F21",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_071",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I11",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N16",
+          "given": "Maria",
+          "surname": "Calder\u00f3n",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F22",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_074",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I12",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N17",
+          "given": "Cebera",
+          "surname": "Rivera",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F23",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_077",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I13",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N18",
+          "given": "Juan",
+          "surname": "Calvillo",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F24",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_080",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I14",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N19",
+          "given": "Guadalupe",
+          "surname": "N\u00fa\u00f1es",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F25",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_083",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I15",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N20",
+          "given": "Tenidad",
+          "surname": "N\u00fa\u00f1es",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F26",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_086",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I16",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N21",
+          "given": "Elo\u00edsa",
+          "surname": "Calvillo",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F27",
+          "type": "Census",
+          "date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "assertion_id": "a_089",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "PID-TODO",
+      "id": "R1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "PID-TODO",
+      "id": "R2",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I3",
+      "id": "R3",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "id": "R4",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I4",
+      "id": "R5",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-1930-census",
+      "title": "Erculano Hernandez household, \"M\u00e9xico censo nacional, 1930\"",
+      "citation": "Erculano Hernandez household, \"M\u00e9xico censo nacional, 1930,\" database with images, FamilySearch (https://familysearch.org/ark:/61903/3:1:S3HT-66R3-LH4 : 1 April 2016), Michoac\u00e1n de Ocampo > Par\u00e1cuaro > Nueva Italia > image 39 of 49; Archivo General de la Naci\u00f3n, Distrito Federal (National Archives, Distrito Federal).",
+      "url": "https://familysearch.org/ark:/61903/3:1:S3HT-66R3-LH4"
+    },
+    {
+      "id": "S1",
+      "title": "M\u00e9xico, Guerrero, Registro Civil, 1860-1996",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QGWQ-MCFV",
+      "citation": "\"M\u00e9xico, Guerrero, Registro Civil, 1860-1996\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGWQ-MCFV : accessed 2026-09-28), Entry for Mauro Cruz Corona and S\u00f3stenes Cruz, 6 de diciembre de 1910."
+    },
+    {
+      "id": "S2",
+      "title": "M\u00e9xico, Guerrero, Registro Civil, 1860-1996 \u2014 Marriage Registration for Primitivo Corona and Hilaria Guillen, 24 July 1935",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q5JN-HB8T",
+      "citation": "\"M\u00e9xico, Guerrero, Registro Civil, 1860-1996\", FamilySearch (https://www.familysearch.org/ark:/61903/1:2:Q5JN-HB8T : accessed 28 September 2026), Entry for Primitivo Corona and S\u00f3stenes Cr\u00faz, 24 July 1935; civil marriage registration, Montes de Oca, Guerrero, M\u00e9xico."
+    },
+    {
+      "id": "S3",
+      "title": "M\u00e9xico censo nacional, 1930",
+      "url": "https://www.familysearch.org/search/collection/1307314",
+      "citation": "\"M\u00e9xico censo nacional, 1930,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MP5H-ZCT : accessed 28 September 2026), entry for Mauro Cruz in household of Feliciano Anguiano, Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico, 1930; citing collection 1307314."
+    }
+  ]
+}

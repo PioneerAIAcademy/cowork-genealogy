@@ -1,0 +1,1118 @@
+{
+  "persons": [
+    {
+      "id": "P874-7BV",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Marina",
+          "surname": "Lopez",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 3
+            },
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N20",
+          "given": "Marina",
+          "surname": "L\u00f3pez",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N28",
+          "given": "Marina",
+          "surname": "Lopez Pichardo",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8db3903a-4a55-4312-837b-1b150f96080d",
+          "type": "Death",
+          "date": "1984-10-05",
+          "place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            },
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "type": "Residence",
+          "place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "assertion_id": "a_099",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F19",
+          "type": "Birth",
+          "date": "1913",
+          "place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "assertion_id": "a_129",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F20",
+          "type": "CauseOfDeath",
+          "value": "Paro Cardiaco / Sufri Cardiovascular / Cirrosis Hepatica",
+          "assertion_id": "a_131",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F21",
+          "type": "MaritalStatus",
+          "value": "Viuda (widow)",
+          "assertion_id": "a_132",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F22",
+          "type": "Occupation",
+          "value": "Sus Quehaceres (home duties / housekeeping)",
+          "assertion_id": "a_133",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P874-PJ5",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Rafael Bautista",
+          "surname": "Pichardo Lopez",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ede8727f-49fc-4868-a9d4-7c9b3b28d4aa",
+          "type": "Birth",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Dominican Republic",
+          "standard_place": "Dominican Republic",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "08f9d9cc-2823-4e5f-a02e-702b1ca3a40f",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P874-8F5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Altagracia Herminia",
+          "surname": "Pichardo Lopez"
+        },
+        {
+          "id": "N16",
+          "given": "Actagracia Herminia Puhardo Lopez [index transcription; likely Altagracia Herminia Pichardo",
+          "surname": "Lopez]",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "82959961-a36c-4371-8eae-cc732eaf0928",
+          "type": "Birth",
+          "date": "31 January 1934",
+          "standard_date": "31 Jan 1934",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "6490603c-85dd-4e72-b1b1-9e2c5f271d22",
+          "type": "Death",
+          "date": "9 August 2014",
+          "standard_date": "9 Aug 2014",
+          "place": "San Jos\u00e9 de Ocoa, San Jos\u00e9 de Ocoa, San Jos\u00e9 de Ocoa, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, San Jos\u00e9 de Ocoa, San Jos\u00e9 de Ocoa, Dominican Republic",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "83792eeb-c3d4-484b-b483-3e88e1927f06",
+          "type": "Occupation",
+          "value": "Abogado",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "cd2d108b-e4c5-4bca-a1bb-3dd247bd490a",
+          "type": "Nationality",
+          "value": "Dominicano",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "dc2a7e55-5c3e-49a9-bad3-129cb5c11dbf",
+          "type": "Residence",
+          "place": "San Jos\u00e9 de Ocoa, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, Dominican Republic"
+        }
+      ]
+    },
+    {
+      "id": "LRQR-QM9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Juan de Dios",
+          "surname": "Pichardo Chalas",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N17",
+          "given": "Juan de Dios",
+          "surname": "Puhardo",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N18",
+          "given": "Juan De Dios",
+          "surname": "Pichardo",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "931b5e3a-767f-43fb-a3f9-79b957afaf21",
+          "type": "Birth",
+          "date": "8 December 1902",
+          "standard_date": "8 Dec 1902",
+          "place": "San Jos\u00e9 de Ocoa, Peravia, Rep\u00fablica Dominicana",
+          "standard_place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "24fbd909-5a0a-424e-a90e-85750133cfbe",
+          "type": "Christening",
+          "date": "6 May 1913",
+          "standard_date": "6 May 1913",
+          "place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic"
+        },
+        {
+          "id": "7c3c50ca-aaae-473b-9c05-a4afcde103de",
+          "type": "Death",
+          "date": "6 November 1978",
+          "standard_date": "6 Nov 1978",
+          "place": "San Jos\u00e9 de Ocoa, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, Dominican Republic"
+        },
+        {
+          "id": "F5",
+          "type": "Death",
+          "date": "6 Nov 1978",
+          "place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "assertion_id": "a_004",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Residence",
+          "place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "assertion_id": "a_005",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Death",
+          "date": "1978-11-07",
+          "place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "assertion_id": "a_036",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "CauseOfDeath",
+          "value": "Insuficiencia Cardiaca, Insuficiencia Respiratoria",
+          "assertion_id": "a_087",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "MaritalStatus",
+          "value": "Casado (married)",
+          "assertion_id": "a_090",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N5",
+          "given": "Jose Cayetano",
+          "surname": "Pichardo",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F10",
+          "type": "Death",
+          "assertion_id": "a_095",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N6",
+          "given": "Petrona",
+          "surname": "Chalas",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N19",
+          "given": "Petrona",
+          "surname": "Chalas",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F11",
+          "type": "Death",
+          "assertion_id": "a_097",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N7",
+          "given": "Manuel",
+          "surname": "Lopez",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N8",
+          "given": "Cruz Maria",
+          "surname": "Casado",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "1927",
+          "assertion_id": "a_054",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N9",
+          "given": "Ismael",
+          "surname": "Cr\u00faz",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N10",
+          "given": "Carmita",
+          "surname": "Casado",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N11",
+          "given": "Mar\u00eda de Lurde",
+          "surname": "L\u00f3pez Casado",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Birth",
+          "date": "1913-03-03",
+          "place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "assertion_id": "a_068",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N12",
+          "given": "Manuel",
+          "surname": "L\u00f3pez",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Occupation",
+          "value": "agricultor",
+          "assertion_id": "a_073",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "date": "1913-03-03",
+          "place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "assertion_id": "a_074",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I9",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N13",
+          "given": "Carmen",
+          "surname": "Casado",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I10",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N14",
+          "given": "Agust\u00edn",
+          "surname": "Romero",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I11",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N15",
+          "given": "F\u00e9lix",
+          "surname": "Casado",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I12",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N21",
+          "given": "Luis",
+          "surname": "Giordano Maceo",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F13",
+          "type": "Occupation",
+          "value": "M\u00e9dico (Physician)",
+          "assertion_id": "a_104",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "type": "Residence",
+          "place": "Avenida Banilejo, San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "standard_place": "San Jos\u00e9 de Ocoa, Peravia, Dominican Republic",
+          "assertion_id": "a_105",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I13",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N22",
+          "given": "Manolo",
+          "surname": "Lopez",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 3
+            },
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F23",
+          "type": "Death",
+          "assertion_id": "a_138",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I14",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N23",
+          "given": "Carmen N",
+          "surname": "Lopez",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N29",
+          "given": "Carmen Nida",
+          "surname": "Lopez",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F24",
+          "type": "Death",
+          "assertion_id": "a_141",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I15",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N24",
+          "given": "Rafael",
+          "surname": "L\u00f3pez Nunez",
+          "sources": [
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F15",
+          "type": "Birth",
+          "date": "25 Oct 1913",
+          "place": "San Jos\u00e9 de Ocoa",
+          "standard_place": "San Jos\u00e9 de Ocoa, Dominican Republic",
+          "assertion_id": "a_117",
+          "sources": [
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I16",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N25",
+          "given": "Manuel",
+          "surname": "L\u00f3pez",
+          "sources": [
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F16",
+          "type": "Occupation",
+          "value": "Zapatero",
+          "assertion_id": "a_120",
+          "sources": [
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I17",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N26",
+          "given": "Euvenia",
+          "surname": "L\u00f3pez Nunez",
+          "sources": [
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F17",
+          "type": "Occupation",
+          "value": "dom\u00e9stico",
+          "assertion_id": "a_124",
+          "sources": [
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I18",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N27",
+          "given": "Luis Octavio",
+          "surname": "Medina Melo",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F18",
+          "type": "Occupation",
+          "value": "M\u00e9dico (physician)",
+          "assertion_id": "a_144",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LRQR-QM9",
+      "person2": "P874-7BV"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "LRQR-QM9",
+      "child": "P874-8F5"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "P874-7BV",
+      "child": "P874-8F5"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LRQR-QM9",
+      "child": "P874-PJ5"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "P874-7BV",
+      "child": "P874-PJ5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I13",
+      "child": "P874-7BV",
+      "sources": [
+        {
+          "ref": "S9",
+          "quality": 2
+        },
+        {
+          "ref": "S7",
+          "quality": 1
+        }
+      ],
+      "id": "R6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I14",
+      "child": "P874-7BV",
+      "sources": [
+        {
+          "ref": "S9",
+          "quality": 2
+        },
+        {
+          "ref": "S7",
+          "quality": 1
+        }
+      ],
+      "id": "R7"
+    }
+  ],
+  "sources": [
+    {
+      "id": "WWBW-2YJ",
+      "title": "Marina Lopez, \"Rep\u00fablica Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"Rep\u00fablica Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66H3-5D6G : Tue Oct 08 00:33:52 UTC 2024), Entry for Juan de Dios Pichardo Chalas and Jose Cayetano Pichardo, 1978.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66H3-5D6R"
+    },
+    {
+      "id": "WWBW-DW8",
+      "title": "Marina Lopez, \"Rep\u00fablica Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"Rep\u00fablica Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6R28-9KNF : Mon Dec 08 07:41:57 UTC 2025), Entry for Rafael Bautista Pichardo Lopez and Juan De Dios Pichardo, 29 Sep 1967.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6R28-7ZZS"
+    },
+    {
+      "id": "WWBW-8CP",
+      "title": "Marina Lopez, \"Rep\u00fablica Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"Rep\u00fablica Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65TX-LPM1 : Sun Mar 10 01:45:13 UTC 2024), Entry for Actagracia Herminia Puhardo Lopez and Juan de Dios Puhardo, 9 de agosto de 2014.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65TX-LP99"
+    },
+    {
+      "id": "WWBW-PPB",
+      "title": "Manuel Lopez, \"Rep\u00fablica Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"Rep\u00fablica Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6TMN-HQ5T : Tue May 07 19:09:26 UTC 2024), Entry for Juan de Dios Pichardo Blalas and Jose Cayetano Pichardo, 7 Nov 1978.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6TMN-HQ51"
+    },
+    {
+      "id": "S1",
+      "title": "Juan de Dios Pichardo Chalas, \"Rep\u00fablica Dominicana, Registro Civil, 1744-2019\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:66H3-5D6G"
+    },
+    {
+      "id": "S2",
+      "title": "Rep\u00fablica Dominicana, Registro Civil, 1744-2019, death registration for Actagracia Herminia Puhardo Lopez, 9 Aug 2014",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:65TX-LPM1"
+    },
+    {
+      "id": "S3",
+      "title": "Rep\u00fablica Dominicana, Registro Civil, 1744-2019, death registration of Juan de Dios Pichardo Chalas, 7 Nov 1978, San Jos\u00e9 de Ocoa",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6TMN-HQ5T"
+    },
+    {
+      "id": "S4",
+      "title": "Rafael Bautista Pichardo Lopez and Cruz Maria Casado, Marriage Registration, 29 Sep 1967, Distrito Nacional, Dominican Republic; \"Rep\u00fablica Dominicana, Registro Civil, 1744-2019\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6R28-9KNF : accessed 16 Sep 2026)"
+    },
+    {
+      "id": "S5",
+      "title": "Rep\u00fablica Dominicana, Registro Civil, 1744-2019, birth entry for Mar\u00eda de Lurde L\u00f3pez Casado, 3 Mar 1913, San Jos\u00e9 de Ocoa",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:623F-42H5"
+    },
+    {
+      "id": "S6",
+      "title": "Civil Death Register Act No. 255, San Jos\u00e9 de Ocoa, Peravia, Dominican Republic, 7 November 1978 \u2014 Juan de Dios Pichardo Chalas",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:9396-YN6L-V"
+    },
+    {
+      "id": "S7",
+      "title": "\"Rep\u00fablica Dominicana, Registro Civil, 1744-2019\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6TMN-26CT : accessed 16 Sep 2026), entry for Marina Lopez Pichardo and Manolo Lopez, 5 Oct 1984",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6TMN-26CT"
+    },
+    {
+      "id": "S8",
+      "title": "Rafael L\u00f3pez Nunez, \"Rep\u00fablica Dominicana, Registro Civil, 1744-2019\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:623F-F7P3"
+    },
+    {
+      "id": "S9",
+      "title": "Dominican Republic, Civil Registration, 1744-2019 \u2014 Act No. 256, Death of Marina Lopez viuda Pichardo, San Jos\u00e9 de Ocoa, 5 October 1984 (original register image)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:9396-YN33-1"
+    }
+  ]
+}

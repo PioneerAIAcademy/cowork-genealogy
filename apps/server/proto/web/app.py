@@ -1,0 +1,1965 @@
+"""Prototype web tier (docs/plan/search-agent-prototype.md, Week 3, D11-12).
+
+The stateless tier between the browser and the queue. It never runs the SDK and never
+sees the model stream: the worker (D9-10) writes ``map_message`` output into
+``session_events`` / ``session_activity`` and this tier only *reads* those rows, so a
+turn's evidence reaches Postgres without a hop that dies with the worker.
+
+Routes are on the same paths ``apps/web`` already calls (``api.ts``), so the SPA is
+reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
+
+  POST /api/sessions/{id}/messages {text}      mint turn_id, record it, enqueue it   -> 202
+  GET  /api/sessions/{id}/events?after=N       one-shot poll read (JSON)
+  GET  /api/sessions/{id}/events/stream        text/event-stream; Last-Event-ID resume
+  GET/POST /api/sessions, GET/PATCH/DELETE /api/sessions/{id}, POST .../resume, GET .../state
+  GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
+  GET  /callback   (patron sign-in, web/auth.py; every /api/sessions route needs the cookie)
+  GET  .../sidecar/{log_id} -> 404;  .../image, .../logs, .../files -> 501
+  POST /api/sessions/{id}/interrupt                Stop: raise the flag        -> 202
+  GET  /api/feedback/context?sessionId=         the files and transcript size a report would carry
+  POST /api/feedback {sessionId, ...}           bundle the project + transcript to S3 (U20,
+                                                web/feedback.py); stored, sent nowhere
+
+The turn message body is ``{turn_id, session_id, project_id, text, enqueued_at,
+max_nudges}``. The ``turn_id`` is a UUID minted here and travels IN THE BODY -- never the
+SQS MessageId, which the shim holds and the worker never sees. ``max_nudges`` (1a) is
+this tier's ``AUTONOMOUS_MAX_NUDGES``, stamped on every message and preferred by the
+worker over its own: the worker serves the browser and ``make proto-demo`` alike and
+cannot tell them apart. It is read from the ENVIRONMENT and never from the request --
+the cap is the operator's, so a ``MessageBody`` field would let a signed-in patron set
+their own nudge budget.
+
+Row -> wire contract (the worker writes the rows; the SPA's chatEvents.ts reads the wire):
+
+  session_events.kind = 'user_msg', payload {text, turn_id}
+      -> {"type": "user_msg", "text", "turn_id", "seq"}
+  session_events.kind = <any map_message kind>, payload = the event's fields
+      -> {"type": "agent_event", "event": {**payload, "kind": kind}, "seq"}
+  session_activity.payload
+      -> {"type": "agent_event", "event": {**payload, "kind": "task_progress"}}   (no id)
+  documents.version moved
+      -> {"type": "research_updated" | "gedcomx_updated", "name", "data": <doc>}  (no id)
+
+Only ``session_events`` frames carry ``id: <seq>``, so ``Last-Event-ID`` is always a seq
+and the transient frames are never replayed -- the same split as TRANSIENT_KINDS in the
+hosted runner.
+
+Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
+queue URL, the shim's shape; required -- unset or empty refuses to start),
+POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``),
+GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
+or neither; neither signs SendMessage with the default AWS chain, the instance profile on
+AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
+region). Startup verifies the schema -- reads the ledger ``migrate.py`` keeps and compares
+it with the proto/sql/*.sql this tier ships, running no DDL (U9) -- and syncs the
+allowlist, one inline attempt each under one ``STARTUP_BUDGET_S``; a failure is retried
+in the background and never stops the tier listening (U10). It logs
+``queue: <url>; sqs credentials: <mode>; region <r>``. Until the allowlist has synced, a
+FamilySearch-configured tier answers 503 at both allowlist checks rather than read a
+table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the same keys
+either way, plus ``checks`` (``postgres``, ``schema``, ``allowlist``) whose ``error`` is a
+label, never a message.
+
+GENEALOGY_S3_BUCKET / _ENDPOINT / _ACCESS_KEY / _SECRET_KEY / _REGION (web/blobstore.py,
+the engine's semantics): the feedback bucket. Unset bucket: POST /api/feedback answers 503;
+a half key pair refuses to start, as a half SQS pair does.
+
+WEB_DIST_DIR (unset: no SPA) names the ``apps/web`` SSE build to serve at ``/``; a
+relative value resolves against the tier root, and a missing dist refuses to start
+(``web/spa.py``).
+
+Grants (U3): this tier is every FamilySearch grant's only refresher. ``grant_refresh_loop``
+runs every ``FS_GRANT_REFRESH_INTERVAL_S`` (30) and refreshes, between attempts, the grant
+of each patron with an open turn whose session is ``FS_GRANT_REFRESH_AGE_S`` (3600) old,
+under the per-patron advisory locks in ``proto/grants.py``; lines are ``ev=grant_refresh``.
+
+Run: ``make proto-web`` (from the venv, with the dummy GENEALOGY_SQS_* pair elasticmq
+ignores).
+"""
+
+from __future__ import annotations
+
+import asyncio
+import contextlib
+import functools
+import html
+import json
+import logging
+import os
+import re
+import secrets
+import sys
+import time
+import uuid
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Protocol
+from urllib.parse import urlparse
+
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
+from pydantic import BaseModel, Field, ValidationError, field_validator
+
+HERE = Path(__file__).resolve().parent
+PROTO_DIR = HERE.parent
+SQL_DIR = PROTO_DIR / "sql"
+# enqueue.py, grants.py and migrate.py are siblings of this package in the repo (proto/)
+# and in the container (/app); make them importable from wherever uvicorn, the driver or
+# pytest started.
+if str(PROTO_DIR) not in sys.path:
+    sys.path.insert(0, str(PROTO_DIR))
+
+import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
+import grants  # noqa: E402  (U3: grant custody, shared with the worker)
+import migrate  # noqa: E402  (U9: the ledger and the verdict; this tier runs no DDL)
+from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
+from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
+from web import feedback  # noqa: E402  (U20: the feedback bundle)
+from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
+
+log = logging.getLogger("proto.web")
+# What the patron sees when SendMessage fails. Never the exception: an AWS refusal names the
+# account id and the instance role's ARN. The log line beside the 502 carries the detail.
+ENQUEUE_FAILED_MESSAGE = "queue send failed; please try again"
+# uvicorn configures only its own loggers, so without a handler of its own every INFO line
+# here -- the schema, the ``queue: ...; sqs credentials: ...`` start line and an ok health
+# transition -- is dropped.
+if not log.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(levelname)s:     %(name)s: %(message)s"))
+    log.addHandler(_handler)
+    log.setLevel(logging.INFO)
+
+DEFAULT_PG_DSN = "postgresql://postgres:proto@localhost:5434/proto"
+# U10: readiness. The probe's whole deadline sits under the image HEALTHCHECK's
+# urlopen(timeout=2); psycopg's connect_timeout floor is 2 s, so it is a race.
+READY_TIMEOUT_S = 1.5
+READY_CONNECT_TIMEOUT_S = 2
+READY_STATEMENT_TIMEOUT_MS = 1500
+# Every table and function this tier queries; a missing one fails `postgres`.
+WEB_TABLES = ("sessions", "projects", "turns", "session_events", "session_seq", "session_activity",
+              "session_entries", "tool_calls", "documents", "blobs", "staging", "users",
+              "allowed_emails", "familysearch_tokens")
+WEB_FUNCTIONS = ("next_session_seq(text)",)
+READY_SQL = (
+    "SELECT t FROM unnest(%s::text[]) t WHERE to_regclass(t) IS NULL "
+    "UNION ALL SELECT f FROM unnest(%s::text[]) f WHERE to_regprocedure(f) IS NULL"
+)
+# The lifespan's inline schema check and allowlist sync share this, so a blackholed
+# Postgres holds uvicorn at most this long before it listens; each background retry is
+# bounded by it too, and backs off STARTUP_BACKOFF_FIRST_S doubling to _MAX_S.
+STARTUP_BUDGET_S = 5.0
+STARTUP_BACKOFF_FIRST_S = 1.0
+STARTUP_BACKOFF_MAX_S = 30.0
+DEFAULT_TITLE = "New research session"
+DEFAULT_MODEL = "claude-sonnet-4-6"
+EVENTS_PAGE = 500
+# documents.name -> the wire type the SPA's WsResearchTransport already folds.
+DOC_WIRE = {"research.json": "research_updated", "tree.gedcomx.json": "gedcomx_updated"}
+# 1b: a turns row whose outcome says it has not been enqueued yet -- the message the
+# patron typed while a turn was running. 006_stop_and_queue.sql records why this is a
+# turns row and not a second table.
+QUEUED_OUTCOME = "queued"
+
+# The three statements 1b and 1c turn on, lifted to module level so a TEST can reach them.
+# Every route test drives a fake store, and a fake that implements `turn_active` in Python
+# proves nothing about the SQL the real one runs -- the latch bug below shipped green under
+# exactly that arrangement.
+#
+# TURN_ACTIVE_SQL: a turn is RUNNING. A HELD message (1b) has completed_at NULL too, so it
+# must be excluded, or the very first held message latches the hold on and every later
+# message queues behind a turn that does not exist.
+TURN_ACTIVE_SQL = (
+    "SELECT EXISTS (SELECT 1 FROM turns WHERE session_id = %s AND completed_at IS NULL "
+    "AND outcome IS DISTINCT FROM %s) AS active"
+)
+HAS_QUEUED_SQL = (
+    "SELECT EXISTS (SELECT 1 FROM turns WHERE session_id = %s AND completed_at IS NULL "
+    "AND outcome = %s) AS queued"
+)
+# 1c: a new message is how a stopped session resumes, so the flag clears when one is
+# recorded. It must not outlive the turn it stopped -- the PreToolUse hook reads it before
+# every tool call, and a stale flag halts the NEXT turn at its first call, which looks
+# exactly like Stop being broken from the other side.
+CLEAR_STOP_SQL = "UPDATE sessions SET stop_requested_at = NULL WHERE session_id = %s"
+# U6: the web tier's one close of a turn a worker may have claimed (a send that landed after
+# its timeout). Epoch-less, like the sweep's: the bump fences the claimed attempt's writes.
+# delete_session's refusal: an open turn that may still have an attempt. Its backend is
+# connected (run_turn's `turn:<id>`, visible to every role in pg_stat_activity), or it was
+# claimed too recently for that connection to be open yet, or its message, never claimed,
+# is young enough to be still in the queue. Any other open turn is stranded -- nothing will
+# close it short of the RetentionPeriod backstop -- and the delete goes ahead: refusing it
+# would leave the patron no way out of the session. A crashed attempt's message comes back
+# only after VisibilityTimeout (hours), so a session deleted in between sends it to the DLQ.
+DELETE_CLAIM_GRACE_S = 120
+DELETE_UNCLAIMED_GRACE_S = 900
+TURN_LIVE_SQL = (
+    "SELECT EXISTS (SELECT 1 FROM turns t WHERE t.session_id = %s AND t.completed_at IS NULL "
+    "AND t.outcome IS DISTINCT FROM %s AND ("
+    "EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.application_name = 'turn:' || t.turn_id) "
+    "OR t.claimed_at > now() - make_interval(secs => %s) "
+    "OR (t.claimed_at IS NULL AND t.enqueued_at > now() - make_interval(secs => %s)))) AS live"
+)
+RETIRED_SQL = "SELECT retired_at IS NOT NULL AS retired FROM sessions WHERE session_id = %s"
+RETIRED_DETAIL = "This session has expired; continue in a new session on this project"
+FAIL_TURN_SQL = (
+    "UPDATE turns SET outcome = %s, completed_at = now(), claim_epoch = claim_epoch + 1 "
+    "WHERE turn_id = %s AND completed_at IS NULL"
+)
+# U20 feedback. The transcript is keyed project_key = project_id (the worker's
+# PgSessionStore), so a project's rows are one prefix of session_entries_key_idx. The group
+# sizes are computed in SQL so /api/feedback/context never loads a row; +1 per row is the
+# JSONL newline, which keeps the sum an upper bound on the bytes a POST zips.
+BLOB_INDEX_SQL = "SELECT key, s3_key, bytes FROM blobs WHERE project_id = %s ORDER BY key"
+SDK_SESSION_SQL = "SELECT sdk_session_id FROM sessions WHERE session_id = %s"
+TRANSCRIPT_GROUPS_SQL = (
+    "SELECT session_id, subpath, max(seq) AS max_seq, "
+    "sum(octet_length(entry::text) + 1) AS bytes "
+    "FROM session_entries WHERE project_key = %s GROUP BY session_id, subpath "
+    "ORDER BY max(seq) DESC, session_id, subpath"
+)
+TRANSCRIPT_ROWS_SQL = (
+    "SELECT seq, entry FROM session_entries WHERE project_key = %s AND session_id = %s "
+    "AND subpath = %s AND seq > %s ORDER BY seq LIMIT %s"
+)
+GRANT_CIPHERTEXTS_SQL = "SELECT access_token_enc, refresh_token_enc FROM familysearch_tokens WHERE user_id = %s"
+
+
+# ── rows ─────────────────────────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class SessionRow:
+    session_id: str
+    project_id: str
+    title: str
+    model: str
+    created_at: datetime
+    updated_at: datetime
+    # projects.owner_id (008). None -- a project the engine created and nobody has
+    # claimed -- is visible to nobody: the route's owner check never matches it.
+    owner_id: str | None = None
+    # U19 (013): set by the worker's retention when it purged this idle session's
+    # transcript, events and tool calls. A retired session takes no new message.
+    retired_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class User:
+    id: str
+    email: str
+    familysearch_id: str | None = None
+    sessions_revoked_at: datetime | None = None
+
+
+class ProjectNotOwned(Exception):
+    """create_session was handed a project the caller may not open. The route answers
+    404, the same as for a project that does not exist, so the answer leaks nothing."""
+
+
+class SessionRetired(Exception):
+    """admit_message found the session retired (013): its transcript is gone, so a new turn
+    would resume nothing and start its spend cap at zero. post_message answers 410."""
+
+
+class SessionBusy(Exception):
+    """delete_session found a turn that may still be running. Deleting under it lets the
+    attempt's unfenced writes (write_event, insert_tool_call) recreate rows for a session
+    that no longer exists, and its redelivery 400s into the DLQ; the route answers 409."""
+
+
+class GrantBusy(Exception):
+    """The sign-in's grant write could not take the patron's write lock within
+    ``grants.WRITE_LOCK_TIMEOUT_S`` (a refresher holds it for at most
+    ``REFRESH_HTTP_TIMEOUT_S`` plus two short transactions); the callback answers 503."""
+
+
+class IdentityMismatch(Exception):
+    """A FamilySearch sign-in presented an email already pinned to a DIFFERENT
+    FamilySearch account. The alpha's upsert never compared the two
+    (apps/server/app/auth.py _upsert_user), so any account carrying an allowlisted email
+    signed in as the existing user."""
+
+
+@dataclass(frozen=True)
+class EventRow:
+    seq: int
+    kind: str
+    payload: dict[str, Any]
+    ts: datetime
+
+
+@dataclass(frozen=True)
+class Activity:
+    updated_at: datetime
+    payload: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class Turn:
+    turn_id: str
+    seq: int  # the user_msg event's seq
+    body: dict[str, Any]  # the queue message
+
+
+class Store(Protocol):
+    async def create_session(
+        self, title: str, model: str, project_id: str | None, owner: str, may_create_or_claim: bool
+    ) -> SessionRow: ...
+    async def list_sessions(self, owner: str) -> list[SessionRow]: ...
+    async def get_session(self, session_id: str) -> SessionRow | None: ...
+    async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None: ...
+    async def delete_session(self, session_id: str) -> bool: ...
+    async def document_versions(self, project_id: str) -> dict[str, int]: ...
+    async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]: ...
+    async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict[str, Any] | None]: ...
+    async def fail_turn(self, turn_id: str, reason: str) -> None: ...
+    async def put_back_held(self, turn_id: str) -> bool: ...
+    async def events_after(self, session_id: str, after: int, limit: int) -> list[EventRow]: ...
+    async def activity(self, session_id: str) -> Activity | None: ...
+    async def turn_active(self, session_id: str) -> bool: ...
+    async def has_queued(self, session_id: str) -> bool: ...
+    async def request_stop(self, session_id: str) -> bool: ...
+    # 008: sign-in. store_grant takes CIPHERTEXT; web/auth.py encrypts before the call.
+    async def get_user(self, user_id: str) -> User | None: ...
+    async def upsert_user(self, email: str, familysearch_id: str | None) -> User: ...
+    async def is_allowed(self, email: str) -> bool: ...
+    async def sync_allowlist(self, emails: set[str]) -> None: ...
+    async def revoke_sessions(self, user_id: str) -> None: ...
+    async def store_grant(
+        self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
+    ) -> None: ...
+    # U20 feedback: what a bundle reads. transcript_rows is one keyset batch (seq > after).
+    async def blob_index(self, project_id: str) -> list[tuple[str, str, int]]: ...
+    async def sdk_session_id(self, session_id: str) -> str | None: ...
+    async def transcript_groups(self, project_id: str) -> list[feedback.TranscriptGroup]: ...
+    async def transcript_rows(
+        self, project_id: str, session_id: str, subpath: str, after: int, limit: int
+    ) -> list[tuple[int, Any]]: ...
+    async def grant_ciphertexts(self, user_id: str) -> tuple[str | None, str | None]: ...
+
+
+class Queue(Protocol):
+    async def send(self, body: dict[str, Any]) -> str: ...
+
+
+# ── pure helpers (tested without I/O) ────────────────────────────────────────────
+
+
+def sse_frame(data: dict[str, Any], *, seq: int | None = None) -> str:
+    """One SSE event. ``id:`` only when the frame is a session_events row."""
+    head = f"id: {seq}\n" if seq is not None else ""
+    return f"{head}data: {json.dumps(data, separators=(',', ':'), default=str)}\n\n"
+
+
+def row_to_wire(row: EventRow) -> dict[str, Any]:
+    if row.kind == "user_msg":
+        return {
+            "type": "user_msg",
+            "text": str(row.payload.get("text", "")),
+            "turn_id": row.payload.get("turn_id"),
+            "seq": row.seq,
+        }
+    return {"type": "agent_event", "event": {**row.payload, "kind": row.kind}, "seq": row.seq}
+
+
+def activity_to_wire(activity: Activity) -> dict[str, Any]:
+    """The payload's own ``kind`` wins (the worker writes the whole transient event --
+    text_delta, thinking_delta or task_progress); a payload without one is task_progress."""
+    return {"type": "agent_event", "event": {"kind": "task_progress", **activity.payload}}
+
+
+def resolve_cursor(last_event_id: str | None, after: str | None) -> int:
+    """The header wins: it is what the browser's automatic reconnect sends."""
+    raw = last_event_id if last_event_id not in (None, "") else after
+    if raw in (None, ""):
+        return 0
+    value = int(str(raw).strip())  # ValueError -> 400 at the route
+    if value < 0:
+        raise ValueError("cursor must be >= 0")
+    return value
+
+
+def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, nudges: int) -> dict[str, Any]:
+    """The turn message the worker receives. One definition, so a test driving a fake
+    store still asserts the shape production enqueues.
+
+    ``max_nudges`` is 1a's carrier: the worker prefers it over its own
+    ``AUTONOMOUS_MAX_NUDGES`` because one worker serves the browser and
+    ``make proto-demo`` and cannot tell them apart. It comes from ``nudges`` -- this
+    tier's environment -- and never from the request."""
+    return {
+        "turn_id": turn_id,
+        "session_id": session.session_id,
+        "project_id": session.project_id,
+        "text": text,
+        "enqueued_at": enqueued_at,
+        "max_nudges": nudges,
+    }
+
+
+def session_out(row: SessionRow) -> dict[str, Any]:
+    """Every key of api.ts's SessionSummary; SessionList dereferences model/last_active."""
+    return {
+        "id": row.session_id,
+        "title": row.title,
+        "model": row.model,
+        "status": "retired" if row.retired_at is not None else "active",
+        "continuable": row.retired_at is None,
+        "sandbox_id": "",
+        "agent_session_id": None,
+        "created": row.created_at.isoformat(),
+        "updated": row.updated_at.isoformat(),
+        "last_active": row.updated_at.isoformat(),
+    }
+
+
+async def stream_frames(
+    store: Store,
+    session: SessionRow,
+    cursor: int,
+    *,
+    poll_s: float,
+    ping_s: float,
+    max_polls: int | None = None,
+    is_disconnected: Callable[[], Awaitable[bool]] | None = None,
+) -> AsyncIterator[str]:
+    """The SSE body: a Postgres poll every ``poll_s``, ``: ping`` after ``ping_s`` idle.
+
+    Order at open, and why: ``retry:``; the catch-up rows after the cursor; the current
+    documents once (the WS server's send_snapshot -- a version bump during a disconnect
+    would otherwise never reach the viewer, which hydrates /state only at mount); THEN
+    ``status turn_active`` if a turn is in flight. The status must follow the replay:
+    ChatPane clears busy on every ``turn_done``, so a replayed one landing after the
+    status would show idle while the agent works -- the same order sandbox_server.py
+    uses (history, then chat_ready, then turn_active).
+
+    ``max_polls`` bounds the loop for a route-level test; production passes None and
+    stops on client disconnect.
+    """
+    sid, pid = session.session_id, session.project_id
+    activity = await store.activity(sid)
+    seen_activity = activity.updated_at if activity else None
+    docs = await store.documents(pid)
+    seen_versions = {name: version for name, (version, _) in docs.items()}
+    yield "retry: 1000\n\n"
+    rows = await store.events_after(sid, cursor, EVENTS_PAGE)
+    while rows:  # the whole backlog before the status frame, page by page
+        for row in rows:
+            yield sse_frame(row_to_wire(row), seq=row.seq)
+            cursor = row.seq
+        rows = await store.events_after(sid, cursor, EVENTS_PAGE) if len(rows) >= EVENTS_PAGE else []
+    for name, (_, doc) in docs.items():
+        yield sse_frame({"type": DOC_WIRE.get(name, "document_updated"), "name": name, "data": doc})
+    if await store.turn_active(sid):
+        yield sse_frame({"type": "status", "state": "turn_active"})
+    # 1b: a message held while the turn runs. The browser marks it locally when it sends,
+    # but a reload or a second tab has no way to know -- so the state is on the wire.
+    seen_queued = await store.has_queued(sid)
+    if seen_queued:
+        yield sse_frame({"type": "status", "state": "turn_queued"})
+    last_sent = time.monotonic()
+    polls = 0
+    while max_polls is None or polls < max_polls:
+        polls += 1
+        sent = False
+        rows = await store.events_after(sid, cursor, EVENTS_PAGE)
+        for row in rows:
+            yield sse_frame(row_to_wire(row), seq=row.seq)
+            cursor = row.seq
+            sent = True
+        activity = await store.activity(sid)
+        if activity is not None and activity.updated_at != seen_activity:
+            seen_activity = activity.updated_at
+            yield sse_frame(activity_to_wire(activity))
+            sent = True
+        queued = await store.has_queued(sid)
+        if queued != seen_queued:
+            seen_queued = queued
+            yield sse_frame({"type": "status", "state": "turn_queued" if queued else "turn_unqueued"})
+            sent = True
+        versions = await store.document_versions(pid)
+        if versions != seen_versions:
+            docs = await store.documents(pid)
+            for name, (version, doc) in docs.items():
+                if seen_versions.get(name) != version:
+                    yield sse_frame({"type": DOC_WIRE.get(name, "document_updated"), "name": name, "data": doc})
+                    sent = True
+            seen_versions = versions
+        now = time.monotonic()
+        if sent:
+            last_sent = now
+        elif now - last_sent >= ping_s:
+            yield ": ping\n\n"
+            last_sent = now
+        if is_disconnected is not None and await is_disconnected():
+            return
+        if len(rows) >= EVENTS_PAGE:
+            continue  # a backlog is still draining; do not sleep between pages
+        await asyncio.sleep(poll_s)
+
+
+# ── readiness labels (U10) ───────────────────────────────────────────────────────
+
+_DSN_CREDENTIALS = re.compile(r"\b[\w.+-]+://[^\s@/]*@")
+
+
+class ReadyCheckError(Exception):
+    """A readiness failure whose label is not an error code or type name."""
+
+    def __init__(self, label: str, message: str) -> None:
+        super().__init__(message)
+        self.label = label
+
+
+def ready_label(exc: BaseException) -> str:
+    """What a failed check reports: the SQLSTATE when there is one, else the type name.
+    Never ``str(exc)``: /api/health is unauthenticated, and psycopg's message carries the
+    host, the port and the user. The worker has the same rule (``worker.ready_label``);
+    the web image does not ship the worker, so it is not imported."""
+    if isinstance(exc, ReadyCheckError):
+        return exc.label
+    sqlstate = getattr(exc, "sqlstate", None)
+    return str(sqlstate) if sqlstate else type(exc).__name__
+
+
+def redact(text: str) -> str:
+    """A message for the log, with any ``scheme://user:password@`` taken out."""
+    return _DSN_CREDENTIALS.sub("", text)
+
+
+def check_out(state: str) -> dict[str, Any]:
+    """One ``app.state.startup`` value (``ok``, ``pending`` or a label) as a check."""
+    return {"ok": True} if state == "ok" else {"ok": False, "error": state}
+
+
+# ── Postgres store ───────────────────────────────────────────────────────────────
+
+
+class PgStore:
+    """One AsyncConnection per call -- streams included, so an open stream costs three or
+    four short connects per poll. n=1 in the prototype; a pool is a production concern.
+
+    Connections are ``autocommit=True``: a read is one round trip, and the writers that
+    need several statements to land together say so with ``conn.transaction()``."""
+
+    def __init__(self, dsn: str) -> None:
+        self.dsn = dsn
+        # U10: the one readiness probe in flight, shared by concurrent /api/health calls,
+        # and the postgres check's last outcome for the transition log.
+        self._ready_task: asyncio.Task | None = None
+        self._ready_last: bool | None = None
+
+    async def check_ready(self, timeout_s: float | None = None) -> dict[str, Any]:
+        """``{ok, checks: {postgres}}`` from a connection of its own that must see every
+        table this tier queries, raced against ``timeout_s`` (``READY_TIMEOUT_S``, read per
+        call). The race runs INSIDE one shared task, so its report is the raced one and no
+        caller's cancellation reaches it: each caller waits through ``asyncio.shield``, and
+        the slot clears when the task finishes. Never raises."""
+        task = self._ready_task
+        if task is None:
+            task = self._ready_task = asyncio.create_task(
+                self._probe_ready(READY_TIMEOUT_S if timeout_s is None else timeout_s)
+            )
+            task.add_done_callback(self._ready_done)
+        return await asyncio.shield(task)
+
+    def _ready_done(self, task: asyncio.Task) -> None:
+        if self._ready_task is task:
+            self._ready_task = None
+
+    async def _probe_ready(self, timeout_s: float) -> dict[str, Any]:
+        try:
+            await asyncio.wait_for(self._probe_postgres(), timeout_s)
+            check, detail = {"ok": True}, ""
+        except Exception as exc:  # noqa: BLE001 - TimeoutError included; every failure is a label
+            check, detail = {"ok": False, "error": ready_label(exc)}, redact(f"{type(exc).__name__}: {exc}")
+        if self._ready_last is not check["ok"]:
+            self._ready_last = check["ok"]
+            if check["ok"]:
+                log.info("ev=health check=postgres ok=true")
+            else:
+                log.warning("ev=health check=postgres ok=false error=%s", detail or check["error"])
+        return {"ok": check["ok"], "checks": {"postgres": check}}
+
+    async def _probe_postgres(self) -> None:
+        import psycopg
+
+        conn = await psycopg.AsyncConnection.connect(
+            self.dsn, autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
+            options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
+        )
+        try:
+            cur = await conn.execute(READY_SQL, (list(WEB_TABLES), list(WEB_FUNCTIONS)))
+            missing = [str(row[0]) for row in await cur.fetchall()]
+        finally:
+            await conn.close()
+        if missing:
+            names = ",".join(missing)
+            raise ReadyCheckError(f"schema: missing {names}", f"web tables or functions missing: {names}")
+
+    async def _connect(self):
+        import psycopg
+        from psycopg.rows import dict_row
+
+        # U23: a connect to a vanished host fails in 10 s rather than the OS's TCP timeout.
+        return await psycopg.AsyncConnection.connect(self.dsn, row_factory=dict_row, autocommit=True,
+                                                     connect_timeout=10)
+
+    async def verify_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
+        """The ledger ``migrate.py`` keeps against the files under ``sql_dir``: the shipped
+        names when it is at this build's level (or ahead of it), else ``ReadyCheckError``
+        with the verdict's label (``schema: unmigrated``, ``behind``, ``drift``,
+        ``out_of_order``). Runs no DDL, so a DML-only role passes once someone has
+        migrated. A connection of its own with positional rows and a server-side
+        statement_timeout, like ``_probe_postgres``, and awaited rather than run on a
+        thread, so the shared startup budget can cancel it."""
+        import psycopg
+
+        shipped = migrate.load(sql_dir)
+        conn = await psycopg.AsyncConnection.connect(
+            self.dsn, autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
+            options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
+        )
+        try:
+            exists = bool((await (await conn.execute(migrate.LEDGER_EXISTS_SQL)).fetchone())[0])
+            rows = await (await conn.execute(migrate.LEDGER_SELECT_SQL)).fetchall() if exists else []
+        finally:
+            await conn.close()
+        found = migrate.verdict(shipped, migrate.ledger_from_rows(exists, rows))
+        if found.label is not None:
+            raise ReadyCheckError(found.label, f"{found.label}; run migrate.py with MIGRATE_PG_DSN")
+        return [m.name for m in shipped]
+
+    @staticmethod
+    def _row(r: dict[str, Any]) -> SessionRow:
+        return SessionRow(
+            session_id=r["session_id"], project_id=r["project_id"],
+            title=r["title"] or DEFAULT_TITLE, model=r["model"] or DEFAULT_MODEL,
+            created_at=r["created_at"], updated_at=r["updated_at"] or r["created_at"],
+            owner_id=r["owner_id"], retired_at=r["retired_at"],
+        )
+
+    # LEFT JOIN: 001 declares no foreign keys, so a session whose project row is missing
+    # must still load -- with owner_id NULL, which the route turns into a 404.
+    _SELECT = (
+        "SELECT s.session_id, s.project_id, s.title, s.model, s.created_at, s.updated_at, p.owner_id, "
+        "s.retired_at "
+        "FROM sessions s LEFT JOIN projects p ON p.project_id = s.project_id"
+    )
+
+    async def create_session(
+        self, title: str, model: str, project_id: str | None, owner: str, may_create_or_claim: bool
+    ) -> SessionRow:
+        """Open a session on a project the caller owns, in one transaction.
+
+        No project_id: a fresh project, owned by the caller. A supplied one opens only
+        if the caller already owns it -- or, under dev-login only
+        (``may_create_or_claim``), if it does not exist yet or nobody owns it, which is
+        how ``proto/seed.py`` hands a project the engine created to the signed-in
+        developer. Anything else raises ProjectNotOwned. Production therefore never
+        creates or claims a client-chosen id."""
+        session_id = "sess_" + uuid.uuid4().hex[:16]
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                if project_id is None:
+                    project_id = "proj_" + uuid.uuid4().hex[:16]
+                    await conn.execute(
+                        "INSERT INTO projects (project_id, owner_id) VALUES (%s, %s)", (project_id, owner)
+                    )
+                else:
+                    cur = await conn.execute(
+                        "SELECT owner_id FROM projects WHERE project_id = %s FOR UPDATE", (project_id,)
+                    )
+                    found = await cur.fetchone()
+                    if found is not None and found["owner_id"] == owner:
+                        pass
+                    elif not may_create_or_claim or (found is not None and found["owner_id"] is not None):
+                        raise ProjectNotOwned(project_id)
+                    elif found is None:
+                        cur = await conn.execute(
+                            "INSERT INTO projects (project_id, owner_id) VALUES (%s, %s) "
+                            "ON CONFLICT (project_id) DO NOTHING RETURNING project_id",
+                            (project_id, owner),
+                        )
+                        if await cur.fetchone() is None:  # a concurrent create won the id
+                            raise ProjectNotOwned(project_id)
+                    else:
+                        cur = await conn.execute(
+                            "UPDATE projects SET owner_id = %s WHERE project_id = %s AND owner_id IS NULL "
+                            "RETURNING project_id",
+                            (owner, project_id),
+                        )
+                        if await cur.fetchone() is None:
+                            raise ProjectNotOwned(project_id)
+                await conn.execute(
+                    "INSERT INTO sessions (session_id, project_id, title, model) VALUES (%s, %s, %s, %s)",
+                    (session_id, project_id, title, model),
+                )
+            cur = await conn.execute(self._SELECT + " WHERE s.session_id = %s", (session_id,))
+            row = await cur.fetchone()
+        return self._row(row)
+
+    async def list_sessions(self, owner: str) -> list[SessionRow]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                self._SELECT + " WHERE p.owner_id = %s ORDER BY s.updated_at DESC, s.created_at DESC", (owner,)
+            )
+            return [self._row(r) for r in await cur.fetchall()]
+
+    async def get_session(self, session_id: str) -> SessionRow | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute(self._SELECT + " WHERE s.session_id = %s", (session_id,))
+            row = await cur.fetchone()
+        return self._row(row) if row else None
+
+    async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "UPDATE sessions SET title = COALESCE(%s, title), model = COALESCE(%s, model), "
+                "updated_at = now() WHERE session_id = %s RETURNING session_id",
+                (title, model, session_id),
+            )
+            hit = await cur.fetchone()
+        return await self.get_session(session_id) if hit else None
+
+    async def delete_session(self, session_id: str) -> bool:
+        """Delete a session and, with its last session, its project. Raises SessionBusy
+        while a turn may still be running (TURN_LIVE_SQL); a held message, or a stranded
+        turn nothing will close, does not count, and goes with it.
+
+        One transaction under the session's queue lock, which admit_message and the
+        worker's release take, so no turn is admitted or released between the check and
+        the deletes. S3 objects behind the project's blobs and staging rows are left to
+        the orphan sweep (U19)."""
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
+                await conn.execute(grants.QUEUE_LOCK_SQL, (grants.QUEUE_LOCK_NS, session_id))
+                cur = await conn.execute(
+                    "SELECT project_id, sdk_session_id FROM sessions WHERE session_id = %s FOR UPDATE",
+                    (session_id,),
+                )
+                row = await cur.fetchone()
+                if row is None:
+                    return False
+                cur = await conn.execute(
+                    TURN_LIVE_SQL, (session_id, QUEUED_OUTCOME, DELETE_CLAIM_GRACE_S, DELETE_UNCLAIMED_GRACE_S)
+                )
+                if (await cur.fetchone())["live"]:
+                    raise SessionBusy(session_id)
+                for table in grants.SESSION_TABLES:
+                    await conn.execute(f"DELETE FROM {table} WHERE session_id = %s", (session_id,))  # noqa: S608 - fixed names
+                # The transcript is keyed by the SDK session id (004), not this one, and a
+                # subagent's rows share it under a `subagents/...` subpath: this removes
+                # exactly what the spend meter (worker SESSION_USAGE_SQL) counts.
+                await conn.execute(grants.TRANSCRIPT_DELETE_SQL,
+                                   (grants.transcript_ids(session_id, row["sdk_session_id"]),))
+                await conn.execute("DELETE FROM sessions WHERE session_id = %s", (session_id,))
+                # The project goes only with its LAST session. A project another session
+                # still opens must keep its documents -- and must keep its projects row,
+                # or its owner is gone and the next dev-login create could claim it.
+                for table in ("documents", "blobs", "staging", "projects"):
+                    await conn.execute(
+                        f"DELETE FROM {table} WHERE project_id = %s "  # noqa: S608 - fixed names
+                        "AND NOT EXISTS (SELECT 1 FROM sessions WHERE project_id = %s)",
+                        (row["project_id"], row["project_id"]),
+                    )
+        return True
+
+    async def document_versions(self, project_id: str) -> dict[str, int]:
+        async with await self._connect() as conn:
+            cur = await conn.execute("SELECT name, version FROM documents WHERE project_id = %s", (project_id,))
+            return {r["name"]: r["version"] for r in await cur.fetchall()}
+
+    async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]:
+        async with await self._connect() as conn:
+            cur = await conn.execute("SELECT name, version, doc FROM documents WHERE project_id = %s", (project_id,))
+            return {r["name"]: (r["version"], r["doc"]) for r in await cur.fetchall()}
+
+    # -- U20 feedback reads ------------------------------------------------------------
+
+    async def blob_index(self, project_id: str) -> list[tuple[str, str, int]]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(BLOB_INDEX_SQL, (project_id,))
+            return [(r["key"], r["s3_key"], int(r["bytes"])) for r in await cur.fetchall()]
+
+    async def sdk_session_id(self, session_id: str) -> str | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute(SDK_SESSION_SQL, (session_id,))
+            row = await cur.fetchone()
+        return row["sdk_session_id"] if row else None
+
+    async def transcript_groups(self, project_id: str) -> list[feedback.TranscriptGroup]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(TRANSCRIPT_GROUPS_SQL, (project_id,))
+            return [feedback.TranscriptGroup(r["session_id"], r["subpath"], int(r["max_seq"]), int(r["bytes"]))
+                    for r in await cur.fetchall()]
+
+    async def transcript_rows(
+        self, project_id: str, session_id: str, subpath: str, after: int, limit: int
+    ) -> list[tuple[int, Any]]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(TRANSCRIPT_ROWS_SQL, (project_id, session_id, subpath, after, limit))
+            return [(int(r["seq"]), r["entry"]) for r in await cur.fetchall()]
+
+    async def grant_ciphertexts(self, user_id: str) -> tuple[str | None, str | None]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(GRANT_CIPHERTEXTS_SQL, (user_id,))
+            row = await cur.fetchone()
+        return (row["access_token_enc"], row["refresh_token_enc"]) if row else (None, None)
+
+    async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict[str, Any] | None]:
+        """Record the patron's message and decide whether it goes out now (1b): ``(turn,
+        held, rescued)``. Held when a turn is running OR an older message is already
+        held (U23 D7: otherwise a newer message overtakes the older one). ``rescued`` is
+        the oldest held body this call claimed because no turn is running -- possibly an
+        older message than this one -- which the caller enqueues.
+
+        U23 D8: one transaction under the session's queue lock (``grants.QUEUE_LOCK_NS``),
+        which the worker's release takes around its own check and claim. Two round trips
+        on two connections used to separate this tier's "is a turn running?" from its
+        insert, and the worker's from its claim, so a message could go straight out while
+        the worker released another: two turns on one session. The caller's send runs
+        after the commit, outside the lock. A lock wait past ``QUEUE_LOCK_TIMEOUT_S``
+        raises (a 500) rather than hanging the post."""
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
+                await conn.execute(grants.QUEUE_LOCK_SQL, (grants.QUEUE_LOCK_NS, session.session_id))
+                # U19: under the lock retention retires under, so a session retired after
+                # the route read its row is still refused.
+                cur = await conn.execute(RETIRED_SQL, (session.session_id,))
+                if (await cur.fetchone())["retired"]:
+                    raise SessionRetired(session.session_id)
+                held = (await self._exists(conn, TURN_ACTIVE_SQL, session.session_id, "active")
+                        or await self._exists(conn, HAS_QUEUED_SQL, session.session_id, "queued"))
+                turn = await self._insert_turn(conn, session, text, queued=held)
+                rescued = None
+                # Asked again after the write: a turn that closed in between without
+                # releasing (a crash between its close and its release) strands the row.
+                if held and not await self._exists(conn, TURN_ACTIVE_SQL, session.session_id, "active"):
+                    rescued = await self._claim_held(conn, session.session_id)
+        return turn, held, rescued
+
+    @staticmethod
+    async def _exists(conn, sql: str, session_id: str, column: str) -> bool:
+        cur = await conn.execute(sql, (session_id, QUEUED_OUTCOME))
+        return bool((await cur.fetchone())[column])
+
+    @staticmethod
+    async def _insert_turn(conn, session: SessionRow, text: str, *, queued: bool) -> Turn:
+        from psycopg.types.json import Jsonb
+
+        turn_id = str(uuid.uuid4())
+        enqueued_at = datetime.now(tz=timezone.utc).isoformat()
+        body = queue_body(turn_id, session, text, enqueued_at, max_nudges())
+        await conn.execute(
+            "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome) "
+            "VALUES (%s, %s, %s, %s, %s::timestamptz, %s)",
+            (turn_id, session.session_id, session.project_id, Jsonb(body), enqueued_at,
+             QUEUED_OUTCOME if queued else None),
+        )
+        # ONLY when this message is actually being enqueued. A HELD message
+        # must not clear the flag: the patron presses Stop, then types a
+        # correction while the turn is still winding down -- which 1b's own UI
+        # change encourages, since Send now sits beside Stop -- and clearing it
+        # here would cancel the Stop they just pressed. The worker's halt() reads
+        # this column on every tool call and would find nothing, so the run would
+        # carry on to job end with the turn recorded as an ordinary close.
+        if not queued:
+            await conn.execute(CLEAR_STOP_SQL, (session.session_id,))
+        cur = await conn.execute("SELECT next_session_seq(%s) AS seq", (session.session_id,))
+        seq = (await cur.fetchone())["seq"]
+        await conn.execute(
+            "INSERT INTO session_events (session_id, seq, kind, payload) VALUES (%s, %s, 'user_msg', %s)",
+            (session.session_id, seq, Jsonb({"text": text, "turn_id": turn_id})),
+        )
+        await conn.execute(
+            "UPDATE sessions SET updated_at = now() WHERE session_id = %s", (session.session_id,)
+        )
+        return Turn(turn_id=turn_id, seq=seq, body=body)
+
+    async def fail_turn(self, turn_id: str, reason: str) -> None:
+        """Close a turn whose send failed. A send that landed after its timeout may already
+        be claimed, so this is an epoch-less close (``FAIL_TURN_SQL``); a row already closed
+        keeps its closer's outcome and epoch."""
+        async with await self._connect() as conn:
+            await conn.execute(FAIL_TURN_SQL, (reason, turn_id))
+
+    async def put_back_held(self, turn_id: str) -> bool:
+        """Hold a rescued message again after its send failed (U23), so an older message is
+        never closed for a failure the patron is told was theirs. Only while no worker has
+        received it: a send that landed after its timeout is claimed, which bumps
+        ``receive_count``. False when the row had moved on."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "UPDATE turns SET outcome = %s WHERE turn_id = %s AND completed_at IS NULL "
+                "AND outcome IS NULL AND receive_count = 0",
+                (QUEUED_OUTCOME, turn_id),
+            )
+            return cur.rowcount == 1
+
+    async def events_after(self, session_id: str, after: int, limit: int) -> list[EventRow]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "SELECT seq, kind, payload, ts FROM session_events "
+                "WHERE session_id = %s AND seq > %s ORDER BY seq LIMIT %s",
+                (session_id, after, limit),
+            )
+            return [EventRow(seq=r["seq"], kind=r["kind"], payload=r["payload"] or {}, ts=r["ts"]) for r in await cur.fetchall()]
+
+    async def activity(self, session_id: str) -> Activity | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "SELECT payload, updated_at FROM session_activity WHERE session_id = %s", (session_id,)
+            )
+            row = await cur.fetchone()
+        return Activity(updated_at=row["updated_at"], payload=row["payload"] or {}) if row else None
+
+    async def turn_active(self, session_id: str) -> bool:
+        """A turn is RUNNING on this session. A held message (1b) has completed_at NULL
+        too, so it must be excluded here or the very first one latches the hold forever
+        and every later message is queued behind a turn that does not exist."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(TURN_ACTIVE_SQL, (session_id, QUEUED_OUTCOME))
+            return bool((await cur.fetchone())["active"])
+
+    async def has_queued(self, session_id: str) -> bool:
+        """Whether a message is held for this session (1b) -- what the SSE stream renders
+        as `turn_queued`, so a reload or a second tab still shows it waiting."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(HAS_QUEUED_SQL, (session_id, QUEUED_OUTCOME))
+            return bool((await cur.fetchone())["queued"])
+
+    @staticmethod
+    async def _claim_held(conn, session_id: str) -> dict[str, Any] | None:
+        """Take the session's oldest held message so THIS tier can enqueue it (1b).
+
+        Deliberately the same statement as the worker's ``take_queued_turn``: the UPDATE
+        that clears the outcome IS the claim, so the worker finishing a turn and this
+        tier rescuing a stranded row cannot both enqueue the same message -- exactly one
+        UPDATE finds the row with ``outcome = 'queued'`` and the other returns nothing.
+        That is the whole reason this is not a SELECT followed by an UPDATE."""
+        cur = await conn.execute(
+            "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
+            "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
+            "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
+            ") RETURNING message",
+            (session_id, QUEUED_OUTCOME),
+        )
+        row = await cur.fetchone()
+        body = row["message"] if row else None
+        if body is not None:
+            # Claiming IS enqueuing, so the Stop flag clears here for the same reason
+            # it clears in the worker's `take_queued_turn`. `_insert_turn` deliberately
+            # does not clear it for a held message, so without this the rescued turn
+            # halts at its first tool call with "Stopped by the researcher."
+            await conn.execute(CLEAR_STOP_SQL, (session_id,))
+        return body if isinstance(body, dict) else None
+
+    async def request_stop(self, session_id: str) -> bool:
+        """1c: raise the Stop flag. The worker owns the turn and no control channel
+        reaches it, so this is a row both worker hooks read on the turn's own connection.
+        Idempotent -- the first press wins and a second changes nothing."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "UPDATE sessions SET stop_requested_at = COALESCE(stop_requested_at, now()) "
+                "WHERE session_id = %s RETURNING stop_requested_at",
+                (session_id,),
+            )
+            return (await cur.fetchone()) is not None
+
+    # -- sign-in (008) --------------------------------------------------------------
+
+    @staticmethod
+    def _user(r: dict[str, Any]) -> User:
+        return User(
+            id=r["id"], email=r["email"], familysearch_id=r["familysearch_id"],
+            sessions_revoked_at=r["sessions_revoked_at"],
+        )
+
+    _USER = "SELECT id, email, familysearch_id, sessions_revoked_at FROM users"
+
+    async def get_user(self, user_id: str) -> User | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute(self._USER + " WHERE id = %s", (user_id,))
+            row = await cur.fetchone()
+        return self._user(row) if row else None
+
+    async def upsert_user(self, email: str, familysearch_id: str | None) -> User:
+        """The user for this email, created on first sign-in. The FamilySearch id is
+        pinned on first sight; a later sign-in presenting a DIFFERENT one raises
+        IdentityMismatch (trust on first use)."""
+        email = email.strip().lower()
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                await conn.execute(
+                    "INSERT INTO users (id, email) VALUES (%s, %s) ON CONFLICT (email) DO NOTHING",
+                    ("usr_" + uuid.uuid4().hex[:16], email),
+                )
+                cur = await conn.execute(self._USER + " WHERE email = %s FOR UPDATE", (email,))
+                user = self._user(await cur.fetchone())
+                if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
+                    raise IdentityMismatch(email)
+                if familysearch_id and not user.familysearch_id:
+                    await conn.execute(
+                        "UPDATE users SET familysearch_id = %s WHERE id = %s", (familysearch_id, user.id)
+                    )
+                    user = User(user.id, user.email, familysearch_id, user.sessions_revoked_at)
+        return user
+
+    async def is_allowed(self, email: str) -> bool:
+        async with await self._connect() as conn:
+            cur = await conn.execute("SELECT 1 FROM allowed_emails WHERE email = %s", (email.strip().lower(),))
+            return (await cur.fetchone()) is not None
+
+    async def sync_allowlist(self, emails: set[str]) -> None:
+        """ALLOWED_EMAILS is the source of truth: the table is replaced at each start, so
+        removing an address from the environment and restarting locks that patron out
+        (current_user re-checks the allowlist on every request)."""
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                await conn.execute("DELETE FROM allowed_emails")
+                for email in sorted(emails):
+                    await conn.execute("INSERT INTO allowed_emails (email) VALUES (%s)", (email,))
+
+    async def revoke_sessions(self, user_id: str) -> None:
+        async with await self._connect() as conn:
+            await conn.execute("UPDATE users SET sessions_revoked_at = now() WHERE id = %s", (user_id,))
+
+    async def store_grant(
+        self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
+    ) -> None:
+        """Ciphertext only, in ONE transaction under the patron's grant write lock
+        (``grants.WRITE_LOCK_NS``), so a sign-in never interleaves with a refresh: a
+        refresher holding the lock makes this wait, bounded by ``lock_timeout``, and then
+        the sign-in's grant wins. It never takes the attempt lock -- a second sign-in does
+        not revoke the first token (U2), so a live attempt keeps its token and the next one
+        reads this grant. granted_at restarts on every sign-in and never on refresh (it
+        records the sign-in); a sign-in also starts a new session and clears a refusal and
+        an ambiguous-refresh marker. A response without a refresh token keeps the one
+        already stored. Raises GrantBusy on the lock timeout."""
+        from psycopg import errors
+
+        try:
+            async with await self._connect() as conn:
+                async with conn.transaction():
+                    await conn.execute(grants.WRITE_LOCK_TIMEOUT_SQL)
+                    await conn.execute(grants.WRITE_XACT_LOCK_SQL, (grants.WRITE_LOCK_NS, user_id))
+                    await conn.execute(
+                        "INSERT INTO familysearch_tokens "
+                        "(user_id, access_token_enc, refresh_token_enc, expires_at, granted_at, updated_at, "
+                        "session_started_at) "
+                        "VALUES (%s, %s, %s, %s, now(), now(), now()) "
+                        "ON CONFLICT (user_id) DO UPDATE SET access_token_enc = EXCLUDED.access_token_enc, "
+                        "refresh_token_enc = COALESCE(EXCLUDED.refresh_token_enc, familysearch_tokens.refresh_token_enc), "
+                        "expires_at = EXCLUDED.expires_at, granted_at = now(), updated_at = now(), "
+                        "session_started_at = now(), refresh_started_at = NULL, refresh_refused_at = NULL, "
+                        "refresh_refused_reason = NULL",
+                        (user_id, access_token_enc, refresh_token_enc, expires_at),
+                    )
+        except errors.LockNotAvailable as exc:
+            raise GrantBusy(user_id) from exc
+
+    # -- grants (U3): this tier is the only refresher ----------------------------------
+
+    async def due_grant_users(self, refresh_age_s: float, limit: int = grants.DUE_BATCH) -> list[tuple[str, float]]:
+        """``(user_id, session age)`` for every grant the loop should try, oldest first."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(grants.DUE_SQL, (refresh_age_s, limit))
+            return [(str(r["user_id"]), float(r["age_s"] or 0)) for r in await cur.fetchall()]
+
+    async def _grant_connect(self):
+        """A connection of its own for one refresh: its session advisory locks die with it,
+        and the server's keepalives end its backend if this host vanishes mid-refresh."""
+        import psycopg
+        from psycopg.rows import dict_row
+
+        return await psycopg.AsyncConnection.connect(
+            self.dsn, row_factory=dict_row, autocommit=True, options=grants.GRANT_KEEPALIVE_OPTIONS,
+        )
+
+    async def refresh_grant(
+        self, user_id: str, *, refresh: Callable[[str], Awaitable[grants.RefreshResult]], refresh_age_s: float,
+    ) -> str:
+        """One refresh of one patron's grant, only if no attempt of theirs is live.
+
+        1. Try the write lock (``skipped_busy``: another refresher has it), then the attempt
+           lock EXCLUSIVELY (``skipped_live``: an attempt holds it shared, and a refresh
+           would revoke the token it bears).
+        2. Transaction 1: lock the row, re-check it is due (``not_due``: another instance
+           just did it), decrypt the refresh token (an undecryptable one marks the grant
+           refused), set the ambiguous-refresh marker.
+        3. ``refresh``, with no transaction open (``auth.refresh_tokens``: one 30 s total
+           deadline).
+        4. Transaction 2: lock the row and record the outcome -- new tokens and a new
+           session start; the refusal; the marker cleared (``not_sent``, unless it was
+           already set before this refresh: that one came from an earlier refresh this
+           ``not_sent`` says nothing about); or the marker kept (``ambiguous``:
+           FamilySearch may have revoked the stored access token, so no attempt starts on
+           it until a later refresh settles it).
+        5. Close the connection, which releases both locks.
+
+        Returns ``refreshed``, ``skipped_live``, ``skipped_busy``, ``not_due``, ``refused``,
+        ``not_sent`` or ``ambiguous``. Never logs or returns a token."""
+        conn = await self._grant_connect()
+        try:
+            cur = await conn.execute(grants.TRY_LOCK_SQL, (grants.WRITE_LOCK_NS, user_id))
+            if not (await cur.fetchone())["pg_try_advisory_lock"]:
+                return "skipped_busy"
+            cur = await conn.execute(grants.TRY_LOCK_SQL, (grants.ATTEMPT_LOCK_NS, user_id))
+            if not (await cur.fetchone())["pg_try_advisory_lock"]:
+                return "skipped_live"
+            async with conn.transaction():
+                cur = await conn.execute(grants.GRANT_FOR_UPDATE_SQL, (user_id,))
+                row = grants.GrantRow.from_row(await cur.fetchone())
+                if row is None or not grants.refresh_due(row, refresh_age_s=refresh_age_s):
+                    return "not_due"
+                refresh_token = auth.decrypt(row.refresh_token_enc)
+                if not refresh_token:
+                    await conn.execute(grants.REFRESH_REFUSED_SQL, (grants.UNDECRYPTABLE, user_id))
+                    return "refused"
+                # A marker already set is an EARLIER refresh's, one FamilySearch may have
+                # processed; only a ``not_sent`` of a refresh that set it may clear it.
+                inherited_marker = row.refresh_pending
+                await conn.execute(grants.MARK_REFRESH_SQL, (user_id,))
+            try:
+                result = await refresh(refresh_token)
+            except Exception as exc:  # noqa: BLE001 - unknown whether it reached FamilySearch
+                log.warning("ev=grant_refresh_error user_id=%s error=%s", user_id, type(exc).__name__)
+                result = grants.RefreshResult("ambiguous", reason=type(exc).__name__)
+            async with conn.transaction():
+                await conn.execute(grants.GRANT_FOR_UPDATE_SQL, (user_id,))
+                if result.kind == "ok":
+                    await conn.execute(grants.REFRESH_OK_SQL, (
+                        auth.encrypt(result.access_token or ""),
+                        auth.encrypt(result.refresh_token) if result.refresh_token else None,
+                        grants.SESSION_IDLE_S, user_id,
+                    ))
+                    return "refreshed"
+                if result.kind == "refused":
+                    await conn.execute(grants.REFRESH_REFUSED_SQL, (result.reason or "refused", user_id))
+                    return "refused"
+                if result.kind == "not_sent":
+                    await conn.execute(
+                        grants.REFRESH_AMBIGUOUS_SQL if inherited_marker else grants.REFRESH_NOT_SENT_SQL,
+                        (user_id,),
+                    )
+                    return "not_sent"
+                await conn.execute(grants.REFRESH_AMBIGUOUS_SQL, (user_id,))
+                return "ambiguous"
+        finally:
+            await conn.close()
+
+
+# ── queues ───────────────────────────────────────────────────────────────────────
+
+
+class SqsQueue:
+    """SendMessage over the SQS query API via enqueue.sqs_call, SigV4-signed. QUEUE_URL is
+    a full queue URL (the shim's shape); the endpoint is its scheme+host, which is also the
+    Host the request is signed for, and the URL itself goes down as QueueUrl -- elasticmq
+    keys on the path, so the in-network host is fine."""
+
+    def __init__(self, queue_url: str) -> None:
+        parsed = urlparse(queue_url)
+        self.queue_url = queue_url
+        self.endpoint = f"{parsed.scheme}://{parsed.netloc}"
+
+    async def send(self, body: dict[str, Any]) -> str:
+        doc = await asyncio.to_thread(
+            enqueue.sqs_call,
+            self.endpoint,
+            "SendMessage",
+            {"QueueUrl": self.queue_url, "MessageBody": json.dumps(body)},
+        )
+        return enqueue.xml_text(doc, "MessageId")
+
+
+# ── app ──────────────────────────────────────────────────────────────────────────
+
+
+class CreateSessionBody(BaseModel):
+    title: str | None = None
+    model: str | None = None
+    # A project already in the store (proto/seed.py); absent -> a fresh empty one. The
+    # pattern is the store's own project-id rule (an S3 key prefix on its own).
+    project_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+    sample: bool = False  # accepted for api.ts compatibility; no seed project on this backend
+
+
+class PatchSessionBody(BaseModel):
+    title: str | None = None
+    model: str | None = None
+
+
+class MessageBody(BaseModel):
+    # Not blank by the worker's own predicate (is_real_turn: text.strip()): a text it
+    # strips to nothing ("\x1c" passes a regex \S) is a stub message there, which it 400s.
+    text: str = Field(min_length=1)
+
+    @field_validator("text")
+    @classmethod
+    def _not_blank(cls, text: str) -> str:
+        if not text.strip():
+            raise ValueError("text is blank")
+        return text
+
+
+class DevLoginBody(BaseModel):
+    email: str | None = None
+
+
+def _env_float(name: str, default: float) -> float:
+    """POLL_S / SSE_PING_S, defensively. A bare ``float()`` raises on ``"1s"`` or a
+    stray space, and both are read while the app is being CONSTRUCTED -- so a typo in one
+    variable takes the whole web tier down at start and keeps it down, with no running
+    service to read the error from.
+
+    This duplicates ``app.agent.continue_policy.env_float``, which the worker and the
+    alpha now share, and it stays duplicated on purpose: the web image copies only
+    ``enqueue.py``, ``sql/`` and ``web/`` (``proto/web/Dockerfile``), so ``app`` is not
+    importable here. Importing it would pass every test -- the suite runs from the repo
+    root, where the whole tree is on the path -- and fail only in the deployed
+    container."""
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        log.warning("%s=%r is not a number; using %s", name, raw, default)
+        return default
+    return value if value > 0 else default
+
+
+# PR #2870 item 1a. Sized on STEP count, not on the nudge histogram: over the 189
+# committed e2e runs, Skill/Task/Agent steps per run are median 15, p90 25, p99 51,
+# max 76, so this clears p99 with margin. The nudge histogram (median 1, p90 4) describes
+# runs under a harness that FORBIDS yielding and does not describe this regime; the plan
+# puts the floor at 30. test_proto_config re-derives the p99 from the corpus.
+DEFAULT_MAX_NUDGES = 60
+
+
+def max_nudges(env: Mapping[str, str] | None = None) -> int:
+    """``AUTONOMOUS_MAX_NUDGES`` for the turns this tier enqueues (1a).
+
+    Read from the tier's OWN environment and stamped on the queue body -- never taken
+    from the request. The cap is the operator's, so a field on ``MessageBody`` would let a
+    signed-in patron set their own nudge budget, and the worker cannot tell the browser from
+    ``make proto-demo``: there is no browser path it can see. Each recipe recreates this
+    container with its own export instead.
+
+    Unset takes ``DEFAULT_MAX_NUDGES``, not 0. A tier that silently enqueued 0 would ship
+    the stop-every-step behaviour the plan exists to remove, and it would look like the
+    feature simply not working. A recipe that needs a one-turn run exports 0 explicitly.
+    A malformed value is a warning and the default, for the same reason: the failure mode
+    of guessing 0 here is invisible."""
+    raw = (os.environ if env is None else env).get("AUTONOMOUS_MAX_NUDGES")
+    text = (raw or "").strip()
+    if not text:
+        return DEFAULT_MAX_NUDGES
+    try:
+        n = int(text)
+    except ValueError:
+        log.warning("AUTONOMOUS_MAX_NUDGES=%r is not an integer; using %d", raw, DEFAULT_MAX_NUDGES)
+        return DEFAULT_MAX_NUDGES
+    if n < 0:
+        log.warning("AUTONOMOUS_MAX_NUDGES=%d is negative; using 0 (the Stop hook off)", n)
+        return 0
+    return n
+
+
+# ── startup (U10) ────────────────────────────────────────────────────────────────
+
+
+async def startup_attempt(
+    startup: dict[str, str], name: str, step: Callable[[], Awaitable[Any]], *, timeout_s: float | None = None,
+) -> bool:
+    """One attempt at a startup step; ``startup[name]`` becomes ``ok`` or the error's
+    label, logged once per change. Never raises."""
+    try:
+        result = await (step() if timeout_s is None else asyncio.wait_for(step(), timeout_s))
+    except Exception as exc:  # noqa: BLE001 - recorded, retried, reported by /api/health
+        label = ready_label(exc)
+        if startup.get(name) != label:
+            log.warning("startup %s failing (%s): %s", name, label, redact(f"{type(exc).__name__}: {exc}"))
+        startup[name] = label
+        return False
+    if name == "schema" and isinstance(result, list) and result:
+        log.info("schema at %s", result[-1])
+    else:
+        log.info("startup %s ok", name)
+    startup[name] = "ok"
+    return True
+
+
+async def retry_startup(startup: dict[str, str], steps: dict[str, Callable[[], Awaitable[Any]]]) -> None:
+    """Retry each failed startup step independently, backing off STARTUP_BACKOFF_FIRST_S
+    doubling to STARTUP_BACKOFF_MAX_S, until it lands -- so a schema check failing until
+    someone migrates never holds up the allowlist sync, and turns green with no restart.
+    Cancelled at lifespan exit."""
+
+    async def one(name: str, step: Callable[[], Awaitable[Any]]) -> None:
+        delay = STARTUP_BACKOFF_FIRST_S
+        while True:
+            await asyncio.sleep(delay)
+            if await startup_attempt(startup, name, step, timeout_s=STARTUP_BUDGET_S):
+                return
+            delay = min(delay * 2, STARTUP_BACKOFF_MAX_S)
+
+    await asyncio.gather(*(one(name, step) for name, step in steps.items()))
+
+
+# ── grant refresh (U3) ──────────────────────────────────────────────────────────
+
+
+async def grant_refresh_loop(
+    store: Any, *, interval_s: float, refresh_age_s: float,
+    refresh: Callable[[str], Awaitable[grants.RefreshResult]],
+) -> None:
+    """This tier is every grant's only refresher (list 3 step 19). Every ``interval_s`` it
+    asks the store for the grants that are due -- an open turn, a session at least
+    ``refresh_age_s`` old or an ambiguous last refresh -- and tries each under
+    ``PgStore.refresh_grant``'s locks, which skip any patron with a live attempt. It
+    sleeps one interval BEFORE its first tick. Exceptions are caught per user and per
+    tick, so the loop never dies; cancelled at lifespan exit.
+
+    One ``ev=grant_refresh`` line per attempt, never with a token or an email (errors are
+    named by type only, since a message is whatever the failing layer put in it); a
+    ``skipped_live`` only when a patron's result changes, so a 10-hour attempt does not
+    log a line every interval."""
+    last: dict[str, str] = {}
+    while True:
+        await asyncio.sleep(interval_s)
+        try:
+            due = await store.due_grant_users(refresh_age_s)
+        except Exception as exc:  # noqa: BLE001 - the next tick retries
+            log.warning("ev=grant_refresh_tick error=%s", type(exc).__name__)
+            continue
+        due_ids = {user_id for user_id, _ in due}
+        for user_id in [u for u in last if u not in due_ids]:
+            del last[user_id]  # no open turn: the next live period logs afresh
+        for user_id, age_s in due:
+            try:
+                result = await store.refresh_grant(user_id, refresh=refresh, refresh_age_s=refresh_age_s)
+            except Exception as exc:  # noqa: BLE001 - one patron's failure must not stop the others
+                result = "error"
+                log.warning("ev=grant_refresh user_id=%s result=error error=%s", user_id, type(exc).__name__)
+            if result == "skipped_live" and last.get(user_id) == "skipped_live":
+                continue
+            last[user_id] = result
+            if result != "error":
+                log.info("ev=grant_refresh user_id=%s result=%s age_s=%d", user_id, result, int(age_s))
+
+
+def create_app(
+    store: Store | None = None,
+    queue: Queue | None = None,
+    *,
+    poll_s: float | None = None,
+    ping_s: float | None = None,
+    stream_max_polls: int | None = None,
+    blobs: Any = None,
+) -> FastAPI:
+    """Factory. With no arguments the lifespan builds PgStore(PG_DSN) + SqsQueue(QUEUE_URL)
+    from env, refusing to start without a QUEUE_URL; tests pass fakes and shrink the timings.
+    ``blobs`` (U20) is the feedback bucket (``blobstore.S3Blobs``); None with no store
+    passed means the lifespan builds it from GENEALOGY_S3_*."""
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        auth.preflight()  # before anything binds: a misconfigured tier must not come up
+        # U7: a half SQS pair refuses here, before a startup step or its background retry
+        # exists, so the refusal leaves nothing running.
+        if app.state.queue is None:
+            # U11: no queue means a turn is recorded and nothing ever runs it.
+            queue_url = (os.environ.get("QUEUE_URL") or "").strip()
+            if not queue_url:
+                raise RuntimeError("QUEUE_URL is unset or empty: the web tier needs the turns queue")
+            try:
+                sqs_auth = await asyncio.to_thread(enqueue.configure, os.environ, queue_url)
+            except enqueue.SqsConfigError as exc:
+                raise RuntimeError(str(exc)) from exc
+            app.state.queue = SqsQueue(queue_url)
+            log.info("queue: %s; %s", queue_url, enqueue.describe(sqs_auth))
+            if sqs_auth.method is None:
+                log.warning("no AWS credentials found yet: SendMessage retries the chain "
+                            "and fails until it resolves")
+        # U20: the feedback bucket. A half key pair refuses here, as a half SQS pair does; no
+        # bucket leaves the tier up and POST /api/feedback answering 503.
+        if app.state.blobs is None and app.state.store is None:
+            try:
+                app.state.blobs = await asyncio.to_thread(blobstore.from_env, os.environ)
+            except blobstore.S3ConfigError as exc:
+                raise RuntimeError(str(exc)) from exc
+            log.info("%s", blobstore.describe(os.environ))
+        # U10 D8: the store goes on app.state before either step, so every route and
+        # /api/health see it while Postgres is down; neither step can stop the tier listening.
+        steps: dict[str, Callable[[], Awaitable[Any]]] = {}
+        if app.state.store is None:
+            app.state.store = PgStore(os.environ.get("PG_DSN") or DEFAULT_PG_DSN)
+            steps["schema"] = app.state.store.verify_schema
+        store = app.state.store
+        if hasattr(store, "sync_allowlist"):
+            emails = auth.allowed_emails()
+            steps["allowlist"] = lambda: store.sync_allowlist(emails)
+        startup: dict[str, str] = {name: "pending" for name in steps}
+        app.state.startup = startup
+
+        async def inline() -> None:
+            for name, step in steps.items():
+                await startup_attempt(startup, name, step)
+
+        # One shared budget, not one per step: a blackholed Postgres holds uvicorn at most
+        # STARTUP_BUDGET_S before it listens.
+        try:
+            await asyncio.wait_for(inline(), STARTUP_BUDGET_S)
+        except TimeoutError:
+            log.warning("startup: Postgres did not answer within %ss; retrying in the background", STARTUP_BUDGET_S)
+        failing = {name: step for name, step in steps.items() if startup[name] != "ok"}
+        retry = asyncio.create_task(retry_startup(startup, failing)) if failing else None
+        # U3: only a store that can refresh (PgStore) gets the loop; a test's FakeStore never.
+        refresher = None
+        if hasattr(store, "refresh_grant"):
+            interval = grants.env_seconds(os.environ, "FS_GRANT_REFRESH_INTERVAL_S", grants.DEFAULT_REFRESH_INTERVAL_S)
+            refresher = asyncio.create_task(grant_refresh_loop(
+                store, refresh=auth.refresh_tokens,
+                interval_s=interval if interval > 0 else grants.DEFAULT_REFRESH_INTERVAL_S,
+                refresh_age_s=grants.env_seconds(os.environ, "FS_GRANT_REFRESH_AGE_S", grants.DEFAULT_REFRESH_AGE_S),
+            ))
+        try:
+            yield
+        finally:
+            for task in (retry, refresher):
+                if task is not None:
+                    task.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await task
+
+    # U12: no /docs, /redoc or /openapi.json -- FastAPI serves them unauthenticated on a
+    # public host, and nothing in the repo reads them.
+    app = FastAPI(title="Genealogy search-agent prototype - web tier", lifespan=lifespan,
+                  docs_url=None, redoc_url=None, openapi_url=None)
+    app.state.store = store
+    app.state.queue = queue
+    app.state.blobs = blobs
+    # U10: what the lifespan's startup steps reached (`ok`, `pending` or a label). None
+    # when no lifespan ran (a test's ASGITransport), which leaves the allowlist ungated.
+    app.state.startup = None
+    app.state.poll_s = poll_s if poll_s is not None else _env_float("POLL_S", 1.0)
+    app.state.ping_s = ping_s if ping_s is not None else _env_float("SSE_PING_S", 15.0)
+    app.state.stream_max_polls = stream_max_polls
+
+    def _store(request: Request) -> Store:
+        return request.app.state.store
+
+    def _allowlist_ready(request: Request) -> bool:
+        """Fail-closed (U10 D8): until this boot's sync has replaced ``allowed_emails``, a
+        table an earlier boot left could still admit a removed patron."""
+        startup = request.app.state.startup
+        return startup is None or startup.get("allowlist", "ok") == "ok"
+
+    async def current_user(request: Request) -> User:
+        """The signed-in patron, or 401/403. On every /api/sessions route."""
+        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
+        if data is None:
+            raise HTTPException(status_code=401, detail="Not signed in")
+        store = _store(request)
+        user = await store.get_user(data["uid"])
+        if user is None:
+            raise HTTPException(status_code=401, detail="Unknown user")
+        if auth.revoked(data.get("iat"), user.sessions_revoked_at):
+            raise HTTPException(status_code=401, detail="Session revoked")
+        if auth.familysearch_configured():
+            if not _allowlist_ready(request):
+                raise HTTPException(status_code=503, detail="Not ready")
+            if not await store.is_allowed(user.email):
+                raise HTTPException(status_code=403, detail="Account removed from allowlist")
+        return user
+
+    async def _session(request: Request, session_id: str, user: User) -> SessionRow:
+        """The session, if the caller owns its project. Someone else's session is a 404,
+        exactly like a missing one, so the answer does not confirm the id exists. A NULL
+        owner never equals a user id, so an unclaimed project is nobody's."""
+        row = await _store(request).get_session(session_id)
+        if row is None or row.owner_id is None or row.owner_id != user.id:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return row
+
+    # -- health ---------------------------------------------------------------------
+
+    @app.get("/api/health")
+    async def health(request: Request) -> JSONResponse:
+        """Readiness (U10): 200 or 503, the same keys either way so every script reading
+        ``queue`` or ``ping_s`` keeps working, plus ``checks`` -- the store's probe when it
+        has one, and the lifespan's startup steps when it ran. A report that raises is a
+        503 without ``checks``, never a 500."""
+        state = request.app.state
+        body: dict[str, Any] = {
+            "ok": True,
+            "tier": "proto-web",
+            "queue": type(state.queue).__name__,
+            "poll_s": state.poll_s,
+            "ping_s": state.ping_s,
+        }
+        checks: dict[str, Any] = {}
+        try:
+            if hasattr(state.store, "check_ready"):
+                checks.update((await state.store.check_ready())["checks"])
+            for name, value in (state.startup or {}).items():
+                checks[name] = check_out(value)
+        except Exception as exc:  # noqa: BLE001 - the load balancer reads the status
+            log.warning("health: %s", redact(f"{type(exc).__name__}: {exc}"))
+            return JSONResponse({**body, "ok": False}, status_code=503)
+        if checks:
+            body["ok"] = all(c["ok"] for c in checks.values())
+            body["checks"] = checks
+        return JSONResponse(body, status_code=200 if body["ok"] else 503)
+
+    # -- sign-in (web/auth.py) ------------------------------------------------------
+
+    def _signed_in(response: Response, user: User) -> dict:
+        response.set_cookie(
+            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
+        )
+        return {"id": user.id, "email": user.email}
+
+    @app.get("/auth/config")
+    async def auth_config() -> dict:
+        return {"familysearch": auth.familysearch_configured(), "devLogin": auth.dev_login_enabled()}
+
+    @app.get("/auth/me")
+    async def auth_me(user: User = Depends(current_user)) -> dict:
+        return {"id": user.id, "email": user.email}
+
+    @app.post("/auth/dev-login")
+    async def dev_login(body: DevLoginBody, request: Request, response: Response) -> dict:
+        """Local only (auth.dev_login_enabled). No allowlist: any email signs in, so a
+        developer can act as two patrons and watch the owner checks work."""
+        if not auth.dev_login_enabled():
+            raise HTTPException(status_code=403, detail="Dev-login disabled; sign in with FamilySearch")
+        email = (body.email or "").strip().lower() or auth.DEV_LOGIN_EMAIL
+        return _signed_in(response, await _store(request).upsert_user(email, None))
+
+    @app.post("/auth/logout")
+    async def logout(request: Request, response: Response) -> dict:
+        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
+        if data is not None:
+            await _store(request).revoke_sessions(data["uid"])
+        response.delete_cookie(auth.COOKIE_NAME, path="/", samesite="lax", secure=auth.is_https())
+        return {"ok": True}
+
+    @app.get("/auth/familysearch/login")
+    async def familysearch_login(next: str | None = None) -> Response:
+        if not auth.familysearch_configured():
+            raise HTTPException(
+                status_code=501,
+                detail="FamilySearch sign-in is not configured (FAMILYSEARCH_WEB_ENABLED); use dev-login locally",
+            )
+        verifier, challenge = auth.pkce()
+        state = secrets.token_urlsafe(16)
+        resp = RedirectResponse(auth.authorize_url(challenge, state))
+        resp.set_cookie(
+            auth.FS_OAUTH_COOKIE, auth.oauth_state_cookie(verifier, state, next),
+            max_age=auth.FS_OAUTH_MAX_AGE, **auth.cookie_kwargs(),
+        )
+        return resp
+
+    @app.get("/callback")
+    async def familysearch_callback(request: Request, code: str | None = None, state: str | None = None) -> Response:
+        """The registered FamilySearch redirect: a TOP-LEVEL /callback (auth.redirect_uri).
+
+        Order matters, and each refusal writes nothing: state, code exchange, identity,
+        allowlist, then the user (refused if the email is pinned to another FamilySearch
+        account), and only then the grant -- encrypted here, so the store sees ciphertext.
+        The write takes the patron's grant write lock (``PgStore.store_grant``), so it never
+        interleaves with a refresh; while a refresher holds the lock past
+        ``grants.WRITE_LOCK_TIMEOUT_S`` it answers 503 and the patron signs in again. Every
+        later write is the refresh loop's (U3)."""
+        fail = "FamilySearch sign-in failed; return to the app and try again."
+        data = auth.read_oauth_state_cookie(request.cookies.get(auth.FS_OAUTH_COOKIE))
+        if data is None:
+            return HTMLResponse(f"Missing or invalid OAuth state. {fail}", status_code=400)
+        if not code or not state or state != data.get("state"):
+            return HTMLResponse(f"OAuth state mismatch. {fail}", status_code=400)
+        token_json = await auth.exchange_code(code, str(data.get("verifier") or ""))
+        if token_json is None:
+            return HTMLResponse(f"Token exchange failed. {fail}", status_code=502)
+        identity = await auth.fetch_identity(token_json["access_token"])
+        if identity is None:
+            return HTMLResponse(f"Could not read your FamilySearch identity. {fail}", status_code=502)
+        email = str(identity.get("email") or "").strip().lower()
+        if not email:
+            return HTMLResponse(
+                "Your FamilySearch account returned no email address, so it cannot be checked against "
+                "the allowlist. Ask the administrator.",
+                status_code=403,
+            )
+        store = _store(request)
+        if not _allowlist_ready(request):
+            return HTMLResponse(f"Not ready: the allowlist has not loaded yet. {fail}", status_code=503)
+        if not await store.is_allowed(email):
+            return HTMLResponse(
+                f"The FamilySearch account <strong>{html.escape(email)}</strong> is not on the allowlist. "
+                "Ask the administrator to add this exact address, then sign in again.",
+                status_code=403,
+            )
+        fs_id = identity.get("id")
+        try:
+            user = await store.upsert_user(email, str(fs_id) if fs_id else None)
+        except IdentityMismatch:
+            return HTMLResponse(
+                f"<strong>{html.escape(email)}</strong> is already linked to a different FamilySearch "
+                "account. Sign in with that account, or ask the administrator.",
+                status_code=403,
+            )
+        refresh = token_json.get("refresh_token")
+        try:
+            await store.store_grant(
+                user.id,
+                auth.encrypt(token_json["access_token"]),
+                auth.encrypt(refresh) if isinstance(refresh, str) and refresh else None,
+                auth.expires_at_from(token_json),
+            )
+        except GrantBusy:
+            return HTMLResponse(f"Sign-in is busy; try again. {fail}", status_code=503)
+        resp = RedirectResponse(auth.redirect_target(data.get("next")))
+        resp.set_cookie(
+            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
+        )
+        resp.delete_cookie(auth.FS_OAUTH_COOKIE, path="/")
+        return resp
+
+    # -- sessions -----------------------------------------------------------------
+
+    @app.get("/api/sessions")
+    async def list_sessions(request: Request, user: User = Depends(current_user)) -> list[dict]:
+        return [session_out(r) for r in await _store(request).list_sessions(user.id)]
+
+    @app.post("/api/sessions")
+    async def create_session(body: CreateSessionBody, request: Request, user: User = Depends(current_user)) -> dict:
+        try:
+            row = await _store(request).create_session(
+                body.title or DEFAULT_TITLE, body.model or DEFAULT_MODEL, body.project_id,
+                user.id, auth.dev_login_enabled(),
+            )
+        except ProjectNotOwned as exc:
+            raise HTTPException(status_code=404, detail="Project not found") from exc
+        return session_out(row)
+
+    @app.post("/api/sessions/{session_id}/continue")
+    async def continue_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        """U19: a new session on a retired session's project, so its research goes on."""
+        row = await _session(request, session_id, user)
+        if row.retired_at is None:
+            raise HTTPException(status_code=409, detail="This session has not expired")
+        try:
+            new = await _store(request).create_session(row.title, row.model, row.project_id, user.id, False)
+        except ProjectNotOwned as exc:
+            raise HTTPException(status_code=404, detail="Project not found") from exc
+        return session_out(new)
+
+    @app.get("/api/sessions/{session_id}")
+    async def get_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        return session_out(await _session(request, session_id, user))
+
+    @app.patch("/api/sessions/{session_id}")
+    async def patch_session(
+        session_id: str, body: PatchSessionBody, request: Request, user: User = Depends(current_user)
+    ) -> dict:
+        # Check, then act: an existing project's owner only ever moves from NULL to a
+        # user, and a NULL owner has already failed the check.
+        await _session(request, session_id, user)
+        row = await _store(request).patch_session(session_id, body.title, body.model)
+        if row is None:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return session_out(row)
+
+    @app.post("/api/sessions/{session_id}/resume")
+    async def resume_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        return session_out(await _session(request, session_id, user))  # nothing to resume: no sandbox
+
+    @app.delete("/api/sessions/{session_id}")
+    async def delete_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        await _session(request, session_id, user)
+        try:
+            deleted = await _store(request).delete_session(session_id)
+        except SessionBusy:
+            raise HTTPException(
+                status_code=409,
+                detail="A turn is still running on this session; press Stop, and try again once it has ended",
+            ) from None
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return {"ok": True}
+
+    @app.get("/api/sessions/{session_id}/state")
+    async def session_state(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        row = await _session(request, session_id, user)
+        docs = await _store(request).documents(row.project_id)
+        return {
+            "label": row.title,
+            "research": docs.get("research.json", (0, None))[1],
+            "gedcomx": docs.get("tree.gedcomx.json", (0, None))[1],
+            "sidecars": [],
+        }
+
+    @app.get("/api/sessions/{session_id}/sidecar/{log_id}")
+    async def session_sidecar(
+        session_id: str, log_id: str, request: Request, user: User = Depends(current_user)
+    ) -> dict:
+        await _session(request, session_id, user)
+        raise HTTPException(status_code=404, detail="Sidecar bodies are not served by the prototype web tier (D6-8)")
+
+    _NOT_IN_PROTOTYPE = {
+        "image": "Source images are not served by the prototype web tier (D6-8 blobs)",
+        "logs": "There are no sandbox logs on this backend; read the worker's stdout",
+        "files": "Uploads have no path into the project on this backend (plan: 'the first unserved class')",
+    }
+
+    @app.get("/api/sessions/{session_id}/image")
+    @app.get("/api/sessions/{session_id}/logs")
+    async def not_in_prototype_get(session_id: str, request: Request, user: User = Depends(current_user)) -> None:
+        await _session(request, session_id, user)
+        raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
+
+    @app.post("/api/sessions/{session_id}/files")
+    async def not_in_prototype_post(session_id: str, request: Request, user: User = Depends(current_user)) -> None:
+        await _session(request, session_id, user)
+        raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
+
+    @app.post("/api/sessions/{session_id}/interrupt", status_code=202)
+    async def interrupt(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        """1c: Stop. This used to answer 501 -- "the worker owns the turn" -- and the whole
+        design rests on it, so it is phase-1 work rather than a later nicety.
+
+        The worker DOES own the turn and no control channel reaches it, so this raises a
+        flag on a control-plane row instead. The worker's PreToolUse hook reads it before
+        every tool call (a median of 2.6 s apart) and ends the turn; its Stop hook reads
+        the same row so it cannot immediately veto that ending. 202, not 200: the press is
+        recorded here, and the halt is observed on the feed as turn_done."""
+        row = await _session(request, session_id, user)
+        store = _store(request)
+        await store.request_stop(row.session_id)
+        return {"ok": True, "stopping": await store.turn_active(row.session_id)}
+
+    # -- turns and events ---------------------------------------------------------
+
+    @app.post("/api/sessions/{session_id}/messages", status_code=202)
+    async def post_message(
+        session_id: str, body: MessageBody, request: Request, user: User = Depends(current_user)
+    ) -> dict:
+        row = await _session(request, session_id, user)
+        store = _store(request)
+        # 1b: nothing else serializes two turns on one session. post_message enqueued
+        # unconditionally, the turn_active() helper existed but only the SSE replay and
+        # session_state ever called it, and choose_sdk_session_id coalesces to ONE
+        # sdk_session_id per session -- so two concurrent turns resumed the SAME SDK
+        # session, two CLIs appending to one transcript. Hold it instead: the row is
+        # written now (the patron sees their message immediately) and the worker enqueues
+        # it when the turn holding it ends.
+        if row.retired_at is not None:
+            raise HTTPException(status_code=410, detail=RETIRED_DETAIL)
+        try:
+            turn, held, rescued = await store.admit_message(row, body.text)
+        except SessionRetired:
+            raise HTTPException(status_code=410, detail=RETIRED_DETAIL) from None
+        if held:
+            # A held message with no turn running would wait for a release that never
+            # comes, so admit_message claimed the oldest held row (the worker's own
+            # single-statement claim, under the lock its release takes) for this tier to
+            # enqueue.
+            if rescued is None:
+                return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": None, "queued": True}
+            # Oldest-first, so what got claimed may be a message held BEFORE this one --
+            # in which case that one runs, ours stays held, and the response still says
+            # so. `turn` stays the patron's own turn throughout: it is the id their tab
+            # matches its echo against, and handing back somebody else's would orphan it.
+            sending = rescued
+            held = rescued.get("turn_id") != turn.turn_id
+        else:
+            sending = turn.body
+        try:
+            message_id = await request.app.state.queue.send(sending)
+        except Exception as exc:  # any queue failure: the row stays, marked, and the UI sees 502
+            # The 502 is about the patron's OWN message, so that is the one failed. A rescued
+            # OLDER message goes back to held, not closed: the patron is told to try again,
+            # and the retry rescues it first (U23; D7 made this path common).
+            sent_id = str(sending.get("turn_id") or turn.turn_id)
+            if sent_id != turn.turn_id and not await store.put_back_held(sent_id):
+                log.error("rescued turn %s moved on after its failed send; not held again", sent_id)
+            await store.fail_turn(turn.turn_id, "enqueue_failed")
+            log.error("enqueue failed for turn %s (sent %s): %s", turn.turn_id, sent_id, exc)
+            # The user_msg row was committed before the send and stays (seqs are dense), so
+            # the 502 names its seq: the SPA still has an echo to drop.
+            raise HTTPException(
+                status_code=502,
+                detail={"message": ENQUEUE_FAILED_MESSAGE, "turn_id": turn.turn_id, "seq": turn.seq},
+            ) from exc
+        return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
+
+    @app.get("/api/sessions/{session_id}/events")
+    async def get_events(
+        session_id: str, request: Request, after: str | None = None, user: User = Depends(current_user)
+    ) -> dict:
+        row = await _session(request, session_id, user)
+        try:
+            cursor = resolve_cursor(request.headers.get("last-event-id"), after)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"bad cursor: {exc}") from exc
+        store = _store(request)
+        rows = await store.events_after(row.session_id, cursor, EVENTS_PAGE)
+        activity = await store.activity(row.session_id)
+        return {
+            "events": [row_to_wire(r) for r in rows],
+            "activity": activity_to_wire(activity) if activity else None,
+            "turn_active": await store.turn_active(row.session_id),
+            "turn_queued": await store.has_queued(row.session_id),
+            "next_after": rows[-1].seq if rows else cursor,
+        }
+
+    @app.get("/api/sessions/{session_id}/events/stream")
+    async def stream_events(
+        session_id: str, request: Request, after: str | None = None, user: User = Depends(current_user)
+    ) -> StreamingResponse:
+        row = await _session(request, session_id, user)
+        try:
+            cursor = resolve_cursor(request.headers.get("last-event-id"), after)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"bad cursor: {exc}") from exc
+        frames = stream_frames(
+            _store(request), row, cursor,
+            poll_s=request.app.state.poll_s, ping_s=request.app.state.ping_s,
+            max_polls=request.app.state.stream_max_polls, is_disconnected=request.is_disconnected,
+        )
+        return StreamingResponse(
+            frames, media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
+    # -- feedback (U20) -------------------------------------------------------------
+    # The alpha's two routes over the prototype's stores: the project from documents +
+    # blobs (bytes in S3), the transcript from session_entries, the zip to our own bucket
+    # under feedback/ and sent nowhere (feedback.forward_stored_feedback). The owner check
+    # runs before the body is validated: a foreign session is 404, never 422.
+
+    # One build at a time per process: a build holds up to 35 MiB of project files, the
+    # transcript budget and the zip, on the tier that also serves every patron's SSE.
+    feedback_gate = asyncio.Semaphore(1)
+
+    async def _owned_for_feedback(request: Request, session_id: Any, user: User) -> SessionRow:
+        if not isinstance(session_id, str) or not session_id:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return await _session(request, session_id, user)
+
+    async def _owner_tokens(store: Store, user_id: str) -> list[str]:
+        """The owner's current FamilySearch access and refresh tokens, for the literal
+        redaction pass. Best effort: none is a bundle with the bearer pass alone."""
+        try:
+            access_enc, refresh_enc = await store.grant_ciphertexts(user_id)
+            plain = [auth.decrypt(access_enc), auth.decrypt(refresh_enc)]
+        except Exception as exc:  # noqa: BLE001 - redaction input, never a reason to fail the report
+            log.warning("ev=feedback grant tokens unavailable: %s", type(exc).__name__)
+            return []
+        return [t for t in plain if t]
+
+    @app.get("/api/feedback/context")
+    async def feedback_context(
+        request: Request, sessionId: str | None = None, user: User = Depends(current_user)
+    ) -> dict:
+        row = await _owned_for_feedback(request, sessionId, user)
+        store = _store(request)
+        files, _stale = feedback.project_files(await store.documents(row.project_id),
+                                               await store.blob_index(row.project_id))
+        size = feedback.session_log_size(await store.transcript_groups(row.project_id))
+        return {"files": feedback.context_files(files), "sessionLogSize": size, "hasSessionLog": size > 0}
+
+    @app.post("/api/feedback")
+    async def submit_feedback(request: Request, user: User = Depends(current_user)) -> dict:
+        try:
+            payload = await request.json()
+        except ValueError:
+            payload = None
+        session_id = payload.get("sessionId") if isinstance(payload, dict) else None
+        row = await _owned_for_feedback(request, session_id, user)
+        try:
+            body = feedback.FeedbackBody.model_validate(payload)
+        except ValidationError as exc:
+            raise RequestValidationError(exc.errors(include_url=False, include_context=False)) from None
+        store = _store(request)
+        tokens = await _owner_tokens(store, user.id)
+        fields = feedback.feedback_fields(body, tokens)
+        blobs = request.app.state.blobs
+        if blobs is None:
+            raise HTTPException(status_code=503, detail="feedback storage is not configured")
+        submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        async with feedback_gate:
+            files, stale = feedback.project_files(await store.documents(row.project_id),
+                                                  await store.blob_index(row.project_id))
+            kept, dropped = feedback.select_project_files(files, body.includeMedia)
+            fetched, unreadable = await asyncio.to_thread(feedback.fetch_project_files, kept, blobs.get)
+            fetched = await asyncio.to_thread(feedback.redact_project_files, fetched, tokens)
+            dropped = dropped + unreadable + [f"{rel} (stale copy)" for rel in stale]
+            session_log: list[tuple[str, bytes]] = []
+            dropped_transcripts: list[str] = []
+            if body.includeSessionLog:
+                active = await store.sdk_session_id(row.session_id) or row.session_id
+                session_log, dropped_transcripts = await feedback.transcript_set(
+                    await store.transcript_groups(row.project_id), store.transcript_rows,
+                    row.project_id, active, tokens,
+                )
+            built_at, git_sha = feedback.build_info(PROTO_DIR)
+            build = functools.partial(
+                feedback.build_bundle,
+                fields=fields, body=body, submitted_at=submitted_at, project_label=row.title,
+                built_at=built_at, git_sha=git_sha, files=fetched, dropped_files=dropped,
+                session_log=session_log, dropped_transcripts=dropped_transcripts,
+            )
+            data, _redacted = await asyncio.to_thread(build)
+            n_files, n_transcripts = len(fetched), len(session_log)
+            # The zip holds what is needed now; free the inputs before the upload.
+            del build, fetched, session_log
+            # row.owner_id == user.id past _session: the internal usr_ id, never NULL here.
+            key = feedback.bundle_key(user.id, row.project_id, submitted_at)
+            try:
+                await asyncio.to_thread(blobs.put, key, data, "application/zip")
+            except Exception as exc:  # noqa: BLE001 - any S3 refusal; its text names the account
+                log.error("ev=feedback result=error reason=put_failed session=%s project=%s key=%s error=%s",
+                          row.session_id, row.project_id, key, type(exc).__name__)
+                raise HTTPException(status_code=502, detail="Feedback upload failed") from None
+        meta = {"session": row.session_id, "project": row.project_id, "bytes": len(data), "files": n_files,
+                "transcripts": n_transcripts, "dropped": len(dropped) + len(dropped_transcripts)}
+        feedback.forward_stored_feedback(key, meta)
+        log.info("ev=feedback result=stored session=%s project=%s key=%s bytes=%d files=%d transcripts=%d dropped=%d",
+                 row.session_id, row.project_id, key, meta["bytes"], n_files, n_transcripts, meta["dropped"])
+        return {"ok": True, "filename": key.rsplit("/", 1)[-1]}
+
+    # Last, so it sees every API route it must not shadow (web/spa.py).
+    spa.mount_spa(app, tier_root=PROTO_DIR)
+    return app
+
+
+app = create_app()
+
+
+if __name__ == "__main__":
+    # The house pattern: a Windows console defaults to cp1252 and dies on the box-drawing
+    # glyphs in this module's own section rules (test_encoding_lint.py).
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+
+    import uvicorn
+
+    # uvicorn's CLI builds the loop before this module is imported, and on Windows that
+    # is ProactorEventLoop, which psycopg3 async refuses; loop="none" lets us choose.
+    server = uvicorn.Server(uvicorn.Config(
+        app, host=os.environ.get("HOST", "127.0.0.1"), port=int(_env_float("PORT", 8085)), loop="none"
+    ))
+    asyncio.run(server.serve(), loop_factory=asyncio.SelectorEventLoop if sys.platform == "win32" else None)

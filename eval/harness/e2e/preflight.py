@@ -5,28 +5,29 @@ missing FS token surfaces mid-run; an unbuilt server fails at spawn; a
 missing API key fails at the judge). With many contributors that's the
 same handful of setup questions over and over. This check green-lights
 all of them up front, so a contributor knows they're ready before
-spending 20–60 minutes (and $3–10) on a run.
+spending about an hour and single-digit dollars, with a long tail, on a run.
 
 Checks, in order:
   1. FamilySearch token   — ~/.familysearch-mcp/tokens.json exists
-  2. Built MCP server     — packages/engine/mcp-server/build/index.js exists
+  2. Built MCP server     — build/index.js exists (FAIL) and is no older than
+                            src/ (WARN — a stale build measures the previous one)
   3. Anthropic API key    — ANTHROPIC_API_KEY in env or eval/.env
   4. Harness deps synced  — claude_agent_sdk + anthropic importable
   5. MCP server connects  — the CLI reports the genealogy server `connected`
   6. Wiki + pop services  — the wiki-query-api and Pop Stats bases answer (WARN only)
+  7. OpenRouter API key   — OPENROUTER_API_KEY in env, eval/.env, or config.json (WARN only)
+  8. FamilySearch search  — record_search via the MCP server over stdio
 
-Check 6 is WARN-only by design (issue #1552): the services are a public tailnet
-that is *expected* to be reachable, but a per-machine setup defect silently fails
-a large share of wiki/pop-stats calls — the agent then ships a thinner locality
-answer and the operator sees nothing. A warning up front spares an hour spent on
-a run whose locality half will be empty. It never FAILs, because a run without
-these services is degraded, not aborted.
+Checks 6 and 7 are WARN-only by design (issue #1552 / #2810): a run without
+the wiki/pop services or the OpenRouter key is degraded, not aborted, so a FAIL
+would block a run the operator was entitled to make.
 
-Checks 1-4 are static: they read files and import modules. **Check 5 is not**
-— it spawns a local Claude Code CLI, which spawns the MCP server, and asks the
-CLI for the live connection status. Nothing here calls FamilySearch, and
-nothing sends a prompt to a model, so check 5 costs **zero model tokens**; but
-this module is no longer "read-only and offline" as it once claimed.
+Checks 1-4 are static: they read files and import modules. **Checks 5 and 8
+are not** — check 5 spawns a local Claude Code CLI and asks for the live
+connection status; check 8 spawns the MCP server over stdio and makes a single
+`record_search` call to FamilySearch. Neither sends a prompt to a model, so
+both cost **zero model tokens**; check 8 costs **one live FamilySearch API
+call**.
 
 Check 5 exists because checks 1-4 measure the wrong thing. Issue #941:
 genealogists lost three e2e runs (60-90 min each) to a genealogy MCP server
@@ -58,6 +59,7 @@ from e2e.mcp_stderr import read_mcp_stderr_lines
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FS_TOKENS = Path.home() / ".familysearch-mcp" / "tokens.json"
 MCP_BUILD = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"
+MCP_SRC = REPO_ROOT / "packages" / "engine" / "mcp-server" / "src"
 ENV_FILE = REPO_ROOT / "eval" / ".env"
 
 # Check 6 (#1552). The wiki/pop base URLs resolve exactly as the tools do: a
@@ -68,6 +70,14 @@ FS_CONFIG = Path.home() / ".familysearch-mcp" / "config.json"
 _WIKI_CONFIG_TS = REPO_ROOT / "packages" / "engine" / "mcp-server" / "src" / "auth" / "config.ts"
 _POP_CONFIG_TS = REPO_ROOT / "packages" / "engine" / "mcp-server" / "src" / "tools" / "place-population.ts"
 _WIKI_POP_TIMEOUT_S = 5.0
+
+# Check 8 (#2810): ceiling on the live FamilySearch search. The search itself
+# (record_search with {surname: "Smith"}) usually answers in 2-5s; the rest is
+# MCP server startup over stdio (~10-15s, same as check 5). 60s is generous
+# enough to avoid false-FAILs on a cold start, short enough to not stall
+# preflight for two minutes on a dead server (check 5 already covers that case
+# with a 90s ceiling).
+_FS_SEARCH_TIMEOUT_S = 60.0
 
 # Ceiling on the whole live connection check, CLI spawn included, because a
 # preflight that hangs is worse than one that lies: an operator can act on a
@@ -124,14 +134,71 @@ def _check_fs_token() -> tuple[str, str]:
     return ("OK", f"FamilySearch token present, {age_h:.0f}h old ({FS_TOKENS})")
 
 
+def _newest_mcp_source() -> tuple[float, Path] | None:
+    """The newest mtime under the MCP server's `src/`, and the file carrying it.
+
+    None when the tree holds no files at all — which is anomalous rather than
+    clean, so the caller WARNs instead of reporting a green build.
+    """
+    newest: tuple[float, Path] | None = None
+    for path in MCP_SRC.rglob("*"):
+        if not path.is_file():
+            continue
+        mtime = path.stat().st_mtime
+        if newest is None or mtime > newest[0]:
+            newest = (mtime, path)
+    return newest
+
+
 def _check_mcp_build() -> tuple[str, str]:
-    if MCP_BUILD.exists():
-        return "OK", "MCP server is built (build/index.js present)"
-    return (
-        "FAIL",
-        "MCP server not built. Run `make engine-build` (or `npm install && "
-        "npm run build` in packages/engine/mcp-server/; Windows: Setup.bat).",
-    )
+    """Check 2, both halves: the build exists, and it is not older than `src/`.
+
+    The existence half is the original check and stays a FAIL — without
+    `build/index.js` there is nothing to run. The staleness half is a WARN, for
+    the same reason checks 6 and 7 are: an operator may be deliberately running
+    an older build (reproducing a past run), and a FAIL would block a run they
+    were entitled to make.
+
+    It is a check at all because the existence half reports `OK` in exactly the
+    case it exists to catch. A build three days behind `src/` is as green to
+    preflight as a fresh one, and the run then measures code that is not the
+    code under review. Same shape as the gap issue #941 opened check 5 for: a
+    green preflight that validated the configuration and never proved the thing
+    the configuration was for. Observed on three consecutive e2e runs,
+    2026-09-28 and 2026-09-29.
+    """
+    if not MCP_BUILD.exists():
+        return (
+            "FAIL",
+            "MCP server not built. Run `make engine-build` (or `npm install && "
+            "npm run build` in packages/engine/mcp-server/; Windows: Setup.bat).",
+        )
+
+    newest = _newest_mcp_source()
+    if newest is None:
+        return (
+            "WARN",
+            f"MCP server is built, but no source files were found under {MCP_SRC} "
+            "to check it against, so staleness could not be established.",
+        )
+
+    src_mtime, src_path = newest
+    build_mtime = MCP_BUILD.stat().st_mtime
+    if src_mtime > build_mtime:
+        behind_min = (src_mtime - build_mtime) / 60.0
+        # Relative to MCP_SRC, not REPO_ROOT: `src_path` came from MCP_SRC.rglob,
+        # so this can never raise the way relative_to(REPO_ROOT) would if the two
+        # were ever pointed at unrelated trees (as the tests do).
+        rel = "src/" + src_path.relative_to(MCP_SRC).as_posix()
+        return (
+            "WARN",
+            f"MCP server build is STALE — build/index.js is {behind_min:.0f} min "
+            f"older than {rel}. The run would measure the previous build. "
+            "Rebuild with `make engine-build` (or `npm run build` in "
+            "packages/engine/mcp-server/).",
+        )
+
+    return "OK", "MCP server is built, and no source file is newer than the build"
 
 
 def _check_api_key() -> tuple[str, str]:
@@ -523,6 +590,154 @@ def _check_wiki_pop_services(
     return ("OK", f"Wiki + population services reachable ({'; '.join(details)})")
 
 
+def _check_openrouter_key() -> tuple[str, str]:
+    """Warn if no OpenRouter API key is configured anywhere the MCP server reads.
+
+    WARN-only (#2810): a run without the key is degraded (image_transcribe fails),
+    not aborted — the same severity rule as check 6 (issue #1552). Checks the same
+    three sources ``stage_openrouter_key()`` bridges from, in the same order, but
+    never writes — preflight is read-only.
+    """
+    import json
+    import os
+
+    key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    if key:
+        return "OK", "OPENROUTER_API_KEY set in the environment"
+
+    try:
+        from dotenv import dotenv_values
+
+        key = (dotenv_values(ENV_FILE).get("OPENROUTER_API_KEY") or "").strip()
+        if key:
+            return "OK", f"OPENROUTER_API_KEY found in {ENV_FILE}"
+    except ImportError:
+        pass
+
+    try:
+        if FS_CONFIG.exists():
+            cfg = json.loads(FS_CONFIG.read_text(encoding="utf-8"))
+            key = (cfg.get("openRouterApiKey") or "").strip()
+            if key:
+                return "OK", f"openRouterApiKey found in {FS_CONFIG}"
+    except (OSError, ValueError):
+        pass
+
+    return (
+        "WARN",
+        "No OpenRouter API key configured — image_transcribe will fail for the "
+        "whole run and image-dependent findings will be unreachable. Set "
+        "OPENROUTER_API_KEY in eval/.env (Setup.bat prompts for it) or add "
+        f"openRouterApiKey to {FS_CONFIG}.",
+    )
+
+
+def _live_fs_search(entry: Path | str) -> tuple[bool, str]:
+    """Spawn the MCP server over stdio and call record_search once.
+
+    Returns ``(is_error, response_text)`` — the same shape the injected
+    ``caller`` in ``_check_fs_search`` returns, so both paths converge on
+    the same classification logic.
+    """
+    from mcp import ClientSession
+    from mcp.client.stdio import StdioServerParameters, stdio_client
+
+    cfg = genealogy_mcp_config(entry)[GENEALOGY_SERVER_NAME]
+
+    async def _do_search() -> tuple[bool, str]:
+        params = StdioServerParameters(command=cfg["command"], args=cfg["args"])
+        async with stdio_client(params) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                result = await session.call_tool(
+                    "record_search", {"surname": "Smith"}
+                )
+                text = "\n".join(
+                    c.text for c in result.content if hasattr(c, "text")
+                )
+                return (bool(result.isError), text)
+
+    return _run_bounded(
+        lambda: asyncio.run(
+            asyncio.wait_for(_do_search(), timeout=_FS_SEARCH_TIMEOUT_S)
+        ),
+        _FS_SEARCH_TIMEOUT_S + _MCP_TEARDOWN_GRACE_S,
+    )
+
+
+def _check_fs_search(
+    caller: Callable[[], tuple[bool, str]] | None = None,
+    *,
+    entry: Path | str | None = None,
+) -> tuple[str, str]:
+    """Prove FamilySearch search works, via a live record_search call.
+
+    ``caller`` is injectable so every arm below is unit-testable without
+    spawning an MCP server — returns ``(is_error, response_text)``.
+    ``entry`` is the MCP server script to spawn — ``None`` resolves to
+    ``MCP_BUILD`` at call time.
+    """
+    for label, check in (
+        ("FamilySearch login", _check_fs_token),
+        ("Built MCP server", _check_mcp_build),
+    ):
+        if check()[0] == "FAIL":
+            return (
+                "SKIP",
+                f"Not attempted — the '{label}' check above failed. Fix that "
+                "first; a live search cannot be proved without it.",
+            )
+
+    resolved_entry = entry if entry is not None else MCP_BUILD
+    get_result = caller or (lambda: _live_fs_search(resolved_entry))
+
+    try:
+        is_error, text = get_result()
+    except (asyncio.TimeoutError, TimeoutError):
+        return (
+            "WARN",
+            "Live FamilySearch search timed out or the MCP server could not "
+            f"be spawned within {_FS_SEARCH_TIMEOUT_S:.0f}s. This is likely a "
+            "transient failure — re-run preflight.",
+        )
+    except Exception as e:  # noqa: BLE001 — a preflight must report, never crash
+        return (
+            "WARN",
+            f"Live search check could not run: {type(e).__name__}: {e}",
+        )
+
+    if not is_error:
+        return (
+            "OK",
+            "FamilySearch record_search returned a response (live search is "
+            "working)",
+        )
+
+    if "blocked the request" in text:
+        return (
+            "FAIL",
+            "FamilySearch search is WAF-blocked from this machine or session. "
+            "Nearly every e2e fixture depends on record_search — do not start "
+            "a run.",
+        )
+    if "session not accepted" in text:
+        return (
+            "FAIL",
+            "FamilySearch session was rejected (401). Re-run `make e2e-login` "
+            "(or Login.bat) to refresh the token before running.",
+        )
+    if "did not complete after retries" in text:
+        return (
+            "WARN",
+            "FamilySearch search did not complete after retries (transient "
+            "network failure). Re-run preflight or try again shortly.",
+        )
+    return (
+        "WARN",
+        f"FamilySearch search returned an error: {text[:200]}",
+    )
+
+
 CHECKS = [
     ("FamilySearch login", _check_fs_token),
     ("Built MCP server", _check_mcp_build),
@@ -533,6 +748,11 @@ CHECKS = [
     # A lightweight network probe (issue #1552). WARN-only, so it sits after the
     # process-spawning check and can never turn a degraded run into a blocked one.
     ("Wiki + population services", _check_wiki_pop_services),
+    # WARN-only OpenRouter key check (#2810). Same severity rule as check 6.
+    ("OpenRouter API key", _check_openrouter_key),
+    # A live FamilySearch search (#2810). Spawns the MCP server over stdio and
+    # calls record_search once, so it proves what the run actually calls.
+    ("FamilySearch search", _check_fs_search),
 ]
 
 
@@ -559,9 +779,9 @@ def main(argv: list[str] | None = None) -> int:
         "--mcp-server-entry",
         type=Path,
         default=None,
-        help="MCP server script to spawn for check 5 (default: the built "
-        "production server). Same flag as run_e2e's, for pointing preflight "
-        "at a stub without touching MCP_BUILD.",
+        help="MCP server script to spawn for checks 5 and 8 (default: the "
+        "built production server). Same flag as run_e2e's, for pointing "
+        "preflight at a stub without touching MCP_BUILD.",
     )
     args = parser.parse_args(argv if argv is not None else [])
 
@@ -572,6 +792,8 @@ def main(argv: list[str] | None = None) -> int:
             status, detail = check(
                 entry=args.mcp_server_entry, log_reader=_read_stderr_for()
             )
+        elif check is _check_fs_search:
+            status, detail = check(entry=args.mcp_server_entry)
         else:
             status, detail = check()
         statuses.append(status)

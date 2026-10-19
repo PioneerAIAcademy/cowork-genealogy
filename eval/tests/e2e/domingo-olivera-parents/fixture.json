@@ -1,0 +1,19 @@
+{
+  "id": "domingo-olivera-parents",
+  "name": "Domingo Olivera y Valadyo — parents named on a 1925 Vega Baja birth registration",
+  "genre": "record-hint",
+  "source_pid": "GN5K-19C",
+  "captured": "2026-09-07",
+  "researcher_question": "Who were the parents of Domingo Olivera y Valadyo (b. 1867), and is the Domingo Olivera named as a father on the 1925 Vega Baja birth registration of Carmen Ester Olivera Martínez this man or his son?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1920s",
+    "geography": "PR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 24, hint-samples.csv row 738, flags adds_father/adds_mother, confidence 3). Resolved (issue #2317): answerable differently. The 1925 hint record names the subject as the child's paternal grandfather, a generation shift; the father is his son Domingo Olivera y González (GN52-SH9). The subject's parents, Juan José Olivera Rolón and Concepción Albaladejo, come from his son Juan Félix's 1902 Ciales birth registration and his own 1926 Vega Baja death registration."
+}

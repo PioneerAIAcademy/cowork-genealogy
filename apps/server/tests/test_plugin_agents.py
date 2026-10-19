@@ -83,7 +83,7 @@ def test_staging_refreshes_a_stale_definition(tmp_path, monkeypatch):
     # A session resumed after an engine upgrade must get the new body, not the
     # copy staged by the run that created the project.
     monkeypatch.setattr(real_agent, "_PLUGIN_DIR", str(PLUGIN_DIR))
-    stale = tmp_path / ".claude" / "agents" / "record-extractor.md"
+    stale = tmp_path / ".claude" / "agents" / "record-structurer.md"
     stale.parent.mkdir(parents=True)
     stale.write_text("stale\n", encoding="utf-8")
 
@@ -163,6 +163,7 @@ def _missing_prerequisites() -> list[str]:
         + "; ".join(_missing_prerequisites())
     ),
 )
+@pytest.mark.spawns_subprocess
 async def test_bare_agent_names_are_registered(tmp_path, monkeypatch):
     """Start a real SDK client with the hosted options and assert every shipped
     agent is registered under its BARE name.

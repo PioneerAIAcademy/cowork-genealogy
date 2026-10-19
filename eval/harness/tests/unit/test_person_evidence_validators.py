@@ -35,9 +35,16 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # collect the imported validators as tests of this module and error on their
 # harness-supplied fixtures. Same pattern as test_init_project_validator.py.
 from test_person_evidence import (  # noqa: E402
-    test_check_warnings_runs_after_a_write as check_warnings_after_write,
     test_matched_persona_is_materialized_onto_its_person as check_materialized,
     test_same_person_called_when_persona_meets_existing_candidate as check_scored,
+    test_stub_person_created_and_linked as check_stub,
+    report_informant_fields_not_in_pe_confidence_reason as check_informant,
+    report_chronological_contradiction_not_speculative as check_chrono,
+    test_geography_measured_with_place_distance as check_distance,
+    test_corridor_read_from_wiki as check_corridor,
+    test_naming_system_read_from_wiki as check_naming,
+    test_unexplained_move_not_confident as check_unexplained,
+    test_corridor_move_links_confident as check_corridor_link,
 )
 
 
@@ -55,8 +62,8 @@ def _tree(*person_ids):
     return {"persons": [{"id": pid} for pid in person_ids]}
 
 
-def _call(tool, **args):
-    return {"tool": f"mcp__genealogy__{tool}", "args": args}
+def _call(tool, response_summary="", **args):
+    return {"tool": f"mcp__genealogy__{tool}", "args": args, "response_summary": response_summary}
 
 
 # --- test_same_person_called_when_persona_meets_existing_candidate ------
@@ -102,6 +109,157 @@ def test_scored_passes_when_every_persona_was_scored():
          _call("same_person", primaryId1="M1", primaryId2="I2"),
          _call("research_append")],
     )
+
+
+def test_scored_accepts_the_project_relative_call_shape():
+    """The cheap call (issue #1731) names its two sides by reference and carries
+    no `primaryId1`/`primaryId2`, so `_same_person_pairs` has to credit it from
+    `recordPersonaId`/`treePersonId`. Without that arm this check fails on every
+    call in the new shape, which judge-skips the whole run.
+
+    Pinned because the arm was added with nothing exercising it: setting
+    `p2 = args.get("treePersonId")` to `None` broke no test at all.
+    """
+    check_scored(
+        _state(_N7V_BEFORE, _tree("I1", "I2")),
+        _state(_N7V_AFTER, _tree("I1", "I2")),
+        [_call("same_person", projectPath="/p", assertionId="a_005",
+               recordPersonaId="F1", treePersonId="I2"),
+         _call("same_person", projectPath="/p", assertionId="a_008",
+               recordPersonaId="M1", treePersonId="I2"),
+         _call("research_append")],
+    )
+
+
+def test_scored_credits_the_second_party_named_by_role():
+    """`recordRole` names the OTHER party of a relationship assertion, so the
+    party being scored is not the assertion's own persona.
+
+    Measured live on `ut_person_evidence_n7v`: scoring the father as the second
+    party of the groom's relationship assertion resolved the GROOM's persona
+    (`G1`) against the required `F1`, so a correct call went uncredited and the
+    validator gate judge-skipped the run. `rubric.md` Score discipline
+    prescribes exactly this call shape for a second party, so the check has to
+    honour it.
+
+    The converse is pinned below: a role no assertion on the record holds must
+    still not credit the pairing.
+    """
+    by_role = [
+        {"id": "a_004", "record_id": "r1", "record_role": "groom",
+         "record_persona_id": "G1"},
+        {"id": "a_006", "record_id": "r1", "record_role": "father_of_groom",
+         "record_persona_id": "F1"},
+    ]
+    from validators.test_person_evidence import _same_person_pairs
+
+    assertions = {a["id"]: a for a in by_role}
+    call = {"tool": "mcp__genealogy__same_person",
+            "args": {"projectPath": "/p", "assertionId": "a_004",
+                     "treePersonId": "I1", "recordRole": "father_of_groom"}}
+    assert ("F1", "I1") in _same_person_pairs([call], assertions)
+
+    unheld = {"tool": "mcp__genealogy__same_person",
+              "args": {"projectPath": "/p", "assertionId": "a_004",
+                       "treePersonId": "I1", "recordRole": "witness"}}
+    assert ("F1", "I1") not in _same_person_pairs([unheld], assertions)
+
+
+def test_scored_credits_the_assertions_own_persona_on_a_role_form_call():
+    """A role-form call attests BOTH personas, and which one the consumer asks
+    about depends on the pe_ entry, not on the call.
+
+    Measured live in `v1_2026-09-24_06-11-11`: `ut_person_evidence_013` called
+    `{assertionId: a_003, treePersonId: I2, recordRole: head_of_household}` and
+    linked a_003 (persona VP1) to I2, so the consumer wanted `(VP1, I2)` -- the
+    assertion's OWN persona. Resolving only the role's persona, which is what
+    the n7v fix shipped, produced `(head_of_household, I2)` and failed a correct
+    call. n7v wants the opposite resolution, so both are indexed.
+    """
+    from validators.test_person_evidence import _same_person_pairs
+
+    assertions = {
+        "a_003": {"id": "a_003", "record_id": "r1", "record_role": "visiting_person",
+                  "record_persona_id": "VP1"},
+        "a_009": {"id": "a_009", "record_id": "r1", "record_role": "head_of_household",
+                  "record_persona_id": "HH1"},
+    }
+    call = {"tool": "mcp__genealogy__same_person",
+            "args": {"projectPath": "/p", "assertionId": "a_003",
+                     "treePersonId": "I2", "recordRole": "head_of_household"}}
+    pairs = _same_person_pairs([call], assertions)
+    assert ("VP1", "I2") in pairs, "the assertion's own persona must be credited"
+    assert ("HH1", "I2") in pairs, "the named second party must be credited too"
+    # Neither of them against a tree person the call never named.
+    assert ("VP1", "I9") not in pairs
+    assert ("HH1", "I9") not in pairs
+
+
+def test_fts_accepts_a_score_backed_by_a_project_relative_call():
+    """The live false-positive this replaced.
+
+    `ut_person_evidence_011` called
+    `{assertionId: "a_004", treePersonId: "I1"}`, recorded 0.005, and was
+    flagged as fabricating the score. A full-text assertion has
+    `record_persona_id: null` by definition, so the persona-pair helper could
+    resolve no record party and contributed no pair, making the call invisible.
+    """
+    from validators.test_person_evidence import test_fts_assertion_no_score as check_fts
+
+    before = {"assertions": [{"id": "a_004", "record_persona_id": None}], "person_evidence": []}
+    after = {
+        "assertions": before["assertions"],
+        "person_evidence": [
+            {"id": "pe_001", "assertion_id": "a_004", "person_id": "I1",
+             "confidence": "probable", "match_score": 0.005},
+        ],
+    }
+    call = {"tool": "mcp__genealogy__same_person",
+            "args": {"projectPath": "/p", "assertionId": "a_004", "treePersonId": "I1"}}
+    # Backed by a real call: must NOT fire.
+    check_fts(_state(before), _state(after), {"tags": ["no-score-fallback"]}, [call])
+
+    # The other direction: a score with no call anywhere still fires.
+    with pytest.raises(AssertionError) as exc:
+        check_fts(_state(before), _state(after), {"tags": ["no-score-fallback"]}, [])
+    assert "pe_001" in str(exc.value)
+
+
+def test_scored_accepts_the_DEFAULT_project_relative_shape_with_no_record_party():
+    """The shape the agent actually sends, and the one that broke.
+
+    `{projectPath, assertionId, treePersonId}` carries no `recordPersonaId` and
+    no `recordRole`, so the record side has to be RESOLVED from the assertion.
+    An earlier arm fell back to `treePersonId` for both sides, recording the
+    pair `("I2","I2")`, which can never equal `(record_persona_id, person_id)`:
+    the check then reported "no same_person call scored that pairing" for every
+    link while the agent was scoring all of them. That shipped and failed six
+    tests in one run.
+
+    The sibling test above passes `recordPersonaId` explicitly, which is
+    precisely why it did not catch this.
+    """
+    check_scored(
+        _state(_N7V_BEFORE, _tree("I1", "I2")),
+        _state(_N7V_AFTER, _tree("I1", "I2")),
+        [_call("same_person", projectPath="/p", assertionId="a_005", treePersonId="I2"),
+         _call("same_person", projectPath="/p", assertionId="a_008", treePersonId="I2"),
+         _call("research_append")],
+    )
+
+
+def test_scored_still_fires_when_a_project_relative_call_covers_only_one_persona():
+    """The other direction: the new arm must not turn the check into a rubber
+    stamp. One cheap call attests one pairing, not both."""
+    with pytest.raises(AssertionError) as exc:
+        check_scored(
+            _state(_N7V_BEFORE, _tree("I1", "I2")),
+            _state(_N7V_AFTER, _tree("I1", "I2")),
+            [_call("same_person", projectPath="/p", assertionId="a_005",
+                   recordPersonaId="F1", treePersonId="I2")],
+        )
+    assert "pe_011" in str(exc.value)
+    assert "pe_010" not in str(exc.value)
 
 
 def test_scored_fires_when_only_one_of_two_personas_was_scored():
@@ -157,7 +315,7 @@ def test_scored_stands_down_without_research_json():
 # --- test_matched_persona_is_materialized_onto_its_person ---------------
 
 _TAGGED = {"tags": ["materialize"]}
-_CW_TAGGED = {"tags": ["check-warnings-required"]}
+
 
 # The death-certificate shape: a_011/a_012 on src_004 linked to Patrick (I1),
 # who is already in the tree.
@@ -213,9 +371,12 @@ def test_materialized_passes_on_the_batched_ops_form():
 
 
 def test_materialized_stands_down_on_unmaterializable_fact_types():
-    """materialize_facts skips `relationship`, `marriage` and `age` outright
-    (SKIP_TYPES in materialize-facts.ts), so a persona carrying only those has
-    nothing owed. This is `ut_person_evidence_022`'s shape."""
+    """materialize_facts skips `relationship`, `marriage` and `age` as facts of
+    the persona they sit on (SKIP_TYPES in materialize-facts.ts), so a persona
+    carrying only those has nothing owed. Its named-party arm mints the OTHER
+    party such an assertion names, which is a different person and a name
+    rather than a fact, so it owes this persona nothing either. This is
+    `ut_person_evidence_022`'s shape."""
     after = {
         "assertions": [{"id": "a_005", "record_persona_id": None,
                         "fact_type": "marriage"}],
@@ -229,6 +390,64 @@ def test_materialized_stands_down_on_unmaterializable_fact_types():
             [],
             _TAGGED,
         )
+
+
+@pytest.mark.parametrize(
+    "fact_type",
+    ["marriage_intention", "marriage_bann", "marriage_date",
+     "Marriage Banns", "marriage_licence", "divorce"],
+)
+def test_materialized_stands_down_on_every_couple_event_spelling(fact_type):
+    """Only the exact string `marriage` stood this down before, so every other
+    spelling of a couple event made the validator demand a person-level fact the
+    engine will never write. `marriage_intention`, `marriage_bann` and
+    `marriage_date` each came out of a live e2e run. Mirrors
+    COUPLE_EVENT_FACT_KEYS in record-persona.ts, folded the same way."""
+    after = {
+        "assertions": [{"id": "a_005", "record_persona_id": None,
+                        "fact_type": fact_type}],
+        "person_evidence": [{"id": "pe_012", "assertion_id": "a_005",
+                             "person_id": "I2"}],
+    }
+    with pytest.raises(pytest.skip.Exception):
+        check_materialized(
+            _state({"assertions": after["assertions"], "person_evidence": []}, _tree("I2")),
+            _state(after, _tree("I2")),
+            [],
+            _TAGGED,
+        )
+
+
+def test_materialized_still_fires_on_an_ordinary_fact_that_looks_adjacent():
+    """The other direction. Folding must not swallow a real person fact: a
+    guard that over-reached here would stand the validator down on evidence it
+    exists to demand."""
+    after = {
+        "assertions": [{"id": "a_005", "record_persona_id": None,
+                        "fact_type": "marriage_record_number"}],
+        "person_evidence": [{"id": "pe_012", "assertion_id": "a_005",
+                             "person_id": "I2"}],
+    }
+    # NOT `pytest.raises(AssertionError)`: an over-reaching fold stands the
+    # validator DOWN, which raises skip.Exception, and pytest would report this
+    # test as skipped rather than failed — green CI past the bug it exists to
+    # catch. Catch the stand-down explicitly and fail on it.
+    try:
+        check_materialized(
+            _state({"assertions": after["assertions"], "person_evidence": []}, _tree("I2")),
+            _state(after, _tree("I2")),
+            [],
+            _TAGGED,
+        )
+    except pytest.skip.Exception:
+        pytest.fail(
+            "stood down on `marriage_record_number` — the couple-event fold "
+            "over-reached and swallowed an ordinary person fact"
+        )
+    except AssertionError:
+        pass  # expected: the validator fires, demanding the materialized fact
+    else:
+        pytest.fail("validator neither fired nor stood down")
 
 
 def test_materialized_stands_down_when_the_person_is_new():
@@ -256,85 +475,431 @@ def test_materialized_stands_down_without_the_tag():
         )
 
 
-# --- test_check_warnings_runs_after_a_write -----------------------------
+# --- report_informant_fields_not_in_pe_confidence_reason ------------------
 #
-# Violating states are real: `_014` (v1_2026-08-20_15-53-03) minted a stub
-# and linked it with skills_invoked == ["person-evidence"]; `_002`
-# (v1_2026-08-24_18-17-08) wrote a pe_ entry with the same. Five different
-# tests skipped it across those two runs, each scoring 3 on all eight
-# dimensions in the run where it skipped.
+# The pe_005 conflation: rationale for a pe_ confidence tier cites informant-
+# quality fields (information_quality / informant_proximity) instead of
+# identity-corroboration evidence.
 
-_LINKED_AFTER = {
-    "assertions": [{"id": "a_010", "record_persona_id": None, "fact_type": "relationship"}],
-    "person_evidence": [{"id": "pe_009", "assertion_id": "a_010", "person_id": "I2"}],
+_INFORMANT_BEFORE = {"assertions": [{"id": "a_001"}], "person_evidence": []}
+_INFORMANT_AFTER_BAD = {
+    "assertions": [{"id": "a_001"}],
+    "person_evidence": [
+        {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "I1",
+            "confidence": "confident",
+            "rationale": (
+                "The information_quality is primary and informant was present "
+                "at the event, so this source is considered highly reliable."
+            ),
+        }
+    ],
 }
-_LINKED_BEFORE = {"assertions": _LINKED_AFTER["assertions"], "person_evidence": []}
+_INFORMANT_AFTER_GOOD = {
+    "assertions": [{"id": "a_001"}],
+    "person_evidence": [
+        {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "I1",
+            "confidence": "probable",
+            "rationale": (
+                "Name and approximate birth year match; single source with no "
+                "corroboration — probable, not confident."
+            ),
+        }
+    ],
+}
 
 
-def test_check_warnings_fires_when_links_were_written():
+def test_informant_fires_on_information_quality_in_rationale():
+    """The pe_005 conflation shape: rationale cites information_quality."""
     with pytest.raises(AssertionError) as exc:
-        check_warnings_after_write(
-            _state(_LINKED_BEFORE, _tree("I1", "I2")),
-            _state(_LINKED_AFTER, _tree("I1", "I2")),
-            ["person-evidence"],
-            _CW_TAGGED,
+        check_informant(
+            _state(_INFORMANT_BEFORE),
+            _state(_INFORMANT_AFTER_BAD),
         )
-    assert "never invoked check-warnings" in str(exc.value)
-    assert "1 new pe_ entr" in str(exc.value)
+    assert "information_quality" in str(exc.value)
+    assert "pe_001" in str(exc.value)
 
 
-def test_check_warnings_fires_when_a_person_was_minted_without_links():
-    """`_014`'s shape is a mint; the trigger must not depend on pe_ entries
-    alone, because the stub is exactly what needs the impossibility check."""
-    same = {"assertions": [], "person_evidence": []}
+def test_informant_fires_on_informant_proximity_in_rationale():
+    """Both banned terms are caught, not just the first one."""
+    after = {
+        "assertions": [{"id": "a_002"}],
+        "person_evidence": [
+            {
+                "id": "pe_002",
+                "assertion_id": "a_002",
+                "person_id": "I2",
+                "confidence": "probable",
+                "rationale": "informant_proximity is high; original registrant present.",
+            }
+        ],
+    }
     with pytest.raises(AssertionError) as exc:
-        check_warnings_after_write(
-            _state(same, _tree("I1")),
-            _state(same, _tree("I1", "I4")),
-            ["person-evidence"],
-            _CW_TAGGED,
+        check_informant(
+            _state({"assertions": [{"id": "a_002"}], "person_evidence": []}),
+            _state(after),
         )
-    assert "minted ['I4']" in str(exc.value)
+    assert "informant_proximity" in str(exc.value)
+    assert "pe_002" in str(exc.value)
 
 
-def test_check_warnings_passes_when_invoked():
-    check_warnings_after_write(
-        _state(_LINKED_BEFORE, _tree("I1", "I2")),
-        _state(_LINKED_AFTER, _tree("I1", "I2")),
-        ["person-evidence", "check-warnings"],
-        _CW_TAGGED,
+def test_informant_passes_when_rationale_uses_identity_evidence():
+    """A rationale citing name, age, and location does not trip the check."""
+    check_informant(
+        _state(_INFORMANT_BEFORE),
+        _state(_INFORMANT_AFTER_GOOD),
     )
 
 
-def test_check_warnings_stands_down_on_a_read_only_run():
-    """A review/audit invocation writes nothing, so §8 has nothing to cover.
-    This is `ut_person_evidence_015`'s shape."""
-    same = {"assertions": [], "person_evidence": [{"id": "pe_001"}]}
+def test_informant_ignores_pre_existing_pe_entries():
+    """The check is new-only: a pre-existing entry with the bad wording must not
+    retroactively fail a run that did not touch it."""
+    pre_existing = {
+        "assertions": [{"id": "a_001"}],
+        "person_evidence": [
+            {
+                "id": "pe_001",
+                "assertion_id": "a_001",
+                "person_id": "I1",
+                "confidence": "confident",
+                "rationale": "information_quality is primary — existing entry.",
+            }
+        ],
+    }
+    # After state is identical to before — no new pe_ entries.
+    check_informant(_state(pre_existing), _state(pre_existing))
+
+
+def test_informant_stands_down_without_research_json():
     with pytest.raises(pytest.skip.Exception):
-        check_warnings_after_write(
-            _state(same, _tree("I1")),
-            _state(same, _tree("I1")),
-            ["person-evidence"],
-            _CW_TAGGED,
+        check_informant(_state(None), _state(None))
+
+
+# --- report_chronological_contradiction_not_speculative -------------------
+#
+# The ut_024 shape: a Kilrush baptism christening dated 1858 is linked at
+# `probable` to a tree person born ~1845 — a 13-year gap that rules out the
+# same birth event. Irish Catholic baptisms follow birth within days.
+
+def _tree_with_birth(person_id: str, birth_year: int) -> dict:
+    return {
+        "persons": [
+            {
+                "id": person_id,
+                "facts": [{"type": "Birth", "date": str(birth_year)}],
+            }
+        ]
+    }
+
+
+def _sp_call_with_gedcomx(
+    persona_id: str, tree_person_id: str, fact_type: str, fact_date: str
+) -> dict:
+    """Build a same_person tool-call dict with embedded GedcomX facts."""
+    return {
+        "tool": "mcp__genealogy__same_person",
+        "args": {
+            "primaryId1": persona_id,
+            "primaryId2": tree_person_id,
+            "gedcomx1": {
+                "persons": [
+                    {
+                        "id": persona_id,
+                        "facts": [{"type": fact_type, "date": fact_date}],
+                    }
+                ]
+            },
+            "gedcomx2": {
+                "persons": [{"id": tree_person_id, "facts": []}]
+            },
+        },
+    }
+
+
+# The ut_024 observation: BP1 (christening 1858) linked at probable to I1
+# (birth ~1845), gap = 13 years.
+_CHRONO_BEFORE = {
+    "assertions": [
+        {"id": "a_001", "record_persona_id": "BP1"},
+    ],
+    "person_evidence": [],
+}
+_CHRONO_AFTER_BAD = {
+    "assertions": _CHRONO_BEFORE["assertions"],
+    "person_evidence": [
+        {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "I1",
+            "confidence": "probable",
+            "rationale": "Name and record match.",
+        }
+    ],
+}
+_CHRONO_TREE_1845 = _tree_with_birth("I1", 1845)
+_CHRONO_SP_CALL = _sp_call_with_gedcomx("BP1", "I1", "Christening", "12 March 1858")
+
+
+def test_chrono_fires_on_13yr_gap_at_probable():
+    """The ut_024 shape: 13-year gap at probable must fire."""
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+            _state(_CHRONO_AFTER_BAD, _CHRONO_TREE_1845),
+            [_CHRONO_SP_CALL],
         )
+    assert "pe_001" in str(exc.value)
+    assert "1858" in str(exc.value)
+    assert "1845" in str(exc.value)
 
 
-def test_check_warnings_stands_down_on_a_negative_test():
-    """A declined routing test has no research.json diff to read."""
-    with pytest.raises(pytest.skip.Exception):
-        check_warnings_after_write(_state(None), _state(None), [], _CW_TAGGED)
+def test_chrono_still_fires_on_the_project_relative_call_shape():
+    """The same 13-year gap, scored with the cheap call (issue #1731).
 
-
-def test_check_warnings_stands_down_without_the_tag():
-    """Tag-gated: an untagged test must not be failed by it, which is what
-    keeps the measured-but-unenforced ungated rate out of the suite."""
-    with pytest.raises(pytest.skip.Exception):
-        check_warnings_after_write(
-            _state(_LINKED_BEFORE, _tree("I1", "I2")),
-            _state(_LINKED_AFTER, _tree("I1", "I2")),
-            ["person-evidence"],
-            {"tags": []},
+    That shape names its two sides by reference and carries no `gedcomx1`, so
+    reading facts out of the call args yields nothing and this check would go
+    permanently silent the moment the agent adopted it. The fallback rebuilds
+    the record party's facts from the project's own assertions, which is the
+    same grouping the engine's projection uses.
+    """
+    before = {
+        "assertions": [
+            {
+                "id": "a_001",
+                "record_id": "ark:/61903/1:1:KILR-B58",
+                "record_role": "child_1",
+                "record_persona_id": None,
+                "fact_type": "christening",
+                "date": "12 March 1858",
+            }
+        ],
+        "person_evidence": [],
+    }
+    after = {
+        "assertions": before["assertions"],
+        "person_evidence": [
+            {
+                "id": "pe_001",
+                "assertion_id": "a_001",
+                "person_id": "I1",
+                "confidence": "probable",
+                "rationale": "Name and record match.",
+            }
+        ],
+    }
+    sp_call = {
+        "tool": "mcp__genealogy__same_person",
+        "args": {"projectPath": "/p", "assertionId": "a_001", "treePersonId": "I1"},
+    }
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(before, _CHRONO_TREE_1845),
+            _state(after, _CHRONO_TREE_1845),
+            [sp_call],
         )
+    assert "pe_001" in str(exc.value)
+    assert "1858" in str(exc.value)
+    assert "1845" in str(exc.value)
+
+
+def test_chrono_ignores_an_absent_role_when_rebuilding_from_assertions():
+    """`record_role: "absent"` is negative evidence describing no persona, so it
+    must not supply a date the check then contradicts a tree person with."""
+    before = {
+        "assertions": [
+            {
+                "id": "a_001",
+                "record_id": "ark:/61903/1:1:KILR-B58",
+                "record_role": "absent",
+                "record_persona_id": None,
+                "fact_type": "christening",
+                "date": "12 March 1858",
+            }
+        ],
+        "person_evidence": [],
+    }
+    after = {
+        "assertions": before["assertions"],
+        "person_evidence": [
+            {
+                "id": "pe_001",
+                "assertion_id": "a_001",
+                "person_id": "I1",
+                "confidence": "probable",
+                "rationale": "Name and record match.",
+            }
+        ],
+    }
+    sp_call = {
+        "tool": "mcp__genealogy__same_person",
+        "args": {"projectPath": "/p", "assertionId": "a_001", "treePersonId": "I1"},
+    }
+    check_chrono(
+        _state(before, _CHRONO_TREE_1845),
+        _state(after, _CHRONO_TREE_1845),
+        [sp_call],
+    )
+
+
+def test_chrono_fires_on_13yr_gap_at_confident():
+    """Confident links with the same gap also fire."""
+    after = {
+        "assertions": _CHRONO_BEFORE["assertions"],
+        "person_evidence": [
+            {
+                "id": "pe_001",
+                "assertion_id": "a_001",
+                "person_id": "I1",
+                "confidence": "confident",
+                "rationale": "Strong match.",
+            }
+        ],
+    }
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+            _state(after, _CHRONO_TREE_1845),
+            [_CHRONO_SP_CALL],
+        )
+    assert "pe_001" in str(exc.value)
+
+
+def test_chrono_passes_when_confidence_is_speculative():
+    """`speculative` explicitly acknowledges the uncertainty — not flagged."""
+    after = {
+        "assertions": _CHRONO_BEFORE["assertions"],
+        "person_evidence": [
+            {
+                "id": "pe_001",
+                "assertion_id": "a_001",
+                "person_id": "I1",
+                "confidence": "speculative",
+                "rationale": "Dates do not align — speculative only.",
+            }
+        ],
+    }
+    check_chrono(
+        _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+        _state(after, _CHRONO_TREE_1845),
+        [_CHRONO_SP_CALL],
+    )
+
+
+def test_chrono_passes_when_gap_is_within_threshold():
+    """A 3-year gap (within the 5-year threshold) is not flagged."""
+    sp_call = _sp_call_with_gedcomx("BP1", "I1", "Christening", "1848")
+    check_chrono(
+        _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+        _state(_CHRONO_AFTER_BAD, _CHRONO_TREE_1845),
+        [sp_call],
+    )
+
+
+def test_chrono_passes_when_no_same_person_call_exists():
+    """Without a same_person call there is no embedded date to check."""
+    check_chrono(
+        _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+        _state(_CHRONO_AFTER_BAD, _CHRONO_TREE_1845),
+        [],
+    )
+
+
+def test_chrono_passes_when_tree_has_no_birth_fact():
+    """If the tree person carries no birth year we cannot compute a gap."""
+    tree_no_birth = {"persons": [{"id": "I1", "facts": []}]}
+    check_chrono(
+        _state(_CHRONO_BEFORE, tree_no_birth),
+        _state(_CHRONO_AFTER_BAD, tree_no_birth),
+        [_CHRONO_SP_CALL],
+    )
+
+
+def test_chrono_passes_when_record_persona_has_no_birth_class_fact():
+    """If the record persona has no birth/christening fact there is nothing to compare."""
+    sp_call = _sp_call_with_gedcomx("BP1", "I1", "Residence", "12 March 1858")
+    check_chrono(
+        _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+        _state(_CHRONO_AFTER_BAD, _CHRONO_TREE_1845),
+        [sp_call],
+    )
+
+
+def test_chrono_fires_on_uri_fact_type():
+    """URI fact types (http://gedcomx.org/Christening) must be matched the same
+    as bare names — 9 of 10 facts in v1_2026-09-15_08-11-26.json use this form."""
+    sp_call = _sp_call_with_gedcomx(
+        "BP1", "I1", "http://gedcomx.org/Christening", "12 March 1858"
+    )
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+            _state(_CHRONO_AFTER_BAD, _CHRONO_TREE_1845),
+            [sp_call],
+        )
+    assert "pe_001" in str(exc.value)
+
+
+def test_chrono_fires_on_dict_date():
+    """Dict dates ({\"original\": \"abt 1845\"}) must not cause TypeError — the same
+    corpus carries this form on both record and tree facts."""
+    sp_call = _sp_call_with_gedcomx(
+        "BP1", "I1", "http://gedcomx.org/Christening", {"original": "12 March 1858"}
+    )
+    tree = {
+        "persons": [
+            {
+                "id": "I1",
+                "facts": [{"type": "http://gedcomx.org/Birth", "date": {"original": "abt 1845"}}],
+            }
+        ]
+    }
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_CHRONO_BEFORE, tree),
+            _state(_CHRONO_AFTER_BAD, tree),
+            [sp_call],
+        )
+    assert "pe_001" in str(exc.value)
+
+
+def test_chrono_fires_when_record_persona_id_is_null():
+    """The flynn-baptism-names-mother shape: assertion has no record_persona_id
+    (came from record_read with no search sidecar), so the validator must fall
+    back to scanning sp_by_pair by person_id rather than skipping silently."""
+    before = {
+        "assertions": [{"id": "a_002"}],  # record_persona_id absent/null
+        "person_evidence": [],
+    }
+    after = {
+        "assertions": before["assertions"],
+        "person_evidence": [
+            {
+                "id": "pe_002",
+                "assertion_id": "a_002",
+                "person_id": "I1",
+                "confidence": "confident",
+                "rationale": "Name match.",
+            }
+        ],
+    }
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(before, _CHRONO_TREE_1845),
+            _state(after, _CHRONO_TREE_1845),
+            [_CHRONO_SP_CALL],  # primaryId1=BP1, primaryId2=I1 — same_person call exists
+        )
+    assert "pe_002" in str(exc.value)
+    assert "1858" in str(exc.value)
+
+
+def test_chrono_stands_down_without_research_json():
+    with pytest.raises(pytest.skip.Exception):
+        check_chrono(_state(None), _state(None), [])
 
 
 # --- Pinning tests (review of #1882, item 3) ----------------------------
@@ -615,3 +1180,360 @@ def test_scored_still_fires_when_the_log_entry_has_a_results_ref():
               "log": after["log"]}
     with pytest.raises(AssertionError):
         check_scored(_state(before, _tree("I1")), _state(after, _tree("I1")), [])
+
+
+# --- check_stub: the minted-by rule ---------------------------------------
+#
+# The eval suite does not exercise this assertion: neutering it left
+# `make harness-test` at an identical pass count. It is also the one most worth
+# a meta-test, because its first version was DEFEATED in review. That version
+# checked the after-state for "a name with some ref", and `tree_edit
+# add_person` copies a caller-supplied `names[].sources` through untouched (its
+# mandatory-ref guard covers inline FACTS only), so a hand-written ref naming
+# the wrong record passed the guard meant to catch exactly that.
+
+_STUB_TAG = {"tags": ["stub-creation"]}
+_SOURCED = [{"id": "N3", "given": "Mary", "surname": "Doyle",
+             "sources": [{"ref": "S5", "quality": 3}]}]
+_BARE = [{"id": "N3", "given": "Mary", "surname": "Doyle"}]
+_MF_NAMED = [{"tool": "mcp__genealogy__materialize_facts",
+              "args": {"assertionId": "a_005", "relatedRole": "bride"}}]
+_MF_PERSONA = [{"tool": "mcp__genealogy__materialize_facts",
+                "args": {"recordId": "REC", "recordRole": "mother"}}]
+_ADD_PERSON = [{"tool": "mcp__genealogy__tree_edit",
+                "args": {"operation": "add_person", "person": {"gender": "Female"}}}]
+
+
+def _stub_verdict(names, calls, test=None):
+    """True when the check accepts. A downstream skip counts as acceptance: it
+    means a LATER, unrelated rule (match_score reachability) skipped."""
+    person = {"id": "I1", "gender": "Male",
+              "names": [{"id": "N1", "given": "Thomas", "surname": "Flynn"}]}
+    assertions = [{"id": "a_005", "record_persona_id": None, "fact_type": "name"}]
+    before = _state({"assertions": assertions, "person_evidence": [], "log": []},
+                    {"persons": [person]})
+    after = _state({"assertions": assertions,
+                    "person_evidence": [{"id": "pe_9", "assertion_id": "a_005",
+                                         "person_id": "I3", "match_score": None}],
+                    "log": []},
+                   {"persons": [person, {"id": "I3", "gender": "Female",
+                                         "names": names}]})
+    try:
+        check_stub(before, after, calls, test or _STUB_TAG)
+        return True
+    except AssertionError:
+        return False
+    except BaseException as exc:  # pytest.skip
+        if type(exc).__name__.endswith("Skipped"):
+            return True
+        raise
+
+
+@pytest.mark.parametrize("calls", [_MF_NAMED, _MF_PERSONA])
+def test_stub_accepts_either_materialize_arm(calls):
+    """Both arms resolve the ref from the assertion, so both are correct on an
+    untagged stub-creation fixture. (Until the `named-party` gate below existed
+    these two cases asserted the same thing: the check read only the tool name,
+    never the args, so the parametrization was decorative.)"""
+    assert _stub_verdict(_SOURCED, calls) is True
+
+
+_NAMED_PARTY_TAG = {"tags": ["stub-creation", "named-party"]}
+
+
+def test_named_party_fixture_requires_the_named_party_ARM():
+    """The one behaviour this change introduces. Without this, nothing
+    distinguishes branch 3 from branch 2 and the arm goes unverified by
+    anything but a human reading a transcript."""
+    assert _stub_verdict(_SOURCED, _MF_NAMED, test=_NAMED_PARTY_TAG) is True
+    # the persona form is the WRONG arm on a fixture the record gives no persona
+    assert _stub_verdict(_SOURCED, _MF_PERSONA, test=_NAMED_PARTY_TAG) is False
+
+
+def test_stub_rejects_add_person_carrying_a_hand_written_ref():
+    """The defeat this check was rewritten for: the ref can name any record."""
+    assert _stub_verdict(_SOURCED, _ADD_PERSON) is False
+
+
+def test_stub_rejects_add_person_with_no_ref():
+    assert _stub_verdict(_BARE, _ADD_PERSON) is False
+
+
+def test_stub_rejects_add_person_used_alongside_materialize_facts():
+    """Calling the right tool somewhere does not license the wrong one here."""
+    assert _stub_verdict(_SOURCED, _MF_NAMED + _ADD_PERSON) is False
+
+
+def test_stub_rejects_a_mint_with_no_tool_call_at_all():
+    assert _stub_verdict(_SOURCED, []) is False
+
+
+def test_stub_accepts_a_tree_edit_that_merely_mentions_add_person():
+    """False-fail guard. The first version matched "add_person" anywhere in the
+    serialized args, so an unrelated tree_edit whose text happens to contain the
+    word was refused. A check that blocks correct work is worse than the gap."""
+    mentions = [
+        {"tool": "mcp__genealogy__tree_edit",
+         "args": {"operation": "add_fact",
+                  "fact": {"type": "Occupation", "value": "clerk (not via add_person)"}}},
+    ]
+    assert _stub_verdict(_SOURCED, _MF_NAMED + mentions) is True
+
+
+def test_stub_still_catches_add_person_inside_a_BATCH():
+    """The batch form is how this skill is told to write, so the check has to
+    see into `ops[]` rather than only the flat call."""
+    batched = [{"tool": "mcp__genealogy__tree_edit",
+                "args": {"ops": [{"operation": "add_relationship"},
+                                 {"operation": "add_person", "person": {"gender": "Female"}}]}}]
+    assert _stub_verdict(_SOURCED, _MF_NAMED + batched) is False
+
+
+def test_stub_catches_add_person_inside_a_STRINGIFIED_batch():
+    """The shape a hand-rolled isinstance(list) check misses. The mock records
+    raw model args and models do stringify a large `ops`, which is why the
+    shared `_ops_arg` recovers it; a private normalizer that did not would let
+    a disallowed mint through silently."""
+    stringified = [{"tool": "mcp__genealogy__tree_edit",
+                    "args": {"ops": '[{"operation": "add_person", "person": {"gender": "Female"}}]'}}]
+    assert _stub_verdict(_SOURCED, _MF_NAMED + stringified) is False
+
+
+# --- Geography and naming read from tools (#2537) -------------------------
+
+_GEO = {"tags": ["person-evidence", "geography-from-tools"]}
+_DIST = {"tags": ["person-evidence", "geography-from-tools", "geography-distance"]}
+_NAMING = {"tags": ["person-evidence", "naming-from-wiki"]}
+
+
+def _call(tool, **args):
+    return {"tool": tool, "args": args}
+
+
+def test_distance_fires_when_no_place_distance_call():
+    calls = [_call("mcp__genealogy__place_search", placeName="Horsham")]
+    with pytest.raises(AssertionError, match="no place_distance call"):
+        check_distance(calls, _DIST)
+
+
+def test_distance_fires_on_an_empty_call_list():
+    with pytest.raises(AssertionError):
+        check_distance([], _DIST)
+
+
+def test_distance_passes_under_every_server_spelling():
+    for prefix in ("mcp__genealogy__", "mcp__remote-devices__Genealogy_Research__", "mcp__Genealogy_Research__"):
+        check_distance([_call(prefix + "place_distance", standardPlace1="a", standardPlace2="b")], _DIST)
+
+
+def test_distance_stands_down_without_the_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_distance([], {"tags": ["person-evidence"]})
+
+
+def test_distance_stands_down_on_the_corridor_case():
+    with pytest.raises(pytest.skip.Exception):
+        check_distance([], _GEO)
+
+
+def test_corridor_fires_when_no_wiki_read():
+    with pytest.raises(AssertionError, match="Emigration_and_Immigration"):
+        check_corridor([_call("mcp__genealogy__place_distance")], _GEO)
+
+
+def test_corridor_fires_on_the_wrong_page():
+    calls = [_call("mcp__genealogy__wiki_read", url="https://www.familysearch.org/en/wiki/Tennessee_Genealogy")]
+    with pytest.raises(AssertionError):
+        check_corridor(calls, _GEO)
+
+
+def test_corridor_fires_when_the_page_came_through_search_not_read():
+    calls = [_call("mcp__genealogy__wiki_search", query="Tennessee_Emigration_and_Immigration")]
+    with pytest.raises(AssertionError):
+        check_corridor(calls, _GEO)
+
+
+def test_corridor_passes_on_a_full_url_with_or_without_an_anchor():
+    for url in ("https://www.familysearch.org/en/wiki/Utah_Emigration_and_Immigration",
+                "https://www.familysearch.org/en/wiki/Kentucky_Emigration_and_Immigration#Background"):
+        check_corridor([_call("mcp__Genealogy_Research__wiki_read", url=url)], _GEO)
+
+
+def test_corridor_fires_on_a_bare_slug_production_cannot_fetch():
+    calls = [_call("mcp__genealogy__wiki_read", url="Kentucky_Emigration_and_Immigration")]
+    with pytest.raises(AssertionError):
+        check_corridor(calls, _GEO)
+
+
+def test_corridor_reads_stringified_args():
+    calls = [{"tool": "mcp__genealogy__wiki_read",
+              "args": json.dumps({"url": "https://www.familysearch.org/en/wiki/Utah_Emigration_and_Immigration"})}]
+    check_corridor(calls, _GEO)
+
+
+def test_distance_ignores_a_tool_that_only_contains_the_name():
+    with pytest.raises(AssertionError):
+        check_distance([_call("mcp__genealogy__place_distance_matrix")], _DIST)
+
+
+def test_corridor_tolerates_a_wiki_read_with_null_args():
+    with pytest.raises(AssertionError):
+        check_corridor([{"tool": "mcp__genealogy__wiki_read", "args": None}], _GEO)
+
+
+def test_naming_fires_without_a_naming_customs_read():
+    calls = [_call("mcp__genealogy__wiki_read", url="Norway_Census")]
+    with pytest.raises(AssertionError, match="_Naming_Customs"):
+        check_naming(calls, _NAMING)
+
+
+def test_naming_passes_on_any_country():
+    for c in ("Norway", "Spain", "Iceland"):
+        check_naming([_call("mcp__genealogy__wiki_read", url=f"https://www.familysearch.org/en/wiki/{c}_Naming_Customs")], _NAMING)
+
+
+def test_naming_fires_on_a_bare_slug():
+    with pytest.raises(AssertionError):
+        check_naming([_call("mcp__genealogy__wiki_read", url="Norway_Naming_Customs")], _NAMING)
+
+
+def test_naming_stands_down_without_the_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_naming([], _GEO)
+
+
+def _geo_states(new_pe, subjects=("I1",), tree_ids=("I1", "I2")):
+    before = {"project": {"subject_person_ids": list(subjects)}, "person_evidence": []}
+    after = {"project": before["project"], "person_evidence": new_pe}
+    return _state(before, _tree(*tree_ids)), _state(after, _tree(*tree_ids))
+
+
+def _pe(i, person, conf):
+    return {"id": f"pe_00{i}", "assertion_id": f"a_00{i}", "person_id": person, "confidence": conf}
+
+
+_CAP = {"tags": ["person-evidence", "unexplained-move-cap"]}
+_LINK = {"tags": ["person-evidence", "corridor-move-link"]}
+
+
+def test_unexplained_fires_on_a_confident_link_to_the_subject():
+    b, a = _geo_states([_pe(1, "I1", "confident")])
+    with pytest.raises(AssertionError, match="probable"):
+        check_unexplained(b, a, _CAP)
+
+
+def test_unexplained_fires_on_a_confident_link_to_a_moved_relative():
+    b, a = _geo_states([_pe(1, "I1", "probable"), _pe(2, "I2", "confident")])
+    with pytest.raises(AssertionError):
+        check_unexplained(b, a, _CAP)
+
+
+def test_unexplained_passes_at_probable_or_with_no_link():
+    for pe in ([_pe(1, "I1", "probable")], []):
+        b, a = _geo_states(pe)
+        check_unexplained(b, a, _CAP)
+
+
+def test_unexplained_ignores_a_person_the_run_minted():
+    b, a = _geo_states([_pe(1, "I9", "confident")])
+    check_unexplained(b, a, _CAP)
+
+
+def test_unexplained_ignores_a_pre_existing_confident_link():
+    before = {"project": {"subject_person_ids": ["I1"]}, "person_evidence": [_pe(1, "I1", "confident")]}
+    check_unexplained(_state(before, _tree("I1")), _state(before, _tree("I1")), _CAP)
+
+
+def test_corridor_link_fires_when_capped_at_probable():
+    b, a = _geo_states([_pe(1, "I1", "probable")])
+    with pytest.raises(AssertionError, match="ordinary tiers"):
+        check_corridor_link(b, a, _LINK)
+
+
+def test_corridor_link_fires_when_nothing_is_linked():
+    b, a = _geo_states([])
+    with pytest.raises(AssertionError, match="none"):
+        check_corridor_link(b, a, _LINK)
+
+
+def test_corridor_link_fires_when_only_a_relative_is_confident():
+    b, a = _geo_states([_pe(1, "I2", "confident")])
+    with pytest.raises(AssertionError):
+        check_corridor_link(b, a, _LINK)
+
+
+def test_corridor_link_passes_on_one_confident_subject_link_among_others():
+    b, a = _geo_states([_pe(1, "I1", "probable"), _pe(2, "I1", "confident"), _pe(3, "I2", "probable")])
+    check_corridor_link(b, a, _LINK)
+
+
+def test_outcome_checks_stand_down_without_their_tags():
+    b, a = _geo_states([_pe(1, "I1", "confident")])
+    with pytest.raises(pytest.skip.Exception):
+        check_unexplained(b, a, _LINK)
+    with pytest.raises(pytest.skip.Exception):
+        check_corridor_link(b, a, _CAP)
+
+
+def _son_of_states():
+    """1880 census: George (DP3, ~1859) 'son of' the head. The relationship
+    assertion links to George and to the father William (I1, ~1825)."""
+    a = [
+        {"id": "a_019", "record_id": "ark:/61903/1:1:TN80", "record_role": "son",
+         "record_persona_id": "DP3", "fact_type": "birth", "date": "~1859"},
+        {"id": "a_020", "record_id": "ark:/61903/1:1:TN80", "record_role": "son",
+         "record_persona_id": "DP3", "fact_type": "relationship",
+         "structured_value": {"relationship_type": "son", "related_person_role": "head"}},
+    ]
+    tree = {"persons": [{"id": "I1", "facts": [{"type": "Birth", "date": "~1825"}]},
+                        {"id": "I5", "facts": [{"type": "Birth", "date": "~1859"}]}]}
+    before = {"assertions": a, "person_evidence": []}
+    after = {"assertions": a, "person_evidence": [
+        {"id": "pe_001", "assertion_id": "a_020", "person_id": "I5", "confidence": "probable", "rationale": "r"},
+        {"id": "pe_002", "assertion_id": "a_020", "person_id": "I1", "confidence": "probable", "rationale": "r"},
+    ]}
+    return _state(before, tree), _state(after, tree)
+
+
+def test_chrono_skips_the_second_party_a_call_names_by_role():
+    """The father's link on a 'son of' assertion, scored with recordRole 'head',
+    carries no birth year for the father; the son's age is not a contradiction."""
+    b, a = _son_of_states()
+    calls = [
+        {"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I5"}},
+        {"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I1", "recordRole": "head"}},
+    ]
+    check_chrono(b, a, calls)
+
+
+def test_chrono_still_fires_when_the_call_scored_the_son_against_the_father():
+    """With no role named the call scored the assertion's own persona (George)
+    against William: that is the pairing the score describes, and it is flagged."""
+    b, a = _son_of_states()
+    calls = [
+        {"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I5"}},
+        {"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I1"}},
+    ]
+    with pytest.raises(AssertionError, match="pe_002"):
+        check_chrono(b, a, calls)
+
+
+def test_chrono_does_not_treat_the_assertions_own_role_as_a_second_party():
+    b, a = _son_of_states()
+    calls = [{"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I1", "recordRole": "son"}}]
+    with pytest.raises(AssertionError, match="pe_002"):
+        check_chrono(b, a, calls)
+
+
+def test_chrono_role_comparison_ignores_case():
+    b, a = _son_of_states()
+    calls = [{"tool": "mcp__genealogy__same_person", "args": {"projectPath": "/p", "assertionId": "a_020", "treePersonId": "I1", "recordRole": "Son"}}]
+    with pytest.raises(AssertionError, match="pe_002"):
+        check_chrono(b, a, calls)
+
+
+def test_unexplained_fires_on_an_existing_link_raised_to_confident():
+    before = {"project": {"subject_person_ids": ["I1"]}, "person_evidence": [_pe(1, "I1", "probable")]}
+    after = {"project": before["project"], "person_evidence": [_pe(1, "I1", "confident")]}
+    with pytest.raises(AssertionError, match="probable"):
+        check_unexplained(_state(before, _tree("I1")), _state(after, _tree("I1")), _CAP)

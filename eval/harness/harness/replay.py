@@ -61,9 +61,23 @@ from typing import Any
 # `tree_edit` / `tree_correct` / `materialize_facts` / `merge_tree_persons` have
 # op-shaped semantics this module would have to model rather than read back, and
 # no current consumer needs tree state. They are reported as unmodelled.
+#
+# Since #2472 `research_append` and `extraction_append` also write
+# `tree.gedcomx.json` when an assertion `update` corrects a fact's
+# place/standard_place/date/value. That happens on the research path, so those
+# two stay in this set and the replay reads their research.json effect back
+# correctly; the TREE half is not modelled and is reported per-op as
+# `tree:<tool>:fact-rewrite`. A partial gap needs its own key rather than the
+# whole-tool `tool:<name>` one: the research half really was applied, and
+# reporting the call as wholly unmodelled would be the opposite lie.
 RESEARCH_WRITERS = frozenset(
     {"research_append", "research_log_append", "extraction_append"}
 )
+
+#: The attributes an assertion `update` mirrors onto its materialized tree fact.
+#: Mirrors ASSERTION_FACT_ATTRS in materialize-facts.ts. A fifth added there and
+#: not here under-reports the gap rather than mis-applying anything.
+_MIRRORED_FACT_ATTRS = frozenset({"place", "standard_place", "date", "value"})
 
 # Project-file writers this module does NOT apply. Named explicitly so a run
 # containing them reports a coverage gap instead of looking fully replayed.
@@ -114,6 +128,7 @@ SECTION_ID_PREFIX = {
 }
 
 _ID_RE = re.compile(r'"(?:entryId|logId)"\s*:\s*"([^"]+)"')
+_URL_RE = re.compile(r'"url"\s*:\s*"([^"]+)"')
 _OK_RE = re.compile(r'"ok"\s*:\s*(true|false)')
 _FULL_LEN_RE = re.compile(r'"_full_length"\s*:\s*(\d+)')
 
@@ -385,6 +400,43 @@ def _apply_op(state: dict, op: dict, entry_id: str | None, out: ReplayResult) ->
     out.note_unmodelled(f"update:no-such-id:{section}")
 
 
+def _builder_hand_off(entry: dict) -> tuple[dict, str] | None:
+    """The log op a `build_external_search_url` call wrote, with its id.
+
+    The builder writes only when called with a `projectPath`, and then exactly
+    one entry: the in-flight `external_site` hand-off. Applied only when the
+    ledger kept both the returned `logId` and `url` — never with a synthesised
+    id, because the 155 committed calls that carried no projectPath wrote
+    nothing, and inventing an entry for each would be the opposite lie.
+    """
+    args = entry.get("args") if isinstance(entry.get("args"), dict) else {}
+    if not args.get("projectPath") or entry.get("is_error"):
+        return None
+    result = parse_tool_result(entry.get("response_summary"))
+    if result is None or result.get("ok") is not True or not result.get("ids"):
+        return None
+    summary = entry.get("response_summary")
+    text = summary if isinstance(summary, str) else json.dumps(summary, default=str)
+    url_m = _URL_RE.search(text.replace('\\"', '"'))
+    if url_m is None:
+        return None
+    attributes = args.get("attributes")
+    body = {
+        "plan_item_id": args.get("planItemId"),
+        "tool": "external_site",
+        "query": dict(attributes) if isinstance(attributes, dict) else {},
+        "outcome": "partial",
+        "results_examined": 0,
+        "external_site": {
+            "site": args.get("site"),
+            "url_generated": url_m.group(1),
+            "capture_received": False,
+        },
+        "results_ref": None,
+    }
+    return {"section": "log", "op": "append", "entry": body}, result["ids"][0]
+
+
 def replay(
     tool_calls: list[dict],
     starting_research: dict | None = None,
@@ -401,6 +453,14 @@ def replay(
         if not isinstance(entry, dict):
             continue
         name = bare_tool_name(str(entry.get("tool") or ""))
+        # Its own branch, ahead of the generic writer path: that path would turn
+        # the builder's arguments into the entry and synthesise an id for every
+        # call, including the ones that wrote nothing.
+        if name == "build_external_search_url":
+            hand_off = _builder_hand_off(entry)
+            if hand_off is not None:
+                _apply_op(out.research, hand_off[0], hand_off[1], out)
+            continue
         if name not in RESEARCH_WRITERS:
             # Report it. The module docstring promises `unmodelled` names every
             # tool this replay could not apply, and `check_replay_fidelity`
@@ -439,4 +499,24 @@ def replay(
                     if entry_id is not None:
                         out.synthesised_ids += 1
             _apply_op(out.research, op, entry_id, out)
+            # An assertion `update` touching a mirrored attribute ALSO rewrites
+            # the tree fact minted from it (#2472). The research half is applied
+            # above; the tree half is not modelled, so report it rather than let
+            # a consumer read a pre-call tree as current. Reported on the op's
+            # SHAPE, not on whether a fact was really rewritten: the replay
+            # cannot see the tree, and `unmodelled` means "this call may have
+            # done something I did not apply", which is exactly the claim.
+            #
+            # Its own blind spot, inherited from `_ops_from_args`: a JSON-STRING
+            # `ops` payload (which the engine coerces, so the write lands) parses
+            # as a log op here and never reaches this branch. That is a
+            # pre-existing gap in the parser rather than in this report, and it
+            # under-reports rather than over-reports.
+            if (
+                op.get("section") == "assertions"
+                and op.get("op") == "update"
+                and isinstance(op.get("fields"), dict)
+                and _MIRRORED_FACT_ATTRS & set(op["fields"])
+            ):
+                out.note_unmodelled(f"tree:{name}:fact-rewrite")
     return out

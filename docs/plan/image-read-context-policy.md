@@ -1,7 +1,8 @@
 # Enforcing the `image_read` context boundary — plan
 
-> **Status:** proposed (2026-07-16), branch `image-read-context-policy`, merged up
-> to main `6829b087` (#715/#712/#714). **Premise probe-verified — see §3.1.** This
+> **Status:** §4 implemented (#717, 2026-07-17, `eval/harness/harness/context_policy.py`);
+> §5's production port declined by lead ruling 2026-08-17 (ADR-0006). Nothing is pending.
+> **Premise probe-verified — see §3.1.** This
 > supersedes an earlier framing from the retired staging queue (the surviving
 > item is issue #1130), whose central premise — *"no environment can
 > currently deny a main session a tool an agent needs"* — is **false as written**.
@@ -172,13 +173,11 @@ Recorded because both would have misdirected an implementer:
 ### Considered and rejected: `subagent_capture.py`
 
 `43ec2480` (#710) added per-subagent capture and looks adjacent, but it is the wrong
-lever: it is **e2e-only**, **best-effort by design** (`collect_subagents` returns `[]`
-on any failure — a missing cache dir is indistinguishable from "the subagent never
-called `image_read`", i.e. it fails **open**), records **tool names only**, and covers
+lever: it is **e2e-only**, **best-effort by design** (`collect_subagents` records a failure
+rather than raising, so it fails **open**), records **tool names only**, and covers
 **subagents only** — it can confirm the reader *did* call `image_read`, never that the
-router *didn't*. It also reads the ephemeral SDK cache, which
-`harness/orchestrator.py:634` `rmtree`s via `cleanup_session_store(workspace)`. The
-hook is synchronous, fails **closed**, and works under parallel subagents.
+router *didn't*. The hook is synchronous, fails **closed**, and works under parallel
+subagents.
 
 ## 4. The change — IMPLEMENTED
 

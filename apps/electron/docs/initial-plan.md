@@ -76,7 +76,7 @@ Collapsible tree view of research.json sections:
 - **Plans** — grouped by question, plan items with status
 - **Log** — sortable table (date, repository, query, outcome)
 - **Sources** — list with citation previews
-- **Assertions** — filterable by fact_type, evidence_type, information_quality
+- **Assertions** — filterable by fact_type, record_basis, information_quality
 - **Person Evidence** — links showing assertion→person mappings
 - **Conflicts** — highlighted with resolution status
 - **Hypotheses** — with supporting/contradicting counts

@@ -27,6 +27,7 @@
  *
  * Run: npx tsx dev/explore-year-band-verify.ts   (from packages/engine/mcp-server)
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchRetry, sleep } from "./http-retry.js";
@@ -38,7 +39,7 @@ interface Row { id: string; year: number | null }
 
 async function req(qs: string): Promise<any | null> {
   await sleep(250);
-  const token = await getValidToken();
+  const token = await getValidToken(LOCAL);
   const res = await fetchRetry(`${BASE}?${qs}&m.queryRequireDefault=on`,
     { headers: { Authorization: `Bearer ${token}`, Accept: "application/json",
                  "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } },

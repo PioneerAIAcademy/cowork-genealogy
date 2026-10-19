@@ -1,0 +1,20 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Isabel Flores was born on 7 July 1880 and baptized on 11 July 1880 in the parish of San Pablo, Laguna, Philippines, the daughter of Policronio Flores and Catalina Ortiz. (The 1880 register records the father as 'Policronio'; correlating records show this is a scribal variant of Apolonio Flores, the name the tree and her children's baptisms carry.)",
+      "details": {
+        "subject_person": "Isabel Flores (GCNR-K3J)",
+        "fact_type": "Birth",
+        "date": "7 July 1880",
+        "place": "San Pablo City, Laguna, Philippines"
+      },
+      "supporting_sources": [
+        "ark:/61903/1:1:666Y-8VPJ — the hint 1880 San Pablo baptism, INDEX (Philippines, Catholic Church Records, 1520-2014): Isabel Flores, b. 7 Jul 1880, chr. 11 Jul 1880, daughter of Policronio Flores and Catalina Ortiz; maternal grandparents Antonio Ortes and Rita Gusmán; paternal grandparents Florentino Flores and María Gulaglay; godmother Paula Ortiz",
+        "ark:/61903/1:1:XWM9-CGG8 — 1877 San Pablo marriage INDEX (5 Feb 1877): Apolonio Flores, son of Fulgencio Flores and Maria Gulaylay, married Catalina Ortis, daughter of Antonio Ortis and Rita Gusman. Catalina's parents (Antonio Ortis + Rita Gusman) match the 1880 baptism's maternal grandparents (Antonio Ortes + Rita Gusmán), a strong indication of the same Catalina; the husband is recorded as Apolonio with mother Maria Gulaylay (matching the 1880 paternal grandmother Maria Gulaglay) — correlating the 1880 Isabel with the tree's Isabel, daughter of Apolonio Flores and Catalina Ortiz, despite the Policronio/Apolonio variant on the father's name"
+      ],
+      "required": true
+    }
+  ]
+}

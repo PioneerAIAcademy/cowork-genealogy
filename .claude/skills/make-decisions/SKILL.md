@@ -76,9 +76,12 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 
   -q '.[] | "\(.updatedAt[0:10])\t#\(.number)\t\(.title)"' | sort
 ```
 
-**`senior` is not your queue.** Those are hard regardless of any open question
-and go to a senior in the matching lane. Never carry both labels; `/fill-ready`
-§ "Above the junior pools" owns the split.
+**`senior` alone is not your queue.** An item labelled `senior` and nothing else
+is hard regardless of any open question and goes to a senior in the matching
+lane — nothing for you to answer. But an item carrying **both** labels is yours:
+the two are orthogonal, so a hard item can also be waiting on one ruling from
+you. Answer it like any other, drop `needs-decision`, and leave `senior` on —
+`/fill-ready` then ranks it into its lane's senior work.
 
 ## 2. Present each question
 
@@ -200,9 +203,12 @@ nothing, and he will send it back. Two properly set up beats four passed through
 item. An answer heard and not applied is worse than one never asked for.
 
 ```sh
-# 1. the durable record — his answer, in his words, on the issue
+# 1. the durable record: his answer VERBATIM, who gave it, and what it rests on.
+#    <who> is the person who answered, not whoever is running this skill:
+#    `lead` only when Dallan answered. Rests on = the one to three facts from your
+#    briefing that the answer turned on, so a later reader can tell when it is stale.
 gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
-  --body "**Ruling:** <his answer> — <the one-line reason, if he gave one>"
+  --body "**Ruling (<who>, <date>):** <his words, verbatim> — **Rests on:** <facts>"
 
 # 2. splice the chosen option's pre-written body text in, replacing the whole
 #    `## Decision needed` block, so the next reader gets the decision and not the
@@ -221,13 +227,23 @@ gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file body.md
 #    and a recorded ruling does not void it. Never write a marker onto an issue
 #    that was never reviewed: that forges a review and wins a permanent skip.
 
-# 4. the label comes off, and the item ranks in a junior pool like anything else
+# 4. the label comes off and the item ranks in its lane's pool like anything
+#    else — as junior work, unless it also carries `senior`, which stays on
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --remove-label needs-decision
 ```
 
 The `**Ruling:**` comment is the record, not a queue. It exists so the next
 reader — a junior picking the issue up, `/audit-board`, a later run of this skill
 — sees the decision and its reasoning.
+
+**Record what he said, not what you inferred.** A one-line "go with your
+recommendation" rules on the option text he was shown and nothing else; do not
+expand it into rules he never saw, and do not carry it to a sibling issue he was
+not asked about. That issue gets its own question.
+
+**A ruling binds only while its premises hold** (`CLAUDE.md`). An item that comes
+back because a fact under an earlier ruling proved wrong is a fresh question on
+the current facts, not a request to reverse him. Say which fact changed.
 
 ## 4. Answers that are not a choice between the options
 
@@ -249,7 +265,12 @@ reader — a junior picking the issue up, `/audit-board`, a later run of this sk
   own results (which reframed the card), and a proposed logging destination turned
   out not to exist. Twice the honest answer was "you are right, and here is the
   part that does not work" — say both halves.
-- **"This is hard either way."** Swap `needs-decision` for `senior`. Never both.
+- **"This is hard either way."** Add `senior` and drop `needs-decision` — the
+  fork is settled, the difficulty is not. Keep both only while the answer is
+  still outstanding: the two labels are orthogonal (`senior` says who does it,
+  `needs-decision` says what is blocking it), so an item that is hard *and*
+  waiting on you carries both until you rule, and loses `needs-decision` when
+  you do.
 - **"Don't do this."** Close it: `gh issue close <N> --repo PioneerAIAcademy/cowork-genealogy --reason
   "not planned" --comment "<why>"`. The label goes with the issue.
 

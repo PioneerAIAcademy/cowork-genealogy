@@ -174,9 +174,10 @@ export const mergeWarningsSchema = {
         type: "array",
         description:
           "Pairs of `[treeId, candidateId]` that would be collapsed. The treeId " +
-          "(a `persons[].id` in the on-disk tree, including any stub you just " +
-          "added) survives; the candidateId (a `persons[].id` in " +
-          "candidateGedcomx) folds into it.",
+          "(a `persons[].id` already in the on-disk tree.gedcomx.json) survives; " +
+          "the candidateId (a `persons[].id` in candidateGedcomx) folds into it. " +
+          "A candidate persona with no tree match is left unpaired — the " +
+          "dry-run previews it as a new person.",
         items: {
           type: "array",
           items: { type: "string" },

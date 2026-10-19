@@ -1,0 +1,257 @@
+// ProjectStore — the one seam between the tools and wherever project state lives.
+//
+// Every read and write of a project's documents (research.json,
+// tree.gedcomx.json, the starting-tree baseline, evaluation verdicts), its
+// sidecars (results/), its staging area (results/.staging/) and its retained
+// scans (images/) goes through the active store. The desktop .mcpb and both eval
+// harnesses run `FsProjectStore`, which is the filesystem code the utils used to
+// hold, moved there verbatim. A hosted deployment installs a different backend
+// with `setProjectStore()` and no tool changes. What makes that true is
+// tests/packaging/no-fs-outside-store.test.ts: no module outside this directory
+// (plus auth, which owns per-user files, and the bundled-data reader) may import
+// `fs`, so a tool cannot reach the filesystem around the store.
+//
+// Two bindings, resolved in this order by `getProjectStore()`:
+//   1. per request — `runWithProjectStore(store, fn)` binds `store` through an
+//      AsyncLocalStorage for every store call in `fn`'s async continuation
+//      (tool body, utils, validator, staging sweeps). A shared server that
+//      serves many projects binds one store per request this way.
+//   2. per process — `setProjectStore(store)`; the HTTP server's
+//      `unboundProjectStore` and tests. Absent both, the first use constructs
+//      `FsProjectStore`.
+// Why an ALS here when auth/principal.ts refuses one for the credential: the
+// principal must be un-forgettable at the call site — a tool that never
+// received one fails to compile. The store is a hidden singleton already,
+// reached from ~30 sites in utils and the validator; threading a parameter
+// through them buys nothing the ALS does not, and `PgS3ProjectStore` already
+// binds its open transaction through one. The property the parameter buys
+// ("n=1 works, n=2 impersonates") is bought here by `unboundProjectStore`: a
+// shared server installs one as the process store, so a request that never
+// bound a store FAILS instead of falling through to another's or to the file
+// backend.
+//
+// Vocabulary: `projectPath` is the project's identity exactly as the tools
+// receive it — a directory on the file backend, an opaque key elsewhere. A `ref`
+// is a project-relative POSIX path (`results/log_001.json`, `images/x.jpg`);
+// a store rejects one that escapes the project.
+
+import { AsyncLocalStorage } from "node:async_hooks";
+import { FsProjectStore } from "./fs-project-store.js";
+
+/** What `projectPath` actually points at, decided WITHOUT reference to which
+ *  file the caller wanted. See `classifyProject`. */
+export type ProjectPathClass = "missing_arg" | "missing_dir" | "no_project" | "project";
+
+/** Finer than `ProjectPathClass` for the two producers (staging, images) whose
+ *  refusal messages distinguish a missing project from a non-directory. */
+export type ProjectDirState = "directory" | "not_directory" | "missing";
+
+/** One entry of a project subdirectory listing. `mtimeMs` is what the TTL
+ *  sweeps compare against; a backend without a real mtime reports the write time. */
+export interface ProjectEntry {
+  name: string;
+  mtimeMs: number;
+}
+
+export interface JsonWrite {
+  ref: string;
+  data: unknown;
+}
+
+/**
+ * One worker attempt's claim of one hosted turn (U6): the `turns` row and the
+ * `claim_epoch` the attempt's claim minted. A store bound with one commits a
+ * write only while that epoch is still the turn's current one, so an attempt a
+ * newer claim superseded writes nothing. `claimEpoch` is the decimal string the
+ * header carried, cast `::bigint` in SQL, so JS never handles a bigint. Lives
+ * here, free of `pg`, for the HTTP entrypoint to parse a header without loading
+ * a backend.
+ */
+export interface ClaimFence {
+  turnId: string;
+  claimEpoch: string;
+}
+
+export interface WriteJsonBothOptions {
+  /**
+   * Test-only seam, honoured by the file backend: invoked after the first
+   * rename and before the second. A throw here simulates a crash *between* the
+   * two renames, leaving the first file committed (new) and the second still at
+   * its old content — the residual window the two-rename contract documents.
+   * A transactional backend has no such window and ignores it.
+   */
+  onBeforeSecondRename?: () => void | Promise<void>;
+}
+
+export interface ProjectStore {
+  /**
+   * A stable, patron-isolating identity for the project this store is bound to,
+   * when the backend has one (the hosted `PgS3ProjectStore`, keyed by the
+   * request's `X-Genealogy-Project-Id`). `undefined` on the file backend, where
+   * one process serves one project and `projectPath` already isolates. A
+   * process-lifetime util cache that must not leak one project's state into
+   * another under the shared-process entrypoint (`http.ts`, where every request
+   * presents the same anchor `projectPath`) keys on this instead of
+   * `projectPath` — see `truncatedImageKey` in `utils/image-store.ts`.
+   */
+  readonly projectId?: string;
+
+  /**
+   * The one `projectPath` this store answers to, when the backend is bound to a
+   * single project (`PgS3ProjectStore`, and the http test double). `undefined` on
+   * the file backend. Lets a call that passed no `projectPath` still be counted
+   * against the bound project — the image cap (`utils/browse-budget.ts`).
+   */
+  readonly anchorPath?: string;
+
+  /**
+   * Run `fn` serialized against every other writer for the same project. Wrap
+   * the ENTIRE tool body — first read to last write — so a read-modify-write
+   * cannot interleave with another writer's. On the file backend this is the
+   * in-process FIFO mutex (issue #1715); on a database backend it is one
+   * connection holding the project's advisory lock for the whole callback,
+   * which is why the validate step must run inside it too.
+   *
+   * NOT reentrant: a locked function must never call another locked function
+   * for the same project. A same-project re-acquire is rejected with a thrown
+   * error naming the key rather than hanging.
+   */
+  withTransaction<T>(projectPath: string, fn: () => Promise<T>): Promise<T>;
+
+  /** Classify `projectPath` itself, independent of any filename — see the
+   *  docstring on `classifyProjectPath` in utils/project-io.ts. */
+  classifyProject(projectPath: unknown): Promise<ProjectPathClass>;
+
+  /** Whether `projectPath` names an existing project container. */
+  projectDirState(projectPath: string): Promise<ProjectDirState>;
+
+  /**
+   * The nearest ancestor project a new project at `projectPath` would nest
+   * inside, or `null`. Only the file backend has a notion of nesting; a
+   * database backend returns `null`.
+   */
+  findNestingAncestor(projectPath: string): Promise<string | null>;
+
+  /** True if `ref` exists in the project. */
+  exists(projectPath: string, ref: string): Promise<boolean>;
+
+  /** Read `ref` as UTF-8 text. Throws when it is absent or unreadable — the
+   *  caller owns the message, since every caller words it differently. */
+  readText(projectPath: string, ref: string): Promise<string>;
+
+  /** Read `ref` as raw bytes — a retained scan as written, a JSON document as
+   *  the UTF-8 of its text. Throws when it is absent or unreadable, as
+   *  `readText` does. */
+  readBytes(projectPath: string, ref: string): Promise<Uint8Array>;
+
+  /** List the entries directly under `dirRef`. An absent directory lists as
+   *  empty. Entries that cannot be described are skipped, never fatal. */
+  list(projectPath: string, dirRef: string): Promise<ProjectEntry[]>;
+
+  /** Write `data` as pretty JSON at `ref`, atomically: a reader never observes
+   *  a partial document. Creates missing parents. */
+  writeJson(projectPath: string, ref: string, data: unknown): Promise<void>;
+
+  /**
+   * Write two (or more) JSON refs both-or-neither, committed in the order given
+   * (the merge tools pass [tree, research]). On the file backend this is
+   * write-every-temp then rename-back-to-back, with the residual window the
+   * docstring on `atomicWriteBoth` records; a transactional backend commits
+   * them in one transaction.
+   */
+  writeJsonBoth(projectPath: string, writes: JsonWrite[], options?: WriteJsonBothOptions): Promise<void>;
+
+  /** Write raw bytes at `ref` (retained page scans), atomically: a reader never
+   *  observes a partial blob. Creates missing parents. */
+  writeBytes(projectPath: string, ref: string, bytes: Uint8Array): Promise<void>;
+
+  /** Append `text` to `ref`, creating it and its parents if absent (the
+   *  rank_search_matches score log). */
+  appendText(projectPath: string, ref: string, text: string): Promise<void>;
+
+  /** Remove `ref`, best-effort: an absent ref or a lost race is not an error. */
+  remove(projectPath: string, ref: string): Promise<void>;
+}
+
+let active: ProjectStore | null = null;
+const requestStore = new AsyncLocalStorage<ProjectStore>();
+
+/** The store every util and tool reads and writes through: the request-bound
+ *  store if one is bound, else the process store, else (first use) the file
+ *  backend. */
+export function getProjectStore(): ProjectStore {
+  const bound = requestStore.getStore();
+  if (bound) return bound;
+  if (!active) active = new FsProjectStore();
+  return active;
+}
+
+/** Install a backend for this process (the hosted entrypoint; tests). `null`
+ *  restores the default file backend on the next `getProjectStore()`. */
+export function setProjectStore(store: ProjectStore | null): void {
+  active = store;
+}
+
+/** Bind `store` for every store call made in `fn`'s async continuation. Wins
+ *  over the process store; gone once `fn` settles. */
+export function runWithProjectStore<T>(store: ProjectStore, fn: () => Promise<T>): Promise<T> {
+  return requestStore.run(store, fn);
+}
+
+/** A store whose every method rejects with `new Error(message)`. A shared
+ *  server installs one as the process store so nothing runs against the file
+ *  backend outside a request binding, and binds one per request that names no
+ *  project, so the message reaches the model through the dispatcher's
+ *  `isError` path. Implementing the interface makes a forgotten method a tsc
+ *  error. */
+export function unboundProjectStore(message: string): ProjectStore {
+  return new UnboundProjectStore(message);
+}
+
+class UnboundProjectStore implements ProjectStore {
+  constructor(private readonly message: string) {}
+
+  private reject<T>(): Promise<T> {
+    return Promise.reject(new Error(this.message));
+  }
+
+  withTransaction<T>(): Promise<T> {
+    return this.reject();
+  }
+  classifyProject(): Promise<ProjectPathClass> {
+    return this.reject();
+  }
+  projectDirState(): Promise<ProjectDirState> {
+    return this.reject();
+  }
+  findNestingAncestor(): Promise<string | null> {
+    return this.reject();
+  }
+  exists(): Promise<boolean> {
+    return this.reject();
+  }
+  readText(): Promise<string> {
+    return this.reject();
+  }
+  readBytes(): Promise<Uint8Array> {
+    return this.reject();
+  }
+  list(): Promise<ProjectEntry[]> {
+    return this.reject();
+  }
+  writeJson(): Promise<void> {
+    return this.reject();
+  }
+  writeJsonBoth(): Promise<void> {
+    return this.reject();
+  }
+  writeBytes(): Promise<void> {
+    return this.reject();
+  }
+  appendText(): Promise<void> {
+    return this.reject();
+  }
+  remove(): Promise<void> {
+    return this.reject();
+  }
+}

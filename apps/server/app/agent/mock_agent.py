@@ -1,8 +1,10 @@
 """A deterministic, scripted stand-in for the real Claude Agent SDK + genealogy
 skills. It needs no Anthropic key, so the whole POC runs offline. It:
 
-  * conducts the init-project researcher-profile interview (experience +
-    subscriptions + objective) conversationally,
+  * asks only for the research objective, conversationally — nothing about the
+    researcher is asked: the profile is fixed (novice, one house-style
+    narration string), which is what the real skill does since the experience
+    question was dropped on 2026-09-18 and the access question on 2026-08-31,
   * writes a schema-shaped research.json + tree.gedcomx.json on completion,
   * on later "search records" turns, appends a source/assertion/log entry and a
     results sidecar (which the control-plane watch turns into live viewer
@@ -20,23 +22,15 @@ from pathlib import Path
 
 STATE_FILE = ".agent_state.json"
 
-_EXPERIENCE = ["novice", "intermediate", "experienced", "professional"]
-_SUBSCRIPTIONS = [
-    "Ancestry", "MyHeritage", "FindMyPast", "Newspapers.com",
-    "GenealogyBank", "FindAGrave-Plus",
-]
-# The two access routes are never typed verbatim, so they match on the
-# phrasing a researcher actually uses rather than on the enum value.
-_ACCESS_ROUTES = {
-    "FamilySearch-Partner": ("familysearch partner", "partner subscription"),
-    "LibraryAccess": ("library", "family history cent", "affiliate"),
-}
-_NARRATION = {
-    "novice": "Narrate why each step matters; define genealogy terms on first use.",
-    "intermediate": "One-line preamble per step; assume standard record-type familiarity.",
-    "experienced": "No preambles; concise rationale only when non-obvious.",
-    "professional": "No preambles; terse, citation-first.",
-}
+# The profile is fixed. There is deliberately no experience or access
+# vocabulary here any more: the real skill asks nothing about the researcher
+# and writes these two values on every project, and `researcher_profile` leaves
+# `subscriptions` ABSENT rather than defaulting it — `["none"]` would assert the
+# researcher told us they have nothing, the opposite of the current assumption.
+# A mock that still asked would keep producing a schema-valid document while no
+# longer standing in for what production does.
+_EXPERIENCE_LEVEL = "novice"
+_NARRATION = 'Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.'
 
 
 def _event(kind: str, **kw) -> dict:
@@ -66,10 +60,8 @@ class MockAgent:
                 pass
         # Pre-seeded (sample) project: skip onboarding.
         if (self.dir / "research.json").is_file():
-            return {"phase": "active", "experience_level": "intermediate",
-                    "subscriptions": [], "objective": None, "log_seq": 1}
-        return {"phase": "greet", "experience_level": None, "subscriptions": [],
-                "objective": None, "log_seq": 0}
+            return {"phase": "active", "objective": None, "log_seq": 1}
+        return {"phase": "greet", "objective": None, "log_seq": 0}
 
     def _save_state(self) -> None:
         (self.dir / STATE_FILE).write_text(json.dumps(self.state, indent=2), encoding="utf-8")
@@ -96,8 +88,6 @@ class MockAgent:
         phase = self.state["phase"]
         handler = {
             "greet": self._greet,
-            "await_experience": self._await_experience,
-            "await_subscriptions": self._await_subscriptions,
             "await_objective": self._await_objective,
             "active": self._active,
         }.get(phase, self._active)
@@ -119,50 +109,18 @@ class MockAgent:
         yield _event(
             "text",
             text=(
-                "Welcome! I'll help you run a GPS-conformant genealogy research "
-                "project. First, a couple of quick questions so I can pitch my "
-                "explanations at the right level.\n\n"
-                "**What's your genealogy experience?** (novice, intermediate, "
-                "experienced, or professional)"
+                "Welcome! I'll help you research your family tree.\n\n"
+                "**What would you like to find out?** Describe the person and the "
+                "question, e.g. \"Identify the parents of Mary Sullivan, born "
+                "ca. 1860 in County Cork.\""
             ),
         )
-        self.state["phase"] = "await_experience"
-        self._save_state()
-
-    async def _await_experience(self, text: str) -> AsyncIterator[dict]:
-        lvl = next((w for w in _EXPERIENCE if w in text.lower()), "intermediate")
-        self.state["experience_level"] = lvl
-        yield _event("text", text=(
-            f"Got it — **{lvl}**. "
-            "Which paid record subscriptions do you have? (e.g. Ancestry, "
-            "MyHeritage, Newspapers.com — or say \"none\")"
-        ))
-        self.state["phase"] = "await_subscriptions"
-        self._save_state()
-
-    async def _await_subscriptions(self, text: str) -> AsyncIterator[dict]:
-        low = text.lower()
-        subs = [s for s in _SUBSCRIPTIONS if s.lower() in low]
-        subs += [
-            value
-            for value, phrases in _ACCESS_ROUTES.items()
-            if any(phrase in low for phrase in phrases)
-        ]
-        self.state["subscriptions"] = subs
-        shown = ", ".join(subs) if subs else "none"
-        yield _event("text", text=(
-            f"Noted — **{shown}**.\n\n"
-            "Last thing: **what's your research objective?** Describe the person "
-            "and question, e.g. \"Identify the parents of Mary Sullivan, born "
-            "ca. 1860 in County Cork.\""
-        ))
         self.state["phase"] = "await_objective"
         self._save_state()
 
     async def _await_objective(self, text: str) -> AsyncIterator[dict]:
         objective = text.strip() or "Unstated objective"
         self.state["objective"] = objective
-        lvl = self.state["experience_level"] or "intermediate"
 
         yield _event("tool_use", tool="init_project",
                      summary="Creating research.json + researcher profile")
@@ -176,10 +134,11 @@ class MockAgent:
                 "updated": "2026-06-06",
                 "title": _title_from_objective(objective),
             },
+            # `subscriptions` is deliberately absent, not []: access is no
+            # longer asked and is assumed available.
             "researcher_profile": {
-                "experience_level": lvl,
-                "subscriptions": self.state["subscriptions"],
-                "narration_guidance": _NARRATION[lvl],
+                "experience_level": _EXPERIENCE_LEVEL,
+                "narration_guidance": _NARRATION,
             },
             "questions": [{
                 "id": "q_001",
@@ -191,9 +150,9 @@ class MockAgent:
                 "depends_on": [], "unblocks": [],
                 "created": "2026-06-06", "resolved": None,
                 "resolution_assertion_ids": [],
-                "exhaustive_declaration": {
-                    "declared": False, "justification": None,
-                    "log_entry_ids": [], "stop_criteria": None,
+                "search_stop": {
+                    "stopped_because": None, "justification": None,
+                    "log_entry_ids": [], "stop_criteria": None, "not_reached": [],
                 },
             }],
             "plans": [], "log": [], "sources": [], "assertions": [],
@@ -300,7 +259,7 @@ class MockAgent:
             "date_certainty": "approximate", "place": "Pennsylvania",
             "information_quality": "secondary", "informant": "head of household",
             "informant_proximity": "household_member", "informant_bias_notes": None,
-            "evidence_type": "direct", "log_entry_id": log_id,
+            "record_basis": "stated", "log_entry_id": log_id,
             "record_persona_id": None, "extracted_for_question_ids": ["q_001"],
         })
         research["project"]["updated"] = "2026-06-06"

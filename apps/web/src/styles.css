@@ -350,6 +350,10 @@ button {
   padding: 2px 9px;
   font-weight: 600;
 }
+.pillEnded {
+  background: var(--line);
+  color: var(--ink-soft);
+}
 .cardDelete {
   position: absolute;
   top: 10px;
@@ -602,6 +606,28 @@ button {
   border-radius: 12px 12px 12px 2px;
   padding: 8px 12px;
 }
+/* PR #2870 item 1b: a message typed while a turn is running is HELD, not
+   enqueued -- two turns on one session would resume the same SDK session. The
+   label is what stops that reading as "my message was dropped"; it clears at
+   turn_done, which is when the held message becomes the next turn. Right-aligned
+   under the bubble it belongs to, since .msgUser is align-self: flex-end. */
+.msgQueued {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  text-align: right;
+  margin-top: 4px;
+  font-style: italic;
+}
+/* PR #2870 item 1c: how the last turn ended. complete() used to hardcode
+   'ok', so a run that hit its step budget or stalled looked exactly like one
+   that finished -- and a genealogist reads that as "nothing more was found".
+   Sits where the "working… Ns" indicator sits, so the same spot answers both
+   "is it running?" and "why did it stop?". */
+.turnOutcome {
+  font-size: 12px;
+  color: var(--ink-soft);
+  padding: 4px 2px;
+}
 /* Restore paragraph spacing the global reset (viewer-ui global.css) zeroes.
    Without this, two text blocks joined with a blank line render on consecutive
    lines with no gap — the paragraph break #1312 requires never reaches the
@@ -615,6 +641,48 @@ button {
 }
 .msgText :last-child {
   margin-bottom: 0;
+}
+/* Restore the block spacing the global reset (viewer-ui global.css) zeroes for
+   the rest of the markdown blocks agent narration emits — lists, fences and
+   quotes. Local to the bubble like .narrative in ProofSummariesSection, not in
+   global.css (whose bare tag rules style 14 viewer sections). em-relative, not
+   var(--spacing-*), which is sized for the viewer's 15px root, not the 13.5px
+   bubble. ul/ol also need padding-left: the reset zeroed it, so markers have
+   nowhere to sit and a margin-only fix would clip them. */
+.msgText ul,
+.msgText ol {
+  margin: 0.6em 0;
+  padding-left: 1.5em;
+}
+.msgText li {
+  margin: 0.2em 0;
+}
+.msgText pre {
+  margin: 0.6em 0;
+}
+.msgText blockquote {
+  margin: 0.6em 0;
+  padding-left: 0.8em;
+  border-left: 3px solid var(--line);
+}
+/* A heading in a bubble is emphasis, not a section title: de-escalate the
+   viewer's global h2/h3 treatment (1.6rem display, border-bottom, and a
+   color:var(--text-primary) that otherwise wins over a user bubble's inherited
+   light-on-accent color). One selector list so h1/h4-h6, which have no global
+   rule, don't return as a second card. Keep the display font, like .narrative. */
+.msgText h1,
+.msgText h2,
+.msgText h3,
+.msgText h4,
+.msgText h5,
+.msgText h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.1em;
+  margin: 0.8em 0 0.3em;
+  border-bottom: none;
+  padding-bottom: 0;
+  color: inherit;
 }
 .msgText.msgError {
   color: var(--danger);
@@ -648,6 +716,7 @@ button {
 }
 .msgText code {
   background: var(--bg-code);
+  color: var(--text-primary);
   padding: 1px 4px;
   border-radius: 4px;
   font-family: var(--font-mono);
@@ -672,8 +741,21 @@ button {
 }
 .msgText th {
   background: var(--bg-code);
+  color: var(--text-primary);
   font-weight: 600;
 }
+/* Reveals the model's reasoning blocks, hidden by default. */
+.chatAdvanced {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--ink-muted, var(--ink));
+  white-space: nowrap;
+  cursor: pointer;
+}
+
 .toolChips {
   display: flex;
   flex-direction: column;
@@ -740,8 +822,11 @@ button {
 .chatSend:disabled {
   opacity: 0.5;
 }
-/* Replaces Send while a turn is running (interrupt). Muted rather than accented
-   so it reads as a secondary "abort", not the primary action. */
+/* Shown BESIDE Send while a turn is running (interrupt) — PR #2870 item 1b.
+   It used to replace Send, which under continuous work meant the composer offered
+   only Stop for the length of a whole research job (a median of 53 minutes). Muted
+   rather than accented so it still reads as a secondary "abort", not the primary
+   action. */
 .chatStop {
   align-self: stretch;
   background: var(--bg-card);
@@ -775,6 +860,12 @@ button {
 .chatAttach:disabled {
   opacity: 0.5;
   cursor: default;
+}
+.chatExpired {
+  padding: 12px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-elev);
+  font-size: 13px;
 }
 .chatUploadError {
   padding: 0 10px 8px;

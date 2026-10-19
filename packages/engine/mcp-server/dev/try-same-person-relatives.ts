@@ -15,12 +15,13 @@
  * high-ish score, the assumption holds and the feature is sound. If it errors
  * or returns nonsense, STOP and raise it before relying on the heuristic.
  *
- * Requires a valid FS session (run `login` first, or set FS_ACCESS_TOKEN
- * in the environment if you want to bypass tokens.json).
+ * Requires a valid FS session: run `login` first (tokens.json is the only
+ * source; the engine has no environment-variable fallback).
  *
  * Usage:
  *   npx tsx dev/try-same-person-relatives.ts
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { samePerson } from "../src/tools/same-person.js";
 import type { SimplifiedGedcomX } from "../src/types/gedcomx.js";
 
@@ -110,7 +111,7 @@ const focus = await samePerson({
   primaryId1: "I1",
   gedcomx2,
   primaryId2: "I1",
-});
+}, LOCAL);
 console.log("=== focus single-pair (anchor on I1, the child) ===");
 console.log(JSON.stringify(focus, null, 2));
 
@@ -121,7 +122,7 @@ const relatives = await samePerson({
   gedcomx2,
   primaryId2: "I1",
   matchRelatives: true,
-});
+}, LOCAL);
 console.log("\n=== matchRelatives:true (anchors on the relatives) ===");
 console.log(JSON.stringify(relatives, null, 2));
 console.log(

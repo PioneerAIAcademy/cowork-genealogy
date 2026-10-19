@@ -2,15 +2,25 @@
   "test": {
     "id": "ut_search_wikipedia_004",
     "skill": "search-wikipedia",
-    "name": "Slug normalization — apostrophe + parentheses",
+    "name": "Verbatim title — apostrophe + parentheses",
     "type": "positive",
-    "description": "Tests slug normalization on a title containing both an apostrophe and parentheses. The article title 'O''Brien (surname)' should produce slug 'o-brien-surname'. This is the documented worked example in the search-wikipedia SKILL.md and is a regression check on the slug rule.",
-    "tags": ["wikipedia", "slug", "apostrophe", "parens", "regression", "slug-obrien-surname"]
+    "description": "Tests a returned title containing both an apostrophe and parentheses. The logged notes' H1 must be the returned title 'O'Brien (surname)' verbatim, not a normalized or re-punctuated form.",
+    "tags": [
+      "wikipedia",
+      "title",
+      "apostrophe",
+      "parens",
+      "regression",
+      "title-obrien-surname",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "Look up the surname O'Brien on Wikipedia",
-    "scenario": null
+    "delegation": "Look up the surname O'Brien on Wikipedia\n\ntopic: the surname O'Brien\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
-  "mcp_fixtures": ["wikipedia-search-obrien-surname"],
+  "mcp_fixtures": [
+    "wikipedia-search-obrien-surname"
+  ],
   "judge_context": []
 }

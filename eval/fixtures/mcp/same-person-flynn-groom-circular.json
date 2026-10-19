@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the groom persona G1 scored against the John Flynn tree stub that was minted FROM G1 in this same run. The comparison is circular: both documents descend from one persona, so the high score is self-confirmation and carries no independent information. The fixture exists because the harness answered this call with `fixture_not_found`, which the judge read as a critical tool-usage error and failed the test on (ut_person_evidence_n7v, v1_2026-08-27_12-36-32 and v1_2026-09-21_20-54-41). The test's own judge_context says the groom half needs no same_person call and must not be penalised either way, so an optional call must not hard-fail the run. The agent body forbids the call (agents/person-evidence.md, 'Do not score a stub you minted from the persona you would be scoring'); this fixture makes that a graded judgement rather than a harness error.",
+  "args": {
+    "assertionId": "a_001",
+    "treePersonId": "~"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 9,
+    "score": 0.97,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
+    "candidateArk": null,
+    "apiTitle": "Matches for ark:/61903/1:1:FLYN-MARR",
+    "updated": "2026-08-01T00:00:00Z"
+  }
+}

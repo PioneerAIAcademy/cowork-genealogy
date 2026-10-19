@@ -24,10 +24,30 @@ _SESSION_STORE_ROOT = Path.home() / ".claude" / "projects"
 
 # Plugin subagents shipped with the Cowork plugin. Staged into every unit
 # workspace so a skill's `@plugin:<name>` delegation resolves to the real
-# agent — mirrors e2e/orchestrator.py's DEFAULT_PLUGIN_AGENTS + staging.
+# agent. The one definition of both plugin paths: e2e/orchestrator.py and the
+# pure-analysis e2e reports import them from here, which keeps the reports free
+# of the orchestrator's module-scope claude_agent_sdk import.
 DEFAULT_PLUGIN_AGENTS = (
     Path(__file__).resolve().parents[3] / "packages" / "engine" / "plugin" / "agents"
 )
+DEFAULT_PLUGIN_SKILLS = DEFAULT_PLUGIN_AGENTS.parent / "skills"
+# Test-only skills (lead, 2026-09-30): staged for unit runs, never shipped. They
+# live outside `packages/engine/plugin/`, so `scripts/package-plugin.mjs` cannot
+# reach them, and neither can the hosted control plane or the e2e harness, which
+# both load the plugin FOLDER. `extraction-append` is the first.
+TEST_ONLY_SKILLS = Path(__file__).resolve().parents[2] / "skills"
+
+
+def skill_dir_for(name: str, skills_dir: Path = DEFAULT_PLUGIN_SKILLS) -> Path:
+    """A skill's directory: the plugin's, else a test-only one of that name.
+
+    Returns the plugin path when neither exists, so an unknown name answers the
+    way it always did."""
+    plugin = Path(skills_dir) / name
+    if plugin.is_dir():
+        return plugin
+    test_only = TEST_ONLY_SKILLS / name
+    return test_only if test_only.is_dir() else plugin
 
 # Reasoning effort pinned into every unit workspace. "high" matches both Cowork
 # and the e2e orchestrator's default, so unit and e2e grade the same behavior.
@@ -56,6 +76,8 @@ def build_workspace(
     target_dir: Path,
     agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
     effort_level: str | None = DEFAULT_EFFORT_LEVEL,
+    stage_skills: bool = True,
+    suite: str | None = None,
 ) -> Path:
     """Populate target_dir with scenario files and a .claude/skills/ tree.
 
@@ -65,6 +87,14 @@ def build_workspace(
     so a skill's `@plugin:<name>` delegation via the Task tool resolves to
     the real agent instead of an improvised generic subagent. The SDK loads
     them via setting_sources=["project"].
+
+    ``stage_skills=False`` builds a workspace holding the plugin AGENTS and no
+    skills at all — the direct-agent arm (issue #2246). That is the conversion
+    doc's acceptance check made literal: "delete the routing skill from the
+    workspace; the agent must reach the same outcome from its arguments alone"
+    (``docs/skill-to-agent-pair-conversion.md`` §0). Nothing downstream needs the
+    skill on disk — ``orchestrator`` reads its SKILL.md frontmatter from the
+    repo, not from here.
 
     ``effort_level`` pins the run's reasoning effort through a project-level
     ``.claude/settings.json``, exactly as the e2e orchestrator does. Left
@@ -82,7 +112,15 @@ def build_workspace(
         src = Path(scenarios_dir) / scenario_name
         if not src.is_dir():
             raise InvalidScenarioError(f"scenario not found: {src}")
-        for fname in ("research.json", "tree.gedcomx.json"):
+        # `starting-tree.gedcomx.json` is the write-once baseline `project_create`
+        # writes in production. research_append reads it to exempt people who
+        # pre-existed the research from its minted-from-this-record check; with no
+        # baseline a pre-existing person enriched by materialize_facts reads as
+        # minted from the record, and a real same_person score is refused. Staged
+        # only when a scenario ships one: copying tree.gedcomx.json in its place
+        # would also exempt persons a mid-research fixture minted in an earlier
+        # session.
+        for fname in ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json"):
             f = src / fname
             if f.exists():
                 shutil.copy(f, target / fname)
@@ -92,12 +130,35 @@ def build_workspace(
         results_src = src / "results"
         if results_src.is_dir():
             shutil.copytree(results_src, target / "results", dirs_exist_ok=True)
+        # The two sidecar classes `sidecar_read` serves — a verdict body under
+        # `evaluations/` and a text upload under `uploads/` (mock_mcp.py's
+        # LIVE_TOOLS note). Staged for the same reason as `results/`: the tool
+        # is live and resolves a project-relative ref against the workspace, so
+        # a scenario that declares an `evaluations[]` entry with a `file_path`
+        # but ships no file makes `sidecar_read` answer `not_found` for a file
+        # the fixture says exists.
+        #
+        # Nothing staged these before, which is why no scenario in the corpus
+        # ships one: the gps-mentor craft-supersession path reads a prior
+        # verdict body's `craft` flag through exactly this call
+        # (`agents/gps-mentor.md:308-312`) and could not be exercised at all.
+        for sidecar in ("evaluations", "uploads"):
+            sidecar_src = src / sidecar
+            if sidecar_src.is_dir():
+                shutil.copytree(sidecar_src, target / sidecar, dirs_exist_ok=True)
 
-    skills_target = target / ".claude" / "skills"
-    skills_target.mkdir(parents=True, exist_ok=True)
-    for skill_dir in Path(skills_dir).iterdir():
-        if skill_dir.is_dir() and not skill_dir.name.startswith("."):
-            shutil.copytree(skill_dir, skills_target / skill_dir.name, dirs_exist_ok=True)
+    if stage_skills:
+        skills_target = target / ".claude" / "skills"
+        skills_target.mkdir(parents=True, exist_ok=True)
+        for skill_dir in Path(skills_dir).iterdir():
+            if skill_dir.is_dir() and not skill_dir.name.startswith("."):
+                shutil.copytree(
+                    skill_dir, skills_target / skill_dir.name, dirs_exist_ok=True
+                )
+        # A test-only skill is staged ONLY for its own suite. Staged everywhere,
+        # every other suite's tests would run with a skill production lacks.
+        if suite and (TEST_ONLY_SKILLS / suite).is_dir():
+            shutil.copytree(TEST_ONLY_SKILLS / suite, skills_target / suite, dirs_exist_ok=True)
 
     # Stage plugin subagents as project subagents (.claude/agents/<name>.md),
     # exactly as the e2e orchestrator does.
@@ -195,14 +256,14 @@ def snapshot_files(workspace: Path) -> dict[str, Any]:
     if research.exists():
         try:
             snap["research_json"] = json.loads(research.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             snap["research_json"] = None
 
     tree = workspace / "tree.gedcomx.json"
     if tree.exists():
         try:
             snap["tree_gedcomx_json"] = json.loads(tree.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             snap["tree_gedcomx_json"] = None
 
     for path in workspace.rglob("*"):

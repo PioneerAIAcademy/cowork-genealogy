@@ -1,0 +1,237 @@
+{
+  "persons": [
+    {
+      "id": "9MF3-9S6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Thomas",
+          "surname": "Werdmüller"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0b421ba0-ace6-4df0-a13c-0df5225327c9",
+          "type": "Birth",
+          "date": "1657",
+          "standard_date": "1657"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "14 November 1704",
+          "standard_date": "14 Nov 1704",
+          "place": "Zürich, Switzerland",
+          "standard_place": "Zürich, Switzerland"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "22 February 1657",
+          "standard_date": "22 Feb 1657",
+          "place": "Grossmuenster Zuerich,Zurich,Switzerland",
+          "standard_place": "Grossmünster, Zürich, Zürich, Switzerland"
+        },
+        {
+          "id": "c1802d66-a242-4129-afee-a9d60e95e356",
+          "type": "Baptism",
+          "date": "22 February 1657",
+          "standard_date": "22 Feb 1657",
+          "place": "Zürich, Zürich, Switzerland",
+          "standard_place": "Zürich, Zürich, Switzerland"
+        }
+      ]
+    },
+    {
+      "id": "KCBY-213",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Thomas",
+          "surname": "Werdmüller"
+        }
+      ],
+      "facts": [
+        {
+          "id": "060a5ffe-0116-4120-8537-742efce88577",
+          "type": "Christening",
+          "date": "14 October 1618",
+          "standard_date": "14 Oct 1618",
+          "place": "Zürich, Zürich, Switzerland",
+          "standard_place": "Zürich, Zürich, Switzerland"
+        },
+        {
+          "id": "0da8cebe-63e5-4449-8fb8-c90159e3ed83",
+          "type": "Baptism",
+          "date": "14 October 1618",
+          "standard_date": "14 Oct 1618",
+          "place": "Zürich, Zürich, Switzerland",
+          "standard_place": "Zürich, Zürich, Switzerland"
+        },
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "14 octobre 1618",
+          "standard_date": "14 Oct 1618",
+          "place": "Zürich, Zürich, Switzerland",
+          "standard_place": "Zürich, Zürich, Switzerland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "25 janvier 1675",
+          "standard_date": "25 Jan 1675",
+          "place": "Zürich, Zürich, Switzerland",
+          "standard_place": "Zürich, Zürich, Switzerland"
+        }
+      ]
+    },
+    {
+      "id": "MTGV-94W",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Margareta",
+          "surname": "Schneeberger"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9941985e-a676-4fc9-8f08-dbb5071a815c",
+          "type": "Baptism",
+          "date": "22 Oct 1617",
+          "standard_date": "22 Oct 1617",
+          "place": "Zürich, Zürich, Schweiz",
+          "standard_place": "Zürich, Zürich, Switzerland"
+        },
+        {
+          "id": "7b67460c-14ec-47bd-8806-6d6adebff86d",
+          "type": "Birth",
+          "date": "22 October 1617",
+          "standard_date": "22 Oct 1617",
+          "place": "Affoltern, Zurich, Switzerland",
+          "standard_place": "Affoltern am Albis, Zürich, Switzerland"
+        },
+        {
+          "id": "54e3f947-ec09-45be-8bab-60cdbe4cd3ba",
+          "type": "Christening",
+          "date": "22 October 1617",
+          "standard_date": "22 Oct 1617",
+          "place": "Zuerich, Zuerich, Switzerland",
+          "standard_place": "Zürich, Zürich, Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "20 February 1676",
+          "standard_date": "20 Feb 1676"
+        }
+      ]
+    },
+    {
+      "id": "LTL9-6N1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Dorothea",
+          "surname": "von Muralt"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f56bb6bf-e4a7-4eeb-9b3a-bb4d54d91ec1",
+          "type": "Birth",
+          "date": "8 September 1661",
+          "standard_date": "8 Sep 1661",
+          "place": "Zürich, Switzerland",
+          "standard_place": "Zürich, Switzerland"
+        },
+        {
+          "id": "0c4c026d-50bd-4e45-b5d2-aba261c8d4b2",
+          "type": "Christening",
+          "date": "8. September 1661",
+          "standard_date": "8 Sep 1661",
+          "place": "Zürich, Zürich, Schweiz",
+          "standard_place": "Zürich, Zürich, Switzerland"
+        },
+        {
+          "id": "b281c2da-4428-4fd8-a59f-0934e97ddcd2",
+          "type": "Death",
+          "date": "14 January 1735",
+          "standard_date": "14 Jan 1735",
+          "place": "Zürich, Switzerland",
+          "standard_place": "Zürich, Switzerland"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "9MF3-9S6",
+      "person2": "LTL9-6N1",
+      "facts": [
+        {
+          "id": "97863360-63ea-4b14-a42c-6f12e448daac",
+          "type": "Marriage",
+          "date": "2 March 1686",
+          "standard_date": "2 Mar 1686",
+          "place": "Zürich, Switzerland",
+          "standard_place": "Zürich, Switzerland"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "KCBY-213",
+      "person2": "MTGV-94W",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "12 June 1637",
+          "standard_date": "12 Jun 1637",
+          "place": "Zürich, Zürich, Switzerland",
+          "standard_place": "Zürich, Zürich, Switzerland"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KCBY-213",
+      "child": "9MF3-9S6",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "MTGV-94W",
+      "child": "9MF3-9S6",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "QGMH-WK8",
+      "title": "Thomas, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66JP-VVD7 : Wed Aug 19 05:21:38 UTC 2026), Entry for Thomas and Thoman Wendmüller, 22 Feb 1657.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66JP-VVD7"
+    },
+    {
+      "id": "9LQ5-2VL",
+      "title": "Thomas/Werdmueller",
+      "url": "http://gw.geneanet.org/uezuercher?lang=en&iz=0&p=thomas&n=werdmuller&oc=2"
+    }
+  ]
+}

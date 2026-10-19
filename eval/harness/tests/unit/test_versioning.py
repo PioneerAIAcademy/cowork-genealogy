@@ -89,6 +89,39 @@ def test_is_releasable_tag_mode():
     assert is_releasable_invocation(mode="tag", has_tag_filter=True) is False
 
 
+def test_is_releasable_multi_run_is_scratch():
+    """A --runs-per-test N (N>1) run is a scratch run, never releasable
+    (issue #2816), even on the otherwise-releasable --skill path."""
+    assert (
+        is_releasable_invocation(mode="skill", has_tag_filter=False, runs_per_test=3)
+        is False
+    )
+
+
+@pytest.mark.parametrize(
+    "mode, has_tag_filter",
+    [("skill", False), ("skill", True), ("test", False), ("tag", True)],
+)
+def test_is_releasable_tool_search_off_is_scratch(mode, has_tag_filter):
+    """`--no-tool-search` is an experiment, so it is never a candidate — even on
+    the otherwise-releasable --skill path."""
+    assert (
+        is_releasable_invocation(
+            mode=mode, has_tag_filter=has_tag_filter, tool_search=False
+        )
+        is False
+    )
+
+
+def test_is_releasable_single_run_default_unchanged():
+    """runs_per_test=1 (the default) leaves --skill releasable — the flag
+    omitted behaves exactly as before."""
+    assert (
+        is_releasable_invocation(mode="skill", has_tag_filter=False, runs_per_test=1)
+        is True
+    )
+
+
 # ---- scan_versions -------------------------------------------------------
 
 

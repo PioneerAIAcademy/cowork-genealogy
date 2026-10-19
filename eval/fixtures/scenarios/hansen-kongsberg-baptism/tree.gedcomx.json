@@ -1,0 +1,25 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "living": true,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Living",
+          "surname": "Hansen"
+        }
+      ],
+      "facts": [],
+      "gender": "Male"
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "Researcher's stated identifying information for Hoval Hansen",
+      "citation": "Researcher's stated identifying information, 2026."
+    }
+  ]
+}

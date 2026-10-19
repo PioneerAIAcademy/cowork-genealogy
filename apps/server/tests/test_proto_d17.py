@@ -1,0 +1,320 @@
+"""Offline tests for the D14/D17 prep: proto/audit.py's classification of tool_calls rows
+(acceptance criteria 3 and 4), proto/seed.py's fixture resolution and file plan, and
+proto/export.py's pure seams (D18: the manifest, the out-dir layout, the exit codes), and
+proto/env.sh's model keys (exported, never echoed) and that, since U3, it mints no
+FamilySearch token. No Postgres, no stack, no model, and no FamilySearch."""
+
+from __future__ import annotations
+
+import json
+import re
+import shlex
+import shutil
+import stat
+import subprocess
+import sys
+from pathlib import Path
+
+import psycopg
+import pytest
+
+from proto import audit, export, seed
+
+
+def row(tool: str, decision: str = "allow", path: str | None = None, ms: int | None = None) -> dict:
+    return {"turn_id": "t", "agent_type": None, "tool_name": tool, "input_path": path,
+            "decision": decision, "duration_ms": ms}
+
+
+# ── audit ─────────────────────────────────────────────────────────────────────────
+
+
+def test_audit_passes_a_clean_session_and_reports_its_durations():
+    a = audit.audit([
+        row("mcp__genealogy__place_search", ms=310),
+        row("Read", path="/opt/genealogy/plugin/skills/x/references/y.md", ms=5),
+        row("Task", ms=90_000),
+        row("mcp__genealogy__record_read"),  # in flight at a kill: no duration, not a failure
+    ], anchor="/project")
+    assert a.criterion_3_ok and a.rows == 4
+    assert a.completed == 3 and a.without_duration == 1
+    assert a.longest == ("Task", 90_000) and a.p50_ms == 310 and a.denied == {}
+
+
+def test_audit_fails_on_an_executed_bash_or_an_allowed_project_read():
+    assert not audit.audit([row("Bash", ms=3)], anchor="/project").criterion_3_ok
+    assert not audit.audit([row("Read", path="/project/research.json", ms=3)], anchor="/project").criterion_3_ok
+    assert not audit.audit([row("Grep", path="/project/results/x.json")], anchor="/project").criterion_3_ok
+    assert not audit.audit([row("Glob", path="/project")], anchor="/project").criterion_3_ok
+
+
+def test_audit_counts_denied_attempts_separately_and_reads_beside_the_anchor_as_ordinary():
+    a = audit.audit([
+        row("Read", "deny", "/project/research.json"),
+        row("Bash", "deny"),
+        row("Read", path="/projects/other.json", ms=1),  # a sibling path, not under /project
+    ], anchor="/project")
+    assert a.criterion_3_ok and a.project_reads_allowed == 0 and a.bash_executed == 0
+    assert a.denied == {"Read": 1, "Bash": 1}
+
+
+def test_audit_normalises_dot_dot_and_relative_paths_against_the_anchor():
+    # '..' out of the anchor is an ordinary read; '..' back into it is a project read.
+    assert audit.audit([row("Read", path="/project/../etc/passwd", ms=1)], anchor="/project").criterion_3_ok
+    assert not audit.audit([row("Read", path="/opt/x/../../project/research.json", ms=1)],
+                           anchor="/project").criterion_3_ok
+    # A relative path resolves against the anchor (the agent's cwd), in or out of it.
+    assert audit.audit([row("Grep", path="results")], anchor="/project").project_reads_allowed == 1
+    assert audit.audit([row("Grep", path=".")], anchor="/project/").project_reads_allowed == 1
+    assert audit.audit([row("Grep", path="../opt/plugin")], anchor="/project").criterion_3_ok
+    # A doubled leading slash is the same directory to the kernel.
+    assert audit.audit([row("Read", path="//project/research.json", ms=1)],
+                       anchor="/project").project_reads_allowed == 1
+    assert audit.audit([row("Read", path="//projects/x.json", ms=1)], anchor="/project").criterion_3_ok
+
+
+def test_audit_counts_allowed_calls_by_bare_tool_name_and_buckets_other_decisions():
+    a = audit.audit([
+        row("mcp__genealogy__person_read", ms=1),
+        row("mcp__remote-devices__Genealogy_Research__person_read", ms=1),
+        row("mcp__Genealogy_Research__person_search", ms=1),
+        row("mcp__genealogy__person_ancestors", "deny"),
+        row("Task", ms=1),
+        row("Stop", "halt"),
+        row("Stop", "delivered"),
+        row("Stop", "delivered"),
+    ], anchor="/project")
+    assert a.allowed_by_tool == {"person_read": 2, "person_search": 1, "Task": 1}
+    assert a.other_decisions == {"halt": 1, "delivered": 2}
+    text = audit.report(a, ceiling_s=1800, session_id="s")
+    assert "person_read 2" in text and "person_search 1" in text and "person_quality 0" in text
+    assert "delivered 2" in text and "halt 1" in text
+
+
+def test_audit_load_filters_by_turn_and_session(monkeypatch):
+    seen: list[tuple] = []
+
+    class Conn:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def execute(self, sql, params):
+            seen.append((sql, params))
+            return self
+
+        def fetchall(self):
+            return []
+
+    monkeypatch.setattr(audit.psycopg, "connect", lambda dsn: Conn())
+    audit.load("dsn", "s", turn_id="t")
+    audit.load("dsn", None, turn_id="t")
+    audit.load("dsn", None)
+    assert "session_id = %s AND turn_id = %s" in seen[0][0] and seen[0][1] == ("s", "t")
+    assert "WHERE turn_id = %s" in seen[1][0] and seen[1][1] == ("t",)
+    assert "WHERE" not in seen[2][0] and seen[2][1] == ()
+
+
+def test_audit_main_passes_the_turn_and_names_both_remedies_when_postgres_is_down(monkeypatch, capsys):
+    calls: list[tuple] = []
+    monkeypatch.setattr(audit, "load", lambda dsn, sid, turn_id=None: calls.append((sid, turn_id)) or [])
+    assert audit.main(["--turn", "t1"]) == 0
+    out = capsys.readouterr().out
+    assert calls == [(None, "t1")] and "rows (turn t1)" in out and "session turn" not in out
+
+    def down(dsn, sid, turn_id=None):
+        raise psycopg.OperationalError("connection refused")
+
+    monkeypatch.setattr(audit, "load", down)
+    assert audit.main([]) == 2
+    err = capsys.readouterr().err
+    assert "make proto-up" in err and "PGPASSFILE" in err and "bastion" in err
+
+
+def test_audit_report_names_the_verdict_and_the_ceiling():
+    text = audit.report(audit.audit([row("Bash", ms=3)], anchor="/project"), ceiling_s=1800, session_id="s")
+    assert "FAIL" in text and "session s" in text
+    text = audit.report(audit.audit([row("Task", ms=2_000_000)], anchor="/project"), ceiling_s=1800, session_id=None)
+    assert "PASS" in text and "reached the ceiling" in text and "every session" in text
+    assert "no completed call" in audit.report(audit.audit([], anchor="/project"), ceiling_s=1800, session_id=None)
+
+
+# ── seed ──────────────────────────────────────────────────────────────────────────
+
+
+def _e2e_fixture(root: Path) -> Path:
+    d = root / "e2e" / "fx"
+    d.mkdir(parents=True)
+    for name in ("starting-research.json", "starting-tree.gedcomx.json", "unstripped-tree.gedcomx.json",
+                 "expected-findings.json"):
+        (d / name).write_text("{}", encoding="utf-8")
+    (d / "fixture.json").write_text(json.dumps({"name": "Fx", "researcher_question": "Who?"}), encoding="utf-8")
+    (d / "README.md").write_text("notes", encoding="utf-8")
+    return d
+
+
+def test_plan_files_maps_an_e2e_fixture_to_the_two_project_documents(tmp_path):
+    d = _e2e_fixture(tmp_path)
+    plan = seed.plan_files(d)
+    assert [ref for ref, _ in plan] == ["research.json", "tree.gedcomx.json"]
+    assert plan[0][1] == d / "starting-research.json"
+    assert seed.fixture_meta(d) == {"name": "Fx", "researcher_question": "Who?"}
+
+
+def test_plan_files_takes_a_scenario_whole_but_for_its_readme_and_dotfiles(tmp_path):
+    d = tmp_path / "sc"
+    (d / "results").mkdir(parents=True)
+    (d / ".hidden").mkdir()
+    for name in ("research.json", "tree.gedcomx.json", "results/log_1.json", "README.md", ".hidden/x"):
+        (d / name).write_text("{}", encoding="utf-8")
+    assert [ref for ref, _ in seed.plan_files(d)] == ["research.json", "results/log_1.json", "tree.gedcomx.json"]
+    assert seed.fixture_meta(d) == {}
+
+
+def test_plan_files_refuses_a_directory_with_no_research_document(tmp_path):
+    (tmp_path / "x.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(ValueError, match="research.json"):
+        seed.plan_files(tmp_path)
+
+
+def test_resolve_fixture_tries_a_directory_then_e2e_then_scenarios(tmp_path):
+    e2e, sc = tmp_path / "e2e", tmp_path / "sc"
+    (e2e / "a").mkdir(parents=True)
+    (sc / "b").mkdir(parents=True)
+    assert seed.resolve_fixture("a", e2e_dir=e2e, scenario_dir=sc) == (e2e / "a").resolve()
+    assert seed.resolve_fixture("b", e2e_dir=e2e, scenario_dir=sc) == (sc / "b").resolve()
+    assert seed.resolve_fixture(str(sc / "b"), e2e_dir=e2e, scenario_dir=sc) == (sc / "b").resolve()
+    with pytest.raises(FileNotFoundError, match="no fixture 'c'"):
+        seed.resolve_fixture("c", e2e_dir=e2e, scenario_dir=sc)
+
+
+def test_default_project_id_is_a_valid_store_key(tmp_path):
+    d = tmp_path / "bagley-father 1884"
+    d.mkdir()
+    pid = seed.default_project_id(d)
+    assert re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", pid) and pid.startswith("proj_bagley-father-1884_")
+
+
+def test_the_repos_own_fixtures_plan_in_both_layouts():
+    e2e = seed.plan_files(seed.resolve_fixture("bagley-father-1884"))
+    assert [ref for ref, _ in e2e] == ["research.json", "tree.gedcomx.json"]
+    assert seed.fixture_meta(seed.resolve_fixture("bagley-father-1884"))["researcher_question"].startswith("Who was the father")
+    scenario = dict(seed.plan_files(seed.resolve_fixture("flynn-first-plan")))
+    assert "research.json" in scenario and "tree.gedcomx.json" in scenario and "README.md" not in scenario
+
+
+# ── env.sh: the token file's mode, and what a failed refresh leaves behind ────────
+
+
+ROOT = Path(__file__).resolve().parents[3]
+#: Windows chmod only toggles read-only, so a file mode never reads back as 0o600 there.
+POSIX_MODES = sys.platform != "win32"
+
+
+@pytest.mark.skipif(shutil.which("sh") is None, reason="env.sh needs a POSIX shell")
+def test_env_sh_exports_the_model_keys_and_mints_no_token(tmp_path):
+    """U3: the worker bears the patron's grant, so env.sh exports the two model keys and
+    nothing else -- no token file, no refresh. The stand-in npx records any call: the old
+    script ran `npx tsx dev/fs-token.ts`, which reached FamilySearch and rotated the
+    operator's refresh token."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    calls = tmp_path / "npx.log"
+    npx = bin_dir / "npx"
+    npx.write_text(f'#!/bin/sh\necho "$*" >> {shlex.quote(str(calls))}\nprintf stub-token\n', encoding="utf-8")
+    npx.chmod(0o755)
+    # A stand-in for eval/.env, so the test never reads the real one.
+    dotenv = tmp_path / "dotenv"
+    dotenv.write_text("ANTHROPIC_API_KEY=k-from-dotenv\nOPENROUTER_API_KEY=or-from-dotenv\n", encoding="utf-8")
+    token_file = tmp_path / "fs-token"
+    base_env = {"PATH": f"{bin_dir}:/usr/bin:/bin", "HOME": str(tmp_path), "PROTO_ENV_FILE": str(dotenv),
+                "PROTO_TOKEN_FILE": str(token_file)}
+
+    def source(**shell_vars: str) -> subprocess.CompletedProcess:
+        # The caller's values are UNEXPORTED shell variables, so only the script's own
+        # `export` makes them reach the worker's `up`; stdout is one printenv per key
+        # (exported values only; BSD printenv prints just its first argument), stderr is
+        # the script's own output, which must never carry a value.
+        prefix = "".join(f"{k}={shlex.quote(v)}; " for k, v in shell_vars.items())
+        cmd = prefix + ". apps/server/proto/env.sh; printenv ANTHROPIC_API_KEY; printenv OPENROUTER_API_KEY"
+        return subprocess.run(["sh", "-c", cmd], cwd=ROOT, env=base_env, capture_output=True, text=True,
+                              encoding="utf-8")
+
+    r = source(ANTHROPIC_API_KEY="k", OPENROUTER_API_KEY="or-key-1", FS_ACCESS_TOKEN="tok-1")
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.split() == ["k", "or-key-1"], "the caller's keys, exported for the worker's up"
+    assert "ANTHROPIC_API_KEY set" in r.stderr and "OPENROUTER_API_KEY set" in r.stderr, r.stderr
+    assert "or-key-1" not in r.stderr and "k\n" not in r.stderr and "tok-1" not in r.stderr, "never echoed"
+    r = source()
+    assert r.stdout.split() == ["k-from-dotenv", "or-from-dotenv"], "both keys read from the dotenv and exported"
+    assert "from-dotenv" not in r.stderr, "never echoed"
+    assert "FS token" not in r.stderr and "fs-token" not in r.stderr, r.stderr
+    assert not calls.exists(), f"env.sh ran npx: {calls.read_text(encoding='utf-8') if calls.exists() else ''}"
+    assert not token_file.exists(), "no operator token file is written"
+    text = (ROOT / "apps" / "server" / "proto" / "env.sh").read_text(encoding="utf-8")
+    assert "fs-token" not in text and "FS_ACCESS_TOKEN" not in text and "PROTO_TOKEN" not in text
+
+
+# ── export (D18): the mirror image of seed ────────────────────────────────────────
+
+
+def test_export_manifest_mirrors_the_seed_manifest_and_the_ts_side_reads_every_key(tmp_path):
+    m = export.manifest("proj_x", tmp_path)
+    assert m == {"projectId": "proj_x", "anchorPath": "/project", "outDir": str(tmp_path)}
+    assert export.ANCHOR == seed.ANCHOR and export.ENGINE_DIR == seed.ENGINE_DIR
+    ts = (export.ENGINE_DIR / "dev" / "export-project.ts").read_text(encoding="utf-8")
+    assert all(key in ts for key in m), "the TS side reads every key the manifest carries"
+    assert "readBytes" in ts, "images are bytes, never a text decode"
+    assert '"results"' in ts and '"images"' in ts and '"research.json"' in ts and '"tree.gedcomx.json"' in ts
+
+
+def test_export_dir_is_the_project_id_under_out_and_the_default_out_is_gitignored():
+    assert export.export_dir(Path("/x/exports"), "proj_y") == Path("/x/exports/proj_y")
+    assert export.DEFAULT_OUT == ROOT / "apps" / "server" / "proto" / "exports"
+    assert "apps/server/proto/exports/" in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+
+
+def test_export_main_exits_2_on_an_unknown_session_or_no_postgres_without_running_the_ts_side(monkeypatch, capsys):
+    def must_not_run(*a, **k):
+        raise AssertionError("the TS side must not run for an unknown session")
+
+    monkeypatch.setattr(export, "export", must_not_run)
+    monkeypatch.setattr(export, "resolve_project", lambda dsn, sid: None)
+    assert export.main(["--session", "nope"]) == 2
+    assert "no session 'nope'" in capsys.readouterr().err
+
+    def down(dsn, sid):
+        raise psycopg.OperationalError("connection refused")
+
+    monkeypatch.setattr(export, "resolve_project", down)
+    assert export.main(["--session", "s"]) == 2
+    assert "postgres unreachable" in capsys.readouterr().err
+
+
+def test_export_main_runs_the_ts_side_on_the_resolved_project_and_maps_its_exit(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(export, "resolve_project", lambda dsn, sid: "proj_z")
+    calls: list[tuple] = []
+    monkeypatch.setattr(export, "export", lambda pid, **kw: calls.append((pid, kw)) or 0)
+    assert export.main(["--session", "s", "--out", str(tmp_path)]) == 0
+    [(pid, kw)] = calls
+    assert pid == "proj_z" and kw["out_dir"] == tmp_path.resolve()
+    assert str(tmp_path.resolve() / "proj_z") in capsys.readouterr().out
+    monkeypatch.setattr(export, "export", lambda pid, **kw: 3)
+    assert export.main(["--session", "s"]) == 1, "any TS-side failure is exit 1"
+
+
+def test_export_runs_the_ts_side_from_the_engine_dir_with_the_store_env(monkeypatch, tmp_path):
+    runs: list[dict] = []
+
+    def fake_run(cmd, **kw):
+        runs.append({"cmd": cmd, **kw})
+        return subprocess.CompletedProcess(cmd, 0, stdout="exported 0 files\n", stderr="")
+
+    monkeypatch.setattr(export.subprocess, "run", fake_run)
+    assert export.export("proj_q", out_dir=tmp_path, pg_dsn="postgresql://x/y", s3_endpoint="http://s3:9000") == 0
+    [run] = runs
+    assert run["cmd"] == ["npx", "tsx", "dev/export-project.ts"] and run["cwd"] == export.ENGINE_DIR
+    assert run["env"]["PROTO_PG_DSN"] == "postgresql://x/y" and run["env"]["PROTO_S3_ENDPOINT"] == "http://s3:9000"
+    assert json.loads(run["input"]) == export.manifest("proj_q", tmp_path) and run["encoding"] == "utf-8"

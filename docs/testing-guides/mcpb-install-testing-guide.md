@@ -6,7 +6,7 @@ it whenever you change the manifest, the build/verify scripts, the tool
 registry, or anything that ships inside the bundle.
 
 It is **not** end-user documentation — end-user install steps live in
-[README.md](../../README.md) → "Installation (for end users)".
+[README.md](../../README.md) → "Install".
 
 The contract these layers check is
 [`docs/specs/mcpb-package-spec.md`](../specs/mcpb-package-spec.md).
@@ -34,9 +34,12 @@ cd /home/gennesis/cowork-genealogy
 ### What success looks like
 
 - `Manifest schema validation passes!`
-- An `mcpb info` summary: `genealogy-mcp@0.1.0`, a package size of a few MB
-  (production deps only), and a non-trivial `ignored (.mcpbignore) files`
-  count.
+- A `Stamped version: 0.1.0+<date>.<sha>` line, then an `mcpb info` summary naming that
+  same stamped version (`genealogy-mcp@0.1.0+2026-09-17.abc12345`; `+dev` only if you built
+  outside a git checkout), a package size of a few MB (production deps only), and a
+  non-trivial `ignored (.mcpbignore) files` count. After installing, read the stamp back:
+  ask Claude Desktop to call `auth_status` and check the returned `buildId` is that same
+  version — that is the line to quote in any bug report.
 - `Done. Created .../releases/genealogy-mcp.mcpb`
 
 ### What failure looks like
@@ -119,13 +122,17 @@ extension. **Prerequisite:** Claude Desktop installed (Windows or macOS).
 2. Open Claude Desktop → **Settings → Extensions**.
 3. Click **Advanced Settings → Install extension** and select
    `genealogy-mcp.mcpb`.
-4. Confirm **"Genealogy Research"** appears in the extensions list.
+4. Enter an OpenRouter key in the **OpenRouter API key** field Claude Desktop
+   shows for the extension, or leave it blank.
+5. Confirm **"Genealogy Research"** appears in the extensions list.
 
 ### What success looks like
 
 - The extension installs without an error dialog. (Claude Desktop will
   note it is **unsigned** — that is expected; we do not sign the bundle
   yet. Approve/allow it.)
+- The **OpenRouter API key** field is masked, and leaving it blank does not
+  stop the extension from enabling.
 - Expanding the extension shows its tools.
 
 ### What failure looks like
@@ -153,29 +160,38 @@ host → VM → skill pipeline works end-to-end.
    Claude should call `place_search` and report structured place data.
 
 2. Install the Cowork plugin too (`releases/genealogy-plugin.zip`, see
-   README → "Install the Cowork plugin"), then in a Cowork session ask:
+   README → "Install"), then in a Cowork session ask:
 
    > "Look up Albert Einstein on Wikipedia."
 
    The `search-wikipedia` skill should call `wikipedia_search` and save a
    markdown file to your working folder.
 
+3. If you entered a key in Layer 4 and `~/.familysearch-mcp/config.json` has
+   none, ask for a FamilySearch page scan to be transcribed:
+
+   > "Transcribe FamilySearch image 004884748_02613."
+
+   It should come back as text. With the field blank and no key in
+   `config.json`, the error should name both places to set one.
+
 ### What success looks like
 
 A tool call returns structured JSON and (for the skill path) a file is
 written — proving host → MCP server → SDK bridge → VM → skill → file write.
+Step 3 is the only check that the install dialog's key reaches the server; no
+CI job can run Claude Desktop.
 
 ---
 
-## Known limitation: wiki-page tools need a local corpus
+## Known limitation: the wiki tools depend on a reachable wiki-query-api
 
-Two tools — `wiki_read` and `wiki_place_page` (all four sections:
-`home`, `getting_started`, `online_records`, `research_tips`) — register
-and are callable, but read a pre-crawled markdown corpus via
-`wikiMarkdownDir` in `~/.familysearch-mcp/config.json`. That corpus is
-**not bundled in the `.mcpb`**, so on a stock install those tools throw a
-config-missing error at runtime. Shipping/hosting the corpus is tracked
-separately. The other 17 tools work out of the box (the bundled
+`wiki_read` and `wiki_place_page` used to read a pre-crawled markdown corpus
+from disk via a `wikiMarkdownDir` config key, and would throw a config-missing
+error on a stock install. **That code path is gone** — `getWikiMarkdownDir` no
+longer exists in the engine and both tools are now HTTP clients of the hosted
+`wiki-query-api`, like `wiki_search`. They need no local corpus; the compiled-in
+default is a publicly reachable host, so they work on a stock install. The other tools work out of the box too (the bundled
 FamilySearch clientId covers the authenticated tools; `wiki_search` and
 `place_population` use hosted services).
 

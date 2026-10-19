@@ -11,10 +11,9 @@ place name also works). The tool derives the right collection scope (see
 [Place → collection scope](#place--collection-scope)) and returns the
 matching collections with record, person, and image counts.
 
-This tool is list mode only. To get detailed information about a single
-collection (the FamilySearch search API response with HTML converted to
-markdown), use the separate `collection_read` tool
-(spec: `docs/specs/collection-read-tool-spec.md`).
+This tool is list mode only. There is no single-collection detail tool:
+`collection_read` was retired 2026-09-27 with no caller; the FamilySearch
+Wiki tools cover a collection's research guidance.
 
 ### Place ID mismatch (design note)
 
@@ -61,6 +60,14 @@ reported back as, the state level).
 | `standardPlace` | string | Yes | The place to list collections for (preferably standardPlace from place_search). |
 | `startYear` | integer | No | Earliest year of interest (inclusive). Omit for all periods. |
 | `endYear` | integer | No | Latest year of interest (inclusive). Must be ≥ startYear. Omit for all periods. |
+
+There is **no record-type filter**: the tool lists every collection for the
+place. `recordType`, `record_type`, `recordTypes`, `recordTypeGroup` and
+`recordTypeGroups` — the spellings the sibling tools take — are refused before
+any request, with an error that points to `volume_search`'s `recordTypeGroups`
+and names its valid groups. Nothing validates input against the advertised
+schema, so without the refusal the field would be dropped and the unfiltered
+list would come back looking filtered. Other unknown fields are not checked.
 
 Examples:
 
@@ -144,8 +151,7 @@ overlapping the requested year window:
     "so results come back at that scope; the derived scope is returned in the " +
     "`scope` field (the tool derives it from the place). Optionally pass " +
     "`startYear`/`endYear` to filter the returned collections to those overlapping " +
-    "that year window. For detailed information about a single collection, use the " +
-    "collection_read tool. Requires authentication — call the login tool first if " +
+    "that year window. Requires authentication — call the login tool first if " +
     "not logged in.",
   inputSchema: {
     type: "object",
@@ -173,10 +179,10 @@ overlapping the requested year window:
 ## Authentication
 
 The tool requires a valid FamilySearch access token. It must call
-`getValidToken()` from `src/auth/refresh.ts` — the single entry point
+`getValidToken(principal)` from `src/auth/refresh.ts` — the single entry point
 for all authenticated tools. Do not re-implement token plumbing.
 
-If the user is not authenticated, `getValidToken()` throws an
+If the user is not authenticated, `getValidToken(principal)` throws an
 LLM-instruction error directing the user to call the `login` tool. The
 tool handler should let this error propagate.
 
@@ -254,7 +260,8 @@ contains only the collections that pass it.
 |-----------|----------|
 | `standardPlace` not provided | Throw error: `"collections_search requires a standardPlace (preferably the standardPlace from place_search)."` |
 | `endYear` less than `startYear` (both given) | Throw error: `"endYear must be greater than or equal to startYear."` |
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error ("User is not logged in to FamilySearch. Call the login tool to authenticate.") |
+| `recordType`, `record_type`, `recordTypes`, `recordTypeGroup` or `recordTypeGroups` supplied | Throw, before any request: `"collections_search has no record-type filter: it lists every collection for the place, so {field} cannot narrow it. To filter by record type, use volume_search's recordTypeGroups (an array of group names). Valid groups: {RECORD_TYPE_GROUP_NAMES}."` |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error ("User is not logged in to FamilySearch. Call the login tool to authenticate.") |
 | API returns non-OK status | Throw error: `"FamilySearch collections API error: {status} {statusText}"` |
 | API returns empty/malformed response | Return `{ query, scope, totalForPlace: 0, results: [] }` |
 
@@ -271,9 +278,12 @@ due to access restrictions).
 
 ## Timeout
 
-`COLLECTIONS_TIMEOUT_MS` = **60s**, passed as `fetchWithTimeout`'s third
-argument, rather than the shared 30s default. The cold path is one un-retried
-`count=5000` request whose budget has to cover a large body streaming in full.
+`COLLECTIONS_TIMEOUT_MS` = **60s**, passed as `fetchWithRetry`'s third
+argument, rather than the shared 30s default. The call is retried by
+`fetchWithRetry` (up to 3 attempts, 10s budget), but a 60s timeout exhausts the
+budget on the first attempt, so timeouts are effectively single-attempt. The
+cold path is one `count=5000` request whose budget has to cover a large body
+streaming in full.
 Across the committed e2e run logs, 2 of 51 calls ran past 30s, at 33s and 36s —
 slow successes today, hard failures at the default. Re-measure rather than
 re-guess if the catalog grows; the method is in
@@ -328,6 +338,7 @@ Smoke-test script for list mode.
 | 11 | `startYear`/`endYear` filter `results` but not `totalForPlace` | Date filter |
 | 12 | Collection with no year span always survives the date filter | Date filter edge case |
 | 13 | Throws when `endYear` < `startYear` | Input validation |
+| 14 | Each of the five record-type spellings throws, pointing to `volume_search`'s `recordTypeGroups`, with no token read and no request | Record-type refusal |
 
 **`standardPlaceToCollectionsQuery` unit tests:** US → state (any nesting
 depth); Canada/Mexico → `"Country, State"`; other countries → country;
@@ -373,7 +384,6 @@ run a `dev/try-*.ts` script via Bash. Run Layer 2 in Cowork.
 
 ## Out of Scope
 
-- Single-collection detail — now its own `collection_read` tool
-  (spec: `docs/specs/collection-read-tool-spec.md`).
+- Single-collection detail (the retired `collection_read` tool).
 - Curating the collection shape beyond the documented `Collection`
   fields.

@@ -1,0 +1,4 @@
+{
+  "_meta": { "description": "test fixture — a group with case/diacritic variants of the same literal name, to prove the build-phase normalizeString calls (not just the query-side one)" },
+  "groups": [["Ann", "ann", "Anne", "Nan"]]
+}

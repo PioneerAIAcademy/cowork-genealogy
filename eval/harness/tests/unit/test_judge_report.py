@@ -3,8 +3,10 @@
 Three of these are synthetic. The fourth reads a real committed run log on purpose:
 a synthetic fixture cannot catch a wrong field path, because the fixture would be
 hand-written to the same wrong shape and pass. Scores live at
-`tests[].outcome_summary.aggregated_dimensions[]`, NOT `tests[].dimensions[]`, and a
-reader pointed at the latter prints zeros for every suite while looking healthy.
+`tests[].outcome_summary.review_dimensions[]` (falling back to
+`aggregated_dimensions[]` on a log written before that field), NOT
+`tests[].dimensions[]`, and a reader pointed at the latter prints zeros for every
+suite while looking healthy.
 """
 
 import json
@@ -414,3 +416,44 @@ def test_build_skill_report_derives_the_mandatory_set_from_the_run_log(tmp_path)
     assert dim.reviewed == 2
     assert dim.reviewed_on_failing == 1
     assert dim.disagreements_on_failing == 1
+
+
+def test_a_validator_failing_tests_review_rows_are_instances_not_just_reviews(tmp_path):
+    """A validator-failing test is `fail` with an EMPTY aggregate (#2057) and its
+    judge's rows in `review_dimensions`. Rule 3 requires a correction on each of
+    those rows, and `build_skill_report` puts the test in `mandatory` through
+    the same accessor — so if `collect_dimensions` still read the aggregate, the
+    correction would count as `reviewed` against an `instances` that never
+    counted the grading: `reviewed` exceeds `instances` and `unreviewed` clamps
+    at 0, understating what is outstanding. One array on both sides."""
+    log = _runlog({"Dim": [3]})
+    log["tests"][0]["outcome"] = "pass"
+    log["tests"].append({
+        "test_id": "ut_demo_vf",
+        "outcome": "fail",
+        "outcome_summary": {
+            "aggregated_dimensions": [],
+            "review_dimensions": [
+                {"source": "rubric", "name": "Dim", "score": 1, "rationale": "x"},
+            ],
+        },
+    })
+    log_path = tmp_path / "v1_2026-01-01_00-00-00.json"
+    log_path.write_text(json.dumps(log), encoding="utf-8")
+    (tmp_path / "v1_2026-01-01_00-00-00.ann.json").write_text(
+        json.dumps({
+            "run_log": log_path.name,
+            "annotator": "t",
+            "corrections": [
+                {"test_id": "ut_demo_vf", "dimension_source": "rubric",
+                 "dimension_name": "Dim", "llm_score": 1, "corrected_score": 1},
+            ],
+        }),
+        encoding="utf-8",
+    )
+    dim = next(
+        d for d in judge_report.build_skill_report("demo", log_path).dimensions if d.name == "Dim"
+    )
+    assert dim.instances == 2, "the review row is a grading a human reviewed"
+    assert dim.scores == [3, 1]
+    assert (dim.reviewed, dim.reviewed_on_failing, dim.unreviewed) == (1, 1, 1)

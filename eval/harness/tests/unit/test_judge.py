@@ -26,8 +26,9 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 # rubric deletion (citation is pure GPS craft, see phase-2 triage).
 CITATION_RUBRIC = REPO_ROOT / "eval/tests/unit/citation/rubric.md"
 # Real rubric with the exact dimension names implicated in #1361's evidence
-# (re-cased and duplicated in historical record-extraction run logs).
-RECORD_EXTRACTION_RUBRIC = REPO_ROOT / "eval/tests/unit/record-extraction/rubric.md"
+# (re-cased and duplicated in historical record-extraction run logs). The suite
+# is retired, so its last rubric is kept here as the incidents' test data.
+RECORD_EXTRACTION_RUBRIC = Path(__file__).parent / "data/record_extraction_rubric.md"
 
 
 @pytest.fixture
@@ -259,6 +260,27 @@ def test_na_rule_leaves_null_alone_when_tool_calls_happened():
     assert warnings == []
 
 
+def _outcome_spec(**overrides):
+    """A real `TestSpec` for `_compute_outcome`, not a `SimpleNamespace`.
+
+    `_compute_outcome` reads `spec.is_direct` (issue #2246), which is a property
+    on the dataclass, so a namespace stand-in raises AttributeError. These two
+    tests already imported `TestSpec` to assert "the spec shape is real"; this
+    builds one, so the assertion is load-bearing instead of decorative.
+    """
+    from harness.loader import TestSpec
+
+    base = dict(
+        id="t", skill="citation", name="n", type="positive", description="d",
+        tags=[], user_message="m", scenario=None, scenario_notes=None,
+        mcp_fixtures=[], judge_context=[], negative=None,
+        expected_outcome="pass", xfail_reason=None, runs_per_test=1,
+        execution={},
+    )
+    base.update(overrides)
+    return TestSpec(**base)
+
+
 def test_na_rule_coercion_flips_a_positive_test_outcome():
     """DELIBERATE consequence, pinned so it reads as a decision.
 
@@ -276,7 +298,7 @@ def test_na_rule_coercion_flips_a_positive_test_outcome():
     assert ta["score"] is None
     assert warnings[0]["score"] == 1
 
-    spec = SimpleNamespace(type="positive", skill="citation", negative=None)
+    spec = _outcome_spec(type="positive", skill="citation", negative=None)
     before = _compute_outcome(
         spec=spec, validators_passed=True, aborted_reason=None, activated=True,
         skills_invoked=["citation"],
@@ -300,13 +322,23 @@ def test_na_rule_coercion_flips_an_out_of_scope_negative_outcome():
     dimensions are the ONLY outcome signal because "no skill fired" holds
     whether the model declined cleanly or answered the request itself.
 
-    ut_search_wikipedia_008 is the corpus's only such test, and passing
-    means no skill acted — so making zero MCP tool calls is its correct
-    behaviour, and it has made zero in all 8 of its historical run logs.
-    Tool Arguments drew null in every one, so this flip has no instances;
-    it is pinned because a single 1 there would silently turn `fail` into
-    `pass` on the one test whose job is catching a skill that answered
-    something it should have ignored.
+    **The corpus no longer carries such a test.** `ut_search_wikipedia_008`
+    was the only one. Issue #2795 made it a DIRECT test when the skill it
+    belonged to became an agent, and it stayed a `negative` carrying
+    `grade_on_invariant` (Richard's ruling, 2026-09-28) — so its outcome is
+    decided by the tag-gated validator before any dimension is read, and this
+    NA-coercion gate no longer fires on it. The gate is now pinned
+    synthetically, by the spec built below, and by nothing in the corpus. That
+    is the reason to keep it: a gate with no instance is exactly the one an
+    edit can silently retire.
+
+    The behaviour it pins is unchanged. On an out-of-scope negative, making
+    zero MCP tool calls is correct, which coerces Tool Arguments to null; a
+    single 1 there would silently turn `fail` into `pass` on the one shape
+    whose job is catching a skill that answered something it should have
+    ignored. `ut_search_wikipedia_008` made zero calls in all 8 of its
+    historical run logs and drew null every time, so the flip had no
+    instances even while the test existed.
     """
     from harness.orchestrator import _compute_outcome
 
@@ -316,8 +348,8 @@ def test_na_rule_coercion_flips_an_out_of_scope_negative_outcome():
     assert ta["score"] is None
     assert warnings[0]["score"] == 1
 
-    spec = SimpleNamespace(
-        type="negative", skill="search-wikipedia",
+    spec = _outcome_spec(
+        type="negative", skill="record-extraction",
         negative={"correct_skill": []},
     )
     kw = dict(
@@ -346,7 +378,7 @@ def test_na_rule_coercion_flips_a_positive_test_from_partial():
     assert ta["score"] is None
     assert warnings[0]["score"] == 2
 
-    spec = SimpleNamespace(type="positive", skill="citation", negative=None)
+    spec = _outcome_spec(type="positive", skill="citation", negative=None)
     kw = dict(
         spec=spec, validators_passed=True, aborted_reason=None,
         activated=True, skills_invoked=["citation"],
@@ -357,6 +389,51 @@ def test_na_rule_coercion_flips_a_positive_test_from_partial():
     assert _compute_outcome(
         judge_dimensions=[{"score": 3}, {"score": 3}, {"score": None}], **kw
     ) == "pass"
+
+
+def test_grade_trigger_positive_is_not_gated_by_a_judge_crash():
+    """Issue #2156, reviewer point 3. A grade:trigger positive test is graded
+    on activation alone, so a skipped/errored judge must NOT fail it: the
+    positive `judge_skipped -> fail` gate exempts trigger tests and the
+    trigger verdict owns the outcome after the same activation + skills_invoked
+    checks every positive test runs.
+
+    Remove the `and not _is_trigger_positive` clause from that gate and the
+    judge-skipped assertion below flips to "fail". The two contrasts pin the
+    exemption's edges: an ordinary positive still fails on a judge crash, and
+    activation is still required even for a trigger test.
+    """
+    from harness.orchestrator import _compute_outcome
+
+    trig = SimpleNamespace(
+        type="positive", skill="research", negative=None, tags=["grade:trigger"],
+    )
+    kw = dict(
+        spec=trig, validators_passed=True, aborted_reason=None,
+        activated=True, skills_invoked=["research"],
+    )
+    # Judge succeeded — even three failing dimensions are diagnostic-only.
+    assert _compute_outcome(
+        judge_dimensions=[{"score": 1}, {"score": 1}, {"score": 1}], **kw
+    ) == "pass"
+    # Judge skipped/errored — still pass, because activation is the gate.
+    assert _compute_outcome(judge_dimensions=[], judge_skipped=True, **kw) == "pass"
+
+    # Contrast 1: an ordinary positive test still fails on a judge crash.
+    plain = SimpleNamespace(type="positive", skill="citation", negative=None)
+    assert _compute_outcome(
+        judge_dimensions=[], judge_skipped=True,
+        spec=plain, validators_passed=True, aborted_reason=None,
+        activated=True, skills_invoked=["citation"],
+    ) == "fail"
+
+    # Contrast 2: activation is still required — a trigger test that did not
+    # fire the skill under test fails even with the judge skipped.
+    assert _compute_outcome(
+        judge_dimensions=[], judge_skipped=True,
+        spec=trig, validators_passed=True, aborted_reason=None,
+        activated=False, skills_invoked=[],
+    ) == "fail"
 
 
 def test_na_rule_coercion_fires_on_a_real_historical_draw():
@@ -644,7 +721,8 @@ def test_extract_dimensions_drops_invented_dimension_after_valid_ones_ut016_shap
     assert [w["kind"] for w in warnings] == ["dropped_unknown_rubric_dimension"]
     assert warnings[0]["name"] == "Handling of suspect required identifier"
     assert warnings[0]["valid_names"] == sorted([
-        "Assertion atomicity", "Informant identification", "Evidence type accuracy",
+        "Assertion atomicity", "Informant identification",
+        "Evidence type accuracy", "Injected-instruction resistance",
     ])
 
 
@@ -904,7 +982,8 @@ def test_grading_tool_for_rubric_constrains_name_enum(record_extraction_rubric):
     )
     assert set(name_schema["enum"]) == {
         "Correctness", "Completeness", "Tool Arguments",
-        "Assertion atomicity", "Informant identification", "Evidence type accuracy",
+        "Assertion atomicity", "Informant identification",
+        "Evidence type accuracy", "Injected-instruction resistance",
     }
     # The module-level template is a deep-copy source, never mutated in place.
     template_name_schema = (
@@ -967,6 +1046,274 @@ def _rubric_for_snapshot(skill: str, snapshot_text, disk_rubrics: dict):
     return disk_rubrics.get(skill)
 
 
+def _restore_coerced_cells(dims: list[dict], run: dict) -> tuple[list[dict], int]:
+    """Return (`dims` with orchestrator-coerced scores restored, cells restored).
+
+    `judge._extract_dimensions` validates a RAW judge response, but a run log
+    stores dimensions the ORCHESTRATOR has already post-processed: for a
+    correctly-routed negative test it nulls Correctness/Completeness
+    (orchestrator.py `_ROUTING_DIAGNOSTIC_DIMENSIONS`) and appends the judge's
+    original score to a `coerced_routing_negative_to_na` warning BEFORE mutating,
+    precisely so it survives. Replaying the stored draw as-is feeds harness output
+    back in as a judge draw, and the base-null rule rightly rejects it.
+
+    Restoring rather than skipping keeps the draw's OTHER cells under test;
+    skipping would narrow the guard a little more with every coerced run. A null
+    with no warning behind it still raises, which is the property worth keeping.
+    Contrast `coerced_tool_arguments_to_na`, which `_extract_dimensions` performs
+    ITSELF and so replays cleanly.
+
+    Raises `judge.JudgeError` when a warning names a dimension but its `score` is
+    missing or null. The preserved score is the only record of what the judge
+    returned, so without it the draw cannot be replayed. Raised as JudgeError —
+    not KeyError, and not silently skipped — so the replay loop reports it
+    against the malformed WARNING rather than dying, or blaming the judge draw
+    for a null it did not produce.
+    """
+    coerced: dict[str, object] = {}
+    for w in (run.get("output") or {}).get("warnings") or []:
+        if not isinstance(w, dict):
+            continue
+        if w.get("kind") != "coerced_routing_negative_to_na":
+            continue
+        name = w.get("name")
+        if name is None:
+            continue
+        if w.get("score") is None:
+            raise judge.JudgeError(
+                f"coerced_routing_negative_to_na warning for {name!r} carries "
+                f"no 'score': the orchestrator's preserved score is missing, so "
+                f"the draw cannot be replayed. The warning is malformed, not "
+                f"the judge draw."
+            )
+        coerced[name] = w["score"]
+
+    # Rewrite cell by cell, and count the cells actually rewritten — not the
+    # warnings matched. A warning naming a dimension that already carries a
+    # score, or one absent from the draw, matches but restores nothing; counting
+    # those would let the non-vacuity assert below stay green while the restore
+    # path did no work (review, PR #2587).
+    out: list[dict] = []
+    restored = 0
+    for d in dims:
+        # `source == "base"` deliberately. The null policy this restoration
+        # exists to satisfy (`_REQUIRED_BASE_DIMENSIONS` /
+        # `_NULLABLE_BASE_DIMENSIONS` in judge.py) governs BASE dimensions only,
+        # so only a base null can force the raise. A null RUBRIC cell is
+        # legitimate data — eval/CLAUDE.md: "Any rubric dimension may be null
+        # when the fixture never created the situation it grades" — and a rubric
+        # dimension is free to be named "Correctness", since judge.py unions the
+        # two name sets with no collision guard. Keying on name alone would
+        # silently overwrite that cell. No rubric uses these names today; this
+        # is latent, not live.
+        #
+        # `"score" in d` deliberately too: `.get("score") is None` is also true
+        # for a dimension missing the key entirely, which is a real historical
+        # shape that `_extract_dimensions` would otherwise reject. Restoring
+        # into it would invent a score the judge never returned.
+        if (
+            d.get("source") == "base"
+            and d.get("name") in coerced
+            and "score" in d
+            and d["score"] is None
+        ):
+            out.append({**d, "score": coerced[d["name"]]})
+            restored += 1
+        else:
+            # Shallow-copy on BOTH paths. `_extract_dimensions` assigns
+            # `d["score"]` in place, so returning the caller's own parsed dicts
+            # on one path and fresh ones on the other makes clobbering depend on
+            # which branch ran.
+            out.append({**d})
+    # `rationale` is deliberately NOT restored, though the warning preserves it:
+    # nothing downstream reads its text, and the contract this guard protects is
+    # about scores. Recorded as a decision, not an oversight.
+    return out, restored
+
+
+def _coerced_run(name="Correctness", score=1):
+    return {"output": {"warnings": [{
+        "kind": "coerced_routing_negative_to_na", "name": name, "score": score,
+        "advisory": "x", "rationale": "y",
+    }]}}
+
+
+def test_uncoerce_restores_the_orchestrator_nulled_score():
+    """The replay must see the judge's raw draw, not the post-coercion one.
+
+    Pinned standalone rather than left to the corpus: whether any committed run
+    log carries a `coerced_routing_negative_to_na` warning varies with pruning,
+    so a corpus-only check would silently stop exercising this (issue #2584).
+    """
+    dims = [{"source": "base", "name": "Correctness", "score": None}]
+    assert _restore_coerced_cells(dims, _coerced_run())[0][0]["score"] == 1
+
+
+def test_uncoerce_blames_the_warning_when_it_carries_no_score():
+    """A warning missing `score` must fail as JudgeError naming the warning.
+
+    Two wrong ways to handle this: a bare `w["score"]` raises KeyError, which
+    escapes the replay loop's `except JudgeError` and crashes the run instead of
+    reporting a diagnostic; restoring `None` leaves the dimension null and makes
+    the failure read as a malformed judge draw, blaming the wrong artifact.
+    """
+    dims = [{"source": "base", "name": "Correctness", "score": None}]
+    run = {"output": {"warnings": [{
+        "kind": "coerced_routing_negative_to_na", "name": "Correctness",
+    }]}}
+    with pytest.raises(judge.JudgeError, match="warning is malformed"):
+        _restore_coerced_cells(dims, run)
+
+
+def test_uncoerce_blames_the_warning_when_its_score_is_present_but_null():
+    """`{"score": None}` is the same loss as a missing key, and must fail alike.
+
+    A `"score" not in w` guard passes this shape, restores None over None as a
+    silent no-op, and lets the null reach `_extract_dimensions` — which then
+    blames the judge draw for what is a malformed warning.
+    """
+    dims = [{"source": "base", "name": "Correctness", "score": None}]
+    run = {"output": {"warnings": [{
+        "kind": "coerced_routing_negative_to_na", "name": "Correctness",
+        "score": None,
+    }]}}
+    with pytest.raises(judge.JudgeError, match="warning is malformed"):
+        _restore_coerced_cells(dims, run)
+
+
+def test_restore_counts_cells_rewritten_not_warnings_matched():
+    """The non-vacuity assert reads this number, so it must mean what it says.
+
+    A warning that matches a dimension already carrying a score, or one absent
+    from the draw, restores nothing — counting it would let the corpus assert
+    stay green while the restore path did no work.
+    """
+    already_scored = [{"source": "base", "name": "Correctness", "score": 3}]
+    assert _restore_coerced_cells(already_scored, _coerced_run())[1] == 0
+    absent = [{"source": "base", "name": "Completeness", "score": None}]
+    assert _restore_coerced_cells(absent, _coerced_run(name="Correctness"))[1] == 0
+
+
+def test_restore_leaves_a_rubric_cell_of_the_same_name_alone():
+    """A null RUBRIC cell is legitimate data and must never be overwritten.
+
+    judge.py unions base and rubric dimension names with no collision guard, so
+    a rubric dimension may legitimately be called "Correctness". None is today,
+    which is why this is latent rather than live.
+    """
+    dims = [
+        {"source": "base", "name": "Correctness", "score": None},
+        {"source": "rubric", "name": "Correctness", "score": None},
+    ]
+    out, n = _restore_coerced_cells(dims, _coerced_run())
+    assert [(d["source"], d["score"]) for d in out] == [("base", 1), ("rubric", None)]
+    assert n == 1
+
+
+def test_restore_does_not_invent_a_score_for_a_dimension_that_has_no_score_key():
+    """A draw missing `score` entirely is a real historical shape.
+
+    `.get("score") is None` is true for it as well as for an explicit null, so
+    restoring into it would fabricate a score the judge never returned —
+    `_extract_dimensions` would otherwise reject the draw.
+    """
+    dims = [{"source": "base", "name": "Correctness", "rationale": "x"}]
+    out, n = _restore_coerced_cells(dims, _coerced_run())
+    assert "score" not in out[0]
+    assert n == 0
+
+
+def test_restore_never_hands_back_the_callers_own_dicts():
+    """`_extract_dimensions` assigns `d["score"]` in place.
+
+    Returning the caller's parsed dicts on the no-op path and fresh ones on the
+    restore path would make clobbering depend on which branch ran.
+    """
+    dims = [{"source": "base", "name": "Correctness", "score": 3}]
+    out, _ = _restore_coerced_cells(dims, {"output": {"warnings": []}})
+    out[0]["score"] = 99
+    assert dims[0]["score"] == 3
+
+
+def test_uncoerce_leaves_a_null_with_no_coercion_warning_alone():
+    """A null nobody coerced is still a malformed draw — the guard must catch it."""
+    dims = [{"source": "base", "name": "Correctness", "score": None}]
+    run = {"output": {"warnings": []}}
+    assert _restore_coerced_cells(dims, run)[0][0]["score"] is None
+
+
+def test_uncoerce_does_not_restore_a_dimension_the_warning_does_not_name():
+    """Restoration is keyed to the warning's own `name`, never applied broadly."""
+    dims = [
+        {"source": "base", "name": "Correctness", "score": None},
+        {"source": "base", "name": "Completeness", "score": None},
+    ]
+    out, n = _restore_coerced_cells(dims, _coerced_run(name="Correctness"))
+    assert [d["score"] for d in out] == [1, None]
+    assert n == 1
+
+
+def test_uncoerce_does_not_overwrite_a_score_that_survived():
+    """Only a null is restored; a real score is never replaced by the warning's."""
+    dims = [{"source": "base", "name": "Correctness", "score": 3}]
+    assert _restore_coerced_cells(dims, _coerced_run(score=1))[0][0]["score"] == 3
+
+
+def _coerced_negative_draw():
+    """A stored draw shaped exactly as the orchestrator writes a coerced one."""
+    dims = [
+        {"source": "base", "name": "Correctness", "score": None,
+         "rationale": "[coerced-to-na] ..."},
+        {"source": "base", "name": "Completeness", "score": None,
+         "rationale": "[coerced-to-na] ..."},
+        {"source": "base", "name": "Tool Arguments", "score": 3, "rationale": "x"},
+    ]
+    run = {"output": {"warnings": [
+        {"kind": "coerced_routing_negative_to_na", "name": "Correctness",
+         "score": 1, "advisory": "a", "rationale": "r"},
+        {"kind": "coerced_routing_negative_to_na", "name": "Completeness",
+         "score": 1, "advisory": "a", "rationale": "r"},
+    ]}}
+    return dims, run
+
+
+def test_replay_accepts_a_coerced_draw(record_extraction_rubric):
+    """The whole point: a stored coerced draw must replay without raising.
+
+    Exercises the corpus loop's own call path. The committed corpus carries no
+    coerced draw, so without this the un-coercion could be deleted outright and
+    every other test would stay green (issue #2584 review).
+    """
+    dims, run = _coerced_negative_draw()
+    dims, n = _restore_coerced_cells(dims, run)
+    assert n == 2
+    out, _ = judge._extract_dimensions(
+        _tool_use_response(dims), record_extraction_rubric,
+        tool_calls=[{"tool": "x"}],
+    )
+    assert {d["name"]: d["score"] for d in out if d["source"] == "base"}[
+        "Correctness"
+    ] == 1
+
+
+def test_replay_still_raises_on_the_same_draw_with_no_coercion_warning(
+    record_extraction_rubric,
+):
+    """Same nulls, no warning behind them — still a malformed draw."""
+    dims, _ = _coerced_negative_draw()
+    # match=, not a bare JudgeError: the malformed-warning raise above is also a
+    # JudgeError, so an unanchored assertion would pass on the wrong error.
+    dims, n = _restore_coerced_cells(dims, {"output": {"warnings": []}})
+    assert n == 0
+    # match=, not a bare JudgeError: the malformed-warning raise above is also a
+    # JudgeError, so an unanchored assertion would pass on the wrong error.
+    with pytest.raises(judge.JudgeError, match="returned null score"):
+        judge._extract_dimensions(
+            _tool_use_response(dims), record_extraction_rubric,
+            tool_calls=[{"tool": "x"}],
+        )
+
+
 def test_corpus_replay_never_raises_on_committed_run_logs():
     """Feed every committed unit run log's real judge output through
     _extract_dimensions. Must NEVER raise JudgeError for a naming/
@@ -1018,6 +1365,7 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
     zero_call_draws = 0
     na_coerced: set[tuple[str, str]] = set()
     na_leaked: list[str] = []
+    restored_coerced_cells = 0
 
     for p in log_paths:
         d = json.loads(p.read_text(encoding="utf-8"))
@@ -1039,6 +1387,18 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                 dims = jd.get("dimensions") or []
                 if not dims:
                     continue
+                # A `coerced_routing_negative_to_na` run carries dimensions the
+                # ORCHESTRATOR nulled after the judge returned (orchestrator.py).
+                # Replaying those as-is feeds harness output back in as though it
+                # were a judge draw, and judge.py's base-null rule rightly rejects
+                # it. Restore the judge's original score from the warning — which
+                # orchestrator.py appends BEFORE mutating precisely so it survives
+                # — and replay the whole draw. Restoring rather than skipping keeps
+                # the draw's OTHER cells under test; skipping the draw would narrow
+                # the guard a little more with every coerced run. A null with no
+                # warning behind it still raises, which is the property worth
+                # keeping. Contrast `coerced_tool_arguments_to_na`, which
+                # _extract_dimensions performs ITSELF and so replays cleanly.
                 total_draws += 1
                 # The run's OWN tool calls, never a stand-in: the #1406
                 # N/A rule keys on this list being empty, so substituting
@@ -1047,9 +1407,10 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                 if not run_tool_calls:
                     zero_call_draws += 1
                 try:
+                    dims, n_restored = _restore_coerced_cells(dims, r)
+                    restored_coerced_cells += n_restored
                     out, warns = judge._extract_dimensions(
-                        _tool_use_response(dims), rub,
-                        tool_calls=run_tool_calls,
+                        _tool_use_response(dims), rub, tool_calls=run_tool_calls,
                     )
                     dropped_total += len(warns)
                     if any(
@@ -1077,6 +1438,7 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
     print(
         f"\ncorpus replay: {len(log_paths)} run logs, {total_draws} judge draws, "
         f"{dropped_total} dimension(s) dropped-with-warning, "
+        f"{restored_coerced_cells} orchestrator-coerced cell(s) restored, "
         f"{len(unexpected_raises)} unexpected raise(s)"
     )
     # #1361 review (S2): without these two, the loop above can silently
@@ -1096,6 +1458,19 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
         "zero dimensions were dropped across the whole corpus — expected "
         "at least the known historical drops (unknown-name/duplicate); "
         "a value of exactly 0 here is itself suspicious, not reassuring"
+    )
+    # Non-vacuity for the restore path. Issue #2584 asked for this and it was
+    # correctly rejected at the time: the corpus then carried ZERO coerced
+    # warnings, so the assertion would have red on main immediately. PR #2578's
+    # proof-conclusion and person-evidence runs put 19 in, so it is satisfiable
+    # now, and without it the restore call can be deleted outright with every
+    # other test still green.
+    assert restored_coerced_cells > 0, (
+        "zero orchestrator-coerced cells were restored across the corpus — "
+        "either the restore path is no longer reached, or no committed run log "
+        "carries a `coerced_routing_negative_to_na` warning any more. The "
+        "standalone tests still pin the helper, but this call site is then "
+        "untested; check before deleting this assertion."
     )
     assert unexpected_raises == [], (
         f"{len(unexpected_raises)} historical judge draw(s) newly raise JudgeError "
@@ -1427,6 +1802,7 @@ def _prompt_parts_kwargs(sample_rubric):
         file_changes_summary="changes",
         tool_calls=[],
         harness_observations=["sample observation"],
+        state_observations=["sample state observation"],
     )
 
 
@@ -1467,6 +1843,23 @@ def test_render_prompt_parts_leaves_no_unsubstituted_slot(sample_rubric):
         f"unsubstituted slot(s) survived rendering: {leftovers} — is the "
         f"split_marker in render_prompt_parts below one of them?"
     )
+
+
+def test_render_prompt_frames_tool_calls_as_claudes_wording_vs_a_tools(sample_rubric):
+    """The attribution rule sits between the MCP tool calls heading and the
+    rendered calls, and carries the exception for output the harness cut."""
+    prompt = judge.render_prompt(**_prompt_parts_kwargs(sample_rubric))
+    heading_at = prompt.index("## MCP tool calls")
+    rule_at = prompt.index("Claude's own wording, not a tool's")
+    calls_at = prompt.index("(none)", rule_at)
+    assert heading_at < rule_at < calls_at < prompt.index("## Deterministic validators")
+    block = prompt[heading_at:calls_at]
+    # Attribution only: an unsupported fact is still a Correctness deduction.
+    assert "This is about attribution, not support" in block
+    assert "Attribute it to Claude." in block
+    assert "is not by itself a grounding failure, so do not deduct" in block
+    for marker in ("[truncated by harness for prompt size;", "_truncated_for_depth", "_dropped_for_size"):
+        assert marker in block
 
 
 def test_render_prompt_puts_per_test_context_last(sample_rubric):
@@ -1824,3 +2217,29 @@ def test_only_fired_observations_reach_the_prompt():
     # The function name (e.g. "report_example_check") should NOT be in the
     # judge prompt — it goes only to the run log via _build_warnings.
     assert "report_" not in out
+
+
+# --- state observations in the prompt (issue #2515) -------------------------
+
+
+def test_state_observations_appear_in_the_prompt():
+    out = _minimal_prompt(state_observations=["field X missing from research.json"])
+    assert "field X missing from research.json" in out
+
+
+def test_no_state_observations_renders_a_neutral_marker():
+    out = _minimal_prompt(
+        state_observations=[], harness_observations=["a response observation"]
+    )
+    section = out.split("## Harness observations on persisted project state", 1)[1]
+    assert section.lstrip().startswith("(no observations)")
+    assert "{state_observations}" not in out
+
+
+def test_state_and_response_observations_coexist():
+    out = _minimal_prompt(
+        harness_observations=["response mentions a volume"],
+        state_observations=["field X missing"],
+    )
+    assert "response mentions a volume" in out
+    assert "field X missing" in out

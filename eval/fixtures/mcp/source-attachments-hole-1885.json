@@ -1,0 +1,31 @@
+{
+  "tool": "source_attachments",
+  "description": "Attachment check for the 1885 Minnesota State Census ARK (HOLE-003) that source-evaluation has just classified as misattributed to Christian P. Hole. It comes back attached to KD96-WX7 as well — a same-name man in Otter Tail County — which is the evidence that turns 'this record is not about him' into 'this record belongs to that other Christian Hole'. The skill's body requires this call before it recommends a detach, so that the recommendation names where the record actually belongs instead of merely asserting it does not belong here. The `~` uris predicate matches whatever ARK form the skill passes.",
+  "args": {
+    "uris": "~HOLE-003"
+  },
+  "response": {
+    "attachments": {
+      "ark:/61903/1:1:HOLE-003": [
+        {
+          "personId": "KD96-TV2",
+          "tags": [
+            "Name",
+            "Birth",
+            "Residence"
+          ]
+        },
+        {
+          "personId": "KD96-WX7",
+          "tags": [
+            "Name",
+            "Birth",
+            "Residence",
+            "Gender"
+          ]
+        }
+      ]
+    },
+    "unattached": []
+  }
+}

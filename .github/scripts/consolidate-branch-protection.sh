@@ -4,7 +4,7 @@
 # overlapping classic branch-protection rule, and (optionally) require status
 # checks to pass before merge.
 #
-# WHY CONSOLIDATE. As of 2026-07-29 both mechanisms guard `main` and disagree:
+# WHY CONSOLIDATE. As of 2026-07-29 both mechanisms guarded `main` and disagreed:
 #
 #                              classic protection    protect-main ruleset
 #   required approvals                 2                      1
@@ -12,23 +12,51 @@
 #   require_code_owner_review         true                   true
 #   dismiss_stale_reviews            false                   false
 #
-# GitHub applies the most restrictive of the two, so the effective policy is
+# GitHub applies the most restrictive of the two, so the effective policy was
 # 2 approvals + code owner + last-push-approval. Correct, but unreadable:
 # anyone checking `/branches/main/protection` concludes last-push-approval is
 # off, and anyone checking the ruleset concludes one approval is enough.
 #
-# ORDER MATTERS. The ruleset requires only 1 approval today. Deleting classic
-# protection first would drop `main` from 2 approvals to 1 until the ruleset is
-# raised. This script raises the ruleset first and refuses to delete until it
-# has verified the new value landed.
+# WANT_APPROVALS IS 1, NOT 2 (2026-09-16). The two approvals used to be a junior
+# peer review followed by a senior one. Authors now self-review — round one is
+# the author's own pass over their own diff — and the senior is the ONLY
+# required approver. GitHub REFUSES an author's approval on their own PR ("Can
+# not approve your own pull request"), so a self-review can never satisfy a
+# required-approval count; lowering the count is what makes the new flow
+# expressible at all. This is a real reduction in review coverage — one human
+# other than the author now reads each PR, not two — taken deliberately to close
+# more issues. Raising it back to 2 restores the old flow and strands the
+# self-review as a step that gates nothing but the senior QUEUE.
+#
+# WHAT STILL FORCES A SENIOR: `require_code_owner_review` plus .github/CODEOWNERS.
+# With the count at 1, the code-owner rule is the ONLY thing making that one
+# approval a senior's. CODEOWNERS deliberately has NO `*` default, so a path no
+# rule names merges on one approval from ANYONE. A `*` default is still the
+# wrong fix — it would drag every docs-only PR into a senior queue
+# (senior-queue.yml's queueTeamOf() returns the first owning team for any file).
+#
+# But "those paths are only CSS and dotfiles" was an ASSERTION, and it was
+# wrong. Enumerating every tracked file against the rules found 337 unowned,
+# including 13 shell scripts — among them scripts/verify-mcpb.sh (CI's packaging
+# gate) and THIS script, which rewrites branch protection. Narrow rules for
+# `*.sh`, `Dockerfile`, `e2b.Dockerfile` and `uv.lock` were added on 2026-09-16;
+# 318 remain unowned and are listed by category in CODEOWNERS' header.
+# Re-run that count before claiming a path is safe to leave out.
+#
+# ORDER MATTERS, AND IT REVERSES WHEN LOWERING. Raising (1 -> 2) had to touch the
+# ruleset before deleting classic protection, or `main` would sit at 1 in the
+# gap. Classic protection is already gone, so lowering has no such gap. The
+# verify-before-delete guard below still applies.
 #
 # NOT LOST BY DELETING CLASSIC PROTECTION. Force pushes and branch deletion are
 # already covered by the ruleset's `non_fast_forward` and `deletion` rules.
 # Every other classic toggle (signatures, linear history, conversation
 # resolution, block creations, lock branch) is currently disabled.
 #
-# MAINTAINER CAN STILL MERGE RED PRs. The ruleset has one bypass actor —
-# user 240745 (DallanQ), mode `always`. Bypass covers every rule in the
+# MAINTAINER CAN STILL MERGE RED PRs. The ruleset has TWO bypass actors —
+# users 240745 (DallanQ) and 1800727, both mode `always` (verified 2026-09-16;
+# the second was added after this note was first written). Bypass covers every
+# rule, so both can merge past the approval count entirely. Bypass covers every rule in the
 # ruleset, required status checks included, so adding them in step 4 blocks
 # the team on red CI without blocking the maintainer. This is the reason the
 # checks belong in the RULESET and not in classic protection, whose
@@ -45,7 +73,7 @@ set -euo pipefail
 REPO="${REPO:-PioneerAIAcademy/cowork-genealogy}"
 RULESET_ID="${RULESET_ID:-17125816}"
 BRANCH="${BRANCH:-main}"
-WANT_APPROVALS="${WANT_APPROVALS:-2}"
+WANT_APPROVALS="${WANT_APPROVALS:-1}"
 APPLY="${APPLY:-0}"
 REQUIRE_CHECKS="${REQUIRE_CHECKS:-0}"
 
@@ -85,7 +113,7 @@ fi
 # --- 1. raise the ruleset -----------------------------------------------------
 # Fetch and patch rather than hand-authoring the body, so bypass_actors,
 # conditions, and the deletion/non_fast_forward rules survive untouched.
-say "step 1: raising ruleset to $WANT_APPROVALS approvals"
+say "step 1: setting ruleset to $WANT_APPROVALS approvals"
 gh api "repos/$REPO/rulesets/$RULESET_ID" > "$tmp/current.json"
 
 jq --argjson n "$WANT_APPROVALS" '{

@@ -1,5 +1,5 @@
-import { getValidToken } from "../auth/refresh.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import type { Principal } from "../auth/principal.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import {
   toSimplified,
   standardizePlaces,
@@ -267,16 +267,15 @@ function emptyResponse(input: PersonSearchInput): PersonSearchToolResponse {
 }
 
 export async function personSearchTool(
-  input: PersonSearchInput
+  input: PersonSearchInput,
+  principal: Principal
 ): Promise<PersonSearchToolResponse> {
   validateInput(input);
 
-  const token = await getValidToken();
   const url = buildSearchUrl(input);
 
-  const response = await fetchWithTimeout(url, {
+  const response = await fsFetch(principal, url, {
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,
       "Accept-Language": "en",
     },
@@ -348,8 +347,9 @@ export const personSearchToolSchema = {
     "count). Additional fields narrow the ranking. Returns a ranked list of " +
     "candidate tree persons, each with a tree-person ID and simplified " +
     "GedcomX (name + facts), so the user can pick which one to research. To " +
-    "expand a chosen match into parents, spouses, and children, call " +
-    "person_read with relatives: true. Requires authentication — call the " +
+    "expand a chosen match into parents, siblings, spouses, and children, " +
+    "call " +
+    "person_read. Requires authentication — call the " +
     "login tool first if not logged in. For ambiguous place names, call the " +
     "place_search tool first. " +
     "EXACT-MATCH TOGGLES: without an `*Exact` flag a name field also matches " +
@@ -366,7 +366,7 @@ export const personSearchToolSchema = {
     type: "object",
     properties: {
       givenName: { type: "string", description: "Given (first) name. Counts as a qualifying 'other' field alongside the required surname." },
-      surname: { type: "string", description: "Family name. Required on every search, and must be accompanied by at least one other search field (a given name, a life-event year/place, or a relative's name). `sex` and `*Exact` toggles do not count." },
+      surname: { type: "string", description: "Family name. Required on every search, and must be accompanied by at least one other search field (a given name, a life-event year/place, or a relative's name). `sex` and `*Exact` toggles do not count. Send a particle surname as written, spaces and all (`van der Linde`) — do not quote it, concatenate it, or split it across `surname`/`surnameAlt`. Whether spacing or the particle changes the result set is measured on the RECORD index only (section K); it is not measured on this endpoint." },
       sex: { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the person. Case-insensitive on input — `'male'` is normalized to `'Male'`. Does not satisfy the surname-plus-one rule on its own." },
       givenNameExact: { type: "boolean", description: "Restrict the given name to its exact spelling. Excludes diminutives — pass a variant as its own `givenName` instead." },
       surnameExact: { type: "boolean", description: "Restrict the surname to its exact spelling. Fuzzy matching is what bridges a misspelling, so this can drop the target; use only with a spelling you have confirmed." },

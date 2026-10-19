@@ -48,6 +48,10 @@ export class IpcResearchTransport implements ResearchTransport {
     void window.api.openExternal(url)
   }
 
+  openFamilySearch(value: string): void {
+    void window.api.openFamilySearch(value)
+  }
+
   submitFeedback(payload: FeedbackPayload): Promise<FeedbackResult> {
     return window.api.submitFeedback(payload)
   }
@@ -75,7 +79,7 @@ export class IpcResearchTransport implements ResearchTransport {
     return {
       files,
       sessionLogSize: sessionLog.sizeBytes,
-      hasSessionLog: sessionLog.entries.length > 0
+      hasSessionLog: sessionLog.hasSessionLog
     }
   }
 

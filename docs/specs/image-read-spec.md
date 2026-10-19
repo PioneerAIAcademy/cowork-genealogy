@@ -12,6 +12,7 @@ to OCR models. Requires FamilySearch authentication.
 {
   imageId?: string      // An Image Group Number of the form NUMBER_NUMBER
   ark?: string          // A FamilySearch document-image ARK, resolver URL, or resolved distribution URL
+  imageArk?: string     // Another name for ark (not advertised); see below
   projectPath?: string  // Absolute project-folder path. When set, the fetched scan is saved
                          // under images/ and its project-relative path returned as imageRef.
 }
@@ -19,6 +20,36 @@ to OCR models. Requires FamilySearch authentication.
 
 Exactly one of `imageId` or `ark` must be provided. `projectPath` is optional
 and independent of that choice.
+
+**`imageArk` is read as `ark`.** It is the field `record_read` returns a page
+image under and the key `research_log_append` logs an image entry by, so it is
+the name callers carry forward. `foldImageArkInput` (`src/utils/fs-image-fetch.ts`)
+folds it into `ark` before anything else reads the input — the resolver, the
+image cap, the viewer link and the saved-image key all see `ark`. When both are
+given and would fetch the same URL (one image in another spelling), `ark` is
+used. When they are one ARK and only one side carries `i`/`cc`/`groupId` (a
+bare `ark` beside `record_read`'s `ark:/61903/3:1:…?cc=2363041`), the side
+carrying them is used, whichever key it came in on: on a multi-image waypoint
+ARK `i=` picks the page, so the bare side could read another image. Two that
+both carry those params and differ, and any other pair, are refused before any
+fetch, and so is an `ark` that is not a string. An empty `imageArk` is not
+folded, so the no-input error names it. Like
+`memoryArtifactUrl`, it is accepted without being advertised on the schema.
+
+**`memoryArtifactUrl` is accepted but deliberately not advertised.**
+`ImageReadInput extends FsImageInput`, the input schema carries no
+`additionalProperties: false`, and the tool forwards `memoryShape` on purpose —
+so a direct artifact URL passed here works, and a dedicated test pins it. What
+was declined (lead, 2026-09-29) is **advertising the parameter on the input
+schema**, for two reasons: it adds an MCP parameter to every conversation, and
+this tool refuses anything over `MAX_INLINE_IMAGE_BYTES` (700 KB raw), which
+turns away most register photos regardless.
+
+A Memories **page** URL (`photos/artifacts/<id>` or `/memories/<id>`) is a
+different matter: it is not a bytes URL at all, and only `image_transcribe`
+resolves one. Passing a page URL here is refused by the host check.
+`image_transcribe` has no size cap because it returns text rather than bytes,
+so it remains the right home for the class.
 
 ### imageId format
 
@@ -49,9 +80,42 @@ Accepted forms:
   resolver URL (`https://www.familysearch.org/ark:/61903/...`), which
   is then fetched directly.
 - A full resolver URL for one of the above, passed through unchanged.
+- An **unprefixed** id of exactly the shape `XXXX-XXXX-XXXX-X` (uppercase
+  letters and digits, trimmed), treated as `3:1:` and resolved like any other
+  `3:1:` ARK. It exists because a delegating agent dropped the prefix from a
+  pasted viewer URL in an alpha-feedback run. The shape is the only one
+  accepted without a prefix. On `main` at `3cdfcb6a9`, 161 distinct prefixed ids of
+  that shape are `3:1:` and 1 is `3:2:` (a test value), counted with
+  `git grep -hoE "[0-9]:[0-9]:[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]\b" -- packages/engine docs eval | sort -u | cut -c1-4 | uniq -c`.
+  Shorter ids collide with `1:1:` persona ids (`XXXX-XXX`, `XXXX-XXXX`) and `4:1:`
+  tree ids (`XXXX-XXX`). The rule lives in `fs-image-fetch.ts`, not `ark.ts`'s
+  `toArk`, which every ARK consumer shares. **Measured 2026-09-28 by the issue's
+  review probe** on `3QS7-89Q6-89S6-Y`: the resolver ignores `i=` and `groupId`
+  (four query forms return byte-identical images), and the `3:2:` form returns 400.
+  On another login the same page returns 403 in every form, so the page is
+  access-restricted per account.
 - An already-resolved DeepZoomCloud ARK URL (ending in `/$dist`) or DGS
   distribution URL (`dgs:.../dist.jpg`), passed through unchanged —
   the pre-existing shapes from before `imageId` was introduced.
+
+**A query string never decides the shape.** `record_read`'s `imageArk` carries
+one (`ark:/61903/3:1:3Q9M-C9PT-V9Q2-2?cc=2363041`), and callers append one to
+the other spellings as readily. Before the resolver runs,
+`foldImageArkInput` respells only the forms a `?…` or `#…` suffix would
+otherwise get refused as `Unrecognized ark`:
+
+| `ark` as given | Read as |
+|---|---|
+| a `/$dist` or `dgs:…/dist.jpg` URL with a query | the same URL, query stripped |
+| a bare `3:1:`/`3:2:` id with a query | its canonical `ark:/61903/…` ARK, query kept |
+| an unprefixed `XXXX-XXXX-XXXX-X` id with a query | `ark:/61903/3:1:…`, query kept |
+| a canonical ARK or resolver URL, with or without a query | unchanged |
+
+The query is kept on an ARK because the resolver reads it the same way for
+every spelling: only `i`/`cc`/`groupId` are forwarded, on the first attempt,
+with the bare resolver URL as the fallback (below); anything else is dropped. A
+spelling that was already accepted is never rewritten, so its saved-image key
+(`images/<key>.jpg`) does not change.
 
 **Verified against a live session (2026-07-07):** fetching a `3:1:`/
 `3:2:` ARK's resolver URL redirects straight to the image bytes
@@ -147,6 +211,10 @@ The tool returns two content blocks:
 ```typescript
 {
   url: string          // The distribution URL that was built and fetched
+  viewerUrl?: string   // FamilySearch viewer URL for the image.
+                        // Present for imageId and ark inputs; absent for memoryArtifactUrl.
+                        // DGS: https://www.familysearch.org/search/film/<dgs>?i=<n-1> (zero-indexed).
+                        // ARK: the resolver URL, preserving i=/cc=/groupId= context params.
   mimeType: string     // e.g. "image/jpeg"
   sizeBytes: number    // Size of the image in bytes
   imageRef?: string    // Project-relative saved path (images/<key>.jpg), present only
@@ -159,17 +227,29 @@ The tool returns two content blocks:
 | Condition | Message |
 |-----------|---------|
 | Not logged in | "Not authenticated. Call the login tool first." |
-| Both imageId and ark provided | "Provide either imageId or ark, not both." |
-| Neither imageId nor ark provided | "image_read requires either imageId or ark." |
+| More than one of imageId, ark and memoryArtifactUrl provided | "Provide exactly one of imageId, ark, or memoryArtifactUrl." (`imageArk` counts as `ark`) |
+| None of them provided | "image_read requires one of imageId, ark, or memoryArtifactUrl. Received keys: {each key passed, marked `(empty)` or `(not a string)` where so}." — or "Received no keys." |
+| `ark` and `imageArk` both given, and they do not name the same image (see Input) | "image_read was given both ark ('{ark}') and imageArk ('{imageArk}'), which do not name the same image. imageArk is another name for ark: pass only one." — thrown before any fetch |
+| `ark` is not a string | "image_read was given an ark that is not a string ({null, a number, an array, …}). Pass ark as a string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given." — thrown before any fetch, with or without `imageArk` |
 | Invalid imageId format | "Unrecognized imageId. Expected an Image Group Number of the form NUMBER_NUMBER (e.g. 004884748_02613)." |
-| Invalid ark format | "Unrecognized ark. Expected a FamilySearch document-image ARK (ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, or a resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS distribution URL (dgs:.../dist.jpg)." |
-| FamilySearch returns non-2xx | "FamilySearch image fetch failed: {status} {statusText}" |
+| Invalid ark format | "Unrecognized ark. Expected a FamilySearch document-image ARK (ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, an unprefixed XXXX-XXXX-XXXX-X id (treated as 3:1:), or a resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS distribution URL (dgs:.../dist.jpg). Pass the FamilySearch page URL or ARK exactly as the user gave it, including its 3:1:/3:2: prefix; do not build an imageId from a groupId or an i= index." |
+| FamilySearch returns non-2xx | "FamilySearch image fetch failed: {status} {statusText}" (the `{statusText}` and its separating space are omitted when the response carries none). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field, and to passing the full page URL when the ark carries `i=`/`cc=`/`groupId=` context. It states that `image_search` returns image ids rather than arks. Every other status — including 401/403 (rights-restricted image) and 429 — keeps the bare message, because the ark is real and re-fetching it returns the same one. |
 | Response is not an image | "Expected an image response but got content-type: {type}" |
+| 21st distinct image in one image group in one project | "Image cap reached: 20 distinct images from image group {group} have already been read in this project, …" — thrown before the fetch. See §"Image cap" below. |
 | Image exceeds the inline size cap | "FamilySearch image {imageId or ark} is {N} MB — too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. OCR it with image_transcribe instead (it reads the scan host-side and returns text, with no size limit), or read the indexed record with record_read / record_search." |
+
+## Image cap
+
+`image_read` shares the hard image cap with `image_transcribe` and `volume_bisect`:
+one count of distinct `imageId`s per image group per project, refused from the 21st,
+checked before the fetch and recorded after it succeeds. The contract, the persisted
+log and its limits are in `image-transcribe-tool-spec.md` §5.8; this tool follows it
+unchanged. A `3:1:`/`3:2:` `ark` and a `memoryArtifactUrl` are not counted; a DGS
+distribution URL passed as `ark` embeds its `imageId` and is.
 
 ## Auth
 
-Uses `getValidToken()` from `src/auth/refresh.ts`. Passes the token as
+Uses `getValidToken(principal)` from `src/auth/refresh.ts`. Passes the token as
 `Authorization: Bearer {token}`. Do not re-implement token logic.
 
 ## Size cap (a transport floor, not the primary defense)
@@ -199,7 +279,7 @@ crashed — no single image was near the ceiling.) Lowering the ceiling does
 The accumulation fix is the **`image-reader` subagent**
 (`packages/engine/plugin/agents/image-reader.md`, spec:
 `docs/specs/image-reader-agent-spec.md`): callers that need a scan's text
-(currently only `record-extraction`) delegate to it via `Task` instead of
+(currently the `search-records` and `search-full-text` skills) delegate to it via `Task` instead of
 calling `image_read` directly. The subagent reads the image in an isolated
 context and returns only a text transcription, so the base64 never enters —
 or accumulates in — the main transcript. `image_read` itself is unchanged; it

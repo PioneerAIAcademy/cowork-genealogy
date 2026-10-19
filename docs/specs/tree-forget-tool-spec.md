@@ -34,7 +34,7 @@ Two properties made it a bad fit for a skill script in the first place:
 - **The path problem is structural.** It was the only script-bearing skill in
   the plugin, so there was no house convention for spelling the invocation, and
   no packaging test to catch the miss. Skill-relative path resolution is already
-  documented as unreliable (issue #17741) — that is why shared `references/` are
+  documented as unreliable (claude-code#17741) — that is why shared `references/` are
   duplicated per skill rather than linked.
 - **Step 1 forced a full tree read.** To turn "his parents" into
   `parents-of:<person_id>` the agent had to `Read tree.gedcomx.json` — tens of
@@ -381,6 +381,22 @@ decides: clear those entries first, or pick a fact-level selector that does not
 cascade. The skill already tells the researcher that pre-existing assertions
 stating the answer compromise the exercise anyway.
 
+### Plan-phase precondition
+
+`tree_forget` refuses the call — including dry runs — when `research.json`
+already holds a non-empty `plans` array. The condition is **any entry at all**,
+not narrowed to active plans or in-progress items; a completed plan still means
+the project has moved past setup. The error message names the cause and says to
+start a new project.
+
+This is checked after the project-file reads (`NoProjectError` takes priority)
+and before any tree mutation or dry-run exit. Implemented as a `TreeForgetError`
+throw, so the existing catch returns `{ ok: false, errors }`.
+
+What it buys: the §1a collision where `question-selection` refused to create a
+new question while unrelated plan items sat `in_progress` after a mid-project
+forget is removed at source rather than anchored with an exception.
+
 ## 5. The restore file
 
 A non-dry run writes the pre-removal tree to **`.tree-before-forget.gedcomx.json`**
@@ -392,10 +408,10 @@ Three properties are load-bearing:
   agent's file browsing and the feedback bundler skip dot-prefixed entries, so
   the restore point cannot be picked up by accident. SKILL.md additionally
   forbids reading it.
-- **No `.bak`.** Unlike `tree_edit`, this tool does **not** call
-  `backupIfExists`. That would write `tree.gedcomx.json.bak` — same content, but
-  *not* dot-prefixed, so it would be exactly the readable copy of the answer the
-  dot-prefix exists to prevent.
+- **No `.bak`.** This tool writes no `tree.gedcomx.json.bak` — that would be a
+  non-dot-prefixed, readable copy of the answer, exactly what the dot-prefixed
+  restore file exists to avoid. (No tree writer creates a `.bak` any more — the
+  writer was removed for leaking unredacted trees into feedback bundles.)
 - **Written once, never overwritten.** If `.tree-before-forget.gedcomx.json`
   already exists, it is left alone and the run proceeds. The restore point
   therefore always refers to the **original** tree, not to an
@@ -407,7 +423,9 @@ Three properties are load-bearing:
 ## 6. Re-invocation
 
 Forgetting is **additive**: a second call strips a further slice from the
-already-stripped tree. Failures are safe — a selector that matches nothing, an
+already-stripped tree — provided no plan has been written between the two calls.
+Once any plan exists, both the first and any subsequent call are refused (§4).
+Failures are safe — a selector that matches nothing, an
 unknown id, or a validation error all abort before any write, leaving no partial
 edit.
 

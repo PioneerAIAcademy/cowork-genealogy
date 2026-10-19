@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
-"""GH Action: the e2e grading gate (a discipline check on committed files).
+"""GH Action: the e2e discipline gates (checks on committed files).
 
 ## Grading gate (BLOCKING)
 
-Every run log ADDED in this PR that produced a final tree must ship its
-``run-<ts>.ann.json`` in the same PR — grading is same-PR (the developer +
+Every run log ADDED OR RENAMED into the corpus in this PR that produced a
+final tree must ship its ``run-<ts>.ann.json`` in the same PR — grading is
+same-PR (the developer +
 genealogist teams grade every run they commit; docs/e2e-testing-guide.md
 "Grading a run"). A treeless run (crashed or skipped before a final tree) is
-exempt: there is nothing to grade. Scoped to PR-added run logs via
-``git diff --diff-filter=A`` (BASE_SHA / HEAD_SHA), mirroring check_runlogs.py
-rule 1; skipped when run outside a PR (env unset), so local runs still work.
+exempt: there is nothing to grade. A ``host_slept`` run is the second exemption
+(issue #2974): it HAS a tree but the judge is skipped by design, so no
+annotation is owed — see ``check_added_runlogs_graded``. Scoped to run logs ADDED OR RENAMED into
+the corpus via ``git diff --diff-filter=AR`` (BASE_SHA / HEAD_SHA), so a run
+promoted out of quarantine is caught; skipped when run outside a PR (env
+unset), so local runs still work.
+Both siblings are resolved from the HEAD_SHA tree, never the working directory,
+so a local run and CI reach the same verdict (issue #2469).
 
 The grading gate checks annotation *presence*, not content. Deeper content
 validity (drift / incomplete / malformed) is the maintainer's
@@ -17,6 +23,25 @@ validity (drift / incomplete / malformed) is the maintainer's
 out of CI so this script stays stdlib-only and never needs the harness venv.
 The one content check that lives here is the component-derivation drift warning
 below: it is pure stdlib JSON arithmetic, so it meets the same constraint.
+
+## 1M-window gate (BLOCKING)
+
+A run log added or renamed into ``eval/runlogs/e2e/`` whose ``usage.betas`` is
+non-empty was made with ``--context-1m``. A 1M window changes the compaction
+count and the cache-gap structure — what ``make e2e-compaction`` and
+``make e2e-cache-window`` measure — and ``all_result_jsons`` scans the corpus
+with no exclusion, so such a run lands at maximum weight. Keep it in a sibling
+directory outside ``eval/runlogs/e2e/``. Same AR scoping and same HEAD_SHA-tree
+read as the grading gate above.
+
+## Tool-search-off gate (BLOCKING)
+
+A run log added or renamed into ``eval/runlogs/e2e/`` whose flat
+``usage.tool_search`` or ``usage.tool_search_offered`` is ``False`` ran with
+every tool schema loaded up front (``--no-tool-search``, or an inherited
+``CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`` that turned an "on" run off). Its
+context size, cache figures and ToolSearch count are not the corpus's. Same AR
+scoping and HEAD_SHA-tree read as the two gates above.
 
 ## Unresolved-draft check (WARN only)
 
@@ -64,6 +89,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -75,6 +101,41 @@ RUNLOGS_DIR = REPO_ROOT / "eval" / "runlogs" / "e2e"
 # The marker `/resolve-record-hint` strips from a record-hint fixture's README
 # when a genealogist resolves it. Its presence == still an unverified draft.
 DRAFT_MARKER = "DRAFT PENDING ADJUDICATION"
+
+# Credential scanner. This script stays stdlib-only and never imports the
+# harness venv (docstring above), so these specs are DUPLICATED verbatim from
+# eval/harness/harness/redact.py -- the single source of truth -- and
+# test_check_e2e_fixtures.py asserts the two lists are byte-identical, so any
+# drift reds CI. (label, kind, pattern); kind "value" == whole match is the
+# secret, "field" == a JSON key whose quoted value (group 4) is the secret. The
+# `\\?"` opening/closing quotes match both the escaped form the credential lands
+# in when captured inside a stringified JSON dump and the unescaped form; the
+# `(?!\[REDACTED)` lookahead keeps an already-redacted placeholder from being
+# flagged (BLOCKING regression: the redacted tip must PASS).
+CREDENTIAL_PATTERN_SPECS = [
+    ("OPENROUTER-KEY", "value", r"sk-or-v1-[A-Za-z0-9_\-]+"),
+    ("ANTHROPIC-KEY", "value", r"sk-ant-[A-Za-z0-9_\-]+"),
+    ("FS-ACCESS-TOKEN", "field", r'(\\*")(accessToken|access_token)(\\*"\s*:\s*\\*")(?!\[REDACTED)([^"\\]+)'),
+    ("FS-REFRESH-TOKEN", "field", r'(\\*")(refreshToken|refresh_token)(\\*"\s*:\s*\\*")(?!\[REDACTED)([^"\\]+)'),
+    ("OPENROUTER-KEY", "field", r'(\\*")(openRouterApiKey|openrouter_api_key)(\\*"\s*:\s*\\*")(?!\[REDACTED)([^"\\]+)'),
+]
+_CREDENTIAL_COMPILED = [(label, kind, re.compile(pat)) for label, kind, pat in CREDENTIAL_PATTERN_SPECS]
+
+
+def scan_for_credentials(text: str) -> list[str]:
+    """Sorted, de-duplicated labels of any credential patterns matching ``text``
+    (never the values). Empty == clean. Best-effort: never raises. Kept
+    byte-identical to redact.scan_for_credentials (drift-tested)."""
+    if not isinstance(text, str):
+        return []
+    hits = []
+    try:
+        for label, _kind, pat in _CREDENTIAL_COMPILED:
+            if pat.search(text):
+                hits.append(label)
+    except Exception:  # noqa: BLE001
+        pass
+    return sorted(set(hits))
 
 
 # --------------------------------------------------------------------------- #
@@ -92,23 +153,54 @@ def _is_primary_runlog(name: str) -> bool:
     )
 
 
+class GateUnavailable(RuntimeError):
+    """The gate could not read the tree it must check.
+
+    Raised rather than returning a sentinel so the caller cannot mistake it for
+    "no run logs were added" -- the failure mode this whole check exists to stop.
+    """
+
+
 def git_added_e2e_runlogs() -> list[Path] | None:
     """PR-added primary run logs under eval/runlogs/e2e/, as repo-relative Paths.
 
     Returns ``None`` when not running in a PR context (BASE_SHA / HEAD_SHA
-    unset) — the grading gate only applies to files added in the PR, mirroring
-    check_runlogs.py rule 1 (``git diff --diff-filter=A``). Local runs skip it.
+    unset). Read by the two WARN-only checks, and by main() for the skip
+    decision and the OK line's second denominator; both blocking gates read
+    ``git_ar_e2e_runlogs()`` instead. Local runs skip it.
     """
     base = os.environ.get("BASE_SHA")
     head = os.environ.get("HEAD_SHA")
     if not base or not head:
         return None
-    out = subprocess.check_output(
-        ["git", "diff", "--name-only", "--diff-filter=A", base, head],
-        text=True,
-        encoding="utf-8",
-        cwd=REPO_ROOT,
-    )
+    # An unfetched sha, a shallow clone or a cwd that is not a repo all die HERE,
+    # in the selection step, before any sibling is looked up -- `check_output`
+    # raises on a non-zero exit. Left uncaught that surfaces as a six-frame
+    # traceback naming `subprocess`, which says nothing about what to do. Caught
+    # here it becomes the one actionable line, at the only place the failure can
+    # actually occur.
+    try:
+        out = subprocess.check_output(
+            ["git", "-c", "diff.renames=true", "diff",
+             "--name-only", "--diff-filter=A", base, head],
+            text=True,
+            encoding="utf-8",
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise GateUnavailable(
+            f"could not diff {base}..{head} in this checkout (git exited "
+            f"{exc.returncode}), so the grading gate cannot see which run logs this "
+            "PR added. Either the commit was never fetched (CI uses fetch-depth: 0) "
+            "or this directory is not a git repository. Refusing rather than "
+            "reporting zero added run logs."
+        ) from exc
+    except FileNotFoundError as exc:  # git itself absent
+        raise GateUnavailable(
+            "git is not on PATH, so the grading gate cannot read the tree it must "
+            "check. Refusing rather than reporting zero added run logs."
+        ) from exc
     added: list[Path] = []
     for line in out.splitlines():
         path = line.strip()
@@ -124,7 +216,307 @@ def git_added_e2e_runlogs() -> list[Path] | None:
     return added
 
 
-def check_added_runlogs_graded(added: list[Path]) -> list[str]:
+QUARANTINE_HINT = (
+    "a sibling directory outside eval/runlogs/e2e/ — the mechanism "
+    "eval/runlogs/_2491-exploratory-quarantine/ uses for its own experiment"
+)
+
+
+def _e2e_runlogs_by_filter(diff_filter: str) -> list[Path] | None:
+    """Primary e2e run logs a PR touched under a given ``--diff-filter``.
+
+    Shared body for `git_ar_e2e_runlogs` (``AR``) and `git_arm_e2e_runlogs`
+    (``ARM``). None when BASE_SHA/HEAD_SHA are unset. `-c diff.renames=true` is
+    pinned (see `git_ar_e2e_runlogs` for why); the destination is `parts[-1]`,
+    which handles A (2 fields), R (3) and M (2) alike.
+    """
+    base = os.environ.get("BASE_SHA")
+    head = os.environ.get("HEAD_SHA")
+    if not base or not head:
+        return None
+    try:
+        out = subprocess.check_output(
+            ["git", "-c", "diff.renames=true", "diff",
+             "--name-status", f"--diff-filter={diff_filter}", base, head],
+            text=True,
+            encoding="utf-8",
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise GateUnavailable(
+            f"could not diff {base}..{head} in this checkout (git exited "
+            f"{exc.returncode}), so a blocking gate cannot see which run logs "
+            f"this PR touched (--diff-filter={diff_filter}). Either the commit "
+            "was never fetched (CI uses fetch-depth: 0) or this directory is not "
+            "a git repository. Refusing rather than reporting zero."
+        ) from exc
+    except FileNotFoundError as exc:
+        raise GateUnavailable(
+            "git is not on PATH, so a blocking gate cannot read the tree it "
+            "must check. Refusing rather than reporting zero."
+        ) from exc
+    out_paths: list[Path] = []
+    for line in out.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        # `R<score>` rows carry src AND dst; the DESTINATION is what arrived in
+        # the corpus. Taking parts[-1] handles A (2 fields) and R (3) alike, and
+        # matches check_runlogs.py::git_diff_changes.
+        p = Path(parts[-1].strip())
+        if (
+            len(p.parts) >= 4
+            and p.parts[:3] == ("eval", "runlogs", "e2e")
+            and _is_primary_runlog(p.name)
+        ):
+            out_paths.append(p)
+    return out_paths
+
+
+def git_ar_e2e_runlogs() -> list[Path] | None:
+    """PR-added OR renamed-into-place primary e2e run logs.
+
+    Deliberately NOT a widening of the shared `git_added_e2e_runlogs()`, which
+    the two warn-only checks still read: widening that one would change what
+    they report as well. The grading and 1M gates read this selector; the
+    credential gate reads `git_arm_e2e_runlogs` (it must also see MODIFIED logs,
+    e.g. a redaction that edits an already-committed run log).
+
+    Why renames matter, and why the grading gate reads this too: promoting a run
+    out of quarantine arrives as a RENAME, which `--diff-filter=A` does not
+    report at all. Measured 2026-09-15 —
+    eval/runlogs/_2491-exploratory-quarantine/ holds four runs, every one with a
+    `.final-tree.gedcomx.json` and ZERO `.ann.json` — so before this selector
+    existed, that promotion landed a tree-producing, ungraded run in the
+    calibration corpus by the one route neither gate could see.
+
+    `-c diff.renames=true` is pinned on BOTH selectors, but it is the pin on
+    `git_added_e2e_runlogs()` that is load-bearing. Measured: with
+    `diff.renames=false` git reports a promotion as a plain `A <destination>`
+    instead of `R100 <src> <destination>`. THIS selector takes the last field
+    either way, so its output is unchanged and removing its pin reds nothing.
+    The A selector flips from returning nothing to returning the destination,
+    which recounts a promotion as an added run — without its pin this file
+    fails two rows under `GIT_CONFIG_GLOBAL=<diff.renames=false>`. The pin here
+    is kept as the matching half of a pair, not because it changes this output;
+    `test_both_selectors_pin_rename_detection_against_the_runners_gitconfig`
+    asserts the half that does.
+    """
+    return _e2e_runlogs_by_filter("AR")
+
+
+def git_arm_e2e_runlogs() -> list[Path] | None:
+    """PR-added, renamed, OR MODIFIED primary e2e run logs — the set the
+    credential gate reads.
+
+    A credential can be introduced by EDITING an already-committed run log (net
+    status M), which `--diff-filter=AR` never reports. That is not hypothetical:
+    a redaction commit modifies an existing run log, and a botched or partial
+    redaction that leaves or reintroduces a token would otherwise pass CI
+    silently. The grading and 1M gates keep reading the AR set (a modified run
+    log is already graded and already 1M-classified); only the credential scan
+    needs the wider ARM set.
+    """
+    return _e2e_runlogs_by_filter("ARM")
+
+
+def _read_at_head(head: str, rel: Path) -> dict | None:
+    """Parse ``rel`` out of the git tree at ``head``. None on anything unusable.
+
+    The content sibling of `_in_head_tree`, which answers presence only. Reading
+    the WORKING DIRECTORY here would reintroduce exactly the defect PR #2550
+    fixed in this file: a log edited on disk but not committed, or committed and
+    then edited, would be judged on bytes CI will never see.
+
+    Binary capture with an explicit decode, so `test_encoding_lint.py`'s
+    text-mode rule does not apply and no platform default can leak in. None
+    covers: undecodable, unparseable, and a root that is not an object — none
+    of which make a run a 1M run.
+
+    A non-zero `git show` RAISES rather than returning None. Every path handed
+    to this function was just reported by `git_ar_e2e_runlogs()` as added or
+    renamed INTO the tree at `head`, so the blob is known to be there: a
+    failure is an anomaly (git gone mid-run, a transient fork failure, an
+    unreadable object), not evidence of no betas. Returning None there reports
+    a file it never opened as clean, which is the same silent-zero the
+    selectors refuse for — and it is reachable, since these git subprocesses do
+    intermittently fail under load.
+    """
+    proc = subprocess.run(
+        ["git", "show", f"{head}:{rel.as_posix()}"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+    )
+    if proc.returncode != 0:
+        raise GateUnavailable(
+            f"could not read {rel} out of the tree at {head} (git exited "
+            f"{proc.returncode}), though the selector just reported it as added "
+            "or renamed into that tree. Refusing rather than reporting the run "
+            "as not-1M on a file that was never opened."
+        )
+    try:
+        parsed = json.loads(proc.stdout.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def check_added_runlogs_not_1m(added: list[Path], head: str) -> list[str]:
+    """Blocking: a PR-added-or-renamed run log made with the 1M context window.
+
+    `--context-1m` sets the SDK's context-1m-2025-08-07 beta and records it in
+    `usage.betas`. A 1M window changes the compaction count and the cache-gap
+    structure, which is what `make e2e-compaction` and `make e2e-cache-window`
+    measure, and `all_result_jsons` scans eval/runlogs/e2e/ with no exclusion at
+    a 14-day window — so a committed 1M run lands at maximum weight.
+
+    The field is FLAT: `usage.betas`, beside `deny_shell`. NOT `usage.usage.betas`
+    — the usage envelope carries a nested `usage` key of SDK token counts, and
+    reading that one finds nothing forever.
+
+    Non-empty LIST only. `[]` is a normal run (174 of the 175 committed runs
+    predate the field; the 175th records `[]`), and a non-list is malformed
+    rather than 1M — neither is this check's business to report.
+    """
+    violations: list[str] = []
+    for rel in added:
+        log = _read_at_head(head, rel)
+        if not isinstance(log, dict):
+            continue
+        usage = log.get("usage")
+        if not isinstance(usage, dict):
+            continue
+        betas = usage.get("betas")
+        if not isinstance(betas, list) or not betas:
+            continue
+        violations.append(
+            f"run log '{rel}' was made with the 1M context window "
+            f"(usage.betas = {betas!r}) and must not be committed under "
+            "eval/runlogs/e2e/. A 1M window changes the compaction count and the "
+            "cache-gap structure, so the run is not comparable to the corpus and "
+            "would skew every windowed report at maximum weight. Keep it in "
+            f"{QUARANTINE_HINT}."
+        )
+    return violations
+
+
+def check_added_runlogs_tool_search_on(added: list[Path], head: str) -> list[str]:
+    """Blocking: a PR-added-or-renamed run log made with tool search off.
+
+    `--no-tool-search` writes `usage.tool_search: false`; the init `tools` list
+    without ToolSearch writes `usage.tool_search_offered: false`. Either one
+    means every schema was loaded up front, so the run's prefix, cache reads and
+    ToolSearch count are not the corpus's. The second catches a run that asked
+    for tool search and was turned off underneath it (an inherited
+    `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`).
+
+    FLAT keys, beside `betas`: NOT `usage.usage.*`, the nested SDK token block.
+
+    Strict `is False`. Absent (every run committed before the fields existed)
+    and `None` (an init with no `tools` list) pass — a truthiness test would
+    reject the whole corpus.
+
+    Cannot catch a run the CLI's per-model gate turned off: that run's init
+    list still offers ToolSearch, so both fields read True. Only the first main
+    call's context size shows it.
+    """
+    violations: list[str] = []
+    for rel in added:
+        log = _read_at_head(head, rel)
+        if not isinstance(log, dict):
+            continue
+        usage = log.get("usage")
+        if not isinstance(usage, dict):
+            continue
+        off = [
+            key for key in ("tool_search", "tool_search_offered")
+            if usage.get(key) is False
+        ]
+        if not off:
+            continue
+        violations.append(
+            f"run log '{rel}' was made with tool search off "
+            f"({', '.join(f'usage.{k} = false' for k in off)}) and must not be "
+            "committed under eval/runlogs/e2e/. With every tool schema loaded up "
+            "front its context size, cache figures and ToolSearch count are not "
+            "comparable to the corpus. Keep it in "
+            f"{QUARANTINE_HINT}."
+        )
+    return violations
+
+
+def _show_at_head_raw(head: str, rel: Path) -> str:
+    """Raw decoded ``git show`` stdout for ``rel`` at ``head`` — the whole file
+    text, not parsed JSON.
+
+    Deliberately NOT `_read_at_head`: that one `json.loads`es and returns None on
+    unparseable input, so a malformed-but-credential-bearing log would be read as
+    clean (the silent-zero this file refuses elsewhere). Scanning the raw text
+    also catches a credential wherever it sits (response_summary, args, anywhere)
+    and in the escaped form it lands in inside a stringified JSON dump. Same
+    refuse-on-unreadable contract as `_read_at_head`: git show raises rather than
+    reporting a file it never opened as clean."""
+    proc = subprocess.run(
+        ["git", "show", f"{head}:{rel.as_posix()}"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+    )
+    if proc.returncode != 0:
+        raise GateUnavailable(
+            f"could not read {rel} out of the tree at {head} (git exited "
+            f"{proc.returncode}), though the selector just reported it as added "
+            "or renamed into that tree. Refusing rather than scanning a file that "
+            "was never opened."
+        )
+    return proc.stdout.decode("utf-8", errors="replace")
+
+
+def check_added_runlogs_no_credentials(added: list[Path], head: str) -> list[str]:
+    """Blocking: a PR-added-or-renamed run log carrying a live credential.
+
+    The e2e agent's built-in Read can reach a host secret file
+    (~/.familysearch-mcp/config.json or tokens.json) and the harness captures the
+    output verbatim into a tool call's response_summary. The orchestrator now
+    scrubs those at capture time (harness/redact.py); this is the backstop that
+    keeps a run log with a credential from landing in a public repo — it scans
+    the whole committed file text, so it also covers a credential in args or any
+    other field the capture-time redactor does not touch."""
+    violations: list[str] = []
+    for rel in added:
+        labels = scan_for_credentials(_show_at_head_raw(head, rel))
+        if labels:
+            violations.append(
+                f"run log '{rel}' contains what looks like a live credential "
+                f"({', '.join(labels)}). A run log is committed to a public repo, "
+                "so it must carry no secret. This usually means the agent Read a "
+                "host credential file (~/.familysearch-mcp/config.json or "
+                "tokens.json) during the run; redact the value(s) to a "
+                "[REDACTED-...] placeholder before committing, and treat the "
+                "exposed credential as compromised and rotate it."
+            )
+    return violations
+
+
+def _in_head_tree(head: str, rel: Path) -> bool:
+    """True when ``rel`` (repo-relative) exists in the git tree at ``head``.
+
+    Only reached once `git_added_e2e_runlogs` has already diffed against ``head``
+    from this same cwd, so a 128 here is a missing PATH rather than a broken
+    checkout -- that case refuses in the selection step above.
+    Paths are POSIX-joined because git addresses ``<sha>:<path>`` with forward
+    slashes on every platform. Binary mode: only the returncode is read, so the
+    child's bytes are never decoded.
+    """
+    proc = subprocess.run(
+        ["git", "cat-file", "-e", f"{head}:{rel.as_posix()}"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+    )
+    return proc.returncode == 0
+
+
+def check_added_runlogs_graded(added: list[Path], head: str) -> list[str]:
     """Blocking gate: every PR-added run log that produced a tree must ship its
     committed ``run-<ts>.ann.json`` in the same PR.
 
@@ -132,17 +524,33 @@ def check_added_runlogs_graded(added: list[Path]) -> list[str]:
     loader can't grade it and neither can a human, so no annotation is owed.
     Detected by the absence of the ``run-<ts>.final-tree.gedcomx.json`` sibling,
     which is exactly the file the grade loader requires.
+
+    A ``host_slept`` run is the second exemption (issue #2974): unlike every
+    other committed run it HAS a tree yet is ungraded by design — the host slept
+    past the inactivity cap, so the judge was skipped and no annotation is owed.
+    It is the first committed-and-ungraded stop reason (``mcp_unavailable`` raises
+    before a result is built), so it is the one case treelessness does not cover;
+    keyed on ``stop_reason`` read from the head tree, and fails safe — an
+    unreadable/unparseable log reads as not-host_slept and still owes its
+    annotation.
+
+    Both siblings resolve from the ``head`` tree, not the working directory: the
+    run logs were selected from that tree too, and a sibling present on disk but
+    uncommitted must not change the verdict (issue #2469). The two warn-only
+    checks below deliberately keep reading the working directory — they never
+    block, so the disagreement costs nothing there. Do not "unify" them.
     """
     violations: list[str] = []
     for rel in added:
-        runlog = REPO_ROOT / rel
         stem = rel.name[: -len(".json")]  # run-<ts>
-        slug_dir = runlog.parent
+        slug_dir = rel.parent
         tree = slug_dir / f"{stem}.final-tree.gedcomx.json"
         ann = slug_dir / f"{stem}.ann.json"
-        if not tree.exists():
+        if not _in_head_tree(head, tree):
             continue  # treeless run — nothing to grade
-        if not ann.exists():
+        if (_read_at_head(head, rel) or {}).get("stop_reason") == "host_slept":
+            continue  # host slept past the cap: the judge is skipped by design (#2974)
+        if not _in_head_tree(head, ann):
             violations.append(
                 f"run log '{rel}' produced a final tree but no committed "
                 f"'{stem}.ann.json'. Grade it in this PR with /grade-e2e-run and "
@@ -308,15 +716,244 @@ def check_matched_vs_components(added: list[Path]) -> list[str]:
 
 
 # --------------------------------------------------------------------------- #
+# Annotation structural validation (blocking): reimplemented mechanical rungs
+# from calibrate_judge.load_annotated_runs (rungs 1-10)
+# --------------------------------------------------------------------------- #
+
+# Hand-kept in sync with calibrate_judge.ALLOWED_ANN_KEYS. This script cannot
+# import calibrate_judge (it pulls in e2e.judge → anthropic, and this script
+# runs on a bare python with no harness venv). Same pattern as derive_matched.
+_ALLOWED_ANN_KEYS = {"annotator", "per_finding", "proof_quality_score", "notes", "findings_hash", "blind_bundle_digest"}
+_FINDING_LABELS = {"true", "partial", "false"}
+
+
+def _findings_hash_local(expected_findings_path: Path) -> str:
+    """Reimplement ``e2e.provenance.findings_hash`` using only stdlib.
+
+    Hand-kept in sync with ``e2e.provenance.findings_hash`` — the
+    normalization is: JSON parse → ``json.dumps(sort_keys=True, indent=2,
+    ensure_ascii=False)`` → trailing newline → sha256. This is the same
+    contract ``harness.snapshot.hash_file`` fulfils for ``.json`` files.
+    """
+    import hashlib
+    raw = expected_findings_path.read_text(encoding="utf-8")
+    parsed = json.loads(raw)
+    normalized = json.dumps(parsed, sort_keys=True, indent=2, ensure_ascii=False) + "\n"
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _hash_file_local(key: str, path: Path) -> str:
+    """Reimplement ``harness.snapshot.hash_file`` using only stdlib.
+
+    Hand-kept in sync — the normalization for ``.json`` is: JSON parse →
+    ``json.dumps(sort_keys=True, indent=2, ensure_ascii=False)`` → trailing
+    newline → sha256. Returns ``""`` for a missing file, matching
+    ``hash_file``. Non-JSON keys would use raw bytes, but the 4 bundle
+    files are all JSON.
+    """
+    import hashlib
+    if not path.exists():
+        return ""
+    raw = path.read_text(encoding="utf-8")
+    parsed = json.loads(raw)
+    normalized = json.dumps(parsed, sort_keys=True, indent=2, ensure_ascii=False) + "\n"
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _bundle_digest_local(
+    slug: str,
+    stem: str,
+    fixtures_dir: Path,
+    runlogs_dir: Path,
+) -> str:
+    """Reimplement ``e2e.blind_bundle.bundle_digest`` using only stdlib.
+
+    Hand-kept in sync with ``e2e.blind_bundle.bundle_digest`` — hash each
+    of the 4 files via ``hash_file``, build a sorted ``{filename: hash}``
+    map, then sha256 the JSON of that map.
+    """
+    import hashlib
+    fixture_dir = fixtures_dir / slug
+    runlog_dir = runlogs_dir / slug
+    paths = [
+        fixture_dir / "expected-findings.json",
+        fixture_dir / "fixture.json",
+        runlog_dir / f"{stem}.final-tree.gedcomx.json",
+        runlog_dir / f"{stem}.final-research.json",
+    ]
+    file_map: dict[str, str] = {}
+    for p in paths:
+        file_map[p.name] = _hash_file_local(p.name, p)
+    combined = json.dumps(file_map, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(combined.encode("utf-8")).hexdigest()
+
+
+def validate_e2e_annotations(runlogs_dir: Path, fixtures_dir: Path) -> list[str]:
+    """Run mechanical validation (rungs 1-10) over every e2e ``.ann.json``.
+
+    Returns a list of ``::error::`` messages for structural violations.
+    Never calls a model; no API key needed. A clean corpus returns ``[]``.
+    """
+    errors: list[str] = []
+    for ann_path in sorted(runlogs_dir.glob("*/run-*.ann.json")):
+        rel = ann_path.relative_to(runlogs_dir)
+
+        # 1. parse
+        try:
+            ann = json.loads(ann_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+            errors.append(f"e2e annotation `{rel}`: invalid JSON ({e})")
+            continue
+        if not isinstance(ann, dict):
+            errors.append(f"e2e annotation `{rel}`: expected a JSON object")
+            continue
+
+        # 2. structural — known keys + per_finding present
+        unknown = set(ann) - _ALLOWED_ANN_KEYS
+        if unknown:
+            errors.append(
+                f"e2e annotation `{rel}`: unknown key(s) {sorted(unknown)} "
+                f"(allowed: {sorted(_ALLOWED_ANN_KEYS)})"
+            )
+            continue
+        per_finding = ann.get("per_finding")
+        if not isinstance(per_finding, dict) or not per_finding:
+            errors.append(f"e2e annotation `{rel}`: 'per_finding' missing or not a non-empty object")
+            continue
+
+        # 3. incomplete (inert) — skip, not error
+        if any(v is None for v in per_finding.values()):
+            continue
+
+        stem = ann_path.name[: -len(".ann.json")]
+        slug = ann_path.parent.name
+
+        # 3b. blind-bundle provenance — blind_bundle_digest. Runs before rungs
+        # 4-7 so a findings/tree edit under a stamped annotation reports the
+        # always-blocking digest mismatch rather than a warn-only rung error.
+        stored_bundle = ann.get("blind_bundle_digest")
+        if stored_bundle is not None:
+            try:
+                current_bundle = _bundle_digest_local(
+                    slug, stem, fixtures_dir, runlogs_dir,
+                )
+            except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+                errors.append(f"e2e annotation `{rel}`: cannot compute blind_bundle_digest ({e})")
+                continue
+            if stored_bundle != current_bundle:
+                errors.append(
+                    f"e2e annotation `{rel}`: blind_bundle_digest mismatch — "
+                    f"one of the 4 graded files changed since grading; re-grade or delete"
+                )
+                continue
+
+        # 4. fixture + expected-findings
+        fixture_dir = fixtures_dir / slug
+        ef_path = fixture_dir / "expected-findings.json"
+        try:
+            expected = json.loads(ef_path.read_text(encoding="utf-8"))
+            json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+            errors.append(f"e2e annotation `{rel}`: fixture for slug '{slug}' unreadable ({e})")
+            continue
+
+        # 5. final-tree sibling
+        tree_path = ann_path.parent / f"{stem}.final-tree.gedcomx.json"
+        if not tree_path.exists():
+            errors.append(f"e2e annotation `{rel}`: {tree_path.name} missing — nothing to grade")
+            continue
+        research_path = ann_path.parent / f"{stem}.final-research.json"
+        try:
+            json.loads(tree_path.read_text(encoding="utf-8"))
+            if research_path.exists():
+                json.loads(research_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+            errors.append(f"e2e annotation `{rel}`: final tree/research unreadable ({e})")
+            continue
+
+        # 6. id/key drift
+        findings = expected.get("findings") or []
+        fixture_ids = {str(f.get("id")) for f in findings if isinstance(f, dict)}
+        ann_ids = set(per_finding)
+        if ann_ids != fixture_ids:
+            errors.append(
+                f"e2e annotation `{rel}`: per_finding keys {sorted(ann_ids)} != "
+                f"fixture findings {sorted(fixture_ids)} — re-grade or delete"
+            )
+            continue
+
+        # 7. content drift — findings_hash
+        stored_hash = ann.get("findings_hash")
+        if stored_hash is not None:
+            try:
+                current_hash = _findings_hash_local(ef_path)
+            except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+                errors.append(f"e2e annotation `{rel}`: cannot compute findings_hash ({e})")
+                continue
+            if stored_hash != current_hash:
+                errors.append(
+                    f"e2e annotation `{rel}`: findings_hash mismatch — "
+                    f"expected-findings.json changed since grading; re-grade or delete"
+                )
+                continue
+
+        # 9. enum validation
+        bad = {fid: v for fid, v in per_finding.items() if not isinstance(v, str) or v not in _FINDING_LABELS}
+        if bad:
+            errors.append(f"e2e annotation `{rel}`: per_finding labels {bad} not in {sorted(_FINDING_LABELS)}")
+            continue
+        pq = ann.get("proof_quality_score")
+        if pq not in (1, 2, 3, None):
+            errors.append(f"e2e annotation `{rel}`: proof_quality_score {pq!r} not 1/2/3/null")
+            continue
+        notes = ann.get("notes")
+        if notes is not None:
+            if not isinstance(notes, dict):
+                errors.append(f"e2e annotation `{rel}`: 'notes' must be a {{finding_id: text}} object")
+                continue
+            note_unknown = set(notes) - ann_ids
+            if note_unknown:
+                errors.append(f"e2e annotation `{rel}`: notes for unknown finding(s) {sorted(note_unknown)}")
+                continue
+
+    return errors
+
+
+# --------------------------------------------------------------------------- #
 # CLI
 # --------------------------------------------------------------------------- #
 
 def main() -> int:
+    # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
+    # and dies on the arrows and box glyphs this module prints; the team it is
+    # written for is on Windows. Guarded by tests/unit/test_encoding_lint.py.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     # --- Grading gate (blocking) — PR-added run logs with a tree need an ann ---
-    added = git_added_e2e_runlogs()
+    try:
+        added = git_added_e2e_runlogs()
+        # INSIDE this try on purpose. The handler below wraps only the call
+        # above today, and a GateUnavailable raised from a later line would
+        # propagate as a six-frame traceback -- the failure shape this class
+        # exists to eliminate. `or []` is for the three tests that stub the
+        # selector above and leave this one real; on the production path
+        # `added is not None` already means both shas are set.
+        ar_runlogs = (git_ar_e2e_runlogs() or []) if added is not None else []
+        # The credential gate also needs MODIFIED run logs (a redaction edits an
+        # already-committed log), which the AR set never reports.
+        arm_runlogs = (git_arm_e2e_runlogs() or []) if added is not None else []
+    except GateUnavailable as exc:
+        # Before the warn loops, unavoidably: they take `added`, which does not
+        # exist on this path. Nothing is swallowed because nothing has run.
+        print(f"::error::{exc}")
+        print(f"  - {exc}", file=sys.stderr)
+        return 1
     if added is None:
         print("E2E grading gate skipped (no PR context: BASE_SHA/HEAD_SHA unset).")
         return 0
+    # Present by construction: git_added_e2e_runlogs() returns None when unset.
+    head = os.environ["HEAD_SHA"]
 
     # --- Unresolved-draft check (warn only) — runs first so its output is
     # --- visible even when the blocking gate below fails the job.
@@ -329,7 +966,31 @@ def main() -> int:
         print(f"::warning::{w}")
         print(f"  ! {w}", file=sys.stderr)
 
-    grade_violations = check_added_runlogs_graded(added)
+    # Both gates read the AR set. For the grading gate that closes a real hole:
+    # a run promoted out of quarantine arrives as a RENAME, and every run in
+    # eval/runlogs/_2491-exploratory-quarantine/ has a final tree and no
+    # annotation -- the exact population this gate rejects, arriving by the one
+    # route `--diff-filter=A` cannot see. This is NOT the widening #2581
+    # forbids: the shared selector is untouched and the two warn loops above
+    # still read it, so only this one blocking gate changes what it sees.
+    # Same handler shape as the selector above: `_read_at_head` refuses on an
+    # unreadable blob, and without this that refusal would leave main() as a
+    # traceback rather than the ::error:: a reader can act on.
+    try:
+        grade_violations = check_added_runlogs_graded(ar_runlogs, head)
+        beta_violations = check_added_runlogs_not_1m(ar_runlogs, head)
+        tool_search_violations = check_added_runlogs_tool_search_on(ar_runlogs, head)
+        credential_violations = check_added_runlogs_no_credentials(arm_runlogs, head)
+    except GateUnavailable as exc:
+        print(f"::error::{exc}")
+        print(f"  - {exc}", file=sys.stderr)
+        return 1
+
+    # Both blocking rules report before either returns. A second rule that
+    # printed ::error:: without reaching the return would be a green check, and
+    # short-circuiting on the first would hide the other on the shape that fires
+    # both -- a promoted quarantine run has a tree and no annotation, so an
+    # ADDED 1M run trips the grading gate too.
     if grade_violations:
         print(
             "E2E grading gate — PR-added run logs missing their annotation:",
@@ -338,9 +999,124 @@ def main() -> int:
         for v in grade_violations:
             print(f"::error::{v}")
             print(f"  - {v}", file=sys.stderr)
+    if beta_violations:
+        print(
+            "E2E 1M-window gate — run logs not comparable to the corpus:",
+            file=sys.stderr,
+        )
+        for v in beta_violations:
+            print(f"::error::{v}")
+            print(f"  - {v}", file=sys.stderr)
+    if tool_search_violations:
+        print(
+            "E2E tool-search gate — run logs made with tool search off:",
+            file=sys.stderr,
+        )
+        for v in tool_search_violations:
+            print(f"::error::{v}")
+            print(f"  - {v}", file=sys.stderr)
+    if credential_violations:
+        print(
+            "E2E credential gate — run logs carrying a live secret:",
+            file=sys.stderr,
+        )
+        for v in credential_violations:
+            print(f"::error::{v}")
+            print(f"  - {v}", file=sys.stderr)
+    if (
+        grade_violations
+        or beta_violations
+        or tool_search_violations
+        or credential_violations
+    ):
         return 1
 
-    print(f"E2E grading gate OK ({len(added)} added run log(s) checked).")
+    # --- Annotation structural validation (blocking on PR-added/modified, warn corpus) —
+    # --- rungs 1-10 from calibrate_judge.load_annotated_runs, reimplemented
+    # --- stdlib-only (#2487 PR B).
+    fixtures_dir = REPO_ROOT / "eval" / "tests" / "e2e"
+    runlogs_dir = REPO_ROOT / "eval" / "runlogs" / "e2e"
+    ann_errors = validate_e2e_annotations(runlogs_dir, fixtures_dir)
+    # Scope: PR-touched annotation violations block; pre-existing ones warn.
+    # Build the set relative to the repo-relative prefix (not the absolute
+    # RUNLOGS_DIR) so they match the `rel` in the error strings, which are
+    # relative to `runlogs_dir`.
+    e2e_prefix = Path("eval", "runlogs", "e2e")
+    touched_ann_rels: set[Path] = set()
+    # Every run log the PR added or renamed — its annotation is accountable.
+    for p in ar_runlogs:
+        ann_path = Path(p).with_name(Path(p).stem + ".ann.json")
+        try:
+            touched_ann_rels.add(ann_path.relative_to(e2e_prefix))
+        except ValueError:
+            pass  # not under e2e prefix — skip
+    # Also catch .ann.json files that are themselves A/R/M in the diff — a PR
+    # that edits an existing annotation or edits expected-findings.json under a
+    # graded run must also block, not just warn (#2487 review finding 2).
+    try:
+        arm_out = subprocess.check_output(
+            ["git", "-c", "diff.renames=true", "diff",
+             "--name-only", "--diff-filter=ARM",
+             os.environ["BASE_SHA"], os.environ["HEAD_SHA"]],
+            text=True, encoding="utf-8", cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+        )
+        for line in arm_out.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            p = Path(line)
+            if (
+                len(p.parts) >= 4
+                and p.parts[:3] == ("eval", "runlogs", "e2e")
+                and p.name.endswith(".ann.json")
+            ):
+                touched_ann_rels.add(p.relative_to(e2e_prefix))
+            elif (
+                len(p.parts) == 5
+                and p.parts[:3] == ("eval", "tests", "e2e")
+                and p.name in ("expected-findings.json", "fixture.json")
+            ):
+                for a in (REPO_ROOT / e2e_prefix / p.parts[3]).glob("run-*.ann.json"):
+                    touched_ann_rels.add(a.relative_to(REPO_ROOT / e2e_prefix))
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass  # best-effort widening; the AR set above still covers the core case
+
+    blocking_ann = []
+    for e in ann_errors:
+        # Check if the error names a PR-touched annotation, or is a
+        # blind_bundle_digest mismatch. The bundle phrases are safe to
+        # always block because main has 0 stamped annotations — no
+        # pre-existing mismatch can fire. findings_hash mismatches are
+        # NOT in this list: two annotations on main already carry stale
+        # hashes (ignacio-alvarado-daughter, mary-mcandrew-son), so
+        # always-blocking those would red every future e2e PR. They
+        # still block when the annotation is PR-touched (is_pr_touched).
+        is_pr_touched = any(str(rel) in e for rel in touched_ann_rels)
+        is_bundle_mismatch = (
+            "blind_bundle_digest mismatch" in e
+            or "cannot compute blind_bundle_digest" in e
+        )
+        if is_pr_touched or is_bundle_mismatch:
+            blocking_ann.append(e)
+        else:
+            print(f"::warning::{e}")
+            print(f"  ! {e}", file=sys.stderr)
+    if blocking_ann:
+        print("E2E annotation validation — structural violations in PR-added files:", file=sys.stderr)
+        for e in blocking_ann:
+            print(f"::error::{e}")
+            print(f"  - {e}", file=sys.stderr)
+        return 1
+
+    # Report the set the gates actually read. A pure quarantine->corpus rename
+    # adds nothing, so an `added`-only denominator would read
+    # `OK (0 added run log(s) checked)` on a run that checked one file -- the
+    # cheerful zero eval/CLAUDE.md's denominator doctrine exists to prevent.
+    print(
+        f"E2E gates OK ({len(ar_runlogs)} added-or-renamed run log(s) checked; "
+        f"{len(added)} of them newly added)."
+    )
     return 0
 
 

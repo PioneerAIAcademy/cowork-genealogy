@@ -114,7 +114,7 @@ This is structural maintenance, not per-test grading. Out-of-band from the weekl
   | `flynn-resolved` | proof-conclusion + project-status tests requiring a completed project | Phase 1 |
   | `flynn-multi-conflict` | conflict-resolution prioritization tests (two unresolved conflicts, which to resolve first) | Phase 1 stretch |
 
-  Stateless skills (search-wikipedia, translation, historical-context, locality-guide, convert-dates) need no scenario — they're immediately writable.
+  Stateless skills (translation, historical-context, locality-guide, convert-dates) need no scenario — they're immediately writable.
 
 - **AI-assisted bulk authoring.** For initial test creation, an LLM generates draft tests from each skill's SKILL.md (reading "Use when," "Do NOT use when," and workflow description). A junior reviews and refines. This bootstraps the target 10-20 tests per skill faster than manual authoring. The drafts live as ordinary test JSON files in `eval/tests/unit/` once accepted; the LLM is a starting point, not an authoritative author.
 - Build deterministic validators (universal + per-skill, per `unit-test-spec.md` §8).
@@ -200,7 +200,7 @@ Targets the YAML `description` field on skills and MCP tool definitions. Port of
 
 - **30+ labeled queries (50/50 should-trigger / should-not-trigger).** Per `unit-test-spec.md` §12, the hand-authored corpus targets 10-20 tests per skill — the optimizer fills the gap. The proposer LLM generates synthetic should-trigger / should-not-trigger queries inline at optimization time using the skill's SKILL.md, current rubric, and existing test patterns as seed material. Synthetic queries are **ephemeral**: they live in memory during the optimization run, are not checked into `eval/tests/unit/`, and do not need to pass through the senior review queue. If a synthetic query surfaces a useful boundary case the hand-authored corpus missed, a junior can promote it into a regular test afterward.
 - 60/40 stratified train/test split (stratified by should-trigger vs should-not-trigger)
-- 3 runs per query for variance — **ruled out.** `runs_per_test` is pinned to 1 as standing policy; the schema caps it at 1 and the loader rejects anything higher, so an optimizer pass cannot buy variance this way. See "Variance: runs per test" in `unit-test-spec.md`.
+- 3 runs per query for variance — a test **file** cannot request this (the schema caps `runs_per_test` at 1 and the loader rejects anything higher, as standing policy), but an optimizer pass can buy variance by invoking `run_tests.py --runs-per-test 3`, which overrides the value at the CLI for a non-releasable scratch run. See "Variance: runs per test" in `unit-test-spec.md`.
 - 5 iterations max per pass
 - Per iteration: proposer LLM generates candidate from failed-trigger and false-trigger lists; evaluator scores; argmax test_score selects winner
 - Stop: two consecutive iterations with no test-score gain
@@ -237,7 +237,7 @@ These are **excluded** from cross-PR comparison (plan §2.10), from the `.github
 
 ### Per-skill-family extensions (4-6 domain dimensions)
 
-Example for record-extraction skills:
+Example for evidence-analysis skills (e.g. source-evaluation):
 - Correctness (facts cited match the record; no fabricated details)
 - Completeness (all extractable fields captured; no silent omissions)
 - Citation discipline

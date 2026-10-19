@@ -2,7 +2,7 @@
 //
 // The sibling of the merge tools: where those collapse persons, this one does
 // the add/correct/remove edits the tree-edit skill performs by hand today. It
-// reuses the shipped write layer (atomicWriteJson, backupIfExists, validateIntroduced)
+// reuses the shipped write layer (atomicWriteJson, validateIntroduced)
 // and the shared id allocator, so the LLM passes only the content judgment and
 // the tool does id assignment, the primary/preferred swaps, standard_place
 // resolution, validate-before-persist, and the atomic write. Writes only
@@ -16,7 +16,6 @@
 // tree_edit is structurally unable to rewrite identity (the ut_013 rename
 // incident), instead of merely prose-forbidden from it.
 
-import { join } from "path";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -27,10 +26,22 @@ import type {
   SimplifiedSourceReference,
 } from "../types/gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
+import {
+  introducedWarnings,
+  staleJustifications,
+  computeTouchedPersonIds,
+  findCompetingParentage,
+  parentChildKey,
+  type WarningJustificationInput,
+} from "../validation/introduced-warnings.js";
+import { dedupSourceRefs, relationshipMatches } from "../utils/merge-gedcomx.js";
+import type { ConflictSurfaced } from "../types/materialize-facts.js";
+import { getPersonName } from "./person-warnings.js";
+import { isCoupleEventFactType } from "../utils/record-persona.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
-  backupIfExists,
+  atomicWriteBoth,
   readProjectJson,
   formatIssues,
   withProjectLock,
@@ -40,7 +51,7 @@ import {
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
 import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
-import { resolveSourceRef } from "../utils/source-ref-resolver.js";
+import { resolveSourceRef, isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
 
 export type TreeEditOperation =
   | "add_fact"
@@ -52,6 +63,7 @@ export type TreeEditOperation =
   | "add_relationship"
   | "add_source"
   | "update_source"
+  | "update_relationship"
   | "remove";
 
 /** The additive ops — the only operations `tree_edit` accepts. */
@@ -69,6 +81,7 @@ export const CORRECT_OPERATIONS = [
   "update_name",
   "update_person",
   "update_source",
+  "update_relationship",
   "remove",
 ] as const;
 
@@ -102,13 +115,18 @@ export interface TreeEditOp {
   source?: SimplifiedSourceDescription;
   gender?: string;
   ark?: string;
+  /** update_relationship only: the edge's new subtype (e.g. "Biological",
+   *  "Step"). The type is its own claim and an edge can be retyped — a census
+   *  or an import lists a stepchild as "son" (plan Decision 11). */
+  subtype?: string;
   /** Auto-resolve standard_place when a place is set (default true). */
   resolveStandardPlace?: boolean;
   /** add_relationship only: resolve the edge's (and any inline Couple fact's)
-   *  source-ref from this research.json `relationship`-type assertion instead
-   *  of supplying a literal `relationship.sources` — mirrors
-   *  materialize_facts's resolver (tree-materialization-spec §8). Mutually
-   *  exclusive with a literal ref on `relationship`. */
+   *  source-ref from this research.json assertion — a `relationship` or
+   *  `marriage` type (RELATIONSHIP_ESTABLISHING_TYPES) — instead of supplying a
+   *  literal `relationship.sources`; mirrors materialize_facts's resolver
+   *  (tree-materialization-spec §8). Mutually exclusive with a literal ref on
+   *  `relationship`. */
   sourceAssertionId?: string;
 }
 
@@ -119,6 +137,10 @@ export interface TreeEditInput extends Partial<TreeEditOp> {
   // once (all-or-nothing). Ids assigned earlier in the batch are visible to
   // later ops (the allocator rescans the live tree).
   ops?: TreeEditOp[];
+  // Justifications for genealogical warnings this write introduces (issue #2840).
+  // If the write introduces warnings and this is absent or incomplete, the tool
+  // refuses with { ok: false, reason: "unjustified_warnings", warnings: [...] }.
+  warningJustifications?: Array<{ warningId: string; justification: string }>;
 }
 
 interface AssignedIds {
@@ -141,17 +163,62 @@ export type TreeEditResult =
       ok: true;
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
+      conflicts_surfaced?: ConflictSurfaced[];
     } & PerOpResult)
   | {
       ok: true;
       results: PerOpResult[];
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
+      conflicts_surfaced?: ConflictSurfaced[];
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  // The warning gate's refusal rides this same arm (see WarningGateRefusal).
+  | ({ ok: false; errors: string[]; reason?: "no_project" | "unjustified_warnings" } &
+      Partial<Pick<WarningGateRefusal, "message" | "warnings" | "conflicts_surfaced">>);
+
+/** One warning a gated write introduced, as the refusal reports it. */
+export interface GateWarning {
+  warningId?: string;
+  issueType?: string;
+  severity?: string;
+  personId?: string;
+  personName?: string;
+  message: string;
+  facts?: unknown;
+  relatedPersonId?: string;
+}
+
+/** The warning gate's refusal, shared by every gated writer. `errors` carries
+ *  the same text as `message`, so a caller that reads `errors` sees it. */
+export interface WarningGateRefusal {
+  ok: false;
+  reason: "unjustified_warnings";
+  errors: string[];
+  message?: string;
+  warnings: GateWarning[];
+  /** Competing biological parentage the refused write would create (#2525). */
+  conflicts_surfaced?: ConflictSurfaced[];
+}
+
+/** What the gate hands back when the write may proceed. */
+export interface WarningGatePass {
+  justificationsPersisted: boolean;
+}
+
+const ROUTE_PARENTAGE =
+  "This write gives a child a second biological parent of one sex. That is not a warning to " +
+  "justify, and warningJustifications cannot pass it. If one of these parents is a step, " +
+  "adoptive, foster or guardian parent, add that edge with its subtype instead. Otherwise send " +
+  "each conflicts_surfaced entry to conflict-resolution as an identity question. Once it is " +
+  "resolved, remove the rejected parent's edge with tree_correct before adding the chosen one: " +
+  "this write is refused while both edges stand.";
+
+const JUSTIFY_OTHERS =
+  " Justify every other warningId: re-call with warningJustifications listing each warningId " +
+  "and a justification string.";
 
 class TreeEditError extends Error {}
 
@@ -200,6 +267,26 @@ function requirePerson(tree: SimplifiedGedcomX, personId: string | undefined): S
 type FactHolder = SimplifiedPerson | SimplifiedRelationship;
 
 /**
+ * A couple event belongs on the Couple relationship's `facts[]`, never on a
+ * person — `tree_edit`'s own convention ("a Marriage/Divorce fact lives on the
+ * Couple, never duplicated onto each spouse"). Writing one onto a person leaves
+ * the Couple edge factless, which is the shape the materialize-facts skip
+ * already refuses to create on the extraction side.
+ *
+ * Matched with `isCoupleEventFactType`, so every spelling it lists is caught —
+ * `marriage_banns`, `MarriageLicense` and `Marriage Intention` alike — rather
+ * than only the exact strings someone happened to list here.
+ */
+function refuseCoupleEventOnPerson(type: unknown, op: string): void {
+  if (!isCoupleEventFactType(type)) return;
+  throw new TreeEditError(
+    `${op}: '${String(type)}' is a couple event and belongs on the Couple relationship, ` +
+      "not on a person. Add it with `add_relationship` carrying the fact inline, or with " +
+      "`add_fact` naming the Couple edge in `relationshipId`",
+  );
+}
+
+/**
  * Resolve the target of add_fact/update_fact: exactly one of `personId` or
  * `relationshipId`. Facts on relationships are legal only on Couples
  * (Marriage, Divorce, …) — the tree schema rejects `facts` on ParentChild.
@@ -230,7 +317,40 @@ function requireFactHolder(tree: SimplifiedGedcomX, input: TreeEditInput, op: st
  * path so the error names the op and the expected shape.
  */
 const FACT_STRING_FIELDS = ["date", "standard_date", "place", "standard_place", "value"] as const;
+/** The fields whose change detaches a fact from the assertion it was minted
+ *  from. `type` rides along with the strings because a RE-CLASSIFICATION is the
+ *  strongest correction a researcher can make: it changes what the fact claims,
+ *  and it also moves the fact across the event / value-bearing line that decides
+ *  whether an assertion's `value` may be written to it at all. Left attached, a
+ *  retyped fact and its assertion disagree about their own type, and the
+ *  disagreement is unreachable by any later correction. */
+const FACT_DETACH_FIELDS = [...FACT_STRING_FIELDS, "type"] as const;
 function requireFactShape(fact: SimplifiedFact, op: string): void {
+  // `primary` carries an instruction, so a near-miss spelling must not be
+  // assigned and left for the document validator: its message is "omit it
+  // rather than setting false", which is the one action that leaves a stale
+  // flag exactly where it was. Caught here because every fact path calls this.
+  const flag = (fact as Record<string, unknown>).primary;
+  if (flag !== undefined && typeof flag !== "boolean") {
+    const got = flag === null ? "null" : Array.isArray(flag) ? "an array" : `a ${typeof flag}`;
+    throw new TreeEditError(
+      `${op}: fact \`primary\` must be the boolean true or false, got ${got} — ` +
+        "`true` makes it the primary of its type, `false` clears the flag",
+    );
+  }
+  // The assertion backlink is stamped by `materialize_facts`, never supplied
+  // (#2472). Admitting `assertion_id` to TREE_FACT_FIELDS also made it
+  // caller-settable here — `fact` is a freeform object and every key is assigned
+  // straight onto the fact — so without this a caller could forge a link the
+  // spec says is set once and never inferred, and `research_append` would then
+  // silently rewrite that hand-entered fact from an assertion it never came from.
+  if ((fact as Record<string, unknown>).assertion_id !== undefined) {
+    throw new TreeEditError(
+      `${op}: fact \`assertion_id\` is not settable — it is the backlink ` +
+        "`materialize_facts` stamps on a fact it mints from an assertion, and it is " +
+        "never supplied by a caller. Materialize the assertion instead, or omit the field.",
+    );
+  }
   for (const field of FACT_STRING_FIELDS) {
     const v = (fact as Record<string, unknown>)[field];
     if (v !== undefined && typeof v !== "string") {
@@ -242,6 +362,19 @@ function requireFactShape(fact: SimplifiedFact, op: string): void {
       );
     }
   }
+}
+
+/**
+ * `primary: false` is an INSTRUCTION, never a stored value. The persisted schema
+ * pins the flag to `const: true` (omit-when-false, for token count —
+ * simplified-gedcomx-spec §6), so the key is dropped before the write and the
+ * document stays conformant. See clearPrimaryOfType's note.
+ *
+ * Every path that authors a NEW fact calls this. `update_fact` does not: it
+ * deletes the flag from the EXISTING fact rather than from the incoming patch.
+ */
+function stripClearedPrimary(fact: SimplifiedFact): void {
+  if (fact.primary === false) delete fact.primary;
 }
 
 // ─── delta-scoped mandatory-ref guard (tree-materialization-spec §6, §8) ─────
@@ -280,11 +413,48 @@ function assertNodeHasRef(
   }
 }
 
-/** Remove the `primary` flag from the holder's other facts of the same type. */
+/** Remove the `primary` flag from the holder's other facts of the same type.
+ *
+ *  Fires only as a side effect of designating a REPLACEMENT primary, so it can
+ *  move the flag but never retire it. Clearing without a replacement is
+ *  `primary: false` on add_fact/update_fact, which is the state a newly-surfaced
+ *  conflict needs: `materialize_facts` never sets `primary` and surfaces a
+ *  conflict when a second vital fact lands, so a pre-existing flag would
+ *  otherwise keep asserting a concluded value the evidence no longer supports
+ *  (10 such persons across the committed e2e final trees, 2026-09-10). */
 function clearPrimaryOfType(holder: FactHolder, type: string | undefined, exceptId: string | undefined): void {
   for (const f of holder.facts ?? []) {
     if (f.id !== exceptId && f.type === type && "primary" in f) delete f.primary;
   }
+}
+
+/**
+ * Is this the same fact already recorded, rather than a second one?
+ *
+ * Strict equality on type, date, place and value — deliberately NOT
+ * `factsEquivalent` from merge-gedcomx, which is a *compatibility* test: it
+ * treats an absent date as matching any date, and one day-range containing
+ * another as one fact. That is right for merging two documents and wrong here,
+ * where folding a dated Marriage into an undated one would silently discard
+ * the date the new record supplied (plan Decision 31 on the same helpers:
+ * `compatibleDate`/`compatiblePlace` "treated 5 of 10 labelled
+ * affirmed-and-ruled-out pairs as one object").
+ *
+ * Compares the four fields the plan names — type, date, place and value — and
+ * deliberately NOT `standard_place`. The twin lookup runs before
+ * `maybeResolvePlace`, so the stored fact carries a resolved `standard_place`
+ * while the incoming one carries none: comparing it made a retried call whose
+ * fact had a resolvable place write a SECOND fact, which is the opposite of the
+ * idempotence corroboration exists for. `standard_date` is dropped with it —
+ * caller-supplied, and the raw `date` already carries the claim.
+ */
+function sameFactValue(a: SimplifiedFact, b: SimplifiedFact): boolean {
+  return (
+    a.type === b.type &&
+    a.date === b.date &&
+    a.place === b.place &&
+    a.value === b.value
+  );
 }
 
 /** Remove the `preferred` flag from the person's other names. */
@@ -310,10 +480,19 @@ async function applyOperation(
 
   // Resolve a fact's standard_place in place when it has a place and no explicit
   // standard_place; best-effort — never fail the edit on a resolution miss.
-  const maybeResolvePlace = async (fact: SimplifiedFact, explicitStandardPlace: boolean): Promise<void> => {
+  // `siblings` are the other facts on the same holder: a bare place
+  // ("Shenandoah") is resolved against their places, not the whole world.
+  const maybeResolvePlace = async (
+    fact: SimplifiedFact,
+    explicitStandardPlace: boolean,
+    siblings: SimplifiedFact[] = [],
+  ): Promise<void> => {
     if (wantResolve && fact.place && !explicitStandardPlace) {
+      const contextPlaces = siblings
+        .map((f) => f.place)
+        .filter((p): p is string => typeof p === "string" && p !== fact.place);
       try {
-        fact.standard_place = (await resolveStandardPlace(fact.place)) ?? undefined;
+        fact.standard_place = (await resolveStandardPlace(fact.place, { contextPlaces })) ?? undefined;
         if (fact.standard_place === undefined) delete fact.standard_place;
       } catch {
         delete fact.standard_place;
@@ -344,11 +523,15 @@ async function applyOperation(
       // fact lives on the Couple, not duplicated onto each spouse).
       const holder = requireFactHolder(tree, input, "add_fact");
       if (!input.fact) throw new TreeEditError("add_fact requires a `fact`");
+      // Only when the target is a PERSON: the same fact on a Couple edge is
+      // exactly where it belongs.
+      if (input.personId) refuseCoupleEventOnPerson(input.fact.type, "add_fact");
       if (input.fact.id) throw new TreeEditError("add_fact `fact` must not carry an id — the tool assigns it");
       requireFactShape(input.fact, "add_fact");
       const fact: SimplifiedFact = { ...input.fact, id: nextId(tree, "F") };
+      stripClearedPrimary(fact);
       assertNodeHasRef(fact, "the added fact", "add_fact");
-      await maybeResolvePlace(fact, input.fact.standard_place !== undefined);
+      await maybeResolvePlace(fact, input.fact.standard_place !== undefined, holder.facts ?? []);
       if (fact.primary === true) clearPrimaryOfType(holder, fact.type, fact.id);
       holder.facts = [...(holder.facts ?? []), fact];
       assignedIds.fact = fact.id;
@@ -364,13 +547,42 @@ async function applyOperation(
         const where = input.personId ? `person '${input.personId}'` : `relationship '${input.relationshipId}'`;
         throw new TreeEditError(`fact '${input.factId}' not found on ${where}`);
       }
+      // Refuse only an op that MAKES a person-level couple event. Editing one
+      // already there is admitted: legacy documents are read, never repaired,
+      // 14 such facts sit in 9 committed e2e starting trees, and refusing their
+      // correction would strand data the agent is supposed to be able to fix.
+      if (
+        input.personId &&
+        input.fact.type !== undefined &&
+        !isCoupleEventFactType(existing.type)
+      ) {
+        refuseCoupleEventOnPerson(input.fact.type, "update_fact");
+      }
       // Delta-scoped provenance rule (§6): an update may not REMOVE an existing
       // ref (e.g. clear a populated `sources`). It is NOT "the result must have a
       // ref" — touching an already-ref-less legacy fact without removing anything
       // is allowed.
       const factHadRef = hasNonNullRef(existing);
+      // Pre-assignment values of the fields a correction can detach on, so the
+      // detach below keys on an actual CHANGE rather than on the key merely
+      // being present. Re-stating a field at the value it already holds is not
+      // a correction, and 7 of the 31 ops that SET one in the committed corpus
+      // also carry `primary` (the conclude-a-fact shape), which is exactly where
+      // an unchanged echo rides along with a real edit.
+      const factStringsBefore = new Map<string, unknown>(
+        FACT_DETACH_FIELDS.map((f) => [f, (existing as Record<string, unknown>)[f]]),
+      );
       for (const [k, v] of Object.entries(input.fact)) {
         if (k === "id") continue;
+        // `primary: false` clears the flag rather than storing a false — the
+        // only way to reach "this type has no concluded value" while a conflict
+        // is open. Assigning it would fail the document validator, whose own
+        // message ("omit it rather than setting false") is advice no op could
+        // follow until this existed.
+        if (k === "primary" && v === false) {
+          delete (existing as any).primary;
+          continue;
+        }
         (existing as any)[k] = v;
       }
       if (factHadRef && !hasNonNullRef(existing)) {
@@ -380,7 +592,39 @@ async function applyOperation(
             "whole fact (tree_correct remove) instead of nulling its ref.",
         );
       }
-      if (input.fact.place !== undefined) await maybeResolvePlace(existing, input.fact.standard_place !== undefined);
+      if (input.fact.place !== undefined) {
+        await maybeResolvePlace(existing, input.fact.standard_place !== undefined, holder.facts ?? []);
+      }
+      // A human CHANGING any of the fact's own string fields detaches it from
+      // the assertion it was minted from (#2472) — the same reading the spec
+      // already applies to `add_fact`: a researcher's own conclusion carries no
+      // backlink. Left attached, the fact would permanently disagree with its
+      // assertion (indistinguishable from the drift the agreement check reports)
+      // and the next assertion update would silently revert the correction.
+      //
+      // Runs AFTER maybeResolvePlace so it sees the final `standard_place`: a
+      // place change that re-resolves the sidecar is a change to this fact even
+      // when the caller never named `standard_place`.
+      //
+      // The trigger is FACT_DETACH_FIELDS, wider than the four mirrored
+      // attributes: a corrected `standard_date` must not survive beside a later
+      // assertion `date` rewrite, and a retyped fact must not keep a backlink
+      // whose assertion still carries the old type.
+      if (existing.assertion_id !== undefined) {
+        const changed = FACT_DETACH_FIELDS.filter(
+          (f) => (existing as Record<string, unknown>)[f] !== factStringsBefore.get(f),
+        );
+        if (changed.length > 0) {
+          warnings.push(
+            `fact '${existing.id}' is no longer linked to assertion '${existing.assertion_id}' ` +
+              `(${changed.join(", ")} changed) — an edit here detaches the fact, so a later ` +
+              "correction to that assertion will not reach it. Correct the assertion instead " +
+              "if the record was misread. (`standard_place` can change on its own when the " +
+              "resolver re-runs, which detaches for the same reason.)",
+          );
+          delete existing.assertion_id;
+        }
+      }
       if (existing.primary === true) clearPrimaryOfType(holder, existing.type, existing.id);
       break;
     }
@@ -443,6 +687,15 @@ async function applyOperation(
         rawPerson.names = [rawPerson.name];
         delete rawPerson.name;
       }
+      // Inline facts take the same rule as add_fact: a new person is a person.
+      // Checked as an array first, so a malformed `facts` is a refusal naming
+      // the op rather than a TypeError escaping the batch loop.
+      if (input.person.facts != null && !Array.isArray(input.person.facts)) {
+        throw new TreeEditError("add_person `person.facts` must be an array of facts");
+      }
+      for (const f of input.person.facts ?? []) {
+        refuseCoupleEventOnPerson(f.type, "add_person");
+      }
       const personId = nextId(tree, "I");
       const nMax = maxIdNum(tree, "N");
       const names = (input.person.names ?? []).map((n, i) => ({ ...n, id: `N${nMax + 1 + i}` }));
@@ -466,9 +719,10 @@ async function applyOperation(
         for (const f of person.facts) {
           if (f.id) throw new TreeEditError("add_person facts must not carry ids — the tool assigns them");
           requireFactShape(f, "add_person");
+          stripClearedPrimary(f);
           assertNodeHasRef(f, "each inline fact", "add_person");
           f.id = nextId(tree, "F");
-          await maybeResolvePlace(f, f.standard_place !== undefined);
+          await maybeResolvePlace(f, f.standard_place !== undefined, person.facts);
           factIds.push(f.id);
         }
         assignedIds.facts = factIds;
@@ -482,11 +736,12 @@ async function applyOperation(
       if (input.relationship.id) throw new TreeEditError("add_relationship `relationship` must not carry an id");
       const rel: SimplifiedRelationship = { ...input.relationship, id: nextId(tree, "R") };
 
-      // Resolve the edge's source-ref from a research.json `relationship`-type
-      // assertion instead of requiring the caller to hand-walk the provenance
-      // chain (tree-materialization-spec §8: "the same resolver
-      // materialize_facts uses"). A literal `relationship.sources` alongside
-      // it is rejected as ambiguous — pick one.
+      // Resolve the edge's source-ref from a research.json relationship-
+      // establishing assertion (`relationship` or `marriage`) instead of
+      // requiring the caller to hand-walk the provenance chain
+      // (tree-materialization-spec §8: "the same resolver materialize_facts
+      // uses"). A literal `relationship.sources` alongside it is rejected as
+      // ambiguous — pick one.
       if (input.sourceAssertionId !== undefined) {
         if (hasNonNullRef(rel)) {
           throw new TreeEditError(
@@ -501,11 +756,18 @@ async function applyOperation(
             `add_relationship: sourceAssertionId '${input.sourceAssertionId}' not found in research.json assertions`,
           );
         }
-        if (assertion.fact_type !== "relationship") {
+        // `marriage` counts as relationship-establishing: a marriage register is
+        // exactly the assertion that establishes a Couple, and it is the type the
+        // commonest Couple edge carries. Excluding it made this tool's own
+        // instruction — and materialize_facts's — impossible to follow for that
+        // edge, since a marriage assertion was the "same assertion" both told the
+        // caller to source it with.
+        if (!isRelationshipEstablishing(assertion.fact_type)) {
           throw new TreeEditError(
             `add_relationship: sourceAssertionId '${input.sourceAssertionId}' is a '${assertion.fact_type}' ` +
-              "assertion, not a 'relationship' assertion — the edge's provenance must come from the " +
-              "relationship-establishing assertion",
+              "assertion, which establishes no link between two parties — the edge's provenance " +
+              "must come from a relationship-establishing assertion ('relationship', 'marriage', " +
+              "'parentage', 'parentchild'; case-insensitive)",
           );
         }
         rel.sources = [resolveRelationshipRef(assertion, research, tree)];
@@ -515,7 +777,48 @@ async function applyOperation(
       // etc. establishing a parent-child/spousal edge is evidence from that
       // record.
       assertNodeHasRef(rel, "the added relationship edge", "add_relationship");
-      tree.relationships = [...(tree.relationships ?? []), rel];
+
+      // A self-Couple is an impossibility, not a duplicate: a person cannot be
+      // their own spouse, and the pair would survive every downstream rule that
+      // reads the two endpoints as different people.
+      if (rel.type === "Couple" && rel.person1 !== undefined && rel.person1 === rel.person2) {
+        throw new TreeEditError(
+          `add_relationship: a Couple cannot join '${rel.person1}' to themselves`,
+        );
+      }
+
+      // An edge that already says this corroborates rather than duplicates
+      // (plan Decision 37). The new sources — and any inline Couple facts —
+      // land on the existing edge and its id comes back, so a retried call and
+      // a second record about the same marriage both leave one edge. A refusal
+      // would make the caller re-route the same evidence by hand through
+      // `add_fact`, dropping the edge's own sources on the way.
+      const matched = (tree.relationships ?? []).find((e) => relationshipMatches(e, rel));
+      if (matched) {
+        if (rel.sources?.length) {
+          matched.sources = dedupSourceRefs([...(matched.sources ?? []), ...rel.sources]);
+        }
+        // Notes are often where the researcher records why; unioned exactly as
+        // `dedupRelationships` unions them, so both paths keep the same trail.
+        if (rel.notes?.length) {
+          matched.notes = [...new Set([...(matched.notes ?? []), ...rel.notes])];
+        }
+        // The matched edge's subtype never changes here: retyping is
+        // `update_relationship`'s job, and silently adopting one would turn an
+        // untyped import into a biological claim with nothing behind it. Say so
+        // rather than let the caller believe the subtype landed.
+        if (rel.subtype !== undefined && matched.subtype !== rel.subtype) {
+          warnings.push(
+            `add_relationship corroborated the existing edge '${matched.id}', which keeps its ` +
+              `${matched.subtype === undefined ? "absent subtype" : `'${matched.subtype}' subtype`} — ` +
+              `use update_relationship to retype it to '${rel.subtype}'`,
+          );
+        }
+      } else {
+        tree.relationships = [...(tree.relationships ?? []), rel];
+      }
+      // Facts go onto whichever edge now carries this relationship.
+      const edge = matched ?? rel;
       // Facts supplied on a new relationship (e.g. a Marriage on a Couple) are
       // the relationship's own facts: assign each a tool-allocated F id and
       // resolve its standard_place, exactly as add_fact does. Callers never
@@ -531,6 +834,7 @@ async function applyOperation(
         for (const f of rel.facts) {
           if (f.id) throw new TreeEditError("add_relationship facts must not carry ids — the tool assigns them");
           requireFactShape(f, "add_relationship");
+          stripClearedPrimary(f);
           // A Couple fact (e.g. Marriage) with no ref of its own inherits the
           // edge's resolved ref — but ONLY when that ref came from
           // `sourceAssertionId` (the marriage record IS typically the source
@@ -542,13 +846,37 @@ async function applyOperation(
             f.sources = rel.sources.map((s) => ({ ...s }));
           }
           assertNodeHasRef(f, "each Couple fact", "add_relationship");
+          // Corroborating: a fact the edge already carries, equal in type, date,
+          // place and value, is not added again — its sources join the one
+          // already there. This is what makes a retried call idempotent rather
+          // than leaving two identical Marriage facts on one edge.
+          const twin = matched
+            ? (matched.facts ?? []).find((g) => sameFactValue(g, f))
+            : undefined;
+          if (twin) {
+            if (f.sources?.length) {
+              twin.sources = dedupSourceRefs([...(twin.sources ?? []), ...f.sources]);
+            }
+            // Report the fact the caller's sources landed on, exactly as the
+            // corroborated edge reports its existing id. A silent omission
+            // would leave a fully-corroborated retry returning no fact id at
+            // all, with nothing to say where the evidence went.
+            if (twin.id) factIds.push(twin.id);
+            continue;
+          }
           f.id = nextId(tree, "F");
-          await maybeResolvePlace(f, f.standard_place !== undefined);
+          await maybeResolvePlace(f, f.standard_place !== undefined, edge.facts ?? rel.facts);
+          // Same primary swap add_fact performs, but only when corroborating:
+          // the plan scopes it to the matched edge, and `main` never swapped on
+          // a newly created one. `primary` is about to become load-bearing
+          // (Decision 34), so who sets it does not change by accident here.
+          if (matched && f.primary === true) clearPrimaryOfType(edge, f.type, f.id);
+          if (matched) matched.facts = [...(matched.facts ?? []), f];
           factIds.push(f.id);
         }
-        assignedIds.facts = factIds;
+        if (factIds.length) assignedIds.facts = factIds;
       }
-      assignedIds.relationship = rel.id;
+      assignedIds.relationship = edge.id;
       break;
     }
     case "add_source": {
@@ -570,31 +898,134 @@ async function applyOperation(
       }
       break;
     }
+    case "update_relationship": {
+      // Retyping, not re-pointing: the endpoints identify the relationship and
+      // changing those would make it a different edge. `add_relationship`'s
+      // corroboration deliberately never changes a matched edge's subtype and
+      // names this op instead, so that a subtype only ever moves on an explicit
+      // correction.
+      if (!input.relationshipId) throw new TreeEditError("update_relationship requires a `relationshipId`");
+      if (input.subtype === undefined) {
+        throw new TreeEditError("update_relationship requires a `subtype` — it is the only field it sets");
+      }
+      // Types are trusted everywhere else in this switch because every other
+      // check is a truthiness test or `===`, both safe on any value. `.trim()`
+      // below is a method call, so a non-string `subtype` from a malformed op
+      // would raise a TypeError — and the batch loop re-throws anything that is
+      // not a TreeEditError, so it would escape as an unhandled exception
+      // instead of a refusal naming the op.
+      if (typeof input.subtype !== "string") {
+        throw new TreeEditError(
+          `update_relationship: \`subtype\` must be a string, got ${typeof input.subtype}`,
+        );
+      }
+      // An empty string is not "clear the subtype": `relationshipMatches` reads
+      // any defined subtype as an explicit one, so `""` would match an absent
+      // subtype but never match 'Biological' — a phantom type that pairs with
+      // nothing. Clearing a subtype is not specified; refuse rather than store
+      // a value that behaves like neither.
+      if (input.subtype.trim() === "") {
+        throw new TreeEditError(
+          "update_relationship: `subtype` must not be empty — an empty subtype matches no other edge. " +
+            "Pass a real subtype (e.g. 'Biological', 'Step')",
+        );
+      }
+      const rel = (tree.relationships ?? []).find((r) => r.id === input.relationshipId);
+      if (!rel) throw new TreeEditError(`relationship '${input.relationshipId}' not found in tree`);
+      if (rel.type !== "ParentChild") {
+        throw new TreeEditError(
+          `update_relationship: '${rel.id}' is a ${rel.type} — only a ParentChild edge carries a subtype`,
+        );
+      }
+      // A retype that would collide with an edge already on the pair is refused
+      // rather than silently creating a duplicate the dedup would later fold.
+      const clash = (tree.relationships ?? []).find(
+        (r) => r.id !== rel.id && relationshipMatches(r, { ...rel, subtype: input.subtype }),
+      );
+      if (clash) {
+        throw new TreeEditError(
+          `update_relationship: retyping '${rel.id}' to '${input.subtype}' would duplicate '${clash.id}', ` +
+            "which already joins this pair — remove one of them instead",
+        );
+      }
+      rel.subtype = input.subtype;
+      break;
+    }
     case "remove": {
-      if (input.personId) {
+      // `personId` is refused only as a target of its own. With a `factId` it
+      // SCOPES the removal — which holder's copy to drop — and that is the
+      // whole point below.
+      // Order matters: two scopes is the more specific complaint. Checked
+      // first so {personId, relationshipId} with no factId is not answered
+      // with "remove does not delete persons", which sends the caller to
+      // merge_tree_persons when their actual mistake was passing both scopes.
+      if (input.personId && input.relationshipId) {
+        throw new TreeEditError(
+          "remove: pass `personId` OR `relationshipId` to scope a `factId`, not both",
+        );
+      }
+      if (input.personId && !input.factId) {
         throw new TreeEditError("remove does not delete persons — use merge_tree_persons to collapse a person");
       }
-      const targets = [input.factId, input.relationshipId].filter(Boolean);
-      if (targets.length !== 1) {
+      // `factId` with `relationshipId` is a scoped fact removal, not two
+      // targets; `{relationshipId}` alone still removes the edge itself.
+      if (!input.factId && !input.relationshipId) {
         throw new TreeEditError("remove requires exactly one of `factId` or `relationshipId`");
       }
       if (input.factId) {
-        let found = false;
+        // FamilySearch reuses fact ids across the persons an import touches —
+        // 65 of the 136 committed e2e starting trees carry one id on two or
+        // more holders, one of them on 15. Filtering the id out of every person
+        // and every relationship therefore deleted the fact for all of them, so
+        // withdrawing one person's disproved imported Birth silently removed
+        // fifteen people's. A shared id must say whose copy to drop.
+        const holders: Array<{ label: string; node: { facts?: SimplifiedFact[] } }> = [];
         for (const p of tree.persons ?? []) {
-          const before = (p.facts ?? []).length;
-          if (before) {
-            p.facts = p.facts!.filter((f) => f.id !== input.factId);
-            if (p.facts.length !== before) found = true;
+          if ((p.facts ?? []).some((f) => f.id === input.factId)) {
+            holders.push({ label: `person '${p.id}'`, node: p });
           }
         }
         for (const r of tree.relationships ?? []) {
-          const before = (r.facts ?? []).length;
-          if (before) {
-            r.facts = r.facts!.filter((f) => f.id !== input.factId);
-            if (r.facts.length !== before) found = true;
+          if ((r.facts ?? []).some((f) => f.id === input.factId)) {
+            holders.push({ label: `relationship '${r.id}'`, node: r });
           }
         }
-        if (!found) throw new TreeEditError(`fact '${input.factId}' not found in tree`);
+        if (holders.length === 0) throw new TreeEditError(`fact '${input.factId}' not found in tree`);
+
+        const scopeId = input.personId ?? input.relationshipId;
+        if (scopeId === undefined) {
+          if (holders.length > 1) {
+            throw new TreeEditError(
+              `remove: fact '${input.factId}' is carried by ${holders.length} holders ` +
+                `(${holders.map((h) => h.label).join(", ")}) — FamilySearch reuses fact ids, so ` +
+                "removing it unscoped would delete all of them. Pass `personId` or " +
+                "`relationshipId` to say whose copy to remove",
+            );
+          }
+          holders[0].node.facts = (holders[0].node.facts ?? []).filter((f) => f.id !== input.factId);
+        } else {
+          const scoped = (input.personId
+            ? (tree.persons ?? []).find((p) => p.id === input.personId)
+            : (tree.relationships ?? []).find((r) => r.id === input.relationshipId)) as
+            | { facts?: SimplifiedFact[] }
+            | undefined;
+          if (!scoped) {
+            throw new TreeEditError(
+              input.personId
+                ? `person '${input.personId}' not found in tree`
+                : `relationship '${input.relationshipId}' not found in tree`,
+            );
+          }
+          const before = (scoped.facts ?? []).length;
+          scoped.facts = (scoped.facts ?? []).filter((f) => f.id !== input.factId);
+          if (scoped.facts.length === before) {
+            throw new TreeEditError(
+              `remove: fact '${input.factId}' is not carried by ${
+                input.personId ? `person '${input.personId}'` : `relationship '${input.relationshipId}'`
+              } — it is on ${holders.map((h) => h.label).join(", ")}`,
+            );
+          }
+        }
       } else {
         const before = (tree.relationships ?? []).length;
         tree.relationships = (tree.relationships ?? []).filter((r) => r.id !== input.relationshipId);
@@ -615,10 +1046,146 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
   return executeTreeOps(input, EDIT_GATE);
 }
 
+/**
+ * Check introduced genealogical warnings and refuse if any are unjustified.
+ * Returns null when the write may proceed, or the refusal response.
+ * When justified, persists the justifications to research.json.
+ *
+ * Shared by tree_edit, tree_correct, materialize_facts and merge_tree_persons.
+ */
+export async function checkWarningGate(
+  beforeTree: SimplifiedGedcomX,
+  afterTree: SimplifiedGedcomX,
+  research: any,
+  projectPath: string,
+  warningJustifications: WarningJustificationInput[] | undefined,
+  toolName: string,
+  collapseMap?: Map<string, string>,
+  proposedAssertionIds?: Map<string, string>,
+): Promise<WarningGateRefusal | WarningGatePass | null> {
+  const touchedIds = computeTouchedPersonIds(beforeTree, afterTree);
+  // Competing biological parentage is gated on its own finding, not on whether
+  // tooManyFathers2/tooManyMothers2 is new: that warning can already stand on
+  // the child, and a parent's gender change does not touch the child at all.
+  const found = findCompetingParentage(beforeTree, afterTree, research, proposedAssertionIds, collapseMap);
+  if (touchedIds.length === 0 && found.length === 0) return null;
+  const parentage = found.map((c) => c.entry);
+
+  const result = introducedWarnings(
+    beforeTree,
+    afterTree,
+    touchedIds,
+    warningJustifications,
+    collapseMap,
+  );
+
+  // A finding replaces the count warning for the same child and sex, so the
+  // caller is asked once, under the finding's own id.
+  const covered = new Set(
+    found.map((c) => `${c.sex === "Male" ? "tooManyFathers2" : "tooManyMothers2"}|${c.entry.personId}`),
+  );
+  const keep = (w: { issueType: string; personId: string }) => !covered.has(`${w.issueType}|${w.personId}`);
+  const nameOf = (id: string) => {
+    const p = (afterTree.persons ?? []).find((x) => x.id === id);
+    return p ? getPersonName(p) : "";
+  };
+  const parentageWarnings = found.map((c) => ({
+    warningId: c.warningId,
+    issueType: c.sex === "Male" ? "tooManyFathers2" : "tooManyMothers2",
+    severity: "implausible" as const,
+    personId: c.entry.personId,
+    personName: nameOf(c.entry.personId),
+    message:
+      `This write gives ${nameOf(c.entry.personId)} (${c.entry.personId}) two or more biological ${c.sex === "Male" ? "fathers" : "mothers"}: ` +
+      `${c.entry.values.join("; ")}.`,
+    facts: undefined,
+    relatedPersonId: undefined,
+  }));
+  const allIntroduced = result.allIntroduced.filter(keep);
+  const others = result.unjustified.filter(keep);
+  // Competing parentage refuses whatever is justified: it is routed, not justified.
+  const unjustified = [...parentageWarnings, ...others];
+
+  if (unjustified.length > 0) {
+    const message = parentage.length > 0
+      ? ROUTE_PARENTAGE + (others.length > 0 ? JUSTIFY_OTHERS : "")
+      : "This write introduces genealogical warnings that must be justified. " +
+        "Re-call with warningJustifications listing each warningId and a justification string.";
+    return {
+      ok: false,
+      reason: "unjustified_warnings",
+      errors: [message],
+      message,
+      ...(parentage.length > 0 ? { conflicts_surfaced: parentage } : {}),
+      warnings: unjustified.map((w) => ({
+        warningId: w.warningId,
+        issueType: w.issueType,
+        severity: w.severity,
+        personId: w.personId,
+        personName: w.personName,
+        message: w.message,
+        facts: w.facts,
+        relatedPersonId: w.relatedPersonId,
+      })),
+    };
+  }
+
+  // All introduced warnings are justified — check for stale justification ids
+  if (warningJustifications && warningJustifications.length > 0) {
+    const stale = staleJustifications(allIntroduced, warningJustifications);
+    if (stale.length > 0) {
+      const message = `Stale warningId(s) not matching any introduced warning: ${stale.join(", ")}. ` +
+        "Re-call without warningJustifications to get the current warning ids.";
+      return {
+        ok: false,
+        reason: "unjustified_warnings",
+        errors: [message],
+        message,
+        warnings: [{ message }],
+      };
+    }
+
+    // Persist justifications to research.json
+    if (allIntroduced.length > 0) {
+      const now = new Date().toISOString().slice(0, 10);
+      const existing = Array.isArray(research.warning_justifications)
+        ? research.warning_justifications
+        : [];
+      const newEntries = warningJustifications.map((j) => ({
+        warning_id: j.warningId,
+        justification: j.justification,
+        person_ids: [...new Set(
+          allIntroduced
+            .filter((w) => w.warningId === j.warningId)
+            .flatMap((w) => [w.personId, ...(w.relatedPersonId ? [w.relatedPersonId] : [])]),
+        )],
+        tool: toolName,
+        recorded_at: now,
+      }));
+      research.warning_justifications = [...existing, ...newEntries];
+      return { justificationsPersisted: true };
+    }
+  }
+
+  return null;
+}
+
+/** Each proposed ParentChild edge's `sourceAssertionId`, keyed parent|child,
+ *  so the gate can name the claim behind an edge it refuses. */
+function proposedParentAssertions(ops: Array<Partial<TreeEditOp>> | undefined): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const op of ops ?? []) {
+    const rel = op.relationship;
+    if (op.operation !== "add_relationship" || !op.sourceAssertionId || rel?.type !== "ParentChild") continue;
+    if (rel.parent && rel.child) out.set(parentChildKey(rel.parent, rel.child), op.sourceAssertionId);
+  }
+  return out;
+}
+
 /** Shared core behind `tree_edit` and `tree_correct` — identical batched-op,
- *  id-assignment, validate-on-write, and `.bak` semantics; only the admitted
+ *  id-assignment, and validate-on-write semantics; only the admitted
  *  op set (the gate) differs. */
-export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promise<TreeEditResult> {
+export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolName = "tree_edit"): Promise<TreeEditResult> {
   const { projectPath } = input;
 
   // Recover object/array args the model serialized as JSON strings (see
@@ -650,7 +1217,6 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
     // section it never touched (#1572).
     const beforeTree = structuredClone(tree);
 
-    const treePath = join(projectPath, "tree.gedcomx.json");
 
     // ─── Batch form: apply every op in-memory, then validate + write once ─────
     if (input.ops !== undefined) {
@@ -681,12 +1247,32 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       if (!validation.valid) {
         return { ok: false, errors: formatIssues(validation.errors) };
       }
-      await backupIfExists(treePath);
-      await atomicWriteJson(treePath, tree);
+
+      // Warning gate: refuse if the write introduces unjustified warnings
+      const warningGateResult = await checkWarningGate(
+        beforeTree, tree, research, projectPath,
+        input.warningJustifications, toolName,
+        undefined, proposedParentAssertions(input.ops),
+      );
+      if (warningGateResult && "ok" in warningGateResult) return warningGateResult;
+      const justificationsPersisted = warningGateResult?.justificationsPersisted === true;
+
+      // Write tree (and research if justifications were persisted)
+      if (justificationsPersisted) {
+        await atomicWriteBoth(projectPath, [
+          { ref: "tree.gedcomx.json", data: tree },
+          { ref: "research.json", data: research },
+        ]);
+      } else {
+        await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
+      }
+      const filesWritten = justificationsPersisted
+        ? ["tree.gedcomx.json", "research.json"]
+        : ["tree.gedcomx.json"];
       return {
         ok: true,
         results,
-        filesWritten: ["tree.gedcomx.json"],
+        filesWritten,
         validation: {
           valid: true,
           warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...opWarnings],
@@ -707,13 +1293,32 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       return { ok: false, errors: formatIssues(validation.errors) };
     }
 
-    await backupIfExists(treePath);
-    await atomicWriteJson(treePath, tree);
+    // Warning gate: refuse if the write introduces unjustified warnings
+    const singleGateResult = await checkWarningGate(
+      beforeTree, tree, research, projectPath,
+      input.warningJustifications, toolName,
+      undefined, proposedParentAssertions([input]),
+    );
+    if (singleGateResult && "ok" in singleGateResult) return singleGateResult;
+    const singleJustificationsPersisted = singleGateResult?.justificationsPersisted === true;
 
+    // Write tree (and research if justifications were persisted)
+    if (singleJustificationsPersisted) {
+      await atomicWriteBoth(projectPath, [
+        { ref: "tree.gedcomx.json", data: tree },
+        { ref: "research.json", data: research },
+      ]);
+    } else {
+      await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
+    }
+
+    const singleFilesWritten = singleJustificationsPersisted
+      ? ["tree.gedcomx.json", "research.json"]
+      : ["tree.gedcomx.json"];
     const result: TreeEditResult = {
       ok: true,
       operation: input.operation,
-      filesWritten: ["tree.gedcomx.json"],
+      filesWritten: singleFilesWritten,
       validation: {
         valid: true,
         warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...warnings],
@@ -737,7 +1342,7 @@ export const treeEditSchema = {
     "Add to the project's tree.gedcomx.json — add a fact or name, add a person or " +
     "relationship, or add a source. " +
     "ADDITIVE ONLY: corrections and removals " +
-    "(update_fact/update_name/update_person/update_source/remove) live in the " +
+    "(update_fact/update_name/update_person/update_source/update_relationship/remove) live in the " +
     "tree_correct tool. add_fact targets a person (personId) or an existing Couple " +
     "relationship (relationshipId) — a Marriage/Divorce fact lives on the Couple, " +
     "never duplicated onto each spouse. Use materialize_facts to write a record " +
@@ -745,8 +1350,11 @@ export const treeEditSchema = {
     "duplicate persons (this tool never deletes a person).\n" +
     "\n" +
     "add_relationship requires a non-null source-ref on the edge. Prefer " +
-    "`sourceAssertionId` (the research.json `relationship`-type assertion this " +
-    "edge comes from) over a literal `relationship.sources` — the tool resolves " +
+    "`sourceAssertionId` (the research.json assertion this edge comes from — any " +
+    "that establishes a link between two parties: relationship, marriage, parentage " +
+    "or parentchild. A marriage register is what establishes a Couple, so source a " +
+    "Couple edge with the marriage assertion itself) over a " +
+    "literal `relationship.sources` — the tool resolves " +
     "assertion.source_id -> research source -> tree S-entry itself (the same " +
     "resolver materialize_facts uses), so you never hand-walk the chain. Any inline " +
     "Couple fact (e.g. Marriage) with no ref of its own inherits the same resolved " +
@@ -755,7 +1363,7 @@ export const treeEditSchema = {
     "Pick the `operation` and supply the content (snake_case simplified-GedcomX " +
     "fields) WITHOUT ids — the tool assigns the next F/N/I/R/S id, swaps the " +
     "primary/preferred flag, resolves standard_place for a place, validates the " +
-    "whole project, and writes only tree.gedcomx.json (with a one-deep .bak). " +
+    "whole project, and writes only tree.gedcomx.json. " +
     "Returns a compact summary (the assigned ids); on a validation failure nothing " +
     "is written and `{ ok: false, errors }` is returned. Run check-warnings after " +
     "for genealogical-plausibility checks.\n" +
@@ -802,7 +1410,8 @@ export const treeEditSchema = {
         description:
           "The fact to add (full, no id). date/standard_date/place/" +
           "standard_place/value are plain strings (date: \"2 October 1876\"), never nested objects. " +
-          "Set `primary: true` to make it the primary of its type.",
+          "Set `primary: true` to make it the primary of its type; `primary: false` " +
+          "adds it without one, leaving any existing primary of that type alone.",
       },
       name: {
         type: "object",
@@ -821,10 +1430,12 @@ export const treeEditSchema = {
       sourceAssertionId: {
         type: "string",
         description:
-          "add_relationship only: the research.json `relationship`-type assertion this edge comes " +
-          "from. The tool resolves its source-ref itself (assertion.source_id -> research source -> " +
-          "tree S-entry) instead of you supplying a literal `relationship.sources` — mutually " +
-          "exclusive with one.",
+          "add_relationship only: the research.json assertion this edge comes from — any type " +
+          "that establishes a link between two parties (relationship, marriage, parentage, " +
+          "parentchild; a Couple edge is sourced with the marriage assertion itself). The tool " +
+          "resolves its source-ref itself (assertion.source_id -> " +
+          "research source -> tree S-entry) instead of you supplying a literal " +
+          "`relationship.sources` — mutually exclusive with one.",
       },
       source: {
         type: "object",
@@ -865,6 +1476,22 @@ export const treeEditSchema = {
             resolveStandardPlace: { type: "boolean" },
           },
           required: ["operation"],
+        },
+      },
+      warningJustifications: {
+        type: "array",
+        description:
+          "Justifications for genealogical warnings this write introduces. " +
+          "If the write introduces warnings and this is absent or incomplete, the tool " +
+          "refuses with { ok: false, reason: 'unjustified_warnings', warnings: [...] }. " +
+          "Re-call with each warningId and a justification string.",
+        items: {
+          type: "object",
+          properties: {
+            warningId: { type: "string", description: "The warning id from the refusal." },
+            justification: { type: "string", description: "Why this warning is acceptable." },
+          },
+          required: ["warningId", "justification"],
         },
       },
     },

@@ -37,8 +37,8 @@ agent (its 700 KB floor still guards any direct `image_read` consumer — see
 ## 2. Files to Create / Modify
 
 - **Create** `packages/engine/plugin/agents/image-reader.md` — the agent.
-- **Modify** `packages/engine/plugin/skills/record-extraction/SKILL.md` —
-  the only skill that reads images: remove `image_read` from
+- **Modify** `packages/engine/plugin/skills/record-extraction/SKILL.md` (since
+  retired) — then the only skill that read images: remove `image_read` from
   `allowed-tools` and change its "Image" input path to delegate via
   `@plugin:image-reader` instead of calling `image_read` directly.
   (Delegation is **not** an `allowed-tools` entry — do not add `Task`;
@@ -53,8 +53,9 @@ agent (its 700 KB floor still guards any direct `image_read` consumer — see
 ## 3. Invocation
 
 Invoked via `@plugin:image-reader` by any agent/skill that needs the text
-of a page scan — currently `record-extraction` (mirroring how `/research`
-invokes `@plugin:gps-mentor`). Delegation resolves to a subagent spawn at
+of a page scan — currently the `search-records` and `search-full-text` skills,
+which pass the text on to `@plugin:record-structurer` for extraction (mirroring
+how `/research` invokes `@plugin:gps-mentor`). Delegation resolves to a subagent spawn at
 runtime; it is not listed in the caller's `allowed-tools`. The caller
 narrows to a specific image first (`image_search` / `volume_search`) and
 hands this agent the imageId.
@@ -64,7 +65,7 @@ hands this agent the imageId.
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
 | `imageId` | yes | The **single** image to read — a DGS Image Group Number (`004022578_00190`) or image ARK (`3:1:.../$dist`). |
-| `looking_for` | no | A **search key only** — *who or what* to locate on the page. It focuses the FOUND / NOT FOUND pointer; it is **not** the expected result and **never** suppresses or shortens the full transcription. If the caller's message asserts the answer ("confirm the father is Adam Schreck"), the agent ignores the assertion and transcribes what the page actually says. |
+| `looking_for` | no | A **search key only** — *who or what* to locate on the page. It focuses the FOUND / NOT FOUND pointer (withheld on a truncated read — see §5); it is **not** the expected result and **never** suppresses or shortens the full transcription. If the caller's message asserts the answer ("confirm the father is Adam Schreck"), the agent ignores the assertion and transcribes what the page actually says. |
 | `project_path` | no | Absolute project-folder path. When given, `image_transcribe` saves the fetched JPEG under `images/` and returns an `imageRef` the agent reports, so the caller can cite it as the source's `image_filename` (viewer). Only retained-source images are kept; the rest are swept. |
 
 ### 3.2 One image per invocation
@@ -114,8 +115,11 @@ image, never a request for the caller to fetch it:
   from `image_transcribe`, so the caller can set the source's `image_filename`.
 - An **extracted facts** list (names, dates, relationships, places) the
   caller can turn into assertions.
-- If `looking_for` was set: `FOUND` / `NOT FOUND` + the matching line — as
-  a pointer for the caller, never a substitute for the full transcription.
+- If `looking_for` was set **and the read was not truncated**: `FOUND` /
+  `NOT FOUND` + the matching line — a pointer for the caller, never a
+  substitute for the full transcription. On a truncated read `image_transcribe`
+  withholds `found` (a half-read page cannot support a clean NOT FOUND), so the
+  agent emits no pointer and says the rest of the page is unread.
 
 ### 5.1 Considered and rejected: compressing non-matching pages
 
@@ -133,11 +137,14 @@ independently while designing the (since-retired) `image-reader-opus`
 **One candidate distinction is unresolved, and is the only thing worth reopening
 on:** gate the caller-facing *relay* on `image_transcribe`'s own `FOUND` /
 `NOT FOUND` field, which is deterministically regex-parsed (`parseFound`,
-`packages/engine/mcp-server/src/tools/image-transcribe.ts`) off a **forced,
-always-full** transcription the tool produces regardless. Full-fidelity OCR still
-happens every time; only the relay is conditional, keyed off a mechanical parse
-rather than a fresh relevance judgment by the relaying agent. Whether that avoids
-the hallucination failure mode or is a distinction without a difference is **not
+`packages/engine/mcp-server/src/tools/image-transcribe.ts`). The full-fidelity
+OCR still happens every time; only the relay would be conditional, keyed off a
+mechanical parse rather than a fresh relevance judgment by the relaying agent.
+Caveat: the transcription is *no longer always full* — an output-token
+cap can truncate it, and in that case the tool **withholds `found` entirely**, so
+a relay gated on `found` would correctly emit nothing on a truncated page (the
+half-read case must not yield a clean NOT FOUND). Whether gating avoids the
+hallucination failure mode or is a distinction without a difference is **not
 investigated**. It needs the same genealogist scrutiny that produced the
 2026-07-17 rejection — not a unilateral call. Do not build it without that.
 
@@ -154,7 +161,8 @@ It returns:
 - the pivot recommendation: read the **indexed** record for this image
   (`record_read` / `record_search` / `search-full-text`, or a related
   person's indexed record). If the failure was a missing/rejected OpenRouter
-  key, note the caller can fix it via `configure_openrouter`.
+  key, note the caller should set `openRouterApiKey` in
+  `~/.familysearch-mcp/config.json` directly.
 
 It does **not** retry via browser / `web_fetch` / "Claude in Chrome"
 (unavailable), and it never invents, infers, or guesses page contents when
@@ -182,7 +190,8 @@ Two scope limits worth knowing:
 
 - **The guard is per-skill.** It applies only to a skill that does *not*
   declare `image_read` in its own `allowed-tools` — i.e. one that holds the
-  tool solely through `@plugin:image-reader`, like `record-extraction`.
+  tool solely through `@plugin:image-reader`, like `search-records` or
+  `search-full-text`.
   (`search-images` used to declare it and browse volumes directly, which was
   the original exemption case; it has since moved to delegating via
   `@plugin:image-reader` too (2026-07-17)
@@ -206,7 +215,7 @@ The landing gate is a fresh scored run in which the agent **actually reads
 at least one image successfully** — ideally **2+ scans across separate
 invocations**, to exercise the once-per-image isolation and confirm base64
 never accumulates in the caller. This is now unblocked: the ARK-accepting
-`image_read` has landed (§8), so `record-extraction`'s ARK inputs reach a
+`image_read` has landed (§8), so `record-extraction`'s (since retired) ARK inputs reach a
 successful read. Produce this real-read run (the prior `clark-parents` run
 that fabricated its read does not count) and record the passing scored run
 + `.ann.json` per the usual e2e gate.
@@ -214,16 +223,16 @@ that fabricated its read does not count) and record the passing scored run
 ## 8. Merge dependency: the ARK-accepting `image_read` (satisfied)
 
 This agent depends on an `image_read` that accepts document-image **ARKs**
-(`3:1:/3:2:`), because `record-extraction` hands the agent ARKs — the shape
+(`3:1:/3:2:`), because its callers hand the agent ARKs — the shape
 `fulltext_search` returns. That dependency is now **satisfied**: the
-ARK-accepting `image_read` landed in `main` (#600) and has been merged into
+ARK-accepting `image_read` landed in `main` and has been merged into
 this branch, so the ARK inputs named in the `imageId`/`ark` convention
 (§3.1) work as written.
 
 (Historical context, kept because it explains the §6 guardrail: before
-#600, `image_read` accepted only a bare `NUMBER_NUMBER` Image Group Number
+ARK support landed, `image_read` accepted only a bare `NUMBER_NUMBER` Image Group Number
 and rejected an ARK — and the pre-§6 failure path *fabricated* a reading on
-that rejection instead of erroring. Had this agent shipped ahead of #600,
+that rejection instead of erroring. Had this agent shipped ahead of ARK support,
 every original-scan read would have been broken in production. The §6
 NOT-READ hardening is orthogonal and stands regardless: it turns any future
 `image_read` failure into a clean, visible miss rather than a fabrication.)

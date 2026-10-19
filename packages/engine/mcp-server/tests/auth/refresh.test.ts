@@ -1,11 +1,14 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
+  FS_ACCESS_TOKEN_LIFETIME_S,
   exchangeCodeForTokens,
   refreshAccessToken,
   getValidToken,
 } from "../../src/auth/refresh.js";
 import { REDIRECT_URI, TOKEN_URL, isHostedMode } from "../../src/auth/config.js";
 import { loadTokens, saveTokens, isExpired } from "../../src/auth/tokenManager.js";
+import type { TokenStore } from "../../src/types/auth.js";
 
 vi.mock("../../src/auth/config.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/auth/config.js")>();
@@ -91,16 +94,19 @@ describe("exchangeCodeForTokens", () => {
   });
 
   it("throws a descriptive error on a non-OK HTTP response with no error field", async () => {
-    mockFetch.mockResolvedValueOnce({
+    mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
       json: async () => ({}),
+      headers: new Headers(),
     });
 
     await expect(exchangeCodeForTokens("c", "v")).rejects.toThrow(
       /FamilySearch token endpoint error: 500/
     );
+    // The authorization code is single-use: a retry would burn it.
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   it("throws when the response body contains an OAuth error field", async () => {
@@ -139,6 +145,35 @@ describe("refreshAccessToken", () => {
     expect(result.refreshToken).toBe("new-ref");
   });
 
+  it("stores 8 h when the response names no lifetime — FamilySearch's never does", async () => {
+    // The real response, measured 2026-09-23: access_token, token_type, refresh_token.
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ access_token: "new-acc", token_type: "family_search", refresh_token: "new-ref" }),
+    });
+    const before = Date.now();
+    const result = await refreshAccessToken("old-ref");
+    const after = Date.now();
+    expect(FS_ACCESS_TOKEN_LIFETIME_S).toBe(8 * 60 * 60);
+    expect(result.expiresAt).toBeGreaterThanOrEqual(before + 8 * 3600 * 1000);
+    expect(result.expiresAt).toBeLessThanOrEqual(after + 8 * 3600 * 1000);
+  });
+
+  it("still honours an expires_in the response does name", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ access_token: "new-acc", token_type: "Bearer", expires_in: 600 }),
+    });
+    const before = Date.now();
+    const result = await refreshAccessToken("old-ref");
+    expect(result.expiresAt).toBeLessThanOrEqual(Date.now() + 600 * 1000);
+    expect(result.expiresAt).toBeGreaterThanOrEqual(before + 600 * 1000);
+  });
+
   it("keeps the old refresh token when the response does not include a new one", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -165,7 +200,7 @@ describe("getValidToken", () => {
     });
     mockedIsExpired.mockReturnValueOnce(false);
 
-    expect(await getValidToken()).toBe("fresh");
+    expect(await getValidToken(LOCAL)).toBe("fresh");
   });
 
   it("refreshes and saves a new token when the current one is expired", async () => {
@@ -174,7 +209,13 @@ describe("getValidToken", () => {
       refreshToken: "rt",
       expiresAt: Date.now() - 1000,
     });
-    mockedIsExpired.mockReturnValueOnce(true);
+    // The shared refresh re-reads tokens.json and refreshes with the refresh token stored there.
+    mockedLoadTokens.mockResolvedValueOnce({
+      accessToken: "old",
+      refreshToken: "rt-stored",
+      expiresAt: Date.now() - 1000,
+    });
+    mockedIsExpired.mockReturnValue(true);
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -186,16 +227,86 @@ describe("getValidToken", () => {
       }),
     });
 
-    expect(await getValidToken()).toBe("refreshed");
+    expect(await getValidToken(LOCAL)).toBe("refreshed");
+    expect(new URLSearchParams(mockFetch.mock.calls[0][1].body as string).get("refresh_token")).toBe("rt-stored");
     expect(mockedSaveTokens).toHaveBeenCalledTimes(1);
     const saved = mockedSaveTokens.mock.calls[0][0];
     expect(saved.accessToken).toBe("refreshed");
-    expect(saved.refreshToken).toBe("rt");
+    expect(saved.refreshToken).toBe("rt-stored");
+  });
+
+  it("shares one refresh between callers that find the token expired together", async () => {
+    mockedLoadTokens.mockResolvedValue({
+      accessToken: "old",
+      refreshToken: "rt",
+      expiresAt: Date.now() - 1000,
+    });
+    mockedIsExpired.mockReturnValue(true);
+    let issued = 0;
+    mockFetch.mockImplementation(async () => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ access_token: `refreshed-${++issued}`, token_type: "Bearer" }),
+    }));
+
+    const together = await Promise.all([getValidToken(LOCAL), getValidToken(LOCAL), getValidToken(LOCAL)]);
+    expect(together).toEqual(["refreshed-1", "refreshed-1", "refreshed-1"]);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockedSaveTokens).toHaveBeenCalledTimes(1);
+
+    // Shared only while in flight: the next expiry refreshes again.
+    expect(await getValidToken(LOCAL)).toBe("refreshed-2");
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("gives a caller whose read predates the save the saved token, not a second refresh", async () => {
+    // tokens.json as the mocks see it: saveTokens replaces it, loadTokens snapshots it.
+    let file: TokenStore = { accessToken: "old", refreshToken: "rt", expiresAt: Date.now() - 1000 };
+    mockedIsExpired.mockImplementation((t) => t.expiresAt <= Date.now());
+    mockedSaveTokens.mockImplementation(async (t) => {
+      file = t;
+    });
+    let stallNextRead = false;
+    let releaseRead: (() => void) | undefined;
+    mockedLoadTokens.mockImplementation(async () => {
+      const snapshot = { ...file };
+      if (stallNextRead) {
+        stallNextRead = false;
+        await new Promise<void>((r) => (releaseRead = r));
+      }
+      return snapshot;
+    });
+    let issued = 0;
+    let releaseRefresh: (() => void) | undefined;
+    mockFetch.mockImplementation(async () => {
+      issued++;
+      if (issued === 1) await new Promise<void>((r) => (releaseRefresh = r));
+      return {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: async () => ({ access_token: `new-${issued}`, token_type: "Bearer" }),
+      };
+    });
+
+    const first = getValidToken(LOCAL);
+    await vi.waitFor(() => expect(releaseRefresh).toBeTypeOf("function"));
+    // This caller reads tokens.json while the refresh is in flight, and its read
+    // settles only after that refresh has saved and finished.
+    stallNextRead = true;
+    const late = getValidToken(LOCAL);
+    await vi.waitFor(() => expect(releaseRead).toBeTypeOf("function"));
+    releaseRefresh!();
+    expect(await first).toBe("new-1");
+    releaseRead!();
+    expect(await late).toBe("new-1");
+    expect(issued).toBe(1);
   });
 
   it("throws an LLM-instruction error when no tokens are stored", async () => {
     mockedLoadTokens.mockResolvedValueOnce(null);
-    await expect(getValidToken()).rejects.toThrow(
+    await expect(getValidToken(LOCAL)).rejects.toThrow(
       /not logged in to FamilySearch/
     );
   });
@@ -214,7 +325,7 @@ describe("getValidToken", () => {
       json: async () => ({ error: "invalid_grant" }),
     });
 
-    await expect(getValidToken()).rejects.toThrow(/refresh failed/);
+    await expect(getValidToken(LOCAL)).rejects.toThrow(/refresh failed/);
   });
 
   it("in hosted mode routes the user to the Reconnect button", async () => {
@@ -224,7 +335,7 @@ describe("getValidToken", () => {
     mockedIsHostedMode.mockResolvedValue(true);
     mockedLoadTokens.mockResolvedValue(null);
 
-    await expect(getValidToken()).rejects.toThrow(/Reconnect FamilySearch/);
+    await expect(getValidToken(LOCAL)).rejects.toThrow(/Reconnect FamilySearch/);
   });
 
   it("in hosted mode surfaces the Reconnect instruction when a refresh fails", async () => {
@@ -242,6 +353,6 @@ describe("getValidToken", () => {
       json: async () => ({ error: "invalid_grant" }),
     });
 
-    await expect(getValidToken()).rejects.toThrow(/Reconnect FamilySearch/);
+    await expect(getValidToken(LOCAL)).rejects.toThrow(/Reconnect FamilySearch/);
   });
 });

@@ -28,6 +28,22 @@ LLM holds simplified-GedcomX of each candidate in its memory
 LLM calls same_person(gedcomx1, primaryId1, gedcomx2, primaryId2)
 ```
 
+That is **arm B**, and it remains the right call when the LLM is comparing two
+documents it already holds. The commoner case by far is scoring a record
+persona against a tree person before writing a `person_evidence` link, and
+there the LLM holds no documents — assembling them is what made the call
+expensive enough to skip. **Arm A** takes project references instead and
+assembles both sides host-side:
+
+```
+person-evidence is about to link assertion a_005 to tree person I1
+   ↓
+agent calls same_person({ projectPath, assertionId: "a_005", treePersonId: "I1" })
+   ↓
+tool resolves the record, builds the tree-side matching mob, scores, and
+records the score to results/.scores/
+```
+
 The matching algorithm uses name + date + place. Parent context, when
 provided, improves accuracy for ambiguous cases (common names, fuzzy
 dates). For strong-signal matches the algorithm scores essentially the
@@ -37,9 +53,172 @@ same with or without parents.
 
 ## Input
 
+**Two arms.** The explicit form below came first and is unchanged. The
+project-relative form was added because the explicit one cost the
+model a hand-assembled pair of record-sized documents per link, and it was
+measurably not paying that cost. The lead's 2026-09-07 ruling measured 7,526
+`person_evidence` links across 151 corpus runs against **91** `same_person`
+calls in total; that figure is quoted at its date and does not reproduce today,
+because the corpus has grown. The ratio is the durable part: re-measured on the
+committed e2e corpus, **8,791** links across 183 runs against **239** calls,
+about 37 links per call. Identity was being asserted and never scored. The arm is selected by the presence of `projectPath`.
+
+### Arm A — project-relative (preferred)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `projectPath` | string | yes | The research project directory. Its presence selects this arm. |
+| `assertionId` | string | yes | The assertion the `person_evidence` link will cite. Resolves the record, the party and the retrieval route in one hop. |
+| `treePersonId` | string | yes | The candidate person's id in `tree.gedcomx.json`. |
+| `recordRole` | string | no | Score a **different** party of the same record than the assertion's own `record_role` — the second party of a relationship or marriage assertion, which gets its own link. |
+| `recordPersonaId` | string | no | Name the record persona directly when the assertion does not carry it and the party is otherwise ambiguous. |
+| `matchRelatives` | boolean | no | As on arm B. Unavailable when the record side had to be projected (see below). |
+
+**Why `assertionId` keys it.** The link about to be written is
+`(assertion_id, person_id)` — that is what `person_evidence` carries and what
+`personEvidenceScoreInvariants` reads -- the writer-side gate that refuses an
+unattested link since 2026-09-24, and a warning before that. So the two tokens the agent already holds
+at the call site are exactly these, and `assertionId` resolves `record_id`,
+`record_role`, `record_persona_id` and `log_entry_id` together. The agent
+supplies no record structure at all, which is the point of the 2026-09-11 lead
+ruling: a mis-shaped `persons[]` built by the model yields a bad score rather
+than an error.
+
+#### The record side: fetch first, derive second
+
+1. **`recordReadTool({ recordId, resultsRef?, projectPath }, principal)`** — one
+   call, not two hand-rolled routes. It *is* sidecar-read-or-live-fetch already,
+   it normalises the id on both sides (`extractEntityId` / `arkToBareId`), and it
+   refuses `1:2:`/`3:1:` ARKs on both paths. Normalisation is not optional here:
+   `record_id` is stored as a resolver **URL** on 561 of the corpus's 10,554
+   assertions and as a bare `ark:` on 9,993, so a raw string compare misses.
+   `resultsRef` is passed **only** when the log entry's tool is in
+   `PERSONA_BEARING_PRODUCERS` (i.e. `record_search`). A `fulltext_search` or
+   `external_links_search` entry carries a `results_ref` too, but its results
+   hold no `gedcomx` and key on `id` rather than `recordId` — 300 corpus
+   assertions sit on exactly that shape, and handing the ref over would look up
+   nothing.
+2. **The projection** (`src/utils/record-persona.ts`) — when the fetch is
+   unavailable or throws. The record's parties are derived on demand by grouping
+   its own assertions on `record_role`. Lead ruling 2026-09-11: derived, **not**
+   stored and **not** built by the agent.
+
+   This route is **strictly additive**. It makes an image-transcribed register
+   page, a PDF, an external site and a sidecar-less search scorable for the
+   first time — the 2026-09-11 ruling's point that treating retrieval as a
+   domain truth was false. Route 1 is why nothing that works today regresses:
+   derivation alone cannot see a party the assertions never mention, and the
+   second party of a marriage assertion is exactly that party. The worked case
+   is `eval/fixtures/scenarios/flynn-spouse-stub-marriage`, whose record
+   `1:1:MARR-8T3` has a single `principal` assertion naming both spouses, and
+   whose sidecar holds MP1 and MP2.
+
+Party selection: `recordPersonaId`, else the assertion's `record_persona_id`,
+else (route 1) the persona whose name matches what the assertion gives that
+party, or (route 2) the `record_role` group. When no route yields a persona for
+the requested party the tool says so explicitly rather than scoring something
+else — that is the sanctioned `match_score: null`, not a failure.
+
+#### What the projection admits, and why it is not the tree filter
+
+`materializesToPersonFact` answers "may this be written onto a **tree person's**
+`facts[]`". This projection answers "what identifies this **record** person".
+The two part company on exactly one type — `marriage` — so the projection
+declares its own predicate rather than reusing that one: `record_role: "absent"`
+and a `record_basis` of `absent` never project (both lead rulings); `name`
+becomes a `SimplifiedName` and `gender`/`sex` the scalar; **`marriage` is
+admitted**; the three pure two-party edges and `age` are not.
+`record-persona.test.ts` pins that the two still differ, so a later tidy-up
+cannot quietly collapse them.
+
+**Both halves of that were measured against the live API**
+(`dev/try-same-person-project.ts`, 2026-09-21), because the first version of
+this design asserted `age` and `marriage` were both discriminators — on the
+reasoning that the match engine scores on document content — and was half
+wrong:
+
+| type | plausible | implausible / absent | verdict |
+|---|---|---|---|
+| `marriage` | 0.9480992 | 0.8032983 | **participates** — a 0.145 swing, so admitting it is worth 286 of 11,340 corpus assertions (2.5%) |
+| `age` | 0.9333059 (age 42) | 0.9333059 (age 999) | **ignored** — identical on a score nowhere near saturation |
+
+`Age` is excluded on three independent grounds, not just the null result: the
+API does not read it; **0** of the 356 person-level facts on committed real
+record personas are `Age`, so it has no precedent in anything FamilySearch
+itself emits; and it is structurally uncomparable, because a tree person's
+`facts[]` can never hold an `Age` either — which is precisely why
+`materializesToPersonFact` skips it. Projecting one is payload that cannot ever
+move a score.
+
+#### No relationships on the projected route
+
+`record_role` is an **open** enum (`^[a-z][a-z0-9_]*$`), so inferring edges from
+role names is guesswork and a wrong edge scores worse than no edge. A projected
+record document therefore carries `persons` only, and `matchRelatives` on that
+route returns an explicit `note` rather than an empty `matches` array — the two
+are not the same answer, and the existing relatives path cannot tell them apart
+on its own (`gatherRelatives` tolerates a missing `relationships` and yields
+nothing).
+
+#### The tree side
+
+`Mob.matchSubset(cap = 40)`: focus + parents + spouses + children + siblings,
+carrying only the relationships whose endpoints are both inside that set. The
+cap mirrors FamilySearch's own `MAX_CHILDREN_TO_COMPARE`.
+
+**Trim order is decided here, not inherited.** The agent body says only "keep the
+closest relatives (focus, parents, spouses) and trim the children/siblings" and
+states no order between the two. Siblings go first: they are two hops from the
+anchor (via a parent) and children are one, so this sheds the furthest kin first,
+which is what "keep the closest" implies.
+
+**Facts copied from the scored record are left out.** Before scoring, every fact
+and name in the mob whose source refs all resolve to the record under scrutiny
+is dropped (`withoutRecordSourced`; the ref walk is `mintedFromThisRecord`'s:
+tree ref → research source → its assertions' `record_id`). A fact or name that
+also cites another source stays, and a person keeps at least one name.
+`materialize_facts` writes a linked record's facts onto the tree person, so a
+re-score after that compares the record with itself. Measured live 2026-10-12 on
+the Gaetjen fixture: the 1875 register persona scored 0.43 (3) against I1 as the
+tree held him and 0.985 (5) once its own facts were on I1; the 1871 arrival
+persona went from no match (0.006) to 0.990 (5).
+
+Not `rank-search-matches.ts`'s exported `buildSubjectDoc`, which selects a
+*subject* for a many-candidate ranking fan-out and deliberately enriches it from
+`research.json`; `matchSubset` selects a *mob* by relationship topology and must
+stay a faithful slice of the tree, because the whole point of household
+membership is that both sides compare like-for-like relatives. Not
+`getRelativeMobs` either — that synthesizes one mini-document per relative for
+the warning loops, where this is a single union slice.
+
+#### Time budget
+
+Nothing caps the arm as a whole, and that is worth knowing before raising any
+piece of it. `scorePair` uses `fetchWithTimeout` at 30s (a CLAUDE.md-sanctioned
+exclusion from `fetchWithRetry`, since it manages its own fan-out), while
+`record_read` uses `fetchWithRetry` at 30s plus a 10s retry budget. So a fetched
+`matchRelatives` call is roughly 40s of retrieval followed by up to six waves of
+scoring at 30s each. The single-pair call, which is the common one, is bounded
+by 40s + 30s.
+
+#### Errors are answers
+
+`treePersonId` absent from the tree, no persona for the requested party, an
+ambiguous projected role, not a project at all: each returns an LLM-actionable
+message naming what to do. `same_person` is deliberately **not** in
+`tests/tools/no-project.test.ts`'s table: that table's first assertion requires
+the tool to RETURN `{ ok: false, reason: "no_project" }`, and this tool returns a
+score, so there is no answer shape to carry that verdict. That ruling is
+about a *write* being silently dropped; here nothing is saved, the explicit arm
+works anywhere, and saying so is the right answer.
+
+### Arm B — explicit (two documents)
+
 Four required fields: two simplified-GedcomX documents and two
 in-document person IDs identifying which person in each document is
-the focus of the comparison.
+the focus of the comparison. Use it when both documents are already in hand and
+there is no project to resolve against. **Nothing is recorded on this arm** — it
+has neither a project nor a record identity to key an attestation on.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -124,6 +303,104 @@ there."* (See "Out of Scope" below.)
 
 ---
 
+## The recorded score (the attestation)
+
+The 2026-09-07 lead ruling: *"the tool writes its score to a
+project-local record keyed by (persona, tree person) — shape is the
+implementer's, but the writer must be able to read it — so a `match_score` on a
+link is checked against a call that happened rather than trusted."*
+
+Written host-side by the tool that computed it, so the payload never round-trips
+through the model on the legitimate path. That is what `match_score` alone never
+was (ADR-0009 constraint 2). **It is not yet unforgeable.**
+`guard_project_files.py`'s `PROTECTED_PROJECT_FILES` covers `research.json`,
+`tree.gedcomx.json`, `starting-tree.gedcomx.json` and `external-collections.json` only, so nothing stops a raw
+`Write` to `results/.scores/` from inside the VM: the model cannot produce the
+payload, but it can author the file. Closing that is a precondition for the
+refusal step trusting this record, and it touches ADR-0005, which owns the list.
+
+**Location: `results/.scores/<sha256(arkToBareId(record_id))>.json`, one file per
+record, holding a map.** Under `results/` because architecture.md §6.1 already
+carries that pattern; under a **dot-directory** because the validator's orphan
+check lists `results/` non-recursively and errors on any unreferenced top-level
+`*.json` — both store backends list direct children only, so a dot-directory is
+invisible to it, the same trick `results/.staging/` uses. Unlike `.staging`,
+nothing prunes this: an attestation outlives the session that made it. The
+filename hashes the **normalised** id so the URL and bare forms of one record do
+not become two files.
+
+```json
+{ "record_id": "ark:/61903/1:1:MARR-8T3",
+  "scores": { "<assertion_id>|<tree_person_id>": { "record_persona_id": …, "record_role": …,
+              "tree_person_id": …, "score": 0.87, "confidence": 5, "matched": true,
+              "assertion_id": "a_005", "record_source": "record_read", "computed": "…" } } }
+```
+
+**Why a per-record map rather than one file per pairing.** One read answers every
+lookup for a record, and a hashed per-pairing filename could not be recovered
+from a slightly different key. Read-modify-write is safe under `withProjectLock`.
+
+**The map key is `(assertion_id, tree_person_id)`.** Those are the two tokens
+BOTH sides always hold: this tool's project-relative arm is called with them,
+and a `person_evidence` entry carries them as `(assertion_id, person_id)`.
+
+It was **`(party, tree_person_id)`** first, and that was wrong. The party
+component is not stable for a single pairing: `recordPersonaId` is a caller
+override, and on the fetched route the tool resolves a real `persons[].id` for a
+party whose assertion carries `record_persona_id: null`. The score was therefore
+filed under what the fetch RESOLVED while every reader computes the key from what
+the ASSERTION carries, so `research_append`'s gate could not find a legitimate
+score and refused precisely the links whose call had been made — telling the
+agent to repeat the call that wrote the unfindable record. Caught by review
+before it shipped; the `dev/probe-score-refusal.ts` arm `fetched-route
+attestation` is the standing check.
+
+ADR-0009 constraint 3 says to key on (`record_id`, `record_persona_id`) and not
+on `record_id` alone, so that a second persona of an already-linked record
+cannot attach unscored. The assertion key satisfies it structurally: an
+assertion carries one `record_role` and one `record_persona_id` and so IS a
+(record, party) pair, which makes a second persona a second assertion. Including
+`tree_person_id` keeps the two links of a relationship assertion apart. Note
+this is the key for the ATTESTATION only; the PROJECTION still groups parties on
+persona-id-else-role, which is a separate question.
+
+Grouping on the role alone was the first design and it was wrong twice over: it
+merges two personas sharing a role into one projected person (a transcribed
+register page holds many entries at one role each), and it makes
+`recordPersonaId` useless as a disambiguator, since the two people the caller is
+choosing between are already collapsed by the time it is read.
+
+Measured over **3,093** projected parties (1,330 persona-keyed, 1,763
+role-keyed): **20** hold more than one distinct `name`. **14 are role-keyed and
+refused** rather than scored as a merge, naming the competing values so the
+agent can re-call with an explicit `recordPersonaId`; **6 are persona-keyed and
+exempt**, because a group the record itself assigned one persona id to is one
+person under several spellings. The tests prove both directions.
+
+The exemption trusts the extractor's `record_persona_id`, and 2 of the 6 exempt
+groups look on inspection like two people sharing one id rather than one person
+under two spellings (`1:1:MPXD-MZC`: "Charlotte Spriggs" / "John W Spriggs").
+That is an extraction defect this guard cannot see and does not try to.
+
+**Why not extend `results/match-scores.jsonl`** (`rank-search-matches.ts`), which
+already persists host-side scores keyed on (subject, record) and already uses the
+same orphan-validator dodge: it is an append-only **calibration trail**, written
+best-effort (its writer swallows its own failure so a rank call never fails),
+with no persona dimension. An attestation a gate reads must be authoritative,
+must not be lossy by contract, and must not require scanning an unbounded log.
+Different contract, so a second artifact.
+
+**Writing it never fails the call.** The score is the answer the agent asked for;
+failing the call because the attestation could not be written would make a disk
+problem look like an unscoreable identity, which is the shape this card exists to
+stop producing. The result carries `recorded: true|false` so the caller knows.
+
+**Not reachable from a feedback zip.** `apps/server/app/feedback.py`'s walker
+skips dot-directories, so `results/.scores/` is excluded from every bundle;
+a triager sees `match_score` values with no way to check them against the
+attestation. Deliberate — the bundle is for reproducing a case, not auditing
+provenance — but stated so `feedback-case-spec.md`'s consumers are not surprised.
+
 ## Output
 
 A small object the LLM can reason over. The verbose GedcomX response
@@ -132,7 +409,7 @@ from the API is parsed and reduced.
 | Field | Type | Always present? | Description |
 |-------|------|-----------------|-------------|
 | `matched` | boolean | yes | `true` when the API returned a `confidence` field on the entry. `false` indicates the API treated the comparison as "no real match" (confidence omitted, near-zero score). |
-| `confidence` | number | only when `matched: true` | Integer 1–10. The API's coarse-bucket confidence rating. Higher is better. |
+| `confidence` | number | only when `matched: true` | Integer 1–5. The API's coarse-bucket confidence rating. Higher is better. |
 | `score` | number | yes | Float 0–1. Fine-grained match score from the API's algorithm. Near-1 means strong match; near-0 means no signal. |
 | `queryArk` | string | yes | The persistent ARK of the focus person in `gedcomx1`, in canonical form (e.g. `"ark:/61903/4:1:KGS8-LY1"`). Parsed out of the API response's `title` field — see parsing rule below. Will contain a `MMMM-MMM` placeholder if the focus person in `gedcomx1` had no `ark`. |
 | `candidateArk` | string | yes | The persistent ARK of the matched person in `gedcomx2`, in canonical form. Derived from `entries[0].id` in the API response (a resolver URL), normalized to `ark:/61903/...`. Will contain `MMMM-MMM` placeholder if the focus person in `gedcomx2` had no `ark`. |
@@ -177,7 +454,7 @@ do next), thrown as `Error` objects.
 
 | Condition | Throw message |
 |-----------|--------------|
-| No FamilySearch session (no tokens / refresh failed) | `"User is not logged in to FamilySearch. Call the login tool to authenticate."` (re-raised from `getValidToken()`) |
+| No FamilySearch session (no tokens / refresh failed) | `"User is not logged in to FamilySearch. Call the login tool to authenticate."` (re-raised from `getValidToken(principal)`) |
 | API returns 401 | `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 403 with Imperva body (errorCode 15) | `"FamilySearch matchTwoExamples blocked by WAF. The User-Agent header was rejected — check that the MCP server is running an unmodified build."` |
 | API returns 400 with JSON body | `"FamilySearch matchTwoExamples rejected the payload: ${detail-from-body}."` |
@@ -186,7 +463,7 @@ do next), thrown as `Error` objects.
 | `gedcomx1` or `gedcomx2` is missing entirely | MCP schema validation rejects the call before the function runs (the four params are `required`). |
 | `gedcomx1.persons` or `gedcomx2.persons` is missing or empty | **Runtime check** inside `validateInput()` — the JSON schema for `type: "object"` won't catch a missing nested array. Throws: `"same_person: <side> has no persons[] array."` |
 | API returns 200 but `entries[]` is empty | Defensive sentinel — should never happen (the API always returns ≥1 entry; see Evidence Trail). Throws: `"matchTwoExamples API returned no entries[]; this is unexpected per FS behavior."` |
-| `fetch()` itself fails (network) | `"Could not reach FamilySearch matchTwoExamples API: ${error.message}."` |
+| `fetch()` itself fails (network) | `"Could not reach FamilySearch matchTwoExamples API: ${describeFetchError(error)}."` |
 
 ---
 
@@ -199,7 +476,7 @@ POST https://www.familysearch.org/service/search/record/collections/match/matchT
 
 **Required headers:**
 ```
-Authorization: Bearer <access token from getValidToken()>
+Authorization: Bearer <access token from getValidToken(principal)>
 Accept: application/json
 Content-Type: application/json
 User-Agent: <BROWSER_USER_AGENT from src/constants.ts>
@@ -229,7 +506,7 @@ The tool omits the parameter.
 
 Each entry's `gedcomx` must include:
 - `persons[]` with at least one person carrying `identifiers["http://gedcomx.org/Persistent"]` — required for the API to return real ARKs in the response.
-- `sourceDescriptions[]` with `{ id: "<any-id>", about: "#<primary-id>" }` declaring which person is the focus. The id field is internal; only `about` matters to the API. Per the FS docs ([Person Matches by Example resource](https://www.familysearch.org/developers/docs/api/tree/Person_Matches_by_Example_resource)), this is required. The API tolerates absence (falls back to `persons[0]`) but the tool always emits it. The tool uses `id: "match-anchor"` to avoid colliding with caller-provided sourceDescription ids (see Internal Pipeline §3).
+- `sourceDescriptions[]` with `{ id: "<any-id>", about: "#<primary-id>" }` declaring which person is the focus. The id field is internal; only `about` matters to the API. Per the FS docs ([Person Matches by Example resource](https://www.familysearch.org/developers/docs/api/tree/Person_Matches_by_Example_resource)), this is required, and the tool always emits it. **The API does not honor it: it scores `persons[0]`**, so the tool also moves the focus person to the front of `persons[]` (measured 2026-10-18 on 85 genealogist-adjudicated record hints: AUC 0.49 with the record's own order, 0.68 with the focus person first). The tool uses `id: "match-anchor"` to avoid colliding with caller-provided sourceDescription ids (see Internal Pipeline §3).
 - Optionally `relationships[]` of `ParentChild` linking parent personas to the primary.
 
 **Response shape (200 OK):**
@@ -238,7 +515,7 @@ Each entry's `gedcomx` must include:
 {
   "entries": [
     {
-      "confidence": 5,                                      // int 1–10; OMITTED on no-match
+      "confidence": 5,                                      // int 1–5; OMITTED on no-match
       "id": "https://familysearch.org/ark:/61903/4:1:<CAND>",  // candidate ARK
       "score": 0.99983513                                   // float 0–1
     }
@@ -276,9 +553,9 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   │     - buildRawWithAnchor then rewrites each Persistent identifier to the
   │       FULL canonical ARK (`ark:/61903/n:n:<id>`) from the simplified `ark`;
   │       matchTwoExamples rejects the converter's bare id as "Invalid Feed".
-  │     - We do NOT pre-structure or re-assemble the persons. Whatever
-  │       was in the simplified GedcomX (focus + parents + relationships)
-  │       comes through into the raw GedcomX as-is.
+  │     - buildRawWithAnchor then moves the focus person to persons[0]
+  │       (matchTwoExamples scores persons[0]). Otherwise the persons are
+  │       not re-assembled: focus + parents + relationships come through as-is.
   │
   ├─ 3. ADD a sourceDescription to each raw GedcomX:
   │       gedcomx1Raw.sourceDescriptions = [
@@ -294,8 +571,9 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   │       via the simplifier — see Evidence Trail — so we don't want to
   │       silently duplicate ids if a caller happened to name theirs mainSrc).
   │     - The id of the sourceDescription is irrelevant to FS's matching
-  │       algorithm; only the `about: "#<primaryId>"` anchor matters. So
-  │       "match-anchor" is just a unique-enough internal name.
+  │       algorithm, and the `about: "#<primaryId>"` anchor does not choose
+  │       whom the API scores (step 2 does). The FS docs call it required,
+  │       so it is still sent. "match-anchor" is just a unique-enough internal name.
   │
   ├─ 4. Build request body:
   │       { entries: [
@@ -304,7 +582,7 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   │       ] }
   │
   ├─ 5. POST to the FS URL with:
-  │       Authorization: Bearer <getValidToken()>
+  │       Authorization: Bearer <getValidToken(principal)>
   │       User-Agent: BROWSER_USER_AGENT
   │       Accept: application/json
   │       Content-Type: application/json
@@ -360,6 +638,13 @@ Pascal's inverter, add one sourceDescription per side, and POST.
 ---
 
 ## Files to Create
+
+> **These listings describe the original build, which is arm B.** They are kept
+> as the implementation trail and are no longer a complete picture: arm A added
+> a `SamePersonProjectInput` member to `SamePersonInput` (now a union, keyed on
+> `projectPath`), `src/utils/record-persona.ts`, `src/utils/match-scores.ts` and
+> `Mob.matchSubset()`. The **Input** and **The recorded score** sections above
+> are the current contract; where they and a listing here disagree, they win.
 
 ### 1. `packages/engine/mcp-server/src/types/same-person.ts`
 
@@ -424,7 +709,7 @@ export async function samePerson(
 ): Promise<SamePersonResult> {
   validateInput(input);
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const raw1 = buildRawWithAnchor(input.gedcomx1, input.primaryId1);
   const raw2 = buildRawWithAnchor(input.gedcomx2, input.primaryId2);
 
@@ -530,13 +815,18 @@ Vitest with mocked `fetch`. Cases to cover:
 
 ## Files to Modify
 
-### `packages/engine/mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/server.ts`
 
-Three additions in the same pattern as other tools:
+Dispatch lives in `createServer(principal)`, not in an entrypoint (`src/index.ts`
+only connects the stdio transport). Three additions in the same pattern as other
+tools:
 
-1. Import: `import { samePerson, samePersonSchema, type SamePersonInput } from "./tools/same-person.js";`
-2. Schema in `ListToolsRequestSchema` array.
+1. Import: `import { samePerson, samePersonSchema } from "./tools/same-person.js";`
+2. Schema in `allToolSchemas` (`src/tool-schemas.ts`).
 3. `if (request.params.name === "same_person") { ... }` block in `CallToolRequestSchema`.
+
+The arm casts `request.params.arguments` and passes it straight through, so
+widening `SamePersonInput` needs no change here.
 
 ---
 
@@ -556,7 +846,7 @@ export const samePersonSchema = {
     "Each gedcomx may contain multiple persons (focus + parents); the primaryId " +
     "tells the tool which one is the focus.\n" +
     "\n" +
-    "Returns a match decision with confidence (integer 1–10, omitted on " +
+    "Returns a match decision with confidence (integer 1–5, omitted on " +
     "no-match) and score (float 0–1). Returns `matched: false` when the API " +
     "doesn't recognize a real match (confidence omitted, score near zero).",
   inputSchema: {
@@ -594,11 +884,11 @@ export const samePersonSchema = {
 
 ## Patterns to Follow
 
-- **Auth:** call `getValidToken()` from `src/auth/refresh.ts`. Never read tokens directly.
+- **Auth:** call `getValidToken(principal)` from `src/auth/refresh.ts`. Never read tokens directly.
 - **Headers:** use `BROWSER_USER_AGENT` from `src/constants.ts`. Do not hardcode the Mozilla string.
 - **HTTP errors:** map each upstream status to an LLM-instruction error message per the Error Handling table. Never surface raw HTTP errors to the LLM.
 - **Simplifier:** use `toGedcomX()` from `src/utils/gedcomx-convert.ts`. Do not roll your own inflation logic.
-- **Minimal post-processing:** call `toGedcomX()` on the LLM's input as-is, then append one `sourceDescription` per side anchored to the primary id. Do not restructure persons, do not add identifiers (the simplifier handles them via the `ark` field), do not normalize ids.
+- **Minimal post-processing:** call `toGedcomX()` on the LLM's input as-is, then move the primary person to the front of `persons[]` and append one `sourceDescription` per side anchored to the primary id. Do not otherwise restructure persons, do not add identifiers (the simplifier handles them via the `ark` field), do not normalize ids.
 
 ---
 
@@ -609,9 +899,8 @@ export const samePersonSchema = {
 - **Multiple ARK identifiers per person.** Only the first `http://gedcomx.org/Persistent` ARK (via `persons[].ark`) is used.
 - **Match against multiple candidates in one call.** The API name is `matchTwoExamples` — exactly two entries per call. Batch processing is the caller's responsibility.
 - **Tree-merge use case.** The platform endpoint `api.familysearch.org/platform/tree/persons/matches` is a different operation (find merge candidates for a tree person). If we eventually want that, it's a separate tool.
-- **Restructuring the input GedcomX.** The tool passes whatever the LLM provides through `toGedcomX()` unchanged. It does not re-assemble persons, build relationships, or normalize ids. If the input has parents-and-relationships, they go to the API. If it's focus-only, that goes too. The only modification is appending one `sourceDescription` for the primary anchor.
+- **Restructuring the input GedcomX.** The tool passes whatever the LLM provides through `toGedcomX()` unchanged. It does not re-assemble persons, build relationships, or normalize ids. If the input has parents-and-relationships, they go to the API. If it's focus-only, that goes too. The only modifications are moving the primary person to the front of `persons[]` (the API scores `persons[0]`) and appending one `sourceDescription` for the primary anchor.
 - **Deduplicating ids across `gedcomx1` and `gedcomx2`.** The two documents live in separate `entries[]` items in the API request, so they don't share an id namespace. Both sides may use `"I1"` independently with no problem. The tool does NOT rewrite ids to make them unique across sides.
-- **Companion plan doc** (`docs/plan/match-two-examples-tool.md`) and **testing guide** (`docs/testing-guides/match-two-examples-tool-testing-guide.md`). Per CLAUDE.md convention these should exist alongside the tool — they'll be added during the implementation PR, not in the spec PR.
 
 ---
 
@@ -659,7 +948,7 @@ exercised by `tests/tools/same-person.test.ts`.
 ### Review-round edits (Pascal/Dallan review, 2026-05-17)
 
 - **`queryArk` format.** Emitted in canonical `ark:/61903/...` form to match `candidateArk` (per the ID-vocabulary standard; both ARKs, no resolver-URL prefix). The `title` field is parsed with an explicit regex rule; if parsing fails, the raw title is surfaced. See "Parsing the queryArk from `title`" subsection.
-- **`sourceDescription` id changed from `mainSrc` → `match-anchor`.** Avoids potential collision if the LLM's simplified input already contains a sourceDescription with id `mainSrc` (sourceDescriptions round-trip via the simplifier — see Evidence Trail). The id itself is irrelevant to FS's matching algorithm — only the `about` anchor matters.
+- **`sourceDescription` id changed from `mainSrc` → `match-anchor`.** Avoids potential collision if the LLM's simplified input already contains a sourceDescription with id `mainSrc` (sourceDescriptions round-trip via the simplifier — see Evidence Trail). The id itself is irrelevant to FS's matching algorithm, and the `about` anchor does not choose whom the API scores: it scores `persons[0]`, which is why the focus person is moved first.
 - **Defensive empty-`entries[]` check added** to the pipeline (step 6) and error table. Should never fire (the API always returns ≥1 entry — see Evidence Trail) but cheap insurance.
 - **Test file naming** uses kebab-case `same-person.test.ts` to match the source file `tools/same-person.ts`.
 - **Runtime persons[] validation** clarified — the JSON schema for `type: "object"` doesn't catch a missing nested `persons[]`. Moved to runtime check inside `validateInput()` with a clear error message.

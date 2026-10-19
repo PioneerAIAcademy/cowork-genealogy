@@ -38,6 +38,21 @@ name: Server tests
 # frontmatter `name:` ↔ filename check, and the SKILL.md `@plugin:` delegation
 # contract. An agent rename is the change most likely to break bare-name
 # binding, and it touches no apps/server path.
+#
+# tests/test_proto_grants_pg.py (U3) needs a real Postgres: it proves the grant
+# locks -- a refresher can never win a patron's attempt lock while an attempt
+# holds it, and the sign-in callback waits on the refresher -- which no fake can.
+# The step below starts postgres:16 only when the scope check says the suite
+# runs (a `services:` block would start on every PR, including the out-of-scope
+# ones this job answers in ~5 s), and the module FAILS rather than skips when CI
+# is set without PROTO_TEST_PG_DSN, so this job cannot go green by skipping it.
+#
+# tests/test_proto_fencing_pg.py (U6) is why this job also has Node: it proves a
+# superseded attempt's write through a second tool-server process is a no-op, so
+# it spawns the real `build/http.js` against the same Postgres. The steps below
+# install the pinned npm and build the engine (~40-60 s, relevant PRs only), and
+# the module FAILS rather than skips under CI when node or the build is missing,
+# or when any src/ file is newer than the build.
 
 #
 # Runs on EVERY pull request — no `paths:` filter — so this check always reports
@@ -66,7 +81,40 @@ jobs:
           # loads docs/specs/schemas/{research,tree-gedcomx,enums}.schema.json.
           # Without it a schema-only diff reported success without running the
           # test that validates the mock agent's output against them.
-          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^docs/specs/schemas/|^\.github/workflows/server-tests\.yml$'
+          #
+          # `^\.gitignore$` (issue #1489): tests/test_sandbox_image_provenance.py
+          # asserts the E2B image's provenance artifact stays gitignored, so a
+          # tracked copy cannot dirty every build. Same shape as the line above --
+          # a test reading a file outside apps/server/ -- and without it a diff
+          # that removes only that .gitignore line reports success having run
+          # nothing.
+          #
+          # `^scripts/eb_bundles/`, `^scripts/build-stamp\.mjs$` and `^Makefile$`
+          # (U12): tests/test_eb_bundles.py loads the Beanstalk builder and
+          # verifier from scripts/eb_bundles/, compares the verifier's build-stamp
+          # regex with scripts/build-stamp.mjs's, and checks the Makefile's
+          # EB_PYYAML pin against uv.lock. A diff to any of them alone would
+          # otherwise report success having run nothing.
+          #
+          # `^packages/engine/plugin/skills/` (U11): tests/test_proto_worker.py pins
+          # the worker's EXPECTED_SKILLS to the plugin's skill count, so a diff that
+          # adds or removes only a skill would otherwise report success.
+          #
+          # `^deploy/` (issue #1365, on issue #2488): tests/test_prod_preflight.py::
+          # test_refusal_reaches_stderr_under_the_deploy_entrypoint parses
+          # deploy/Dockerfile's CMD and starts the app with it, so a Dockerfile-only
+          # diff would otherwise report success without running that test.
+          #
+          # `^docs/architecture\.md$`, `^docs/plan/familysearch-handoff\.md$` and
+          # `^docs/search-agent-prototype-report\.md$` (U13):
+          # tests/test_proto_rehearsal.py's 12-digit account-id scan reads them, and it
+          # is CI's only guard against a pasted AWS account id. A docs-only diff would
+          # otherwise report success having scanned nothing.
+          #
+          # `^packages/engine/mcp-server/(src/|package\.json$|...)` (U6):
+          # tests/test_proto_fencing_pg.py spawns build/http.js, so a diff to the
+          # store or http-server alone must run it.
+          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^packages/engine/plugin/skills/|^docs/specs/schemas/|^\.gitignore$|^deploy/|^scripts/eb_bundles/|^scripts/build-stamp\.mjs$|^Makefile$|^\.github/workflows/server-tests\.yml$|^docs/architecture\.md$|^docs/plan/familysearch-handoff\.md$|^docs/search-agent-prototype-report\.md$|^packages/engine/mcp-server/(src/|package\.json$|package-lock\.json$|tsconfig[^/]*\.json$)'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -95,7 +143,45 @@ jobs:
         working-directory: apps/server
         run: uv sync --frozen
 
+      - name: Set up Node (for the fencing test's tool server)
+        if: steps.scope.outputs.relevant == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: packages/engine/mcp-server/package-lock.json
+
+      - name: Install the pinned npm (from the packageManager field)
+        if: steps.scope.outputs.relevant == 'true'
+        run: |
+          # Node 22 bundles npm 10.x; the engine's .npmrc sets engine-strict with
+          # an npm >=11.12 bound, so install the pinned npm before any engine
+          # `npm ci`. Version comes from packageManager (single source of truth).
+          NPM_VER="$(node -p "require('./packages/engine/mcp-server/package.json').packageManager.split('@')[1]")"
+          npm install -g "npm@${NPM_VER}"
+          echo "Using npm $(npm --version)"
+
+      - name: Build the tool server
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: packages/engine/mcp-server
+        run: npm ci && npm run build
+
+      - name: Start Postgres for the grant-lock tests
+        if: steps.scope.outputs.relevant == 'true'
+        run: |
+          set -euo pipefail
+          docker run -d --name u3pg -e POSTGRES_PASSWORD=proto -p 5432:5432 postgres:16-alpine
+          for _ in $(seq 1 60); do
+            if docker exec u3pg pg_isready -U postgres -h 127.0.0.1 >/dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          docker logs u3pg
+          echo "::error::postgres:16 never became ready"
+          exit 1
+
       - name: Run control-plane tests
         if: steps.scope.outputs.relevant == 'true'
         working-directory: apps/server
+        env:
+          PROTO_TEST_PG_DSN: postgresql://postgres:proto@localhost:5432/postgres
         run: uv run --frozen pytest -q

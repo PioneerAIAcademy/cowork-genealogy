@@ -24,46 +24,45 @@ def payload(command):
 
 
 CASES = [
-    # (should the gate fire?, name, stdin)
-    (True, "plain gh issue create", payload("gh issue create --label developer --title x --body y")),
-    (True, "inside a compound command", payload('cd /tmp && gh issue create --title x --body "a\nb"')),
-    (True, "line-continuation form", payload("gh issue create --label developer \\\n  --title t \\\n  --body b")),
-    (True, "multiline body", payload('gh issue create --title t --body "**Touches:** a.ts\n\nbody"')),
-    (False, "gh issue list", payload("gh issue list --state open --search foo")),
-    (False, "gh issue view", payload("gh issue view 1549 --json body")),
-    (False, "gh pr create", payload("gh pr create --title x --body y")),
-    (False, "unrelated command", payload("pnpm test")),
-    (False, "malformed json", "not json at all"),
-    (False, "empty stdin", ""),
-    (False, "no command key", '{"tool_name":"Bash","tool_input":{}}'),
-    (False, "command is not a string", '{"tool_name":"Bash","tool_input":{"command":123}}'),
+    # (expected decision — "ask", "deny", or None for quiet; name, stdin)
+    ("ask", "plain gh issue create", payload("gh issue create --label developer --title x --body y")),
+    ("ask", "inside a compound command", payload('cd /tmp && gh issue create --title x --body "a\nb"')),
+    ("ask", "line-continuation form", payload("gh issue create --label developer \\\n  --title t \\\n  --body b")),
+    ("ask", "multiline body", payload('gh issue create --title t --body "**Touches:** a.ts\n\nbody"')),
+    (None, "gh issue list", payload("gh issue list --state open --search foo")),
+    (None, "gh issue view", payload("gh issue view 1549 --json body")),
+    (None, "gh pr create", payload("gh pr create --title x --body y")),
+    (None, "unrelated command", payload("pnpm test")),
+    (None, "malformed json", "not json at all"),
+    (None, "empty stdin", ""),
+    (None, "no command key", '{"tool_name":"Bash","tool_input":{}}'),
+    (None, "command is not a string", '{"tool_name":"Bash","tool_input":{"command":123}}'),
 ]
 
 
 def main():
     failures = 0
-    for should_fire, name, stdin in CASES:
+    for expected, name, stdin in CASES:
         proc = subprocess.run(
             [sys.executable, str(HOOK)],
             input=stdin.encode("utf-8"),
             capture_output=True,
         )
         out = proc.stdout.decode("utf-8").strip()
-        fired = False
+        decision = None
         if out:
             try:
                 decision = json.loads(out)["hookSpecificOutput"]["permissionDecision"]
-                fired = decision == "ask"
             except (ValueError, KeyError, TypeError):
-                fired = False
+                decision = None
 
         # Exit 0 always: the hook must never break an unrelated Bash call.
-        ok = fired == should_fire and proc.returncode == 0
+        ok = decision == expected and proc.returncode == 0
         failures += not ok
         print(
             f"{'PASS' if ok else 'FAIL'}  "
-            f"expected={'fire' if should_fire else 'quiet':5s} "
-            f"got={'fire' if fired else 'quiet':5s} exit={proc.returncode}  {name}"
+            f"expected={str(expected or 'quiet'):5s} "
+            f"got={str(decision or 'quiet'):5s} exit={proc.returncode}  {name}"
         )
 
     print(f"\n{len(CASES) - failures}/{len(CASES)} passed")

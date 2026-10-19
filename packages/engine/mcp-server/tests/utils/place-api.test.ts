@@ -87,3 +87,76 @@ describe("searchPlace", () => {
     ]);
   });
 });
+
+// Each of these fails on main. The suite was previously invariant to whether
+// the sanitiser, the header and the qualifier worked at all: reverting
+// place-api.ts wholesale left every test green, which is why they exist.
+describe("searchPlace query sanitisation", () => {
+  // Read the decoded `q` VALUE, not the whole URL: the URL always contains a
+  // literal "?" as its query separator, so asserting on the raw string would
+  // pass or fail for the wrong reason.
+  const q = (i = 0) =>
+    new URL(mockFetch.mock.calls[i][0] as string).searchParams.get("q") ?? "";
+  const decoded = () => q(0);
+
+  it("maps & to the word 'and' rather than dropping it", async () => {
+    // Dropping the & deletes a token from the phrase and a shorter parent name
+    // outscores the real place: live, "Manila American Cemetery & Memorial, ..."
+    // returns the cemetery at 88 with the word and only the CITY of Manila at
+    // 72 with the & removed.
+    await searchPlace("Great & Little Singleton, Kirkham, Lancashire");
+    expect(decoded()).toContain("Great and Little Singleton");
+    expect(decoded()).not.toContain("&");
+  });
+
+  it("drops the documented wildcard and fuzzy operators", async () => {
+    await searchPlace("Marshall Sal*, Missouri");
+    expect(q(0)).not.toContain("*");
+    await searchPlace("Alverson Cemetery #1, Owen, Indiana");
+    expect(q(1)).not.toContain("#");
+    await searchPlace("??Gren");
+    expect(q(2)).not.toContain("?");
+    expect(q(2)).toContain('name:"Gren"');
+    await searchPlace("Wanrooij~, Noord-Brabant");
+    expect(q(3)).not.toContain("~");
+  });
+
+  it("leaves characters that were never measured as harmful alone", async () => {
+    // Hyphens are load-bearing in real names; parens and colons measured benign.
+    await searchPlace("Bambecque, Nord, Hauts-de-France, France");
+    expect(decoded()).toContain("Hauts-de-France");
+  });
+
+  it("returns [] without calling the API when sanitising empties the name", async () => {
+    const results = await searchPlace("???");
+    expect(results).toEqual([]);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("pins Accept-Language so the persisted spelling cannot drift", async () => {
+    await searchPlace("Bayern, Deutschland");
+    const init = mockFetch.mock.calls[0][1] as { headers: Record<string, string> };
+    expect(init.headers["Accept-Language"]).toBe("en");
+  });
+});
+
+describe("searchPlace date qualifier", () => {
+  it("omits +date: entirely when no date is given", async () => {
+    await searchPlace("Rochdale, England");
+    const sent = new URL(mockFetch.mock.calls[0][0] as string).searchParams.get("q") ?? "";
+    expect(sent).not.toContain("+date:");
+  });
+
+  it("appends +date:+YYYY when a year is given", async () => {
+    await searchPlace("Rochdale, England", { date: 1880 });
+    // Undated this resolves to Greater Manchester, a county created in 1974.
+    const sent = new URL(mockFetch.mock.calls[0][0] as string).searchParams.get("q") ?? "";
+    expect(sent).toContain("+date:+1880");
+  });
+
+  it("keeps the qualifier outside the phrase-quoted name", async () => {
+    await searchPlace("Rochdale, England", { date: 1880 });
+    const sent = new URL(mockFetch.mock.calls[0][0] as string).searchParams.get("q") ?? "";
+    expect(sent).toBe('name:"Rochdale, England" +date:+1880');
+  });
+});

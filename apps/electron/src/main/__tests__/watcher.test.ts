@@ -316,11 +316,19 @@ describe('scanAndNotify stores the folder notice for hydration (#1899)', () => {
 
     await scanAndNotify(dir, win as unknown as Parameters<typeof scanAndNotify>[1])
 
+    // Separator-agnostic: unlike the formatNestedNotice tests above, which feed
+    // the formatter literal strings, this goes through the real scan, and
+    // `findNestedResearchJson` builds its paths with `relative()` from
+    // `node:path` — so the notice carries `sub\research.json` on Windows. The
+    // source is right (a Windows user should see a Windows path); hardcoding a
+    // forward slash here failed every run on Windows, which meant the whole
+    // `make test-all` pre-PR gate could not pass there.
+    const nested = join('sub', 'research.json')
     expect(win.webContents.send).toHaveBeenCalledWith(
       'project:folder-notice',
-      expect.stringContaining('sub/research.json')
+      expect.stringContaining(nested)
     )
-    expect(getCurrentState().notice).toContain('sub/research.json')
+    expect(getCurrentState().notice).toContain(nested)
   })
 
   it('stores nothing when there is no nested research.json', async () => {

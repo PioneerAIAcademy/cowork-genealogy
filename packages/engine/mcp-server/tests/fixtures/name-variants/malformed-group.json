@@ -1,0 +1,4 @@
+{
+  "_meta": { "description": "test fixture — a group entry that is not a non-empty string" },
+  "groups": [["fine", "alsofine"], ["broken", ""]]
+}

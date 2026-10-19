@@ -13,12 +13,6 @@
     "agent": "claude-sonnet-4-6",
     "judge": "claude-haiku-4-5-20251001"
   },
-  "caps": {
-    "wall_clock_seconds": 3600,
-    "inactivity_seconds": 600,
-    "tool_calls": 200,
-    "max_turns": 100
-  },
   "difficulty": "hard",
-  "notes": "Indirect-evidence case study. Västra Karaby parish registers begin only in 1688, while Elena was born c. 1681, so her origin is established by correlating Swedish tax lists (Mantalslängder, from 1658) and catechism records (Katekismilängder) across five decades to place Asmund Torsson's household at Henckelstorp. The tax lists ARE on FamilySearch, as browse-only image volumes (Harjager härad, 1670-1681 and 1700-1714, 0% name-indexed); the catechism records are not, at härad, parish or county level, and neither are the 1658-1663 tax lists behind f5. Nothing here is name-searchable, so recoverability via FamilySearch record search stays low even where the images exist — see the Recoverability caveat in README.md (measured 2026-08-19, #1596). This is the deliberately hardest fixture of the batch."
+  "notes": "Indirect-evidence case study. Västra Karaby parish registers begin only in 1688 (verified 2026-08-25 by reading the volume's own first pages: 004523018_00008 is the title page \"Wester Carleby Kyrckio Book\" and 004523018_00010 carries 1688 christenings facing \"Anno 1689\"), while Elena was born c. 1681, so her origin is established by correlating Swedish tax lists (Mantalslängder, from 1658) and catechism records (Katekismilängder) across five decades to place Asmund Torsson's household at Henckelstorp. The tax lists ARE on FamilySearch, as browse-only image volumes (Harjager härad, 1670-1681 and 1700-1714, 0% name-indexed); the catechism records are not, at härad, parish or county level, and neither are the 1658-1663 tax lists behind f5. Nothing here is name-searchable, so recoverability via FamilySearch record search stays low even where the images exist — see the Recoverability caveat in README.md, which now cites the exact image for f2, f4, f6 and f3's reachable half. This is the deliberately hardest fixture of the batch."
 }

@@ -1,13 +1,30 @@
-# Converting a skill into a skill-agent pair
+# Converting a skill into an agent
 
-**Read this before converting anything.** It is the measured record of the first
-two conversions (`proof-conclusion`, 2026-08-19/20; `research-exhaustiveness`,
-2026-08-23) and the rules that follow from them. The first took nine paid eval
-runs; most of that was avoidable, and this document exists so the next one does
-not repeat it.
+**We no longer keep skills at all — only agents.** A conversion ends with the
+agent authored and `skills/<name>/` deleted in the same PR. There is no
+skill-agent pair and no thin routing skill (lead ruling 2026-09-22, recorded in
+`docs/specs/unit-test-spec.md`; restated by chesworthrm on PR #3000,
+2026-09-29). Worked cases: `citation` (#2799, PR #2861), `person-evidence`,
+`search-wikipedia` (#2795), `proof-conclusion` (#2822), `question-selection`
+(#2115, PR #3000).
 
-Pairs are still the right instrument. Nothing below argues against pairing — it
-argues about *what to move, in what order*.
+**Read this before converting anything.** It is the measured record of the
+conversions so far and the rules that follow from them. The first
+(`proof-conclusion` as a pair, 2026-08-19/20) took nine paid eval runs; most of
+that was avoidable, and this document exists so the next one does not repeat
+it. Much of what follows was measured on pairs, when the routing skill still
+existed. It is kept for those measurements, not as instruction to build one:
+wherever it says "the routing skill", read "the caller" — on the deleted-skill
+path that is the orchestrator or the main thread.
+
+**Three exemptions predate the restatement:** `research` (the orchestrator),
+`record-extraction` (ruled 2026-09-21, and since retired: extraction runs in
+code, through `extraction_append` and the `record-structurer` agent), and
+`forget-and-rederive` (ruled
+2026-09-25, issue #2791), whose confirmation step and its rule never to read
+the FamilySearch tree for the rest of the project must bind the main thread
+after setup, which an agent's single return cannot do. They stay until a
+replacement architecture exists (chesworthrm, 2026-09-29).
 
 **Two rationales reach a pair, and they buy different work.** This document was
 written for the first:
@@ -15,17 +32,25 @@ written for the first:
 - **Attribution.** Only an agent carries an `agent_id`, which is what the whole
   guardrail programme is built on — the hook routes a protected write to the
   agent that owns it. This is what PR #1819 and PR #1847 bought, and it is what
-  ADR-0011 and step 3 below are about.
+  ADR-0011 and step 4 below are about.
 - **Cost and context.** An agent is the only surface that honours a `model:` or
   `effort:` pin (`docs/architecture.md` §3.5), and a folded body stops occupying
   the orchestrator's context. This buys no attribution and needs none.
 
-A cost-motivated conversion is the cheaper build: **no hook route, no ownership
-row, and no writer-tool precondition.** `AGENT_WRITABLE_SECTIONS.get(caller)` in
-`guard_project_files.py` returns `None` for an unlisted agent, so the
-out-of-lane check never fires, and the only routed targets are `proof_summaries`
-and `questions.exhaustive_declaration`. Everything else here — the fold order,
+A cost-motivated conversion is the cheaper build: **no hook route and no
+writer-tool precondition** — the only routed targets are `proof_summaries` and
+`questions.exhaustive_declaration`. It still needs a **lane**: an agent granted
+`research_append` must have an `AGENT_WRITABLE_SECTIONS` entry in
+`guard_project_files.py` naming the sections it writes
+(`plugin-hooks.test.ts`, "gives every agent granted research_append a lane"),
+and an ownership row that names it as `agent:<name>` if it owns a section. Everything else here — the fold order,
 the baseline, the fixture audit — applies to both.
+
+The lane and the row are a repo requirement, not a runtime one: the guard does
+not fire for an unlisted agent, but the tests above refuse it. Say so in a
+comment beside each, so no reader takes the lane for a route. (Measured on
+#2115, where the card asserted the opposite and CI refused it.) The full list of
+what an added agent trips is [below](#what-adding-an-agent-trips).
 
 **The general rule this is a worked instance of is ADR-0011**
 (`docs/adrs/ADR-0011-put-guardrails-at-the-write-boundary.md`), and it applies
@@ -41,15 +66,39 @@ first two were built on.**
 
 The lead ruled on 2026-08-31 that `/research` spawns a paired agent **directly**
 — the Invoke cell of its routing table spells `@plugin:<agent>`, the same form
-the file already used for the mentor. The routing skill stays on disk, but it is
-now only two things: the entry point for a user who names it, and the entry
-point for its own unit-eval suite. **It is not loaded when the orchestrator
-delegates.**
+the file already used for the mentor. The routing skill was left on disk at the
+time, as two things only: the entry point for a user who names it, and the entry
+point for its own unit-eval suite. **It was not loaded when the orchestrator
+delegates.** The 2026-09-22 ruling at the top of this file then removed even
+that: no routing skill survives, and the agent is the only entry point.
 
 So a rule stated only in the routing skill's body is **off during production
 research**. The skill is not a layer in front of the agent. It is a second,
 narrower doorway into the same agent, and the wide doorway does not pass through
 it.
+
+### A pair-conversion PR does not edit `research/SKILL.md`
+
+**Exception: a conversion that deletes the skill flips the cell in the same
+PR.** The table's rule is that an entry not spelled `@plugin:<name>` is a
+`Skill` call, so a bare cell naming a deleted skill routes production research
+to nothing from merge until the follow-up lands. Pay the `research` run in the
+conversion (issue #2115 is the worked case). The rest of this section is about
+a pair, where the skill survives and the ordering below is safe.
+
+The Invoke cell flips to `@plugin:<agent>` in a **separate PR**, opened after
+the conversion merges. Two reasons, and either alone is sufficient: the
+conversion keeps its own acceptance check instead of sharing one with a routing
+change, and the paid `research` run is not split across two changes.
+
+If another open PR already carries a fresh `eval/runlogs/unit/research/` log,
+wait for it and rebase — the branch that has already paid lands first.
+
+The same ordering binds in the other direction once a cell names an agent:
+`check_runlogs.py` gates every skill whose `SKILL.md` references
+`@plugin:<name>` on any touched agent body, so a routing PR that adds the
+reference retroactively bills a paid `research` run to every open PR editing
+that agent. Check for one before landing.
 
 ### Everything load-bearing goes in the agent
 
@@ -65,7 +114,7 @@ The routing skill may contain **only** these, and nothing else:
 2. The narration line.
 3. Resolution of the user's words into the agent's arguments.
 4. The delegation call.
-5. Relay of what the agent returned, and the recommended next step.
+5. Relay of the agent's `summary_for_user` verbatim, and its `next_step`.
 
 No gates. No preconditions. No doctrine. No `Never` clause the agent does not
 also carry. If a sentence in a routing skill would change the outcome when
@@ -113,9 +162,17 @@ The runs are
 `eval/runlogs/e2e/hannah-earnest-children/run-2026-08-23_03-37-12.json` and
 `eval/runlogs/e2e/mary-mcandrew-son/run-2026-08-23_03-19-50.json`. **Two runs is
 a thin sample and the pair had been live for two days** — but it is the whole of
-the evidence, it is 2 of 2, and no committed run postdates the
-`research-exhaustiveness` conversion at all, so that pairing is unmeasured in
-both directions.
+the evidence and it is 2 of 2.
+
+Two committed runs **do** postdate the `research-exhaustiveness` conversion, one
+per route (measured 2026-09-07 by scanning `tool_calls[]` for `Skill`/`Agent`
+calls naming either pair; a new committed e2e run moves this):
+
+- `eval/runlogs/e2e/elena-asmundsdotter-origin/run-2026-08-25_23-41-49.json` —
+  skill-then-agent for both pairs (`Skill`→`Agent` `research-exhaustiveness` at
+  calls 92→93, `proof-conclusion` at 105→106).
+- `eval/runlogs/e2e/elena-asmundsdotter-origin/run-2026-09-01_22-19-45.json` —
+  `Agent research-exhaustiveness` at call 150, no `Skill` call.
 
 ### The agent bears the cost of a caller it cannot constrain
 
@@ -128,6 +185,46 @@ A conversion is not finished until the agent has one.
 Write it as a standing property of the agent, not as a reply to one phrasing. The
 caller cannot see the evidence and does not run the gate; a delegation is a
 request for work, never a finding about the work's preconditions.
+
+### Accepted as lost
+
+The direct route is sanctioned, so what the routing skill did on the way in is
+either in the agent body or gone. These are gone, each stated as a loss so the
+next conversion inherits the decision instead of rediscovering it. They apply to
+every guardrail pair the orchestrator spawns directly (a `@plugin:<name>` cell in
+`research/SKILL.md`'s routing table), and not to `record-extraction`, which is
+still routed as a skill.
+
+- **"Ask which question you meant" degrades to decline-and-name.** A subagent has
+  no user turn. When the delegation's words match no question or more than one,
+  the best an agent can do is decline and list the candidate `q_` ids with their
+  text; the user is not asked, and the run moves on without that question
+  worked.
+- **The caller thin in capability is gone, and rewording the orchestrator cannot
+  bring it back.** The routing skill's `allowed-tools` once kept the caller from
+  gathering evidence and pre-judging the agent's gate. On the direct route the
+  orchestrator is the caller, and it holds every tool. An allow-list can only
+  narrow; nothing narrows the main thread.
+- **Not lost, recorded so nobody re-derives it: matching the question by its
+  TEXT, with `questionStatuses` advisory.** Both the `proof-conclusion` and the
+  `research-exhaustiveness` agent bodies carry it, with the decline that names
+  every candidate, so it binds on the direct route. What is lost there is only
+  the user turn (the first bullet).
+- **"Relay the outcome as-is" binds nothing.** It is judgment inside one turn of
+  the caller and produces no write, so no writer tool or hook can hold it. The
+  orchestrator may restate, summarise or re-argue the agent's return.
+- **The tree half of the `proof-conclusion` detector arm is looser.** The e2e
+  hard detector credits the whole arm once the agent has been spawned
+  successfully in the run, and the arm's two tree disjuncts (a new primary fact,
+  a new `ParentChild`/`Couple` relationship) are not hook-routed. So one spawn
+  for question A credits a relationship the main thread wrote inline for
+  question B, and that inline write no longer costs the run its compliance pass.
+  The shadow arm (`find_unguarded_protected_writes`) is only a partial net here:
+  a `tree_edit`/`tree_correct` op carries no question id, so its window check
+  falls back to "any successful `proof-conclusion` summons", and a spawn for
+  question A within the preceding window clears the inline write for question B
+  too. Outside that window the shadow arm still flags it. The loss is
+  compliance-gating on that shape, and per-question visibility of it.
 
 ## 1. A conversion destabilises tests that were stable
 
@@ -144,7 +241,9 @@ flaky tests that the conversion exposed. The conversion made them unstable.
 
 **So: do not start a conversion by assuming the suite was already shaky.** Pull
 the last few run logs first and write down which tests are stable. That baseline
-is the only thing that tells you later whether you are fixing or breaking.
+is the only thing that tells you later whether you are fixing or breaking — and
+recording it is not a licence to convert over a red suite. Clear the failures
+first, per step 1 of "The process, in order".
 
 ## 2. A prose gate weakens when it crosses a delegation boundary
 
@@ -258,8 +357,8 @@ the defect in one line; a judge gives an opinion that moves between runs.
 
 ## 5. Folded size sizes the work; it does not disqualify
 
-There is no size ceiling. `wc -c` on `record-extractor.md` gives the largest
-agent body shipped so far — precedent, not a limit — and it moves (53,845 bytes,
+There is no size ceiling. `wc -c` on `record-extractor.md` (since retired) gave the
+largest agent body shipped — precedent, not a limit — and it moved (53,845 bytes,
 then 58,541, then 57,229), so a candidate measured against it crosses in either
 direction without anyone touching the candidate. Nor do agent bodies only grow:
 roughly a quarter of that file's committed revisions shrank it.
@@ -271,48 +370,198 @@ the other side: reopen a size argument only on a measurement that body size
 costs something end to end, not on a byte count.
 
 Use the folded size to size the work — what moves, what stays skill-side, how
-much prose a reviewer has to read. What does bind is step 4 below: a fold
+much prose a reviewer has to read. What does bind is step 5 below: a fold
 deletes `references/`, so a candidate whose references carry content the body
 cannot absorb is blocked until that content has another home, whatever it
 measures.
 
 ## 6. A unit suite exercises the doorway the orchestrator does not use
 
-The unit harness reaches an agent only by invoking its routing skill, so a
-paired skill's suite grades the skill-then-agent path. Production research
-grades the agent alone. A pair can therefore be green on every unit test and
-still be wrong in the loop, and this is invisible from the suite.
+**Closed by the direct-agent arm (issue #2246).** The unit harness used to reach
+an agent only by invoking its routing skill, so a paired skill's suite graded the
+skill-then-agent path while production research grades the agent alone — a pair
+could be green on every unit test and still be wrong in the loop, invisibly.
 
-Two consequences for a conversion:
+A test may now carry `input.delegation` instead of `input.user_message`
+(`docs/specs/unit-test-spec.md` §5.2.1). The harness stages the agents and **no
+skills**, has a bare main thread relay the delegation verbatim into
+`Agent{subagent_type: "<skill>"}`, and decides the outcome on the spawn rather
+than on `skills_invoked`. **The delete-the-skill acceptance check is therefore a
+suite result, not a reading task** — any behaviour that passes routed and fails
+direct is a rule sitting in the wrong file.
 
-- **A unit suite cannot confirm the delete-the-skill acceptance check.** Applying
-  that check is a reading task on the agent body, done by hand, per conversion.
-- **The e2e corpus is the only instrument that sees the real route.** Its
+Two things this does NOT close:
+
+- **A routing skill that grows a gate back is invisible on the direct arm**,
+  because the skill is not in that workspace at all. That is issue #2244, and
+  the "Nothing enforces the routing-skill contents list" bullet below stays open.
+- **The e2e corpus is still the only instrument that sees the real loop.** Its
   attribution reads the agent that made the write
-  (`eval/harness/harness/skill_invocation.py`), so that is where a direct
-  delegation shows up at all.
+  (`eval/harness/harness/skill_invocation.py`).
+
+## What adding an agent trips
+
+A card's "what proves it" list is written before the agent file exists, and it
+undercounts. #2115's named five checks; CI refused six more, and found them only
+after the one named packaging test had passed locally.
+Every one below fails CI if skipped. Put the whole list in the card.
+
+| register | what it wants |
+|---|---|
+| `tests/packaging/agent-tool-names.test.ts` | the agent registered, every MCP tool under all three spellings, no `Task`/`Agent` grant |
+| `apps/server/proto/worker/worker.py` `EXPECTED_AGENTS` (+ `EXPECTED_SKILLS` when a skill is deleted) | the shipped set, as a literal; `apps/server/tests/test_proto_worker.py` pins it and names the count in a test name |
+| `tests/packaging/agent-delegation-framing.test.ts` | every caller→agent edge in `DELEGATION_EDGES`, with a verbatim pinned sentence |
+| `tests/packaging/plugin-hooks.test.ts` + `guard_project_files.py` | an `AGENT_WRITABLE_SECTIONS` lane for an agent granted `research_append` — see above |
+| `docs/specs/schemas/ownership.json` | an `agentCallers` entry on every row the agent writes |
+| `tests/packaging/enum-drift.test.ts` | any closed-enum declaration the fold moved into the agent body |
+| `tests/packaging/agent-return-contract.test.ts` | a `summary_for_user` return-contract heading, or a `PENDING` entry naming when it lands |
+| `docs/architecture.md`, `docs/skill-dataflow.md` | the agent count and any per-tool agent tally — re-measure, do not increment |
+| `make agent-smoke` | the only check that reads what the runtime resolved; **no CI job runs it** |
+
+**Deleting the skill trips more, and some of it bills other suites.** Under the
+2026-09-22 ruling every conversion deletes its skill (`citation`,
+`person-evidence` and `question-selection` are the worked cases). On top of
+the table above:
+
+| register | what it wants | paid? |
+|---|---|---|
+| `research/SKILL.md` routing table | any bare cell naming the skill flipped to `@plugin:<agent>` — see the exception in §0 | `research` run |
+| other suites' negatives with `correct_skill` naming the skill | nothing mechanical since 2026-10-08: `runnability.py` accepts an agent name in `correct_skill` (#3092), the routing short-circuit stops on an `Agent` spawn of it (#3077), and `_compute_outcome` reads `handoffs`, which count spawns (#3131). Before #3092 (2026-10-03) the test aborted `not_runnable`; between #3092 and #3131 it loaded and a correctly routed run graded `fail`. What remains is the test's own merit: a description-routing negative is deleted under the 2026-09-22 ruling, while a `grade_on_invariant` near-miss or hand-back test keeps grading its invariant (#2116 kept five) | only for a suite whose test you edit |
+| `execution.stub_skills` naming the skill | nothing — an entry naming an agent stubs its spawn (`stub_agents`) | no |
+| the suite's own routed tests | every `input.user_message` becomes an `input.delegation`, tagged `direct-arm`; a routed original with a same-phrasing twin is deleted | the suite's run |
+| the agent's `description` | the deleted skill's user trigger phrases, now that it is the only thing a user's words match; within 1024 characters (`skill-description-length.test.ts`) | no |
+| `agent-delegation-framing.test.ts` | the router self-edge replaced by the real caller's edge; every bare-name mention in another `SKILL.md` registered in `PROSE_MENTIONS`; the name added to `PROSE_ARM_COVERS` | no |
+| `ownership.json` | `skill:<name>` → `agent:<name>` as owner and caller | no |
+| `docs/catalog.md`, `architecture.md` skill counts; `EXPECTED_SKILLS` | decremented and the row moved to the Agents table | no |
+
+Every check in both tables is local and free to run. Run the whole packaging suite
+(`npx vitest run tests/packaging` in `packages/engine/mcp-server/`) and
+`apps/server`'s `pytest`, not just the file the card names. A packaging file that
+cannot import (a missing `yaml`, say) reports "no tests" rather than failing, so
+read the file count, not just the red count.
+
+## What a cold-started agent gets wrong
+
+Measured on `question-selection` (#2115, five paid runs). None of these showed
+up while the body ran on the main thread, and each cost a run to find.
+
+- **"Trust what you already hold" is false in an agent.** A folded rule saying
+  not to re-read state held "from the same continuous run" made the agent act
+  on the delegation's summary instead. An agent always starts cold; say so.
+- **Check that the agent's tools can return what the body needs.**
+  `project_context` returned no objective, so the only way to see it was to
+  `Read` `research.json` whole — and an agent told to read "only the first
+  lines" paged through the whole file and then skipped the section queries the
+  body requires. Telling it *how* to read does not hold; fix the tool.
+- **The narration line is a file read.** It sends the agent into
+  `research.json` for a fixed house-style string. `record-extractor` (since
+  retired) carried none; drop it from an agent that should not read that file.
+- **A rule the delegation contradicts loses some of the time.** The agent
+  observed a plan item `in_progress`, said so, and wrote the dependent
+  question anyway because the delegation called the search done — on some runs
+  and not others. Two prose wordings did not hold, so it became a
+  `research_append` precondition. Apply ADR-0011's first question before a
+  second wording.
+- **The return contract changes what the judge should read.** Judge lines
+  written for a router ("gloss the id", "never name a skill") contradict a
+  contract whose caller-facing lines carry ids and a routing hint. Re-point
+  them at the text after the final `---`.
+
+### Proving "consistently"
+
+- **Read every run, not the summary.** With `--runs-per-test 3` the summary
+  table reports each test's majority outcome. 42 runs showed 14/14 pass while
+  three tests had a failed or partial run. Read `tests[].runs[].outcome` and
+  `tests[].flaky`.
+- **Move failing candidate logs out of the suite's run-log directory.** They
+  can never be committed (rule 6) but still occupy keep-newest-5 slots, and
+  the next run's prune then deletes committed, annotated logs (rule 7).
+  Restore any `D` it shows with `git restore`.
 
 ## The process, in order
 
-1. Record the pre-conversion baseline from existing run logs.
+1. **Green the suite before the refactor, not merely baseline it.** A suite is
+   green before a refactor — a wiki move, a pair conversion, a model+effort floor
+   search — and after it. Only **failures** count; partials are fine and need no
+   annotation to justify them. One exception, part of the rule rather than a
+   per-card ruling: a red whose cause is the thing the refactor changes — name it
+   and carry it forward. Explicitly **not** exceptions: "the remedy is contested"
+   and "nobody has measured it yet". Both are reasons to do the work, not to skip
+   the bar.
+
+   **Jitter.** Fix one thing per paid run, then a single **three-run, all-pass**
+   confirmation for the final verdict — not three runs per fix. Three-per-fix
+   triples every step, and again wherever a fix reaches another skill's suite;
+   one run cannot distinguish a fix from a lucky roll on a suite whose reds flip
+   on an unchanged body. Record the pre-refactor baseline from existing run logs
+   as part of this step — it is what tells you later whether you are fixing or
+   breaking. (Lead ruling, 2026-09-09, issue #2271.)
 2. Audit that skill's fixtures for self-contradiction and unsatisfiability.
-3. Move any rule that must *hold* into the writer tool. Prove it fails first.
+3. Move locality-specific and record-type-specific guidance onto the wiki
+   (ADR-0012). This is its own card and its own paid run, before the fold; the
+   fold then carries only what the wiki lacks. The agent grants the wiki tools
+   it will call, under all three spellings.
+4. Move any rule that must *hold* into the writer tool. Prove it fails first.
    On a cost-motivated conversion there may be no such rule; say so and move on
    rather than inventing one.
-4. Fold the prose verbatim. Delete `references/` — an agent reading its own
+5. Fold the prose verbatim. Delete `references/` — an agent reading its own
    reference files is measured unreliable and silent.
-5. Give the routing skill only the tools it needs to route.
-6. Put everything load-bearing in the **agent**, including the resolution of its
+6. Give the routing skill only the tools it needs to route.
+7. Put everything load-bearing in the **agent**, including the resolution of its
    own arguments and its refusal to be steered by the delegation. The routing
    skill keeps only the five items listed under "Everything load-bearing goes in
    the agent". The delegation message now comes from the orchestrator, which the
    conversion does not own — so the agent must be correct under a delegation that
    names the artifact and pre-states the answer, not merely a well-phrased one.
-7. Apply the delete-the-skill acceptance check: delete the routing skill and read
-   the agent as the orchestrator will reach it. Anything that changes goes into
-   the agent before you run.
-8. Run once, unchanged. Compare against step 1.
-9. Fix one thing per run.
+   **The agent's return ends with `summary_for_user` and `next_step`** (lead
+   ruling 2026-09-18): one paragraph for a researcher who has never done
+   genealogy — no identifiers, file names, tool names or field names — and one
+   plain sentence on what happens next, after the caller-facing lines and never
+   merged into them — as a `---` line followed by two unlabeled paragraphs, so
+   the router can copy "everything after the final `---`" without judging what
+   is researcher-facing. The router prints only that, verbatim, and appends the
+   hand-back literal issue #2292 rules; it never summarizes, and no label or
+   field name reaches the researcher. `agents/citation.md`'s "Return contract"
+   is the worked form, and
+   `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
+   refuses an agent body without the heading once its name leaves that test's
+   pending list. Three agents are EXCLUDED from the contract rather than
+   pending: `image-reader`, which by spec returns a transcription and nothing
+   else; under lead ruling "PS return: A" (2026-09-24, issue #2793),
+   `source-evaluation` (issue #2796), which writes nothing, so its id-bearing
+   report IS its whole output — conforming would push it below the caller's
+   print line, where a production relay drops it; and `record-structurer`,
+   whose whole return is `extraction_append`'s code-written summary, verbatim
+   (lead, 2026-09-29). (The former `project-status` agent carried the "PS
+   return: A" exemption too; it was deleted outright by issue #3112.)
+   Each goes in that test's `EXCLUDED` with its reason and carries no `---`
+   section. Exclusion silences the lint in both directions, so a green run
+   says nothing about an excluded body; read it.
+   **A request that belongs to another agent is handed back, never spawned**
+   (lead ruling 2026-09-23): the agent does none of that work, names the
+   owning agent in its caller-facing lines, and the main thread spawns it. The
+   `next_step` sentence still names nothing. Do not grant the agent `Task` or
+   `Agent`; `agent-tool-names.test.ts` fails the grant.
+8. Apply the delete-the-skill acceptance check — now mechanically. **Author a
+   direct twin**: copy the gate-bearing positive test byte for byte, give it a
+   new `test.id` and name, replace `input.user_message` with an
+   `input.delegation` carrying the adversarial phrasing (name the artifact,
+   pre-state the answer), append `direct-arm` to its tags, and keep everything
+   else — `tags` gate the deterministic validators and branch the rubric,
+   `execution` carries the wall clock, `judge_reads_files` decides whether the
+   judge can see a persisted narrative. Add one happy-path twin per pair with the
+   orchestrator's normal phrasing. Negatives get none: routing is the router's
+   job, and a direct test has no router. Take the twin's own outcome as the
+   verdict, and read a disagreement with its routed original by cause: a rule the
+   router holds and the agent does not is a rule in the wrong file — move it into
+   the agent before you run; a step the agent's own body names and the run skips
+   is an agent-body defect: fix it in the agent body in this PR, one thing per
+   run (steps 9–10), until the twin passes. Never mark it
+   `expected_outcome: "xfail"`: the marker is retired, and `check_runlogs.py`
+   rule 10 blocks it. A failure whose fix belongs to another open issue is deleted, and that issue's done-when restores it. Read neither off one run: settling the first five twins took ten, and both of the two that moved
+   reversed on a later run.
+9. Run once, unchanged. Compare against step 1.
+10. Fix one thing per run.
 
 ## What is still open
 
@@ -326,10 +575,27 @@ Two consequences for a conversion:
 - **Nothing enforces the routing-skill contents list.** A routing skill that grows a
   gate back fails no test, and the acceptance check is applied by a reader. Both
   *thin-routing* pairs — `proof-conclusion` and `research-exhaustiveness` — were
-  written before the rule and both violate it. `record-extraction` is the third
-  pair and is not one of these: it acquires, triages and logs before batching one
-  extractor per record, so the list above does not describe it and the
-  orchestrator still routes it as a skill.
-- **The direct route is measured on two runs.** Whether the orchestrator reaches
-  every paired agent that way, or only the ones it has a strong prior about, is
-  not known.
+  written before the rule and both violate it. `record-extraction` was the third
+  pair and was not one of these: it acquired, triaged and logged before batching one
+  extractor per record, so the list above did not describe it. **The ruling that
+  kept its fan-out loop in the skill (#2491, 2026-09-15) is moot: both the skill and
+  the agent are retired, and extraction runs in code through `extraction_append`.**
+  It was tested — moving the loop into `/research` (Shape B) vs leaving it in the
+  skill (Shape A) — and the measured effect ceiling was ~0.1%:
+  `record-extraction/SKILL.md` was ~15.5 KB (~4k tokens),
+  invoked 0–2× per run (0× in 50 committed runs, 1× in 105, 2× in 17), against a
+  median main-thread `cache_read_input_tokens` of 8.0M — so the entire
+  main-thread saving is ≤~8k tokens against ~8M, which is why the run's
+  peak-window metric saturated at the SDK auto-compaction ceiling and could not
+  discriminate the two shapes at any affordable sample size. The measurement stands
+  for any future skill-vs-orchestrator fan-out question.
+- **The direct route dominates but does not displace the routed one.** Over
+  every committed e2e run dated on or after 2026-08-20: 15 runs reach
+  `research-exhaustiveness`, 14 spawn it directly and one reaches it only via
+  `Skill` (`hannah-earnest-children/run-2026-08-23_03-37-12`, a completed passing
+  run), with six taking both routes in one run. Counting every (run, pair) reach
+  across all pairs: 66 of 76 direct, 10 skill-only. Re-derive by scanning each
+  `eval/runlogs/e2e/*/run-<ts>.json` for an `Agent`/`Task` call whose
+  `subagent_type` names a pair versus a `Skill` call naming one. Whether the
+  orchestrator reaches every paired agent directly, or only the ones it has a
+  strong prior about, is still not known.

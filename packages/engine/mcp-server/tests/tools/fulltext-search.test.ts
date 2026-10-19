@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -95,6 +96,9 @@ function flynnEntry(): FSFulltextEntry {
         { type: "DATE", value: "1849" },
         { type: "OTHER", value: "ignored" }, // not NAME/PLACE/DATE -> dropped
       ],
+      // Bare matched terms, not marked-up snippets -- confirmed against a
+      // live upstream response; the old "<em>"-wrapped assumption here
+      // never matched what production actually sends.
       highlightTexts: ["Patrick", "Flynn", "Flynn Patrick"],
     },
   };
@@ -111,7 +115,7 @@ describe("fulltextSearchTool happy path", () => {
       })
     );
 
-    const result = await fulltextSearchTool({ keywords: "+Patrick +Flynn" });
+    const result = await fulltextSearchTool({ keywords: "+Patrick +Flynn" }, LOCAL);
 
     expect(result.totalResults).toBe(87);
     expect(result.returned).toBe(1);
@@ -126,7 +130,7 @@ describe("fulltextSearchTool happy path", () => {
       keywords: "Flynn",
       count: 5,
       includeFacets: true,
-    });
+    }, LOCAL);
     expect(result.query).toMatchObject({
       keywords: "Flynn",
       count: 5,
@@ -136,14 +140,123 @@ describe("fulltextSearchTool happy path", () => {
   });
 });
 
+// Issue #1988 fault 3: the agent ran fulltext_search against an image group
+// volume_search had already returned with `fulltextSearchable: false`, got the
+// only possible answer, and recorded the guaranteed zero as evidence of absence.
+describe("fulltextSearchTool not-full-text-searchable note", () => {
+  const GROUP = "005156041_012_M9V3-BYG";
+  // The searchability endpoint answers with the ids that ARE searchable.
+  const searchableIds = (ids: string[]) => makeOk({ ids } as never);
+
+  it("flags a nil on a group the endpoint omits from the searchable set", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeOk(emptyBody()))
+      .mockResolvedValueOnce(searchableIds([]));
+
+    const out = await fulltextSearchTool(
+      { keywords: "+Dixon", imageGroupNumber: GROUP },
+      LOCAL
+    );
+    expect(out.notFulltextSearchable).toContain("not full-text searchable");
+    expect(out.notFulltextSearchable).toContain("Do not record it as a negative finding");
+  });
+
+  it("stays silent on a nil when the group IS searchable", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeOk(emptyBody()))
+      .mockResolvedValueOnce(searchableIds([GROUP]));
+
+    const out = await fulltextSearchTool(
+      { keywords: "+Dixon", imageGroupNumber: GROUP },
+      LOCAL
+    );
+    expect(out.notFulltextSearchable).toBeUndefined();
+  });
+
+  // `null` from the lookup is UNKNOWN. Treating it as false would label a
+  // perfectly good nil as a volume problem.
+  it("stays silent when the searchability lookup itself fails", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeOk(emptyBody()))
+      .mockResolvedValueOnce({ ok: false, status: 503, statusText: "Unavailable", json: async () => ({}) });
+
+    const out = await fulltextSearchTool(
+      { keywords: "+Dixon", imageGroupNumber: GROUP },
+      LOCAL
+    );
+    expect(out.notFulltextSearchable).toBeUndefined();
+  });
+
+  // An EMPTY imageGroupNumber is not a scoped search: `buildUrl` gates the
+  // `q.groupName` filter on truthiness, so "" searches the whole corpus. Gated
+  // on `!== undefined` the note fired anyway, telling the caller a full-corpus
+  // nil was a fact about a volume that was never in the query.
+  it("treats an empty imageGroupNumber as unscoped: no lookup, no note", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+
+    const out = await fulltextSearchTool(
+      { keywords: "+Dixon", imageGroupNumber: "" },
+      LOCAL
+    );
+    expect(out.notFulltextSearchable).toBeUndefined();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(String(mockFetch.mock.calls[0][0])).not.toContain("q.groupName");
+  });
+
+  // The compounding failure: with projectPath, both notes fire and contradict.
+  // `nilSearchNeedsLog` says record the negative; `notFulltextSearchable` says
+  // do not. The more specific one wins and a real finding is discarded.
+  it("does not contradict nilSearchNeedsLog on an unscoped projectPath nil", async () => {
+    // The searchability response IS mocked, so that under the old `!== undefined`
+    // gate the lookup succeeds and the note really does fire. Without it the
+    // lookup would fail, return UNKNOWN, and this test would pass on the bug.
+    mockFetch
+      .mockResolvedValueOnce(makeOk(emptyBody()))
+      .mockResolvedValueOnce(makeOk({ ids: [] } as never));
+
+    const out = await fulltextSearchTool(
+      { keywords: "+Dixon", imageGroupNumber: "", projectPath: "/p" },
+      LOCAL
+    );
+    expect(out.nilSearchNeedsLog).toBeDefined();
+    expect(out.notFulltextSearchable).toBeUndefined();
+  });
+
+  it("does not look searchability up at all when no imageGroupNumber was given", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+
+    const out = await fulltextSearchTool({ keywords: "+Dixon" }, LOCAL);
+    expect(out.notFulltextSearchable).toBeUndefined();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  // The extra upstream leg is bounded to the case the note is for.
+  it("does not look searchability up when the search returned rows", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
+    );
+
+    const out = await fulltextSearchTool(
+      { keywords: "+Flynn", imageGroupNumber: GROUP },
+      LOCAL
+    );
+    expect(out.notFulltextSearchable).toBeUndefined();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("fulltextSearchTool param mapping", () => {
   async function urlFor(
     input: Parameters<typeof fulltextSearchTool>[0]
   ): Promise<string> {
+    // This invocation's OWN first call. Not the run's last, because a nil on an
+    // `imageGroupNumber` search makes a second request to the searchability
+    // endpoint; and not index 0, because the mock is not reset between the two
+    // urlFor calls some of these tests make.
+    const before = mockFetch.mock.calls.length;
     mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
-    await fulltextSearchTool(input);
-    const calls = mockFetch.mock.calls;
-    return calls[calls.length - 1][0] as string;
+    await fulltextSearchTool(input, LOCAL);
+    return mockFetch.mock.calls[before][0] as string;
   }
 
   it("3. maps every q.* and f.* param", async () => {
@@ -156,10 +269,10 @@ describe("fulltextSearchTool param mapping", () => {
       yearFrom: 1840,
       yearTo: 1850,
       recordType: "Probate",
-      recordPlace0: "Europe",
-      recordPlace1: "Ireland",
-      recordPlace2: "Tipperary",
-      recordPlace3: "Nenagh",
+      recordPlace0: "1",
+      recordPlace1: "1,Ireland",
+      recordPlace2: "1,Ireland,Tipperary",
+      recordPlace3: "1,Ireland,Tipperary,Nenagh",
     });
     expect(url).toContain("q.text=Flynn");
     expect(url).toContain("q.fullName=Patrick%20Flynn");
@@ -169,10 +282,10 @@ describe("fulltextSearchTool param mapping", () => {
     expect(url).toContain("f.recordYear0=1840");
     expect(url).toContain("f.recordYear1=1850");
     expect(url).toContain("f.recordType0=Probate");
-    expect(url).toContain("f.recordPlace0=Europe");
-    expect(url).toContain("f.recordPlace1=Ireland");
-    expect(url).toContain("f.recordPlace2=Tipperary");
-    expect(url).toContain("f.recordPlace3=Nenagh");
+    expect(url).toContain("f.recordPlace0=1");
+    expect(url).toContain("f.recordPlace1=1%2CIreland");
+    expect(url).toContain("f.recordPlace2=1%2CIreland%2CTipperary");
+    expect(url).toContain("f.recordPlace3=1%2CIreland%2CTipperary%2CNenagh");
   });
 
   it("4. sends default count=5, offset=0 and m.queryRequireDefault=on", async () => {
@@ -204,7 +317,7 @@ describe("fulltextSearchTool param mapping", () => {
 
 describe("fulltextSearchTool input validation", () => {
   it("8. throws when no query field is supplied and never calls fetch", async () => {
-    await expect(fulltextSearchTool({})).rejects.toThrow(
+    await expect(fulltextSearchTool({}, LOCAL)).rejects.toThrow(
       /At least one of keywords, name, place, nlQuery, or imageGroupNumber/
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -213,52 +326,98 @@ describe("fulltextSearchTool input validation", () => {
   it("9. accepts a query via any single field (imageGroupNumber alone)", async () => {
     mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
     await expect(
-      fulltextSearchTool({ imageGroupNumber: "004010852" })
+      fulltextSearchTool({ imageGroupNumber: "004010852" }, LOCAL)
     ).resolves.toBeDefined();
   });
 
   it("10. throws when count is out of 1..100 or non-integer", async () => {
     await expect(
-      fulltextSearchTool({ keywords: "x", count: 0 })
+      fulltextSearchTool({ keywords: "x", count: 0 }, LOCAL)
     ).rejects.toThrow(/count must be between 1 and 100/);
     await expect(
-      fulltextSearchTool({ keywords: "x", count: 101 })
+      fulltextSearchTool({ keywords: "x", count: 101 }, LOCAL)
     ).rejects.toThrow(/count must be between 1 and 100/);
     await expect(
-      fulltextSearchTool({ keywords: "x", count: 1.5 })
+      fulltextSearchTool({ keywords: "x", count: 1.5 }, LOCAL)
     ).rejects.toThrow(/count must be between 1 and 100/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("11. throws when offset is negative or non-integer", async () => {
     await expect(
-      fulltextSearchTool({ keywords: "x", offset: -1 })
+      fulltextSearchTool({ keywords: "x", offset: -1 }, LOCAL)
     ).rejects.toThrow(/offset must be non-negative/);
     await expect(
-      fulltextSearchTool({ keywords: "x", offset: 2.5 })
+      fulltextSearchTool({ keywords: "x", offset: 2.5 }, LOCAL)
     ).rejects.toThrow(/offset must be non-negative/);
   });
 
   it("12. throws when yearFrom and yearTo are not supplied together", async () => {
     await expect(
-      fulltextSearchTool({ keywords: "x", yearFrom: 1840 })
+      fulltextSearchTool({ keywords: "x", yearFrom: 1840 }, LOCAL)
     ).rejects.toThrow(/yearFrom and yearTo must be provided together/);
     await expect(
-      fulltextSearchTool({ keywords: "x", yearTo: 1850 })
+      fulltextSearchTool({ keywords: "x", yearTo: 1850 }, LOCAL)
     ).rejects.toThrow(/yearFrom and yearTo must be provided together/);
   });
 
   it("13. throws when yearFrom > yearTo", async () => {
     await expect(
-      fulltextSearchTool({ keywords: "x", yearFrom: 1850, yearTo: 1840 })
+      fulltextSearchTool({ keywords: "x", yearFrom: 1850, yearTo: 1840 }, LOCAL)
     ).rejects.toThrow(/yearFrom must be <= yearTo/);
   });
 
   it("14. accepts an equal year pair", async () => {
     mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
     await expect(
-      fulltextSearchTool({ keywords: "x", yearFrom: 1849, yearTo: 1849 })
+      fulltextSearchTool({ keywords: "x", yearFrom: 1849, yearTo: 1849 }, LOCAL)
     ).resolves.toBeDefined();
+  });
+
+  it("15b. refuses plain text on recordPlace1", async () => {
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace1: "New Hampshire" }, LOCAL)
+    ).rejects.toThrow(/recordPlace1 value "New Hampshire" is not in the required facet form/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("15c. accepts facet-form recordPlace1", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace1: "10,New Hampshire" }, LOCAL)
+    ).resolves.toBeDefined();
+    expect(String(mockFetch.mock.calls[0][0])).toContain("f.recordPlace1=10%2CNew%20Hampshire");
+  });
+
+  it("15d. refuses empty string on recordPlace1", async () => {
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace1: "" }, LOCAL)
+    ).rejects.toThrow(/recordPlace1 value "" is not in the required facet form/);
+  });
+
+  it("15e. refuses comma-only on recordPlace0", async () => {
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace0: "," }, LOCAL)
+    ).rejects.toThrow(/recordPlace0 value "," is not in the required facet form/);
+  });
+
+  it("15f. accepts bare numeric on recordPlace0", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace0: "10" }, LOCAL)
+    ).resolves.toBeDefined();
+  });
+
+  it("15g. refuses wrong level: recordPlace0 with comma segment", async () => {
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace0: "10,Alabama" }, LOCAL)
+    ).rejects.toThrow(/recordPlace0 value "10,Alabama" is not in the required facet form/);
+  });
+
+  it("15h. refuses wrong level: recordPlace1 with no comma segment", async () => {
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace1: "10" }, LOCAL)
+    ).rejects.toThrow(/recordPlace1 value "10" is not in the required facet form/);
   });
 });
 
@@ -266,19 +425,19 @@ describe("fulltextSearchTool natural-language query", () => {
   it("15. emits the nlQuery param and the X-FS-Feature-Tag header", async () => {
     mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
     const q = "Search for John Doe born in Austria";
-    await fulltextSearchTool({ nlQuery: q });
+    await fulltextSearchTool({ nlQuery: q }, LOCAL);
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toContain(`nlQuery=${encodeURIComponent(q)}`);
-    const headers = init.headers as Record<string, string>;
-    expect(headers["X-FS-Feature-Tag"]).toBe("search_naturalLanguageSupport");
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("X-FS-Feature-Tag")).toBe("search_naturalLanguageSupport");
   });
 
   it("16. omits the feature header for a non-nlQuery search", async () => {
     mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
-    await fulltextSearchTool({ keywords: "Flynn" });
+    await fulltextSearchTool({ keywords: "Flynn" }, LOCAL);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = init.headers as Record<string, string>;
-    expect(headers["X-FS-Feature-Tag"]).toBeUndefined();
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("X-FS-Feature-Tag")).toBeNull();
   });
 });
 
@@ -291,7 +450,7 @@ describe("fulltextSearchTool error propagation", () => {
       )
     );
     await expect(
-      fulltextSearchTool({ keywords: "Flynn" })
+      fulltextSearchTool({ keywords: "Flynn" }, LOCAL)
     ).rejects.toThrow(/not logged in/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -302,7 +461,7 @@ describe("fulltextSearchTool error propagation", () => {
       status: 401,
       statusText: "Unauthorized",
     });
-    await expect(fulltextSearchTool({ keywords: "Flynn" })).rejects.toThrow(
+    await expect(fulltextSearchTool({ keywords: "Flynn" }, LOCAL)).rejects.toThrow(
       /session expired; call the login tool/
     );
   });
@@ -313,7 +472,7 @@ describe("fulltextSearchTool error propagation", () => {
       status: 403,
       statusText: "Forbidden",
     });
-    await expect(fulltextSearchTool({ keywords: "Flynn" })).rejects.toThrow(
+    await expect(fulltextSearchTool({ keywords: "Flynn" }, LOCAL)).rejects.toThrow(
       /blocked the request/
     );
   });
@@ -326,7 +485,7 @@ describe("fulltextSearchTool error propagation", () => {
       text: async () => "unbalanced quote",
     });
     await expect(
-      fulltextSearchTool({ keywords: 'Flynn"' })
+      fulltextSearchTool({ keywords: 'Flynn"' }, LOCAL)
     ).rejects.toThrow(/rejected the query \(400\)[\s\S]*Detail: unbalanced quote/);
   });
 
@@ -339,7 +498,7 @@ describe("fulltextSearchTool error propagation", () => {
         throw new Error("no body");
       },
     });
-    const settled = await fulltextSearchTool({ keywords: "Flynn" }).catch(
+    const settled = await fulltextSearchTool({ keywords: "Flynn" }, LOCAL).catch(
       (e) => e as Error
     );
     // Assert it actually rejected before reading `.message`. Without this the
@@ -352,12 +511,13 @@ describe("fulltextSearchTool error propagation", () => {
   });
 
   it("22. throws a generic message for other non-OK statuses", async () => {
-    mockFetch.mockResolvedValueOnce({
+    mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
+      headers: new Headers(),
     });
-    await expect(fulltextSearchTool({ keywords: "Flynn" })).rejects.toThrow(
+    await expect(fulltextSearchTool({ keywords: "Flynn" }, LOCAL)).rejects.toThrow(
       /full-text search error: 500 Internal Server Error/
     );
   });
@@ -368,7 +528,7 @@ describe("fulltextSearchTool response shaping", () => {
     mockFetch.mockResolvedValueOnce(
       makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
     );
-    const r = (await fulltextSearchTool({ keywords: "Flynn" })).results[0];
+    const r = (await fulltextSearchTool({ keywords: "Flynn" }, LOCAL)).results[0];
     expect(r.id).toBe("ark:/61903/3:1:3Q9M-CSNL-S98H-M");
     expect(r.names).toEqual(["Patrick Flynn", "Mary Flynn"]); // deduped, OTHER dropped
     expect(r.places).toEqual(["Tipperary"]);
@@ -391,7 +551,7 @@ describe("fulltextSearchTool response shaping", () => {
       id: "https://www.familysearch.org/ark:/61903/3:2:ABCD-1234",
     };
     mockFetch.mockResolvedValueOnce(makeOk({ results: 1, entries: [entry] }));
-    const r = (await fulltextSearchTool({ keywords: "x" })).results[0];
+    const r = (await fulltextSearchTool({ keywords: "x" }, LOCAL)).results[0];
     expect(r.id).toBe("ark:/61903/3:2:ABCD-1234");
   });
 
@@ -401,7 +561,7 @@ describe("fulltextSearchTool response shaping", () => {
       content: { entities: [], highlightTexts: [] },
     };
     mockFetch.mockResolvedValueOnce(makeOk({ results: 1, entries: [entry] }));
-    const r = (await fulltextSearchTool({ keywords: "x" })).results[0];
+    const r = (await fulltextSearchTool({ keywords: "x" }, LOCAL)).results[0];
     expect(r.id).toBe("ark:/61903/3:1:BARE-ONLY");
     expect(r.names).toBeUndefined();
     expect(r.places).toBeUndefined();
@@ -418,7 +578,7 @@ describe("fulltextSearchTool response shaping", () => {
         entries: [{ content: {} }, flynnEntry()],
       })
     );
-    const result = await fulltextSearchTool({ keywords: "Flynn" });
+    const result = await fulltextSearchTool({ keywords: "Flynn" }, LOCAL);
     expect(result.returned).toBe(1);
     expect(result.results).toHaveLength(1);
     expect(result.results[0].id).toBe("ark:/61903/3:1:3Q9M-CSNL-S98H-M");
@@ -426,7 +586,7 @@ describe("fulltextSearchTool response shaping", () => {
 
   it("27. returns an empty result set with hasMore=false", async () => {
     mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
-    const result = await fulltextSearchTool({ keywords: "Nobody" });
+    const result = await fulltextSearchTool({ keywords: "Nobody" }, LOCAL);
     expect(result.results).toEqual([]);
     expect(result.returned).toBe(0);
     expect(result.hasMore).toBe(false);
@@ -435,7 +595,7 @@ describe("fulltextSearchTool response shaping", () => {
 
   it("28. falls back to input.offset when the response omits index", async () => {
     mockFetch.mockResolvedValueOnce(makeOk({ results: 5, entries: [] }));
-    const result = await fulltextSearchTool({ keywords: "Flynn", offset: 20 });
+    const result = await fulltextSearchTool({ keywords: "Flynn", offset: 20 }, LOCAL);
     expect(result.offset).toBe(20);
   });
 
@@ -443,7 +603,7 @@ describe("fulltextSearchTool response shaping", () => {
     mockFetch.mockResolvedValueOnce(
       makeOk({ results: 5, index: 10, entries: [] })
     );
-    const result = await fulltextSearchTool({ keywords: "Flynn", offset: 20 });
+    const result = await fulltextSearchTool({ keywords: "Flynn", offset: 20 }, LOCAL);
     expect(result.offset).toBe(10);
   });
 });
@@ -459,7 +619,7 @@ describe("fulltextSearchTool facets", () => {
           count: 3,
           displayName: "Collection",
           facets: [
-            { count: 10, displayName: "Ireland Wills", params: "f.collectionId=111" },
+            { count: 10, displayName: "Ireland Wills", params: "c.collectionId=on&f.collectionId=111" },
             { count: 5, displayName: "" }, // no displayName -> filtered out
             { count: 2 }, // no displayName -> filtered out
           ],
@@ -482,17 +642,17 @@ describe("fulltextSearchTool facets", () => {
     const result = await fulltextSearchTool({
       keywords: "Flynn",
       includeFacets: true,
-    });
+    }, LOCAL);
     expect(result.facets).toHaveLength(1);
     const group = result.facets![0];
     expect(group.name).toBe("Collection");
     expect(group.count).toBe(3);
     expect(group.items).toEqual([
-      { name: "Ireland Wills", count: 10, filterParam: "f.collectionId=111" },
+      { name: "Ireland Wills", count: 10, filterParam: "111" },
     ]);
   });
 
-  it("31. defaults a missing item params to an empty filterParam", async () => {
+  it("31. excludes facet items with no params from the output", async () => {
     mockFetch.mockResolvedValueOnce(
       makeOk({
         results: 1,
@@ -505,14 +665,15 @@ describe("fulltextSearchTool facets", () => {
     const result = await fulltextSearchTool({
       keywords: "Flynn",
       includeFacets: true,
-    });
-    expect(result.facets![0].items[0].filterParam).toBe("");
+    }, LOCAL);
+    expect(result.facets![0].items).toHaveLength(0);
   });
 
   it("32. caps facet items to 20", async () => {
     const items = Array.from({ length: 25 }, (_, i) => ({
       count: i,
       displayName: `c${i}`,
+      params: `f.c=${i}`,
     }));
     mockFetch.mockResolvedValueOnce(
       makeOk({
@@ -524,14 +685,39 @@ describe("fulltextSearchTool facets", () => {
     const result = await fulltextSearchTool({
       keywords: "Flynn",
       includeFacets: true,
-    });
+    }, LOCAL);
     expect(result.facets![0].items).toHaveLength(20);
   });
 
   it("33. omits facets entirely when includeFacets is not set", async () => {
     mockFetch.mockResolvedValueOnce(makeOk(facetBody()));
-    const result = await fulltextSearchTool({ keywords: "Flynn" });
+    const result = await fulltextSearchTool({ keywords: "Flynn" }, LOCAL);
     expect(result.facets).toBeUndefined();
+  });
+
+  it("33b. extracts the f.* value from compound Place facet params", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOk({
+        results: 1,
+        entries: [],
+        facets: [
+          {
+            count: 1,
+            displayName: "Place",
+            facets: [
+              { count: 42, displayName: "Alabama", params: "c.recordPlace1=on&f.recordPlace0=10" },
+            ],
+          },
+        ],
+      })
+    );
+    const result = await fulltextSearchTool({
+      keywords: "Flynn",
+      includeFacets: true,
+    }, LOCAL);
+    expect(result.facets![0].items).toEqual([
+      { name: "Alabama", count: 42, filterParam: "10" },
+    ]);
   });
 });
 
@@ -547,7 +733,7 @@ describe("fulltextSearchTool result staging", () => {
     const result = await fulltextSearchTool({
       keywords: "Flynn",
       projectPath: "/tmp/project",
-    });
+    }, LOCAL);
     expect(mockedStage).toHaveBeenCalledTimes(1);
     expect(mockedStage.mock.calls[0][0]).toMatchObject({
       projectPath: "/tmp/project",
@@ -571,7 +757,7 @@ describe("fulltextSearchTool result staging", () => {
     const result = await fulltextSearchTool({
       keywords: "Flynn",
       projectPath: "/tmp/project",
-    });
+    }, LOCAL);
     // The 79–136 KB overflow driver is gone from the inline copy...
     expect(result.results[0]?.textDocument).toBeUndefined();
     // ...but the light triage fields survive for in-context ranking.
@@ -586,7 +772,7 @@ describe("fulltextSearchTool result staging", () => {
     mockFetch.mockResolvedValueOnce(
       makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
     );
-    const result = await fulltextSearchTool({ keywords: "Flynn" });
+    const result = await fulltextSearchTool({ keywords: "Flynn" }, LOCAL);
     expect(result.staged).toBeUndefined();
     expect(result.results[0]?.textDocument).toBe("...full transcript text...");
   });
@@ -599,7 +785,7 @@ describe("fulltextSearchTool result staging", () => {
     const result = await fulltextSearchTool({
       keywords: "Flynn",
       projectPath: "/tmp/project",
-    });
+    }, LOCAL);
     expect(result.staged).toBeNull();
     expect(result.stagingError).toBe("disk full");
     expect(result.results).toHaveLength(1); // search result is intact
@@ -609,7 +795,7 @@ describe("fulltextSearchTool result staging", () => {
     mockFetch.mockResolvedValueOnce(
       makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
     );
-    const result = await fulltextSearchTool({ keywords: "Flynn" });
+    const result = await fulltextSearchTool({ keywords: "Flynn" }, LOCAL);
     expect(mockedStage).not.toHaveBeenCalled();
     expect(result.staged).toBeUndefined();
   });
@@ -633,7 +819,7 @@ describe("fulltextSearchTool request headers", () => {
     const result = await fulltextSearchTool({
       keywords: "Flynn",
       projectPath: "/tmp/project",
-    });
+    }, LOCAL);
 
     expect(result.unloggedSearches).toContain("3 earlier staged search");
     const keys = Object.keys(result);
@@ -646,12 +832,12 @@ describe("fulltextSearchTool request headers", () => {
     const result = await fulltextSearchTool({
       keywords: "Nonesuch",
       projectPath: "/tmp/project",
-    });
+    }, LOCAL);
 
     expect(result.nilSearchNeedsLog).toBe(NIL_SEARCH_NEEDS_LOG_NOTE);
     // …and says nothing when there is no project to log into.
     mockFetch.mockResolvedValueOnce(makeOk({ results: 0, index: 0, entries: [] }));
-    const noProject = await fulltextSearchTool({ keywords: "Nonesuch" });
+    const noProject = await fulltextSearchTool({ keywords: "Nonesuch" }, LOCAL);
     expect(noProject.nilSearchNeedsLog).toBeUndefined();
   });
 
@@ -666,7 +852,7 @@ describe("fulltextSearchTool request headers", () => {
     const result = await fulltextSearchTool({
       keywords: "Flynn",
       projectPath: "/tmp/project",
-    });
+    }, LOCAL);
 
     expect(result.results).toHaveLength(0);
     expect(result.totalResults).toBe(812);
@@ -688,7 +874,7 @@ describe("fulltextSearchTool request headers", () => {
     const result = await fulltextSearchTool({
       keywords: "Flynn",
       projectPath: "/tmp/project",
-    });
+    }, LOCAL);
 
     expect(result.unloggedSearches).toBeTruthy();
     // The sidecar records what the search RETURNED, not instructions to the model.
@@ -699,12 +885,42 @@ describe("fulltextSearchTool request headers", () => {
 
   it("37. sends Bearer auth, JSON Accept, and the browser User-Agent", async () => {
     mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
-    await fulltextSearchTool({ keywords: "Flynn" });
+    await fulltextSearchTool({ keywords: "Flynn" }, LOCAL);
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = init.headers as Record<string, string>;
-    expect(headers.Authorization).toBe("Bearer test-token");
-    expect(headers.Accept).toBe("application/json");
-    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("Authorization")).toBe("Bearer test-token");
+    expect(headers.get("Accept")).toBe("application/json");
+    expect(headers.get("User-Agent")).toBe(BROWSER_USER_AGENT);
+  });
+});
+
+describe("fulltextSearchTool name field", () => {
+  it("38. passes name through to q.fullName unchanged", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    await fulltextSearchTool({ name: "Elizabeth Martin" }, LOCAL);
+    const url = mockFetch.mock.calls[0][0] as string;
+    const fullNameParam = decodeURIComponent(
+      url.match(/q\.fullName=([^&]+)/)?.[1] ?? ""
+    );
+    expect(fullNameParam).toBe("Elizabeth Martin");
+    expect(url).not.toContain("q.fullName.boost");
+    expect(url).toContain("m.queryRequireDefault=on");
+  });
+
+  it("38b. name coexists with other parameters", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    await fulltextSearchTool({
+      name: "Elizabeth Martin",
+      keywords: "will testament",
+      place: "Tipperary",
+    }, LOCAL);
+    const url = mockFetch.mock.calls[0][0] as string;
+    expect(url).toContain("q.text=will%20testament");
+    expect(url).toContain("q.recordPlace=Tipperary");
+    const fullNameParam = decodeURIComponent(
+      url.match(/q\.fullName=([^&]+)/)?.[1] ?? ""
+    );
+    expect(fullNameParam).toBe("Elizabeth Martin");
   });
 });

@@ -51,6 +51,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # collect the imported validators as tests of this module and error on their
 # harness-supplied fixtures. Same pattern as the sibling validator tests.
 from test_convert_dates import (  # noqa: E402
+    test_day_offset_calls_name_a_jurisdiction as check_jurisdiction,
     test_no_spurious_conversion as check_no_spurious,
     test_only_convert_calendar_called as check_only_cc,
     test_refusal_to_convert_makes_no_call as check_refusal,
@@ -154,3 +155,67 @@ def test_no_spurious_conversion_now_has_a_registered_tool_to_catch():
     with pytest.raises(AssertionError, match="must not trigger a calendar conversion"):
         check_no_spurious([_convert(year=1821, month=2, day=15)],
                           _tags("no-spurious-conversion"))
+
+
+# --- jurisdiction on a day-offset call (issue #2260) -------------------
+#
+# `pyproject.toml` sets testpaths = ["tests"], so nothing under validators/ is
+# collected by `make harness-test`. Without these, the guard's real pass/fail
+# set would surface only inside a paid run.
+
+def _convert_with(jurisdiction, **date):
+    call = _call(date, {"julianToGregorianDay": True})
+    call["args"]["jurisdiction"] = jurisdiction
+    return call
+
+
+def test_jurisdiction_passes_when_the_day_offset_call_names_one():
+    check_jurisdiction([_convert_with("England", year=1750, month=2, day=14)], _tags())
+
+
+def test_jurisdiction_fires_when_the_day_offset_call_omits_it():
+    with pytest.raises(AssertionError):
+        check_jurisdiction([_convert(year=1750, month=2, day=14)], _tags())
+
+
+def test_jurisdiction_fires_on_an_empty_or_whitespace_string():
+    for bad in ("", "   "):
+        with pytest.raises(AssertionError):
+            check_jurisdiction([_convert_with(bad, year=1750, month=2, day=14)], _tags())
+
+
+def test_jurisdiction_accepts_a_differently_spelled_but_matched_place():
+    """The legitimate-variant direction the card asks for by name."""
+    for spelling in ("England", "  england ", "Great Britain", "great britain,"):
+        check_jurisdiction([_convert_with(spelling, year=1750, month=2, day=14)], _tags())
+
+
+def test_jurisdiction_ignores_calls_that_do_not_request_the_day_offset():
+    """Quaker-only and double-date-only calls need no place: the era comes from
+    the date. ut_convert_dates_001 names no place at all and is tagged
+    requires-tool-conversion, so a tag-gated check would fail it."""
+    check_jurisdiction([_call({"year": 1845, "month": 2}, {"quakerMonth": {"era": "post_1752"}})], _tags())
+    check_jurisdiction([_call({"year": 1750, "doubleYear": 1}, {"doubleDatedYear": True})], _tags())
+
+
+def test_jurisdiction_passes_when_no_tool_was_called_at_all():
+    check_jurisdiction([], _tags())
+
+
+def test_jurisdiction_accepts_any_server_prefix():
+    """A bridged Cowork spelling must still be seen, or the guard is blind in
+    the environment it most needs to hold."""
+    bridged = _convert(year=1750, month=2, day=14)
+    bridged["tool"] = "mcp__remote-devices__Genealogy_Research__convert_calendar"
+    with pytest.raises(AssertionError):
+        check_jurisdiction([bridged], _tags())
+
+
+def test_jurisdiction_stands_down_when_the_record_names_no_place():
+    """The body permits the omission in exactly this case, so the guard must
+    not fail the model for following it."""
+    with pytest.raises(pytest.skip.Exception):
+        check_jurisdiction(
+            [_convert(year=1900, month=2, day=14)],
+            _tags("record-names-no-place"),
+        )

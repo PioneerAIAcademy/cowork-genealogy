@@ -5,10 +5,10 @@
     "name": "Sidecar integrity error (returned_count mismatch) is reported and explained",
     "type": "positive",
     "description": "Run schema validation against mid-research-flynn-bad-sidecar. Log entry log_001 has results_ref 'results/log_001.json'; that sidecar declares returned_count 5 but its payload.results array holds only 2 items. The validator emits one error from the validateSidecars branch — a category neither the prior tests nor the SKILL.md's 'what the validator checks' list covered.",
-    "tags": ["validation", "error-path", "sidecar", "results-integrity", "explain-and-suggest"]
+    "tags": ["validation", "error-path", "sidecar", "results-integrity", "explain-and-suggest", "direct-arm"]
   },
   "input": {
-    "user_message": "Validate the project files for schema compliance.",
+    "delegation": "Validate the project files for schema compliance.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-bad-sidecar"
   },
   "judge_context": [

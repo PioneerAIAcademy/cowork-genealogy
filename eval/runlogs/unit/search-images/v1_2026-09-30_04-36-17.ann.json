@@ -1,0 +1,254 @@
+{
+  "run_log": "v1_2026-09-30_04-36-17.json",
+  "annotator": "adeyinkaadedayo1024@mail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly read 95% recordSearchablePercent from volume_search and declined to browse. Redirected to search-records."
+    },
+    {
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Declining the browse is the correct completion when tool data shows the volume is indexed."
+    },
+    {
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "volume_search called with correct standardPlace and recordTypeGroups. Matched expected_args."
+    },
+    {
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Discovered the indexed volume via volume_search and correctly steered away from browse."
+    },
+    {
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly made no image_search or image_transcribe calls for an indexed volume."
+    },
+    {
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No browse performed, so no log entry required. Correct per test context."
+    },
+    {
+      "test_id": "ut_search_images_d1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Transcribed image 00008, reported Thomas Flynn's 1889 will contents accurately. Patrick Flynn absent, all claims sourced from tool response."
+    },
+    {
+      "test_id": "ut_search_images_d1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "image_search(007936749) and image_transcribe(007936749_00008) both matched expected_args. Log and append calls correct."
+    },
+    {
+      "test_id": "ut_search_images_d1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Browsed group, transcribed target image, logged partial (1/15), updated pli_006 to completed."
+    },
+    {
+      "test_id": "ut_search_images_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Delegation supplied imageGroupNumber; agent went straight to image_search without volume_search. Correct per rubric."
+    },
+    {
+      "test_id": "ut_search_images_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Called image_search, transcribed 00008, reported faithfully. No fabrication. One page is a complete browse per rubric."
+    },
+    {
+      "test_id": "ut_search_images_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "log_006 documents group, place, record type, image examined, 15 available, outcome partial, and will contents."
+    },
+    {
+      "test_id": "ut_search_images_d5",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "image_search returned empty imageIds. Agent reported group exists but has no images. No fabrication."
+    },
+    {
+      "test_id": "ut_search_images_d5",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Called image_search, got empty result, logged negative. No pages to attempt reading."
+    },
+    {
+      "test_id": "ut_search_images_d5",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "image_search(004452257) matched expected. research_log_append had all required fields with outcome negative and resultsExamined 0."
+    },
+    {
+      "test_id": "ut_search_images_d5",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Used provided imageGroupNumber directly without calling volume_search. Correct per rubric."
+    },
+    {
+      "test_id": "ut_search_images_d5",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Empty imageIds — correctly reported no images and did not call image_transcribe."
+    },
+    {
+      "test_id": "ut_search_images_d5",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Log notes carry scope: group 004452257, no images available, reason for negative result. Sufficient for audit."
+    },
+    {
+      "test_id": "ut_search_images_d2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two volume_search calls returned zero results for Alabama land records. Did not invent an imageGroupNumber. Suggested BLM GLO, NARA RG 49, and Alabama Archives."
+    },
+    {
+      "test_id": "ut_search_images_d2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Searched with appropriate parameters, broadened on empty result, logged negative, suggested next steps."
+    },
+    {
+      "test_id": "ut_search_images_d2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " First call scoped to Land 1800-1830, second broadened to all types 1810-1820. Both matched expected_args. Log call had all required fields."
+    },
+    {
+      "test_id": "ut_search_images_d2",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly concluded no digitized volume exists after two empty results. Did not fabricate a group number."
+    },
+    {
+      "test_id": "ut_search_images_d2",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No volume found, so correctly did not attempt any browse. Honest zero-result reporting."
+    },
+    {
+      "test_id": "ut_search_images_d2",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Log_006 outcome negative with notes naming place, date ranges, record type, and historical context (territory 1798-1819)."
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Identified both probate volumes (007936749, 007936752) covering the 1885-1895 death window. Sampled pages from both. Honestly reported all returned Henry Schoener will, not Flynn's."
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "volume_search, image_search on both groups, sampled transcriptions, logged with both groups named, updated pli_006. Nothing omitted."
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "volume_search with Schuylkill/1880-1900/Probate+Wills. image_search on both correct groups. image_transcribe used valid IDs from returned lists. No fixture_not_found."
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Recognized death window straddles the 1890/1891 film boundary. Browsed both films. Ignored Berks County result. Pass condition met."
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Sampled pages from both volumes. Reported honestly that mock returned same page for all. Did not fabricate. Environment limitation correctly identified."
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "log_006 names both groups, place, record type, date range 1851-1930, target, and partial status. Sufficient for exhaustiveness audit."
+    }
+  ]
+}

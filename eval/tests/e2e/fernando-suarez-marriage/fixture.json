@@ -1,0 +1,20 @@
+{
+  "id": "fernando-suarez-marriage",
+  "name": "Fernando Suarez Franco — marriage in November 1891, Aguadas, Caldas, Colombia",
+  "genre": "record-hint",
+  "source_pid": "GZ6S-8MW",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Fernando Suarez Franco, born about 1866 in Antioquia and the son of Juan de Dios Suarez and Manuela Franco, marry Maria Jesus Ramirez Henao, the mother of his children baptized in Caramanta between 1896 and 1904?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1890s",
+    "geography": "CO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "image_basis": false,
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 6, hint-samples.csv row 189, flag adds_marriage, confidence 3). Resolved TRUE MATCH on an INDEX-ONLY route: the 1891 Aguadas marriage index (ark:/61903/1:1:QG2B-LVHQ) names the bride Maria de Jesus Ramirez's parents Luis Ramirez and Juana Henao and the groom's mother Manuela Franco, and Julia Rosa's 1896 Caramanta baptism (ark:/61903/1:1:6DDW-L7XF, already attached to tree person GZ6S-8MW) independently names the same maternal grandparents Luis Ramirez and Juana Henao plus paternal grandparents indexed as Juan de Dios Juarez (a variant of Suarez) and Manue la Franco (a split of Manuela Franco) — the shared four-grandparent set ties the tree's Fernando and wife to the marriage with no image reading. The groom is indexed matronymically as Fernando Franco (mother only) in 1891 and as Fernando Suarez in the 1896 baptism; the baptism supplies the father Juan de Dios Suarez, explaining the difference. image_basis false: the register image was not read; the Step 1a calibration rule does not apply. Event place kept as the record states it (Inmaculada Concepcion, Aguadas, Aguadas, Caldas), not the register volume's Salamina cataloguing location."
+}

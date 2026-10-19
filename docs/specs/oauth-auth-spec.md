@@ -14,10 +14,10 @@ Milestone A is complete — `wikipedia_search` and `place_search` tools work thr
 |---|------|--------|
 | 0 | `config/familysearch.json` | **Create (committed to git)** — `{ "clientId": "<dev-key>" }`. Bundled into the `.mcpb` and read by `getClientId()` at runtime. Sole source for the client ID. |
 | 1 | `src/types/auth.ts` | **Create** — Auth interfaces (TokenStore, LoginResult, AuthStatusResult, FSTokenResponse, AppConfig). `AppConfig` covers per-user settings only (e.g. `wikiApiUrl`); it does **not** carry `clientId`. |
-| 2 | `src/auth/config.ts` | **Create** — OAuth URLs, port, paths, `loadConfig`/`saveConfig` for the per-user `~/.familysearch-mcp/config.json`, and `getClientId()` that reads the bundled `config/familysearch.json` |
+| 2 | `src/auth/config.ts` | **Create** — OAuth URLs, port, paths, `loadConfig` for the per-user `~/.familysearch-mcp/config.json`, and `getClientId()` that reads the bundled `config/familysearch.json` |
 | 3 | `src/auth/pkce.ts` | **Create** — PKCE code_verifier/code_challenge + state generation |
 | 4 | `src/auth/tokenManager.ts` | **Create** — Save/load/clear tokens from `~/.familysearch-mcp/tokens.json` |
-| 5 | `src/auth/refresh.ts` | **Create** — Token exchange, refresh, and `getValidToken()` |
+| 5 | `src/auth/refresh.ts` | **Create** — Token exchange, refresh, and `getValidToken(principal)` |
 | 6 | `src/auth/login.ts` | **Create** — Full OAuth flow (HTTP callback server + browser launch) |
 | 7 | `src/tools/login.ts` | **Create** — MCP `login` tool wrapper |
 | 8 | `src/tools/logout.ts` | **Create** — MCP `logout` tool wrapper |
@@ -97,8 +97,8 @@ Constants + two distinct config sources.
 
 **Functions:**
 
-- `loadConfig()` -> `AppConfig` — reads the **per-user** JSON config; returns `{}` on missing/corrupt/wrong-shape (never throws). Holds tunables like `wikiApiUrl`. Does not hold the client ID.
-- `saveConfig(patch: Partial<AppConfig>)` — merges `patch` into existing per-user config, `mkdir({ recursive: true })` + `writeFile` JSON with `mode: 0o600`. Preserves any keys the user has set that are not in `patch`.
+- `loadConfig(principal)` -> `AppConfig` — reads the **per-user** JSON config; returns `{}` on missing/corrupt/wrong-shape (never throws). Holds tunables like `wikiApiUrl`. Does not hold the client ID.
+- Nothing in the engine writes the per-user config. The user, the e2e harness or the hosted control plane does.
 - `getClientId()` -> `string` — reads the **bundled** `config/familysearch.json` at runtime and returns `clientId` (trimmed). On missing/unreadable/malformed/empty, throws a packaging error:
   ```
   FamilySearch client ID is unavailable. The MCP server's bundled
@@ -125,7 +125,7 @@ Uses Node.js built-in `crypto` module (no external deps).
 
 File-based token persistence.
 
-- `saveTokens(tokens)` — `mkdir({ recursive: true })` + `writeFile` JSON with `mode: 0o600` (user read/write only)
+- `saveTokens(tokens)` — `mkdir({ recursive: true })`, then `writeFile` JSON to a new temp file beside `tokens.json`, created with `mode: 0o600` (user read/write only) and `flag: "wx"`, and `rename` it over `tokens.json`, so a concurrent `loadTokens` reads the old tokens or the new ones, never a partial file. If the write or the rename fails, it removes the temp and rejects with that error
 - `loadTokens()` -> `TokenStore | null` — never throws (returns null on missing/corrupt/wrong-shape)
 - `isExpired(tokens)` -> boolean — pure function, checks `expiresAt - buffer`
 - `clearTokens()` — `rm({ force: true })`, silent if already gone
@@ -134,14 +134,24 @@ File-based token persistence.
 
 ## Step 5: Token Exchange & Refresh (`src/auth/refresh.ts`)
 
-The core auth logic. **`getValidToken()` is the single entry point all authenticated tools will call.**
+The core auth logic. **`getValidToken(principal)` is the single entry point all authenticated tools will call.**
+The `principal` (`src/auth/principal.ts`) says who the call acts as: `LOCAL` reads and
+refreshes the per-user files described here; a bearer principal carries the request's
+access token and per-user config and is used as given — no refresh, no file — because
+in a hosted deployment the web tier owns the grant. `loadConfig`,
+`isHostedMode` and the config getters take the same parameter.
 
 - `exchangeCodeForTokens(code, codeVerifier)` -> `TokenStore` — POST to token URL with `grant_type=authorization_code`
 - `refreshAccessToken(refreshToken)` -> `TokenStore` — POST with `grant_type=refresh_token`, keeps old refresh token if new one not issued
-- `getValidToken()` -> `string` (access token) — loads tokens, refreshes if expired, throws instructive error if no tokens or refresh fails:
+- `getValidToken(principal)` -> `string` (access token) — loads tokens, refreshes if expired, throws instructive error if no tokens or refresh fails:
   - No tokens: `"User is not logged in to FamilySearch. Call the login tool to authenticate."`
   - Expired + refresh fails: `"FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate."`
   - Expired + no refresh token: `"FamilySearch access token has expired and no refresh token is available. Call the login tool to re-authenticate."`
+
+**Shared refresh.** Concurrent `LOCAL` callers of `getValidToken` share one in-flight
+refresh, which re-reads `tokens.json` first: it returns an unexpired token found there
+as is, and otherwise refreshes with the refresh token stored there, so a caller whose
+read predates the last save never starts a second refresh.
 
 **Hosted-mode override.** When `config.json` carries `hosted: true` (the control
 plane sets it when it provisions a sandbox — see
@@ -151,8 +161,19 @@ replaced by `HOSTED_REAUTH_INSTRUCTION`, which routes the user to the web app's
 `login` flow cannot complete in the VM (its callback binds the sandbox's
 `127.0.0.1:1837`, while the registered redirect resolves on the user's laptop),
 so `loginTool` likewise short-circuits to that instruction in hosted mode
-instead of starting a doomed flow. `isHostedMode()` gates both; the desktop
+instead of starting a doomed flow. `isHostedMode(principal)` gates both; the desktop
 `.mcpb` never sets the flag, so its behavior is unchanged.
+
+**401 re-read.** `fsFetch` and `fsFetchWithTimeout`
+(`src/utils/fs-fetch.ts`) wrap `getValidToken` + the fetch layer. On a 401 under
+`LOCAL`, they call `getValidToken` once more — re-reading `tokens.json` from
+disk. If the token changed (the control plane pushed a fresh one via
+`push_token_to_live_sandboxes`), they retry once with the new token. If the token
+is unchanged, they return the original 401 so the tool's own handler can produce
+the right user-facing error. **They never call `refreshAccessToken` on a 401** —
+a refresh revokes every other holder's access token immediately and rotates the
+refresh token. Bearer principals skip the re-read entirely
+(the web tier owns the grant).
 
 ---
 
@@ -226,7 +247,6 @@ ESM-native, zero dependencies, ships TypeScript types, cross-platform browser la
 - `getClientId` reads the bundled `config/familysearch.json` and returns the trimmed `clientId`
 - `getClientId` throws `CLIENT_ID_PACKAGING_ERROR` on missing / invalid-JSON / wrong-shape / empty / missing-field
 - `CLIENT_ID_PACKAGING_ERROR` is framed as an installation problem, not an LLM-actionable prompt (regression guard: forbids "pass / provide / configure" + "dev key" + "Call the login tool" phrasing)
-- `saveConfig` merges a patch into the per-user config (preserves other keys), writes JSON with `mode: 0o600`
 - **Mock:** `node:fs/promises`
 
 ### `tests/auth/bundled-client-config.test.ts` — 2 tests
@@ -294,14 +314,14 @@ npm test               # All 57 tests pass
 ```bash
 npx @modelcontextprotocol/inspector node build/index.js
 ```
-- `auth_status` -> `{ loggedIn: false }`
+- `auth_status` -> `{ loggedIn: false, buildId: "0.1.0+<date>.<sha>" }` (`buildId` is the engine build stamp, on every branch — `mcpb-package-spec.md` § Versioning)
 - `logout` -> success message
 - `login` (no arguments) -> browser opens to the FS consent screen using the bundled client ID
 
 ### Integration (no manual key setup)
 1. Call `login()` — browser opens; user authorizes
 2. Browser -> FS login -> redirect -> "Login Successful"
-3. `auth_status` -> `{ loggedIn: true, expiresInMinutes: ~1440 }`
+3. `auth_status` -> `{ loggedIn: true, expiresInMinutes: ~1440, buildId }`
 4. `logout` -> success, `auth_status` -> `{ loggedIn: false }`
 
 ---

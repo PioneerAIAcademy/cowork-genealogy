@@ -32,11 +32,12 @@ export const patrickFlynnResearch: ResearchData = {
       created: '2026-05-01',
       resolved: null,
       resolution_assertion_ids: [],
-      exhaustive_declaration: {
-        declared: false,
+      search_stop: {
+        stopped_because: null,
         justification: null,
         log_entry_ids: [],
-        stop_criteria: null
+        stop_criteria: null,
+        not_reached: []
       }
     },
     {
@@ -52,8 +53,8 @@ export const patrickFlynnResearch: ResearchData = {
       created: '2026-05-01',
       resolved: '2026-05-02',
       resolution_assertion_ids: ['a_001', 'a_002', 'a_003'],
-      exhaustive_declaration: {
-        declared: true,
+      search_stop: {
+        stopped_because: 'question_answered',
         justification:
           'Searched 1850 census for Schuylkill County on FamilySearch (indexed and browse), Ancestry (indexed), and MyHeritage (indexed). All three returned the same household. No other Patrick Flynn of matching age found in the county.',
         log_entry_ids: ['log_001', 'log_002', 'log_003'],
@@ -71,7 +72,8 @@ export const patrickFlynnResearch: ResearchData = {
           conflict_resolution: 'No conflicts on the 1850 census placement question.',
           overturn_risk:
             'Low — all three repositories agree, and no competing Patrick Flynn of matching age exists in the county.'
-        }
+        },
+        not_reached: []
       }
     }
   ],
@@ -296,7 +298,7 @@ export const patrickFlynnResearch: ResearchData = {
       informant: 'Unknown household member reporting to census enumerator',
       informant_proximity: 'unknown',
       informant_bias_notes: null,
-      evidence_type: 'direct',
+      record_basis: 'stated',
       log_entry_id: 'log_001',
       record_persona_id: 'P1',
       extracted_for_question_ids: ['q_002']
@@ -316,7 +318,7 @@ export const patrickFlynnResearch: ResearchData = {
       informant: 'Unknown household member (likely Thomas Flynn or wife)',
       informant_proximity: 'household_member',
       informant_bias_notes: null,
-      evidence_type: 'indirect',
+      record_basis: 'inferred',
       log_entry_id: 'log_001',
       extracted_for_question_ids: ['q_002']
     },
@@ -338,7 +340,7 @@ export const patrickFlynnResearch: ResearchData = {
       informant: 'Inferred from household structure',
       informant_proximity: 'unknown',
       informant_bias_notes: null,
-      evidence_type: 'indirect',
+      record_basis: 'inferred',
       log_entry_id: 'log_001',
       extracted_for_question_ids: ['q_001']
     },
@@ -358,7 +360,7 @@ export const patrickFlynnResearch: ResearchData = {
       informant_proximity: 'unknown',
       informant_bias_notes:
         '1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.',
-      evidence_type: 'indirect',
+      record_basis: 'inferred',
       log_entry_id: null,
       extracted_for_question_ids: ['q_001']
     },
@@ -378,7 +380,7 @@ export const patrickFlynnResearch: ResearchData = {
       informant_proximity: 'family_not_present',
       informant_bias_notes:
         'Son-in-law reporting birth facts decades after the event. Death cert says Pennsylvania, but census records say Ireland.',
-      evidence_type: 'direct',
+      record_basis: 'stated',
       log_entry_id: 'log_005',
       extracted_for_question_ids: ['q_001']
     },
@@ -397,7 +399,7 @@ export const patrickFlynnResearch: ResearchData = {
       informant: 'James Brown (son-in-law)',
       informant_proximity: 'family_not_present',
       informant_bias_notes: 'Secondary information — son-in-law reporting parentage',
-      evidence_type: 'direct',
+      record_basis: 'stated',
       log_entry_id: 'log_005',
       extracted_for_question_ids: ['q_001']
     }
@@ -524,6 +526,7 @@ export const patrickFlynnResearch: ResearchData = {
       question_id: 'q_001',
       tier: 'probable',
       vehicle: 'summary',
+      shortfall: 'gap',
       supporting_assertion_ids: ['a_004', 'a_010', 'a_013'],
       resolved_conflict_ids: ['c_001'],
       exhaustive_search_summary:
@@ -550,7 +553,7 @@ export const patrickFlynnGedcomx: GedcomxData = {
   persons: [
     {
       id: 'I1',
-      ark: 'https://familysearch.org/ark:/61903/4:1:KGS8-LY1',
+      ark: 'ark:/61903/4:1:KGS8-LY1',
       gender: 'Male',
       names: [
         {

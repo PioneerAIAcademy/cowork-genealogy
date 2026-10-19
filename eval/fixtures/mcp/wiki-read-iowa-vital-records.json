@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_read",
+  "description": "Excerpt from the live Iowa_Vital_Records page, probed 2026-09-04 at https://www.familysearch.org/en/wiki/Iowa_Vital_Records (30389 chars). Verbatim contiguous excerpt of 1752 chars anchored on the registration-start table, NOT the whole page — the registration facts the tests rely on are present; the rest of the page is omitted deliberately (issue #2257).",
+  "args": {
+    "url": "~Iowa_Vital_Records"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Iowa_Vital_Records",
+    "content": "[U.S. Vital Records](https://www.familysearch.org/en/wiki/United_States_Vital_Records \"United States Vital Records\")\n\n[Iowa](https://www.familysearch.org/en/wiki/Iowa,_United_States_Genealogy \"Iowa, United States Genealogy\")\n\nVital Records\n\n## Iowa Vital Records Dates\n\nYears Vital Records Started in Iowa\n\n| **Government Registration** | **[Births](https://www.familysearch.org/en/wiki/Iowa_Vital_Records#Birth_Records \"Iowa Vital Records\")** | **[Marriages](https://www.familysearch.org/en/wiki/Iowa_Vital_Records#Marriage_Records \"Iowa Vital Records\")** | **[Deaths](https://www.familysearch.org/en/wiki/Iowa_Vital_Records#Death_Records \"Iowa Vital Records\")** |\n| --- | --- | --- | --- |\n| **County/Town** | 1880 | County Formation | 1880 |\n| **Statewide Registration** | 1880 | 1880 | 1880 |\n| **General Compliance**[[1]](#cite_note-1) | 1921 | 1880 | 1921 |\n\n## Online Resources\n\n### Birth\n\n* **1800-1999** [Iowa Births and Christenings Index, 1800-1999](https://www.ancestry.com/search/collections/2547) at Ancestry — index ($)\n* **1830-1950** [Iowa Births and Christenings, 1830-1950](https://www.familysearch.org/search/collection/1674820) at FamilySearch — [How to Use this Collection](https://www.familysearch.org/en/wiki/Iowa_Births_and_Christenings_-_FamilySearch_Historical_Records \"Iowa Births and Christenings - FamilySearch Historical Records\"); index\n* **1837-1987** [Iowa Church and Civil Births and Baptisms, 1837-1987](https://www.familysearch.org/search/collection/2366597) at FamilySearch — [How to Use this Collection](https://www.familysearch.org/en/wiki/Iowa,_Church_and_Civil_Births_and_Baptisms_-_FamilySearch_Historical_Records \"Iowa, Church and Civil Births and Baptisms - FamilySearch Historical Records\"); index & images"
+  }
+}

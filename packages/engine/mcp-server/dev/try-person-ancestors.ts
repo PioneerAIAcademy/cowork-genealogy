@@ -11,6 +11,7 @@
  *   npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 4 --person-details
  *   npx tsx dev/try-person-ancestors.ts LZJW-C31 --generations 2 --marriage-details
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { personAncestorsTool } from "../src/tools/person-ancestors.js";
 import type { PersonAncestorsInput } from "../src/types/person-ancestors.js";
 
@@ -50,7 +51,7 @@ console.log("Input:", JSON.stringify(input));
 console.log("---");
 
 try {
-  const result = await personAncestorsTool(input);
+  const result = await personAncestorsTool(input, LOCAL);
   console.log(`persons: ${result.persons.length}`);
   for (const p of result.persons) {
     // Persons can carry several name variants (BirthName/AlsoKnownAs/...);

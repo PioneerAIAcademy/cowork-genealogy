@@ -11,6 +11,7 @@ export interface GedcomX {
 
 export interface GedcomXPerson {
   id?: string;
+  principal?: boolean;
   gender?: { type: string };
   names?: GedcomXName[];
   facts?: GedcomXFact[];
@@ -69,6 +70,17 @@ export interface GedcomXNote {
 
 export interface GedcomXSourceReference {
   description?: string;
+  /**
+   * The bare id of the description this ref points at.
+   *
+   * FamilySearch sends it alongside `description` on person-level refs, and it is
+   * what makes a relative's ref usable: `description` there is a full URL to a
+   * description the tree-read body does not contain, while this is the id that
+   * description carries once fetched. Measured 2026-09-30 on two real subjects —
+   * present on 102/102 and 77/77 URL-form refs, and equal to the URL's last
+   * segment in every one (`dev/probe-relative-sources.json`).
+   */
+  descriptionId?: string;
   qualifiers?: GedcomXQualifier[];
 }
 
@@ -79,9 +91,17 @@ export interface GedcomXQualifier {
 
 export interface GedcomXSourceDescription {
   id?: string;
+  resourceType?: string;
   titles?: { value: string }[];
   citations?: { value: string }[];
   about?: string;
+  coverage?: GedcomXCoverage[];
+}
+
+export interface GedcomXCoverage {
+  spatial?: { description?: string };
+  temporal?: { original?: string; formal?: string };
+  recordType?: string;
 }
 
 export interface GedcomXPlaceDescription {
@@ -104,6 +124,7 @@ export interface SimplifiedGedcomX {
 export interface SimplifiedPerson {
   id?: string;
   ark?: string;
+  principal?: boolean;
   gender?: string;
   names?: SimplifiedName[];
   facts?: SimplifiedFact[];
@@ -134,6 +155,12 @@ export interface SimplifiedFact {
   // free-text places. Dropped on `toGedcomX`, like `standard_date`.
   standard_place?: string;
   value?: string;
+  // The `research.json` assertion this fact was minted from — the backlink an
+  // assertion correction joins on to find the fact it produced (#2472).
+  // Stamped by `materialize_facts` on the MINT branch only; never on
+  // corroboration, never inferred, never caller-supplied. Dropped on
+  // `toGedcomX`, like `standard_date`.
+  assertion_id?: string;
   sources?: SimplifiedSourceReference[];
 }
 
@@ -161,10 +188,19 @@ export interface SimplifiedSourceReference {
 
 export interface SimplifiedSourceDescription {
   id?: string;
+  resource_type?: string;
   title?: string;
   citation?: string;
   author?: string;
   url?: string;
+  coverage?: SimplifiedCoverage;
+}
+
+export interface SimplifiedCoverage {
+  standard_place?: string;
+  place_rep_id?: string;
+  date_range?: string;
+  record_type?: string;
 }
 
 export interface SimplifiedPlaceDescription {

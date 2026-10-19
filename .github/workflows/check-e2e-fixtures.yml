@@ -1,13 +1,31 @@
-name: Check e2e fixtures + grading
+name: Check e2e fixtures + grading + annotation validation
 
-# One e2e discipline check on committed files (eval/harness/scripts/check_e2e_fixtures.py):
+# The e2e discipline checks on committed files (eval/harness/scripts/check_e2e_fixtures.py) —
+# four blocking run-log gates (grading, 1M window, tool search off, credentials),
+# blocking annotation validation, and two warns. The run-log gates:
 #
-# Grading gate (BLOCKING): every run log ADDED in this PR that produced a
-# final tree must ship its run-<ts>.ann.json in the same PR. Grading is
+# Grading gate (BLOCKING): every run log added or renamed into the corpus in
+# this PR that produced a final tree must ship its run-<ts>.ann.json in the
+# same PR. Grading is
 # same-PR (the developer + genealogist teams grade every run they commit).
 # Treeless runs (crashed/skipped before a tree) are exempt. Scoped to
-# PR-added run logs via `git diff --diff-filter=A` (needs BASE_SHA/HEAD_SHA
-# and full history).
+# run logs added or renamed into the corpus via `git diff --diff-filter=AR`
+# (needs BASE_SHA/HEAD_SHA and full history).
+#
+# 1M-window gate (BLOCKING): a run log added or renamed into eval/runlogs/e2e/
+# whose usage.betas is non-empty was made with --context-1m. A 1M window is not
+# comparable to the rest of the corpus (it changes the compaction count and the
+# cache-gap structure) and the corpus scan has no exclusion for it, so keep such
+# a run in a sibling directory outside eval/runlogs/e2e/. Same AR scoping.
+#
+# Tool-search-off gate (BLOCKING): a run log added or renamed into
+# eval/runlogs/e2e/ whose flat usage.tool_search or usage.tool_search_offered is
+# false ran with every tool schema loaded up front (--no-tool-search, or an
+# inherited CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS), so its context size and
+# cache figures are not the corpus's. Absent fields pass. Same AR scoping.
+#
+# Credential gate (BLOCKING): a run log added, renamed or modified in this PR
+# that carries a live FamilySearch, OpenRouter or Anthropic credential.
 #
 # Fixture *validity* (a fixture having a committed passing run log — spec §14)
 # is NOT gated here: it is a recommended authoring practice, not a CI check, so
@@ -66,7 +84,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Check e2e grading gate (blocking)
+      - name: Check e2e grading + 1M-window + annotation gates (blocking)
         if: steps.scope.outputs.relevant == 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

@@ -1,0 +1,19 @@
+{
+  "id": "olaya-guerrero-marriage",
+  "name": "Olaya Guerrero — marriage in October 1768, Higüey, Dominican Republic",
+  "genre": "record-hint",
+  "source_pid": "L17S-LBY",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Olaya Guerrero, born about 1732 in Higüey, marry Baltazar Guerrero, the father of her daughter Rosa born in Higüey in September 1769, and who were her parents?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1760s",
+    "geography": "DO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 7, hint-samples.csv row 288, flags adds_father/adds_mother/adds_marriage, confidence 3). Resolved 2026-10-15 (issue #3330): the hint is a true match. A 1793 Higüey marriage (ark:/61903/1:1:6R89-44PS) names a bride's parents as Baltasar Guerrero and Olaya Hurtarte, tying the 1768 bride's surname to the tree's couple; their other records call her Olaya Guerrero."
+}

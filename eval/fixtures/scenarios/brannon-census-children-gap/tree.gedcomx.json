@@ -1,0 +1,64 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Ellen", "surname": "Brannon", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "primary": true, "date": "~1870", "place": "Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Patrick", "surname": "Brannon", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F2", "type": "Birth", "primary": true, "date": "~1867", "place": "Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        { "id": "N3", "preferred": true, "given": "James", "surname": "Brannon", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F3", "type": "Birth", "primary": true, "date": "1892", "place": "Cincinnati, Hamilton County, Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Female",
+      "names": [
+        { "id": "N4", "preferred": true, "given": "Catherine", "surname": "Brannon", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F4", "type": "Birth", "primary": true, "date": "1895", "place": "Cincinnati, Hamilton County, Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Male",
+      "names": [
+        { "id": "N5", "preferred": true, "given": "Thomas", "surname": "Brannon", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F5", "type": "Birth", "primary": true, "date": "1904", "place": "Cincinnati, Hamilton County, Ohio, United States" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "R1", "type": "Couple", "person1": "I2", "person2": "I1" },
+    { "id": "R2", "type": "ParentChild", "parent": "I1", "child": "I3", "subtype": "Biological" },
+    { "id": "R3", "type": "ParentChild", "parent": "I2", "child": "I3", "subtype": "Biological" },
+    { "id": "R4", "type": "ParentChild", "parent": "I1", "child": "I4", "subtype": "Biological" },
+    { "id": "R5", "type": "ParentChild", "parent": "I2", "child": "I4", "subtype": "Biological" },
+    { "id": "R6", "type": "ParentChild", "parent": "I1", "child": "I5", "subtype": "Biological" },
+    { "id": "R7", "type": "ParentChild", "parent": "I2", "child": "I5", "subtype": "Biological" }
+  ],
+  "sources": []
+}

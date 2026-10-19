@@ -149,13 +149,15 @@ You need the ONE plugin sub-skill that owns the mistake — the test's
   - **sub-skill regression** or **agent-reasoning regression** → mine a
     test for the implicated sub-skill. The run log already lists the
     sub-skills the agent ran, in order — read them from `run-<ts>.json`'s
-    `tool_calls` (the `Skill` entries' `args.skill`):
+    `tool_calls`: the `Skill` entries' `args.skill` and the typed
+    `Agent`/`Task` entries' `args.subagent_type` (the orchestrator spawns
+    paired agents directly, so a `Skill`-only list misses them):
     ```
-    uv run --directory eval/harness python -c "import json,sys; r=json.load(open(sys.argv[1])); print([tc['args'].get('skill') for tc in r.get('tool_calls',[]) if tc['tool']=='Skill'])" eval/runlogs/e2e/<slug>/run-<ts>.json
+    python3 -c "import json,sys; r=json.load(open(sys.argv[1], encoding='utf-8')); print([tc['args'].get('skill') if tc['tool']=='Skill' else (tc['args'].get('subagent_type') or 'UNTYPED').split(':')[-1] for tc in r.get('tool_calls',[]) if tc['tool'] in ('Skill','Agent','Task')])" eval/runlogs/e2e/<slug>/run-<ts>.json
     ```
     That list is the *sequence*, not the culprit: the owner is the sub-skill
     whose **handoff dropped the evidence**, which may not be the last one to run.
-    Read the assistant narration *between* the `Skill` blocks (where a decision
+    Read the assistant narration *between* those blocks (where a decision
     like "this date can't be verified — drop it" happens), and check what a
     sub-skill was *handed* vs what it passed on, to find the turn it went wrong.
     That last step is judgment.
@@ -359,7 +361,7 @@ As the **last thing**, print to the session:
 | The cause is a tool bug or a stale rubric/fixture (Step 1) | Stop. Say so and route it (MCP PR, or `rubric-critic`) — do not mine a unit test. |
 | Can't confidently name one sub-skill | Ask the user; on the recorded path, run `/interpret-e2e-result` first. |
 | Cause is `/research` routing, FS drift, or jitter | Not a body test. Split `/research`: "picked the wrong sub-skill" → `make optimize-skill` (description optimizer); "skipped a GPS step" → a `research`-body (orchestrator) `SKILL.md` edit (the optimizer can't fix it). Discard *jitter*. **FS drift needs a second look:** finding simply *unreachable* because FS data changed → discard; but skill **mishandled** a real FS data quirk (mislinked image, mis-transcription, wrong-collection filing) → **mine it** — the gap is the skill's *response*, not the data. |
-| Run inside a feedback-case dir (a `.feedback-repo-root` is present) | Fine — mine it as `--project <case-dir>`. Resolve the repo from that marker rather than assuming cwd, and read `_feedback/feedback.json` for the submitter's Did/Should (and `correct_answer`, when they supplied ground truth) instead of interviewing the user for it. **Either may legitimately be empty** — `agent_should_have` when the reporter hit a bug but did not know the ideal behavior, `agent_did` because the submission dialog requires only the Yes/No answer — so fall back to asking the user for the Should, or the Did, rather than mining a rubric from a blank. When the Did is blank and the bundle has a `_feedback/session-log.jsonl`, that carries the transcript; it is optional, a Cowork submission has none, and a log trimmed for size drops the oldest entries first. Mine it *before* the fix lands, so the gate has a pre-edit baseline. |
+| Run inside a feedback-case dir (a `.feedback-repo-root` is present) | Fine — mine it as `--project <case-dir>`. Resolve the repo from that marker rather than assuming cwd, and read `_feedback/feedback.json` for the submitter's Did/Should (and `correct_answer`, when they supplied ground truth) instead of interviewing the user for it. **Either may legitimately be empty** — `agent_should_have` when the reporter hit a bug but did not know the ideal behavior, `agent_did` because the submission dialog requires only the Yes/No answer — so fall back to asking the user for the Should, or the Did, rather than mining a rubric from a blank. When the Did is blank and the bundle has a `_feedback/session-log.jsonl`, that carries the transcript — plus `_feedback/subagents/*.jsonl` for anything the agent delegated, which the main log does not contain, so read both before concluding the agent made no tool calls; it is optional, a Cowork submission has none, and a log trimmed for size drops the oldest entries first. Mine it *before* the fix lands, so the gate has a pre-edit baseline. |
 | The `results/` folder / recorded payloads are absent | Emit fixture placeholders and flag them in the Step 8 printout for the user to fill in. |
 | A test or scenario for `<slug>` already exists | Don't overwrite — append `-2`/`-3` and let the user consolidate. |
 | Skill has no `eval/tests/unit/<skill>/` dir yet | Create it; flag in the Step 8 printout that the rubric needs authoring. |

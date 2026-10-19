@@ -6,28 +6,39 @@ import {
   HOSTED_REAUTH_INSTRUCTION,
 } from "./config.js";
 import { loadTokens, saveTokens, isExpired } from "./tokenManager.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import {
+  fetchWithRetry,
+  DEFAULT_FETCH_TIMEOUT_MS,
+  type RetryBudgetOptions,
+} from "../utils/http.js";
 import type { TokenStore, FSTokenResponse } from "../types/auth.js";
+import type { Principal } from "./principal.js";
 
 // The instruction the LLM gets when there is no usable FamilySearch session.
 // In hosted mode the `login` tool is a dead end (its loopback callback can't
 // reach the user's browser), so point them at the app's Reconnect button; on
 // the desktop, `login` is exactly right.
-async function reauthInstruction(desktopMessage: string): Promise<string> {
-  return (await isHostedMode()) ? HOSTED_REAUTH_INSTRUCTION : desktopMessage;
+async function reauthInstruction(desktopMessage: string, principal: Principal): Promise<string> {
+  return (await isHostedMode(principal)) ? HOSTED_REAUTH_INSTRUCTION : desktopMessage;
 }
 
 async function postTokenEndpoint(
-  body: URLSearchParams
+  body: URLSearchParams,
+  retryOpts: RetryBudgetOptions = {}
 ): Promise<FSTokenResponse> {
-  const response = await fetchWithTimeout(TOKEN_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Accept: "application/json",
+  const response = await fetchWithRetry(
+    TOKEN_URL,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+      },
+      body: body.toString(),
     },
-    body: body.toString(),
-  });
+    DEFAULT_FETCH_TIMEOUT_MS,
+    retryOpts
+  );
 
   let data: FSTokenResponse | null = null;
   try {
@@ -51,11 +62,22 @@ async function postTokenEndpoint(
   return data;
 }
 
+/**
+ * The lifetime to store when the token response names none — which FamilySearch's
+ * never does: its keys are `access_token`, `token_type` and `refresh_token`
+ * (measured 2026-09-23). A FamilySearch access token lives 8 h of idle time and
+ * 24 h at most, so 8 h from issue is a lower bound it cannot undercut. The old
+ * default, one hour, made every holder refresh hourly for nothing — and a refresh
+ * revokes the previous access token at once, so each needless one killed the calls
+ * of whatever else still held it.
+ */
+export const FS_ACCESS_TOKEN_LIFETIME_S = 8 * 60 * 60;
+
 function toTokenStore(
   data: FSTokenResponse,
   fallbackRefreshToken?: string
 ): TokenStore {
-  const expiresInMs = (data.expires_in ?? 3600) * 1000;
+  const expiresInMs = (data.expires_in ?? FS_ACCESS_TOKEN_LIFETIME_S) * 1000;
   return {
     accessToken: data.access_token,
     refreshToken: data.refresh_token ?? fallbackRefreshToken,
@@ -75,7 +97,9 @@ export async function exchangeCodeForTokens(
     client_id: clientId,
     code_verifier: codeVerifier,
   });
-  const data = await postTokenEndpoint(body);
+  // An authorization code is single-use. If FamilySearch consumed it and the
+  // response was lost, re-POSTing returns invalid_grant and burns the login.
+  const data = await postTokenEndpoint(body, { attempts: 1 });
   return toTokenStore(data);
 }
 
@@ -92,12 +116,52 @@ export async function refreshAccessToken(
   return toTokenStore(data, refreshToken);
 }
 
-export async function getValidToken(): Promise<string> {
+// A refresh revokes the access token the previous one issued, so local callers that
+// find the token expired together — tool calls Claude Code runs side by side — share
+// one refresh rather than each revoking the token the others were just handed. It
+// re-reads tokens.json first: a caller whose read began before the last refresh saved
+// still holds the expired token, and must take the saved one rather than refresh again.
+let localRefresh: Promise<TokenStore> | null = null;
+
+async function refreshUnlessSaved(callerRefreshToken: string): Promise<TokenStore> {
+  const current = await loadTokens();
+  if (current && !isExpired(current)) return current;
+  const refreshed = await refreshAccessToken(current?.refreshToken ?? callerRefreshToken);
+  await saveTokens(refreshed);
+  return refreshed;
+}
+
+function refreshLocalTokens(refreshToken: string): Promise<TokenStore> {
+  localRefresh ??= refreshUnlessSaved(refreshToken).finally(() => {
+    localRefresh = null;
+  });
+  return localRefresh;
+}
+
+/**
+ * The access token `principal` acts with. The single entry point for every
+ * FamilySearch call; the parameter is what makes an unscoped call a compile
+ * error rather than a read of whichever user last wrote `~/.familysearch-mcp`
+ * (see auth/principal.ts).
+ *
+ * A bearer principal's token is used as given: the web tier owns the grant,
+ * refreshes it and hands each turn a fresh token, so the tool server never
+ * refreshes and has nowhere per-user to persist one. The local principal is
+ * the desktop flow — load, refresh when expired, persist.
+ */
+export async function getValidToken(principal: Principal): Promise<string> {
+  if (principal.kind === "bearer") {
+    if (!principal.accessToken) {
+      throw new Error(HOSTED_REAUTH_INSTRUCTION);
+    }
+    return principal.accessToken;
+  }
   const tokens = await loadTokens();
   if (!tokens) {
     throw new Error(
       await reauthInstruction(
-        "User is not logged in to FamilySearch. Call the login tool to authenticate."
+        "User is not logged in to FamilySearch. Call the login tool to authenticate.",
+        principal
       )
     );
   }
@@ -107,18 +171,18 @@ export async function getValidToken(): Promise<string> {
   if (!tokens.refreshToken) {
     throw new Error(
       await reauthInstruction(
-        "FamilySearch access token has expired and no refresh token is available. Call the login tool to re-authenticate."
+        "FamilySearch access token has expired and no refresh token is available. Call the login tool to re-authenticate.",
+        principal
       )
     );
   }
   try {
-    const refreshed = await refreshAccessToken(tokens.refreshToken);
-    await saveTokens(refreshed);
-    return refreshed.accessToken;
+    return (await refreshLocalTokens(tokens.refreshToken)).accessToken;
   } catch {
     throw new Error(
       await reauthInstruction(
-        "FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate."
+        "FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate.",
+        principal
       )
     );
   }

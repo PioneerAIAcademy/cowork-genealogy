@@ -1,0 +1,1005 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search -- browse-only Kongsberg parish register volumes, incl. 008680156_003 (1769-1782).",
+  "args": {
+    "standardPlace": "~Kongsberg"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Kongsberg, Buskerud, Norway",
+      "startYear": 1750,
+      "endYear": 1810
+    },
+    "totalResults": 31,
+    "results": [
+      {
+        "imageGroupNumber": "008731451_002_M9MF-DWD",
+        "imageGroupPrefix": "008731451",
+        "imageCount": 369,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1741,
+            "endYear": 1757,
+            "dateRange": "1741–1757",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008680156_002_M9X2-636",
+        "imageGroupPrefix": "008680156",
+        "imageCount": 189,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1756,
+            "endYear": 1768,
+            "dateRange": "1756-1768",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008680156_001_M9X2-63F",
+        "imageGroupPrefix": "008680156",
+        "imageCount": 135,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1756,
+            "endYear": 1768,
+            "dateRange": "1756-1768",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008680156_003_M9X2-63X",
+        "imageGroupPrefix": "008680156",
+        "imageCount": 382,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1769,
+            "endYear": 1782,
+            "dateRange": "1769–1782",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008680157_002_M9X2-6Q3",
+        "imageGroupPrefix": "008680157",
+        "imageCount": 249,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1783,
+            "endYear": 1797,
+            "dateRange": "1783-1797",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008680157_003_M9X2-6Q9",
+        "imageGroupPrefix": "008680157",
+        "imageCount": 380,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1795,
+            "endYear": 1816,
+            "dateRange": "1795–1816",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008680157_001_M9X2-6QS",
+        "imageGroupPrefix": "008680157",
+        "imageCount": 167,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1783,
+            "endYear": 1797,
+            "dateRange": "1783-1797",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008680155_004_M9X2-DYP",
+        "imageGroupPrefix": "008680155",
+        "imageCount": 292,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1744,
+            "endYear": 1755,
+            "dateRange": "1744–1755",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "009061212",
+        "imageGroupPrefix": "009061212",
+        "imageCount": 691,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Jondalen, Kongsberg, Buskerud, Norway",
+            "startYear": 1696,
+            "endYear": 1915,
+            "dateRange": "1696-1915",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Jondalen, Kongsberg, Buskerud, Norway",
+            "startYear": 1884,
+            "endYear": 1897,
+            "dateRange": "1884-1897",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Jondalen, Kongsberg, Buskerud, Norway",
+            "startYear": 1883,
+            "endYear": 1895,
+            "dateRange": "1883-1895",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Jondalen, Kongsberg, Buskerud, Norway",
+            "startYear": 1883,
+            "endYear": 1896,
+            "dateRange": "1883-1896",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Jondalen, Kongsberg, Buskerud, Norway",
+            "startYear": 1885,
+            "endYear": 1886,
+            "dateRange": "1885-1886",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Jondalen, Kongsberg, Buskerud, Norway",
+            "startYear": 1883,
+            "endYear": 1894,
+            "dateRange": "1883-1894",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1696,
+            "endYear": 1915,
+            "dateRange": "1696-1915",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Jondalen, Kongsberg, Buskerud, Norway",
+            "startYear": 1886,
+            "endYear": 1896,
+            "dateRange": "1886-1896",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Jondalen, Kongsberg, Buskerud, Norway",
+            "startYear": 1894,
+            "endYear": 1896,
+            "dateRange": "1894-1896",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Jondalen, Kongsberg, Buskerud, Norway",
+            "startYear": 1892,
+            "endYear": 1894,
+            "dateRange": "1892-1894",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Jondalen, Kongsberg, Buskerud, Norway",
+            "startYear": 1883,
+            "endYear": 1897,
+            "dateRange": "1883-1897",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725046",
+        "imageGroupPrefix": "008725046",
+        "imageCount": 259,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1772,
+            "endYear": 1798,
+            "dateRange": "1772-1798",
+            "recordType": "Mortgage Records",
+            "recordTypeConceptId": 124152
+          },
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1838,
+            "endYear": 1854,
+            "dateRange": "1838-1854",
+            "recordType": "Mortgage Records",
+            "recordTypeConceptId": 124152
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725049",
+        "imageGroupPrefix": "008725049",
+        "imageCount": 485,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1756,
+            "endYear": 1762,
+            "dateRange": "1756-1762",
+            "recordType": "Land and property",
+            "recordTypeConceptId": 124032
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725052",
+        "imageGroupPrefix": "008725052",
+        "imageCount": 728,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1781,
+            "endYear": 1798,
+            "dateRange": "1781-1798",
+            "recordType": "Land and property",
+            "recordTypeConceptId": 124032
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725050",
+        "imageGroupPrefix": "008725050",
+        "imageCount": 583,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1763,
+            "endYear": 1772,
+            "dateRange": "1763-1772",
+            "recordType": "Land and property",
+            "recordTypeConceptId": 124032
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725045",
+        "imageGroupPrefix": "008725045",
+        "imageCount": 666,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1746,
+            "endYear": 1838,
+            "dateRange": "1746-1838",
+            "recordType": "Mortgage Records",
+            "recordTypeConceptId": 124152
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725042",
+        "imageGroupPrefix": "008725042",
+        "imageCount": 883,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1801,
+            "endYear": 1813,
+            "dateRange": "1801-1813",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725039",
+        "imageGroupPrefix": "008725039",
+        "imageCount": 582,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1782,
+            "endYear": 1789,
+            "dateRange": "1782-1789",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725034",
+        "imageGroupPrefix": "008725034",
+        "imageCount": 535,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1762,
+            "endYear": 1766,
+            "dateRange": "1762-1766",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725035",
+        "imageGroupPrefix": "008725035",
+        "imageCount": 693,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1762,
+            "endYear": 1769,
+            "dateRange": "1762-1769",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725036",
+        "imageGroupPrefix": "008725036",
+        "imageCount": 297,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1746,
+            "endYear": 1774,
+            "dateRange": "1746–1774",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725040",
+        "imageGroupPrefix": "008725040",
+        "imageCount": 635,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1794,
+            "endYear": 1794,
+            "dateRange": "1794",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1789,
+            "endYear": 1789,
+            "dateRange": "1789",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725041",
+        "imageGroupPrefix": "008725041",
+        "imageCount": 872,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1794,
+            "endYear": 1801,
+            "dateRange": "1794-1801",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008731452",
+        "imageGroupPrefix": "008731452",
+        "imageCount": 514,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1758,
+            "endYear": 1779,
+            "dateRange": "1758-1779",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725051",
+        "imageGroupPrefix": "008725051",
+        "imageCount": 592,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1772,
+            "endYear": 1781,
+            "dateRange": "1772-1781",
+            "recordType": "Land and property",
+            "recordTypeConceptId": 124032
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725053",
+        "imageGroupPrefix": "008725053",
+        "imageCount": 891,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1798,
+            "endYear": 1814,
+            "dateRange": "1798-1814",
+            "recordType": "Land and property",
+            "recordTypeConceptId": 124032
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725033",
+        "imageGroupPrefix": "008725033",
+        "imageCount": 536,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1752,
+            "endYear": 1761,
+            "dateRange": "1752-1761",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725037",
+        "imageGroupPrefix": "008725037",
+        "imageCount": 766,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1769,
+            "endYear": 1774,
+            "dateRange": "1769-1774",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725038",
+        "imageGroupPrefix": "008725038",
+        "imageCount": 724,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1774,
+            "endYear": 1782,
+            "dateRange": "1774-1782",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008725032",
+        "imageGroupPrefix": "008725032",
+        "imageCount": 326,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1751,
+            "endYear": 1761,
+            "dateRange": "1751-1761",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008731453",
+        "imageGroupPrefix": "008731453",
+        "imageCount": 490,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kongsberg, Buskerud, Norway",
+            "startYear": 1779,
+            "endYear": 1816,
+            "dateRange": "1779-1816",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007939034",
+        "imageGroupPrefix": "007939034",
+        "imageCount": 1352,
+        "recordSearchablePercent": 84,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Efteløt, Kongsberg, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Uvdal, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Lyngdal i Numedal, Flesberg, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Sandsvaer, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Svene, Flesberg, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Tuft, Kongsberg, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Nore, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Hedenstad, Haug, Eiker, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Komnes, Kongsberg, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Flesberg, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Veggli, Rollag, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Rollag, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007939299",
+        "imageGroupPrefix": "007939299",
+        "imageCount": 7905,
+        "recordSearchablePercent": 99,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Eggedal, Sigdal, Buskerud, Norway",
+            "startYear": 1676,
+            "endYear": 1830,
+            "dateRange": "1676-1830",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Heggen, Modum, Buskerud, Norway",
+            "startYear": 1676,
+            "endYear": 1830,
+            "dateRange": "1676-1830",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Sigdal, Buskerud, Norway",
+            "startYear": 1676,
+            "endYear": 1830,
+            "dateRange": "1676-1830",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Nykirke, Modum, Buskerud, Norway",
+            "startYear": 1676,
+            "endYear": 1830,
+            "dateRange": "1676-1830",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Eiker, Buskerud, Norway",
+            "startYear": 1676,
+            "endYear": 1830,
+            "dateRange": "1676-1830",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Fiskum, Eiker, Buskerud, Norway",
+            "startYear": 1676,
+            "endYear": 1830,
+            "dateRange": "1676-1830",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Modum, Buskerud, Norway",
+            "startYear": 1676,
+            "endYear": 1830,
+            "dateRange": "1676-1830",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Svene, Flesberg, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Tuft, Kongsberg, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Nore, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Snarum, Modum, Buskerud, Norway",
+            "startYear": 1676,
+            "endYear": 1830,
+            "dateRange": "1676-1830",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Flesberg, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Veggli, Rollag, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Rollag, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Efteløt, Kongsberg, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Bakke, Eiker, Buskerud, Norway",
+            "startYear": 1676,
+            "endYear": 1830,
+            "dateRange": "1676-1830",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Uvdal, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Lyngdal i Numedal, Flesberg, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Haug, Norderhov, Buskerud, Norway",
+            "startYear": 1676,
+            "endYear": 1830,
+            "dateRange": "1676-1830",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Sandsvaer, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Krødsherad, Sigdal, Buskerud, Norway",
+            "startYear": 1676,
+            "endYear": 1830,
+            "dateRange": "1676-1830",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Nedre Eiker, Buskerud, Norway",
+            "startYear": 1676,
+            "endYear": 1830,
+            "dateRange": "1676-1830",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Hedenstad, Haug, Eiker, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          },
+          {
+            "place": "Komnes, Kongsberg, Buskerud, Norway",
+            "startYear": 1694,
+            "endYear": 1802,
+            "dateRange": "1694-1802",
+            "recordType": "Probate records",
+            "recordTypeConceptId": 124277
+          }
+        ]
+      }
+    ]
+  }
+}

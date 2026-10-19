@@ -22,6 +22,7 @@
  *
  * Run: `npx tsx dev/explore-tree-require-switch.ts` from `packages/engine/mcp-server`.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { fetchRetry, sleep } from "./http-retry.js";
 const BASE = "https://api.familysearch.org/platform/tree/search";
@@ -30,9 +31,9 @@ const REQUIRE = "m.queryRequireDefault=on";   // the switch I dropped last time
 async function total(qs: string): Promise<number | string> {
   for (let a = 0; a < 6; a++) {
     await sleep(600);
-    // Per request, not once up front: `getValidToken()` auto-refreshes, so a token
+    // Per request, not once up front: `getValidToken(LOCAL)` auto-refreshes, so a token
     // expiring mid-run cannot surface as a 401 that reads like a data value.
-    const token = await getValidToken();
+    const token = await getValidToken(LOCAL);
     // `fetchRetry` owns the 429/5xx backoff with a correct Retry-After parse — an
     // absent header no longer reads as a 0ms wait, and the HTTP-date form is not
     // mistaken for NaN either. The outer loop remains for the body-level

@@ -25,9 +25,64 @@ class Settings(BaseSettings):
     agent_mode: str = "mock"
     anthropic_api_key: str | None = None
     default_model: str = "claude-sonnet-4-6"
+    # Lay mode's auto-continue (issue #2653): the in-sandbox runner answers the
+    # hand-back literal `Next: <step>. Continue?` with `Yes.` itself, so a stated
+    # objective runs step by step with no click. Both reach the runner as
+    # AUTO_CONTINUE / AUTO_CONTINUE_MAX_STEPS in the sandbox env. The budget
+    # bounds one unattended chain (consecutive auto turns since the last real
+    # user message), not the session. A frame may opt out with
+    # `auto_continue: false` regardless of this setting. Per-session on/off lands
+    # with the experience-level user setting (PR #2649).
+    auto_continue: bool = True
+    auto_continue_max_steps: int = 30
+    # PR #2870 item 1d: the SDK Stop hook's veto cap in the sandbox, which is what makes
+    # one user message run a whole research job. Sized on STEP count, not on the nudge
+    # histogram. 0 turns the hook off, and `auto_continue: false` turns it off too --
+    # that flag already meant "one turn per message", and a new mechanism that ignored
+    # it would take an operator's kill switch away without saying so.
+    #
+    # PER SESSION, NOT PER TURN -- this comment said "per turn" until 2026-10-13 and was
+    # wrong. `nudges_used` is created once in `make_stop_hook`, the hooks dict is built
+    # once per session because the SDK client is cached, and `_begin_turn_hook_state`
+    # resets `delivered` and `continuations` but NOT the nudge count. A normal Stop, a
+    # reconnect and a pause/resume all keep it, so a second job in one sitting starts
+    # with whatever the first left. That matters more at 30 than it did at 60. Pinned by
+    # `test_the_nudge_cap_is_per_session_not_per_turn` so the scope cannot drift
+    # unnoticed; whether it SHOULD reset per turn is a live question, not settled here,
+    # because resetting would multiply the bound by the number of turns in a session.
+    #
+    # LOWERED 60 -> 30 on 2026-10-13, as the cost half of turning continuous work back
+    # on. Re-derived on that date by `test_proto_config._steps_per_run`'s own method
+    # (the method matters: an earlier hand-count of this branch's got p99 wrong by 3):
+    # 203 committed e2e runs, Skill/Task/Agent steps per run median 15, p90 26, p99 48,
+    # max 76. A cap of 30 covers 93.6% of runs against 60's 99.0%, and halves the worst
+    # case. Dated rather than pinned to a run count, which moves every time the corpus
+    # grows.
+    #
+    # Exceeding it is not a kill: the cap is consulted only at a VOLUNTARY yield, so a
+    # run past it simply stops being nudged onward and ends where it chose to stop.
+    #
+    # It therefore bounds nothing for the ~31% of runs that never yield, AND THERE IS NO
+    # SPEND LIMIT BEHIND IT ON THIS PLANE. An earlier draft of this comment said those
+    # runs were "held only by SESSION_SPEND_CAP_USD"; that cap is read only by the
+    # search-agent prototype's worker (`app/agent/spend.py`). The alpha's credential proxy
+    # records what each call cost (`api_calls`) but never stops one (lead ruling
+    # 2026-09-25, pinned by `test_the_alpha_carries_no_spend_limit`). Short of the
+    # researcher or the model ending such a run, its only automatic halt is the E2B
+    # sandbox pausing an hour after it started or last resumed (the Hobby cap,
+    # `_RUNNING_TIMEOUT_S` in `sandbox/e2b.py`), which a reconnect to a running sandbox
+    # does not extend (#3305).
+    #
+    # NOT the prototype's cap. `proto/web/app.py`'s DEFAULT_MAX_NUDGES and the Beanstalk
+    # template both stay at 60 on purpose: that is a separate deployment with its own
+    # spend cap, and its recorded U13 acceptance figures were measured at 60
+    # (`docs/plan/familysearch-handoff.md`). Lowering it there would contradict the
+    # measurements, not just change a default.
+    autonomous_max_nudges: int = 30
     # OpenRouter key for the engine's image_transcribe OCR tool. The in-sandbox
     # MCP server reads it config-only (never from env), so — unlike
-    # ANTHROPIC_API_KEY, which the Agent SDK reads from the sandbox env — this
+    # ANTHROPIC_API_KEY, which is written into the sandbox by
+    # agent_secrets.write_secrets on every connect — this
     # is written into the sandbox's ~/.familysearch-mcp/config.json on connect
     # (fs_oauth.write_config, sessions.create_project). See
     # docs/specs/image-transcribe-tool-spec.md §6.5.
@@ -73,6 +128,13 @@ class Settings(BaseSettings):
     # A compromised sandbox can forge a token only for ITSELF. Must be stable
     # across CP restarts/instances. NOT the session_secret (that signs cookies).
     ws_signing_key: str = "dev-ws-signing-key-change-me"
+    # Master key for per-sandbox Anthropic proxy tokens. The CP derives a
+    # per-sandbox token = HMAC(anthropic_proxy_signing_key, sandbox_id) and
+    # passes it to the sandbox as the ANTHROPIC_API_KEY value. The proxy
+    # endpoint validates it by recomputing the HMAC, then injects the real
+    # Anthropic key — the sandbox never holds it. Same derivation pattern as
+    # ws_signing_key; same rotation caveat (orphans existing sandboxes).
+    anthropic_proxy_signing_key: str = "dev-proxy-signing-key-change-me"
     # Master key for encrypting FamilySearch OAuth tokens at rest in the DB
     # (familysearch_tokens.access_token / refresh_token, via crypto.EncryptedStr).
     # An arbitrary string like session_secret — a Fernet key is DERIVED from it
@@ -99,22 +161,6 @@ class Settings(BaseSettings):
     # Public base URL (Tailscale Funnel in prod) for OAuth redirects.
     public_url: str = "http://localhost:8000"
 
-    # ── Public /v1 REST API (bearer keys for an external chatbot team) ───
-    # Comma-separated `key:email` pairs. Operator-granted: presence here IS the
-    # grant (NOT subject to the Gmail allowlist — see auth.get_api_client). Each
-    # key maps to the same User row its email would create on the browser path,
-    # so ownership (_owned) isolates one client's sessions from another's. Give
-    # each distinct client a distinct email; two keys sharing an email share a
-    # User (and therefore its sessions).
-    api_keys: str = ""
-    # Sync turn cap. A turn that runs longer ends in 504 turn_timeout; streaming
-    # (stream:true) relies on heartbeats instead of a hard cap.
-    v1_turn_timeout_seconds: int = 120
-    # Staleness TTL for the per-session turn lock (Project.turn_locked_at). A lock
-    # older than this is reclaimed by the next caller, so a crashed/killed instance
-    # can't wedge a session forever. Must exceed the longest expected turn.
-    v1_turn_lock_stale_seconds: int = 600
-
     # ── Storage ──────────────────────────────────────────────────
     # LocalProvider per-session sandbox dirs + the SQLite DB live here.
     # (Feedback goes to Google Drive; no other local-disk writes.)
@@ -136,20 +182,6 @@ class Settings(BaseSettings):
     @property
     def allowlist(self) -> set[str]:
         return {e.strip().lower() for e in self.allowed_emails.split(",") if e.strip()}
-
-    @property
-    def api_key_map(self) -> dict[str, str]:
-        """Parse `api_keys` into {key: email}. Malformed pairs are skipped."""
-        out: dict[str, str] = {}
-        for pair in self.api_keys.split(","):
-            pair = pair.strip()
-            if not pair or ":" not in pair:
-                continue
-            key, email = pair.split(":", 1)
-            key, email = key.strip(), email.strip().lower()
-            if key and email:
-                out[key] = email
-        return out
 
     @property
     def familysearch_client_id(self) -> str | None:
@@ -197,6 +229,19 @@ class Settings(BaseSettings):
         return self.data_dir / "sandboxes"
 
 
+#: The secrets whose dev defaults block a production boot, in the order the refusal
+#: names them. Read it rather than restating it: `test_prod_preflight.py` derives both
+#: its literal-defaults guard and the stderr-legibility test from this, so adding a
+#: secret here extends every one of them. `DATABASE_URL` is deliberately absent — it is
+#: a separate branch below (unset/blank, not "equals its default"), not a member.
+_DEFAULTED_SECRET_FIELDS = (
+    "session_secret",
+    "ws_signing_key",
+    "fs_token_enc_key",
+    "anthropic_proxy_signing_key",
+)
+
+
 def assert_production_config(s: Settings) -> None:
     """Refuse to boot a production deploy that is still on development defaults.
 
@@ -212,6 +257,10 @@ def assert_production_config(s: Settings) -> None:
     - `fs_token_enc_key` encrypts the FamilySearch tokens at rest
       (`crypto.EncryptedStr`), so a default value encrypts every user's token under
       a public string — no better than plaintext to anyone who reads the DB.
+    - `anthropic_proxy_signing_key` is the HMAC master key behind every per-sandbox
+      proxy token (`anthropic_proxy.proxy_token`), so a default value lets anyone
+      who guesses a sandbox_id forge a token and use the Anthropic key through the
+      proxy.
     - An unset `DATABASE_URL` is SQLite under DATA_DIR, and `deploy/fly.toml` mounts
       no volume (the DB lives on Neon), so in production that is an ephemeral rootfs:
       every user, session and allowlist row is lost on the next machine restart.
@@ -244,7 +293,7 @@ def assert_production_config(s: Settings) -> None:
     # Guarded by test_prod_preflight.py::
     # test_secret_defaults_are_literals_so_the_comparison_can_work — no other
     # test catches it, because they all inject `.default` as the value.
-    for field in ("session_secret", "ws_signing_key", "fs_token_enc_key"):
+    for field in _DEFAULTED_SECRET_FIELDS:
         if getattr(s, field) == Settings.model_fields[field].default:
             env = field.upper()
             problems.append(

@@ -5,10 +5,10 @@
     "name": "Validate a scenario with two unresolved conflicts (different shapes)",
     "type": "positive",
     "description": "Run schema validation against flynn-multi-conflict. The scenario has a fact conflict (c_001) and an identity conflict (c_002) — both should pass schema validation. Tests the schema's conditional rules: fact conflicts require `disputed_attribute` and ≥2 competing assertions; identity conflicts require `identity_question` and ≥1 competing assertion.",
-    "tags": ["validation", "conditional-rules", "multi-conflict", "schema-conditionals"]
+    "tags": ["validation", "conditional-rules", "multi-conflict", "schema-conditionals", "direct-arm"]
   },
   "input": {
-    "user_message": "Validate the project files. There are two unresolved conflicts — make sure both have the right shape.",
+    "delegation": "Validate the project files. There are two unresolved conflicts — make sure both have the right shape.\n\nprojectPath: <workspace>",
     "scenario": "flynn-multi-conflict"
   },
   "judge_context": [

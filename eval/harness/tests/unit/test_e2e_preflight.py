@@ -51,14 +51,109 @@ def test_fs_token_expired_is_fail(monkeypatch, tmp_path):
     assert "e2e-login" in detail or "login" in detail.lower()
 
 
+def _build_tree(tmp_path, *, src_names=("tools/x.ts",), build_newer=True):
+    """A throwaway build+src pair with the mtime ordering the caller wants."""
+    build = tmp_path / "build" / "index.js"
+    src = tmp_path / "src"
+    src.mkdir(parents=True, exist_ok=True)
+    for name in src_names:
+        f = src / name
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("//", encoding="utf-8")
+    build.parent.mkdir(parents=True, exist_ok=True)
+    build.write_text("//", encoding="utf-8")
+    if src_names:
+        newest = max((src / n).stat().st_mtime for n in src_names)
+        t = newest + (600 if build_newer else -600)
+        os.utime(build, (t, t))
+    return build, src
+
+
 def test_mcp_build_check(monkeypatch, tmp_path):
     monkeypatch.setattr(pf, "MCP_BUILD", tmp_path / "index.js")
+    monkeypatch.setattr(pf, "MCP_SRC", tmp_path / "src")
     status, detail = pf._check_mcp_build()
     assert status == "FAIL"
     assert "build" in detail.lower()
-    (tmp_path / "index.js").write_text("//", encoding="utf-8")
+    build, src = _build_tree(tmp_path, build_newer=True)
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+    monkeypatch.setattr(pf, "MCP_SRC", src)
     status, _ = pf._check_mcp_build()
     assert status == "OK"
+
+
+def test_mcp_build_stale_warns_and_names_the_newer_file(monkeypatch, tmp_path):
+    """The case that slipped through three consecutive e2e runs: the build is
+    present, so the old existence-only check said OK while it was days behind."""
+    build, src = _build_tree(tmp_path, src_names=("tools/x.ts",), build_newer=False)
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+    monkeypatch.setattr(pf, "MCP_SRC", src)
+    status, detail = pf._check_mcp_build()
+    assert status == "WARN"
+    assert "STALE" in detail
+    assert "src/tools/x.ts" in detail
+
+
+def test_mcp_build_stale_when_sources_straddle_the_build(monkeypatch, tmp_path):
+    """NEWEST, not oldest — the only test that pins which file decides.
+
+    Found by review: mutating `_newest_mcp_source` to track the OLDEST file
+    left all 75 tests passing. The stale test above has a single source file,
+    and the fresh test below puts every file behind the build, so oldest and
+    newest give the same answer in both.
+
+    This is the shape that separates them, and it is the real one: a tree
+    where most files are older than the build and one was just edited. Reading
+    the oldest reports OK there — a green preflight on exactly the staleness
+    the check exists to catch.
+    """
+    src = tmp_path / "src"
+    (src / "tools").mkdir(parents=True)
+    build = tmp_path / "build" / "index.js"
+    build.parent.mkdir(parents=True)
+    build.write_text("//", encoding="utf-8")
+    t_build = build.stat().st_mtime
+
+    old = src / "tools" / "untouched.ts"
+    new = src / "tools" / "just-edited.ts"
+    for f in (old, new):
+        f.write_text("//", encoding="utf-8")
+    os.utime(old, (t_build - 600, t_build - 600))
+    os.utime(new, (t_build + 600, t_build + 600))
+
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+    monkeypatch.setattr(pf, "MCP_SRC", src)
+    status, detail = pf._check_mcp_build()
+    assert status == "WARN"
+    assert "STALE" in detail
+    # The newer file is the one that makes it stale, and naming the older one
+    # would send the reader to a file that is not the reason.
+    assert "just-edited.ts" in detail
+    assert "untouched.ts" not in detail
+
+
+def test_mcp_build_warns_when_the_source_tree_is_empty(monkeypatch, tmp_path):
+    """A check that cannot see its own tree must not report green. With no
+    source files there is nothing to compare against, so staleness is unknown."""
+    build, src = _build_tree(tmp_path, src_names=(), build_newer=True)
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+    monkeypatch.setattr(pf, "MCP_SRC", src)
+    status, detail = pf._check_mcp_build()
+    assert status == "WARN"
+    assert "staleness could not be established" in detail
+
+
+def test_mcp_build_fresh_build_is_not_flagged(monkeypatch, tmp_path):
+    """The other direction: a legitimately current build stays OK, including
+    when several source files exist and only the newest one matters."""
+    build, src = _build_tree(
+        tmp_path, src_names=("tools/x.ts", "utils/y.ts", "a/b/c.json"), build_newer=True
+    )
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+    monkeypatch.setattr(pf, "MCP_SRC", src)
+    status, detail = pf._check_mcp_build()
+    assert status == "OK"
+    assert "STALE" not in detail
 
 
 def test_api_key_from_env(monkeypatch):
@@ -751,3 +846,229 @@ def test_main_passes_skip_through_without_failing_or_warning(monkeypatch, capsys
     out = capsys.readouterr().out
     assert "[SKIP]" in out
     assert "warning" not in out.lower()
+
+
+# --- check 7: OpenRouter API key (#2810) --------------------------------
+#
+# WARN-only. The three sources mirror stage_openrouter_key()'s fallback
+# order: process env, eval/.env, ~/.familysearch-mcp/config.json.
+
+
+def test_openrouter_key_ok_from_env(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test")
+    status, detail = pf._check_openrouter_key()
+    assert status == "OK"
+    assert "environment" in detail.lower()
+
+
+def test_openrouter_key_ok_from_env_file(monkeypatch, tmp_path):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    env = tmp_path / ".env"
+    env.write_text("OPENROUTER_API_KEY=sk-or-from-file\n", encoding="utf-8")
+    monkeypatch.setattr(pf, "ENV_FILE", env)
+    monkeypatch.setattr(pf, "FS_CONFIG", tmp_path / "absent.json")
+    status, detail = pf._check_openrouter_key()
+    assert status == "OK"
+    assert ".env" in detail
+
+
+def test_openrouter_key_ok_from_config_json(monkeypatch, tmp_path):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.setattr(pf, "ENV_FILE", tmp_path / "absent.env")
+    cfg = tmp_path / "config.json"
+    cfg.write_text('{"openRouterApiKey": "sk-or-from-config"}', encoding="utf-8")
+    monkeypatch.setattr(pf, "FS_CONFIG", cfg)
+    status, detail = pf._check_openrouter_key()
+    assert status == "OK"
+    assert "config.json" in detail
+
+
+def test_openrouter_key_missing_is_warn(monkeypatch, tmp_path):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.setattr(pf, "ENV_FILE", tmp_path / "absent.env")
+    monkeypatch.setattr(pf, "FS_CONFIG", tmp_path / "absent.json")
+    status, detail = pf._check_openrouter_key()
+    assert status == "WARN"
+    assert "image_transcribe" in detail
+
+
+def test_openrouter_key_empty_string_is_warn(monkeypatch, tmp_path):
+    """Setup.bat writes OPENROUTER_API_KEY= when the user presses Enter."""
+    monkeypatch.setenv("OPENROUTER_API_KEY", "")
+    monkeypatch.setattr(pf, "ENV_FILE", tmp_path / "absent.env")
+    monkeypatch.setattr(pf, "FS_CONFIG", tmp_path / "absent.json")
+    status, _ = pf._check_openrouter_key()
+    assert status == "WARN"
+
+
+def test_openrouter_key_whitespace_only_is_warn(monkeypatch, tmp_path):
+    """A config.json value of '  ' (whitespace only) is treated as missing."""
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.setattr(pf, "ENV_FILE", tmp_path / "absent.env")
+    cfg = tmp_path / "config.json"
+    cfg.write_text('{"openRouterApiKey": "   "}', encoding="utf-8")
+    monkeypatch.setattr(pf, "FS_CONFIG", cfg)
+    status, _ = pf._check_openrouter_key()
+    assert status == "WARN"
+
+
+def test_openrouter_key_never_fails(monkeypatch, tmp_path):
+    """The WARN-not-FAIL rule: same principle as check 6 (issue #1552)."""
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.setattr(pf, "ENV_FILE", tmp_path / "absent.env")
+    monkeypatch.setattr(pf, "FS_CONFIG", tmp_path / "absent.json")
+    status, _ = pf._check_openrouter_key()
+    assert status != "FAIL"
+
+
+def test_openrouter_key_check_is_in_checks_list():
+    names = [c[1] for c in pf.CHECKS]
+    assert pf._check_openrouter_key in names
+
+
+# --- check 8: live FamilySearch search (#2810) --------------------------
+#
+# `caller` injection: no test spawns an MCP server or hits FamilySearch.
+# Each caller returns (is_error, text).
+
+
+def _fs_search_prereqs_ok(monkeypatch, tmp_path):
+    """Make checks 1 (FS token) and 2 (MCP build) pass so check 8 is attempted."""
+    token = tmp_path / "tokens.json"
+    token.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(pf, "FS_TOKENS", token)
+    build = tmp_path / "index.js"
+    build.write_text("//", encoding="utf-8")
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+
+
+def test_fs_search_ok_on_normal_response(monkeypatch, tmp_path):
+    _fs_search_prereqs_ok(monkeypatch, tmp_path)
+    status, detail = pf._check_fs_search(
+        caller=lambda: (False, '{"results":[]}')
+    )
+    assert status == "OK"
+    assert "returned" in detail.lower()
+
+
+def test_fs_search_ok_on_zero_results(monkeypatch, tmp_path):
+    """Zero results is not an error — it means the search endpoint answered."""
+    _fs_search_prereqs_ok(monkeypatch, tmp_path)
+    status, _ = pf._check_fs_search(
+        caller=lambda: (False, '{"results":[],"totalHits":0}')
+    )
+    assert status == "OK"
+
+
+def test_fs_search_fails_on_waf_block(monkeypatch, tmp_path):
+    _fs_search_prereqs_ok(monkeypatch, tmp_path)
+    status, detail = pf._check_fs_search(
+        caller=lambda: (
+            True,
+            "FamilySearch search blocked the request. The User-Agent header "
+            "was rejected by the WAF — check that the MCP server is running "
+            "an unmodified build.",
+        )
+    )
+    assert status == "FAIL"
+    assert "WAF" in detail
+
+
+def test_fs_search_fails_on_auth_rejection(monkeypatch, tmp_path):
+    _fs_search_prereqs_ok(monkeypatch, tmp_path)
+    status, detail = pf._check_fs_search(
+        caller=lambda: (
+            True,
+            "FamilySearch session not accepted; call the login tool to "
+            "re-authenticate.",
+        )
+    )
+    assert status == "FAIL"
+    assert "e2e-login" in detail or "login" in detail.lower()
+
+
+def test_fs_search_warns_on_transient_failure(monkeypatch, tmp_path):
+    _fs_search_prereqs_ok(monkeypatch, tmp_path)
+    status, detail = pf._check_fs_search(
+        caller=lambda: (
+            True,
+            "FamilySearch record search did not complete after retries "
+            "(network timeout or transient error): timeout. This is a "
+            "transient failure, NOT an empty result — coverage is unknown.",
+        )
+    )
+    assert status == "WARN"
+    assert "transient" in detail.lower()
+
+
+def test_fs_search_warns_on_timeout(monkeypatch, tmp_path):
+    _fs_search_prereqs_ok(monkeypatch, tmp_path)
+
+    def _timeout():
+        raise TimeoutError("timed out")
+
+    status, detail = pf._check_fs_search(caller=_timeout)
+    assert status == "WARN"
+    assert "timed out" in detail.lower() or "timeout" in detail.lower()
+
+
+def test_fs_search_warns_on_unexpected_error(monkeypatch, tmp_path):
+    _fs_search_prereqs_ok(monkeypatch, tmp_path)
+
+    def _boom():
+        raise RuntimeError("connection refused")
+
+    status, detail = pf._check_fs_search(caller=_boom)
+    assert status == "WARN"
+    assert "connection refused" in detail
+
+
+def _never_called_fs():
+    raise AssertionError("the live search must not be attempted without prerequisites")
+
+
+def test_fs_search_skips_when_token_missing(monkeypatch, tmp_path):
+    monkeypatch.setattr(pf, "FS_TOKENS", tmp_path / "nope.json")
+    build = tmp_path / "index.js"
+    build.write_text("//", encoding="utf-8")
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+    status, detail = pf._check_fs_search(caller=_never_called_fs)
+    assert status == "SKIP"
+    assert "FamilySearch login" in detail
+
+
+def test_fs_search_skips_when_build_missing(monkeypatch, tmp_path):
+    token = tmp_path / "tokens.json"
+    token.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(pf, "FS_TOKENS", token)
+    monkeypatch.setattr(pf, "MCP_BUILD", tmp_path / "absent.js")
+    status, detail = pf._check_fs_search(caller=_never_called_fs)
+    assert status == "SKIP"
+    assert "Built MCP server" in detail
+
+
+def test_fs_search_check_follows_the_mcp_connection_check():
+    """Check 8 depends on the MCP server and FS token, so it must come after
+    those checks, and after the MCP connection check."""
+    names = [c[1] for c in pf.CHECKS]
+    assert pf._check_fs_search in names
+    assert names.index(pf._check_fs_search) > names.index(pf._check_mcp_connection)
+
+
+def test_fs_search_classifier_matches_the_tool_s_wording() -> None:
+    """The strings `_check_fs_search` classifies on must exist in the tool.
+
+    Check 8 decides FAIL-vs-WARN by substring against `record_search`'s error
+    text. Nothing else couples the two, so rewording the tool silently turns a
+    WAF block into an unclassified WARN while every suite stays green.
+    """
+    src = (
+        Path(__file__).resolve().parents[4]
+        / "packages/engine/mcp-server/src/tools/record-search.ts"
+    ).read_text(encoding="utf-8")
+    for marker in ("blocked the request", "session not accepted",
+                   "did not complete after retries"):
+        assert marker in src, (
+            f"preflight check 8 classifies on {marker!r}, which record-search.ts "
+            "no longer emits — the check is now blind to that failure"
+        )

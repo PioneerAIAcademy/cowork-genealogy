@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Deny raw Write/Edit/NotebookEdit on research.json and tree.gedcomx.json.
 
+Also on external-collections.json, which only `external_links_search` (given a
+`projectPath`) writes: it is the curated-collections list skills read back.
+
 Every write to those two files must go through the MCP writer tools, which
 validate before persisting. A direct file write never validates. `project_create`
 brings a project into being (both files, one validated call); `research_append`,
@@ -44,7 +47,7 @@ import sys
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); a raw overwrite of it would defeat the gate the
 # same way a raw tree.gedcomx.json write defeats the write-boundary invariants.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # The raw file-write tools. Their `file_path` is unambiguously a destination —
 # there is no reading of `Write(file_path=...)` where that file is an input.
@@ -96,25 +99,82 @@ _MAX_PATH_LEN = 4096
 # hook runs in the VM with no access to the repo — `cwd` is the sandbox and the
 # connected folder is not mounted there. Keeping the two in step is the
 # manifest's `hookCallers` field plus this comment, not a loader.
-OWNED_SECTIONS = {"proof_summaries": "proof-conclusion"}
+OWNED_SECTIONS = {
+    "proof_summaries": "proof-conclusion",
+    # person_evidence, 2026-09-01. One owner, and `extraction_append` does not
+    # accept the section, so a whole-section route fits -- no field is required
+    # on every question the way `exhaustive_declaration` is, so this needs none
+    # of OWNED_DECLARATIONS' field-scoped treatment.
+    "person_evidence": "person-evidence",
+}
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
-# truthy. Same plane and same manifest as OWNED_SECTIONS, different granularity.
+# to a gate-claiming value. Same plane and same manifest as OWNED_SECTIONS,
+# different granularity.
 #
 # `proof_summaries` is a whole section with one owner, so a section rule fits it.
-# `exhaustive_declaration` is not: it is a REQUIRED property of every question
+# `search_stop` is not: it is a REQUIRED property of every question
 # (`research.schema.json`, `$defs.question.required`), so `question-selection`
 # writes it on every question it creates, from the main thread, with no
 # `agent_id`. Measured over 159 committed e2e runs, 197 of the 392 ops carrying
 # the field are exactly those creations — a presence-keyed rule denies every one.
 #
-# So the rule keys on the CLAIM, not the field: an op setting
-# `exhaustive_declaration.declared` to true. A question being created carries
-# `declared: false` and passes; so does an honest early termination, which is the
-# same skill's own `declared: false` path and claims nothing. What is routed is
-# the assertion that GPS Component 1 is satisfied, which is the artifact 47 of
-# 131 corpus runs wrote without ever invoking the skill that owns it.
-OWNED_DECLARATIONS = {("questions", "exhaustive_declaration"): "research-exhaustiveness"}
+# So the rule keys on the CLAIM, not the field: any op setting a non-null
+# `search_stop.stopped_because`. A question being created carries
+# `stopped_because: null` and passes. Everything else — stop-gate values AND
+# honest non-gate terminations (`resources_spent`, `blocked_by_conflict`) — is
+# routed to research-exhaustiveness (ruling 2026-09-30).
+# Renamed from `exhaustive_declaration` 2026-10-07.
+OWNED_DECLARATIONS = {("questions", "search_stop"): "research-exhaustiveness"}
+
+# Any non-null `stopped_because` is routed — the stop-gate values
+# (`question_answered`, `record_exhausted`, `nothing_further_reachable`) AND
+# the non-gate values (`resources_spent`, `blocked_by_conflict`).
+# Null means no declaration and is not routed.
+# Ruling 2026-09-30.
+
+# Field-scoped routing keyed on PRESENCE, not on a claim value: (section, field)
+# -> the BARE agent name that may write it at all. Third granularity, and the
+# reason it is not folded into either map above.
+#
+# `OWNED_SECTIONS` cannot hold it: `project` is co-written. `init-project`
+# authors the section and every skill pings `updated`, so reserving the whole
+# section would deny both. `OWNED_DECLARATIONS` cannot hold it either: that map
+# keys on a claim VALUE (`stopped_because is not None`) because a question
+# legitimately carries `stopped_because: null`. `status` has no such honest
+# non-claiming value --
+# any write of it asserts the project's state, so the write IS the claim and
+# presence is the right key.
+OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
+
+# Claim-scoped routing over SEVERAL fields: section -> (the BARE agent name that
+# may make the claim, the fields whose truthy value is the claim, the status
+# value that is the claim). Fourth granularity, and why none of the three above
+# holds it.
+#
+# `conflicts` cannot be a whole-section route: six skills legitimately OPEN a
+# conflict writing only the schema's required fields, and a section route denies
+# every one (53 of 218 landed corpus `conflicts` ops). `OWNED_DECLARATIONS` keys
+# on one field set to one value; the conflict's analytical product is spread over
+# six fields and a status. So the rule keys on the PRODUCT: an op that sets
+# `status: "resolved"`, or carries any analysis field truthy. A skeleton open, and
+# a re-open that sets `status: "unresolved"` and clears the analysis, claim
+# nothing and pass. `resolution_kind` and `resolved_value` are listed so a write
+# carrying only those cannot slip past as a non-claim.
+OWNED_CLAIMS = {
+    "conflicts": (
+        "conflict-resolution",
+        (
+            "independence_analysis",
+            "weighing_analysis",
+            "preferred_assertion_id",
+            "resolution_rationale",
+            "resolution_kind",
+            "resolved_value",
+        ),
+        "resolved",
+    ),
+}
 
 # The reverse direction: the sections each named agent MAY write. Rows come from
 # the same manifest -- every section whose `callers` names that agent's skill.
@@ -129,9 +189,11 @@ OWNED_DECLARATIONS = {("questions", "exhaustive_declaration"): "research-exhaust
 # `disallowedTools:` cannot express that: the granularity there is the tool, and
 # the tool was the right one. Only a section-level check reaches it.
 #
-# A section owned by a SKILL cannot be enforced through OWNED_SECTIONS -- there
-# is no agent to permit, so a permit-the-owner rule would deny the owning
-# skill's own write. `conflicts` is that shape, which is why it is covered here.
+# `conflicts` used to be covered only here, because it was owned by a SKILL and a
+# permit-the-owner rule would have denied that skill's own write. Since the
+# conflict-resolution agent replaced the skill, the analytical product is routed
+# to it by OWNED_CLAIMS above, and this map keeps every OTHER agent off the
+# section entirely -- the 2026-08-19 proof-conclusion write is still refused.
 AGENT_WRITABLE_SECTIONS = {
     "proof-conclusion": frozenset({"proof_summaries", "questions", "project"}),
     # research-exhaustiveness writes one field on one question and nothing else.
@@ -140,6 +202,68 @@ AGENT_WRITABLE_SECTIONS = {
     # owns `plan_items`, not by this agent, so leaving `plans`/`plan_items` out
     # is what stops it clearing its own blocker (issue #1821).
     "research-exhaustiveness": frozenset({"questions"}),
+    # person-evidence writes identity links and nothing else in research.json.
+    # Its stub `persons` and `relationships` writes go to tree.gedcomx.json
+    # through tree_edit/materialize_facts, which carry no `section` for this
+    # check to read. Deliberately narrow for the same reason as the row above:
+    # a blocker it meets -- an unclassified assertion, a genuinely competing
+    # candidate -- is cleared by extraction or conflict-resolution, not
+    # by this agent editing those sections itself.
+    "person-evidence": frozenset({"person_evidence"}),
+    # gps-mentor appends its verdict to `evaluations` and writes nothing else in
+    # research.json; its description says so and every corpus write is there.
+    "gps-mentor": frozenset({"evaluations"}),
+    # search-images updates the status of the plan item a browse executed. Its
+    # browse log goes through research_log_append, which carries no `section`.
+    "search-images": frozenset({"plan_items"}),
+    # search-external-sites updates the status of the plan item a search executed.
+    # Its log entries go through research_log_append and build_external_search_url,
+    # which carry no `section`.
+    "search-external-sites": frozenset({"plan_items"}),
+    # search-full-text updates the status of the plan item a search executed.
+    # Its search log goes through research_log_append, which carries no `section`.
+    # This is a repo CI requirement, not a runtime gate (the guard does not fire
+    # for agents outside the listed sections).
+    "search-full-text": frozenset({"plan_items"}),
+    # citation refines `citation` / `citation_detail` on source entries that
+    # already exist, and writes nothing else in research.json.
+    "citation": frozenset({"sources"}),
+    # question-selection appends new `q_` entries and writes nothing else. A
+    # lane is required by tests/packaging/plugin-hooks.test.ts for every agent
+    # granted research_append, so this row exists even though NO hook route
+    # points at this agent -- do not read it as one. It is deliberately narrow:
+    # `questions` carries a routed claim: any non-null `search_stop.stopped_because`
+    # belongs to research-exhaustiveness. Creating a question writes
+    # `stopped_because: null`, which the guard permits, so this
+    # lane widens nothing.
+    "question-selection": frozenset({"questions"}),
+    # locality-guide writes one `localities` entry per surveyed place, and
+    # nothing else in research.json.
+    "locality-guide": frozenset({"localities"}),
+    # hypothesis-tracking states, links and rules out hypotheses, and writes
+    # nothing else in research.json.
+    "hypothesis-tracking": frozenset({"hypotheses"}),
+    # timeline regenerates one `timelines` entry wholesale and writes nothing
+    # else in research.json. Its coherence verdict and any geographic
+    # infeasibility have no persisted field at all -- they live in its reply.
+    "timeline": frozenset({"timelines"}),
+    # conflict-resolution opens, analyses and settles conflicts, and writes
+    # nothing else in research.json. A hypothesis or question change its finding
+    # implies is handed back to the main thread, not made here.
+    "conflict-resolution": frozenset({"conflicts"}),
+    # init-project writes the fixed researcher profile, the volunteered
+    # holdings and one `sources` entry per transcribed memory, through
+    # research_append after project_create. It owns `project` (ownership.json),
+    # which project_create writes; `project.status` stays routed to
+    # proof-conclusion above. A lane, not a route: nothing is routed to this
+    # agent. It leaves out `questions`, which question-selection owns
+    # (issue #2122).
+    "init-project": frozenset({"project", "researcher_profile", "known_holdings", "sources"}),
+    # research-plan writes plans and their items and nothing else in
+    # research.json. A lane, not a route: tests/packaging/plugin-hooks.test.ts
+    # requires one for every agent granted research_append, and nothing is
+    # routed to this agent (issue #2116).
+    "research-plan": frozenset({"plans", "plan_items"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.
@@ -158,12 +282,30 @@ OWNER_REASON = (
 
 DECLARATION_REASON = (
     "Declaring a question exhaustive from here is disabled — `{field}` with "
-    "`declared: true` is owned by the {agent} agent, which applies the five "
-    "threshold questions and the 7-point stop criteria this claim rests on. "
+    "a non-null `stopped_because` value is owned by the {agent} agent, which "
+    "applies the seven stop criteria this claim rests on. "
     "Delegate it: invoke `@plugin:{agent}` and let it make the research_append "
-    "call. Only the claim is routed — creating a question with "
-    "`declared: false`, and recording an honest `declared: false` termination, "
-    "are both unaffected, as is everything else in `{section}`."
+    "call. Only non-null `stopped_because` is routed — creating a question with "
+    "`stopped_because: null` is unaffected, as is everything else in `{section}`."
+)
+
+OWNED_FIELD_REASON = (
+    "Setting research.json's `{section}.{field}` from here is disabled — it is "
+    "owned by the {agent} agent, which applies the GPS conclusion rules that "
+    "decide whether a project is finished. Delegate it: invoke "
+    "`@plugin:{agent}` and let it make the research_append call. Only this "
+    "field is routed — every other write to `{section}`, including the "
+    "`updated` activity ping, is unaffected."
+)
+
+CLAIM_REASON = (
+    "Recording a conflict's analysis or resolution from here is disabled — "
+    "settling `{section}` (a `status: \"resolved\"`, or any of {fields}) is owned "
+    "by the {agent} agent, which weighs source independence and the "
+    "preponderance of evidence before it decides. Delegate it: invoke "
+    "`@plugin:{agent}` and let it make the research_append call. Only the "
+    "analysis is routed — opening a conflict with just its required fields, and "
+    "re-opening one as `unresolved`, are both unaffected."
 )
 
 OUT_OF_LANE_REASON = (
@@ -178,7 +320,8 @@ REASON = (
     "must go through the writer tools. To CREATE a new project use project_create, "
     "which writes both files together; to add to an existing one use "
     "research_append, research_log_append, tree_edit or tree_correct. These "
-    "validate before persisting. Direct file writes never validate."
+    "validate before persisting. Direct file writes never validate. "
+    "external-collections.json is written only by external_links_search given a projectPath."
 )
 
 
@@ -250,28 +393,63 @@ def protected_target(tool_name: str, tool_input: dict) -> str | None:
     return None
 
 
+def _decoded(value):
+    """`value` parsed from JSON when it is a string, else `value` unchanged.
+
+    `research_append` runs `coerceJsonArg` on `ops`, `entry` and `fields`, so a
+    stringified argument is parsed and applied there. Reading only lists and
+    dicts here let the same write through unexamined. Never raises: a string
+    that does not parse is returned as-is and matches nothing.
+    """
+    if not isinstance(value, str):
+        return value
+    try:
+        return json.loads(value)
+    except (ValueError, RecursionError):
+        return value
+
+
+def _with_payloads_decoded(op: dict) -> dict:
+    """`op` with its `fields` and `entry` decoded, for the same reason."""
+    out = dict(op)
+    for key in ("fields", "entry"):
+        if key in out:
+            out[key] = _decoded(out[key])
+    return out
+
+
 def _ops(tool_input: dict):
     """Every op in a `research_append` call, batch or single.
 
     A batch puts them in `ops`; a single call carries `section` at the top
-    level. Both shapes reach the same sections, so both are walked.
+    level. Both shapes reach the same sections, so both are walked. Each is read
+    after `_decoded`, as the tool reads it.
     """
-    ops = (tool_input or {}).get("ops")
+    ops = _decoded((tool_input or {}).get("ops"))
     if isinstance(ops, list):
         for op in ops:
+            op = _decoded(op)
             if isinstance(op, dict):
-                yield op
+                yield _with_payloads_decoded(op)
     elif tool_input:
-        yield tool_input
+        yield _with_payloads_decoded(tool_input)
 
 
 def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | None:
     """`(section, rule, caller)` for a denied write, or None to allow.
 
-    Two rules, both keyed on the caller and both returning the offending
+    Four rules, all keyed on the caller and all returning the offending
     section: `routed` — a section reserved to an owning agent, reached by
-    someone else; `out_of_lane` — a known agent reaching outside the sections
-    its own skill is a declared caller for.
+    someone else; `declaration` — a routed CLAIM (a field set to a particular
+    value), reached by someone else; `owned_field` — a routed field, keyed on
+    presence rather than value; `out_of_lane` — a known agent reaching outside
+    the sections its own skill is a declared caller for. `declaration` and
+    `owned_field` return a dotted `section.field`, which is a key in neither
+    `OWNED_SECTIONS` nor `AGENT_WRITABLE_SECTIONS`, so every consumer must
+    branch on `rule` and never on the shape of the first element. A fifth,
+    `claim`, returns the bare section of an `OWNED_CLAIMS` route: a conflict's
+    analytical product (a resolve, or any analysis field), reached by anyone
+    but its owning agent.
 
     `proof_summaries` is owned by `proof-conclusion`
     (`docs/specs/schemas/ownership.json`). Measured over the committed corpus,
@@ -292,6 +470,30 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     Covers `op: "update"` as well as `"append"`: the skill updates an existing
     `ps_NNN` in place on every re-conclusion, and a rule that saw only appends
     would leave that path denied in production with its fixture still green.
+
+    **Gating on `research_append` alone is complete, and here is the check that
+    says so** — it looks like an oversight and is the first thing a reader asks.
+    Of the six declared writers of any research.json section
+    (`research_append`, `project_create`, `research_log_append`,
+    `extraction_append`, `merge_tree_persons`, `build_external_search_url`),
+    only `merge_tree_persons` also writes a section this function routes, and it
+    reaches `person_evidence` and
+    `proof_summaries` without ever passing through here.
+
+    That is safe for a structural reason, not a lucky one: it writes those
+    sections through `iteratePersonIdRefs`, whose setters assign one field on an
+    entry that already exists — `pe.person_id = newId`. It cannot create an
+    entry, and it cannot touch `match_score`, which is the failure the
+    `person_evidence` row exists to prevent. A merge permutes ids; it never
+    authors a claim.
+
+    What keeps that true is the source-vs-manifest guard in
+    `tests/packaging/ownership-manifest.test.ts`, which reds when the manifest's
+    `writerTools` and the walker's own field set disagree. Note its limit before
+    relying on it: it catches this tool gaining a NEW SECTION, not it gaining
+    scope *within* a section. If `merge_tree_persons` ever writes a routed
+    section through anything but a ref setter, this docstring is what stops
+    being true, and nothing checks it.
     """
     if _basename(tool_name.replace("__", "/")) != "research_append":
         return None
@@ -308,10 +510,9 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
             return (section, "routed", caller)
         # A routed CLAIM, reached by anyone but its owning agent. Read from the
         # op's own payload — `fields` on an update, `entry` on an append — and
-        # only when the op sets the claim TRUE. A `declared: false` write claims
-        # nothing: it is either a question being created (197 of 392 corpus ops)
-        # or an honest early termination, and both are the owning skill's own
-        # sanctioned path.
+        # only when `stopped_because` is non-null. A `stopped_because: null`
+        # write claims nothing: it is a question being created (null init) and
+        # is the owning skill's own sanctioned path.
         for (owned_section, field), owner in OWNED_DECLARATIONS.items():
             if section != owned_section or caller == owner:
                 continue
@@ -328,11 +529,41 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
                 if not isinstance(payload_obj, dict):
                     continue
                 value = payload_obj.get(field)
-                if isinstance(value, dict) and value.get("declared") is True:
+                if isinstance(value, dict) and value.get("stopped_because") is not None:
                     return (f"{section}.{field}", "declaration", caller)
+        # A routed FIELD, reached by anyone but its owning agent. Keyed on
+        # presence: unlike the declaration above there is no honest
+        # non-claiming value to let through, so carrying the key at all is the
+        # claim. Both payload keys for the same reason as that loop -- an empty
+        # `fields` dict beside a populated `entry` is still a dict, and a
+        # missing deny here fails open silently.
+        for (owned_section, field), owner in OWNED_FIELDS.items():
+            if section != owned_section or caller == owner:
+                continue
+            for key in ("fields", "entry"):
+                payload_obj = op.get(key)
+                if isinstance(payload_obj, dict) and field in payload_obj:
+                    return (f"{section}.{field}", "owned_field", caller)
         # A known agent reaching outside its own set.
         if writable is not None and section not in writable:
             return (section, "out_of_lane", caller)
+        # A routed CLAIM spread over several fields, reached by anyone but its
+        # owning agent. After the lane check, so an agent with no business in
+        # the section at all is told that, not that the claim belongs
+        # elsewhere. Both payload keys, for the same fail-open reason as the two
+        # loops above. A moot is claimed too: the tool refuses one without a
+        # `resolution_rationale`, which is a claim field.
+        claim = OWNED_CLAIMS.get(section)
+        if claim is not None and caller != claim[0]:
+            _owner, claim_fields, claim_status = claim
+            for key in ("fields", "entry"):
+                payload_obj = op.get(key)
+                if not isinstance(payload_obj, dict):
+                    continue
+                if payload_obj.get("status") == claim_status or any(
+                    payload_obj.get(f) for f in claim_fields
+                ):
+                    return (section, "claim", caller)
     return None
 
 
@@ -356,6 +587,20 @@ def decision(payload: dict) -> dict:
                 section=owned_section,
                 field=field,
                 agent=OWNED_DECLARATIONS[(owned_section, field)],
+            )
+        elif rule == "claim":
+            owner, claim_fields, _status = OWNED_CLAIMS[section]
+            reason = CLAIM_REASON.format(
+                section=section,
+                fields=", ".join(f"`{f}`" for f in claim_fields),
+                agent=owner,
+            )
+        elif rule == "owned_field":
+            owned_section, _, field = section.partition(".")
+            reason = OWNED_FIELD_REASON.format(
+                section=owned_section,
+                field=field,
+                agent=OWNED_FIELDS[(owned_section, field)],
             )
         else:
             allowed = ", ".join(f"`{s}`" for s in sorted(AGENT_WRITABLE_SECTIONS[caller]))

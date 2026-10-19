@@ -1,7 +1,10 @@
-// The client realtime seam. WsSessionConnection (one bidirectional WebSocket
-// straight to the in-sandbox WS server) is the only implementation. The viewer
-// transport (WsResearchTransport) and ChatPane consume only this interface
-// (conn.on / conn.send), so the transport is invisible to them.
+import { ApiError } from '../api'
+// The client realtime seam. Two implementations: WsSessionConnection below (one
+// bidirectional WebSocket straight to the in-sandbox WS server — the hosted alpha)
+// and SseSessionConnection (an EventSource + REST against the search-agent
+// prototype's web tier; VITE_SESSION_TRANSPORT=sse). The viewer transport
+// (WsResearchTransport) and ChatPane consume only this interface (conn.on /
+// conn.send), so which one is behind it is invisible to them.
 export type WsMessage = { type: string; [k: string]: unknown }
 export type Listener = (msg: WsMessage) => void
 
@@ -30,8 +33,54 @@ export type CredentialsProvider = () => Promise<SessionCredentials>
 // WS to the sandbox host auto-resumes a paused sandbox (lifecycle.auto_resume), so
 // an un-gated reconnect in a backgrounded tab silently wakes the sandbox and bills
 // idle compute. We reconnect on focus instead; the server replays state on connect.
-const MAX_RETRIES = 20
-const retryDelayMs = (attempt: number): number => Math.min(1000, 150 * attempt)
+// Shared with SseSessionConnection, so the two transports back off the same way.
+export const MAX_RETRIES = 20
+export const retryDelayMs = (attempt: number): number => Math.min(1000, 150 * attempt)
+
+// How long one credentials fetch may take before it is abandoned.
+//
+// WHAT THIS FIXES. `connecting` guards the await window inside connect(), and it
+// is cleared only by the provider settling. A provider that never settles leaves
+// it true forever, so every later connect() returns at the guard: no socket, no
+// retry, and no `chat_error` either. The panel sits on "Connecting to the
+// agent..." indefinitely, which is one of the only two paths that can produce
+// that symptom.
+//
+// SIZED FROM THE COST OF THE THING IT BOUNDS, not picked round. /connect resumes
+// the sandbox (~1s, `docs/realtime-architecture.md`), writes secrets, merges
+// config, refreshes the FamilySearch token over the network and exposes the WS
+// port (`sessions.py` connect_session). A legitimate call is seconds; 30 is
+// generous enough not to fire on a slow one and short enough that a person is
+// not left staring at a placeholder.
+//
+// NOT ON `api.req`. That is the shared REST helper, and `resumeSession` plus the
+// viewer's /state hydration resume the same paused sandbox and are just as slow,
+// so a blanket timeout there aborts them too. It is not at the `connectSession`
+// call site either: the flag that actually wedges lives in this class, so the
+// bound belongs here, where it also covers any future provider.
+const CREDENTIALS_TIMEOUT_MS = 30_000
+
+// A hang gets a TIGHTER ceiling than a refusal, and the asymmetry is the point.
+// A refused socket is cheap and fast, so MAX_RETRIES of them is fine. Each
+// credentials attempt is a full server-side E2B resume + secret write + config
+// merge + FamilySearch token refresh, so retrying a hang 20 times would multiply
+// that load by 20 against a control plane already failing to answer - trading a
+// wedge for a stampede. Two, then tell the user.
+// Worst case a user waits about 60 seconds before "Chat unavailable" appears:
+// two CREDENTIALS_TIMEOUT_MS bounds plus the retry delay between them. That is
+// the trade against an indefinite "Connecting to the agent..." placeholder,
+// which is the failure this card exists to remove, and it is written down here
+// rather than left to be derived from three constants.
+const MAX_CREDENTIAL_TIMEOUTS = 2
+
+/** The credentials fetch exceeded CREDENTIALS_TIMEOUT_MS. Distinct from a
+ *  rejection: a rejection is an answer, this is the absence of one. */
+class CredentialsTimeout extends Error {
+  constructor() {
+    super('credentials request timed out')
+    this.name = 'CredentialsTimeout'
+  }
+}
 
 export class WsSessionConnection implements SessionConnection {
   private ws: WebSocket | null = null
@@ -46,9 +95,33 @@ export class WsSessionConnection implements SessionConnection {
   // silently billing compute for a tab nobody is viewing. Reconnects pause while
   // hidden and resume on focus.
   private hidden = false
+  // The 410 frame, kept because it can arrive before ChatPane subscribes: the
+  // refusal returns before any sandbox work, often inside the first render.
+  // `on()` replays it to a late listener. Every other terminal frame comes after
+  // seconds of retries, by which time the subscriber exists.
+  private expiredFrame: WsMessage | null = null
   // Guards the await window inside connect(): without it a retry firing while
   // the credentials request is in flight would open a second socket.
   private connecting = false
+  // Counts only credential fetches that never answered. Reset on SUCCESS, so an
+  // intermittent control plane does not accumulate toward the ceiling across an
+  // otherwise healthy session.
+  //
+  // NOT symmetric with `attempts`, which this used to claim: `onVisibility`
+  // also resets `attempts` on focus, and this deliberately survives that.
+  // Resetting it on focus would let tabbing away and back re-arm the stampede
+  // the ceiling exists to prevent, which is a cheaper way to reach the failure
+  // than the one this card is about. Pinned by
+  // "focus does not reset the credential-timeout budget".
+  private credentialTimeouts = 0
+  // Replay-dedupe cursor (#3387). The server stamps every recorded frame with
+  // a seq before broadcasting it, then replays its whole history to each
+  // (re)connect. Instance fields, not per-socket: they survive the drop so the
+  // replay after a silent reconnect is dropped instead of folded again. A page
+  // reload constructs a new connection, so lastSeq=0 lets the full replay
+  // rebuild the chat.
+  private lastSeq = 0
+  private epoch: unknown = null
 
   private onVisibility = (): void => {
     if (typeof document === 'undefined') return
@@ -82,12 +155,36 @@ export class WsSessionConnection implements SessionConnection {
     }
   }
 
+  /** `getCredentials()` bounded by CREDENTIALS_TIMEOUT_MS.
+   *
+   *  The timer is always cleared, so a settled fetch leaves nothing pending. The
+   *  losing side of the race is dropped rather than cancelled - there is no
+   *  AbortSignal on the provider contract - so a late resolution is ignored; its
+   *  only side effect is the `onFsState` callback, which is idempotent.
+   */
+  private credentials(): Promise<SessionCredentials> {
+    return new Promise<SessionCredentials>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new CredentialsTimeout()), CREDENTIALS_TIMEOUT_MS)
+      this.getCredentials().then(
+        (creds) => {
+          clearTimeout(timer)
+          resolve(creds)
+        },
+        (err) => {
+          clearTimeout(timer)
+          reject(err)
+        }
+      )
+    })
+  }
+
   connect(): void {
     if (this.ws || this.closed || this.connecting) return
     this.connecting = true
-    void this.getCredentials().then(
+    void this.credentials().then(
       (creds) => {
         this.connecting = false
+        this.credentialTimeouts = 0
         // close() or a racing connect landed while we were awaiting.
         if (this.closed || this.ws) return
         // Backgrounded mid-fetch: opening now would auto-resume a paused sandbox
@@ -96,11 +193,39 @@ export class WsSessionConnection implements SessionConnection {
         if (this.hidden) return
         this.openSocket(creds)
       },
-      () => {
+      (err) => {
         // The control plane is unreachable or the session is gone. Same backoff
         // as a refused socket, so this can't spin and can't hang silently.
         this.connecting = false
+        // 410: the session is more than 72 h old and the server will never accept
+        // it (#3406). Terminal and never retried, checked before the `hidden`
+        // return so a tab that is hidden when it lands does not ask again on
+        // focus. Not `fail()`, whose "Chat unavailable" is the wrong message, and
+        // not `close()`, which would drop the listener that must hear this.
+        if (err instanceof ApiError && err.status === 410) {
+          if (this.closed) return
+          this.closed = true
+          if (typeof document !== 'undefined') {
+            document.removeEventListener('visibilitychange', this.onVisibility)
+          }
+          this.expiredFrame = { type: 'status', state: 'session_expired', message: err.message }
+          for (const l of [...this.listeners]) l(this.expiredFrame)
+          return
+        }
         if (this.closed || this.hidden) return
+        if (err instanceof CredentialsTimeout) {
+          this.credentialTimeouts += 1
+          if (this.credentialTimeouts >= MAX_CREDENTIAL_TIMEOUTS) {
+            this.fail('The agent is not responding (connection timed out).')
+            return
+          }
+        }
+        // Every other retrying path tells the UI it is retrying; without this
+        // one a failing `/connect` shows the same static line as a healthy
+        // connect for the whole window. Below the ceiling block so a terminal
+        // failure still goes through `fail()`, and after the `hidden` guard so
+        // a backgrounded tab stays silent.
+        this.emitConn('reconnecting')
         this.scheduleRetry()
       }
     )
@@ -110,11 +235,16 @@ export class WsSessionConnection implements SessionConnection {
     for (const l of [...this.listeners]) l({ type: 'conn_state', state })
   }
 
+  /** Surface a terminal connection failure. `chat_error` is what ChatPane turns
+   *  into "Chat unavailable: ..."; without it the placeholder never resolves. */
+  private fail(message: string): void {
+    for (const l of [...this.listeners]) l({ type: 'status', state: 'chat_error', message })
+  }
+
   private scheduleRetry(): void {
     this.attempts += 1
     if (this.attempts > MAX_RETRIES) {
-      for (const l of [...this.listeners])
-        l({ type: 'status', state: 'chat_error', message: 'Could not reach the agent (connection failed).' })
+      this.fail('Could not reach the agent (connection failed).')
       return
     }
     this.retryTimer = setTimeout(() => {
@@ -143,6 +273,22 @@ export class WsSessionConnection implements SessionConnection {
       } catch {
         return
       }
+      // Frames without a seq pass through untouched: status, snapshot and ping
+      // frames are never stamped, and a sandbox still running pre-#3387 server
+      // code stamps nothing — those sessions keep the replay bug, nothing breaks.
+      // isFinite, not just typeof: JSON.parse accepts 1e999 as Infinity, and one
+      // such frame would pin lastSeq at Infinity and drop every later frame.
+      if (typeof msg.seq === 'number' && Number.isFinite(msg.seq)) {
+        // A fresh sandbox_server (LocalProvider.ensure_server replaces a dead
+        // one) counts seq from 1 again under a new epoch; without this reset a
+        // client holding a high lastSeq would silently drop every new frame.
+        if (msg.epoch !== this.epoch) {
+          this.epoch = msg.epoch
+          this.lastSeq = 0
+        }
+        if (msg.seq <= this.lastSeq) return // the reconnect edge: never fold a frame twice
+        this.lastSeq = msg.seq
+      }
       for (const l of [...this.listeners]) l(msg)
     }
     ws.onclose = () => {
@@ -169,6 +315,7 @@ export class WsSessionConnection implements SessionConnection {
 
   on(listener: Listener): () => void {
     this.listeners.add(listener)
+    if (this.expiredFrame) listener(this.expiredFrame)
     return () => this.listeners.delete(listener)
   }
 

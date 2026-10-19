@@ -14,15 +14,19 @@ export default function ProofSummariesSection(): React.JSX.Element {
   if (items.length === 0) {
     return (
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Proof Summaries</h2>
-        <p className={styles.empty}>No proof summaries recorded.</p>
+        <h2 className={styles.sectionTitle}>Findings</h2>
+        <p className={styles.empty}>
+          No findings yet. A finding is the written answer to a research question,
+          with the evidence behind it. One is written as the evidence for a
+          question comes together.
+        </p>
       </div>
     )
   }
 
   return (
     <div className={styles.section}>
-      <h2 className={styles.sectionTitle}>Proof Summaries</h2>
+      <h2 className={styles.sectionTitle}>Findings</h2>
       {items.map((ps) => {
         const questionEntry = getById(ps.question_id)
         const question = questionEntry?.item as Question | undefined
@@ -37,6 +41,7 @@ export default function ProofSummariesSection(): React.JSX.Element {
               <>
                 <StatusBadge value={ps.tier} />
                 <StatusBadge value={ps.vehicle} />
+                {ps.shortfall !== 'none' && <StatusBadge value={ps.shortfall} />}
               </>
             }
             summary={ps.exhaustive_search_summary}
@@ -63,6 +68,21 @@ export default function ProofSummariesSection(): React.JSX.Element {
             }
           >
             <div className={styles.body}>
+              {ps.claims && ps.claims.length > 0 && (
+                <div className={styles.claims}>
+                  <span className={styles.footerLabel}>Each claim:</span>
+                  {ps.claims.map((c) => (
+                    <div key={c.claim} className={styles.claim}>
+                      <span className={styles.claimLabel}>{c.claim}</span>
+                      <StatusBadge value={c.proof_tier} />
+                      {c.shortfall && c.shortfall !== 'none' && <StatusBadge value={c.shortfall} />}
+                      <span className={styles.claimEndpoint}>
+                        {c.relationship.type}: {c.relationship.parent} → {c.relationship.child}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className={styles.narrative}>
                 <Markdown remarkPlugins={[remarkGfm]}>{ps.narrative_markdown}</Markdown>
               </div>

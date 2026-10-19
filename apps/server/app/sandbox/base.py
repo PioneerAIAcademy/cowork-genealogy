@@ -164,6 +164,19 @@ class SandboxProvider(ABC):
     @abstractmethod
     async def list(self, labels: dict[str, str] | None = None) -> list[Sandbox]: ...
 
+    @property
+    def sandbox_image_commit(self) -> str | None:
+        """The commit the sandbox image this provider creates from was built at,
+        or None when it is not known yet or does not apply.
+
+        Read from the image itself rather than from a deploy-time guess, which is
+        what makes it answer "which build is this session actually on?". Providers
+        that bake no image (LocalProvider runs the repo's own copy) keep the None
+        default. Callers must treat it as advisory: /api/health reports it, so it
+        can never do I/O or raise.
+        """
+        return None
+
     async def aclose(self) -> None:
         """Release any provider-level resources (override as needed)."""
         await asyncio.sleep(0)

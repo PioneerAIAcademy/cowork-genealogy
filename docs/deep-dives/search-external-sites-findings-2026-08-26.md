@@ -762,9 +762,11 @@ find an unexplained edit.
 
 ## Four rubric-wording gaps the reviewer found, all latent
 
-Recorded here so the next run of this skill can fold them in; none is fixed on
-this branch, because the prose is frozen by two paid runs and fixing them later
-costs the same single run.
+**Fixed on this branch (PR #2248):** all four are corrected in
+`search-external-sites/SKILL.md` and `eval/tests/unit/search-external-sites/rubric.md`,
+along with the `unresolved > resolved > moot` precedence ordering the review added.
+They remain latent — no fixture exercises any of them — so the run shows no
+regression rather than enforcement; the validators are issue #1950. As found:
 
 - **`moot` is misclassified.** `conflict_status` is `unresolved | resolved |
   moot`. Both `SKILL.md` and `rubric.md` say "any other status → still

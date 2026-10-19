@@ -31,7 +31,10 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_question_selection import (  # noqa: E402
     test_disputed_parents_missing_info_handled as check_missing_info,
     test_first_question_tests_disputed_parents as check_disputed_parents,
+    test_motivation_objective_decomposed as check_motivation,
     test_new_question_not_vague as check_not_vague,
+    test_premise_question_names_fact as check_premise,
+    test_single_fact_objective_not_narrowed as check_single_fact,
     test_timelines_queried_before_deciding as check_timelines_ordering,
     test_unblocks_nonempty as check_unblocks_nonempty,
 )
@@ -209,3 +212,216 @@ def test_unblocks_nonempty_fails_when_empty():
             _state([_q("q_003", "Where was Patrick Flynn residing in 1870?", unblocks=[])]),
             _UNBLOCKS_TAGS,
         )
+
+
+# --- test_premise_question_names_fact: the #1394 negative-shape guard ---
+#
+# Pins the demonstrated reject/accept behaviour of the premise-question-names-fact
+# guard (CLAUDE.md "a new lint must be proven to fail" — both directions). The
+# guard rejects a bare property test of a name (maiden-vs-married) whose branch
+# names no fact, while accepting a question that names the gating fact, and it
+# must coexist with #1471's confirm-or-refute framing. Cases mirror the two-way
+# demonstration recorded in the PR body. The two residual contrived edge cases
+# (cross-clause phrasings) are accepted as-is by decision — the positive class is
+# the judge's job — and are deliberately NOT pinned here.
+
+_PREMISE_TAGS = {"tags": ["premise-question-names-fact"]}
+
+
+def _premise_after(question):
+    return _state([_q("q_001", question)])
+
+
+def test_premise_skips_when_tag_absent():
+    # Assert the tag-gate reason specifically, so this can't pass on the other
+    # skip path ("missing research.json for diff").
+    with pytest.raises(pytest.skip.Exception, match="not a premise-question-names-fact scenario"):
+        check_premise(_EMPTY, _premise_after("What was her maiden name?"),
+                      {"tags": ["first-question"]})
+
+
+def test_premise_requires_a_new_question():
+    with pytest.raises(AssertionError, match="none was added"):
+        check_premise(_EMPTY, _EMPTY, _PREMISE_TAGS)
+
+
+# Accept: the question names the gating fact (or is #1471), so the guard passes.
+@pytest.mark.parametrize("question", [
+    "What was Caroline's maiden name?",
+    "What was the birth surname of Rosalind Hartwell, born ca. 1855 in Ohio?",  # a "birth surname" fact-naming variant (synonym of maiden name); ut_016 now emits a "maiden name" form
+    "Under what surname was Caroline born?",
+    "What was Caroline's birth name?",
+    "Was Rosalind born with the surname Hartwell, and if not, what was her maiden name?",
+    "What maiden name did she use before her marriage?",
+    # Exercises the `maiden surname` escape term specifically: the leading
+    # "Was it a married name" trips signal 4, and only the `maiden surname`
+    # escape alternative rescues it — drop that term and this flips to reject.
+    "Was it a married name, and what was her maiden surname?",
+    # An intervening parenthetical between the birth/maiden word and the
+    # name/surname word is tolerated (#1394 review): "birth (maiden) surname" is
+    # a spelling of the same fact as "birth surname", so it escapes. (Its
+    # trailing-marriage-clause twin moved to the reject list on 2026-09-30.)
+    "What was the birth (maiden) surname of Rosalind?",
+    # Real ut_016 questions (2026-09-30/10-01) that end at the value. Descriptive
+    # clauses identifying the person are not a classification.
+    "What was the birth surname of Rosalind Hartwell (b. ca. 1855, Ohio), who is recorded in a compiled source under the surname 'Hartwell' and is known to have been married to Thomas Hartwell?",
+    "What was the birth (maiden) surname of Rosalind Hartwell, born circa 1855 in Ohio, who married Thomas Hartwell?",
+    "Do independent records confirm or refute that Johann and Maria Vogt are the parents of Anton Vogt?",
+    "Who were Caroline's parents?",  # objective restatement — the judge's call, not this guard's
+])
+def test_premise_accepts_fact_naming_and_1471(question):
+    check_premise(_EMPTY, _premise_after(question), _PREMISE_TAGS)
+
+
+# Reject: a bare property test of the name whose branch names no fact.
+@pytest.mark.parametrize("question", [
+    "Was Curtis her maiden or married name?",
+    "Was 'Curtis' the maiden name of Caroline?",
+    # Exercises the reversed `married or maiden` signal specifically: no leading
+    # was/is/did and no other signal matches, so dropping that signal would let
+    # this bad either/or through.
+    "Should I record Hartwell as her married or maiden name?",
+    "Determine whether Curtis was her maiden name or acquired through marriage.",
+    "Did she take Hartwell by marriage?",
+    "Was 'Hartwell' her maiden or married name, and what surname does the census list?",
+    "Was Hartwell her maiden or married name, and what surname did she use after marriage?",
+    # A value question that then re-asks the recorded name as a choice fails
+    # (genealogist ruling, 2026-09-30). The last three are real ut_016 questions.
+    "What was the birth (maiden) surname of Rosalind, or was it acquired through marriage?",
+    "What was Rosalind Hartwell's birth surname — was 'Hartwell' her maiden name or the married name she acquired from her husband Thomas Hartwell?",
+    "What was the birth surname of Rosalind Hartwell (b. ca. 1855, Ohio), the wife of Thomas Hartwell — was 'Hartwell' her maiden name or her married name?",
+    "What was the birth surname of Rosalind Hartwell (b. ca. 1855, Ohio), whose recorded surname 'Hartwell' may be her maiden name or the married name of her husband Thomas Hartwell?",
+])
+def test_premise_rejects_bare_property_test(question):
+    with pytest.raises(AssertionError, match="property test of a name"):
+        check_premise(_EMPTY, _premise_after(question), _PREMISE_TAGS)
+
+
+# --- test_single_fact_objective_not_narrowed: the #1394-review paired-fact guard ---
+#
+# Pins the demonstrated reject/accept/skip behaviour of the single-fact-objective
+# guard (CLAUDE.md "a new lint must be proven to fail" -- both directions). It
+# rejects narrowing a paired "parents" objective to one side ("who was the
+# father...") while accepting the paired restatement ("who were the parents..."),
+# and skips when the tag is absent or the objective names no paired fact. Cases
+# mirror ut_002's regression (parents -> father) recorded in the PR body.
+
+_SINGLE_FACT_TAGS = {"tags": ["single-fact-objective"]}
+_PARENTS_OBJECTIVE = "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania"
+
+
+def _state_obj(objective, questions):
+    return {"research_json": {"project": {"objective": objective}, "questions": questions}}
+
+
+_EMPTY_PARENTS = _state_obj(_PARENTS_OBJECTIVE, [])
+
+
+def _parents_after(question):
+    return _state_obj(_PARENTS_OBJECTIVE, [_q("q_001", question)])
+
+
+def test_single_fact_skips_when_tag_absent():
+    with pytest.raises(pytest.skip.Exception, match="not a single-fact-objective scenario"):
+        check_single_fact(_EMPTY_PARENTS,
+                          _parents_after("Who was the father of Patrick Flynn?"),
+                          {"tags": ["first-question"]})
+
+
+def test_single_fact_skips_when_objective_not_paired():
+    # A single, non-paired objective: the guard must not fire even on a
+    # one-parent question -- proves the paired-fact gate.
+    before = _state_obj("Find the birth date of Patrick Flynn", [])
+    after = _state_obj("Find the birth date of Patrick Flynn",
+                       [_q("q_001", "Who was the father of Patrick Flynn?")])
+    with pytest.raises(pytest.skip.Exception, match="objective does not name a paired fact"):
+        check_single_fact(before, after, _SINGLE_FACT_TAGS)
+
+
+# Accept: the paired objective is restated at scope (or the question is unrelated).
+@pytest.mark.parametrize("question", [
+    "Who were the parents of Patrick Flynn, born ca. 1845 in Pennsylvania?",
+    "When and where was Patrick Flynn born?",
+    "Who were Patrick Flynn's father and mother?",
+])
+def test_single_fact_accepts_paired_restatement(question):
+    check_single_fact(_EMPTY_PARENTS, _parents_after(question), _SINGLE_FACT_TAGS)
+
+
+# Reject: the paired objective is narrowed to one side.
+@pytest.mark.parametrize("question", [
+    "Who was the father of Patrick Flynn, born ca. 1845 in Pennsylvania?",
+    "Who was the mother of Patrick Flynn?",
+    "Identify the father of Patrick Flynn.",
+    # Finding-1 idiomatic variants: possessive form and present tense.
+    "Who was Patrick Flynn's father?",
+    "Who is Patrick Flynn's father?",
+    "Who is Patrick Flynn's mother?",
+    "Who is the father of Patrick Flynn?",
+])
+def test_single_fact_rejects_one_side_narrowing(question):
+    with pytest.raises(AssertionError, match="narrowed to"):
+        check_single_fact(_EMPTY_PARENTS, _parents_after(question), _SINGLE_FACT_TAGS)
+
+
+# --- test_motivation_objective_decomposed: the #2003 "why" guard ----------
+
+_MOTIVATION_TAGS = {"tags": ["motivation-objective-decomposed"]}
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Why did Patrick Flynn's family move to Schuylkill County between 1850 and 1880?",
+        "WHY did the Morgans move to Texas?",
+        "What led Patrick Flynn's family to settle in Schuylkill County?",
+        "For what reason did the family leave Ireland?",
+        "What were the reasons the Flynn family relocated to Pennsylvania?",
+        "Did Michael Sheahan move to Schuylkill County, Pennsylvania around 1882 for anthracite coal-mining work, as family tradition holds?",
+        "Did the Morgans move to Texas to join relatives already living there?",
+        "Did the family migrate because of the 1883 death of Eugene McElwee?",
+        "What brought Patrick Flynn's family to Schuylkill County?",
+        "What drew the Flynn family to Pennsylvania?",
+    ],
+)
+def test_motivation_rejects_a_question_asking_the_reason(question):
+    after = _state([_q("q_001", question)])
+    with pytest.raises(AssertionError, match="motivation objective"):
+        check_motivation(_EMPTY, after, _MOTIVATION_TAGS)
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "When did Patrick Flynn's family arrive in Schuylkill County, Pennsylvania?",
+        "Where did Patrick Flynn's family live before Schuylkill County?",
+        "Who were Patrick Flynn's parents, b. ca. 1845, Pennsylvania?",
+        "Which of Clorinda Sleeper's brothers were living in the Texas county before 1880?",
+        "Did Patrick Flynn's parents move to Schuylkill County before 1860?",
+        "When did the Morgan family arrive in Texas?",
+        "What ship brought Patrick Flynn's family to Philadelphia?",
+    ],
+)
+def test_motivation_accepts_a_relationship_or_event_question(question):
+    after = _state([_q("q_001", question)])
+    check_motivation(_EMPTY, after, _MOTIVATION_TAGS)
+
+
+def test_motivation_fails_when_no_question_is_written():
+    with pytest.raises(AssertionError, match="none was written"):
+        check_motivation(_EMPTY, _EMPTY, _MOTIVATION_TAGS)
+
+
+def test_motivation_one_bad_question_is_not_masked_by_a_good_one():
+    after = _state([
+        _q("q_001", "When did the Morgan family arrive in Texas?"),
+        _q("q_002", "Why did the Morgans move to Texas?"),
+    ])
+    with pytest.raises(AssertionError, match="q_002"):
+        check_motivation(_EMPTY, after, _MOTIVATION_TAGS)
+
+
+def test_motivation_skips_without_its_tag():
+    after = _state([_q("q_001", "Why did the Morgans move to Texas?")])
+    with pytest.raises(pytest.skip.Exception):
+        check_motivation(_EMPTY, after, {"tags": []})

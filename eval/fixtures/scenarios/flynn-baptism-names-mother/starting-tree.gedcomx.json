@@ -1,0 +1,31 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Patrick", "surname": "Flynn", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "~1845", "place": "Clare, Ireland" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Thomas", "surname": "Flynn", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F2", "type": "Birth", "date": "~1818", "place": "Clare, Ireland" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "RT1", "type": "ParentChild", "parent": "I2", "child": "I1" }
+  ],
+  "sources": [
+    { "id": "S1", "title": "1850 U.S. Census, Schuylkill County, Pennsylvania — Thomas Flynn household" },
+    { "id": "S2", "title": "Kilrush parish (Diocese of Killaloe), Ireland — Patrick Flynn baptism register" }
+  ]
+}

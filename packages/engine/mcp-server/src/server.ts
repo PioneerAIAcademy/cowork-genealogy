@@ -1,0 +1,855 @@
+// The tool server: one `Server` carrying the ListTools handler and the whole
+// CallTool dispatch chain, built for a given principal. Two entrypoints share
+// it — src/index.ts (the shipped .mcpb: stdio, one desktop user per process,
+// binds LOCAL) and src/http.ts (the search-agent prototype's Streamable HTTP
+// tool server: one Server per POST, bound to that request's bearer —
+// src/http-server.ts). A new tool's dispatch arm goes
+// here, in the chain below, never in an entrypoint.
+
+import { catalogSearchTool } from "./tools/catalog-search.js";
+import type { CatalogSearchInput } from "./types/catalog-search.js";
+import type { Principal } from "./auth/principal.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema
+} from "@modelcontextprotocol/sdk/types.js";
+import { wikipediaSearch, type WikipediaSearchInput } from "./tools/wikipedia.js";
+import { researchDelivered, type ResearchDeliveredInput } from "./tools/research-delivered.js";
+import {
+  placeSearchTool,
+  placeSearchAllTool,
+  type PlaceSearchToolInput,
+  type PlaceSearchAllToolInput,
+} from "./tools/place-search.js";
+import { loginTool, type LoginToolInput } from "./tools/login.js";
+import { logoutTool, type LogoutToolInput } from "./tools/logout.js";
+import { authStatusTool, type AuthStatusToolInput } from "./tools/auth-status.js";
+import { collectionsSearchTool, type CollectionsSearchInput } from "./tools/collections-search.js";
+import { wikiSearch, type WikiSearchInput } from "./tools/wiki-search.js";
+import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js";
+import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
+import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/external-links-search.js";
+import type { ExternalLinksSearchResult } from "./types/external-links-search.js";
+import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
+import { imageTranscribeTool } from "./tools/image-transcribe.js";
+import { volumeBisectTool } from "./tools/volume-bisect.js";
+import type { ImageTranscribeInput } from "./types/image-transcribe.js";
+import type { VolumeBisectInput } from "./types/volume-bisect.js";
+import { recordSearchTool } from "./tools/record-search.js";
+import type { RecordSearchInput } from "./types/record-search.js";
+import { personSearchTool, type PersonSearchInput } from "./tools/person-search.js";
+import { samePerson } from "./tools/same-person.js";
+import type { SamePersonInput } from "./types/same-person.js";
+import { personReadTool, type PersonReadToolInput } from "./tools/person-read.js";
+import {
+  personAncestorsTool,
+  type PersonAncestorsInput,
+} from "./tools/person-ancestors.js";
+import { treeGapsTool } from "./tools/tree-gaps.js";
+import type { TreeGapsInput } from "./types/tree-gaps.js";
+import { recordReadTool, type RecordReadInput } from "./tools/record-read.js";
+import { fulltextSearchTool } from "./tools/fulltext-search.js";
+import type { FulltextSearchInput } from "./types/fulltext-search.js";
+import { wikiReadTool, type WikiReadInput } from "./tools/wiki-read.js";
+import {
+  wikiPlacePageTool,
+  type WikiPlacePageInput,
+} from "./tools/wiki-place-page.js";
+import {
+  validateResearchSchema,
+  type ValidateResearchSchemaInput,
+} from "./tools/validate-research-schema.js";
+import {
+  personRecordMatches,
+  recordPersonMatches,
+  personPersonMatches,
+  recordRecordMatches,
+} from "./tools/match-by-id.js";
+import type { MatchByIdInput } from "./types/match-by-id.js";
+import { sourceAttachmentsTool } from "./tools/source-attachments.js";
+import type { SourceAttachmentsInput } from "./types/source-attachments.js";
+import { imageSearchTool } from "./tools/image-search.js";
+import type { ImageSearchInput } from "./types/image-search.js";
+import { personWarningsTool } from "./tools/person-warnings.js";
+import type { PersonWarningsInput } from "./types/person-warnings.js";
+import { personQualityTool } from "./tools/person-quality.js";
+import type { PersonQualityInput } from "./types/person-quality.js";
+import { mergeWarnings } from "./tools/merge-warnings.js";
+import type { MergeWarningsInput } from "./types/merge-warnings.js";
+import { volumeSearchTool } from "./tools/volume-search.js";
+import type { VolumeSearchInput } from "./types/volume-search.js";
+import {
+  mergeTreePersons,
+  type MergeTreePersonsInput,
+} from "./tools/merge-tree-persons.js";
+import {
+  researchLogAppend,
+  type ResearchLogAppendInput,
+} from "./tools/research-log-append.js";
+import {
+  convertCalendar,
+  type ConvertCalendarInput,
+} from "./tools/convert-calendar.js";
+import { censusChildrenGapTool } from "./tools/census-children-gap.js";
+import type { CensusChildrenGapInput } from "./types/census-children-gap.js";
+import {
+  buildExternalSearchUrlTool,
+  type BuildExternalSearchUrlToolInput,
+} from "./tools/build-external-search-url.js";
+import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
+import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
+import { treeForget, type TreeForgetInput } from "./tools/tree-forget.js";
+import {
+  researchAppendFromCaller,
+  type ResearchAppendInput,
+} from "./tools/research-append.js";
+import { rankSearchMatches } from "./tools/rank-search-matches.js";
+import type { RankSearchMatchesInput } from "./types/rank-search-matches.js";
+import {
+  projectContext,
+  type ProjectContextInput,
+} from "./tools/project-context.js";
+import { extractionAppend } from "./tools/extraction-append.js";
+import { materializeFacts } from "./tools/materialize-facts.js";
+import type { MaterializeFactsInput } from "./types/materialize-facts.js";
+import {
+  researchQuery,
+  type ResearchQueryInput,
+} from "./tools/research-query.js";
+import {
+  projectCreate,
+  type ProjectCreateInput,
+} from "./tools/project-create.js";
+import { sidecarRead, type SidecarReadInput } from "./tools/sidecar-read.js";
+import { getNameVariants, type GetNameVariantsInput } from "./tools/name-variants.js";
+import { allToolSchemas } from "./tool-schemas.js";
+// Tools that report failure by RETURNING `{ ok: false }` rather than throwing
+// need `isError` set explicitly — the catch arms below cannot see them.
+import { writerToolResult, type OkFalseResult } from "./tool-result.js";
+import { readBuildInfo } from "./utils/build-info.js";
+
+export function createServer(principal: Principal): Server {
+  const server = new Server(
+    // The stamped build (base+date.sha, or base+dev) — issue #2126. The same
+    // string is the `buildId` project_context and auth_status return.
+    { name: "genealogy-mcp", version: readBuildInfo().version },
+    { capabilities: { tools: {} } }
+  );
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: allToolSchemas,
+  }));
+
+  // Tool results are serialized COMPACT — `JSON.stringify(result)`, never
+  // `(result, null, 2)`. The sole consumer is the model, and pretty-print
+  // whitespace was measured at 27.9% of `record_search`'s raw response bytes over
+  // a real 5-hour session: 159k tokens on that one tool, more than the entire
+  // field-level payload diet saved, and it applies to every other tool as well
+  // (`record_read` was another 231k tokens in the same session). Context spent on
+  // indentation is context unavailable for evidence, and it drives the
+  // auto-compaction cycle that makes the agent re-fetch what it already had.
+  // Nothing downstream parses the formatting; a human debugging a transcript can
+  // pipe it through `jq`. See docs/plan/research-performance-2026-07-27.md §C6.
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    if (request.params.name === "research_delivered") {
+      // A pure signal: no network, no auth, no project write. On BOTH hosted planes a
+      // PreToolUse hook ends the turn on this tool's NAME before it executes, so this
+      // arm runs only where no such hook binds (Cowork, the e2e harness).
+      //
+      // The try/catch is not decoration: the server does NOT validate `inputSchema`, so
+      // a non-string `summary` reaches the body and `.trim()` throws. Every other arm
+      // here returns `isError` with a readable message; without this one, that throw
+      // escapes as a protocol-level MCP error instead.
+      try {
+        const args = request.params.arguments as unknown as ResearchDeliveredInput;
+        return {
+          content: [{ type: "text", text: JSON.stringify(researchDelivered(args)) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+
+    if (request.params.name === "wikipedia_search") {
+      try {
+        const args = request.params.arguments as unknown as WikipediaSearchInput;
+        const result = await wikipediaSearch(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "catalog_search") {
+      try {
+        const args = request.params.arguments as unknown as CatalogSearchInput;
+        const result = await catalogSearchTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "place_search") {
+      try {
+        const args = request.params.arguments as unknown as PlaceSearchToolInput;
+        const result = await placeSearchTool(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "place_search_all") {
+      try {
+        const args = request.params.arguments as unknown as PlaceSearchAllToolInput;
+        const result = await placeSearchAllTool(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "login") {
+      try {
+        const args = (request.params.arguments ?? {}) as unknown as LoginToolInput;
+        const result = await loginTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "logout") {
+      try {
+        const args = (request.params.arguments ?? {}) as unknown as LogoutToolInput;
+        const result = await logoutTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "auth_status") {
+      try {
+        const args = (request.params.arguments ?? {}) as unknown as AuthStatusToolInput;
+        const result = await authStatusTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "collections_search") {
+      try {
+        const args = request.params.arguments as unknown as CollectionsSearchInput;
+        const result = await collectionsSearchTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "wiki_search") {
+      try {
+        const args = request.params.arguments as unknown as WikiSearchInput;
+        const result = await wikiSearch(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "place_distance") {
+      try {
+        const args = request.params.arguments as unknown as PlaceDistanceInput;
+        const result = await placeDistanceTool(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "place_population") {
+      try {
+        const args = request.params.arguments as unknown as PopulationToolInput;
+        const result = await populationTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "external_links_search") {
+      try {
+        const args = request.params.arguments as unknown as ExternalLinksSearchInput;
+        // It reports failure by throwing (below), never with `ok: false`, so the
+        // envelope is the plain one; the wrapper keeps it on the writer path.
+        const result: ExternalLinksSearchResult & OkFalseResult = await externalLinksSearchTool(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "image_read") {
+      try {
+        const args = request.params.arguments as unknown as ImageReadInput;
+        const { imageData, metadata } = await imageReadTool(args, principal);
+        return {
+          content: [
+            { type: "image", data: imageData, mimeType: metadata.mimeType },
+            { type: "text", text: JSON.stringify(metadata) },
+          ],
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true,
+        };
+      }
+    }
+    if (request.params.name === "volume_bisect") {
+      try {
+        const args = request.params.arguments as unknown as VolumeBisectInput;
+        const result = await volumeBisectTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true,
+        };
+      }
+    }
+
+    if (request.params.name === "image_transcribe") {
+      try {
+        const args = request.params.arguments as unknown as ImageTranscribeInput;
+        const result = await imageTranscribeTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }],
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true,
+        };
+      }
+    }
+    if (request.params.name === "record_search") {
+      try {
+        const args = request.params.arguments as unknown as RecordSearchInput;
+        const result = await recordSearchTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "person_search") {
+      try {
+        const args = request.params.arguments as unknown as PersonSearchInput;
+        const result = await personSearchTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "same_person") {
+      try {
+        const args = request.params.arguments as unknown as SamePersonInput;
+        const result = await samePerson(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "person_record_matches") {
+      try {
+        const args = request.params.arguments as unknown as MatchByIdInput;
+        const result = await personRecordMatches(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "record_person_matches") {
+      try {
+        const args = request.params.arguments as unknown as MatchByIdInput;
+        const result = await recordPersonMatches(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "person_person_matches") {
+      try {
+        const args = request.params.arguments as unknown as MatchByIdInput;
+        const result = await personPersonMatches(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "record_record_matches") {
+      try {
+        const args = request.params.arguments as unknown as MatchByIdInput;
+        const result = await recordRecordMatches(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "person_read") {
+      try {
+        const args = request.params.arguments as unknown as PersonReadToolInput;
+        const result = await personReadTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "person_ancestors") {
+      try {
+        const args = request.params.arguments as unknown as PersonAncestorsInput;
+        const result = await personAncestorsTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "tree_gaps") {
+      try {
+        const args = request.params.arguments as unknown as TreeGapsInput;
+        const result = await treeGapsTool(args ?? {}, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "record_read") {
+      try {
+        const args = request.params.arguments as unknown as RecordReadInput;
+        const result = await recordReadTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "fulltext_search") {
+      try {
+        const args = request.params.arguments as unknown as FulltextSearchInput;
+        const result = await fulltextSearchTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "wiki_read") {
+      try {
+        const args = request.params.arguments as unknown as WikiReadInput;
+        const result = await wikiReadTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "wiki_place_page") {
+      try {
+        const args = request.params.arguments as unknown as WikiPlacePageInput;
+        const result = await wikiPlacePageTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "validate_research_schema") {
+      try {
+        const args = request.params.arguments as unknown as ValidateResearchSchemaInput;
+        const result = await validateResearchSchema(args);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "source_attachments") {
+      try {
+        const args = request.params.arguments as unknown as SourceAttachmentsInput;
+        const result = await sourceAttachmentsTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "image_search") {
+      try {
+        const args = request.params.arguments as unknown as ImageSearchInput;
+        const result = await imageSearchTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "person_warnings") {
+      try {
+        const args = request.params.arguments as unknown as PersonWarningsInput;
+        const result = await personWarningsTool(args);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "person_quality") {
+      try {
+        const args = request.params.arguments as unknown as PersonQualityInput;
+        const result = await personQualityTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "merge_warnings") {
+      try {
+        const args = request.params.arguments as unknown as MergeWarningsInput;
+        const result = await mergeWarnings(args);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "volume_search") {
+      try {
+        const args = request.params.arguments as unknown as VolumeSearchInput;
+        const result = await volumeSearchTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "merge_tree_persons") {
+      try {
+        const args = request.params.arguments as unknown as MergeTreePersonsInput;
+        const result = await mergeTreePersons(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "materialize_facts") {
+      try {
+        const args = request.params.arguments as unknown as MaterializeFactsInput;
+        const result = await materializeFacts(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "research_log_append") {
+      try {
+        const args = request.params.arguments as unknown as ResearchLogAppendInput;
+        const result = await researchLogAppend(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "convert_calendar") {
+      try {
+        const args = request.params.arguments as unknown as ConvertCalendarInput;
+        const result = convertCalendar(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "census_children_gap") {
+      try {
+        const args = request.params.arguments as unknown as CensusChildrenGapInput;
+        const result = await censusChildrenGapTool(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "build_external_search_url") {
+      try {
+        const args = request.params.arguments as unknown as BuildExternalSearchUrlToolInput;
+        const result = await buildExternalSearchUrlTool(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "tree_edit") {
+      try {
+        const args = request.params.arguments as unknown as TreeEditInput;
+        const result = await treeEdit(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "tree_correct") {
+      try {
+        const args = request.params.arguments as unknown as TreeCorrectInput;
+        const result = await treeCorrect(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "tree_forget") {
+      try {
+        const args = request.params.arguments as unknown as TreeForgetInput;
+        const result = await treeForget(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "extraction_append") {
+      try {
+        // Lane scoping lives inside extractionAppend, not here — see
+        // ResearchAppendOptions. Dispatch passes only the tool arguments.
+        const args = request.params.arguments as unknown as Parameters<typeof extractionAppend>[0];
+        const result = await extractionAppend(args, principal);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "research_append") {
+      try {
+        const args = request.params.arguments as unknown as ResearchAppendInput;
+        const result = await researchAppendFromCaller(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "rank_search_matches") {
+      try {
+        const args = request.params.arguments as unknown as RankSearchMatchesInput;
+        const result = await rankSearchMatches(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "project_context") {
+      try {
+        const args = request.params.arguments as unknown as ProjectContextInput;
+        const result = await projectContext(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "research_query") {
+      try {
+        const args = request.params.arguments as unknown as ResearchQueryInput;
+        const result = await researchQuery(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "project_create") {
+      try {
+        const args = request.params.arguments as unknown as ProjectCreateInput;
+        const result = await projectCreate(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "sidecar_read") {
+      try {
+        const args = request.params.arguments as unknown as SidecarReadInput;
+        const result = await sidecarRead(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "get_name_variants") {
+      try {
+        const args = request.params.arguments as unknown as GetNameVariantsInput;
+        const result = await getNameVariants(args);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    throw new Error(`Unknown tool: ${request.params.name}`);
+  });
+  return server;
+}

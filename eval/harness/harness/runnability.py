@@ -8,7 +8,9 @@ Block a test from executing when:
   OR fails schema validation per spec §9 (unless the test sets
   `intentionally_invalid: true`, for validator skills that must run
   against broken-on-purpose scenarios)
-- the skill directory doesn't exist
+- the skill directory doesn't exist — except on a direct-agent test, whose
+  `test.skill` names a plugin agent file instead (issue #1253); see the
+  fallback in `check_runnable`
 - the skill's rubric.md is missing or malformed
 - an `execution.stub_skills` entry names a skill that doesn't exist
 """
@@ -29,6 +31,7 @@ from harness.schema_validator import (
     validate_tree_gedcomx_json,
 )
 from harness.skill_stubs import parse_stub_skills
+from harness.workspace import DEFAULT_PLUGIN_AGENTS, skill_dir_for
 
 
 # eval/harness/harness/runnability.py -> eval/harness/validators/
@@ -113,6 +116,7 @@ def check_runnable(
     skills_dir: Path,
     tests_dir: Path,
     validators_dir: Path = DEFAULT_VALIDATORS_DIR,
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
 ) -> RunnabilityResult:
     if spec.scenario_notes and spec.scenario_notes.strip():
         return RunnabilityResult(False, "test has non-empty scenario_notes — scenario doesn't match")
@@ -130,7 +134,7 @@ def check_runnable(
                 continue
             try:
                 data = json.loads(f.read_text(encoding="utf-8"))
-            except json.JSONDecodeError as e:
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
                 return RunnabilityResult(
                     False, f"scenario {fname} is not valid JSON: {e}"
                 )
@@ -159,9 +163,31 @@ def check_runnable(
         except InvalidFixtureError as e:
             return RunnabilityResult(False, str(e))
 
-    skill_path = Path(skills_dir) / spec.skill
+    # `test.skill` names a skill directory on a routed test and a plugin-agent
+    # file on a direct-agent test (the #2246 arm; issue #1253). A direct test
+    # has no routing skill by construction — `stage_skills=not spec.is_direct`
+    # never stages one — and an agent-keyed suite like `gps-mentor` has no skill
+    # directory at all, so requiring one here aborts it before it runs.
+    # `_prompt_for` already resolves `agents_dir / f"{spec.skill}.md"` and
+    # raises when it is absent; this gate checks the same artifact so gate-time
+    # and run-time agree on what `test.skill` has to name.
+    #
+    # Gated on `spec.is_direct` deliberately: on a ROUTED test a missing skill
+    # directory is still a typo worth catching, and falling through to an agent
+    # of the same name would run it by a route the test did not ask for.
+    # A test-only skill (eval/skills/) is staged for its own suite only.
+    skill_path = skill_dir_for(spec.skill, Path(skills_dir))
     if not skill_path.is_dir():
-        return RunnabilityResult(False, f"skill not found: {skill_path}")
+        if not spec.is_direct:
+            return RunnabilityResult(False, f"skill not found: {skill_path}")
+        agent_path = Path(agents_dir) / f"{spec.skill}.md"
+        if not agent_path.is_file():
+            return RunnabilityResult(
+                False,
+                f"skill not found: {skill_path} — and this is a direct-agent "
+                f"test, so there is no agent file at {agent_path} to fall back "
+                f"on either",
+            )
 
     # Validate execution.stub_skills entries. A stub is matched by exact
     # name in the PreToolUse hook (`skill_name in _stub_skills`), so a typo
@@ -176,14 +202,19 @@ def check_runnable(
     # and run-time agree on which names are live: parse_stub_skills applies
     # the same normalization the hook matches against (both entry forms,
     # malformed entries dropped — the JSON Schema is the gate for shape).
+    #
+    # An entry may also name an agent with no skill directory: a callee
+    # converted from a skill to an agent, whose spawn the hook stubs instead
+    # (`stub_agents`, issue #2825).
     stubbed = parse_stub_skills(spec.execution)
+    agents_dir = Path(skills_dir).parent / "agents"
     for name in stubbed:
-        if not (Path(skills_dir) / name).is_dir():
+        if not (Path(skills_dir) / name).is_dir() and not (agents_dir / f"{name}.md").is_file():
             return RunnabilityResult(
                 False,
                 f"execution.stub_skills entry '{name}' is not an existing "
-                f"skill (no directory at {skills_dir}/{name}) — the stub "
-                f"would silently never fire",
+                f"skill or agent (no directory at {skills_dir}/{name}, no "
+                f"{agents_dir}/{name}.md) — the stub would silently never fire",
             )
 
     # A callee in BOTH run_skills and stub_skills is the one combination that
@@ -219,19 +250,85 @@ def check_runnable(
             f"run_skills to execute the callee, stub_skills to deny it.",
         )
 
+    # `stop_at_stub` ends the run at the first stubbed hand-off (#3119). With
+    # nothing stubbed it can never fire, and on a negative test the routing
+    # short-circuit already owns the stop: both are declarations that silently
+    # do nothing, so refuse them. A `no-shortcut` test must set it, because its
+    # validator fails on any paired row reached besides the expected one and,
+    # without the stop, the router walks on down the table to those rows.
+    if spec.execution.get("stop_at_stub"):
+        if spec.type != "positive":
+            return RunnabilityResult(
+                False,
+                "execution.stop_at_stub is for positive tests only; a negative "
+                "test already stops at its correct_skill hand-off",
+            )
+        if not stubbed:
+            return RunnabilityResult(
+                False,
+                "execution.stop_at_stub requires a non-empty stub_skills — with "
+                "nothing stubbed the stop could never fire",
+            )
+    if "no-shortcut" in spec.tags and not spec.execution.get("stop_at_stub"):
+        return RunnabilityResult(
+            False,
+            "a no-shortcut test must set execution.stop_at_stub: its verdict is "
+            "the first hand-off, and without the stop the router walks on past it",
+        )
+
+    # `grade:trigger` grades a positive test on activation alone
+    # (grading_mode "trigger"): the verdict is that the skill under test
+    # fired, and the judge dimensions are recorded but do not gate. Its whole
+    # justification is that the delegated sub-skills are STUBBED — an
+    # outcome-dimension score would measure the stub, not the skill. A test
+    # carrying the tag but stubbing nothing lets the callees run for real
+    # while the tag silences the judge's gate over that real execution, so
+    # the verdict passes on activation asserting nothing about the work: the
+    # same vacuous-green failure mode as grade_on_invariant below, and the
+    # same gate-time treatment. Refuse to load it. (grading_mode_for stays a
+    # pure classifier — this runnability gate, not the classifier, owns
+    # fixture-runnability validation.)
+    if "grade:trigger" in (spec.tags or []) and not stubbed:
+        return RunnabilityResult(
+            False,
+            "test is tagged grade:trigger (graded on activation alone, judge "
+            "dimensions diagnostic) but execution.stub_skills is empty. The "
+            "mode is only sound when the delegated sub-skills are stubbed — "
+            "otherwise the callees execute for real and the tag silences the "
+            "judge's gate over a real execution, so the pass is vacuous. Add "
+            "the delegated sub-skills to execution.stub_skills, or drop the "
+            "grade:trigger tag.",
+        )
+
     # Validate negative.correct_skill entries — typos silently produce
     # unsatisfiable tests (Claude can route correctly and the test
     # still fails). Catch them at gate time. xfail tests are exempt: an
     # xfail test is an explicitly declared known-failing test, so a
     # correct_skill naming a not-yet-built skill is the documented
     # reason for the xfail (see xfail_reason), not a typo to catch.
+    # An entry naming a CONVERTED skill resolves to its agent file instead of a
+    # skill directory (issue #2793, and the same shape as the `spec.skill`
+    # fallback above). The destination is still real — a converted agent is
+    # reachable by auto-delegation from its own description — so requiring a
+    # directory here would fail a correctly-routed test for a migration the
+    # test is not about. A name matching NEITHER is still the typo this catches.
     if spec.type == "negative" and spec.negative and spec.expected_outcome != "xfail":
+        # Widened to accept an agent (issue #2793, the comment above). It was
+        # held back first: issue #2825's ruling C accepted an aborted row while
+        # `_compute_outcome` and the routing short-circuit still keyed on
+        # `Skill` calls, because accepting the agent here would have graded a
+        # correctly routed run `fail`. Both now read an `Agent` spawn too -- the
+        # short-circuit's agent form (#3077) and `handoffs` in the outcome
+        # (#3131) -- so the acceptance below is consistent with grading.
         for i, name in enumerate(spec.negative.get("correct_skill", []) or []):
-            if not (Path(skills_dir) / name).is_dir():
+            if not (Path(skills_dir) / name).is_dir() and not (
+                Path(agents_dir) / f"{name}.md"
+            ).is_file():
                 return RunnabilityResult(
                     False,
-                    f"negative.correct_skill[{i}]='{name}' is not an "
-                    f"existing skill (no directory at {skills_dir}/{name})",
+                    f"negative.correct_skill[{i}]='{name}' is neither an "
+                    f"existing skill (no directory at {skills_dir}/{name}) "
+                    f"nor an existing agent (no file at {agents_dir}/{name}.md)",
                 )
 
         # `grade_on_invariant` hands the whole verdict to the test's
@@ -244,7 +341,12 @@ def check_runnable(
         # enforced it until now. Same failure mode and same gate-time
         # treatment as the correct_skill typo above.
         if spec.negative.get("grade_on_invariant"):
-            gate_tags = tag_gated_validator_tags(validators_dir, spec.skill)
+            # `test_universal.py` runs for every suite, so a gate there binds
+            # this test as surely as one in the skill's own file
+            # (`test_hand_back_names_its_owner`, lifted there by issue #2805).
+            gate_tags = tag_gated_validator_tags(
+                validators_dir, spec.skill
+            ) | tag_gated_validator_tags(validators_dir, "universal")
             matched = sorted(set(spec.tags or []) & gate_tags)
             if not matched:
                 validator_file = (

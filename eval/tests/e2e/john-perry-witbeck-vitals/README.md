@@ -13,6 +13,18 @@ time.)
 > Witbeck, and what evidence confirms each event in Schenectady County,
 > New York?
 
+## Bundled captures (`provided-documents/`)
+
+One Find a Grave page is committed here to let the harness exercise its burial plan item without a live
+browser session (issue #2083):
+
+| File | Source | What it shows |
+|------|--------|---------------|
+| `findagrave-john-perry-witbeck-140729859.pdf` | findagrave.com | Memorial #140729859 — John Perry Witbeck, died 28 Feb 1819, buried Niskayuna Reformed Church Cemetery, Schenectady County, New York |
+
+This is an authentic page saved from findagrave.com in a credentialed browser. It supplies the specific
+cemetery name (Niskayuna Reformed Church Cemetery) and confirms the death date for f2 and burial place for f3.
+
 ## What was removed from the starting tree
 
 - Removed fact 548652f1-ac14-4146-998a-0c5203e00397 on MGRB-VP2: Death 28 Feb 1819 Niskayuna, Schenectady, New York, United States

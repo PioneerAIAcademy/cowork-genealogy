@@ -1,0 +1,62 @@
+# Source Evaluation Rubric
+
+Grading dimensions for source-evaluation unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
+
+**Grading constraints (read before scoring any dimension).** You do not have direct access to the scenario's `research.json` or `tree.gedcomx.json`. Your only sources of truth are the scenario README, the delegation, the agent's tool calls and the tool responses returned, and the agent's final text response.
+
+Do not assert that a fact is or is not in the tree, in a source, or in any record unless a tool response or the scenario README says so verbatim. This applies symmetrically: do not deduct because the agent missed something you cannot verify, and do not credit it for matching something you cannot verify. When the agent cites a value from a tool response, grade whether the citation matches that response. When it asserts something present in no tool response and no README, that is a Correctness deduction — the agent invented it.
+
+A fact about a second person is grounded in that person's own `person_read` response, and relatives or household members named in a `record_read` are grounded in that response. Check a claim against every response before calling it invented. Order of operations is the order of the tool calls: the final reply is written after every call has returned, so the order in which the reply presents its findings is not evidence of the order the tools were called.
+
+**Which value came from where.** Two documents are in play and they are easy to transpose. The **indexed** value is whatever a `record_read` response holds; the **profile** value is whatever the `person_read` response holds. A finding names both, in that order. Before deducting for a factual error, check the agent's two values against those two responses specifically — a rationale that alleges a mismatch and then quotes the same number on both sides has transposed them, and the deduction is yours, not the agent's.
+
+## Remediation doctrine
+
+The core of the agent. When a source disagrees, does the recommended remedy match the kind of disagreement? An indexing or transcription error — one field wrong in a record that otherwise fits the person — is fixed by going back to what the index was made from (the original page, or, for an index-only collection, the record the index derives from) and correcting the index, with the source left attached. Detaching is correct only for a source genuinely about a different person.
+
+**Detaching is the one unrecoverable recommendation in this agent, so every bar below turns on what licensed it.** Before scoring, find each passage that recommends detaching, unlinking or removing — characterising a source-versus-source disagreement and routing it onward is not one of these, and the body now requires it — and ask two questions of it: was the disagreement with the **profile** or with **another source**, and does the passage **name the person whose record it is**? A detach is licensed only when the answer is "with the profile" and the person is named. Neither question is answerable from the classification label the reply used — a reply that writes the word "misattributed" over a source-vs-source disagreement has not made it one.
+
+**Decide index error versus misattribution from what disagrees with the profile, not from the label.** One field wrong in a record whose other details fit (name, place, date pattern, household) is an index error. Several independent fields wrong at once — birth year, county, spouse or household — is a misattribution: re-reading the original cannot make that record fit, and the reply listing those fields is the classification cue.
+
+**Then check the order of every index-error remedy (issue #1606).** This check applies only to index-error findings as defined above. A detach of a misattributed source is never scored under it: detaching is not a correction, so a licensed misattribution detach whose first action is "detach" passes this check by construction. For each index-error finding, quote the **first action** its remedy tells the researcher to take. The correction is what going back to the original decides, so the original comes first. The remedy fails this check when its first action is submitting or making the correction, and going back to what the index was made from is conditional ("if you can locate…"), optional, or framed as confirming the correction afterwards — even when that original is named correctly. It passes when the original is checked first and the correction is made from what it shows. Naming FamilySearch's correction path as *where* to submit, after the check, is fine. State the quoted first action in your rationale.
+
+- **pass:** Every index-error finding recommends re-reading the original and correcting the index, and none recommends detaching, unlinking, removing or flagging the source. Where a source disagrees with the profile on several independent fields, detaching is recommended — as the first action, with no re-read required — after `source_attachments`, and the reason names the true subject the reply read with `person_read`.
+- **partial:** The re-read remedy is given but hedged with a detach alternative for an index error; or an index-error remedy (one field wrong, record otherwise fits) fails the order check above — a misattribution detach is never a partial for its order; or the misattributed source is correctly identified but the recommendation stops at "this doesn't belong" without saying where it does — including a reply that states it cannot name the true subject and recommends detaching anyway.
+- **fail:** Detaching, unlinking or flagging is recommended for a source whose disagreement is a single mis-transcribed field. This is the failure issue #1606 was filed on and it is a fail even when everything else in the report is right. **Also a fail:** detaching is recommended for a source whose disagreement is with **another source** rather than with the profile. Two sources contradicting each other is not evidence that either is about a different person — nothing has discredited either record — so a detach there discards evidence on the strength of a conflict the agent is not the one to resolve.
+- **N/A:** No disagreement of any kind was found — neither between a source and the profile, nor between two sources. Score `null`.
+
+## Classification before recommendation
+
+Does the agent decide *what kind* of finding it has before saying what to do about it, and does it name the cue that decided it? The distinction that matters is one field disagreeing (index error) versus the record describing a different life altogether (misattribution).
+
+- **pass:** Each finding carries an explicit classification and the evidence for it — "everything else fits: the township, the wife, the son" or "born 1852 against 1875, a different county, a wife and children who are not this family's".
+- **partial:** Findings are classified but at least one classification is asserted without the cue, so a reader cannot check it.
+- **fail:** Findings are reported as undifferentiated errors with a recommendation attached to each, or the classification contradicts the record the tool returned.
+- **N/A:** No findings. Score `null`.
+
+## Signal versus backend noise
+
+Does the report separate what the researcher can act on from FamilySearch storage artifacts? Repeated internal fact, name and person ids across unrelated records are how the system numbers things, not defects. Distinguish two FamilySearch-originated things: storage **artifacts** (the repeated ids) are noise and stay closing-context only; the **profile checklist** returned by `person_quality` is legitimate content, permitted as one named block after the findings and outside the count. So are the **impossible-date warnings** `person_warnings` returns over the project tree: one block after the findings, before the checklist, outside the count, each warning's `message` verbatim with no cause narrated. The tester's words in feedback case #1536: *"Having the metadata errors brought to my attention was not helpful."*
+
+- **pass:** The findings list and the stated count contain only user-actionable items. Backend artifacts are absent, or appear once as closing context with no action attached. A FamilySearch profile-checklist block after the findings does not count against this — it is content, not noise — provided it is outside the count and carries no recommended action. A stated tally of omitted artifacts is a pass, not a hedge.
+- **partial:** Backend artifacts stay out of the numbered findings but the framing still implies they are problems, or the checklist block is merged into the findings or their count, or a `person_warnings` warning is numbered as a finding, given a source remedy, or explained with a narrated cause. Stating how many artifacts were omitted is **not** this — that is the pass bar.
+- **fail:** A backend artifact appears as a numbered finding, carries a recommended action, or is counted among the errors — the researcher is handed the triage the agent was supposed to do.
+- **N/A:** Nothing in the tool responses could be mistaken for a backend artifact. Score `null`.
+
+## Tool selection and argument quality
+
+Does the agent reach the sources the way its body says to, and pass arguments that match what it read? `person_read({ personId })` is the path from a person id to the attached list — it always returns sources and relatives, and takes no flag for either; `record_read` takes the ARK carried by each source's `url`; `source_attachments` is required before a misattribution is called, so the recommendation can name where the record actually belongs. `person_warnings` is called once with `projectPath` and the FamilySearch id `person_read` returned; the tool finds the tree person itself (by id, or by the `ark` linking a local id such as `I1` to it) and answers "not found" when the project does not hold them.
+
+- **pass:** `person_read` is called for the person named; every source carrying a `1:1:` ARK is read with the ARK it actually carries; `source_attachments` is called before any detach recommendation; `person_warnings` is called once, and its warnings are reported only when it found the person.
+- **partial:** The sources are enumerated and read correctly, but a misattribution is called without the `source_attachments` check, so the report says where the record does not belong without saying where it does; **or** another person is named as the record's true subject on the attachment check alone, without a `person_read` of that person to confirm their facts fit — an attachment proves attachment, not ownership; **or** `person_warnings` is skipped, or retried under another id after "not found".
+- **fail:** an ARK is invented rather than taken from the source's `url`; or records are judged without being read; or a warning is reported for a person the project tree does not hold, or the person is added to the project to make the check run.
+
+## Coverage and honesty about what was not checked
+
+Every attached source is either read and judged, or reported as unreadable with the reason. A source that could not be read is never reported as clean.
+
+- **pass:** Each attached source is accounted for. Sources with no record ARK — uploaded documents, memories, external links — are named as unchecked with the reason.
+- **partial:** All readable sources are judged, but the unreadable ones are omitted from the report rather than named.
+- **fail:** A source is described as clean, or as supporting a fact, without a tool response behind it; or attached sources go unmentioned with no explanation.
+
+> Read-only discipline is **not** a rubric dimension: the cap is 5 and it is already checked deterministically by `test_research_json_unmodified` and `test_tree_gedcomx_unmodified` in `eval/harness/validators/test_source_evaluation.py`, plus the universal ownership checks. A judge dimension restating a validator grades nothing and burns budget a substantive dimension needs.

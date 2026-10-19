@@ -1,11 +1,11 @@
 // fact-helpers — TypeScript ports of the date/fact aggregation helpers
 // that Java's MobWarnings relies on.
 //
-// Java's per-check methods (hasEventBeforeBirth, earliestChildBirthToBirth,
-// hasEventAfterDeath, etc.) read like:
+// Java's per-check methods (hasEventAfterDeath, earliestChildBirthToBirth,
+// hasEventBeforeChristening, etc.) read like:
 //
-//     Integer diff = factDaysDiffEarliestLatest(mob, null, null,
-//                       FsFactType.BIRTHLIKE_FACT_TYPES, null, false, 0);
+//     Integer diff = factDaysDiffLatestLatest(mob,
+//                       FsFactType.DEATHLIKE_FACT_TYPES, null, null, null, false, 0);
 //     return diff != null && diff > days;
 //
 // This module gives us the same building blocks so the TS warning checks
@@ -25,7 +25,9 @@
 import type {
   SimplifiedFact,
   SimplifiedPerson,
+  SimplifiedRelationship,
 } from "../types/gedcomx.js";
+import type { WarningFact } from "../types/person-warnings.js";
 import {
   earliestYear,
   getDayRange,
@@ -87,40 +89,57 @@ function collectFactDayRanges(
   return out;
 }
 
-// ─── Fact-id collection (for PersonWarning.factIds highlighting) ──────────
+// ─── Fact collection (for PersonWarning.facts) ────────────────────────────
 
 /**
  * Ids of a person's facts whose `type` matches the (factTypes, antiFactTypes)
  * selection — `factTypes = null` means any type; `antiFactTypes = null` means
  * no exclusion. Skips facts with no `id`, preserves source order, and drops
  * duplicate ids. Pure; used by the warning emitters to attach the specific
- * facts a check examined (`PersonWarning.factIds`). Works for the anchor
- * (`mob.getPerson()`) or any relative/child `SimplifiedPerson`.
+ * facts a check examined (`PersonWarning.facts`). Works for the anchor
+ * (`mob.getPerson()`), any relative/child `SimplifiedPerson`, or a
+ * `SimplifiedRelationship` whose facts a check reads (a Couple's
+ * `CoupleNeverHadChildren`). Only `facts` is read.
  */
-export function factIdsOfPersonFacts(
-  person: SimplifiedPerson,
+export function warningFactsOfPerson(
+  person: SimplifiedPerson | SimplifiedRelationship,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
-): string[] {
-  const out: string[] = [];
+): WarningFact[] {
+  const out: WarningFact[] = [];
   const seen = new Set<string>();
   for (const f of person.facts ?? []) {
     if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
     if (f.id === undefined || seen.has(f.id)) continue;
     seen.add(f.id);
-    out.push(f.id);
+    out.push({
+      id: f.id,
+      type: f.type ?? "",
+      // Raw `date` first, `standard_date` second, null when neither. NOT
+      // getStandardDate(): it inverts this precedence and normalizes through
+      // stdDate(), turning a record's "~1818" into "Abt 1818".
+      date: f.date ?? f.standard_date ?? null,
+    });
   }
   return out;
 }
 
 // ─── Self-fact (anchor) aggregations ──────────────────────────────────────
 
-/** Earliest possible day across all matching facts on the anchor, or null. */
+/**
+ * Earliest possible day across all matching facts on the anchor, or null.
+ *
+ * `bound` picks which end of each fact's day range is compared: `"min"` (the
+ * default) gives the earliest any fact could be; `"max"` gives the earliest
+ * fact read as LATE as its date allows — the generous side of a check that
+ * asks whether some fact came too early (see `hasEventBeforeBirth`).
+ */
 export function earliestDayOfSelfFacts(
   mob: Mob,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
   imperfectDateFudgeDays = 0,
+  bound: "min" | "max" = "min",
 ): number | null {
   const ranges = collectFactDayRanges(
     mob.getFacts(),
@@ -129,19 +148,26 @@ export function earliestDayOfSelfFacts(
     imperfectDateFudgeDays,
   );
   if (ranges.length === 0) return null;
-  let earliest = ranges[0].min;
+  let earliest = ranges[0][bound];
   for (let i = 1; i < ranges.length; i++) {
-    if (ranges[i].min < earliest) earliest = ranges[i].min;
+    if (ranges[i][bound] < earliest) earliest = ranges[i][bound];
   }
   return earliest;
 }
 
-/** Latest possible day across all matching facts on the anchor, or null. */
+/**
+ * Latest possible day across all matching facts on the anchor, or null.
+ *
+ * `bound` picks which end of each fact's day range is compared: `"max"` (the
+ * default) gives the latest any fact could be; `"min"` gives the latest fact
+ * read as EARLY as its date allows.
+ */
 export function latestDayOfSelfFacts(
   mob: Mob,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
   imperfectDateFudgeDays = 0,
+  bound: "min" | "max" = "max",
 ): number | null {
   const ranges = collectFactDayRanges(
     mob.getFacts(),
@@ -150,9 +176,47 @@ export function latestDayOfSelfFacts(
     imperfectDateFudgeDays,
   );
   if (ranges.length === 0) return null;
-  let latest = ranges[0].max;
+  let latest = ranges[0][bound];
   for (let i = 1; i < ranges.length; i++) {
-    if (ranges[i].max > latest) latest = ranges[i].max;
+    if (ranges[i][bound] > latest) latest = ranges[i][bound];
+  }
+  return latest;
+}
+
+/** Earliest possible year across all matching facts in `facts`, or null.
+ *  Split out of `earliestYearOfSelfFacts` so a caller can pass a fact list the
+ *  anchor's own `facts[]` does not hold — a Marriage on its Couple edge. */
+export function earliestYearOfFacts(
+  facts: readonly SimplifiedFact[],
+  factTypes: ReadonlySet<string> | null,
+  antiFactTypes: ReadonlySet<string> | null = null,
+): number | null {
+  let earliest: number | null = null;
+  for (const f of facts) {
+    if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
+    const std = getStandardDate(f);
+    if (std === null) continue;
+    const y = earliestYear(std);
+    if (y === null) continue;
+    if (earliest === null || y < earliest) earliest = y;
+  }
+  return earliest;
+}
+
+/** Latest possible year across all matching facts in `facts`, or null. */
+export function latestYearOfFacts(
+  facts: readonly SimplifiedFact[],
+  factTypes: ReadonlySet<string> | null,
+  antiFactTypes: ReadonlySet<string> | null = null,
+): number | null {
+  let latest: number | null = null;
+  for (const f of facts) {
+    if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
+    const std = getStandardDate(f);
+    if (std === null) continue;
+    const y = latestYear(std);
+    if (y === null) continue;
+    if (latest === null || y > latest) latest = y;
   }
   return latest;
 }
@@ -199,19 +263,32 @@ export function latestYearOfSelfFacts(
  * Earliest possible year across all matching facts on every CHILD of the
  * anchor. Equivalent to Java's
  *   getEarliest(getChildEventYears(mob, factTypes))
+ *
+ * `bound` selects which end of each fact's date range is read before taking
+ * the minimum across children. `"earliest"` (the default, and Java's
+ * behaviour) answers "how early COULD the first child have been born"; with
+ * `"latest"` it answers "by what year was the first child CERTAINLY born".
+ *
+ * The distinction only matters for an imprecise date, where the two bounds
+ * differ — `Bef 1880` spans 1870..1880 — and it is the difference between a
+ * check that fires on a possibility and one that fires on a certainty. A
+ * caller whose check REFUSES work on the result wants `"latest"`; see
+ * `earliestChildBirthToBirth`.
  */
 export function earliestYearOfChildFacts(
   mob: Mob,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
+  bound: "earliest" | "latest" = "earliest",
 ): number | null {
+  const yearOf = bound === "latest" ? latestYear : earliestYear;
   let earliest: number | null = null;
   for (const child of mob.getChildren()) {
     for (const f of child.facts ?? []) {
       if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
       const std = getStandardDate(f);
       if (std === null) continue;
-      const y = earliestYear(std);
+      const y = yearOf(std);
       if (y === null) continue;
       if (earliest === null || y < earliest) earliest = y;
     }
@@ -278,13 +355,15 @@ export function earliestYearOfPersonFacts(
   person: SimplifiedPerson,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
+  bound: "earliest" | "latest" = "earliest",
 ): number | null {
+  const yearOf = bound === "latest" ? latestYear : earliestYear;
   let earliest: number | null = null;
   for (const f of person.facts ?? []) {
     if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
     const std = getStandardDate(f);
     if (std === null) continue;
-    const y = earliestYear(std);
+    const y = yearOf(std);
     if (y === null) continue;
     if (earliest === null || y < earliest) earliest = y;
   }
@@ -387,14 +466,25 @@ export function earliestYearOfParentFacts(
 }
 
 // ─── Java's day-diff aggregators ──────────────────────────────────────────
-// All four (Earliest-Latest, Latest-Earliest, Earliest-Earliest, Latest-
-// Latest) are direct ports of warnings.java:975-997.
+// Ports of warnings.java:975-997, plus one conservative pairing Java lacks.
+// Java's Earliest-Latest pairing (latest(set 2) − earliest(set 1)) has no
+// helper: its two users, hasEventBeforeBirth and hasEventBeforeChristening,
+// read each date generously instead.
 //
 // Convention matches Java: the diff is always (side-2 quantity) − (side-1
 // quantity). null when either side has no matching dated fact.
 
-/** = latest(set 2) − earliest(set 1). Java warnings.java:975. Used by W1. */
-export function factDaysDiffEarliestLatest(
+/**
+ * = earliest(set 2) − latest(set 1). No Java counterpart: this is the
+ * CONSERVATIVE pairing, taking the bounds that make a gap look as SMALL as
+ * possible, so a warning built on it fires only when the violation holds under
+ * every reading the recorded dates permit. Java's Earliest-Latest is the
+ * opposite pairing. See
+ * `hasBurialAfterDeath` for why the conservative form exists;
+ * `hasDelayedBurial` and `hasStillbirthConflict`'s age branch use it for the
+ * same reason.
+ */
+export function factDaysDiffLatestEarliest(
   mob: Mob,
   factTypes1: ReadonlySet<string> | null,
   antiFactTypes1: ReadonlySet<string> | null,
@@ -402,20 +492,20 @@ export function factDaysDiffEarliestLatest(
   antiFactTypes2: ReadonlySet<string> | null,
   imperfectDateFudgeDays = 0,
 ): number | null {
-  const earliest1 = earliestDayOfSelfFacts(
+  const latest1 = latestDayOfSelfFacts(
     mob,
     factTypes1,
     antiFactTypes1,
     imperfectDateFudgeDays,
   );
-  const latest2 = latestDayOfSelfFacts(
+  const earliest2 = earliestDayOfSelfFacts(
     mob,
     factTypes2,
     antiFactTypes2,
     imperfectDateFudgeDays,
   );
-  if (earliest1 === null || latest2 === null) return null;
-  return latest2 - earliest1;
+  if (latest1 === null || earliest2 === null) return null;
+  return earliest2 - latest1;
 }
 
 /** = latest(set 2) − latest(set 1). Java warnings.java:993. Used by W3. */

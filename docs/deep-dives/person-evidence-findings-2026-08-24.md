@@ -3,27 +3,18 @@
 Issue #1646. Base `11c8e2cb`. Release candidate: `v1_2026-08-24_22-05-46` (22 tests,
 drift 0, annotated). Findings were read from `v1_2026-08-20_15-53-03` and the
 
-> ## ⚠ Three edits are written and NOT applied — they ride this skill's next paid run
+> ## Status (updated by issue #2194)
 >
-> Each one edits a snapshot-tracked file, so each buys a `make eval-skill
-> SKILL=person-evidence` run. The lead deferred them rather than buy a fourth run
-> in one session. **Whoever next pays for a run on this skill should apply all
-> three first**, and they are worth more together than separately.
+> Items 1 and 2 below have been applied; item 3 remains deferred.
 >
-> 1. **The name-provenance sentence** on §5's carve-out — without it a
->    record-derived person minted via `tree_edit add_person` lands with no ref at
->    all. Wording is in "Deferred deliberately" below. Retired entirely if #1895
->    lands first.
-> 2. **F9's `_023` grounding clause** — tells the judge to decide what a run did
->    from its call list. Worth more now than when written: the judge prompt has
->    since made `judge_context` binding on scores.
-> 3. **Ungating `test_check_warnings_runs_after_a_write`** — drop the
->    `check-warnings-required` tag gate once the corpus complies consistently.
->    Measured skip rate when this was written: 2 of 12, 3 of 13, 5 of 14.
->
-> A fourth reason to run: the release candidate was graded under a judge prompt
-> that no longer ships (`judge_prompt_hash` mismatches after a `main` merge;
-> rule 2b is warn-only, so nothing blocks and nothing reminds you).
+> 1. **The name-provenance sentence** — superseded by PR #2428 (§5 named-party
+>    arm, `materialize_facts`). The agent body already states "Never
+>    `tree_edit add_person` for a person the record names." Retired.
+> 2. **F9's `_023` grounding clause** — applied to `ut_023` `judge_context`
+>    in issue #2194.
+> 3. **Ungating `test_check_warnings_runs_after_a_write`** — still deferred.
+>    Measured skip rate: 2 of 12, 3 of 13, 5 of 14. Ungate once compliance
+>    is consistent.
 
 Step 1's output is [`person-evidence-prohibition-list.md`](./person-evidence-prohibition-list.md)
 — 36 transcript-checkable rules, of which **11 have a guard and 9 of those are
@@ -475,6 +466,17 @@ unsourced `add_person` for record-derived people.
 > assertion's `source_id`, since `add_person` enforces a ref on inline facts but
 > not on names and she is record-derived, not a hypothesis stub. Then link per
 > Step 4.
+
+> **Superseded 2026-09-07, before this was ever applied.** #1895's engine half
+> landed: `materialize_facts` now has a named-party arm that mints exactly this
+> person and *enforces* the resolved ref rather than asking the caller to write
+> one, which is the outcome the reviewer preferred when this wording was
+> accepted as the interim. Whoever buys the next `person-evidence` run should
+> retire the carve-out in favour of that call — condition 1 at the top of this
+> file ("Retired entirely if #1895 lands first") — and **not** apply the
+> hand-written `sources` wording above, which now carries a typo and wrong-ref
+> path the tool does not. The paragraph is kept as the record of what was
+> accepted on 2026-08-24.
 
 **Why deferred.** It edits `SKILL.md`, so it flips the run-log snapshot and buys
 a paid eval run; it cannot take `eval-cosmetic-skip`, which is for

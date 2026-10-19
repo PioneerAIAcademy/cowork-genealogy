@@ -14,7 +14,11 @@ export default function PersonEvidenceSection(): React.JSX.Element {
     return (
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Person Evidence</h2>
-        <p className={styles.empty}>No person evidence recorded.</p>
+        <p className={styles.empty}>
+          No person evidence recorded. The evidence gathered for each person —
+          which sources speak to them and what each one says — is compiled
+          during the person-evidence step.
+        </p>
       </div>
     )
   }
@@ -50,6 +54,16 @@ export default function PersonEvidenceSection(): React.JSX.Element {
             }
           >
             <div className={styles.body}>
+              {pe.core_identifier_conflict && (
+                <div className={styles.detail}>
+                  <span className={styles.label}>Conflict:</span> {pe.core_identifier_conflict}
+                </div>
+              )}
+              {pe.move_bridge && (
+                <div className={styles.detail}>
+                  <span className={styles.label}>Move explained by:</span> {pe.move_bridge}
+                </div>
+              )}
               {pe.match_score != null && (
                 <div className={styles.detail}>
                   <span className={styles.label}>Match:</span> {Math.round(pe.match_score * 100)}%

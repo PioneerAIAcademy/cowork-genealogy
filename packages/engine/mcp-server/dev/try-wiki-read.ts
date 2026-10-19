@@ -1,3 +1,4 @@
+import { LOCAL } from "../src/auth/principal.js";
 import { wikiReadTool } from "../src/tools/wiki-read.js";
 
 // Usage: npx tsx dev/try-wiki-read.ts <url>
@@ -11,7 +12,7 @@ if (!url) {
   process.exit(1);
 }
 
-const result = await wikiReadTool({ url });
+const result = await wikiReadTool({ url }, LOCAL);
 console.log(`URL: ${result.url}`);
 console.log(`Content length: ${result.content.length} chars`);
 console.log("\n--- Content Preview (first 2000 chars) ---\n");

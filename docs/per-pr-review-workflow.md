@@ -8,7 +8,7 @@ and their reasoning*, and check any mechanic against the live source first:
 | For | Read instead |
 |---|---|
 | Run-log naming, release/candidate/active, the snapshot model | [`eval/CLAUDE.md`](../eval/CLAUDE.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
-| What the CI gate actually enforces | `eval/CLAUDE.md` § "GitHub Action rules" — now four blocking rules + two warns, plus the `eval-cosmetic-skip` bypass, none of which are described here |
+| What the CI gate actually enforces | `eval/CLAUDE.md` § "GitHub Action rules" — now eight blocking rules + two warns, plus the `eval-cosmetic-skip` bypass, none of which are described here |
 | The skill-improvement loop | [`docs/skill-lifecycle.md`](skill-lifecycle.md) |
 
 **§2.4 is superseded and was never built.** The per-test `test_content_hash`
@@ -126,7 +126,7 @@ The histogram is what makes bimodality visible — a skill with 5 fails + 5 pass
 
 **Decision:** Junior genealogists may update existing tests freely. The harness writes a `test_content_hash` field per test in every run log — SHA-256 over **the resolved test**, computed as:
 
-- the test JSON minus the cosmetic fields `name`, `description`, `tags`
+- the test JSON minus the cosmetic fields `name`, `description`
 - plus the contents of the referenced scenario directory (`research.json` + `tree.gedcomx.json`)
 - plus the contents of each referenced MCP fixture file
 
@@ -183,10 +183,11 @@ The corrected_score is the *final* human verdict after senior PR review. If a ju
 > renamed-into-place* released `v{N}.json` per skill" (the rename
 > matters because release is a candidate → released git rename — the
 > earlier `--diff-filter=A`-only check missed it). Two new blocking
-> rules join Rule 1: the latest full-skill run log must be active on
-> skill-side files (snapshot matches working tree) and its `.ann.json`
-> must have an entry for every dimension **of the sampled tests** — five
-> chosen picks plus every test that failed or scored a 1 or 2 on any dimension, so the count varies by run; see
+> rules join Rule 1: the run log the PR adds (else the latest full-skill
+> run log) must be active on skill-side files (snapshot matches working
+> tree) and its `.ann.json` must have an entry for every dimension **of
+> the sampled tests** — five
+> chosen picks plus every test that failed, scored a 1 or 2 on any dimension, or carries a coerced_routing_negative_to_na warning, so the count varies by run; see
 > `eval/harness/harness/review_sample.py`. A run log with no
 > `review_sample` (every one committed before sampling shipped) still
 > owes every dimension of every test. Plus one warn-only check on

@@ -37,7 +37,7 @@ def load_fixtures(names: list[str], fixtures_dir: Path) -> list[dict[str, Any]]:
             raise InvalidFixtureError(f"fixture not found: {path}")
         try:
             fixture = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as e:
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
             raise InvalidFixtureError(
                 f"fixture is not valid JSON: {path}: {e}"
             ) from e
@@ -54,6 +54,7 @@ def build_manifest(fixtures: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
         tool_name: {
             "predicated": [(args, response, source_name), ...],
             "input_schema": dict or None,
+            "is_error": [bool, ...],  # parallel to "predicated"
         }
     }
 
@@ -79,12 +80,30 @@ def build_manifest(fixtures: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
                 f"fixture missing required non-empty 'args' field: "
                 f"{fixture.get('_source_name') or fixture.get('tool', '?')}"
             )
+        is_error = fixture.get("is_error", False)
+        if not isinstance(is_error, bool):
+            raise InvalidFixtureError(
+                f"fixture 'is_error' must be a boolean: "
+                f"{fixture.get('_source_name') or fixture.get('tool', '?')}"
+            )
+        response = fixture["response"]
+        if is_error and not (
+            isinstance(response, dict)
+            and list(response) == ["error"]
+            and isinstance(response["error"], str)
+        ):
+            raise InvalidFixtureError(
+                f"fixture with is_error must respond with exactly "
+                f'{{"error": "<message>"}}, the envelope production pairs with '
+                f"isError: {fixture.get('_source_name') or fixture.get('tool', '?')}"
+            )
         bucket = manifest.setdefault(
             fixture["tool"],
-            {"predicated": [], "input_schema": None},
+            {"predicated": [], "input_schema": None, "is_error": []},
         )
         source = fixture.get("_source_name")
-        bucket["predicated"].append((args, fixture["response"], source))
+        bucket["predicated"].append((args, response, source))
+        bucket["is_error"].append(is_error)
         if "input_schema" in fixture:
             bucket["input_schema"] = fixture["input_schema"]
     return manifest

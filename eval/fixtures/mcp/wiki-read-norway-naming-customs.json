@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_read",
+  "description": "Norway_Naming_Customs, the page conflict-resolution's identity-conflict pre-work block fetches for a Norwegian record set (issue #2254). Content excerpted verbatim from the live page on 2026-09-23 (23,163 chars; the full page is mostly navigation chrome). It carries the two facts the skill needs and no longer hardcodes: that the population used patronymic surnames in -sen/-datter derived from the father's given name, and WHEN that ended — fixed surnames spread at the end of the 19th century, with Norway's first naming law in 1923. An 1875 record is therefore inside the patronymic era, which is what makes a Hansen/Pedersen mismatch a different-father signal rather than a spelling variant. Used by ut_conflict_resolution_014.",
+  "args": {
+    "url": "~Norway_Naming_Customs"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Norway_Naming_Customs",
+    "content": "# Norway Naming Customs\n\n## Surnames\n\n* As early as the 1600s certain classes of people had fixed surnames.\n* During the end of the 19th century people began adopting fixed surnames\n* The first law in Norway regarding names was passed in 1923\n* Most of the population used patronymic surnames which are derived from the father's given name and a suffix to identify the child's gender, *-sen*, *-datter*\n* Surnames were frequently abbreviated in records\n  * The suffix *-datter* was frequently abbreviated as **d.**, **dr.**, **dtr.**, etc.\n* Spelling was not standardized in Norway until 1917\n\n### Types of Surnames\n\n* Patronymic - based on the father's given name, such as Jensen (son of Jens)\n* Farm name - indicates the farm where the person lived; farm names changed when a person moved and are residence, not identity\n\n### Best Practices For Recording Names in Family Tree\n\n* Surnames which are abbreviated in the records should be recorded fully spelled out\n* Farm names indicate residence, and should be recorded as part of the event locality - not as a surname\n\n## Given Names\n\n* Naming patterns were traditional: the first son was often named for the paternal grandfather, the first daughter for the paternal grandmother\n* A child born after a sibling died was frequently given the deceased sibling's name\n"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "tool": "record_read",
+  "description": "The Minnesota Death Index record attached to Christian P. Hole (KD96-TV2) as SD-HOLE-B, carrying the corpus's unambiguous indexing error. It indexes the death as 10 June 1954 against the profile's 10 June 1945 — same day, same month, same county, same name and middle initial, so it is plainly the right man and a transposed digit in the year. The record type matters: a death index date is exact, so this cannot be read as ordinary approximation the way a census age can. That distinction is the point — the 1900 census in this corpus indexes a birth year two years off, which is normal census variance and must NOT be reported as an indexing error. One record with a real transcription error, one with tolerable drift, one genuinely misattributed.",
+  "args": {
+    "recordId": "~HOLE-002"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Christian P.",
+            "surname": "Hole",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Death",
+            "date": "10 June 1954",
+            "place": "Erskine, Polk, Minnesota, United States"
+          },
+          {
+            "id": "F2",
+            "type": "Birth",
+            "date": "1875",
+            "place": "Norway"
+          }
+        ],
+        "ark": "ark:/61903/1:1:HOLE-002",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Minnesota Death Index, 1908-2002"
+          }
+        ]
+      }
+    ],
+    "places": [],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Minnesota Death Index, 1908-2002",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-002"
+      }
+    ]
+  }
+}

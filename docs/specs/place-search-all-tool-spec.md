@@ -25,7 +25,7 @@ Identical to `place_search`.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `placeName` | string | Yes | Place name to search for. |
+| `placeName` | string | Yes | Place name to search for. **Sanitized before it is sent** (`&` → the word `and`; `?` `*` `#` `~` dropped) — see [`place-search-tool-spec.md`](./place-search-tool-spec.md#places_search_resource), which owns the shared query construction. |
 | `contextName` | string | No | Higher-level place to disambiguate by; matched as a case-insensitive substring of each candidate's full name. If nothing matches, unfiltered results are used. |
 
 ```json

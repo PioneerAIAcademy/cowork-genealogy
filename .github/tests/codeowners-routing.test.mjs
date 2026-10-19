@@ -105,7 +105,7 @@ const TABLE = [
   ['.gitattributes', D],
   ['docs/specs/schemas/research.schema.json', D],
   // Genealogist content, including where it lives in developer-looking files.
-  ['packages/engine/plugin/skills/citation/SKILL.md', G],
+  ['packages/engine/plugin/skills/record-extraction/SKILL.md', G],
   ['packages/engine/plugin/skills/timeline/scripts/build.py', G],
   ['packages/engine/plugin/agents/gps-mentor.md', G],
   ['eval/fixtures/scenarios/x/research.json', G],
@@ -120,7 +120,24 @@ const TABLE = [
   ['apps/web/src/styles.css', null],
   ['apps/web/public/favicon.svg', null],
   ['.gitignore', null],
-  ['scripts/test.sh', null],
+  // scripts/test.sh EXPECTED null until 2026-09-16, grouped with CSS and
+  // .gitignore as incidental. It is not incidental — it is `make test-all`, the
+  // gate every PR claims to have run — and when the approval count dropped to 1
+  // it became a one-approval-from-anyone path. Now senior-owned via `*.sh`,
+  // along with the build/packaging scripts and the branch-protection script.
+  ['scripts/test.sh', D],
+  ['scripts/verify-mcpb.sh', D],
+  ['.github/scripts/consolidate-branch-protection.sh', D],
+  ['deploy/Dockerfile', D],
+  ['apps/server/sandbox/e2b.Dockerfile', D],
+  ['apps/server/uv.lock', D],
+  // The Beanstalk templates and pins (U12): Procfile, .config and requirements.txt
+  // match no extension rule, so without their own rules these deploy
+  // definitions would need no senior.
+  ['apps/server/proto/eb-tools/Procfile', D],
+  ['apps/server/proto/eb-web/.ebextensions/01-web.config', D],
+  ['apps/server/proto/eb-worker/Procfile', D],
+  ['apps/server/proto/web/requirements.txt', D],
 ];
 {
   const before = failures;

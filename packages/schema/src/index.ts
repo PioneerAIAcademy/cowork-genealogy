@@ -19,13 +19,13 @@
 // entry is a compile error, not silent drift.
 export * from './enums.generated.js'
 import type {
-  ConflictStatus, ConflictType, DateCertainty, EvidenceType, HoldingConfidence,
+  ConflictStatus, ConflictType, DateCertainty, RecordBasis, HoldingConfidence,
   HoldingType, HypothesisStatus, InformantProximity, InformationQuality,
-  LogOutcome, PersonEvidenceConfidence, PlanItemStatus, PlanStatus, Priority,
-  ProjectStatus, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
+  LogOutcome, NotReachedKind, PersonEvidenceConfidence, PlanItemStatus, PlanStatus, Priority,
+  ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
-  Subscription,
+  StoppedBecause, Subscription, LocalityPageSection, ResolutionKind, SkipCategory,
 } from './enums.generated.js'
 
 // ============================================================
@@ -64,11 +64,19 @@ export interface StopCriteria {
   overturn_risk: string
 }
 
-export interface ExhaustiveDeclaration {
-  declared: boolean
+export interface NotReachedEntry {
+  kind: NotReachedKind
+  description: string
+  log_entry_id: string | null
+  wiki_title: string | null
+}
+
+export interface SearchStop {
+  stopped_because: StoppedBecause | null
   justification?: string | null
   log_entry_ids: string[]
   stop_criteria: StopCriteria | null
+  not_reached: NotReachedEntry[]
 }
 
 export interface Question {
@@ -83,7 +91,7 @@ export interface Question {
   created: string
   resolved: string | null
   resolution_assertion_ids: string[]
-  exhaustive_declaration: ExhaustiveDeclaration
+  search_stop: SearchStop
 }
 
 export interface PlanItem {
@@ -96,6 +104,8 @@ export interface PlanItem {
   rationale: string
   fallback_for: string | null
   status: PlanItemStatus
+  skip_category?: SkipCategory
+  skip_reason?: string
 }
 
 export interface Plan {
@@ -103,7 +113,12 @@ export interface Plan {
   question_id: string
   status: PlanStatus
   created: string
-  items: PlanItem[]
+  /** At least one item, mirroring `$defs/plan.items` in `research.schema.json`
+   *  (`type: array, minItems: 1`). A plain `PlanItem[]` admits `[]`, so this
+   *  mirror silently disagreed with the schema it exists to mirror — the same
+   *  drift the engine's runtime validator had. Held by
+   *  `src/type-assertions.ts`. */
+  items: [PlanItem, ...PlanItem[]]
 }
 
 export interface ExternalSiteDetail {
@@ -149,6 +164,14 @@ export interface Source {
   notes?: string | null
   log_entry_id?: string | null
   transcription?: string | null
+  /** `true` = `transcription` is PARTIAL — image_transcribe hit its output-token
+   *  cap (its `truncated` output flag; image-transcribe-tool-spec §6.2) and the
+   *  text below the cut was not read. Otherwise ABSENT. The persisted marker is
+   *  `true` or absent, never `false` (#2457 B2 ruling): a verified-whole read is
+   *  recorded only in the tool's in-process cap store, never here. Absence means
+   *  not established (whole, non-image, or a truncation state that never reached
+   *  the write boundary) — unknown, not a guarantee of whole. */
+  transcription_truncated?: true
   /** Project-relative path of the saved page scan (images/<key>.jpg), when the
    *  source is image-backed and image_transcribe persisted it (§8.5). */
   image_filename?: string | null
@@ -171,7 +194,7 @@ export interface Assertion {
   informant: string
   informant_proximity: InformantProximity
   informant_bias_notes?: string | null
-  evidence_type: EvidenceType
+  record_basis: RecordBasis
   log_entry_id?: string | null
   record_persona_id?: string | null
   extracted_for_question_ids: string[]
@@ -183,6 +206,8 @@ export interface PersonEvidence {
   person_id: string
   confidence: PersonEvidenceConfidence
   rationale: string
+  core_identifier_conflict?: string | null
+  move_bridge?: string | null
   match_score?: number | null
   created: string
   superseded_by?: string | null
@@ -199,6 +224,8 @@ export interface Conflict {
   weighing_analysis?: string | null
   preferred_assertion_id?: string | null
   resolution_rationale?: string | null
+  resolution_kind?: ResolutionKind | null
+  resolved_value?: string | null
   status: ConflictStatus
   blocks_question_ids: string[]
 }
@@ -247,15 +274,35 @@ export interface Timeline {
   gaps: TimelineGap[]
 }
 
+export interface ProofClaimRelationship {
+  type: 'ParentChild'
+  parent: string
+  child: string
+}
+
+export interface ProofClaim {
+  claim: string
+  proof_tier: ProofTier
+  // Optional here but required on ProofSummary below: `claims` is itself an
+  // optional object, and a required field inside one is a second thing to get
+  // wrong for no gain. Optionality follows the schema's `required` list, and a
+  // drift test asserts the `?` in both directions.
+  shortfall?: ProofShortfall
+  supporting_assertion_ids: string[]
+  relationship: ProofClaimRelationship
+}
+
 export interface ProofSummary {
   id: string
   question_id: string
   tier: ProofTier
   vehicle: ProofVehicle
+  shortfall: ProofShortfall
   supporting_assertion_ids: string[]
   resolved_conflict_ids: string[]
   exhaustive_search_summary: string
   narrative_markdown: string
+  claims?: ProofClaim[]
 }
 
 export interface KnownHolding {
@@ -281,7 +328,7 @@ export interface EvaluationEntry {
 }
 
 export interface LocalityPageRead {
-  section: "home" | "getting_started" | "online_records" | "research_tips"
+  section: LocalityPageSection
   url?: string | null
   found: boolean
 }
@@ -312,6 +359,14 @@ export interface Locality {
   updated?: string
 }
 
+export interface WarningJustification {
+  warning_id: string
+  justification: string
+  person_ids: string[]
+  tool: string
+  recorded_at: string
+}
+
 export interface ResearchData {
   project: Project
   researcher_profile?: ResearcherProfile
@@ -328,6 +383,7 @@ export interface ResearchData {
   proof_summaries: ProofSummary[]
   evaluations: EvaluationEntry[]
   localities?: Locality[]
+  warning_justifications?: WarningJustification[]
 }
 
 // ============================================================
@@ -365,6 +421,12 @@ export interface GedcomxFact {
   /** Qualifier carrying the fact's meaning when type+date+place isn't enough
    *  (e.g. an Occupation fact's `"Newspaper Editor"`). */
   value?: string
+  /** The `research.json` assertion this fact was minted from. Stamped by
+   *  `materialize_facts` on the mint branch only, so a later correction to that
+   *  assertion can find the fact it produced. Absent on hand-entered facts, on
+   *  facts merged from members that do not all carry the same backlink, and on
+   *  every fact written before the field existed. */
+  assertion_id?: string
   sources?: GedcomxSourceRef[]
 }
 
@@ -376,6 +438,8 @@ export interface GedcomxPerson {
   gender: 'Male' | 'Female' | 'Unknown'
   names: GedcomxName[]
   facts?: GedcomxFact[]
+  /** The sources FamilySearch attaches to this person, as refs into `sources[]`. */
+  sources?: GedcomxSourceRef[]
 }
 
 export interface GedcomxParentChildRelationship {
@@ -445,12 +509,17 @@ export interface RecordSearchResult {
 
 export interface FulltextSearchResult {
   id: string
+  sourceUrl?: string
+  collectionId?: string
   collectionTitle?: string
+  title?: string
+  recordDate?: string
   recordType?: string
   recordPlace?: string
   textDocument?: string
   names?: string[]
   places?: string[]
+  dates?: string[]
   highlightTerms?: string[]
 }
 

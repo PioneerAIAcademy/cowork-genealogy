@@ -3,12 +3,13 @@
  * Smoke test for same_person — exercises the tool end-to-end against
  * the live FamilySearch API using the Hufenreuter example payloads.
  *
- * Requires a valid FS session (run `login` first, or set FS_ACCESS_TOKEN
- * in the environment if you want to bypass tokens.json).
+ * Requires a valid FS session: run `login` first (tokens.json is the only
+ * source; the engine has no environment-variable fallback).
  *
  * Usage:
  *   npx tsx dev/try-same-person.ts
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { samePerson } from "../src/tools/same-person.js";
 import type { SimplifiedGedcomX } from "../src/types/gedcomx.js";
 
@@ -97,6 +98,6 @@ const result = await samePerson({
   primaryId1: "I1",
   gedcomx2,
   primaryId2: "I1",
-});
+}, LOCAL);
 
 console.log(JSON.stringify(result, null, 2));

@@ -1,16 +1,19 @@
 // results-staging — the host-side payload transport for search-result sidecars
 // (Option B). A search tool stages its verbatim response to results/.staging/
 // and returns a small handle; research_log_append later finalizes that staged
-// file into results/<log_id>.json. The big payload travels search-tool → disk →
+// file into results/<log_id>.json. The big payload travels search-tool → store →
 // log-append and never round-trips through the model.
 //
 // Specs: search-result-staging-spec.md (producer + finalize), research-log-
 // editor-spec.md §5–§6 (consumer).
+//
+// All I/O goes through the active ProjectStore; this module owns the staging
+// protocol (envelope shape, the pairing rule, the TTL) and the error wording.
 
-import { writeFile, readFile, readdir, stat, unlink, mkdir } from "fs/promises";
 import { join, resolve, dirname } from "path";
 import { randomUUID } from "node:crypto";
-import { isInsideProject, assertInsideProject, readProjectJson } from "./project-io.js";
+import { getProjectStore } from "../store/project-store.js";
+import { isInsideProject, assertInsideProject, projectRelativeRef, readProjectJson } from "./project-io.js";
 
 /** The mandatory staging subdirectory. Invisible to the validator orphan check
  *  (which scans results/ non-recursively for top-level *.json). */
@@ -20,24 +23,67 @@ export const STAGING_SUBDIR = "results/.staging";
 const STAGING_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
- * The tools that stage, and therefore the only tools whose log entries can carry
- * a `results_ref`. Lives here rather than in `research-log-append.ts` because
- * `unloggedStagedSearches` below needs the same predicate, and a
- * `utils/` → `tools/` import is against CLAUDE.md's no-util→tool rule. The log
- * appender imports it from here; a second copy would drift.
+ * The SEARCH-shaped staging producers: their payload is a page of results with
+ * an upstream total, so the nil-search note, the unlogged-search note and
+ * `research_log_append`'s retained-none warning apply to them and to nothing
+ * else, and the eval mock stages their canned fixtures. Mirrored byte-for-byte as
+ * `STAGING_SEARCH_TOOLS` in `eval/harness/harness/mock_mcp.py` and pinned by
+ * `test_mock_mcp.py::test_staging_tool_sets_agree_across_the_two_copies`.
  */
-export const STAGING_CAPABLE_TOOLS = new Set([
+export const STAGING_SEARCH_TOOLS = new Set([
   "record_search",
   "fulltext_search",
   "external_links_search",
 ]);
+
+/**
+ * Every tool that stages: the search producers above plus the three acquisition
+ * producers. A transcription, a record fetched by ARK and a tree person read are
+ * retained as a ONE-element `results[]` envelope, so finalize needs no second
+ * shape. The acquisition producers carry none of the search notes:
+ * `extraction_append` logs each read it makes with that read's own staged ref,
+ * and an upload as `user_provided`, and a `person_read` file is staged for
+ * `project_create` to build the starting tree from (issue #2944's Stage B, not
+ * yet built) rather than logged, so there is nothing to nag about. An
+ * unfinalized acquisition file is simply TTL-pruned.
+ */
+export const STAGING_CAPABLE_TOOLS = new Set([
+  ...STAGING_SEARCH_TOOLS,
+  "image_transcribe",
+  "record_read",
+  "person_read",
+]);
+
+/**
+ * The subset of STAGING_CAPABLE_TOOLS whose sidecar results carry a GedcomX
+ * persona document, so `research_append`'s D2 / the validator's D5 can resolve
+ * or auto-fill `record_persona_id`. A whitelist, not a blacklist: the next
+ * staging producer added is treated as persona-less until it is listed here,
+ * which fails safe rather than silently matching nothing on a `recordId` field
+ * it does not carry (#2038). `record_search` and `record_read` results key on
+ * `recordId`; the persona-less producers (`fulltext_search`,
+ * `external_links_search`) key on `id`. Mirrors `personaReachable` in
+ * research-append.ts and `_persona_reachable` in the eval harness.
+ *
+ * `record_read` was MISSING here until issue #2937, and both mirrors already
+ * counted it — `personaReachable` returns true on `logEntry.tool ===
+ * "record_read"`, and the harness's `_persona_reachable` says the same, each
+ * because the tool returns a `SimplifiedGedcomX` with a persons array. This set
+ * was the only one of the three that disagreed, so adding it is a CORRECTION,
+ * not a widening. The omission failed precisely and silently: `record_read`
+ * stages `{ recordId, gedcomx }` (record-read.ts), but a non-persona-bearing
+ * producer is matched on `r.id`, which that envelope does not carry — so every
+ * `record_read` sidecar matched nothing, and any `record_persona_id` on an
+ * assertion drawn from one was refused outright.
+ */
+export const PERSONA_BEARING_PRODUCERS = new Set(["record_search", "record_read"]);
 
 export interface StagedHandle {
   resultsRef: string;
   returnedCount: number;
 }
 
-/** The on-disk staging envelope (snake_case — it is persisted project state). */
+/** The persisted staging envelope (snake_case — it is persisted project state). */
 interface StagingEnvelope {
   tool: string;
   retrieved: string;
@@ -73,25 +119,22 @@ export async function stageSearchResults<TResponse extends { results?: unknown[]
   const results = Array.isArray(response.results) ? response.results : [];
   if (results.length === 0) return null; // nil search retains nothing
 
+  const store = getProjectStore();
+
   // A missing or non-directory projectPath is a staging failure (§8) — never
   // silently scaffold a bogus directory tree under a typo'd path. Throwing here
   // surfaces to the producer as `staged: null` + a stagingError note.
-  let st;
-  try {
-    st = await stat(projectPath);
-  } catch {
+  const state = await store.projectDirState(projectPath);
+  if (state === "missing") {
     throw new Error(`projectPath '${projectPath}' does not exist`);
   }
-  if (!st.isDirectory()) {
+  if (state === "not_directory") {
     throw new Error(`projectPath '${projectPath}' is not a directory`);
   }
 
-  const stagingDir = join(projectPath, STAGING_SUBDIR);
-  await mkdir(stagingDir, { recursive: true });
-
   // Opportunistic prune of stale staging files (best-effort; runs before the
   // fresh write so it never deletes the file we are about to create).
-  await pruneStale(stagingDir);
+  await pruneStale(projectPath);
 
   const filename = `${randomUUID()}.json`;
   const envelope: StagingEnvelope = {
@@ -100,27 +143,99 @@ export async function stageSearchResults<TResponse extends { results?: unknown[]
     returned_count: results.length,
     payload: response,
   };
-  await writeFile(
-    join(stagingDir, filename),
-    JSON.stringify(envelope, null, 2),
-    "utf-8",
-  );
+  const resultsRef = `${STAGING_SUBDIR}/${filename}`;
+  await store.writeJson(projectPath, resultsRef, envelope);
 
   return {
-    resultsRef: `${STAGING_SUBDIR}/${filename}`,
+    resultsRef,
     returnedCount: results.length,
   };
 }
 
 /**
- * Finalize a staged file into the real sidecar results/<logId>.json: guard the
- * ref, read the staged envelope, verify its tool matches the log entry, recompute
- * returned_count from the payload (authoritative), write the sidecar, and unlink
- * the staged file. A host-side byte move — the model never serializes the payload.
+ * Check a staged ref without writing anything: guard the ref, read the staged
+ * envelope, verify its tool matches the log entry, and recompute returned_count
+ * from the payload (authoritative). `research_log_append` runs this for every
+ * op before it applies any, so a bad ref in op[1] is refused before op[0] does
+ * any work; `finalizeStagedResults` runs it again under the same lock.
  *
- * @throws on a traversal/outside-staging ref, a missing/invalid staged file, a
- *   tool mismatch, or a payload with no results[] (all surfaced as log-append
- *   input errors that write nothing).
+ * @throws on a traversal/outside-staging ref, a missing or invalid staged file,
+ *   a tool mismatch, or a payload with no results[].
+ */
+export async function checkStagedResults(args: {
+  projectPath: string;
+  stagedResultsRef: string;
+  expectedTool: string;
+}): Promise<{ envelope: StagingEnvelope; returnedCount: number }> {
+  const { projectPath, stagedResultsRef, expectedTool } = args;
+  const store = getProjectStore();
+
+  // 1. Path-traversal guard, then require the ref to live under results/.staging/.
+  const abs = assertInsideProject(projectPath, stagedResultsRef);
+  const stagingDir = join(projectPath, STAGING_SUBDIR);
+  if (!isInsideProject(stagingDir, abs)) {
+    throw new Error(
+      `stagedResultsRef '${stagedResultsRef}' is not inside ${STAGING_SUBDIR}/`,
+    );
+  }
+  const ref = projectRelativeRef(projectPath, stagedResultsRef);
+
+  // 2. Read the staged envelope. A missing file is the common case (the ref was
+  //    already logged, pruned, or never staged) and gets a message saying which
+  //    move fixes it; an unparseable one is a different fault.
+  let envelope: StagingEnvelope;
+  let text: string;
+  try {
+    text = await store.readText(projectPath, ref);
+  } catch (e) {
+    // Only an absent file gets the "logged once" advice; a store fault reading a
+    // file that is there must not tell the agent to re-run a search it already has.
+    if (await store.exists(projectPath, ref)) {
+      throw new Error(
+        `stagedResultsRef '${stagedResultsRef}' could not be read: ` +
+          (e instanceof Error ? e.message : String(e)),
+      );
+    }
+    throw new Error(
+      `stagedResultsRef '${stagedResultsRef}' is not in ${STAGING_SUBDIR}/ — each staged ref can ` +
+        `be logged once, so it was either already finalized by an earlier successful ` +
+        `research_log_append, pruned after 24h, or never staged. If this search already has a ` +
+        `log entry, do not log it again; if it has none, re-run the search to re-stage it.`,
+    );
+  }
+  try {
+    envelope = JSON.parse(text);
+  } catch {
+    throw new Error(`stagedResultsRef '${stagedResultsRef}' is invalid JSON`);
+  }
+
+  // 3. Verify the staged tool matches the log entry's tool.
+  if (envelope.tool !== expectedTool) {
+    throw new Error(
+      `staged file tool '${envelope.tool}' does not match log entry tool '${expectedTool}'`,
+    );
+  }
+
+  // 4. Recompute returned_count from the payload (never trust the staged count).
+  const payload = envelope.payload;
+  if (!payload || !Array.isArray(payload.results)) {
+    throw new Error("staged payload has no 'results' array");
+  }
+  return { envelope, returnedCount: payload.results.length };
+}
+
+/**
+ * Finalize a staged file into the real sidecar results/<logId>.json: check the
+ * ref (`checkStagedResults`), then write the sidecar. A host-side byte move — the
+ * model never serializes the payload.
+ *
+ * It does NOT remove the staged file. The caller removes it with
+ * `consumeStagedResults` only after its research.json commit succeeds, so a call
+ * that is refused after finalizing (a later op in a batch, the query-required
+ * check, the final validation) leaves the staged file for a corrected re-send.
+ *
+ * @throws as `checkStagedResults` does (all surfaced as log-append input errors
+ *   that write nothing).
  */
 export async function finalizeStagedResults(args: {
   projectPath: string;
@@ -138,39 +253,12 @@ export async function finalizeStagedResults(args: {
   payloadQuery?: Record<string, unknown>;
 }> {
   const { projectPath, stagedResultsRef, logId, expectedTool } = args;
-
-  // 1. Path-traversal guard, then require the ref to live under results/.staging/.
-  const abs = assertInsideProject(projectPath, stagedResultsRef);
-  const stagingDir = join(projectPath, STAGING_SUBDIR);
-  if (!isInsideProject(stagingDir, abs)) {
-    throw new Error(
-      `stagedResultsRef '${stagedResultsRef}' is not inside ${STAGING_SUBDIR}/`,
-    );
-  }
-
-  // 2. Read the staged envelope.
-  let envelope: StagingEnvelope;
-  try {
-    envelope = JSON.parse(await readFile(abs, "utf-8"));
-  } catch {
-    throw new Error(
-      `stagedResultsRef '${stagedResultsRef}' does not exist or is invalid JSON`,
-    );
-  }
-
-  // 3. Verify the staged tool matches the log entry's tool.
-  if (envelope.tool !== expectedTool) {
-    throw new Error(
-      `staged file tool '${envelope.tool}' does not match log entry tool '${expectedTool}'`,
-    );
-  }
-
-  // 4. Recompute returned_count from the payload (never trust the staged count).
+  const { envelope, returnedCount } = await checkStagedResults({
+    projectPath,
+    stagedResultsRef,
+    expectedTool,
+  });
   const payload = envelope.payload;
-  if (!payload || !Array.isArray(payload.results)) {
-    throw new Error("staged payload has no 'results' array");
-  }
-  const returnedCount = payload.results.length;
 
   // 5. Write the real sidecar.
   const resultsRef = `results/${logId}.json`;
@@ -181,34 +269,75 @@ export async function finalizeStagedResults(args: {
     returned_count: returnedCount,
     payload,
   };
-  await mkdir(join(projectPath, "results"), { recursive: true });
-  await writeFile(
-    join(projectPath, resultsRef),
-    JSON.stringify(sidecar, null, 2),
-    "utf-8",
-  );
-
-  // 6. Consume the staged file (best-effort; a lost race is harmless).
-  await unlink(abs).catch(() => {});
+  await getProjectStore().writeJson(projectPath, resultsRef, sidecar);
 
   // The producer's echoed query, if it recorded one. Guarded on a plain object
   // so a malformed payload degrades to "no default" rather than persisting a
   // string or array into a field the schema types as an object.
-  const rawQuery = (payload as { query?: unknown }).query;
-  let payloadQuery: Record<string, unknown> | undefined;
-  if (rawQuery !== null && typeof rawQuery === "object" && !Array.isArray(rawQuery)) {
-    // `echoQuery` copies EVERY defined input, which includes plumbing the log
-    // entry must not carry: `projectPath` is an absolute host path (it landed
-    // in 11 of 24 entries of a real run before this filter) and `subjectId` is
-    // a tree id, not a search parameter. `research.json` is shared project
-    // state that moves between machines — a `/private/var/folders/...` in it is
-    // meaningless anywhere else. Strip them from the DEFAULT only; a caller who
-    // passes `query` explicitly still owns its contents.
-    const { projectPath: _p, subjectId: _s, ...rest } = rawQuery as Record<string, unknown>;
-    payloadQuery = rest;
-  }
+  const payloadQuery = stripQueryPlumbing((payload as { query?: unknown }).query);
 
   return { resultsRef, returnedCount, payloadQuery };
+}
+
+/**
+ * Remove staged files a committed research_log_append finalized. Called only
+ * after the research.json write succeeds. Best-effort by the store's own
+ * contract (an absent ref or a lost race is not an error), and deliberately NOT
+ * wrapped in a try/catch: on the Postgres backend the whole call is one
+ * transaction still open here, and a swallowed query error would abort it, so
+ * the call would report success while its research.json write rolls back.
+ */
+export async function consumeStagedResults(
+  projectPath: string,
+  stagedResultsRefs: readonly string[],
+): Promise<void> {
+  const store = getProjectStore();
+  for (const ref of stagedResultsRefs) {
+    await store.remove(projectPath, projectRelativeRef(projectPath, ref));
+  }
+}
+
+/**
+ * The producer's echoed query with host plumbing removed, or undefined when the
+ * value is not a plain object (a malformed payload degrades to "no query"
+ * rather than persisting a string or array into an object-typed field).
+ *
+ * `echoQuery` copies EVERY defined input, which includes plumbing a log entry
+ * must not carry: `projectPath` is an absolute host path (it landed in 11 of 24
+ * entries of a real run before this filter) and `subjectId` is a tree id, not a
+ * search parameter. `research.json` moves between machines, so a
+ * `/private/var/folders/...` in it is meaningless anywhere else. Used for the
+ * `query` default and as the ground truth `research_log_append` checks an
+ * explicit `query` against; the caller's explicit `query` is never rewritten.
+ */
+export function stripQueryPlumbing(raw: unknown): Record<string, unknown> | undefined {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const { projectPath: _p, subjectId: _s, ...rest } = raw as Record<string, unknown>;
+  return rest;
+}
+
+/**
+ * Read a staged handle's producing tool and its plumbing-stripped echoed query,
+ * without consuming it. Only a handle under `results/.staging/` is read, by the
+ * same resolved-path test `finalizeStagedResults` applies; anything else, a
+ * missing file or invalid JSON returns undefined, because a bad ref is
+ * finalize's error to report.
+ */
+export async function readStagedEnvelopeQuery(
+  projectPath: string,
+  stagedResultsRef: string,
+): Promise<{ tool: string; query: Record<string, unknown> | undefined } | undefined> {
+  try {
+    const abs = assertInsideProject(projectPath, stagedResultsRef);
+    if (!isInsideProject(join(projectPath, STAGING_SUBDIR), abs)) return undefined;
+    const envelope = JSON.parse(
+      await getProjectStore().readText(projectPath, projectRelativeRef(projectPath, stagedResultsRef)),
+    );
+    if (typeof envelope?.tool !== "string") return undefined;
+    return { tool: envelope.tool, query: stripQueryPlumbing(envelope.payload?.query) };
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -239,6 +368,17 @@ export function formatUnloggedRefs(refs: string[]): string {
   const rest = refs.length - UNLOGGED_REFS_SHOWN;
   return rest > 0 ? `${shown}, and ${rest} more` : shown;
 }
+
+/**
+ * Emitted on a nil `fulltext_search` against an `imageGroupNumber` FamilySearch
+ * reports as not full-text searchable. The zero was guaranteed before the query
+ * ran, so it says nothing about the person (issue #1988).
+ */
+export const NOT_FULLTEXT_SEARCHABLE_NOTE =
+  "This image group is not full-text searchable, so this nil was guaranteed " +
+  "before the query ran: it is a fact about the volume, not about the person. " +
+  "Do not record it as a negative finding. Browse the images instead — " +
+  "image_search / image_read — or search a different group.";
 
 /**
  * Emitted on a `projectPath`-carrying search that returned nothing. A nil search
@@ -286,8 +426,8 @@ export const NIL_SEARCH_NEEDS_LOG_NOTE =
  * `query` — a 20%-failure-rate transcription (`research-log-append.ts`), and an
  * entry of exactly the shape the pairing below tolerates, so the count would drop
  * to zero while the raw response was lost for good. Handing back the refs makes the
- * obligation satisfiable from disk, and `research_log_append` then fills `query`
- * from the staged payload verbatim.
+ * obligation satisfiable from the store, and `research_log_append` then fills
+ * `query` from the staged payload verbatim.
  *
  * Never throws, and returns an empty array on any failure — a missing project,
  * unreadable research.json, corrupt envelope. This runs inside a successful search;
@@ -314,11 +454,11 @@ export async function unloggedStagedSearches(
   // scaffolding one.
   if (typeof projectPath !== "string" || projectPath === "") return [];
 
-  const stagingDir = join(projectPath, STAGING_SUBDIR);
+  const store = getProjectStore();
 
-  let names: string[];
+  let names: { name: string; mtimeMs: number }[];
   try {
-    names = (await readdir(stagingDir)).filter((n) => n.endsWith(".json"));
+    names = (await store.list(projectPath, STAGING_SUBDIR)).filter((e) => e.name.endsWith(".json"));
   } catch {
     return []; // no staging dir yet — nothing staged, nothing owed
   }
@@ -332,21 +472,23 @@ export async function unloggedStagedSearches(
   // work, not because deletion is imminent.
   const cutoff = Date.now() - STAGING_TTL_MS;
   const staged: { ref: string; tool: string; retrieved: number; iso: string }[] = [];
-  for (const n of names) {
-    const p = resolve(stagingDir, n);
+  for (const entry of names) {
+    const ref = `${STAGING_SUBDIR}/${entry.name}`;
     try {
-      const s = await stat(p);
-      if (s.mtimeMs < cutoff) continue;
-      const envelope = JSON.parse(await readFile(p, "utf-8")) as StagingEnvelope;
+      if (entry.mtimeMs < cutoff) continue;
+      const envelope = JSON.parse(await store.readText(projectPath, ref)) as StagingEnvelope;
+      // An acquisition read is logged as `user_provided` or under the search that
+      // found it, never under its own tool name, so it can never pair here.
+      if (STAGING_CAPABLE_TOOLS.has(envelope.tool) && !STAGING_SEARCH_TOOLS.has(envelope.tool)) continue;
       const parsed = Date.parse(envelope.retrieved);
       const fallback = Number.isNaN(parsed);
       staged.push({
-        ref: `${STAGING_SUBDIR}/${n}`,
+        ref,
         tool: typeof envelope.tool === "string" ? envelope.tool : "",
         // mtime is the fallback for an envelope whose `retrieved` is missing or
         // unparseable: it is the same clock, one write later.
-        retrieved: fallback ? s.mtimeMs : parsed,
-        iso: fallback ? new Date(s.mtimeMs).toISOString() : envelope.retrieved,
+        retrieved: fallback ? entry.mtimeMs : parsed,
+        iso: fallback ? new Date(entry.mtimeMs).toISOString() : envelope.retrieved,
       });
     } catch {
       continue; // unreadable or corrupt: not counted, never fatal
@@ -390,25 +532,100 @@ export async function unloggedStagedSearches(
   return unpaired;
 }
 
-async function pruneStale(stagingDir: string): Promise<void> {
-  let names: string[];
+/** How far a mis-copied staged name may drift and still name one file. */
+const STAGED_REF_MAX_EDITS = 3;
+/** The shortest truncated name accepted as a prefix of one staged file. */
+const STAGED_REF_MIN_PREFIX = 8;
+
+function editDistance(a: string, b: string, cap: number): number {
+  if (Math.abs(a.length - b.length) > cap) return cap + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    let rowMin = i;
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      rowMin = Math.min(rowMin, cur[j]);
+    }
+    if (rowMin > cap) return cap + 1;
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+/**
+ * Map a staged ref the model mis-copied onto the one staged file it names.
+ *
+ * A staged ref is `results/.staging/<uuid>.json`, 58 characters the model has to
+ * copy. Across the committed corpus 11 of 3,636 ref-carrying calls were refused
+ * for a damaged copy of a ref that existed in the same run: a 1-2 character
+ * slip, the `results/.staging/` prefix dropped, or the name cut short. Each cost
+ * a retry. A random UUID makes two staged files within a few characters of each
+ * other practically impossible, so a near-copy names exactly one file.
+ *
+ * Returns the ref unchanged when it exists, when it points outside
+ * `results/.staging/`, or when zero or several staged files are near it — the
+ * caller's own check then refuses it as before. Otherwise returns the one file's
+ * ref and `correctedFrom`. A writing caller reports the correction in its
+ * warnings; the read-only `readStagedResults` reads through without reporting it
+ * (search-result-staging-spec.md §6.0).
+ */
+export async function resolveStagedRef(
+  projectPath: string,
+  rawRef: string,
+): Promise<{ ref: string; correctedFrom?: string }> {
+  const ref = rawRef.trim();
+  const store = getProjectStore();
+  if (ref === "" || ref.includes("..") || (await store.exists(projectPath, ref).catch(() => false))) {
+    return { ref };
+  }
+  const slash = ref.lastIndexOf("/");
+  const dir = slash === -1 ? "" : ref.slice(0, slash);
+  if (dir !== "" && dir !== STAGING_SUBDIR && dir !== ".staging") return { ref };
+  const stem = ref.slice(slash + 1).replace(/\.json$/, "");
+  if (stem === "") return { ref };
+
+  let entries;
   try {
-    names = await readdir(stagingDir);
+    entries = await store.list(projectPath, STAGING_SUBDIR);
+  } catch {
+    return { ref };
+  }
+  const near = entries
+    .filter((e) => e.name.endsWith(".json"))
+    .map((e) => e.name.slice(0, -".json".length))
+    .filter(
+      (name) =>
+        name === stem ||
+        (stem.length >= STAGED_REF_MIN_PREFIX && name.startsWith(stem)) ||
+        editDistance(stem, name, STAGED_REF_MAX_EDITS) <= STAGED_REF_MAX_EDITS,
+    );
+  if (near.length !== 1) return { ref };
+  return { ref: `${STAGING_SUBDIR}/${near[0]}.json`, correctedFrom: ref };
+}
+
+/** The warning a caller reports when `resolveStagedRef` corrected a ref. */
+export function stagedRefCorrectionWarning(field: string, from: string, to: string): string {
+  return (
+    `${field} '${from}' matched no staged file; used '${to}', the only staged file it is a ` +
+    `near-copy of. Copy staged refs exactly.`
+  );
+}
+
+async function pruneStale(projectPath: string): Promise<void> {
+  const store = getProjectStore();
+  let entries;
+  try {
+    entries = await store.list(projectPath, STAGING_SUBDIR);
   } catch {
     return;
   }
   const cutoff = Date.now() - STAGING_TTL_MS;
   await Promise.all(
-    names
-      .filter((n) => n.endsWith(".json"))
-      .map(async (n) => {
-        const p = resolve(stagingDir, n);
-        try {
-          const s = await stat(p);
-          if (s.mtimeMs < cutoff) await unlink(p);
-        } catch {
-          // best-effort: ignore ENOENT / races / stat failures
-        }
+    entries
+      .filter((e) => e.name.endsWith(".json"))
+      .map(async (e) => {
+        if (e.mtimeMs < cutoff) await store.remove(projectPath, `${STAGING_SUBDIR}/${e.name}`);
       }),
   );
 }
@@ -423,8 +640,11 @@ async function pruneStale(stagingDir: string): Promise<void> {
  */
 export async function readStagedResults(
   projectPath: string,
-  stagedResultsRef: string,
+  rawRef: string,
 ): Promise<unknown[]> {
+  // Read-only, so a near-copy is read through to the one staged file it names
+  // (resolveStagedRef) with nothing persisted under the mis-copied name.
+  const { ref: stagedResultsRef } = await resolveStagedRef(projectPath, rawRef);
   const abs = assertInsideProject(projectPath, stagedResultsRef);
   const stagingDir = join(projectPath, STAGING_SUBDIR);
   const resultsDir = resolve(projectPath, "results");
@@ -438,7 +658,9 @@ export async function readStagedResults(
   }
   let envelope: { payload?: { results?: unknown[] } };
   try {
-    envelope = JSON.parse(await readFile(abs, "utf-8"));
+    envelope = JSON.parse(
+      await getProjectStore().readText(projectPath, projectRelativeRef(projectPath, stagedResultsRef)),
+    );
   } catch {
     throw new Error(
       `stagedResultsRef '${stagedResultsRef}' does not exist or is invalid JSON.`,

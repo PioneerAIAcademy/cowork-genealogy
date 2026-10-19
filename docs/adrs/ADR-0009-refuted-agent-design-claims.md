@@ -4,20 +4,28 @@
 > propose "routing as a tool" as the fix for a routing failure · quote a
 > compliance rate, a violation count, or a cost figure from an older write-up ·
 > argue that skill `model:` pins are an eval/production fidelity gap · argue the
-> unit harness would deny the router `research_append` · vet an issue whose
-> premise is one of the rows below.
+> unit harness would deny the router `research_append` · cite the base64
+> rationale for delegating an image read · assume a `MUST delegate` sentence
+> decides who calls a tool · vet an issue whose premise is one of the rows below.
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09
-- **Last updated:** 2026-08-30 (the compliance-rate row's anachronism clause
-  withdrawn; constraint 6's fire-rate figure annotated with the deny-mode run
-  that met it. Previously 2026-08-09, promoted from
-  `docs/agentic-system-critique.md` §9, which was retired; constraint 6 added)
+- **Last updated:** 2026-10-12 (constraint 5's reason restated: a thin tree
+  person, not a missing ARK, is what scores near zero; issue #1529). Previously
+  2026-09-11 (added the acquisition-seam section — three
+  claims refuted while deciding where image reading belongs). Previously
+  2026-08-31 (added the issue #1344 section — four claims about
+  `gps-mentor`'s never-called wiki tools, including the two tidy explanations a
+  reader is likeliest to reach for). Previously 2026-08-30 (the compliance-rate
+  row's anachronism clause withdrawn; constraint 6's fire-rate figure annotated
+  with the deny-mode run that met it), and 2026-08-09, promoted from
+  `docs/agentic-system-critique.md` §9, which was retired; constraint 6 added
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
 - **Applies to:** `.claude/agents/task-reviewer.md`, `.claude/skills/review-ready/SKILL.md`, `docs/specs/guardrail-enforcement-spec.md`, `docs/architecture.md` — *linted; keep current*
-- **Related:** ADR-0002, ADR-0003, ADR-0006; issues #1006, #1012, #1015, #702, #941
+- **Related:** ADR-0002, ADR-0003, ADR-0004, ADR-0006; issues #1006, #1012,
+  #1015, #702, #941, #1084, #1085, #1253, #1344, #2489, #2490
 
 ## Context
 
@@ -74,9 +82,9 @@ failure rather than into a vacuum.
 | `research_query` "**silently** truncates" | The response has carried `truncated` + a pre-cap `count` since the tool shipped on 2026-07-26 (`packages/engine/mcp-server/src/tools/research-query.ts`), five days before rev. 2. The defect is missing pagination and an ignored flag, not silence |
 | "A suite built today would **deny** the router `research_append`" | Backwards: `compute_allowed_tools` (`eval/harness/harness/allowed_tools.py`) unions `@plugin:gps-mentor`'s `tools:` into the router's allowlist, so a suite would *grant* it — and nothing denies the router using it inline. The real gap is held-only-for-the-subagent tools; #1012 is the inverse — a `Skill()` callee runs toolless |
 | The ferber agent escalated permissions and "**only then**" wrote raw | The first raw `Edit` (idx 33) precedes every denied settings attempt (idx 46, 102); 9 of 13 writes precede the last one. Escalation was interleaved with the writes, not a prelude — a tidier story than the log supports, the same failure mode this ledger exists to catch |
-| "46 MCP tools" / "all 26 skills with suites" | 48 (`allToolSchemas`) and 25 (27 skills − `research` − `forget-and-rederive`) |
+| "46 MCP tools" / "all 26 skills with suites" | 49 (`allToolSchemas`) and 25 (27 skills − `research` − `forget-and-rederive`) |
 | "a tool call is a turn," stated as law | The cited plan's own data: ~2.1 calls/turn, with parallel calls amortizing. Direction right, arithmetic wrong |
-| The unconditional `same_person` gate (P0) and the 16-violation arm read as pure doctrine gap | The owning skill's contract exempts FTS-/image-/PDF-sourced links (`packages/engine/plugin/skills/person-evidence/SKILL.md`, its `match_score` typing) and the no-candidate stub path; the detector enforces the router's broader paraphrase. Conditions added in rev. 3's P0; the canonical-doctrine decision moved into the calibration exit |
+| The unconditional `same_person` gate (P0) and the 16-violation arm read as pure doctrine gap | The owning agent's contract exempts FTS-/image-/PDF-sourced links (`packages/engine/plugin/agents/person-evidence.md`, its `match_score` typing) and the no-candidate stub path; the detector enforces the router's broader paraphrase. Conditions added in rev. 3's P0; the canonical-doctrine decision moved into the calibration exit |
 
 ### rev. 3 claims, refuted in the rev. 4 pass
 
@@ -96,6 +104,47 @@ failure rather than into a vacuum.
 | "bagley: `materialize_facts` at idx 85, **all 13 links at idx 86**" | Idx 86 is a 30-op batch across three persons carrying 11 of I1's 13 links; the other 2 land at idx 141, from a fourth record. The idx-85 → 86 ordering argument stands; the count did not |
 | 20-fixture pass "≈$150–165" | The doc's own median gives $145.80 — the low bound is ≈$146 |
 
+### Claims refuted while working issue #1344, 2026-08-31
+
+`gps-mentor` declares `wiki_search` and `wiki_place_page` and has never called
+either. All figures below are over the **159** committed e2e result JSONs at
+`312d3c670`, re-derived twice independently. Two of the four rows are claims this
+ADR's own reader is most likely to reach for next, because they are the tidy
+explanations; both are wrong.
+
+| claim | Why it was wrong |
+|---|---|
+| The wiki pair is unused because its mandatory sites sit in `gps-mentor.md`'s `### pre-exhaustiveness` rubric, and `/research` retired that gate | The premise is true — commit `1bc84e58e` (PR #597, 2026-07-07 11:48) deleted the rows that invoked the `pre-exhaustiveness` and `conclusion-readiness` gates, and both rubrics are still in the agent body. The **inference** is refuted three ways. (1) Wiki calls per run went **up** after the retirement: gate-era runs that wrote a pre-exhaustiveness verdict 1.00 (10 runs), gate-era runs that wrote none 1.10 (10), post-removal **5.25** (100). (2) The surviving mode-agnostic site (`gps-mentor.md`'s `## Tool usage guidance`) applies under `proof-critique`, and its condition demonstrably obtains — of the 30 focus-attributed `proof-critique` verdicts, **12** carry a `standard` naming Standard 14 and **7** name topical breadth or repository diversity specifically, with the tool uncalled in every one. (Match `topical breadth|repository divers` for the 7 and add `|Standard 14` for the 12, case-insensitive, against the serialized `research_append` args; widening further to `|record types?` gives 16. An earlier draft of this row said "17 of the 30" from a wider still match that also caught `probate|notarial|not searched|untried` — not reproducible from the narrower triggers, so the strings are named here rather than the figure left to be guessed.) (3) See the control row below. The retirement narrows *which* sites are live; it does not explain the zero |
+| Confinement of a mandatory instruction to an unrouted focus mode explains a zero call count | `place_search` / `place_distance` are the control, and it was not run. Their only mandatory site is `### conclusion-readiness` — retired by the *same* commit — plus a permissive tool-usage entry, i.e. the identical structure. They were called **28** and **16** times. Structure does not predict the zero; only the wiki pair is at zero |
+| The committed corpus can measure whether `gps-mentor` complies with its `pre-exhaustiveness` instructions | It cannot, and the finding is unfalsifiable against it. All **91** gps-mentor invocations (84 `subagents[]` captures + 7 reachable only via `tool_calls[].agent_id`, over 68 runs) are dated **2026-07-20 → 2026-08-23**; the first run carrying a non-empty `subagents` list is 2026-07-30. **Zero** invocations exist from the window when the gate was still routed. Of the 23 `pre-exhaustiveness` writes (11 runs), 10 runs have **no `subagents` key at all** — not `subagents: []`, a distinct bucket the report separates — and the eleventh (`katalin-horak-son/run-2026-08-03_21-26-35`) wrote it from the **main thread** at `tool_calls[94]`, `agent_type: null`, three calls *before* the `Agent` delegation at `[97]` |
+| #1344's unblock condition — "#1253 must land first; nothing can measure this until an eval path can invoke the agent" | The offline half needed no new harness path: the corpus already carries 91 invocations, which is what refuted the rows above. And the live half does not need #1253's *unit*-harness agent path either — `on-demand` is an orchestrated trigger in `/research`'s "When to invoke" table and routes to light `pre-exhaustiveness`, so an e2e fixture whose user turn asks for a review of a question with incomplete plan items reaches the rubric today. Fixture work, not harness work |
+
+Two claims that survive, so they are not re-litigated: the grant is **not** the
+problem (9 of `gps-mentor`'s 11 declared tools are called in this path, from the
+same frontmatter block that spells the wiki pair under all three prefixes), and
+`gps-mentor` **does** ignore explicit unconditional instructions — 9 of 16
+attributed `Read` calls open `research.json` against "Do not open
+`research.json`", and only 26 of 82 tool-using captures call `project_context`
+against "Open every invocation with `project_context`".
+
+### Claims refuted while designing the acquisition seam, 2026-09-11
+
+Figures are over the **169** committed e2e run logs at `b0950e003`, which are
+autonomous-only. (`eval/runlogs/e2e` holds three files per run — the log, the
+final research and the final tree — so 169 runs is 507 files; a count of files
+understates every rate threefold.) Caller attribution
+(`tool_calls[].agent_type`) is recorded in only **30** of the runs, so every
+attributed figure below is over those 30. The control in the same runs is
+`extraction_append`, which only `record-extractor` can call: 145
+record-extractor / 10 general-purpose / 3 main-thread — attribution is working
+there, not missing.
+
+| claim | Why it was wrong |
+|---|---|
+| **Delegating an image read to `image-reader` keeps base64 out of the caller's context** — stated in both `record-extraction` and `search-images` as the reason the delegation is mandatory | `image_transcribe` fetches the scan host-side, OCRs it through a hosted VLM and returns **text**. No bytes cross the MCP transport whoever calls it, so the subagent isolates nothing the tool does not already isolate. The rationale describes `image_read`, which returns inline base64 — and that tool has been declared by no agent and no skill since `image-reader-opus` was retired (issue #2013), while two skill bodies still spend prose forbidding it by name and the orchestrator's routing table still names it as how images get read. Its membership in the harness's `SUBAGENT_ONLY_TOOLS` is correct and unrelated: that deny exists for the tool, not for a caller that no longer exists |
+| **A `MUST delegate` sentence in a skill body decides who calls a tool** | In the 30 attributed runs `image_transcribe` was called **128 times by `image-reader` and 75 times from the main thread** — 37% bypass, against a body that says "Do not call `image_read` yourself", mandates the delegation in bold, and calls reporting a miss without an attempt "a completeness failure." What binds is the grant: `allowed-tools` is additive, both production paths hold every advertised tool, and nothing denies the main thread this one. Corpus-wide it runs 459 times across 53 of the 169 runs, median 2 per run, max 81 |
+| **The image-acquisition paths are three paths needing one owner** | They are one call with three input spellings. An image ARK and an Image Group Number already resolve through a single function inside `image_transcribe`, and an uploaded image file is the same call with a third input form (issue #2048). The split that matters is **host-fetchable vs model-read**: the only medium genuinely outside the artifact channel was the PDF, because nothing in the engine reads one — which is why issue #2489 adds a PDF reader instead of a fourth acquisition path |
+
 ## The `same_person` write-boundary gate: six constraints any design must satisfy
 
 Three discriminators failed adversarial review (the tables above record each).
@@ -108,23 +157,135 @@ a graduation, must satisfy all six:
    `materialize_facts` time, and gate there too — the tree write is where the
    violation lands, so a `person_evidence`-append gate alone cannot be the
    enforcement point.
-2. **An attestation — but note the owner has already decided against holding out
-   for a non-fabricable one.** Nothing today persists `same_person` output.
-   `docs/specs/research-append-tool-spec.md` records the 2026-08-01 decision
-   (#1006): validate `match_score`'s **presence** on the
-   `personEvidenceInvariants` path, explicitly conceding that presence does not
-   prove the call happened, and *"do not over-engineer past this."* The stronger
-   counter-design — `same_person` persisting a (person, record, persona)-keyed
-   attestation the writer tools check — is not what was decided; propose it
-   *against* that decision, not into a vacuum.
+2. **An attestation — SUPERSEDED 2026-09-07; the counter-design was adopted.**
+   This constraint told you to propose the attestation *against* the 2026-08-01
+   "do not over-engineer past this" decision (#1006) rather than into a vacuum.
+   The lead then decided the other way: the 2026-09-07 ruling on #1731 is that
+   `same_person` **does** persist what it computed and `research_append` **will**
+   require it. So the argument this constraint asked for has been made and won,
+   and the constraint is kept only as the record of what it displaced.
+
+   What shipped for it (PR A, #1731 steps 1-2): `same_person` gained a
+   project-relative arm and writes every score it computes to
+   `results/.scores/`, host-side, so the record never round-trips through the
+   model on the legitimate path. The writer-side requirement (step 3)
+   shipped on 2026-09-24: `research_append` refuses a `person_evidence` append
+   for a reachable persona with no recorded score for that pairing, so a
+   `match_score` written with no call behind it at all is now rejected. The
+   check is on the attestation's PRESENCE for the pairing, not on the value
+   written against it -- an agent that called `same_person` and then wrote a
+   different number still passes, and a test pins that. The
+   concession this constraint records -- validate presence, concede presence
+   does not prove the call -- is therefore spent on the legitimate path: the
+   check is now against a host-written record the model never touches.
+
+   Three limits the refusal carries rather than resolves. The value-vs-presence
+   gap above is the first. The score-TTL question was never answered, so it
+   ships on option A ("a score from an earlier session still counts"), which is
+   the option the card itself marks recommended. Recorded plainly because the
+   card named this a ruling needed BEFORE step 3 opened, and it was never put to
+   the lead: the choice is the recommended one, not an obtained ruling; option B is no longer reachable from what PR A
+   stored, because `RecordedMatchScore` keeps `computed` but nothing describing
+   the tree person at score time. And the gate has TWO rules, only one of which
+   is gated on reachability: requiring a score applies where one could have been
+   obtained, while forbidding a fabricated score on a provably circular pairing
+   applies everywhere. Conflating them left the fabrication case uncatchable for
+   any full-text-sourced assertion.
+
+   **The attestation is not yet unforgeable either, and step 3 must not assume
+   it is.** `guard_project_files.py`'s `PROTECTED_PROJECT_FILES` covers
+   `research.json`, `tree.gedcomx.json` and `starting-tree.gedcomx.json` only,
+   so a raw `Write` to `results/.scores/` from inside the VM is unguarded. The
+   model cannot produce the payload; it can author the file. Extending that list is not a one-line
+   change: it is a tuple of BASENAMES matched by `name in ...`, and an
+   attestation is `results/.scores/<sha256>.json`, so it needs a path-prefix
+   predicate, and the tuple has THREE enforcement copies, not one:
+   `packages/engine/plugin/hooks/guard_project_files.py`,
+   `eval/harness/e2e/orchestrator.py` and
+   `apps/server/app/agent/real_agent.py` (the hosted control plane), all
+   registered in `eval/harness/tests/unit/test_write_lockdown_parity.py`, which
+   fails on an unregistered fourth. `eval/harness/e2e/corpus_report.py` carries a
+   read-only `WATCHED_PROJECT_FILES` mirror of the same names. An earlier draft
+   of this paragraph said "two more copies" and counted the parity TEST in place
+   of the hosted implementation -- which is the very copy the next paragraph
+   argues is out of scope, so the miscount undercut its own reasoning.
+
+   **Step 3 shipped without it, deliberately, with the threat model scoped
+   rather than treated as one binary.** The hook ships in the plugin, so it
+   binds in Cowork and on the hosted path and not at all in the `.mcpb`; on the
+   hosted path the store is `PgS3ProjectStore` and no file-write tool reaches
+   it. The residual forgery surface is the desktop `.mcpb` main thread and the
+   Cowork main thread. The `person-evidence` agent itself has no `Write`. The
+   prefix-deny remains worth doing and is **not currently tracked by any open
+   issue** -- searched 2026-09-24 and there is none, so this paragraph is the
+   only record of it. Stated plainly rather than as "tracked separately", which
+   is what it said until the claim was checked and found false.
 3. **Persona granularity.** Key on (`record_id`, `record_persona_id`), not
    `record_id` — bagley's `QPQP-R8T8` carries ≥3 personas, and a record-level
    exemption lets a second persona of an already-linked record attach unscored.
+
+   **As implemented, after a correction in PR B.** The attestation keys on
+   (`record_id`, `assertion_id`, `tree_person_id`).
+
+   PR A keyed it on (`record_id`, party, `tree_person_id`), party being
+   `record_persona_id` when non-null and `record_role` otherwise. That was
+   wrong, and PR B's writer-side gate is what exposed it: the party is not
+   stable across the two routes. On the FETCHED route the tool resolves a real
+   `persons[].id` for a party whose assertion carries `record_persona_id: null`,
+   so the score was filed under what was resolved while every reader computes
+   the key from what the assertion carries. The gate could not find a legitimate
+   score and refused exactly the links whose call HAD been made, instructing the
+   agent to repeat the call that wrote the unfindable record. Reproduced against
+   the compiled build; `dev/probe-score-refusal.ts` carries the standing arm.
+
+   **The assertion key satisfies this constraint structurally rather than by
+   argument.** An assertion carries one `record_role` and one
+   `record_persona_id`, so it IS a (record, party) pair: a second persona of an
+   already-linked record is a DIFFERENT assertion and needs its own score.
+   `tree_person_id` keeps the two links of a relationship assertion apart.
+   Both sides always hold both tokens, which the party never guaranteed.
+
+   The constraint's own wording — key on (`record_id`, `record_persona_id`) —
+   is met in effect, not literally: `record_persona_id` is null on thousands of
+   corpus links and so cannot key anything on its own, which is what drove PR A
+   to the party fallback in the first place. The assertion is the stable stand-in
+   for it.
+
+   **This is the ATTESTATION key only.** The record-side PROJECTION still groups
+   parties on persona-id-else-role, and must, for the reasons below.
+
+   **The projection groups on the same key**, so the two cannot disagree about
+   what identifies a party. Grouping on `record_role` alone was the first
+   design and it was wrong twice over: it merges two personas that share a role
+   into one projected person (a transcribed register page holds many entries at
+   one role each), and it makes `recordPersonaId` useless as a disambiguator,
+   because the two people the caller is choosing between have already been
+   collapsed by the time it is read.
+
+   Measured over 3,093 projected parties on this corpus (1,330 persona-keyed,
+   1,763 role-keyed): **20 hold more than one distinct `name`.** Of those, 14
+   are role-keyed and are **refused** rather than scored as a merge; 6 are
+   persona-keyed and are exempt, because a group the record itself assigned one
+   persona id to is one persona under several spellings (maiden name, scribal
+   variant, "also known as"). Both directions are tested.
+
+   Two honesty notes on that exemption. It trusts the extractor's
+   `record_persona_id`, and by inspection 2 of the 6 exempt groups look like
+   two different people sharing one id (`1:1:MPXD-MZC`: "Charlotte Spriggs" /
+   "John W Spriggs") rather than one person under two spellings — an extraction
+   defect this guard cannot see and does not try to. And an earlier draft of
+   this paragraph claimed "18 of 22 are alias variants, so the guard exempts
+   them": that was a miscount, folding 14 groups carrying *no* persona id in
+   with 4 carrying one. The guard requires exactly one, so it never exempted
+   18.
 4. **Batch semantics.** Keep `proofSummaryInvariants`' pre-call-state discipline
    (`docs/specs/guardrail-enforcement-spec.md` §5, "Prefer this shape") with
    defined handling for an assertion and its link arriving in one batch.
-5. **Demand the call, not a score threshold.** An ark-less stub legitimately
-   returns a degenerate score the skill must treat as *no score*.
+5. **Demand the call, not a score threshold.** A thin tree person — one name
+   and one fact — legitimately scores near zero against everything, because the
+   match engine scores on document content (`same-person-flynn-degenerate`), so
+   a threshold would block a correct link. Having no FamilySearch ARK is not such
+   a case: the person is still scored on content (constraint 6's probe).
 6. **Satisfiability.** State **which call shape satisfies the gate, and how often
    agents actually produce that shape.** A constraint an agent cannot practically
    meet is a denial of service, not a guardrail — and none of constraints 1–5

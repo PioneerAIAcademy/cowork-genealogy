@@ -1,7 +1,8 @@
-import { getValidToken } from "../auth/refresh.js";
+import type { Principal } from "../auth/principal.js";
+import { dropDanglingEdges, describeDroppedEdges } from "../utils/tree-graph.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import type { GedcomX, SimplifiedRelationship } from "../types/gedcomx.js";
 import type {
   AncestorPerson,
@@ -82,15 +83,15 @@ export const personAncestorsToolSchema = {
 
 export async function personAncestorsTool(
   input: PersonAncestorsInput,
+  principal: Principal,
 ): Promise<PersonAncestorsResult> {
   validateInput(input);
-  const token = await getValidToken();
   // Resolve the root: the supplied personId, or the logged-in user's own
   // tree person when it's omitted/empty.
   const provided =
     typeof input.personId === "string" ? input.personId.trim() : "";
-  const pid = provided !== "" ? provided : await getCurrentUserPersonId(token);
-  return fetchAndMap(token, input, pid, 0);
+  const pid = provided !== "" ? provided : await getCurrentUserPersonId(principal);
+  return fetchAndMap(principal, input, pid, 0);
 }
 
 function validateInput(input: PersonAncestorsInput): void {
@@ -112,10 +113,9 @@ function validateInput(input: PersonAncestorsInput): void {
 // account PII (helperAccessPin, birthDate, ...) the endpoint also returns.
 // Inline here for the single caller; promote to src/auth/ if a second tool
 // needs it.
-async function getCurrentUserPersonId(token: string): Promise<string> {
-  const res = await fetchWithTimeout(FS_CURRENT_USER_URL, {
+async function getCurrentUserPersonId(principal: Principal): Promise<string> {
+  const res = await fsFetch(principal, FS_CURRENT_USER_URL, {
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,
     },
   });
@@ -145,15 +145,14 @@ async function getCurrentUserPersonId(token: string): Promise<string> {
 // ─── Fetch + status handling (mirrors person_read's host contract) ─────────
 
 async function fetchAndMap(
-  token: string,
+  principal: Principal,
   input: PersonAncestorsInput,
   pid: string,
   redirectsFollowed: number,
 ): Promise<PersonAncestorsResult> {
   const url = buildUrl(input, pid);
-  const res = await fetchWithTimeout(url, {
+  const res = await fsFetch(principal, url, {
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,
     },
     redirect: "manual",
@@ -178,7 +177,7 @@ async function fetchAndMap(
         `FamilySearch ancestry API error: 301 redirect missing Location header for ${pid}.`,
       );
     }
-    return fetchAndMap(token, input, newId, redirectsFollowed + 1);
+    return fetchAndMap(principal, input, newId, redirectsFollowed + 1);
   }
 
   if (res.status === 401) {
@@ -261,7 +260,12 @@ async function mapResponse(
   for (const sp of simplified.persons ?? []) {
     if (!sp.id) continue;
     const ascendancyNumber = ascById.get(sp.id);
-    if (ascendancyNumber === undefined) continue; // defensive — every ancestry person has one
+    // NOT defensive under `descendants: true`: measured 2026-09-23, five persons
+    // on LZJW-C31 arrive with no ascendancyNumber and are dropped here. This is
+    // load-bearing and lossy, and it is why the closure guard below compares
+    // against the EMITTED persons rather than the raw response. The person loss
+    // itself is unreported — only the edges those persons anchor reach notes[].
+    if (ascendancyNumber === undefined) continue;
     // Drop per-person source references: the ancestry response carries no
     // sourceDescriptions, so these would be dangling. Mutates this result
     // only — toSimplified is untouched, so other callers keep their sources.
@@ -271,9 +275,24 @@ async function mapResponse(
 
   const result: PersonAncestorsResult = { persons };
   if (marriageDetails) {
-    result.relationships = (simplified.relationships ?? []).map(
-      shapeRelationship,
+    const shaped = (simplified.relationships ?? []).map(shapeRelationship);
+    // Against the EMITTED persons, after the ascendancy filter above — checking
+    // `rawPersons` would re-admit exactly the leak this guards (issue #2747).
+    // Measured on live data 2026-09-23: 11 of 27 edges on LZJW-C31 name a
+    // person absent from persons[] (9 of 20 on KNDX-MKG). Each would fail the
+    // project_create write outright, costing the user the whole project rather
+    // than the edge. Under descendants:true, 2 of 13 are persons the filter
+    // above removed — which is why this compares against `persons`, not raw.
+    // `AncestorPerson.id` is optional in the type, so narrow rather than
+    // building a Set<string|undefined> — an undefined in the set would make
+    // `personIds.has(undefined)` meaningless and admit a malformed edge.
+    const emittedIds = new Set(
+      persons.map((p) => p.id).filter((id): id is string => typeof id === "string"),
     );
+    const kept = dropDanglingEdges(shaped, emittedIds);
+    result.relationships = kept;
+    const note = describeDroppedEdges(shaped, kept);
+    if (note) result.notes = [note];
   }
   return result;
 }
@@ -282,6 +301,15 @@ async function mapResponse(
 // (…/persons/<id>); strip to the bare tree ID, same as person_read.
 function shapeRelationship(r: SimplifiedRelationship): SimplifiedRelationship {
   const out: SimplifiedRelationship = { ...r };
+  // ALL FOUR keys, not just the Couple pair. `simplifyRelationship` writes
+  // `parent`/`child` from `stripFragment(resource)`, which passes an absolute
+  // `…/persons/<id>` URL through untouched — and the closure guard below
+  // compares against bare `persons[].id`, so an unbared endpoint would be
+  // dropped even when its person IS returned. Defensive: no probed ancestry
+  // response carries a ParentChild (all `Couple`, measured 2026-09-23), so this
+  // is insurance against a shape the endpoint is not known to return.
+  if (out.parent) out.parent = bareId(out.parent);
+  if (out.child) out.child = bareId(out.child);
   if (out.person1) out.person1 = bareId(out.person1);
   if (out.person2) out.person2 = bareId(out.person2);
   return out;

@@ -31,6 +31,7 @@ Run by .github/workflows/check-runlogs.yml. Self-contained: stdlib only
 
 from __future__ import annotations
 
+
 import json
 import sys
 from pathlib import Path
@@ -49,6 +50,10 @@ if str(HERE) not in sys.path:
 
 from gh_annotations import gh_warning, write_step_summary  # noqa: E402
 
+if str(HARNESS_DIR) not in sys.path:
+    sys.path.insert(0, str(HARNESS_DIR))
+from harness.instrument import LIVE_TOOLS  # noqa: E402
+
 SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 TESTS_DIR = REPO_ROOT / "eval" / "tests" / "unit"
 FIXTURES_DIR = REPO_ROOT / "eval" / "fixtures" / "mcp"
@@ -66,51 +71,6 @@ EXEMPT_TOOLS: dict[str, str] = {
         "exercised in-harness. Tool-code correctness is covered by Vitest "
         "(packages/engine/mcp-server/tests/); transcription behavior is verified via the "
         "layered manual testing playbooks (docs/testing-guides/)."
-    ),
-    "research_log_append": (
-        "registered as a LIVE_TOOL in mock_mcp.py — calls the real compiled "
-        "implementation rather than matching a fixture. The tool handles id "
-        "assignment, timestamping, camelCase-to-snake_case field renaming, "
-        "and validation. No fixture needed; it is always available."
-    ),
-    "research_append": (
-        "registered as a LIVE_TOOL in mock_mcp.py — calls the real compiled "
-        "implementation against the workspace research.json rather than "
-        "matching a fixture. It validates-before-persist and enforces "
-        "supersede-not-delete, so its result reflects the actual file the "
-        "skill wrote. No fixture needed; it is always available."
-    ),
-    "research_query": (
-        "registered as a LIVE_TOOL in mock_mcp.py (#919) — a read-only, "
-        "deterministic projection over the workspace's own research.json, "
-        "same class as project_context. It calls the real compiled "
-        "implementation rather than matching a fixture, so mocking it would "
-        "only invite drift from the scenario's actual state. No fixture "
-        "needed; it is always available."
-    ),
-    "extraction_append": (
-        "registered as a LIVE_TOOL in mock_mcp.py — the record-extraction "
-        "lane's writer (research_append restricted to sources + assertions). "
-        "Calls the real compiled implementation against the workspace, so its "
-        "result reflects the actual file the skill wrote, including a "
-        "rejection when an op strays outside the lane. No fixture needed; it "
-        "is always available."
-    ),
-    "convert_calendar": (
-        "registered as a LIVE_TOOL in mock_mcp.py (#1654) — pure calendar "
-        "arithmetic, so a fixture would have to hard-code the very answer the "
-        "test exists to measure, which is the one way of mocking this tool "
-        "that is worse than not mocking it. It calls the real compiled "
-        "implementation, deriving the Julian/Gregorian offset by JDN round-"
-        "trip. No fixture needed; it is always available. conflict-resolution "
-        "declares the same tool, so this exemption drops convert_calendar from "
-        "that skill's missing list too — it does NOT silence that skill, which "
-        "still warns for place_search_all, an unrelated pre-existing gap. "
-        "Before the "
-        "live registration this warning was true and unactioned for two "
-        "months, because the remedies it named — add a fixture, or drop the "
-        "tool — were both wrong here; the warning now had to stop firing or it "
-        "would assert something false about a tool 11 of 16 tests exercise."
     ),
 }
 
@@ -172,7 +132,7 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
     for test_path in sorted(skill_tests.glob("*.json")):
         try:
             test = json.loads(test_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             continue
         for fixture_name in test.get("mcp_fixtures") or []:
             fixture_path = FIXTURES_DIR / f"{fixture_name}.json"
@@ -180,7 +140,7 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
                 continue
             try:
                 fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, UnicodeDecodeError):
                 continue
             tool = fixture.get("tool")
             if isinstance(tool, str):
@@ -190,11 +150,30 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
     return refs
 
 
+#: Every LIVE_TOOL is exempt by construction: the mock registers it
+#: unconditionally and its handler calls the real compiled implementation, so
+#: a fixture is not how they are covered. (Not that one could never exist: a few --
+#: person_quality, person_warnings -- are fixture-backed in places. The point is that
+#: the live handler answers, so a missing fixture is not a coverage gap.) Six were
+#: hand-copied
+#: into EXEMPT_TOOLS above while LIVE_TOOLS held eighteen, so `research_query`
+#: was exempt and `validate_research_schema` -- equally live -- was warned about
+#: for as long as both have existed. Derived rather than copied a seventh time.
+#:
+#: Imported from `harness.instrument`, which is stdlib-only for the same reason
+#: this script is: the workflow installs no dependencies. (It used to be parsed
+#: out of `mock_mcp.py`, which cannot be imported here.)
+def live_tools() -> set[str]:
+    """`LIVE_TOOLS` as the harness declares it."""
+    return set(LIVE_TOOLS)
+
+
 def main() -> int:
     if not SKILLS_DIR.is_dir():
         print(f"No skills directory at {SKILLS_DIR}; nothing to check.")
         return 0
 
+    LIVE = live_tools()
     forward_gaps = 0
     reverse_gaps = 0
     tool_using_skills = 0
@@ -209,7 +188,7 @@ def main() -> int:
 
         # Forward: a declared tool that no fixture in the corpus covers —
         # no eval test can exercise that tool path.
-        missing = sorted(set(declared) - set(refs) - set(EXEMPT_TOOLS))
+        missing = sorted(set(declared) - set(refs) - set(EXEMPT_TOOLS) - LIVE)
         if missing:
             forward_gaps += 1
             plural = "these tools" if len(missing) > 1 else "this tool"
@@ -258,12 +237,27 @@ def main() -> int:
         print("\nCoverage-exempt tools (structurally untestable, never flagged):")
         for tool, reason in sorted(EXEMPT_TOOLS.items()):
             print(f"  - {tool}: {reason}")
+    # The docstring promises the exemption list is printed every run "so it stays visible
+    # rather than silently swallowing a gap". The derived half has to be printed too, or
+    # the larger of the two sets is the invisible one.
+    if LIVE:
+        print(
+            f"\nAlso exempt, derived from LIVE_TOOLS ({len(LIVE)}): "
+            "registered unconditionally and answered by the real compiled tool, so a "
+            "fixture is not how they are covered."
+        )
+        print("  " + ", ".join(sorted(LIVE)))
+    else:
+        print(
+            "\nLIVE_TOOLS could not be read, so nothing is exempt on that ground and "
+            "live tools below are reported as gaps."
+        )
 
     write_step_summary(
         "Skill tool-coverage drift (warn-only)",
         footer=(
             "Warn-only: this check does not block the build. "
-            f"Coverage-exempt tools: {', '.join(sorted(EXEMPT_TOOLS)) or 'none'}."
+            f"Coverage-exempt: {', '.join(sorted(set(EXEMPT_TOOLS) | LIVE)) or 'none'}."
         ),
     )
     return 0

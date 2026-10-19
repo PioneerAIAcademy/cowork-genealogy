@@ -4,19 +4,17 @@
     "skill": "search-familysearch-wiki",
     "name": "FamilySearch wiki — census records",
     "type": "positive",
-    "description": "User asks how to use census records on FamilySearch. Also verifies slug normalization — topic 'census records' should save as census-records.md.",
-    "tags": ["fs-wiki", "how-to", "census", "slug-normalization", "expects-file-census-records"]
+    "description": "User asks how to use census records on FamilySearch, and the logged notes must keep the census era boundaries the chunk states.",
+    "tags": ["fs-wiki", "how-to", "census", "title-normalization", "direct-arm"]
   },
   "input": {
-    "user_message": "Search the FamilySearch wiki for how to use census records to trace my family",
-    "scenario": null
+    "delegation": "Search the FamilySearch wiki for how to use census records to trace my family\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": ["wiki-search-census-records"],
   "judge_context": [
     "Should call the FamilySearch wiki with a query about using census records on FamilySearch",
-    "The saved file should be named census-records.md — lowercase, hyphenated, no extra characters",
-    "Summary should only reflect what the wiki actually said — no invented census years, states, or coverage details",
-    "The fixture chunk says 'FamilySearch has free access to indexed census records from 1790 through 1940. The 1950 census was released in 2022.' — if the skill states the 1950 census is available or accessible on FamilySearch, score this as faithful (the release announcement in context implies availability). Do NOT score it as fabricated.",
-    "The fixture chunk describes how census content changed by era: 1790–1840 only the head of household is named (others are tally marks by age/sex); 1850–1870 every free person is named but relationship to the head is NOT recorded; 1880 onward everyone is named with their relationship to the head. The summary should reflect these era distinctions and must NOT claim a census lists every household member with their relationship across all years — that holds only from 1880 on. Flattening the eras into one blanket statement is a Correctness error."
+    "The logged entry's notes should open with '# FamilySearch Wiki: ' and the question's core noun phrase (census records), not the whole question",
+    "Summary should only reflect what the wiki actually said — no invented census years, states, or coverage details"
   ]
 }

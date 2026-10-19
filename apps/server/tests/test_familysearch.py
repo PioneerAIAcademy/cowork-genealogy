@@ -9,6 +9,8 @@ sandbox; with no row, nothing is written (mock mode never reads it).
 import json
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
@@ -48,7 +50,7 @@ def test_create_session_injects_real_fs_token():
                 user_id=user_id,
                 access_token="real-access",
                 refresh_token="real-refresh",
-                expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+                expires_at=datetime.now(timezone.utc) + timedelta(hours=2),
             ))
             s.commit()
 
@@ -59,7 +61,7 @@ def test_create_session_injects_real_fs_token():
 
         tok = json.loads(path.read_text(encoding="utf-8"))
         assert tok["accessToken"] == "real-access"
-        assert tok["refreshToken"] == "real-refresh"
+        assert "refreshToken" not in tok, "sandbox must not hold a refresh token (issue #2887)"
         assert "mock" not in tok  # real token, not the old dev-connect mock shape
         assert isinstance(tok["expiresAt"], int) and tok["expiresAt"] > 0
 
@@ -112,13 +114,13 @@ def _patch_identity(monkeypatch, *, email: str, fs_id: str) -> None:
 
 def test_callback_allowlisted_creates_user_and_token(monkeypatch):
     email = "callback-ok@example.com"
-    with Session(get_engine()) as s:
-        if s.get(AllowedEmail, email) is None:
-            s.add(AllowedEmail(email=email))
-            s.commit()
     _patch_identity(monkeypatch, email=email, fs_id="cis.user.CBOK")
 
     with TestClient(app) as client:
+        with Session(get_engine()) as s:
+            if s.get(AllowedEmail, email) is None:
+                s.add(AllowedEmail(email=email))
+                s.commit()
         r = client.get(
             "/callback?code=abc&state=st-ok", headers=_state_header("st-ok"),
             follow_redirects=False,
@@ -178,13 +180,13 @@ def _state_header_with_next(state: str, next_val: str) -> dict:
 
 def test_callback_honours_safe_next(monkeypatch):
     email = "callback-next@example.com"
-    with Session(get_engine()) as s:
-        if s.get(AllowedEmail, email) is None:
-            s.add(AllowedEmail(email=email))
-            s.commit()
     _patch_identity(monkeypatch, email=email, fs_id="cis.user.NEXT")
 
     with TestClient(app) as client:
+        with Session(get_engine()) as s:
+            if s.get(AllowedEmail, email) is None:
+                s.add(AllowedEmail(email=email))
+                s.commit()
         r = client.get(
             "/callback?code=abc&state=st-next",
             headers=_state_header_with_next("st-next", "#/s/prj_abc123"),
@@ -198,13 +200,13 @@ def test_callback_rejects_unsafe_next(monkeypatch):
     """A tampered `next` (absolute URL → open redirect) is dropped; the user just
     lands on the app origin."""
     email = "callback-badnext@example.com"
-    with Session(get_engine()) as s:
-        if s.get(AllowedEmail, email) is None:
-            s.add(AllowedEmail(email=email))
-            s.commit()
     _patch_identity(monkeypatch, email=email, fs_id="cis.user.BADNEXT")
 
     with TestClient(app) as client:
+        with Session(get_engine()) as s:
+            if s.get(AllowedEmail, email) is None:
+                s.add(AllowedEmail(email=email))
+                s.commit()
         r = client.get(
             "/callback?code=abc&state=st-bad",
             headers=_state_header_with_next("st-bad", "https://evil.example.com/phish"),
@@ -245,7 +247,7 @@ async def test_fresh_fs_token_returns_live_token_as_is(monkeypatch):
 async def test_fresh_fs_token_refreshes_when_near_expiry(monkeypatch):
     async def _refresh(rt):
         assert rt == "R-old"
-        return {"access_token": "A-new", "refresh_token": "R-new", "expires_in": 3600}
+        return {"access_token": "A-new", "refresh_token": "R-new", "expires_in": 7200}
     monkeypatch.setattr(fs_oauth, "refresh_tokens", _refresh)
     _seed_token("usr_stale", access="A-old", refresh="R-old",
                 expires_at=datetime.now(timezone.utc) + timedelta(minutes=2))
@@ -292,7 +294,7 @@ class _FakeSandbox:
 
 async def test_sync_fs_token_ok_reinjects_refreshed_token(monkeypatch):
     async def _refresh(_rt):
-        return {"access_token": "A-fresh", "refresh_token": "R", "expires_in": 3600}
+        return {"access_token": "A-fresh", "refresh_token": "R", "expires_in": 7200}
     monkeypatch.setattr(fs_oauth, "refresh_tokens", _refresh)
     _seed_token("usr_ok", access="A-old", refresh="R",
                 expires_at=datetime.now(timezone.utc) + timedelta(minutes=1))
@@ -303,6 +305,7 @@ async def test_sync_fs_token_ok_reinjects_refreshed_token(monkeypatch):
         assert await sync_fs_token(s, user, sandbox) == "ok"
     injected = json.loads(sandbox.writes[fs_oauth.TOKENS_PATH].decode())
     assert injected["accessToken"] == "A-fresh"
+    assert "refreshToken" not in injected, "sandbox must not hold a refresh token (issue #2887)"
 
 
 async def test_sync_fs_token_expired_leaves_sandbox_untouched(monkeypatch):
@@ -326,3 +329,311 @@ async def test_sync_fs_token_none_without_row():
     with Session(get_engine()) as s:
         assert await sync_fs_token(s, user, sandbox) == "none"
     assert sandbox.writes == {}
+
+
+# ── Allowlist revocation (security audit #1018 Task 6) ─────────
+
+def test_init_db_removes_stale_allowlist_entries():
+    """Entries in the DB but not in ALLOWED_EMAILS are removed on init, so
+    revoking access by editing the env actually takes effect."""
+    from app.db import init_db
+
+    with Session(get_engine()) as s:
+        if s.get(AllowedEmail, "stale-user@example.com") is None:
+            s.add(AllowedEmail(email="stale-user@example.com"))
+            s.commit()
+        assert s.get(AllowedEmail, "stale-user@example.com") is not None
+
+    init_db()
+
+    with Session(get_engine()) as s:
+        assert s.get(AllowedEmail, "stale-user@example.com") is None, \
+            "stale allowlist entry should be removed on init_db()"
+
+
+@pytest.mark.asyncio
+async def test_revoke_sandboxes_destroys_active_projects(monkeypatch):
+    """When a user is not on the allowlist, _revoke_sandboxes destroys their
+    active sandbox sessions and archives only the successfully deleted ones.
+    Allowlisted users are spared."""
+    from unittest.mock import AsyncMock
+    from app.main import _revoke_sandboxes
+    from app.models import Project
+
+    monkeypatch.setattr(get_settings(), "familysearch_web_enabled", True)
+    monkeypatch.setattr(
+        get_settings(), "allowed_emails", "spared-allow@example.com",
+    )
+
+    revoked_email = "revoke-sandbox-test@example.com"
+    allowlisted_email = "spared-allow@example.com"
+    with TestClient(app):
+        with Session(get_engine()) as s:
+            user = User(id="usr_revoke_test_01", email=revoked_email)
+            s.add(user)
+            s.add(FamilySearchToken(
+                user_id=user.id,
+                access_token="revoked-access",
+                refresh_token="revoked-refresh",
+                expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            ))
+            s.add(Project(
+                id="prj_revoke_test_01", user_id=user.id,
+                sandbox_id="sbx_revoke_test_01", status="active",
+            ))
+            s.add(Project(
+                id="prj_revoke_test_02", user_id=user.id,
+                sandbox_id="sbx_revoke_test_02", status="archived",
+            ))
+            allowed_user = User(id="usr_revoke_test_02", email=allowlisted_email)
+            s.add(allowed_user)
+            s.add(Project(
+                id="prj_revoke_test_03", user_id=allowed_user.id,
+                sandbox_id="sbx_revoke_test_03", status="active",
+            ))
+            s.commit()
+
+        provider = AsyncMock()
+        await _revoke_sandboxes(provider)
+
+        provider.delete.assert_called_once_with("sbx_revoke_test_01")
+
+        with Session(get_engine()) as s:
+            active = s.get(Project, "prj_revoke_test_01")
+            assert active is not None and active.status == "archived", \
+                "active project must be archived after sandbox revocation"
+            already = s.get(Project, "prj_revoke_test_02")
+            assert already is not None and already.status == "archived", \
+                "already-archived project must remain archived"
+            spared_allowlisted = s.get(Project, "prj_revoke_test_03")
+            assert spared_allowlisted is not None and spared_allowlisted.status == "active", \
+                "allowlisted user's project must survive the sweep"
+            assert s.get(FamilySearchToken, "usr_revoke_test_01") is None, \
+                "revoked user's FS token must be deleted"
+            revoked_user = s.get(User, "usr_revoke_test_01")
+            assert revoked_user is not None and revoked_user.sessions_revoked_at is not None, \
+                "revoked user's sessions must be invalidated"
+            assert s.get(User, "usr_revoke_test_02").sessions_revoked_at is None, \
+                "allowlisted user's sessions must not be invalidated"
+
+        with Session(get_engine()) as s:
+            for uid in ("usr_revoke_test_01", "usr_revoke_test_02"):
+                u = s.get(User, uid)
+                if u:
+                    for p in s.exec(select(Project).where(Project.user_id == uid)).all():
+                        s.delete(p)
+                    s.delete(u)
+            s.commit()
+
+
+@pytest.mark.asyncio
+async def test_revoke_sandboxes_skips_archival_on_failed_delete(monkeypatch):
+    """A project whose sandbox deletion failed stays active so the next boot
+    retries it (self-healing)."""
+    from unittest.mock import AsyncMock
+    from app.main import _revoke_sandboxes
+    from app.models import Project
+
+    monkeypatch.setattr(get_settings(), "familysearch_web_enabled", True)
+
+    email = "revoke-fail-test@example.com"
+    with TestClient(app):
+        with Session(get_engine()) as s:
+            user = User(id="usr_revoke_fail_01", email=email)
+            s.add(user)
+            s.add(Project(
+                id="prj_revoke_fail_01", user_id=user.id,
+                sandbox_id="sbx_revoke_fail_01", status="active",
+            ))
+            s.commit()
+
+        provider = AsyncMock()
+        provider.delete.side_effect = RuntimeError("E2B API down")
+        await _revoke_sandboxes(provider)
+
+        provider.delete.assert_called_once_with("sbx_revoke_fail_01")
+
+        with Session(get_engine()) as s:
+            project = s.get(Project, "prj_revoke_fail_01")
+            assert project is not None and project.status == "active", \
+                "failed delete must leave project active for retry on next boot"
+
+        with Session(get_engine()) as s:
+            for uid in ("usr_revoke_fail_01",):
+                u = s.get(User, uid)
+                if u:
+                    for p in s.exec(select(Project).where(Project.user_id == uid)).all():
+                        s.delete(p)
+                    s.delete(u)
+            s.commit()
+
+
+def test_get_current_user_rejects_removed_allowlist_email(monkeypatch):
+    """A user with a valid session cookie is rejected if their email is no
+    longer on the allowlist — revocation is per-request, not login-only.
+
+    The per-request check fires only when FamilySearch OAuth is the login gate
+    (production); dev-login has no allowlist, so the check would be wrong there.
+    We log in via dev-login first (FS unconfigured), then flip the flag so the
+    per-request check activates."""
+    with TestClient(app) as client:
+        with Session(get_engine()) as s:
+            if s.get(AllowedEmail, "soon-revoked@example.com") is None:
+                s.add(AllowedEmail(email="soon-revoked@example.com"))
+                s.commit()
+        login = client.post("/auth/dev-login", json={"email": "soon-revoked@example.com"})
+        assert login.status_code == 200
+
+        assert client.get("/auth/me").status_code == 200
+
+        monkeypatch.setattr(get_settings(), "familysearch_web_enabled", True)
+
+        with Session(get_engine()) as s:
+            row = s.get(AllowedEmail, "soon-revoked@example.com")
+            if row is not None:
+                s.delete(row)
+                s.commit()
+
+        r = client.get("/auth/me")
+        assert r.status_code == 403, \
+            "a user removed from the allowlist must be rejected immediately"
+
+
+def test_expires_at_defaults_to_the_familysearch_lifetime_when_the_response_names_none():
+    """FamilySearch's token response carries no expires_in (measured 2026-09-23); its access
+    tokens live 8 h idle. An hour-long default made every holder refresh hourly, and a
+    refresh revokes the previous access token -- the sandbox's live one."""
+    from datetime import datetime, timedelta, timezone
+
+    before = datetime.now(timezone.utc).replace(microsecond=0)
+    got = fs_oauth.expires_at_from({"access_token": "a", "token_type": "family_search", "refresh_token": "r"})
+    assert fs_oauth.FS_ACCESS_TOKEN_LIFETIME_S == 8 * 60 * 60
+    assert before + timedelta(hours=8) <= got <= datetime.now(timezone.utc) + timedelta(hours=8)
+    assert fs_oauth.expires_at_from({"expires_in": 600}) <= datetime.now(timezone.utc) + timedelta(seconds=600)
+
+
+def test_the_hosted_lifetime_matches_the_engine():
+    """Two copies of one fact, one per language; a drift would have the web tier and the
+    in-sandbox engine disagree on when to refresh -- and each refresh revokes the other's."""
+    import re
+    from pathlib import Path
+
+    ts = (Path(__file__).resolve().parents[3] / "packages/engine/mcp-server/src/auth/refresh.ts").read_text(encoding="utf-8")
+    m = re.search(r"export const FS_ACCESS_TOKEN_LIFETIME_S = ([0-9 *]+);", ts)
+    assert m, "the engine constant moved; update this test"
+    assert eval(m.group(1)) == fs_oauth.FS_ACCESS_TOKEN_LIFETIME_S  # noqa: S307 -- digits and '*' only
+
+
+# ── Issue #2887: single refresh owner ─────────────────────────────
+
+
+def test_tokens_file_bytes_has_no_refresh_token():
+    """The sandbox must never hold a refresh token -- the control plane is the
+    sole refresh owner (issue #2887). A refreshToken key in the sandbox's
+    tokens.json would let the engine refresh on its own, revoking the control
+    plane's token."""
+    blob = fs_oauth.tokens_file_bytes("access-abc", datetime.now(timezone.utc) + timedelta(hours=2))
+    payload = json.loads(blob)
+    assert payload["accessToken"] == "access-abc"
+    assert "refreshToken" not in payload
+
+
+async def test_concurrent_fresh_fs_token_refreshes_once(monkeypatch):
+    """Two concurrent /connect calls for the same user must not both spend the
+    refresh token. The asyncio.Lock serializes them: the second caller re-reads
+    the DB after the lock and finds a fresh token."""
+    import asyncio
+
+    call_count = 0
+
+    async def _counting_refresh(_rt):
+        nonlocal call_count
+        call_count += 1
+        await asyncio.sleep(0.05)  # simulate network round-trip
+        return {"access_token": f"A-fresh-{call_count}", "refresh_token": "R-new", "expires_in": 7200}
+
+    monkeypatch.setattr(fs_oauth, "refresh_tokens", _counting_refresh)
+    _seed_token("usr_concurrent", access="A-old", refresh="R-old",
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=1))
+
+    async def _call():
+        with Session(get_engine()) as s:
+            return await fresh_fs_token(s, "usr_concurrent")
+
+    r1, r2 = await asyncio.gather(_call(), _call())
+    assert r1 is not None and r2 is not None
+    assert call_count == 1, f"refresh_tokens called {call_count} times, expected 1"
+
+
+async def test_push_token_reaches_active_skips_stale():
+    """After a refresh, the new token is pushed to every recently-active sandbox
+    the user has, but stale sandboxes (last_active older than _RUNNING_TIMEOUT_S)
+    are skipped."""
+    from app.sessions import push_token_to_live_sandboxes, _RUNNING_TIMEOUT_S
+    from app.models import Project, utcnow
+
+    active_sandbox = _FakeSandbox()
+    active_sandbox.id = "sb-active"
+    stale_sandbox = _FakeSandbox()
+    stale_sandbox.id = "sb-stale"
+    connecting_sandbox = _FakeSandbox()
+    connecting_sandbox.id = "sb-connecting"
+
+    class _FakeProvider:
+        async def get(self, sandbox_id):
+            if sandbox_id == "sb-active":
+                return active_sandbox
+            if sandbox_id == "sb-stale":
+                return stale_sandbox
+            raise RuntimeError(f"unexpected sandbox_id: {sandbox_id}")
+
+    user_id = "usr_push"
+    with Session(get_engine()) as s:
+        s.merge(User(id=user_id, email="push@example.com"))
+        s.commit()
+        s.merge(Project(
+            id="prj_active", user_id=user_id, sandbox_id="sb-active",
+            last_active=utcnow(),
+        ))
+        s.merge(Project(
+            id="prj_stale", user_id=user_id, sandbox_id="sb-stale",
+            last_active=datetime.now(timezone.utc) - timedelta(seconds=_RUNNING_TIMEOUT_S + 600),
+        ))
+        s.merge(Project(
+            id="prj_connecting", user_id=user_id, sandbox_id="sb-connecting",
+            last_active=utcnow(),
+        ))
+        s.commit()
+
+        expires = datetime.now(timezone.utc) + timedelta(hours=2)
+        await push_token_to_live_sandboxes(
+            s, user_id, "A-pushed", expires, _FakeProvider(),
+            exclude_sandbox_id="sb-connecting",
+        )
+
+    # Active sandbox got the new token
+    assert fs_oauth.TOKENS_PATH in active_sandbox.writes
+    pushed = json.loads(active_sandbox.writes[fs_oauth.TOKENS_PATH].decode())
+    assert pushed["accessToken"] == "A-pushed"
+    assert "refreshToken" not in pushed
+    # Stale sandbox was not touched
+    assert not stale_sandbox.writes
+    # Connecting sandbox was excluded
+    assert not connecting_sandbox.writes
+
+
+def test_refresh_margin_covers_running_timeout():
+    """_FS_REFRESH_MARGIN must be >= _RUNNING_TIMEOUT_S so the injected token
+    outlives the sandbox's maximum running window. Drift between the two would
+    let a sandbox outlive its token with no way to self-refresh (issue #2887)."""
+    from app.auth import _FS_REFRESH_MARGIN
+    from app.sessions import _RUNNING_TIMEOUT_S
+    from app.sandbox.e2b import _RUNNING_TIMEOUT_S as _E2B_RUNNING_TIMEOUT_S
+    assert _RUNNING_TIMEOUT_S == _E2B_RUNNING_TIMEOUT_S, (
+        f"sessions._RUNNING_TIMEOUT_S ({_RUNNING_TIMEOUT_S}) has drifted from "
+        f"e2b._RUNNING_TIMEOUT_S ({_E2B_RUNNING_TIMEOUT_S})"
+    )
+    assert _FS_REFRESH_MARGIN >= timedelta(seconds=_E2B_RUNNING_TIMEOUT_S), (
+        f"_FS_REFRESH_MARGIN ({_FS_REFRESH_MARGIN}) must be >= "
+        f"_RUNNING_TIMEOUT_S ({_E2B_RUNNING_TIMEOUT_S}s)"
+    )

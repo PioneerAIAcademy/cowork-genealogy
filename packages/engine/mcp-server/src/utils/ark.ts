@@ -17,6 +17,26 @@ const BARE_PREFIXED_RE = /^\d:\d:[A-Za-z0-9.-]+$/;
 
 const FS_URL_PREFIX_RE = /^https?:\/\/(?:www\.)?familysearch\.org\//i;
 
+// The one spelling of "is this a document-image ARK" (3:1: or 3:2:). It lived
+// in three hand-maintained copies with three different anchorings —
+// fs-image-fetch's DOCUMENT_IMAGE_ARK_PATTERN, its error-message scanner, and
+// record-read's extractImageArk — so widening the set (a new type, a new id
+// character) meant finding all three. Two functions rather than one flag:
+// validating a whole string and finding an ARK inside a URL are different
+// questions, and the callers read better for saying which they mean.
+const DOCUMENT_IMAGE_ARK_CORE = "ark:\\/61903\\/3:[12]:[A-Za-z0-9.-]+";
+
+export function isDocumentImageArk(value: string): boolean {
+  if (typeof value !== "string") return false;
+  return new RegExp(`^${DOCUMENT_IMAGE_ARK_CORE}$`).test(value);
+}
+
+/** Find a document-image ARK anywhere inside a string (e.g. a resolved URL). */
+export function findDocumentImageArk(value: string): string | undefined {
+  if (typeof value !== "string") return undefined;
+  return new RegExp(DOCUMENT_IMAGE_ARK_CORE).exec(value)?.[0];
+}
+
 /**
  * Normalize any form of a FamilySearch ARK to the canonical `ark:/61903/...`
  * form: a resolver URL, an already-bare ARK, or a type-prefixed id like
@@ -67,4 +87,104 @@ export function arkToUrl(value: string): string {
     return `https://www.familysearch.org/${trimmed}`;
   }
   return trimmed;
+}
+
+// An imageId is a digitized-image identifier of the form NUMBER_NUMBER
+// (an image group number, an underscore, and an image sequence number,
+// e.g. "004884748_02613"). Shared by fs-image-fetch.ts (validation) and
+// imageViewerUrl (viewer-link construction).
+export const IMAGE_ID_PATTERN = /^\d+_\d+$/;
+
+// An image-ARK id with its `3:1:` prefix dropped, as a delegating agent passed
+// it in an alpha-feedback run. Only the 4-4-4-1 shape: in the repo, 161 distinct
+// prefixed ids of that shape are 3:1: and 1 is 3:2: (a test value), while
+// shorter bare ids collide with 1:1: persona ids (XXXX-XXX, XXXX-XXXX) and 4:1:
+// tree ids (XXXX-XXX). Shared by fs-image-fetch.ts (fetch resolution) and
+// imageViewerUrl (viewer-link construction).
+export const UNPREFIXED_IMAGE_ID_RE = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]$/;
+
+// A DGS distribution URL passed as `ark` — extract the embedded imageId to build
+// a viewer URL. The fetch side (fs-image-fetch.ts) already accepts this shape;
+// imageViewerUrl needs to derive a film-viewer link from it.
+const DGS_URL_RE = /^https:\/\/(?:www\.)?familysearch\.org\/das\/v2\/dgs:(\d+_\d+)\/dist\.jpg$/;
+
+/** The `NUMBER_NUMBER` imageId a DGS distribution URL embeds, or undefined. */
+export function dgsImageId(url: string): string | undefined {
+  return DGS_URL_RE.exec(url)?.[1];
+}
+
+/**
+ * Build a FamilySearch viewer URL for a tool's image input, so the user can
+ * click through and verify what the agent read. Returns `undefined` when no
+ * viewer URL can be derived (uploaded file, memory artifact).
+ *
+ * - **ARK** (3:1:/3:2:, bare or canonical or full URL): the resolver URL,
+ *   preserving any `i=`/`cc=`/`groupId=` context params the input carried.
+ * - **DGS imageId** (`004528077_00697`): the film-viewer URL. The viewer's
+ *   `i=` parameter is **zero-indexed** (verified 2026-10-01: image 00697 of
+ *   film 004528077 opens correctly at `i=696`).
+ *
+ * Called by `image_transcribe`, `image_read`, and `record_read` (issue #2854).
+ */
+export function imageViewerUrl(
+  input: { imageId?: string; ark?: string },
+  extractContextQuery?: (raw: string) => string,
+): string | undefined {
+  if (input.imageId !== undefined) {
+    if (!IMAGE_ID_PATTERN.test(input.imageId)) return undefined;
+    const [dgsNumber, seq] = input.imageId.split("_");
+    const imageNumber = parseInt(seq, 10);
+    if (imageNumber < 1) return undefined;
+    // The film viewer's `i=` is zero-indexed.
+    return `https://www.familysearch.org/search/film/${dgsNumber}?i=${imageNumber - 1}`;
+  }
+  if (input.ark !== undefined) {
+    // DGS distribution URL: extract the embedded imageId and build a film viewer.
+    const dgsId = dgsImageId(input.ark);
+    if (dgsId) {
+      const [dgsNumber, seq] = dgsId.split("_");
+      const imageNumber = parseInt(seq, 10);
+      if (imageNumber < 1) return undefined;
+      return `https://www.familysearch.org/search/film/${dgsNumber}?i=${imageNumber - 1}`;
+    }
+    // Unprefixed XXXX-XXXX-XXXX-X image id → treat as 3:1: ARK.
+    if (UNPREFIXED_IMAGE_ID_RE.test(input.ark.trim())) {
+      return arkToUrl(`ark:/61903/3:1:${input.ark.trim()}`);
+    }
+    const canonical = toArk(input.ark);
+    if (!isDocumentImageArk(canonical)) return undefined;
+    const base = arkToUrl(canonical);
+    const query = extractContextQuery ? extractContextQuery(input.ark) : "";
+    return `${base}${query}`;
+  }
+  return undefined;
+}
+
+/** The FamilySearch tree PID an `ark` names: a tree-person ark
+ *  (4:1:) in any spelling, or a tree person URL. A record or image ark names
+ *  no tree person. */
+export function treePidOfArk(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  // Each %XX on its own, so one stray `%` does not switch decoding off.
+  const text = value
+    .trim()
+    .replace(/%([0-9A-Fa-f]{2})/g, (_m, hex: string) => String.fromCharCode(parseInt(hex, 16)));
+  // A FamilySearch tree person URL names the PID in a path segment after
+  // /tree/person/ (details, sources, memories, a language prefix before it).
+  // Read first, so a query string cannot override the path.
+  const url = text.match(
+    /^https?:\/\/(?:www\.)?familysearch\.org(?::\d+)?\/(?:[a-z]{2}(?:-[a-z]{2,4})?\/)?tree\/(?:person|pedigree)\/([^?#]*)/i,
+  );
+  if (url) {
+    for (const seg of url[1].split("/")) {
+      const pid = seg.match(/^([A-Za-z0-9]{4}-[A-Za-z0-9]{3,4})(?![A-Za-z0-9-])/);
+      if (pid) return pid[1];
+    }
+    return undefined;
+  }
+  // Otherwise an ark: `ark:/61903/4:1:<PID>` in the path of a resolver URL, or
+  // a bare `4:1:<PID>`. Never from a query string: a record URL can carry a
+  // tree ark there without naming that person.
+  const path = text.replace(/[?#].*$/, "");
+  return path.match(/(?:ark:\/61903\/|^)4:1:([A-Za-z0-9]{4}-[A-Za-z0-9]{3,4})(?![A-Za-z0-9])/i)?.[1];
 }

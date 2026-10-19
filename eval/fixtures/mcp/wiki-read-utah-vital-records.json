@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_read",
+  "description": "Excerpt from the live Utah_Vital_Records page, probed 2026-09-04 at https://www.familysearch.org/en/wiki/Utah_Vital_Records (35244 chars). Verbatim contiguous excerpt of 1582 chars anchored on the registration-start table, NOT the whole page — the registration facts the tests rely on are present; the rest of the page is omitted deliberately (issue #2257).",
+  "args": {
+    "url": "~Utah_Vital_Records"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Utah_Vital_Records",
+    "content": "[Utah](https://www.familysearch.org/en/wiki/Utah,_United_States_Genealogy \"Utah, United States Genealogy\")\n\nVital Records\n\n[![Vital Records Collage.JPG](/en/wiki/img_auth.php/thumb/a/a2/Vital_Records_Collage.JPG/350px-Vital_Records_Collage.JPG)](https://www.familysearch.org/en/wiki/index.php?title=File:Vital_Records_Collage.JPG&filetimestamp=20100930223902& \"Vital Records Collage.JPG\")\n\n|  | [Births](https://www.familysearch.org/en/wiki/Utah_Vital_Records#Birth_and_Death_Records \"Utah Vital Records\") | [Marriages](https://www.familysearch.org/en/wiki/Utah_Vital_Records#Marriage_Records \"Utah Vital Records\") | [Deaths](https://www.familysearch.org/en/wiki/Utah_Vital_Records#Birth_and_Death_Records \"Utah Vital Records\") |\n| --- | --- | --- | --- |\n| Earliest | 1890 | 1887 | 1898* |\n| Statewide Registration | 1905 | 1978 | 1905 |\n| General Compliance | 1922 | — | 1919 |\n\n## Vital Records Reference Dates\n\nUtah's vital records start the following years[[1]](#cite_note-rdb4-1):\n\n *Salt Lake City death records start in 1848, Logan in 1863 and Ogden in 1890.\n\n## Utah Birth, Marriage and Death Records Online\n\n### Births\n\n* **1892-1941** [Utah Births and Christenings, 1892–1941](https://www.familysearch.org/search/collection/1675542) at FamilySearch — [How to Use this Collection](https://www.familysearch.org/en/wiki/Utah_Births_and_Christenings_-_FamilySearch_Historical_Records \"Utah Births and Christenings - FamilySearch Historical Records\"); index; *Also at: [Findmypast](http://search.findmypast.com/search-world-Records/utah-births-and-christenings-1892-1941)* ($)"
+  }
+}

@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 contextBridge.exposeInMainWorld('api', {
   openFile: () => ipcRenderer.invoke('open-file'),
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
+  openFamilySearch: (value: string) => ipcRenderer.invoke('open-familysearch', value),
   getVersion: () => ipcRenderer.invoke('get-version'),
   onResearchUpdated: (callback: (data: unknown) => void) => {
     ipcRenderer.on('project:research-updated', (_e, data) => callback(data))

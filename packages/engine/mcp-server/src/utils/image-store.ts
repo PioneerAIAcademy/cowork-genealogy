@@ -7,12 +7,128 @@
 // ages out instead of lingering. Same discipline as results-staging's pruneStale;
 // here a GC sweep replaces staging→finalize because a source carries no imageId to
 // key a finalize on. Spec: docs/specs/image-transcribe-tool-spec.md §8.5.
+//
+// All I/O goes through the active ProjectStore; this module owns the naming and
+// the retention rule only.
 
-import { writeFile, readdir, stat, unlink, mkdir } from "fs/promises";
-import { join } from "path";
+import { posix } from "node:path";
+import { getProjectStore } from "../store/project-store.js";
 
 /** Project-relative directory holding retained source scans. */
 export const IMAGES_SUBDIR = "images";
+
+// The set of persisted source images image_transcribe read PAST the OCR
+// output-token cap, keyed `${projectId-or-projectPath}\0${imageRef}` — the imageRef
+// being the same `images/<key>.jpg` string a source records as `image_filename`,
+// and the scope being the bound store's patron-isolating projectId where there is
+// one, else the projectPath (see truncatedImageKey). Membership means "verified
+// PARTIAL"; absence means "not established" (either a whole read or no read here).
+// TRUE-or-ABSENT, add-only (#2457 B1/B2 rulings, C 2026-09-21): a whole read records
+// nothing, so once an image is in the set it stays — stickiness by construction. The
+// single invariant is that nothing moves from PARTIAL to WHOLE, in memory or in the
+// document. A capped read returns its partial transcription verbatim beside
+// `truncated: true`, but `record-extractor` relays that text across a subagent
+// boundary and never sees the flag, so `transcription_truncated` is derived at the
+// write boundary instead: research_append joins a source's `image_filename` against
+// this set (`sourceImageCapState`) and persists `true` or nothing. That is why a
+// wrong-but-resolvable `image_filename` can add an unneeded `true` badge but can
+// never stamp a whole transcription "verified whole". It lives here, not in
+// image-transcribe.ts, because both the writer (image_transcribe) and the reader
+// (research_append) already import this module. Process-lifetime, never persisted
+// (as the image cap's in-process count is); keyed by the bound store's projectId when it has one —
+// patron isolation under the shared-process http.ts entrypoint, where every request
+// presents the same anchor projectPath — else by projectPath. Only reads that
+// PERSISTED an image land here (an imageRef is what a source cites); a read with no
+// projectPath leaves no image_filename to join, the known limitation in
+// image-transcribe-tool-spec §8.6. image_filename, not imageId, is the key because
+// it is the only identifier both tools share — an ARK read gets one too, so an ARK
+// read is NOT the image cap's imageId blind spot.
+const sourceImageCaps = new Set<string>();
+
+/** Canonicalize an image ref/filename that arrives raw from an LLM relay. The
+ *  write side mints a canonical `images/<key>.jpg`, but a source's `image_filename`
+ *  on the read side (the cap join) and in the GC's referenced set can be spelled
+ *  `./images/x.jpg`, `images//x.jpg`, `images/./x.jpg`, or with backslashes, so
+ *  both must canonicalize the same way or they miss — the GC miss silently deletes
+ *  a *cited* scan past its TTL. `posix.normalize` folds backslash→`/` (after the
+ *  split-join), a leading `./`, doubled `//`, and interior `/./` the same way
+ *  `assertRelativeRef` does, without its throwing project-escape checks (this is a
+ *  cache/GC key, not a store write). */
+function normalizeImageRef(ref: string): string {
+  return posix.normalize(ref.replace(/\\/g, "/"));
+}
+
+/** The patron-isolating scope shared by the two process-lifetime caches
+ *  (`sourceImageCaps` here, `seenInProcess` in utils/browse-budget.ts): the bound
+ *  store's `projectId` when there is one — the patron-isolating identity under the
+ *  shared-process `http.ts` entrypoint, where every request presents the SAME
+ *  anchor `projectPath` (`/project`), so keying on projectPath would collide two
+ *  patrons (#2457 B2, image cap #2771). getProjectStore() returns the
+ *  request-bound store there — every http tool call runs inside runWithProjectStore
+ *  — so record and read resolve the same projectId for one project and distinct ids
+ *  across patrons. A header-less request instead binds an *unbound* store, whose
+ *  projectId is undefined (not a throw), so scope falls back to the anchor
+ *  projectPath; for the cap that fallback is never reached (the unbound store's I/O
+ *  throws before any cap is recorded or read), but the image cap falls back to
+ *  its in-process count when the unbound store refuses, so two header-less patrons
+ *  share the fallback bucket — the accepted
+ *  known limitation in image-transcribe-tool-spec §5.8. On the file backend
+ *  projectId is undefined — one process serves one project — so fall back to the
+ *  normalized projectPath. When even that is absent (image_transcribe's own
+ *  `projectPath` is optional), fall back to the `<no-project>` sentinel so a bare
+ *  `?? projectPath` never stringifies `undefined` into the key. projectPath arrives
+ *  raw from an LLM relay, so canonicalize it: backslashes → `/` and a trailing
+ *  separator off (a Windows caller may record `C:\p` and query `C:/p/`), or the
+ *  record/query symmetry is lost. */
+export function projectScope(projectPath: string | undefined): string {
+  return (
+    getProjectStore().projectId ??
+    (projectPath === undefined
+      ? "<no-project>"
+      : posix.normalize(projectPath.replace(/\\/g, "/")).replace(/\/+$/, ""))
+  );
+}
+
+function truncatedImageKey(projectPath: string, imageRef: string): string {
+  // imageRef also arrives raw from an LLM relay, so canonicalize it the same way
+  // the GC folds its referenced set: backslashes → `/`, a leading `./`, doubled
+  // `//`, interior `/./` (so `./images/x.jpg` joins `images/x.jpg`). Without it the
+  // record/query symmetry is lost.
+  return `${projectScope(projectPath)}\0${normalizeImageRef(imageRef)}`;
+}
+
+/** Record that this project's persisted source image was read PAST the OCR
+ *  output-token cap. Add-only (#2457 rulings, C 2026-09-21): a whole read
+ *  (`!truncated`) records nothing, so once an image is in the set it stays —
+ *  stickiness by construction, expressing the invariant that nothing moves from
+ *  partial to whole. The cap bounds output tokens and the OCR prompt varies with
+ *  `lookingFor`, so a second, narrower read of the same image can come back
+ *  uncapped; that whole read must not clear the earlier partial, and here it
+ *  simply doesn't try to. */
+export function recordImageReadCap(
+  projectPath: string,
+  imageRef: string,
+  truncated: boolean,
+): void {
+  if (!truncated) return;
+  sourceImageCaps.add(truncatedImageKey(projectPath, imageRef));
+}
+
+/** Whether image_transcribe read the image a research.json source cites via
+ *  `image_filename` past the cap (verified PARTIAL). Absence means not
+ *  established — a whole read or no read here. The join research_append uses to
+ *  derive `transcription_truncated` at the write boundary. */
+export function sourceImageCapState(
+  projectPath: string,
+  imageFilename: string,
+): boolean {
+  return sourceImageCaps.has(truncatedImageKey(projectPath, imageFilename));
+}
+
+/** Test-only reset — the set is module-level and persists across `it()` blocks. */
+export function __clearTruncatedSourceImagesForTests(): void {
+  sourceImageCaps.clear();
+}
 
 /** Unreferenced scans older than this are pruned opportunistically. Matches the
  *  results-staging TTL — long enough that a scan survives from transcription to
@@ -41,21 +157,19 @@ export async function saveSourceImage(args: {
   bytes: Uint8Array;
 }): Promise<string> {
   const { projectPath, imageKey, bytes } = args;
+  const store = getProjectStore();
 
-  let st;
-  try {
-    st = await stat(projectPath);
-  } catch {
+  const state = await store.projectDirState(projectPath);
+  if (state === "missing") {
     throw new Error(`projectPath '${projectPath}' does not exist`);
   }
-  if (!st.isDirectory()) {
+  if (state === "not_directory") {
     throw new Error(`projectPath '${projectPath}' is not a directory`);
   }
 
-  const name = imageFilenameFor(imageKey);
-  await mkdir(join(projectPath, IMAGES_SUBDIR), { recursive: true });
-  await writeFile(join(projectPath, IMAGES_SUBDIR, name), Buffer.from(bytes));
-  return `${IMAGES_SUBDIR}/${name}`;
+  const ref = `${IMAGES_SUBDIR}/${imageFilenameFor(imageKey)}`;
+  await store.writeBytes(projectPath, ref, bytes);
+  return ref;
 }
 
 /**
@@ -71,26 +185,26 @@ export async function gcUnreferencedImages(
   projectPath: string,
   referenced: Set<string>,
 ): Promise<void> {
-  const dir = join(projectPath, IMAGES_SUBDIR);
-  let names: string[];
+  const store = getProjectStore();
+  let entries;
   try {
-    names = await readdir(dir);
+    entries = await store.list(projectPath, IMAGES_SUBDIR);
   } catch {
-    return; // no images/ dir yet — nothing to GC
+    return; // an unusable projectPath — nothing to GC
   }
   const cutoff = Date.now() - IMAGE_GC_TTL_MS;
+  // Canonicalize the referenced set the same way the cap join does, so a source
+  // citing `./images/x.jpg` (or a backslash spelling) still protects the file
+  // `images/x.jpg` from the sweep. Without this the normalization the cap join
+  // relies on would let the GC delete a scan a source actually cites (#2457 r4 note 6).
+  const normalizedReferenced = new Set([...referenced].map(normalizeImageRef));
   await Promise.all(
-    names
-      .filter((n) => n.endsWith(".jpg"))
-      .map(async (n) => {
-        if (referenced.has(`${IMAGES_SUBDIR}/${n}`)) return;
-        const p = join(dir, n);
-        try {
-          const s = await stat(p);
-          if (s.mtimeMs < cutoff) await unlink(p);
-        } catch {
-          // best-effort: ignore ENOENT / races / stat failures
-        }
+    entries
+      .filter((e) => e.name.endsWith(".jpg"))
+      .map(async (e) => {
+        const ref = `${IMAGES_SUBDIR}/${e.name}`;
+        if (normalizedReferenced.has(ref)) return;
+        if (e.mtimeMs < cutoff) await store.remove(projectPath, ref);
       }),
   );
 }

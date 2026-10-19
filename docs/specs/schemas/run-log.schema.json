@@ -50,12 +50,50 @@
       "pattern": "^\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}$",
       "description": "UTC timestamp YYYY-MM-DD_HH-MM-SS (underscore between date and time for readability)."
     },
-    "harness_version": { "type": "string" },
+    "harness_version": {
+      "type": "string",
+      "description": "The harness package version (`eval/harness/pyproject.toml`). Not an invalidation signal: it is a hand-bumped literal nothing gates on. What decides whether a run log's instrument is current is `instrument`."
+    },
     "model": { "type": "string" },
     "judge_prompt_hash": {
       "type": "string",
       "pattern": "^([a-f0-9]{64})?$",
       "description": "SHA-256 of eval/harness/judge/prompt.md after normalization. Empty when the judge prompt file is missing. Not part of the snapshot — the judge prompt is project-global, tracked separately so judge edits don't clobber every skill on activate."
+    },
+    "instrument": {
+      "type": "object",
+      "description": "What produced and graded this run log, beside `snapshot` (which covers the skill-side files). Read by check_runlogs rule 2c (issue #2479 PR 3). Optional: absent in run logs written before the field, and when the tool catalog could not be read. Hashes are computed by `eval/harness/harness/instrument.py`.",
+      "additionalProperties": false,
+      "required": ["validators", "tools"],
+      "properties": {
+        "validators": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["suite", "shared"],
+          "properties": {
+            "suite": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `eval/harness/validators/test_<skill>.py` (an absent marker when the suite has none) and of every sibling module in `validators/` it imports. A change blocks." },
+            "shared": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `test_universal.py` and `validators_lib.py`. A change warns." }
+          }
+        },
+        "tools": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fixture", "live"],
+          "properties": {
+            "fixture": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "description + inputSchema of every tool this suite's fixtures serve. A change blocks." },
+            "live": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "description + inputSchema of the remaining LIVE_TOOLS, advertised to every suite. A change warns." }
+          }
+        },
+        "live_modules": {
+          "type": "object",
+          "description": "SHA-256 of the compiled entry module of each live tool this run called, keyed by bare tool name. A change warns.",
+          "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
+    "judge_model": {
+      "type": "string",
+      "description": "Judge model used for this run log, e.g. 'claude-haiku-4-5-20251001'. Optional — absent in run logs committed before 2026-10 when the field was added (issue #2479 PR 1). Allows a judge-model change to be dated and compared rather than silently invalidating historical scores."
     },
     "snapshot": {
       "type": "object",
@@ -70,7 +108,7 @@
         "tests": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "test_ids whose every dimension needs a correction entry in the .ann.json. Five chosen picks (3 rotation, 1 targeted, 1 random) plus every gradeable test that failed or scored a 1 or 2 on any dimension, so the length varies by run."
+          "description": "test_ids whose every dimension needs a correction entry in the .ann.json. Five chosen picks (3 rotation, 1 targeted, 1 random) plus every gradeable test that failed, scored a 1 or 2 on any dimension, or carries a coerced_routing_negative_to_na warning, so the length varies by run."
         },
         "cursor": {
           "type": "array",
@@ -83,6 +121,14 @@
         }
       },
       "description": "Which tests this run log's annotation must cover. Absent on every run log written before sampling shipped, and on partial/scratch writes; readers treat absence as 'every dimension of every test'. Written once by the final build_run_log on a releasable run — the targeted and mandatory slots need post-run scores across the whole suite, which do not exist mid-run. See eval/harness/harness/review_sample.py."
+    },
+    "tool_search": {
+      "type": "boolean",
+      "description": "Whether the run deferred tool schemas (ENABLE_TOOL_SEARCH): true by default, false under run_tests.py --no-tool-search, which loads every schema up front and makes the run a non-releasable scratch log. Optional: absent on run logs written before the field existed, all of which ran with it on."
+    },
+    "store": {
+      "enum": ["pg"],
+      "description": "The project store the live tools ran on, when it was not the file store: \"pg\" under run_tests.py --store pg (U15), every live tool call on PgS3ProjectStore via eval/harness/harness/pg_store_prelude.mjs. Such a run is non-releasable and written under eval/runlogs/unit-pg/<skill>/. Absent means the file store, as every earlier log ran."
     },
     "tests": {
       "type": "array",
@@ -116,17 +162,17 @@
           "items": { "type": "string" }
         },
         "outcome": {
-          "enum": ["pass", "partial", "fail", "aborted", "xfail", "xpass"]
+          "enum": ["pass", "partial", "fail", "aborted"]
         },
         "flaky": { "type": "boolean" },
         "grading_mode": {
           "type": "string",
-          "enum": ["dimensions", "invariant", "routing"],
-          "description": "What decided this test's outcome. \"invariant\": a grade_on_invariant negative, passed on its tag-gated validator alone. \"routing\": a negative with a non-empty correct_skill, decided by which skill fired. \"dimensions\": a positive test, or an out-of-scope negative (correct_skill: []), where the judge dimensions gate. Optional — absent on run logs written before this field existed."
+          "enum": ["dimensions", "invariant", "routing", "trigger"],
+          "description": "What decided this test's outcome. \"invariant\": a grade_on_invariant negative, passed on its tag-gated validator alone. \"routing\": a negative with a non-empty correct_skill, decided by which skill fired. \"dimensions\": a positive test, or an out-of-scope negative (correct_skill: []), where the judge dimensions gate. \"trigger\": a positive test tagged grade:trigger, decided by activation alone (the skill under test fired), with the judge dimensions diagnostic only. Optional — absent on run logs written before this field existed."
         },
         "dimensions_gate_outcome": {
           "type": "boolean",
-          "description": "Whether the judge dimensions could change this outcome for a test that RAN TO COMPLETION. It describes the test's grading design, so on an \"aborted\" entry it says how the test would have been graded, not what decided it — an abort carries zero dimensions, and the abort is what decided the outcome. False on \"invariant\" and \"routing\" tests, where they are diagnostic only — so a dimension scored 1 beside outcome \"pass\" is designed, not a defect. Optional — absent on run logs written before this field existed."
+          "description": "Whether the judge dimensions could change this outcome for a test that RAN TO COMPLETION. It describes the test's grading design, so on an \"aborted\" entry it says how the test would have been graded, not what decided it — an abort carries zero dimensions, and the abort is what decided the outcome. False on \"invariant\", \"routing\", and \"trigger\" tests, where they are diagnostic only — so a dimension scored 1 beside outcome \"pass\" is designed, not a defect. Optional — absent on run logs written before this field existed."
         },
         "outcome_summary": {
           "type": "object",
@@ -140,6 +186,11 @@
             "aggregated_dimensions": {
               "type": "array",
               "items": { "$ref": "#/$defs/judge_dimension" }
+            },
+            "review_dimensions": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/judge_dimension" },
+              "description": "The dimension rows a human annotates. Equal to aggregated_dimensions, except on a test whose every judged run failed a validator: those runs are excluded from the aggregate (#2057) but graded, so this holds the modal over them instead. Empty only when nothing was judged (aborted, or the judge raised). Optional — absent on run logs written before this field existed, where readers fall back to aggregated_dimensions."
             }
           }
         },
@@ -249,12 +300,14 @@
                 "sdk_stream_silence",
                 "not_runnable",
                 "unmatched_tool_call",
-                "error"
+                "error",
+                "quota_exhausted"
               ]
             },
             { "type": "null" }
           ]
         },
+        "error": { "type": ["string", "null"] },
         "duration_ms": { "type": "number", "minimum": 0, "description": "Harness wall-clock around the SDK message-consume loop (skill execution only)." },
         "duration_api_ms": { "type": "number", "minimum": 0, "description": "SDK-reported API/network time (ResultMessage.duration_api_ms). duration_ms - duration_api_ms approximates local overhead; small here with large duration_ms signals an upstream stall. 0 on aborts without a ResultMessage. Optional (absent in pre-instrumentation run logs)." },
         "num_turns": { "type": "integer", "minimum": 0, "description": "SDK-reported turn count (ResultMessage.num_turns). 0 on aborts without a ResultMessage. Optional." },
@@ -270,6 +323,11 @@
           "additionalProperties": { "type": "object" },
           "description": "The SDK's per-model token ledger for this run, keyed by model id, verbatim (inputTokens / outputTokens / cacheReadInputTokens / cacheCreationInputTokens per entry). The run's own token fields are its column sums. More than one key means the run delegated to a plugin agent on its own model: pin — the only record of what that pin cost. Optional: absent on the abort path and in logs written before it was captured."
         },
+        "no_result_message": { "type": "boolean", "description": "True when the run ended before a ResultMessage arrived even though it is not an abort — the negative-test routing short-circuit, or a stop_at_stub stop, which shares its exit. num_turns is real here (see its own description); output_tokens is 0 because no real count exists, not because the skill used none. Optional, defaults to absent/false in logs written before it was captured." },
+        "suppressed_post_deny_calls": { "type": "array", "items": { "type": "object" }, "description": "MCP calls made in the turn AFTER the routing short-circuit's hook denied the hand-off (a negative test's, or a stop_at_stub stop) — the model reacting to the deny, not the skill working. Kept out of output.tool_calls and out of the uncovered_tool_call advisory so a deliberately stopped run collects no note for a turn it never owned, but counted on the attempted side of the orchestrator's unmatched_tool_call gate and scanned there for unregistered tool names. Recorded so the two questions dropping them left unanswerable — whether a reaction call ever executes, and whether one ever names an unregistered tool — can be settled from a run log (issue #2740). Optional; absent when the run suppressed nothing." },
+        "subagents": { "type": "array", "items": { "type": "object", "properties": { "agent_type": { "type": ["string", "null"] }, "peak_window_tokens": { "type": "integer", "minimum": 0 }, "compactions": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["trigger", "pre_tokens", "post_tokens"], "properties": { "trigger": { "type": ["string", "null"] }, "pre_tokens": { "type": ["integer", "null"] }, "post_tokens": { "type": ["integer", "null"] } } } }, "models": { "type": "array", "items": { "type": "string" } }, "usage": { "type": "object" } } }, "description": "One summary per subagent the run spawned (on a direct-arm test, the agent under test), read from its own SDK transcript before the session store is deleted: agent_type, usage, num_assistant_turns, runaway/cap flags, peak_window_tokens (the tallest single window it read — a max, not a sum), compactions (one entry per compaction; the count is the signal), models and duration_seconds (earliest to latest transcript timestamp, null with fewer than two). Same shape as the e2e run log's subagents[] minus turns and transcript. Optional; written together with subagent_capture_status and absent when no capture ran (an older log, or an abort before execution) — never an empty stand-in for 'not captured'." },
+        "subagent_capture_status": { "enum": ["captured", "matched_no_transcripts", "no_cache_dir", "error"], "description": "Why subagents[] holds what it holds: captured (at least one summary), matched_no_transcripts (the ordinary no-subagent case), no_cache_dir (the SDK cache was not found), error (the lookup failed; recorded, never raised). Optional; present exactly when subagents is." },
+        "main_thread": { "type": "object", "additionalProperties": false, "required": ["peak_window_tokens", "compactions", "models"], "properties": { "peak_window_tokens": { "type": "integer", "minimum": 0 }, "compactions": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["trigger", "pre_tokens", "post_tokens"], "properties": { "trigger": { "type": ["string", "null"] }, "pre_tokens": { "type": ["integer", "null"] }, "post_tokens": { "type": ["integer", "null"] } } } }, "models": { "type": "array", "items": { "type": "string" } } }, "description": "The parent session's busiest moment, compactions and models, read from its own SDK transcript (sidechain records excluded). On a routed test this is where the skill ran; on a direct-arm test it is only the relay. Optional; absent when the transcript could not be read." },
         "skill_cost_usd": { "type": "number", "minimum": 0 },
         "output": { "$ref": "#/$defs/run_output" },
         "validators": { "$ref": "#/$defs/validator_results" },
@@ -321,6 +379,20 @@
               "tool": { "type": "string" },
               "args": { "type": "object" },
               "agent_id": { "type": "string" }
+            }
+          }
+        },
+        "agent_returns": {
+          "description": "What each spawned subagent returned, in call order. On the direct-agent arm this is the AGENT's own text, where `text_response` is the main-thread dispatcher relaying it. Absent on a run where the agent under test returned nothing. A ROUTED run can spawn agents too (`ut_timeline_008` spawned `record-extractor`, since retired), and the judge still grades `text_response` there -- so presence of this field is not the same as \"this run was direct\".",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["subagent_type", "text"],
+            "additionalProperties": false,
+            "properties": {
+              "subagent_type": { "type": "string" },
+              "text": { "type": "string" },
+              "is_error": { "type": "boolean" }
             }
           }
         },
@@ -399,7 +471,7 @@
           "required": ["kind"],
           "additionalProperties": false,
           "properties": {
-            "kind": { "enum": ["predicate", "none", "live"] },
+            "kind": { "enum": ["predicate", "none", "live", "staged_ref_refused"] },
             "index": { "type": ["integer", "null"], "minimum": 0 }
           }
         },
@@ -459,12 +531,16 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name", "passed"],
+            "required": ["name", "passed", "outcome"],
             "additionalProperties": false,
             "properties": {
               "name": { "type": "string" },
               "passed": { "type": "boolean" },
-              "error": { "type": ["string", "null"] }
+              "error": { "type": ["string", "null"] },
+              "outcome": {
+                "enum": ["passed", "failed", "skipped"],
+                "description": "What the validator did. `skipped` means it raised pytest.skip() and executed no assertion — non-gating, so it also carries `passed: true`, but it is NOT evidence the checked property holds. Absent on run logs written before this field existed; read those by testing `error` for a leading \"skipped: \"."
+              }
             }
           }
         }
@@ -481,7 +557,7 @@
           "items": { "$ref": "#/$defs/judge_dimension" }
         },
         "judge_cost_usd": { "type": "number", "minimum": 0 },
-        "duration_ms": { "type": "number", "minimum": 0, "description": "Wall-clock of the judge LLM call (perf_counter around _run_judge). 0 when the judge was skipped. Optional (absent in pre-instrumentation run logs)." },
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Wall-clock of the judge LLM call (perf_counter around _run_judge). 0 only when no judge call was attempted (an aborted run); a judge that raised records wall-clock here, so a nonzero value beside `skipped: true` is normal. Optional (absent in pre-instrumentation run logs)." },
         "input_tokens": { "type": "integer", "minimum": 0 },
         "cached_input_tokens": { "type": "integer", "minimum": 0 },
         "output_tokens": { "type": "integer", "minimum": 0 },
@@ -500,7 +576,7 @@
             { "enum": [1, 2, 3] },
             { "type": "null" }
           ],
-          "description": "1=fail, 2=partial, 3=pass. Null = N/A, currently allowed only on the Tool Arguments base dimension when a test makes zero MCP tool calls."
+          "description": "1=fail, 2=partial, 3=pass. Null = N/A: the Tool Arguments base dimension when a test makes zero MCP tool calls, any rubric dimension the fixture never exercised, and Correctness/Completeness on a correctly-routed negative test, where the harness usually truncates the transcript at the hand-off and coerces the judge's 1 (coerced_routing_negative_to_na)."
         },
         "rationale": { "type": "string" }
       }

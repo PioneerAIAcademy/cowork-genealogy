@@ -1,0 +1,223 @@
+{
+  "persons": [
+    {
+      "id": "K69J-F7Y",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Georg",
+          "surname": "Gajdosch"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "about 1690",
+          "standard_date": "Abt 1690",
+          "place": "Lidečko, Vsetín, Gottwaldovský kraj, Czechoslovakia",
+          "standard_place": "Lidečko, Vsetín, Czechoslovakia"
+        },
+        {
+          "id": "3663d6e2-272a-404b-a366-d430f40eddc6",
+          "type": "Death"
+        },
+        {
+          "id": "68edbf44-45bd-4a81-b01f-c86bda829d69",
+          "type": "TitleOfNobility",
+          "value": "rf"
+        }
+      ]
+    },
+    {
+      "id": "KZYF-GBJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Dorothea",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "about 1690",
+          "standard_date": "Abt 1690",
+          "place": "Lidečko, Vsetín, Gottwaldovský kraj, Czechoslovakia",
+          "standard_place": "Lidečko, Vsetín, Czechoslovakia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "68edbf44-45bd-4a81-b01f-c86bda829d69",
+          "type": "TitleOfNobility",
+          "value": "rf"
+        }
+      ]
+    },
+    {
+      "id": "KDB1-TLM",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "",
+          "surname": "Gajdosch",
+          "prefix": "Mr."
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "ABT 1665",
+          "standard_date": "Abt 1665",
+          "place": "of Vsetin, Czechoslovakia",
+          "standard_place": "Vsetín, Czechoslovakia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "DEAD"
+        }
+      ]
+    },
+    {
+      "id": "K8GQ-C6M",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Joannes",
+          "surname": "Gajdosch"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "26 Oct 1714",
+          "standard_date": "26 Oct 1714",
+          "place": "Lidečko, Vsetín, Gottwaldovský kraj, Czechoslovakia",
+          "standard_place": "Lidečko, Vsetín, Czechoslovakia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "68edbf44-45bd-4a81-b01f-c86bda829d69",
+          "type": "TitleOfNobility",
+          "value": "rf"
+        }
+      ]
+    },
+    {
+      "id": "K6SX-6ZX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "",
+          "surname": "Gajdosch",
+          "prefix": "Mrs."
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "ABT 1667",
+          "standard_date": "Abt 1667",
+          "place": "of Vsetin, Czechoslovakia",
+          "standard_place": "Vsetín, Czechoslovakia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "DEAD"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "K69J-F7Y",
+      "person2": "KZYF-GBJ",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "about 1710",
+          "standard_date": "Abt 1710",
+          "place": "Lidečko, Vsetín, Gottwaldovský kraj, Czechoslovakia",
+          "standard_place": "Lidečko, Vsetín, Czechoslovakia"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "KDB1-TLM",
+      "person2": "K6SX-6ZX",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "ABT 1685",
+          "standard_date": "Abt 1685",
+          "place": "of Vsetin, Czechoslovakia",
+          "standard_place": "Vsetín, Czechoslovakia"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KDB1-TLM",
+      "child": "K69J-F7Y",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "K6SX-6ZX",
+      "child": "K69J-F7Y",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "K69J-F7Y",
+      "child": "K8GQ-C6M",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KZYF-GBJ",
+      "child": "K8GQ-C6M",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "MR3V-CMR",
+      "title": "Georg Gajdosch in entry for Joannes Gajdosch, \"Czech Republic, Births and Baptisms, 1637-1889\"",
+      "citation": "\"Czech Republic, Births and Baptisms, 1637-1889\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FMS8-XFQ : 17 December 2019), Georg Gajdosch in entry for Joannes Gajdosch, 1714.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMS8-XFQ"
+    }
+  ]
+}

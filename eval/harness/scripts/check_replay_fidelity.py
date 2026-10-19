@@ -82,7 +82,7 @@ def main() -> int:
         try:
             log = json.loads(path.read_text(encoding="utf-8"))
             final = json.loads(final_p.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
             skipped += 1
             continue
 
@@ -91,7 +91,7 @@ def main() -> int:
         if start_p.exists():
             try:
                 start = json.loads(start_p.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
+            except (OSError, json.JSONDecodeError, UnicodeDecodeError):
                 start = None
 
         r = replay(log.get("tool_calls") or [], starting_research=start)

@@ -1,9 +1,10 @@
 /**
  * Shared TypeScript types for the eval app.
  *
- * Mirrors the JSON Schemas under docs/specs/schemas/. The Zod schemas
- * in lib/schema/ (generated) are the runtime validators; this file is
- * the static-typing surface.
+ * Mirrors the JSON Schemas under docs/specs/schemas/. This file is the
+ * static-typing surface; nothing in it is checked at runtime. No app code
+ * imports the generated schemas in lib/schema/ — the only read-time
+ * validation is the hand-maintained Zod schema in lib/fs/annotations.ts.
  *
  * Run log schema v3: one envelope per harness invocation, wrapping a
  * list of per-test entries. See docs/plan/eval-runlog-versioning.md.
@@ -25,7 +26,14 @@ export interface UnitTestFile {
     xfail_reason?: string;
   };
   input: {
-    user_message: string;
+    /** Routed test. Exactly one of `user_message` / `delegation` is set (`input.oneOf`). */
+    user_message?: string;
+    /**
+     * Direct-agent test (issue #2246): the exact text handed to the pair's
+     * agent, in place of a user turn. The harness wraps it in its own
+     * dispatcher prompt and asserts the recorded spawn contains it verbatim.
+     */
+    delegation?: string;
     scenario?: string | null;
     scenario_notes?: string | null;
   };
@@ -46,7 +54,14 @@ export interface UnitTestFile {
 }
 
 export type DimensionSource = 'base' | 'rubric';
-/** 1 = fail, 2 = partial, 3 = pass, null = N/A (Tool Arguments only). */
+/**
+ * 1 = fail, 2 = partial, 3 = pass, null = N/A.
+ *
+ * N/A comes from three places: Tool Arguments on a run with zero MCP tool
+ * calls, any rubric dimension the fixture never exercised, and
+ * Correctness/Completeness coerced by the harness on a correctly-routed
+ * negative test (`coerced_routing_negative_to_na`).
+ */
 export type Score = 1 | 2 | 3 | null;
 
 /**
@@ -80,13 +95,34 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
  *     null-vs-3 "disagreement" that is really just a UI gap.
  *  2. It is a nullable base dimension (Tool Arguments) — the reviewer may
  *     set *or override to* N/A even when the judge emitted a 1/2/3.
+ *  3. The run log says this test's dimensions DO NOT GATE its outcome
+ *     (`dimensions_gate_outcome: false`, i.e. a `routing` or `invariant`
+ *     test). An N/A there asserts nothing about pass/fail, and the reviewer
+ *     needs it to correct a diagnostic `1` that graded a field the harness
+ *     blanked at the hand-off.
+ *
+ * Case 3 exists because cases 1 and 2 cover only run logs written AFTER the
+ * N/A coercion shipped, where the judge score is already `null` and case 1
+ * lights the button on its own. On an ALREADY-COMMITTED log the score is a
+ * recorded `1`, so no case matched and the button never appeared — which made
+ * the re-grade issue #2375 exists to perform impossible to enter, the CRUD UI
+ * being the only sanctioned writer of a unit `.ann.json`. That is not
+ * hypothetical: an annotator hit it on `ut_record_extraction_011` and both
+ * cells went in as `corrected_score: 1`, adding the corpus damage #2375 is
+ * meant to repair.
+ *
+ * `dimensionsGateOutcome` is REQUIRED rather than optional on purpose. A
+ * defaulted parameter would let a future call site omit it and silently lose
+ * case 3 again, which is exactly how this gap shipped. Pass `undefined`
+ * explicitly for a pre-sampling log that records no gating field; `undefined`
+ * is not `false`, so it does not widen anything.
  */
 /**
  * The tests a run log's annotation must cover, or `null` for "all of them".
  *
- * Variable length: five chosen picks plus every test that failed or scored a 1 or
- * 2 on any dimension, so a run with a low score anywhere exceeds 5. Never assume
- * a fixed size here.
+ * Variable length: five chosen picks plus every test that failed, scored a 1 or
+ * 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning, so
+ * a run with a low score anywhere exceeds 5. Never assume a fixed size here.
  *
  * A run log written before sampling shipped — every committed one today — has
  * no `review_sample` and keeps the original every-dimension rule. Keep this the
@@ -96,6 +132,20 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
  * Lives here rather than in `lib/fs/` because the scoring page is a client
  * component and must not pull in `node:fs`.
  */
+/**
+ * The dimension rows a human annotates for one test — the single accessor
+ * for the annotation modal, the completeness rule and the sample guard.
+ * Mirrors `review_sample.py::review_dimensions`: the harness's
+ * `review_dimensions` where written, else the aggregate, so a run log
+ * written before the field existed keeps the rule it was annotated under.
+ * Baseline readers (weighted mean, histogram, compare) stay on
+ * `aggregated_dimensions` on purpose — a validator-failing run's scores are
+ * for review, not for the numbers `gate-skill` compares against.
+ */
+export function reviewDimensions(t: TestEntry): RunLogDimension[] {
+  return t.outcome_summary.review_dimensions ?? t.outcome_summary.aggregated_dimensions;
+}
+
 export function sampledTestIds(log: RunLogFile): Set<string> | null {
   const sample = log.review_sample;
   if (!sample) return null;
@@ -109,7 +159,9 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
   // three guards reopened it for the third case.
   const known = new Set(log.tests.map((t) => t.test_id));
   for (const id of ids) if (!known.has(id)) return null;
-  // A sample naming only tests whose judge was skipped would require nothing —
+  // A sample naming only tests with no reviewable dimensions would require
+  // nothing (aborted, or the judge raised; a validator failure is not one of
+  // these — its rows are in `review_dimensions`) —
   // and this also covers an EMPTY sample, since `.some()` over no ids is false.
   // An explicit `ids.size === 0` guard was tried here and was unreachable: it
   // left its own test unable to fail, the same way three redundant guards did
@@ -117,7 +169,7 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
   // only because it emits a different warning message.
   const gradeable = new Set(
     log.tests
-      .filter((t) => t.outcome_summary.aggregated_dimensions.length > 0)
+      .filter((t) => reviewDimensions(t).length > 0)
       .map((t) => t.test_id),
   );
   if (![...ids].some((id) => gradeable.has(id))) return null;
@@ -194,10 +246,17 @@ export function dimensionAllowsNa(
   source: DimensionSource,
   name: string,
   judgeScore: Score,
+  dimensionsGateOutcome: boolean | undefined,
 ): boolean {
+  // N/A is always available on rubric dimensions regardless of the judge score:
+  // the judge can score a rubric dimension 3 on a fixture that never exercised
+  // it, and the reviewer must be able to correct that to null. Base dimensions
+  // are narrower — only null (must agree) or the declared nullable set.
   return (
     judgeScore === null ||
-    (source === 'base' && NULLABLE_BASE_DIMENSIONS.has(name))
+    source === 'rubric' ||
+    (source === 'base' && NULLABLE_BASE_DIMENSIONS.has(name)) ||
+    dimensionsGateOutcome === false
   );
 }
 
@@ -233,6 +292,10 @@ export interface RunLogRun {
   num_turns?: number;
   /** Skill-execution attempts; >1 means transient stall/error retries. */
   skill_attempts?: number;
+  // Busiest-moment capture (optional; absent on older logs and pre-execution aborts).
+  subagents?: Array<Record<string, unknown>>;
+  subagent_capture_status?: "captured" | "matched_no_transcripts" | "no_cache_dir" | "error";
+  main_thread?: { peak_window_tokens: number; compactions: unknown[]; models: string[] };
   /** Epoch seconds bracketing the whole run. Absent for never-executed runs. */
   started_at?: number;
   ended_at?: number;
@@ -242,13 +305,7 @@ export interface RunLogRun {
   [key: string]: unknown;
 }
 
-export type TestOutcome =
-  | 'pass'
-  | 'partial'
-  | 'fail'
-  | 'aborted'
-  | 'xfail'
-  | 'xpass';
+export type TestOutcome = 'pass' | 'partial' | 'fail' | 'aborted';
 
 export interface RunLogTotals {
   duration_ms: number;
@@ -283,9 +340,24 @@ export interface TestEntry {
   mcp_fixtures: string[];
   outcome: TestOutcome;
   flaky: boolean;
+  /** What decided this test's outcome. Optional: absent from the schema's
+   *  `required` and from every run log written before it shipped. */
+  grading_mode?: 'dimensions' | 'invariant' | 'routing';
+  /** Whether the judge dimensions could change this outcome for a test that ran
+   *  to completion. FALSE on `invariant` and `routing` tests, where routing or a
+   *  tag-gated validator decides and the dimensions are diagnostic only. It
+   *  describes the test's grading DESIGN, so an aborted entry still says how the
+   *  test would have been graded. Optional, as above. */
+  dimensions_gate_outcome?: boolean;
   outcome_summary: {
     per_run_outcomes: Array<'pass' | 'partial' | 'fail' | 'aborted'>;
     aggregated_dimensions: RunLogDimension[];
+    /** The rows a human annotates. Equal to `aggregated_dimensions`, except on
+     *  a test whose every judged run failed a validator, where the aggregate is
+     *  empty by ruling (#2057) and this holds the modal over those runs. Optional:
+     *  absent on run logs written before it existed — read it through
+     *  `reviewDimensions()`, never directly. */
+    review_dimensions?: RunLogDimension[];
   };
   totals: RunLogTotals;
   runs: RunLogRun[];
@@ -305,8 +377,9 @@ export type RunInvocation = 'skill' | 'test' | 'tag';
  * candidate pruning destroys the annotation history it would otherwise be
  * derived from.
  *
- * `tests` has no fixed length — the harness adds every test that failed or
- * scored a 1 or 2 on any dimension to the five it chooses.
+ * `tests` has no fixed length — the harness adds every test that failed,
+ * scored a 1 or 2 on any dimension, or carries a
+ * `coerced_routing_negative_to_na` warning, to the five it chooses.
  */
 export interface ReviewSample {
   tests: string[];
@@ -325,7 +398,19 @@ export interface RunLogFile {
   harness_version: string;
   model: string;
   review_sample?: ReviewSample;
+  /** `false` under `run_tests.py --no-tool-search` (a scratch log). Absent on
+   *  logs written before the field existed, all of which ran with it on. */
+  tool_search?: boolean;
   judge_prompt_hash: string;
+  /** Judge model used for this run log. Optional — absent in logs pre-dating the field (issue #2479 PR 1). */
+  judge_model?: string;
+  /** What produced and graded the run (issue #2479 PR 3), read by check_runlogs rule 2c.
+   *  Optional — absent in logs pre-dating the field. The app does not recompute it. */
+  instrument?: {
+    validators: { suite: string; shared: string };
+    tools: { fixture: string; live: string };
+    live_modules?: Record<string, string>;
+  };
   /** {repo-relative-path: sha256-of-normalized-content}. Digests, not bytes. */
   snapshot: Record<string, string>;
   tests: TestEntry[];
@@ -384,6 +469,8 @@ export interface McpFixtureFile {
    */
   args: Record<string, string | number | boolean | null>;
   input_schema?: unknown;
+  /** A thrown-error fixture: answered with `is_error`, as production sets `isError`. */
+  is_error?: boolean;
   response: unknown;
   [key: string]: unknown;
 }

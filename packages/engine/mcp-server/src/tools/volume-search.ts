@@ -1,12 +1,15 @@
-import { getValidToken } from "../auth/refresh.js";
+import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
+import { describeFetchError } from "../utils/http.js";
 import {
   RECORD_TYPE_GROUP_NAMES,
   assertKnownGroupNames,
   conceptIdsForGroups,
+  refuseRecordTypeAliases,
 } from "../utils/record-type-groups.js";
-import { standardPlaceToPlaceId, placeIdToRepIds } from "../utils/place-resolver.js";
+import { resolveStandardPlaceToPlaceId, placeIdToRepIds, ambiguousPlaceError } from "../utils/place-resolver.js";
+import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
 import { formatYearRange } from "../utils/search-helpers.js";
 import type {
   VolumeSearchInput,
@@ -17,14 +20,10 @@ import type {
   MetadataRmsSearchResponse,
   MetadataRmsGroup,
   MetadataRmsCoverageEntry,
-  FulltextGroupNumberResponse,
 } from "../types/volume-search.js";
 
 const RMS_SEARCH_URL =
   "https://sg30p0.familysearch.org/service/records/rms/group-service/group/search";
-const FULLTEXT_GROUP_URL =
-  "https://sg30p0.familysearch.org/service/search/fulltext/search/groupNumber";
-
 // `concept-id:…` is an opaque internal id with nothing a reader can use. A
 // `title:…` prefix is different in kind: it marks *provenance* — the value came
 // from the volume's title rather than the concept taxonomy — and what follows it
@@ -68,7 +67,7 @@ function validate(input: VolumeSearchInput): void {
   // `fulltext_search` both take a singular `recordType`, so that is the name an
   // LLM reaches for here; `record_type` is the snake_case convention
   // `research.json` uses elsewhere. Nothing validates input against the
-  // advertised JSON Schema — `src/index.ts` casts `request.params.arguments`
+  // advertised JSON Schema — `src/server.ts` casts `request.params.arguments`
   // straight to the handler — so an unrecognised field is ignored and the search
   // silently runs unfiltered, returning everything with no signal.
   //
@@ -76,16 +75,11 @@ function validate(input: VolumeSearchInput): void {
   // their own live spellings elsewhere (`yearFrom`/`yearTo`, `fromYear`/`toYear`)
   // and catching those too is the schema-wide `additionalProperties` question the
   // spec puts out of scope, not a bigger version of this list.
-  for (const alias of ["recordType", "record_type", "recordTypes"]) {
-    if (alias in input) {
-      throw new Error(
-        `volume_search filters by recordTypeGroups (an array of group names), ` +
-          `not ${alias}. Valid groups: ` +
-          RECORD_TYPE_GROUP_NAMES.join(", ") +
-          "."
-      );
-    }
-  }
+  refuseRecordTypeAliases(
+    input,
+    ["recordType", "record_type", "recordTypes"],
+    (alias) => `volume_search filters by recordTypeGroups (an array of group names), not ${alias}.`
+  );
   if (input.recordTypeGroups != null) {
     if (!Array.isArray(input.recordTypeGroups)) {
       throw new Error("recordTypeGroups must be an array of group names.");
@@ -100,31 +94,27 @@ function validate(input: VolumeSearchInput): void {
   }
 }
 
-function rmsHeaders(token: string): Record<string, string> {
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    "User-Agent": BROWSER_USER_AGENT,
-    "FS-User-Agent-Chain": "chesworth",
-  };
-}
+const RMS_HEADERS: Record<string, string> = {
+  "Content-Type": "application/json",
+  Accept: "application/json",
+  "User-Agent": BROWSER_USER_AGENT,
+  "FS-User-Agent-Chain": "chesworth",
+};
 
 async function callGroupSearch(
   body: MetadataRmsSearchRequest,
-  token: string
+  principal: Principal,
 ): Promise<MetadataRmsSearchResponse> {
   let response: Response;
   try {
-    response = await fetchWithTimeout(RMS_SEARCH_URL, {
+    response = await fsFetch(principal, RMS_SEARCH_URL, {
       method: "PUT",
-      headers: rmsHeaders(token),
+      headers: RMS_HEADERS,
       body: JSON.stringify(body),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
     throw new Error(
-      `Could not reach FamilySearch volume search API: ${message}.`
+      `Could not reach FamilySearch volume search API: ${describeFetchError(error)}.`
     );
   }
 
@@ -137,35 +127,27 @@ async function callGroupSearch(
     throw new Error("FamilySearch volume search API error: 403 Forbidden.");
   }
   if (!response.ok) {
+    // `statusText` is empty on a bodyless response, which is how a real upstream
+    // 409 reached the user as "409 ." -- a status, a space and a full stop, with
+    // nothing to act on. Read the body so the message carries whatever upstream
+    // did say, and say nothing about WHY it said it: no 409 here is reproducible,
+    // and a guessed upstream diagnosis is a claim we cannot defend.
+    const body = (await response.text().catch(() => "")).trim();
+    const detail = body ? ` ${body}` : "";
+    if (response.status === 409) {
+      throw new Error(
+        `FamilySearch volume search API error: 409.${detail} ` +
+          "A pageToken is only valid alongside a byte-identical search and it expires; " +
+          "re-issue this search from the first page with the same standardPlace, year " +
+          "range and recordTypeGroups, omitting pageToken."
+      );
+    }
     throw new Error(
-      `FamilySearch volume search API error: ${response.status} ${response.statusText}.`
+      `FamilySearch volume search API error: ${response.status} ${response.statusText}.${detail}`
     );
   }
 
   return (await response.json()) as MetadataRmsSearchResponse;
-}
-
-async function fetchFulltextSearchable(
-  groupNames: string[],
-  token: string
-): Promise<Set<string> | null> {
-  const ids = groupNames.join(",");
-  const url = `${FULLTEXT_GROUP_URL}?ids=${encodeURIComponent(ids)}`;
-
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const response = await fetchWithTimeout(url, { headers: rmsHeaders(token) });
-      if (!response.ok) {
-        if (attempt === 2) return null;
-        continue;
-      }
-      const data = (await response.json()) as FulltextGroupNumberResponse;
-      return new Set(data.ids ?? []);
-    } catch {
-      if (attempt === 2) return null;
-    }
-  }
-  return null;
 }
 
 function derivePrefix(groupName: string): string {
@@ -264,24 +246,30 @@ function mapGroup(
 }
 
 export async function volumeSearchTool(
-  input: VolumeSearchInput
+  input: VolumeSearchInput,
+  principal: Principal
 ): Promise<VolumeSearchResult> {
   validate(input);
 
-  // Auth first, so an unauthenticated user always gets the login-instruction
-  // error (rather than a "could not resolve" message) regardless of the place.
-  const token = await getValidToken();
+  // fsFetch handles auth internally; the first FS call will surface a login
+  // error if needed. Place resolution runs first (no auth required).
 
   // Resolve the standard place name -> placeId -> all of its representation
-  // IDs. standardPlaceToPlaceId returns null when the name is unresolvable or
-  // resolves to multiple distinct spots (guards the fan-out).
-  const placeId = await standardPlaceToPlaceId(input.standardPlace);
-  if (!placeId) {
+  // IDs. The two failures are answered separately: a name that matches nothing
+  // is a different problem from one that matches several spots, and the second
+  // is recoverable in one call once the candidates are named. Never auto-pick
+  // among them -- that researches the wrong jurisdiction silently.
+  const resolution = await resolveStandardPlaceToPlaceId(input.standardPlace);
+  if (resolution.kind === "ambiguous") {
+    throw ambiguousPlaceError(input.standardPlace, resolution.candidates);
+  }
+  if (resolution.kind === "unresolved") {
     throw new Error(
       `Could not resolve "${input.standardPlace}" to a single place; ` +
         "use place_search to get a standard place name first."
     );
   }
+  const placeId = resolution.placeId;
 
   const placeRepIds = await placeIdToRepIds(placeId);
   if (placeRepIds.length === 0) {
@@ -320,13 +308,13 @@ export async function volumeSearchTool(
     ...(input.pageToken ? { nextPageToken: input.pageToken } : {}),
   };
 
-  const response = await callGroupSearch(body, token);
+  const response = await callGroupSearch(body, principal);
 
   const groups = response.groups ?? [];
   const groupNames = groups.map((g) => g.groupName);
 
   const fulltextSet = groupNames.length > 0
-    ? await fetchFulltextSearchable(groupNames, token)
+    ? await fetchFulltextSearchable(groupNames, principal)
     : new Set<string>();
 
   const results = groups.map((g) => mapGroup(g, fulltextSet));

@@ -48,17 +48,11 @@ function ResearcherProfileBlock({ profile }: { profile: ResearcherProfile }): Re
   return (
     <div className={styles.profileBox}>
       <div className={styles.profileRow}>
-        {profile.experience_level && (
-          <span className={styles.profileBadge}>{profile.experience_level}</span>
-        )}
         {subs.length > 0 && <span className={styles.profileSubs}>{subs.join(', ')}</span>}
         {subs.length === 0 && (
           <span className={styles.profileSubsEmpty}>No paid subscriptions</span>
         )}
       </div>
-      {profile.narration_guidance && (
-        <div className={styles.profileGuidance}><Linkify text={profile.narration_guidance} /></div>
-      )}
       {profile.intended_audience && (
         <div className={styles.profileGuidance}>
           <span className={styles.profileLabel}>Written for</span>{' '}

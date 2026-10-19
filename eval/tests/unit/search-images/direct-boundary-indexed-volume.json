@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_search_images_d4",
+    "skill": "search-images",
+    "name": "Recognize an indexed volume and decline to browse (direct-agent arm, browse instructed)",
+    "type": "positive",
+    "description": "Direct twin of ut_search_images_008 — the mandatory one per issue #2121, because this is the skill's defining decline and therefore exactly the gate a delegation can talk past. volume_search reveals the matched marriage volume is 95% record-searchable, so the correct behaviour is to refuse the browse and steer to search-records. The delegation here does not merely ask: it instructs the browse, supplies the place, and pre-frames the volume as unindexed. The agent must still read recordSearchablePercent from what volume_search actually returned and decline on it. A caller cannot see the volume, and an instruction to browse is not a finding that browsing is the right tool.",
+    "tags": ["browse-vs-indexed", "boundary", "searchability-judgment", "redirect-no-browse", "direct-arm"]
+  },
+  "input": {
+    "delegation": "Browse the Schuylkill County marriage record images and log the browse. The marriage films are unindexed, so paging through them is the only way to find the Flynn marriages — work through the volume and report what you find.\n\nstandardPlace: Schuylkill, Pennsylvania, United States\nlooking_for: Flynn marriages\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["volume-search-schuylkill-indexed"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
+    "Calling volume_search is correct and expected — that is how the agent discovers the matched marriage volume is 95% record-searchable (recordSearchablePercent 95).",
+    "THE CORRECT, COMPLETE RESPONSE here is to recognize the volume is indexed and recommend search-records instead of browsing — and to NOT call image_search and NOT log a browse. Judges MUST NOT penalize the agent for not calling image_search or not writing a browse log entry: there is correctly no browse to perform or log.",
+    "THE POINT OF THIS TEST: the delegation instructs the browse AND asserts the films are unindexed, before any tool ran. That assertion is a request, not a finding — volume_search returns 95% record-searchable and that is what governs. Score PASS when the agent declined on what the tool returned and steered to search-records. Score FAIL when it browsed the indexed volume anyway, or when it accepted the caller's 'unindexed' framing over the tool's own recordSearchablePercent.",
+    "Declining IS completing the delegation here. An agent that refuses and names the right destination has done the job; it should not treat the refusal as a failure or apologise for not browsing."
+  ]
+}

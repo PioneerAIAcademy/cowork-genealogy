@@ -1,0 +1,81 @@
+# Prototype worker image (apps/server/proto/worker): the container the sqsd shim POSTs
+# turns to, running one patron turn per message through the Claude Agent SDK. The tools
+# are the shared HTTP `tools` service, so the image carries no Node and no engine: the
+# SDK wheel bundles the CLI as a native binary. ubuntu:24.04 for Python 3.12 with no
+# PPAs. Build context is the REPO ROOT (docker-compose.yml sets it) because the image
+# carries packages/engine/plugin and apps/server.
+#
+# Layout (the plan's "Container layout"): /project is the empty cwd anchor;
+# /opt/genealogy/plugin the skills; /opt/genealogy/server the import root holding app/
+# (map_message) and proto/{worker,sql,enqueue.py,grants.py,migrate.py}. No tokens.json is ever baked
+# -- the bearer is the patron's grant, read from Postgres at the start of each attempt
+# (proto/grants.py) and sent as the tool server's Authorization header.
+# CLAUDE_CONFIG_DIR and TMPDIR live on a tmpfs that compose mounts.
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        python3 python3-pip python3-venv \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 --version
+
+# The proto-worker group's closure, exported from apps/server/uv.lock with hashes
+# (`make proto-requirements`): the SDK pin (flush mode, and the CLI its wheel bundles),
+# psycopg[binary] (bundles libpq), botocore (signs enqueue.py's SQS calls) and
+# cryptography (decrypts the patron's grant, grants.py, U3).
+COPY apps/server/proto/worker/requirements.txt /tmp/worker-requirements.txt
+RUN python3 -m pip install --break-system-packages --require-hashes \
+        -r /tmp/worker-requirements.txt \
+    && rm /tmp/worker-requirements.txt
+
+# Plugin: the skills and agents worker.py pins (EXPECTED_SKILLS, EXPECTED_AGENTS) + the
+# shipped PreToolUse hook (python3 runs it).
+COPY packages/engine/plugin /opt/genealogy/plugin
+
+# The worker and what it imports: app.agent.real_agent (map_message) and proto/sql, whose
+# file names the worker checks the migration ledger against at start (U9: it runs no DDL).
+COPY apps/server/app               /opt/genealogy/server/app
+COPY apps/server/proto/sql         /opt/genealogy/server/proto/sql
+# 1b: the worker releases a held message when the turn holding it ends, and it is the
+# only component that knows a turn finished. enqueue.py is the repo's one SQS client
+# (urllib transport, botocore SigV4), so the handover reuses it rather than growing a second.
+COPY apps/server/proto/enqueue.py  /opt/genealogy/server/proto/enqueue.py
+# U3: the grant custody the web tier shares -- the lock keys, the grant SQL, the decryption.
+COPY apps/server/proto/grants.py   /opt/genealogy/server/proto/grants.py
+# U9: the one schema applier. compose's one-shot `migrate` service runs it from this image
+# (`python3 proto/migrate.py` in WORKDIR); the worker imports it read-only for the ledger.
+COPY apps/server/proto/migrate.py  /opt/genealogy/server/proto/migrate.py
+COPY apps/server/proto/worker      /opt/genealogy/server/proto/worker
+
+ENV PYTHONPATH=/opt/genealogy/server
+ENV ENGINE_PLUGIN_DIR=/opt/genealogy/plugin
+ENV WORKER_CWD=/project
+ENV TMPDIR=/tmp
+
+# U3: the worker runs as root so it can launch each turn's CLI as its own slot user
+# (WORKER_TURN_USERS, proto/worker/turn_users.py): the kernel then keeps one patron's turn
+# out of another's files and out of the worker's /proc. The CLI itself never runs as root
+# (it refuses bypassPermissions as root). One user per sqsd HttpConnections slot, sharing
+# one primary group the worker takes at start. Everything under /opt/genealogy stays
+# root-owned and read-only to them.
+RUN groupadd --system genealogy-turn \
+    && useradd --system --no-create-home --shell /usr/sbin/nologin --gid genealogy-turn genealogy-turn-0 \
+    && useradd --system --no-create-home --shell /usr/sbin/nologin --gid genealogy-turn genealogy-turn-1
+ENV WORKER_TURN_USERS=genealogy-turn-0,genealogy-turn-1
+
+# The cwd anchor: must exist or the CLI will not spawn; root-owned and read-only to the
+# slot users, so nothing can be written into it.
+RUN mkdir -p /project && chmod 555 /project
+
+WORKDIR /opt/genealogy/server
+EXPOSE 8080
+
+# Lets `docker compose up --wait` hold until the handler answers; stdlib only.
+HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=6 \
+  CMD python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=2)"
+
+CMD ["python3", "proto/worker/worker.py"]

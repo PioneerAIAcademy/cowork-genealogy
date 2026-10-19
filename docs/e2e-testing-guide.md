@@ -5,7 +5,7 @@ assigned, or author a new one from a FamilySearch person.
 
 | You want to… | Go to |
 |---|---|
-| Fix a skill problem — whether you noticed it while researching or a run exposed it | [`skill-lifecycle.md`](skill-lifecycle.md) — mine a unit test, improve, gate, PR. That loop is the same wherever the problem came from, and Step 7 below hands off to it. |
+| Fix a skill problem — whether you noticed it while researching or a run exposed it | [`skill-lifecycle.md`](skill-lifecycle.md) — mine a unit test, improve, gate, PR. That loop is the same wherever the problem came from, and Step 8 below hands off to it. |
 | Look up an exact field, contract, or enum | [`specs/e2e-test-spec.md`](specs/e2e-test-spec.md) — the authoritative format. This guide stays task-shaped and sends you there for reference detail. |
 
 ---
@@ -19,6 +19,10 @@ Which steps are yours depends on how you got here:
 - **Authoring a new fixture** — a person you want to turn into a test, whether
   you picked them yourself or a `feedback`-labelled issue sent you here. Do
   **every** step.
+- **Running a panel fixture** — a GitHub issue titled "e2e panel run `<date>`".
+  The fixture is already authored, so do steps **0, 5–9**: skip 1a/1b/2/3
+  (authoring) and 4 (live debugging, which only delays the measurement). See
+  "The standing panel" below.
 
 | Step | What you do | Where |
 |---|---|---|
@@ -29,10 +33,10 @@ Which steps are yours depends on how you got here:
 | 2 Scope *(1b only)* | one question, 1–5 findings; keep the search anchors | 🤖 Claude Code |
 | 3 Validate *(1b only)* | check the answer is findable; `make e2e-validate TEST=<slug>` | ⌨️ Terminal |
 | 4 Debug live | `make e2e-project`, then `/research` in Cowork with the Viewer open | 🖥️ Cowork + Viewer |
-| 5 Run | `make e2e-run TEST=<slug>` — one fixture, 20–60 min, $3–10 | ⌨️ Terminal |
-| 6 Read | `/interpret-e2e-result`; `make e2e-view` for the visual pass | 🤖 Claude Code |
-| 7 Attribute | read `narration[]` + `tool_calls[]`, fix in Step 4; `/mine-unit-test --e2e-run …` for a skill miss | 🤖 Claude Code |
-| 8 Grade | `/grade-e2e-run` → commit the `.ann.json` (CI-enforced) | 🤖 Claude Code |
+| 5 Run | `make e2e-run TEST=<slug>` — one fixture, median 56 min / $7.47 (n=172/147, range 35–108 min / $0.06–$25) | ⌨️ Terminal |
+| 6 Grade | `/grade-e2e-run` → commit the `.ann.json` (CI-enforced) — **grade blind, before reading the result** | 🤖 Claude Code |
+| 7 Read | `/interpret-e2e-result`; `make e2e-view` for the visual pass | 🤖 Claude Code |
+| 8 Attribute | read `narration[]` + `tool_calls[]`, fix in Step 4; `/mine-unit-test --e2e-run …` for a skill miss | 🤖 Claude Code |
 | 9 Land | commit fixture + run log + grade; open the PR | ⌨️ Terminal / GitHub |
 
 ## The three places you'll work
@@ -55,7 +59,17 @@ strips a focused subset (the "answer"), and asks the agent — via
 `/research --autonomous` — to recover what was removed. The judge grades the
 final state `pass` / `partial` / `fail`.
 
-**Runs are expensive: 20–60 minutes and $3–10 each. Run one at a time.**
+**Runs are expensive: median 56 minutes and $7.47 each, and the tails run
+longer — p10–p90 is 35–108 minutes across the committed corpus (n=172 for
+time, n=147 for cost; re-derive both with one scan of
+`eval/runlogs/e2e/*/run-*.json` (the git-tracked ones — an uncommitted local
+run log skews the sample), reading `usage.wall_clock_seconds` for time and
+`usage.total_cost_usd` for cost — note that `make e2e-latency SINCE=all`
+reports one run per fixture and prints no median, so it will not reproduce
+these). Run one at a time. `max_cost_usd = 15.0`
+(`eval/harness/e2e/orchestrator.py`) is a reporting threshold, not a bound:
+nothing stops a run at $15, so a single run can cost well past this section's
+median on its own.**
 
 This is a capability benchmark, not a regression suite — per-PR regression
 coverage is the unit tests in `eval/tests/unit/`. The verdict measures *fact
@@ -67,11 +81,12 @@ the agent does sound, verifiable GPS research. Full framing: spec §1.
 ## Setup
 
 **Run the preflight first** — it green-lights FamilySearch auth, the built MCP
-server, the Anthropic API key, the harness deps, and **a live MCP connection**,
-so a setup gap fails here instead of deep inside an expensive run. Budget
-**~30 seconds**: the last check starts a real CLI session and waits for the
-genealogy server to report `connected`, because a green light on the *config*
-was what let three runs die with no tools at all (issue #941):
+server, the Anthropic API key, the harness deps, **a live MCP connection**, wiki
+and population services, the OpenRouter API key, and **a live FamilySearch
+search**, so a setup gap fails here instead of deep inside an expensive run.
+Budget **~60 seconds**: two checks start real server sessions — one waits for the
+genealogy server to report `connected` (issue #941), the other makes a live
+`record_search` call to catch WAF blocks before they burn a full run (#2810):
 
 ```bash
 make e2e-preflight                # Windows: eval\CheckSetup.bat
@@ -100,6 +115,16 @@ If it flags something:
   are expected to be reachable, so a WARN here is a per-machine setup problem to
   report before spending an hour on the run — not a normal state to run through.
 - **Harness deps** — `cd eval/harness && uv sync`.
+- **OpenRouter API key** — a WARN means `image_transcribe` will fail for the
+  whole run and image-dependent findings will be unreachable. Set
+  `OPENROUTER_API_KEY` in `eval/.env` (Setup.bat prompts for it) or add
+  `openRouterApiKey` to `~/.familysearch-mcp/config.json`. A run without the
+  key is degraded, not blocked.
+- **FamilySearch search** — a FAIL here means record searches are broken on this
+  machine right now. If it says "WAF-blocked", the issue is environment-specific
+  and will affect the whole run. If it says "session not accepted", re-run
+  `make e2e-login`. A WARN means the search timed out or the server couldn't be
+  spawned — transient, try again.
 
 ---
 
@@ -159,11 +184,46 @@ was matched to them.
 2. **Read the fixture's README**, "Notes for reviewers" section, for what the
    original author already found (the tree's existing sources, the
    match-strength argument for and against).
-3. **Open the hint record** and look, by hand, for corroborating or
-   contradicting evidence — the same way you would for any genealogical proof.
+3. **Open the hint record** and look for corroborating or contradicting
+   evidence — the same way you would for any genealogical proof.
 
-This is the human GPS work the benchmark exists to measure; there's no tool
-shortcut for it. **Ask a genealogist for a second opinion** if the call is
+**If you read an image rather than taking the index's text, check that reading
+against the index before you trust it.** This covers any image you read during
+this research, not only the hint record's, and any reader: `image_transcribe`,
+`dev/try-image-transcribe.ts`, another model, or you reading the scan by eye.
+
+1. Before reading the entries you care about, read **two other entries on the
+   same page** that the FamilySearch index already holds. Compare child,
+   father, mother and date.
+2. **Both match:** the reading is licensed for those fields. **Either one
+   differs:** discard everything that transcription read from the page. Don't
+   correct it and carry on.
+3. **The page has fewer than two other indexed entries:** the reading is
+   unlicensed. Say so in the README, and don't fall back to trusting it.
+4. **Farm, residence and occupation are not covered.** A passing check does not
+   license those words; the index usually has no farm column to check them
+   against. Confirm them from a separate indexed source, such as a
+   church-census household placing that person on that farm.
+5. **A sharper image is not the fix.** On issue #2308 a full-resolution scan of
+   one page still gave different wrong answers.
+
+Name the two entries you checked, and whether they matched, in the README.
+
+**If the reading is what settled the identification, the fixture declares it.**
+Set `"image_basis": true` in `fixture.json` and put the record's image ark
+(`ark:/61903/3:1:` or `3:2:`, not the `1:1:` index form) in an
+`expected-findings.json` `supporting_sources` entry — `make e2e-validate`
+hard-fails an `image_basis: true` fixture that cites only index arks. Leave the
+flag off when the indexes alone were enough; the README image ark you cite for a
+reviewer does not, on its own, satisfy the flag.
+
+**Retrieval may be tool-assisted; the identity judgement may not.** You can use
+the `packages/engine/mcp-server/dev/try-*.ts` scripts against live FamilySearch
+(`make e2e-login` first, or `eval\Login.bat` on Windows) for collections
+search, record search, record read and image read. What no tool decides is
+whether the hint record concerns the tree person — that is the human GPS work
+the benchmark exists to measure. Say in the README which you used. Spec §3.6
+carries the decision. **Ask a genealogist for a second opinion** if the call is
 borderline — don't guess alone.
 
 **Write the outcome with the skill — don't hand-edit the fixture files:**
@@ -185,9 +245,15 @@ the fixture files, and validates the result. The three outcomes:
 Once the skill hands off, go straight to **Step 4** — Steps 2 and 3 don't apply
 here (nothing was stripped, and the skill already validated).
 
-> No fixture of this genre has been resolved and run end to end yet, so there's
-> no finished one to copy. You are working an unexercised path: if a step doesn't
-> behave the way this page says, that's worth reporting, not working around.
+> Worked examples of this genre already resolved and run end to end:
+> `eval/tests/e2e/creszentia-haas-birth/` (false hint, real answer found),
+> `eval/tests/e2e/antonio-lucas-spouse/` (false match, `avoid` + `required`
+> pair) and `eval/tests/e2e/chresten-nielsen-daughter/` (re-adjudicated
+> after a graded run). To re-derive the resolved set, normalise both greps to
+> directories first — one prints `<dir>/fixture.json` and the other
+> `<dir>/README.md`, so comparing them as-is reports every fixture as differing:
+>
+>     comm -23 <(grep -rl '"genre": "record-hint"' eval/tests/e2e/*/fixture.json | xargs -n1 dirname | sort) <(grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/ | xargs -n1 dirname | sort)
 
 ## Step 1b — Pick a person and author a new fixture 🤖 Claude Code
 
@@ -302,7 +368,8 @@ detail: spec §§2–3, §6.2.
 ## Step 4 — Debug `/research` live, before you pay for a run 🖥️ Cowork + Viewer
 
 A headless run can't show you *why* the agent stopped or skipped a step — and
-it charges you 20–60 minutes to not tell you. Watch a run live in Cowork, fix
+it charges you a median 56 minutes to not tell you (see Step 5's cost/time
+note for the full spread). Watch a run live in Cowork, fix
 what you see, and save the headless run for the verdict.
 
 1. **Build and install both artifacts**, so Cowork has the genealogy tools.
@@ -353,7 +420,60 @@ tool.** One fixture at a time:
 make e2e-run TEST=<slug>            # Windows: eval\RunE2E.bat
 ```
 
-## Step 6 — Read the result 🤖 Claude Code
+## Step 6 — Grade the run 🤖 Claude Code
+
+**Grade blind — before reading the result.** The order matters: if you read
+the judge's verdict first (Step 7), the human grade anchors on it and the
+calibration number becomes a rubber stamp. Grade first, then interpret.
+
+Every committed run gets graded in the same PR — **this one is CI-enforced.**
+The `check-e2e-fixtures` gate blocks any run log *added, or renamed into the
+corpus,* in your PR that produced a final tree but ships no `run-<ts>.ann.json`
+beside it — so promoting a run out of quarantine is caught too. (A treeless
+run — crashed or skipped before a final tree — is exempt; there's nothing to
+grade. So is a `host_slept` run: the machine slept, so the judge was skipped and
+the run is left out of the rates. Do not grade it; see the stop-reason table
+below.)
+
+The same gate also reds a run log whose `usage.betas` is non-empty — a run made
+with `--context-1m`. A 1M window is not corpus-comparable, so keep it in a
+sibling directory such as `eval/runlogs/_2491-exploratory-quarantine/` rather
+than under `eval/runlogs/e2e/`. It reds one made with tool search off
+(`usage.tool_search` or `usage.tool_search_offered` false — `--no-tool-search`,
+which the harness already refuses to write under `eval/runlogs/e2e/`) for the
+same reason.
+
+```
+/grade-e2e-run
+```
+
+It shows you each expected finding plus the agent's evidence, and writes
+`run-<ts>.ann.json` with your labels. It reads the fixture and the run's final
+tree — deliberately **not** the judge's own grades — so you label blind. Commit
+the `.ann.json`.
+
+Annotation format, the ≥80% agreement gate, and how to read a calibration
+report: spec §7.4.
+
+**Check the gate the way the gate works.** It resolves both siblings from the
+`HEAD_SHA` tree, so an annotation you have written but not yet committed does
+not count — run it after committing:
+
+```bash
+BASE_SHA="$(git merge-base origin/main HEAD)" HEAD_SHA="$(git rev-parse HEAD)" \
+  python3 eval/harness/scripts/check_e2e_fixtures.py
+```
+
+Run it in Git Bash or WSL on Windows. `origin/main` must be the `main` you branched
+from: if `origin` is your fork, use `upstream/main`.
+
+With `BASE_SHA`/`HEAD_SHA` unset it prints `skipped` and exits 0 — **a run with
+no env set is not a pass.** If it cannot diff the two shas at all (an unfetched
+commit, or a directory that is not a repo) it refuses with an `::error::` rather
+than reporting zero added run logs. And it reds on an ungraded run until the annotation
+is *committed*, which is the gate working, not a regression.
+
+## Step 7 — Read the result 🤖 Claude Code
 
 **The easy path — run the interpreter skill** on the run, in a Claude Code
 session in this checkout:
@@ -365,22 +485,23 @@ session in this checkout:
 It reads the run-log files and explains in plain language: which expected
 findings the tree actually contains and which it doesn't, what proof
 conclusion the agent wrote (described, not scored), any blocked tree-reads
-(did it try to shortcut?), whether a finding came from a bundled PDF rather
+(did it try to shortcut?), any blocked context calls (a caller wrote a section
+it does not own, or reached a subagent-only tool), whether a finding came from a
+bundled PDF rather
 than live research, the stop reason translated into something actionable,
 any GPS guardrail skills the run bypassed, and — when findings are missing —
 the most likely cause.
 
 It deliberately does **not** report the judge's grade: not the verdict, not
-the `proof_quality` score, not the `outcome` gate. You grade the run blind
-right afterwards with `/grade-e2e-run`, and seeing the judge's labels first
-would corrupt the calibration number. For the same reason `make e2e-run`
-prints only the stop reason and the compliance result when a run finishes.
+the `proof_quality` score, not the `outcome` gate. For the same reason
+`make e2e-run` prints only the stop reason, the compliance result, and a
+`[blocked context call] N` count when that array is non-empty, when a run finishes.
 
 If you'd rather read the files yourself, each run writes three:
 
 | File | What's in it |
 |---|---|
-| `run-<ts>.json` | The structured result: the three axes (`verdict` = genealogy, `compliance` = guardrails, `outcome` = the combined gate), stop reason, judge output, usage, tool calls, `narration[]` (the agent's prose between tool calls), blocked tree-reads. If you are about to grade this run, read the two `final-*` files instead — this one holds the judge's grade |
+| `run-<ts>.json` | The structured result: the three axes (`verdict` = genealogy, `compliance` = guardrails, `outcome` = the gate, which is the genealogical verdict since the §8 detectors were demoted on 2026-09-25), stop reason, judge output, usage, tool calls, `narration[]` (the agent's prose between tool calls), blocked tree-reads, and `blocked_context_calls[]` — calls the per-context policy refused, a union of two arms (spec §6.1.1, §6.1.2) that `blocked_by` cannot tell apart; only `tool` does. Sparse by construction: of 172 committed runs, 146 predate the field entirely, 26 are eligible, 5 carry any entry and there are 6 in total, all `research_append` (measured 2026-09-14). Any `SUBAGENT_ONLY_TOOLS` or `AGENT_WRITABLE_SECTIONS` change moves that. If you are about to grade this run, read the two `final-*` files instead — this one holds the judge's grade |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree — what the judge graded |
 | `run-<ts>.final-research.json` | The agent's final `research.json` |
 
@@ -406,18 +527,22 @@ re-graded) / `skipped` (the judge never ran).
 | `natural_end` | The agent thought it was done; GPS may or may not agree |
 | `inactivity` / `timeout` | It stalled — the last `narration` entry shows where |
 | `tool_cap` / `max_turns` | It may be looping — look for repeated tool calls near the end |
-| `cost_cap` | Hit the per-run cost limit |
+| `cost_cap` | The final cost passed `caps.max_cost_usd`. A label, not a stop: the run had already ended |
 | `error` | SDK or harness exception; check `result.error` |
+| `host_slept` | **The machine slept for at least the inactivity cap: an environment failure, not your fixture.** The judge was skipped and the run is left out of the rates. Commit its three files with no `.ann.json`, keep the machine awake (`eval/README.md`, "Keep the machine awake during a run") and re-run |
 | `mcp_unavailable` | **The genealogy tools were not in the session — an environment failure, not your fixture. Re-run; do not re-research the case.** You will not find a run log for it: this one writes no files. The abort message itself now prints the server's own captured stderr when the harness found it — if it didn't, run `make e2e-preflight`, which reads the same log and shows the directory it looked in |
 
 Full field reference: spec §8.
 
-## Step 7 — When it fails ⌨️ / 🤖
+## Step 8 — When it fails ⌨️ / 🤖
 
 Read `narration[]` alongside `tool_calls[]` first — most failures are obvious
 from them. Each narration entry carries `tool_calls_before` — the number of
 tool calls that preceded it — so the two replay as one trace. If something needs fixing, fix it in **Step 4** (Cowork +
 Viewer) and re-run, rather than guessing blind.
+
+**Not for a panel run:** do not fix and re-run. Land the run at the verdict it
+earned; see [The standing panel](#the-standing-panel).
 
 **Rule out a tool failure before you blame the skill.** A search that returned
 little because it *failed* reads exactly like one the agent never pushed on,
@@ -443,26 +568,6 @@ the fix-and-verify loop lives; this guide doesn't repeat it.
 When a fixture's behavior shifts meaningfully, add a dated line to its
 `README.md` saying what changed. Next person to run it reads that first.
 
-## Step 8 — Grade the run 🤖 Claude Code
-
-Every committed run gets graded in the same PR — **this one is CI-enforced.**
-The `check-e2e-fixtures` gate blocks any run log *added* in your PR that
-produced a final tree but ships no `run-<ts>.ann.json` beside it. (A treeless
-run — crashed or skipped before a final tree — is exempt; there's nothing to
-grade.)
-
-```
-/grade-e2e-run
-```
-
-It shows you each expected finding plus the agent's evidence, and writes
-`run-<ts>.ann.json` with your labels. It reads the fixture and the run's final
-tree — deliberately **not** the judge's own grades — so you label blind. Commit
-the `.ann.json`.
-
-Annotation format, the ≥80% agreement gate, and how to read a calibration
-report: spec §7.4.
-
 ## Step 9 — Land it ⌨️ Terminal / GitHub
 
 Commit the fixture directory, the run log, and its `.ann.json` together, push
@@ -484,9 +589,12 @@ Request** (it opens GitHub in your browser with the branch pre-filled).
 
 **Commit a passing run, from the branch you're landing.** Stripping proves the
 answer isn't *in* the starting tree; only a run proves it's *recoverable from
-live FS*. If you fixed something in Step 7 and re-ran, the earlier run log is
+live FS*. If you fixed something in Step 8 and re-ran, the earlier run log is
 stale — commit the new one. Landing a fixture without a passing run is a
 judgment call you should be able to defend in review.
+
+**Not for a panel run:** land the run at whatever verdict it earned, not only a
+passing one; see [The standing panel](#the-standing-panel).
 
 > **Resolved a fixture to "the hint is wrong" (Step 1a)?** "Passing" means
 > something different there: there's no fact to recover, so what you're looking
@@ -502,8 +610,8 @@ judgment call you should be able to defend in review.
 Steps 0–9 are about authoring one fixture. A different kind of task reads
 *every* committed run at once — `eval/harness/e2e/corpus_report.py`,
 `nudge_report.py`, `latency_report.py`, `wiki_failure_report.py`,
-`compaction_report.py`, and their `make e2e-*` targets are all pure analysis
-over `eval/runlogs/e2e/**`: no live run, no API spend.
+`compaction_report.py`, `ranked_read_report.py`, and their `make e2e-*` targets
+are all pure analysis over `eval/runlogs/e2e/**`: no live run, no API spend.
 
 **Why this lands as a permanent module + Makefile target, not a one-off
 script**, using `compaction_report.py`/`make e2e-compaction` (issue #1155,
@@ -527,6 +635,22 @@ this target can print. A run committed before 2026-07-26 (#895) carries no
 per-message tool names and can't be segmented; it's excluded from the report
 and the exclusion is counted, never silently dropped.
 
+**`make e2e-ranked-reads TEST=<slug> SINCE=all|N|YYYY-MM-DD`** (issue #1156) is
+the other half of that question: it joins each main-thread `record_read` back
+to the search that supplied it and reports how many landed inside the ranker's
+top 3. `SINCE=2026-08-04` is the invocation that answers it — the capture fix
+landed that day, and no run before it carries a `ranked` block at all. Two
+limits bind every figure it prints. **Only the visible top 3 is measurable**:
+`_summarize_response` truncates `ranked.matches` past three entries while
+`_full_length` runs to 10, so a read at rank 7 is indistinguishable from a read
+of an unranked record, and "outside the top 3" is an upper bound on ranker
+disagreement rather than a count of ignored rankings. **Subagent reads are not
+the main thread's**: `record_search` is only ever called by the main thread,
+but a third of `record_read` calls come from `record-extractor` (since retired)
+and `person-evidence`, which run in fresh context and read the `recordId` they were
+handed — they are reported separately as delegated reads, never scored against
+the main thread's choice.
+
 **`make e2e-branch-only` is a different kind of tool** — not a run-log
 analysis but a git-ref crawl (issue #1444). Every corpus report above reads
 `eval/runlogs/e2e/` in the current checkout only, and now says so on every
@@ -539,16 +663,51 @@ embedded in the reports above on purpose — see `guardrail-enforcement-spec.md`
 §4 for the measurement behind that call, and its own caveat about reading
 that measurement as a standing property rather than a dated snapshot.
 
+## The standing panel
+
+Four fixtures are run repeatedly, so the corpus can be compared month over month
+instead of describing whichever fixtures someone happened to touch:
+`eval/tests/e2e/spriggs-parents-1898/`, `eval/tests/e2e/hannah-earnest-children/`,
+`eval/tests/e2e/anders-monsen-ancestry/` and `eval/tests/e2e/cruz-corona-ancestry/`.
+
+The lead runs `/file-e2e-panel` whenever more panel work is wanted — there is no
+fixed cadence, though in practice a batch lands about once a week. Every run files
+**four more issues, one per fixture**, each an unassigned half-day any genealogist
+can pick up. Four parallel tasks rather than one bundle is what stops the tier
+having a single operator. Take one the same way you would any assigned fixture, on
+the "Running a panel fixture" route above.
+
+**Weekly filing is what fills the monthly window.** A batch is one run per fixture,
+so filing about weekly puts roughly four runs per fixture inside the report's 28
+days — the "at least 4 runs" its acceptance check asks for. Read the same panel over
+one week instead and every fixture reports a single run, which is the small-sample
+window the panel exists to escape.
+
+A panel run is landed at whatever verdict it earned — `pass`, `partial` or `fail`
+— because the panel counts runs and a failed run is the data point. Re-run only
+after an environment failure rather than a result: the run wrote no files at all
+(`mcp_unavailable`, or an abort before any `run-<ts>.json`), or it stopped on
+`host_slept`. A slept run is committed ungraded, as the harness prints, and lands
+with its re-run.
+
+The panel is **fixed**. Fixture difficulty varies enormously, so a month's
+aggregate is comparable to the next month's only when the mix is constant;
+swapping a fixture in because it looks more interesting today quietly ends the
+comparison. `make e2e-panel` prints each fixture's last run and its count over the
+last 28 days (`SINCE=all` for the whole history) — the one number no other corpus
+report gives you, since `make e2e-corpus`'s `concentration:` block counts
+violations per fixture rather than runs.
+
 ---
 
 ## Windows equivalents
 
 Every `make` target in the fixture-authoring steps above has a batch file in
 `eval\`. The corpus reports (`make e2e-corpus`, `e2e-nudges`, `e2e-latency`,
-`e2e-wiki-failures`, `e2e-compaction`, `e2e-branch-only`) do not — run those
-from Git Bash or WSL. Double-click a batch file or run it from that folder;
-each prompts for what it needs instead of taking `TEST=`-style arguments, and
-builds the MCP server first where that matters.
+`e2e-wiki-failures`, `e2e-compaction`, `e2e-ranked-reads`, `e2e-branch-only`)
+do not — run those from Git Bash or WSL. Double-click a batch file or run it
+from that folder; each prompts for what it needs instead of taking
+`TEST=`-style arguments, and builds the MCP server first where that matters.
 
 | Instead of | Double-click |
 |---|---|

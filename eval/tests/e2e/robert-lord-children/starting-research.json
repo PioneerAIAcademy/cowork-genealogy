@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_robert_lord_children",
+    "objective": "Is the Robert Brierley enumerated at Rochdale in 1911 with wife Ellen and children James and Betsy the same man as Robert Lord (b. 1858, son of Abel Brierley), and did he have those two children?",
+    "subject_person_ids": [
+      "GSPY-NFZ"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

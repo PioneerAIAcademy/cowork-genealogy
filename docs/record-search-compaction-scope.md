@@ -1,7 +1,7 @@
 # Scope: `rank_search_matches` — a host-side match-score re-ranker for `record_search`
 
 **Status:** scoped + premise validated by a live probe (for team review) · **Date:** 2026-07-06
-· Extends [`search-result-staging-spec.md`](docs/specs/search-result-staging-spec.md).
+· Extends [`search-result-staging-spec.md`](specs/search-result-staging-spec.md).
 
 ## Problem
 
@@ -68,11 +68,11 @@ the FS ranker's failure auditable; `matchScore:null` on persistent call failure 
 
 **Internals (all host-side, all reuse):**
 1. Read the staged file via the `assertInsideProject`/`isInsideProject` + `readFile`
-   block `finalizeStagedResults` uses (`results-staging.ts:108-124`) — **read-only**,
+   block `finalizeStagedResults` uses (`src/utils/results-staging.ts`) — **read-only**,
    never unlink (so `research_log_append` can still finalize the same handle).
 2. Subject doc = **raw `person_read(subjectId)` output**, used directly as `gedcomx2`
    (probe-confirmed; no new assembly). Enrich with relatives only if later shown to help.
-3. One `getValidToken()`; fan out `scorePair(result.gedcomx, result.primaryId,
+3. One `getValidToken(principal)`; fan out `scorePair(result.gedcomx, result.primaryId,
    subjectDoc, subjectId, token)` via `mapWithConcurrency(results, 10, …)` + `withRetry`.
 4. Optional one batch `source_attachments({uris})`.
 5. Sort by score; return flat stubs.

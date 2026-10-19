@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_read",
+  "description": "Excerpt from the live West_Virginia,_United_States_Genealogy page, probed 2026-09-15 at https://www.familysearch.org/en/wiki/West_Virginia,_United_States_Genealogy (15450 chars). Verbatim contiguous excerpt anchored on state-formation and boundary content the historical-context tests rely on.",
+  "args": {
+    "url": "~West_Virginia,_United_States_Genealogy"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/West_Virginia,_United_States_Genealogy",
+    "content": "# West Virginia, United States Genealogy\n\n[West Virginia](https://www.familysearch.org/en/wiki/West_Virginia,_United_States_Genealogy \"West Virginia, United States Genealogy\") was admitted to the union as the 35th state on 20 June 1863, having separated from [Virginia](https://www.familysearch.org/en/wiki/Virginia,_United_States_Genealogy \"Virginia, United States Genealogy\") during the Civil War. Before 1863, the area that became West Virginia was part of Virginia, so records created before statehood are typically found in Virginia repositories.\n\n## Background\n\nWest Virginia's creation as a separate state resulted from the political and military divisions of the Civil War. The northwestern counties of Virginia, which had fewer enslaved persons and stronger Unionist sentiment, voted to form a separate state. The process began in 1861 and concluded when West Virginia was admitted on June 20, 1863.\n\nFor genealogical research, this boundary change is significant: an ancestor described as \"born in Virginia\" before 1863 may have been born in the area that became West Virginia. Similarly, records from before 1863 for locations now in West Virginia are held in Virginia archives and county courthouses.\n\n## County Formation\n\nWest Virginia was formed from 50 counties of Virginia. Researchers must identify which Virginia county originally encompassed the location of interest and search Virginia county records for pre-1863 events.\n\n## Key Repositories\n\n- **West Virginia State Archives** — holds state-level records post-1863\n- **Virginia county courthouses** — hold pre-1863 county records for locations now in West Virginia\n- **Library of Virginia** — holds Virginia colonial and antebellum records"
+  }
+}

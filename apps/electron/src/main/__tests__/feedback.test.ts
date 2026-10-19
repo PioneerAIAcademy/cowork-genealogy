@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, writeFile, rm, utimes } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, isAbsolute } from 'node:path'
 import JSZip from 'jszip'
@@ -10,6 +10,13 @@ import {
   FEEDBACK_SCHEMA_VERSION,
   MAX_FIELD_CHARS,
   NOT_PROVIDED,
+  PARENT_LOG_ENTRY,
+  readSessionLog,
+  redactApiKeys,
+  PRESUMED_LIVING_YEARS,
+  redactLivingPersons,
+  renderFeedbackMarkdown,
+  walkProject,
   type FeedbackOptions
 } from '../feedback'
 
@@ -18,6 +25,45 @@ async function readFeedbackJson(zipBase64: string): Promise<Record<string, unkno
   const file = zip.file('_feedback/feedback.json')
   if (!file) throw new Error('feedback.json missing from zip')
   return JSON.parse(await file.async('string'))
+}
+
+/** One `assistant` conversation entry — what `conversationEntries` keeps. */
+function turn(text: string): string {
+  return `{"type":"assistant","message":{"role":"assistant","content":${JSON.stringify(text)}}}\n`
+}
+
+/** A subagent meta file. `toolUseId` is the parent `Agent` call the consumer
+ *  splices at, which is why the pair only makes sense shipped together. */
+const META =
+  '{"agentType":"proof-conclusion","description":"conclude q_001",' +
+  '"toolUseId":"toolu_01","spawnDepth":1}\n'
+
+/**
+ * Run `body` with HOME/USERPROFILE pointed at a throwaway home, and hand it the
+ * `~/.claude/projects/<hash>` directory `readSessionLog` will look in. Claude
+ * Code replaces EVERY non-alphanumeric char with '-', so the hash is derived
+ * here the same way rather than assumed.
+ */
+async function withPlantedHome(
+  folder: string,
+  body: (projectDir: string) => Promise<void>
+): Promise<void> {
+  const homeSaved = process.env.HOME
+  const profileSaved = process.env.USERPROFILE
+  const fakeHome = await mkdtemp(join(tmpdir(), 'feedback-home-'))
+  try {
+    const projectDir = join(fakeHome, '.claude', 'projects', folder.replace(/[^a-zA-Z0-9-]/g, '-'))
+    await mkdir(projectDir, { recursive: true })
+    process.env.HOME = fakeHome
+    process.env.USERPROFILE = fakeHome
+    await body(projectDir)
+  } finally {
+    if (homeSaved === undefined) delete process.env.HOME
+    else process.env.HOME = homeSaved
+    if (profileSaved === undefined) delete process.env.USERPROFILE
+    else process.env.USERPROFILE = profileSaved
+    await rm(fakeHome, { recursive: true, force: true })
+  }
 }
 
 function makeOptions(
@@ -80,6 +126,16 @@ describe('buildFeedbackZip — feedback.json', () => {
     expect(payload.notes).toBe('')
   })
 
+  // Issue #1880. The consumer reads `dropped_transcripts` from feedback.json,
+  // not the prose list in FEEDBACK.md, and holds every guardrail owner arm at
+  // "unknown" when it is non-empty. Present-and-empty is what lets a consumer
+  // tell "nothing was dropped" from "this producer never wrote the field".
+  it('always writes dropped_transcripts, empty when nothing was left out', async () => {
+    const payload = await readFeedbackJson((await buildFeedbackZip(makeOptions(folder))).zipBase64)
+    expect(payload).toHaveProperty('dropped_transcripts')
+    expect(payload.dropped_transcripts).toEqual([])
+  })
+
   it('stores worked_as_expected as the boolean from the report', async () => {
     const positive = await readFeedbackJson(
       (await buildFeedbackZip(makeOptions(folder, { workedAsExpected: true, agentShouldHave: '' })))
@@ -117,6 +173,25 @@ describe('buildFeedbackZip — feedback.json', () => {
     expect(payload.viewer_version).toBe('0.4.2-dev')
   })
 
+  // #2126 — the same two fields the web producer emits, so a triager reads the
+  // build the same way from either surface. Omitted (not null) when absent.
+  it('emits build_date and git_sha when the caller passes its build stamp, and omits them otherwise', async () => {
+    const stamped = await buildFeedbackZip({
+      ...makeOptions(folder),
+      viewerVersion: '1.0.0+2026-09-18.abc12345',
+      buildDate: '2026-09-18',
+      gitSha: 'abc12345'
+    })
+    const withStamp = await readFeedbackJson(stamped.zipBase64)
+    expect(withStamp.viewer_version).toBe('1.0.0+2026-09-18.abc12345')
+    expect(withStamp.build_date).toBe('2026-09-18')
+    expect(withStamp.git_sha).toBe('abc12345')
+
+    const plain = await readFeedbackJson((await buildFeedbackZip(makeOptions(folder))).zipBase64)
+    expect('build_date' in plain).toBe(false)
+    expect('git_sha' in plain).toBe(false)
+  })
+
   it('uses an absolute project_folder_path', async () => {
     const result = await buildFeedbackZip(makeOptions(folder))
     const payload = await readFeedbackJson(result.zipBase64)
@@ -143,6 +218,34 @@ describe('buildFeedbackZip — feedback.json', () => {
     expect(zip.file('FEEDBACK.md')).not.toBeNull()
     expect(zip.file('_feedback/feedback.json')).not.toBeNull()
   })
+
+  it('redacts API keys from user-typed feedback fields', async () => {
+    const key = 'sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA'
+    const result = await buildFeedbackZip(
+      makeOptions(folder, {
+        userPrompt: `I pasted ${key} and it broke`,
+        agentDid: `It echoed ${key} back`,
+        agentShouldHave: `Not echo ${key}`,
+        correctAnswer: `Refuse the ${key}`,
+        notes: `Also found ${key} in logs`
+      })
+    )
+    const payload = await readFeedbackJson(result.zipBase64)
+    for (const field of [
+      'user_prompt',
+      'agent_did',
+      'agent_should_have',
+      'correct_answer',
+      'notes'
+    ]) {
+      expect(payload[field]).not.toContain('sk-ant-')
+      expect(payload[field]).toContain('[REDACTED_API_KEY]')
+    }
+    const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+    const md = await zip.file('FEEDBACK.md')!.async('string')
+    expect(md).not.toContain('sk-ant-')
+    expect(md).toContain('[REDACTED_API_KEY]')
+  })
 })
 
 describe('buildFeedbackZip — size budgets follow the server convention', () => {
@@ -157,24 +260,26 @@ describe('buildFeedbackZip — size budgets follow the server convention', () =>
     await rm(folder, { recursive: true, force: true })
   })
 
-  // Incompressible payload: DEFLATE would otherwise shrink repetitive filler
-  // far below the cap and the budget logic would never engage.
-  function noise(bytes: number): Buffer {
-    const buf = Buffer.allocUnsafe(bytes)
-    let x = 123456789
-    for (let i = 0; i < bytes; i++) {
-      x = (x * 1103515245 + 12345) & 0x7fffffff
-      buf[i] = x & 0xff
-    }
-    return buf
+  // Compressible filler. This was incompressible pseudo-random bytes, on the
+  // stated grounds that "DEFLATE would otherwise shrink repetitive filler far
+  // below the cap and the budget logic would never engage" — but that is not
+  // how the budget works: `buildFeedbackZip` sums `buf.length` of the files it
+  // read from disk and compares that to ZIP_CAP_BYTES, before anything reaches
+  // the archive, and no cap anywhere measures compressed size. So entropy
+  // bought nothing and cost the whole DEFLATE bill: this test ran 7.6s
+  // standalone and timed out past 30s under the parallel load of
+  // `make test-all`. With filler it is ~3s and the assertions are unchanged.
+  // The 45 MB is still load-bearing — 3 x 15 MB against the 35 MB cap.
+  function filler(bytes: number): Buffer {
+    return Buffer.alloc(bytes, 0x61)
   }
 
   it('drops the largest files instead of throwing when over the archive budget', async () => {
     // 3 x 15 MB = 45 MB against a 35 MB budget: the biggest must go, and the
     // send must still succeed. Previously this threw and produced nothing.
-    await writeFile(join(folder, 'big-a.bin'), noise(15 * 1024 * 1024))
-    await writeFile(join(folder, 'big-b.bin'), noise(15 * 1024 * 1024))
-    await writeFile(join(folder, 'big-c.bin'), noise(15 * 1024 * 1024))
+    await writeFile(join(folder, 'big-a.bin'), filler(15 * 1024 * 1024))
+    await writeFile(join(folder, 'big-b.bin'), filler(15 * 1024 * 1024))
+    await writeFile(join(folder, 'big-c.bin'), filler(15 * 1024 * 1024))
 
     const result = await buildFeedbackZip({ ...makeOptions(folder), includeMedia: true })
 
@@ -187,19 +292,14 @@ describe('buildFeedbackZip — size budgets follow the server convention', () =>
 
     // research.json — the file that actually matters — always survives.
     expect(zip.file('research.json')).not.toBeNull()
-    // Measured, not guessed: this test genuinely zips 45 MB of incompressible
-    // bytes. ~2.4s alone, ~8.4s under `make test-all` (turbo runs every
-    // workspace suite at once), against vitest's 5s default — so it failed on a
-    // clean tree for anyone running the full gate while passing in isolation.
-    // The 45 MB is load-bearing (3 x 15 MB against the 35 MB budget), so the
-    // budget to raise is the clock's. DEFLATE dominates the cost, not the
-    // fixture: generating the noise is only ~340ms of it. The per-test
-    // 30_000 that used to sit here is redundant now that this package's
-    // vitest.config.ts raises testTimeout for the whole suite.
+    // This test zips 45 MB, which is load-bearing (3 x 15 MB against the 35 MB
+    // budget). What is not load-bearing is the entropy of those bytes — see the
+    // `filler` helper above. The suite-wide testTimeout in this package's
+    // vitest.config.ts still covers the remainder.
   })
 
   it('keeps a bundle that fits entirely intact', async () => {
-    await writeFile(join(folder, 'small.bin'), noise(1024))
+    await writeFile(join(folder, 'small.bin'), filler(1024))
     const result = await buildFeedbackZip({ ...makeOptions(folder), includeMedia: true })
     const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
     expect(zip.file('small.bin')).not.toBeNull()
@@ -229,6 +329,46 @@ describe('capSessionLog', () => {
   })
 })
 
+describe('redactApiKeys', () => {
+  it('replaces Anthropic sk-ant- keys', () => {
+    const input = '{"message":"my key is sk-ant-api03-abcDEF123456789012345678901234"}\n'
+    expect(redactApiKeys(input)).toBe('{"message":"my key is [REDACTED_API_KEY]"}\n')
+  })
+
+  it('replaces OpenRouter sk-or- keys', () => {
+    const input = '{"message":"use sk-or-v1-abcdef1234567890abcdef1234567890"}\n'
+    expect(redactApiKeys(input)).toBe('{"message":"use [REDACTED_API_KEY]"}\n')
+  })
+
+  it('replaces generic sk- keys (40+ chars)', () => {
+    const key = 'sk-' + 'a'.repeat(48)
+    const input = `{"message":"${key}"}\n`
+    expect(redactApiKeys(input)).toBe('{"message":"[REDACTED_API_KEY]"}\n')
+  })
+
+  it('leaves short sk- tokens alone (not an API key)', () => {
+    const input = '{"message":"sk-short is fine"}\n'
+    expect(redactApiKeys(input)).toBe(input)
+  })
+
+  it('redacts multiple keys in one log', () => {
+    const lines = [
+      '{"type":"user","message":"sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA"}',
+      '{"type":"assistant","message":"ok"}',
+      '{"type":"user","message":"also sk-or-v1-BBBBBBBBBBBBBBBBBBBBBB"}'
+    ].join('\n')
+    const out = redactApiKeys(lines)
+    expect(out).not.toContain('sk-ant-')
+    expect(out).not.toContain('sk-or-')
+    expect(out).toContain('[REDACTED_API_KEY]')
+  })
+
+  it('leaves a log with no keys unchanged', () => {
+    const input = '{"type":"user","message":"find John Smith in 1870 census"}\n'
+    expect(redactApiKeys(input)).toBe(input)
+  })
+})
+
 describe('buildFeedbackZip — living-person redaction', () => {
   let folder: string
 
@@ -249,7 +389,9 @@ describe('buildFeedbackZip — living-person redaction', () => {
         names: [{ id: 'n2', given: 'Jane Marie', surname: 'Spriggs' }],
         facts: [{ id: 'f2', type: 'Birth', date: '3 March 1985', place: 'Riverside, CA' }]
       },
-      // No `living` flag at all — absent is NOT deceased.
+      // No `living` flag at all. Absent is no longer living unconditionally —
+      // P3 stays redacted only because a 1990 birth is neither 110 years back
+      // nor evidence of death. Changing this date changes the expected outcome.
       {
         id: 'P3',
         gender: 'Male',
@@ -329,22 +471,38 @@ describe('buildFeedbackZip — living-person redaction', () => {
     expect(p2.living).toBe(true)
   })
 
-  it('treats a MISSING living flag as living — absent is not deceased', async () => {
+  it('still redacts a missing living flag when nothing says the person died', async () => {
+    // Issue #2988 narrowed this: an absent flag is no longer living *unconditionally*,
+    // but P3 has only a Birth 1990, so no death fact and no 110-year age — still living.
     const tree = await readTree((await buildFeedbackZip(makeOptions(folder))).zipBase64)
     const p3 = person(tree, 'P3')
     expect(p3.names[0].given).toBe('Living')
     expect(p3.facts).toEqual([])
   })
 
-  it('never leaks a redacted name or date anywhere in the bundled tree', async () => {
+  it('never leaks a redacted name or date in ANY bundle entry — not just tree.gedcomx.json', async () => {
+    // Scans every file in the zip, not just tree.gedcomx.json, so the
+    // exact-name redaction is verified across whatever the bundle actually
+    // contains rather than one named file. NOTE: this fixture stages only the
+    // two tree files, so the scan does not by itself exercise a stray
+    // unredacted copy — the guard that no writer *produces* one lives in the
+    // engine tests (project-io's dot-prefixed-temp assertion and each writer's
+    // `.bak`-absent assertion, issue #2333). What this adds is that IF a future
+    // fixture or producer ever puts a second readable tree copy in the bundle,
+    // an every-entry scan catches it where a one-file assertion would not.
     const zip = await JSZip.loadAsync(
       Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
     )
-    const raw = await zip.file('tree.gedcomx.json')!.async('string')
-    for (const leak of ['Jane Marie', 'Bobby', '3 March 1985', 'Riverside, CA', 'SECRET']) {
-      expect(raw).not.toContain(leak)
+    const entries = Object.values(zip.files).filter((f) => !f.dir)
+    expect(entries.length).toBeGreaterThan(0)
+    for (const entry of entries) {
+      const raw = await entry.async('string')
+      for (const leak of ['Jane Marie', 'Bobby', '3 March 1985', 'Riverside, CA', 'SECRET']) {
+        expect(raw, `${leak} leaked into ${entry.name}`).not.toContain(leak)
+      }
     }
-    expect(raw).toContain('Reuben Spencer') // the deceased subject survives
+    // The deceased subject still ships in the bundle.
+    expect(await zip.file('tree.gedcomx.json')!.async('string')).toContain('Reuben Spencer')
   })
 
   it('clears Couple facts touching a living person, keeps the rest', async () => {
@@ -527,5 +685,699 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
       else process.env.USERPROFILE = profileSaved
       await rm(fakeHome, { recursive: true, force: true })
     }
+  })
+
+  // Issue #1880. Two guardrail owner arms do their protected write from inside a
+  // subagent, whose transcript is a separate file one level down. While the
+  // bundle carried only the main session's log, those writes were invisible and
+  // the arms returned 0 for any post-split bundle by construction.
+  it('bundles subagent transcripts, their meta, and counts their bytes', async () => {
+    const homeSaved = process.env.HOME
+    const profileSaved = process.env.USERPROFILE
+    const fakeHome = await mkdtemp(join(tmpdir(), 'feedback-home-'))
+    try {
+      const projectHash = folder.replace(/[^a-zA-Z0-9-]/g, '-')
+      const projectDir = join(fakeHome, '.claude', 'projects', projectHash)
+      const subagents = join(projectDir, 'session', 'subagents')
+      await mkdir(subagents, { recursive: true })
+      await writeFile(
+        join(projectDir, 'session.jsonl'),
+        '{"type":"assistant","message":{"role":"assistant","content":"PARENT"}}\n',
+        'utf8'
+      )
+      // cwd is a SUBFOLDER of the project. An equality test drops every line,
+      // the file filters to empty, and the transcript vanishes unnamed.
+      await writeFile(
+        join(subagents, 'agent-abc.jsonl'),
+        `{"type":"assistant","cwd":${JSON.stringify(join(folder, 'results'))},` +
+          '"message":{"role":"assistant","content":"CHILD"}}\n',
+        'utf8'
+      )
+      await writeFile(
+        join(subagents, 'agent-abc.meta.json'),
+        '{"agentType":"proof-conclusion","description":"conclude q_001",' +
+          '"toolUseId":"toolu_01","spawnDepth":1}\n',
+        'utf8'
+      )
+      process.env.HOME = fakeHome
+      process.env.USERPROFILE = fakeHome
+
+      const log = await readSessionLog(folder)
+      const opts = { ...makeOptions(folder), includeSessionLog: true }
+      const zip = await JSZip.loadAsync(
+        Buffer.from((await buildFeedbackZip(opts)).zipBase64, 'base64')
+      )
+
+      const child = zip.file('_feedback/subagents/agent-abc.jsonl')
+      expect(child).not.toBeNull()
+      expect(await child!.async('string')).toContain('CHILD')
+      // The meta names the parent Agent call that spawned this child — the
+      // anchor the consumer splices at, so appending cannot be mistaken for it.
+      const meta = zip.file('_feedback/subagents/agent-abc.meta.json')
+      expect(meta).not.toBeNull()
+      expect(JSON.parse(await meta!.async('string')).toolUseId).toBe('toolu_01')
+
+      // The reporter is shown this number next to the toggle. Ship bytes it does
+      // not count and they consent to one figure while a larger bundle leaves.
+      let written = 0
+      for (const name of Object.keys(zip.files)) {
+        if (zip.files[name].dir) continue
+        if (
+          name === '_feedback/session-log.jsonl' ||
+          name.startsWith('_feedback/subagents/') ||
+          name.startsWith('_feedback/sessions/')
+        ) {
+          written += Buffer.byteLength(await zip.file(name)!.async('string'))
+        }
+      }
+      expect(log.sizeBytes).toBe(written)
+    } finally {
+      if (homeSaved === undefined) delete process.env.HOME
+      else process.env.HOME = homeSaved
+      if (profileSaved === undefined) delete process.env.USERPROFILE
+      else process.env.USERPROFILE = profileSaved
+      await rm(fakeHome, { recursive: true, force: true })
+    }
+  })
+
+  it('tells the triager where the subagent transcripts are, not just that they shipped', async () => {
+    await withPlantedHome(folder, async (projectDir) => {
+      const subagents = join(projectDir, 'session', 'subagents')
+      await mkdir(subagents, { recursive: true })
+      await writeFile(join(projectDir, 'session.jsonl'), turn('PARENT'), 'utf8')
+      await writeFile(join(subagents, 'agent-abc.jsonl'), turn('CHILD'), 'utf8')
+      await writeFile(join(subagents, 'agent-abc.meta.json'), META, 'utf8')
+
+      const md = await feedbackMarkdown({ ...makeOptions(folder), includeSessionLog: true })
+      expect(md).toContain('See `_feedback/session-log.jsonl`')
+      expect(md).toContain('`_feedback/subagents/`')
+      expect(md).toContain('.meta.json')
+    })
+  })
+
+  // The status flag means "the set is non-empty", which does not imply the file
+  // the 'included' wording names is in the bundle: the newest session can filter
+  // to nothing while an older one's group ships. Naming it anyway sends the
+  // triager hunting for a missing file — the #1481 confusion by another door.
+  it('names the grouped path, not a missing session-log.jsonl, when the newest session is empty', async () => {
+    await withPlantedHome(folder, async (projectDir) => {
+      await mkdir(join(projectDir, 'old', 'subagents'), { recursive: true })
+      await writeFile(join(projectDir, 'old.jsonl'), turn('OLD-PARENT'), 'utf8')
+      await writeFile(join(projectDir, 'old', 'subagents', 'agent-x.jsonl'), turn('CHILD'), 'utf8')
+      await writeFile(join(projectDir, 'old', 'subagents', 'agent-x.meta.json'), META, 'utf8')
+      // Filters to nothing (neither `user` nor `assistant`), but it is the
+      // newest .jsonl, so it is the active session.
+      await writeFile(join(projectDir, 'new.jsonl'), '{"type":"summary","summary":"x"}\n', 'utf8')
+      await utimes(join(projectDir, 'old.jsonl'), new Date(1000), new Date(1000))
+      await utimes(join(projectDir, 'new.jsonl'), new Date(9000), new Date(9000))
+
+      const opts = { ...makeOptions(folder), includeSessionLog: true }
+      const zip = await JSZip.loadAsync(
+        Buffer.from((await buildFeedbackZip(opts)).zipBase64, 'base64')
+      )
+      expect(zip.file('_feedback/session-log.jsonl')).toBeNull()
+      expect(zip.file('_feedback/sessions/old/session-log.jsonl')).not.toBeNull()
+
+      const md = await zip.file('FEEDBACK.md')!.async('string')
+      expect(md).toContain('## Session log')
+      expect(md).not.toContain('See `_feedback/session-log.jsonl`')
+      expect(md).toContain('`_feedback/sessions/<session-id>/`')
+      // Still a log-bearing bundle: the "we found nothing" wording would be wrong.
+      expect(md).not.toContain('requested but none was found')
+
+      // This cause records NO drop, so "## Skipped files" is not rendered
+      // (`skipped.length > 0` guards it). Pointing the triager at it to learn
+      // which cause applied is the same missing-file hunt this branch prevents,
+      // so the message must state the cause outright. Both halves asserted: the
+      // failure mode is a message and a section disagreeing.
+      expect(md).toContain('had no conversation entries for this project')
+      expect(md).not.toContain('Skipped files')
+      expect(md).not.toContain('transcript size budget')
+    })
+  })
+
+  // Issue #1880. The drop names also go into FEEDBACK.md's "Skipped files", but
+  // that is prose no consumer opens. `dropped_transcripts` is the field the
+  // guardrail report reads to hold every owner arm at "unknown" rather than
+  // reporting a 0 that means "we could not see".
+  it('names a dropped transcript in feedback.json, not only in FEEDBACK.md', async () => {
+    await withPlantedHome(folder, async (projectDir) => {
+      const subagents = join(projectDir, 'session', 'subagents')
+      await mkdir(subagents, { recursive: true })
+      await writeFile(join(projectDir, 'session.jsonl'), turn('PARENT'), 'utf8')
+      // Conversation-free: the producer cannot ship it, and an unnamed drop
+      // reads downstream as "we looked and found nothing".
+      await writeFile(
+        join(subagents, 'agent-empty.jsonl'),
+        '{"type":"summary","summary":"no turns"}\n',
+        'utf8'
+      )
+      await writeFile(join(subagents, 'agent-empty.meta.json'), META, 'utf8')
+
+      const opts = { ...makeOptions(folder), includeSessionLog: true }
+      const result = await buildFeedbackZip(opts)
+      const payload = await readFeedbackJson(result.zipBase64)
+      const dropped = payload.dropped_transcripts as string[]
+      expect(dropped).toHaveLength(1)
+      expect(dropped[0]).toContain('agent-empty')
+
+      const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+      const md = await zip.file('FEEDBACK.md')!.async('string')
+      expect(md).toContain('agent-empty')
+    })
+  })
+
+  // Before the set existed, redaction sat at the single zip write (#2175 /
+  // #1018 Task 5). Four kinds of member ship now -- active parent, grouped
+  // parent, subagent transcript, subagent meta -- and a key pasted in chat
+  // reaches the parent while a subagent handed it reaches the child's, so one
+  // call site per member is the shape that lets the next member ship a key.
+  // Mirrors test_session_log_redacts_api_keys_in_every_member_of_the_set in
+  // apps/server/tests/test_feedback.py.
+  it('redacts an API key in every transcript in the set, not just the parent', async () => {
+    const key = `sk-or-v1-${'a'.repeat(40)}`
+    await withPlantedHome(folder, async (projectDir) => {
+      const subagents = join(projectDir, 'session', 'subagents')
+      await mkdir(subagents, { recursive: true })
+      await writeFile(join(projectDir, 'session.jsonl'), turn(`my key is ${key}`), 'utf8')
+      await writeFile(join(subagents, 'agent-abc.jsonl'), turn(`reusing ${key}`), 'utf8')
+      await writeFile(
+        join(subagents, 'agent-abc.meta.json'),
+        `{"agentType":"proof-conclusion","description":"use ${key}",` +
+          '"toolUseId":"toolu_01","spawnDepth":1}\n',
+        'utf8'
+      )
+
+      const opts = { ...makeOptions(folder), includeSessionLog: true }
+      const zip = await JSZip.loadAsync(
+        Buffer.from((await buildFeedbackZip(opts)).zipBase64, 'base64')
+      )
+      for (const name of [
+        '_feedback/session-log.jsonl',
+        '_feedback/subagents/agent-abc.jsonl',
+        '_feedback/subagents/agent-abc.meta.json'
+      ]) {
+        const text = await zip.file(name)!.async('string')
+        expect(text, name).not.toContain(key)
+        expect(text, name).toContain('[REDACTED_API_KEY]')
+      }
+    })
+  })
+})
+
+// The grouped-only branch has TWO causes and names whichever applied. The
+// empty-parent cause is covered end-to-end above ('names the grouped path,
+// not a missing session-log.jsonl…'); the over-budget cause cannot be reached
+// that way without a >20 MB transcript, and a test sized against
+// SESSION_LOG_CAP_BYTES silently stops exercising the branch the moment anyone
+// raises the cap. So this pair drives the renderer directly, mirroring
+// `_session_log_markdown` in apps/server/tests/test_feedback.py.
+describe('renderFeedbackMarkdown — the grouped-only branch names its cause', () => {
+  const groupedOnlyMarkdown = (skipped: string[]): string =>
+    renderFeedbackMarkdown({
+      fields: {
+        email: 't@example.com',
+        userPrompt: 'q',
+        agentDid: 'd',
+        agentShouldHave: '',
+        correctAnswer: '',
+        notes: ''
+      },
+      workedAsExpected: false,
+      timestamp: '2026-09-01T00:00:00Z',
+      projectFolder: '/tmp/a-project',
+      viewerVersion: 'test 2026-09-01 (abc123)',
+      sessionLogStatus: 'included-grouped-only',
+      hasSubagentTranscripts: true,
+      skipped
+    })
+
+  it('names the size budget, and the list it points at is rendered', () => {
+    // This cause DOES record a drop, so naming the "Skipped files" list is
+    // correct here — and the list really is there. Both halves asserted,
+    // because the failure mode is a message and a section disagreeing.
+    const md = groupedOnlyMarkdown([`${PARENT_LOG_ENTRY} (over the transcript size budget)`])
+
+    expect(md).toContain('did not fit the transcript size budget')
+    expect(md).toContain('## Skipped files')
+    expect(md).not.toContain('had no conversation entries')
+  })
+
+  it('names the empty parent, and points at no list, when no drop was recorded', () => {
+    // The commoner cause records nothing, so `skipped.length > 0` leaves the
+    // section unrendered. Sending the triager there to learn which cause
+    // applied is the #1481 missing-file hunt this message exists to prevent.
+    const md = groupedOnlyMarkdown([])
+
+    expect(md).toContain('had no conversation entries for this project')
+    expect(md).not.toContain('Skipped files')
+    expect(md).not.toContain('transcript size budget')
+  })
+})
+
+describe('issue #2988 — an absent `living` flag is no longer "living" unconditionally', () => {
+  // The rule is exercised at the file level, mirroring the server suite's
+  // fb._redact_living tests, so the plumbing between the predicate and the
+  // rewritten bytes is covered too.
+  const NOW = new Date(2026, 0, 1)
+
+  function p(extra: Record<string, unknown>): Record<string, unknown> {
+    return {
+      id: 'X1',
+      gender: 'Male',
+      names: [{ id: 'nx', given: 'Ada Test', surname: 'Sample' }],
+      ...extra
+    }
+  }
+
+  function entryFor(persons: unknown[]): { relativePath: string; buf: Buffer } {
+    return {
+      relativePath: 'tree.gedcomx.json',
+      buf: Buffer.from(
+        JSON.stringify({ persons, relationships: [], sources: [] }, null, 2),
+        'utf-8'
+      )
+    }
+  }
+
+  const SENTINEL = {
+    id: 'SENTINEL',
+    gender: 'Female',
+    living: true,
+    names: [{ id: 'ns', given: 'Jane Marie', surname: 'Sentinel' }]
+  }
+
+  /**
+   * 1 when the subject was redacted, 0 when they shipped unredacted.
+   *
+   * Every tree also carries a person explicitly flagged living, and this
+   * asserts they came back redacted. Without it a bare count of 0 is
+   * ambiguous: redactOneTree's catch also returns 0 with the file passed
+   * through untouched, and since the fixture and the redactor both serialize
+   * with `JSON.stringify(x, null, 2)` the bytes are identical too. The
+   * sentinel is the only thing that makes a swallowed throw visible.
+   */
+  function redacts(person: Record<string, unknown>, now: Date | undefined = NOW): number {
+    const entry = entryFor([person, SENTINEL])
+    const count = redactLivingPersons([entry], now)
+    const tree = JSON.parse(entry.buf.toString('utf-8'))
+    const sentinel = tree.persons.find((x: GedcomxPerson) => x.id === 'SENTINEL')
+    expect(
+      sentinel?.names[0].given,
+      'the sentinel survived unredacted — the file was passed through by a catch'
+    ).toBe('Living')
+    return count - 1
+  }
+
+  const BIRTH_1990 = { id: 'b', type: 'Birth', date: '3 March 1990' }
+
+  // 1-3: each death-type fact alone decides it. Birth 1990 keeps the age
+  // heuristic out of the way, so exactly one fact type is under test.
+  it('case 1: no flag + a Death fact ships unredacted', () => {
+    expect(redacts(p({ facts: [{ id: 'f', type: 'Death', date: '1994' }, BIRTH_1990] }))).toBe(0)
+  })
+
+  it('case 2: no flag + a Burial fact ships unredacted', () => {
+    expect(redacts(p({ facts: [{ id: 'f', type: 'Burial', date: '1994' }, BIRTH_1990] }))).toBe(0)
+  })
+
+  it('case 3: no flag + a Cremation fact ships unredacted', () => {
+    expect(redacts(p({ facts: [{ id: 'f', type: 'Cremation', date: '1994' }, BIRTH_1990] }))).toBe(
+      0
+    )
+  })
+
+  it('case 4: no flag, born 1823, no death fact — age alone ships them unredacted', () => {
+    expect(redacts(p({ facts: [{ id: 'b', type: 'Birth', date: '14 May 1823' }] }))).toBe(0)
+  })
+
+  it('case 5: no flag, born 1990, no death fact — still redacted, as before #2988', () => {
+    expect(redacts(p({ facts: [BIRTH_1990] }))).toBe(1)
+  })
+
+  // 6: `living` is 4-valued in the wild. Every PRESENT value keeps the
+  // pre-#2988 behaviour, so a non-boolean flag must not fall into the
+  // heuristic and un-redact someone the old code protected.
+  it.each([
+    ['null', null],
+    ['0', 0],
+    ['the string "true"', 'true'],
+    ['an empty array', []]
+  ])('case 6: a present but non-boolean living flag (%s) is still redacted', (_label, value) => {
+    const person = p({
+      living: value,
+      facts: [{ id: 'f', type: 'Death', date: '1994' }, BIRTH_1990]
+    })
+    expect(redacts(person)).toBe(1)
+  })
+
+  it('case 7: `living: true` wins over a Death fact — the flag comes from FamilySearch', () => {
+    const person = p({
+      living: true,
+      facts: [{ id: 'f', type: 'Death', date: '1994' }, BIRTH_1990]
+    })
+    expect(redacts(person)).toBe(1)
+  })
+
+  it('case 8: a person with `facts: null` does not throw the file past the redactor', () => {
+    // redactOneTree's catch ships the file UNTOUCHED, so a throw here would leak
+    // every living person in it. Asserting the bytes changed is what separates
+    // "the helper coped" from "the outer catch swallowed it".
+    const entry = entryFor([
+      p({ id: 'BAD', facts: null }),
+      p({
+        id: 'LIVE',
+        living: true,
+        names: [{ id: 'n2', given: 'Jane Marie', surname: 'Sample' }]
+      })
+    ])
+    const before = entry.buf.toString('utf-8')
+    const count = redactLivingPersons([entry], NOW)
+    const after = entry.buf.toString('utf-8')
+
+    expect(count).toBe(2)
+    expect(after).not.toBe(before)
+    expect(after).not.toContain('Jane Marie')
+  })
+
+  it('case 9: a malformed fact is skipped, not fatal — the real Death fact still counts', () => {
+    const person = p({ facts: [null, { id: 'f', type: 'Death', date: '1994' }, BIRTH_1990] })
+    expect(redacts(person)).toBe(0)
+  })
+
+  // 10-11: the only pair that can tell `> 110` from `>= 110`. Deliberately one
+  // year more conservative than living_gate, which would ship the 110-year-old.
+  it('case 10: born exactly 110 years ago is still redacted', () => {
+    const year = NOW.getFullYear() - PRESUMED_LIVING_YEARS
+    expect(redacts(p({ facts: [{ id: 'b', type: 'Birth', date: `1 July ${year}` }] }))).toBe(1)
+  })
+
+  it('case 11: born 111 years ago ships unredacted', () => {
+    const year = NOW.getFullYear() - PRESUMED_LIVING_YEARS - 1
+    expect(redacts(p({ facts: [{ id: 'b', type: 'Birth', date: `1 July ${year}` }] }))).toBe(0)
+  })
+
+  it('reads the birth year past a birth fact whose dates do not parse', () => {
+    // Mirrors _birth_year: an unparseable birth fact falls through to the next
+    // one rather than ending the search.
+    const person = p({
+      facts: [
+        { id: 'b1', type: 'Birth', date: 'date unknown' },
+        { id: 'b2', type: 'Christening', standard_date: '+1823-05-14' }
+      ]
+    })
+    expect(redacts(person)).toBe(0)
+  })
+
+  it('defaults to the real clock when no `now` is passed', () => {
+    // Born 1900, so the answer flips on what the default clock actually is:
+    // the real one ships them, while the epoch, a NaN date and a deleted
+    // fallback all redact. A 1990 birth would pass under every one of those.
+    expect(redacts(p({ facts: [{ id: 'b', type: 'Birth', date: '1900' }] }), undefined)).toBe(0)
+  })
+})
+
+describe('issue #2988 — stale tree copies never reach the bundle', () => {
+  let folder: string
+
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'feedback-stale-'))
+    await writeFile(join(folder, 'research.json'), '{}', 'utf8')
+    await writeFile(join(folder, 'tree.gedcomx.json'), '{"persons":[]}', 'utf8')
+  })
+
+  afterEach(async () => {
+    await rm(folder, { recursive: true, force: true })
+  })
+
+  it('case 12: a `.bak` beside the tree is not walked', async () => {
+    // Pre-#2333 .mcpb builds wrote one. It is never redacted, because
+    // redactOneTree only rewrites the two canonical filenames.
+    await writeFile(join(folder, 'tree.gedcomx.json.bak'), '{"persons":[]}', 'utf8')
+    const names = (await walkProject(folder)).map((f) => f.relativePath)
+    expect(names).toContain('tree.gedcomx.json')
+    expect(names).not.toContain('tree.gedcomx.json.bak')
+  })
+
+  it('case 13: a non-dot-prefixed `.tmp-<uuid>` is not walked', async () => {
+    // Before the ProjectStore seam, atomicWriteJson wrote this shape, so a
+    // crash between write and rename leaves one the dot-skip does not catch.
+    const stale = 'tree.gedcomx.json.tmp-0b5f1c2e-9a44-4d1e-8f77-2c6d3e9a1b04'
+    await writeFile(join(folder, stale), '{"persons":[]}', 'utf8')
+    const names = (await walkProject(folder)).map((f) => f.relativePath)
+    expect(names).not.toContain(stale)
+  })
+
+  it('skips stale copies at any depth, and keeps look-alike names', async () => {
+    // The other direction: names that merely resemble the patterns must survive,
+    // or the skip is silently eating real project files.
+    await mkdir(join(folder, 'results'), { recursive: true })
+    await writeFile(join(folder, 'results', 'log_001.json.bak'), '{}', 'utf8')
+    await writeFile(join(folder, 'results', 'log_001.json'), '{}', 'utf8')
+    await writeFile(join(folder, 'backup-notes.md'), 'keep me', 'utf8')
+    await writeFile(join(folder, 'tmp-plan.md'), 'keep me', 'utf8')
+
+    const names = (await walkProject(folder)).map((f) => f.relativePath)
+    expect(names).not.toContain(join('results', 'log_001.json.bak'))
+    expect(names).toContain(join('results', 'log_001.json'))
+    expect(names).toContain('backup-notes.md')
+    expect(names).toContain('tmp-plan.md')
+  })
+})
+
+describe('issue #2988 — the bundle #2932 shape, end to end', () => {
+  let folder: string
+
+  const TREE = {
+    persons: [
+      // No living flag anywhere: exactly what tree_edit produces, and what
+      // blanked all 11 persons in bundle #2932.
+      {
+        id: 'M1',
+        gender: 'Female',
+        names: [{ id: 'n1', given: 'Mary Hales', surname: 'Hales' }],
+        facts: [
+          { id: 'f1', type: 'Birth', date: '1823', place: 'Sheffield, Yorkshire' },
+          { id: 'f2', type: 'Death', date: '1853' },
+          { id: 'f3', type: 'Burial', date: '1853' }
+        ]
+      },
+      {
+        id: 'M2',
+        gender: 'Male',
+        names: [{ id: 'n2', given: 'Bobby Living', surname: 'Hales' }],
+        facts: [{ id: 'f4', type: 'Birth', date: '1990', place: 'Riverside, CA' }]
+      }
+    ],
+    relationships: [],
+    sources: []
+  }
+
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'feedback-2932-'))
+    await writeFile(join(folder, 'research.json'), '{}', 'utf8')
+    await writeFile(join(folder, 'tree.gedcomx.json'), JSON.stringify(TREE), 'utf8')
+    await writeFile(join(folder, 'tree.gedcomx.json.bak'), JSON.stringify(TREE), 'utf8')
+    await writeFile(
+      join(folder, 'tree.gedcomx.json.tmp-0b5f1c2e-9a44-4d1e-8f77-2c6d3e9a1b04'),
+      JSON.stringify(TREE),
+      'utf8'
+    )
+  })
+
+  afterEach(async () => {
+    await rm(folder, { recursive: true, force: true })
+  })
+
+  it('ships the 1823 ancestor, redacts the 1990 person, and drops both stale copies', async () => {
+    const zip = await JSZip.loadAsync(
+      Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
+    )
+
+    const names = Object.values(zip.files)
+      .filter((f) => !f.dir)
+      .map((f) => f.name)
+    expect(names.some((n) => n.endsWith('.bak'))).toBe(false)
+    expect(names.some((n) => n.includes('.tmp-'))).toBe(false)
+
+    const tree = JSON.parse(await zip.file('tree.gedcomx.json')!.async('string'))
+    const mary = tree.persons.find((x: GedcomxPerson) => x.id === 'M1')
+    const bobby = tree.persons.find((x: GedcomxPerson) => x.id === 'M2')
+
+    expect(mary.names[0].given).toBe('Mary Hales')
+    expect(mary.facts).toHaveLength(3)
+    expect(bobby.names[0].given).toBe('Living')
+    expect(bobby.facts).toEqual([])
+
+    // And the leaked copies really are gone from every entry, not just unnamed.
+    for (const entry of Object.values(zip.files).filter((f) => !f.dir)) {
+      if (entry.name === 'tree.gedcomx.json') continue
+      expect(await entry.async('string')).not.toContain('Bobby Living')
+    }
+  })
+})
+
+describe('review findings on the #2988 fix', () => {
+  const NOW = new Date(2026, 0, 1)
+
+  function p(extra: Record<string, unknown>): Record<string, unknown> {
+    return {
+      id: 'X1',
+      gender: 'Male',
+      names: [{ id: 'nx', given: 'Ada Test', surname: 'Sample' }],
+      ...extra
+    }
+  }
+
+  const SENTINEL = {
+    id: 'SENTINEL',
+    gender: 'Female',
+    living: true,
+    names: [{ id: 'ns', given: 'Jane Marie', surname: 'Sentinel' }]
+  }
+
+  function redacts(person: Record<string, unknown>, name = 'tree.gedcomx.json'): number {
+    const entry = {
+      relativePath: name,
+      buf: Buffer.from(
+        JSON.stringify({ persons: [person, SENTINEL], relationships: [], sources: [] }, null, 2),
+        'utf-8'
+      )
+    }
+    const count = redactLivingPersons([entry], NOW)
+    const tree = JSON.parse(entry.buf.toString('utf-8'))
+    const sentinel = tree.persons.find((x: GedcomxPerson) => x.id === 'SENTINEL')
+    expect(sentinel?.names[0].given, 'sentinel survived — the file was passed through').toBe(
+      'Living'
+    )
+    return count - 1
+  }
+
+  it('redacts a tree copy the walker has no reason to drop', () => {
+    // A researcher's own duplicate is not `.bak` and not `.tmp-`, so nothing
+    // skips it. Keying redaction on the two canonical names shipped it whole.
+    expect(
+      redacts(p({ facts: [{ id: 'b', type: 'Birth', date: '1990' }] }), 'tree-backup.gedcomx.json')
+    ).toBe(1)
+    expect(
+      redacts(p({ facts: [{ id: 'b', type: 'Birth', date: '1990' }] }), 'tree.gedcomx copy.json')
+    ).toBe(1)
+  })
+
+  it('leaves a non-tree JSON document alone', () => {
+    // The other direction: shape-based selection must not rewrite project JSON
+    // that has no `persons` array. research.json is the one that matters.
+    const entry = {
+      relativePath: 'research.json',
+      buf: Buffer.from(JSON.stringify({ project: { id: 'rp_x' }, log: [] }), 'utf-8')
+    }
+    const before = entry.buf.toString('utf-8')
+    expect(redactLivingPersons([entry], NOW)).toBe(0)
+    expect(entry.buf.toString('utf-8')).toBe(before)
+  })
+
+  it('ignores a non-string date instead of reading a year out of its contents', () => {
+    // Python's str({...}) shows the contents and would find 1823 here; TS's
+    // String({...}) gives "[object Object]". The guard is what keeps the two
+    // bundles identical — without it the hosted server ships this person.
+    const person = p({ facts: [{ id: 'b', type: 'Birth', date: { original: '14 May 1823' } }] })
+    expect(redacts(person)).toBe(1)
+  })
+
+  it('ships an ancestor known only from a census or residence', () => {
+    // No birth, no death — the record type an ancestor is most likely to have
+    // exactly one of. A birth-only heuristic left these blanked.
+    expect(
+      redacts(
+        p({
+          facts: [
+            { id: 'c', type: 'Census', date: '1850' },
+            { id: 'r', type: 'Residence', date: '1860' }
+          ]
+        })
+      )
+    ).toBe(0)
+  })
+
+  it('treats a Probate fact as evidence of death', () => {
+    expect(redacts(p({ facts: [{ id: 'pr', type: 'Probate', date: '1994' }] }))).toBe(0)
+  })
+
+  it('is not fooled by a posthumous ordinance dated after the birth', () => {
+    // A Baptism long after death would date this 1823 person to 1960 and blank
+    // them. An explicit Birth fact wins regardless of array order.
+    const person = p({
+      facts: [
+        { id: 'o', type: 'Baptism', date: '12 Mar 1960' },
+        { id: 'b', type: 'Birth', date: '14 May 1823' }
+      ]
+    })
+    expect(redacts(person)).toBe(0)
+  })
+
+  it('redacts a tree saved with a BOM in front', () => {
+    // A Windows editor readily adds one. Without stripping it the parse throws,
+    // redactOneTree's catch ships the file UNREDACTED, and the living person in
+    // it leaks — the fail-open hazard this whole change exists to close.
+    const body = JSON.stringify(
+      {
+        persons: [p({ facts: [{ id: 'b', type: 'Birth', date: '3 March 1990' }] })],
+        relationships: [],
+        sources: []
+      },
+      null,
+      2
+    )
+    const entry = {
+      relativePath: 'tree.gedcomx.json',
+      buf: Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(body, 'utf-8')])
+    }
+    expect(redactLivingPersons([entry], NOW)).toBe(1)
+    expect(entry.buf.toString('utf-8')).not.toContain('Ada Test')
+  })
+
+  it('still redacts someone whose only dated fact is recent', () => {
+    // The reverse of the census case: a living person with a 1990 residence
+    // must not be shipped by the last-seen-alive rule.
+    expect(redacts(p({ facts: [{ id: 'r', type: 'Residence', date: '1990' }] }))).toBe(1)
+  })
+})
+
+describe('review findings — the stale-copy skip', () => {
+  let folder: string
+
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'feedback-stale2-'))
+    await writeFile(join(folder, 'research.json'), '{}', 'utf8')
+    await writeFile(join(folder, 'tree.gedcomx.json'), '{"persons":[]}', 'utf8')
+  })
+
+  afterEach(async () => {
+    await rm(folder, { recursive: true, force: true })
+  })
+
+  it('matches case-insensitively — the genealogist team is on Windows', async () => {
+    await writeFile(join(folder, 'tree.gedcomx.json.BAK'), '{"persons":[]}', 'utf8')
+    const names = (await walkProject(folder)).map((f) => f.relativePath)
+    expect(names).not.toContain('tree.gedcomx.json.BAK')
+  })
+
+  it('keeps a file that merely contains the temp substring', async () => {
+    // The pattern is anchored to a trailing uuid run, so an ordinary file with
+    // `.tmp-` in the middle of its name is not silently eaten.
+    await writeFile(join(folder, 'notes.tmp-draft.md'), 'keep me', 'utf8')
+    const names = (await walkProject(folder)).map((f) => f.relativePath)
+    expect(names).toContain('notes.tmp-draft.md')
+  })
+
+  it('names every stale copy it dropped in FEEDBACK.md', async () => {
+    // Every other drop reason is reported; a silent one leaves a triager
+    // reproducing against a folder quietly missing a file.
+    await writeFile(join(folder, 'tree.gedcomx.json.bak'), '{"persons":[]}', 'utf8')
+    const zip = await JSZip.loadAsync(
+      Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
+    )
+    const md = await zip.file('FEEDBACK.md')!.async('string')
+    expect(md).toContain('tree.gedcomx.json.bak (stale copy)')
   })
 })

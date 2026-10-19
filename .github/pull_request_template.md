@@ -43,8 +43,8 @@
      "Nothing" is the common answer. PLAN.md is gitignored, so this line is
      the only way a deviation reaches your reviewer.
 
-     Hit the step-4 stop rule (schema, auth, an ADR reversal, anything hard
-     to undo)? Say so here and name the message where you raised it. -->
+     Hit the step-4 stop rule (a schema change other than a new optional
+     field, auth, an ADR reversal, anything hard to undo)? Say so here and name the message where you raised it. -->
 
 **Didn't change:**
 
@@ -57,13 +57,29 @@
 <!-- If this PR touches a code/infra file (.ts/.tsx/.js/.mjs/.cjs/.py/.json/
      .yml/.yaml/.toml/.bat, Makefile, .gitattributes), or anything under
      packages/engine/plugin/skills/, packages/engine/plugin/agents/,
-     eval/fixtures/, eval/tests/, eval/runlogs/ or eval/harness/judge/, one
-     of your two approvals must come from a senior — EITHER senior team
-     satisfies it. See .github/CODEOWNERS for the exact rule. Peer approval
-     alone will not unblock merge. Note that docs/ is no longer an exclusion:
-     prose there needs no senior, but a schema or other code file under it
+     eval/fixtures/, eval/tests/, eval/runlogs/ or eval/harness/judge/, your
+     single required approval must come from a senior — EITHER senior team
+     satisfies it. See .github/CODEOWNERS for the exact rule. Round one is your
+     OWN review (checkbox below); the senior is the only required approver, so
+     nobody else is coming to catch what you skip. Note that docs/ is no longer
+     an exclusion: prose there needs no senior, but a schema or other code file under it
      does. This is a convenience note; GitHub's merge button is the actual
      enforcement. -->
+
+- [ ] **I reviewed my own diff first**, file by file, and left a review on this PR
+      (GitHub → Files changed → Review changes → Comment) saying what I found or
+      that I found nothing.
+      <!-- This is round one. It replaced the junior peer review on 2026-09-16:
+           the senior is now the only required approver, so this pass is the only
+           one before theirs. senior-queue.yml will not surface this PR to a
+           senior until the review exists — GitHub refuses an author's *approval*
+           on their own PR, so it must be a Comment review, not an Approve.
+           Read it as a reviewer would, not as the person who just wrote it.
+
+           NOTHING PARSES THIS CHECKBOX. senior-queue.yml checks that a review
+           EXISTS; no workflow reads whether you ticked this or whether you
+           actually read the diff. It is a social gate, and it is the only one
+           standing where the junior review used to. -->
 
 - [ ] I ran `make test-all` (or `scripts/test.sh` — the same command) and it passed.
       <!-- On Windows without Git Bash: `scripts\windows\test-all.bat` runs the
@@ -78,7 +94,8 @@
       Windows: `RunTests.bat` — and committed the run log **and its
       `.ann.json`** under `eval/runlogs/unit/<skill>/`.
       <!-- Behaviour-neutral skill edit (typo, rewording, comment)? Ask a senior
-           for the `eval-cosmetic-skip` label instead of burning a paid run.
+           for the `eval-cosmetic-skip:<skill>` label (one per skill) instead
+           of burning a paid run.
            Rules: eval/CLAUDE.md § "GitHub Action rules". -->
 
 - [ ] If I changed a skill's `description` frontmatter or its DO NOT clauses, I

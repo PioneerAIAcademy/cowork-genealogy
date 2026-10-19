@@ -1,0 +1,142 @@
+{
+  "persons": [
+    {
+      "id": "K8LX-YMK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Kierstin",
+          "surname": "Jonsdr"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "ML39-WN3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Hans",
+          "surname": "Andersson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "09 Dec 1771",
+          "standard_date": "9 Dec 1771",
+          "place": ", Rattvik, Kopparberg, Sweden",
+          "standard_place": "Rättvik, Kopparberg, Sweden"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "ML39-47Q",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Hans",
+          "surname": "Andersson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "02 Mar 1781",
+          "standard_date": "2 Mar 1781",
+          "place": ", Rattvik, Kopparberg, Sweden",
+          "standard_place": "Rättvik, Kopparberg, Sweden"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K4V1-467",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Anders",
+          "surname": "Hansson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "K4V1-467",
+      "person2": "K8LX-YMK"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "K4V1-467",
+      "child": "ML39-WN3",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "K8LX-YMK",
+      "child": "ML39-WN3",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "K4V1-467",
+      "child": "ML39-47Q",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "K8LX-YMK",
+      "child": "ML39-47Q",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "M17B-NL1",
+      "title": "Kierstin Jonsdr, \"Sweden, Baptisms, 1611-1920\"",
+      "citation": "\"Sweden, Baptisms, 1611-1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWHS-H9M : Wed Apr 16 23:30:51 UTC 2025), Entry for Hans and Anders Hansson, 9 Dec 1771.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWHS-H9S"
+    },
+    {
+      "id": "MBFF-GTR",
+      "title": "Kierstin Jonsdr, \"Sweden, Baptisms, 1611-1920\"",
+      "citation": "\"Sweden, Baptisms, 1611-1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWHS-HS3 : Wed Apr 16 23:44:18 UTC 2025), Entry for Hans and Anders Hansson, 2 Mar 1781.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWHS-HS7"
+    }
+  ]
+}

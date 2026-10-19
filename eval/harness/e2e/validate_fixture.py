@@ -26,7 +26,12 @@ Three gates, in order:
    check it. Per issue #1025, that requirement attaches to whichever
    record does the disproving on a documented-negative resolution, never
    to the absence claim itself (spec §3.6.1); the check is satisfied by a
-   single ark anywhere in the fixture, not one per finding.
+   single ark anywhere in the fixture, not one per finding. When such a
+   fixture declares `"image_basis": true` in `fixture.json` — the
+   resolution rested on reading the original page images — the same check
+   additionally requires an *image* ark (`3:1:`/`3:2:`, not the `1:1:`
+   index form) among those `supporting_sources`, and rejects a non-boolean
+   `image_basis` (issue #2877).
 3. **Stripping completeness** (warn-only), described below.
 
 The crux invariant of an e2e fixture: every entry in
@@ -60,6 +65,7 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -82,14 +88,22 @@ _STOPWORDS = frozenset(
     }
 )
 
-_WORD = re.compile(r"[A-Za-z]+")
+# Any Unicode letter run, so Cyrillic names tokenize and "João" stays whole.
+_WORD = re.compile(r"[^\W\d_]+")
+
+
+def _fold(text: str) -> str:
+    """Strip diacritics so "João" and "Joao" share a token."""
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c)
+    )
 
 
 def _tokens(text: str) -> set[str]:
     """Lowercased alphabetic word tokens, minus stopwords and 1-char noise."""
     return {
         w
-        for w in (m.group(0).lower() for m in _WORD.finditer(text or ""))
+        for w in (m.group(0).lower() for m in _WORD.finditer(_fold(text or "")))
         if len(w) > 1 and w not in _STOPWORDS
     }
 
@@ -308,6 +322,7 @@ def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
 
     for person in persons:
         pid = person.get("id", "?")
+        check_source_refs(person, f"person {pid}")
         for name in person.get("names") or []:
             if isinstance(name, dict):
                 check_source_refs(name, f"person {pid} name {name.get('id', '?')}")
@@ -436,6 +451,15 @@ def finding_shape_errors(expected_findings: dict[str, Any]) -> list[str]:
 # id this check exists to reject.
 _ARK_RE = re.compile(r"ark:/61903/[0-9]+:[0-9]+:[\w-]{4,}")
 
+# An *image* ark, as opposed to an index ark. The ark taxonomy is settled:
+# image arks carry `3:1:` or `3:2:` in the two path segments; `1:1:`, `1:2:`,
+# `2:5:` and `4:1:` are indexes, not images (`src/tools/record-read.ts`,
+# `src/tools/image-read.ts`). The first segment is what distinguishes an image
+# — `1:1:` vs `1:2:` is a difference in indexing, not the index/image split —
+# so the pattern keys on `3:` and accepts both `3:1:` and `3:2:` rather than
+# hardcoding `3:1:`.
+_IMAGE_ARK_RE = re.compile(r"ark:/61903/3:[12]:[\w-]{4,}")
+
 # The existing definition of "unresolved" for a record-hint fixture
 # (eval/harness/scripts/check_e2e_fixtures.py:58) — its presence in the
 # README means the fixture is still a draft pending adjudication and #970's
@@ -455,9 +479,11 @@ def record_hint_citation_errors(
     Applies only when `fixture.json`'s `genre == "record-hint"` and the
     fixture is not still a draft (no `_DRAFT_MARKER` in `README.md`). A
     strip-genre fixture, or a record-hint fixture still pending
-    adjudication, is not checked here.
+    adjudication, is not checked here — the non-record-hint and draft skips
+    precede every check below, so `image_basis` is ignored on a strip
+    fixture and on a draft.
 
-    The bar is deliberately low, per issue #1025: at least one
+    The base bar is deliberately low, per issue #1025: at least one
     `supporting_sources` entry, on at least one finding, anywhere in the
     fixture, must contain a literal `ark:/61903/`. A documented-negative
     resolution has two different claims — the disproving record (real,
@@ -465,6 +491,17 @@ def record_hint_citation_errors(
     definition) — so this does not require every entry to carry an ark,
     only that the disproving record's ark is present *somewhere* in the
     fixture (spec §3.6.1).
+
+    On top of that, `fixture.json`'s `image_basis` is a **declared flag**
+    (issue #2877): a resolution that rests on reading the original page
+    images sets `"image_basis": true`, and then at least one
+    `supporting_sources` entry must cite an *image* ark (`3:1:`/`3:2:`) —
+    an index ark (`1:1:`) or an ark that lives only in `README.md` does not
+    satisfy it. When the flag is `false`/absent the base bar is unchanged.
+    A non-boolean `image_basis` (`"true"`, `1`, `null`) is a hard error:
+    truthiness-coercing it would let `"false"` enable the check and let a
+    typo'd string disable it with CI green. It is read by key presence so a
+    JSON `null` is caught distinct from an absent key.
 
     Silently returns no errors if `fixture.json` or `README.md` is
     missing or unparseable — those are reported by other checks, and this
@@ -489,22 +526,58 @@ def record_hint_citation_errors(
     if _DRAFT_MARKER in readme_text:
         return []
 
-    for finding in expected_findings.get("findings") or []:
-        if not isinstance(finding, dict):
-            continue
-        for source in finding.get("supporting_sources") or []:
-            if isinstance(source, str) and _ARK_RE.search(source):
-                return []
+    errors: list[str] = []
 
-    return [
-        "expected-findings.json: resolved record-hint fixture has no "
-        "`supporting_sources` entry containing a literal `ark:/61903/` on "
-        "any finding — issue #970 requires the disproving record's ark be "
-        "checkable by a reviewer. A bare id (e.g. `QL7X-YN65`) does not "
-        "satisfy this; expand it to the full ark path (issue #1025 / spec "
-        "§3.6.1 covers the disproving-record-vs-absence split for "
-        "documented negatives)."
-    ]
+    # `image_basis` type check — key presence so JSON `null` (-> None) is caught
+    # distinct from an absent key; a truthiness test would silently accept both.
+    image_basis = fixture_meta.get("image_basis", False)
+    if "image_basis" in fixture_meta and not isinstance(image_basis, bool):
+        errors.append(
+            f"fixture.json: `image_basis` must be a boolean (true/false), got "
+            f"{image_basis!r} — coercing it would let \"false\" enable the "
+            f"image-ark check and a typo'd string disable it with CI green "
+            f"(issue #2877)."
+        )
+
+    # Base bar (issue #970 / #1025): a full ark somewhere in the findings.
+    has_ark = any(
+        isinstance(source, str) and _ARK_RE.search(source)
+        for finding in expected_findings.get("findings") or []
+        if isinstance(finding, dict)
+        for source in finding.get("supporting_sources") or []
+    )
+    if not has_ark:
+        errors.append(
+            "expected-findings.json: resolved record-hint fixture has no "
+            "`supporting_sources` entry containing a literal `ark:/61903/` on "
+            "any finding — issue #970 requires the disproving record's ark be "
+            "checkable by a reviewer. A bare id (e.g. `QL7X-YN65`) does not "
+            "satisfy this; expand it to the full ark path (issue #1025 / spec "
+            "§3.6.1 covers the disproving-record-vs-absence split for "
+            "documented negatives)."
+        )
+
+    # `image_basis: true` raises the bar to an image ark. Strict `is True` so a
+    # non-boolean (already errored above) never enables the check.
+    if image_basis is True:
+        has_image_ark = any(
+            isinstance(source, str) and _IMAGE_ARK_RE.search(source)
+            for finding in expected_findings.get("findings") or []
+            if isinstance(finding, dict)
+            for source in finding.get("supporting_sources") or []
+        )
+        if not has_image_ark:
+            errors.append(
+                "expected-findings.json: `image_basis` is true but no "
+                "`supporting_sources` entry cites an image ark "
+                "(`ark:/61903/3:1:` or `3:2:`) — this resolution rests on "
+                "reading the original page images (issue #2877), so the image "
+                "ark must be in expected-findings.json. An index ark "
+                "(`1:1:`/`1:2:`) or an ark that appears only in README.md does "
+                "not satisfy this."
+            )
+
+    return errors
 
 
 @dataclass
@@ -579,20 +652,67 @@ def check_stripping(
     return suspects
 
 
-def format_suspect(fixture_name: str, s: Suspect) -> str:
+def suspect_genre(fixture_dir: Path) -> str:
+    """The fixture's genre, for advice text only — defaults to "strip".
+
+    Deliberately permissive where `e2e.author`'s `fixture_genre` is strict:
+    that one owns validating the value and raises on an unknown genre. This
+    one only decides which sentence to print, so a missing, unreadable or
+    unrecognized `fixture.json` must not crash the linter — the worst case
+    is the strip-genre wording, which is what callers got before this
+    parameter existed. Kept here rather than imported from `e2e.author`,
+    which already imports from this module.
+    """
+    try:
+        raw = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return "strip"
+    return str(raw.get("genre") or "strip") if isinstance(raw, dict) else "strip"
+
+
+def format_suspect(fixture_name: str, s: Suspect, genre: str = "strip") -> str:
     """The WARN line for one suspect.
 
     Lives here rather than in `main()` so `e2e.author` can lint an
     *in-memory* candidate tree — on a dry run, or before the first write —
     and still print the same advice as the standalone linter.
+
+    `genre` selects the advice, not the detection. Every branch below used to
+    tell the reader to edit `starting-tree.gedcomx.json`, which is correct
+    for a `strip` fixture and forbidden on a `record-hint` one: nothing was
+    stripped there, the two trees are committed byte-identical (enforced by
+    `e2e.author validate`), and `resolve-record-hint`'s SKILL.md lists all
+    three tree files under "Never touch". Issue #2306 had to spend a
+    paragraph pre-emptively disarming this text; the fix is for the tool to
+    stop giving advice the genre forbids.
     """
     shared = ", ".join(sorted(s.shared))
-    if s.polarity == "avoid":
+    record_hint = genre == "record-hint"
+    if s.polarity == "avoid" and record_hint:
+        fix = (
+            f"this is an `avoid` finding on a record-hint fixture — the claim "
+            f"the agent must NOT assert overlaps a person the starting tree "
+            f"legitimately contains. **Do not edit either tree**: nothing was "
+            f"stripped in this genre and the two are committed identical. "
+            f"Either rewrite the finding so its name tokens no longer match "
+            f"{s.person_id}, or accept this line — and note that the same "
+            f"matcher runs against the agent's FINAL tree at grading time, so "
+            f"a finding left this way is force-failed on every run."
+        )
+    elif s.polarity == "avoid":
         fix = (
             f"this is an `avoid` finding — the claim the agent must NOT "
             f"assert appears to be pre-asserted by the starting tree. Remove "
             f"it from starting-tree.gedcomx.json (and the identical snapshot "
             f"on a record-hint fixture), or rewrite the finding."
+        )
+    elif record_hint:
+        fix = (
+            f"this is a record-hint fixture — nothing was stripped, so "
+            f"{s.person_id} staying in the tree is expected, not a defect. "
+            f"**Do not delete the person and do not edit either tree.** If "
+            f"{s.person_id} really is what this finding describes, rewrite "
+            f"the finding; otherwise ignore this line."
         )
     elif s.finding_type == "fact":
         fix = (
@@ -715,6 +835,9 @@ def _resolve_target(arg: Path) -> Path:
 
 
 def main(argv: list[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(
         prog="e2e.validate_fixture",
         description="Lint e2e fixtures for stripping completeness.",
@@ -758,8 +881,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"OK     [{name}] schema valid, all findings appear stripped")
             continue
         total_suspects += len(suspects)
+        genre = suspect_genre(fixture_dir)
         for s in suspects:
-            print(format_suspect(name, s))
+            print(format_suspect(name, s, genre))
 
     if any_hard_error:
         return 2  # structural problem — fix the fixture files

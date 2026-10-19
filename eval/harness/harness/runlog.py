@@ -43,9 +43,17 @@ HARNESS_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = HARNESS_DIR.parents[1]
 SCHEMAS_DIR = REPO_ROOT / "docs/specs/schemas"
 
-
-class RunlogAssemblyError(Exception):
-    pass
+# Re-exported from the stdlib-only `outcomes` module so `check_runlogs.py` can
+# import the aggregation without dragging jsonschema/referencing onto a bare
+# interpreter (issue #2684). One definition, two import paths.
+from .outcomes import (  # noqa: E402,F401
+    RunlogAssemblyError,
+    _modal_with_tiebreak_down,
+    _OUTCOME_RANK,
+    aggregate_per_run_outcome,
+    suppressed_failure,
+    unexpected_pass,
+)
 
 
 class RunlogCollisionError(Exception):
@@ -72,7 +80,12 @@ class JudgeResult:
     cached_input_tokens: int = 0
     output_tokens: int = 0
     # Wall-clock of the judge LLM call (perf_counter around _run_judge).
-    # 0.0 when the judge was skipped (validators failed / run aborted).
+    # 0.0 only on the branch that never attempted a judge call, which since
+    # #2057 means an aborted run alone - a validator failure no longer skips
+    # the judge. A judge that RAISED still records wall-clock here, because
+    # orchestrator sets this on every attempted branch including
+    # `except JudgeError`; `skipped: true` beside a nonzero duration_ms is
+    # therefore a normal shape, not a contradiction.
     duration_ms: float = 0.0
 
 
@@ -88,6 +101,15 @@ class SingleRun:
     output: dict[str, Any]
     validators: ValidatorResult
     judge: JudgeResult
+    # The SDK's error string for a run that aborted, plus whichever rate-limit
+    # signals fired (`skill_runner._format_quota_evidence`). Optional, and
+    # `["string", "null"]` in the schema rather than required — putting it in
+    # `required` would invalidate every already-committed run log. Before this
+    # field existed the only trace of *why* a run aborted was inside
+    # `output.text_response`, which is not anywhere a reader looks: a
+    # subscription quota sat there unread while the PR that shipped the run
+    # described it as an SDK error (#2192).
+    error: str | None = None
     # --- Timing instrumentation (all optional; default 0/None so the
     # _aborted_entry path and existing test constructors keep working). ---
     # SDK-reported API/network time for the skill run (ResultMessage
@@ -119,6 +141,28 @@ class SingleRun:
     # record of what the pin actually cost. `{}` on the abort path and on
     # any CLI old enough not to emit `modelUsage`.
     model_usage: dict[str, Any] = field(default_factory=dict)
+    # True when the run ended before a ResultMessage arrived even though it
+    # is NOT an abort — currently only the negative-test routing short-circuit
+    # (issue #2189). num_turns above is real on that path (turns_seen survives
+    # regardless of exit path); output_tokens is not (no partial token count
+    # exists pre-ResultMessage) — this says why 0 there isn't "used no
+    # tokens," rather than leaving it indistinguishable from a genuine zero.
+    no_result_message: bool = False
+    # MCP calls the routing short-circuit discarded (the post-deny reaction
+    # turn's). Recorded but read by no gate here: the orchestrator's
+    # unmatched_tool_call comparison counts them, the uncovered_tool_call
+    # advisory deliberately does not. Present so a future run log can settle
+    # whether a reaction call ever executes at all (issue #2740).
+    suppressed_post_deny_calls: list[dict] = field(default_factory=list)
+    # Busiest moment / compactions / model, read from the SDK's own transcripts
+    # by `_execute_skill_with_retry` before the session store is deleted.
+    # `subagents` is one compact `e2e.subagent_capture` summary per helper (the
+    # agent under test, on a direct-arm test); `main_thread` is the parent
+    # session (where a routed test's skill runs). None when no capture ran — an
+    # abort before execution — which the serializer leaves out entirely.
+    subagents: list[dict[str, Any]] | None = None
+    subagent_capture_status: str | None = None
+    main_thread: dict[str, Any] | None = None
 
 
 # ---- Timing helpers ------------------------------------------------------
@@ -153,57 +197,60 @@ def _wall_clock_ms_from_runs(run_dicts: list[dict[str, Any]]) -> float:
 # ---- Aggregation helpers -------------------------------------------------
 
 
-_OUTCOME_RANK = {"fail": 0, "partial": 1, "pass": 2}
 # None (N/A) ranks above pass so it never wins a tie against a real score.
 # All-null buckets are handled separately in aggregate_dimensions and don't
 # rely on this rank.
 _DIMENSION_RANK = {1: 1, 2: 2, 3: 3, None: 4}
 
 
-def aggregate_per_run_outcome(per_run: list[str]) -> str:
-    """Aggregate per-run outcomes per unit-test-spec.md §7.
-
-    Operates on the strings `_compute_outcome` already produced, so the
-    validator-dominates-cap-abort demotion (issue #1866 V7) is baked in
-    upstream: a run that failed a validator under a deterministic cap
-    arrives here as "fail", never "aborted". This abort-precedence branch
-    therefore only fires on a genuinely ungradeable run, and the two sites
-    agree by construction.
-    """
-    if not per_run:
-        raise RunlogAssemblyError("no per-run outcomes to aggregate")
-    if "aborted" in per_run:
-        return "aborted"
-    return _modal_with_tiebreak_down(per_run, _OUTCOME_RANK)
-
-
-def _modal_with_tiebreak_down(values, rank):
-    if not values:
-        raise ValueError("empty values list")
-    counts: dict = {}
-    for v in values:
-        counts[v] = counts.get(v, 0) + 1
-    max_count = max(counts.values())
-    winners = [v for v, c in counts.items() if c == max_count]
-    if len(winners) == 1:
-        return winners[0]
-    return min(winners, key=lambda v: rank.get(v, 999))
-
-
-def aggregate_dimensions(runs: list[SingleRun]) -> list[dict[str, Any]]:
+def aggregate_dimensions(
+    runs: list[SingleRun], *, include_validator_failed: bool = False
+) -> list[dict[str, Any]]:
     """Modal per-dimension score across runs (ties resolve down).
 
-    A dimension may have score=None (N/A) — currently only the Tool
-    Arguments base dimension uses this, when a test made zero MCP tool
-    calls. All-None buckets aggregate to None; mixed buckets fall back
-    to standard modal logic with None ranking above pass so a real
-    score wins any tie.
+    A dimension may have score=None (N/A): the Tool Arguments base
+    dimension on a run with zero MCP tool calls, any rubric dimension the
+    fixture never exercised, and since #2196 Correctness/Completeness on a
+    correctly-routed negative test, where the harness usually truncates the
+    transcript at the hand-off (measured: not on 4 of the 47 runs it fires
+    on, where the 1 is real - see flag_routing_negative_judge_fail). All-None buckets aggregate to None; mixed
+    buckets fall back to standard modal logic with None ranking above pass
+    so a real score wins any tie.
+
+    Runs that FAILED a validator are excluded (#2057): they are graded now,
+    but their scores stay out of the modal so committed baselines do not
+    shift. Their per-run scores remain in `runs[].judge.dimensions`.
+
+    `include_validator_failed=True` lifts that exclusion. It exists for ONE
+    caller — `assemble_test_entry` building `review_dimensions`, the rows a
+    human annotates — and must never feed `aggregated_dimensions`, which is
+    what the baseline readers (`skill_gate`, the dashboards) consume.
     """
     if not runs:
         return []
     bucket: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for r in runs:
+        # A validator-failing run is now GRADED (#2057) but stays out of the
+        # modal: letting defective runs into the aggregate would move every
+        # committed baseline at once, so the next gate-skill comparison would
+        # be against a shifted goalpost. The per-run scores remain in
+        # runs[].judge.dimensions. On committed data this disjunct is a no-op
+        # (every validator-failing run there was already judge-skipped), so
+        # test_aggregate_excludes_a_validator_failing_run is what pins it.
+        #
+        # `is False`, not `not r.validators.passed` as issue #2057 words it:
+        # ValidatorResult.passed is `bool | None`, and None means validators
+        # never reached a verdict (the _aborted_entry path) rather than that
+        # one failed. Truthiness would drop an unknown-but-graded run from the
+        # aggregate too, which is wider than the ruling. Unreachable today —
+        # compute_validators_passed returns a bool, and every None-valued run
+        # is aborted and so already excluded by judge.skipped — so this is
+        # about intent surviving the next reader, and
+        # test_aggregate_still_counts_a_run_whose_validators_are_unknown fails
+        # if it is ever simplified back.
         if r.judge.skipped:
+            continue
+        if r.validators.passed is False and not include_validator_failed:
             continue
         for d in r.judge.dimensions:
             key = (d.get("source", ""), d.get("name", ""))
@@ -239,8 +286,10 @@ def derive_activated(
     files_created: list[str],
     text_response: str,
     other_skill_names: set[str] | None = None,
+    agents_spawned: list[str] | None = None,
+    handed_off: bool = False,
 ) -> bool:
-    """Per unit-test-spec.md §6 three-rule definition.
+    """Per unit-test-spec.md §6's rules.
 
     Attribution of file changes / files created / substantive responses
     to the skill under test requires that the skill actually ran — it
@@ -255,8 +304,30 @@ def derive_activated(
     The known-accepted failure mode is Agent SDK skill-discovery bugs
     that leave `skills_invoked` empty even when the skill ran — re-runs
     typically clear it.
+
+    **Direct-agent arm (issue #2246).** A direct test invokes no skill at all —
+    the main thread spawns the pair's agent — so `skills_invoked` is empty by
+    construction and the attribution signal is `agents_spawned` instead. Callers
+    pass it only for a direct test; when it is None the rule is unchanged.
+
+    This has to live here rather than in `_compute_outcome` alone, because
+    `activated` is read further on: `test_activated_run_produces_response`
+    (`validators/test_universal.py`) opens `if activated is not True:
+    pytest.skip(...)`, so a direct run stuck at False would silently lose that
+    gate rather than fail it.
+
+    **`stop_at_stub` (#3119).** Such a run ends at the skill's first stubbed
+    hand-off, before it can write or summarize, so its narration can be a short
+    line naming the next row, which reads as routing away. The caller passes
+    `handed_off=True` only for a run that stop ended, and then the recorded
+    hand-off is the skill's work.
     """
-    if skill in skills_invoked:
+    attributed = skill in skills_invoked
+    if agents_spawned is not None:
+        attributed = skill in agents_spawned
+    if attributed:
+        if handed_off:
+            return True
         if file_changes:
             for f_diff in file_changes.values():
                 if f_diff and f_diff.get("sections_modified"):
@@ -291,13 +362,41 @@ def _is_substantive(
     if len(text.split()) >= _SUBSTANTIVE_MIN_WORDS_LONG:
         return True
     for other in other_skill_names:
-        pattern = re.compile(r"\b" + re.escape(other) + r"\b", re.IGNORECASE)
-        if pattern.search(text):
+        if _names_skill(text, other):
             _ROUTING_FALLBACK_LOG.append(
                 {"matched_skill": other, "text_excerpt": text[:200]}
             )
             return False
     return True
+
+
+def _names_skill(text: str, skill: str) -> bool:
+    """Whether `text` names `skill` as a skill, not merely uses the word.
+
+    A hyphenated name (`record-extraction`) is never ordinary English, so a
+    bare mention counts. A one-word name (`research`, `timeline`,
+    `translation`) is, so it counts only when written as a name: backticked,
+    slash-prefixed, or followed by "skill" or "agent". Measured over the
+    committed unit run logs: 8 of 51 short replies were classified as routing
+    purely on "genealogy research", all of them declines.
+    """
+    escaped = re.escape(skill)
+    if "-" in skill:
+        return re.search(r"\b" + escaped + r"\b", text, re.IGNORECASE) is not None
+    return re.search(
+        r"`/?" + escaped + r"`"
+        r"|/" + escaped + r"\b"
+        # `[*_"'`]*` before the space: closing markup sits between the name
+        # and "skill", so `That belongs to the **timeline** skill` and
+        # `Try the "research" skill.` read as routing again. Without it the
+        # suffix arm matched only an unadorned name, and bold or quoted
+        # mentions -- the common way a decline names the lane it hands off
+        # to -- scored substantive. Replayed over all 2,469 committed runs:
+        # no `activated` value changes.
+        r"|\b" + escaped + r"[*_\"'`]*\s+(?:skill|agent)\b",
+        text,
+        re.IGNORECASE,
+    ) is not None
 
 
 def get_routing_fallback_log() -> list[dict[str, Any]]:
@@ -345,14 +444,21 @@ def assemble_test_entry(
     aggregated = aggregate_per_run_outcome(per_run_outcomes)
     flaky = len(set(per_run_outcomes)) > 1
 
+    # `outcome` is the real aggregate. An `expected_outcome: "xfail"` marker no
+    # longer relabels it to `xfail`/`xpass`; downstream readers consult the
+    # marker (via `suppressed_failure` / `unexpected_pass`) to decide what a
+    # failure or pass means.
     outcome = aggregated
-    if expected_outcome == "xfail":
-        if aggregated == "fail":
-            outcome = "xfail"
-        elif aggregated == "pass":
-            outcome = "xpass"
 
     aggregated_dims = aggregate_dimensions(runs)
+    # The rows a human annotates: the aggregate whenever it has any, else — when
+    # every judged run failed a validator — the modal over those runs, so the
+    # test reaches review instead of looking ungraded. Every annotation plane
+    # reads this through `review_sample.review_dimensions`. Empty only when
+    # nothing was judged (aborted, or the judge raised).
+    review_dims = aggregated_dims or aggregate_dimensions(
+        runs, include_validator_failed=True
+    )
 
     totals = {
         "duration_ms": sum(r.duration_ms for r in runs),
@@ -383,6 +489,9 @@ def assemble_test_entry(
             "run_id": f"run_{test_id}_{timestamp_for_run_id}_{i}",
             "outcome": r.outcome,
             "aborted_reason": r.aborted_reason,
+            # This serializer is explicit, not `asdict` — adding the dataclass
+            # field alone persists nothing and no test notices.
+            "error": r.error,
             "duration_ms": r.duration_ms,
             "duration_api_ms": r.duration_api_ms,
             "num_turns": r.num_turns,
@@ -392,6 +501,24 @@ def assemble_test_entry(
             "cache_creation_input_tokens": r.cache_creation_input_tokens,
             "output_tokens": r.output_tokens,
             "model_usage": r.model_usage,
+            "no_result_message": r.no_result_message,
+            **(
+                {"suppressed_post_deny_calls": r.suppressed_post_deny_calls}
+                if r.suppressed_post_deny_calls
+                else {}
+            ),
+            # Written only when the capture ran, like `started_at`: an absent
+            # key means "not captured" (an older log, or an abort before
+            # execution), never a zero.
+            **(
+                {
+                    "subagents": r.subagents,
+                    "subagent_capture_status": r.subagent_capture_status,
+                }
+                if r.subagent_capture_status is not None
+                else {}
+            ),
+            **({"main_thread": r.main_thread} if r.main_thread is not None else {}),
             "skill_cost_usd": r.skill_cost_usd,
             "output": r.output,
             "validators": {
@@ -428,6 +555,7 @@ def assemble_test_entry(
         "outcome_summary": {
             "per_run_outcomes": per_run_outcomes,
             "aggregated_dimensions": aggregated_dims,
+            "review_dimensions": review_dims,
         },
         "totals": totals,
         "runs": runs_block,
@@ -478,9 +606,13 @@ def build_run_log(
     harness_version: str,
     model: str,
     judge_prompt_hash: str,
+    judge_model: str | None = None,
+    instrument: dict[str, Any] | None = None,
     snapshot: dict[str, str],
     tests: list[dict[str, Any]],
     review_sample: dict[str, Any] | None = None,
+    tool_search: bool | None = None,
+    store: str | None = None,
 ) -> dict[str, Any]:
     """Wrap per-test entries in the run-log envelope.
 
@@ -492,6 +624,15 @@ def build_run_log(
     envelope is `additionalProperties: false`, and its absence is what makes
     every pre-sampling run log, and every partial write, fall back to the
     every-dimension rule in `check_runlogs.rule3_completeness`.
+
+    `tool_search` records `--tool-search` / `--no-tool-search`. `run_tests.py`
+    passes it on every write, the default `True` included, so a new log says
+    which way it ran; None omits it, and absence (every log written before the
+    field) means on — no unit run could turn it off until the flag existed.
+
+    `store` is `"pg"` under `--store pg` and omitted on the file store, so
+    every earlier log keeps its bytes. It also picks the directory the log is
+    written to (`unit_dir_name`).
     """
     totals = {k: 0 for k in _TOTALS_KEYS}
     for entry in tests:
@@ -520,9 +661,29 @@ def build_run_log(
         "tests": tests,
         "totals": totals,
     }
+    # judge_model is optional (issue #2479 PR 1) — absent on logs that pre-date
+    # the field. Omit the key entirely when unknown so historical logs stay
+    # byte-identical rather than gaining a stray `"judge_model": null`.
+    if judge_model:
+        envelope["judge_model"] = judge_model
     if review_sample is not None:
         envelope["review_sample"] = review_sample
+    if tool_search is not None:
+        envelope["tool_search"] = tool_search
+    if store is not None:
+        envelope["store"] = store
+    # instrument is optional (issue #2479 PR 3): what produced and graded the run,
+    # read by check_runlogs rule 2c. Absent when the tool catalog could not be read.
+    if instrument is not None:
+        envelope["instrument"] = instrument
     return envelope
+
+
+def unit_dir_name(store: str | None) -> str:
+    """The run-log subdirectory under the runlogs root: `unit` for the file
+    store, `unit-pg` for a `--store pg` run (U15), so no Postgres log ever sits
+    in a skill's release lineage or reaches `check_runlogs`."""
+    return "unit-pg" if store == "pg" else "unit"
 
 
 # ---- Schema validation ----------------------------------------------------
@@ -559,7 +720,7 @@ def write_run_log(
     filename: str,
     on_prune: Callable[[list[Path]], None] | None = None,
 ) -> Path:
-    """Write `log` to `<runlogs_root>/unit/<skill>/<filename>`.
+    """Write `log` to `<runlogs_root>/<unit_dir_name(store)>/<skill>/<filename>`.
 
     Spills per-run `text_response` payloads >100KB to sidecar files
     under `runs/<run_id>.text.md` (replaces the string with `{"ref": ...}`).
@@ -570,7 +731,7 @@ def write_run_log(
     timestamp.
     """
     skill = log["skill"]
-    target_dir = Path(runlogs_root) / "unit" / skill
+    target_dir = Path(runlogs_root) / unit_dir_name(log.get("store")) / skill
     target_dir.mkdir(parents=True, exist_ok=True)
 
     for test in log.get("tests", []):
@@ -713,10 +874,15 @@ def _replace_with_retry(src: Path, dst: Path, *, attempts: int = 8) -> None:
 _PARTIAL_PREFIX = ".partial_"
 
 
-def partial_runlog_path(runlogs_root: Path, skill: str, timestamp: str) -> Path:
+def partial_runlog_path(
+    runlogs_root: Path, skill: str, timestamp: str, store: str | None = None
+) -> Path:
     """The dotfile path the in-progress partial envelope is written to."""
     return (
-        Path(runlogs_root) / "unit" / skill / f"{_PARTIAL_PREFIX}{timestamp}.json"
+        Path(runlogs_root)
+        / unit_dir_name(store)
+        / skill
+        / f"{_PARTIAL_PREFIX}{timestamp}.json"
     )
 
 
@@ -736,7 +902,7 @@ def write_partial_runlog(
     SIGKILL mid-write leaves the previous good partial intact. Validates
     against the v2 schema before writing.
     """
-    out = partial_runlog_path(runlogs_root, skill, timestamp)
+    out = partial_runlog_path(runlogs_root, skill, timestamp, log.get("store"))
     out.parent.mkdir(parents=True, exist_ok=True)
     validate_run_log(log)
     tmp = out.parent / (out.name + ".tmp")

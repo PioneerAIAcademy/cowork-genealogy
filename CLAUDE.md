@@ -21,7 +21,9 @@ We ship two separate artifacts from this single repo:
 - A Cowork plugin folder packaged as a `.zip` (runs in the Cowork VM)
 
 These two pieces are tightly coupled and must be developed together,
-which is why they live in one repo.
+which is why they live in one repo. The search-agent prototype adds three
+Elastic Beanstalk source bundles, web, worker and tools (`make eb-bundles`;
+`docs/plan/familysearch-handoff.md`).
 
 ## Architecture you must understand before changing anything
 
@@ -56,18 +58,22 @@ wiki tools can be overridden per-user via `wikiApiUrl` in
 `~/.familysearch-mcp/config.json` (useful for pointing at a local dev
 instance).
 
-**There is no public deployment yet, so the defaults are a developer's
-personal host.** `DEFAULT_WIKI_API_URL` in `src/auth/config.ts` and
-`DEFAULT_POP_STATS_URL` in `src/tools/place-population.ts` both point at
-one machine's tailnet. The hosted path can now be redirected without an
+**The defaults are a developer's personal host, and it is publicly
+reachable.** `DEFAULT_WIKI_API_URL` in `src/auth/config.ts` and
+`DEFAULT_POP_STATS_URL` in `src/tools/place-population.ts` both point at a
+`*.ts.net` host served to the public internet through Tailscale Funnel, so
+every install reaches it. Never describe it as private, undeployed or
+unreachable — not in a README, a known-limits list or a review. A `dig`
+returning a `100.64.0.0/10` address is the tailnet-internal answer and says
+nothing about public reach. The hosted path can now be redirected without an
 engine rebuild — set `WIKI_API_URL` / `POP_STATS_URL` on the control
 plane and `hosted_config()` writes them into the sandbox's config — but
 the compiled-in defaults still apply everywhere else, including every
 installed `.mcpb`. When one of those calls fails the agent gets an
 actionable error and then quietly ships a thinner answer, so the user sees
 nothing; `make e2e-wiki-failures` is what surfaces the current rate and its
-causes. Do not write "end users do not need to set this" — that was true only
-in the sense that they cannot.
+causes. Those failures are ordinary intermittent availability, not a
+locked-out audience.
 
 ## Repository layout
 
@@ -77,7 +83,8 @@ in the sense that they cannot.
   `packages/engine/mcp-server/build/`. The `.mcpb` is built from this.
 - `packages/engine/plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
-- `scripts/` — Build scripts for both artifacts.
+- `scripts/` — Build scripts for every artifact (`scripts/eb_bundles/` for the
+  Beanstalk bundles).
 - `packages/engine/mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
   smoke tests that invoke a tool directly against live APIs (no MCP
   harness; useful for debugging a tool in isolation), plus
@@ -110,14 +117,18 @@ in the sense that they cannot.
 
 This repo is also a pnpm + turborepo monorepo for the hosted web product —
 `packages/schema`, `packages/viewer-ui`, `apps/electron`, `apps/web`,
-`apps/server`. Two rules bind when you touch it:
+`apps/server` — plus `eval/app`, the eval CRUD UI, a member so that it imports
+`@genealogy/schema` rather than hand-forking the types. Two rules bind when you
+touch it:
 
 - **Keep the engine out of the pnpm workspace.** `pnpm-workspace.yaml` carries a
   `!packages/engine/**` negation. Both shipped artifacts install their production
   tree with `npm ci --omit=dev` from
-  `packages/engine/mcp-server/package-lock.json`, and no CI job builds either
-  one, so that lockfile has to stay npm's — a break surfaces at release time,
-  not in a green PR.
+  `packages/engine/mcp-server/package-lock.json`, so that lockfile has to stay
+  npm's. The required `vitest` job in `.github/workflows/engine-tests.yml`
+  builds both artifacts on every PR and verifies the `.mcpb` boots with every
+  manifest tool (`scripts/verify-mcpb.sh`), so a packaging break reds the PR
+  rather than waiting for a release.
 - **The web side depends on `packages/schema`, never on the engine.**
 
 What each package is and how they bind: `docs/architecture.md`, "The hosted web
@@ -186,18 +197,25 @@ find along the way", which owns these rules.
 ## Tools and skills
 
 For the user-facing tool catalog (purpose, auth, examples) and skill
-catalog (descriptions, workflow), see `README.md`. This file is the
+catalog (descriptions, workflow), see `docs/catalog.md`. This file is the
 agent operating manual — it covers architecture, conventions, and how
 to make changes, not what each individual tool/skill does.
 
 Tool implementations live in `packages/engine/mcp-server/src/tools/`. Their schemas are
 listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
-source of truth for the advertised tool list); `src/index.ts` imports that
-list and dispatches calls. Per-tool behavioral contracts are in
+source of truth for the advertised tool list); `src/server.ts`
+(`createServer(principal)`) imports that list and dispatches calls, and the
+entrypoints only connect a transport: `src/index.ts` (stdio, the `.mcpb`) and
+`src/http.ts` (the prototype's Streamable HTTP server, compose service `tools`, binding each
+request's `Authorization: Bearer` and a `PgS3ProjectStore` from its
+`X-Genealogy-Project-Id` header, fenced by `X-Genealogy-Turn-Id` and
+`X-Genealogy-Claim-Epoch` so a superseded worker attempt's writes roll back, and
+owner-checked against the bearer the worker stamped on that open turn — U6/U4). Per-tool
+behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
 Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
-skill uses `person_search` to find a person in the FamilySearch tree
+agent uses `person_search` to find a person in the FamilySearch tree
 when the user doesn't have a FamilySearch ID to provide.
 
 The host artifact is the `.mcpb` desktop extension, built from
@@ -227,9 +245,9 @@ plugin. The hosted control plane does **both**: it passes
 *agents* into the project (`real_agent.stage_plugin_agents`). That is not
 redundancy — SDK plugin loading registers agents **only** under the namespaced
 name `genealogy-research:<agent>`, while every SKILL.md delegates by the bare
-name (`@plugin:record-extractor`), so without the staging the Task call errors
+name (`@plugin:record-structurer`), so without the staging the Task call errors
 and the model silently falls back to a general-purpose stand-in that binds none
-of the `tools:`/`disallowedTools:` below (issue #939; skills are unaffected —
+of the `tools:`/`disallowedTools:` below (ADR-0004; skills are unaffected —
 the loader registers *those* under bare names). If you change how the hosted
 agent is configured, run `make agent-smoke`: it is the only check that reads
 what the runtime actually resolved, and no CI job covers this path.
@@ -255,11 +273,11 @@ Which spelling a Cowork session exposes has been **observed to move**: three
 censuses found every genealogy tool under
 `mcp__remote-devices__Genealogy_Research__…` ("via your device") with the
 bare `mcp__Genealogy_Research__…` spelling absent — macOS and Windows on
-2026-08-15, and a second Windows session via issue #1732 on 2026-08-19 — yet
-issue #1341 recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the
+2026-08-15, and a second Windows session on 2026-08-19 — yet
+an earlier census recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the
 bridged spelling among its *unrecognized* entries. The registrar moved
 between those dates (or the configurations differ in a way nobody has
-identified — same conclusion). **Run mode is a per-task setting nothing in
+identified — same conclusion; ADR-0004 keeps the dated census records). **Run mode is a per-task setting nothing in
 the plugin can see, and the spelling exposed is not stable over time.** No
 single spelling resolves everywhere; listing all three is insurance against a
 moving target, not defensive redundancy.
@@ -273,9 +291,9 @@ because unrecognized entries are ignored so long as at least one resolves.
 **No agent declares `disallowedTools:` any more — omit the tool instead.**
 Under `bypassPermissions` **both** bind: a tool merely omitted from `tools:` is
 absent from the agent, exactly as a denied one is (`make probe-agent-binding`,
-2026-08-30, Claude Code 2.1.251 / SDK 0.2.128). Every deny we shipped named a
+2026-08-30, Claude Code 2.1.220 / SDK 0.2.128). Every deny we shipped named a
 tool already absent from the list above it, so all five were deleted as
-restatements. What keeps `record-extractor` off the broad `research_append` is
+restatements. What keeps `record-structurer` off the broad `research_append` is
 `research_append` not being in its `tools:`.
 
 **To take a capability away from an agent, remove it from `tools:`.** The
@@ -313,6 +331,13 @@ entitled to make. `scripts/package-plugin.mjs`'s `INCLUDE` list must carry
 `"hooks"` or the directory never ships, which looks identical to the runtime
 refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 
+**After changing anything under `hooks/`, run `make hook-smoke`.**
+`plugin-hooks.test.ts` proves the script *decides* correctly; only `hook-smoke`
+proves a runtime *binds* it, and since the script must never raise, a hook that
+stopped binding looks exactly like one with no opinion. It is live, billed, and
+run by no CI job. It covers the **hosted** loader only — Cowork's stays on the
+`nothing-checks` register (`docs/specs/e2e-test-spec.md` §6.1.1).
+
 **Allow-lists are subtractive; hooks are not.** A per-agent `tools:` list can
 only narrow what the session already holds — the session's tool set is always a
 superset — so no allow-list can deny the *main thread* a tool one of its
@@ -339,12 +364,13 @@ prefix rather than slicing it against another prefix's length.
 
 **No CI job can verify that a granted tool actually binds.** Only a
 live Cowork session can, and only for the spelling that session exposes — the
-bare form was live in #1341 but absent in the later censuses, so a green check
+bare form was live on 2026-08-04/05 but absent in the later censuses, so a green check
 proves binding for one spelling at one moment, not in general.
 
 **Never hardcode a qualified name in a ToolSearch query.** Cowork defers the
-genealogy tool schemas above a size threshold and offers no control over it, so
-ToolSearch is the real load path there. Search by bare tool name —
+genealogy tool schemas above a size threshold (Claude Code exempts `ALWAYS_LOAD`
+in `src/tool-schemas.ts`; Cowork is unverified), so ToolSearch is the load path.
+Search by bare tool name —
 `query: "+research_append"` — which matches whatever prefix the session exposes.
 The same packaging test fails any `select:mcp__…` in a plugin body.
 
@@ -365,7 +391,8 @@ bodies are self-contained — do not split them".
 
 ## Handling user feedback submissions
 
-When a user submits a feedback zip via the Cowork viewer, the workflow
+When a user submits a feedback zip (from the hosted web app or the Cowork
+desktop viewer — the issue's `Platform:` line says which), the workflow
 to triage it lives at `docs/alpha-feedback-guide.md` (a worked story,
 start to finish). The skill-improvement half it hands off to is
 `docs/skill-lifecycle.md`. The underlying spec
@@ -376,14 +403,24 @@ workflow itself or building one of its skills.
 
 ## Researcher profile in `research.json`
 
-Per-project context about the researcher (experience level, paid
-subscriptions, derived narration guidance) lives in a
-`researcher_profile` section of `research.json`. `init-project` writes
-it after a short opening-turn interview, asked non-blocking alongside
-the project's research objective at project start. Every
-`SKILL.md` opens with a one-line `**Narration:**` instruction that
-tells Claude to read `researcher_profile.narration_guidance` and apply
-it as the narration style for that invocation.
+Per-project context about the researcher lives in a `researcher_profile`
+section of `research.json`. `init-project` writes a fixed profile at
+project start (`experience_level: "novice"` and one house-style
+`narration_guidance` string) and asks nothing about the researcher; the
+only opening-turn question is the research objective, non-blocking. Every
+shipped skill carries a one-line `**Narration:**` instruction that tells Claude
+to read `researcher_profile.narration_guidance` and apply it as the narration
+style for that invocation. The `search-wikipedia` **agent** is the deliberate
+exception — the line's own fallback is "a one-line preamble per action",
+and that preamble is exactly what its
+`test_reply_does_not_narrate_pending_step` validator fails it for. Do
+not add the line to it. The exception moved from the skills to the agents when
+that skill was replaced by an agent on 2026-09-27; re-derive both lists with
+`grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
+`grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md`, and note that
+nine other agents also carry no line — `search-wikipedia` is the one whose
+absence is a *rule*, pinned by
+`tests/packaging/search-wikipedia-no-narration.test.ts`.
 
 Three architectural rules made this design necessary:
 
@@ -396,7 +433,7 @@ Three architectural rules made this design necessary:
   `~/.cowork-genealogy/` to write to.
 - **No shared SKILL.md reference loading.** Claude Code's relative-
   path resolution from SKILL.md is unreliable (upstream Claude Code issue
-  #17741). Shared
+  claude-code#17741). Shared
   reference docs across skills are duplicated, not linked from a
   `packages/engine/plugin/references/` location.
 - **No plugin-level CLAUDE.md auto-load.** Anthropic's plugin docs are
@@ -428,7 +465,7 @@ change, with different (and easy-to-undercount) site lists:
   `docs/specs/schemas/ownership.json` saying who may write it — declare it
   `owner: null` with a reason rather than guessing; a packaging test fails until
   the row exists.
-- **New value on a closed enum** (e.g. `evidence_type`): the enum lives in
+- **New value on a closed enum** (e.g. `record_basis`): the enum lives in
   `enums.schema.json` (`$defs`), **not** `research.schema.json` (which only
   `$ref`s it). Edit `enums.schema.json` in *both* schema trees (`docs/specs/schemas/`
   and `packages/schema/schemas/`), the `CLOSED_ENUMS` set in `validator.ts`, and the
@@ -451,11 +488,17 @@ change, with different (and easy-to-undercount) site lists:
   `packages/engine/mcp-server/src/validation/tree-shape.ts` must be edited —
   the validator enforces `additionalProperties: false` from those sets, so an
   unlisted field makes every writer tool (`tree_edit`, `tree_correct`, the
-  merge tools, `research_append`'s tree write) reject the write. The legacy
+  merge tools, `research_append`'s tree write) reject the write. Two more
+  engine sites go with it: the matching `Simplified*` interface in
+  `src/types/gedcomx.ts`, and the field's **type** check in `validator.ts`'s
+  `checkTree*` function — the allow-list admits the key, and only that says what
+  type it must be, so a field in one and not the other is accepted by the
+  runtime validator and rejected by the JSON Schema with nothing catching it
+  (`tree-shape-drift.test.ts` compares field NAMES). The legacy
   healer (`tree-sanitize.ts`) reads the same sets; check whether the change
   needs a heal rule for pre-change trees.
 
-The interview lives in `init-project/SKILL.md`.
+The fixed profile and the objective question live in `agents/init-project.md`.
 
 ## Auth architecture (`packages/engine/mcp-server/src/auth/`)
 
@@ -465,9 +508,18 @@ module — do not re-implement token plumbing. To see which tools those are toda
 
 Four rules hold across the module:
 
-- **`getValidToken()` (`refresh.ts`) is the single entry point.** It loads
+- **`getValidToken(principal)` (`refresh.ts`) is the single entry point.** It loads
   tokens, auto-refreshes if expired, and throws an LLM-instruction error
   ("Call the login tool to authenticate.") when there is no valid session.
+  **Every credential and per-user-config read takes a `Principal`**
+  (`src/auth/principal.ts`) — `LOCAL` for the one-user-per-process desktop and
+  harness path, a bearer carrying the request's token and config for a hosted
+  entrypoint — so the tool entry points that need one take it as their last
+  parameter and the stdio dispatcher binds `LOCAL` once. A call site that
+  never establishes it does not compile; never route around this with a
+  module-level or async-local default, which is the cross-patron
+  impersonation the parameter exists to prevent. A bearer never refreshes and
+  never touches `~/.familysearch-mcp` (`tests/auth/principal.test.ts` pins it).
 - **The bundled `config/familysearch.json` is the sole source of the FS client
   ID** — no env-var fallback, no per-user override. A missing or corrupt file
   throws an installation-framed error, not an LLM-actionable one: it ships with
@@ -490,20 +542,27 @@ Two distinct config sources:
 2. **Per-user, on the user's machine:** `~/.familysearch-mcp/`
    directory, `mode: 0o600`. Holds `tokens.json` (OAuth tokens from
    `login`) and `config.json` (per-user tunables like `wikiApiUrl`).
-   `loadConfig` / `saveConfig` read and write the per-user JSON.
+   `loadConfig` reads the per-user JSON. Nothing in the engine writes
+   it: the user, the e2e harness or the hosted control plane does.
    **Do not** introduce env-var fallbacks — the files are the sole
    sources. New per-user keys go on `AppConfig` in `src/types/auth.ts`
-   and are read via `loadConfig()`.
+   and are read via `loadConfig(principal)`. One exception: the `.mcpb`
+   install dialog asks for the OpenRouter key (`user_config` in
+   `manifest.json`), whose only channel is an environment variable, so
+   `src/index.ts` layers `GENEALOGY_OPENROUTER_API_KEY` over `config.json`
+   at start-up (`installConfigFromEnv`, `localPrincipal`). No getter reads
+   the environment; do not add a second `user_config` field without the
+   lead's say.
 
 Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
-| `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
+| `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl(principal)` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
 | `popStatsUrl` | `place_population` | Optional | Base URL of the Pop Stats API. Read directly in `src/tools/place-population.ts`; defaults to `DEFAULT_POP_STATS_URL` when absent. |
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
-| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Written by the `configure_openrouter` tool. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent so Claude can prompt the user. |
-| `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
+| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey(principal)` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user in the `.mcpb` install dialog (layered over `config.json`, and winning over it) or directly in `config.json`. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent, naming both places to set it. |
+| `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel(principal)` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
 
 Each `get*` helper throws an LLM-instruction error when its required
 field is missing — the error message tells Claude what to put in the
@@ -543,6 +602,14 @@ Rules that follow from this:
   which the agent co-edits in the same skill.
 - Python skill scripts read snake_case JSON natively, which is the
   other reason persisted documents are snake_case.
+- **A camelCase field on a flat tool response is correct and stays.**
+  `imageRef` on `image_read` and `image_transcribe` is on the right side of
+  this line and must not be "fixed" — ruled 2026-09-21. What made
+  `person_read`'s `artifactUrl` a slip was that it sat **inside** `TreeSource`,
+  whose every other field is snake_case; a lone camelCase key among snake_case
+  neighbours reads as an error. A flat response with no snake_case neighbours
+  does not. Renaming those two would break two more tool contracts for a
+  consistency nobody is confused by.
 - The thing to avoid is mixing both conventions **within a single
   co-edited document** — never mixing them across the repo, which is
   intentional.
@@ -551,9 +618,16 @@ Rules that follow from this:
 
 Tools are defined in `packages/engine/mcp-server/src/tools/`. Each tool exports a
 single function and its schema. Add the schema to `allToolSchemas` in
-`src/tool-schemas.ts` (the list `src/index.ts` advertises and the
-packaging drift test checks), add the call dispatch to `src/index.ts`,
-and add the tool name to `manifest.json`'s `tools` array.
+`src/tool-schemas.ts` (the list the server advertises and the
+packaging drift test checks), add the call dispatch to `src/server.ts`,
+and add the tool name to `manifest.json`'s `tools` array. Dispatch lives in
+`src/server.ts` (`createServer(principal)`); `src/index.ts` is the shipped stdio
+entrypoint binding `LOCAL`, `src/http.ts` the prototype's Streamable HTTP one binding each
+request's `Authorization: Bearer` (never `LOCAL`) and a `PgS3ProjectStore` from its
+`X-Genealogy-Project-Id` header (claim-fenced and owner-checked, U6/U4), and a new tool's arm goes in
+`server.ts`, never in an entrypoint. A new tool also needs a row in
+`dev/smoke-calls.ts`: `make engine-smoke-http` fails on an advertised tool it
+neither calls nor lists as an exclusion.
 
 Use generic tool names with provider parameters when scaling, not
 one tool per provider. For example, when we add real APIs, use
@@ -603,6 +677,37 @@ fires and watch it fail. A check that cannot fail reads as coverage and is worse
 than no check at all. The three ways one silently passes here: a grep whose
 pattern excludes its own tree, a `git grep` that skips untracked files, and a
 field-name match that collides with an unrelated key.
+
+**One break is not a proof.** Those three are about the check's *reach*. The
+other way through is the *shape of the input at the site*: unquoted, commented
+out, wrapped in another call, a stringified argument, a `null`, an empty list, a
+missing token, a value that parses to `NaN`. Break it two or three ways, not one.
+Both real: an argument parsing to `NaN`, and a typo'd `--only` matching nothing —
+each made the tool **exit 0 having done nothing**, past a guard added beside it.
+
+**Prove the other direction too.** A guard fails two ways — wrongly blocking
+legitimate work, and wrongly passing the bad thing. Breaking the repo tests only
+the second. Show a legitimate variant the check still accepts (a reflowed line, a
+renamed local, a valid alternate spelling), or you have built something that will
+be `skip`ped within a month. Replaying a check over committed runs tests the
+*first* direction only and cannot test the second at all, because in a replay the
+check is its own ground truth — `eval/harness/e2e/guardrail_shadow_report.py`.
+
+When the bug is the **second** instance of a class already fixed, write one
+shared guard, not a second one-off — the `encoding="utf-8"` AST lint replaced
+per-line greps for exactly this reason.
+
+Prove the guard **emits** on a planted defect, not just that it exits non-zero — a log-line-only guard and a broken guard both produce the same empty output (lead, 2026-09-25).
+
+### A ruling binds only while its premises hold
+
+A ruling (a `**Ruling:**` comment, a `Decided (lead, …)` line, "lead ruling <date>"
+in a doc) is a call made on the facts shown at the time, often answered in one line.
+It is not a rule. When a fact it rested on turns out wrong, or new information bears on
+it, it stops binding: say what changed, and then either decide on the current facts
+(if the call is yours) or put it back to whoever ruled. Never enforce a ruling against
+the evidence, and never cite one as the reason something cannot change. Credit a ruling
+to the person who actually answered; `(lead, …)` means Dallan answered it himself.
 
 ### A measurement that disagrees with belief is re-measured, not reworded
 
@@ -667,14 +772,37 @@ module instead.
 
 Where to look first:
 
-- **`src/auth/`** — `getValidToken()` is the only correct way to
+- **`src/auth/`** — `getValidToken(principal)` is the only correct way to
   read a FamilySearch access token. Don't re-implement token
   loading, expiry checks, or refresh. The same applies to anything
   else here (PKCE, config loading, token storage).
-- **`src/auth/config.ts`** — `loadConfig()` / `getClientId()` is
+- **`src/auth/config.ts`** — `loadConfig(principal)` / `getClientId()` is
   the single source for app config. New provider keys go on
   `AppConfig` in `src/types/auth.ts`, not into env vars or
   ad-hoc files.
+- **`src/store/`** — `ProjectStore` is the only way to read or write project
+  state (`research.json`, `tree.gedcomx.json`, `results/`, `images/`). Tools
+  reach it through `src/utils/project-io.ts` (`readProjectJson`,
+  `atomicWriteJson(projectPath, ref, obj)`, `withProjectLock`),
+  `results-staging.ts` and `image-store.ts`, or call `getProjectStore()` for a
+  raw read; refs are project-relative, never absolute paths. The desktop and
+  both harnesses run `FsProjectStore`; a hosted deployment installs another
+  backend with `setProjectStore()` and no tool changes. A shared server binds a
+  store per request instead, with `runWithProjectStore` (`src/http.ts`), and
+  installs `unboundProjectStore` as the process store so nothing falls through
+  to the file backend. **No module outside
+  `src/store/` imports `fs`** except auth (per-user files) and the bundled-data
+  reader — enforced by `tests/packaging/no-fs-outside-store.test.ts`, which
+  also fails when an exemption stops being needed. A second backend runs
+  `tests/store/conformance.ts`. That second backend is `PgS3ProjectStore`
+  (`pg-s3-project-store.ts`) — constructor-scoped to one project, documents in
+  Postgres jsonb, blobs and staged results in S3 with a Postgres index; its
+  dependencies (`pg`, `@aws-sdk/client-s3`, `@smithy/node-http-handler`) are
+  `optionalDependencies` omitted from the `.mcpb`, and `make proto-store-test`
+  runs its conformance against the compose stack. `make engine-test-pg` (CI:
+  `vitest-pg`) runs the whole engine suite on it; a new test that asserts
+  file-system behaviour with no Postgres meaning calls `fileStoreOnly(reason)`
+  (`tests/helpers/store-backend.ts`) rather than skipping.
 - **`src/types/`** — shared API response and tool I/O types live
   here. If a second tool touches the same upstream API, put the
   response shape here so both stay in sync.
@@ -685,21 +813,39 @@ Where to look first:
   examples). Import this constant instead of hardcoding the
   string — `collections_search`, `record_search`, `external_links_search`,
   `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
-- **`src/utils/http.ts`** — `fetchWithTimeout()` is the only correct way to call
-  an external service. Node's global `fetch` never times out on its own; a
-  stalled upstream connection (FamilySearch/Imperva, the wiki-query-api
-  sidecar, OpenRouter) hangs the call forever otherwise. Every tool that touches
-  the network calls this instead of the global `fetch` directly; it is the
-  only file allowed to (enforced by `tests/packaging/no-bare-fetch.test.ts`).
+- **`src/utils/http.ts`** — `fetchWithRetry()` is the standard way to call an
+  external service. It wraps `fetchWithTimeout()` with automatic retry of
+  transient failures (429, 5xx, network errors, timeouts) under a 10s budget
+  cap with exponential backoff + jitter. On exhaustion it returns the last
+  Response so the caller's existing `!response.ok` error path is preserved.
+  Use `fetchWithRetry` for new call sites; `fetchWithTimeout` is still
+  exported for the handful of excluded sites that manage their own retry or
+  carry timeouts too long for the budget (`image_transcribe` 180s,
+  `fs-image-fetch` 90s, `match-engine`). Node's global `fetch`
+  never times out on its own; a stalled upstream connection
+  (FamilySearch/Imperva, the wiki-query-api sidecar, OpenRouter) hangs the
+  call forever otherwise. This file is the only one allowed to call the global
+  `fetch` directly (enforced by `tests/packaging/no-bare-fetch.test.ts`).
   Default timeout 30s; pass a longer one as the third argument (180s for
   `image_transcribe`'s OCR call, 90s for `fs-image-fetch.ts`'s multi-MB scan,
-  60s for `wiki_search`, `collections_search` and `wikipedia_search`). Size a
+  60s for `wiki_search` and `collections_search`; `wikipedia_search`'s three
+  requests share one 55s deadline, under the Cowork bridge's 60s abort). Size a
   raise from the measured e2e corpus, not by guessing — the worked method is in
   `docs/specs/image-transcribe-tool-spec.md`. The
   budget covers headers **and** body — size it for the whole transfer, not the
   round-trip to first byte. A body still streaming when the clock fires is
   aborted mid-read, and the wrapper turns that into the same readable error,
   so call sites never handle it themselves.
+- **`src/utils/fs-fetch.ts`** — `fsFetch()` and `fsFetchWithTimeout()` are the
+  standard way to call an authenticated FamilySearch endpoint. They call
+  `getValidToken(principal)` internally, set `Authorization: Bearer`, and
+  delegate to `fetchWithRetry` / `fetchWithTimeout` respectively. On a 401
+  under `LOCAL`, they re-read `tokens.json` once and retry if the token
+  changed (the control plane may have pushed a fresh one). They never refresh
+  on a 401. Use `fsFetch` for most FS endpoints; `fsFetchWithTimeout` for
+  `match-engine.ts` and `fs-image-fetch.ts` which manage their own retry.
+  Non-FS services (wiki, Pop Stats, OpenRouter) keep using `fetchWithRetry` /
+  `fetchWithTimeout` directly.
 - **`src/utils/place-resolver.ts`** — the shared resolver between a
   `standardPlace` name and FamilySearch IDs: `resolveStandardPlace`,
   `standardPlaceToRepId`, `repIdToStandardPlace`, `standardPlaceToPlaceId`
@@ -770,8 +916,10 @@ templates directly:
 - **A new MCP tool** — copy `src/tools/wikipedia.ts` and its sibling four files.
   The full site list is in `DEVELOPMENT.md` → "How to add a new feature" and
   `docs/architecture.md` → "The engine's three-way decomposition".
-- **A new skill** — copy `packages/engine/plugin/skills/search-wikipedia/`, and
-  keep its rule: **no network in skill `scripts/`.**
+- **A new capability** — under the lead's 2026-09-22 ruling a new capability is
+  an **agent**, not a skill: copy `packages/engine/plugin/agents/search-images.md`.
+  If you are editing one of the skills that remain, keep their rule: **no
+  network in skill `scripts/`.**
 - **Checking an implementation against its spec** — read it against
   `docs/specs/<tool>-tool-spec.md` yourself, or ask a general-purpose subagent
   to, quoting both sides. The spec is the source of truth.
@@ -799,11 +947,15 @@ reviews on the PR.
   directories at runtime. Build-time references via the build scripts
   are fine, runtime references are not.
 
-## Working reference skill
+## Working reference agent
 
-The `search-wikipedia` skill in `packages/engine/plugin/` is the canonical minimal
-example of the full plugin pipeline — it calls the `wikipedia_search`
-MCP tool, populates a markdown template, and saves the result to a
-file. Copy this structure when wiring a new skill to one of the other
-tools. Don't mutate `search-wikipedia` itself; create a new skill
-folder.
+`packages/engine/plugin/agents/search-images.md` is the reference to copy when
+wiring a new agent to one of the other tools. It shows every part an agent
+needs: the invocation contract, a routing section that hands work back by name
+rather than spawning it, the three tool spellings, and the `summary_for_user`
+return contract. Don't mutate `search-images` itself; create a new agent file.
+
+Do **not** copy `search-wikipedia.md`, though it is smaller. It is exempt from
+the return contract (on the PENDING list in
+`tests/packaging/agent-return-contract.test.ts`), so an agent copied from it
+fails that test.

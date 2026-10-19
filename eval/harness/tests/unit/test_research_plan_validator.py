@@ -1,19 +1,24 @@
-"""Proof-of-failure tests for the research-plan deterministic validators
-(issue #1866, deep dive #1650).
+"""Direct tests for research-plan's deterministic validators.
 
-Nothing in CI checks that a gating validator can fail (the run-log gate only
-runs the validators, it never mutates a run to red one), so each check here is
-exercised against a state that must PASS and the state that must FIRE —
-CLAUDE.md, "a new lint must be proven to fail".
+Same reason as `test_init_project_validator.py`: `pyproject.toml` sets
+`testpaths = ["tests"]`, so nothing under `validators/` is collected by
+`make harness-test`, and its real pass/fail set would otherwise appear only
+inside a paid per-skill run.
 
-The validators are pytest functions named `test_*` so the harness collects
-them; imported here they would be collected a second time as tests of this
-module, so they are aliased away from the `test_` prefix (the #1762 pattern).
-Shapes are reduced from `v1_2026-08-17_17-52-29`, the run the issue cites.
+Two independent sets of proof-of-failure tests live here:
+
+- The already-attached-FAN-facts validator (issue #1948) further down,
+  aliased as `check`.
+- The proof-of-failure tests for the run-on-every-test deterministic checks
+  (issue #1866, deep dive #1650) below, aliased away from the `test_` prefix
+  (the #1762 pattern) since the validators are themselves pytest functions
+  named `test_*` and would otherwise be collected a second time here. Shapes
+  are reduced from `v1_2026-08-17_17-52-29`, the run the issue cites.
 """
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -28,6 +33,8 @@ from test_research_plan import (  # noqa: E402
     test_research_plan_fallback_for_in_same_plan as check_v3,
     test_research_plan_no_out_of_lane_tools as check_v2,
     test_research_plan_rationale_identifiers_traceable as check_v1,
+    test_research_plan_reads_question_person_profile as check_profile,
+    report_survey_surfaces_already_attached_fan_facts as check,
 )
 
 QUAL = "mcp__genealogy__"
@@ -257,6 +264,34 @@ def test_v1_grounds_served_hyphenated_range():
     check_v1(before, after, served)
 
 
+def test_v1_grounds_served_url_path_identifier():
+    """A collection id served inside a URL path is grounded.
+
+    `external_links_search` is in _TRACEABLE_ID_TOOLS because it returns
+    collection ids, but it returns them ONLY as URL path segments, and the
+    grounding lookbehind refused any digit run preceded by '/'. So every id
+    that tool served was invisible to the grounded set and a correct citation
+    read as a fabrication: 22 of the 40 ids its 16 fixtures serve were
+    ungroundable. Observed on ut_research_plan_r3d in
+    v1_2026-09-01_07-35-31, which cited Ancestry collection 61749 after
+    external_links_search served it. Reds without the fix."""
+    served = [_call("external_links_search", {
+        "query": {"standardPlace": "Kongsberg, Buskerud, Norway"},
+        "totalForPlace": 1,
+        "returned": 1,
+        "results": [
+            {
+                "url": "https://www.ancestry.com/search/collections/61749/",
+                "linkText": "1801 Norway Census",
+            }
+        ],
+    })]
+    before, after = _states([
+        _item("pli_006", rationale="Also available on Ancestry (col 61749)."),
+    ])
+    check_v1(before, after, served)
+
+
 # --- V5 -------------------------------------------------------------------
 
 def test_v5_fires_on_indexed_claim_against_zero_count():
@@ -286,3 +321,1105 @@ def test_v5_skips_multi_collection_sentence():
         _item("pli_010", rationale="Collection 1999196 is indexed and 1921317 is browse-only.")
     ])
     check_v5(before, after, _SERVED)  # no fire despite both adjectives being wrong
+
+
+# A browse/unindexed adjective on a non-collection noun is about that volume,
+# not the sentence's one collection id. Recorded false positive:
+# ut_research_plan_016, v1_2026-09-01_17-38-18 (issue #2110), verbatim below;
+# 1804888 is served indexed in collections-search-kentucky.json.
+_SERVED_KY = [_call("collections_search", _collections([
+    {"id": "1804888", "title": "Kentucky, Deaths and Burials", "personCount": 421870},
+]))]
+_UT016_PLI007 = (
+    "Paid fallback if FamilySearch collection 1804888 (item 2) and the browse-only "
+    "volume (item 3) both return nothing for the pre-1911 period."
+)
+
+
+# ut_research_plan_007, v3_2026-10-07_16-40-45, pli_014, verbatim: an article
+# before the adjective ("not a name-indexed search") used up the one optional
+# word, so the negation was missed and a correct browse claim failed the run.
+_UT007_PLI014 = (
+    "Pennsylvania Probate Records, 1683-1994 (collection 1999196) returned "
+    "personCount 0 at collections_search, confirming this is an image browse of "
+    "Schuylkill County Register of Wills volumes — not a name-indexed search."
+)
+
+
+def test_v5_reads_not_a_name_indexed_as_a_browse_claim():
+    before, after = _states([_item("pli_014", rationale=_UT007_PLI014)])
+    check_v5(before, after, _SERVED)
+
+
+@pytest.mark.parametrize("phrase", [
+    "not an indexed search", "not the indexed index", "not a record-indexed search",
+])
+def test_v5_accepts_negation_with_an_article(phrase):
+    before, after = _states([_item("pli_014", rationale=f"Collection 1999196 is {phrase}.")])
+    check_v5(before, after, _SERVED)
+
+
+@pytest.mark.parametrize("phrase", [
+    "a name-indexed search",              # no negation at all
+    "not a fully indexed collection",     # partial indexing claim, needs personCount > 0
+    "indexed, not a browse",              # negation attached to "browse", not to "indexed"
+])
+def test_v5_still_fires_on_an_indexed_claim_against_zero(phrase):
+    before, after = _states([_item("pli_014", rationale=f"Collection 1999196 is {phrase}.")])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+# SKILL.md's prescribed phrases (issue #2251): each must be read as the claim it
+# makes, so the guard still binds once the skill stops writing "indexed".
+def test_v5_accepts_the_prescribed_phrases_when_they_match():
+    before, after = _states([
+        _item("pli_010", rationale="Collection 1999196 is browse-only (personCount 0)."),
+        _item("pli_011", rationale="Collection 1921317 is name-searchable (personCount 50000)."),
+    ])
+    check_v5(before, after, _SERVED)
+
+
+def test_v5_fires_on_name_searchable_against_zero():
+    before, after = _states([
+        _item("pli_010", rationale="Collection 1999196 is name-searchable (personCount 0).")
+    ])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_reads_not_name_searchable_as_a_browse_claim():
+    before, after = _states([
+        _item("pli_010", rationale="Collection 1999196 is not name-searchable; browse the images.")
+    ])
+    check_v5(before, after, _SERVED)
+
+
+# ut_research_plan_002, v5_2026-10-08_00-17-25, pli_011, verbatim: a real slip,
+# "indexed" used as part of the collection's description. Must keep firing.
+def test_v5_fires_on_the_ut002_indexed_collection_slip():
+    rationale = (
+        "The Pennsylvania Probate Records indexed collection (1999196) returned "
+        "personCount 0 — this is a browse of image group 007936749 (Schuylkill "
+        "County Probate Records, 1851–1930, 412 images, 0% indexed)."
+    )
+    before, after = _states([_item("pli_011", rationale=rationale)])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_ignores_browse_only_on_a_volume():
+    before, after = _states([_item("pli_007", rationale=_UT016_PLI007)])
+    check_v5(before, after, _SERVED_KY)
+
+
+def test_v5_ignores_unindexed_on_a_volume():
+    rationale = _UT016_PLI007.replace("browse-only volume", "unindexed volume")
+    before, after = _states([_item("pli_007", rationale=rationale)])
+    check_v5(before, after, _SERVED_KY)
+
+
+@pytest.mark.parametrize("phrase", ["image-only film", "browse only register", "not indexed image groups"])
+def test_v5_ignores_adjective_variants_on_a_non_collection_noun(phrase):
+    before, after = _states([_item("pli_007", rationale=(
+        f"Fallback if collection 1804888 and the {phrase} both return nothing."
+    ))])
+    check_v5(before, after, _SERVED_KY)
+
+
+def test_v5_still_fires_on_browse_claim_about_the_collection_itself():
+    # "images" is not a non-collection noun: the collection's own images are
+    # still a claim about the collection.
+    before, after = _states([_item("pli_010", rationale="Collection 1921317 has browse-only images.")])
+    with pytest.raises(AssertionError, match="1921317"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_still_fires_on_indexed_collection_beside_a_browsed_volume():
+    before, after = _states([_item("pli_010", rationale=(
+        "Search the indexed collection 1999196 before browsing volume 007936749."
+    ))])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_fires_on_indexed_collection_beside_a_browse_only_volume():
+    # Before the volume skip, the two adjectives cancelled and the sentence was
+    # skipped as self-contradicting; the volume's adjective no longer masks the
+    # collection's claim.
+    before, after = _states([_item("pli_010", rationale=(
+        "Search the indexed collection 1999196 first, then the browse-only volume 007936749."
+    ))])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+# Verbatim 1999196 rationales from v1_2026-09-17_15-04-52: the two real
+# catches must survive the volume skip, and the volume-shaped third must keep
+# its old verdict.
+_UT007_PLI006 = (
+    "Thomas Flynn (born ~1818 Ireland) was head of household in Schuylkill County in "
+    "both 1850 and 1860. His plausible death window is 1865–1920. A will or "
+    "administration naming Patrick as a son or heir would be direct evidence of "
+    "parentage from a primary source. The locality guide confirms probate records "
+    "have been held by the county Register of Wills since 1811; the FamilySearch "
+    "indexed collection 1999196 (Pennsylvania Probate Records, 1683–1994) covers "
+    "this jurisdiction and period. Search under Flynn, Flin, and Flinn. Date range set "
+    "to Thomas's plausible lifespan (born ~1818), not Patrick's research window."
+)
+_UT010_PLI007 = (
+    "Carry-forward of pli_006 (superseded pl_002) with corrected date range. New "
+    "evidence places Thomas Flynn's death circa 1865, not 1875-1890. A will or estate "
+    "file naming Patrick as a son would be direct parentage evidence. FamilySearch "
+    "collection 'Pennsylvania, Probate Records, 1683-1994' (id: 1999196) is indexed "
+    "and covers this window. Search under Flynn and variant Flinn."
+)
+_UT007_PLI007 = (
+    "Fallback for pli_006 (indexed probate collection). The locality guide flags that "
+    "some Schuylkill County records exist only as browse-only image groups. Volume "
+    "007936749 (Probate Records, 1851–1930) is 0% record-searchable and not indexed "
+    "— browse image-by-image if the indexed collection 1999196 does not return "
+    "Thomas Flynn. Check variant spellings Flynn / Flin / Flinn in margin entries."
+)
+
+
+@pytest.mark.parametrize("rationale", [_UT007_PLI006, _UT010_PLI007], ids=["ut007_pli006", "ut010_pli007"])
+def test_v5_still_fires_on_recorded_indexed_claims(rationale):
+    before, after = _states([_item("pli_006", rationale=rationale)])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_keeps_verdict_on_recorded_volume_fallback():
+    before, after = _states([_item("pli_007", rationale=_UT007_PLI007)])
+    check_v5(before, after, _SERVED)
+
+
+# A coverage percentage is not an availability claim. Recorded false positive:
+# ut_research_plan_007 run 0, scratch run 2026-09-24 (issue #2685), verbatim.
+_UT007_RUN0_PLI006 = (
+    "Thomas Flynn (I2) has no sources attached; his death is unlocated but bracketed "
+    "by the 1860 census (alive) and Patrick's 1908 death certificate (names him as "
+    "father). A will or estate administration listing heirs would directly document "
+    "the father-son relationship and — if Thomas's wife survived him — supply her "
+    "name (still unknown). The Pennsylvania Probate Records collection (1999196) "
+    "returned personCount 0, so this is a browse of image group 007936749 (Schuylkill "
+    "County Probate Records, 1851–1930, 412 images, 0% indexed). Date range is sized "
+    "to Thomas's plausible death window, not Patrick's research window. Search "
+    "variants: Flynn, Flinn."
+)
+
+
+_DK_SERVED = [_call("collections_search", _collections([
+    {"id": "2513529", "title": "Denmark, Military Levying Rolls", "personCount": 200408},
+]))]
+
+
+def test_v5_ignores_browse_only_in_brackets_after_an_image_group():
+    """ut_research_plan_015, 2026-10-13, pli_009: the bracket describes the
+    image group, not collection 2513529."""
+    before, after = _states([_item("pli_009", rationale=(
+        "Image group 004748896 (Thisted Amt military levy rolls, 1789-1814, "
+        "browse-only (personCount 0)) provides the raw roll images if the name "
+        "search in collection 2513529 (item 3) fails to surface Mikkel."
+    ))])
+    check_v5(before, after, _DK_SERVED)
+
+
+def test_v5_still_fires_on_browse_only_in_the_collections_own_bracket():
+    before, after = _states([_item("pli_009", rationale=(
+        "Collection 2513529 (browse-only) and image group 004748896 "
+        "(1789-1814) hold the levy rolls."
+    ))])
+    with pytest.raises(AssertionError, match="2513529"):
+        check_v5(before, after, _DK_SERVED)
+
+
+_DK_PROBATE_SERVED = [_call("collections_search", _collections([
+    {"id": "2015318", "title": "Denmark, Probate Indexes, 1674-1851", "personCount": 1310442},
+]))]
+
+
+def test_v5_ignores_browse_only_bound_to_a_later_volume():
+    """ut_research_plan_015, 2026-10-14, pli_008, verbatim: "browse-only"
+    describes volume 004392710, not the collection cited before it."""
+    before, after = _states([_item("pli_008", rationale=(
+        "If the probate index (pli_007, collection 2015318) does not return an "
+        "entry for Niels of Blyeberg, or if the index entry is not linked to "
+        "images, browse volume 004392710, which covers Hassing Herred probate "
+        "records 1690-1850 and is browse-only (personCount 0)."
+    ))])
+    check_v5(before, after, _DK_PROBATE_SERVED)
+
+
+def test_v5_ignores_not_indexed_bound_to_a_volume():
+    before, after = _states([_item("pli_008", rationale=(
+        "Volume 004392710 is not indexed, but collection 2015318 is indexed."
+    ))])
+    check_v5(before, after, _DK_PROBATE_SERVED)
+
+
+def test_v5_still_fires_on_browse_only_bound_to_the_collection_before_a_volume():
+    before, after = _states([_item("pli_008", rationale=(
+        "Collection 2015318 is browse-only, unlike volume 004392710."
+    ))])
+    with pytest.raises(AssertionError, match="2015318"):
+        check_v5(before, after, _DK_PROBATE_SERVED)
+
+def test_v5_ignores_a_coverage_percentage():
+    before, after = _states([_item("pli_006", rationale=_UT007_RUN0_PLI006)])
+    check_v5(before, after, _SERVED)
+
+
+@pytest.mark.parametrize("phrase", ["4% name-indexed", "0 % record-searchable", "12.5%indexed"])
+def test_v5_ignores_coverage_percentage_variants(phrase):
+    before, after = _states([_item("pli_006", rationale=f"Collection 1999196 is only {phrase}.")])
+    check_v5(before, after, _SERVED)
+
+
+def test_v5_still_fires_on_indexed_claim_beside_an_unrelated_percentage():
+    # The strip removes only "N% indexed"; a percentage elsewhere in the sentence
+    # must not shield a real indexed claim.
+    before, after = _states([_item("pli_006", rationale=(
+        "The indexed collection 1999196 covers 40% of counties."
+    ))])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_still_fires_on_indexed_claim_after_a_percentage():
+    before, after = _states([_item("pli_006", rationale=(
+        "Volume 007936749 is 0% indexed, but collection 1999196 is fully indexed."
+    ))])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+# ut_research_plan_002, v1_2026-09-24_19-25-44, pli_012 verbatim (trimmed).
+_UT002_V4_PLI012 = (
+    "Pennsylvania Probate Records (collection 1999196) returned personCount 0 "
+    "→ no indexed name search is possible; this is an image browse. "
+    "Volume 007936749 (Schuylkill County Probate Records 1851–1930, 412 images, "
+    "0% record-searchable) must be paged through manually."
+)
+
+
+def test_v5_ignores_no_indexed_name_search_phrase():
+    # "no indexed name search is possible" negates the indexed claim — do not
+    # fire even though _INDEXED_RE would match "indexed" in the sentence.
+    before, after = _states([_item("pli_012", rationale=_UT002_V4_PLI012)])
+    check_v5(before, after, _SERVED)
+
+
+# ut_research_plan_q7m, v1_2026-09-25_08-29-32, pli_003 verbatim (trimmed).
+_UT_Q7M_V6_PLI003 = (
+    "collections_search returned 'Pennsylvania, Probate Records, 1683–1994' "
+    "(collection 1999196, personCount 0) → images only, not name-indexed. "
+    "volume_search returned image group 007936749 (Probate Records, Schuylkill "
+    "County, 1851–1930, 0% record-searchable). Browse image-by-image for "
+    "John Doyle's will or letters of administration."
+)
+
+
+def test_v5_ignores_not_name_indexed_phrase():
+    # "not name-indexed" is an adjectival compound that negates the indexed
+    # claim just like "not indexed" — do not fire.
+    before, after = _states([_item("pli_003", rationale=_UT_Q7M_V6_PLI003)])
+    check_v5(before, after, _SERVED)
+
+
+# ut_research_plan_015, v1_2026-09-25_09-24-00, pli_003 verbatim (trimmed).
+# Collection 2513529 has personCount 200408 — it IS indexed nationally, but the
+# specific volume for this jurisdiction is unindexed (recordSearchablePercent:0).
+_UT_015_V7_PLI003 = (
+    "The national collection 2513529 (Denmark, Military Levying Rolls, 1789–1861, "
+    "personCount 200K) is indexed at collection level, but volume_search shows image "
+    "group 004748896 (Vestervig/Thisted Amt districts, 1789–1814, 1,204 images, "
+    "recordSearchablePercent: 0) is entirely unindexed for this jurisdiction — "
+    "browse the images rather than searching by name."
+)
+_SERVED_DK = [_call("collections_search", _collections([
+    {"id": "2513529", "title": "Denmark, Military Levying Rolls, 1789-1861", "personCount": 200408},
+]))]
+
+
+def test_v5_ignores_unindexed_for_this_jurisdiction():
+    # "unindexed for this jurisdiction" qualifies the local volume, not the
+    # national collection. The collection IS indexed (personCount 200K), so V5
+    # must not fire.
+    before, after = _states([_item("pli_003", rationale=_UT_015_V7_PLI003)])
+    check_v5(before, after, _SERVED_DK)
+
+
+def test_v5_ignores_not_fully_indexed():
+    # "not fully indexed" is a partial-indexing claim — the collection has some
+    # searchable records (personCount > 0). _UNINDEXED_RE must not match "fully"
+    # as the optional adjective between "not" and "indexed".
+    rationale = (
+        "Collection 2513529 (1880 US Census) is not fully indexed — "
+        "search by name returns personCount 200408 results."
+    )
+    before, after = _states([_item("pli_001", rationale=rationale)])
+    check_v5(before, after, _SERVED_DK)
+
+
+# ===========================================================================
+# Already-attached-FAN-facts validator (issue #1948)
+# ===========================================================================
+
+TAGGED = {"tags": ["already-attached"]}
+UNTAGGED = {"tags": ["planning"]}
+
+RESEARCH = {"project": {"subject_person_ids": ["I1"]}}
+
+TREE = {
+    "persons": [
+        {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
+        {
+            "id": "I2",
+            "names": [{"given": "Patrick", "surname": "Sheahan"}],
+            "facts": [
+                {
+                    "type": "Residence",
+                    "date": "1875",
+                    "place": "Schuylkill County, Pennsylvania",
+                    "value": "Purchased land, Deed Book 42 p. 118",
+                    "sources": [{"ref": "S1", "quality": 3}],
+                }
+            ],
+        },
+        {
+            "id": "I3",
+            "names": [{"given": "", "surname": "Sheahan"}],
+        },
+    ]
+}
+
+BEFORE_STATE = {"research_json": RESEARCH, "tree_gedcomx_json": TREE}
+
+# TREE with the fact->source ref deleted and nothing else changed: the shape a
+# real FamilySearch import produces. Simplified GedcomX has no person-level
+# source field, so the only source<->person link is a fact-level `sources` ref,
+# and real imports do not write them -- 3 of 136 e2e starting trees carry any
+# (55 of 4,182 facts) against 62 of 99 hand-authored scenarios (issue #2208,
+# measured 2026-09-22). Every fixture above carries the ref, so before this one
+# no test told the source-ref-gated version of the check apart from the current
+# one: reverting the widening left the whole suite green.
+TREE_NO_SOURCE_REF = {
+    "persons": [
+        {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
+        {
+            "id": "I2",
+            "names": [{"given": "Patrick", "surname": "Sheahan"}],
+            "facts": [
+                {
+                    "type": "Residence",
+                    "date": "1875",
+                    "place": "Schuylkill County, Pennsylvania",
+                    "value": "Purchased land, Deed Book 42 p. 118",
+                }
+            ],
+        },
+        {
+            "id": "I3",
+            "names": [{"given": "", "surname": "Sheahan"}],
+        },
+    ]
+}
+
+BEFORE_STATE_NO_SOURCE_REF = {
+    "research_json": RESEARCH,
+    "tree_gedcomx_json": TREE_NO_SOURCE_REF,
+}
+
+
+def test_fires_on_production_shape_when_fact_never_surfaced():
+    """The mutation guard for issue #2208's widening. With the fact->source
+    ref gone, the pre-change check skipped this person entirely and passed
+    silently -- the blind spot, on the shape 133 of 136 real trees have.
+    Reverting `sourced_facts` to the source-ref-filtered comprehension must
+    turn this test red."""
+    response = (
+        "Here is the plan for Michael Sheahan's move to Schuylkill County: "
+        "1880 census, 1900 census, church records, naturalization."
+    )
+    with pytest.raises(AssertionError, match="I2"):
+        check(BEFORE_STATE_NO_SOURCE_REF, response, TAGGED)
+
+
+def test_passes_on_production_shape_when_content_present():
+    """The other direction: the widening must not fail a response that does
+    state the fact's content, or it would red every honest plan on a
+    production-shaped tree."""
+    response = (
+        "Patrick Sheahan (I2) purchased land in Schuylkill County in 1875 "
+        "(Deed Book 42, p. 118) -- seven years before Michael's own "
+        "documented arrival. Plan: 1880 census, 1900 census, church records."
+    )
+    check(BEFORE_STATE_NO_SOURCE_REF, response, TAGGED)  # does not raise
+
+
+def test_fires_when_fact_never_surfaced():
+    """Proves the check actually fails: a response that never mentions
+    Patrick's already-sourced 1875 fact must raise."""
+    response = (
+        "Here is the plan for Michael Sheahan's move to Schuylkill County: "
+        "1880 census, 1900 census, church records, naturalization."
+    )
+    with pytest.raises(AssertionError, match="I2"):
+        check(BEFORE_STATE, response, TAGGED)
+
+
+def test_passes_when_name_date_and_value_content_present():
+    """The intended pass case: the response names Patrick, his 1875 date,
+    and restates a fragment of the fact's own content (a deed book)."""
+    response = (
+        "Patrick Sheahan (I2) already has a sourced 1875 deed book entry "
+        "for land in Schuylkill County -- seven years before Michael's own "
+        "documented arrival. Plan: 1880 census, 1900 census, church records."
+    )
+    check(BEFORE_STATE, response, TAGGED)  # does not raise
+
+
+def test_passes_when_citation_sits_in_its_own_paragraph():
+    """Proves the same-paragraph scoping removed during PR #2004 review
+    (clack391) was a false-negative source, not a precision gain: this
+    ordinary, correctly-written response cites the fact's content in a
+    paragraph separate from the person's name, and would have wrongly
+    failed under the old same-paragraph rule. Now that the check looks at
+    the whole response, it correctly passes."""
+    response = (
+        "**Already attached (surveyed before planning)**\n\n"
+        "Patrick Sheahan (I2)\n\n"
+        "Source S1 records a land purchase in Schuylkill County dated 1875 "
+        "(Deed Book 42, p. 118)."
+    )
+    check(BEFORE_STATE, response, TAGGED)  # does not raise
+
+
+def test_fires_when_new_search_proposed_using_the_same_year():
+    """Reproduces the exact false positive found in a committed run during
+    PR #2004 review (clack391): a FAN plan item's own search-window header
+    happens to reuse the fact's year ("Schuylkill County -- 1875-1905") in
+    the same paragraph as Patrick's name, while the response never restates
+    what the source actually records and instead proposes searching to
+    *discover* it ("if Patrick preceded Michael..."). Name+date proximity
+    alone cannot tell "citing a known fact" apart from "a new search that
+    happens to start near the same year" -- only the value-gram requirement
+    catches this, which is why a fact's `value` is required, not just its
+    date, whenever the fact has one."""
+    response = (
+        "### Item 8 -- FAN -- Patrick Sheahan (I2) records\n"
+        "Schuylkill County, PA -- 1875-1905\n"
+        "Patrick is already in the tree with source S1. If Patrick preceded "
+        "Michael in the county, that would support chain migration; search "
+        "his 1880/1900 census and church records to confirm."
+    )
+    with pytest.raises(AssertionError, match="I2"):
+        check(BEFORE_STATE, response, TAGGED)
+
+
+def test_fires_when_only_name_present_not_date():
+    """A bare mention of the person's name (e.g. planning a redundant new
+    search for them) does not count as surfacing the already-attached fact --
+    this is the exact failure mode issue #1948 reported. Also proves the
+    failure message accurately reports which condition is missing (PR #2004
+    review, EdmondOware): this scenario has the name present and the date
+    absent, so the message must not claim "neither" is present."""
+    response = (
+        "Plan includes a FAN item: search census records for Patrick Sheahan "
+        "(I2) to corroborate the family's origin and timing."
+    )
+    with pytest.raises(AssertionError) as exc_info:
+        check(BEFORE_STATE, response, TAGGED)
+    message = str(exc_info.value)
+    assert "I2" in message
+    assert "neither" not in message.lower()
+    assert "the person's given name appears" in message
+
+
+TREE_SHORT_NAME = {
+    "persons": [
+        {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
+        {
+            "id": "I2",
+            "names": [{"given": "Ann", "surname": "Sheahan"}],
+            "facts": [
+                {
+                    "type": "Residence",
+                    "date": "1868",
+                    "place": "Schuylkill County, Pennsylvania",
+                    "sources": [{"ref": "S1", "quality": 3}],
+                }
+            ],
+        },
+    ]
+}
+BEFORE_STATE_SHORT_NAME = {"research_json": RESEARCH, "tree_gedcomx_json": TREE_SHORT_NAME}
+
+
+def test_name_and_date_present_but_unrelated_still_fails():
+    """A coincidental date match alone must not pass: a real run's pre-plan
+    narration happened to say "the 1875-1900 window" (an unrelated
+    search-date range) before the plan ever mentioned Patrick, and Patrick's
+    own paragraph never restates the fact's content. This is caught by the
+    value-gram requirement, not by paragraph scoping (removed during PR
+    #2004 review, clack391: scoping to one paragraph was itself a
+    false-positive hole, not a precision gain -- see the validator's
+    docstring). The response below carries neither "purchased land" nor
+    "deed book" anywhere, which is what actually fails it here."""
+    response = (
+        "Discovering record collections for Schuylkill County in the "
+        "1875-1900 window.\n\n"
+        "Starting-point analysis: Michael Sheahan (I1) has zero attached "
+        "sources. Patrick Sheahan (I2) holds source S1 in tree.gedcomx.json "
+        "but no research.json source assertions."
+    )
+    with pytest.raises(AssertionError, match="I2"):
+        check(BEFORE_STATE, response, TAGGED)
+
+
+def test_short_name_substring_is_not_a_false_positive():
+    """A short given name ('Ann') must not be treated as present just
+    because it appears as a substring inside an unrelated word ('planning'
+    contains 'ann'). Proves the word-boundary fix (PR #2004 review,
+    EdmondOware): under the old plain-substring check this response would
+    have wrongly counted as surfacing Ann's fact and the check would have
+    passed silently even though nothing about Ann was actually said."""
+    response = (
+        "Plan for 1868 records: continue planning the census search and "
+        "church record review for the family."
+    )
+    with pytest.raises(AssertionError, match="I2"):
+        check(BEFORE_STATE_SHORT_NAME, response, TAGGED)
+
+
+def test_skipped_when_not_tagged():
+    """Untagged tests are not in scope -- must not raise even on a
+    response that would otherwise fail."""
+    response = "No mention of anyone."
+    with pytest.raises(pytest.skip.Exception):
+        check(BEFORE_STATE, response, UNTAGGED)
+
+
+def test_passes_vacuously_when_non_subject_persons_have_no_facts():
+    """A tree whose non-subject persons carry no facts at all has nothing
+    to check -- must pass vacuously (nothing in scope), not fail. Named for
+    what actually happens: the validator has no `pytest.skip()` branch for
+    this case, it just finds nothing to add to `missed` (PR #2004 review,
+    clack391 -- an earlier name/docstring here claimed a skip that the code
+    never performed).
+
+    Renamed for issue #2208: the old name said "no sourced fan facts",
+    which stopped describing this fixture once the check widened from
+    source-ref'd facts to all recorded facts. These persons have no facts,
+    which is why it still passes; a person with an UNSOURCED fact is now in
+    scope and is covered by
+    `test_fires_on_production_shape_when_fact_never_surfaced`."""
+    tree_no_facts = {
+        "persons": [
+            {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
+            {"id": "I2", "names": [{"given": "Patrick", "surname": "Sheahan"}]},
+        ]
+    }
+    before_state = {"research_json": RESEARCH, "tree_gedcomx_json": tree_no_facts}
+    response = "No mention of anyone."
+    check(before_state, response, TAGGED)  # does not raise (nothing in scope)
+
+
+TREE_NONSTANDARD_DATE = {
+    "persons": [
+        {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
+        {
+            "id": "I2",
+            "names": [{"given": "Patrick", "surname": "Sheahan"}],
+            "facts": [
+                {
+                    "type": "Residence",
+                    "date": "~1845",
+                    "standard_date": "Abt 1845",
+                    "place": "Schuylkill County, Pennsylvania",
+                    "sources": [{"ref": "S1", "quality": 3}],
+                }
+            ],
+        },
+    ]
+}
+BEFORE_STATE_NONSTANDARD_DATE = {
+    "research_json": RESEARCH,
+    "tree_gedcomx_json": TREE_NONSTANDARD_DATE,
+}
+
+
+def test_extracted_year_matches_non_bare_year_date_formats():
+    """The fact's date is `~1845` (approximate, not a bare year) -- of 113
+    sourced facts with a date across the scenario corpus, only 9 are bare
+    years (PR #2004 review, clack391's measurement). A literal `"~1845" in
+    response` check fails against a response that naturally writes "about
+    1845", so the check must extract and match the bare year too."""
+    response = "Patrick Sheahan (I2) was born about 1845 in County Cork, per source S1."
+    check(BEFORE_STATE_NONSTANDARD_DATE, response, TAGGED)  # does not raise
+
+
+TREE_NO_DATE_HAS_VALUE = {
+    "persons": [
+        {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
+        {
+            "id": "I2",
+            "names": [{"given": "Patrick", "surname": "Sheahan"}],
+            "facts": [
+                {
+                    "type": "Occupation",
+                    "value": "Coal miner, per 1880 census",
+                    "place": "Schuylkill County, Pennsylvania",
+                    "sources": [{"ref": "S1", "quality": 3}],
+                }
+            ],
+        },
+    ]
+}
+BEFORE_STATE_NO_DATE_HAS_VALUE = {
+    "research_json": RESEARCH,
+    "tree_gedcomx_json": TREE_NO_DATE_HAS_VALUE,
+}
+
+
+_PSHAPE_DIR = (
+    Path(__file__).resolve().parents[4] / "eval/fixtures/scenarios/first-plan-fan-production-shape"
+)
+
+
+def _pshape_state():
+    return {
+        "research_json": json.loads((_PSHAPE_DIR / "research.json").read_text(encoding="utf-8")),
+        "tree_gedcomx_json": json.loads((_PSHAPE_DIR / "tree.gedcomx.json").read_text(encoding="utf-8")),
+    }
+
+
+def test_person_level_source_needs_its_content_not_name_and_year():
+    """The committed production-shaped scenario: Patrick's deed is a person-level
+    attachment and his fact carries only 1875 and the place. Naming him with the
+    year is what the question's own framing already gives away -- it must fire."""
+    response = (
+        "Patrick Sheahan (I2), Michael's brother, was in Schuylkill County by 1875. "
+        "Plan: 1880 census, church records, naturalization."
+    )
+    with pytest.raises(AssertionError, match="I2"):
+        check(_pshape_state(), response, TAGGED)
+
+
+def test_person_level_source_passes_when_deed_content_stated():
+    response = (
+        "Patrick Sheahan (I2) bought land from James Kelly in 1875 (Deed Book 42, "
+        "p. 118, S2). Plan: 1880 census, church records, naturalization."
+    )
+    check(_pshape_state(), response, TAGGED)  # does not raise
+
+
+def test_direct_arm_grades_the_agents_own_return_not_the_relay():
+    """Issue #2116: on a direct test the main thread only relays the agent's
+    return, so the reporter reads `agent_returns`. The relay naming the deed
+    while the agent's own return does not must still fire, and the reverse must
+    pass."""
+    direct = {**TAGGED, "skill": "research-plan", "delegation": "Create the first research plan for q_001."}
+    with_deed = "Patrick Sheahan (I2) bought land from James Kelly in 1875 (Deed Book 42, p. 118, S2)."
+    without = "Patrick Sheahan (I2), Michael's brother, was in Schuylkill County by 1875."
+    returns = lambda text: [{"subagent_type": "research-plan", "text": text}]  # noqa: E731
+    with pytest.raises(AssertionError, match="I2"):
+        check(_pshape_state(), with_deed, direct, returns(without))
+    check(_pshape_state(), without, direct, returns(with_deed))  # does not raise
+
+
+def test_person_level_source_content_without_the_person_fires():
+    response = "A land purchase is recorded in Deed Book 42, p. 118. Plan: 1880 census, church records."
+    with pytest.raises(AssertionError, match="I2"):
+        check(_pshape_state(), response, TAGGED)
+
+def test_passes_on_value_content_alone_when_fact_has_no_date():
+    """`date` is optional in the schema (PR #2004 review, clack391): a
+    sourced fact with no date at all previously failed unconditionally no
+    matter what the response said. A fact with a `value` but no date must
+    still be satisfiable -- by the value content alone."""
+    response = "Patrick Sheahan (I2) is already documented as a coal miner in the tree."
+    check(BEFORE_STATE_NO_DATE_HAS_VALUE, response, TAGGED)  # does not raise
+
+
+def test_fires_when_dateless_fact_value_never_surfaced_on_production_shape():
+    """The red side of the no-date case, on a tree with no fact-level source
+    ref (issue #2208): a fact with a `value` and no date is still checked,
+    not skipped into a vacuous pass."""
+    person = TREE_NO_DATE_HAS_VALUE["persons"][1]
+    fact = {k: v for k, v in person["facts"][0].items() if k != "sources"}
+    tree = {"persons": [TREE_NO_DATE_HAS_VALUE["persons"][0], {**person, "facts": [fact]}]}
+    response = "Patrick Sheahan (I2) lived in Schuylkill County. Plan: church records, tax lists."
+    with pytest.raises(AssertionError, match="I2"):
+        check({"research_json": RESEARCH, "tree_gedcomx_json": tree}, response, TAGGED)
+
+
+TREE_NO_DATE_NO_VALUE = {
+    "persons": [
+        {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
+        {
+            "id": "I2",
+            "names": [{"given": "Patrick", "surname": "Sheahan"}],
+            "facts": [
+                {
+                    "type": "Residence",
+                    "place": "Schuylkill County, Pennsylvania",
+                    "sources": [{"ref": "S1", "quality": 3}],
+                }
+            ],
+        },
+    ]
+}
+BEFORE_STATE_NO_DATE_NO_VALUE = {
+    "research_json": RESEARCH,
+    "tree_gedcomx_json": TREE_NO_DATE_NO_VALUE,
+}
+
+
+def test_passes_vacuously_when_fact_has_neither_date_nor_value():
+    """A sourced fact with neither a date nor a value has no fact-specific
+    content to confirm was read -- it is out of scope, the same as a
+    person with no sourced facts at all, not an unconditional fail. Must
+    not raise even though the response never mentions Patrick."""
+    response = "No mention of anyone."
+    check(BEFORE_STATE_NO_DATE_NO_VALUE, response, TAGGED)  # does not raise
+
+
+# --- profile-reread (issue #2208, alpha report #3244) ----------------------
+
+_PROFILE_TEST = {"tags": ["profile-reread"]}
+_PROFILE_STATE = {
+    "research_json": {
+        "questions": [
+            {"id": "q_001", "status": "open", "question": "Who were the parents of Thomas Kerrigan (I2)?"}
+        ]
+    },
+    "tree_gedcomx_json": {
+        "persons": [
+            {"id": "I1", "ark": "ark:/61903/4:1:ZZKR-BR1",
+             "names": [{"preferred": True, "given": "Bridget", "surname": "Kerrigan"}]},
+            {"id": "I2", "ark": "ark:/61903/4:1:ZZKR-TH2",
+             "names": [{"preferred": True, "given": "Thomas", "surname": "Kerrigan"}]},
+        ]
+    },
+}
+
+
+def _read(pid, *, matched=True):
+    c = _call("person_read", {"persons": []} if matched else {"error": "fixture_not_found"},
+              {"personId": pid})
+    c["matched"] = {"kind": "predicate" if matched else "none", "index": 0 if matched else None}
+    return c
+
+
+_PLAN_OPS = [{"section": "plans", "op": "append", "entry": {"question_id": "q_001"}}]
+
+
+def _write(shape="list"):
+    if shape == "string":
+        return _call("research_append", None, {"ops": json.dumps(_PLAN_OPS)})
+    if shape == "single":
+        return _call("research_append", None, dict(_PLAN_OPS[0]))
+    return _call("research_append", None, {"ops": _PLAN_OPS})
+
+
+@pytest.mark.parametrize("shape", ["list", "string", "single"])
+def test_profile_passes_on_matched_read_before_plan_write(shape):
+    check_profile(_PROFILE_STATE, [_read("ZZKR-TH2"), _write(shape)], _PROFILE_TEST)
+
+
+def test_profile_passes_with_extra_subject_read():
+    check_profile(
+        _PROFILE_STATE, [_read("ZZKR-BR1"), _read("ZZKR-TH2"), _write()], _PROFILE_TEST
+    )
+
+
+def test_profile_fires_on_no_read():
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_call("collections_search"), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_on_unmatched_read():
+    # Every mock call reaches tool_calls; an unmatched one is told apart only by matched.kind.
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_read("ZZKR-TH2", matched=False), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_on_subject_read_only():
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_read("ZZKR-BR1"), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_on_read_after_plan_write():
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_write(), _read("ZZKR-TH2")], _PROFILE_TEST)
+
+
+def test_profile_fires_on_no_plan_write():
+    with pytest.raises(AssertionError, match="no research_append wrote plans"):
+        check_profile(
+            _PROFILE_STATE,
+            [_read("ZZKR-TH2"), _call("research_append", None, {"ops": [{"section": "log"}]})],
+            _PROFILE_TEST,
+        )
+
+
+def test_profile_skips_untagged():
+    with pytest.raises(pytest.skip.Exception):
+        check_profile(_PROFILE_STATE, [], {"tags": []})
+
+
+def test_profile_passes_on_read_before_and_after_plan_write():
+    check_profile(
+        _PROFILE_STATE, [_read("ZZKR-TH2"), _write(), _read("ZZKR-TH2")], _PROFILE_TEST
+    )
+
+
+def test_profile_refused_write_is_not_the_first_write():
+    refused = _write()
+    refused["response"] = {"ok": False, "errors": ["schema"]}
+    check_profile(_PROFILE_STATE, [refused, _read("ZZKR-TH2"), _write()], _PROFILE_TEST)
+
+
+def test_profile_closed_question_person_does_not_count():
+    state = {
+        **_PROFILE_STATE,
+        "research_json": {"questions": _PROFILE_STATE["research_json"]["questions"] + [
+            {"id": "q_000", "status": "resolved", "question": "When was Bridget Kerrigan born?"}
+        ]},
+    }
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(state, [_read("ZZKR-BR1"), _write()], _PROFILE_TEST)
+
+
+def test_profile_shared_given_name_without_surname_does_not_count():
+    tree = {"persons": _PROFILE_STATE["tree_gedcomx_json"]["persons"] + [
+        {"id": "I9", "ark": "ark:/61903/4:1:ZZOT-TH9",
+         "names": [{"preferred": True, "given": "Thomas", "surname": "Walsh"}]}
+    ]}
+    state = {**_PROFILE_STATE, "tree_gedcomx_json": tree}
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(state, [_read("ZZOT-TH9"), _write()], _PROFILE_TEST)
+
+def test_v1_grounds_ark_served_by_person_read():
+    served = [_call("person_read", {"sources": [
+        {"id": "SD1", "url": "https://familysearch.org/ark:/61903/1:1:JQ4M-2XS"}]})]
+    before, after = _states([_item("pli_010", rationale="Extract the attached baptism, ark:/61903/1:1:JQ4M-2XS.")])
+    check_v1(before, after, served)
+
+
+
+# --- Step 3 pre-work fetch (issue #2251) ------------------------------------
+
+from test_research_plan import (  # noqa: E402
+    test_pre_register_birth_plans_death_route as check_death_route,
+    test_wiki_prework_fetches_triggered_pages as check_prework,
+)
+
+DK = {"id": "ut_research_plan_015", "tags": ["planning", "wiki-prework"]}
+DK_STEMS = ("wiki-read-denmark-military-records", "wiki-read-denmark-naming-customs")
+
+
+def _wiki(stem, tool=QUAL + "wiki_read"):
+    return {"tool": tool, "args": {"url": "x"}, "response_fixture": stem}
+
+
+def test_prework_fires_when_no_page_was_fetched():
+    """The gps-mentor pattern: the body names the call and none is made."""
+    calls = [{"tool": QUAL + "collections_search", "response_fixture": "collections-search-denmark"}]
+    with pytest.raises(AssertionError, match="never served"):
+        check_prework(calls, DK)
+
+
+def test_prework_fires_on_zero_and_none_tool_calls():
+    for calls in ([], None):
+        with pytest.raises(AssertionError, match="never served"):
+            check_prework(calls, DK)
+
+
+def test_prework_fires_on_a_404_slug():
+    """A guessed slug misses the page predicate and is served no fixture: the
+    mock records `response_fixture: None` with a fixture_not_found body."""
+    calls = [_wiki(None), _wiki("wiki-read-denmark-naming-customs")]
+    with pytest.raises(AssertionError, match="denmark-military-records"):
+        check_prework(calls, DK)
+
+
+def test_prework_fires_when_only_one_of_two_triggered_pages_is_fetched():
+    with pytest.raises(AssertionError, match="denmark-naming-customs"):
+        check_prework([_wiki("wiki-read-denmark-military-records")], DK)
+
+
+def test_prework_fires_when_a_sibling_wiki_tool_serves_the_stem():
+    """wiki_search / wiki_place_page are locality-guide's tools; a stem they
+    serve is not the constructed-URL page read the pre-work names."""
+    calls = [_wiki(s, tool=QUAL + "wiki_search") for s in DK_STEMS]
+    with pytest.raises(AssertionError, match="never served"):
+        check_prework(calls, DK)
+
+
+@pytest.mark.parametrize("prefix", [
+    "mcp__genealogy__",
+    "mcp__remote-devices__Genealogy_Research__",
+    "mcp__Genealogy_Research__",
+])
+def test_prework_passes_on_every_server_spelling(prefix):
+    check_prework([_wiki(s, tool=prefix + "wiki_read") for s in DK_STEMS], DK)
+
+
+def test_prework_passes_with_extra_unrelated_calls():
+    calls = [_wiki(s) for s in DK_STEMS] + [
+        {"tool": QUAL + "volume_search", "response_fixture": "volume-search-thisted"},
+        _wiki(None),
+    ]
+    check_prework(calls, DK)
+
+
+def test_prework_skips_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_prework([], {"id": "ut_research_plan_005", "tags": ["planning"]})
+
+
+def test_prework_map_entry_without_its_tag_fails_before_the_skip():
+    """Dropping the tag from a spec must not silently disarm the guard."""
+    with pytest.raises(AssertionError, match="no 'wiki-prework'"):
+        check_prework([], {"id": "ut_research_plan_015", "tags": ["planning"]})
+
+
+def test_prework_tag_without_a_map_entry_fails():
+    with pytest.raises(AssertionError, match="no entry"):
+        check_prework([], {"id": "ut_research_plan_zzz", "tags": ["wiki-prework"]})
+
+
+DTH = {"id": "ut_research_plan_dth", "tags": ["planning", "pre-register-birth"]}
+
+
+def _plan_states(items):
+    before = {"plans": []}
+    after = {"plans": [{"id": "pl_001", "question_id": "q_001", "status": "active", "items": items}]}
+    return {"research_json": before}, {"research_json": after}
+
+
+def _pli(i, record_type, date_range, rationale, jurisdiction="Barsebäck, Malmöhus, Sweden"):
+    return {"id": f"pli_{i:03d}", "sequence": i, "record_type": record_type,
+            "jurisdiction": jurisdiction, "date_range": date_range,
+            "repository": "FamilySearch", "rationale": rationale,
+            "fallback_for": None, "status": "planned"}
+
+
+BAPTISM = _pli(1, "church", "1678-1695", "Elena's baptism in Västra Karaby, if the register reaches it.")
+BURIAL = _pli(2, "cemetery", "1718-1770",
+              "Elena's own burial entry in Barsebäck; death entries can state an age and a birthplace.")
+
+
+def test_death_route_fires_on_the_e2e_shape_all_church_no_death_item():
+    """run-2026-09-18_21-35-53: ten items, all church, no death or burial item."""
+    items = [_pli(i, "church", "1675-1712", f"Elena household examination {i}") for i in range(1, 11)]
+    b, a = _plan_states(items)
+    with pytest.raises(AssertionError) as e:
+        check_death_route(b, a, DTH)
+    assert "own death or burial" in str(e.value) and "one record_type" in str(e.value)
+
+
+def test_death_route_fires_when_the_death_item_is_someone_elses():
+    """A rationale about the husband's death does not target Elena's entry."""
+    jons = _pli(2, "cemetery", "1718-1770", "Jöns Jönsson's burial entry, to date the widowhood.")
+    b, a = _plan_states([BAPTISM, jons])
+    with pytest.raises(AssertionError, match="own death or burial"):
+        check_death_route(b, a, DTH)
+
+
+@pytest.mark.parametrize("rationale", [
+    "Burial of Asmund Jönsson, Elena's son, d. 1768.",
+    "Jöns Jönsson, Elena's husband, buried in Barsebäck; dates her widowhood.",
+    "Elena's son died young; his burial entry names the farm.",
+    "Elena's husband's burial entry, to date the widowhood.",
+    "A burial entry for Asmund (Elena's father) would confirm his parish, age at death, and identity.",
+    "Burial of her son Asmund Jönsson in Barsebäck; Elena is named as his mother.",
+    "Burial of Elena's son Asmund, 1720.",
+    "Burials for Elena's son Asmund in the Barsebäck register.",
+    "Death entry of Elena's father Asmund in Barsebäck.",
+    "Asmund Jönsson, son of Elena, was buried in 1720 in Barsebäck.",
+    "Per Nilsson (husband of Elena) burial entry, to date the widowhood.",
+    "Her grandson's burial entry in Barsebäck; Elena is named.",
+    "Her stepson died in 1740; his burial entry names the farm.",
+])
+def test_death_route_fires_when_the_burial_only_names_her_as_a_relative(rationale):
+    """T-FEH's review on #3118: the name and a death word both present is not enough."""
+    other = _pli(2, "cemetery", "1718-1770", rationale)
+    b, a = _plan_states([BAPTISM, other])
+    with pytest.raises(AssertionError, match="own death or burial"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_fires_when_death_is_mentioned_on_a_baptism_window_item():
+    item = _pli(2, "church", "1675-1695", "Elena's baptism; she died in Barsebäck later.")
+    b, a = _plan_states([BAPTISM, item])
+    with pytest.raises(AssertionError, match="own death or burial"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_fires_on_a_death_item_but_one_record_type():
+    burial_as_church = _pli(2, "church", "1718-1770", "Elena's burial entry in the Barsebäck register.")
+    b, a = _plan_states([BAPTISM, burial_as_church])
+    with pytest.raises(AssertionError, match="one record_type"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_fires_on_an_undated_death_item():
+    undated = _pli(2, "cemetery", "unknown", "Elena's burial entry.")
+    b, a = _plan_states([BAPTISM, undated])
+    with pytest.raises(AssertionError, match="own death or burial"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_fires_when_no_plan_was_written():
+    b, a = _plan_states([])
+    a["research_json"]["plans"] = []
+    with pytest.raises(AssertionError, match="no new plan items"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_passes_a_mixed_plan_with_her_burial_item():
+    b, a = _plan_states([BAPTISM, BURIAL])
+    check_death_route(b, a, DTH)
+
+
+@pytest.mark.parametrize("rationale,date_range", [
+    ("Elena Asmundsdotter, buried beside her son in Barsebäck.", "1718-1770"),
+    ("Elena Asmundsdotter, buried beside her son in Barsebäck; the entry gives her age.", "1718-1770"),
+    ("Search the Sweden, Burials index for Elena Asmundsdotter.", "1712-1770"),
+    ("Browse Barsebäck's Döde section for Elena's death entry.", "1718–1768"),
+    ("ELENA'S BURIED entry — begravna, Barsebäck.", "1745"),
+    ("Elena's burial entry commonly states her age at death (yielding a birth year estimate).", "1718-1770"),
+    ("Elena Asmundsdotter’s own burial in the Barsebäck register.", "1718-1770"),
+    ("Burial entry of Elena in Barsebäck.", "1745"),
+    ("Elena was alive in Barsebäck at least through 1718 (son Asmund's christening). Swedish burial "
+     "entries routinely record the deceased's age. Search for Elena in Barsebäck or Malmöhus; she may "
+     "appear as Elena Jönsdotter (wife of Jöns Jönsson).", "1718-1780"),
+    ("A burial entry would give her age at death and may name her home parish. She was living in "
+     "Barsebäck in 1718 (son christened there). Search Elena or Helena Asmundsdotter.", "1720-1790"),
+    ("A targeted browse of the Barsebäck burial register recovers Elena's entry; her husband's "
+     "burial is in the same volume.", "1718-1780"),
+    ("The subject's own death or burial entry is planned as a separate item when the birth parish is "
+     "unknown. Date window: Elena was last documented alive at her son Asmund's christening in 1718. "
+     "Search: Elena Asmundsdotter; also Elena wife of Jöns Jönsson.", "1718-1765"),
+])
+def test_death_route_passes_legitimate_variants(rationale, date_range):
+    """Reflowed wording, Swedish register terms, an en dash, a single year."""
+    b, a = _plan_states([BAPTISM, _pli(2, "church", date_range, rationale), _pli(3, "tax", "1700-1712", "mantalslängder")])
+    check_death_route(b, a, DTH)
+
+
+def test_death_route_skips_an_untagged_test():
+    b, a = _plan_states([BAPTISM])
+    with pytest.raises(pytest.skip.Exception):
+        check_death_route(b, a, {"id": "ut_research_plan_005", "tags": ["planning"]})
+
+
+def test_death_route_map_entry_without_its_tag_fails_before_the_skip():
+    b, a = _plan_states([BAPTISM, BURIAL])
+    with pytest.raises(AssertionError, match="no 'pre-register-birth'"):
+        check_death_route(b, a, {"id": "ut_research_plan_dth", "tags": ["planning"]})

@@ -9,7 +9,8 @@
  * tolerated. So the `!validation.valid` branch cannot fire from a real call —
  * this forces it with a mocked `validateIntroduced` to pin the rollback contract
  * directly: on a validation failure the staged sidecar is removed and
- * research.json is byte-unchanged. Deleting a `cleanupSidecars` call turns this red.
+ * research.json is byte-unchanged, and the staged file it came from survives.
+ * Deleting a `cleanupSidecars` call turns this red.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
@@ -77,6 +78,8 @@ describe("research_log_append rollback on a validation failure", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(researchBefore);
     // ...and the finalized sidecar is removed, not left as a freeze-risk orphan.
     expect(await exists("results/log_001.json")).toBe(false);
+    // The staged file survives: it is removed only after a successful commit (#2913).
+    expect(await exists(handle!.resultsRef)).toBe(true);
   });
 
   it("(batch) same rollback at the batch validation site", async () => {
@@ -99,5 +102,6 @@ describe("research_log_append rollback on a validation failure", () => {
     expect(result.ok).toBe(false);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(researchBefore);
     expect(await exists("results/log_001.json")).toBe(false);
+    expect(await exists(handle!.resultsRef)).toBe(true);
   });
 });

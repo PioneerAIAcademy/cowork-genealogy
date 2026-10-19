@@ -13,9 +13,11 @@
 //
 // The context is `git ls-files`, so an untracked artifact sitting in the
 // working tree cannot mask a break. That makes this stricter than the real
-// build, which is the right direction for a gate.
+// build, which is the right direction for a gate. It is then filtered through
+// .dockerignore, as the real build context is: a COPY of an ignored path fails
+// here instead of on the Fly builder.
 import { execFileSync } from 'node:child_process'
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -64,15 +66,67 @@ function stage(name) {
   return out
 }
 
-/** Tracked paths under `src`, or [src] when it is a tracked file. */
-function tracked(src) {
+/** One .dockerignore glob as a regex over a context-relative path. */
+function globToRegex(glob) {
+  if (/[[\]\\]/.test(glob)) {
+    throw new UnsupportedInstruction(`.dockerignore pattern '${glob}': character classes and escapes are not modelled`)
+  }
+  let re = ''
+  for (let i = 0; i < glob.length; i++) {
+    const c = glob[i]
+    if (c === '*' && glob[i + 1] === '*') {
+      i++
+      if (glob[i + 1] === '/') {
+        i++
+        re += '(?:.*/)?'
+      } else {
+        re += '.*'
+      }
+    } else if (c === '*') re += '[^/]*'
+    else if (c === '?') re += '[^/]'
+    else re += c.replace(/[.+^${}()|]/g, '\\$&')
+  }
+  // A pattern matching a parent directory excludes everything under it.
+  return new RegExp(`^${re}(?:/.*)?$`)
+}
+
+/**
+ * Docker's context filter: patterns in order, `!` re-includes, last match
+ * wins. Docker reads `<Dockerfile>.dockerignore` in preference to the root one.
+ */
+function dockerignore() {
+  const beside = `${dockerfile}.dockerignore`
+  const file = existsSync(beside) ? beside : join(repoRoot, '.dockerignore')
+  if (!existsSync(file)) return () => false
+  const rules = readFileSync(file, 'utf8')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith('#'))
+    .map((l) => {
+      const negate = l.startsWith('!')
+      const glob = (negate ? l.slice(1) : l).trim().replace(/^\/+/, '').replace(/\/+$/, '')
+      return { negate, re: globToRegex(glob) }
+    })
+  return (path) => {
+    let ignored = false
+    for (const { negate, re } of rules) if (re.test(path)) ignored = !negate
+    return ignored
+  }
+}
+
+/** Context paths under `src` — tracked and not dockerignored — or [src] for a file. */
+function tracked(src, ignored) {
   const raw = execFileSync('git', ['ls-files', '-z', '--', src], { cwd: repoRoot })
-  const paths = raw.toString('utf8').split('\0').filter(Boolean)
-  if (paths.length === 0) throw new Error(`COPY ${src}: nothing tracked at that path`)
+  const all = raw.toString('utf8').split('\0').filter(Boolean)
+  if (all.length === 0) throw new Error(`COPY ${src}: nothing tracked at that path`)
+  const paths = all.filter((p) => !ignored(p))
+  if (paths.length === 0) {
+    throw new Error(`COPY ${src}: excluded from the build context by .dockerignore`)
+  }
   return paths
 }
 
-function replayCopy(args, workdir) {
+function replayCopy(args, workdir, ignored) {
   // `--from=` copies from another stage, which this replay has not built. The
   // rest (--chown/--chmod/--link) are no-ops on a plain filesystem copy.
   for (const flag of args.filter((a) => a.startsWith('--'))) {
@@ -89,7 +143,7 @@ function replayCopy(args, workdir) {
   const destDir = join(workdir, dest === './' || dest === '.' ? '' : dest)
 
   for (const src of sources) {
-    const paths = tracked(src)
+    const paths = tracked(src, ignored)
     const isFile = paths.length === 1 && paths[0] === src
     if (isFile) {
       // A file lands inside dest when dest is a directory (trailing slash, or
@@ -135,6 +189,7 @@ function main() {
   const IMAGE_ROOT = '/repo'
   let workdir = root
   try {
+    const ignored = dockerignore()
     for (const line of instructions) {
       const [, verb, rest] = line.match(/^(\w+)\s+(.*)$/) ?? []
       if (verb === 'WORKDIR') {
@@ -153,7 +208,7 @@ function main() {
         continue
       }
       if (verb === 'COPY') {
-        replayCopy(rest.split(/\s+/), workdir)
+        replayCopy(rest.split(/\s+/), workdir, ignored)
         continue
       }
       if (verb === 'RUN') {
@@ -184,8 +239,9 @@ function main() {
       console.error(`  ${err.message.split('\n')[0]}`)
       console.error('')
       console.error('  Most likely: a COPY before `RUN pnpm install` no longer brings in')
-      console.error('  everything an install-time script needs, or a source a later RUN')
-      console.error('  reads is never copied. Re-run with the failing command above.')
+      console.error('  everything an install-time script needs, a source a later RUN')
+      console.error('  reads is never copied, or .dockerignore drops a path a COPY names.')
+      console.error('  Re-run with the failing command above.')
     }
     process.exitCode = 1
   } finally {

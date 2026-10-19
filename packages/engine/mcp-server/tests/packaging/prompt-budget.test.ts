@@ -1,22 +1,17 @@
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
+import { readFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
 
-// Prompt-budget lint (warn-only). Reports the byte-size delta a PR introduces
-// to every SKILL.md, plugin-agent body, and CLAUDE.md — the three prose files
-// billed on every run of the thing that loads them — so reviewers see growth at
-// review time, which today nothing surfaces. The unit suite cannot be the gate: it
-// grades a single invocation in fresh context and blesses an addition as
-// readily as a cut.
+// Prompt-budget lint. Reports the size delta a PR introduces to every SKILL.md,
+// plugin-agent body and CLAUDE.md — the prompt shapes billed on every run of
+// the thing that loads them — so reviewers see growth at review time.
 //
-// Settled by the lead 2026-07-31 (issue #976):
-//   - Warn-only, not blocking. Every test always passes.
-//   - Delta-only. No absolute ceiling per file yet (issue #1275).
-//   - Prose bytes, not a token estimate.
-//
-// Delta comparison requires the base branch to be fetched. In CI,
-// engine-tests.yml fetches origin/<base-ref> before running vitest. Locally,
-// `origin/main` may or may not be available — the test degrades gracefully to
-// reporting absolute sizes only, no deltas.
+// Warn-only and delta-only: no ceiling, no threshold (issue #976). The "before"
+// side is read from the base branch with `git ls-tree`, so nothing is committed
+// and nothing goes stale. In CI, engine-tests.yml fetches origin/<base-ref>
+// before vitest runs. Locally, without `origin/main`, the report falls back to
+// absolute sizes.
 
 const SKILLS_PATH = "packages/engine/plugin/skills";
 const AGENTS_PATH = "packages/engine/plugin/agents";
@@ -33,11 +28,11 @@ const ROOT_PROMPT_PATH = "CLAUDE.md";
 const TRACKED = /(^|\/)(skills\/[^/]+\/SKILL\.md|agents\/[^/]+\.md)$|^CLAUDE\.md$/;
 
 // ---------------------------------------------------------------------------
-// Reading sizes out of git
+// Reading prompt-file sizes out of git
 // ---------------------------------------------------------------------------
 
 /**
- * Every size on both sides comes from git's own blob length, never `statSync`.
+ * Every prompt-file size comes from git's own blob length, never `statSync`.
  * On Windows with `core.autocrlf=true` the on-disk file has CRLF while git
  * stores LF, so mixing the two would report a phantom growth on every file
  * equal to its line count.
@@ -94,6 +89,37 @@ export function parseLsTree(stdout: string): Map<string, number> {
   }
   return sizes;
 }
+
+/**
+ * Working-tree prompt sizes, so a local run sees an edit before it is
+ * committed. CRLF is counted as LF, which equals git's blob length under
+ * `* text=auto eol=lf` — the same number `lsTree` would report once committed.
+ */
+function workingTreeSizes(): Map<string, number> | null {
+  try {
+    const root = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
+    const out = execFileSync(
+      "git",
+      ["ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", SKILLS_PATH, AGENTS_PATH, ROOT_PROMPT_PATH],
+      { cwd: root, encoding: "utf8" },
+    );
+    const sizes = new Map<string, number>();
+    for (const path of out.split("\0")) {
+      if (!TRACKED.test(path) || !existsSync(join(root, path))) continue;
+      const buf = readFileSync(join(root, path));
+      let crlf = 0;
+      for (let i = 0; i + 1 < buf.length; i++) if (buf[i] === 13 && buf[i + 1] === 10) crlf++;
+      sizes.set(path, buf.length - crlf);
+    }
+    return sizes;
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Base branch
+// ---------------------------------------------------------------------------
 
 /** GITHUB_BASE_REF is set by GitHub Actions for pull_request events. */
 const REQUESTED_BASE_REF = process.env.GITHUB_BASE_REF || "main";
@@ -170,7 +196,7 @@ export function computeDeltas(
   return deltas.sort((x, y) => y.delta - x.delta);
 }
 
-function label(d: Delta): string {
+function promptLabel(d: Delta): string {
   const name = short(d.path);
   if (d.before === null) return `${name}: ${formatKB(d.after!)} (new file)`;
   if (d.after === null) {
@@ -183,14 +209,22 @@ function label(d: Delta): string {
 // Build the report
 // ---------------------------------------------------------------------------
 
-const headTree = lsTree("HEAD");
-const headSizes = headTree === null ? new Map<string, number>() : parseLsTree(headTree);
+const headSizes = workingTreeSizes() ?? new Map<string, number>();
 
 const baseRef = baseRefAvailable();
-const baseTree = baseRef === null ? null : lsTree(`origin/${baseRef}`);
-const baseSizes = baseTree === null ? null : parseLsTree(baseTree);
 
-const deltas = baseSizes === null ? [] : computeDeltas(baseSizes, headSizes);
+const basePromptSizes: Map<string, number> | null = (() => {
+  if (baseRef === null) return null;
+  const tree = lsTree(`origin/${baseRef}`);
+  return tree === null ? null : parseLsTree(tree);
+})();
+
+const promptDeltas =
+  basePromptSizes === null ? [] : computeDeltas(basePromptSizes, headSizes);
+
+// ---------------------------------------------------------------------------
+// Report
+// ---------------------------------------------------------------------------
 
 /**
  * Write the report on raw stdout, because neither of the two obvious channels
@@ -205,7 +239,7 @@ const deltas = baseSizes === null ? [] : computeDeltas(baseSizes, headSizes);
  */
 function emitReport(): void {
   const out: string[] = [];
-  if (baseSizes === null) {
+  if (basePromptSizes === null) {
     // A silent degradation to absolute-only would hide a broken fetch step.
     // Workflow commands are parsed only at the start of a line.
     if (process.env.CI) {
@@ -215,11 +249,12 @@ function emitReport(): void {
           "Check the 'Fetch base branch' step in engine-tests.yml.",
       );
     }
-    for (const [path, size] of headSizes) out.push(`  ${short(path)}: ${formatKB(size)}`);
-  } else if (deltas.length === 0) {
+    for (const [path, size] of headSizes)
+      out.push(`  ${short(path)}: ${formatKB(size)}`);
+  } else if (promptDeltas.length === 0) {
     out.push("  no prompt-size changes in this changeset");
   } else {
-    for (const d of deltas) out.push(`  ${label(d)}`);
+    for (const d of promptDeltas) out.push(`  ${promptLabel(d)}`);
   }
   process.stdout.write(`\nprompt-budget (warn-only)\n${out.join("\n")}\n\n`);
 }
@@ -238,10 +273,10 @@ describe("prompt-budget (warn-only)", () => {
     // side comes back with nothing, every delta vanishes and the report says
     // "no prompt-size changes" while covering nothing at all.
     expect(headSizes.size).toBeGreaterThan(0);
-    if (baseSizes !== null) expect(baseSizes.size).toBeGreaterThan(0);
+    if (basePromptSizes !== null) expect(basePromptSizes.size).toBeGreaterThan(0);
   });
 
-  if (baseSizes === null) {
+  if (basePromptSizes === null) {
     // Local dev without origin/main fetched, or a CI run whose fetch step
     // failed. Report absolute sizes as a fallback — still useful for
     // orientation.
@@ -250,13 +285,13 @@ describe("prompt-budget (warn-only)", () => {
         // Informational only — always passes.
       });
     }
-  } else if (deltas.length === 0) {
+  } else if (promptDeltas.length === 0) {
     it("no prompt-size changes in this changeset", () => {
       // Nothing grew or shrank — nothing to report.
     });
   } else {
-    for (const d of deltas) {
-      it(label(d), () => {
+    for (const d of promptDeltas) {
+      it(promptLabel(d), () => {
         // Warn-only: the name carries the signal; the test always passes.
       });
     }
@@ -264,9 +299,7 @@ describe("prompt-budget (warn-only)", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Unit tests — these DO assert, and are the only part of this file that can
-// fail. They cover the arithmetic and formatting that the warn-only report
-// above renders but never checks.
+// Unit tests — these DO assert. They cover the arithmetic and formatting.
 // ---------------------------------------------------------------------------
 
 describe("prompt-budget (unit)", () => {

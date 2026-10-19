@@ -19,6 +19,8 @@ command:
 - Which issues merge, which stay independent, which close as duplicates
 - Promotion into Ready, and what loses a swap
 - Lane labels, `reviewed`, `cluster:*`, board hygiene
+- `high-priority` — approving `fill-ready`'s proposed adds and removes, and
+  applying it by hand (criterion 4, "a lead's call"; Dallan may too)
 - Standup topics, replies, and who work goes to
 - Paid eval runs — he holds the same budget as Dallan
 - The roster
@@ -32,7 +34,6 @@ command:
 | Architecture, schema, tool boundaries, API shape | No change |
 | `icebox` vs. a real commitment | Icebox |
 | Close as *not planned* with no successor issue | Leave open |
-| `cross-cutting` assignment | Unassigned; does not start |
 | Overturning a previous ruling | Ruling stands |
 | Milestone gating | Not gating |
 | Overriding someone's work; security triage | No action |
@@ -58,7 +59,8 @@ instead of a decision.
 |---|---|---|
 | Daily | Richard | `triage-standup` → `merge-recent-issues` → `fill-ready` (calls `review-ready`) |
 | Daily | Dallan | `make-decisions` — answer what the day's reviews queued |
-| Mon | Richard | `audit-board`, before that day's `fill-ready` |
+| Mon, Thu | Richard | `merge-issues`, before that day's `fill-ready` |
+| Mon | Richard | `audit-board`, after `merge-issues` and before `fill-ready` |
 | Mon | Dallan | `find-big-wins`, after `audit-board` |
 | Tue / Fri | Dallan | `review-icebox` |
 | Fri | Both | `audit-merged-prs` — Richard takes process compliance, Dallan takes architectural drift |
@@ -75,8 +77,9 @@ produce a report and change nothing.
 them, `/make-decisions` answers them daily, and nothing treats an
 already-answered decision as a defect any more.
 
-**Still open:** the terminal approval gate in `fill-ready`, `audit-board` and
-`merge-recent-issues` — apply the reversible things now, queue the rest.
+**Still open:** the terminal approval gate in `fill-ready`, `audit-board`,
+`merge-issues` and `merge-recent-issues` — apply the reversible things now, queue
+the rest.
 
 Then: give Richard a position in `fill-ready`'s routing, move roster maintenance
 to whoever runs the skill, send replies in Richard's own name, and record the

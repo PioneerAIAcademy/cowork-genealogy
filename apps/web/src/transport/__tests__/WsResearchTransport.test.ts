@@ -78,3 +78,27 @@ describe('WsResearchTransport — notice is always null on the hosted path', () 
     expect(state.notice).toBeNull()
   })
 })
+
+describe('WsResearchTransport — constrained FamilySearch channel', () => {
+  // The policy has its own suite; this pins the CALLER. `apps/web` is the only
+  // consumer of the web policy copy, and replacing this method's body with a
+  // bare `window.open(value, …)` left all 8 turbo tasks and all 440 tests green
+  // — the same hole as the previous round, moved one file up.
+  // `link-channel-routing.test.ts` cannot see it: that one reads
+  // `src/components` and never looks at a transport.
+  it('openFamilySearch constrains the destination', () => {
+    const open = vi.fn()
+    vi.stubGlobal('window', { open })
+    const t = new WsResearchTransport('s1', fakeConn())
+
+    t.openFamilySearch('https://evil.example/ark:/61903/1:1:MXYZ')
+    expect(open).not.toHaveBeenCalled()
+
+    t.openFamilySearch('1:1:QPRC-WPBZ')
+    expect(open).toHaveBeenCalledWith(
+      'https://www.familysearch.org/ark:/61903/1:1:QPRC-WPBZ',
+      '_blank',
+      'noopener,noreferrer'
+    )
+  })
+})

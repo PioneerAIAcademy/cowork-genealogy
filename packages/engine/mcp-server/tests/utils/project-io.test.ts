@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, readFile, writeFile, readdir } from "fs/promises";
-import { join } from "path";
+import { mkdtemp, rm, readFile, writeFile, readdir, mkdir } from "fs/promises";
+import { realpathSync } from "node:fs";
+import { join, parse } from "path";
 import { tmpdir } from "os";
 import {
   isInsideProject,
@@ -8,7 +9,9 @@ import {
   atomicWriteJson,
   atomicWriteBoth,
   withProjectLock,
+  findNestingAncestor,
 } from "../../src/utils/project-io.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 describe("project-io write layer", () => {
   let dir: string;
@@ -50,7 +53,7 @@ describe("project-io write layer", () => {
   describe("atomicWriteJson", () => {
     it("writes pretty JSON and leaves no temp file behind", async () => {
       const path = join(dir, "research.json");
-      await atomicWriteJson(path, { a: 1, b: [2, 3] });
+      await atomicWriteJson(dir, "research.json", { a: 1, b: [2, 3] });
 
       const text = await readFile(path, "utf-8");
       expect(JSON.parse(text)).toEqual({ a: 1, b: [2, 3] });
@@ -62,14 +65,14 @@ describe("project-io write layer", () => {
 
     it("creates missing parent directories", async () => {
       const path = join(dir, "results", "log_007.json");
-      await atomicWriteJson(path, { log_id: "log_007" });
+      await atomicWriteJson(dir, "results/log_007.json", { log_id: "log_007" });
       expect(JSON.parse(await readFile(path, "utf-8"))).toEqual({ log_id: "log_007" });
     });
 
     it("overwrites an existing file in place", async () => {
       const path = join(dir, "tree.gedcomx.json");
       await writeFile(path, JSON.stringify({ old: true }), "utf-8");
-      await atomicWriteJson(path, { new: true });
+      await atomicWriteJson(dir, "tree.gedcomx.json", { new: true });
       expect(JSON.parse(await readFile(path, "utf-8"))).toEqual({ new: true });
     });
   });
@@ -78,15 +81,43 @@ describe("project-io write layer", () => {
     it("writes both files and leaves no temps", async () => {
       const treePath = join(dir, "tree.gedcomx.json");
       const researchPath = join(dir, "research.json");
-      await atomicWriteBoth([
-        { path: treePath, data: { tree: 1 } },
-        { path: researchPath, data: { research: 1 } },
+      await atomicWriteBoth(dir, [
+        { ref: "tree.gedcomx.json", data: { tree: 1 } },
+        { ref: "research.json", data: { research: 1 } },
       ]);
 
       expect(JSON.parse(await readFile(treePath, "utf-8"))).toEqual({ tree: 1 });
       expect(JSON.parse(await readFile(researchPath, "utf-8"))).toEqual({ research: 1 });
       const leftovers = (await readdir(dir)).filter((f) => f.includes(".tmp-"));
       expect(leftovers).toEqual([]);
+    });
+
+    it("dot-prefixes its temp files so a crash-left temp is a dotfile the feedback bundler skips (issue #2333)", async () => {
+      fileStoreOnly("temp files are the file store's rename mechanism; Postgres writes in one transaction");
+      // The feedback bundler skips dotfiles and redacts by exact name, so a
+      // NON-dot temp (`tree.gedcomx.json.tmp-<uuid>`) left by a crash between
+      // write and rename would ship unredacted. Observe the real temp name
+      // mid-write via the between-renames seam: the second temp is still on
+      // disk here, not yet renamed.
+      const treePath = join(dir, "tree.gedcomx.json");
+      const researchPath = join(dir, "research.json");
+      let midWriteTemps: string[] = [];
+      await atomicWriteBoth(
+        dir,
+        [
+          { ref: "tree.gedcomx.json", data: { tree: 1 } },
+          { ref: "research.json", data: { research: 1 } },
+        ],
+        {
+          onBeforeSecondRename: async () => {
+            midWriteTemps = (await readdir(dir)).filter((f) => f.includes(".tmp-"));
+          },
+        },
+      );
+      expect(midWriteTemps.length).toBeGreaterThan(0);
+      for (const name of midWriteTemps) {
+        expect(name.startsWith("."), `temp ${name} must be dot-prefixed`).toBe(true);
+      }
     });
 
     it("a failure during the temp-write phase leaves both targets unchanged (both-or-neither)", async () => {
@@ -101,9 +132,9 @@ describe("project-io write layer", () => {
       circular.self = circular;
 
       await expect(
-        atomicWriteBoth([
-          { path: treePath, data: { tree: "new" } },
-          { path: researchPath, data: circular },
+        atomicWriteBoth(dir, [
+          { ref: "tree.gedcomx.json", data: { tree: "new" } },
+          { ref: "research.json", data: circular },
         ]),
       ).rejects.toThrow();
 
@@ -114,6 +145,7 @@ describe("project-io write layer", () => {
     });
 
     it("a failure injected between the two renames leaves the first new and the second old", async () => {
+      fileStoreOnly("the rename seam has no Postgres counterpart: writeJsonBoth is one transaction there");
       const treePath = join(dir, "tree.gedcomx.json");
       const researchPath = join(dir, "research.json");
       await writeFile(treePath, JSON.stringify({ tree: "old" }), "utf-8");
@@ -121,9 +153,10 @@ describe("project-io write layer", () => {
 
       await expect(
         atomicWriteBoth(
+          dir,
           [
-            { path: treePath, data: { tree: "new" } },
-            { path: researchPath, data: { research: "new" } },
+            { ref: "tree.gedcomx.json", data: { tree: "new" } },
+            { ref: "research.json", data: { research: "new" } },
           ],
           {
             onBeforeSecondRename: () => {
@@ -148,7 +181,7 @@ describe("project-io write layer", () => {
           // Re-acquiring the SAME project's lock from inside the critical section.
           return withProjectLock(dir, async () => "unreachable");
         }),
-      ).rejects.toThrow(/re-entered for '.*': a locked writer called another/);
+      ).rejects.toThrow(/re-entered for (project )?'.*': a locked writer called another/);
     });
 
     it("catches re-entry reached through a non-lock await chain", async () => {
@@ -180,6 +213,63 @@ describe("project-io write layer", () => {
       // a fresh acquire, not a re-entry.
       const second = await withProjectLock(dir, async () => "second");
       expect(second).toBe("second");
+    });
+  });
+
+  describe("findNestingAncestor", () => {
+    // The realpath `dir` itself resolves to — matches what the function
+    // returns, so assertions don't depend on whether the OS temp dir is
+    // itself a symlink (macOS's /tmp -> /private/tmp).
+    const realDir = () => realpathSync.native(dir);
+
+    it("returns null when no ancestor holds research.json", async () => {
+      const candidate = join(dir, "brand-new-project");
+      expect(await findNestingAncestor(candidate)).toBeNull();
+    });
+
+    it("finds an ancestor one level up", async () => {
+      fileStoreOnly("projects do not nest in Postgres: findNestingAncestor is always null there");
+      await writeFile(join(dir, "research.json"), "{}", "utf-8");
+      const candidate = join(dir, "sub-project");
+      expect(await findNestingAncestor(candidate)).toBe(realDir());
+    });
+
+    it("finds an ancestor several levels up, returning the FIRST one found", async () => {
+      fileStoreOnly("projects do not nest in Postgres: findNestingAncestor is always null there");
+      await writeFile(join(dir, "research.json"), "{}", "utf-8");
+      // A second, nested project between dir and the candidate — the walk
+      // must stop at this closer one, not the outer one.
+      const nested = join(dir, "a", "b");
+      await mkdir(nested, { recursive: true });
+      await writeFile(join(nested, "research.json"), "{}", "utf-8");
+      const candidate = join(nested, "c", "d");
+      expect(await findNestingAncestor(candidate)).toBe(realpathSync.native(nested));
+    });
+
+    it("still finds the ancestor when projectPath itself does not exist yet", async () => {
+      fileStoreOnly("projects do not nest in Postgres: findNestingAncestor is always null there");
+      await writeFile(join(dir, "research.json"), "{}", "utf-8");
+      // Nothing on this path below `dir` has been created.
+      const candidate = join(dir, "not-created", "yet");
+      expect(await findNestingAncestor(candidate)).toBe(realDir());
+    });
+
+    it("terminates at the filesystem root instead of hanging or throwing", async () => {
+      // Assumes no research.json sits at the OS drive/filesystem root, which
+      // holds on any normal dev machine or CI runner.
+      const root = parse(dir).root;
+      const candidate = join(root, "cowork-genealogy-findnestingancestor-probe");
+      await expect(findNestingAncestor(candidate)).resolves.toBeNull();
+    });
+
+    it("does not treat the candidate's OWN research.json as an ancestor", async () => {
+      // The scan starts at the PARENT of projectPath, never projectPath
+      // itself — an already-existing project must not block its own
+      // project_create refusal path with a self-nesting false positive.
+      const candidate = join(dir, "existing-project");
+      await mkdir(candidate, { recursive: true });
+      await writeFile(join(candidate, "research.json"), "{}", "utf-8");
+      expect(await findNestingAncestor(candidate)).toBeNull();
     });
   });
 });

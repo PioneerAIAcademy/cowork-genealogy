@@ -12,11 +12,12 @@
       "mode-b",
       "hypothesis",
       "I1",
-      "I3"
+      "I3",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "We found a Patrick Flynn in the 1870 and 1880 Schuylkill County censuses, born about 1832 in Pennsylvania. Build a candidate timeline to test whether he is the same man as our Patrick Flynn (born about 1845 in Ireland). Do these records fit one life?",
+    "delegation": "Do the records for persons I1 and I3 fit one life? Hypothesis h_002.\n\nprojectPath: <workspace>",
     "scenario": "flynn-two-lives"
   },
   "mcp_fixtures": [
@@ -31,7 +32,10 @@
     "place-search-pennsylvania-by-place",
     "place-distance-ireland-pennsylvania",
     "place-distance-pennsylvania-ireland",
-    "place-distance-within-pennsylvania"
+    "place-distance-within-pennsylvania",
+    "wiki-read-united-states-census",
+    "wiki-read-ireland-census",
+    "wiki-read-any"
   ],
   "judge_context": [
     "Should build a candidate (hypothesis-testing) timeline that aggregates assertions from BOTH candidate persons (I1 and I3) and ties it to the hypothesis (hypothesis_id h_002)",

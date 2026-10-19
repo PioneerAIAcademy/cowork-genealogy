@@ -26,6 +26,7 @@
  * Run:  npx tsx dev/probe-batch-anchor.ts
  * Needs a live FamilySearch token (`login` tool first).
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
@@ -44,7 +45,7 @@ type Leg = { total: number | null; note?: string };
 
 async function count(qs: string): Promise<Leg> {
   try {
-    const token = await getValidToken();
+    const token = await getValidToken(LOCAL);
     const res = await fetchWithTimeout(
       `${BASE}?${qs}&m.queryRequireDefault=on&m.defaultFacets=off&count=1`,
       {

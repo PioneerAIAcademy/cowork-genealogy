@@ -33,6 +33,7 @@ on:
       - '.github/workflows/project-status-sync.yml'
       - '.github/workflows/senior-queue.yml'
       - '.github/workflows/check-runlogs.yml'
+      - '.github/workflows/stale-base-guard.yml'
       - '.github/workflows/workflow-logic-tests.yml'
       - '.github/tests/**'
       - 'scripts/claude-hooks/**'
@@ -106,3 +107,13 @@ jobs:
         with:
           node-version: '22'
       - run: node .github/tests/check-runlogs-post-gate-lints.test.mjs
+
+  stale-base-watched:
+    name: stale-base-guard watched files exist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: node .github/tests/stale-base-guard.test.mjs

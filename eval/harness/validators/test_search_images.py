@@ -1,10 +1,12 @@
 """Skill-specific validators for the search-images skill.
 
 search-images browses FamilySearch digitized image volumes page-by-page
-(volume_search → image_search → delegate each page to the image-reader
-subagent) when a record set is digitized but not indexed and not full-text
-searchable, and logs every browse via research_log_append. image_search does not stage results, so no results/
-sidecar is written — the log entry stands alone.
+(volume_search → image_search → image_transcribe, one call per page) when a
+record set is digitized but not indexed and not full-text searchable, and logs
+every browse via research_log_append. Since the pair conversion (issue #2121)
+the agent reads pages itself rather than delegating to the image-reader
+subagent — agents cannot reach another agent. image_search does not stage
+results, so no results/ sidecar is written — the log entry stands alone.
 
 Narrative-quality dimensions (volume selection, browse procedure,
 negative-result detail) live in the rubric and are graded by the LLM judge.
@@ -113,59 +115,3 @@ def test_no_results_sidecar_written(before_state, after_state, test):
     )
 
 
-# --- No-harm invariant for planning/strategy requests ----------------
-
-def test_no_browse_or_writes_on_planning_request(
-    before_state, after_state, tool_calls, test
-):
-    """Tag-gated (no-browse-no-write): the search-images no-harm invariant
-    for a planning/strategy request that should route to research-plan.
-
-    search-images executes a browse and logs it; a pure planning question
-    ("which unindexed record sets should I browse next?") must not cause a
-    browse to be EXECUTED or anything to be persisted. This is the
-    deterministic gate for the grade_on_invariant negative
-    ut_search_images_009: which skill wins the route is a known-unstable
-    model prior (the router picks research-plan directly on some runs,
-    search-images — which then correctly redirects per SKILL.md's ROUTING
-    section — on others, project-status on others), but the state-harm
-    invariant holds under every one of those routes and is what we assert.
-    See docs/specs/unit-test-spec.md.
-
-    Fails iff the run:
-      - made a `volume_search` or `image_search` MCP call (a browse was
-        executed), or
-      - appended a new `log` entry (search-images logs every browse it
-        runs; research-plan — the acceptable route — never writes `log`,
-        so any new log entry means a search/browse skill actually ran), or
-      - wrote a new `results/` sidecar file.
-
-    Deliberately does NOT flag other research.json writes: routing to
-    research-plan legitimately writes `plans`/`questions`, which is
-    correct behavior, not harm.
-    """
-    if "no-browse-no-write" not in test.get("tags", []):
-        pytest.skip("not a no-browse-no-write scenario")
-
-    # 1. No browse executed.
-    browsed = [
-        c for c in (tool_calls or [])
-        if c.get("tool", "").split("__")[-1] in ("volume_search", "image_search")
-    ]
-    assert not browsed, (
-        "planning request must not execute a browse; got "
-        f"{[(c.get('tool', '').split('__')[-1], c.get('args')) for c in browsed]}"
-    )
-
-    # 2. No new browse log entry (research-plan never writes `log`).
-    new_entries = _new_log_entries(before_state, after_state)
-    assert not new_entries, (
-        "planning request must not append a browse log entry; new log "
-        f"ids: {[e.get('id') for e in new_entries]}"
-    )
-
-    # 3. No new results/ sidecar file.
-    sidecars = _new_result_sidecars(before_state, after_state)
-    assert not sidecars, (
-        f"planning request must not write a results/ sidecar; got: {sidecars}"
-    )

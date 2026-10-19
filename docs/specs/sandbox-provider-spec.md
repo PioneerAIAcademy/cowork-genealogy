@@ -9,7 +9,7 @@ from `app/agent/real_agent.py` and `app/agent_secrets.py`. Daytona was never
 built. **Scope:** the per-user execution
 sandbox layer for the hosted multi-user "genealogy workbench" (the
 client-server product), kept vendor-neutral across **Daytona** and **E2B**
-(and a future provider) so the partner (FamilySearch) can self-host later.
+(and a future provider) so FamilySearch can self-host later.
 
 This is the implementation plan for the sandbox abstraction only. For the
 broader product direction (re-host skills+MCP under the Agent SDK; monorepo +
@@ -37,7 +37,7 @@ differ on the axes below.
 |---|---|---|---|
 | Isolation primitive (PII) | Firecracker microVM, own guest kernel/tenant | Sysbox container, shared host kernel (+ `Privileged:true`) | **E2B** |
 | Network egress | open by default, no gate | gated behind Tier-3 $500 prepaid top-up | **E2B** |
-| Persistence / resume | pause = FS+memory, indefinite; resume ~1s (bugs #884/#987 closed) | stop/archive + S3 volumes, FS-only; resume-by-id | **E2B** |
+| Persistence / resume | pause = FS+memory, indefinite; resume ~1s (pause/resume bugs fixed) | stop/archive + S3 volumes, FS-only; resume-by-id | **E2B** |
 | Self-host license | Apache-2.0 | AGPL-3.0 (copyleft) | **E2B** |
 | Self-host isolation | keeps Firecracker microVM | stays Sysbox shared-kernel | **E2B** |
 | Compliance **documented today** | contested/unverified (DPA/SOC2/HIPAA not on E2B's own pages) | DPA + HIPAA BAA + SOC2 Type I documented | **Daytona** |
@@ -207,7 +207,18 @@ class SandboxProvider(ABC):
     async def delete(self, sandbox_id: str) -> None: ...
     @abstractmethod
     async def list(self, labels: dict[str, str] | None = None) -> list[Sandbox]: ...
+
+    @property
+    def sandbox_image_commit(self) -> str | None: ...   # provenance of the baked image; None by default
 ```
+
+`sandbox_image_commit` is the one non-abstract member: the commit the sandbox
+image was built from (with a `+dirty` suffix when the tree was unclean), read off
+the image itself rather than guessed from the deploy, and surfaced by
+`/api/health` as `sandboxImageCommit`. A provider that bakes no image
+(`LocalProvider` runs the repo's own copy) keeps the `None` default. It must stay
+a plain in-memory read — `/api/health` is Fly's health check, so the value is
+refreshed when a sandbox is created and never fetched on the request path.
 
 ---
 
@@ -216,7 +227,7 @@ class SandboxProvider(ABC):
 | Neutral op | Daytona (`AsyncDaytona`) | E2B (`AsyncSandbox`, SDK v2.5.0) |
 |---|---|---|
 | `create(spec)` | `daytona.create(CreateSandboxFromImageParams(image, env_vars, labels, ephemeral, auto_stop_interval=secs//60, resources=Resources(cpu,memory,disk)))` | `AsyncSandbox.create(template, envs, metadata, timeout, allow_internet_access=True)` |
-| `get` / `resume` | `daytona.get(id)` → `sandbox.start()` | `AsyncSandbox.connect(id)` (auto-resumes if paused) |
+| `get` / `resume` | `daytona.get(id)` → `sandbox.start()` | `AsyncSandbox.connect(id)` on a handle-cache miss (auto-resumes if paused); a cached handle's first request auto-resumes (`auto_resume`) |
 | `suspend` | `sandbox.stop()` (or `.archive()` for cheap long idle) | `sandbox.pause()` |
 | `delete` | `sandbox.delete()` | `sandbox.kill()` |
 | `list(labels)` | `daytona.list(ListSandboxesQuery(labels=…))` | `AsyncSandbox.list(SandboxQuery(metadata=…))` |
@@ -403,7 +414,9 @@ async def _pump(a, b):
 - **`Resources` is advisory on E2B** — CPU/RAM come from the template; bake sizes
   into the template. Honored on Daytona's image path.
 - **`auto_suspend` units differ** — Daytona wants minutes (`auto_stop_interval`);
-  adapter converts. E2B uses `timeout` seconds + `set_timeout` to extend.
+  adapter converts. E2B uses `timeout` seconds + `set_timeout` to extend, but on
+  Hobby never past an hour after the sandbox started (measured 2026-10-15 by
+  `apps/server/dev/probe_e2b_heartbeat.py`); a resume starts a fresh hour.
 - **No env mutation on a running sandbox** on either platform → secrets are
   file-based (decision #2), not an interface method.
 - **No native whole-directory sync** on either → object-store sync runs inside

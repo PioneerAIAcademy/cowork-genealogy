@@ -20,7 +20,7 @@ export interface RankSearchMatchesInput {
    * to match every staged candidate against.
    */
   subjectId: string;
-  /** How many top-ranked stubs to return. Default 10. */
+  /** How many top-ranked stubs to return. Defaults to every scored candidate (#1212). */
   top?: number;
   /**
    * When true, fold one batch `source_attachments` call in host-side to set
@@ -55,7 +55,7 @@ export interface RankedMatch {
   recordArk?: string;
   /** 0-1 match score; null when the FS call kept failing (never dropped). */
   matchScore: number | null;
-  /** 1-10 confidence bucket; omitted on a no-match / failure. */
+  /** 1-5 confidence bucket; omitted on a no-match / failure. */
   matchConfidence?: number;
   /** Only set when `checkAttachments` and the batch call succeeded. */
   attachedToSubject?: boolean;
@@ -76,7 +76,7 @@ export interface RankSearchMatchesResult {
   subjectId: string;
   /** Candidates scored (full staged set). */
   scoredCount: number;
-  /** min(top, scoredCount). */
+  /** scoredCount, or min(top, scoredCount) when `top` is given. */
   returnedCount: number;
   /** Pairs whose FS call kept failing (kept, matchScore null). */
   scoringErrors: number;
@@ -115,5 +115,14 @@ export interface RankSearchMatchesResult {
    * and would shift every ranking in the eval corpus.
    */
   relativeTermNote?: string;
+  /**
+   * Present and `true` when the subject has no date narrower than a year (a bare
+   * or qualified year such as "1829" or "Abt 1829" does not count) AND no named
+   * spouse, parent or child in the tree or the subject's linked evidence —
+   * i.e. nothing that separates this person from any same-named individual.
+   * For the search-records namesake gate (#2213 PR3, not yet built).
+   * Omitted when the subject is not too thin; never `false`.
+   */
+  subjectTooThin?: true;
   matches: RankedMatch[];
 }

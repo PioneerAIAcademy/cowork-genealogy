@@ -1,0 +1,19 @@
+{
+  "id": "grigory-kokosha-death",
+  "name": "Григорий Захаров Кокоша — death in September 1846, Zhydivska Hreblia, Kiev, Russian Empire",
+  "genre": "record-hint",
+  "source_pid": "GSTD-C4H",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Григорий Захаров Кокоша, born about 1818 in Zhydivska Hreblia, Tarashcha, Kiev, and married to Татьяна Иванова Гейко in 1843, die?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1840s",
+    "geography": "UA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 22, hint-samples.csv row 768, flag adds_death, confidence 3). Resolved 2026-10-15 as outcome 2: the 18 Sep 1846 death of a Григорий Кокоша, aged 25, at the St John the Theologian church, Zhydivska Hreblia (ark:/61903/1:1:KX55-44K), is genuine and in his parish, but the index names no patronymic or widow and the register image could not be read reliably (an AI transcription failed calibration on two indexed neighbours), so the identification stays qualified. The expected finding is that the report engages the entry and leaves the identity qualified."
+}

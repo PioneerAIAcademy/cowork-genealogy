@@ -7,10 +7,10 @@
 >
 > **Do this after the tools land**, not before — a rewrite is only as stable as
 > the tool contract it targets, and the contracts are now shipped:
-> - **Wave 1** (on `main`, #397): `merge_record_into_tree`, `merge_tree_persons`,
+> - **Wave 1** (on `main`): `merge_record_into_tree`, `merge_tree_persons`,
 >   `research_log_append`, and the `record_search`/`fulltext_search` `projectPath`
 >   staging + shared write layer.
-> - **Wave 2** (branch `deterministic-skill-tools`, PR #400): `convert_calendar`,
+> - **Wave 2** (branch `deterministic-skill-tools`): `convert_calendar`,
 >   `tree_edit`, `research_append`.
 
 This is the contract for editing the **`SKILL.md` files and their `references/`**
@@ -100,18 +100,11 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   the post-write validate guidance. **Recovery:** a TTL-expired `staged.resultsRef`
   → re-run the search (cheap, re-stages).
 
-### 4.3 `record-extraction` — BOTH waves (rewrite once)
-- **Wave 1 — Step 4:** route the `user_provided` log entry through
-  `research_log_append` (nil sidecar), and when the source came from a staged
-  `record_search`, pass `staged.resultsRef`.
-- **Wave 2 — Steps 1/3/5a:** `research_append({ section: "sources", op: "append" })`
-  for the `src_` entry, then one `research_append({ section: "assertions", op:
-  "append" })` per assertion (including negative assertions) — the tool assigns each
-  id and validates each, removing the "write first persona, then Edit-append the
-  rest" chunking dance.
-- **Trim:** the sidecar/log-protocol references; the by-hand "next available id"
-  guidance; the post-write validate step. **Keep:** all extraction judgment (BCG
-  objectivity, one-fact-per-assertion, classification values, source-reuse decision).
+### 4.3 `record-extraction` — retired
+The skill and its `record-extractor` agent are deleted. Extraction runs in code through
+`extraction_append` (`recordIds`, `documents` or `absences`), which writes the log entry,
+the source and the assertions itself; text sources reach it through the
+`record-structurer` agent (`record-structurer-agent-spec.md`).
 
 ### 4.4 `convert-dates` — Wave 2 (the cleanest consumer)
 - Replace the "deterministic arithmetic you perform in context" paragraph and the
@@ -119,9 +112,15 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   call, requesting **only** the corrections the user asked for (the "answer only the
   question asked" rule is now structural). Narrate from `applied[].rule` / `notes[]`
   / `converted`.
-- **Trim:** none of the regime tables — **keep** them and `references/calendar-conflicts.md`
-  as the identification reference (deciding *which* corrections apply stays the LLM's
-  judgment). Output-only behavior unchanged (the tool writes nothing).
+- **Trim: superseded 2026-09-07 by lead ruling.** This bullet
+  read "**keep** them and `references/calendar-conflicts.md`". The adoption table
+  now lives in the tool behind an optional `jurisdiction` parameter
+  (`convert-calendar-tool-spec.md` §4.5), the prompt states no adoption date,
+  offset or year-start, and `references/calendar-conflicts.md` is **deleted** —
+  its numbers are the tool's and its narrative is the wiki's under ADR-0012. The
+  half this bullet was right about survives: deciding *which* corrections apply
+  is still the LLM's judgment (§5b), which is why `corrections` stays required.
+  Output-only behavior unchanged (the tool writes nothing).
 
 ### 4.5 `conflict-resolution` — Wave 2
 - **Create (Step 2):** `research_append({ section: "conflicts", op: "append" })`.
@@ -135,15 +134,20 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
 
 ### 4.6 `assertion-classification` — Wave 2
 - **Step 6:** `research_append({ section: "assertions", op: "update", entryId,
-  fields: { information_quality, informant, informant_proximity, evidence_type, … } })`
+  fields: { information_quality, informant, informant_proximity, record_basis, … } })`
   — never `append` (this skill only refines). The immutable-field list becomes
   structural (you only pass classification fields). **Keep** `references/three-layer-model.md`
   in full (pure classification judgment).
 
 ### 4.7 `person-evidence` — Wave 2 (two tools)
 - **Step 4 link:** `research_append({ section: "person_evidence", op: "append" })`.
-- **Step 5 stub person:** `tree_edit({ operation: "add_person" })` (tool allocates
-  the synthetic `I`/`N` ids).
+- **Step 5 stub person:** `materialize_facts` (tool allocates the synthetic
+  `I`/`N` ids) — the persona form `{ personId?, recordId, recordRole }` when
+  that party has its own persona on the record carrying a name assertion, the
+  named-party form `{ assertionId, relatedRole, name }` when the record only
+  names her. **Not** `tree_edit add_person`: it enforces no source-ref on names
+  and leaves a record-derived person provenance-less
+  (`tree-materialization-spec.md` section 4.6).
 - **Step 6 revision:** two calls — `append` the corrected `pe_` link, then `update`
   the old entry's `superseded_by` (never delete).
 
@@ -155,8 +159,8 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
 
 ### 4.9 `research-exhaustiveness` — Wave 2
 - **Steps 4/5:** `research_append({ section: "questions", op: "update", entryId,
-  fields: { status: "exhaustive_declared", exhaustive_declaration: { declared,
-  log_entry_ids, stop_criteria } } })`. Early termination → `declared: false` form.
+  fields: { status: "exhaustive_declared", search_stop: { stopped_because,
+  log_entry_ids, stop_criteria, not_reached } } })`. Early termination → `stopped_because: "resources_spent"` (non-gate) form.
   Re-declaring an already-declared question is a structural no-op. **Keep**
   `references/research-exhaustiveness.md` in full. **Superseded 2026-08-23:**
   `research-exhaustiveness` is now a skill-agent pair, so that reference file is
@@ -168,9 +172,12 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   `op: "update"` setting `status: "superseded"` (preserves the id; never delete).
 
 ### 4.11 `research-plan` — Wave 2
-- **Step 5:** `research_append({ section: "plans", op: "append" })` for the plan
-  shell, then `research_append({ section: "plan_items", op: "append", planId })` per
-  item. **Re-plan (Step 6):** `op: "update"` on the old plan → `status: "superseded"`
+- **Step 5:** ONE batched `research_append({ ops: [...] })` — the plan shell
+  (`section: "plans"`, `items` omitted) followed by one
+  `{ section: "plan_items", op: "append", planId }` op per item, `planId` being
+  the `pl_` id the tool assigns the shell. Two calls do not work: a plan must
+  end its own call carrying at least one item, so the shell alone is refused.
+  **Re-plan (Step 6):** `op: "update"` on the old plan → `status: "superseded"`
   (at most one active plan per question — the tool enforces it).
 
 ### 4.12 `proof-conclusion` — BOTH waves (rewrite once)
@@ -182,7 +189,7 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
 - **Step 7 — DO NOT resolve the question here.** Proof-conclusion deliberately
   does **not** write the `questions` section — marking a question `resolved` (and
   setting `resolved` / `resolution_assertion_ids`) is `question-selection`'s job,
-  and `exhaustive_declaration` is `research-exhaustiveness`'s. Leave §7 ("Do not
+  and `search_stop` is `research-exhaustiveness`'s. Leave §7 ("Do not
   modify the question") intact. (An earlier draft of this spec wrongly listed a
   `research_append` questions-update here — that reverses the skill's standing
   ownership boundary and must not be applied.)
@@ -197,7 +204,7 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
 
 ## 5. Cross-cutting
 
-- **Rewrite both-waves skills once.** `tree-edit`, `record-extraction`, and
+- **Rewrite both-waves skills once.** `tree-edit`, `record-extraction` (since retired), and
   `proof-conclusion` are each touched by both waves — do a single pass per file so
   the `SKILL.md` is edited once (the whole reason this spec is consolidated).
 - **Supersede-not-delete coordination.** `question-selection` / `research-plan` /
@@ -209,9 +216,10 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   `op: "update"` — a singleton-object section (no id/append; `allowedFields:
   ["status"]`; the tool stamps `project.updated`). See
   `research-append-tool-spec.md`.
-- **Known gap — tree source descriptions.** `record-extraction` (the `S` entry)
-  and `proof-conclusion` (Step 6 "ensure every cited source has a GedcomX `S`
-  entry") write `tree.gedcomx.json` `sources[]`, but `tree_edit` has no source
+- **Known gap — tree source descriptions.** `proof-conclusion` (Step 6 "ensure
+  every cited source has a GedcomX `S` entry") writes `tree.gedcomx.json`
+  `sources[]` (extraction's `S` entry is written by `extraction_append` through
+  `research_append`'s composite persist), but `tree_edit` has no source
   operation. Those source writes stay hand-done until `tree_edit` gains
   `add_source` / `update_source` (a small follow-up to the tree-edit tool).
 - **`allowed-tools` frontmatter** updated per skill; `validate_research_schema`
@@ -226,7 +234,7 @@ Wave-2-only, single-tool skills first (lowest risk): `convert-dates`,
 `assertion-classification`, `hypothesis-tracking`, `research-exhaustiveness`,
 `question-selection`, `research-plan`, `conflict-resolution`. Then the
 `research_append`+`tree_edit` skill `person-evidence`. Then the both-waves skills
-(`tree-edit`, `record-extraction`, `proof-conclusion`). The three search skills can
+(`tree-edit`, `record-extraction` (since retired), `proof-conclusion`). The three search skills can
 go any time (wave-1 dominant). Each skill is an independent, verifiable PR.
 
 ---

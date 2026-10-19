@@ -3,18 +3,19 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Juan Rodriguez and Marcelina Garcia had a son also named Juan Rodriguez, buried in infancy on 17 February 1801 in San Bartolomé, Pozuelo, Albacete — close in time to their tree-recorded daughter Juana (b. 1799) and son Francisco (christened 1801).",
+      "description": "Juan Rodríguez Martínez and Marcelina Garcia had at least one more son than the starting tree records: an infant buried on 17 February 1801 at San Bartolomé, Pozuelo, Albacete, entered in the parish burial register as \"Juan\" and described as a párvulo — the register's own word for a child dead before the age of reason. The entry gives no age, no birth date and no baptism date, and no baptism of a son named Juan of this couple is indexed in the parish.",
       "details": {
         "subject_person": "Juan Rodríguez Martínez (9634-PS9)",
         "relation": "child",
         "target_person": {
           "name": "Juan Rodriguez",
-          "birth": "unknown, likely Pozuelo, Albacete, Spain",
+          "birth": "not recorded; no baptism of a son Juan of this couple is indexed in the parish",
           "death": "17 February 1801 (burial), San Bartolomé, Pozuelo, Albacete, Spain"
         }
       },
       "supporting_sources": [
-        "España, Diócesis de Albacete, registros parroquiales, 1504-1979 — burial entry, 17 Feb 1801, San Bartolomé, Pozuelo, naming parents Juan Rodriguez and Marcelina Garcia"
+        "España, Diócesis de Albacete, registros parroquiales, 1504-1979 (collection 1431011) — burial entry, 17 February 1801, San Bartolomé, Pozuelo: \"se enterro a Juan parvb.o hijo de Juan Rodriguez, y Marcelina Garcia\": ark:/61903/1:1:VTJ3-PBJ (register image ark:/61903/3:1:S3HY-691S-222)",
+        "España, Diócesis de Albacete, registros parroquiales, 1504-1979 — baptism of Antonio Josef Rodriguez, 21 December 1800, San Bartolomé, Pozuelo, naming parents Juan Rodriguez and Marcelina Garcia together with all four grandparents (Antonio Rodriguez and Vicenta Martinez de las Peñas; Francisco Garcia and Maria de Corcoles), which identifies the couple and supplies the family context the burial entry itself lacks: ark:/61903/1:1:N3M1-19Q"
       ],
       "required": true
     }

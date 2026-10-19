@@ -344,11 +344,11 @@ def test_first_question_depends_on_empty(before_state, after_state, test):
     )
 
 
-# --- Tag-gated: new question's exhaustive_declaration is unstarted ----
+# --- Tag-gated: new question's search_stop is unstarted ----
 
 def test_new_question_exhaustive_declaration_unstarted(before_state, after_state, test):
-    """Tag-gated: a freshly added question's exhaustive_declaration must
-    be unstarted — declared=False, log_entry_ids=[], stop_criteria=None.
+    """Tag-gated: a freshly added question's search_stop must
+    be unstarted — stopped_because=null, log_entry_ids=[], stop_criteria=None.
     Declaring exhaustiveness at creation time is structurally wrong:
     the question hasn't been researched yet."""
     if "new-question-exhaustive-declaration-unstarted" not in test.get("tags", []):
@@ -359,25 +359,26 @@ def test_new_question_exhaustive_declaration_unstarted(before_state, after_state
         pytest.skip("missing research.json for diff")
     new = _new_questions(before, after)
     assert new, "expected a new question; none was added"
+    _STOP_GATE_VALUES = frozenset({"question_answered", "record_exhausted", "nothing_further_reachable"})
     errors: list[str] = []
     for q in new:
-        ed = q.get("exhaustive_declaration") or {}
-        if ed.get("declared") is not False:
+        ss = q.get("search_stop") or {}
+        if ss.get("stopped_because") in _STOP_GATE_VALUES:
             errors.append(
-                f"question {q.get('id')}.exhaustive_declaration.declared="
-                f"{ed.get('declared')}; expected False"
+                f"question {q.get('id')}.search_stop.stopped_because="
+                f"{ss.get('stopped_because')!r}; expected null (not a stop-gate value)"
             )
-        if ed.get("log_entry_ids") not in (None, []):
+        if ss.get("log_entry_ids") not in (None, []):
             errors.append(
-                f"question {q.get('id')}.exhaustive_declaration.log_entry_ids="
-                f"{ed.get('log_entry_ids')}; expected []"
+                f"question {q.get('id')}.search_stop.log_entry_ids="
+                f"{ss.get('log_entry_ids')}; expected []"
             )
-        if ed.get("stop_criteria") is not None:
+        if ss.get("stop_criteria") is not None:
             errors.append(
-                f"question {q.get('id')}.exhaustive_declaration.stop_criteria="
-                f"{ed.get('stop_criteria')}; expected None"
+                f"question {q.get('id')}.search_stop.stop_criteria="
+                f"{ss.get('stop_criteria')}; expected None"
             )
-    assert not errors, "Unstarted-exhaustive-declaration violations:\n  - " + "\n  - ".join(errors)
+    assert not errors, "Unstarted-search-stop violations:\n  - " + "\n  - ".join(errors)
 
 
 # --- Tag-gated: disputed assignment is tested, not confirmed (#1471) ---
@@ -509,6 +510,37 @@ def test_timelines_queried_before_deciding(before_state, tool_calls, test):
         )
 
 
+def test_person_warnings_called_before_deciding(tool_calls, test):
+    """Tag-gated: on a scenario carrying a real person_warnings contradiction,
+    the skill must have actually called person_warnings before writing (or
+    declining to write) the question -- not merely at some point in the run.
+    Concluding 'no contradiction' without this call is fabrication, not
+    informed absence of evidence."""
+    if "person-warnings-contradiction" not in test.get("tags", []):
+        pytest.skip("not a person-warnings-contradiction scenario")
+    warning_idxs = [
+        i
+        for i, call in enumerate(tool_calls)
+        if call.get("tool", "").endswith("person_warnings")
+    ]
+    assert warning_idxs, (
+        "the skill decided without ever calling person_warnings; a "
+        "contradiction on the subject cannot have been seen"
+    )
+    append_idxs = [
+        i
+        for i, call in enumerate(tool_calls)
+        if call.get("tool", "").endswith("research_append")
+    ]
+    if append_idxs:
+        assert min(warning_idxs) < min(append_idxs), (
+            "the skill wrote its question before ever calling "
+            "person_warnings -- the call must inform the decision, not "
+            "just appear somewhere in the transcript after it was already "
+            "made"
+        )
+
+
 # --- Tag-gated: missing-info disputed assignment accepts either honest branch (V4) ---
 
 # A single-turn harness cannot exercise a real ask-and-wait: the skill either
@@ -556,4 +588,215 @@ def test_disputed_parents_missing_info_handled(before_state, after_state, test, 
     assert len(reply.strip()) >= 20, (
         "the skill wrote no question and said essentially nothing -- "
         f"neither honest branch was taken. Reply: {reply!r}"
+    )
+
+
+# --- Tag-gated: a premise-verification question must name the fact (#1394) ---
+
+# Regression for issue #1394. When the objective's premise is an unverified
+# property of a name (here, whether a surname is a maiden or a married name),
+# question-selection must frame the verifying question so every branch names the
+# fact the objective needs -- "What was her maiden name?" -- not a bare yes/no
+# or either/or test of the name's property, whose "no" branch names nothing.
+#
+# This is a NEGATIVE guard: it rejects the prohibited property-test SHAPE only;
+# the judge (via judge_context) owns the positive "names the fact" class. The
+# signals are deliberately narrow and correctly grouped -- each marriage
+# alternative requires the adjacent word "marriage", and the bare yes/no form is
+# anchored to the start so a wh-question ("What was her maiden name?") does not
+# match. It must COEXIST with the #1471 confirm-or-refute framing, which tests a
+# disputed IDENTITY ASSERTION on the tree ("...parents of Z?") and names a fact:
+# that shape matches none of the signals below, and #1471's tests carry a
+# different tag (verifies-disputed-parents / disputed-parents-missing-info), so
+# this validator never runs on them.
+_PREMISE_PROPERTY_TEST_SIGNALS = (
+    r"\bmaiden or married\b",
+    # "her maiden name or her married name", "maiden surname or the married name"
+    r"\bmaiden(?:\s+(?:sur)?name)?\s+or\s+(?:(?:her|the|a)\s+)?married\b",
+    r"\bmarried or maiden\b",
+    r"\bwhether\b[^.?]*\b(?:maiden|married|surname|birth name)\b",
+    r"^\s*(?:was|is|did|does)\b[^.?]*\b(?:maiden|married|surname|birth name)\b",
+    r"\bacquire\w*\b[^.?]*\bmarriage\b",
+    r"\b(?:through|by|upon)\s+marriage\b",
+)
+
+# A question that asks for the GATING FACT by value -- "what ... maiden name / maiden
+# surname / birth surname / birth name" -- names the fact even alongside a yes/no or a
+# marriage clause: a compound "Was X the birth surname, and if not, what was her maiden
+# name?" names the fact in its second branch, and "What maiden name did she use before her
+# marriage?" is a fact question, not a property test. Such a question escapes the guard.
+# An intervening parenthetical between the maiden/birth word and the name/surname word is
+# tolerated, so "birth (maiden) surname" escapes exactly as "birth surname" does -- the
+# parenthetical is a spelling of the same fact, not a different question (#1394 review).
+# Two deliberate narrowings keep the escape from rescuing a bad question:
+#   * the fact term must be the MAIDEN/BIRTH fact -- bare "surname" is NOT an escape term,
+#     because "what surname did she use after marriage?" / "what surname does the census
+#     list?" names the married or record surname, not the gating maiden fact, and must not
+#     let a "maiden or married name" clause in the same sentence off the hook;
+#   * a bare "Was 'Curtis' the maiden name of Caroline?" (no "what") is still caught.
+# The positive "names the fact" class beyond this escape stays the judge's job.
+_FACT_NAMING_ESCAPE = r"\bwhat\b[^.?]*\b(?:maiden|birth)\s+(?:\([^)]*\)\s+)?(?:name|surname)\b"
+
+
+def _premise_question_offends(question: str) -> bool:
+    """A bare property test, or a value question that then re-asks the recorded
+    name as a choice.
+
+    The escape exempts a question that names the gating fact by value. It used to
+    exempt the whole question; now it exempts only what comes BEFORE the value
+    phrase. A leading test that the value then answers ("Was she born a Hartwell,
+    and if not, what was her maiden name?") still passes, but a classification
+    appended AFTER the value ("What was her birth surname -- was 'Hartwell' her
+    maiden name or her married name?") fails: it can be answered without finding
+    the surname (genealogist ruling, 2026-09-30).
+    """
+    text = question.lower()
+    # Lazy, so the cut falls at the FIRST value phrase: greedy, "What was her birth
+    # surname -- was it her maiden name or her married name?" would stretch the match
+    # to the later "maiden name" and swallow the very choice it must catch.
+    m = re.search(_FACT_NAMING_ESCAPE.replace(r"[^.?]*", r"[^.?]*?", 1), text)
+    if m is None:
+        return any(re.search(sig, text) for sig in _PREMISE_PROPERTY_TEST_SIGNALS)
+    tail = text[m.end():]
+    return any(re.search(sig, tail) for sig in _PREMISE_PROPERTY_TEST_SIGNALS)
+
+
+def test_premise_question_names_fact(before_state, after_state, test):
+    """Tag-gated: when the objective's premise is an unverified surname origin,
+    the new question must name the fact sought, not test a property of the name
+    (maiden-vs-married) in a branch that names nothing (#1394)."""
+    if "premise-question-names-fact" not in test.get("tags", []):
+        pytest.skip("not a premise-question-names-fact scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    assert new, "expected a new question naming the fact the premise gates; none was added"
+    offenders = [q.get("question") for q in new if _premise_question_offends(q.get("question") or "")]
+    assert not offenders, (
+        "at least one written question is a bare property test of a name "
+        "(e.g. 'Was Curtis her maiden or married name?') whose branch names no "
+        "fact. A premise-verification question must be framed so every branch "
+        "names the fact the objective needs -- 'What was her maiden name?' -- "
+        "which subsumes the test. A disputed identity assertion already on the "
+        "tree may be tested directly (confirm-or-refute, #1471); a property test "
+        "of a name or date may not stand in for the fact. "
+        f"Offending question(s): {offenders!r}"
+    )
+
+
+# --- Tag-gated: a motivation objective is decomposed, not asked (#2003). ---
+#
+# A "why" objective is answered narratively from historical context, so the
+# question written must be a relationship or event question its answer rests
+# on. These match a question whose answer would be a reason: a bare "why", a
+# "what led/prompted/caused" form, and a yes/no hypothesis about the cause of a
+# move ("Did he move to Schuylkill County for coal work?").
+_MOTIVATION_PATTERNS = (
+    r"\bwhy\b",
+    r"\bfor what (?:reason|purpose)\b",
+    r"\breasons?\b",
+    r"\bmotivat",
+    r"\bwhat (?:led|prompted|caused|drove|induced|motivated|brought|drew)\b",
+    r"\bbecause\b",
+    r"\b(?:move|moved|relocate|relocated|migrate|migrated|settle|settled|leave|left|emigrate|emigrated)\b[^?]*\b(?:for|to (?:find|seek|join|escape|take up))\b[^?]{0,40}?\b(?:work|employment|jobs?|land|wages|mining|mines|opportunit\w*|relatives|kin|family)\b",
+)
+
+
+def _asks_motivation(text: str) -> str | None:
+    for pattern in _MOTIVATION_PATTERNS:
+        if re.search(pattern, text, re.IGNORECASE):
+            return pattern
+    return None
+
+
+def test_motivation_objective_decomposed(before_state, after_state, test):
+    """Tag-gated: on a "why" objective, a question must be written and none of
+    the written questions may ask for the reason itself (#2003). The reply's
+    narrative-treatment sentence is prose, so the judge grades it."""
+    if "motivation-objective-decomposed" not in test.get("tags", []):
+        pytest.skip("not a motivation-objective scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    assert new, (
+        "expected a relationship or event question decomposed from the "
+        "motivation objective; none was written"
+    )
+    offenders = []
+    for q in new:
+        text = q.get("question") or ""
+        hit = _asks_motivation(text)
+        if hit:
+            offenders.append(f"{q.get('id')}: {text!r} (matched /{hit}/)")
+    assert not offenders, (
+        "a motivation objective must be decomposed into the relationship or "
+        "event facts its answer rests on, not asked as a question -- the reason "
+        "is explained from historical context, not researched:\n  - "
+        + "\n  - ".join(offenders)
+    )
+
+
+# --- Tag-gated: a single-fact objective naming a paired fact must not be
+#     narrowed to one side (#1394 review -- ut_002 "parents" -> "father"). ----
+#
+# A "parents" objective is ONE fact, not two (SKILL.md Step 1c). Splitting it
+# into a father question or a mother question narrows the objective's scope.
+# Gated on `single-fact-objective` (only ut_002 carries it) and further
+# restricted to objectives that name a PAIRED fact ("parents"), so a non-paired
+# single-fact objective (a lone birth date) cannot trip it. It COEXISTS with
+# #1471 (verifies-disputed-parents) and the #1394 premise guard
+# (premise-question-names-fact): those carry different tags, so this never runs
+# on ut_014 or ut_016. The positive "restate the paired fact" class stays the
+# judge's job; this only rejects the one-side narrowing shape.
+_PAIRED_FACT_OBJECTIVE = r"\bparents\b"
+_SINGLE_PARENT_NARROWING = (
+    r"\bwho (?:was|were|is|are) the (?:father|mother)\b",
+    # possessive form: "Who was/is Patrick Flynn's father?" (name bounded to a
+    # single clause by [\w' -], so a comma/other clause can't be spanned).
+    r"\bwho (?:was|were|is|are) [\w' -]+'s (?:father|mother)\b",
+    r"\bthe (?:father|mother) of\b",
+    r"\b(?:father|mother)'s (?:identity|name)\b",
+    r"\bidentify the (?:father|mother)\b",
+)
+# A question that names BOTH sides (or "parents") is the correct restatement,
+# not a narrowing, so it escapes even if it also mentions one parent.
+_NAMES_PAIRED = r"\bparents\b|\bfather and mother\b|\bmother and father\b|\bboth parents\b"
+
+
+def test_single_fact_objective_not_narrowed(before_state, after_state, test):
+    """Tag-gated: a single-fact objective naming a PAIRED fact ("parents") must
+    be restated at that scope, not narrowed to one side -- two parents are one
+    fact (SKILL.md Step 1c). Gated on `single-fact-objective`; only fires when
+    the objective names a paired fact, so a non-paired single-fact objective
+    cannot trip it. Coexists with #1471 (verifies-disputed-parents) and the
+    #1394 premise guard (premise-question-names-fact) -- different tags, so it
+    never runs on ut_014 or ut_016. The positive case is the judge's; this
+    rejects only the one-side narrowing shape."""
+    if "single-fact-objective" not in test.get("tags", []):
+        pytest.skip("not a single-fact-objective scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    objective = ((after.get("project") or {}).get("objective") or "").lower()
+    if not re.search(_PAIRED_FACT_OBJECTIVE, objective):
+        pytest.skip("objective does not name a paired fact")
+    offenders = [
+        q.get("question")
+        for q in _new_questions(before, after)
+        if not re.search(_NAMES_PAIRED, (q.get("question") or "").lower())
+        and any(
+            re.search(sig, (q.get("question") or "").lower())
+            for sig in _SINGLE_PARENT_NARROWING
+        )
+    ]
+    assert not offenders, (
+        "a single-fact objective naming a paired fact (parents) was narrowed to "
+        "one side -- two parents are one fact; restate the objective ('Who were "
+        "the parents of X?') rather than asking only for the father or only the "
+        f"mother. Offending question(s): {offenders!r}"
     )

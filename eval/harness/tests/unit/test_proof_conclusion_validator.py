@@ -31,11 +31,16 @@ TAGGED = {"type": "positive", "tags": ["conflict-blocks-proved"]}
 UNTAGGED = {"type": "positive", "tags": ["proof"]}
 
 
-def _after(summaries, question=None):
+def _after(summaries, question=None, conflicts=None):
+    """`conflicts` is optional so a test can exercise the message's READ of
+    c_001's status. Without it every state renders `c_state == "absent"`, which
+    is why reverting that read to the old hardcoded "is open" left the whole
+    suite green (issue #2022 review)."""
     return {
         "research_json": {
             "proof_summaries": summaries,
             "questions": [question or {"id": "q_001", "status": "open"}],
+            **({"conflicts": conflicts} if conflicts is not None else {}),
         }
     }
 
@@ -147,3 +152,80 @@ def test_bounded_check_skips_when_untagged():
     with pytest.raises(BaseException) as exc:
         bounded(_state("not_proved", None), {"type": "positive", "tags": []})
     assert "not a bounded-conclusion scenario" in str(exc.value)
+
+
+# --- the message reads c_001's status rather than asserting it ---------------
+
+
+def test_message_reports_the_conflict_as_open_when_it_is_open():
+    """The branch that matches the old hardcoded sentence."""
+    with pytest.raises(AssertionError) as e:
+        check(
+            _after([_ps("probable")], conflicts=[{"id": "c_001", "status": "unresolved"}]),
+            TAGGED,
+        )
+    msg = str(e.value)
+    assert "identifying attribute" in msg
+    assert "'unresolved'" in msg, msg
+
+
+def test_message_reports_the_conflict_as_resolved_and_points_at_the_ownership_check():
+    """The branch the old hardcoded sentence got WRONG: a run that settled the
+    conflict first got a message asserting it was open. Settling it itself is an
+    out-of-lane write, so the message now says where that is asserted."""
+    with pytest.raises(AssertionError) as e:
+        check(
+            _after([_ps("probable")], conflicts=[{"id": "c_001", "status": "resolved"}]),
+            TAGGED,
+        )
+    msg = str(e.value)
+    assert "'resolved'" in msg, msg
+    assert "test_no_out_of_lane_section_writes" in msg, msg
+
+
+# --- the tier CEILING: `tier-possible-q001` fixes the tier exactly -----------
+#
+# The bounded validator above owns the FLOOR (a bounded finding may not collapse
+# to `not_proved`), and its ACCEPTED set deliberately admits `probable`. This tag
+# owns the exact-`possible` ceiling and now binds only `_004`
+# (`possible-tier-thin-evidence`). `_018` carried it too until issue #2930
+# relaxed its bounded death to accept `possible` OR `probable` — the tier flips
+# between the two run-to-run even on neutral wording — so 018 dropped the
+# tag and now relies on the floor validator alone. The synthetic cases below pin
+# both directions of the assertion (issue #2604), independently of any fixture.
+
+from test_proof_conclusion import (  # noqa: E402
+    test_q001_possible_tier as possible_tier,
+)
+
+POSSIBLE_TAGGED = {"type": "positive", "tags": ["tier-possible-q001"]}
+
+
+def _summary_state(tier):
+    return {"research_json": {"proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": tier}]}}
+
+
+def test_ceiling_accepts_possible():
+    possible_tier(_summary_state("possible"), POSSIBLE_TAGGED)
+
+
+def test_ceiling_rejects_probable():
+    """The 2026-09-19 failure: a HIGHER tier must fail, not only a lower one."""
+    with pytest.raises(AssertionError, match="'possible' exactly"):
+        possible_tier(_summary_state("probable"), POSSIBLE_TAGGED)
+
+
+def test_ceiling_rejects_not_proved():
+    with pytest.raises(AssertionError, match="'possible' exactly"):
+        possible_tier(_summary_state("not_proved"), POSSIBLE_TAGGED)
+
+
+def test_ceiling_rejects_a_missing_summary():
+    with pytest.raises(AssertionError, match="no proof_summaries entry"):
+        possible_tier({"research_json": {"proof_summaries": []}}, POSSIBLE_TAGGED)
+
+
+def test_ceiling_skips_when_untagged():
+    with pytest.raises(BaseException) as exc:
+        possible_tier(_summary_state("probable"), {"type": "positive", "tags": []})
+    assert "not a tier-possible-q001 scenario" in str(exc.value)

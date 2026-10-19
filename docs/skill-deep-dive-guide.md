@@ -28,7 +28,7 @@ You need three things open:
 | Its committed run logs | `eval/runlogs/unit/<skill>/v*.json` |
 | Its tests | `eval/tests/unit/<skill>/*.json` |
 
-If the skill delegates to an agent (record-extraction does), open the agent body
+If the skill delegates to an agent (research-exhaustiveness does), open the agent body
 too: `packages/engine/plugin/agents/<agent>.md`.
 
 ---
@@ -167,8 +167,8 @@ is the half a developer cannot invent.
 |---|---|
 | A field must hold one of a fixed set of values | a first-question-from-objective must record `selection_basis: objective_decomposition` |
 | A count — exactly one, at most one, none | at most one new `q_` per invocation; **zero** writes when the skill should have declined |
-| A field pinned at creation | a new hypothesis starts `active`; a new question's `exhaustive_declaration` is unstarted |
-| A cross-field rule that must always hold | `status: supported` requires at least one supporting assertion whose `evidence_type` is `direct` |
+| A field pinned at creation | a new hypothesis starts `active`; a new question's `search_stop` is unstarted |
+| A cross-field rule that must always hold | `status: supported` requires either one supporting assertion with `record_basis: stated`, or two with `record_basis: inferred` citing two distinct `source_id`s |
 | An identifier that must trace to something real | a collection id in a plan rationale must appear in a tool response from that same run |
 | A literal phrase that must never appear | a disqualified namesake must not be offered extraction "not even as a question" |
 | Content that must land in a persisted field, not just the chat | a locality fact cited in narration but absent from `plan_items[].rationale` never reaches the next skill |
@@ -182,7 +182,7 @@ with a dimension that scores 3 forever.
 
 ### Write the request like this
 
-> **Rule:** every new assertion carrying `evidence_type: direct` must cite a
+> **Rule:** every new assertion carrying `record_basis: stated` must cite a
 > `source_id` whose source is `original`, not `derivative`.
 > **Where to look:** `research.json` `assertions[]` and `sources[]` in the
 > after-state.

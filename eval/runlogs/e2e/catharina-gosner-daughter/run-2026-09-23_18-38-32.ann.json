@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Partial, not a clean miss. The tree does assert the forbidden relationship -- I1 (Magdalena Schedler) carries ParentChild links to both K4K8-5K3 and KZS8-RS7, and conflicts is empty -- so the guard is violated. But unlike the first run, this one explicitly formulated the correct alternative as h_002 ('Joannes Schedler had two different wives named Catharina in close succession: a first wife (Catharina Schedlerin) who died between 1741 and 1743, and a second wife (Catharina Gosnerin)') and reasoned about it before marking it ruled_out, while marking the convention reading h_001 supported. It reached the right question and rejected the right answer, which is nearer to declining the candidate than run 1's single-source acceptance, hence partial rather than false. Cause, shared with run 1: each bounded its marriage search at the christening year under test -- run 1 marriageYearTo 1743, run 2 marriageYearTo 1745 -- on the assumption that parents marry before their children, which is the assumption this case disproves. The 10 Aug 1751 marriage (ark:/61903/1:1:XLG8-6ZS) sits outside both windows in collection 1809045, which both runs queried. That single exclusion is what left h_002 unsupported and got it ruled out.",
+    "f2": "Partial. No negative conclusion exists and ps_001 asserts the opposite at probable tier, so the finding is not met. Credit for the analysis around it: five sources rather than one, sibling correlation across 1741-1756, two competing hypotheses stated, a mentor critique recorded, and an honest statement of its own ceiling (all sources derivative, original Triesen Kirchenbuch not examined). The conclusion is wrong, not unreasoned."
+  },
+  "annotator": "genealogist",
+  "findings_hash": "05086ba8dc8f294011777b2469bb3098e6a275bbadc2a69b7fa73031562f0763"
+}

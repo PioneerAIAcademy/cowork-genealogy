@@ -10,6 +10,19 @@ FamilySearch ToS requires all committed e2e fixtures to be about deceased person
 > Who were the parents of Simpson Ridley Stribling, born 15 July 1821 in Amite
 > County, Mississippi?
 
+## Bundled captures (`provided-documents/`)
+
+One BLM General Land Office page is committed here to let the harness exercise its land-patent plan item
+without a live browser session (issue #2083):
+
+| File | Source | What it shows |
+|------|--------|---------------|
+| `blm-glo-stribling-amite-county-ms.pdf` | glorecords.blm.gov | Taliaferro Stribling co-patentee with William McDowell, Credit Volume patent, Amite County, Mississippi, 15 June 1821, Accession CV-0112-265 |
+
+This is an authentic page saved from glorecords.blm.gov. It places the father (Taliaferro Stribling) in
+Amite County, Mississippi in the year Simpson was born (1821). The co-patentee William McDowell shares
+the mother Margaret "Peggy" McDowell's maiden surname, providing an additional corroborating connection.
+
 ## Why this fixture exists
 
 Filed as issue #1413, from an alpha report: *"Claude might need more help with the
@@ -328,7 +341,8 @@ Read these before attributing a failed headless run.
   `possible`, `possible` is beneath the `probable` tree-write gate, and resolving that
   conflict means reading the deed image. **Without a key, a correctly-behaving agent
   cannot reach a tree write at all, and f1–f3 are unreachable by construction.** Verify
-  `configure_openrouter` before starting a scored run, or the result is predetermined.
+  `openRouterApiKey` is set in `~/.familysearch-mcp/config.json` before starting a
+  scored run, or the result is predetermined.
 - **`a_046` — "Taliafer Stribling" among the 1836 grantors — is the binding constraint,
   and there is a third reading the debug run didn't consider.** The conclusion needs
   Taliaferro dead c. 1822–23; a living Taliaferro conveying in 1836 would dismantle the
@@ -413,7 +427,7 @@ Read these before attributing a failed headless run.
   result.** `stop_reason: completed`; 78.7 min, $10.32 — above the guide's 20–60 min /
   $3–10 envelope, which is the depth warning landing. Blind grade: **f1 `true`, f2 `true`,
   f3 `true`, f4 `false`** — 3 of 4, so `partial`. Compliance **FAIL** on nine guardrail
-  bypasses: an `exhaustive_declaration` written without `research-exhaustiveness`, a
+  bypasses: an `search_stop` written without `research-exhaustiveness`, a
   conflict carrying `conflict-resolution`'s analytical product without that skill running,
   and six new persons carrying `person_evidence` links with `same_person` never called, so
   every identity was asserted rather than scored. Per spec §14 compliance does not bear on
@@ -434,8 +448,8 @@ Read these before attributing a failed headless run.
   are never rewritten.
 - **2026-08-18 — second scored run (`run-2026-08-18_02-03-06`), and run 1 re-graded.**
   `stop_reason: cost_cap`, but the cap fired at the *end* of a completed trajectory, not
-  mid-flow: `research-exhaustiveness`, `proof-conclusion` and the mandatory `gps-mentor`
-  critique all ran, `question-selection` declared an autonomous stop point, and
+  mid-flow: `research-exhaustiveness`, `proof-conclusion` and the `gps-mentor`
+  critique (then mandatory) all ran, `question-selection` declared an autonomous stop point, and
   `project.status` was set to `completed` before the cap. Read it as a finished run that
   ran out of budget on the way out, not as a truncated one. Blind grade: **f1 `true`,
   f2 `true`, f3 `false`, f4 `true`** — 3 of 4, so `partial`. Proof quality **3 of 3**:

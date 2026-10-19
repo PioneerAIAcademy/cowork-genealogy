@@ -2,7 +2,7 @@ import styles from './StatusBadge.module.css'
 
 type BadgeColor = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'purple'
 
-const statusColorMap: Record<string, BadgeColor> = {
+export const statusColorMap: Record<string, BadgeColor> = {
   // Question status
   open: 'gray',
   in_progress: 'amber',
@@ -15,6 +15,17 @@ const statusColorMap: Record<string, BadgeColor> = {
   // Plan item status
   planned: 'gray',
   skipped: 'gray',
+  // Skip category (#1830) — why a skipped item was skipped. Amber is reserved
+  // for the three a reader can still act on: a human can often open what an
+  // autonomous run cannot, and `premise_invalidated` says the PLAN wants
+  // revising rather than this item dropping. The settled four are gray.
+  inaccessible: 'amber',
+  no_coverage: 'amber',
+  premise_invalidated: 'amber',
+  answered: 'gray',
+  fallback_not_triggered: 'gray',
+  out_of_scope: 'gray',
+  user_declined: 'gray',
   // Log outcome
   positive: 'green',
   negative: 'red',
@@ -28,9 +39,19 @@ const statusColorMap: Record<string, BadgeColor> = {
   primary: 'green',
   secondary: 'amber',
   indeterminate: 'gray',
-  // Evidence type
-  direct: 'green',
-  indirect: 'amber',
+  // Record basis. The map is keyed on the VALUE, not the field, so `absent`
+  // needs its own entry: before the rename `negative` only rendered red by
+  // colliding with log_outcome's `negative` above, and nothing would have
+  // caught all three evidence badges silently turning gray.
+  stated: 'green',
+  inferred: 'amber',
+  absent: 'gray',
+  // Proof shortfall — why a conclusion is not higher. `gap` and `conflict` are
+  // the two a researcher can act on, so they carry the warning colours.
+  ceiling: 'blue',
+  gap: 'amber',
+  conflict: 'red',
+  none: 'gray',
   // Conflict status
   unresolved: 'red',
   moot: 'gray',
@@ -52,15 +73,30 @@ const statusColorMap: Record<string, BadgeColor> = {
   // Priority
   high: 'red',
   medium: 'amber',
-  low: 'gray'
+  low: 'gray',
+  // gps-mentor verdicts (#1223). Without these every verdict renders gray, so
+  // "this proof needs work before it stands" looks the same as "looks solid".
+  looks_solid: 'green',
+  consider_addressing: 'amber',
+  address_first: 'red',
+  refused: 'gray',
+  // Known-holding confidence (confident reuses the green above). Carried even
+  // though no section here renders it yet: the map is keyed on the stored
+  // value, not on the section, and the parity test against viewer-ui's copy
+  // compares the whole map.
+  unsure: 'amber'
 }
 
 interface StatusBadgeProps {
-  value: string
+  /** Nullable: ScenarioViewer casts raw run-log JSON and promises that schema
+   *  drift degrades to blank fields rather than a crash. An evaluations[] entry
+   *  with no `verdict` used to throw inside render and blank the whole panel. */
+  value?: string | null
   color?: BadgeColor
 }
 
-export default function StatusBadge({ value, color }: StatusBadgeProps): React.JSX.Element {
+export default function StatusBadge({ value, color }: StatusBadgeProps): React.JSX.Element | null {
+  if (value == null) return null
   const resolvedColor = color ?? statusColorMap[value] ?? 'gray'
   return (
     <span className={`${styles.badge} ${styles[resolvedColor]}`}>{value.replace(/_/g, ' ')}</span>

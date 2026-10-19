@@ -21,6 +21,8 @@
  */
 
 /** Section → a single worked `entry` payload, as pretty JSON. */
+import { VALIDATOR_ENUMS } from "../validation/validator.js";
+
 const EXAMPLES: Record<string, string> = {
   // No "gedcomx_source_description_id" here on purpose: the composite form
   // below supplies "sourceDescription", which CREATES the tree's S entry and
@@ -63,17 +65,23 @@ const EXAMPLES: Record<string, string> = {
   "informant": "Mary Flynn, widow",
   "informant_proximity": "household_member",
   "informant_bias_notes": null,
-  "evidence_type": "direct",
+  "record_basis": "stated",
   "log_entry_id": "log_004",
   "extracted_for_question_ids": ["q_002"]
 }`,
 
+  // `match_score` carries a real number because #1731 step 3 refuses a link for
+  // a reachable persona that has no recorded same_person score behind it, and
+  // this example is the ORDINARY case. It is not universal: a pairing the tool
+  // can prove circular must keep `match_score: null`, and that refusal says so
+  // in its own text rather than relying on this example, because the example is
+  // appended to EVERY person_evidence rejection and cannot vary by cause.
   person_evidence: `{
   "assertion_id": "a_013",
   "person_id": "I1",
   "confidence": "probable",
-  "rationale": "Death certificate names Patrick Flynn, d. 1908 Schuylkill County — name, place and date match the subject. Father's name is a single uncorroborated reading, so the link is probable rather than confident.",
-  "match_score": null,
+  "rationale": "Death certificate names Patrick Flynn, d. 1908 Schuylkill County — name, place and date match the subject; same_person scored 0.78. Father's name is a single uncorroborated reading, so the link is probable rather than confident.",
+  "match_score": 0.78,
   "created": "2026-07-18",
   "superseded_by": null
 }`,
@@ -89,19 +97,24 @@ const EXAMPLES: Record<string, string> = {
   "created": "2026-07-18",
   "resolved": null,
   "resolution_assertion_ids": [],
-  "exhaustive_declaration": {
-    "declared": false,
+  "search_stop": {
+    "stopped_because": null,
     "justification": null,
     "log_entry_ids": [],
-    "stop_criteria": null
+    "stop_criteria": null,
+    "not_reached": []
   }
 }`,
 
+  // No "items" here on purpose: it is REQUIRED and non-empty, and the
+  // `plan_items` ops in the same call are what create it. This example said
+  // `"items": []`, which is the shape a caller refused for a missing `items`
+  // then copied — and which validates in no schema. `exampleFor` renders this
+  // shell inside the batched call, never alone.
   plans: `{
   "question_id": "q_002",
   "status": "active",
-  "created": "2026-07-18",
-  "items": []
+  "created": "2026-07-18"
 }`,
 
   plan_items: `{
@@ -149,12 +162,29 @@ const EXAMPLES: Record<string, string> = {
   "gaps": []
 }`,
 
+  // `resolved_conflict_ids` is `[]` in both proof-summary examples ON PURPOSE.
+  // The `conflicts` example above ships `status: "unresolved"` — correct, since
+  // creating a conflict is identification rather than resolution — and `c_001`
+  // appears in no settled example anywhere in this file. Citing it here taught
+  // an agent to write an unresolved conflict and then cite it as resolved,
+  // which `validator.ts` now refuses (#1972 V5) — and these strings are printed
+  // inside that very refusal, so the example handed back an instance of the
+  // thing just rejected. `[]` is the shape that matches this file's own
+  // conflict example. Do not re-add an id here without also adding a settled
+  // conflict example whose `preferred_assertion_id` and `resolution_rationale`
+  // match it.
+  //
+  // `shortfall` is "ceiling" here and not "gap" because this example's own
+  // `exhaustive_search_summary` says no further records surfaced — the value
+  // has to agree with the narrative beside it, or the example teaches the model
+  // to write a shortfall that contradicts its own summary.
   proof_summaries: `{
   "question_id": "q_002",
   "tier": "probable",
   "vehicle": "summary",
+  "shortfall": "ceiling",
   "supporting_assertion_ids": ["a_013", "a_025"],
-  "resolved_conflict_ids": ["c_001"],
+  "resolved_conflict_ids": [],
   "exhaustive_search_summary": "Searched Schuylkill County civil death registers, Catholic parish registers for St. Patrick's, and the 1850-1880 federal censuses; no further records naming Patrick's parents surfaced.",
   "narrative_markdown": "## Parents of Patrick Flynn\\n\\nThe 1908 death certificate names Thomas Flynn as father..."
 }`,
@@ -224,6 +254,75 @@ const PROJECT_EXAMPLE = `research_append({
 })`;
 
 /**
+ * The `plans` append, as the batched call `agents/research-plan.md` prescribes:
+ * the shell, then one `plan_items` op per item carrying the id the tool will
+ * assign the shell. Built from `EXAMPLES.plans` + `EXAMPLES.plan_items` rather
+ * than a third literal, so a schema drift in either is caught once.
+ */
+function plansBatchExample(): string {
+  const indent = (text: string, pad: string) => text.split("\n").join(`\n${pad}`);
+  return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  ops: [
+    // Op #1 — the plan shell. Omit "id" AND "items": the tool assigns the id,
+    // and the item ops below create the items. An EMPTY items array is not the
+    // way to satisfy a missing-items refusal — an itemless plan is invalid.
+    {
+      section: "plans",
+      op: "append",
+      entry: ${indent(EXAMPLES.plans, "      ")}
+    },
+    // Ops #2…N — one per plan item, in sequence order. planId is the id the
+    // tool assigns op #1: (highest existing pl_ in research.json) + 1,
+    // zero-padded to 3. Predict it — pl_001/pl_002 existing makes this pl_003.
+    // A hard-coded "pl_001" appends your items to another question's plan and
+    // leaves the plan you just created empty.
+    {
+      section: "plan_items",
+      op: "append",
+      planId: "pl_003",
+      entry: ${indent(EXAMPLES.plan_items, "      ")}
+    }
+  ]
+})`;
+}
+
+/**
+ * One worked resolve per `resolution_kind`, as the `fields` of a `conflicts`
+ * update (research_append's resolution-kind precondition). Each names the kind,
+ * carries the three analyses every resolve owes, and adds what that kind
+ * requires. Validated by the worked-examples test against a fixture conflict
+ * over a_013 / a_025.
+ */
+const RESOLVE_EXAMPLES: Record<"competitor" | "tree" | "synthesis", string> = {
+  competitor: `{
+  "status": "resolved",
+  "resolution_kind": "competitor",
+  "independence_analysis": "The 1850 census age came from a household informant; the delayed birth certificate was sworn by Patrick himself in 1915. Different informants, no shared derivation.",
+  "weighing_analysis": "The certificate is an original record, but its information is secondary: Patrick was reporting his own birth sixty years on. The census was taken five years after the event.",
+  "preferred_assertion_id": "a_013",
+  "resolution_rationale": "The 1850 census age (a_013) is preferred: it is closer to the event, and the delayed certificate's 1843 is the kind of self-reported drift the other censuses do not repeat."
+}`,
+  tree: `{
+  "status": "resolved",
+  "resolution_kind": "tree",
+  "independence_analysis": "Both records derive from the same family informant, so they are not independent of each other.",
+  "weighing_analysis": "Neither record outweighs the tree's existing birth year, which rests on a baptism already attached as a source.",
+  "preferred_assertion_id": null,
+  "resolution_rationale": "The tree's existing conclusion (baptism, 1844) stands: both competing records trace to one informant and neither outweighs the baptism."
+}`,
+  synthesis: `{
+  "status": "resolved",
+  "resolution_kind": "synthesis",
+  "independence_analysis": "The census (src_001) and the certificate (src_004) have different informants and no shared derivation.",
+  "weighing_analysis": "Each bounds the year from one side; neither alone fixes it.",
+  "preferred_assertion_id": null,
+  "resolved_value": "about 1844",
+  "resolution_rationale": "Neither assertion wins outright: the census age (a_013, src_001) places the birth in 1844-1845 and the certificate (a_025, src_004) in 1843-1844, so the year both allow is about 1844."
+}`,
+};
+
+/**
  * A worked `research_append` call for `section`, or null when the section has
  * no example. `op` selects the call shape (`plan_items` needs a `planId`).
  */
@@ -231,7 +330,7 @@ export function exampleFor(
   section: string,
   op: "append" | "update" = "append",
   /** Field names the failing op actually named. When it includes
-   *  `exhaustive_declaration`, the `questions` update example teaches the
+   *  `search_stop`, the `questions` update example teaches the
    *  seven-key `stop_criteria` object instead of the generic skeleton.
    *
    *  Without this the declaring body went to EVERY failing `questions` update —
@@ -242,12 +341,27 @@ export function exampleFor(
   fieldsNamed: readonly string[] = [],
 ): string | null {
   if (section === "project") return PROJECT_EXAMPLE;
+  // A `plans` append is never legal alone: `items` is required and non-empty,
+  // and the plan shell omits it, so the item ops that fill it belong in the
+  // SAME call. Rendering the shell on its own taught a call the tool refuses.
+  // Composed from the two registry entries so the packaging test still checks
+  // both halves against the schema.
+  if (section === "plans" && op === "append") return plansBatchExample();
   // hasOwn, not a bare index: `section` is LLM-supplied, and `constructor`
   // indexes out `Object`, which is truthy — so `!entry` lets it through and the
   // `entry.split` below throws a TypeError out of the rejection path.
   const entry = Object.hasOwn(EXAMPLES, section) ? EXAMPLES[section] : undefined;
   if (!entry) return null;
-  const planId = section === "plan_items" ? `\n  planId: "pl_001",` : "";
+  // `pl_001` was hard-coded here, which is the one literal
+  // `agents/research-plan.md` says never to hard-code: in an ongoing project it
+  // attaches the items to another question's plan. The append form teaches the
+  // prediction rule; the update form needs an id that already exists.
+  const planId =
+    section === "plan_items"
+      ? op === "update"
+        ? `\n  planId: "<the pl_ id of the plan holding this item>",`
+        : `\n  planId: "<the pl_ id of the plan this item belongs to — when the same call creates that plan, (highest existing pl_) + 1>",`
+      : "";
   // A source append must either reference an S entry that already exists in the
   // tree or create one in the same call. The composite form is the norm, so the
   // example teaches it rather than a bare id that would be rejected.
@@ -271,7 +385,7 @@ export function exampleFor(
     // nothing that teaches the seven-key object it is being asked for. The
     // `questions` APPEND example is no help either: it shows `stop_criteria:
     // null` on an undeclared question, which is the other legal shape.
-    if (section === "questions" && fieldsNamed.includes("exhaustive_declaration")) {
+    if (section === "questions" && fieldsNamed.includes("search_stop")) {
       return `research_append({
   projectPath: "<absolute-path-to-project-directory>",
   section: "questions",
@@ -279,8 +393,8 @@ export function exampleFor(
   entryId: "<existing-q_-id>",
   fields: {
     status: "exhaustive_declared",
-    exhaustive_declaration: {
-      declared: true,
+    search_stop: {
+      stopped_because: "question_answered",
       justification: "Searched 1850/1860 censuses, death certificate, and probate. Three independent sources confirm parentage.",
       log_entry_ids: ["log_001", "log_002", "log_003"],
       stop_criteria: {
@@ -291,10 +405,28 @@ export function exampleFor(
         evidence_class: "1860 census (original, primary) and death certificate (original, direct).",
         conflict_resolution: "Birthplace conflict resolved per preponderance hierarchy.",
         overturn_risk: "Low. No unexamined record type likely to name a different father."
-      }
+      },
+      not_reached: []
     }
   }
 })`;
+    }
+    // A refused resolve is taught the three kinds, one worked resolve each,
+    // rather than the generic skeleton: the resolution-kind precondition is the
+    // refusal a resolve now meets first, and "only the fields you are changing"
+    // teaches none of what it asks for.
+    if (section === "conflicts" && fieldsNamed.some((f) => RESOLUTION_FIELDS.has(f))) {
+      return ([...VALIDATOR_ENUMS.resolution_kind] as Array<keyof typeof RESOLVE_EXAMPLES>)
+        .map(
+          (kind) => `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "conflicts",
+  op: "update",
+  entryId: "<existing-c_-id>",
+  fields: ${RESOLVE_EXAMPLES[kind].split("\n").join("\n  ")}
+})`,
+        )
+        .join("\n");
     }
     return `research_append({
   projectPath: "<absolute-path-to-project-directory>",
@@ -302,6 +434,44 @@ export function exampleFor(
   op: "update",${planId}
   entryId: "<existing-id>",
   fields: { /* only the fields you are changing */ }
+})`;
+  }
+  // A caller refused for writing an unrecognized/malformed `claims[]` entry
+  // (#1711's per-claim tier breakdown) gets a worked body showing the shape,
+  // rather than the base single-claim example below, which never mentions
+  // `claims` at all. Mirrors the `questions`+`search_stop` branch
+  // above: swap in a different worked body for the same section+op when a
+  // specific field was named in the failing call. `tier` here is the
+  // stronger of the two per-claim tiers (probable, over maternity's
+  // possible) — see research-schema-spec.md §7 for why.
+  if (section === "proof_summaries" && fieldsNamed.includes("claims")) {
+    return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "proof_summaries",
+  op: "append",
+  entry: {
+    question_id: "q_002",
+    tier: "probable",
+    vehicle: "summary",
+    supporting_assertion_ids: ["a_013", "a_025"],
+    resolved_conflict_ids: [],
+    exhaustive_search_summary: "Searched Schuylkill County civil death registers, Catholic parish registers for St. Patrick's, and the 1850-1880 federal censuses; no further records naming Patrick's parents surfaced.",
+    narrative_markdown: "## Parents of Patrick Flynn\\n\\nThe 1908 death certificate names Thomas Flynn as father...",
+    claims: [
+      {
+        claim: "paternity",
+        proof_tier: "probable",
+        supporting_assertion_ids: ["a_013"],
+        relationship: { type: "ParentChild", parent: "I2", child: "I1" }
+      },
+      {
+        claim: "maternity",
+        proof_tier: "possible",
+        supporting_assertion_ids: ["a_025"],
+        relationship: { type: "ParentChild", parent: "I3", child: "I1" }
+      }
+    ]
+  }
 })`;
   }
   return `research_append({
@@ -333,4 +503,14 @@ export function exampleHints(
   return hints;
 }
 
-export const __testing = { EXAMPLES };
+/** The `conflicts` fields a resolve names; a refused update naming one is
+ *  shown the three worked resolves. */
+const RESOLUTION_FIELDS = new Set([
+  "status",
+  "resolution_kind",
+  "preferred_assertion_id",
+  "resolved_value",
+  "resolution_rationale",
+]);
+
+export const __testing = { EXAMPLES, RESOLVE_EXAMPLES };

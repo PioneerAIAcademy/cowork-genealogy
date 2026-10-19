@@ -6,10 +6,10 @@
     "type": "positive",
     "holdout": true,
     "description": "Run schema validation against mid-research-flynn-bad-enum, which is the clean mid-research scenario with exactly one mutation: assertion a_001 has information_quality 'tertiary' (not in the closed enum primary|secondary|indeterminate). The validator emits one error. This exercises the skill's headline behavior, which no prior test covered: surface the error, explain what it means, suggest a fix, and do NOT silently rewrite the file.",
-    "tags": ["validation", "error-path", "invalid-enum", "explain-and-suggest"]
+    "tags": ["validation", "error-path", "invalid-enum", "explain-and-suggest", "direct-arm"]
   },
   "input": {
-    "user_message": "Validate the project files for schema compliance.",
+    "delegation": "Validate the project files for schema compliance.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-bad-enum"
   },
   "intentionally_invalid": true,

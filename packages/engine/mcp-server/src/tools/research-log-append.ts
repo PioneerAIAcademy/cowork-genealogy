@@ -18,7 +18,7 @@
 // orphan-cleanup behavior, just extended to a list.
 
 import { join } from "path";
-import { unlink } from "fs/promises";
+import { getProjectStore } from "../store/project-store.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
@@ -29,9 +29,24 @@ import {
   withProjectLock,
   NoProjectError,
   noProjectResult,
+  isInsideProject,
+  assertInsideProject,
 } from "../utils/project-io.js";
-import { finalizeStagedResults, STAGING_CAPABLE_TOOLS } from "../utils/results-staging.js";
+import {
+  checkStagedResults,
+  consumeStagedResults,
+  finalizeStagedResults,
+  readStagedEnvelopeQuery,
+  readStagedResults,
+  resolveStagedRef,
+  stagedRefCorrectionWarning,
+  STAGING_SEARCH_TOOLS,
+  STAGING_SUBDIR,
+} from "../utils/results-staging.js";
+import { applyAltNameAutoPair, recordSearchToolSchema } from "./record-search.js";
+import { fulltextSearchToolSchema } from "./fulltext-search.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
@@ -50,13 +65,16 @@ const LOG_WITHOUT_PERSISTENCE_WARN_THRESHOLD = 3;
  *  BOTH being empty so it owns a distinct shape from the source-append warning
  *  (which fires once ≥3 sources exist); self-silences the instant any source or
  *  assertion lands. Fires per qualifying call while the two-empty state holds.
- *  Tool-name neutral, and a warning — never a failure. */
+ *  Reference lookups (`REFERENCE_LOOKUP_TOOLS`) are not counted. A warning —
+ *  never a failure. */
 function logWithoutPersistenceWarning(research: any): string | null {
   const sources = Array.isArray(research.sources) ? research.sources : [];
   const assertions = Array.isArray(research.assertions) ? research.assertions : [];
   if (sources.length > 0 || assertions.length > 0) return null;
   const log = Array.isArray(research.log) ? research.log : [];
-  const positives = log.filter((e: any) => e?.outcome === "positive").length;
+  const positives = log.filter(
+    (e: any) => e?.outcome === "positive" && !REFERENCE_LOOKUP_TOOLS.has(e?.tool),
+  ).length;
   if (positives < LOG_WITHOUT_PERSISTENCE_WARN_THRESHOLD) return null;
   return (
     `${positives} search(es) logged with a positive outcome but no sources or ` +
@@ -64,6 +82,105 @@ function logWithoutPersistenceWarning(research: any): string | null {
     `it — the source and the assertions it supports — or record why it could not, ` +
     `so the evidence is not lost when the session ends.`
   );
+}
+
+/** Nil FamilySearch index searches against one plan item before `escalationDue`
+ *  fires, counting the entry being logged. Matches search-records/SKILL.md step 8
+ *  item 7, "nil across 3+ FamilySearch variants". */
+const NIL_ESCALATION_THRESHOLD = 3;
+
+/** The FamilySearch index searches whose nils count toward the threshold. */
+const FS_INDEX_SEARCH_TOOLS = new Set(["record_search", "fulltext_search"]);
+
+/** Reference lookups log a looked-up article or overview, not a record search, so
+ *  their `positive` entries carry no evidence to persist and are left out of the
+ *  logging-without-persistence count (#3244). The census hedge still applies. */
+const REFERENCE_LOOKUP_TOOLS = new Set(["wiki_search", "wiki_read", "wikipedia_search", "historical_context"]);
+
+/** Question statuses under which the question is still open: every status but
+ *  the two that close it. */
+const OPEN_QUESTION_STATUSES = new Set(
+  [...VALIDATOR_ENUMS.question_status].filter((s) => s !== "resolved" && s !== "exhaustive_declared"),
+);
+
+/**
+ * Returned as `escalationDue` when this call's nil logs bring a census plan
+ * item to the threshold with its question still open (issue #2735, merged from
+ * #2789). The `ut_search_records_018` run logged nine nils and then told a
+ * logged-in user to log in: it had re-read the nils as an expired session, so
+ * in its own reasoning the prose escalation trigger never fired. A prose join
+ * that made the tally explicit was measured and reverted, because it made
+ * `ut_search_records_023` escalate before trying the letter-level surname lever.
+ * A note fires only once the nils are on disk, so it cannot reach that run.
+ *
+ * Census plan items only: a nil on a low-index record type (probate, land) is
+ * an index-coverage gap whose next step is full text, not another site
+ * (`ut_search_records_024`), and the tool cannot see index coverage.
+ */
+export const NIL_ESCALATION_NOTE =
+  "{n} FamilySearch searches for census plan item {planItemId} have returned " +
+  "nothing and its question is still open, so the escalation trigger has fired. " +
+  "The FamilySearch index has no phonetic fallback: a mis-indexed name will not " +
+  "surface under another variant. Hand this plan item to external sites now " +
+  "(`search-external-sites`) with the same person attributes. A zero-result search " +
+  "ran and matched nothing; it is not a sign of an expired session, which throws " +
+  "an authentication error instead.";
+
+/** A search that returned nothing: examined none, and reported none available.
+ *  `results_examined: 0` alone also covers a search whose results were judged
+ *  irrelevant unread, which is not a nil and must not be told it returned nothing. */
+const isNilFsSearch = (e: any): boolean =>
+  FS_INDEX_SEARCH_TOOLS.has(e?.tool) &&
+  e?.outcome === "negative" &&
+  e?.results_examined === 0 &&
+  (e?.results_available === undefined || e?.results_available === null || e?.results_available === 0);
+
+/** Map the literal string "null" to null — the model slip `applyLogAppendOp`
+ *  step 0b describes. Shared so the census preflight reads refs the same way. */
+const asNull = <T,>(v: T): T | null => ((v as unknown) === "null" ? null : v);
+
+/**
+ * "Indexed" beside the role word it qualifies ("Role indexed as 'Head'"). Taken
+ * from the eval validator's own marker list when it kept one; that validator now
+ * replays this function, so this is the only copy. The payload trigger made the
+ * gate reach `ut_search_records_014`'s note, which carries exactly this hedge.
+ * The role words exclude bare kinship and "household", so "surname indexed as
+ * Flyn, head of household ..." stays refused.
+ */
+export const INDEXED_ROLE_HEDGES: readonly RegExp[] = [
+  /\bindex\w*\b[^.;,]{0,20}\b(?:heads?|relationships?|co-?residents?|roles?)\b/,
+  /\b(?:heads?|relationships?|co-?residents?|roles?)\b[^.;,]{0,20}\bindex\w*\b/,
+];
+
+/**
+ * The `escalationDue` note for the plan items this call logged nils against,
+ * one line per qualifying plan item, or null. Reads only research.json, so it is decidable from the project documents
+ * (ADR-0011). Silent once the plan item has any positive or partial entry (a
+ * search found something) or any `external_site` entry (already escalated).
+ * Advisory: it never touches `ok`, and anything it cannot resolve yields null.
+ */
+function nilEscalationNote(research: any, newEntries: any[]): string | null {
+  const log: any[] = Array.isArray(research.log) ? research.log : [];
+  const plans: any[] = Array.isArray(research.plans) ? research.plans : [];
+  const questions: any[] = Array.isArray(research.questions) ? research.questions : [];
+  const touched = [...new Set(newEntries.filter(isNilFsSearch).map((e) => e.plan_item_id))]
+    .filter((id): id is string => typeof id === "string");
+  const notes: string[] = [];
+  for (const pli of touched) {
+    const entries = log.filter((e) => e?.plan_item_id === pli);
+    const nils = entries.filter(isNilFsSearch).length;
+    if (nils < NIL_ESCALATION_THRESHOLD) continue;
+    if (entries.some((e) => e?.outcome === "positive" || e?.outcome === "partial" || e?.tool === "external_site")) {
+      continue;
+    }
+    const plan = plans.find((p) => Array.isArray(p?.items) && p.items.some((i: any) => i?.id === pli));
+    const item = plan?.items.find((i: any) => i?.id === pli);
+    if (String(item?.record_type ?? "").trim().toLowerCase() !== "census") continue;
+    const question = questions.find((q) => q?.id === plan?.question_id);
+    if (!OPEN_QUESTION_STATUSES.has(question?.status)) continue;
+    notes.push(NIL_ESCALATION_NOTE.replaceAll("{n}", String(nils)).replaceAll("{planItemId}", pli));
+  }
+  return notes.length > 0 ? notes.join("\n") : null;
 }
 
 export interface ResearchLogAppendExternalSite {
@@ -111,6 +228,8 @@ export type ResearchLogAppendResult =
       ok: true;
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
+      /** `NIL_ESCALATION_NOTE`, present only when it fired. */
+      escalationDue?: string;
     } & ResearchLogAppendOpResult)
   | {
       ok: true;
@@ -118,6 +237,7 @@ export type ResearchLogAppendResult =
       results: ResearchLogAppendOpResult[];
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
+      escalationDue?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -126,6 +246,1413 @@ export type ResearchLogAppendResult =
 
 /** Raised for expected input problems; turned into `{ ok: false }`. */
 class LogAppendError extends Error {}
+
+/**
+ * The refusal for a log entry whose plan item sits on a `superseded` plan, or
+ * null when the item is on any other plan or on none (an unknown id is the
+ * validator's foreign-key check, not this one). Names the same question's
+ * active plan and its next open item, so the caller has a way forward.
+ */
+function supersededPlanItemRefusal(research: any, planItemId: string): string | null {
+  const plans: any[] = Array.isArray(research?.plans) ? research.plans : [];
+  const owner = plans.find((p) => Array.isArray(p?.items) && p.items.some((i: any) => i?.id === planItemId));
+  if (owner?.status !== "superseded") return null;
+  const active = plans.find((p) => p?.status === "active" && p?.question_id === owner.question_id);
+  const items: any[] = Array.isArray(active?.items) ? active.items : [];
+  const next =
+    items.find((i) => i?.status === "in_progress") ?? items.find((i) => i?.status === "planned");
+  const head =
+    `planItemId '${planItemId}' belongs to plan ${owner.id ?? "?"}, which is superseded: ` +
+    `its items are retired and a search logged against one counts toward a plan nobody is running.`;
+  if (!active) {
+    return (
+      `${head} Question ${owner.question_id ?? "?"} has no active plan — log this search with ` +
+      `planItemId null, or have research-plan write the plan it belongs to.`
+    );
+  }
+  if (!next) {
+    return (
+      `${head} The active plan for question ${owner.question_id ?? "?"} is ${active.id ?? "?"}, ` +
+      `and none of its items is planned or in progress — log this search with planItemId null, ` +
+      `or have research-plan extend ${active.id ?? "the plan"}.`
+    );
+  }
+  return (
+    `${head} The active plan for question ${owner.question_id ?? "?"} is ${active.id ?? "?"}; ` +
+    `its next open item is '${next.id}'${next.record_type ? ` (${next.record_type})` : ""}. ` +
+    `Log this search against that item if it serves it, or with planItemId null.`
+  );
+}
+
+/**
+ * Census mentions the note actually makes: a year BOUND to the word "census",
+ * with the jurisdiction that qualifies it.
+ *
+ * Two things used to be read off the whole note and both were wrong.
+ *
+ * THE YEAR. `/\b18[0-7]\d\b/` over the whole note meant any incidental pre-1880
+ * number tripped the rule, and a census note almost always carries birth years
+ * older than the census itself: "1880 US Census ... Henry Bottermiller (head,
+ * born 1828 Germany)" was refused on the 1828.
+ *
+ * THE JURISDICTION. The doctrine is US-federal: 1880 is the dividing line
+ * there. England & Wales and Scotland gained the relationship column in 1851,
+ * so an "1871 Scotland Census household" is fully documented and was still
+ * refused. This is the second of the three objections the lead raised against a
+ * tool-boundary gate on 2026-08-27 (issue #1967, "Decision (lead, 2026-08-27)",
+ * and restated in docs/specs/research-log-editor-spec.md § 8.2): "not
+ * generalizable outside the US (post-1851 England & Wales censuses do carry a
+ * relationship column)".
+ *
+ * MEASURED over the 3,522 distinct `notes` arguments of research_log_append in
+ * the committed run logs (eval/runlogs, both the plain and the `ops[]` batch
+ * form), measured at 414ee3c68: refusals fall 355 -> 202, and the 153 removed
+ * are 43.1% of every refusal the rule made -- 133 of them the year, 20 the
+ * jurisdiction. THE SPLIT RULE, because the figure is meaningless without it: a
+ * freed note counts as JURISDICTION when `censusMentions` bound it to a non-US
+ * threshold (a mention whose `columnFrom` is not 1880), and as YEAR otherwise.
+ * The obvious alternative -- counterfactual, "would it still be refused if every
+ * census were treated as US/1880?" -- splits the same 153 as 145 year and 8
+ * jurisdiction. The two rules disagree on exactly 12 notes, and all 12 are the
+ * same shape: a British census of 1881, 1891, 1901 or 1911, with a pre-1880
+ * BIRTH year elsewhere in the note ("1901 England census ... Robert Brierley
+ * b.1866"). None of them names a US census before 1880 -- such a note would be
+ * refused on both readings and never reach the freed set at all. What frees
+ * these is the year binding: `18[0-7]\d` matched the birth year under the old
+ * whole-note test, and bound to its own census (1901, past every threshold) it
+ * no longer does. The rule above files them under JURISDICTION because the
+ * census is non-US; the counterfactual files them under YEAR because that is
+ * what moved. That one shape is the whole 20-versus-8 gap. Neither rule is
+ * wrong; quoting a split without saying which is.
+ *
+ * Nothing in that corpus was newly refused by the binding. Those figures are the
+ * record of what the binding moved and can no longer be reproduced: 414ee3c68
+ * was a branch commit a squash merge discarded. The current figures come from
+ * `dev/measure-census-hedge-refusals.ts`: measured at c70e0214d, 177 of 4,062
+ * distinct notes are refused on note text alone (4.4%), and the staged-search
+ * trigger refuses 4 of the 738 paired `record_search` entries (the `h4k` note
+ * twice, and two more flat household claims with no census word). Against the
+ * fallback-present baseline, 46 notes are newly freed (note-only) and 12
+ * payload ops are newly freed; 0 newly refused in either.
+ * RE-DERIVE RATHER THAN QUOTE these: the corpus moves in both
+ * directions as run logs land, because a re-run REPLACES a skill's run log
+ * rather than adding one. Four earlier passes of this docstring read
+ * 3,275/332/136, 3,392/338/142, 3,490/355/154 and 3,489/355/153 -- it shrank by
+ * one between the last two of those and grew by 33 after them. The stamp is
+ * there so a reader can tell what the number was true of.
+ *
+ * That is a MEASUREMENT, not an invariant, and the difference matters to anyone
+ * leaning on it. `CENSUS_YEAR` spans 1600-1999 while the old gate was
+ * `\b18[0-7]\d\b`, so a census named before 1800 is newly refused: "1790 US
+ * Census household: John Smith head, with wife Mary" was allowed before and is
+ * refused now (1800 itself was already refused -- `18[0-7]\d` matches it -- so
+ * the boundary is 1600-1799). That behaviour is right, because the 1790-1840
+ * schedules name only the head of household and tally everyone else by age
+ * band, so "with wife Mary" names someone the schedule does not name at all. A
+ * note that names only the head states what such a schedule states, and is
+ * accepted (`HEAD_ONLY_US_CENSUS_YEARS`). But the rule does not only narrow,
+ * and a maintainer who believes it does will mis-predict this shape.
+ *
+ * The jurisdiction test is deliberately adjacency-bound and NOT a search of the
+ * note, because most non-US words in this corpus are birthplaces on a US
+ * schedule: "1850 US Census, Schuylkill County, PA ... born Ireland" is a US
+ * census of Irish immigrants and must stay refused. 52 of the 202 surviving
+ * refusals name a non-US place anywhere in the note (same corpus and stamp as
+ * above); read through, they are overwhelmingly that shape, so a wider window
+ * would be a regression rather than a further fix.
+ *
+ * Both are bound ADJACENTLY, never by scanning. The jurisdiction must sit in
+ * the unbroken run of words touching the census token -- punctuation ends the
+ * run -- so "born 1821 Wales, 1860 census at Cosumnes Township, California"
+ * still reads as a US 1860 census (correctly refused) rather than a Welsh one.
+ *
+ * A CENSUS TOKEN BINDS ONE YEAR SIDE. A token already bound to the year before
+ * it does not also bind a single year after it: in "1900 census 1853/Maine",
+ * "the 1900 census, 1853 Maine" and "1900 census (1853, Maine)" the 1853 is a
+ * birth year, and read as an 1853 census it refused a note about the 1880 census
+ * ("Mogom household, 1880 census: ... 1900 census 1853/Maine"). A RUN of two or
+ * more years after it still binds ("Searched 1880 census, 1870 and 1860"). And a
+ * year straight after a vital-event marker (`b.`, `born`, `bapt.`, `bp.`, `chr.`,
+ * `d.`, `died`, `m.`, `married`, `bur.`) never binds, so "Patrick Flynn b. 1840
+ * United States Census, 1850" reads as the 1850 census, not the 1840 one -- which
+ * would have put it under the head-only rule below.
+ *
+ * THE STAGED PAYLOAD SUPPLIES THE JURISDICTION OF AN UNQUALIFIED MENTION (issue
+ * #3409, decided at review-ready 2026-10-14). An unqualified "1851 census" reads
+ * as US, so a note logged against an English search was refused as a US census
+ * and rewritten until the gate stopped firing. When every titled row of the
+ * staged payload is British (`stagedPayloadColumnFrom`), an unqualified mention
+ * takes 1851 as its threshold; a mention that names its own jurisdiction, US
+ * included, keeps it. It does NOT skip the check: an unqualified 1841 mention
+ * against English rows stays refused, so "still refuses an 1841 England census"
+ * in pre1880-census-hedge.test.ts holds. The rejected option was to skip the
+ * note-only path whenever no staged row is a US federal census: that accepts
+ * "1841 England census ... wife" and frees none of the church-records notes,
+ * whose payload names no census at all. "pre-1880 census" and "census of the
+ * U.S." count as US-qualified, and a collection title is British only when it
+ * STARTS with a British name, so "New England ..." and "British Columbia ..."
+ * are not.
+ */
+type CensusMention = { year: number; columnFrom: number };
+/** A mention, plus whether it is explicitly US-worded: "US", "U.S.", "USA",
+ *  "United States", "federal", "census of the U.S.", or a `pre-`/`before` year.
+ *  A British-qualified mention stays false: the payload can only supply 1851,
+ *  the threshold it already has. `phrase` is the note's own words for it, which
+ *  a refusal quotes. */
+type QualifiedMention = CensusMention & { qualified: boolean; phrase: string };
+
+const CENSUS_YEAR = String.raw`1[6-9]\d\d`;
+const CENSUS_YEAR_SEPARATOR = String.raw`\s*(?:,|and|&|\/|or|to|-|–|through)\s*`;
+/** A run of years sharing one census token: "1860 and 1870 censuses". */
+const CENSUS_YEAR_RUN = String.raw`(?:${CENSUS_YEAR})(?:${CENSUS_YEAR_SEPARATOR}(?:${CENSUS_YEAR}))*`;
+/** A vital-event marker a year can follow: "b. 1840", "born 1840", "d. 1878".
+ *  The one-letter forms are lower case only, so an initial ("John B.") is not one. */
+const VITAL_EVENT_BEFORE = /(?:\b(?:b|d|m)\.|\b(?:[Bb]apt|[Bb]p|[Cc]hr|[Bb]ur)\.|\b(?:[Bb]orn|[Dd]ied|[Mm]arried))\s*$/;
+/** Words allowed between the year and the token: "1900 US federal census". */
+const CENSUS_QUALIFIER = String.raw`(?:u\.?\s?s\.?|united\s+states|federal|state|national|uk|united\s+kingdom|england|english|wales|welsh|scotland|scottish|ireland|irish|britain|british|canada|canadian|denmark|danish|norway|norwegian|sweden|swedish|germany|german|prussia|prussian|colonial|population|agricultural|mortality|slave|veterans?|school|and|&)`;
+const CENSUS_TOKEN = String.raw`census(?:es)?`;
+const CENSUS_BEFORE = new RegExp(
+  String.raw`\b(${CENSUS_YEAR_RUN})\s*((?:${CENSUS_QUALIFIER}\s+){0,4})${CENSUS_TOKEN}\b`,
+  "gi",
+);
+const CENSUS_AFTER = new RegExp(
+  // The connector may be a word ("census of 1870"), punctuation ("census, 1870")
+  // or nothing at all but a space ("US Census 1880", which is how FamilySearch
+  // titles its collections). Only whitespace and these connectors may sit
+  // between, never free text -- that is what keeps "census ... born 1828" out.
+  // A token `CENSUS_BEFORE` already bound is skipped (`qualifiedMentions`).
+  String.raw`((?:${CENSUS_QUALIFIER}\s+){0,4})${CENSUS_TOKEN}\b(?:\s*(?:of|for|in|from|year|taken\s+in|enumerated\s+in)\s+|\s*[,:(\[-]\s*|\s+)(${CENSUS_YEAR_RUN})`,
+  "gi",
+);
+
+/**
+ * The first census year whose schedule carries a relationship-to-head column.
+ *
+ * Sources, re-pointed by issue #2123 when
+ * search-records/references/census-field-availability.md was deleted: the
+ * FamilySearch wiki, which is now the runtime source for census schedules
+ * (ADR-0012). `United_States_Census` states "Relationships | 1880-1950" in its
+ * Federal Population Census Contents table; `England_Census` lists relationship
+ * to head under "1851-1901" and omits it from "1841". Scotland follows E&W.
+ * Both probed against the sidecar 2026-09-29 at 33,782 and 26,351 chars, and
+ * both are captured in eval/fixtures/mcp/wiki-read-united-states-census.json and
+ * wiki-read-england-census.json.
+ *
+ * A jurisdiction named but not listed here returns null, which SKIPS the rule
+ * rather than guessing: the doctrine is documented for these two only, and a
+ * wrong refusal blocks a researcher mid-write.
+ */
+function relationshipColumnFrom(qualifier: string): number | null {
+  const q = qualifier.toLowerCase();
+  if (/\b(?:england|english|wales|welsh|scotland|scottish|britain|british|uk|united\s+kingdom)\b/.test(q)) {
+    return 1851;
+  }
+  if (/\b(?:ireland|irish|canada|canadian|denmark|danish|norway|norwegian|sweden|swedish|germany|german|prussia|prussian)\b/.test(q)) {
+    return Number.NaN; // named, non-US, undocumented here -> skip
+  }
+  return 1880; // unqualified or explicitly US/federal
+}
+
+/** An explicitly US mention: never re-jurisdictioned by a staged payload. */
+const US_QUALIFIER = /\b(?:u\.?\s?s|united\s+states|federal)\b/i;
+
+export function censusMentions(notes: string): CensusMention[] {
+  return qualifiedMentions(notes).map(({ year, columnFrom }) => ({ year, columnFrom }));
+}
+
+function qualifiedMentions(notes: string): QualifiedMention[] {
+  const out: QualifiedMention[] = [];
+  const push = (years: string, qualifier: string, post: string, phrase: string, before = false, usAfter = false) => {
+    const from = relationshipColumnFrom(`${qualifier} ${post}`);
+    if (from === null || Number.isNaN(from)) return;
+    // `population`, `state` and the other non-place words leave a mention
+    // unqualified; a NaN jurisdiction was dropped above. "pre-1880" is US wording.
+    const qualified = before || usAfter || US_QUALIFIER.test(`${qualifier} ${post}`);
+    // The prefix qualifies the year it touches, not the run: "before 1880 and
+    // 1880 census" is a pre-1880 census and the 1880 one.
+    for (const [i, y] of (years.match(new RegExp(CENSUS_YEAR, "g")) ?? []).entries()) {
+      out.push({ year: Number(y) - (before && i === 0 ? 1 : 0), columnFrom: from, qualified, phrase });
+    }
+  };
+  // Where each census token bound to a PRECEDING year starts.
+  const boundTokens = new Set<number>();
+  for (const m of notes.matchAll(CENSUS_BEFORE)) {
+    // "b. 1840 census 1850": the 1840 is a birth. It does not bind, and when it
+    // is the only year before the token, the token keeps the year after it.
+    const vital = VITAL_EVENT_BEFORE.test(notes.slice(0, m.index))
+      ? (new RegExp(String.raw`^${CENSUS_YEAR}(?:${CENSUS_YEAR_SEPARATOR})?`, "i").exec(m[1])?.[0] ?? "")
+      : "";
+    if (vital === m[1]) continue;
+    boundTokens.add(m.index + m[0].search(/census(?:es)?$/i));
+    const post = notes.slice(m.index + m[0].length, m.index + m[0].length + 24);
+    // "pre-1880 census" names a census BEFORE 1880, so it binds as 1879. Read as
+    // 1880 it skipped the whole note: a ut_search_records_027 roster saying
+    // "(pre-1880 census)" passed whatever else it asserted.
+    const prefix = /\b(?:pre[-\s]?|before\s+)$/i.exec(notes.slice(Math.max(0, m.index - 7), m.index))?.[0];
+    const before = prefix !== undefined;
+    // The `of|for` capture stops at a period, so "census of the U.S." is read
+    // here, and so is "census for the USA".
+    const usAfter = /^\s*(?:of|for)\s+(?:the\s+)?(?:u\.?\s?s(?:\.?a)?\b|united\s+states\b)/i.test(post);
+    push(
+      m[1].slice(vital.length),
+      m[2] ?? "",
+      /^\s*(?:of|for)\s+([A-Za-z&\s]{0,20})/.exec(post)?.[1] ?? "",
+      `${prefix ?? ""}${m[0].slice(vital.length)}`,
+      before,
+      usAfter,
+    );
+  }
+  for (const m of notes.matchAll(CENSUS_AFTER)) {
+    // A token the year before it bound still takes a RUN after it ("1880
+    // census, 1870 and 1860"), never one year ("1900 census 1853/Maine").
+    const following = m[2].match(new RegExp(CENSUS_YEAR, "g")) ?? [];
+    if (boundTokens.has(m.index + (m[1] ?? "").length) && following.length < 2) continue;
+    push(m[2], m[1] ?? "", "", m[0]);
+  }
+  return out;
+}
+
+/**
+ * Refuse a pre-1880 US census note that states household structure as fact.
+ *
+ * 1850/1860/1870 carry NO "relationship to head" column. Every "head" / "wife" /
+ * "son" read off such a household -- and the record's own ParentChild/Couple
+ * edges, which are the indexer's inference from the same signals -- is an
+ * inference, not something the census stated. A note asserting it flat records a
+ * relationship the source cannot support, and a later reader has no way to tell
+ * it from a stated one. The 1790-1840 schedules name only the head, so there
+ * naming the head is not a claim and naming anyone else is
+ * (`HEAD_ONLY_US_CENSUS_YEARS`).
+ *
+ * ENFORCED HERE RATHER THAN IN PROSE because it is decidable from the note
+ * alone, which is ADR-0011's test for a writer-tool precondition. The prose rule
+ * has been in search-records/SKILL.md since issue #1284 and adherence is
+ * measurably partial: across the five committed run logs the marker appears in
+ * 32 of 43 logged searches, and issue #1912's flat "plus sons Thos T McElwee and
+ * Stephen McElwee" is real production text.
+ *
+ * DELIBERATELY NARROWER THAN THE EVAL VALIDATOR, whose pattern sets have been
+ * re-tuned three times (#1284, #1642, #1912) for false positives and negatives.
+ * Porting them wholesale into a hard refusal would inherit that history, and a
+ * wrong refusal blocks a researcher mid-write. This fires only where all three
+ * parts are unambiguous, and a note that trips it can always be fixed by saying
+ * what is true -- so the refusal is always actionable.
+ *
+ * THE STAGED PAYLOAD IS THE SECOND TRIGGER (issue #2735, lead ruling B,
+ * 2026-09-22). A note can describe a pre-1880 census household in full and
+ * never say "census": "1 result returned: Amos Whitfield, b. 1817, Georgia, in
+ * Pike, Kentucky, 1850. Indexed within the Household of Nancy Doss" (the
+ * recorded `ut_search_records_h4k` failure). `stagedCensusYears` carries what
+ * the `record_search` response staged for this entry says, as FamilySearch
+ * wrote it -- the one signal the caller does not author, which is what
+ * separates it from the author-supplied signal refused on 2026-08-27. It is
+ * derived by `stagedPre1880UsCensusYears`, never the envelope itself.
+ *
+ * The payload decides only when EVERY titled row is a pre-1880 US federal
+ * census, and only when the note binds no census year of its own (a bound year
+ * keeps precedence, so every note-only verdict is unchanged). Two rejected
+ * options: "any row is a pre-1880 US census" refuses a parish-register or
+ * 1880-row note whenever the same search also returned an 1850 row; "the
+ * top-ranked row only" trusts `results[0]`, which is the best match only when
+ * ranking ran.
+ *
+ * THE NOTE NO LONGER HAS TO REPEAT THE YEAR (2026-10-02). The requirement hid
+ * real misses: `ut_search_records_001` ("...in household of Thomas Flynn", birth
+ * year 1845 and no census year) and `_017` ("...in household of William Mullen",
+ * birth year 1852) both wrote flat and were caught by the eval validator
+ * afterwards instead of refused at the write.
+ *
+ * What the year requirement HAD been guarding is real and is kept by other
+ * means. `stagedPre1880UsCensusYears` counts only rows carrying a
+ * `collectionTitle`, so an UNTITLED parish-register row can sit in the same
+ * staged payload as the titled 1850 rows that produced the years -- the payload
+ * cannot prove the note is about a census row. The positional carve-out below
+ * is what now separates them: a note ABOUT another source names it before the
+ * household it qualifies. Do not delete that carve-out on the strength of
+ * "every titled row is a census row"; the untitled ones are the hole.
+ *
+ * This does NOT reopen the whole-note fallback the lead declined on 2026-09-29
+ * (issue #2945): that was `saysCensus && /\b18[0-7]\d\b/` scanning the note for
+ * any year, which made 46 of 223 note-only refusals with about 38 wrong on
+ * reading. This branch reads no year out of the note at all; the payload --
+ * which the caller does not author -- is what decides.
+ */
+/**
+ * A phrase that NAMES a record of another type. Every entry names a record
+ * (`will of`, never `will`): a term that doubles as ordinary English reopens
+ * the hole the bare `will` opened, where the verb cancelled the gate.
+ *
+ * EVERY NOUN HEAD CARRIES ITS PLURAL. The first version ended each alternative
+ * on a word boundary after the singular, so "Church records show Sarah in the
+ * household of William Mullen." and "Marriage records: ..." named a source and
+ * missed the list -- a carve-out that fails on the commonest spelling of its
+ * own terms is not a carve-out. The `will` entries stay singular on purpose:
+ * they are the phrases (`will of`, `will book`) that keep the bare verb out.
+ */
+const SOURCE_NAMED =
+  /\b(parish registers?|church (?:books?|records?)|baptisms?|christenings?|burial registers?|probate|will of|last will|will and testament|will book|deeds?|land records?|passenger lists?|draft (?:cards?|registrations?)|city director(?:y|ies)|gravestones?|headstones?|obituar(?:y|ies)|marriage (?:records?|certificates?|licen[cs]es?|registers?)|death (?:certificates?|records?|registers?)|birth (?:certificates?|records?|registers?)|vital records?|naturali[sz]ations?|pension files?)\b/;
+
+/**
+ * The US federal censuses that name only the HEAD of each household: everyone
+ * else is a tally by age and sex, with no name. A head named off one is what the
+ * schedule states, so when every census that fired is one of these (or, with no
+ * year bound, every staged payload year is), a head claim (`Claim.head`) is
+ * excused. Every other claim still refuses, and a note whose head claim is
+ * excused is also read for anyone else (`otherPersonClaims`), including a
+ * bracketed list of names after the household name ("Thomas Flynn household
+ * (Mary, Patrick, Bridget)", `bracketedRosters`). What neither reads passes: a
+ * note with no head claim keeps the older arms' verdict, so "Thomas Flynn,
+ * Household head; his son Patrick" passes as its 1850 twin does.
+ */
+const HEAD_ONLY_US_CENSUS_YEARS: ReadonlySet<number> = new Set([1790, 1800, 1810, 1820, 1830, 1840]);
+
+/**
+ * A phrase read as stating household structure, as the note wrote it. `head`
+ * marks a phrase that names only a household's head, or a household by its head
+ * ("household of Nancy Doss", "Thomas Flynn household", "as head"): the claims
+ * a 1790-1840 US schedule states. Every other claim places someone else in the
+ * household or gives them a relationship.
+ */
+type Claim = { phrase: string; head: boolean };
+const headClaim = (phrase: string): Claim => ({ phrase, head: true });
+const otherClaim = (phrase: string): Claim => ({ phrase, head: false });
+/** A role label or `as` role: a head claim only when the role is head, so not
+ *  "as the head's wife". */
+const roleClaim = (phrase: string): Claim => ({ phrase, head: /\bhead\b(?!['’]s\b)/i.test(phrase) });
+
+/** Every match of `re` in `s`, run on to the end of the word it stops in, so a
+ *  refusal can quote "wife Mary" where the pattern stopped at "wife M". */
+function phrasesOf(re: RegExp, s: string): string[] {
+  const all = new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`);
+  return [...s.matchAll(all)].map((m) => {
+    const end = m.index + m[0].length;
+    return s.slice(m.index, end) + (/^[\w'’-]*/.exec(s.slice(end))?.[0] ?? "");
+  });
+}
+
+/**
+ * The RELATIONAL half of the household wording. These predicate co-residence:
+ * there is no way to write "co-resident spouse" or "living with Thomas" that
+ * is not a claim, so they qualify with no name attached. Split from the nouns
+ * below after a corpus re-measure -- requiring a name of the whole set freed
+ * "1860 census: Elijah Wilkins ... with Sarah Wilkins ... as co-resident
+ * spouse", a flat spouse-and-children claim that is exactly what this gate is
+ * for. Searched against `notes`, hence the `i`.
+ *
+ * The PLURAL is not in this set: "no co-residents listed" and "co-residents not
+ * checked" are about the search, not the household. It is a claim when names
+ * follow it -- see `CORESIDENTS_NAMED`.
+ */
+const CORESIDENCE_CLAIM = /\b(?:co-?resident|enumerated with|living with)\b/i;
+
+/**
+ * Plural co-residents WITH the people named: "sidecar co-residents are Henry and
+ * Margaret Ackerman only", "Co-residents: Henry, Margaret". `\bco-?resident\b`
+ * stops short of the plural, so that ut_search_records_027 note walked through.
+ * A name has to follow the noun, directly or after `are`/`were`/`include`/a
+ * colon, so a note that says co-residents were not listed or not checked is
+ * left alone, and so is "Co-residents: None listed". Case-sensitive for the name,
+ * against `notes`.
+ */
+const CORESIDENTS_NAMED =
+  /\b[Cc]o-?residents\b\s*(?:(?:are|were|include[sd]?|including)\s+|:\s*)?(?!(?:None|No|Not|Nil|N\/A)\b)[A-Z]/;
+
+/**
+ * The ABSTRACT half. `household` and `dwelling` are ordinary nouns for the
+ * CONCEPT as much as for a particular one -- "reading the record to view
+ * household members", "cannot identify the correct household", "no Stribling
+ * appeared as a household head on any readable page" -- so one of these counts
+ * only when something is PUT IN one.
+ */
+const HOUSEHOLD_NOUN = /\b(?:household|dwelling)\b/;
+
+/**
+ * Someone placed in a household, read off the GRAMMAR rather than off
+ * capitalisation.
+ *
+ * The first version of this test asked whether a capital letter sat within 24
+ * characters of the noun. That is not a test for a name and review broke it
+ * three ways in each direction at once: it missed "1850 census: amos
+ * whitfield in household of nancy doss" and "1850 census: Amos in the doss
+ * household", and it fired on "no household found in Pike County" and "Bucks
+ * Co., PA household: no Whitfield found", where the only capital is a place.
+ * No lexicon of names is available, so no window size fixes either direction.
+ *
+ * What separates the two populations is the RELATION, not the orthography: a
+ * claim puts someone IN a household or names the household OF someone, while
+ * a mention attaches the bare noun to an abstract complement (members,
+ * composition, listing, head, name). Every alternative in `HOUSEHOLD_HEAD_CLAIM`
+ * and `HOUSEHOLD_MEMBER_CLAIM` is one of those relations and every one is
+ * case-free.
+ *
+ * NEGATION AND INTENT ARE NOT READ, and the limit is worth stating rather
+ * than discovering. A note that names a household in a relation is refused
+ * however it frames it, so with a staged pre-1880 payload behind them
+ * "Searched Whitfield household in Dodge Precinct: nil", "plan to check the
+ * Thomas Flynn household" and "no co-resident spouse found" are all refused
+ * -- each names a household and none asserts one. The corpus nils survive
+ * only because they name nobody ("No matching household found"), which is
+ * luck about phrasing rather than a rule. Adding a negation or intent clause
+ * is a widening of a deny and needs the corpus re-measure in
+ * `dev/measure-census-hedge-refusals.ts`, not a keyword list: the refusal
+ * costs a turn and is actionable, so the limit is tolerable where a silent
+ * miss would not be.
+ *
+ * `in` admits up to three intervening words so "in the doss household" and
+ * "in the 1850 census household" both read, while "no household found in Pike
+ * County" does not -- there the `in` governs the place and follows the noun.
+ * The possessive arm wants the apostrophe adjacent, so "Rebecca's 1840
+ * household cannot be confirmed" stays a mention.
+ *
+ * ONE SHAPE RESISTS THIS and is handled separately below: the bare noun
+ * compound, "Thomas Flynn household, Dwelling 84, Family 91". There is no
+ * relation word to read, so `householdCompounds` does read case -- but as
+ * one of three conditions, with a place blocklist and a complement guard.
+ * That blocklist is safe in a way a blocklist of CLAIM shapes would not be:
+ * a place word missing from it causes a false refusal, which is actionable,
+ * where a missing claim shape would cancel a deny silently.
+ */
+const HOUSEHOLD_NOUNS = String.raw`(?:household|dwelling)`;
+
+/**
+ * Words that make the noun ABSTRACT rather than a particular household, read
+ * off the corpus: "household composition", "household records", "household
+ * members", "a household head on any readable page". A compound whose noun
+ * carries one of these is a mention however the modifier is spelled, which is
+ * what keeps "Reading Topsham household records" out.
+ */
+const HOUSEHOLD_COMPLEMENT = String.raw`(?:members?|composition|listing|records?|data|info(?:rmation)?|structure|size|names?|heads?|co-?residents?|schedules?|pages?|groups?|entr(?:y|ies))`;
+
+/**
+ * Tokens that are a PLACE rather than a person, so a capitalised run ending
+ * in one is not a name. Short on purpose: a place word missing here causes a
+ * false refusal, which is actionable, while a person-name word wrongly listed
+ * here would cancel a deny silently.
+ */
+const PLACE_MARKER = String.raw`(?:Co|County|Counties|Twp|Township|Parish|City|Town|State|Precinct|District|Ward|Borough|Village|[A-Z]{2})`;
+
+/** The relations that name a household by its head. */
+const HOUSEHOLD_HEAD_CLAIM = new RegExp(
+  [
+    // "household of Nancy Doss", "Household of William Mullen"
+    String.raw`\b${HOUSEHOLD_NOUNS}\s+of\b`,
+    // "Nancy Doss's household"
+    String.raw`\b[\w.’-]+(?:'s|s'|’s|s’)\s+${HOUSEHOLD_NOUNS}\b`,
+    // "heads a household in Justice Precinct 4", "heading own household with
+    // John Clark b.1822" -- the participle is not optional decoration, it is
+    // the form the one corpus instance uses.
+    String.raw`\bhead(?:s|ing|ed)?\s+(?:a|the|his|her|their|own|her\s+own|his\s+own)?\s*${HOUSEHOLD_NOUNS}\b`,
+    // ...and the reverse order, which is how a note usually writes it:
+    // "household headed by Nancy Doss".
+    String.raw`\b${HOUSEHOLD_NOUNS}\s+head(?:s|ing|ed)?\s+by\b`,
+  ].join("|"),
+  "i",
+);
+
+/** The relations that place someone in a household. */
+const HOUSEHOLD_MEMBER_CLAIM = new RegExp(
+  [
+    // "in the doss household", "in one dwelling", "within the household"
+    String.raw`\b(?:in|within)\s+(?:[\w.'’-]+\s+){0,3}${HOUSEHOLD_NOUNS}\b`,
+    // "Household also includes: Mary J", "Dwelling 112 holds Nancy Doss".
+    // The optional number is how a schedule numbers the dwelling it is about.
+    String.raw`\b${HOUSEHOLD_NOUNS}\s+(?:\d+\s+)?(?:also\s+)?(?:includes?|contains?|comprises?|lists?|holds?)\b`,
+  ].join("|"),
+  "i",
+);
+
+/**
+ * The NOUN-COMPOUND shape, which the relations above cannot reach: "Thomas
+ * Flynn household, Dwelling 84, Family 91" and "Flynn household: Patrick
+ * Flynn (32, M, Laborer)" are both flat claims and both common in the corpus
+ * -- dropping this arm freed eleven of them.
+ *
+ * Capitalisation is ONE of three conditions here, never the whole test, which
+ * is the correction review asked for. The run must also avoid a place marker,
+ * so "Bucks Co., PA household" does not qualify, and the noun must not carry
+ * an abstract complement, so "Reading Topsham household records" does not
+ * either. Case-sensitive by necessity and searched against `notes`.
+ */
+const HOUSEHOLD_COMPOUND_G = new RegExp(
+  String.raw`((?:[A-Z][\w'’-]*[ ]){1,3})(?:[Hh]ousehold|[Dd]welling)\b(?![ ]${HOUSEHOLD_COMPLEMENT}\b)`,
+  "g",
+);
+const PLACE_MARKER_ONLY = new RegExp(String.raw`^${PLACE_MARKER}$`);
+
+/**
+ * Tokens that are capitalised for a reason other than being a name --
+ * sentence-opening determiners, and the handful of ordinary words that
+ * routinely start a note's sentences here (`Census`, `Federal`, `State`,
+ * `Found`, `Reading`, `Result`). Stripped from the front of a run before it
+ * is judged, or "The household also includes: Mary J" reads as a compound
+ * named "The" -- the capital test coming back in through the arm meant to
+ * replace it.
+ */
+const SENTENCE_OPENER = /^(?:The|A|An|This|That|These|Those|His|Her|Their|Our|My|No|One|Each|Same|Both|Another|Other|New|Old|Census|Federal|State|Found|Returned|Reading|Result)$/;
+
+/**
+ * The compound arm: after dropping any sentence-opening determiner, the run
+ * must be non-empty and name no place. Returns each compound as written, from
+ * the first kept token through the noun.
+ */
+function householdCompounds(notes: string): string[] {
+  const out: string[] = [];
+  for (const m of notes.matchAll(HOUSEHOLD_COMPOUND_G)) {
+    const run = m[1].trim().split(/\s+/);
+    while (run.length > 0 && SENTENCE_OPENER.test(run[0])) run.shift();
+    if (run.length > 0 && run.every((t) => !PLACE_MARKER_ONLY.test(t.replace(/\.$/, "")))) {
+      out.push(`${run.join(" ")} ${m[0].slice(m[1].length)}`);
+    }
+  }
+  return out;
+}
+
+/**
+ * The ROSTER shape: a household phrase followed directly by a list of people --
+ * "Household shows George, Henry, and Margaret Ackerman only", "record read
+ * shows household members George, Henry Ackerman, and Margaret", "Household per
+ * sidecar: George, Henry, Margaret Ackerman". Real `ut_search_records_027` notes
+ * (2026-10-08) that this gate let through and the eval validator failed. They
+ * place people in the household exactly as "Household lists George, Henry"
+ * does, which `HOUSEHOLD_MEMBER_CLAIM` already refuses; only the wording differs. A
+ * pasted transcription with no household phrase before it is untouched, as the
+ * spec's §8.2 transcription paragraph requires.
+ *
+ * The words between the noun and the list are ANY up to three lower-case
+ * words, not a list of verbs. A verb list was tried first and each round of
+ * runs found a phrasing it lacked (`shows`, then `members` and `per sidecar:`,
+ * then `indexed as`); the list's shape -- capitalised names joined by commas
+ * or "and" -- is what carries the claim, whatever links it to the noun.
+ *
+ * Like the compound arm this one reads case, and as there it is ONE of three
+ * conditions, never the whole test: the household phrase, a list of at least
+ * two capitalised runs joined by a comma or "and", and at least two of those
+ * runs naming no place -- so "Household shows Bucks Co., PA and Pike Co., KY as
+ * residences" is not a roster. "view household members and marriage indicator" (a plan the
+ * bare noun once refused) and "PA household: no Whitfield found" (a nil) have
+ * no list after the phrase. A roster written in lower case is missed, the
+ * same limit the compound arm accepts.
+ */
+const ROSTER_NAME = String.raw`[A-Z][\w.'’-]*(?:[ ][A-Z][\w.'’-]*){0,2}`;
+
+/**
+ * State and country names, so "Household search covered Ohio, Indiana and
+ * Kentucky" is not read as three people. A closed list, so it is safe in the
+ * same way as `PLACE_MARKER`: a place missing here causes a refusal the caller
+ * can act on. It leaves out every state that is also a common given name
+ * (Virginia, Georgia, Florida, Nevada, Carolina), because a person wrongly
+ * listed here would cancel the deny silently.
+ */
+const ROSTER_PLACE_NAMES = new Set([
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware",
+  "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine",
+  "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana",
+  "Nebraska", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina",
+  "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+  "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Washington", "West Virginia",
+  "Wisconsin", "Wyoming", "United States",
+  "Ireland", "England", "Scotland", "Wales", "Germany", "Prussia", "Bavaria", "Norway", "Sweden",
+  "Denmark", "Holland", "Netherlands", "France", "Switzerland", "Canada", "Mexico", "Italy",
+  "Poland", "Austria",
+]);
+
+const isPlaceRun = (run: string): boolean =>
+  ROSTER_PLACE_NAMES.has(run.replace(/\.$/, "")) ||
+  run.split(" ").some((t) => PLACE_MARKER_ONLY.test(t.replace(/\.$/, "")));
+const HOUSEHOLD_ROSTER_G = new RegExp(
+  String.raw`\b[Hh]ousehold\b((?:[ ][a-z][\w.'’-]*){0,3})[ ]?:?[ ]+(${ROSTER_NAME}(?:(?:[ ]?,[ ]*(?:and[ ]+)?|[ ]+and[ ]+)${ROSTER_NAME})+)`,
+  "g",
+);
+
+/**
+ * A list that is not of people, read off the words around it: "Household
+ * spellings tried: Flynn, Flinn and Flynne" lists spellings, "household search
+ * of Fayette, Greene and Washington counties" ends in a plural place noun, and
+ * "household in Norwalk, Fairfield, CT" follows a preposition of place. All three
+ * were refused before these. `names` is deliberately not a list word: "Household
+ * names: George, Henry and Margaret" is a roster. Nor is a FamilySearch record
+ * title, which names the head and then the collection: in "Household of David
+ * Bagley, United States, Census, 1840" neither "United States" nor a run with
+ * `Census` in it is a person.
+ */
+const ROSTER_OF_SPELLINGS = /\b(?:spellings?|variants?|surnames?|forms?)\b/;
+const ROSTER_OF_PLACES = /^[ ]+(?:counties|townships|parishes|states|districts|precincts|wards|towns|cities)\b/;
+const ROSTER_AFTER_PLACE_WORD = /^[ ](?:in|at|near)$/;
+
+function householdRosters(sentence: string): string[] {
+  const out: string[] = [];
+  for (const m of sentence.matchAll(HOUSEHOLD_ROSTER_G)) {
+    if (ROSTER_OF_SPELLINGS.test(m[1])) continue;
+    if (ROSTER_AFTER_PLACE_WORD.test(m[1])) continue;
+    if (ROSTER_OF_PLACES.test(sentence.slice((m.index ?? 0) + m[0].length))) continue;
+    const people = m[2]
+      .split(/[ ]?,[ ]*(?:and[ ]+)?|[ ]+and[ ]+/)
+      .filter((run) => !isPlaceRun(run) && !/\bCensus\b/.test(run));
+    if (people.length >= 2) out.push(m[0]);
+  }
+  return out;
+}
+
+/**
+ * A role LABELLING a named person is a structural claim whatever else the
+ * note does: "Amos (head), Nancy (wife), Thomas (son); dwelling 112" states a
+ * family in full and names no relation in prose, so neither the household arm
+ * nor `KINSHIP_CLAIM` (which wants `wife` immediately before a capitalised
+ * name) saw it.
+ *
+ * THE SHAPE IS NARROW ON PURPOSE: the bracket holds the role and nothing else
+ * before the `,` or `)`. A looser `\(\s*role` matched four corpus notes that
+ * assert nothing -- "c_002 (mother identity)", "Anders Monsen in Norway
+ * Census (spouse Unna)", "Margret Reagan (the mother, b. 1820)" and a will's
+ * "Mary Ann Dougherty (wife of Patrick Dougherty)". Those are glosses, where
+ * the role heads the parenthetical and the person sits inside it; in a claim
+ * the bracket holds only the label. "(head, ~1822 Bavaria)" still counts --
+ * the comma ends the role.
+ *
+ * An earlier version also required a word character BEFORE the bracket, to
+ * say the person stands outside it. THAT CONDITION WAS INERT and is gone:
+ * `.` sat in its character class, so a sentence-ending period satisfied it,
+ * and relaxing it moved nothing across 4,322 corpus notes. Review asked for a
+ * test that fails without it; there is none to write, because it did nothing,
+ * and a guard that cannot fail reads as coverage. Deleted instead.
+ */
+const ROLE_IN_PARENS =
+  /\(\s*(?:head|wife|husband|son|daughter|mother|father|spouse|widow)\s*[,)]/i;
+
+/**
+ * The union of the two, for POSITION only -- where the earliest household
+ * mention sits, never whether one is claimed. DERIVED from the halves rather
+ * than spelled a third time: an edit to either half that this missed would
+ * move the carve-out's anchor silently, and a deny whose anchor drifts fails
+ * open. Lowercased input.
+ */
+const HOUSEHOLD_ANCHOR = new RegExp(`${HOUSEHOLD_NOUN.source}|${CORESIDENCE_CLAIM.source}|\\bco-?residents\\b`);
+
+/**
+ * Kinship asserted about a NAMED person. Case-sensitive on purpose (the
+ * capital starts the name), so it is searched against `notes`, not `text`.
+ *
+ * `children` was missing and cost a real catch: "Household confirmed
+ * as correct family: Thomas Young ... and children Thomas (b.1829), Mary
+ * (b.1830)" states a family in full off an 1841 England schedule, which has
+ * no relationship column, and nothing else in the note reaches it. PLURAL
+ * ONLY: the singular refused "first child Martha J. born ~1860 (nine months
+ * later)", a marriage-record note reasoning from the wedding date, which
+ * asserts nothing about a census household. `spouse`
+ * is deliberately still absent, here and in `AS_ROLE`. Re-measured 2026-10-12:
+ * adding it newly refused 6 notes and 3 payload ops in the corpus, every one a
+ * search anchor ("with spouse Unna", "Mary Dwyer spouse Michael Dwyer", "added
+ * spouse anchor Juana Flores", "index does not name Catherine as spouse") and
+ * not one a claim -- even with a bracketed "(spouse Unna)" excluded.
+ *
+ * A role may be separated from the name by a REPORT VERB: "wife is listed as
+ * Mary A. Ranny" is the indexer's inference stated as fact, which is what
+ * this gate exists to catch. `indexed` is not among those verbs -- an index
+ * attribution is a hedge, though `INDEXED_ROLE_HEDGES` honours it only beside
+ * head/relationship/co-resident/role, never beside a bare kinship word.
+ *
+ * A PLURAL role may also be separated from its names by punctuation ("plus
+ * sons, Thos T McElwee and Stephen McElwee") -- `PLURAL_KINSHIP_PUNCTUATED`,
+ * payload only. The singular roles may not: "Groom's father: Christopher
+ * Jespersen" is a marriage record's field label, which the corpus re-measure
+ * showed the wider arm refusing.
+ *
+ * `AS_ROLE` and `HOUSEHOLD_HEAD_NAMED` are the role shapes the eval validator
+ * caught before it became a replay of this check: "Mary Flynn listed as wife",
+ * "Thomas Flynn as head", "Household head Thomas Flynn". The head shape wants a
+ * name after it, so "no Stribling appeared as a household head on any readable
+ * page" stays a negative result. An index attribution ("indexed as Head") is
+ * still a hedge, through `INDEXED_ROLE_HEDGES`.
+ *
+ * `AS_ROLE` counts only in a sentence that names no other record type
+ * (`SOURCE_NAMED`): "the death records naming Sarah A. Bagley as mother" and
+ * "child baptism records ... (Chresten Nielsen as father)" are what those
+ * records state, and the corpus re-measure refused both without this. Nor in a
+ * sentence about the tree: "Margaret Flynn, recorded in the tree as wife of
+ * Thomas" is the tree's claim, not the census's.
+ */
+const AS_ROLE =
+  /\bas\s+["'“‘]?(?:(?:his|her|the)\s+)?["'“‘]?(?:head|wife|husband|son|daughter|father|mother)\b/i;
+const HOUSEHOLD_HEAD_NAMED = /\b[Hh]ousehold\s+head\s*[:,\u2013\u2014-]?\s*[A-Z]/;
+const HEAD_OF_HOUSEHOLD = /\bhead\s+of\s+(?:the\s+)?household\b/i;
+
+/** Where a note's sentence ends. Not at an initial, or "naming Sarah A. Bagley
+ *  as mother" loses its source. */
+const SENTENCE_STOP = /(?<!\b[A-Z])[.;]\s/;
+/** A sentence that speaks for the census: one that names no other record type
+ *  and not the tree. */
+const speaksForCensus = (sentence: string): boolean =>
+  !SOURCE_NAMED.test(sentence.toLowerCase()) && !/\btree\b/i.test(sentence);
+/** The note's sentences that speak for the census. */
+const censusSentences = (notes: string): string[] => notes.split(SENTENCE_STOP).filter(speaksForCensus);
+const asRoleClaims = (notes: string): Claim[] =>
+  censusSentences(notes).flatMap((sentence) => phrasesOf(AS_ROLE, sentence).map(roleClaim));
+const KINSHIP_CLAIM =
+  /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?|children)\s+(?:(?:is|was|are|were)\s+(?:listed|recorded|shown|given|named)\s+as\s+)?[A-Z]/;
+
+/**
+ * The punctuated plural. Read ONLY against a staged pre-1880 census payload, like
+ * `POSSESSIVE_KINSHIP`: in a note alone it refused "Searched 1850 census for
+ * children, Mary and John: nil", a search plan, and a nil stages no payload.
+ */
+const PLURAL_KINSHIP_PUNCTUATED =
+  /(?<!\b(?:his|her|their)\s)\b(?:sons|daughters|children)[ ]?[,:\u2013\u2014-][ ]*[A-Z]/;
+
+/**
+ * The POSSESSIVE form, which puts the name before the role: "Ezra and Noah
+ * Whitfield, also in that entry, are Amos's children". `KINSHIP_CLAIM` wants the
+ * name after the role and never sees it. The owner must be capitalised, which
+ * keeps "the family's children" out; "George's wife Catherine" naming a tree-side
+ * relative is caught too, as the eval validator this replaced always did.
+ *
+ * Read ONLY against a staged pre-1880 census payload, where the rows say which
+ * household the note is about. In a note alone it refused "adjacent to
+ * Niskayuna where JPW's children were christened", a christening aside in a note
+ * that also named an 1810 census, and nothing it would have caught.
+ */
+const POSSESSIVE_KINSHIP = /\b[A-Z][a-zA-Z]*(?:'s|’s)\s+(?:sons?|daughters?|child|children|wife|husband)\b/;
+
+/**
+ * SOMEONE BESIDES THE HEAD, read only where the head-only rule is excusing a
+ * head claim (`HEAD_ONLY_US_CENSUS_YEARS`). The arms above were built for an
+ * 1850 schedule, where the household phrase already refused the note, and each
+ * is narrow on purpose: `KINSHIP_CLAIM` wants a lower-case role, a capitalised
+ * name after it and no his/her/their. With the head excused they were the whole
+ * deny, and "John Smith household. Wife Mary.", "Thomas Flynn household; father
+ * of Patrick" and "heads a household with his wife Mary and three children" all
+ * passed. These read the wider shapes:
+ *
+ * - `HEAD_ONLY_RELATION`: a relationship word, in any case, with no name after
+ *   it and his/her/their included.
+ * - `NAMED_COMPANION_G`: a capitalised run after with/includes/including/contains/
+ *   comprises/holds/enumerated in|with, unless the run is a place (`isPlaceRun`),
+ *   as in "enumerated in Fallsbury Township".
+ * - `AGED_NAMES`: two or more names, each with an age: "John (40), Mary (38)".
+ * - `NAMED_TALLY`: a name put on a tally mark: "Mary Flynn is the female 30-40".
+ *   The head's own tally reads the same way and is refused too.
+ * - `NAMED_IN_IT`: "Patrick Flynn enumerated in it".
+ * - `bracketedRosters`: two or more names in a bracket straight after the
+ *   household name: "Thomas Flynn household (Mary, Patrick, Bridget)". A place
+ *   list, the head's own name and a single item are not rosters.
+ *
+ * Only in a sentence that speaks for the census (`censusSentences`): "consistent
+ * with the father named in the 1884 death records" is what those records state.
+ * A note that makes no head claim is judged by the arms above alone, so a search
+ * note that mentions a relative ("check age columns for male child ~5", "if
+ * Nehemiah is Elizabeth's father") passes as it did before. A hedge clears these
+ * as it clears every other claim.
+ */
+const HEAD_ONLY_RELATION =
+  /\b(?:wife|wives|husbands?|spouses?|(?:grand|step)?(?:sons?|daughters?|child(?:ren)?|mother|father|parents?)|brothers?|sisters?|widow(?:er)?s?)\b/i;
+const NAMED_COMPANION_G = new RegExp(
+  String.raw`\b(?:with|includes?|including|contains?|comprises?|holds?|enumerated\s+(?:in|with))\s+(${ROSTER_NAME})`,
+  "g",
+);
+/** A capitalised name that is not a pronoun or an article. */
+const PERSON_NAME = String.raw`(?!(?:He|She|It|They|This|That|The|Who)\b)[A-Z][a-z][\w'’-]*(?:[ ][A-Z][a-z][\w'’-]*){0,2}`;
+const AGED_NAME = String.raw`${PERSON_NAME}[ ]?\([ ]*\d{1,3}[ ]*\)`;
+const AGED_NAMES = new RegExp(String.raw`${AGED_NAME}(?:[ ]*(?:,|and|&)[ ]*(?:and[ ]+)?${AGED_NAME})+`);
+const NAMED_TALLY = new RegExp(
+  String.raw`${PERSON_NAME}[ ](?:is|was)[ ](?:the|a|one[ ]of[ ]the)[ ](?:free[ ](?:white|colou?red)[ ])?(?:fe)?males?\b`,
+);
+const NAMED_IN_IT = new RegExp(String.raw`${PERSON_NAME}[ ](?:(?:is|was)[ ])?(?:also[ ])?enumerated[ ]in[ ]it\b`);
+
+/**
+ * A LIST IN A BRACKET straight after a household name: "Thomas Flynn household
+ * (Mary, Patrick, Bridget)", "Household of Thomas Flynn [Mary, Patrick]",
+ * "Cornelius Hurley's household (Cornelius, 67; Johanna, 61)", and `dwelling`
+ * as the compound arm reads it. Read only where the head-only rule is excusing
+ * a head claim (`otherPersonClaims`): there the household name is excused and
+ * the list is what names everyone else, while on an 1850 schedule the household
+ * name refuses the note by itself.
+ *
+ * A lower-case label opening the list comes off ("(members: Mary, Patrick)",
+ * "(incl. Mary, Patrick)"), the list is split on commas, semicolons, `&` and
+ * `and`, and each item loses any aside in brackets and one person's age or
+ * birth (`LIFE_DETAIL`). The list is a roster when two or more items look like
+ * a person's name: one to three capitalised words (`ROSTER_NAME`, which reads
+ * "Mary A." and "O'Brien" where `PERSON_NAME` does not), with no digit and no
+ * `Census`. It is skipped when it lists spellings (`ROSTER_OF_SPELLINGS`), when
+ * any item is a place (`isPlaceRun`, leaving out the head's own name, so
+ * "Household of Thomas Ward (Mary Ward, Patrick Ward)" still reads), and when
+ * every name in it is the head's own ("Household of David Bagley (Bagley,
+ * David)"). So "(Dwelling 84, Family 91)", "(XHRB-V42, XHRB-V4V)" and a source
+ * citation are not rosters, and nor is a single item, which may be the head or
+ * a place.
+ *
+ * Brackets are held out of the sentence split, so "(Mary; Patrick)" and "(Mary
+ * (b. 1802), Patrick)" stay whole, and the sentence, brackets included, must
+ * speak for the census (`speaksForCensus`).
+ */
+const BRACKET = String.raw`\((?:[^()]|\([^()]*\))*\)|\[[^\[\]]*\]`;
+const BRACKET_G = new RegExp(BRACKET, "g");
+const HOUSEHOLD_WORD = String.raw`(?:[Hh]ousehold|[Dd]welling)`;
+const HOUSEHOLD_NAME = String.raw`[A-Z][\w.'’-]*(?:[ ][A-Z][\w.'’-]*){0,3}`;
+/** "X household (…)", where X may be possessive, or "Household of X (…)". */
+const NAMED_HOUSEHOLD_LIST_G = new RegExp(
+  String.raw`(?:\b(${HOUSEHOLD_NAME})[ ]${HOUSEHOLD_WORD}|\b${HOUSEHOLD_WORD}[ ]of[ ](${HOUSEHOLD_NAME}))[ ]?(${BRACKET})`,
+  "g",
+);
+const LIST_LABEL = /^(?:[a-z][a-z ]*:|incl\.)[ ]*/;
+const LIST_ITEM_SPLIT = /[ ]*(?:[,;&]|\band\b)[ ]*/;
+const ASIDE_G = /\([^()]*\)|\[[^\[\]]*\]/g;
+/** One person's age or birth: "age 38", "b. 1802", "abt 1800". Not an age range,
+ *  which is a tally column: "Free White Males aged 30-40". */
+const LIFE_DETAIL = /[ ]+(?:aged?[ ]*\d{1,3}\b(?!-)|(?:born|abt|ca)\b|[bc]\.|~).*$/;
+const LISTED_NAME = new RegExp(String.raw`^${ROSTER_NAME}$`);
+
+function bracketedRosters(notes: string): string[] {
+  const held: string[] = [];
+  const masked = notes.replace(BRACKET_G, (b) => `\u0000${held.push(b) - 1}\u0000`);
+  const out: string[] = [];
+  for (const part of masked.split(SENTENCE_STOP)) {
+    const sentence = part.replace(/\u0000(\d+)\u0000/g, (_, i: string) => held[Number(i)]);
+    if (!speaksForCensus(sentence)) continue;
+    for (const m of sentence.matchAll(NAMED_HOUSEHOLD_LIST_G)) {
+      if (ROSTER_OF_SPELLINGS.test(m[3])) continue;
+      const own = new Set((m[1] ?? m[2]).split(" ").map((w) => w.replace(/['’]s$/, "")));
+      const notOwn = (item: string) => item.split(" ").filter((w) => !own.has(w)).join(" ");
+      const items = m[3]
+        .slice(1, -1)
+        .replace(LIST_LABEL, "")
+        .replace(ASIDE_G, "")
+        .split(LIST_ITEM_SPLIT)
+        .map((item) => item.replace(LIFE_DETAIL, "").trim())
+        .filter((item) => item !== "");
+      if (items.some((item) => isPlaceRun(notOwn(item)))) continue;
+      const names = items.filter((item) => LISTED_NAME.test(item) && !/\d/.test(item) && !/\bCensus\b/.test(item));
+      if (names.every((name) => notOwn(name) === "")) continue;
+      if (names.length >= 2) out.push(m[3]);
+    }
+  }
+  return out;
+}
+
+function otherPersonClaims(notes: string): Claim[] {
+  return censusSentences(notes)
+    .flatMap((sentence) => [
+      ...phrasesOf(HEAD_ONLY_RELATION, sentence),
+      ...[...sentence.matchAll(NAMED_COMPANION_G)].filter((m) => !isPlaceRun(m[1])).map((m) => m[0]),
+      ...phrasesOf(AGED_NAMES, sentence),
+      ...phrasesOf(NAMED_TALLY, sentence),
+      ...phrasesOf(NAMED_IN_IT, sentence),
+    ])
+    .concat(bracketedRosters(notes))
+    .map(otherClaim);
+}
+
+/**
+ * "relationship to head column", HOWEVER IT IS HYPHENATED. The separator is
+ * `[\s-]` because this tool's own refusal message spells it
+ * "relationship-to-head column", and the hedge patterns only accepted spaces:
+ * a researcher who hedged in the exact words they were handed was refused a
+ * second time, with no wording in the message that would clear it. Found in
+ * the corpus -- "Eight members enumerated: John Baker (head, ~1822 Bavaria)
+ * ... No relationship-to-head column in 1870 census" is a properly hedged note
+ * the gate refused.
+ */
+const RELATIONSHIP_COLUMN = String.raw`relationship[\s-]+(?:to[\s-]+head[\s-]+)?column`;
+const NO_RELATIONSHIP_COLUMN = new RegExp(String.raw`\bno\s+${RELATIONSHIP_COLUMN}`);
+const RELATIONSHIP_COLUMN_DENIED = new RegExp(
+  String.raw`${RELATIONSHIP_COLUMN}[^.]{0,40}\b(?:does not|did not|is not|was not|absent|missing)\b`,
+);
+
+/**
+ * Where does the note place someone in a household? Every phrase that does.
+ *
+ * The bare noun is not a claim, and treating it as one is the "cannot tell a
+ * plan from a claim" weakness `requirePre1880CensusHedge` already names below
+ * -- which the staged-payload trigger exposed on a real note.
+ * `ut_search_records_027` logged "Spouse field absent in index -- reading full
+ * record to view household members and marriage indicator" against an 1850
+ * payload and was refused for the words "household members", in a sentence
+ * that asserts no structure and only says what it is about to read. That was
+ * one of four payload ops this branch newly refused against `main`; the other
+ * three are flat "in household of <Name>" claims and stay refused.
+ *
+ * Two arms, each exercised by the suite: the relational phrases, which
+ * predicate co-residence on their own, and `HOUSEHOLD_HEAD_CLAIM` with
+ * `HOUSEHOLD_MEMBER_CLAIM`, which want the noun in a relation that puts someone
+ * in it. Case-free in both.
+ *
+ * SENTENCE BY SENTENCE, because a grammatical relation does not reach across
+ * a full stop. "…not indexed in FamilySearch. Rebecca's 1840 household cannot
+ * be confirmed" is a real corpus note where the `in` belongs to one sentence
+ * and the noun to the next, and matching the whole string refuses it. The
+ * split is on a terminator FOLLOWED BY SPACE, so "Bucks Co., PA" and "Sarah
+ * A. Mullen" are not cut at their abbreviating periods.
+ */
+function householdClaims(notes: string): Claim[] {
+  const claims = [
+    ...phrasesOf(CORESIDENCE_CLAIM, notes).map(otherClaim),
+    ...phrasesOf(CORESIDENTS_NAMED, notes).map(otherClaim),
+  ];
+  for (const sentence of notes.split(/[.;]\s/)) {
+    claims.push(
+      ...phrasesOf(HOUSEHOLD_HEAD_CLAIM, sentence).map(headClaim),
+      ...phrasesOf(HOUSEHOLD_MEMBER_CLAIM, sentence).map(otherClaim),
+      ...householdCompounds(sentence).map(headClaim),
+      ...householdRosters(sentence).map(otherClaim),
+    );
+  }
+  return claims;
+}
+
+/** Up to eight distinct phrases, quoted: double quotes taken out, runs of
+ *  whitespace closed up, and a phrase that sits inside a longer one dropped. */
+function quoted(phrases: readonly string[]): string {
+  const clean = phrases.map((p) => p.replace(/["“”]/g, "").replace(/\s+/g, " ").trim());
+  const lower = clean.map((p) => p.toLowerCase());
+  const distinct = clean.filter(
+    (p, i) => lower.indexOf(lower[i]) === i && !lower.some((q) => q.length > p.length && q.includes(lower[i])),
+  );
+  const shown = distinct.slice(0, 8).map((p) => `"${p.length > 80 ? `${p.slice(0, 80)}…` : p}"`).join(", ");
+  return distinct.length > 8 ? `${shown} and ${distinct.length - 8} more` : shown;
+}
+
+export function requirePre1880CensusHedge(
+  notes: string,
+  stagedCensusYears?: readonly number[],
+  payloadColumnFrom?: number,
+): void {
+  const text = notes.toLowerCase();
+  const payloadYears = stagedCensusYears ?? [];
+  // `\bcensus\b`, singular only, KNOWINGLY: a note saying just "censuses"
+  // bypasses the rule entirely ("Traced the family across the 1850 and 1860 US
+  // censuses ... head of household Thomas Flynn" writes clean today). Widening
+  // to `census(?:es)?` was measured and reverted -- it adds 4 refusals of which
+  // 2 are research PLANS rather than claims ("check 1850 and 1860 censuses for
+  // a woman named Margaret in the Thomas Flynn household"). The rule cannot
+  // tell a plan from a claim, which is a pre-existing weakness that fixing the
+  // gate merely exposes on more notes, and it is the real objection here. Do
+  // not widen this without solving that first.
+  //
+  // The payload overrides it deliberately: a note logged against a staged
+  // pre-1880 US census search is about that search's results, not a plan, so
+  // it is judged whatever word it uses -- unless it names another record type
+  // first, which is the carve-out below. That also closes the word hole -- a note
+  // that never says "census" -- for `record_search` only. A note with no census
+  // payload behind it (every other tool, a nil search) still returns here.
+  // Measured at dc9766b15 (dev/measure-census-hedge-refusals.ts): the override
+  // newly refused no plural-only note in the committed corpus.
+  const saysCensus = /\bcensus\b/.test(text);
+  if (!saysCensus && payloadYears.length === 0) return;
+
+  // Tie the year to the census it qualifies. When no year binds to a census
+  // mention at all the note is undecidable on that axis, so the note-only gate
+  // SKIPS rather than guessing — the same behaviour as an undocumented
+  // jurisdiction. What this gives up: an unhedged pre-1880 US census note whose
+  // phrasing the adjacency patterns above do not cover (e.g. "The federal
+  // census shows Daniel in one dwelling with Margaret and sons Thomas and
+  // Stephen; marriage 1871, Adams County"). The staged-payload trigger still
+  // fires for `record_search` entries whose staged rows name a pre-1880 US
+  // census; since 2026-10-02 the payload decides without the note repeating the
+  // year, bounded by the positional carve-out below.
+  // Decided (lead, 2026-09-29), issue #2945: the whole-note fallback
+  // (`saysCensus && /\b18[0-7]\d\b/`) made 46 of 223 note-only refusals over
+  // ~4,000 distinct corpus notes, about 38 of them wrong on reading.
+  // An UNQUALIFIED mention takes its jurisdiction from the staged payload when
+  // `stagedPayloadColumnFrom` found one (issue #3409); a qualified one keeps its own.
+  const bound = qualifiedMentions(notes).map((m) =>
+    !m.qualified && payloadColumnFrom !== undefined ? { ...m, columnFrom: payloadColumnFrom } : m,
+  );
+  // A note naming a DIFFERENT record type is not about the census rows, and the
+  // payload cannot rule that out: `stagedPre1880UsCensusYears` counts only rows
+  // carrying a `collectionTitle`, so an untitled parish-register row can sit in
+  // the same staged payload as the 1850 census rows that produced the years.
+  // Where the note is ABOUT such a source, the payload stops deciding and the
+  // note must bind its own census year, as it did before 2026-10-02.
+  //
+  // POSITIONAL, not a bare word list. The source must be named BEFORE the
+  // household it qualifies -- a note that is about a parish register leads with
+  // it ("Parish register 1861: baptism of Sarah, in the household of ..."),
+  // while a census note that merely mentions one later is still a census note.
+  // A list alone fails open: the first version carried a bare `will`, which the
+  // ordinary verb matched, so "...in the household of Nancy Doss. Will pass to
+  // extraction." silently skipped a gate that had refused it. Every entry below
+  // is a phrase that names a RECORD (`will of`, never `will`); adding a term
+  // that doubles as ordinary English reopens that hole, and a missing deny here
+  // fails open and silently where a missing allow merely annoys.
+  const sourceAt = text.search(SOURCE_NAMED);
+  // Anchor on the CLAIM, not on the household word alone. `householdAt < 0 ||`
+  // was the hole: a kinship claim with no household word ("...with wife Nancy
+  // and son Thomas Whitfield.") left the anchor at -1, so ANY source word
+  // anywhere in the note allowed it -- "Check baptism next." appended to a flat
+  // kinship claim walked straight through the gate it was meant to close.
+  // Both claim shapes are anchored now, on the EARLIEST of the two.
+  //
+  // POSITION comes from the broad `HOUSEHOLD_ANCHOR`, not from
+  // `householdClaims`, and the two answer different questions: whether a claim
+  // exists, and where the earliest household mention sits. Taking the broad one
+  // can only move `claimAt` earlier, which makes this carve-out HARDER to
+  // trigger -- the fail-closed direction, which is the one to be wrong in for a
+  // clause that cancels a deny.
+  const claimAt = [
+    text.search(HOUSEHOLD_ANCHOR),
+    notes.search(KINSHIP_CLAIM),
+    notes.search(PLURAL_KINSHIP_PUNCTUATED),
+    notes.search(POSSESSIVE_KINSHIP),
+    notes.search(AS_ROLE),
+  ]
+    .filter((i) => i >= 0)
+    .reduce((a, b) => Math.min(a, b), Number.POSITIVE_INFINITY);
+  const isAboutOtherSource =
+    sourceAt >= 0 && Number.isFinite(claimAt) && sourceAt < claimAt;
+  const fired = bound.filter((m) => m.year < m.columnFrom);
+  const namesColumnlessCensus = bound.length > 0
+    ? fired.length > 0
+    : payloadYears.length > 0 && !isAboutOtherSource;
+  if (!namesColumnlessCensus) return;
+
+  // Kinship asserted about a NAMED person: "mother Margaret", "plus sons Thos
+  // and Stephen". The lookbehind excludes the possessive form -- "searched for
+  // his wife Catherine" names a TREE-side relative who may be absent from the
+  // return, which is a statement about the tree and not about what the census
+  // stated. That carve-out was the eval validator's too, and dropping it made
+  // this refuse a compliant note.
+  // `ROLE_IN_PARENS` is the third shape: a note that labels each person with a
+  // bracketed role states the family as completely as prose does, and neither
+  // of the other two saw it.
+  const payload = payloadYears.length > 0;
+  const claims: Claim[] = [
+    ...householdClaims(notes),
+    ...phrasesOf(KINSHIP_CLAIM, notes).map(otherClaim),
+    ...(payload ? phrasesOf(PLURAL_KINSHIP_PUNCTUATED, notes).map(otherClaim) : []),
+    ...(payload ? phrasesOf(POSSESSIVE_KINSHIP, notes).map(otherClaim) : []),
+    ...asRoleClaims(notes),
+    ...phrasesOf(HOUSEHOLD_HEAD_NAMED, notes).map(headClaim),
+    ...phrasesOf(ROLE_IN_PARENS, notes).map(roleClaim),
+    ...phrasesOf(HEAD_OF_HOUSEHOLD, notes).map(headClaim),
+  ];
+  // When every census that decides is a head-only schedule, a claim that names
+  // only the head is what it states -- unless the note names someone else too
+  // (`otherPersonClaims`). A note that also names a later census keeps that
+  // census's rule.
+  const headOnly = bound.length > 0
+    ? fired.every((m) => m.columnFrom === 1880 && HEAD_ONLY_US_CENSUS_YEARS.has(m.year))
+    : payloadYears.every((y) => HEAD_ONLY_US_CENSUS_YEARS.has(y));
+  const excusesHead = headOnly && claims.some((c) => c.head);
+  const stated = [
+    ...claims.filter((c) => !(headOnly && c.head)),
+    ...(excusesHead ? otherPersonClaims(notes) : []),
+  ];
+  if (stated.length === 0) return;
+
+  const hedged =
+    /infer/.test(text) ||
+    /\bnot\s+(?:a\s+)?stated\b/.test(text) ||
+    /\bunstated\b/.test(text) ||
+    /\bimplied\b/.test(text) ||
+    /\bpresum\w*/.test(text) ||
+    NO_RELATIONSHIP_COLUMN.test(text) ||
+    RELATIONSHIP_COLUMN_DENIED.test(text) ||
+    // A compliant ut_search_records_027 note hedged with both; once "pre-1880
+    // census" binds as a pre-1880 census, nothing else here accepts it.
+    /\bno\s+relationships?\s+(?:is\s+|are\s+|was\s+|were\s+)?(?:stated|given|recorded|listed)\b/.test(text) ||
+    /\b(?:does|did)(?:\s+not|n['’]t)\s+record\b[^.]{0,60}\brelationship/.test(text) ||
+    INDEXED_ROLE_HEDGES.some((re) => re.test(text));
+  if (hedged) return;
+
+  // British wording only when every mention that fired is British; a note that
+  // also fires on a US mention, or on the US payload alone, keeps the US text.
+  // Every refusal quotes the census it read and the wording it read as
+  // structure, so the note can be fixed in one try.
+  const british = fired.length > 0 && fired.every((m) => m.columnFrom === 1851);
+  const census = fired.length > 0
+    ? quoted(fired.map((m) => m.phrase))
+    : `the staged search's ${[...new Set(payloadYears)].sort((a, b) => a - b).join("/")} US census rows`;
+  const wording = quoted(stated.map((c) => c.phrase));
+  throw new LogAppendError(
+    headOnly
+      ? `This note describes a 1790-1840 US census household (${census}) and names someone ` +
+        `other than its head, or gives them a relationship (${wording}). Those schedules name ` +
+        "only the head of each household and count everyone else in age-and-sex tallies, with " +
+        "NO relationship-to-head column, so anyone else named there, and how they are related, " +
+        "is an inference from other records or from the tallies. Name only the head, or say so " +
+        "in the note, e.g. \"...wife Mary, inferred from other records, not stated on the " +
+        "schedule.\" Then re-send."
+      : (british
+          ? `This note describes a pre-1851 British census household (${census}) but states the ` +
+            `family structure as fact (${wording}). The 1841 England, Wales and Scotland censuses ` +
+            "have NO relationship-to-head column (it begins in 1851)"
+          : `This note describes a pre-1880 US census household (${census}) but states the family ` +
+            `structure as fact (${wording}). 1850/1860/1870 censuses have NO relationship-to-head ` +
+            "column") +
+        ", so the structure is an inference from surname, ages and listing " +
+        "order -- as are any ParentChild/Couple edges on the record, which the " +
+        "indexer inferred the same way. Say so in the note, e.g. \"...in one " +
+        "dwelling; family structure inferred from surname, ages and order, not " +
+        "stated.\" Then re-send.",
+  );
+}
+
+/**
+ * A US FEDERAL census collection title, and its year. Positive and anchored,
+ * deliberately NOT `censusMentions` over the title: that reads an unqualified
+ * census as US, so "Ecuador, Census, 1737-1990" and "Philippines, Church Census,
+ * 1542-1980" (both real FamilySearch titles in the eval fixtures) would read as
+ * pre-1880 US censuses, and a state census ("New York State Census, 1855", which
+ * carries a relationship column) would too. Shapes seen in fixtures and run logs:
+ * "United States Census, 1850", "United States, Census, 1850", "United States
+ * Census, 1900 (Lancaster County, Pennsylvania)", "1870 United States Federal
+ * Census", "US Census 1910". A title this misses is simply not a trigger.
+ */
+const US_FEDERAL_CENSUS_TITLE = [
+  /^(?:united\s+states|u\.?s\.?),?\s+(?:federal\s+)?census,?\s+(1[6-9]\d\d)\b/i,
+  /^(1[6-9]\d\d)\s+united\s+states\s+federal\s+census\b/i,
+];
+
+/**
+ * The census years a staged `record_search` payload names, when EVERY row that
+ * carries a `collectionTitle` is a US federal census before 1880; otherwise [].
+ * A mixed search (1850 and 1880 rows) or any non-US row returns [], because the
+ * note may be describing the other row. Rows are read per-row: a staged payload
+ * keeps `collectionTitle` on each row and has no `collections` map.
+ */
+export function stagedPre1880UsCensusYears(rows: readonly unknown[]): number[] {
+  const years = new Set<number>();
+  let titled = 0;
+  for (const row of rows) {
+    const title = (row as { collectionTitle?: unknown } | null)?.collectionTitle;
+    if (typeof title !== "string") continue;
+    titled++;
+    const m = US_FEDERAL_CENSUS_TITLE.map((re) => re.exec(title.trim())).find(Boolean);
+    const year = m ? Number(m[1]) : NaN;
+    if (!(year < 1880)) return [];
+    years.add(year);
+  }
+  return titled > 0 ? [...years] : [];
+}
+
+/** A British collection title: "England and Wales Census, 1851", "England,
+ *  Wiltshire, Church Records, 1518-1990", "Scotland Census, 1861". Anchored at
+ *  the start, so "New England, ..." and "British Columbia, ..." are not. */
+const BRITISH_TITLE = /^(?:england|wales|scotland|great\s+britain|united\s+kingdom)\b/i;
+
+/**
+ * The relationship-column threshold the staged payload's JURISDICTION implies,
+ * for an unqualified census mention in the note to take (issue #3409). Only
+ * British collections answer: 1851 when at least one row is titled and EVERY
+ * titled row is a `BRITISH_TITLE`. A US row, any other jurisdiction, a mixed
+ * payload or no titles returns undefined and changes nothing: this clause
+ * cancels a deny, so it fails closed. Titles come from each `record_search`
+ * row's `collectionTitle`, or from a `record_read` row's `sd_c_` source (the
+ * collection description); any other tool returns undefined.
+ */
+export function stagedPayloadColumnFrom(tool: string, rows: readonly unknown[]): number | undefined {
+  if (tool !== "record_search" && tool !== "record_read") return undefined;
+  let titled = 0;
+  for (const row of rows) {
+    const r = row as { collectionTitle?: unknown; gedcomx?: { sources?: unknown } } | null;
+    const sources = r?.gedcomx?.sources;
+    const title =
+      tool === "record_search"
+        ? r?.collectionTitle
+        : Array.isArray(sources)
+          ? sources.find((s: any) => typeof s?.id === "string" && s.id.startsWith("sd_c_"))?.title
+          : undefined;
+    if (typeof title !== "string") continue;
+    titled++;
+    if (!BRITISH_TITLE.test(title.trim())) return undefined;
+  }
+  return titled > 0 ? 1851 : undefined;
+}
+
+/**
+ * Run the census check for one op BEFORE any op is applied, so a refusal is
+ * reported before any op writes a sidecar. `notes` is read as researchLogAppend
+ * left it (JSON-escaped tables already decoded, #3414); only `stagedResultsRef`
+ * gets the "null"-string mapping.
+ */
+async function preflightCensusHedge(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+  if (op.notes === undefined || op.notes === null) return;
+  const ref = asNull(op.stagedResultsRef);
+  let years: number[] | undefined;
+  let columnFrom: number | undefined;
+  if ((op.tool === "record_search" || op.tool === "record_read") && typeof ref === "string") {
+    try {
+      // Staged handles only, by the same resolved-path test `finalizeStagedResults`
+      // applies, so every ref finalize accepts is judged: `./results/.staging/x`
+      // or an absolute path cannot slip past on its spelling. `readStagedResults`
+      // also reads a finalized sidecar, which finalize rejects, and that error
+      // must reach the caller before a census refusal asks for a rewritten note.
+      if (isInsideProject(join(projectPath, STAGING_SUBDIR), assertInsideProject(projectPath, ref))) {
+        const rows = await readStagedResults(projectPath, ref);
+        if (op.tool === "record_search") years = stagedPre1880UsCensusYears(rows);
+        columnFrom = stagedPayloadColumnFrom(op.tool, rows);
+      }
+    } catch {
+      years = undefined; // a bad ref is finalize's error to report, not this check's
+    }
+  }
+  requirePre1880CensusHedge(op.notes, years, columnFrom);
+}
+
+/**
+ * The staging producers that echo their own inputs into the staged payload's
+ * `query` (`query: echoQuery(input)`), keyed to the input properties of their
+ * own schema. Only these have host-side ground truth for which filters a call
+ * sent; the other producers stage no echoed inputs, so they are never judged.
+ */
+const ECHOING_PRODUCER_INPUTS: ReadonlyMap<string, ReadonlySet<string>> = new Map([
+  ["record_search", new Set(Object.keys(recordSearchToolSchema.inputSchema.properties))],
+  ["fulltext_search", new Set(Object.keys(fulltextSearchToolSchema.inputSchema.properties))],
+]);
+
+/**
+ * What a producer actually sent, from its staged echo. `record_search` echoes
+ * its input but searches with `applyAltNameAutoPair(input)`, which fills the
+ * missing half of an alternate name, so a log naming that half is true.
+ */
+const SENT_FROM_ECHO: ReadonlyMap<string, (echo: Record<string, unknown>) => Record<string, unknown>> = new Map([
+  ["record_search", (echo) => applyAltNameAutoPair(echo as never) as Record<string, unknown>],
+]);
+
+/**
+ * Inputs a producer echoes that are not search filters: host plumbing, and the
+ * paging and response-shape controls, which change which page comes back but
+ * not which records match. A log `query` naming one claims nothing about a
+ * filter (`offset: 0` logged for a call that sent none is the default, not a
+ * misstatement), so none is ever refused.
+ */
+const NOT_A_FILTER = new Set(["projectPath", "subjectId", "count", "offset", "includeFacets"]);
+
+/**
+ * The filter keys an explicit log `query` claims that the staged search never
+ * sent at all (research-log-editor-spec.md §8.3). A key counts only when it is
+ * an input parameter of the producing tool's own schema, is a filter (not
+ * plumbing or paging),
+ * carries a value (`null`, `undefined`, `""` and an `*Exact: false` claim
+ * nothing), and is absent from what the search sent. A key the search sent with a different value is not
+ * returned: that is value normalization, not a claim about a filter.
+ */
+export function neverSentFilterClaims(
+  producer: string,
+  query: unknown,
+  stagedQuery: Record<string, unknown> | undefined,
+): { key: string; value: unknown }[] {
+  const inputs = ECHOING_PRODUCER_INPUTS.get(producer);
+  if (!inputs || !stagedQuery) return [];
+  if (query === null || typeof query !== "object" || Array.isArray(query)) return [];
+  const sent = SENT_FROM_ECHO.get(producer)?.(stagedQuery) ?? stagedQuery;
+  const claims: { key: string; value: unknown }[] = [];
+  for (const [key, value] of Object.entries(query as Record<string, unknown>)) {
+    if (value === null || value === undefined || value === "") continue;
+    // An `*Exact` flag reaches the search only when true; `false` is the default.
+    if (value === false && key.endsWith("Exact")) continue;
+    if (NOT_A_FILTER.has(key) || !inputs.has(key)) continue;
+    if (Object.hasOwn(sent, key)) continue;
+    claims.push({ key, value });
+  }
+  return claims;
+}
+
+/**
+ * Refuse an op whose explicit `query` claims a filter its staged search never
+ * sent. Runs for every op before any op is applied, so a refusal is reported
+ * before any op writes a sidecar.
+ */
+async function preflightQueryFilterClaims(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+  const ref = asNull(op.stagedResultsRef);
+  if (typeof ref !== "string" || op.query === undefined || op.query === null) return;
+  const staged = await readStagedEnvelopeQuery(projectPath, ref);
+  if (!staged || staged.tool !== op.tool) return;
+  const claims = neverSentFilterClaims(staged.tool, coerceObjectArg(op.query, "query"), staged.query);
+  if (claims.length === 0) return;
+  const named = claims.map((c) => `\`${c.key}: ${JSON.stringify(c.value)}\``).join(", ");
+  const keys = claims.map((c) => `\`${c.key}\``).join(", ");
+  throw new LogAppendError(
+    `query claims ${named}, but the ${staged.tool} call that staged this response sent no ` +
+      `${keys} filter. Log only the filters the search actually sent: drop ` +
+      `${claims.length === 1 ? "that key" : "those keys"}, or omit \`query\` so the tool fills it ` +
+      `from the staged search. If the filter was meant, re-run the search with it and log that ` +
+      `response's \`staged.resultsRef\`.`,
+  );
+}
+
+const QUERY_REQUIRED_MESSAGE =
+  "`query` is required. Supply it as an object — search parameters for a " +
+  'search entry, or a keyed identifier for a read-style entry (e.g. ' +
+  '`{"recordId": "ark:/61903/1:1:XXXX-XXX"}` for record_read, ' +
+  '`{"imageArk": "..."}` for image_transcribe). It may be omitted only ' +
+  "when `stagedResultsRef` points at a staged payload that already " +
+  "carries the query.";
+
+/**
+ * Fill an omitted `tool` from the staged envelope, then refuse once naming every
+ * required field still missing. Runs first, so every later preflight sees the
+ * filled `tool`. Without it an omitted `tool` reached the staging check as
+ * `'undefined'` and read as a mismatch, and a caller that dropped the staged ref
+ * to get past it lost the search's results (feedback issue #3069).
+ */
+async function preflightRequiredFields(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+  const ref = asNull(op.stagedResultsRef);
+  if ((op.tool === undefined || op.tool === null || op.tool === "") && typeof ref === "string") {
+    const staged = await readStagedEnvelopeQuery(projectPath, ref);
+    if (!staged) return; // an unreadable ref is preflightStagedRef's error to report
+    op.tool = staged.tool;
+  }
+  const toolMissing = op.tool === undefined || op.tool === null || op.tool === "";
+  const queryMissing = typeof ref !== "string" && (op.query === undefined || op.query === null);
+  const missing: string[] = [];
+  if (toolMissing) missing.push("`tool`");
+  if (op.outcome === undefined || op.outcome === null) missing.push("`outcome`");
+  if (op.resultsExamined === undefined || op.resultsExamined === null) missing.push("`resultsExamined`");
+  if (queryMissing) missing.push("`query`");
+  if (missing.length === 0) return;
+  throw new LogAppendError(
+    `missing required ${missing.length === 1 ? "field" : "fields"} ${missing.join(", ")}.` +
+      (toolMissing
+        ? " `tool` names the tool that produced the entry (e.g. 'record_search'); it may be " +
+          "omitted only alongside a `stagedResultsRef`, which records it."
+        : "") +
+      (queryMissing ? ` ${QUERY_REQUIRED_MESSAGE}` : "") +
+      (typeof ref === "string"
+        ? " Keep the `stagedResultsRef` when re-sending: it is what keeps the search's results " +
+          "with the log entry."
+        : ""),
+  );
+}
+
+/**
+ * Check one op's staged ref BEFORE any op is applied — it exists under
+ * results/.staging/ and its tool matches — so a bad ref in op[1] is refused
+ * before op[0] writes anything. Finalize re-checks under the same lock.
+ */
+async function preflightStagedRef(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+  const ref = asNull(op.stagedResultsRef);
+  if (typeof ref !== "string") return;
+  try {
+    await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: op.tool });
+  } catch (e) {
+    throw new LogAppendError(e instanceof Error ? e.message : String(e));
+  }
+}
+
+/**
+ * Refuse a batch naming one staged ref in two ops. Finalize no longer removes
+ * the staged file, so both ops would finalize it — one search, two log entries,
+ * two sidecars. Compared on the resolved path, the same test finalize applies,
+ * so `./results/.staging/x.json` and `results/.staging/x.json` collide; a ref
+ * that does not resolve is compared raw and left to the staged-ref check.
+ */
+function duplicateStagedRefError(ops: readonly ResearchLogAppendOp[], projectPath: string): string | null {
+  const seen = new Map<string, number>();
+  for (let j = 0; j < ops.length; j++) {
+    const ref = asNull(ops[j]?.stagedResultsRef);
+    if (typeof ref !== "string") continue;
+    let key = ref;
+    try {
+      key = assertInsideProject(projectPath, ref);
+    } catch {
+      // compared raw
+    }
+    const i = seen.get(key);
+    if (i !== undefined) return `ops[${j}]: stagedResultsRef '${ref}' is also ops[${i}]'s`;
+    seen.set(key, j);
+  }
+  return null;
+}
 
 /**
  * Coerce an object-typed tool argument that a model emitted as a JSON string
@@ -149,6 +1676,35 @@ function coerceObjectArg(value: unknown, field: string): unknown {
     throw new LogAppendError(`${field} must be a JSON object`);
   }
   return parsed;
+}
+
+const JSON_ESCAPE = /\\(u[0-9a-fA-F]{4}|[nrt"\\/])/g;
+const JSON_ESCAPE_CHAR: Record<string, string> = { n: "\n", r: "\r", t: "\t", '"': '"', "\\": "\\", "/": "/" };
+
+/** No real newline inside, two or more literal `\n`, and one that opens a table row or heading. */
+function looksJsonEscaped(notes: string): boolean {
+  return !notes.trim().includes("\n") && (notes.match(/\\n/g)?.length ?? 0) >= 2 && /\\n\s*[|#]/.test(notes);
+}
+
+/**
+ * Decode a markdown table or heading a model sent JSON-escaped (literal `\n`,
+ * no real newline). Measured on #3414: 4 of 12 survey-surname tables arrived so
+ * and were stored as one line. Decodes only \n \r \t \" \\ \/ \uXXXX and keeps
+ * any other backslash (\| \* \'); undoes at most two levels of escaping.
+ */
+export function unescapeJsonNotes(notes: string | null | undefined): string | null | undefined {
+  if (typeof notes !== "string") return notes;
+  // The string's own closing quote can leak through: drop a trailing `"` when it
+  // is the only unescaped quote in an escaped table (#3414, 1 of 12).
+  let out = looksJsonEscaped(notes) && /(?<!\\)"$/.test(notes) && (notes.match(/(?<!\\)"/g)?.length ?? 0) === 1
+    ? notes.slice(0, -1)
+    : notes;
+  for (let pass = 0; pass < 2 && looksJsonEscaped(out); pass++) {
+    out = out.replace(JSON_ESCAPE, (_m, e: string) =>
+      e.length === 5 ? String.fromCharCode(parseInt(e.slice(1), 16)) : JSON_ESCAPE_CHAR[e],
+    );
+  }
+  return out;
 }
 
 async function readJson(projectPath: string, filename: string): Promise<any> {
@@ -181,7 +1737,7 @@ function nextLogId(log: any[]): string {
  *  orphan sidecar survives a call that ultimately writes nothing. */
 async function cleanupSidecars(projectPath: string, resultsRefs: string[]): Promise<void> {
   for (const ref of resultsRefs) {
-    await unlink(join(projectPath, ref)).catch(() => {});
+    await getProjectStore().remove(projectPath, ref);
   }
 }
 
@@ -200,24 +1756,41 @@ async function applyLogAppendOp(
   projectPath: string,
   sidecarsCreated: string[],
   warnings: string[],
+  stagedConsumed: string[],
 ): Promise<ResearchLogAppendOpResult> {
   // 0. Coerce object-typed args a model may have stringified. Some models
   //    emit `externalSite` / `query` as a JSON string instead of a nested
   //    object; without this they reach the checks below as strings and fail
   //    opaquely ("externalSite.site 'undefined' is not a valid site").
-  const externalSite = coerceObjectArg(op.externalSite, "externalSite") as
+  // 0b. Map the literal string "null" back to null on every nullable arg.
+  //     Some models emit `"null"` (the string) where they mean JSON null.
+  //     Stored verbatim on `planItemId` it becomes a bogus id reference
+  //     ("plan_item_id 'null' not found"); on the fields that carry a
+  //     validator it is worse, because it refuses the ENTIRE append:
+  //     `resultsAvailable: "null"` fails the non-negative-integer bound below,
+  //     `stagedResultsRef: "null"` fails the staging-path check, and
+  //     `externalSite: "null"` fails `coerceObjectArg`. One stringly-typed
+  //     argument then discards the log entry the caller actually wrote.
+  //
+  //     One helper over all of them rather than a mapping per field: handling
+  //     `planItemId` alone and not its siblings is the same class the integer
+  //     bound below already had to be widened for (review round 5), and
+  //     CLAUDE.md asks for one shared guard on the second instance.
+  //
+  //     Safe because `"null"` is never a legitimate value for any of these:
+  //     not a `pli_` id, not a number, not a `results/.staging/` path, not an
+  //     object. `notes` is deliberately NOT mapped — a note whose text is
+  //     "null" is odd but not invalid, and nulling a caller's prose would
+  //     discard information rather than recover it.
+  const planItemId = asNull(op.planItemId);
+  const resultsAvailable = asNull(op.resultsAvailable);
+  const stagedResultsRef = asNull(op.stagedResultsRef);
+
+  const externalSite = coerceObjectArg(asNull(op.externalSite), "externalSite") as
     | ResearchLogAppendExternalSite
     | null
     | undefined;
   const query = coerceObjectArg(op.query, "query");
-
-  // 0b. Map the literal string "null" back to null for nullable scalar args.
-  //     Some models emit `planItemId: "null"` (the string) instead of JSON
-  //     null; stored verbatim it becomes a bogus id reference that fails
-  //     validation ("plan_item_id 'null' not found"). "null" is never a
-  //     valid pli_ id, so this coercion is safe.
-  let planItemId = op.planItemId;
-  if ((planItemId as unknown) === "null") planItemId = null;
 
   // 0c. planItemId must be a plan-item id (^pli_) from the active plan, or
   //     null for an opportunistic/ad-hoc search. Models sometimes stuff a
@@ -237,6 +1810,17 @@ async function applyLogAppendOp(
     );
   }
 
+  // 0d. A superseded plan's items are retired: research-plan replaced the plan,
+  //     and a search logged against one of its items counts toward a strategy
+  //     nobody is running (issue #2155). Refuse it and name the active plan's
+  //     next open item. A `completed` plan is not refused: the write-time replay
+  //     over the e2e corpus found its only hits with no active plan to point at,
+  //     where a refusal would leave the caller nowhere to log.
+  if (typeof planItemId === "string") {
+    const refusal = supersededPlanItemRefusal(research, planItemId);
+    if (refusal) throw new LogAppendError(refusal);
+  }
+
   // 1. Input-consistency checks (external_site ↔ tool, enums).
   const isExternal = op.tool === "external_site";
   if (isExternal && (externalSite === undefined || externalSite === null)) {
@@ -248,8 +1832,56 @@ async function applyLogAppendOp(
   if (externalSite && !EXTERNAL_SITE_VALUES.has(externalSite.site)) {
     throw new LogAppendError(`externalSite.site '${externalSite.site}' is not a valid site`);
   }
+  // `urlGenerated` is the string the skill presents as the clickable link and
+  // persists into `research.json` — the same caller-composed, URL-shaped
+  // input `build_external_search_url` rejects as `invalid_base_url`. Trimmed
+  // before both the check and the write: `new URL()` strips padding itself,
+  // so a padded value would pass here and persist with its spaces.
+  const urlGenerated =
+    typeof externalSite?.urlGenerated === "string" ? externalSite.urlGenerated.trim() : externalSite?.urlGenerated;
+  if (externalSite && urlGenerated != null && !isHttpUrl(String(urlGenerated))) {
+    throw new LogAppendError(
+      `externalSite.urlGenerated ${JSON.stringify(externalSite.urlGenerated)} is not an absolute http(s) URL`,
+    );
+  }
   if (!OUTCOME_VALUES.has(op.outcome)) {
     throw new LogAppendError(`outcome '${op.outcome}' is not one of positive/negative/partial/error`);
+  }
+  // Coerced the same way `resultsAvailable` is below (a model that
+  // stringifies numeric args sends `"5"`); a genuinely non-numeric string is
+  // left as-is and rejected by the check under it. That check runs before the
+  // `external_links_search` gate because the gate's `> 0` comparison is
+  // `false` for both `NaN` and a negative number. `validator.ts` enforces the
+  // same bound on the persisted `results_examined` for every writer of
+  // `log[]`; this is the fail-fast under the caller's own parameter name, the
+  // same split `planItemId` above uses.
+  const resultsExamined = coerceJsonArg(op.resultsExamined);
+  if (!isNonNegativeInteger(resultsExamined)) {
+    throw new LogAppendError(
+      `resultsExamined must be a non-negative integer; got ${JSON.stringify(op.resultsExamined)}`,
+    );
+  }
+  // This entry grades the curated-links FETCH, not the search: any links
+  // returned is a positive fetch, even when none fit the plan item's record
+  // type (that goes in notes instead). Measured 2026-09-10 against the five run
+  // logs then committed, a model got this wrong in 4 of 66
+  // `external_links_search` entries, so prose alone did not hold it.
+  //
+  // Corrected rather than refused: the right value is decidable from the call
+  // itself, so a refusal only bought a retry and, on 2026-10-01, the Tool
+  // Arguments point in every partial of a re-measured suite. The correction is
+  // never silent — a warning names it, so the agent and the transcript both
+  // see it. Scoped to `external_links_search` with links returned: a
+  // zero-link entry keeps the outcome the caller sent, and no other tool value
+  // shares this fetch-vs-search distinction.
+  let outcome: string = op.outcome;
+  if (op.tool === "external_links_search" && resultsExamined > 0 && outcome !== "positive") {
+    warnings.push(
+      `outcome set to 'positive' (was '${outcome}'): tool 'external_links_search' returned ` +
+        `${resultsExamined} result(s), and this entry grades the fetch, not the search — put the ` +
+        `record-type mismatch in 'notes'.`,
+    );
+    outcome = "positive";
   }
 
   if (!Array.isArray(research.log)) {
@@ -266,22 +1898,22 @@ async function applyLogAppendOp(
     performed,
     tool: op.tool,
     query,
-    outcome: op.outcome,
-    results_examined: op.resultsExamined,
+    outcome,
+    results_examined: resultsExamined,
     external_site: externalSite
       ? {
           site: externalSite.site,
-          url_generated: externalSite.urlGenerated,
+          url_generated: urlGenerated,
           capture_received: externalSite.captureReceived,
           ...(externalSite.captureFilename !== undefined
-            ? { capture_filename: externalSite.captureFilename }
+            ? { capture_filename: asNull(externalSite.captureFilename) }
             : {}),
         }
       : null,
     results_ref: null,
   };
-  const resultsAvailableCoerced = coerceJsonArg(op.resultsAvailable);
-  if (op.resultsAvailable !== undefined && op.resultsAvailable !== null) {
+  const resultsAvailableCoerced = coerceJsonArg(resultsAvailable);
+  if (resultsAvailable !== undefined && resultsAvailable !== null) {
     // Coerced the same way `ops` is: a model sending `"5"` otherwise lands a string
     // in an integer-typed field that nothing rejects — `validator.ts` carries
     // `results_available` in field-name allow-lists with no type check. The staged-
@@ -294,8 +1926,22 @@ async function applyLogAppendOp(
     // rebuilds the entry from arguments and does NOT coerce, by its own renames-only
     // contract, so a replayed entry differs from a live one for a stringly-typed
     // value. Left that way deliberately: the replay contract is a harness decision.
+    // Same bound as `results_examined` above, from the same shared predicate
+    // and for the same reason: the schema declares this `integer, minimum: 0`,
+    // and the comment above says `validator.ts` carries it in field-name
+    // allow-lists with no type check — so a NaN (which persists as `null`), a
+    // negative or a fraction reached the document unchallenged. Adding the
+    // bound to one of the two sibling fields and not the other was the second
+    // instance of one class; CLAUDE.md asks for one shared guard (review
+    // round 5).
+    if (!isNonNegativeInteger(resultsAvailableCoerced)) {
+      throw new LogAppendError(
+        `resultsAvailable must be a non-negative integer; got ${JSON.stringify(resultsAvailable)}`,
+      );
+    }
     entry.results_available = resultsAvailableCoerced as number;
   }
+  // The census check ran in `preflightCensusHedge`, before any op was applied.
   if (op.notes !== undefined && op.notes !== null) {
     entry.notes = op.notes;
   }
@@ -305,12 +1951,12 @@ async function applyLogAppendOp(
   //    skipping the final research.json write, so record it for cleanup.
   let resultsRef: string | null = null;
   let returnedCount: number | null = null;
-  if (op.stagedResultsRef !== undefined && op.stagedResultsRef !== null) {
+  if (stagedResultsRef !== undefined && stagedResultsRef !== null) {
     let fin: Awaited<ReturnType<typeof finalizeStagedResults>>;
     try {
       fin = await finalizeStagedResults({
         projectPath,
-        stagedResultsRef: op.stagedResultsRef,
+        stagedResultsRef: stagedResultsRef,
         logId,
         expectedTool: op.tool,
       });
@@ -321,12 +1967,14 @@ async function applyLogAppendOp(
     returnedCount = fin.returnedCount;
     entry.results_ref = resultsRef;
     sidecarsCreated.push(resultsRef);
+    stagedConsumed.push(stagedResultsRef);
 
     // Default `query` from the producing tool's own echo in the staged payload.
     // The search tool already recorded the exact parameters host-side, so making
     // the model re-serialize them buys nothing and costs a 20%-failure-rate
     // hand-transcription of an ARK-dense object (see the tool description). An
-    // explicit caller-supplied `query` always wins — this only fills a gap.
+    // explicit `query` is kept as sent, never rewritten; one claiming a filter the
+    // search never sent was already refused by `preflightQueryFilterClaims`.
     if (entry.query === undefined && fin.payloadQuery !== undefined) {
       entry.query = fin.payloadQuery;
     }
@@ -345,9 +1993,11 @@ async function applyLogAppendOp(
   //     nothing to keep, >0 means results existed and were discarded. Failing
   //     would also reject entries whose search genuinely ran without a
   //     projectPath, turning a lossy log into no log at all.
+  //     Search producers only: an acquisition is logged by `extraction_append`,
+  //     which passes the read's own staged ref, so there is nothing to nag about.
   if (
-    STAGING_CAPABLE_TOOLS.has(op.tool) &&
-    (op.stagedResultsRef === undefined || op.stagedResultsRef === null) &&
+    STAGING_SEARCH_TOOLS.has(op.tool) &&
+    (stagedResultsRef === undefined || stagedResultsRef === null) &&
     Number.isFinite(resultsAvailableCoerced) &&
     (resultsAvailableCoerced as number) > 0
   ) {
@@ -366,14 +2016,7 @@ async function applyLogAppendOp(
   // error — fail loudly here rather than writing an entry the validator will
   // reject on the next append.
   if (entry.query === undefined) {
-    throw new LogAppendError(
-      "`query` is required. Supply it as an object — search parameters for a " +
-        'search entry, or a keyed identifier for a read-style entry (e.g. ' +
-        '`{"recordId": "ark:/61903/1:1:XXXX-XXX"}` for record_read, ' +
-        '`{"imageArk": "..."}` for image_transcribe). It may be omitted only ' +
-        "when `stagedResultsRef` points at a staged payload that already " +
-        "carries the query.",
-    );
+    throw new LogAppendError(QUERY_REQUIRED_MESSAGE);
   }
 
   // 4. Append (append-only — existing entries are never touched).
@@ -390,6 +2033,14 @@ export async function researchLogAppend(
   // Recover a batch `ops` array the model serialized as a JSON string (see
   // coerceJsonArg) before any shape checks.
   input.ops = coerceJsonArg(input.ops) as ResearchLogAppendOp[] | undefined;
+  // Repair JSON-escaped notes before any check reads them, so the gates judge
+  // the text that is stored.
+  input.notes = unescapeJsonNotes(input.notes);
+  if (Array.isArray(input.ops)) {
+    for (const op of input.ops) {
+      if (op && typeof op === "object") op.notes = unescapeJsonNotes(op.notes);
+    }
+  }
 
   // Serialize the read-modify-write against every other writer on this project
   // (issue #1715).
@@ -405,20 +2056,68 @@ export async function researchLogAppend(
     // is read-only here): block only on errors THIS call introduces, not
     // pre-existing drift in a section it never touched (#1572).
     const beforeResearch = structuredClone(research);
+    const priorLogLength = Array.isArray(beforeResearch.log) ? beforeResearch.log.length : 0;
+    // The nil-escalation note, computed on the committed document. Advisory, so
+    // a failure computing it drops the note rather than the successful write.
+    const escalation = (): { escalationDue?: string } => {
+      try {
+        const note = nilEscalationNote(research, research.log.slice(priorLogLength));
+        return note ? { escalationDue: note } : {};
+      } catch {
+        return {};
+      }
+    };
     const sidecarsCreated: string[] = [];
+    // Staged files this call finalized. Removed only after research.json commits,
+    // so every refusal leaves them for a corrected re-send.
+    const stagedConsumed: string[] = [];
     // Tool-level warnings (retention gaps), merged with the validator's on success.
     const opWarnings: string[] = [];
+
+    // A mis-copied staged ref is mapped onto the one staged file it names before
+    // any check reads it, so every check, the finalize and the consume below all
+    // see the same canonical ref (resolveStagedRef).
+    const resolveRef = async (op: { stagedResultsRef?: string | null }, field: string) => {
+      const raw = op.stagedResultsRef;
+      if (typeof raw !== "string" || raw === "null") return;
+      const { ref, correctedFrom } = await resolveStagedRef(projectPath, raw);
+      if (correctedFrom === undefined) return;
+      op.stagedResultsRef = ref;
+      opWarnings.push(stagedRefCorrectionWarning(field, correctedFrom, ref));
+    };
+    if (Array.isArray(input.ops)) {
+      for (let i = 0; i < input.ops.length; i++) {
+        if (input.ops[i] && typeof input.ops[i] === "object") {
+          await resolveRef(input.ops[i], `ops[${i}].stagedResultsRef`);
+        }
+      }
+    } else {
+      await resolveRef(input, "stagedResultsRef");
+    }
 
     // ─── Batch form: apply every op in-memory, then validate + write once ────
     if (input.ops !== undefined) {
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
         return { ok: false, errors: ["`ops` must be a non-empty array"] };
       }
+      const duplicate = duplicateStagedRefError(input.ops, projectPath);
+      if (duplicate) return { ok: false, errors: [duplicate] };
+      for (let i = 0; i < input.ops.length; i++) {
+        try {
+          await preflightRequiredFields(input.ops[i], projectPath);
+          await preflightStagedRef(input.ops[i], projectPath);
+          await preflightCensusHedge(input.ops[i], projectPath);
+          await preflightQueryFilterClaims(input.ops[i], projectPath);
+        } catch (e) {
+          if (e instanceof LogAppendError) return { ok: false, errors: [`ops[${i}]: ${e.message}`] };
+          throw e;
+        }
+      }
       const results: ResearchLogAppendOpResult[] = [];
       for (let i = 0; i < input.ops.length; i++) {
         try {
           results.push(
-            await applyLogAppendOp(research, input.ops[i], projectPath, sidecarsCreated, opWarnings),
+            await applyLogAppendOp(research, input.ops[i], projectPath, sidecarsCreated, opWarnings, stagedConsumed),
           );
         } catch (e) {
           await cleanupSidecars(projectPath, sidecarsCreated);
@@ -432,11 +2131,13 @@ export async function researchLogAppend(
         await cleanupSidecars(projectPath, sidecarsCreated);
         return { ok: false, errors: formatIssues(validation.errors) };
       }
-      await atomicWriteJson(join(projectPath, "research.json"), research);
+      await atomicWriteJson(projectPath, "research.json", research);
+      await consumeStagedResults(projectPath, stagedConsumed);
       const persistWarn = logWithoutPersistenceWarning(research);
       return {
         ok: true,
         results,
+        ...escalation(),
         filesWritten: ["research.json", ...sidecarsCreated],
         validation: {
           valid: true,
@@ -450,28 +2151,28 @@ export async function researchLogAppend(
     // throw AFTER it has finalized a sidecar (the `query`-missing check does
     // exactly that), and a sidecar written with no `research.json` entry to
     // reference it is an orphan the next validate_research_schema hard-fails
-    // on — with no recovery, since the staged file it came from is already
-    // unlinked. The outer catch below returns the error but cannot know a
-    // sidecar was written, so the unwind has to happen here.
+    // on. The staged file it came from is still there — it is removed only
+    // after the commit — so the corrected re-send can finalize it again. The
+    // outer catch below returns the error but cannot know a sidecar was
+    // written, so the unwind has to happen here.
+    const singleOp: ResearchLogAppendOp = {
+      tool: input.tool!,
+      query: input.query,
+      outcome: input.outcome!,
+      resultsExamined: input.resultsExamined!,
+      planItemId: input.planItemId,
+      resultsAvailable: input.resultsAvailable,
+      notes: input.notes,
+      externalSite: input.externalSite,
+      stagedResultsRef: input.stagedResultsRef,
+    };
+    await preflightRequiredFields(singleOp, projectPath);
+    await preflightStagedRef(singleOp, projectPath);
+    await preflightCensusHedge(singleOp, projectPath);
+    await preflightQueryFilterClaims(singleOp, projectPath);
     let result;
     try {
-      result = await applyLogAppendOp(
-        research,
-        {
-          tool: input.tool!,
-          query: input.query,
-          outcome: input.outcome!,
-          resultsExamined: input.resultsExamined!,
-          planItemId: input.planItemId,
-          resultsAvailable: input.resultsAvailable,
-          notes: input.notes,
-          externalSite: input.externalSite,
-          stagedResultsRef: input.stagedResultsRef,
-        },
-        projectPath,
-        sidecarsCreated,
-        opWarnings,
-      );
+      result = await applyLogAppendOp(research, singleOp, projectPath, sidecarsCreated, opWarnings, stagedConsumed);
     } catch (e) {
       await cleanupSidecars(projectPath, sidecarsCreated);
       throw e;
@@ -482,12 +2183,14 @@ export async function researchLogAppend(
       await cleanupSidecars(projectPath, sidecarsCreated);
       return { ok: false, errors: formatIssues(validation.errors) };
     }
-    await atomicWriteJson(join(projectPath, "research.json"), research);
+    await atomicWriteJson(projectPath, "research.json", research);
+    await consumeStagedResults(projectPath, stagedConsumed);
 
     const persistWarn = logWithoutPersistenceWarning(research);
     return {
       ok: true,
       ...result,
+      ...escalation(),
       filesWritten: result.resultsRef ? ["research.json", result.resultsRef] : ["research.json"],
       validation: {
         valid: true,
@@ -545,7 +2248,8 @@ export const researchLogAppendSchema = {
         description:
           "The tool/source that produced this entry, e.g. 'record_search', " +
           "'fulltext_search', 'external_links_search', 'image_search', 'person_read', or " +
-          "'external_site'. Must match the staged file's tool when stagedResultsRef is given.",
+          "'external_site'. Must match the staged file's tool when stagedResultsRef is given; " +
+          "may be omitted alongside stagedResultsRef, which records it.",
       },
       query: {
         type: "object",
@@ -563,7 +2267,9 @@ export const researchLogAppendSchema = {
           "InputValidationError that rejects the whole call before this tool " +
           "runs — keep ARKs in a keyed field. Omit entirely when " +
           "`stagedResultsRef` is given and the staged payload already " +
-          "carries the query.",
+          "carries the query. Record only filters the search actually sent: " +
+          "with a `stagedResultsRef`, a `query` naming a filter that search " +
+          "never sent is refused.",
       },
       outcome: {
         type: "string",
@@ -626,11 +2332,11 @@ export const researchLogAppendSchema = {
             externalSite: { type: ["object", "null"] },
             stagedResultsRef: { type: ["string", "null"] },
           },
-          // `query` is deliberately absent: it may be omitted when
+          // `query` and `tool` are deliberately absent: both may be omitted when
           // `stagedResultsRef` carries a payload the producing tool already
-          // stamped with its own query. Enforced in code (applyLogAppendOp),
-          // which fails loudly when neither source supplies one.
-          required: ["tool", "outcome", "resultsExamined"],
+          // stamped with its own name and query. Enforced in code
+          // (preflightRequiredFields), which names every field still missing.
+          required: ["outcome", "resultsExamined"],
         },
       },
     },

@@ -1,0 +1,180 @@
+{
+  "persons": [
+    {
+      "id": "G18D-QZW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Juan José",
+          "surname": "Goñi"
+        }
+      ],
+      "facts": [
+        {
+          "id": "97461975-35e9-44ae-8325-923e4580ce2b",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G1HL-QDF",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Engracia Ygnacia",
+          "surname": "Goñi"
+        }
+      ],
+      "facts": [
+        {
+          "id": "942564b3-c9d4-4738-a3a5-cdcd30e41774",
+          "type": "Birth",
+          "date": "30 de septiembre de 1840",
+          "standard_date": "30 Sep 1840",
+          "place": "Elizondo",
+          "standard_place": "Elizondo, La Habana, Cuba"
+        },
+        {
+          "id": "8d3f585b-3a08-45bb-b95d-08a0bf03b827",
+          "type": "Christening",
+          "date": "1 de octubre de 1840",
+          "standard_date": "1 Oct 1840",
+          "place": "Elizondo, Baztán, Navarra, España",
+          "standard_place": "Elizondo, Baztan, Nafarroa, Spain"
+        },
+        {
+          "id": "40e85793-b814-4789-86da-eb34df54dc4f",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P7HP-JRR",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Martina",
+          "surname": "Urta"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9a569861-758f-4ca4-8678-3d7ed6a2c81b",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P7HP-LQZ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Juan",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "5ac94521-d222-42c7-afee-915363511146",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G18D-LD4",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Francisca De",
+          "surname": "Goñi"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7b914051-0e23-443d-8ec3-1d63068adf32",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G18D-QZW",
+      "person2": "G18D-LD4"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "P7HP-JRR",
+      "child": "G18D-QZW"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "P7HP-LQZ",
+      "child": "G18D-QZW"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "G18D-QZW",
+      "child": "G1HL-QDF"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "G18D-LD4",
+      "child": "G1HL-QDF"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7HD8-22S",
+      "title": "Juan Jose, \"España, bautismos, 1502-1940\"",
+      "citation": "\"España, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H67B-PZ6Z : Wed Mar 05 03:27:16 UTC 2025), Entry for Josefa Martina Apezteguia Goni and Juan Bautista Apezteguia, 18 May 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H67B-PZ2M"
+    },
+    {
+      "id": "7R2V-FV7",
+      "title": "Juan Jose in entry for Juan Bautista Apezteguia, \"Spain, Marriages, 1565-1950\"",
+      "citation": "\"España, matrimonios, 1565-1950\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:C9DL-1Z2M : 17 February 2020), Juan Jose in entry for Juan Bautista Apezteguia, 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:C9DL-1Z2M"
+    },
+    {
+      "id": "7HD8-L5K",
+      "title": "Juan Jose, \"España, bautismos, 1502-1940\"",
+      "citation": "\"España, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H6WS-CVMM : Wed Mar 05 03:17:30 UTC 2025), Entry for Casimira Josefa Apezteguia Goni and Juan Bautista Apezteguia, 14 Aug 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H6WS-CVW2"
+    },
+    {
+      "id": "7HD8-BWS",
+      "title": "Juan Jose Goni, \"España, bautismos, 1502-1940\"",
+      "citation": "\"España, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H6W9-RKZM : Tue Oct 21 10:08:21 UTC 2025), Entry for Vidal and Juan Bautista Apezteguia, 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H6W9-RKN2"
+    },
+    {
+      "id": "7R2V-N9S",
+      "title": "Juan José Goñi, \"España, registros parroquiales y diocesanos, 1307-2005\"",
+      "citation": "\"España, registros parroquiales y diocesanos, 1307-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:664F-CCKG : Thu Jan 01 00:22:47 UTC 2026), Entry for Engracia Ignacia and Juan José Goñi, 1 de octubre de 1840.",
+      "url": "https://familysearch.org/ark:/61903/1:1:664F-CCK2"
+    },
+    {
+      "id": "7HD8-1KY",
+      "title": "Juan Jose, \"España, bautismos, 1502-1940\"",
+      "citation": "\"España, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H6W3-FWN2 : Wed Mar 05 03:27:19 UTC 2025), Entry for Jose Ramon Apezteguia Goni and Juan Bautista Apezteguia, 9 Jan 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H6W3-5XN2"
+    }
+  ]
+}

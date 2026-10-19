@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_jacob_klatkiewicz_spouse",
+    "objective": "Is the Stanislaus Klatkwicz baptised 2 May 1886 at Ceradz, Posen the son of Jacob Klatkiewicz and Hedwig Kurek that the tree records as born in 1884 at Rumianek?",
+    "subject_person_ids": [
+      "LDZR-XPT"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

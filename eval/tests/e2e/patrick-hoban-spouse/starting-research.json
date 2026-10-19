@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_patrick_hoban_spouse",
+    "objective": "Was the Patrick whose son Thomas Dee married Bessie Butler at Halifax in 1895 the same man as Patrick Hoban (b. 1836), and was his wife an Ellen?",
+    "subject_person_ids": [
+      "KK3W-WLT"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

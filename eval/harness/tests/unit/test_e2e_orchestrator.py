@@ -7,6 +7,7 @@ path is covered by an e2e suite run, not these unit tests.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -19,7 +20,11 @@ from e2e.orchestrator import (
     PROVIDED_DOCS_DIRNAME,
     FixtureCaps,
     _accumulate_usage,
+    merge_whole_run_usage,
+    wall_ts,
     _fallback_usage,
+    _raw_result_chars,
+    _thread_usage,
     _render_user_message,
     _RUNLOG_MAX_CHARS,
     _RUNLOG_VERBATIM_MAX,
@@ -566,6 +571,112 @@ def test_summarize_tool_response_honours_the_overall_cap():
     assert out.endswith("...")
 
 
+# --- per-key exemptions from truncation (issue #2561) -------------------------
+# Three tests, each broken before committing, per the issue's Verify section:
+#   1. A 6,000-char transcription survives whole (the _RUNLOG_MAX_CHARS arm).
+#   2. A 6,000-char string under a different key is still bounded at 500.
+#   3. A transcription under 500 chars passes through verbatim.
+
+
+def test_exempt_transcription_survives_past_backstop():
+    """A 6,000-char transcription must survive whole — both the per-string cap
+    (_RUNLOG_STRING_MAX, 500) and the backstop (_RUNLOG_MAX_CHARS, 4000).
+
+    This is the arm that fails today without the exemption: a >4000-char value
+    is silently head-cut with a bare "...", looking complete. The longest
+    transcriptions in the corpus run past the 4,000-char backstop.
+    """
+    transcription_text = "Á" * 6_000
+    content = [{"type": "text", "text": json.dumps({
+        "transcription": transcription_text,
+        "imageId": "test_image_001",
+    })}]
+    out = _summarize_tool_response(
+        content, tool_name="mcp__genealogy__image_transcribe"
+    )
+    # The output is a JSON array (the MCP unwrap preserves the list envelope),
+    # so parse → index into [0] to reach the response dict.
+    parsed = json.loads(out)
+    assert isinstance(parsed, list) and len(parsed) == 1
+    doc = parsed[0]
+    assert doc["transcription"] == transcription_text
+    assert len(doc["transcription"]) == 6_000
+    # The non-exempt key is still present (not lost by the exemption).
+    assert "imageId" in doc
+
+
+def test_non_exempt_key_still_bounded():
+    """A 6,000-char string under a key that is NOT exempted must still be
+    truncated at _RUNLOG_STRING_MAX with its marker — the exemption is per-key,
+    not "exempt everything".
+    """
+    content = [{"type": "text", "text": json.dumps({
+        "someOtherField": "x" * 6_000,
+        "imageId": "test_image_002",
+    })}]
+    out = _summarize_tool_response(
+        content, tool_name="mcp__genealogy__image_transcribe"
+    )
+    # The non-exempt key must be truncated.
+    assert "[truncated by harness" in out
+    assert "full length 6000 chars" in out
+    # Two-sided: the generic path's pin still holds — the x count is bounded.
+    assert out.count("x") <= 600
+
+
+def test_short_transcription_passes_through_verbatim():
+    """A transcription already under 500 chars must pass through unchanged —
+    the accept direction. A change that only ever widens must not reshape a
+    short payload.
+    """
+    short_text = "María García, nacida en 1845"
+    content = [{"type": "text", "text": json.dumps({
+        "transcription": short_text,
+        "imageId": "test_image_003",
+    })}]
+    raw = json.dumps(content)
+    assert len(raw) <= _RUNLOG_VERBATIM_MAX, "fixture must sit under the verbatim threshold"
+    out = _summarize_tool_response(
+        content, tool_name="mcp__genealogy__image_transcribe"
+    )
+    # Under the verbatim threshold the raw serialization is returned as-is,
+    # regardless of exemptions — this is the early exit.
+    assert out == raw
+
+
+def test_exempt_key_and_large_non_exempt_sibling_together():
+    """The combination the shipped backstop-bypass comment warns about, which
+    neither neighbour covers: an exempt `transcription` makes `saved` non-empty
+    so the whole-response backstop (`if not saved …`) is skipped, WHILE a large
+    NON-exempt sibling in the same response is still per-string capped at 500.
+
+    `test_exempt_transcription_survives_past_backstop` has the exempt key but no
+    large sibling; `test_non_exempt_key_still_bounded` has the sibling but no
+    exempt key (so `saved` is empty and the bypass never fires). This exercises
+    the `if not saved` branch with both present.
+    """
+    transcription_text = "Á" * 6_000
+    content = [{"type": "text", "text": json.dumps({
+        "transcription": transcription_text,
+        "bigSibling": "x" * 6_000,
+        "imageId": "test_image_004",
+    })}]
+    out = _summarize_tool_response(
+        content, tool_name="mcp__genealogy__image_transcribe"
+    )
+    # The bypass fired: output exceeds the backstop rather than being cut to it.
+    assert len(out) > _RUNLOG_MAX_CHARS
+    parsed = json.loads(out)
+    doc = parsed[0]
+    # Exempt key preserved whole.
+    assert doc["transcription"] == transcription_text
+    # Non-exempt sibling still per-string capped with its marker — the bypass
+    # widens the backstop, it does not disable the per-string cap.
+    assert "[truncated by harness" in out
+    assert "full length 6000 chars" in out
+    assert out.count("x") <= 600
+
+
 # --- timeline tool labeling ---------------------------------------------------
 # Regression cover for the per-skill wall-clock gap: usage.timeline carried
 # elapsed time + message kind but no tool identity, so a Skill-phase
@@ -692,20 +803,20 @@ def test_check_guardrail_compliance_is_empty_for_a_clean_run():
     assert check_guardrail_compliance([], {}, {}, starting_tree={"persons": []}) == []
 
 
-def test_check_guardrail_compliance_aggregates_all_three_checks():
-    """One call, three non-windowed §4.4 arms. The `mentor` arm below reads
-    only research.json, which is why compliance is a real result even on a
-    run that produced no tree."""
+def test_check_guardrail_compliance_is_a_real_result_on_a_treeless_run():
+    """The proof-conclusion arm reads only research.json, which is why
+    compliance is a real result even on a run that produced no tree. A
+    resolved question's uncritiqued proof summary is not a violation: the
+    gps-mentor critique runs only on request."""
     research = {
         "questions": [{"id": "q1", "status": "resolved"}],
         "proof_summaries": [{"id": "ps1", "question_id": "q1"}],
-        "exhaustive_declaration": {"declared": True},
+        "search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []},
+        "evaluations": [],
     }
     violations = check_guardrail_compliance([], research, None)
-    # The gps-mentor arm reads only research.json...
-    assert any("proof-critique" in v for v in violations)
-    # ...and the proof-conclusion arm fires from the same call.
     assert any("proof-conclusion" in v for v in violations)
+    assert not any("proof-critique" in v for v in violations)
 
 
 # --- load_seed_person_ids (issue #963 seed read; fail-open) ------------------
@@ -849,7 +960,14 @@ def test_provenance_gap_reason_names_the_satisfiable_call_shape():
     `primaryId1`/`primaryId2` inside the caller's own gedcomx documents. So the
     reason has to name the one call shape that satisfies the gate, and — because
     a PreToolUse deny is all-or-nothing on a batch whose median is 17 ops — say
-    that the whole batch was rejected."""
+    that the whole batch was rejected.
+
+    Issue #1731 changed WHICH shape satisfies the gate. `same_person` now takes
+    `{ projectPath, assertionId, treePersonId }` and assembles both documents
+    itself, so naming the hand-built `gedcomx1`/`gedcomx2` recipe here would
+    steer the agent back to the cost that produced the skipped call in the first
+    place. The retrieval recipe moved into the tool with it, so the reason no
+    longer teaches it."""
     reason = person_evidence_provenance_gap(
         "mcp__genealogy__research_append",
         _pe_append("I1"),
@@ -857,28 +975,28 @@ def test_provenance_gap_reason_names_the_satisfiable_call_shape():
         starting_person_ids=set(),
     )
     assert reason is not None
-    # the satisfiable shape, named explicitly
-    assert "gedcomx2" in reason
-    assert "primaryId2" in reason
+    # the satisfiable shape, named explicitly (#1731)
+    assert "assertionId" in reason
+    assert "treePersonId" in reason
+    assert '"I1"' in reason, "the reason must name the flagged person's own id"
+    # and NOT the retired hand-assembled shape, which is now the slow path
+    assert "gedcomx2" not in reason
+    assert "primaryId2" not in reason
     # the whole batch is lost, not just the flagged op
     assert "entire batch" in reason
-    # Issue #1429. The check no longer flags a link whose provenance lane cannot
-    # yield a persona from what the run retained, so the reason has to say HOW to get the persona it
-    # is demanding a score for -- both retrieval routes, and the per-party rule
-    # that stops the first party's persona being reused for the second.
-    assert "record_read" in reason
-    assert "results_ref" in reason
-    assert "record_role" in reason
-    # The one exit that survives: provenance the check could not resolve at all.
-    # NOT the deleted escape, which excused a REACHABLE persona.
+    # The per-party rule survives: it is the one thing the tool cannot infer.
+    assert "recordRole" in reason
+    # The exits that survive, and the non-exit that does not.
     assert "rationale" in reason
+    assert "circular" in reason.lower()
+    assert "scorable" in reason.lower(), "retrieval must not read as an excuse"
 
 
 def test_provenance_gap_reason_offers_no_escape_for_a_locally_minted_id():
     """The reason must NOT tell the agent a locally-minted id is unscorable.
 
-    person-evidence/SKILL.md says such an id returns a degenerate score to treat
-    as "no score available" (2026-07-02). That is stale: the match-engine
+    person-evidence/SKILL.md (deleted) said such an id returned a degenerate score
+    to treat as "no score available" (2026-07-02). That was stale: the match-engine
     mint-hardening (2026-07-07) made an ARK-less focus person score on document
     content. Probed live — dev/probe-same-person-local-id.ts — the tree focus
     with its ARK removed scores 0.9999484 against a 0.999967 control, identical
@@ -898,7 +1016,9 @@ def test_provenance_gap_reason_offers_no_escape_for_a_locally_minted_id():
     assert "degenerate" not in reason.lower()
     assert "unresolvable stub" not in reason.lower()
     # The per-party persona rule still names the field, so this stays pinned.
-    assert "record_persona_id" in reason
+    # Spelled camelCase since #1731: it is an MCP tool PARAMETER on the
+    # project-relative arm, not the research.json field it reads from.
+    assert "recordPersonaId" in reason
 
 
 def _pe_append_with_assertion(person_id="I1", assertion_id="a_001"):
@@ -1123,3 +1243,410 @@ def test_mcp_unavailable_error_carries_the_operator_message():
     assert "re-research" in text
 
 
+# --- result_chars: the untruncated payload size ---
+# `response_summary` caps at _RUNLOG_MAX_CHARS, so a saturated capture is a
+# floor, not a measurement. These pin BOTH paths: the truncating one, and the
+# short one that returns verbatim.
+
+
+def test_raw_result_chars_measures_past_the_summary_cap():
+    """A payload well over the cap reports its true length, not the cap."""
+    content = "x" * 12_000
+    assert len(_summarize_tool_response(content)) <= _RUNLOG_MAX_CHARS
+    assert _raw_result_chars(content) == 12_000
+
+
+def test_raw_result_chars_is_exact_on_the_verbatim_path():
+    """The other direction: a payload SHORTER than _RUNLOG_VERBATIM_MAX comes
+    back verbatim, and the field must still be its true length. A field that is
+    only correct when truncation happens is half a measurement."""
+    content = "y" * 200
+    assert len(content) < _RUNLOG_VERBATIM_MAX
+    assert _summarize_tool_response(content) == content
+    assert _raw_result_chars(content) == 200
+
+
+def test_raw_result_chars_counts_serialized_json_not_the_object():
+    """Non-str content is measured as the harness serializes it."""
+    content = [{"text": "abc"}]
+    assert _raw_result_chars(content) == len(json.dumps(content))
+
+
+# --- _thread_usage: column semantics, window arithmetic, thread split ---
+
+
+def _acc(*cache_reads):
+    """One accumulator entry per cache_read value. input/output/cache_creation
+    are held at 1/2/4 so a transposed or dropped column is visible."""
+    return {
+        f"m{i}": {
+            "input_tokens": 1,
+            "output_tokens": 2,
+            "cache_read_input_tokens": cr,
+            "cache_creation_input_tokens": 4,
+        }
+        for i, cr in enumerate(cache_reads)
+    }
+
+
+def test_thread_usage_columns_windows_and_split():
+    """Four distinct field values so no transposition survives, and three
+    messages on one thread with windows 8/35/8 so `peak` cannot be satisfied by
+    first, last or min.
+
+    Two same-valued messages would make max == first == last == min, and
+    `windows[t] = w` — the likeliest one-token slip — would pass every
+    assertion. That is the defect this shape exists to catch.
+    """
+    acc = _acc(3, 30, 3)  # windows 1+3+4=8, 1+30+4=35, 8
+    acc["s0"] = {
+        "input_tokens": 1,
+        "output_tokens": 2,
+        "cache_read_input_tokens": 3,
+        "cache_creation_input_tokens": 4,
+    }
+    rows, windows = _thread_usage(
+        acc, {"m0": "main", "m1": "main", "m2": "main", "s0": "sub"}
+    )
+
+    # Column order and semantics: [thread, input, cache_read, cache_creation].
+    # `output` is absent by design - the stream reports it as a message-start
+    # snapshot, so a per-message output figure measures nothing on either thread.
+    assert rows[0] == ["main", 1, 3, 4]
+    assert rows[1] == ["main", 1, 30, 4]
+    assert rows[3] == ["sub", 1, 3, 4]
+    assert all(len(r) == 4 for r in rows)
+
+    # Peak is the MAX of a thread's windows - never the sum (51), never the
+    # first or last (8).
+    assert windows["main"]["peak_window_tokens"] == 35
+    assert windows["main"]["message_count"] == 3
+    assert windows["sub"]["message_count"] == 1
+
+    # `sub` carries no peak: it would be computed over only those subagent
+    # messages that reach the main stream, which undercounts 150-250x.
+    assert "peak_window_tokens" not in windows["sub"]
+
+
+def test_thread_usage_defaults_untagged_messages_to_main():
+    """A message the tagger never saw must not vanish from the series."""
+    rows, windows = _thread_usage(_acc(3), {})
+    assert rows == [["main", 1, 3, 4]]
+    assert windows["main"]["message_count"] == 1
+    assert windows["sub"]["message_count"] == 0
+
+
+def test_apply_tool_result_records_the_untruncated_length():
+    """The WIRING, not the helper.
+
+    Three tests above pin `_raw_result_chars` itself, and every one of them
+    still passes if `apply_tool_result` writes `len(summary)` instead — which
+    is the whole defect, since `summary` is capped at `_RUNLOG_MAX_CHARS` and a
+    saturated capture is exactly the case the field exists to measure. Asserting
+    on the entry is what makes the break-test fail.
+    """
+    content = "z" * 9_000
+    summary = _summarize_tool_response(content)
+    assert len(summary) <= _RUNLOG_MAX_CHARS < len(content)  # the cap really bit
+
+    entry = {"tool": "mcp__genealogy__record_search", "args": {}, "response_summary": None}
+    apply_tool_result(entry, ToolResultBlock(tool_use_id="tu_1", content=content), summary)
+
+    assert entry["result_chars"] == 9_000
+    assert entry["result_chars"] > len(entry["response_summary"])
+
+
+# ---------------------------------------------------------------------------
+# Whole-run usage merge (#2582).
+#
+# `usage["usage"]` counts the main thread only; subagent turns run in their own
+# SDK sub-session and never enter it. Every cost figure over this corpus was
+# therefore main-plus-a-subtraction, and one published claim was nothing but
+# that gap restated (`docs/plan/cost-latency-10x.md` A3 item 4).
+# ---------------------------------------------------------------------------
+
+_MAIN = {
+    "input_tokens": 100,
+    "output_tokens": 200,
+    "cache_read_input_tokens": 300,
+    "cache_creation_input_tokens": 400,
+}
+
+
+def _sub(**fields):
+    base = dict.fromkeys(_MAIN, 0)
+    base.update(fields)
+    return {"agent_type": "record-extractor", "usage": base}
+
+
+def test_merge_adds_every_subagent_to_the_main_thread():
+    """The issue's first acceptance criterion; ImportErrors before the fix."""
+    merged, cost = merge_whole_run_usage(
+        {"usage_source": "result_message", "usage": dict(_MAIN)},
+        [_sub(output_tokens=50, cache_read_input_tokens=7), _sub(output_tokens=5)],
+    )
+    assert merged == {
+        "input_tokens": 100,
+        "output_tokens": 255,
+        "cache_read_input_tokens": 307,
+        "cache_creation_input_tokens": 400,
+    }
+    assert cost is not None and cost > 0
+
+
+def test_merge_equals_main_exactly_when_no_subagent_was_captured():
+    """Subagents present but zero captured must not error and must not guess."""
+    inner = dict(_MAIN)
+    merged, _cost = merge_whole_run_usage(
+        {"usage_source": "result_message", "usage": inner}, []
+    )
+    assert merged == inner
+    # A fresh object: mutating the merged figure must never reach back into the
+    # block that `corpus_report`'s spend tally and the 0.90x calibration read.
+    assert merged is not inner
+
+
+def test_merge_is_null_on_the_streamed_fallback_path():
+    """That path's `output_tokens` is a start-of-message snapshot, and since
+    commit 76bc0655b its accumulator already holds subagent messages that
+    surfaced on the main stream — so adding subagent totals would double-count
+    them on top of a field that is already wrong."""
+    merged, cost = merge_whole_run_usage(
+        {"usage_source": "streamed_fallback", "usage": dict(_MAIN)},
+        [_sub(output_tokens=50)],
+    )
+    assert merged is None and cost is None
+
+
+def test_merge_is_null_when_a_subagent_predates_the_usage_field():
+    """Every run committed before this change is that shape. Falling back to
+    summing `subagents[].turns[]` is the ~2x error: one entry per content block,
+    each repeating its message's totals. Unknown is unknown."""
+    merged, cost = merge_whole_run_usage(
+        {"usage_source": "result_message", "usage": dict(_MAIN)},
+        [_sub(output_tokens=50), {"agent_type": "image-reader", "turns": [{}, {}]}],
+    )
+    assert merged is None and cost is None
+
+
+@pytest.mark.parametrize(
+    "usage", [None, {}, {"usage": "n/a"}, {"usage_source": "result_message"}]
+)
+def test_merge_is_null_without_a_main_thread_token_block(usage):
+    assert merge_whole_run_usage(usage, []) == (None, None)
+
+
+def test_merge_drops_unsummable_siblings_of_the_token_fields():
+    """`server_tool_use`, `iterations` and friends are not token counts."""
+    inner = dict(_MAIN)
+    inner["server_tool_use"] = {"web_search_requests": 0}
+    inner["iterations"] = [{"input_tokens": 1}]
+    merged, _cost = merge_whole_run_usage(
+        {"usage_source": "result_message", "usage": inner}, []
+    )
+    assert set(merged) == set(_MAIN)
+
+
+def test_merge_counts_a_missing_subagent_field_as_zero_not_as_unknown():
+    """A missing FIELD is 0; a missing `usage` OBJECT is unknown."""
+    merged, _cost = merge_whole_run_usage(
+        {"usage_source": "result_message", "usage": dict(_MAIN)},
+        [{"agent_type": "image-reader", "usage": {"output_tokens": 9}}],
+    )
+    assert merged["output_tokens"] == 209
+    assert merged["input_tokens"] == 100
+
+
+def _timeline(*kinds):
+    return [[float(i), kind, [], "2026-09-24T07:23:44.000Z", None] for i, kind in enumerate(kinds)]
+
+
+def test_merge_is_null_when_a_background_subagent_started_a_second_query():
+    """anders-monsen-ancestry 2026-09-24's shape (#3128): a background subagent's
+    `task_notification`, then a fresh `system:init`. The ResultMessage counted the
+    last query only (`num_turns` 3 against about 106 real turns), so adding the
+    subagents to it gives a figure that looks complete and is not."""
+    usage = {
+        "usage_source": "result_message",
+        "num_turns": 3,
+        "resumes": 0,
+        "usage": dict(_MAIN),
+        "timeline": _timeline(
+            "system:init", "assistant", "system:task_notification",
+            "system:init", "assistant", "result",
+        ),
+    }
+    assert merge_whole_run_usage(usage, [_sub(output_tokens=50)]) == (None, None)
+
+
+def test_merge_is_null_on_a_stall_resume():
+    """The case a `num_turns` or duration heuristic passes wrongly: 157 turns look
+    like a whole run, but the resume began a second query."""
+    usage = {
+        "usage_source": "result_message",
+        "num_turns": 157,
+        "resumes": 1,
+        "usage": dict(_MAIN),
+        "timeline": _timeline(
+            "system:init", "assistant", "tool_result",
+            "system:init", "assistant", "result",
+        ),
+    }
+    assert merge_whole_run_usage(usage, [_sub(output_tokens=50)]) == (None, None)
+
+
+def test_merge_is_unchanged_on_one_query_that_compacted():
+    """Compaction emits `system:compact_boundary`, not `system:init`, so an ordinary
+    long run stays one query and keeps its merged figure."""
+    usage = {
+        "usage_source": "result_message",
+        "num_turns": 90,
+        "usage": dict(_MAIN),
+        "timeline": _timeline(
+            "system:init", "assistant", "system:compact_boundary",
+            "assistant", "system:compact_boundary", "result",
+        ),
+    }
+    merged, cost = merge_whole_run_usage(usage, [_sub(output_tokens=50)])
+    assert merged == {**_MAIN, "output_tokens": 250}
+    assert cost is not None and cost > 0
+
+
+def test_wall_ts_matches_the_transcript_format_byte_for_byte():
+    """Real subagent records carry `"2026-09-18T06:52:42.431Z"`. A `+00:00`, or a
+    fractional part dropped when microseconds are 0, would make the join a
+    conversion rather than a match."""
+    stamp = wall_ts(1_758_178_362.431, 100.0, 100.0)
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z", stamp), stamp
+    assert wall_ts(1_758_178_362.0, 0.0, 0.0).endswith(".000Z")
+    # The monotonic offset is applied: 2.5s elapsed is 2.5s of wall clock.
+    assert wall_ts(1_758_178_362.0, 10.0, 12.5).endswith(".500Z")
+
+
+# --- #3188: an Agent's return survives, and narration says which thread ------
+
+
+def test_agent_return_is_not_cut_at_the_500_char_bound():
+    """The return IS the thing #3188 measures, so a raw side cut at 500 reports
+    "the relay dropped content" for content the LOG dropped. Measured at the
+    change: 834 truncated Agent strings across the 203 committed logs, median
+    2,274 / max 21,578."""
+    from e2e.orchestrator import _summarize_tool_response
+
+    ret = "R" * 7000
+    out = _summarize_tool_response(
+        [
+            {"type": "text", "text": ret},
+            {"type": "text", "text": "agentId: x\n<usage>total_tokens: 1</usage>"},
+        ],
+        tool_name="Agent",
+    )
+    assert ret in out, "the full return must survive"
+    assert "[truncated by harness" not in out
+
+
+def test_the_agent_return_is_not_overwritten_by_the_usage_announcement():
+    """Why this is NOT done through `_RUNLOG_EXEMPT_KEYS`.
+
+    That path saves ONE value per key, last wins -- its own comment says "Safe
+    for image_transcribe (always one text block)". An Agent result is two
+    blocks, and the `agentId:/<usage>` announcement is LAST in all 845 parsed
+    corpus summaries, so exempting `text` would save the announcement and write
+    it over the return.
+    """
+    import json as _json
+
+    from e2e.orchestrator import _summarize_tool_response
+
+    ret = "R" * 7000
+    out = _summarize_tool_response(
+        [
+            {"type": "text", "text": ret},
+            {"type": "text", "text": "agentId: x\n<usage>total_tokens: 1</usage>"},
+        ],
+        tool_name="Agent",
+    )
+    blocks = _json.loads(out)  # must still be parseable JSON
+    assert blocks[0]["text"].startswith("R")
+    assert "agentId" in blocks[1]["text"]
+
+
+def test_other_tools_keep_the_old_500_char_bound():
+    """The raised bound is for one tool, not a global relaxation."""
+    from e2e.orchestrator import _summarize_tool_response
+
+    out = _summarize_tool_response(
+        [{"type": "text", "text": "R" * 3000}], tool_name="record_search"
+    )
+    assert "[truncated by harness" in out
+
+
+def test_image_transcribe_exemption_still_preserves_its_transcription():
+    """The shared-path regression check: the Agent branch must not disturb the
+    exemption that took HARNESS_SCHEMA_VERSION to 5."""
+    import json as _json
+
+    from e2e.orchestrator import _summarize_tool_response
+
+    tr = "T" * 9000
+    out = _summarize_tool_response(
+        [{"type": "text", "text": _json.dumps({"transcription": tr, "pad": "x" * 5000})}],
+        tool_name="image_transcribe",
+    )
+    assert tr in out
+
+
+def test_is_agent_tool_matches_every_server_spelling():
+    """Suffix match, as `_exempt_keys_for` does -- CLAUDE.md "Dual-spelled tool
+    names". The corpus spells it `Agent` in all 1,738 calls."""
+    from e2e.orchestrator import _is_agent_tool
+
+    assert _is_agent_tool("Agent")
+    assert _is_agent_tool("Task")
+    assert _is_agent_tool("mcp__remote-devices__Genealogy_Research__Agent")
+    assert not _is_agent_tool("record_search")
+    assert not _is_agent_tool(None)
+
+
+def test_assistant_narration_entries_carry_a_thread_key():
+    """Pinned structurally because it lives inside the SDK message loop, which a
+    unit test cannot drive.
+
+    If `thread` is dropped in a later edit of that block, every new run log is
+    written in a shape `compute_production_counts` reports as unscorable, the
+    relay-fidelity denominator silently stays 0, and the whole harness suite
+    stays green. `e2e-test-spec.md` documents the key; this is what makes the
+    documentation enforceable.
+    """
+    import ast
+    import pathlib
+
+    src = pathlib.Path(__file__).resolve().parents[2] / "e2e" / "orchestrator.py"
+    tree = ast.parse(src.read_text(encoding="utf-8"))
+
+    assistant_dicts = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Dict):
+            continue
+        keys = {k.value for k in node.keys if isinstance(k, ast.Constant)}
+        if "kind" not in keys or "tool_calls_before" not in keys:
+            continue
+        # The assistant append is the one whose `kind` is the literal
+        # "assistant"; the harness/blocked sites pass a variable or another
+        # literal and have no message in scope to read a thread from.
+        for k, v in zip(node.keys, node.values):
+            if (
+                isinstance(k, ast.Constant)
+                and k.value == "kind"
+                and isinstance(v, ast.Constant)
+                and v.value == "assistant"
+            ):
+                assistant_dicts.append(keys)
+
+    assert assistant_dicts, "no assistant narration entry found — did the shape move?"
+    for keys in assistant_dicts:
+        assert "thread" in keys, (
+            "an assistant narration entry lost its `thread` key; "
+            "relay fidelity cannot tell the main thread from a subagent's own "
+            "messages without it (#3188)"
+        )

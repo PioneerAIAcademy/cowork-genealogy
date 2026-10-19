@@ -1,0 +1,234 @@
+{
+  "persons": [
+    {
+      "id": "KZS8-RS7",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Catharina",
+          "surname": "Gosnerin"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "97ZY-PZT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Josephus",
+          "surname": "Schedler"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "12 NOV 1751",
+          "standard_date": "12 Nov 1751",
+          "place": "Katholisch,Triesen,Liechtenstein,Liechtenstein",
+          "standard_place": "Triesen, Liechtenstein"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "97ZB-P6C",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Rosa",
+          "surname": "Schedler"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "19 JAN 1754",
+          "standard_date": "19 Jan 1754",
+          "place": "Katholisch,Triesen,Liechtenstein,Liechtenstein",
+          "standard_place": "Triesen, Liechtenstein"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K4K8-5K3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Joannes",
+          "surname": "Schedler"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "97Z5-NC1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Antonius",
+          "surname": "Schedler"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "07 DEC 1741",
+          "standard_date": "7 Dec 1741",
+          "place": "Katholisch,Triesen,Liechtenstein,Liechtenstein",
+          "standard_place": "Triesen, Liechtenstein"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "97Z5-NZF",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Antonius",
+          "surname": "Schedler"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "12 JUN 1756",
+          "standard_date": "12 Jun 1756",
+          "place": "Katholisch,Triesen,Liechtenstein,Liechtenstein",
+          "standard_place": "Triesen, Liechtenstein"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "K4K8-5K3",
+      "person2": "KZS8-RS7"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "K4K8-5K3",
+      "child": "97Z5-NC1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KZS8-RS7",
+      "child": "97Z5-NC1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "K4K8-5K3",
+      "child": "97ZY-PZT",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KZS8-RS7",
+      "child": "97ZY-PZT",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "K4K8-5K3",
+      "child": "97ZB-P6C",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KZS8-RS7",
+      "child": "97ZB-P6C",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "K4K8-5K3",
+      "child": "97Z5-NZF",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KZS8-RS7",
+      "child": "97Z5-NZF",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "M66X-3ZZ",
+      "title": "Catharina Gosnerin in entry for Antonius Schedler, \"Liechtenstein, Births and Baptisms, 1650-1875\"",
+      "citation": "\"Liechtenstein Geburten und Taufen 1650-1875\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:X5CB-BQ9 : 7 February 2020), Catharina Gosnerin in entry for Antonius Schedler, 1756.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X5CB-BQ9"
+    },
+    {
+      "id": "M66X-SPD",
+      "title": "Catharina Gosnerin in entry for Antonius Schedler, \"Liechtenstein, Births and Baptisms, 1650-1875\"",
+      "citation": "\"Liechtenstein Geburten und Taufen 1650-1875\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:X5CB-B3B : 7 February 2020), Catharina Gosnerin in entry for Antonius Schedler, 1741.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X5CB-B3B"
+    },
+    {
+      "id": "M667-XTY",
+      "title": "Catharina Gosnerin in entry for Rosa Schedler, \"Liechtenstein, Births and Baptisms, 1650-1875\"",
+      "citation": "\"Liechtenstein Geburten und Taufen 1650-1875\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:X5CB-PCS : 7 February 2020), Catharina Gosnerin in entry for Rosa Schedler, 1754.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X5CB-PCS"
+    },
+    {
+      "id": "M6D1-CGX",
+      "title": "Catharina Gosnerin in entry for Josephus Schedler, \"Liechtenstein, Births and Baptisms, 1650-1875\"",
+      "citation": "\"Liechtenstein Geburten und Taufen 1650-1875\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:X5C1-9D3 : 7 February 2020), Catharina Gosnerin in entry for Josephus Schedler, 1751.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X5C1-9D3"
+    }
+  ]
+}

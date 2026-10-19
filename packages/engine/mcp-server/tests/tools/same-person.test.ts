@@ -1,8 +1,13 @@
+import { LOCAL } from "../../src/auth/principal.js";
+import { mkdtemp, rm, writeFile, readdir, readFile } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { samePerson } from "../../src/tools/same-person.js";
+import { samePerson, buildRecordedScore } from "../../src/tools/same-person.js";
 import { notHaving } from "../helpers/narrow.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
 import type { SamePersonApiResponse } from "../../src/types/same-person.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -12,10 +17,21 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: getValidTokenMock,
 }));
 
+// The project-relative arm resolves the record side through record_read. Mocked
+// so the tests choose the route: resolving returns the fetched persona document,
+// throwing falls the arm through to the assertion projection. Defaults to
+// throwing, so the explicit-form tests below are untouched by it.
+const recordReadMock = vi.hoisted(() => vi.fn());
+vi.mock("../../src/tools/record-read.js", () => ({
+  recordReadTool: recordReadMock,
+}));
+
 beforeEach(() => {
   mockFetch.mockReset();
   getValidTokenMock.mockReset();
   getValidTokenMock.mockResolvedValue("test-token");
+  recordReadMock.mockReset();
+  recordReadMock.mockRejectedValue(new Error("no record_read in this test"));
 });
 
 afterEach(() => {
@@ -79,7 +95,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      }), "matchRelatives");
+      }, LOCAL), "matchRelatives");
 
       expect(result.matched).toBe(true);
       expect(result.confidence).toBe(5);
@@ -101,7 +117,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", "https://familysearch.org/ark:/61903/4:1:NONMATCH"),
         primaryId2: "I1",
-      }), "matchRelatives");
+      }, LOCAL), "matchRelatives");
 
       expect(result.matched).toBe(false);
       expect(result.confidence).toBeUndefined();
@@ -120,7 +136,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      });
+      }, LOCAL);
 
       expect(mockFetch).toHaveBeenCalledOnce();
       const [url, opts] = mockFetch.mock.calls[0];
@@ -128,10 +144,11 @@ describe("samePerson", () => {
         "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
       );
       expect(opts.method).toBe("POST");
-      expect(opts.headers.Authorization).toBe("Bearer test-token");
-      expect(opts.headers.Accept).toBe("application/json");
-      expect(opts.headers["Content-Type"]).toBe("application/json");
-      expect(opts.headers["User-Agent"]).toContain("Mozilla");
+      const headers = new Headers(opts.headers as HeadersInit);
+      expect(headers.get("Authorization")).toBe("Bearer test-token");
+      expect(headers.get("Accept")).toBe("application/json");
+      expect(headers.get("Content-Type")).toBe("application/json");
+      expect(headers.get("User-Agent")).toContain("Mozilla");
     });
 
     it("appends a sourceDescription with about=#<primaryId> to each entry", async () => {
@@ -145,7 +162,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I7", CANDIDATE_ARK),
         primaryId2: "I7",
-      });
+      }, LOCAL);
 
       const body = JSON.parse((mockFetch.mock.calls[0][1] as { body: string }).body);
       const entry1Gedcomx = body.entries[0].content.gedcomx;
@@ -157,6 +174,34 @@ describe("samePerson", () => {
       expect(entry2Gedcomx.sourceDescriptions).toEqual([
         { id: "match-anchor", about: "#I7" },
       ]);
+    });
+
+    it("puts the focus person first, because matchTwoExamples scores persons[0]", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => matchResponse,
+      });
+
+      const household = makeGedcomx("I1", "ark:/61903/1:1:QBCD-FGH");
+      household.persons!.push(
+        { ...makeGedcomx("I2", "ark:/61903/1:1:QBCD-FGJ").persons![0] },
+        { ...makeGedcomx("I3", "ark:/61903/1:1:QBCD-FGK").persons![0] },
+      );
+
+      await samePerson({
+        gedcomx1: household,
+        primaryId1: "I3",
+        gedcomx2: makeGedcomx("I7", CANDIDATE_ARK),
+        primaryId2: "I7",
+      }, LOCAL);
+
+      const body = JSON.parse((mockFetch.mock.calls[0][1] as { body: string }).body);
+      const entry1Gedcomx = body.entries[0].content.gedcomx;
+      expect(entry1Gedcomx.persons.map((p: { id: string }) => p.id)).toEqual(["I3", "I1", "I2"]);
+      expect(entry1Gedcomx.sourceDescriptions).toEqual([
+        { id: "match-anchor", about: "#I3" },
+      ]);
+      expect(household.persons!.map((p) => p.id)).toEqual(["I1", "I2", "I3"]);
     });
 
     it("sends the Persistent identifier as a full canonical ARK (not a bare id)", async () => {
@@ -173,7 +218,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      });
+      }, LOCAL);
 
       const body = JSON.parse((mockFetch.mock.calls[0][1] as { body: string }).body);
       const persistent =
@@ -196,7 +241,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      });
+      }, LOCAL);
 
       const body = JSON.parse((mockFetch.mock.calls[0][1] as { body: string }).body);
       const [persistent] =
@@ -223,7 +268,7 @@ describe("samePerson", () => {
           primaryId1: "I99",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/primaryId "I99" not found in gedcomx1/);
     });
 
@@ -234,7 +279,7 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I99",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/primaryId "I99" not found in gedcomx2/);
     });
 
@@ -245,7 +290,7 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/gedcomx1 has no persons\[\]/);
     });
 
@@ -261,7 +306,7 @@ describe("samePerson", () => {
           primaryId1: "wrong",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/Available ids in gedcomx1: I1, I2/);
     });
   });
@@ -281,7 +326,7 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/call the login tool/i);
     });
 
@@ -299,7 +344,7 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/blocked by WAF/i);
     });
 
@@ -317,7 +362,7 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/Required header 'Authorization' is not present/);
     });
 
@@ -333,12 +378,12 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/returned no entries\[\]/);
     });
 
     it("wraps a network failure with a helpful message", async () => {
-      mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+      mockFetch.mockRejectedValueOnce(socketFetchFailure());
 
       await expect(
         samePerson({
@@ -346,8 +391,8 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
-      ).rejects.toThrow(/Could not reach FamilySearch matchTwoExamples API/);
+        }, LOCAL),
+      ).rejects.toThrow(/Could not reach FamilySearch matchTwoExamples API: fetch failed <- ETIMEDOUT/);
     });
   });
 
@@ -399,7 +444,7 @@ describe("samePerson", () => {
         gedcomx2: side2,
         primaryId2: "I2",
         matchRelatives: true,
-      });
+      }, LOCAL);
 
       expect(mockFetch).toHaveBeenCalledTimes(3);
       if (!("matchRelatives" in result)) throw new Error("expected relatives result");
@@ -438,7 +483,7 @@ describe("samePerson", () => {
         gedcomx2: side2,
         primaryId2: "I2",
         matchRelatives: true,
-      });
+      }, LOCAL);
 
       if (!("matchRelatives" in result)) throw new Error("expected relatives result");
       expect(result.matches).toHaveLength(2);
@@ -453,7 +498,7 @@ describe("samePerson", () => {
           gedcomx2: side2,
           primaryId2: "I2",
           matchRelatives: true,
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/primaryId "BOGUS" not found in gedcomx1/);
     });
   });
@@ -470,7 +515,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      }), "matchRelatives");
+      }, LOCAL), "matchRelatives");
 
       expect(result.queryArk).toBe("ark:/61903/4:1:KGS8-LY1");
     });
@@ -489,9 +534,537 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      }), "matchRelatives");
+      }, LOCAL), "matchRelatives");
 
       expect(result.queryArk).toBe("ark:/61903/4:1:MMMM-MMM");
     });
+  });
+});
+
+// ─── the project-relative arm (issue #1731 steps 1 + 2) ──────────────────────
+
+describe("samePerson — project-relative arm", () => {
+  let dir: string;
+
+  const RECORD = "https://www.familysearch.org/ark:/61903/1:1:MARR-8T3";
+
+  /** research.json with one marriage assertion whose record holds two parties. */
+  function research(over: Record<string, unknown> = {}): any {
+    return {
+      log: [
+        { id: "log_1", tool: "record_search", results_ref: "results/log_1.json" },
+        { id: "log_ft", tool: "fulltext_search", results_ref: "results/log_ft.json" },
+      ],
+      assertions: [
+        {
+          id: "a_005", record_id: RECORD, record_role: "principal",
+          fact_type: "name", value: "Thomas Flynn", record_persona_id: null,
+          record_basis: "stated", log_entry_id: "log_1",
+        },
+        {
+          id: "a_006", record_id: RECORD, record_role: "bride",
+          fact_type: "name", value: "Mary Doyle", record_persona_id: null,
+          record_basis: "stated", log_entry_id: "log_1",
+        },
+      ],
+      ...over,
+    };
+  }
+
+  const TREE = {
+    persons: [
+      { id: "I1", gender: "Male", names: [{ given: "Thomas", surname: "Flynn" }] },
+      { id: "I2", gender: "Female", names: [{ given: "Mary", surname: "Doyle" }] },
+    ],
+    relationships: [{ type: "Couple", person1: "I1", person2: "I2" }],
+  };
+
+  async function project(r: any = research(), tree: any = TREE) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(r), "utf8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree), "utf8");
+  }
+
+  const okScore = () =>
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => matchResponse });
+
+  async function scoresOnDisk(): Promise<any[]> {
+    let names: string[];
+    try {
+      names = await readdir(join(dir, "results", ".scores"));
+    } catch {
+      return [];
+    }
+    return Promise.all(
+      names.map(async (n) =>
+        JSON.parse(await readFile(join(dir, "results", ".scores", n), "utf8")),
+      ),
+    );
+  }
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "same-person-project-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("scores from three references and records what it computed", async () => {
+    await project();
+    okScore();
+
+    const result = notHaving(
+      await samePerson(
+        { projectPath: dir, assertionId: "a_005", treePersonId: "I1" },
+        LOCAL,
+      ),
+      "matchRelatives",
+    );
+
+    expect(result.score).toBeCloseTo(0.99983513);
+    expect(result.recorded).toBe(true);
+    expect(result.recordSource).toBe("projection");
+
+    const [file] = await scoresOnDisk();
+    expect(file.scores["a_005|I1"]).toMatchObject({
+      record_id: RECORD,
+      record_role: "principal",
+      tree_person_id: "I1",
+      assertion_id: "a_005",
+      matched: true,
+    });
+  });
+
+  it("sends the matching mob as the tree side, not the whole tree", async () => {
+    await project();
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    // I2 is I1's spouse, so it belongs in the mob; nothing else does.
+    const treeSide = JSON.stringify(body).includes("Doyle");
+    expect(treeSide).toBe(true);
+  });
+
+  it("leaves out tree facts and names sourced only from the record it scores", async () => {
+    const OTHER = "https://www.familysearch.org/ark:/61903/1:1:CENS-1880";
+    const r = research({
+      sources: [
+        { id: "src_001", gedcomx_source_description_id: "S50" },
+        { id: "src_002", gedcomx_source_description_id: "S60" },
+      ],
+    });
+    r.assertions = r.assertions.map((a: any) => ({ ...a, source_id: "src_001" }));
+    r.assertions.push({
+      id: "a_020", record_id: OTHER, record_role: "head", source_id: "src_002",
+      fact_type: "residence", value: null, record_basis: "stated", log_entry_id: "log_1",
+    });
+    await project(r, {
+      persons: [
+        {
+          id: "I1", gender: "Male",
+          names: [
+            { given: "Thomas", surname: "Flynn" },
+            { given: "Thomas", surname: "Flinn", sources: [{ ref: "S50" }] },
+          ],
+          facts: [
+            { type: "Residence", date: "1875", sources: [{ ref: "S50" }] },
+            { type: "Residence", date: "1880", sources: [{ ref: "S60" }] },
+            { type: "Birth", date: "1844", sources: [{ ref: "#S50" }, { ref: "S60" }] },
+          ],
+        },
+        {
+          id: "I2", gender: "Female",
+          names: [{ given: "Mary", surname: "Doyle", sources: [{ ref: "S50" }] }],
+          facts: [{ type: "Residence", date: "1877", sources: [{ ref: "S50" }] }],
+        },
+      ],
+      relationships: [{ type: "Couple", person1: "I1", person2: "I2" }],
+    });
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+
+    const treeSide = JSON.stringify(JSON.parse(mockFetch.mock.calls[0][1].body).entries[1]);
+    expect(treeSide).not.toContain("1875");
+    expect(treeSide).not.toContain("1877");
+    expect(treeSide).not.toContain("Flinn");
+    expect(treeSide).toContain("1880");
+    expect(treeSide).toContain("1844");
+    expect(treeSide).toContain("Doyle");
+  });
+
+  it("keeps a fact whose source reaches the scored record and another one too", async () => {
+    const OTHER = "https://www.familysearch.org/ark:/61903/1:1:CENS-1880";
+    const r = research({ sources: [{ id: "src_001", gedcomx_source_description_id: "S50" }] });
+    r.assertions = r.assertions.map((a: any) => ({ ...a, source_id: "src_001" }));
+    r.assertions.push({
+      id: "a_020", record_id: OTHER, record_role: "head", source_id: "src_001",
+      fact_type: "residence", value: null, record_basis: "stated", log_entry_id: "log_1",
+    });
+    await project(r, {
+      ...TREE,
+      persons: [
+        { ...TREE.persons[0], facts: [{ type: "Residence", date: "1875", sources: [{ ref: "S50" }] }] },
+        TREE.persons[1],
+      ],
+    });
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+
+    const treeSide = JSON.stringify(JSON.parse(mockFetch.mock.calls[0][1].body).entries[1]);
+    expect(treeSide).toContain("1875");
+  });
+
+  it("prefers the record's own GedcomX, and names the persona it scored", async () => {
+    recordReadMock.mockResolvedValue({
+      persons: [
+        { id: "MP1", names: [{ given: "Thomas", surname: "Flynn" }] },
+        { id: "MP2", names: [{ given: "Mary", surname: "Doyle" }] },
+      ],
+      relationships: [{ type: "Couple", person1: "MP1", person2: "MP2" }],
+    });
+    await project();
+    okScore();
+
+    const result = notHaving(
+      await samePerson(
+        { projectPath: dir, assertionId: "a_005", treePersonId: "I1", recordPersonaId: "MP1" },
+        LOCAL,
+      ),
+      "matchRelatives",
+    );
+    expect(result.recordSource).toBe("record_read");
+    const [file] = await scoresOnDisk();
+    // Keyed on the assertion; the resolved persona is still RECORDED on the entry,
+    // which is what `recordPersonaId` was honoured means.
+    expect(file.scores["a_005|I1"]).toBeTruthy();
+    expect(file.scores["a_005|I1"]?.record_persona_id).toBe("MP1");
+  });
+
+  it("passes a record_search sidecar ref to record_read", async () => {
+    recordReadMock.mockResolvedValue({ persons: [{ id: "MP1" }] });
+    await project();
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+    expect(recordReadMock.mock.calls[0][0].resultsRef).toBe("results/log_1.json");
+  });
+
+  it("never passes a fulltext_search sidecar ref — it carries no persona", async () => {
+    // A fulltext_search entry has a results_ref too, but its results hold no
+    // gedcomx and key on `id` rather than `recordId`, so handing it over would
+    // look up nothing (PERSONA_BEARING_PRODUCERS). 300 corpus assertions sit
+    // on exactly this shape.
+    //
+    // Its own test rather than a second half of the one above: sharing a
+    // project and a record id there let the resolved-record memo serve the
+    // second call from cache, so record_read was never called and the
+    // assertion read undefined for the wrong reason.
+    recordReadMock.mockResolvedValue({ persons: [{ id: "MP1" }] });
+    const r = research();
+    r.assertions[0].log_entry_id = "log_ft";
+    await project(r);
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+    expect(recordReadMock).toHaveBeenCalledTimes(1);
+    expect(recordReadMock.mock.calls[0][0].resultsRef).toBeUndefined();
+  });
+
+  it("passes a record_read sidecar ref to record_read — persona-bearing", async () => {
+    recordReadMock.mockResolvedValue({ persons: [{ id: "MP1" }] });
+    const r = research();
+    r.log.push({ id: "log_rr", tool: "record_read", results_ref: "results/log_rr.json" });
+    r.assertions[0].log_entry_id = "log_rr";
+    await project(r);
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+    expect(recordReadMock).toHaveBeenCalledTimes(1);
+    expect(recordReadMock.mock.calls[0][0].resultsRef).toBe("results/log_rr.json");
+  });
+
+  it("does not serve one project's resolved record to another", async () => {
+    recordReadMock.mockResolvedValue({ persons: [{ id: "MP1" }] });
+    await project();
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+
+    const other = await mkdtemp(join(tmpdir(), "same-person-other-"));
+    try {
+      await writeFile(join(other, "research.json"), JSON.stringify(research()), "utf8");
+      await writeFile(join(other, "tree.gedcomx.json"), JSON.stringify(TREE), "utf8");
+      okScore();
+      await samePerson({ projectPath: other, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+      expect(recordReadMock).toHaveBeenCalledTimes(2);
+    } finally {
+      await rm(other, { recursive: true, force: true });
+    }
+  });
+
+  it("resolves the SECOND party of a relationship assertion via recordRole", async () => {
+    await project();
+    okScore();
+    const result = notHaving(
+      await samePerson(
+        { projectPath: dir, assertionId: "a_005", treePersonId: "I2", recordRole: "bride" },
+        LOCAL,
+      ),
+      "matchRelatives",
+    );
+    expect(result.recorded).toBe(true);
+    const [file] = await scoresOnDisk();
+    // The tree person is half the key, so the second party does not collide with
+    // the first even though both share assertion a_005.
+    expect(file.scores["a_005|I2"]?.record_role).toBe("bride");
+    expect(file.scores["a_005|I1"]).toBeUndefined();
+  });
+
+  it("resolves one record ONCE across links — the memo", async () => {
+    recordReadMock.mockResolvedValue({ persons: [{ id: "MP1" }] });
+    await project();
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_006", treePersonId: "I2" }, LOCAL);
+    // Two links, two scores, one fetch. Without the memo this arm would turn
+    // the agent's one-fetch-per-record into one-fetch-per-link.
+    expect(recordReadMock).toHaveBeenCalledTimes(1);
+  });
+
+  describe("answers, not crashes", () => {
+    it("honours recordPersonaId on the PROJECTED route, not just the fetched one", async () => {
+      // The ambiguity refusal tells the agent to pass recordPersonaId, and the
+      // schema advertises it as the disambiguator. Route 2 selected purely by
+      // role, so following that instruction produced the identical refusal for
+      // ever, on the transcribed-register population the route exists for.
+      const r = research();
+      r.assertions[0].record_persona_id = "p_thomas";
+      r.assertions.push({
+        id: "a_007", record_id: RECORD, record_role: "principal",
+        fact_type: "name", value: "Somebody Else", record_persona_id: "p_other",
+        record_basis: "stated", log_entry_id: "log_1",
+      });
+      await project(r);
+      okScore();
+      const result = notHaving(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_005", treePersonId: "I1", recordPersonaId: "p_thomas" },
+          LOCAL,
+        ),
+        "matchRelatives",
+      );
+      expect(result.recorded).toBe(true);
+      const [file] = await scoresOnDisk();
+      expect(file.scores["a_005|I1"]).toBeTruthy();
+      expect(file.scores["a_005|I1"]?.record_persona_id).toBe("p_thomas");
+    });
+
+    it("says so when recordPersonaId names no persona in the record", async () => {
+      await project();
+      await expect(
+        samePerson(
+          { projectPath: dir, assertionId: "a_005", treePersonId: "I1", recordPersonaId: "p_nope" },
+          LOCAL,
+        ),
+      ).rejects.toThrow(/holds no persona with record_persona_id 'p_nope'/);
+    });
+
+    it("refuses a projected role that names more than one person", async () => {
+      const r = research();
+      r.assertions.push({
+        id: "a_007", record_id: RECORD, record_role: "principal",
+        fact_type: "name", value: "Somebody Else", record_persona_id: null,
+        record_basis: "stated", log_entry_id: "log_1",
+      });
+      await project(r);
+      await expect(
+        samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL),
+      ).rejects.toThrow(/names more than one person/);
+    });
+
+    it("does NOT refuse one persona carrying two name spellings", async () => {
+      // 18 of the 22 role-level name collisions in the corpus are alias
+      // variants of a single persona (maiden name, scribal variant). The guard
+      // above must not fire on the commonest shape it will see.
+      const r = research();
+      r.assertions[0].record_persona_id = "p_1";
+      r.assertions.push({
+        id: "a_007", record_id: RECORD, record_role: "principal",
+        fact_type: "name", value: "Thomas Flinn", record_persona_id: "p_1",
+        record_basis: "stated", log_entry_id: "log_1",
+      });
+      await project(r);
+      okScore();
+      const result = notHaving(
+        await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL),
+        "matchRelatives",
+      );
+      expect(result.recorded).toBe(true);
+    });
+
+    it("says so when the tree person does not exist", async () => {
+      await project();
+      await expect(
+        samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I99" }, LOCAL),
+      ).rejects.toThrow(/tree person 'I99' is not in tree\.gedcomx\.json/);
+    });
+
+    it("says so when the assertion does not exist", async () => {
+      await project();
+      await expect(
+        samePerson({ projectPath: dir, assertionId: "a_nope", treePersonId: "I1" }, LOCAL),
+      ).rejects.toThrow(/no assertion 'a_nope'/);
+    });
+
+    it("says so when the record holds no persona for the requested role", async () => {
+      await project();
+      await expect(
+        samePerson(
+          { projectPath: dir, assertionId: "a_005", treePersonId: "I1", recordRole: "witness_1" },
+          LOCAL,
+        ),
+      ).rejects.toThrow(/holds no persona for role 'witness_1'/);
+    });
+
+    it("points at the explicit form outside a project", async () => {
+      await expect(
+        samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL),
+      ).rejects.toThrow(/gedcomx1\/primaryId1\/gedcomx2\/primaryId2/);
+    });
+
+    it("tells matchRelatives apart from 'paired and found nothing' on a projected record", async () => {
+      await project();
+      const result = await samePerson(
+        { projectPath: dir, assertionId: "a_005", treePersonId: "I1", matchRelatives: true },
+        LOCAL,
+      );
+      expect(result).toMatchObject({ matchRelatives: true, matches: [] });
+      expect((result as any).note).toMatch(/no record relatives to pair/);
+      // Nothing was scored, so nothing was recorded.
+      expect(await scoresOnDisk()).toEqual([]);
+    });
+  });
+
+  it("the explicit form records nothing — it has no project and no record id", async () => {
+    await project();
+    okScore();
+    const result = notHaving(
+      await samePerson(
+        {
+          gedcomx1: makeGedcomx("I1", QUERY_ARK), primaryId1: "I1",
+          gedcomx2: makeGedcomx("I1", CANDIDATE_ARK), primaryId2: "I1",
+        },
+        LOCAL,
+      ),
+      "matchRelatives",
+    );
+    expect(result.recorded).toBeUndefined();
+    expect(await scoresOnDisk()).toEqual([]);
+  });
+});
+
+// ─── buildRecordedScore (#1731 PR B) ────────────────────────────────────────
+//
+// Extracted so the eval harness can write a truthful attestation on a
+// fixture-served call: `same_person` is not in the unit harness's LIVE_TOOLS,
+// so this file never runs there and `results/.scores/` never exists, which
+// makes any writer-side gate that reads one untestable.
+//
+// `record_source` is the field that cannot be copied from the fetch, because a
+// mock performs none, so it is derived from the same routes `personaReachable`
+// encodes. These pin that derivation: a mutation making it constant passed the
+// whole pre-existing suite.
+
+describe("buildRecordedScore", () => {
+  const RESULT = { score: 0.82, confidence: 7, matched: true };
+  const research = (assertion: Record<string, unknown>, log: unknown[] = []) => ({
+    assertions: [assertion],
+    log,
+  });
+
+  it("returns null when the assertion is not in the project", () => {
+    expect(buildRecordedScore(research({ id: "a_001", record_id: "r1" }),
+      "a_999", "I1", undefined, RESULT)).toBeNull();
+  });
+
+  it("returns null when the assertion carries no record_id", () => {
+    expect(buildRecordedScore(research({ id: "a_001" }),
+      "a_001", "I1", undefined, RESULT)).toBeNull();
+  });
+
+  // ── record_source: the three routes that mean the record can be opened ──
+  it("reads as record_read when the assertion carries a persona id", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", record_persona_id: "P1" }),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("record_read");
+    expect(r?.record_persona_id).toBe("P1");
+  });
+
+  it("reads as record_read when the log entry is a record_read", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", log_entry_id: "log_1" },
+               [{ id: "log_1", tool: "record_read" }]),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("record_read");
+  });
+
+  it("reads as record_read for a record_search that retained its sidecar", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", log_entry_id: "log_1" },
+               [{ id: "log_1", tool: "record_search", results_ref: "results/log_1.json" }]),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("record_read");
+  });
+
+  it("reads as record_read for an accepted FamilySearch hint (search-hints, #2029)", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "ark:/61903/1:1:MABC", log_entry_id: "log_1" },
+               [{ id: "log_1", tool: "person_record_matches" }]),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("record_read");
+  });
+
+  // ── and the cases that must NOT read as fetchable ──
+  it("reads as projection for a full-text hit", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", log_entry_id: "log_1" },
+               [{ id: "log_1", tool: "fulltext_search", results_ref: "results/log_1.json" }]),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("projection");
+  });
+
+  it("reads as projection for a record_search whose sidecar was not retained", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", log_entry_id: "log_1" },
+               [{ id: "log_1", tool: "record_search" }]),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("projection");
+  });
+
+  it("reads as projection when the log entry is missing entirely", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", log_entry_id: "log_gone" }),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("projection");
+  });
+
+  // ── the rest of the record ──
+  it("prefers an explicit role over the assertion's own", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", record_role: "groom" }),
+      "a_001", "I1", "father_of_groom", RESULT);
+    expect(r?.record_role).toBe("father_of_groom");
+  });
+
+  it("falls back to the assertion's record_role", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", record_role: "groom" }),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_role).toBe("groom");
+  });
+
+  it("omits confidence when the API returned none", () => {
+    const r = buildRecordedScore(research({ id: "a_001", record_id: "r1" }),
+      "a_001", "I1", undefined, { score: 0.1, matched: false });
+    expect(r).not.toHaveProperty("confidence");
+    expect(r?.matched).toBe(false);
   });
 });

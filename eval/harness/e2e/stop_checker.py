@@ -37,14 +37,36 @@ def read_research_json(workspace: Path) -> dict[str, Any] | None:
 
 
 def read_tree_json(workspace: Path) -> dict[str, Any] | None:
-    """Return parsed tree.gedcomx.json or None if missing/invalid."""
+    """Return parsed tree.gedcomx.json, or None if missing or unusable.
+
+    The same two guards `read_research_json` above documents, but they earn their
+    place differently, so read them separately.
+
+    `UnicodeDecodeError` is a `ValueError` rather than an `OSError`, so a tree
+    written in cp1252 (the Windows default, and this team runs on Windows) used
+    to propagate out of every caller. That one does matter on the paid e2e path:
+    `collect_post_hoc_shadow` reads this file, and a raise there aborts the run
+    before any result file is written.
+
+    The `isinstance` guard does NOT protect that path — every detector at that
+    site already returns `[]` on a non-dict, so an array-shaped tree was harmless
+    there. It protects the OTHER two callers: `final_tree` and `starting_tree`
+    are passed around as `dict | None`, and a list slipped through every
+    `is None` test to raise `AttributeError` on `.get(...)` later. It also
+    changes what such a run RECORDS -- the judge is skipped and the verdict is
+    `skipped` rather than the judge being handed a list and the run landing
+    `ungraded`. Both are better than the alternative, and both are tested in
+    `tests/unit/test_e2e_stop_checker.py`; neither is a side effect of the
+    post-hoc work that prompted the hardening.
+    """
     path = Path(workspace) / "tree.gedcomx.json"
     if not path.exists():
         return None
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
         return None
+    return parsed if isinstance(parsed, dict) else None
 
 
 def project_completed(research: dict[str, Any] | None) -> bool:
@@ -68,8 +90,9 @@ def should_continue_run(
     True  → block the Stop: the run is unfinished and a nudge may help.
     False → allow the Stop: the project is complete, the nudge budget is
             spent, the previous nudge produced no tool call (the agent
-            isn't making progress, so another nudge won't either), or the
-            genealogy MCP surface is gone (issue #941 — see below).
+            isn't making progress, so another nudge won't either), there is
+            no research.json (issue #3274 — see below), or the genealogy MCP
+            surface is gone (issue #941 — see below).
 
     Kept pure so the orchestrator's Stop hook stays a thin wrapper and this
     is unit-testable without a live agent.
@@ -82,6 +105,12 @@ def should_continue_run(
     # lands must not nudge the agent back into an empty tool set.
     if mcp_unavailable:
         return False
+    # #3274: with no research.json there is no project to resume, and the nudge says to
+    # re-read it. `is None`, not a falsy test, so an empty `{}` still reads as an unfinished
+    # project. Same place as in the shared copy (apps/server/app/agent/continue_policy.py),
+    # which `test_continue_policy_parity.py` pins.
+    if research is None:
+        return False
     if project_completed(research):
         return False
     if nudges_used >= max_nudges:
@@ -89,6 +118,92 @@ def should_continue_run(
     if nudges_used > 0 and tool_count == tool_count_at_last_nudge:
         return False
     return True
+
+
+# The retired hand-back literal (lead ruling 2026-09-07, retired by issue #2292 and
+# PR #2870, 2026-09-27: "the Stop hook is the mechanism"). No shipped prompt emits it,
+# so in an autonomous run a `step` is the agent asking the patron — the yield the veto
+# exists to refuse. Kept as telemetry only: `usage.hand_back_classes` and
+# `nudge_report` count it, the reply never depends on it (U17, handoff plan), and the
+# committed pre-retirement run logs still carry it. Matched literally; do not loosen.
+_HAND_BACK_STEP_TAIL = ". Continue?"
+_HAND_BACK_STEP_LEAD = "Next: "
+_HAND_BACK_COMPLETE = "Research complete."
+
+
+def classify_hand_back(text: str | None) -> str:
+    """Classify an agent's closing words: "step" | "silent" | "completion_claim".
+
+    Pure, stdlib-only, text in / class out, and takes NO `research` argument: whether
+    a completion claim is true is `hand_back_key`'s question, not this one's.
+
+    Normalises its own input (`" ".join(text.split())`) so the two callers agree: the
+    orchestrator passes a whole TextBlock, `nudge_report` passes narration text, and a
+    predicate anchored to the end would otherwise behave differently on each.
+
+    `completion_claim` is tested first; order between the two `endswith` arms is
+    arbitrary, since no normalised string can end with both.
+
+    NOTE the class is about FORM, not truth. A `completion_claim` is not by itself a
+    false completion — the caller decides that by reading project.status. And a run
+    that stops on a genuine logged blocker reads as `silent` here, because it names no
+    next step; the taxonomy has no separate blocker class.
+    """
+    t = " ".join((text or "").split())
+    if t.endswith(_HAND_BACK_COMPLETE):
+        return "completion_claim"
+    if t.endswith(_HAND_BACK_STEP_TAIL) and _HAND_BACK_STEP_LEAD in t:
+        return "step"
+    return "silent"
+
+
+def terminal_reason(
+    *,
+    research: dict | None,
+    nudges_used: int,
+    max_nudges: int,
+    mcp_unavailable: bool,
+) -> str:
+    """Why `should_continue_run` is about to return False.
+
+    That function returns a bare bool for FIVE different reasons and only two of them
+    are defects. 134 of the 181 committed e2e run logs stop on `completed` — counting
+    those as hand-back defects would make the rate dominated by successes, and the live
+    acceptance run (which must end `completed`) would log one against itself. `ok` is the
+    fifth: no research.json, so no project for a hand-back to be a defect against.
+
+    Mirrors should_continue_run's own order, which is what keeps the two in agreement.
+    """
+    if mcp_unavailable:
+        return "mcp_unavailable"
+    if research is None:
+        return "ok"
+    if project_completed(research):
+        return "completed"
+    if nudges_used >= max_nudges:
+        return "budget"
+    return "no_progress"
+
+
+#: Terminal reasons whose hand-back is worth counting. `completed` is the successful
+#: path, `mcp_unavailable` is infrastructure (#941) and `ok` has no project (#3274) —
+#: none of them says anything about how the agent handed back.
+COUNTED_TERMINAL_REASONS = frozenset({"budget", "no_progress"})
+
+
+def hand_back_key(hand_back_class: str, *, project_is_completed: bool) -> str:
+    """The `usage.hand_back_classes` key for one hand-back class — telemetry only.
+
+    Every vetoed stop gets the same reply, the worker's `CONTINUE_REASON` verbatim, so
+    the e2e grade and the prototype's runs see one Stop policy (U17);
+    `test_continue_policy_parity.py` pins that the hook has no other reply.
+
+    A `completion_claim` on a project that IS completed is a TRUTHFUL completion, not a
+    false one — `terminal_completed`, never `false_completion`.
+    """
+    if hand_back_class == "completion_claim":
+        return "terminal_completed" if project_is_completed else "false_completion"
+    return hand_back_class
 
 
 def derive_stop_reason(
@@ -107,6 +222,11 @@ def derive_stop_reason(
     # project.status == "completed" and were reported as research failures.
     if sdk_aborted_reason == "mcp_unavailable":
         return "mcp_unavailable"
+    # #2974 — like mcp_unavailable, an infrastructure stop that outranks
+    # `completed`: a host that slept past the inactivity cap consumed the run's
+    # budget, so whatever status it left is not a graded outcome.
+    if sdk_aborted_reason == "host_slept":
+        return "host_slept"
     if sdk_aborted_reason == "max_wall_clock_seconds":
         return "timeout"
     if sdk_aborted_reason == "max_tool_calls":

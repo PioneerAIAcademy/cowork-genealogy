@@ -15,11 +15,12 @@
       "scope-excludes-serena-deacon",
       "scope-excludes-samuel-jesse-purnell",
       "scope-excludes-serena",
-      "scope-excludes-samuel"
+      "scope-excludes-samuel",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "What should I research next?",
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
     "scenario": "job-purnell-parents-identity"
   },
   "judge_context": [

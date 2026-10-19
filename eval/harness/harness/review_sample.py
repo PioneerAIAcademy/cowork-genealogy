@@ -18,8 +18,9 @@ point — each answers a different question:
 - **Random (1)** — the only unbiased estimator of judge accuracy. Every other
   slot is chosen, so only this one supports an honest error rate.
 - **Mandatory (uncapped)** — every test that scored a 1 or 2 on any dimension,
-  or whose outcome is not `pass`/`xfail`. `is_mandatory` below carries the
-  evidence for both triggers. Appended last so the three slots above keep
+  whose outcome is not an ordinary pass or a declared-xfail failure, or which
+  carries a `coerced_routing_negative_to_na` warning. `is_mandatory` below carries the
+  evidence for all three triggers. Appended last so the three slots above keep
   drawing from the whole eligible pool.
 
 **The mandatory slot does not replace the other three, and must not be made to.**
@@ -46,6 +47,8 @@ from __future__ import annotations
 
 import random
 from typing import Any
+from harness.outcomes import suppressed_failure
+from harness.warning_kinds import iter_run_warnings
 
 
 N_ROTATION = 3
@@ -56,31 +59,76 @@ N_RANDOM = 1
 # uncapped — so a constant claiming otherwise would be wrong wherever it was
 # read. It had no callers when it was removed; keep it that way.
 
-# Outcomes that do NOT make a test mandatory. Everything else does, including
-# `fail`, `partial`, `xpass` and `aborted`. `xfail` is a failure someone
-# declared in advance, and `pass` is the ordinary case.
-_NON_FAILING_OUTCOMES = frozenset({"pass", "xfail"})
+def _is_non_failing(entry: dict) -> bool:
+    """A test whose outcome does NOT make it mandatory to annotate: an ordinary
+    pass, or a declared-xfail test that failed as declared. Everything else —
+    `fail`, `partial`, `aborted`, and a declared-xfail test that unexpectedly
+    passed — is mandatory."""
+    outcome = entry.get("outcome")
+    expected_outcome = entry.get("expected_outcome")
+    return (
+        outcome == "pass" and expected_outcome != "xfail"
+    ) or suppressed_failure(outcome, expected_outcome)
 
 
-def _dimensions(entry: dict[str, Any]) -> list[dict[str, Any]]:
-    return entry.get("outcome_summary", {}).get("aggregated_dimensions") or []
+def review_dimensions(entry: dict[str, Any]) -> list[dict[str, Any]]:
+    """The dimension rows a human annotates for this test.
+
+    `outcome_summary.review_dimensions` where the harness wrote it — equal to
+    `aggregated_dimensions`, except on a test whose every judged run failed a
+    validator, where the aggregate is empty by ruling (#2057) and this holds
+    the modal over those runs instead. Falls back to `aggregated_dimensions`
+    on a run log written before the field existed, so every committed
+    annotation keeps the rule it was written under. The single accessor for
+    the sampler, CI rule 3 and the reports; the CRUD UI mirrors it in
+    `lib/types.ts::reviewDimensions`.
+    """
+    summary = entry.get("outcome_summary") or {}
+    dims = summary.get("review_dimensions")
+    if dims is None:
+        dims = summary.get("aggregated_dimensions")
+    return dims or []
+
+
+def _carries_warning(entry: dict[str, Any], kind: str) -> bool:
+    """True when any run of this test emitted an `output.warnings` entry of `kind`.
+
+    Warnings are per-RUN (`entry["runs"][i]["output"]["warnings"][j]["kind"]`,
+    per `runlog.assemble_test_entry` and run-log.schema.json's
+    `$defs.run_output`); there is no `entry["output"]`. Every level is read
+    defensively because callers and fixtures legitimately omit them — a test
+    entry has no `runs` key at all until a run is recorded, and `_test_entry` in
+    tests/unit/test_review_sample.py builds run dicts with no `output` key.
+    """
+    return any(w.get("kind") == kind for w in iter_run_warnings(entry))
 
 
 def is_gradeable(entry: dict[str, Any]) -> bool:
-    """True when the test produced at least one graded dimension.
+    """True when the test has at least one dimension ROW to annotate.
 
-    The judge is skipped when validators fail or a run aborts, leaving
-    `aggregated_dimensions` empty — and `rule3_completeness` iterates exactly
-    that array, so such a test demands zero corrections. Sampling one wastes a
+    Row count, not scored-ness: after the routing-negative coercion a test can
+    carry three base rows all scored `null` -- zero GRADED dimensions -- and it
+    must still be sampled, which is what the third `is_mandatory` trigger
+    depends on. 44 of the 47 affected tests are that shape.
+
+    `review_dimensions` is empty only when nothing was judged: the run
+    aborted, or the judge raised. `rule3_completeness` iterates exactly that
+    array, so such a test demands zero corrections. Sampling one wastes a
     slot: on `project-status` 3 of 11 tests are empty, and **76 of the 79** empty
     tests in the corpus failed or aborted — which is exactly what `is_mandatory`
     matches — so without this filter the mandatory slot would be biased *toward*
     tests with nothing to annotate.
 
+    A validator-failing test is NOT empty here. Its `aggregated_dimensions` is
+    empty by ruling (#2057), and while this predicate read that array every
+    such test — `outcome: fail`, judge-scored, mandatory by every trigger —
+    was filtered out before the mandatory slot ran. On one record-extraction
+    run that hid 4 of the 7 non-passing tests from review while CI passed.
+
     Excluded is not unnoticed: `rule3_completeness` warns about these
     separately, because an ungraded test is a signal, not an absence.
     """
-    return bool(_dimensions(entry))
+    return bool(review_dimensions(entry))
 
 
 def zero_dimension_test_ids(tests: list[dict[str, Any]]) -> list[str]:
@@ -92,25 +140,25 @@ def _has_rubric_null_on_positive(entry: dict[str, Any]) -> bool:
         return False
     return any(
         d.get("source") != "base" and d.get("score") is None
-        for d in _dimensions(entry)
+        for d in review_dimensions(entry)
     )
 
 
 def is_mandatory(entry: dict[str, Any]) -> bool:
     """A test a human must read this run, whatever the other three slots picked.
 
-    Two triggers, both measured over the 102 committed run logs that carry a
-    `review_sample`:
+    Three triggers. The first two were measured over the 102 committed run logs
+    that carried a `review_sample` when they landed (115 as of 2026-09-10):
 
     - **A dimension scored 1 or 2.** 131 of the 216 tests carrying one were
       never sampled, so nobody read them; 65 of 102 runs shipped with at least
       one, and 26 of those owed not a single written comment. Per cell, a human
       changed the judge's score on 5.92% of cells belonging to such a test
       (38/642) against 0.61% everywhere else (28/4,581) — 9.7x the yield.
-    - **An outcome that is not `pass` or `xfail`.** 14 tests fail on routing or
-      activation with every dimension scored 3 or null, which the first trigger
-      cannot see. 11 were already sampled, so this one costs 3 tests across the
-      whole corpus.
+    - **An outcome that is not an ordinary pass or a declared-xfail failure.**
+      14 tests fail on routing or activation with every dimension scored 3 or
+      null, which the first trigger cannot see. 11 were already sampled, so this
+      one costs 3 tests across the whole corpus.
 
     **Non-gating tests are deliberately included.** A routing negative renders
     `outcome: pass` beside a diagnostic 1 by design — `dimensions_gate_outcome`
@@ -122,10 +170,27 @@ def is_mandatory(entry: dict[str, Any]) -> bool:
     routing deference explains only 4 of the 77, so the harness is not
     manufacturing them. Do not "fix" this by keying on
     `dimensions_gate_outcome`; that was proposed, measured, and rejected.
+
+    **Third trigger: a `coerced_routing_negative_to_na` warning (#2196).** It
+    extends the paragraph above rather than qualifying it. Coercion turns the
+    diagnostic `1` those two paragraphs are about into `null`, and the first
+    trigger keys on `score in (1, 2)` — null is neither — so without this the
+    coercion would silently delete the highest-correction-rate class in the
+    corpus (17.28%, 14/81) from human review, on a test whose outcome is `pass`.
+    A reviewer can still correct a null to 1, and that is the only remaining
+    route by which a skill doing its own task inline gets seen.
+
+    Keyed on the WARNING, not on "an aggregated base dimension is null": that
+    reading would also swallow every legitimate Tool Arguments N/A, and
+    `aggregate_dimensions` can resolve a mixed null/3 bucket to the real score,
+    so a multi-run test could carry the coercion with no null in
+    `aggregated_dimensions` at all.
     """
-    if entry.get("outcome") not in _NON_FAILING_OUTCOMES:
+    if not _is_non_failing(entry):
         return True
-    return any(d.get("score") in (1, 2) for d in _dimensions(entry))
+    if any(d.get("score") in (1, 2) for d in review_dimensions(entry)):
+        return True
+    return _carries_warning(entry, "coerced_routing_negative_to_na")
 
 
 def select_review_sample(
@@ -191,9 +256,10 @@ def select_review_sample(
     #
     # `_outcome_disagrees` was the fifth, deleted when the mandatory slot landed
     # because that slot subsumes it **structurally**. `expected_outcome` is only
-    # `pass` or `xfail`, and `assemble_test_entry` normalizes an xfail run to
-    # `xfail`/`xpass`, so a disagreement can only ever be `partial`, `fail`,
-    # `aborted` or `xpass` — and `is_mandatory` takes all four. It was a strict
+    # `pass` or `xfail`, and `_is_non_failing` treats an ordinary pass and a
+    # declared-xfail failure as non-mandatory, so a disagreement can only ever be
+    # `partial`, `fail`, `aborted` or a declared-xfail that unexpectedly passed —
+    # and `is_mandatory` takes all four. It was a strict
     # subset: across the corpus it matched 170 tests, every one already
     # mandatory, and reached none of the 66 human score changes the surviving
     # rule and the mandatory slot do not. The shape that would have escaped

@@ -25,8 +25,12 @@ from e2e import (
     guardrail_shadow_report,
     image_transcribe_report,
     nudge_report,
+    panel_report,
+    ranked_read_report,
     skill_episode_report,
+    transcription_join_report,
     wiki_failure_report,
+    writer_attribution_report,
 )
 
 _MISSING_SLUG = "nonexistent-fixture-slug-for-branch-scope-caveat-test"
@@ -39,8 +43,12 @@ _READERS = [
     (guardrail_shadow_report, []),
     (image_transcribe_report, []),
     (nudge_report, []),
+    (panel_report, []),
+    (ranked_read_report, []),
     (skill_episode_report, []),
+    (transcription_join_report, []),
     (wiki_failure_report, []),
+    (writer_attribution_report, []),
     (detector_before_after_report, ["--detector", "lane-check"]),
 ]
 

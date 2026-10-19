@@ -1,0 +1,35 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Thomas", "surname": "Flynn", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "~1810", "place": "Schuylkill County, Pennsylvania, United States" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Bridget", "surname": "Sheehy", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F2", "type": "Birth", "date": "~1815", "place": "Schuylkill County, Pennsylvania, United States" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "RT1", "type": "Couple", "person1": "I1", "person2": "I2" }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "John Flynn, \"Pennsylvania, County Marriages, 1885-1950\"",
+      "citation": "\"Pennsylvania, County Marriages, 1885-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR), entry for John Flynn and [spouse], 1887.",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR"
+    }
+  ]
+}

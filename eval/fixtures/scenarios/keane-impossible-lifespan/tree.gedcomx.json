@@ -1,0 +1,67 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Ambrose", "surname": "Keane", "type": "BirthName" }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1785",
+          "place": "Ireland",
+          "sources": [{ "ref": "S1", "page": "1850 Census, Luzerne Co., dwelling 61 (age given as 65)" }]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "1908-03-12",
+          "place": "Luzerne County, Pennsylvania",
+          "sources": [{ "ref": "S2", "page": "Death cert. no. 7734" }]
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "date": "1925",
+          "place": "Wilkes-Barre, Luzerne County, Pennsylvania",
+          "sources": [{ "ref": "S4", "page": "Obituary of Ellen (Keane) Doyle, naming her late father Ambrose Keane; auto-attached to Ambrose as a Residence" }]
+        },
+        {
+          "id": "F7",
+          "type": "Death",
+          "date": "1909-11-02",
+          "place": "Luzerne County, Pennsylvania",
+          "sources": [{ "ref": "S3", "page": "Findagrave memorial 5512087, Ambrose Keane" }]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Michael", "surname": "Keane", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F3", "type": "Birth", "primary": true, "date": "~1818", "place": "Ireland", "sources": [] }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": [{ "ref": "S1", "page": "1850 Census, Luzerne Co., dwelling 61", "quality": 1 }]
+    }
+  ],
+  "sources": [
+    { "id": "S1", "title": "1850 U.S. Federal Census", "author": "U.S. Census Bureau" },
+    { "id": "S2", "title": "Pennsylvania Death Certificates", "author": "Pennsylvania Dept. of Health" },
+    { "id": "S3", "title": "Findagrave memorial index" },
+    { "id": "S4", "title": "Wilkes-Barre Record, obituary of Ellen (Keane) Doyle, 1925" }
+  ]
+}

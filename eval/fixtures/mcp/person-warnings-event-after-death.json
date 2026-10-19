@@ -1,6 +1,6 @@
 {
   "tool": "person_warnings",
-  "description": "person_warnings on Patrick (I1) returns hasEventAfterDeath1 -- flagship Fundamental violation (event dated more than 1 year after Patrick's recorded death). Used by ut_check_warnings_004.",
+  "description": "person_warnings on Cornelius (I1) returns hasEventAfterDeath1 -- flagship Fundamental violation (event dated more than 1 year after Cornelius's recorded death). Used by ut_check_warnings_004.",
   "args": {
     "personId": "I1"
   },
@@ -12,11 +12,24 @@
         "issueType": "hasEventAfterDeath1",
         "severity": "contradiction",
         "personId": "I1",
-        "personName": "Patrick Flynn",
+        "personName": "Cornelius Brady",
         "message": "An event is dated more than 1 year after this person's latest death-like fact.",
-        "factIds": [
-          "F1",
-          "F2"
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "~1845"
+          },
+          {
+            "id": "F2",
+            "type": "Death",
+            "date": "1908-03-12"
+          },
+          {
+            "id": "F4",
+            "type": "Residence",
+            "date": "1925"
+          }
         ]
       }
     ]

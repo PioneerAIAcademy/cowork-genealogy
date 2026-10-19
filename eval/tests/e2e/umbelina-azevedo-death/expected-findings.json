@@ -1,0 +1,42 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Umbelina Maria Azevedo (PID GXSQ-V3L), wife of Francisco Antônio Pariz, died on 14 November 1910 in the city of Rio de Janeiro. That death entry indexes an Umbelina Azevedo Da Silva (born about 1879) with no spouse or parents named, and it cannot be her: the indexed death entries of three of her children each name her as their mother and give birth years after November 1910 — Maria Glória in 1912, Florita Umbelina in 1915 and Maura Umbelina in 1918. Pass = the final `tree.gedcomx.json` carries no 14 November 1910 death (or any 1910 Rio de Janeiro death) for Umbelina Maria Azevedo. A rejected candidate may be documented in `research.json`; writing one into the tree \u2014 even annotated as rejected \u2014 fails this finding.",
+      "details": {
+        "subject_person": "Umbelina Maria Azevedo (GXSQ-V3L)",
+        "fact_type": "Death",
+        "wrong_candidate": {
+          "name": "Umbelina Azevedo Da Silva",
+          "note": "died 14 November 1910, death registered in the city of Rio de Janeiro; index gives a computed birth year of 1879 and no spouse or parents"
+        }
+      },
+      "supporting_sources": [
+        "Brasil, Rio de Janeiro, Registro Civil, 1804-2013 — death entry for Umbelina Azevedo Da Silva, 14 Nov 1910, Rio de Janeiro (ark:/61903/1:1:7975-85ZM) — the rejected hint",
+        "Brasil, Rio de Janeiro, Registro Civil, 1804-2013 — death entry for Maria Glória Ferreira, 17 May 1982, Rio de Janeiro, born 1912, daughter of Francisco Antonio Paris and Umbelina Maria de Azevedo (ark:/61903/1:1:794X-QD3Z) — a disproving record",
+        "Brasil, Rio de Janeiro, Registro Civil, 1804-2013 — death entry for Florita Umbelina dos Santos, 2 Jul 1980, Rio de Janeiro, born 1915, daughter of Antonio Francisco Pariz and Umbelina Maria Pariz de Azevedo (ark:/61903/1:1:79FM-TFZM) — a disproving record",
+        "Brasil, Rio de Janeiro, Registro Civil, 1804-2013 — death entry for Maura Umbelina Ferreira, registered 19 Dec 1978, Duque de Caxias, born 1918, daughter of Francisco Antonio Parez and Umbelina Maria de Azevedo (ark:/61903/1:1:77F3-D8T2) — a disproving record"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having searched the Rio de Janeiro and Espírito Santo civil registers for a death of Umbelina Maria Azevedo (as Azevedo, Pariz de Azevedo or Pariz) after the births of her children, the agent should document a negative/exhausted-search conclusion: the 14 November 1910 Rio de Janeiro death is rejected as belonging to a different woman, and no record found establishes when or where Umbelina Maria Azevedo died.",
+      "details": {
+        "subject_person": "Umbelina Maria Azevedo (GXSQ-V3L)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: death date and place not found",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "No death entry for Umbelina Maria Azevedo / Pariz de Azevedo / Pariz in Brasil, Rio de Janeiro, Registro Civil, 1804-2013 (collection 1582573), searched 1911-1990, nor in Brazil, Espirito Santo, Registro Civil, 1850-2020 (collection 4473668), searched by name with no date limit"
+      ],
+      "required": true
+    }
+  ]
+}

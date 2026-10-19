@@ -1,6 +1,8 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
+import { refuseRecordTypeAliases } from "../utils/record-type-groups.js";
 import { formatYearRange } from "../utils/search-helpers.js";
 import type {
   FSCollectionData,
@@ -95,7 +97,8 @@ export function standardPlaceToCollectionsQuery(value: string): string {
  * Fetch all collections from FamilySearch (cached for 1 hour per token).
  */
 export async function fetchAllCollections(
-  token: string
+  token: string,
+  principal: Principal,
 ): Promise<FSCollectionsResponse> {
   if (
     cache &&
@@ -107,16 +110,16 @@ export async function fetchAllCollections(
 
   const url = `${FS_COLLECTIONS_URL}?count=5000&offset=0&facets=OFF`;
 
-  const response = await fetchWithTimeout(
+  const response = await fsFetch(
+    principal,
     url,
     {
       headers: {
-        Authorization: `Bearer ${token}`,
         Accept: "application/json",
         "User-Agent": BROWSER_USER_AGENT,
       },
     },
-    COLLECTIONS_TIMEOUT_MS
+    COLLECTIONS_TIMEOUT_MS,
   );
 
   if (!response.ok) {
@@ -167,7 +170,7 @@ function toCollection(data: FSCollectionData): Collection {
 // A collection overlaps [startYear, endYear] when its searchMetadata year span
 // intersects the window. A collection with no year span (undated) is always
 // included, mirroring the rest of the place-search family.
-function overlapsYears(
+export function overlapsYears(
   data: FSCollectionData,
   startYear: number,
   endYear: number
@@ -181,6 +184,41 @@ function overlapsYears(
   return effectiveStart <= endYear && effectiveEnd >= startYear;
 }
 
+/**
+ * Score how well the catalog covers a place and period: how many collections
+ * (and indexed records) match the place's collection scope, overlap the years,
+ * and, when `typeFacets` is given, carry one of those record-type facets
+ * (VITAL, CENSUS, CHURCH_RECORD, ...). Pure over the already-fetched catalog.
+ */
+export function collectionCoverage(
+  entries: FSCollectionEntry[],
+  standardPlace: string,
+  startYear: number,
+  endYear: number,
+  typeFacets?: readonly string[],
+): { collections: number; records: number; recordTypes: string[]; censusYears: number[] } {
+  const scope = standardPlaceToCollectionsQuery(standardPlace);
+  const types = new Set<string>();
+  const censusYears = new Set<number>();
+  let records = 0;
+  let collections = 0;
+  for (const c of filterByQuery(entries, scope)) {
+    if (!overlapsYears(c, startYear, endYear)) continue;
+    const meta = c.searchMetadata?.[0];
+    const facet = meta?.typeFacet;
+    // A census names the whole household, so its years matter for every hole
+    // type, not only those that list CENSUS among their facets.
+    if (facet === "CENSUS" && meta?.startYear != null && meta.startYear === meta.endYear) {
+      censusYears.add(meta.startYear);
+    }
+    if (typeFacets && (!facet || !typeFacets.includes(facet))) continue;
+    collections += 1;
+    records += meta?.recordCount ?? getCount(c.content, "/Record");
+    if (facet) types.add(facet);
+  }
+  return { collections, records, recordTypes: [...types].sort(), censusYears: [...censusYears].sort((a, b) => a - b) };
+}
+
 // ---------- Tool entry point ----------
 
 export interface CollectionsSearchInput {
@@ -190,7 +228,8 @@ export interface CollectionsSearchInput {
 }
 
 export async function collectionsSearchTool(
-  input: CollectionsSearchInput
+  input: CollectionsSearchInput,
+  principal: Principal
 ): Promise<CollectionsSearchResult> {
   if (!input.standardPlace) {
     throw new Error(
@@ -205,13 +244,26 @@ export async function collectionsSearchTool(
   if (startYear != null && endYear != null && endYear < startYear) {
     throw new Error("endYear must be greater than or equal to startYear.");
   }
+  // The record-type spellings the sibling tools take (record_search and
+  // fulltext_search `recordType`, volume_search `recordTypeGroups`). Nothing
+  // validates input against the advertised schema, so without this the field
+  // is dropped and the place's whole list comes back as if it were filtered:
+  // a "probate" ask returned every New York collection.
+  refuseRecordTypeAliases(
+    input,
+    ["recordType", "record_type", "recordTypes", "recordTypeGroup", "recordTypeGroups"],
+    (alias) =>
+      `collections_search has no record-type filter: it lists every collection for the ` +
+      `place, so ${alias} cannot narrow it. To filter by record type, use volume_search's ` +
+      "recordTypeGroups (an array of group names)."
+  );
 
   // Derive the right collection scope (US state, "Country, State" for
   // Canada/Mexico, country otherwise). Free-text queries pass through.
   const scope = standardPlaceToCollectionsQuery(input.standardPlace);
 
-  const token = await getValidToken();
-  const data = await fetchAllCollections(token);
+  const token = await getValidToken(principal);
+  const data = await fetchAllCollections(token, principal);
   const entries = data.entries ?? [];
 
   // Title match first; totalForPlace is this count, BEFORE any date filter.
@@ -258,8 +310,7 @@ export const collectionsSearchToolSchema = {
     "so results come back at that scope (the tool derives it and returns it as " +
     "`scope`). Optionally filter by startYear/endYear to keep only collections " +
     "whose date range overlaps that window. Returns the full matched set in one " +
-    "response (no pagination). To fetch full detail for one collection, pass its " +
-    "id to collection_read. " +
+    "response (no pagination). " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",

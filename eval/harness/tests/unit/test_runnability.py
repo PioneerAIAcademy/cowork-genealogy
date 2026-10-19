@@ -16,11 +16,18 @@ SKILLS = REPO_ROOT / "packages/engine/plugin/skills"
 TESTS = REPO_ROOT / "eval/tests/unit"
 
 
+# The synthetic specs below name `record-extraction`, not `search-wikipedia`.
+# Issue #2795 deleted that skill directory, and these tests pass the REAL
+# `skills_dir`, so a routed spec naming it now aborts `skill not found` before
+# reaching the rubric, fixture, stub and invariant gates each of these tests is
+# actually about. The lead's 2026-09-22 ruling names `research` and
+# `record-extraction` as the two skills that never convert, so this name cannot
+# rot out from under the next conversion card.
 def _runnable_test_dict():
     return {
         "test": {
             "id": "ut_runnability_001",
-            "skill": "search-wikipedia",
+            "skill": "research",
             "name": "rn",
             "type": "positive",
             "description": "x",
@@ -118,7 +125,7 @@ def test_runnable_when_rubric_missing(tmp_path):
     NOT a runnability failure — the skill is graded on base dimensions
     only."""
     fake_tests = tmp_path / "tests"
-    (fake_tests / "search-wikipedia").mkdir(parents=True)
+    (fake_tests / "research").mkdir(parents=True)
     # no rubric.md
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
@@ -131,8 +138,8 @@ def test_blocks_when_rubric_empty(tmp_path):
     CRUD UI's parser, so letting it through here would grade the run on base
     dimensions while breaking the skills list the annotator needs."""
     fake_tests = tmp_path / "tests"
-    (fake_tests / "search-wikipedia").mkdir(parents=True)
-    (fake_tests / "search-wikipedia" / "rubric.md").write_text("", encoding="utf-8")
+    (fake_tests / "research").mkdir(parents=True)
+    (fake_tests / "research" / "rubric.md").write_text("", encoding="utf-8")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
     assert result.runnable is False
@@ -141,8 +148,8 @@ def test_blocks_when_rubric_empty(tmp_path):
 
 def test_blocks_when_rubric_malformed(tmp_path):
     fake_tests = tmp_path / "tests"
-    (fake_tests / "search-wikipedia").mkdir(parents=True)
-    (fake_tests / "search-wikipedia" / "rubric.md").write_text("no proper structure here", encoding="utf-8")
+    (fake_tests / "research").mkdir(parents=True)
+    (fake_tests / "research" / "rubric.md").write_text("no proper structure here", encoding="utf-8")
     spec = load_test_from_dict(_runnable_test_dict())
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=fake_tests)
     assert result.runnable is False
@@ -195,7 +202,29 @@ def test_blocks_when_negative_correct_skill_has_typo(tmp_path):
     )
     assert result.runnable is False
     assert "search-record" in result.reason
-    assert "not an existing skill" in result.reason
+    assert "neither an existing skill" in result.reason
+    # The name matches no agent file either, which is what still makes it a typo
+    # rather than a converted skill (issue #2793).
+    assert "nor an existing agent" in result.reason
+
+
+def test_allows_a_negative_correct_skill_naming_a_converted_agent(tmp_path):
+    """The other direction of the same guard: a `correct_skill` naming a skill
+    that was CONVERTED to an agent is a real destination, not a typo. Requiring
+    a skill directory would fail a correctly-routed test for a migration the
+    test is not about (issue #2793)."""
+    d = _runnable_test_dict()
+    d["test"]["type"] = "negative"
+    d["negative"] = {
+        "correct_skill": ["citation"],  # an agent file, no skill directory
+        "explanation": "x",
+    }
+    spec = load_test_from_dict(d)
+    result = check_runnable(
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+        skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert result.runnable is True, result.reason
 
 
 def _stub_check(execution):
@@ -227,9 +256,63 @@ def test_blocks_when_stub_skills_names_a_nonexistent_skill(entry):
 
 def test_allows_stub_skills_naming_a_real_skill():
     result = _stub_check(
-        {"stub_skills": ["search-external-sites", {"skill": "record-extraction"}]}
+        {"stub_skills": ["search-external-sites", {"skill": "research-plan"}]}
     )
     assert result.runnable is True
+
+
+# --- execution.stop_at_stub (#3119) ---------------------------------------------
+
+
+def test_stop_at_stub_is_refused_with_nothing_stubbed():
+    result = _stub_check({"stop_at_stub": True})
+    assert result.runnable is False
+    assert "requires a non-empty stub_skills" in result.reason
+
+
+def test_stop_at_stub_is_refused_on_a_negative_test():
+    d = _runnable_test_dict()
+    d["test"]["type"] = "negative"
+    d["negative"] = {"correct_skill": ["search-records"], "explanation": "x"}
+    d["execution"] = {"stop_at_stub": True, "stub_skills": ["search-records"]}
+    result = check_runnable(
+        load_test_from_dict(d), scenarios_dir=SCENARIOS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert result.runnable is False
+    assert "positive tests only" in result.reason
+
+
+def test_stop_at_stub_is_allowed_with_a_stub():
+    result = _stub_check({"stop_at_stub": True, "stub_skills": ["search-records"]})
+    assert result.runnable is True, result.reason
+
+
+def test_a_no_shortcut_test_must_set_stop_at_stub():
+    """Its validator reads the first hand-off, and without the stop the router
+    walks on past it."""
+    d = _runnable_test_dict()
+    d["test"]["tags"] = ["no-shortcut"]
+    d["execution"] = {"stub_skills": ["search-records"]}
+    refused = check_runnable(
+        load_test_from_dict(d), scenarios_dir=SCENARIOS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert refused.runnable is False
+    assert "must set execution.stop_at_stub" in refused.reason
+    d["execution"]["stop_at_stub"] = True
+    allowed = check_runnable(
+        load_test_from_dict(d), scenarios_dir=SCENARIOS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert allowed.runnable is True, allowed.reason
+
+
+def test_allows_stub_skills_naming_an_agent_with_no_skill_directory():
+    """A callee converted from a skill to an agent is stubbed at its spawn
+    (issue #2825). `gps-mentor` ships as an agent only."""
+    assert not (SKILLS / "gps-mentor").exists()
+    assert _stub_check({"stub_skills": ["gps-mentor"]}).runnable is True
 
 
 @pytest.mark.parametrize("execution", [{}, {"stub_skills": []}, {"max_turns": 35}])
@@ -272,7 +355,7 @@ def test_allows_run_skills_and_stub_skills_naming_different_callees():
     test. search-records delegates to several skills and a test may reasonably
     execute one and deny another."""
     result = _stub_check(
-        {"run_skills": ["search-external-sites"], "stub_skills": ["record-extraction"]}
+        {"run_skills": ["search-external-sites"], "stub_skills": ["research-plan"]}
     )
     assert result.runnable is True
 
@@ -290,6 +373,48 @@ def test_exclusivity_gate_is_inert_without_an_actual_overlap(execution):
     assert _stub_check(execution).runnable is True
 
 
+def _check_with(tags, execution):
+    d = _runnable_test_dict()
+    d["test"]["tags"] = tags
+    d["execution"] = execution
+    return check_runnable(
+        load_test_from_dict(d), scenarios_dir=SCENARIOS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+    )
+
+
+@pytest.mark.parametrize(
+    "execution",
+    [{}, {"stub_skills": []}, {"max_turns": 20}],
+    ids=["no-execution", "empty-stub-list", "no-stub-key"],
+)
+def test_blocks_grade_trigger_without_stubbed_callees(execution):
+    """grade:trigger (issue #2156) grades a positive test on activation alone,
+    with the judge dimensions diagnostic. That is sound only when the delegated
+    sub-skills are stubbed — an outcome score would otherwise measure the stub,
+    not the skill. Tagged but stubbing nothing, the callees run for real and the
+    tag silences the judge's gate over that real execution: a vacuous pass, the
+    same failure mode as grade_on_invariant. It must be refused at load time."""
+    result = _check_with(["grade:trigger"], execution)
+    assert result.runnable is False
+    assert "grade:trigger" in result.reason
+    assert "stub_skills" in result.reason
+
+
+def test_allows_grade_trigger_with_stubbed_callees():
+    """The four shipped grade:trigger fixtures all stub their callees, so this
+    is the positive control for that population."""
+    result = _check_with(["grade:trigger"], {"stub_skills": ["research-plan"]})
+    assert result.runnable is True
+
+
+def test_grade_trigger_gate_is_inert_without_the_tag():
+    """The other direction: an ordinary positive test with no stubs is still
+    runnable — the empty-stub refusal fires only for grade:trigger, not for
+    every stubless positive test."""
+    assert _check_with([], {}).runnable is True
+
+
 def _invariant_test_dict(tags):
     d = _runnable_test_dict()
     d["test"]["type"] = "negative"
@@ -303,11 +428,11 @@ def _invariant_test_dict(tags):
 
 
 def _validators_dir(tmp_path, body):
-    """A validators dir holding one validator file for search-wikipedia
+    """A validators dir holding one validator file for record-extraction
     (the skill `_runnable_test_dict` uses)."""
     v = tmp_path / "validators"
     v.mkdir()
-    (v / "test_search_wikipedia.py").write_text(body, encoding="utf-8")
+    (v / "test_research.py").write_text(body, encoding="utf-8")
     return v
 
 
@@ -417,6 +542,33 @@ def _corpus_invariant_specs():
     return out
 
 
+# Tests blocked by the skill-to-agent conversion WINDOW, not by the vacuous
+# class this check is about. `{test id: (callee, issue that deletes it)}`.
+#
+# Issue #2825 ruling C: a converted callee's negatives in a not-yet-converted
+# suite abort `not_runnable` until that suite's own conversion card lands, and
+# "that is an aborted row, not a wrong verdict, and it is accepted". The lead
+# also rejected widening the `correct_skill` gate to resolve an agent, as
+# harness work spent keeping alive tests that are about to be deleted.
+#
+# So the block is ruled, expected and time-boxed -- but it is a DIFFERENT block
+# from the one this check exists for, and letting it red the suite would mean
+# either deleting another suite's test or editing it, which stales that skill's
+# run log and buys a paid re-run it does not otherwise owe. (Measured
+# 2026-09-27 against a detached origin/main worktree: `search-familysearch-wiki`'s
+# v1_2026-09-21_18-16-58 is ACTIVE with zero snapshot diffs, so the re-run would
+# be caused entirely by this edit.) Issue #2795 decided to leave it.
+#
+# SHRINK-ONLY, and asserted in both directions: an entry whose test has become
+# runnable fails here ("the window closed -- delete this entry"), and an entry
+# whose test is blocked for any OTHER reason fails too. The vacuous-validator
+# class is still asserted for these ids, because the reason is pinned to the
+# `correct_skill` one and a vacuous fixture produces a different reason.
+CONVERSION_WINDOW = {
+    "ut_search_wiki_004": ("search-wikipedia", "#2794"),
+}
+
+
 @pytest.mark.parametrize("path", _corpus_invariant_specs())
 def test_every_corpus_grade_on_invariant_test_has_a_live_validator(path):
     """The real corpus, against the real validators dir. This is the check
@@ -424,10 +576,59 @@ def test_every_corpus_grade_on_invariant_test_has_a_live_validator(path):
     grade_on_invariant test must have a validator its tags actually reach."""
     from harness.loader import load_test
 
+    spec = load_test(path)
     result = check_runnable(
-        load_test(path), scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
         skills_dir=SKILLS, tests_dir=TESTS,
     )
+
+    if spec.id in CONVERSION_WINDOW:
+        callee, closing_issue = CONVERSION_WINDOW[spec.id]
+        assert result.runnable is False, (
+            f"{spec.id} is runnable again, so the conversion window that "
+            f"CONVERSION_WINDOW excuses it for has closed. Delete its entry "
+            f"rather than leaving a carve-out nothing needs."
+        )
+        reason = result.reason or ""
+        assert "negative.correct_skill" in reason and callee in reason, (
+            f"{spec.id} is blocked for a reason CONVERSION_WINDOW does not "
+            f"excuse -- it excuses ONLY a correct_skill naming the converted "
+            f"callee {callee!r}, and this check's own class (a "
+            f"grade_on_invariant tag that reaches no validator) is not "
+            f"excused. Reason was: {reason}"
+        )
+        assert (SKILLS.parent / "agents" / f"{callee}.md").is_file(), (
+            f"{callee} is neither a skill nor an agent, so this is not the "
+            f"conversion window at all -- it is a plain typo. Fix the test."
+        )
+
+        # `check_runnable` returns on its FIRST failure and the correct_skill
+        # gate runs ahead of the grade_on_invariant one, so the assertions above
+        # would pass on a fixture that is ALSO vacuous -- the very class this
+        # file exists for, hidden by the carve-out. Measured: dropping
+        # `no-wiki-search` (ut_search_wiki_004's gating tag) left this green.
+        # So re-run the check with only the conversion obstacle removed, and
+        # require the rest of the gate to pass exactly as it does for every
+        # other fixture.
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        raw["negative"]["correct_skill"] = [
+            n for n in raw["negative"]["correct_skill"] if n != callee
+        ]
+        without = check_runnable(
+            load_test_from_dict(raw), scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+            skills_dir=SKILLS, tests_dir=TESTS,
+        )
+        assert without.runnable is True, (
+            f"{spec.id} is excused for naming the converted callee {callee!r}, "
+            f"but it fails the gate for a second, unexcused reason as well: "
+            f"{without.reason}. {closing_issue} deletes this test; fix or delete "
+            f"it now rather than letting the carve-out cover this."
+        )
+        pytest.skip(
+            f"{spec.id} blocked by the #2825 conversion window; {closing_issue} "
+            f"deletes it"
+        )
+
     assert result.runnable is True, result.reason
 
 
@@ -528,3 +729,108 @@ def test_intentionally_invalid_flag_bypasses_schema_gate(tmp_path):
     )
     assert result.runnable is True
     assert result.reason is None
+
+
+# ---- direct-agent tests key `test.skill` to an agent file (issue #1253) ----
+#
+# A direct test has no routing skill by construction — `stage_skills=not
+# spec.is_direct` never stages one — and an agent-keyed suite (`gps-mentor`)
+# has no skill directory at all. Before the fallback these tests aborted at
+# "skill not found" before any delegation branch ran, which is what left
+# `gps-mentor` with no way to be a test's subject.
+
+AGENTS = REPO_ROOT / "packages/engine/plugin/agents"
+
+
+def _direct_test_dict(skill="gps-mentor"):
+    return {
+        "test": {
+            "id": "ut_runnability_direct_001",
+            "skill": skill,
+            "name": "rn",
+            "type": "positive",
+            "description": "x",
+            "tags": [],
+        },
+        "input": {"delegation": "Critique ps_001.", "scenario": None},
+        "mcp_fixtures": [],
+        "judge_context": [],
+    }
+
+
+def test_direct_test_runnable_when_only_the_agent_file_exists():
+    """The case the fallback exists for: an agent with no routing skill.
+
+    Asserts the two preconditions inline so this reds loudly (rather than
+    passing vacuously) if someone later creates a `gps-mentor` skill directory
+    — which `scripts/package-plugin.mjs` would then ship as a user-triggerable
+    skill competing with the agent's own description.
+    """
+    spec = load_test_from_dict(_direct_test_dict())
+    assert spec.is_direct is True
+    assert not (SKILLS / "gps-mentor").is_dir()
+    assert (AGENTS / "gps-mentor.md").is_file()
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.runnable is True
+    assert result.reason is None
+
+
+def test_direct_test_blocked_when_neither_skill_nor_agent_exists():
+    spec = load_test_from_dict(_direct_test_dict(skill="not-a-real-pair"))
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.runnable is False
+    assert "not-a-real-pair.md" in result.reason
+
+
+def test_routed_test_still_blocked_by_a_missing_skill_directory():
+    """The fallback is gated on `is_direct` deliberately.
+
+    On a ROUTED test a missing skill directory is still a typo worth catching,
+    and falling through to a same-named agent would grade the test by a route
+    it never asked for. `gps-mentor` is the sharpest case: the agent file
+    exists, so only the `is_direct` gate keeps this red.
+    """
+    d = _runnable_test_dict()
+    d["test"]["skill"] = "gps-mentor"
+    spec = load_test_from_dict(d)
+    assert spec.is_direct is False
+    assert (AGENTS / "gps-mentor.md").is_file()
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.runnable is False
+    assert "skill not found" in result.reason
+
+
+def test_direct_gate_resolves_the_same_agent_file_as_prompt_for():
+    """Gate-time and run-time must name one artifact.
+
+    If these drift, a direct test clears the gate and then dies in
+    `_prompt_for` ~20 turns into a paid run, which is the failure the gate
+    exists to move forward to load time.
+    """
+    from harness.orchestrator import _prompt_for
+
+    spec = load_test_from_dict(_direct_test_dict())
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.runnable is True
+    prompt = _prompt_for(spec)
+    assert "gps-mentor" in prompt
+    assert "Critique ps_001." in prompt
+
+
+def test_a_test_only_skill_passes_the_skill_gate():
+    """`eval/skills/<name>` is a skill the harness stages for its own suite, so
+    the gate resolves it the way the workspace does (`skill_dir_for`)."""
+    d = _runnable_test_dict()
+    d["test"]["skill"] = "extraction-append"
+    spec = load_test_from_dict(d)
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.reason is None or "skill not found" not in result.reason
+
+
+def test_an_unknown_skill_still_fails_the_skill_gate():
+    d = _runnable_test_dict()
+    d["test"]["skill"] = "no-such-skill-anywhere"
+    spec = load_test_from_dict(d)
+    result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+    assert result.runnable is False
+    assert "skill not found" in result.reason

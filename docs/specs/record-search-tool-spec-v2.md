@@ -91,13 +91,52 @@ but the anchor rule above must be satisfied.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `surname` | string | Family name. The strongest anchor for genealogy queries. |
+| `surname` | string | Family name. The strongest anchor for genealogy queries. Sent verbatim, including any particle and its spaces (`van der Linde`, `Mc Kee`) — see *Particle surnames* below. |
 | `givenName` | string | Given (first) name. |
 | `surnameAlt` | string | Alternate family name (e.g., maiden name when also searching by married name). |
 | `givenNameAlt` | string | Alternate given name. |
 | `sex` | `"Male"` \| `"Female"` \| `"Unknown"` | Sex of the person. Case-insensitive — `"male"` is normalized to `"Male"`. |
 | `surnameExact` | boolean | Restricts the surname to its exact spelling — see the exact-match rule below. Applies to `surnameAlt` too when both are set. **Narrows the count, reorders the records it keeps, and can drop the target**: read over complete sets the exact result is a strict subset of the fuzzy one, so it cannot surface a record a fuzzy search buried (measured on `surname` in marriage populations only). |
 | `givenNameExact` | boolean | Restricts the given name to its exact spelling — see the exact-match rule below. Applies to `givenNameAlt` too. Excludes period diminutives (`Betty` for `Elizabeth`); pass a variant as its own `givenName` instead. **The exclusion direction is the lead's (2026-08-17), not measured**: the artifact records only the fuzzy REACH — `N.verdict:diminutiveReach` = REACHED, and section E's membership tests — never that `.exact` drops them. The ruling sourced it, which is why the description states it flatly. |
+
+#### Particle surnames
+
+A surname carrying a particle or an internal space is passed through **verbatim**,
+percent-encoded and **unquoted**. Nothing is stripped, concatenated, split across
+`surname`/`surnameAlt`, or wrapped in literal quotes.
+
+Measured on one hard-scoped pool (given name `Marinus`, the Netherlands, births
+1800–1810), **enumerated to exhaustion** — 558 rows, 558 distinct, no duplicate
+serving — in section K of `dev/probe-search-qualifiers.ts`:
+
+- **Literal quotes are inert.** `"van der Linde"` returns the identical set as
+  `van der Linde`, and an *unbalanced* quote returns the same unscoped total as
+  the bare form, so the server strips them before matching rather than honouring
+  them. `search-records/references/name-search-mechanics.md` used to prescribe
+  quoting and now records this measured finding instead; quoting neither helps
+  nor hurts, and the tool does not send it.
+- **Spacing, case and the particle itself carry no signal.** `vanderlinde`,
+  `Van Der Linde` and even `Linde` — the particle dropped entirely — each
+  enumerate the **identical 558-row set** as `van der Linde`. All five are one
+  fuzzy equivalence class.
+- **The inverted form is a different query.** `Linde, van der` — the shape Dutch
+  and Belgian indexes commonly use, alphabetising under the root with the
+  *tussenvoegsel* trailing — enumerates **993 rows**, a different set. This is
+  the one spelling that changes what comes back, and it is the card's leg 2.
+- **Control.** `Mc Kee` and `McKee` are equivalent, which is the claim already
+  in the plugin's reference file. A probe that could not reproduce it would have
+  an instrument problem rather than a finding.
+
+**An earlier revision of this section asserted the opposite of the third bullet**
+— that dropping the particle yielded "a pool of the same size whose composition
+differs, so it is a different query". That came from comparing the first 100-row
+page of a 558-row pool. Two reviewers independently identified it, and the
+enumerated re-run refuted it: an identical total over a different first page is
+what a *re-ranking of one set* looks like, which is what it was.
+
+The unit tests pin the **string the tool builds** (rule 20a), never that
+FamilySearch honours it; the live half is the probe's, and its figures are in
+`dev/measured-figures.json` under `K`.
 
 #### The exact-match rule
 
@@ -340,7 +379,35 @@ reads the record.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `count` | number | Results per call. Max 100. **Default 50 when `subjectId` is supplied, 20 otherwise.** The default is coupled to ranking on purpose: a deep pool is worth fetching only because the re-ranker cuts it back host-side. Fetching 50 without ranking hands the model 50 raw stubs to triage, which is the cost this default exists to avoid. |
+| `count` | number | Results per call. Max 100. **Default 50 when `subjectId` is supplied, 20 otherwise.** The default is coupled to ranking on purpose: a deep pool is worth fetching only because every row comes back scored and ordered. Fetching 50 without ranking hands the model 50 raw stubs to triage, which is the cost this default exists to avoid. Ranking does not CUT the pool host-side, so `count` is what bounds the response. |
+
+### The response is re-ordered; the staged sidecar is not
+
+When a search ranks, `results` comes back **annotated in place** — each row
+carries `matchRank`, `searchRank`, `matchScore`, and where available
+`matchConfidence`, `candidateFactCount` and the `attachedTo*` flags — and the
+list is ordered **best first**. `ranked` carries metadata only (plus
+`subjectTooThin: true` when the subject lacks both a narrow date and a named
+relative — see `rank-search-matches-tool-spec.md` § `subjectTooThin`); it has
+no row list of its own. There is one set of rows, never two.
+
+`searchRank` is what keeps that re-ordering **auditable rather than lossy**.
+Sorting by match score discards FamilySearch's own ordering, so without the
+original position recorded on each row it would be unrecoverable from the
+response.
+
+**The staged sidecar keeps FamilySearch's search order and is NOT re-sorted.**
+It is an audit record of what the repository returned, and re-sorting an audit
+trail by a score computed afterwards is the thing to regret later. This is a
+real divergence, not a theoretical one: the sidecar is written *before* ranking
+runs, so the response and the sidecar genuinely differ in order. A reader
+comparing the two should expect that — the sidecar answers "what did
+FamilySearch return, and in what order", the response answers "which of these
+best matches this subject".
+
+A row the ranker did not score keeps its search position, gains no score fields,
+and sorts after every scored row. It is never dropped.
+
 | `offset` | number | Pagination offset. Default 0. The combined value `offset + count` must be at most 4999. |
 
 ### Examples
@@ -420,8 +487,9 @@ Strict surname + birth-place match:
 | `rankingSkipped` | string \| undefined | Present **only** when `projectPath` was supplied and `subjectId` was not. Names the two features that therefore did not run, and how to get them. **Serialized before `results`** — see below. |
 | `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory — the search still succeeded and nothing is refused. **Serialized before `results`** — see below. |
 | `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied **and `totalMatches` is 0** — not merely when `results` is empty, which is the post-`mapEntry` set. A nil search stages no file, so `unloggedSearches` structurally cannot see it. **Serialized before `results`.** |
-| `results` | RecordSearchResult[] | The ranked results, best-scoring first. |
+| `results` | RecordSearchResult[] \| undefined | The results in FamilySearch's own search order. **Omitted when `ranked` carries the same rows in a usable form** — `ranked` then holds every scored candidate, ordered by match score and carrying the same triage fields, so shipping both was the same records twice. Present whenever ranking did not run, threw (`rankingError`), or returned a ranking the caller must not triage on (`subjectResolvable: false`, either branch). |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
+| `surnameVariantHints` | object \| undefined | Present **only** on a search that did not identify the subject where a surname field ends in `-datter` or `-dotter`. Lists the abbreviated forms the index may hold. A nil search needs neither `projectPath` nor `subjectId`; a search that returned rows fires only through ranking's `subjectResolvable: false`, which needs both. **Serialized before `results`**; never staged. See below. |
 
 ### `unloggedSearches` / `nilSearchNeedsLog` — the log obligation, at the tool
 
@@ -438,7 +506,7 @@ entries; 154 scored candidate rows reached `results/match-scores.jsonl` while
 `stageSearchResults` writes `results/.staging/<uuid>.json` and
 `research_log_append` unlinks it on finalize, so a surviving file is a candidate
 unlogged search. It is only a candidate: `research_log_append` *warns* rather than
-fails when a staging-capable tool logs `results_available > 0` with no
+fails when a staging search tool logs `results_available > 0` with no
 `stagedResultsRef`, so a logged search can leave its file behind for the full TTL.
 Each staged file therefore consumes at most one such entry — same `tool`,
 `performed` at or after the file's `retrieved` — and only unpaired files count.
@@ -477,7 +545,8 @@ settling for this note to be correct.
 
 **The nil note's wording is load-bearing.** `negative` records what the search
 returned, never that the record is absent — this spec's own consumers say so at
-`search-records/SKILL.md:223`, `:72` and `:593` — and the note reaches an agent that
+`packages/engine/plugin/skills/search-records/SKILL.md` §"MCP tools and routing",
+§"2. Construct the search query" and §"8. Handle nil results" — and the note reaches an agent that
 by construction has read none of them.
 
 Both are advisory: no deny, no error, no changed exit path. Both are withheld from
@@ -510,7 +579,11 @@ measurement the signal exists to produce. A caller running a legitimate broad
 survey gets one extra short field; whether a given omission was legitimate is
 answered at analysis time from the args already in the run log. `make
 e2e-compaction` is the corpus-scale version of that analysis, split by
-compaction segment.
+compaction segment. `make e2e-ranked-reads` is the other half: it uses this
+field as the analysis-time **control** the paragraph above describes,
+excluding a `record_read` whose supplying search carried `rankingSkipped` —
+that search had no ranking to ignore — and reporting the exclusion count
+alongside the reads it did score.
 
 Falsiness, not `=== undefined`, is the test on `subjectId`, because the ranking
 gate is itself `input.subjectId &&`. Matching it exactly is what stops the field
@@ -538,7 +611,7 @@ back as the MCP over-limit error.
 
 Two further consumers keep the ordering load-bearing regardless: the model's own
 context window, and anything else that bounds this response without the harness's
-key preservation. #1073's Definition of Done requires the ordering in any case.
+key preservation. The Definition of Done requires the ordering in any case.
 
 The capture side was widened in the same change
 (`eval/harness/e2e/orchestrator.py::_summarize_tool_response` now summarizes by
@@ -568,8 +641,9 @@ in the six committed runs. `run-<ts>.json` is committed to git, so that is the
 price of the change, stated rather than discovered later.
 
 That 2.16x is the whole cost. `_summarize_tool_response` has exactly one caller —
-`tool_calls[].response_summary`. It had a second until #1238, which rendered the
-tool-call `args` into `run-<ts>.transcript.md`; #1238 removed both the transcript
+`tool_calls[].response_summary`. It had a second until the run-log-retention
+change, which rendered the
+tool-call `args` into `run-<ts>.transcript.md`; that change removed both the transcript
 and that call site, so no other artifact grows.
 
 **`response_summary` now has two shapes.** Under the verbatim threshold it keeps
@@ -624,8 +698,12 @@ this is the common shape, not an edge case.
 
 `subjectResolvable: false` is set by **two** branches of `rank-search-matches.ts`,
 and the hint deliberately fires on both. One is a scoreable subject against a pool
-that holds no match (a real negative). The other is a subject too thin to
-discriminate — no dated or placed fact — where the scores are noise. Those two
+that holds no match (a real negative). The other is a subject with no dated or
+placed fact, which cannot be discriminated, so the scores are noise. (That is
+not the `subjectTooThin` flag, which is a separate test: neither strictly
+contains the other — a subject with a named spouse but no facts fires the
+withholding branch without the flag, and a city-only subject gets the flag
+without firing the branch.) Those two
 need opposite responses from the caller *about the ranking*, but they want the same
 response here, and the thin-subject case may be the more valuable of the two: in
 genealogy you often cannot enrich the subject, because not knowing the missing
@@ -942,16 +1020,112 @@ Each `RecordSearchResult`:
 | `collectionTitle` | string \| undefined | Human-readable collection name. Undefined under the same conditions as `collectionId`. |
 | `collectionUrl` | string \| undefined | Link to the collection page on FamilySearch (a web page, not an ARK). Undefined under the same conditions as `collectionId`. |
 | `recordTitle` | string \| undefined | Human-readable description of the source record. |
-| `recordArk` | string \| undefined | The source record's ARK in canonical form (the `1:2:` entry, e.g. `"ark:/61903/1:2:HSJG-CLNF"`). Distinct from `recordId`, which is the `1:1:` persona ARK. |
+| `recordArk` | string \| undefined | The source record's ARK in canonical form (the `1:2:` entry, e.g. `"ark:/61903/1:2:HSJG-CLNF"`). Distinct from `recordId`, which is the `1:1:` persona ARK. **Not accepted by `record_read`** — feed that tool `recordId`. The two are independent id spaces, so a `1:2:` ARK passed to `record_read` resolved against the persona namespace and returned a different, unrelated record as a clean success; it is refused at the tool boundary. |
 | `treeMatches` | TreeMatch[] | Suggested matches between this record persona and existing FamilySearch Family Tree people. Sorted by `stars` descending. Empty array when the upstream entry has no `hints`. |
 | `gedcomx` | SimplifiedGedcomX \| undefined | The matched persona's record converted from the entry's raw `content.gedcomx` to the simplified GedcomX format (via `toSimplified`, see `simplified-gedcomx-spec.md`). Carries the faithful record shape — names, facts, source descriptions — for downstream tools that need more than the flattened summary fields. Undefined when the entry has no `content.gedcomx`. |
 | `primaryId` | string \| undefined | The `id` of the focus persona within `gedcomx.persons[]` (the person this result represents). Lets a downstream consumer pick the right person out of a multi-person record. Undefined when the represented persona carries no `id`. |
 | `relativeTerms` | RelativeTerms \| undefined | Per-relative answer to "is the relative I searched on actually named on this record?" Present only when the caller supplied a relative *name*; see [`relativeTerms`](#relativeterms--whether-the-relative-you-anchored-on-is-actually-there) below. |
 | `batchNumber` | string \| undefined | The extraction batch this record came out of (e.g. `"M01048-5"`), read off the entry's `content.gedcomx.fields[]`. Feed it straight back as the `batchNumber` **input** to enumerate the rest of the batch. Undefined on any record that does not trace to an extraction batch, which is most of them — **absence carries no information** and is not a statement about the collection. See [`batchNumber`](#batchnumber--the-only-route-to-a-batch-you-can-enumerate) below. |
+| `role` | string \| undefined | FamilySearch's label for the persona's role on this record: `"Principal"`, `"Father"`, `"Mother"`, `"Spouse"`, or `"Other"`. Flat and top-level for the same reason as `relativeTerms` and `batchNumber`: the staged slim block strips `gedcomx`, and a role the model cannot see in the staged case is the one case that matters. This is FamilySearch's own vocabulary, not a `research.json` `record_role` value. Absent means unknown, never "principal". Present on 100% of search personas (measured 2026-09-14). `record_read` carries `principal` (boolean) on each person instead — the recapi endpoint does not expose the role string. |
 
 Output fields keep the `Date` naming because they hold the date as
 written on the record — which can include month and day even though
 inputs are year-only.
+
+### `surnameVariantHints` — abbreviated patronymics on a search that does not find the subject
+
+Scandinavian clerks wrote the patronymic ending *-datter* / *-dotter*
+("daughter") short, and FamilySearch's indexes transcribe the short form
+without its period. The bride a tree records as "Unna Halsteinsdatter" is
+indexed "Urna Halsteinsdr" in Norway, Marriages, 1660-1926 (collection
+`1468080`), so a search on the full spelling returns nothing. The tool lists the
+abbreviated forms itself rather than relying on the caller to remember them —
+the same reasoning as `jurisdictionHints`.
+
+**Measured basis.** The rule lived as prose in the
+`search-records` skill's `references/collection-quirks.md`. Across 12 runs of
+`ut_search_records_023` the model read that entry in every run, before its
+first search, and applied it in 7: a passing run made 1–2 `record_search` calls,
+a failing one wandered to 9–10. Three rewordings and a restored pre-slim file
+did not move the rate (`docs/deep-dives/search-records-reference-routing.md`,
+"ut_search_records_023 flaps at ~55%"). A rule reached and not followed belongs on
+a call the agent already makes (ADR-0011). Measured 2026-10-08 with
+`--runs-per-test 10`: **4 of 10** passed without the hint (every failure never
+sent an abbreviated surname), **10 of 10** with it, each run sending `Halsteinsdr`
+after the first nil.
+
+**The abbreviations are the FamilySearch wiki's.** Norway Naming
+Customs#Abbreviations: *"The abbreviations dr., dtr., d., are all substitutes
+for datter."* Sweden Naming Customs: *"The abbreviations d., dr., dtr., are all
+substitutes for dotter."* Both endings map to `dr`, `dtr`, `d`, in that order —
+`dr` first because it is the form the motivating record carries.
+
+Fires when **both** of:
+
+- the search did not identify the subject — `totalMatches` is 0 **or** ranking
+  reported `subjectResolvable: false` (`searchFoundNobody`, the one test
+  `jurisdictionHints` also calls, and for the same reason: rows that matched
+  nobody are the same situation as no rows). Both of the ranker's branches
+  count, including the one where the subject has no dated or placed fact and
+  the rows may hold her: an abbreviated surname is still worth trying there,
+  which is why the note says the search did not *identify* the subject;
+- at least one surname field — `surname`, `surnameAlt`, `spouseSurname`,
+  `fatherSurname`, `motherSurname`, `parentSurname`, `otherSurname` — ends in
+  `datter` or
+  `dotter` (trimmed, case-insensitive) with at least one letter before the
+  ending.
+
+It needs no tree, so on a nil search, unlike `jurisdictionHints`, it does not
+require `projectPath` or `subjectId`. On a search that returned rows it fires
+only when ranking reported `subjectResolvable: false`, and ranking runs only
+when the call carries both.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `fields` | object[] | One entry per qualifying input field, in the order above: `field` (the input field name), `searched` (the value sent, trimmed), `variants` (the stem plus each abbreviation — `Halsteinsdr`, `Halsteinsdtr`, `Halsteinsd`). The stem keeps the caller's spelling; an all-capitals ending gets capital abbreviations. |
+| `note` | string | The rule in plain language: retry each form **in the same field as the surname it replaces** (a form listed for `surname` goes in `surname`, not `surnameAlt`), in the same call as each given-name spelling being tried, before concluding the record is not indexed — and these are spellings to try, not evidence. It says the search "did not identify the subject", never that it found nothing: on the `subjectResolvable: false` branch the rows are present and one may be the subject. |
+
+**Why every surname field, not only `surname`.** The lead's ruling (2026-10-06)
+names `surname`. The case that motivated it does not fit that: the bride is not
+indexed as a principal at all, and the one search that finds her is
+`surname=Monsen givenName=Anders spouseGivenName=Urna spouseSurname=Halsteinsdr`
+(`eval/tests/e2e/anders-monsen-ancestry/README.md`). A `surname`-only hint would
+pass the unit test and miss the production case, and a mother's patronymic on a
+christening search is abbreviated the same way. Widened to the six fields above
+on the user's decision of 2026-10-08 and put back to the lead as a question, then
+to `surnameAlt` too: it is the maiden-name union, the field a woman's patronymic
+most often travels in, and leaving it out missed the case this hint exists for.
+Narrowing it again is a change to `SURNAME_FIELDS` alone.
+
+**Why the note says "same field", not `surnameAlt`.** A form already sent as
+`surnameAlt` is not dropped from the list, and the note steers a form listed for
+another field away from `surnameAlt`: the alternate name is a union paired with
+its own given name, so a short form tried there with one given-name spelling may
+still need trying with another. A form listed for `surnameAlt` itself goes back
+in `surnameAlt`.
+
+**Serialized before `results`**, for the reason given under "`rankingSkipped`":
+anything after `results` is the first thing a size bound drops, which matters on
+the rows-present branch. **Never staged** — it is computed after staging, and it
+is advice to the caller, not what the search returned.
+
+**Rejected alternatives.**
+
+- *A quirks table keyed on `collectionId`.* It is the record-type × country
+  shape the lead has ruled out for engine data, it would have covered 8
+  collections, and the abbreviation is a property of the name, not of one
+  collection.
+- *The male half (`-son` / `-sen` → `s`).* The same wiki pages document it, but
+  `-son` also ends ordinary English surnames — Johnson, Wilson — so the hint would
+  fire on every English nil and suggest "Johns". `-datter` and `-dotter` end no
+  English surname.
+
+**One implementation.** The whole rule — trigger and content — is
+`surnameVariantHints(input, out)` in `src/utils/surname-variant-hints.ts`. The
+eval harness's mock calls that compiled function on every `record_search`
+response it serves, inside the node process it already runs, so a unit test sees
+exactly what production would send for the arguments the model actually used. No
+fixture carries a hand-written copy.
 
 ### `relativeTerms` — whether the relative you anchored on is actually there
 
@@ -1231,11 +1405,11 @@ Schema's `required` (which can only require single fields, not
 ## Authentication
 
 This tool requires a valid FamilySearch access token. It must call
-`getValidToken()` from `src/auth/refresh.ts` — the single entry
+`getValidToken(principal)` from `src/auth/refresh.ts` — the single entry
 point for all authenticated tools. Do not re-implement token
 plumbing.
 
-If the user is not authenticated, `getValidToken()` throws an
+If the user is not authenticated, `getValidToken(principal)` throws an
 LLM-instruction error directing the user to call the `login`
 tool. The tool handler should let this error propagate (same
 try/catch pattern as other tools in `index.ts`).
@@ -1331,7 +1505,7 @@ User-Agent: <browser-like user agent string>
 | `imageGroupNumber` | `q.filmNumber` |
 | `batchNumber` | `q.batchNumber` |
 | `recordCountry` | `q.recordCountry` |
-| `recordSubdivision` | `q.recordSubcountry=<recordCountry>,<recordSubdivision>` (joined with a comma, no space) |
+| `recordSubdivision` | `f.recordSubcountry=<recordCountry>,<recordSubdivision>` (joined with a comma, no space). The `f.` facet filter, not `q.`: `q.` returns 0 for a hyphenated subdivision such as `Aust-Agder` (see the strictness row) |
 | `recordType` | `f.recordType=N` (`"birth"`=0, `"marriage"`=1, `"death"`=2, `"census"`=3, `"immigration"`=4, `"military"`=5, `"probate"`=6, `"other"`=7) |
 | `maritalStatus` | `f.maritalStatus` |
 | `isPrincipal` | `q.isPrincipal=true` or `=false` |
@@ -1437,7 +1611,7 @@ general statement about place ranking.
 | `<event>Place` | Expands upward far enough that a county scope barely discriminates — from the same query, the **wrong** Arkansas county returned the same total as the right one to within 0.1% (about 35,500 each). Two *different* English counties measured counts 0.001% apart (`dev/explore-wildcard-scope.ts`), so treat an unqualified county scope as no scope at all | It makes the count meaningful. Its effect on ordering was not measured beyond one target, which ranked first either way. Useful mainly where a total has to mean something (an exhaustiveness claim) |
 | `<event>Year` | An unqualified range matches by **estimate overlap**: a record with no year of its own carries an estimated date range (from the dated facts of others on it) and is returned whenever it overlaps — so no record is kept regardless of the range (`H.verdict:index-silent personas exist` = NO), and an unqualified range reliably *includes* estimate-dated records — for the birth, death and marriage families; record-index **residence** is collection-dependent (`Q.bands:records-residence` = every row dated, `.exact` changes nothing, so `Y.verdict:generalises past birth (impossible-range)` = DOES NOT GENERALISE reads that one pool; `Q.bands:records-uscensus-residence` = `.exact` drops a meaningful fraction), behaving like the rest wherever records are dated only through others. `any` was never tested | `.exact` keeps only records whose indexed date is inside the range, dropping the estimate-overlap matches — a reliable *exclude* (`H.verdict:.exact requires the indexed date inside the range`). A cohort that is not always small — up to roughly a quarter of a census pool — has no indexed date in the swept span and is reached by no bounded range, so read the results back rather than trust a range to gather them; whether `.exact` also drops in-range *approximate* dates is unmeasured. Use only with a firm date |
 | `recordCountry` | **Already strict** — `q.recordCountry=Narnia` returns 0 rather than being ignored | No flag exists and none is needed |
-| `recordSubdivision` | **Already strict**, measured the same way as `recordCountry`: a nonexistent subdivision returns 0 rather than being ignored, and a real one (`Alabama`) cut a 14,035,394 country total to 342,439. Note the scope — this establishes only that the value is *honoured*, not how a place scope EXPANDS. Whether dropping to a state-level scope rescues a search that nils at county level is a separate, unfinished place investigation and is not answered here | No flag exists and, on this evidence, none is needed |
+| `recordSubdivision` | **Already strict**, measured the same way as `recordCountry`: a nonexistent subdivision returns 0 rather than being ignored, and a real one (`Alabama`) cut a 13,644,213 country total to 325,982. It is sent as `f.recordSubcountry`: `q.recordSubcountry` returns 0 for a hyphenated subdivision (`Norway,Aust-Agder`: 0 under `q.`, 240,388 under `f.` — `verdict:q. zeroes a hyphenated subdivision`, `verdict:f. honours a hyphenated subdivision`). Note the scope — this establishes only that the value is *honoured*, not how a place scope EXPANDS. Whether dropping to a state-level scope rescues a search that nils at county level is a separate, unfinished place investigation and is not answered here | No flag exists and, on this evidence, none is needed |
 
 **Relative names keep records where the relative is absent.** This is
 correct as designed, and worth stating because it is invisible to the
@@ -1648,13 +1822,13 @@ For each `entry` in `response.entries`:
 | `sex` not in `{Male, Female, Unknown}` (case-insensitive) | Throw: `"sex must be 'Male', 'Female', or 'Unknown' (case-insensitive)."` |
 | `maritalStatus` not in the four allowed values (case-sensitive) | Throw: `"maritalStatus must be exactly one of: 'Married', 'Single', 'Divorced', 'Widowed' (case-sensitive)."` |
 | `recordType` not in the eight allowed values | Throw: `"recordType must be one of: birth, marriage, death, census, immigration, military, probate, other."` |
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error. |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error. |
 | API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 403 | Throw: `"FamilySearch search blocked the request. The User-Agent header was rejected by the WAF — check that the MCP server is running an unmodified build."` |
 | API returns 400 | Read response body as JSON, extract `body.errors[]`, join with `; `. Throw: `"FamilySearch search rejected the query: ${detail}."` Fall back to a generic message if the body isn't parseable. |
-| API returns 429 or 5xx | Transient. Retried with backoff (3 attempts). If still failing after retries, surfaced via the network/timeout terminal error below — NOT returned as a short/empty result set. |
-| Request times out (per-attempt `AbortSignal.timeout`, 25s) or `fetch` rejects (network error) | Transient. Retried with backoff (3 attempts). If still failing, throw: `"FamilySearch record search did not complete after 3 attempts (network timeout or transient error): ${detail}. This is a transient failure, NOT an empty result — coverage is unknown."` The distinguishable message is the point: a timed-out search must never look like an exhaustive one that found little. |
-| API returns other non-OK status (non-retryable, e.g. 404 or other 4xx) | Throw: `"FamilySearch search API error: ${status} ${statusText}"`. (429/5xx do NOT reach here — see the retried row above.) |
+| API returns 429 or 5xx | Transient. Retried by `fetchWithRetry` (up to 3 attempts, capped by a 10s budget). If 429 persists after retry exhaustion, throw: `"FamilySearch rate limit reached and did not clear within the retry budget. Wait a minute and try again."` If 5xx persists, throw: `"FamilySearch record search did not complete after retries (FamilySearch search API error: ${status} ${statusText}). This is a transient failure, NOT an empty result — coverage is unknown."` |
+| Request times out (per-attempt `AbortSignal.timeout`, 25s) or `fetch` rejects (network error) | Transient. Retried by `fetchWithRetry` (budget-capped; a 25s timeout exhausts the budget on the first attempt, so effectively 1 attempt for timeouts). If still failing, throw: `"FamilySearch record search did not complete after retries (network timeout or transient error): ${detail}. This is a transient failure, NOT an empty result — coverage is unknown."` The distinguishable message is the point: a timed-out search must never look like an exhaustive one that found little. |
+| API returns other non-OK status (non-retryable, e.g. 404 or other 4xx) | Throw: `"FamilySearch search API error: ${status} ${statusText}"`. A 429 that outlives the retry budget gets its own message (see above); other non-retryable statuses reach here directly. |
 | API returns 200 with empty `entries` | Return `{ ..., totalMatches: <upstream>, returned: 0, results: [], hasMore: false }`. |
 
 ---
@@ -1718,6 +1892,16 @@ either and importing from the other would make the two mutually importing.
 - `parseUpstreamErrorBody(body)` — pull `errors[]` from a 400
   response body.
 
+### `packages/engine/mcp-server/src/utils/surname-variant-hints.ts`
+
+- `surnameVariantHints(input, out)` — the whole `surnameVariantHints` rule:
+  trigger and content. Import-free, because the eval mock runs it out of the
+  compiled build.
+- `patronymicVariants(surname)` — the abbreviated forms of one surname, or `[]`.
+- `searchFoundNobody(out)` — the did-not-identify-the-subject test, shared with
+  `jurisdictionHints` in `record-search.ts`.
+- `SURNAME_FIELDS`, `PATRONYMIC_ABBREVIATIONS`, `SURNAME_VARIANT_HINTS_NOTE`.
+
 ### `packages/engine/mcp-server/src/index.ts`
 
 Register `recordSearchTool` following the existing tool pattern (import,
@@ -1755,7 +1939,8 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 15 | `surnameExact=true` emits both `q.surname.exact=on` and `q.surname.exact.1=on` when `surnameAlt` is set | Modifier + cardinality stack |
 | 16 | `birthYearExact=true` emits `q.birthLikeDate.exact=on` | Year-exact mapping |
 | 17 | `birthPlaceExact=true` emits `q.birthLikePlace.exact=on` | Place-exact mapping |
-| 18 | `recordSubdivision` is composed into `q.recordSubcountry=<country>,<subdivision>` | Subdivision composition |
+| 18 | `recordSubdivision` is composed into `f.recordSubcountry=<country>,<subdivision>`, and no `q.recordSubcountry` is sent | Subdivision composition |
+| 18b | A hyphenated `recordSubdivision` (`Aust-Agder`) is sent as `f.recordSubcountry=Norway%2CAust-Agder` | Hyphenated subdivision |
 | 19 | `recordType="marriage"` maps to `f.recordType=1` | Record-type enum mapping |
 | 20 | Default flags `m.queryRequireDefault=on` and `m.defaultFacets=off` are sent on every request | Default flag enforcement |
 | 20a | The `.exact=on` **semantics** documented under "What `.exact=on` actually does" are NOT asserted here — the URL-shape rows above check the string the tool builds, never that FamilySearch honors it. Reproduced by `dev/probe-search-qualifiers.ts` against the live API | Live-behavior evidence trail (deliberately outside vitest) |
@@ -1770,7 +1955,7 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 25 | Throws on 403 with WAF/UA guidance | WAF rejection |
 | 26 | Returns empty results when entries is empty | Zero-match handling |
 | 27 | Maps entry → RecordSearchResult correctly using `display{}` first, `facts[]` fallback | Field mapping |
-| 28 | Surfaces `treeMatches` from `entry.hints` sorted by stars descending | Tree-match surfacing |
+| 28 | Surfaces `treeMatches` from `entry.hints` sorted by stars descending, and reaches `ranked[].treeMatches` on a `subjectId` search | Tree-match surfacing — the subject-named case is the one that reads `ranked`, not `results` |
 | 29 | Resolves the represented persona by ark suffix when there are multiple principals | Multi-principal handling |
 | 30 | Sets `hasMore: true` when `links.next` exists | Pagination flag |
 | 31 | Echoes `totalMatches` and `paginationCappedAt` correctly | Total-count surfacing |
@@ -1803,10 +1988,20 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 61 | Read past other root fields (`FilmNumber`, `RecordGroup`, `UniqueId`) | Position independence within the array |
 | 62 | Survives the staged slim block, inline **and** in the sidecar | The staged case is the normal one; proven by sabotage |
 | 63 | Reaches `ranked[].batchNumber` on a `subjectId` search | The projection a subject-named search actually reads |
+| 64 | `results` is ALWAYS present and complete, and carries the ranking annotation when ranking ran | There is one row list, so the failure to guard against is a row going missing rather than a row being duplicated. `tests/utils/staged-compaction.test.ts` pins that no row is ever dropped, that an unscored row trails the scored ones rather than vanishing, and that `ranked` gives up `matches` once the rows carry the scores. The earlier conditional-drop design and its `record-search-ranked-drop.test.ts` were removed with it. |
+| 65 | `surnameVariantHints` emitted for `ut_search_records_023`'s inputs (`surname: "Halsteinsdatter"`, `collectionId: "1468080"`, nil), with no project | The issue's case; needs no `projectPath` |
+| 66 | Emitted on `spouseSurname` when the bride is the secondary party | The shape the real index answers |
+| 67 | Serialized immediately before `results` | Key order |
+| 68 | Silent on a nil `Neal` and a nil `Johnson` | Non-qualifying surname; pins the rejected `-son` case |
+| 69 | Silent when the search found records and no ranking ran | Trigger is "did not find the subject", not "any search" |
+| 70 | Fires on rows + `subjectResolvable: false`, says "did not identify the subject", precedes `results`, and is absent from the staged sidecar | The one branch that stages, so the only place "never staged" can be shown |
+| 71 | Emitted on `surnameAlt`, the maiden-name union | The field a woman's patronymic most often travels in |
+| 72 | `searchFoundNobody` true on a nil and on rows with `subjectResolvable: false`, false otherwise | One test for both hints |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63
-cover `batchNumber`.
+cover `batchNumber`; 65–72 cover `surnameVariantHints`, whose rule is also
+unit-tested in `tests/utils/surname-variant-hints.test.ts`.
 
 ### Smoke-test script
 
@@ -1855,7 +2050,7 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 ### Manual Layers 3 + 4 (Cowork via WSL2 + native Windows)
 Standard end-to-end testing per `docs/testing-guides/oauth-tool-testing-guide.md`
-template. Detailed playbook in `docs/testing-guides/search-tool-testing-guide.md`.
+template.
 
 ---
 
@@ -1917,6 +2112,6 @@ the headline changes:
 19. **Browser User-Agent header** required (WAF) — same constant
     as `collections_search`.
 
-Everything in this spec is grounded in evidence from probe scripts
-under `packages/engine/mcp-server/dev/probe-svc-*.ts` (run April 30 – May 4,
-2026, ~170 queries total).
+Everything in this spec is grounded in evidence from the `probe-svc-*.ts` probe
+scripts (run April 30 – May 4, 2026, ~170 queries total; removed with the other
+unused probes before the move to `packages/engine/`).

@@ -15,6 +15,7 @@ rule their own spec row states. Which skill owns which section is frozen next
 door, in `test_ownership_manifest.py`.
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -25,9 +26,12 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_universal import (  # noqa: E402
+    report_no_gps_jargon_in_response as check_jargon,
+    report_no_internal_identifiers_in_response as check_ids,
     test_no_entries_deleted as check_no_deletes,
     test_ownership_table as check_research,
     test_tree_ownership_table as check_tree,
+    test_write_then_validate as check_write_then_validate,
 )
 
 
@@ -88,7 +92,10 @@ def test_non_owner_writing_localities_fails():
             POSITIVE,
         )
     assert "localities" in str(e.value)
-    assert "locality-guide" in str(e.value)
+    # The row's only writer is `agent:locality-guide` (issue #2117), which
+    # `writer_sets` resolves only from locality-guide's own suite, so from
+    # research-plan's vantage point the section has no writer at all.
+    assert "'localities': []" in str(e.value)
 
 
 def test_non_owner_writing_an_already_enforced_section_still_fails():
@@ -109,8 +116,8 @@ def test_proof_conclusion_may_write_questions():
 def test_a_section_with_no_enforceable_row_is_not_default_denied():
     """`evaluations` is agent-owned, so this tier cannot express its row.
 
-    Default-deny here would fail the mandatory proof critique on every run that
-    has one — 114 of 154 committed runs. Not-checked and denied are different
+    Default-deny here would fail every gps-mentor critique — 114 of 154
+    committed runs carry one. Not-checked and denied are different
     answers, and only one of them is right for a row this plane cannot see.
     """
     check_research(
@@ -144,6 +151,131 @@ def test_negative_tests_are_skipped():
         )
 
 
+def test_ownership_is_skipped_on_a_stubbed_run():
+    """The stub_skills skip must actually fire (issue #2156, lead-affirmed
+    2026-09-14). On a stubbed positive run the owning callee is denied, so every
+    section write lands on the caller; grading the caller for it measures the
+    stub, not the skill. This uses a **non-owner** write so that if the skip
+    block is ever removed the test fails loudly — the check would raise
+    AssertionError instead of skipping — rather than passing vacuously, which is
+    the coverage gap the lead flagged.
+    """
+    with pytest.raises(pytest.skip.Exception):
+        check_research(
+            research(),
+            research(conflicts=entry("c_001")),
+            {"name": "research"},
+            {"type": "positive", "execution": {"stub_skills": ["question-selection"]}},
+        )
+
+
+def test_write_then_validate_is_skipped_on_a_stubbed_run():
+    """Companion coverage for the other new stub skip (issue #2156). Same
+    property: a stubbed positive run's research.json write is the stub/caller's,
+    so demanding a `validate_research_schema` pass measures the stub. The skill
+    declares the tool and none was called and research.json changed, so without
+    the skip this raises — proving the skip block is load-bearing rather than
+    inert (the gap the lead flagged for both new arms).
+    """
+    with pytest.raises(pytest.skip.Exception):
+        check_write_then_validate(
+            research(),
+            research(conflicts=entry("c_001")),
+            [],  # no tool calls -> no validate_research_schema call
+            {"name": "research", "allowed-tools": ["validate_research_schema"]},
+            {"type": "positive", "execution": {"stub_skills": ["question-selection"]}},
+        )
+
+
+_EXTRACT = [{"tool": "mcp__genealogy__extraction_append", "args": {"recordIds": ["MZGS-1BH"]}}]
+
+
+def test_extraction_appends_are_authorized_by_tool_identity():
+    """The research router and search-records call extraction_append directly,
+    and neither is a caller of `log`, `sources` or `assertions`."""
+    before = research(log=entry("log_001"), sources=entry("src_001"), assertions=entry("a_001"))
+    after = research(
+        log=entry("log_001") + entry("log_002"),
+        sources=entry("src_001") + entry("src_002"),
+        assertions=entry("a_001") + entry("a_002"),
+    )
+    check_research(before, after, {"name": "research"}, POSITIVE, tool_calls=_EXTRACT)
+
+
+def test_extraction_append_does_not_license_editing_an_existing_entry():
+    before = research(assertions=[{"id": "a_001", "record_basis": "stated"}])
+    after = research(assertions=[{"id": "a_001", "record_basis": "inferred"}, {"id": "a_002"}])
+    with pytest.raises(AssertionError) as e:
+        check_research(before, after, {"name": "research"}, POSITIVE, tool_calls=_EXTRACT)
+    assert "assertions" in str(e.value)
+
+
+def test_the_same_appends_without_an_extraction_append_call_fail():
+    with pytest.raises(AssertionError) as e:
+        check_research(
+            research(), research(assertions=entry("a_001")), {"name": "research"}, POSITIVE, tool_calls=[]
+        )
+    assert "assertions" in str(e.value)
+
+
+def test_extraction_append_does_not_reach_a_section_it_does_not_write():
+    with pytest.raises(AssertionError) as e:
+        check_research(
+            research(), research(conflicts=entry("c_001")), {"name": "research"}, POSITIVE, tool_calls=_EXTRACT
+        )
+    assert "conflicts" in str(e.value)
+
+
+def _notes_update(entry_id="a_001", fields=None):
+    op = {"section": "assertions", "op": "update", "entryId": entry_id, "fields": fields or {"informant_bias_notes": "user reads T"}}
+    return [{"tool": "mcp__genealogy__research_append", "args": {"projectPath": "/w", **op}}]
+
+
+def test_an_informant_bias_notes_update_is_authorized_for_any_caller():
+    """research_append accepts one assertions write from any caller: an update
+    setting only informant_bias_notes (ut_conflict_resolution_016)."""
+    before = research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}])
+    after = research(assertions=[{"id": "a_001", "value": "Tannetje [?]", "informant_bias_notes": "user reads T"}])
+    check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=_notes_update())
+
+
+def test_a_notes_update_tolerates_what_the_update_arm_normalizes():
+    """The update arm re-runs canonicalizeAssertionLabels on the merged entry, so
+    a legacy `birthplace` becomes `birth` with its place lifted from `value`."""
+    before = research(assertions=[{"id": "a_001", "fact_type": "birthplace", "value": "Cork, Ireland"}])
+    after = research(assertions=[{
+        "id": "a_001", "fact_type": "birth", "value": "Cork, Ireland", "place": "Cork, Ireland",
+        "informant_bias_notes": "n",
+    }])
+    check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=_notes_update())
+    batched = [{"tool": "mcp__genealogy__research_append", "args": {"projectPath": "/w", "ops": json.dumps([
+        {"section": "assertions", "op": "update", "entryId": "a_001", "fields": {"informant_bias_notes": "n"}},
+    ])}}]
+    check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=batched)
+
+
+def test_a_notes_update_does_not_license_any_other_assertion_change():
+    before = research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}, {"id": "a_002", "value": "x"}])
+    notes = {"informant_bias_notes": "user reads T"}
+    for after, calls, why in (
+        (research(assertions=[{"id": "a_001", "value": "Tannetje", **notes}, {"id": "a_002", "value": "x"}]),
+         _notes_update(), "a value change"),
+        (research(assertions=[{"id": "a_001", "value": "Tannetje [?]", **notes}, {"id": "a_002", "value": "x"}, {"id": "a_003"}]),
+         _notes_update(), "an added assertion"),
+        (research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}, {"id": "a_001", "value": "Tannetje [?]", **notes}]),
+         _notes_update(), "a deletion hidden behind a duplicate id"),
+        (research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}, {"id": "a_002", "value": "x", **notes}]),
+         _notes_update(), "notes on an assertion the op did not name"),
+        (research(assertions=[{"id": "a_001", "value": "Tannetje [?]", **notes}, {"id": "a_002", "value": "x"}]),
+         _notes_update(fields={"informant_bias_notes": "n", "value": "Tannetje"}), "an op that also set value"),
+        (research(assertions=[{"id": "a_001", "value": "Tannetje [?]", **notes}, {"id": "a_002", "value": "x"}]),
+         [], "no research_append call"),
+    ):
+        with pytest.raises(AssertionError) as e:
+            check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=calls)
+        assert "assertions" in str(e.value), why
+
+
 # ── tree.gedcomx.json ──────────────────────────────────────────────────────
 
 
@@ -151,10 +283,174 @@ def test_tree_owner_writing_persons_passes():
     check_tree(tree(), tree(persons=entry("I1")), {"name": "person-evidence"}, POSITIVE)
 
 
-def test_record_extraction_may_write_tree_sources_but_not_tree_persons():
-    check_tree(tree(), tree(sources=entry("S1")), {"name": "record-extraction"}, POSITIVE)
+def test_extraction_may_write_tree_sources_but_not_tree_persons():
+    """Tree `sources` is authorized by tool identity: `extraction_append` mints
+    each `S` entry, whichever skill calls it. The same call cannot add a person:
+    tree `persons` authorizes it only for its own assertion-backlink delta, and a
+    skill-granular grant would also authorize adding an unsourced person and
+    setting `primary`, both of which the row's own `failure` line is about.
+    """
+    call = [{"tool": "mcp__genealogy__extraction_append", "args": {"recordIds": ["MZGS-1BH"]}}]
+    check_tree(tree(), tree(sources=entry("S1")), {"name": "search-records"}, POSITIVE, tool_calls=call)
     with pytest.raises(AssertionError) as e:
-        check_tree(tree(), tree(persons=entry("I1")), {"name": "record-extraction"}, POSITIVE)
+        check_tree(tree(), tree(sources=entry("S1")), {"name": "search-records"}, POSITIVE)
+    assert "sources" in str(e.value)
+    with pytest.raises(AssertionError) as e:
+        check_tree(tree(), tree(persons=entry("I1")), {"name": "search-records"}, POSITIVE, tool_calls=call)
+    assert "persons" in str(e.value)
+
+
+_I5 = {"id": "I5", "names": [{"id": "N5", "given": "Sarah", "surname": "Mullen"}]}
+_EXTRACT = [{"tool": "mcp__genealogy__extraction_append", "args": {"recordIds": ["WICN-1860-M01"]}}]
+
+
+def test_the_healer_dropping_an_empty_facts_array_is_not_a_persons_write():
+    """ut_search_records_015: extraction_append added the census source, and the
+    tree write's sanitizer deleted an untouched person's empty `facts` array.
+    That is the same tree, so only the `sources` write is graded."""
+    before = tree(persons=[{**_I5, "facts": []}])
+    after = tree(persons=[dict(_I5)], sources=entry("S2"))
+    check_tree(before, after, {"name": "search-records"}, POSITIVE, tool_calls=_EXTRACT)
+    # and the reverse spelling: absent before, empty after
+    check_tree(tree(persons=[dict(_I5)]), tree(persons=[{**_I5, "facts": []}], sources=entry("S2")),
+               {"name": "search-records"}, POSITIVE, tool_calls=_EXTRACT)
+
+
+def test_a_real_persons_change_beside_the_healer_still_fails():
+    fact = {"id": "F1", "type": "Residence", "place": "Wisconsin"}
+    for after_person, why in (
+        ({**_I5, "facts": [fact]}, "a fact added where the array was empty"),
+        ({**_I5, "names": [{"id": "N5", "given": "Sara", "surname": "Mullen"}]}, "a renamed person"),
+    ):
+        with pytest.raises(AssertionError) as e:
+            check_tree(tree(persons=[{**_I5, "facts": []}]), tree(persons=[after_person], sources=entry("S2")),
+                       {"name": "search-records"}, POSITIVE, tool_calls=_EXTRACT)
+        assert "persons" in str(e.value), why
+
+
+def _person_with_fact(**fact_over):
+    fact = {"id": "F1", "type": "Immigration", "place": "Wellburn, Ontario, Canada",
+            "assertion_id": "a_011", "sources": [{"ref": "S1"}]}
+    fact.update(fact_over)
+    return [{"id": "I1", "names": [{"id": "N1", "given": "Anna", "surname": "W"}], "facts": [fact]}]
+
+
+#: A real correction: the tool, the op, and the assertion id it named.
+_EXTRACTION_CALL = [{
+    "tool": "mcp__genealogy__research_append",
+    "args": {"section": "assertions", "op": "update", "entryId": "a_011",
+             "fields": {"place": "Odessa, Saskatchewan, Canada"}},
+}]
+
+#: research.json as it stands AFTER that correction. The authorization checks
+#: the fact's new value against it, so an arbitrary edit cannot ride the path.
+def _research_after(place="Odessa, Saskatchewan, Canada"):
+    return {"assertions": [{"id": "a_011", "place": place}]}
+
+
+def _tree_state(persons, research=None):
+    state = tree(persons=persons)
+    state["research_json"] = research if research is not None else _research_after()
+    return state
+
+
+def test_the_fact_rewrite_is_authorized_by_tool_identity():
+    """A backlinked fact's mirrored attributes may change under research_append's correction."""
+    check_tree(
+        _tree_state(_person_with_fact()),
+        _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+        {"name": "conflict-resolution"},
+        POSITIVE,
+        tool_calls=_EXTRACTION_CALL,
+    )
+
+
+def test_a_legacy_heal_riding_along_with_the_rewrite_is_still_authorized():
+    """research_append runs sanitizeTree on every call and persists the healed
+    document whenever it writes the tree, so a coerced legacy `quality` or a
+    pruned unknown key arrives with a perfectly legitimate rewrite. Refusing that
+    reds a run for something the TOOL did and the skill could not avoid."""
+    before = _person_with_fact()
+    before[0]["facts"][0]["sources"] = [{"ref": "S1", "quality": "3"}]
+    before[0]["facts"][0]["legacy_key"] = "pruned on read"
+    after = _person_with_fact(place="Odessa, Saskatchewan, Canada")
+    after[0]["facts"][0]["sources"] = [{"ref": "S1", "quality": 3}]
+    check_tree(
+        _tree_state(before),
+        _tree_state(after),
+        {"name": "conflict-resolution"},
+        POSITIVE,
+        tool_calls=_EXTRACTION_CALL,
+    )
+
+
+def test_the_new_value_must_match_the_corrected_assertion():
+    """An arbitrary edit to a backlinked fact is not the rewrite."""
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(_person_with_fact(place="anything at all")),
+            {"name": "conflict-resolution"},
+            POSITIVE,
+            tool_calls=_EXTRACTION_CALL,
+        )
+    assert "persons" in str(e.value)
+
+
+def test_the_corrected_assertion_must_be_one_the_run_named():
+    """A backlink to an assertion no op touched cannot have been rewritten."""
+    other = [{"tool": "mcp__genealogy__research_append",
+              "args": {"section": "assertions", "op": "update", "entryId": "a_999",
+                       "fields": {"place": "x"}}}]
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+            {"name": "conflict-resolution"},
+            POSITIVE,
+            tool_calls=other,
+        )
+    assert "persons" in str(e.value)
+
+
+@pytest.mark.parametrize("label,after_persons", [
+    # Anything the rewrite cannot produce must still fail, even with the call present.
+    ("adds a person", _person_with_fact(place="Odessa, Saskatchewan, Canada")
+     + [{"id": "I2", "names": [], "facts": []}]),
+    ("adds a fact", [{**_person_with_fact()[0],
+                      "facts": _person_with_fact()[0]["facts"] + [{"id": "F2", "type": "Birth"}]}]),
+    ("sets primary", _person_with_fact(place="Odessa, Saskatchewan, Canada", primary=True)),
+    ("adds a source ref", _person_with_fact(sources=[{"ref": "S1"}, {"ref": "S2"}])),
+    ("changes a name", [{**_person_with_fact()[0],
+                         "names": [{"id": "N1", "given": "Anne", "surname": "W"}]}]),
+    ("changes an unbacklinked fact", [{**_person_with_fact()[0],
+                                       "facts": [{"id": "F1", "type": "Immigration",
+                                                  "place": "Odessa, Saskatchewan, Canada",
+                                                  "sources": [{"ref": "S1"}]}]}]),
+    ("retypes the fact", _person_with_fact(type="Residence")),
+])
+def test_the_tool_identity_path_authorizes_nothing_else(label, after_persons):
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(after_persons),
+            {"name": "conflict-resolution"},
+            POSITIVE,
+            tool_calls=_EXTRACTION_CALL,
+        )
+    assert "persons" in str(e.value), label
+
+
+def test_the_tool_identity_path_needs_the_call():
+    """Without an extraction_append/research_append call, the same delta fails."""
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+            {"name": "conflict-resolution"},
+            POSITIVE,
+            tool_calls=[{"tool": "mcp__genealogy__person_read", "args": {}}],
+        )
     assert "persons" in str(e.value)
 
 
@@ -194,3 +490,386 @@ def test_deleting_from_an_already_covered_section_still_fails():
 
 def test_appending_is_not_a_deletion():
     check_no_deletes(research(), research(localities=entry("loc_001")))
+
+def test_a_stringified_ops_payload_is_still_authorized():
+    """`research_append` coerces a JSON-string `ops`, so the write lands and the
+    run log records the string. Without parsing it here the authorization
+    false-fails a legitimate write, which is the worse direction."""
+    call = [{
+        "tool": "mcp__genealogy__research_append",
+        "args": {"ops": json.dumps([{
+            "section": "assertions", "op": "update", "entryId": "a_011",
+            "fields": {"place": "Odessa, Saskatchewan, Canada"},
+        }])},
+    }]
+    check_tree(
+        _tree_state(_person_with_fact()),
+        _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+        {"name": "conflict-resolution"},
+        POSITIVE,
+        tool_calls=call,
+    )
+
+
+def test_an_op_touching_no_mirrored_field_authorizes_nothing():
+    """An assertions update that set only `informant` cannot have caused a
+    rewrite, so it must not license one."""
+    call = [{
+        "tool": "mcp__genealogy__research_append",
+        "args": {"section": "assertions", "op": "update", "entryId": "a_011",
+                 "fields": {"informant": "official"}},
+    }]
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+            {"name": "conflict-resolution"},
+            POSITIVE,
+            tool_calls=call,
+        )
+    assert "persons" in str(e.value)
+
+
+def test_deleting_an_attribute_the_assertion_still_asserts_is_refused():
+    """Absence is how the rewrite expresses a withdrawal, so it is legitimate
+    only when the assertion withdrew it."""
+    after = _person_with_fact()
+    del after[0]["facts"][0]["place"]
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(after),
+            {"name": "conflict-resolution"},
+            POSITIVE,
+            tool_calls=_EXTRACTION_CALL,
+        )
+    assert "persons" in str(e.value)
+
+
+def test_deleting_an_attribute_the_assertion_withdrew_is_authorized():
+    after = _person_with_fact()
+    del after[0]["facts"][0]["place"]
+    check_tree(
+        _tree_state(_person_with_fact()),
+        _tree_state(after, {"assertions": [{"id": "a_011", "place": None}]}),
+        {"name": "conflict-resolution"},
+        POSITIVE,
+        tool_calls=_EXTRACTION_CALL,
+    )
+
+
+def test_a_name_prefix_change_is_not_authorized():
+    """`_person_identity` compared four keys, so prefix, suffix and a name's own
+    source refs could change and ride through."""
+    after = _person_with_fact(place="Odessa, Saskatchewan, Canada")
+    after[0]["names"] = [{"id": "N1", "given": "Anna", "surname": "W", "prefix": "Dr."}]
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(after),
+            {"name": "conflict-resolution"},
+            POSITIVE,
+            tool_calls=_EXTRACTION_CALL,
+        )
+    assert "persons" in str(e.value)
+
+
+def test_a_person_level_source_ref_change_is_not_authorized():
+    """Person-level refs (#2696) are part of a person's identity: a fact rewrite
+    authorizes the fact's mirrored attrs, never the person's own `sources`."""
+    after = _person_with_fact(place="Odessa, Saskatchewan, Canada")
+    after[0]["sources"] = [{"ref": "S1"}]
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(after),
+            {"name": "record-extraction"},
+            POSITIVE,
+            tool_calls=_EXTRACTION_CALL,
+        )
+    assert "persons" in str(e.value)
+
+
+def test_a_stubbed_run_skips_tree_ownership():
+    """Mirrors the research-side skip (#2156 ruling). `research` carries 10
+    stubbed positive tests, owns no tree section, and stubs `person-evidence`
+    and `proof-conclusion` which own `persons` -- so without this the caller's
+    write is attributed to `research` and the check measures the stub."""
+    with pytest.raises(BaseException) as exc:
+        check_tree(
+            tree(),
+            tree(persons=entry("I1")),
+            {"name": "research"},
+            {"type": "positive", "execution": {"stub_skills": ["person-evidence"]}},
+        )
+    assert exc.typename == "Skipped"
+
+
+def test_an_UNSTUBBED_run_still_checks_tree_ownership():
+    """The other direction, written so a SKIP counts as a FAILURE.
+
+    `pytest.raises(AssertionError)` cannot express this. A `pytest.skip` inside
+    the validator raises `Skipped`, which is a BaseException pytest reports as a
+    skipped test, not a failed one -- so widening the skip to every run left the
+    `raises` form green while silently standing the whole check down. Measured:
+    that break turned 21 tests into skips and the suite still reported 0 failed.
+    """
+    outcome = "the check did not run at all (passed)"
+    try:
+        check_tree(tree(), tree(persons=entry("I1")), {"name": "research"}, POSITIVE)
+    except AssertionError as exc:
+        assert "persons" in str(exc)
+        outcome = "refused"
+    except BaseException as exc:  # noqa: BLE001 -- Skipped is a BaseException
+        outcome = f"{type(exc).__name__}: {exc}"
+    assert outcome == "refused", f"ownership was not enforced on an unstubbed run: {outcome}"
+
+
+# --- lay mode: no internal identifiers in the reply (tier 2, advisory) ------
+
+def _report_fails(text):
+    try:
+        check_ids(text, POSITIVE)
+    except AssertionError as exc:
+        return str(exc)
+    return None
+
+
+def test_identifier_report_names_each_schema_id_it_finds():
+    msg = _report_fails("q_001 written. I logged the search as log_003 and added a_283.")
+    assert msg is not None
+    for ident in ("q_001", "log_003", "a_283"):
+        assert ident in msg
+
+
+def test_identifier_report_fires_on_bracketed_section_names():
+    """The schema's section names written as arrays — `conflicts[]`,
+    `hypotheses[]` — are how issue #2493's own quoted reply spoke to the tester."""
+    msg = _report_fails("I added a conflicts[] entry and a hypotheses[] entry for Etta.")
+    assert msg is not None and "conflicts[]" in msg and "hypotheses[]" in msg
+
+
+def test_identifier_report_fires_on_project_file_and_tool_names():
+    msg = _report_fails("I updated research.json through research_append.")
+    assert msg is not None and "research.json" in msg and "research_append" in msg
+
+
+def test_identifier_report_passes_a_lay_reply():
+    """The other direction: a reply in the house style, with a year, a place and
+    an ordinary numbered list, must not trip on numbers or underscores."""
+    assert _report_fails(
+        "I found the 1850 census for the household in Warren County. Mary is "
+        "listed as 12, born in Ohio, which fits. Next: search for her marriage."
+    ) is None
+
+
+def test_identifier_report_skips_a_negative_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_ids("q_001 written", {"type": "negative"})
+
+
+def test_identifier_report_skips_an_empty_reply():
+    with pytest.raises(pytest.skip.Exception):
+        check_ids("", POSITIVE)
+
+
+# --- lay mode: no GPS vocabulary in the reply (tier 2, advisory, #2984) ------
+
+def _jargon(text, prompt=None, key="user_message"):
+    # Flat, as `orchestrator.py` builds the validator's `test` argument —
+    # not the test file's nested `input` block.
+    test = {"type": "positive", key: prompt} if prompt else {"type": "positive"}
+    try:
+        check_jargon(text, test)
+    except AssertionError as exc:
+        return str(exc)
+    return None
+
+
+def test_jargon_report_fires_on_not_proved():
+    msg = _jargon("The parentage is Not Proved yet.")
+    assert msg is not None and "proved" in msg
+
+
+def test_jargon_report_fires_on_disproved():
+    msg = _jargon("That candidate is disproved by the 1850 census.")
+    assert msg is not None and "disproved" in msg
+
+
+def test_jargon_report_fires_on_each_word():
+    msg = _jargon(
+        "Under the GPS the search is exhaustive, and the proof holds; "
+        "a GPS-conformant write-up follows."
+    )
+    assert msg is not None
+    for word in ("gps", "exhaustive", "proof"):
+        assert word in msg
+
+
+def test_jargon_report_passes_improved_and_agent_names():
+    """The other direction: substrings and the hyphenated agent names we route
+    by are not the words the researcher is shielded from."""
+    assert _jargon(
+        "The citation improved. The proof-conclusion step and the "
+        "proof-critique review ran, and gps-mentor read it. not_proved stays."
+    ) is None
+
+
+def test_jargon_report_passes_a_word_the_prompt_used():
+    assert _jargon(
+        "Your proof meets the GPS on four of five points.",
+        prompt="does my proof meet the GPS",
+    ) is None
+
+
+def test_jargon_report_still_fires_on_a_form_the_prompt_did_not_use():
+    msg = _jargon(
+        "Your proof meets the GPS, but parentage is not proved.",
+        prompt="does my proof meet the GPS",
+    )
+    assert msg is not None and "proved" in msg
+    assert "gps" not in msg and "proof," not in msg
+
+
+def test_jargon_report_reads_an_agent_delegation_as_the_prompt():
+    assert _jargon(
+        "The proof summary reads well.",
+        prompt="Review the proof summary for ps_001.\n\nfocus: on-demand",
+        key="delegation",
+    ) is None
+
+
+def test_jargon_report_skips_a_negative_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_jargon("not proved", {"type": "negative"})
+
+
+def test_jargon_report_skips_an_empty_reply():
+    with pytest.raises(pytest.skip.Exception):
+        check_jargon("  ", POSITIVE)
+
+
+# --- An agent-keyed suite's frontmatter reaches the validators (#1253) ------
+#
+# The orchestrator hands every validator `skill_frontmatter`. Before
+# `load_suite_frontmatter` it resolved `skills/<skill>/SKILL.md` only, so for a
+# suite keyed to an agent it was `{}` — and two validators read it. Neither
+# failed; both degraded quietly, which is why this needs a test rather than a
+# bug report.
+
+import warnings as _warnings_mod  # noqa: E402
+
+from test_universal import test_tool_allowlist as check_tool_allowlist  # noqa: E402
+
+AGENT_FM = {
+    "name": "gps-mentor",
+    "tools": [
+        "mcp__genealogy__research_query",
+        "mcp__remote-devices__Genealogy_Research__research_query",
+        "mcp__Genealogy_Research__research_query",
+    ],
+}
+MCP_CALLS = [{"tool": "mcp__genealogy__research_query"}]
+
+
+def _advisories(fm):
+    with _warnings_mod.catch_warnings(record=True) as caught:
+        _warnings_mod.simplefilter("always")
+        check_tool_allowlist(
+            tool_calls=MCP_CALLS, skill_frontmatter=fm, test={"skill": "gps-mentor"}
+        )
+    return [str(w.message) for w in caught]
+
+
+def test_tool_allowlist_reads_an_agents_tools_key():
+    """An agent declares `tools`, qualified; a skill declares `allowed-tools`,
+    bare. Reading only the skill spelling left the declared set empty, so the
+    advisory fired on every test in the suite — and an advisory that always
+    fires teaches its reader to ignore it."""
+    assert _advisories(AGENT_FM) == []
+
+
+def test_tool_allowlist_still_warns_when_nothing_is_declared():
+    """The accept direction: an empty frontmatter is still a real finding."""
+    assert len(_advisories({})) == 1
+
+
+def test_tool_allowlist_still_flags_an_undeclared_call():
+    """Narrowing must not have become blanket permission."""
+    with _warnings_mod.catch_warnings(record=True) as caught:
+        _warnings_mod.simplefilter("always")
+        check_tool_allowlist(
+            tool_calls=[{"tool": "mcp__genealogy__tree_edit"}],
+            skill_frontmatter=AGENT_FM,
+            test={"skill": "gps-mentor"},
+        )
+    assert len(caught) == 1
+    assert "not in allowed-tools" in str(caught[0].message)
+
+
+def test_ownership_table_is_not_skipped_for_an_agent_keyed_suite():
+    """`test_ownership_table` reads `skill_frontmatter["name"]` and SKIPS when
+    it is absent, so a `{}` frontmatter dropped ownership checking for the whole
+    suite silently. An agent file carries `name`, so resolving it restores the
+    check — asserted here by the write being REFUSED rather than skipped."""
+    before = research(proof_summaries=[])
+    after = research(proof_summaries=[{"id": "ps_001"}])
+    with pytest.raises(AssertionError):
+        check_research(before, after, AGENT_FM, POSITIVE)
+
+
+def test_tool_allowlist_widens_by_an_agent_keyed_suites_own_delegations(monkeypatch, tmp_path):
+    """The widening scan must read the AGENT body for an agent-keyed suite.
+
+    It scanned `skills/<test.skill>/SKILL.md`, absent for such a suite, so the
+    suite was never widened by what it delegates to. LATENT: no agent body
+    carries an `@plugin:` reference today, so this fixture is synthetic and the
+    real corpus exercises none of it. It is guarded anyway because the
+    frontmatter beside it is now resolved from the agent, and the two reading
+    different files is the inconsistency that made the declared set wrong.
+
+    `DEFAULT_PLUGIN_AGENTS` is patched on `harness.workspace` rather than on the
+    validator, because the validator imports it inside the function body.
+    """
+    import harness.workspace as _ws
+
+    agents = tmp_path / "agents"
+    agents.mkdir()
+    (agents / "gps-mentor.md").write_text(
+        "---\nname: gps-mentor\ntools:\n  - mcp__genealogy__sidecar_read\n---\n"
+        "Hand the page to `@plugin:image-reader`.\n",
+        encoding="utf-8",
+    )
+    (agents / "image-reader.md").write_text(
+        "---\nname: image-reader\ntools:\n  - mcp__genealogy__image_transcribe\n---\nx\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(_ws, "DEFAULT_PLUGIN_AGENTS", agents)
+
+    fm = {"name": "gps-mentor", "tools": ["mcp__genealogy__sidecar_read"]}
+    with _warnings_mod.catch_warnings(record=True) as caught:
+        _warnings_mod.simplefilter("always")
+        # A call the suite holds only THROUGH its delegate. Unwidened, this is
+        # reported as undeclared.
+        check_tool_allowlist(
+            tool_calls=[{"tool": "mcp__genealogy__image_transcribe"}],
+            skill_frontmatter=fm,
+            test={"skill": "gps-mentor"},
+        )
+    assert [str(w.message) for w in caught] == []
+
+
+def test_the_healer_coercing_a_person_ref_quality_is_not_a_move():
+    """`research_append` persists the healed tree: a string quality coerced to an
+    integer, or refs reordered, is the tool's change, not a person rewrite."""
+    before = _person_with_fact()
+    before[0]["sources"] = [{"ref": "S2", "quality": "3"}, {"ref": "S1"}]
+    after = _person_with_fact(place="Odessa, Saskatchewan, Canada")
+    after[0]["sources"] = [{"ref": "S1"}, {"ref": "S2", "quality": 3}]
+    check_tree(
+        _tree_state(before),
+        _tree_state(after),
+        {"name": "record-extraction"},
+        POSITIVE,
+        tool_calls=_EXTRACTION_CALL,
+    )

@@ -1,19 +1,37 @@
 import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
 
-// Standalone (not merged with vite.config.ts): these are pure-logic unit tests
-// that need no DOM and no React plugin. A dedicated config keeps `vitest run`
-// from pulling the app build's `@genealogy/schema generate` dev step or its
-// jsx transform. Add a jsdom project here if a component render test is ever
-// needed.
+// Two projects split by extension. The `.ts` suites (chatEvents + the three
+// transport suites) are pure logic and run under `node`, exactly as before —
+// flipping them to jsdom is deliberately avoided (issue #1458). The `.tsx`
+// suites are component render tests that need a DOM and the React plugin's jsx
+// transform, so they run under `jsdom`. The globs are exact (`.ts` vs `.tsx`)
+// and do not overlap, so no file runs twice or under the wrong environment.
+// `testTimeout`/`hookTimeout` are not inherited into inline projects, so both
+// carry them: raised from vitest's 5000ms default to match every other
+// workspace config under `make test-all`'s parallel turbo contention.
 export default defineConfig({
   test: {
-    environment: 'node',
-    include: ['src/**/*.test.{ts,tsx}'],
-    // Raised from vitest's 5000ms default, matching every other workspace
-    // config: `make test-all` runs every suite through turbo in parallel, and
-    // this package competes for the same cores as the ones already observed
-    // flaking under that contention, even though nothing here has flaked yet.
-    testTimeout: 30_000,
-    hookTimeout: 30_000
+    projects: [
+      {
+        test: {
+          name: 'node',
+          environment: 'node',
+          include: ['src/**/*.test.ts'],
+          testTimeout: 30_000,
+          hookTimeout: 30_000
+        }
+      },
+      {
+        plugins: [react()],
+        test: {
+          name: 'jsdom',
+          environment: 'jsdom',
+          include: ['src/**/*.test.tsx'],
+          testTimeout: 30_000,
+          hookTimeout: 30_000
+        }
+      }
+    ]
   }
 })

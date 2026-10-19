@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "partial"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Two David Bagleys in the tree (I1 linked via R7, I2 unlinked); I1 carries no birth facts. Both Davids were created by the agent — the starting tree had no David Bagley at all. Agent also deleted R4 (the ParentChild linking LVDV-6MK/Sarah Sally Andrews to William), leaving her in no relationship. Agent had the birth date and place (22 Feb 1777, Newton, Rockingham, NH) from the supporting sources but did not populate them onto I1. Without facts on I1 the two Davids are indistinguishable in the tree — target person underidentified."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "679a8f9acedcfd4aa2b25276012b0efbfd855d0eec05a99a8688f0697ab99077"
+}

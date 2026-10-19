@@ -1,0 +1,966 @@
+#!/usr/bin/env python3
+"""D9-10 acceptance: two real turns through web tier -> queue -> shim -> worker, the
+second resuming the first's SDK session in a fresh worker process. Billed (two short
+Sonnet turns); needs a stack with ANTHROPIC_API_KEY in the worker's environment
+(``make proto-turn`` exports it from the host env or eval/.env before `up`).
+
+    uv run python proto/turn.py [--base http://127.0.0.1:8085] [--pg-dsn ...] [--deadline-s 300]
+
+Turn 1 asks for a calendar conversion that needs ``convert_calendar``; turn 2 asks the
+model to repeat the date it just converted -- answerable only from the resumed
+transcript. Every claim is a Postgres row (PASS/FAIL table, exit 1 on any FAIL, 2 when
+the tier is unreachable):
+
+  turn 1   >= 1 agent_event row; a tool_use and a tool_result naming convert_calendar;
+           session_entries > 0 for sessions.sdk_session_id; tool_calls >= 1 with the
+           convert_calendar row decision allow; turns.completed_at set; cost_usd > 0;
+           turns.outcome not one of RESUMED_FAILED_OUTCOMES; the token columns summed
+           from session_entries (output_tokens > 0, and the input side non-empty)
+  turn 2   session_entries grew; the reply text mentions 1751; completed; cost_usd > 0;
+           turns.outcome not one of RESUMED_FAILED_OUTCOMES; token columns filled for
+           this turn alone (output_tokens > 0)
+
+``--kill`` (D14, ``make proto-kill``) runs one turn instead: a ``place_search`` question,
+the worker container killed the moment the call's ``tool_calls`` row appears (its
+PreToolUse hook, before the tool runs) and started again, the shim's redelivery resumed
+in the fresh process. Checks: redelivered (receive_count >= 2); completed with cost;
+the same SDK session (``sessions.sdk_session_id`` unchanged) with ``session_entries``
+grown past the kill; a ``place_search`` call completed with a duration (criterion 4);
+its result carried no reconnect instruction (the bearer reached the tool server); the
+reply names Nauvoo. ``--session <id>`` runs it on a seeded session (proto/seed.py).
+
+The kill is generalised for the resume probes (D18): ``--kill-on <bare tool name>``
+(default ``place_search``; ``Agent`` lands it during a delegation), ``--kill-after-s
+<n>`` (default 0, the moment the row appears; ~15 s puts a subagent mid-work) and
+``--text ...`` / ``--text-file <path>`` for the message. ``--kill-signal term`` (U5) stops
+the worker with ``docker restart -t 30`` instead of ``kill`` plus ``start``: a SIGTERM, which
+the worker answers with a 500. Under docker-compose.sqsd.yml (passed in ``PROTO_COMPOSE``,
+with ``ERROR_VISIBILITY_S`` above SHUTDOWN_GRACE_S plus the restart, e.g. 45) the
+redelivery comes after the shim's error visibility, once the old process is gone. Under
+the base profile the shim's 5 s doubling backoff can redeliver into the old process's
+shutdown grace, which answers 503 unclaimed and spends a receive.
+
+``--kill-on-input KEY=VALUE`` narrows ``--kill-on`` to a call whose INPUT matches, which
+is what PR #2870 item 0a needs: the case that produced the synthetic result was a
+BACKGROUND delegation (``Agent`` with ``run_in_background: true``), and killing a
+foreground one resumes cleanly, so tool name alone cannot select it. ``tool_calls`` has
+no input column -- 004_worker.sql adds only ``tool_use_id`` -- so the selector reads the
+``tool_use`` block out of ``session_entries.entry``, the SDK's own transcript. Pair it
+with ``--text-file`` (``probes/background-delegation.txt`` asks for two record
+extractions at once) and ``AUTONOMOUS_MAX_NUDGES > 0``, which ``make proto-kill`` leaves
+at 0: ``run_in_background`` is model-chosen, appearing in 19 of 714 committed runs and in
+none of the eight ``bagley-father-1884`` runs, so it has to be provoked. The two checks that are about
+the default text (the bearer, Nauvoo) run only with the default text; the rest stay.
+``--expect-grant-refresh`` (U3, refused with ``--kill-signal term``) proves the resumed
+attempt bears the CURRENT grant: between ``docker kill`` and ``docker start`` it waits up
+to 90 s for the owner's ``session_started_at`` to move -- the web tier refreshing while no
+attempt is live, which revokes the first attempt's token -- and adds three checks: the
+grant was refreshed between attempts, ``reauth_hits`` is 0 since the ``user_msg``, and
+``reauth_entry_hits`` (the full tool results in ``session_entries``, not the 160-char
+summaries) is 0. Run it with ``FS_GRANT_REFRESH_AGE_S=0`` on the web tier.
+
+Every real-turn arm first checks that the dev-login patron has a usable grant
+(``require_grant``) and exits 2 naming ``make proto-grant`` when not: without it a missing
+grant shows only as a ``signin_required`` turn. Every arm that gives up on a turn it posted --
+a miss, a timeout, a failed docker call or DB read, ^C before turn_done -- POSTs
+``/interrupt`` first (U23), so no billed turn is left running.
+
+Whatever the checks say, an evidence block follows ``turn_done``: the ``turns`` row, the
+``tool_calls`` and ``session_entries`` rows written after the kill (the CLI's own words
+on resume, so they survive ``proto-down -v``), research.json's array-section sizes
+before the kill and after ``turn_done``, and the ``text`` events after the kill.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import httpx
+import psycopg
+
+Check = tuple[str, bool, str]
+
+TEXT_1 = "What is 4 April 1751 in the Gregorian calendar? Use convert_calendar and answer in one line."
+TEXT_2 = "Repeat the date you just converted, in one line."
+TOOL = "convert_calendar"
+
+TEXT_KILL = ("Use place_search to find the standardized FamilySearch place name for Nauvoo, Illinois, "
+             "then answer in one line with the name it returned.")
+KILL_TOOL = "place_search"
+# What a FamilySearch tool answers when its bearer is empty or rejected.
+REAUTH = re.compile(r"reconnect|log ?in|authenticat|unauthori[sz]ed|\b401\b", re.I)
+# What the engine's auth module actually says when the bearer is missing, expired or rejected
+# (src/auth/refresh.ts, the hosted message) -- not REAUTH, whose `log ?in|authenticat` also
+# matches "the Login family" and "Authenticated copy" in record text. Over the 160-char
+# tool_result SUMMARIES, so a cut-off record cannot carry an anchor past the cut.
+REAUTH_HITS = re.compile(r"Call the login tool|Reconnect FamilySearch|unauthori[sz]ed|\b401\b", re.I)
+# The same instruction over the FULL tool results in session_entries: only the engine's two
+# anchors, because record text there has page and film numbers that \b401\b would flag.
+REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
+
+
+# U2: every /api/sessions route needs a signed-in patron. The scripts sign in through
+# dev-login, which the tier offers only with DEV_LOGIN=true, FamilySearch sign-in off and
+# PUBLIC_URL http -- the default compose stack. Distinct emails are distinct patrons.
+DEV_LOGIN_EMAIL = "dev@localhost"
+# U13: a deployed web tier has no dev-login; a driver signs in with the operator's own
+# ``wb_session`` cookie, read from this file (0600, never argv) when set.
+COOKIE_FILE_ENV = "PROTO_SESSION_COOKIE_FILE"
+SESSION_COOKIE = "wb_session"
+
+
+def read_cookie_file(path: str) -> str:
+    """The cookie value in ``path``: the bare value, or ``wb_session=<value>``."""
+    raw = Path(path).read_text(encoding="utf-8").strip()
+    value = raw.split("=", 1)[1] if raw.startswith(f"{SESSION_COOKIE}=") else raw
+    if not value or any(c.isspace() or c == ";" for c in value):
+        raise ValueError(f"{path} holds no single {SESSION_COOKIE} value")
+    return value
+
+
+def signed_in_client(
+    base: str, email: str = DEV_LOGIN_EMAIL, *, timeout: float = 30.0, transport: httpx.BaseTransport | None = None,
+    cookie_file: str | None = None,
+) -> httpx.Client:
+    """An UNOPENED ``httpx.Client`` on ``base`` holding a dev-login session cookie, usable
+    with or without ``with``. It takes absolute URLs (``f"{base}/api/..."``) and relative
+    ones alike. The login goes through its own short-lived client: a client that has sent
+    a request refuses ``__enter__``, so logging in on the returned one broke every
+    ``with signed_in_client(...)``. ``transport`` is for tests. With ``cookie_file`` (or
+    ``$PROTO_SESSION_COOKIE_FILE``) it carries that session instead and never posts to
+    dev-login (U13: a deployed tier signs in only through FamilySearch)."""
+    extra: dict[str, Any] = {"transport": transport} if transport is not None else {}
+    cookie_file = cookie_file or os.environ.get(COOKIE_FILE_ENV) or None
+    if cookie_file:
+        return httpx.Client(base_url=base, timeout=timeout,
+                            cookies={SESSION_COOKIE: read_cookie_file(cookie_file)}, **extra)
+    with httpx.Client(base_url=base, timeout=timeout, **extra) as login:
+        r = login.post("/auth/dev-login", json={"email": email})
+        if r.status_code == 403:
+            raise RuntimeError(
+                f"dev-login is disabled at {base} (DEV_LOGIN is not true, FamilySearch sign-in is on, "
+                "or PUBLIC_URL is https); "
+                "run the scripts against the default stack, not docker-compose.fs-signin.yml"
+            )
+        r.raise_for_status()
+        cookies = httpx.Cookies(login.cookies)
+    return httpx.Client(base_url=base, timeout=timeout, cookies=cookies, **extra)
+
+
+def post_message(client: httpx.Client, base: str, session_id: str, text: str) -> str:
+    r = client.post(f"{base}/api/sessions/{session_id}/messages", json={"text": text})
+    r.raise_for_status()
+    return r.json()["turn_id"]
+
+
+def interrupt(client: httpx.Client, base: str, session_id: str) -> str | None:
+    """POST /interrupt (Stop) on a session, so a turn a driver gave up on does not run on
+    billed; None on the 202, else what went wrong. Never raises: it runs on paths that are
+    already failing (U23)."""
+    try:
+        r = client.post(f"{base}/api/sessions/{session_id}/interrupt")
+    except Exception as exc:  # noqa: BLE001
+        return f"{type(exc).__name__}: {exc}"
+    return None if r.status_code == 202 else f"HTTP {r.status_code}"
+
+
+def wait_turn_done(client: httpx.Client, base: str, session_id: str, turn_id: str, deadline_s: float) -> tuple[int, float]:
+    """Poll GET /events until the turn's turn_done; ``(seq, elapsed_s)``."""
+    after = 0
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < deadline_s:
+        page = client.get(f"{base}/api/sessions/{session_id}/events", params={"after": after}).json()
+        for ev in page["events"]:
+            event = ev.get("event") or {}
+            if ev.get("type") == "agent_event" and event.get("kind") == "turn_done" and event.get("turn_id") == turn_id:
+                return ev["seq"], time.monotonic() - t0
+        after = page["next_after"]
+        time.sleep(1.0)
+    raise TimeoutError(f"no turn_done for {turn_id} within {deadline_s:.0f}s")
+
+
+def post_and_wait(client: httpx.Client, base: str, session_id: str, text: str, deadline_s: float) -> tuple[str, int, float]:
+    """POST one message and wait for its turn_done; ``(turn_id, seq, elapsed_s)``."""
+    turn_id = post_message(client, base, session_id, text)
+    seq, elapsed = wait_turn_done(client, base, session_id, turn_id, deadline_s)
+    return turn_id, seq, elapsed
+
+
+def db(dsn: str, sql: str, params: tuple) -> list[tuple]:
+    with psycopg.connect(dsn) as conn:
+        return conn.execute(sql, params).fetchall()
+
+
+def one(dsn: str, sql: str, params: tuple) -> Any:
+    rows = db(dsn, sql, params)
+    return rows[0][0] if rows else None
+
+
+# -- the grant (U3) ---------------------------------------------------------------------
+
+GRANT_SQL = (
+    "SELECT 1 FROM users u JOIN familysearch_tokens ft ON ft.user_id = u.id "
+    "WHERE u.email = %s AND ft.refresh_refused_at IS NULL"
+)
+
+
+def require_grant(dsn: str, email: str) -> str | None:
+    """None when ``email``'s patron holds a grant FamilySearch has not refused, else why not
+    -- naming ``make proto-grant``. The worker bears the project owner's grant, so without
+    one every real turn would end ``signin_required``."""
+    try:
+        found = db(dsn, GRANT_SQL, (email.strip().lower(),))
+    except Exception as exc:  # noqa: BLE001
+        return f"cannot read the grant at {dsn.split('@')[-1]} ({type(exc).__name__}); is the stack up (make proto-up)?"
+    if found:
+        return None
+    return (f"no usable FamilySearch grant for {email}: run `make proto-grant EMAIL={email}` "
+            "(a sign-in on the dev key), then try again")
+
+
+def reauth_hits(dsn: str, session_id: str, since_seq: int) -> list[str]:
+    """tool_result summaries after ``since_seq`` matching ``REAUTH_HITS`` -- what a FamilySearch
+    tool answers when its bearer is empty or rejected. Every attempt and every delegated
+    agent's results are in the scan."""
+    found = db(dsn, "SELECT payload->>'summary' FROM session_events WHERE session_id = %s AND seq > %s "
+                    "AND kind = 'tool_result' ORDER BY seq", (session_id, since_seq))
+    return [s or "" for (s,) in found if REAUTH_HITS.search(s or "")]
+
+
+def tool_result_texts(entry: Any) -> list[str]:
+    """The text of every ``tool_result`` block in one ``session_entries.entry``, whole."""
+    texts: list[str] = []
+
+    def text_of(content: Any) -> str:
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            return " ".join(text_of(c) for c in content)
+        if isinstance(content, dict):
+            return str(content.get("text") or "") if content.get("type") == "text" else text_of(content.get("content"))
+        return ""
+
+    def walk(node: Any) -> None:
+        if isinstance(node, dict):
+            if node.get("type") == "tool_result":
+                texts.append(text_of(node.get("content")))
+                return
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(entry)
+    return texts
+
+
+REAUTH_ENTRIES_SQL = (
+    "SELECT entry FROM session_entries WHERE session_id = %s "
+    "AND seq > COALESCE((SELECT entries_seq_before FROM turns WHERE turn_id = %s), 0) ORDER BY seq"
+)
+
+
+def reauth_entry_hits(dsn: str, sdk_session_id: str | None, turn_id: str) -> list[str]:
+    """Full tool results of the turn (every subpath, so delegated agents' too, above the
+    turn's ``entries_seq_before``) carrying the engine's reconnect instruction anywhere in
+    their text -- past the 160 chars a summary keeps."""
+    if not sdk_session_id:
+        return []
+    hits: list[str] = []
+    for (entry,) in db(dsn, REAUTH_ENTRIES_SQL, (sdk_session_id, turn_id)):
+        for text in tool_result_texts(entry):
+            match = REAUTH_ENTRY.search(text)
+            if match:
+                hits.append(text[max(0, match.start() - 60):match.end() + 60])
+    return hits
+
+
+GRANT_START_SQL = (
+    "SELECT ft.session_started_at FROM projects p JOIN familysearch_tokens ft ON ft.user_id = p.owner_id "
+    "WHERE p.project_id = %s"
+)
+GRANT_REFRESH_WAIT_S = 90.0
+
+
+def wait_grant_refresh(dsn: str, project_id: str | None, before: Any, deadline_s: float = GRANT_REFRESH_WAIT_S) -> bool:
+    """Whether the project owner's ``session_started_at`` moved from ``before`` within the
+    deadline: the web tier's loop refreshing the grant while no attempt is live."""
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < deadline_s:
+        now = one(dsn, GRANT_START_SQL, (project_id,))
+        if now is not None and now != before:
+            return True
+        time.sleep(1.0)
+    return False
+
+
+def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) -> tuple[list[Check], dict[str, Any]]:
+    checks: list[Check] = []
+    figures: dict[str, Any] = {}
+    with signed_in_client(base, email) as client:
+        session = client.post(f"{base}/api/sessions", json={"title": "proto-turn"}).json()
+        session_id = session["id"]
+        figures["session_id"] = session_id
+
+        # -- turn 1 ------------------------------------------------------------------
+        try:
+            turn1, seq1, wall1 = post_and_wait(client, base, session_id, TEXT_1, deadline_s)
+        except Exception as exc:  # noqa: BLE001 - a timeout is a FAIL, not a crash
+            checks.append(("turn 1 reached turn_done", False, f"{type(exc).__name__}: {exc}"))
+            interrupt(client, base, session_id)
+            return checks, figures
+        except BaseException:  # ^C: Stop the turn, then exit
+            interrupt(client, base, session_id)
+            raise
+        checks.append(("turn 1 reached turn_done", True, f"{wall1:.0f}s"))
+        figures["turn1"] = {"turn_id": turn1, "wall_s": round(wall1, 1)}
+
+        agent_rows = one(dsn, "SELECT count(*) FROM session_events WHERE session_id = %s AND kind NOT IN ('user_msg', 'turn_done')", (session_id,))
+        checks.append(("turn 1: >= 1 agent_event row", agent_rows >= 1, f"rows={agent_rows}"))
+        tool_use = one(dsn, "SELECT count(*) FROM session_events WHERE session_id = %s AND kind = 'tool_use' AND payload->>'tool' LIKE %s", (session_id, f"%{TOOL}"))
+        tool_result = one(dsn, "SELECT count(*) FROM session_events WHERE session_id = %s AND kind = 'tool_result' AND payload->>'tool' LIKE %s", (session_id, f"%{TOOL}"))
+        checks.append((f"turn 1: tool_use and tool_result rows name {TOOL}", tool_use >= 1 and tool_result >= 1, f"tool_use={tool_use} tool_result={tool_result}"))
+        sdk_session_id = one(dsn, "SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
+        checks.append(("turn 1: sessions.sdk_session_id set", bool(sdk_session_id), f"sdk_session_id={sdk_session_id}"))
+        entries1 = one(dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_session_id or "",))
+        checks.append(("turn 1: session_entries > 0 for the SDK session", entries1 > 0, f"entries={entries1}"))
+        calls = one(dsn, "SELECT count(*) FROM tool_calls WHERE turn_id = %s", (turn1,))
+        allowed = one(dsn, "SELECT count(*) FROM tool_calls WHERE turn_id = %s AND tool_name LIKE %s AND decision = 'allow'", (turn1, f"%{TOOL}"))
+        checks.append((f"turn 1: tool_calls >= 1, the {TOOL} row decision allow", calls >= 1 and allowed >= 1, f"tool_calls={calls} allowed={allowed}"))
+        row = db(dsn, "SELECT completed_at, outcome, cost_usd, num_turns, duration_ms FROM turns WHERE turn_id = %s", (turn1,))
+        completed1, outcome1, cost1, num1, dur1 = row[0] if row else (None, None, None, None, None)
+        checks.append(("turn 1: turns.completed_at set", completed1 is not None, f"row={row}"))
+        checks.append(("turn 1: turns.cost_usd > 0", cost1 is not None and float(cost1) > 0, f"cost_usd={cost1}"))
+        checks.append(outcome_check("turn 1", outcome1))
+        tokens1 = tokens(dsn, turn1)
+        checks.append(("turn 1: token columns summed from session_entries", tokens_filled(tokens1), f"tokens={tokens1}"))
+        figures["turn1"].update({"cost_usd": float(cost1) if cost1 is not None else None, "outcome": outcome1, "num_turns": num1,
+                                 "duration_ms": dur1, "events": agent_rows, "entries": entries1, "tool_calls": calls,
+                                 "tokens": tokens1})
+
+        # -- turn 2: the cross-process resume --------------------------------------------
+        try:
+            turn2, seq2, wall2 = post_and_wait(client, base, session_id, TEXT_2, deadline_s)
+        except Exception as exc:  # noqa: BLE001
+            checks.append(("turn 2 reached turn_done", False, f"{type(exc).__name__}: {exc}"))
+            interrupt(client, base, session_id)
+            return checks, figures
+        except BaseException:  # ^C: Stop the turn, then exit
+            interrupt(client, base, session_id)
+            raise
+        checks.append(("turn 2 reached turn_done", True, f"{wall2:.0f}s"))
+        figures["turn2"] = {"turn_id": turn2, "wall_s": round(wall2, 1)}
+
+        entries2 = one(dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_session_id or "",))
+        checks.append(("turn 2: session_entries grew", entries2 > entries1, f"{entries1} -> {entries2}"))
+        user_seq = one(dsn, "SELECT max(seq) FROM session_events WHERE session_id = %s AND kind = 'user_msg' AND payload->>'turn_id' = %s", (session_id, turn2))
+        texts = db(dsn, "SELECT payload->>'text' FROM session_events WHERE session_id = %s AND kind = 'text' AND seq > %s ORDER BY seq", (session_id, user_seq or 0))
+        reply = " ".join(t[0] or "" for t in texts)
+        checks.append(("turn 2: the reply mentions 1751", "1751" in reply, f"reply={reply[:200]!r}"))
+        row2 = db(dsn, "SELECT completed_at, outcome, cost_usd, num_turns, duration_ms FROM turns WHERE turn_id = %s", (turn2,))
+        completed2, outcome2, cost2, num2, dur2 = row2[0] if row2 else (None, None, None, None, None)
+        checks.append(("turn 2: completed with cost_usd > 0", completed2 is not None and cost2 is not None and float(cost2) > 0, f"row={row2}"))
+        checks.append(outcome_check("turn 2", outcome2))
+        tokens2 = tokens(dsn, turn2)
+        # The two turns' output columns must fit inside the session's whole output: a turn 2
+        # summed from seq 0 would carry turn 1's tokens again and overshoot it.
+        session_output = one(dsn, SESSION_OUTPUT_SQL, (sdk_session_id or "",)) or 0
+        before1 = one(dsn, "SELECT entries_seq_before FROM turns WHERE turn_id = %s", (turn1,))
+        before2 = one(dsn, "SELECT entries_seq_before FROM turns WHERE turn_id = %s", (turn2,))
+        own = (tokens1.get("output_tokens") or 0) + (tokens2.get("output_tokens") or 0) <= session_output
+        checks.append(("turn 2: token columns cover this turn alone",
+                       tokens_filled(tokens2) and own and before1 is not None and before2 is not None and before2 > before1,
+                       f"output {tokens1.get('output_tokens')} + {tokens2.get('output_tokens')} vs session {session_output}; "
+                       f"entries_seq_before {before1} -> {before2}"))
+        figures["turn2"].update({"cost_usd": float(cost2) if cost2 is not None else None, "outcome": outcome2, "num_turns": num2,
+                                 "duration_ms": dur2, "entries": entries2, "reply": reply[:200], "tokens": tokens2})
+    return checks, figures
+
+
+# -- the kill arm (D14, generalised for the D18 resume probes) --------------------------
+
+
+@dataclass(frozen=True)
+class KillSpec:
+    """What ``--kill`` does: which call's PreToolUse row triggers the kill (a bare tool
+    name -- ``place_search`` or ``Agent`` -- matched under any server spelling), how long
+    after that row to wait, and the message. ``default_text`` gates the two checks that
+    are about TEXT_KILL's answer."""
+
+    kill_on: str = KILL_TOOL
+    kill_after_s: float = 0.0
+    text: str = TEXT_KILL
+    session_id: str | None = None
+    container: str = "proto-worker"
+    # 0a: the jsonb fragment the call's input must CONTAIN, or None for name-only.
+    kill_on_input: dict[str, Any] | None = None
+    # U5: "kill" is docker kill + start (SIGKILL); "term" is docker restart -t 30 (SIGTERM).
+    kill_signal: str = "kill"
+    # U3: wait, between the kill and the start, for the web tier to refresh the grant, and
+    # check the resumed attempt bore the new one (no reauth anywhere).
+    expect_grant_refresh: bool = False
+    # U13: a DeployedTarget signals the worker over SSM instead of docker.
+    deployed: Any = None
+
+    @property
+    def target(self) -> str:
+        """How the selected call reads in a check line."""
+        if not self.kill_on_input:
+            return self.kill_on
+        pairs = ", ".join(f"{k}={json.dumps(v)}" for k, v in self.kill_on_input.items())
+        return f"{self.kill_on}({pairs})"
+
+    @property
+    def default_text(self) -> bool:
+        return self.text == TEXT_KILL
+
+
+# turns.outcome values that mean the resume FAILED. Before PR #2870 item 1c,
+# complete() hardcoded 'ok' and the check was `outcome == "ok"`; now the column says HOW a
+# run ended, and a kill probe run with the Stop hook on (which proto-probe-resume needs,
+# or the run never reaches a delegation) legitimately lands on `completed` -- or on
+# `budget`, when the probe's narrow message exhausts the nudge cap without finishing the
+# project, which is the ordinary shape of a probe run and not a failure of the RESUME.
+#
+# Stated as the failure set rather than the success set on purpose: a new terminal value
+# added later is then a resume that WORKED unless someone says otherwise, which is the
+# safe default for a check whose job is to catch one specific defect. `no_progress` is
+# 0a's terminal failure -- the resume did nothing, twice -- which is exactly what a resume
+# probe exists to catch. `retries_exhausted` (U5) is the worker closing the turn because its
+# message ran out of receives: no resume finished it. `transcript_lost` (U10) is a turn
+# whose transcript never reached the store, closed by the worker: a resume that did not work.
+# `signin_required` (U3) is a turn the worker closed because the owner's grant was missing or
+# refused: it never ran at all.
+RESUMED_FAILED_OUTCOMES = frozenset({"no_progress", "retries_exhausted", "transcript_lost", "signin_required"})
+
+
+def outcome_check(label: str, outcome: Any) -> Check:
+    """``<label>: turns.outcome is not <RESUMED_FAILED_OUTCOMES>`` -- the two-turn run's
+    check, the same deny-set as the kill arm's. A turn the worker closed ITSELF (a
+    redelivery's zero-progress ``no_progress``, say) still reaches turn_done with
+    completed_at set, so only the outcome says it failed. No outcome at all fails too."""
+    return (f"{label}: turns.outcome is not {'/'.join(sorted(RESUMED_FAILED_OUTCOMES))}",
+            outcome is not None and outcome not in RESUMED_FAILED_OUTCOMES, f"outcome={outcome}")
+
+
+def bare_name(tool_name: str) -> str:
+    """``mcp__<server>__<name>`` -> ``<name>``; a built-in tool's name as is (the worker's
+    ``options.bare_tool_name``, repeated here so this script imports no SDK)."""
+    return tool_name.rsplit("__", 1)[-1] if tool_name.startswith("mcp__") else tool_name
+
+
+def matches_bare(tool_name: str, bare: str) -> bool:
+    """Whether a ``tool_calls.tool_name`` is ``bare`` under any spelling: exactly (a
+    built-in such as ``Agent``) or as an MCP tool's bare name. Never a suffix match --
+    ``place_search`` must not match ``place_search_all``, nor ``Agent`` a name that
+    merely ends in it."""
+    return tool_name == bare or (tool_name.startswith("mcp__") and bare_name(tool_name) == bare)
+
+
+def wait_for_tool_call(dsn: str, turn_id: str, tool: str, deadline_s: float) -> str:
+    """``"seen"`` once the turn has a tool_calls row whose name is ``tool`` (the
+    PreToolUse hook writes it as the call starts); ``"completed"`` if the turn finished
+    without one (a kill would then land on nothing); ``"timeout"`` at the deadline."""
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < deadline_s:
+        names = db(dsn, "SELECT tool_name FROM tool_calls WHERE turn_id = %s ORDER BY id", (turn_id,))
+        if any(matches_bare(n, tool) for (n,) in names):
+            return "seen"
+        if one(dsn, "SELECT completed_at FROM turns WHERE turn_id = %s", (turn_id,)) is not None:
+            return "completed"
+        time.sleep(0.2)
+    return "timeout"
+
+
+def parse_input_selector(text: str | None) -> dict[str, Any] | None:
+    """``--kill-on-input KEY=VALUE`` -> the jsonb fragment a call's input must contain.
+
+    VALUE is parsed as JSON when it parses, else taken as a bare string. That distinction
+    is the whole point for ``run_in_background=true``: the SDK writes a JSON boolean, and
+    the string ``"true"`` would match nothing and the probe would hang until its deadline
+    looking like "the model never did it"."""
+    if not text:
+        return None
+    key, sep, raw = text.partition("=")
+    key = key.strip()
+    if not sep or not key:
+        raise ValueError(f"--kill-on-input wants KEY=VALUE, not {text!r}")
+    try:
+        value: Any = json.loads(raw)
+    except ValueError:
+        value = raw
+    return {key: value}
+
+
+# A ``tool_use`` block in the SDK's own transcript, with its input -- which ``tool_calls``
+# cannot answer, having no input column. ``@>`` is jsonb containment, so the fragment need
+# not be the whole input. The CASE guards a non-array ``content`` rather than letting
+# jsonb_array_elements raise mid-poll.
+TOOL_USE_INPUT_SQL = (
+    "SELECT c->>'name' FROM session_entries e "
+    "CROSS JOIN LATERAL jsonb_array_elements("
+    "  CASE WHEN jsonb_typeof(e.entry->'message'->'content') = 'array' "
+    "       THEN e.entry->'message'->'content' ELSE '[]'::jsonb END) c "
+    "WHERE e.session_id = %s AND e.entry->>'type' = 'assistant' "
+    "AND c->>'type' = 'tool_use' AND c->'input' @> %s::jsonb ORDER BY e.seq"
+)
+
+
+def wait_for_tool_input(
+    dsn: str, session_id: str, turn_id: str, tool: str, selector: dict[str, Any], deadline_s: float
+) -> str:
+    """``wait_for_tool_call`` narrowed by the call's INPUT (0a). Same three returns.
+
+    The SDK session id is re-read every poll rather than once up front: the worker writes
+    it at claim time, which can be after this starts, and a single NULL read would send
+    every later query against the empty string."""
+    t0 = time.monotonic()
+    fragment = json.dumps(selector)
+    while time.monotonic() - t0 < deadline_s:
+        sdk = one(dsn, "SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
+        if sdk:
+            names = db(dsn, TOOL_USE_INPUT_SQL, (sdk, fragment))
+            if any(matches_bare(n or "", tool) for (n,) in names):
+                return "seen"
+        if one(dsn, "SELECT completed_at FROM turns WHERE turn_id = %s", (turn_id,)) is not None:
+            return "completed"
+        time.sleep(0.2)
+    return "timeout"
+
+
+def docker(*args: str) -> None:
+    subprocess.run(["docker", *args], check=True, capture_output=True, text=True, encoding="utf-8")
+
+
+@dataclass
+class KillRows:
+    """What the checks read after ``turn_done``, gathered by ``run_kill`` so ``kill_checks``
+    is a pure function of rows."""
+
+    turn_row: tuple | None                 # (receive_count, completed_at, outcome, cost_usd)
+    sdk_before: str | None
+    sdk_after: str | None
+    entries_at_kill: int
+    entries_after: int
+    kill_calls: list[tuple]                # (decision, duration_ms) for the kill-on tool
+    summaries: list[str]                   # tool_result summaries of the kill-on tool
+    reply: str
+    # U3, --expect-grant-refresh only: session_started_at moved in the kill gap, and the
+    # reconnect instruction over the summaries and over the full results since user_msg.
+    grant_refreshed: bool | None = None
+    reauth_hits: list[str] = field(default_factory=list)
+    reauth_entry_hits: list[str] = field(default_factory=list)
+
+
+def kill_checks(rows: KillRows, spec: KillSpec) -> list[Check]:
+    receive_count, completed, outcome, cost = rows.turn_row if rows.turn_row else (None, None, None, None)
+    checks: list[Check] = [
+        ("kill: the turn was redelivered (receive_count >= 2)", (receive_count or 0) >= 2, f"receive_count={receive_count}"),
+        (f"kill: completed with cost_usd > 0 and an outcome that is not "
+         f"{'/'.join(sorted(RESUMED_FAILED_OUTCOMES))}",
+         completed is not None and outcome is not None and outcome not in RESUMED_FAILED_OUTCOMES
+         and cost is not None and float(cost) > 0, f"row={rows.turn_row}"),
+        ("kill: the same SDK session resumed, not a new one", bool(rows.sdk_before) and rows.sdk_after == rows.sdk_before,
+         f"{rows.sdk_before} -> {rows.sdk_after}"),
+        ("kill: session_entries grew past the kill", rows.entries_after > rows.entries_at_kill,
+         f"{rows.entries_at_kill} -> {rows.entries_after}"),
+        (f"kill: a {spec.target} call completed with a duration (criterion 4)",
+         any(d == "allow" and ms is not None for d, ms in rows.kill_calls), f"calls={rows.kill_calls}"),
+    ]
+    if spec.default_text:
+        checks.append((f"kill: {spec.kill_on} answered with the bearer (no reconnect instruction)",
+                       bool(rows.summaries) and not any(REAUTH.search(s) for s in rows.summaries),
+                       f"summaries={rows.summaries[:2]}"))
+        checks.append(("kill: the reply names Nauvoo", "nauvoo" in rows.reply.lower(), f"reply={rows.reply[:200]!r}"))
+    if spec.expect_grant_refresh:
+        checks.append(("kill: grant refreshed between attempts", bool(rows.grant_refreshed),
+                       "session_started_at did not move while no attempt was live"))
+        checks.append(("kill: reauth_hits=0 since the user_msg", not rows.reauth_hits,
+                       f"hits={rows.reauth_hits[:2]}"))
+        checks.append(("kill: reauth_entry_hits=0 (full tool results)", not rows.reauth_entry_hits,
+                       f"hits={rows.reauth_entry_hits[:2]}"))
+    return checks
+
+
+# -- the evidence block: what the resumed attempt actually did ---------------------------
+
+
+@dataclass
+class KillMarks:
+    """High-water marks taken at the kill: everything above them was written by the
+    resumed attempt."""
+
+    calls_id: int
+    entries_seq: int
+    events_seq: int
+    sections_before: list[tuple]
+
+
+@dataclass
+class KillEvidence:
+    turn_row: dict[str, Any] = field(default_factory=dict)
+    calls_after: list[tuple] = field(default_factory=list)      # (tool_name, agent_type, decision, duration_ms)
+    entries_after: list[tuple] = field(default_factory=list)    # (seq, subpath, type, brief)
+    sections_before: list[tuple] = field(default_factory=list)  # (section, n)
+    sections_after: list[tuple] = field(default_factory=list)
+    texts_after: list[str] = field(default_factory=list)
+
+
+def entry_brief(entry: Any, limit: int = 200) -> str:
+    """The first ``limit`` characters of what a transcript entry says: its message's text
+    blocks, ``tool_use:<name>`` per tool call, ``tool_result:<content>`` per result, the
+    ``result`` text of a result entry, or the entry's own ``summary``/``content``."""
+    if not isinstance(entry, dict):
+        return str(entry)[:limit]
+    parts: list[str] = []
+    message = entry.get("message")
+    content = message.get("content") if isinstance(message, dict) else None
+    if content is None:
+        content = entry.get("content")
+    if isinstance(content, str):
+        parts.append(content)
+    elif isinstance(content, list):
+        for block in content:
+            if not isinstance(block, dict):
+                parts.append(str(block))
+                continue
+            kind = block.get("type")
+            if kind == "text":
+                parts.append(str(block.get("text") or ""))
+            elif kind == "tool_use":
+                parts.append(f"tool_use:{block.get('name')}")
+            elif kind == "tool_result":
+                inner = block.get("content")
+                if isinstance(inner, list):
+                    inner = " ".join(str(b.get("text") or "") if isinstance(b, dict) else str(b) for b in inner)
+                parts.append(f"tool_result:{inner if inner is not None else ''}")
+            else:
+                parts.append(f"{kind}")
+    for key in ("result", "summary"):
+        if isinstance(entry.get(key), str):
+            parts.append(str(entry[key]))
+    text = " ".join(p for p in parts if p)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:limit]
+
+
+def section_counts_sql() -> str:
+    """Length of every array-typed top-level key of the project's research.json -- no section
+    list to maintain, so a delegation writing person_evidence shows up beside an extraction
+    writing sources and assertions. Shared with demo.py, which imports this module; nothing
+    here imports demo -- under ``python proto/turn.py`` sys.path holds proto/, not apps/server,
+    so a ``from proto import …`` in this file is a ModuleNotFoundError at run time."""
+    return (
+        "SELECT k AS section, jsonb_array_length(d.doc->k) AS n "
+        "FROM documents d, jsonb_object_keys(d.doc) AS k "
+        "WHERE d.project_id = %s AND d.name = 'research.json' AND jsonb_typeof(d.doc->k) = 'array' "
+        "ORDER BY k"
+    )
+
+
+def take_marks(dsn: str, session_id: str, turn_id: str, sdk_session_id: str | None, project_id: str | None) -> KillMarks:
+    return KillMarks(
+        calls_id=one(dsn, "SELECT COALESCE(max(id), 0) FROM tool_calls WHERE turn_id = %s", (turn_id,)) or 0,
+        entries_seq=one(dsn, "SELECT COALESCE(max(seq), 0) FROM session_entries WHERE session_id = %s", (sdk_session_id or "",)) or 0,
+        events_seq=one(dsn, "SELECT COALESCE(max(seq), 0) FROM session_events WHERE session_id = %s", (session_id,)) or 0,
+        sections_before=db(dsn, section_counts_sql(), (project_id or "",)),
+    )
+
+
+def gather_evidence(dsn: str, session_id: str, turn_id: str, sdk_session_id: str | None, project_id: str | None,
+                    marks: KillMarks) -> KillEvidence:
+    row = db(dsn, "SELECT receive_count, num_turns, cost_usd, nudges, duration_ms, outcome, completed_at "
+                  "FROM turns WHERE turn_id = %s", (turn_id,))
+    keys = ("receive_count", "num_turns", "cost_usd", "nudges", "duration_ms", "outcome", "completed_at")
+    entries = db(dsn, "SELECT seq, subpath, entry FROM session_entries WHERE session_id = %s AND seq > %s ORDER BY seq",
+                 (sdk_session_id or "", marks.entries_seq))
+    return KillEvidence(
+        turn_row=dict(zip(keys, row[0])) if row else {},
+        calls_after=db(dsn, "SELECT tool_name, agent_type, decision, duration_ms FROM tool_calls "
+                            "WHERE turn_id = %s AND id > %s ORDER BY id", (turn_id, marks.calls_id)),
+        entries_after=[(seq, subpath, (entry or {}).get("type") if isinstance(entry, dict) else None, entry_brief(entry))
+                       for seq, subpath, entry in entries],
+        sections_before=list(marks.sections_before),
+        sections_after=db(dsn, section_counts_sql(), (project_id or "",)),
+        texts_after=[t or "" for (t,) in db(dsn, "SELECT payload->>'text' FROM session_events WHERE session_id = %s "
+                                                 "AND kind = 'text' AND seq > %s ORDER BY seq", (session_id, marks.events_seq))],
+    )
+
+
+def render_evidence(ev: KillEvidence) -> str:
+    """The block printed after turn_done whatever the checks say."""
+    lines = ["-- evidence: the turns row",
+             "   " + "  ".join(f"{k}={v}" for k, v in ev.turn_row.items()) if ev.turn_row else "   (no row)"]
+    lines.append(f"-- evidence: tool_calls rows written after the kill ({len(ev.calls_after)})")
+    lines.extend(f"   {tool}  agent_type={agent}  {decision}  duration_ms={ms}" for tool, agent, decision, ms in ev.calls_after)
+    if not ev.calls_after:
+        lines.append("   (none)")
+    lines.append(f"-- evidence: session_entries rows appended after the kill ({len(ev.entries_after)})")
+    lines.extend(f"   seq={seq}  {(subpath + '  ') if subpath else ''}{kind}  {brief!r}"
+                 for seq, subpath, kind, brief in ev.entries_after)
+    if not ev.entries_after:
+        lines.append("   (none)")
+    before = dict(ev.sections_before)
+    after = dict(ev.sections_after)
+    lines.append("-- evidence: research.json array sections, before the kill -> after turn_done")
+    lines.extend(f"   {name}  {before.get(name, 0)} -> {after.get(name, 0)}"
+                 + ("  (%+d)" % (after.get(name, 0) - before.get(name, 0)) if after.get(name, 0) != before.get(name, 0) else "")
+                 for name in sorted(set(before) | set(after)))
+    if not before and not after:
+        lines.append("   (no research.json row)")
+    lines.append(f"-- evidence: text events after the kill ({len(ev.texts_after)})")
+    lines.extend(f"   {t[:300]!r}" for t in ev.texts_after)
+    if not ev.texts_after:
+        lines.append("   (none)")
+    return "\n".join(lines)
+
+
+def run_kill(
+    base: str, dsn: str, deadline_s: float, spec: KillSpec, email: str = DEV_LOGIN_EMAIL
+) -> tuple[list[Check], dict[str, Any]]:
+    """One real turn, the worker container killed ``spec.kill_after_s`` after its first
+    ``spec.kill_on`` call starts and started again; the shim's redelivery must resume the
+    SDK session and finish. Prints the evidence block after turn_done."""
+    checks: list[Check] = []
+    figures: dict[str, Any] = {}
+    session_id = spec.session_id
+    with signed_in_client(base, email) as client:
+        if session_id is None:
+            r = client.post(f"{base}/api/sessions", json={"title": "D14 kill-resume"})
+            r.raise_for_status()
+            session_id = r.json()["id"]
+        figures["session_id"] = session_id
+        project_id = one(dsn, "SELECT project_id FROM sessions WHERE session_id = %s", (session_id,))
+        turn_id = post_message(client, base, session_id, spec.text)
+        figures["turn_id"] = turn_id
+        # U23: whatever leaves this block before turn_done -- a failed docker call, a DB
+        # error, ^C during a wait -- Stops the turn first; the misses below do it themselves.
+        try:
+            if spec.kill_on_input:
+                outcome = wait_for_tool_input(dsn, session_id, turn_id, spec.kill_on, spec.kill_on_input, deadline_s)
+                missed = "the turn finished without one" if outcome == "completed" else "no matching tool_use block in time"
+            else:
+                outcome = wait_for_tool_call(dsn, turn_id, spec.kill_on, deadline_s)
+                missed = "the turn finished without one" if outcome == "completed" else "no tool_calls row in time"
+            checks.append((f"kill: the turn reached its first {spec.target} call", outcome == "seen", missed))
+            if outcome != "seen":
+                # U23: a miss leaves the turn running billed until its own end (a probe turn
+                # under the Stop hook can run an hour); Stop it.
+                interrupt(client, base, session_id)
+                return checks, figures
+            if spec.kill_after_s > 0:
+                time.sleep(spec.kill_after_s)
+            sdk_before = one(dsn, "SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
+            entries_at_kill = one(dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",))
+            marks = take_marks(dsn, session_id, turn_id, sdk_before, project_id)
+            grant_before = one(dsn, GRANT_START_SQL, (project_id,)) if spec.expect_grant_refresh else None
+            grant_refreshed: bool | None = None
+            t_kill = time.monotonic()
+            if spec.deployed is not None and spec.kill_signal == "term":
+                spec.deployed.signal("worker", "term")  # systemd: SIGTERM, then SIGKILL after 90 s
+            elif spec.kill_signal == "term":
+                docker("restart", "-t", "30", spec.container)  # SIGTERM, then SIGKILL after 30 s (the compose stop grace)
+            else:
+                if spec.deployed is not None:
+                    spec.deployed.signal("worker", "kill")
+                else:
+                    docker("kill", spec.container)  # counts as a manual stop: unless-stopped will not restart it
+                if spec.expect_grant_refresh:
+                    # No attempt is live now, so the web tier's loop may refresh -- and revoke the
+                    # token the killed attempt bore. The redelivery must bear the new one.
+                    grant_refreshed = wait_grant_refresh(dsn, project_id, grant_before)
+                    figures["grant_refreshed"] = grant_refreshed
+                if spec.deployed is not None:
+                    spec.deployed.signal("worker", "start")
+                else:
+                    docker("start", spec.container)
+            figures.update({"sdk_session_id": sdk_before, "entries_at_kill": entries_at_kill, "kill_on": spec.target,
+                            "kill_after_s": spec.kill_after_s, "kill_signal": spec.kill_signal})
+            try:
+                _seq, _wall = wait_turn_done(client, base, session_id, turn_id, deadline_s)
+            except Exception as exc:  # noqa: BLE001
+                checks.append(("kill: the redelivered turn reached turn_done", False, f"{type(exc).__name__}: {exc}"))
+                interrupt(client, base, session_id)
+                print(render_evidence(gather_evidence(dsn, session_id, turn_id, sdk_before, project_id, marks)))
+                return checks, figures
+        except BaseException:
+            interrupt(client, base, session_id)
+            raise
+        figures["wall_after_kill_s"] = round(time.monotonic() - t_kill, 1)
+        checks.append(("kill: the redelivered turn reached turn_done", True, ""))
+        row = db(dsn, "SELECT receive_count, completed_at, outcome, cost_usd FROM turns WHERE turn_id = %s", (turn_id,))
+        sdk_after = one(dsn, "SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
+        entries_after = one(dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",))
+        calls = [(d, ms) for n, d, ms in db(dsn, "SELECT tool_name, decision, duration_ms FROM tool_calls WHERE turn_id = %s ORDER BY id",
+                                            (turn_id,)) if matches_bare(n, spec.kill_on)]
+        results = db(dsn, "SELECT payload->>'tool', payload->>'summary' FROM session_events WHERE session_id = %s "
+                          "AND kind = 'tool_result' ORDER BY seq", (session_id,))
+        summaries = [s or "" for tool, s in results if matches_bare(tool or "", spec.kill_on)]
+        user_seq = one(dsn, "SELECT max(seq) FROM session_events WHERE session_id = %s AND kind = 'user_msg' AND payload->>'turn_id' = %s",
+                       (session_id, turn_id))
+        texts = db(dsn, "SELECT payload->>'text' FROM session_events WHERE session_id = %s AND kind = 'text' AND seq > %s ORDER BY seq",
+                   (session_id, user_seq or 0))
+        reply = " ".join(t[0] or "" for t in texts)
+        rows = KillRows(turn_row=row[0] if row else None, sdk_before=sdk_before, sdk_after=sdk_after,
+                        entries_at_kill=entries_at_kill, entries_after=entries_after, kill_calls=calls,
+                        summaries=summaries, reply=reply)
+        if spec.expect_grant_refresh:
+            rows.grant_refreshed = grant_refreshed
+            rows.reauth_hits = reauth_hits(dsn, session_id, user_seq or 0)
+            rows.reauth_entry_hits = reauth_entry_hits(dsn, sdk_before, turn_id)
+            figures.update({"reauth_hits": len(rows.reauth_hits), "reauth_entry_hits": len(rows.reauth_entry_hits)})
+        checks.extend(kill_checks(rows, spec))
+        receive_count, _completed, _outcome, cost = rows.turn_row if rows.turn_row else (None, None, None, None)
+        figures.update({"receive_count": receive_count, "cost_usd": float(cost) if cost is not None else None,
+                        "entries_after": entries_after, "kill_on_calls": calls, "reply": reply[:200]})
+        print(render_evidence(gather_evidence(dsn, session_id, turn_id, sdk_before, project_id, marks)))
+    return checks, figures
+
+
+TOKEN_COLUMNS = ("input_tokens", "cache_creation_tokens", "cache_read_tokens", "output_tokens")
+
+# The whole SDK session's output tokens, one row per API message (the worker's
+# TURN_USAGE_SQL without its seq window).
+SESSION_OUTPUT_SQL = (
+    "SELECT sum((u->>'output_tokens')::bigint) "
+    "FROM (SELECT DISTINCT ON (entry->'message'->>'id') entry->'message'->'usage' AS u "
+    "FROM session_entries WHERE session_id = %s AND entry->>'type' = 'assistant' "
+    "ORDER BY entry->'message'->>'id', seq DESC) m"
+)
+
+
+def tokens(dsn: str, turn_id: str) -> dict[str, int | None]:
+    rows = db(dsn, f"SELECT {', '.join(TOKEN_COLUMNS)} FROM turns WHERE turn_id = %s", (turn_id,))
+    return dict(zip(TOKEN_COLUMNS, rows[0])) if rows else dict.fromkeys(TOKEN_COLUMNS)
+
+
+def tokens_filled(t: dict[str, int | None]) -> bool:
+    """Every column non-NULL, some output, and some input (uncached or cached)."""
+    return (all(t[c] is not None for c in TOKEN_COLUMNS) and (t["output_tokens"] or 0) > 0
+            and ((t["input_tokens"] or 0) + (t["cache_creation_tokens"] or 0) + (t["cache_read_tokens"] or 0)) > 0)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    p.add_argument("--base", default="http://127.0.0.1:8085")
+    p.add_argument("--email", default=DEV_LOGIN_EMAIL,
+                   help="dev-login as this patron; --session must be one this patron owns")
+    p.add_argument("--pg-dsn", default="postgresql://postgres:proto@localhost:5434/proto")
+    p.add_argument("--deadline-s", type=float, default=300.0,
+                   help="wall clock before a FAIL, per wait: on --kill the arm waits it out twice, "
+                        "once for the --kill-on row (an Agent can be minutes in) and again for turn_done")
+    p.add_argument("--kill", action="store_true", help="D14: one turn killed at its first --kill-on call, redelivered and resumed")
+    p.add_argument("--session", default=None, help="with --kill: run on this session (proto/seed.py) instead of a fresh one")
+    p.add_argument("--worker-container", default="proto-worker")
+    p.add_argument("--target", choices=("compose", "deployed"), default="compose",
+                   help="--kill: signal compose's worker container, or U13's Beanstalk worker over SSM")
+    p.add_argument("--profile", default=None, help="--target deployed: the aws CLI profile")
+    p.add_argument("--kill-on", default=KILL_TOOL,
+                   help=f"with --kill: the bare tool name whose PreToolUse row triggers the kill (default {KILL_TOOL}; "
+                        "Agent lands it during a delegation)")
+    p.add_argument("--kill-on-input", default=None, metavar="KEY=VALUE",
+                   help="with --kill-on: narrow to a call whose INPUT contains KEY=VALUE, read from "
+                        "session_entries (tool_calls has no input column). 0a's probe uses "
+                        "--kill-on Agent --kill-on-input run_in_background=true")
+    p.add_argument("--kill-after-s", type=float, default=0.0,
+                   help="with --kill: seconds to wait after that row before the kill (default 0: at once)")
+    p.add_argument("--kill-signal", choices=("term", "kill"), default="kill",
+                   help="with --kill: kill = docker kill + start (SIGKILL, the default); "
+                        "term = docker restart -t 30 (SIGTERM, U5's shutdown path)")
+    p.add_argument("--expect-grant-refresh", action="store_true",
+                   help="with --kill (U3): wait in the kill gap for the web tier to refresh the grant, then check "
+                        "the resumed attempt saw no reauth (run with FS_GRANT_REFRESH_AGE_S=0)")
+    text = p.add_mutually_exclusive_group()
+    text.add_argument("--text", default=None, help="with --kill: the message to post (default: the place_search question)")
+    text.add_argument("--text-file", default=None, help="with --kill: read the message from this UTF-8 file")
+    return p
+
+
+def kill_spec(args: argparse.Namespace) -> KillSpec:
+    """The ``--kill`` arm's spec from the parsed arguments. The message is ``--text-file``'s
+    contents (UTF-8, stripped), else ``--text`` verbatim, else ``TEXT_KILL``; a blank
+    message is refused rather than posted."""
+    text = TEXT_KILL
+    if args.text_file:
+        text = Path(args.text_file).read_text(encoding="utf-8").strip()
+    elif args.text is not None:
+        text = args.text
+    if not text.strip():
+        raise ValueError("--text/--text-file gave an empty message")
+    if args.kill_after_s < 0:
+        raise ValueError(f"--kill-after-s must be >= 0, not {args.kill_after_s}")
+    if args.expect_grant_refresh and args.kill_signal == "term":
+        raise ValueError("--expect-grant-refresh needs --kill-signal kill: a restart leaves no gap to refresh in")
+    deployed = None
+    if getattr(args, "target", "compose") == "deployed":
+        here = str(Path(__file__).resolve().parent)
+        if here not in sys.path:
+            sys.path.insert(0, here)
+        import target
+
+        deployed = target.DeployedTarget(profile=args.profile)
+    return KillSpec(kill_on=args.kill_on, kill_after_s=args.kill_after_s, text=text,
+                    kill_on_input=parse_input_selector(args.kill_on_input),
+                    session_id=args.session, container=args.worker_container, kill_signal=args.kill_signal,
+                    expect_grant_refresh=args.expect_grant_refresh, deployed=deployed)
+
+
+def main(argv: list[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    args = build_parser().parse_args(argv)
+    spec: KillSpec | None = None
+    if args.kill:
+        try:
+            spec = kill_spec(args)
+        except (OSError, ValueError) as exc:
+            print(f"--kill: {exc}", file=sys.stderr)
+            return 2
+
+    try:
+        httpx.get(f"{args.base}/api/health", timeout=5.0).json()
+        db(args.pg_dsn, "SELECT 1", ())
+    except Exception as exc:  # noqa: BLE001
+        print(f"stack not up ({type(exc).__name__}: {exc}); run `make proto-up` first", file=sys.stderr)
+        return 2
+    problem = require_grant(args.pg_dsn, args.email)
+    if problem:
+        print(problem, file=sys.stderr)
+        return 2
+
+    if spec is not None:
+        checks, figures = run_kill(args.base, args.pg_dsn, args.deadline_s, spec, args.email)
+    else:
+        checks, figures = run(args.base, args.pg_dsn, args.deadline_s, args.email)
+    width = max(len(c[0]) for c in checks)
+    print()
+    for name, ok, detail in checks:
+        print(f"{name:{width}} {'PASS' if ok else 'FAIL'}  {'' if ok else detail}")
+    failed = sum(not ok for _, ok, _ in checks)
+    print(f"\n{len(checks) - failed}/{len(checks)} checks passed")
+    if args.kill:
+        print(" ".join(f"{k}={v!r}" if isinstance(v, str) else f"{k}={v}" for k, v in figures.items()))
+    for key in ("turn1", "turn2"):
+        if key in figures:
+            f = figures[key]
+            print(f"{key}: cost_usd={f.get('cost_usd')} num_turns={f.get('num_turns')} "
+                  f"duration_ms={f.get('duration_ms')} wall_s={f.get('wall_s')} entries={f.get('entries')}"
+                  + (f" events={f['events']} tool_calls={f['tool_calls']}" if 'events' in f else "")
+                  + (f" tokens={f['tokens']}" if 'tokens' in f else "")
+                  + (f" reply={f['reply']!r}" if 'reply' in f else ""))
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

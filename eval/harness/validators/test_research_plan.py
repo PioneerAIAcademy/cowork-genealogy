@@ -1,6 +1,8 @@
-"""Skill-specific validators for the research-plan skill.
+"""Suite-specific validators for the research-plan agent.
 
-research-plan creates a sequenced plan entry for a research question.
+research-plan creates a sequenced plan entry for a research question. It was a
+skill until issue #2116; the validators for the one test that moved to the
+research suite (`ut_research_rpn`) moved to `test_research.py` with it.
 The ownership check in `test_universal.py::test_ownership_table` already
 restricts writes to the `plans` section; FK integrity for
 `plans.question_id → questions` is covered by
@@ -28,7 +30,10 @@ import pytest
 from validators_lib import (
     assert_log_append_only,
     assert_no_section_deletions,
+    extract_year,
 )
+from validators_lib import existing_plan_changes
+from validators_lib import new_plan_ids as _new_plan_ids
 
 # Identifier extraction is shared with `make provenance-report` (issue #1667)
 # so the two agree on what counts as a traceable identifier: ARKs and 5+ digit
@@ -62,15 +67,6 @@ def test_log_unchanged_by_research_plan(before_state, after_state):
 
 # --- Tag-gated: do not create a new plan when one already exists -----
 
-def _new_plan_ids(before: dict, after: dict) -> list[str]:
-    before_ids = {p.get("id") for p in (before.get("plans") or [])}
-    return [
-        p.get("id")
-        for p in (after.get("plans") or [])
-        if p.get("id") and p.get("id") not in before_ids
-    ]
-
-
 def test_research_plan_no_new_plan(before_state, after_state, test):
     """Tag-gated: when an active plan already addresses the target
     question, research-plan should review (not create) — adding a
@@ -89,169 +85,127 @@ def test_research_plan_no_new_plan(before_state, after_state, test):
     )
 
 
-# --- Tag-gated: nothing is written once the search is declared exhaustive ---
+# --- Tag-gated: review mode writes nothing to plans ------------------------
 
-def test_no_plan_writes_when_resolved(before_state, after_state, test):
-    """Tag-gated: on a question whose `exhaustive_declaration.declared` is
-    already true, research-plan must add nothing and change nothing.
+def test_review_writes_no_plan(before_state, after_state, test):
+    """Tag-gated (``research-plan-review-no-writes``): a review leaves `plans[]`
+    exactly as it found it.
 
-    Covers the gap the other two leave. `test_research_plan_no_new_plan`
-    catches a whole new `pl_` and `test_plans_no_deletions` catches removals;
-    neither sees an item **appended to an existing plan** or an existing item
-    **edited in place**. Either rewrites the GPS audit trail the declaration
-    rests on — and appending to `pl_002` is the obvious way to write a plan
-    without creating one.
-
-    This is one of two routing-independent gates for `ut_research_plan_003`
-    (`grade_on_invariant`): whichever skill ends up handling the prompt, no run
-    may leave a mark on `plans[]`. Its companion
-    `test_resolved_question_not_reopened` guards the question's own state —
-    `status`, `exhaustive_declaration`, `project.status` — which this one does
-    not look at and which is the likelier harm on that prompt. Both are gated
-    on the same tag; neither is sufficient alone.
+    Review mode (Step 1a) recaps an active plan that still has unfinished items
+    and writes nothing. ``research-plan-no-new-plan`` catches only a whole new
+    ``pl_``, and ``pli-006-status-unchanged`` only that one item's status, so an
+    item appended to the active plan, an existing item edited, or the plan's own
+    ``status`` set to ``completed`` passed both -- the last being exactly what a
+    delegation saying "the current plan is finished" invites
+    (``ut_research_plan_d01``). Issue #2116. Measured before gating: across the
+    eight committed run logs from 2026-10-07 on, the two review tests made zero
+    ``research_append`` calls in all 16 runs, so this cannot false-fail a run
+    that reviewed.
     """
-    if "no-plan-writes-when-resolved" not in test.get("tags", []):
-        pytest.skip("not a no-plan-writes-when-resolved scenario")
+    if "research-plan-review-no-writes" not in test.get("tags", []):
+        pytest.skip("not a research-plan-review-no-writes scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    errors = [f"new plan {pid} written" for pid in _new_plan_ids(before, after)]
+    errors += existing_plan_changes(before, after)
+    assert not errors, (
+        "review mode wrote to plans:\n  - " + "\n  - ".join(errors)
+    )
+
+
+# --- Tag-gated: Dispose mode closes out only the named planned items -------
+
+_DISPOSE_FIELDS = ("status", "skip_category", "skip_reason")
+
+
+def _delegated_item_ids(test: dict) -> str:
+    """The `planItemIds:` line of a direct test's delegation, or "" (any id)."""
+    for line in (test.get("delegation") or "").splitlines():
+        if line.strip().lower().startswith("planitemids:"):
+            return line
+    return ""
+
+
+def test_dispose_named_items(before_state, after_state, test):
+    """Tag-gated (``research-plan-dispose``): Dispose mode (Step 1a) closes out
+    planned items and does nothing else.
+
+    research-exhaustiveness refuses a stop-gate declaration while an item on the
+    active plan is still `planned`, and the router then spawns research-plan to
+    dispose of the named items: each becomes `completed` if its search was done
+    and logged, otherwise `skipped` with a `skip_category`. No item is added or
+    deleted, no plan is superseded or written, and a planned item changes only
+    in those three fields. A `completed` item no log entry names claims a search
+    that never ran. Issue #2116: Dispose mode is entered on the caller's word, so
+    it is the one mode the agent's delegation rule has to let through, and no
+    test reached it before.
+    """
+    if "research-plan-dispose" not in test.get("tags", []):
+        pytest.skip("not a research-plan-dispose scenario")
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
         pytest.skip("missing research.json for diff")
 
-    before_plans = {
-        p.get("id"): p for p in (before.get("plans") or []) if p.get("id")
+    named = set(re.findall(r"pli_\d+", _delegated_item_ids(test)))
+    errors = [f"new plan {pid} written" for pid in _new_plan_ids(before, after)]
+    logged = {
+        entry.get("plan_item_id")
+        for entry in (after.get("log") or [])
+        if entry.get("plan_item_id")
     }
-    errors: list[str] = []
+    before_plans = {p.get("id"): p for p in (before.get("plans") or []) if p.get("id")}
+    disposed: list[str] = []
     for plan in after.get("plans") or []:
         prior = before_plans.get(plan.get("id"))
         if prior is None:
-            # A whole new plan is test_research_plan_no_new_plan's finding;
-            # reporting it here too would double-count the same defect.
             continue
-        if plan == prior:
-            continue
-
-        # Compare the WHOLE prior plan object, not just the items present in
-        # the after-state. Walking only `after`'s items cannot see a deletion —
-        # a removed item simply isn't there to check — and misses plan-level
-        # fields entirely. With `grade_on_invariant` on ut_003, that gap scored
-        # "wiped every item from pl_002" and "flipped pl_002 back to active" as
-        # a PASS, which is the opposite of what this validator exists for.
-        before_items = {
-            i.get("id"): i for i in (prior.get("items") or []) if i.get("id")
-        }
-        after_items = {
-            i.get("id"): i for i in (plan.get("items") or []) if i.get("id")
-        }
         pid = plan.get("id")
-        # Accumulate PER PLAN. Checking the shared `errors` for emptiness would
-        # let a second damaged plan slip through unnamed once the first has
-        # reported — the assert still fires, but you fix pl_001, re-run, and
-        # only then learn pl_002 was wrong too.
-        plan_errors: list[str] = []
-        for gone in before_items.keys() - after_items.keys():
-            plan_errors.append(f"{pid}: item {gone} DELETED from an existing plan")
-        for added in after_items.keys() - before_items.keys():
-            plan_errors.append(f"{pid}: item {added} added to an existing plan")
-        for both in before_items.keys() & after_items.keys():
-            if before_items[both] != after_items[both]:
-                plan_errors.append(f"{pid}: item {both} modified in place")
-        for field in set(prior) | set(plan):
-            if field == "items":
-                continue
+        for field in sorted((set(prior) | set(plan)) - {"items"}):
             if prior.get(field) != plan.get(field):
-                plan_errors.append(
-                    f"{pid}: plan field '{field}' changed "
-                    f"{prior.get(field)!r} -> {plan.get(field)!r}"
-                )
-        if not plan_errors:  # differs, but no rule above named it — never silent
-            plan_errors.append(
-                f"{pid}: plan object changed in a way this check did not classify"
-            )
-        errors.extend(plan_errors)
-    assert not errors, (
-        "research-plan wrote to a question whose search is already declared "
-        "exhaustive:\n  - " + "\n  - ".join(errors)
-    )
-
-
-def test_resolved_question_not_reopened(before_state, after_state, test):
-    """Tag-gated: the resolved question's own state must survive untouched.
-
-    Companion to `test_no_plan_writes_when_resolved`, and the more important
-    half. That one guards `plans[]`; this guards the fields the ut_003 prompt
-    actually tempts the skill to change.
-
-    Why it has to exist here rather than being covered already: the universal
-    `test_ownership_table` / `test_tree_ownership_table` **skip themselves on
-    negative tests**, and their docstring gives the reason — "a negative test
-    where the skill *does* wrongly activate already fails on the routing
-    check." `grade_on_invariant: true` is precisely the flag that removes that
-    routing check (`orchestrator.py` returns "pass" the moment validators
-    pass), so for this test the premise behind the skip is void and nothing
-    replaces it. Verified against the real fixture: with a writer-tool call
-    present, flipping `q_001` back to open, un-declaring exhaustiveness,
-    reopening `project.status`, or rewriting the question text all scored a
-    clean pass before this check existed.
-
-    That is the harm the prompt invites. "The probate search came up empty —
-    are we done?" tempts reopening the question far more than it tempts adding
-    a plan item, and reopening silently undoes a completed GPS proof: the
-    declaration and the proof summary both cite the negative probate result.
-
-    Deliberately narrow. A blanket "questions[] must not change" would
-    false-fail the legitimate routes — `question-selection` may append a
-    follow-on question, which is one of this test's `correct_skill` answers.
-    So this names the specific deltas that are never legitimate here: the
-    target question's `status` and `exhaustive_declaration`, and
-    `project.status`. Same shape as
-    `test_search_external_sites.py::test_no_external_search_or_log_on_routeaway_negative`.
-    """
-    if "no-plan-writes-when-resolved" not in test.get("tags", []):
-        pytest.skip("not a no-plan-writes-when-resolved scenario")
-    before = before_state.get("research_json")
-    after = after_state.get("research_json")
-    if before is None or after is None:
-        pytest.skip("missing research.json for diff")
-
-    def _resolved(research: dict) -> dict:
-        return {
-            q.get("id"): q
-            for q in (research.get("questions") or [])
-            if q.get("status") == "resolved"
-            or (q.get("exhaustive_declaration") or {}).get("declared")
-        }
-
-    before_q = _resolved(before)
-    if not before_q:
-        pytest.skip("no resolved/declared question in the before-state")
-
-    errors: list[str] = []
-    after_q = {q.get("id"): q for q in (after.get("questions") or [])}
-    for qid, was in before_q.items():
-        now = after_q.get(qid)
-        if now is None:
-            errors.append(f"{qid}: resolved question DELETED")
-            continue
-        for field in ("status", "exhaustive_declaration", "question",
-                      "resolution_assertion_ids", "resolved"):
-            if was.get(field) != now.get(field):
                 errors.append(
-                    f"{qid}: '{field}' changed {was.get(field)!r} -> "
-                    f"{now.get(field)!r} on a question whose search is "
-                    f"already declared exhaustive"
+                    f"{pid}: plan field {field!r} changed {prior.get(field)!r} -> "
+                    f"{plan.get(field)!r}; Dispose mode leaves the plan itself alone"
                 )
-
-    before_status = (before.get("project") or {}).get("status")
-    after_status = (after.get("project") or {}).get("status")
-    if before_status != after_status:
-        errors.append(
-            f"project.status changed {before_status!r} -> {after_status!r}"
-        )
-
-    assert not errors, (
-        "the resolved question's own state was modified:\n  - "
-        + "\n  - ".join(errors)
-    )
+        was_items = {i.get("id"): i for i in (prior.get("items") or []) if i.get("id")}
+        now_items = {i.get("id"): i for i in (plan.get("items") or []) if i.get("id")}
+        errors += [f"{pid}: item {i} added" for i in sorted(now_items.keys() - was_items.keys())]
+        errors += [f"{pid}: item {i} deleted" for i in sorted(was_items.keys() - now_items.keys())]
+        for iid in sorted(was_items.keys() & now_items.keys()):
+            was, now = was_items[iid], now_items[iid]
+            if was == now:
+                continue
+            if was.get("status") != "planned":
+                errors.append(f"{iid}: changed, but it was {was.get('status')!r}, not planned")
+                continue
+            if named and iid not in named:
+                errors.append(f"{iid}: changed, but the delegation did not name it")
+            rest = lambda item: {k: v for k, v in item.items() if k not in _DISPOSE_FIELDS}  # noqa: E731
+            if rest(was) != rest(now):
+                errors.append(f"{iid}: fields other than status/skip_category/skip_reason changed")
+            status = now.get("status")
+            if status == "skipped":
+                if not now.get("skip_category"):
+                    errors.append(f"{iid}: skipped with no skip_category")
+                disposed.append(iid)
+            elif status == "completed":
+                if iid not in logged:
+                    errors.append(f"{iid}: completed, but no log entry names it")
+                disposed.append(iid)
+            else:
+                errors.append(f"{iid}: status {status!r} is not a disposal")
+    if not disposed:
+        errors.append("no planned item was disposed of")
+    still_planned = {
+        i.get("id")
+        for p in (after.get("plans") or [])
+        for i in (p.get("items") or [])
+        if i.get("status") == "planned"
+    }
+    errors += [f"{iid}: named for disposal but still planned" for iid in sorted(named & still_planned)]
+    assert not errors, "Dispose mode wrote the wrong thing:\n  - " + "\n  - ".join(errors)
 
 
 # --- Tag-gated: existing in-progress plan items stay in_progress -----
@@ -361,6 +315,126 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
     assert not errors, "New plan items with non-planned status:\n  - " + "\n  - ".join(errors)
 
 
+# --- Tag-gated: the objective's target record leads the plan ----------
+
+# Scenario-specific expectation for `hansen-kongsberg-baptism`. Its objective
+# asks for a birth or baptism record and supplies the place, so SKILL.md
+# step 4 item 7 makes the Kongsberg baptism the first research target. Trysil
+# is the death place: legitimate corroboration, but not ahead of the target
+# and not a precondition for reaching it.
+#
+# Deliberately mechanical and judge-independent. The rubric's `Sequencing
+# logic` dimension does not discriminate: across every committed run log it
+# scores 3 on all but one graded occurrence. No exact count is quoted here on
+# purpose -- it has needed re-deriving twice (73 of 74, then 93 of 94) as new
+# logs landed and old ones were pruned, and nothing guards the figure, so a
+# number in this comment is stale the moment the corpus moves. Re-derive it
+# from `eval/runlogs/unit/research-plan/v*.json` if you need it. The 2026-08-24
+# dive called the dimension "worse than no" -- it once cited a fabricated
+# collection id as its evidence -- and `rubric.md` is fenced by #1404/#1668, so
+# the ordering this guards cannot be enforced there. Origin: alpha feedback
+# #1945.
+_TARGET_JURISDICTION = "kongsberg"
+# `record_type` is an open string with only *recommended* values
+# (`enums.schema.json` -> record_type_recommended), and a baptism register is
+# defensibly either. Both spellings have been observed for this scenario's
+# target: `church` in the 09:58 run, `vital_record` in the 18:16 run. The
+# jurisdiction is the discriminator here, not the type -- the Trysil burial is
+# `vital_record` as well -- so this set must stay narrow enough to exclude
+# census/probate/military/land, which are breadth items and not the record the
+# objective asked for.
+_TARGET_RECORD_TYPES = ("church", "vital_record")
+_INDIRECT_JURISDICTION = "trysil"
+
+
+def _plan_items_in_sequence(research: dict) -> list[dict]:
+    items: list[dict] = []
+    for plan in research.get("plans", []) or []:
+        for item in plan.get("items", []) or []:
+            items.append(item)
+    return sorted(items, key=lambda i: i.get("sequence") or 0)
+
+
+def test_objective_target_leads_the_plan(before_state, after_state, test):
+    """Tag-gated: the record the objective asks for is the first research
+    target, and is not gated behind an indirect source (SKILL.md step 4
+    item 7).
+
+    Two distinct failures, both seen in the submitted session behind #1945:
+    the target sequenced behind the death place, and the target written as
+    a `fallback_for` of a death-place item so it is only reached if that
+    search succeeds."""
+    if "objective-target" not in test.get("tags", []):
+        pytest.skip("not an objective-target scenario")
+    after = after_state.get("research_json")
+    if after is None:
+        pytest.skip("missing research.json for diff")
+
+    items = _plan_items_in_sequence(after)
+    if not items:
+        pytest.skip("no plan items written")
+
+    def juris(item: dict) -> str:
+        return str(item.get("jurisdiction") or "").lower()
+
+    # An item naming BOTH places cannot be the target. `jurisdiction` is free
+    # text and the skill really writes multi-place values -- `r3d`'s own run
+    # produced "Trysil, Hedmark, Norway; Kongsberg, Buskerud, Norway" -- so
+    # without this exclusion one item satisfies both the target test and the
+    # ahead-of-target test, and relabelling the seq-1 death item makes the
+    # identical defect pass. Found in review of #2033.
+    target = next(
+        (
+            i
+            for i in items
+            if _TARGET_JURISDICTION in juris(i)
+            and _INDIRECT_JURISDICTION not in juris(i)
+            and str(i.get("record_type") or "").lower() in _TARGET_RECORD_TYPES
+        ),
+        None,
+    )
+    assert target is not None, (
+        f"no plan item targets the objective's record "
+        f"(record_type in {_TARGET_RECORD_TYPES} in {_TARGET_JURISDICTION.title()}); "
+        f"items were: "
+        + ", ".join(
+            f"seq {i.get('sequence')} {i.get('record_type')}/{i.get('jurisdiction')}"
+            for i in items
+        )
+    )
+
+    target_seq = target.get("sequence") or 0
+    # ANY earlier item, not just an indirect-jurisdiction one. Keying this on
+    # `_INDIRECT_JURISDICTION` made it a place-name substring match: `jurisdiction`
+    # is free text and the skill routinely writes a bare county or country, so a
+    # leading item labelled "Norway" — an actual value in this scenario's own run —
+    # slipped past while the identical defect labelled "Trysil, Hedmark, Norway"
+    # was caught. Same evasion class as the combined-jurisdiction one, one field
+    # over (#2033 review). The rule the objective states is that the target LEADS;
+    # what precedes it is not the point.
+    ahead = [i for i in items if (i.get("sequence") or 0) < target_seq]
+    assert not ahead, (
+        f"the objective asks for a baptism record in "
+        f"{_TARGET_JURISDICTION.title()} and supplies the place, but "
+        f"{len(ahead)} item(s) are sequenced "
+        f"ahead of it (target is seq {target_seq}):\n  - "
+        + "\n  - ".join(
+            f"seq {i.get('sequence')} {i.get('record_type')} — "
+            f"{str(i.get('rationale') or '')[:120]}"
+            for i in ahead
+        )
+    )
+
+    # The target must not be reachable only via an indirect item.
+    fallback_of = target.get("fallback_for")
+    if fallback_of:
+        parent = next((i for i in items if i.get("id") == fallback_of), None)
+        assert parent is None or _INDIRECT_JURISDICTION not in juris(parent), (
+            f"the objective's target item {target.get('id')} is a "
+            f"fallback_for {fallback_of}, a {_INDIRECT_JURISDICTION.title()} "
+            f"item — the requested record must not be gated behind an "
+            f"indirect source"
+        )
 # ===========================================================================
 # Deterministic checks over newly written plans (issue #1866, research-plan
 # deep dive #1650). Unlike the tag-gated validators above these run on EVERY
@@ -419,28 +493,36 @@ def test_research_plan_fallback_for_in_same_plan(before_state, after_state):
     )
 
 
-# --- V2: research-plan calls no MCP tool outside its six --------------------
+# --- V2: research-plan calls none of locality-guide's place-survey tools ----
 
 _FORBIDDEN_TOOLS = {"wiki_search", "wiki_place_page", "place_population"}
 _FORBIDDEN_SKILL = "locality-guide"
 
 
 def test_research_plan_no_out_of_lane_tools(
-    tool_calls, attempted_mcp_calls, skills_invoked
+    tool_calls, attempted_mcp_calls, skills_invoked, builtin_tool_calls=None
 ):
-    """research-plan owns six tools and states "You have no wiki/place-fact
-    tools of your own" (SKILL.md 137). Fail on any call OR attempt of
-    wiki_search / wiki_place_page / place_population, or delegation to
-    locality-guide (SKILL.md 128, 499). Issue #1866 V2.
+    """research-plan states "You have no place-survey tools" (the agent body's
+    Step 2). Fail on any call OR attempt of wiki_search / wiki_place_page /
+    place_population, or delegation to locality-guide. Issue #1866 V2.
 
-    Named prohibition, not the complement of the six: project_context is
+    The agent holds none of these tools and no spawn tool (its `tools:` list,
+    pinned by agent-tool-names.test.ts), so on the direct arm this gate catches
+    a widened grant or a dispatcher that strays from its one Agent call, not a
+    call the agent can make today.
+    `wiki_read` is granted since issue #2251 for the Step 3 record-type
+    pre-work and is deliberately not in the prohibition.
+
+    Named prohibition, not the complement of the grant: project_context is
     attempted by sibling skills and forbidden by nothing, so a complement
     gate reds it. Deriving a deny from a grant is what PR #1774 retired. A
     denied call never reaches tool_calls, so union the attempts (#1748)."""
     called = [_bare(c.get("tool", "")) for c in (tool_calls or [])]
     attempted = [_bare(c.get("tool", "")) for c in (attempted_mcp_calls or [])]
+    from harness.skill_runner import handoffs
+
     hit_tools = sorted({t for t in called + attempted if t in _FORBIDDEN_TOOLS})
-    delegated = _FORBIDDEN_SKILL in (skills_invoked or [])
+    delegated = _FORBIDDEN_SKILL in handoffs(skills_invoked, builtin_tool_calls)
 
     problems: list[str] = []
     if hit_tools:
@@ -448,14 +530,127 @@ def test_research_plan_no_out_of_lane_tools(
     if delegated:
         problems.append(f"delegated to {_FORBIDDEN_SKILL!r}")
     assert not problems, (
-        "research-plan reached outside its six-tool lane:\n  - "
+        "research-plan reached outside its tool lane:\n  - "
         + "\n  - ".join(problems)
+    )
+
+
+# --- Tag-gated: the question person's FamilySearch profile is read first -----
+
+
+def _plan_write_ops(args: dict) -> list[dict]:
+    """The ops of one `research_append` call, in either shape the model sends:
+    `ops` as a list or a JSON string, or a single top-level op (same parse as
+    test_universal.py's assertion-update check)."""
+    ops = args.get("ops")
+    if isinstance(ops, str):
+        try:
+            ops = json.loads(ops)
+        except (ValueError, TypeError):
+            ops = None
+    candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+    return [op for op in candidates if isinstance(op, dict)]
+
+
+def _question_person_pids(research: dict, tree: dict) -> set[str]:
+    """FamilySearch ids of tree persons named in an open question's text: the
+    `ark` tail (`ark:/61903/4:1:<PID>`) of every person whose preferred given
+    name and surname both appear in it."""
+    text = " ".join(
+        (q.get("question") or "")
+        for q in research.get("questions") or []
+        if q.get("status") in {"open", "in_progress"}
+    ).lower()
+    pids: set[str] = set()
+    for person in tree.get("persons") or []:
+        ark = person.get("ark") or ""
+        if not ark:
+            continue
+        name = next(
+            (n for n in person.get("names") or [] if n.get("preferred")),
+            (person.get("names") or [{}])[0],
+        )
+        given = (name.get("given") or "").strip().lower()
+        surname = (name.get("surname") or "").strip().lower()
+        if given and surname and re.search(rf"\b{re.escape(given)}\b", text) and re.search(
+            rf"\b{re.escape(surname)}\b", text
+        ):
+            pids.add(ark.split("?")[0].rstrip("/").rsplit(":", 1)[-1].strip())
+    return pids
+
+
+def test_research_plan_reads_question_person_profile(before_state, tool_calls, test):
+    """Tag-gated (``profile-reread``), tier 1. Issue #2208, alpha report #3244.
+
+    The project tree is a setup snapshot: a relative imported with the subject
+    arrives without his own parents or attached sources. Before writing a plan,
+    the skill must `person_read` the FamilySearch profile of the person the
+    question is about. Graded on the call log, so narrating a check cannot pass.
+
+    Every mock call lands in `tool_calls`, matched or not; `matched.kind` is
+    what tells a fixture hit from a `fixture_not_found`. A read counts only if
+    it matched and its `personId` is a question person's `ark` PID, and only if
+    it comes before the first `research_append` writing `plans`/`plan_items`.
+    A refused write (`ok: false`) wrote nothing, so it is not the first write.
+    A tagged run with no plan write fails: it planned nothing."""
+    if "profile-reread" not in test.get("tags", []):
+        pytest.skip("not a profile-reread test")
+    research = before_state.get("research_json")
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    if research is None or tree is None:
+        pytest.skip("missing research.json or tree.gedcomx.json for before-state")
+    wanted = _question_person_pids(research, tree)
+    assert wanted, "profile-reread scenario names no tree person with an `ark` in an open question"
+
+    calls = [c for c in tool_calls or [] if isinstance(c, dict)]
+    first_write = next(
+        (
+            i
+            for i, c in enumerate(calls)
+            if _bare(c.get("tool", "")) == "research_append"
+            and isinstance(c.get("args"), dict)
+            and (c.get("response") or {}).get("ok") is not False
+            and any(
+                op.get("section") in {"plans", "plan_items"}
+                for op in _plan_write_ops(c["args"])
+            )
+        ),
+        None,
+    )
+    assert first_write is not None, "no research_append wrote plans or plan_items"
+
+    reads = [
+        (i, (c.get("args") or {}).get("personId"))
+        for i, c in enumerate(calls)
+        if _bare(c.get("tool", "")) == "person_read"
+    ]
+    good = [
+        i
+        for i, pid in reads
+        if isinstance(pid, str)
+        and pid.strip() in wanted
+        and (calls[i].get("matched") or {}).get("kind") == "predicate"
+    ]
+    assert good and good[0] < first_write, (
+        f"The plan must read the question person's FamilySearch profile "
+        f"(personId in {sorted(wanted)}) before writing. person_read calls "
+        f"(index, personId)={reads}; first plan write at index {first_write}."
     )
 
 
 # --- V1: identifiers in a rationale must trace to a served response ---------
 
-_TRACEABLE_ID_TOOLS = {"collections_search", "volume_search", "external_links_search"}
+# person_read (issue #2208): the plan cites the attached-source ARKs a profile read
+# returns. wiki_read (issue #2251): a fetched record-type page links collection ids
+# (the Denmark_Military_Records fixture links collection/2243379). Both are ids "a
+# tool returned this session", so they are served, not invented.
+_TRACEABLE_ID_TOOLS = {
+    "collections_search",
+    "volume_search",
+    "external_links_search",
+    "person_read",
+    "wiki_read",
+}
 
 
 # Grounding is deliberately more permissive than candidate_identifiers. A
@@ -469,7 +664,14 @@ _TRACEABLE_ID_TOOLS = {"collections_search", "volume_search", "external_links_se
 # unioned onto candidate_identifiers so grounding stays a strict SUPERSET —
 # permissive grounding can only remove a false fabrication, never add one. The
 # CITED side keeps candidate_identifiers, matching make provenance-report.
-_GROUNDED_NUM_RE = re.compile(r"(?<![\w.:/])\d{5,}(?![\w.])")
+# The lookbehind must NOT exclude '/': external_links_search is in
+# _TRACEABLE_ID_TOOLS because it returns collection ids, and it returns them
+# only as URL path segments ("ancestry.com/search/collections/61749/"), so
+# excluding a slash-preceded run made every id that tool serves ungroundable
+# — 22 of the 40 across its 16 fixtures — and turned a correct citation into
+# a fabrication flag (ut_research_plan_r3d, v1_2026-09-01_07-35-31). Widening
+# grounding can only clear a false positive, per the invariant above.
+_GROUNDED_NUM_RE = re.compile(r"(?<![\w.:])\d{5,}(?![\w.])")
 
 
 def _grounded_identifiers(text: str) -> set[str]:
@@ -556,16 +758,88 @@ def test_research_plan_rationale_identifiers_traceable(
 
 # --- V5: an availability claim must match the returned personCount ----------
 
-_INDEXED_RE = re.compile(r"\b(?:fully\s+)?indexed\b", re.I)
-_UNINDEXED_RE = re.compile(r"\b(?:un-?indexed|not\s+indexed)\b", re.I)
+# "name-searchable" is SKILL.md's prescribed phrase for personCount > 0
+# (issue #2251), so it is an indexed claim too; without it a mislabel written in
+# the new phrasing would pass unseen.
+_INDEXED_RE = re.compile(r"\b(?:(?:fully\s+)?indexed|name[\s-]searchable)\b", re.I)
+# "no indexed name search is possible" and "not name-indexed" both negate the
+# indexed claim.  Allow an optional adjective between "not" and "indexed"
+# (e.g. "not name-indexed", "not record-indexed") and keep "no indexed" and
+# the bare "un-?indexed" forms.
+# ut_research_plan_002, v1_2026-09-24_19-25-44, pli_012: "no indexed name search"
+# ut_research_plan_q7m, v1_2026-09-25_08-29-32, pli_003: "not name-indexed"
+# "not fully indexed" is a PARTIAL-indexing claim (personCount > 0), not a
+# browse-only claim — exclude it with a negative lookahead on "fully".
+# An article may sit before the adjective: ut_research_plan_007,
+# v3_2026-10-07_16-40-45, pli_014: "…returned personCount 0, confirming this is
+# an image browse … not a name-indexed search" was charged with calling
+# 1999196 "indexed" because the one optional word was spent on "a".
+_UNINDEXED_RE = re.compile(
+    r"\b(?:un-?indexed|not\s+(?:(?:a|an|the)\s+)?(?!fully\s)(?:\w+[\s-])?indexed"
+    r"|not\s+(?:(?:a|an|the)\s+)?name[\s-]searchable|no\s+indexed)\b",
+    re.I,
+)
 _BROWSE_ONLY_RE = re.compile(r"\b(?:browse|image)[\s-]?only\b", re.I)
+# A browse/unindexed adjective sitting directly on a non-collection noun ("the
+# browse-only volume (item 3)") describes that volume, not the one collection
+# id the sentence names. ut_research_plan_016, v1_2026-09-01_17-38-18 (issue
+# #2110): "Paid fallback if FamilySearch collection 1804888 (item 2) and the
+# browse-only volume (item 3) both return nothing" charged "browse-only" to
+# 1804888 (personCount 421870). The volume's own id is not in that sentence, so
+# keying on a served volume id would not have caught it.
+# "unindexed for this jurisdiction" similarly qualifies a sub-area volume, not
+# the collection itself. ut_research_plan_015, v1_2026-09-25_09-24-00, pli_003:
+# "collection 2513529 (…personCount 200K) is indexed at collection level, but
+# …image group 004748896 …is entirely unindexed for this jurisdiction".
+_ADJ_ON_NON_COLLECTION_RE = re.compile(
+    r"\b(?:(?:browse|image)[\s-]?only|un-?indexed|not\s+indexed)\s+"
+    r"(?:volumes?|films?|microfilms?|image\s+groups?|registers?|items?|"
+    r"for\s+(?:this|the)\s+\w+)\b",
+    re.I,
+)
+# An availability adjective describes the nearest identifier before it. When
+# that is a volume, film or image group, it is not a claim about the one
+# collection the sentence names. Two recorded false positives, both
+# ut_research_plan_015: pli_009 on 2026-10-13, "Image group 004748896 (Thisted
+# Amt military levy rolls, 1789-1814, browse-only (personCount 0)) provides the
+# raw roll images if the name search in collection 2513529 (item 3) fails", and
+# pli_008 on 2026-10-14, "If the probate index (pli_007, collection 2015318)
+# does not return an entry …, browse volume 004392710, which covers Hassing
+# Herred probate records 1690-1850 and is browse-only (personCount 0)".
+_NON_COLLECTION_ID_RE = re.compile(
+    r"\b(?:image\s+groups?|volumes?|films?|microfilms?|dgs)\s+(?:no\.?\s*)?\d{5,}",
+    re.I,
+)
+
+
+def _claim_on_collection(pattern: re.Pattern, text: str, cid: str) -> bool:
+    """True when some match of `pattern` in `text` binds to collection `cid`:
+    the nearest identifier before it is `cid`, or there is none."""
+    subjects = sorted(
+        [(m.end(), False) for m in _NON_COLLECTION_ID_RE.finditer(text)]
+        + [(m.end(), True) for m in re.finditer(rf"(?<!\d){re.escape(cid)}(?!\d)", text)]
+    )
+    for m in pattern.finditer(text):
+        before = [is_collection for end, is_collection in subjects if end <= m.start()]
+        if not before or before[-1]:
+            return True
+    return False
+# A coverage percentage ("412 images, 0% indexed", "only 4% name-indexed") is
+# neither an indexed nor a browse-only claim. ut_research_plan_007 run 0 on
+# 2026-09-24 (issue #2685) wrote "…returned personCount 0, so this is a browse
+# of image group 007936749 (…, 0% indexed)" and was charged with calling
+# 1999196 "indexed".
+_PERCENT_INDEXED_RE = re.compile(
+    r"\b\d+(?:\.\d+)?\s*%\s*(?:name[\s-]?)?(?:indexed|record[\s-]searchable)\b", re.I
+)
 
 
 def _collection_person_counts(tool_calls) -> dict[str, set[int]]:
     """id -> set of personCounts across every collections_search response
     this run received. An id can be served with different counts in
-    different responses (1999196 is 0 in schuylkill, 893214 in
-    pennsylvania), so key on the response, not the id."""
+    different responses (1999196 was once 0 in schuylkill and 893214 in
+    pennsylvania, reconciled 2026-09-24 under issue #2685), so key on the
+    response, not the id."""
     counts: dict[str, set[int]] = {}
     for c in tool_calls or []:
         if _bare(c.get("tool", "")) != "collections_search":
@@ -584,12 +858,16 @@ def test_research_plan_availability_claim_matches_counts(
 ):
     """A rationale that calls a served collection "indexed" must name one
     whose returned personCount is > 0; "browse-only"/"image-only" must name
-    one whose personCount is 0. Issue #1866 V5, e.g. ut_research_plan_q7m
-    pli_007 calls 1999196 "indexed" against a served personCount of 0.
+    one whose personCount is 0. Issue #1866 V5, e.g. ut_research_plan_010
+    pli_007 (v1_2026-09-17_15-04-52) calls 1999196 "indexed" against a served
+    personCount of 0.
 
     Bind the adjective to the identifier within one sentence and skip any
     sentence naming more than one served collection — a rationale routinely
     describes a browse-only volume and an indexed collection in one breath.
+    A browse/unindexed adjective attached to a non-collection noun ("the
+    browse-only volume") is not a claim about the collection and is ignored,
+    and neither is a coverage percentage ("0% indexed").
     personCount is a property of the response, so key on what was served."""
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -613,12 +891,14 @@ def test_research_plan_availability_claim_matches_counts(
                     continue  # skip no-collection and multi-collection sentences
                 cid = ids_here[0]
                 pcs = counts[cid]
-                claims_indexed = bool(_INDEXED_RE.search(sentence)) and not (
-                    _UNINDEXED_RE.search(sentence)
-                )
-                claims_browse = bool(_BROWSE_ONLY_RE.search(sentence)) or bool(
-                    _UNINDEXED_RE.search(sentence)
-                )
+                claim_text = _PERCENT_INDEXED_RE.sub(" ", sentence)
+                claims_indexed = _claim_on_collection(
+                    _INDEXED_RE, claim_text, cid
+                ) and not _claim_on_collection(_UNINDEXED_RE, claim_text, cid)
+                about_collection = _ADJ_ON_NON_COLLECTION_RE.sub(" ", claim_text)
+                claims_browse = _claim_on_collection(
+                    _BROWSE_ONLY_RE, about_collection, cid
+                ) or _claim_on_collection(_UNINDEXED_RE, about_collection, cid)
                 if claims_indexed == claims_browse:
                     continue  # neither claim, or a self-contradicting sentence
                 if claims_indexed and not any(pc > 0 for pc in pcs):
@@ -636,4 +916,415 @@ def test_research_plan_availability_claim_matches_counts(
     assert not errors, (
         "availability claim contradicts returned personCount:\n  - "
         + "\n  - ".join(errors)
+    )
+
+
+# --- Tag-gated: already-attached FAN-cluster facts must reach the response ---
+
+
+def _word_grams(text: str, n: int) -> set[str]:
+    words = re.findall(r"[a-z0-9]+", text.lower())
+    return {" ".join(words[i : i + n]) for i in range(len(words) - n + 1)}
+
+
+def _survey_noise_grams(research: dict, tree: dict) -> set[str]:
+    """Two-word grams a response can produce without reading any source: the
+    questions' own wording, every place a fact names, and every person name."""
+    text = [q.get("question") or "" for q in research.get("questions") or []]
+    for person in tree.get("persons") or []:
+        text += [f.get("place") or "" for f in person.get("facts") or []]
+        text += [f"{n.get('given') or ''} {n.get('surname') or ''}" for n in person.get("names") or []]
+    return _word_grams(" ".join(text), 2)
+
+
+def _person_source_grams(person: dict, tree: dict, noise: set[str]) -> set[str]:
+    """Distinctive two-word grams from the title and citation of every source
+    the person's own `sources` refs resolve to (noise removed)."""
+    by_id = {s.get("id"): s for s in tree.get("sources") or [] if isinstance(s, dict)}
+    grams: set[str] = set()
+    for ref in person.get("sources") or []:
+        src = by_id.get(ref.get("ref")) if isinstance(ref, dict) else None
+        if src:
+            grams |= _word_grams(f"{src.get('title') or ''} {src.get('citation') or ''}", 2)
+    return grams - noise
+
+
+def report_survey_surfaces_already_attached_fan_facts(before_state, text_response, test, agent_returns=None):
+    """Tag-gated (issue #1948), tier 2 -- reporting only, per ADR-0011 /
+    `unit-test-spec.md`: the harness can detect whether a non-subject
+    person's already-sourced fact was surfaced, but not decide whether the
+    response's reasoning about it is sound, so a miss here is an observation
+    fed to the judge (Correctness/Completeness), not an independent gate on
+    the run's outcome.
+
+    Started as tier 1 and was moved during PR #2004 review (clack391): a
+    tier-1 gate on this behavior means a coin-flip miss makes ordinary model
+    variance loud rather than regressions loud (EdmondOware, round 1), and
+    -- separately and more importantly -- the predicate can be satisfied by
+    a response that read nothing (see the false-positive shapes below),
+    which a tier-1 pass would have hidden from the judge entirely
+    (only a tier-2 finding is fed to the judge as an observation).
+
+    Live alpha-feedback report: a first plan for a "why did the family move"
+    question never surfaced a sibling's already-sourced 1875 land purchase in
+    the destination county, seven years before the subject's own documented
+    arrival. Three SKILL.md wording attempts (see the mined test
+    `ut_research_plan_bpx`) moved the failure rate from "every sample" to
+    roughly half -- expected, since the skill runs without `temperature=0`,
+    so no wording can pin any behavior at exactly 100%. The 5 committed runs
+    of `ut_research_plan_bpx` against the final wording
+    (`v1_2026-08-28_06-14-42`, `_10-59-10`, `v1_2026-08-30_04-40-39`,
+    `_16-05-12`, `v1_2026-08-31_10-37-11`) give 3 pass / 2 fail -- roughly
+    the same "about half" rate, though five runs is too few to pin the exact
+    fraction. Now that this check is tier 2, that rate no longer independently
+    decides the test's outcome (the judge does), which is what makes the
+    rate a curiosity rather than a marking decision.
+
+    Deliberately gated on the `already-attached` tag rather than running on
+    every research-plan test. Measured against the corpus at review time
+    (clack391): of the research-plan tests then in the suite, only this
+    PR's own fixture had a non-subject person with a checkable sourced
+    fact, so gating false-positives on nothing today -- but a future
+    scenario could add one incidentally, and this check has no way to know
+    whether surfacing it was that test's point.
+
+    The tag gate carries more weight since issue #2208 widened the checked
+    population from source-ref'd facts to all recorded facts, and to a
+    relative's person-level sources: on an imported tree that is nearly every
+    relative. Both tagged scenarios are hand-authored with a single
+    checkable non-subject person, so nothing over-fires today -- but do NOT
+    apply the `already-attached` tag to an imported tree without re-scoping
+    this check, or it will demand a date-and-value for every relative and fire
+    on every honest response. Note also that `surfaced` is satisfied by ANY of
+    the person's facts, so widening the fact set made the per-person bar
+    easier, not harder.
+
+    A person with person-level `sources` is checked on those instead: the
+    response must name them and carry a distinctive two-word gram from a
+    source's title or citation (question wording, fact places and person names
+    removed), because a name and a year can be written without reading it.
+
+    Check: for each non-subject person with a fact the tree records --
+    sourced or not (issue #2208; see the inline note at the loop) -- require
+    somewhere in the response (case-insensitive) -- their given name
+    (word-boundary match, not a bare substring test: "Ann" must not match
+    inside "planning") AND the fact's *content*: a date token (`date`,
+    `standard_date`, or a bare year extracted from either, so `~1845`,
+    `1908-03-12` and "Abt 1850" are all recognized, not just a literal bare
+    year) AND, when the fact carries a `value`, at least one two-word gram
+    from that value. A fact with no `value` degrades to name+date; a fact
+    with no date at all degrades to name+value -- either signal alone still
+    gates on *some* fact-specific content, never on the name alone. A fact
+    with neither a date nor a value has nothing fact-specific to check
+    against and is out of scope, the same as a person with no facts
+    at all (there is no content to confirm was read, so nothing is asked of
+    the response) -- this closes a real false negative found during review
+    (clack391): `date` is optional in the schema, so a sourced fact that
+    only carries a place, say, previously failed unconditionally regardless
+    of what the response said.
+
+    This design replaced an earlier name+date-only check found to have two
+    real gaps during PR #2004's review (clack391): (1) matching `date`
+    verbatim missed every non-bare-year format -- of 113 sourced facts with
+    a date across the scenario corpus, only 9 are bare years; 53 are
+    `~yyyy`, 47 are ISO `yyyy-mm-dd`, the rest free text -- so `"~1845" in
+    "...about 1845..."` was false and the check failed a correct response.
+    (2) A committed run (`v1_2026-08-27_16-18-15.json`, since pruned by
+    retention -- see the review thread for its recorded text) exposed the
+    deeper problem the value-gram requirement exists for: its response
+    mentions Patrick seven times and a FAN plan item's own search-window
+    header happens to read "Schuylkill County, PA -- 1875-1905", satisfying
+    a bare name+date check, while the response's own text is entirely
+    conditional ("if Patrick preceded Michael...") and proposes searching to
+    *discover* what the tree already states. Name and date co-occurrence
+    cannot tell "citing a known fact" apart from "proposing a new search
+    that happens to start near the same year"; a content fragment from the
+    fact's own `value` can.
+
+    Checked against the WHOLE response, not scoped to one paragraph. An
+    earlier version required the name and the content signals to land in
+    the same blank-line-delimited paragraph, on the theory that a stray
+    date elsewhere in the response shouldn't count. Review (clack391) found
+    this scoping was itself a false-positive hole, not a precision gain: a
+    response naming nobody can still pass if a date token and a value gram
+    both happen to appear anywhere near the person's name by coincidence of
+    the fixture's own wording (measured directly against this fixture's own
+    plan-item search window), and restricting to same-paragraph did nothing
+    to prevent it while failing at least one honestly-correct response
+    whose citation sits in its own paragraph, separate from the name. Since
+    this is now tier 2, the judge is the backstop for "did the response
+    actually reason about this fact" regardless of scope; the mechanical
+    check's job is only to flag whether the content appears at all.
+
+    Does not grade whether the response's *reasoning* about the fact is
+    sound once it clears this bar -- that is exactly what moving this to
+    tier 2 hands to the judge (Completeness/Correctness already grade
+    reasoning quality on this test).
+    """
+    if "already-attached" not in test.get("tags", []):
+        pytest.skip("not an already-attached-fan-facts scenario")
+    research = before_state.get("research_json")
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    if research is None or tree is None:
+        pytest.skip("missing research.json or tree.gedcomx.json for before-state")
+    # On the direct arm `text_response` is the dispatcher relaying the agent's
+    # return, possibly paraphrased; grade the agent's own words (issue #2116).
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "research-plan", test)
+    if not reply:
+        pytest.skip("no reply captured")
+
+    subject_ids = set(research.get("project", {}).get("subject_person_ids") or [])
+    response_lower = reply.lower()
+    paragraphs = [response_lower]
+    noise = _survey_noise_grams(research, tree)
+
+    missed: list[str] = []
+    for person in tree.get("persons", []) or []:
+        pid = person.get("id")
+        if not pid or pid in subject_ids:
+            continue
+        given = (person.get("names") or [{}])[0].get("given", "")
+        if not given:
+            continue
+        # EVERY fact the tree records, not only the source-ref'd ones (issue #2208): a
+        # fact's ref is no evidence the person was surveyed, and trees authored before
+        # project_create built from person_read (#3140) carry no refs at all.
+        recorded_facts = list(person.get("facts") or [])
+        # A relative's own attachments live at the person level (#3066), referenced
+        # from `persons[].sources`, not from a fact. When there are any, their content
+        # -- not a name and a year -- is what shows the survey read them.
+        source_grams = _person_source_grams(person, tree, noise)
+        if not recorded_facts and not source_grams:
+            continue  # nothing recorded for this person -- not in scope for this check
+
+        name_pattern = rf"\b{re.escape(given.lower())}\b"
+        name_present = bool(re.search(name_pattern, response_lower))
+
+        surfaced = False
+        any_checkable = bool(source_grams)
+        if source_grams:
+            recorded_facts = []
+            surfaced = name_present and bool(source_grams & _word_grams(response_lower, 2))
+        for fact in recorded_facts:
+            date_tokens = {
+                t.lower() for t in (fact.get("date"), fact.get("standard_date")) if t
+            }
+            date_tokens |= {
+                y
+                for y in (extract_year(fact.get("date")), extract_year(fact.get("standard_date")))
+                if y
+            }
+            value_grams = _word_grams(fact["value"], 2) if fact.get("value") else set()
+            if not date_tokens and not value_grams:
+                continue  # nothing fact-specific to check for this one
+            any_checkable = True
+
+            for para in paragraphs:
+                if not re.search(name_pattern, para):
+                    continue
+                date_ok = not date_tokens or any(
+                    re.search(rf"\b{re.escape(tok)}\b", para) for tok in date_tokens
+                )
+                value_ok = not value_grams or bool(value_grams & _word_grams(para, 2))
+                if date_ok and value_ok:
+                    surfaced = True
+                    break
+            if surfaced:
+                break
+
+        if not any_checkable:
+            continue  # no recorded fact on this person has a date or value -- nothing to check
+
+        if surfaced:
+            continue
+
+        if not name_present:
+            reason = "the person's given name never appears in the response"
+        else:
+            reason = (
+                "the person's given name appears, but no recorded fact's date and value "
+                "content (whichever the fact carries) both also appear in the response"
+            )
+        missed.append(f"{pid} ({given}): the tree records a fact for them but {reason}")
+    assert not missed, (
+        "already-recorded FAN-cluster fact(s) never surfaced in the "
+        "response:\n  - " + "\n  - ".join(missed)
+    )
+
+
+# --- Step 3 pre-work: the subject-triggered wiki pages are actually fetched --
+
+# Maps a `wiki-prework` test to the wiki_read fixture stems its subject
+# triggers (SKILL.md Step 3 pre-work; issue #2251, lead ruling 2026-09-27).
+# Hardcoded rather than read from the spec: the `test` fixture carries only the
+# inner "test" block, not top-level `mcp_fixtures` (validator_runner.py) --
+# the same reason test_search_full_text.py keeps _TOPICAL_FIXTURES_BY_TEST_ID.
+# Add an entry whenever "wiki-prework" is added to a research-plan test.
+_WIKI_FIXTURES_BY_TEST_ID = {
+    "ut_research_plan_015": (
+        "wiki-read-denmark-military-records",
+        "wiki-read-denmark-naming-customs",
+    ),
+    "ut_research_plan_dth": ("wiki-read-sweden-naming-customs",),
+    "ut_research_plan_csn": ("wiki-read-spain-naming-customs",),
+}
+
+
+def test_wiki_prework_fetches_triggered_pages(tool_calls, test):
+    """A `wiki-prework` test must fetch every record-type page its subject
+    triggers, and land on the page, not beside it.
+
+    ADR-0012, "Name the fetch so it runs": `gps-mentor` named the wiki tools at
+    five sites and made zero calls in 91 invocations, so prose that names a
+    call is not a call. Matching on the served fixture stem rather than on
+    "some wiki_read happened" is what makes a guessed slug fail: a 404 slug
+    (`Denmark_Military_Record`, `Spain_Names,_Personal`) misses the page's
+    predicate and is served no fixture, and a sibling tool (`wiki_search`)
+    never serves a wiki_read stem at all.
+
+    Asserts only that the page was READ. Whether its content reached the plan
+    is the judge's, per each test's judge_context.
+    """
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    # Map -> tag direction BEFORE the skip, or the skip swallows it: dropping
+    # the tag from a spec would silently disarm this guard.
+    assert test_id not in _WIKI_FIXTURES_BY_TEST_ID or "wiki-prework" in tags, (
+        f"{test_id} has a _WIKI_FIXTURES_BY_TEST_ID entry but no 'wiki-prework' "
+        "tag - restore the tag or delete the entry"
+    )
+    if "wiki-prework" not in tags:
+        pytest.skip("not a wiki-prework test")
+    expected = _WIKI_FIXTURES_BY_TEST_ID.get(test_id)
+    assert expected, (
+        f"{test_id} carries 'wiki-prework' but has no entry in "
+        "_WIKI_FIXTURES_BY_TEST_ID - add the wiki_read stems its subject triggers"
+    )
+    hit = {
+        c.get("response_fixture")
+        for c in (tool_calls or [])
+        if _bare(c.get("tool", "")) == "wiki_read" and c.get("response_fixture")
+    }
+    missing = [stem for stem in expected if stem not in hit]
+    assert not missing, (
+        f"{test_id}: SKILL.md Step 3 pre-work requires {list(expected)}, and "
+        f"{missing} was never served -- the page was not fetched, or was "
+        f"fetched under a slug its predicate does not match. wiki_read "
+        f"fixtures served: {sorted(hit) or '(none)'}"
+    )
+
+
+# --- Pre-register birth: the plan works back from the subject's death --------
+
+# test id -> (subject's given name, earliest start year a death or burial item
+# may carry). The bound sits after the subject's birth window, which is what
+# separates a search for her own death entry from a baptism-window search whose
+# rationale merely mentions a death. Elena: born c. 1680-1692 per q_001, married
+# 1712, alive 1718; a burial search starting 1712 or 1718 passes, one starting
+# 1675 does not.
+_DEATH_ROUTE_BY_TEST_ID = {
+    "ut_research_plan_dth": ("Elena", 1700),
+}
+
+_DEATH_WORD = r"(?:death|died|burial|buried|bur\.|d[öo]d|d[öo]de|begrav\w*|begraf\w*)"
+_YEAR_RE = re.compile(r"\b(1[5-9]\d\d)\b")
+
+
+_RELATIVE = r"(?:(?:grand|step)?(?:son|daughter|child|children|father|mother|parents?)|husband|brother|sister|wife|spouse)"
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-ZÅÄÖ])")
+
+
+def _death_route_res(given: str) -> tuple[re.Pattern, re.Pattern]:
+    """(own, relative): `own` ties the entry to the subject ("Elena's burial",
+    "burials index for Elena", "her age at death", "Elena's entry");
+    `relative` names a relative of hers ("Elena's son", "her husband")."""
+    g = re.escape(given)
+    own = re.compile(
+        rf"\b{g}(?:\s+\w+)?['’]s\s+(?:own\s+)?(?:{_DEATH_WORD}|entry)"
+        rf"|\b{_DEATH_WORD}\w*(?:\s+[\w-]+){{0,2}}\s+(?:of|for)\s+{g}\b(?!['’]s)"
+        rf"|(?<!\bof\s)\b{g}(?:\s+\w+)?,?\s+(?:was\s+)?(?:buried|died)\b"
+        rf"|\bher\s+(?:own\s+)?(?:age\s+at\s+)?{_DEATH_WORD}",
+        re.IGNORECASE,
+    )
+    relative = re.compile(
+        rf"(?:\b{g}['’]s|\bher)\s+{_RELATIVE}\b|\b{_RELATIVE}\s+of\s+{g}\b",
+        re.IGNORECASE,
+    )
+    return own, relative
+
+
+def test_pre_register_birth_plans_death_route(before_state, after_state, test):
+    """When the birth predates the register, the plan must carry the
+    subject's OWN death or burial entry as its own item, and must not be one
+    record type throughout.
+
+    The e2e evidence (issue #2676, merged into #2251): on
+    elena-asmundsdotter-origin run-2026-09-18_21-35-53 the one active plan held
+    ten items, all `record_type: "church"`, with no death or burial item, so the
+    agent never opened the register section where her 1745 death entry states
+    her birthplace. Both defects are asserted here.
+
+    An item counts only when its rationale or jurisdiction names the subject
+    and a death/burial word, and its `date_range` starts after the subject's
+    birth window. When every sentence carrying a death word also names a
+    relative of hers ("Elena's son", "her husband"), the item counts only if
+    it ties the entry to her elsewhere ("Elena's burial", "her age at death"),
+    so a son's, husband's or father's burial fails, as does a baptism search
+    whose rationale notes she later died.
+    """
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _DEATH_ROUTE_BY_TEST_ID or "pre-register-birth" in tags, (
+        f"{test_id} has a _DEATH_ROUTE_BY_TEST_ID entry but no "
+        "'pre-register-birth' tag - restore the tag or delete the entry"
+    )
+    if "pre-register-birth" not in tags:
+        pytest.skip("not a pre-register-birth test")
+    spec = _DEATH_ROUTE_BY_TEST_ID.get(test_id)
+    assert spec, (
+        f"{test_id} carries 'pre-register-birth' but has no entry in "
+        "_DEATH_ROUTE_BY_TEST_ID"
+    )
+    given, earliest_start = spec
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or [])]
+    assert items, "no new plan items were written"
+
+    own, relative = _death_route_res(given)
+
+    def _qualifies(item: dict) -> bool:
+        text = f"{item.get('rationale') or ''} {item.get('jurisdiction') or ''}"
+        if given.lower() not in text.lower() or not re.search(_DEATH_WORD, text, re.IGNORECASE):
+            return False
+        death_sentences = [
+            s for s in _SENTENCE_SPLIT_RE.split(text)
+            if re.search(_DEATH_WORD, s, re.IGNORECASE)
+        ]
+        if all(relative.search(s) for s in death_sentences) and not own.search(text):
+            return False
+        years = [int(y) for y in _YEAR_RE.findall(str(item.get("date_range") or ""))]
+        return bool(years) and min(years) >= earliest_start
+
+    problems: list[str] = []
+    if not any(_qualifies(i) for i in items):
+        problems.append(
+            f"no item targets {given}'s own death or burial entry dated from "
+            f"{earliest_start} on (items: "
+            + "; ".join(
+                f"{i.get('id')} {i.get('record_type')} {i.get('date_range')}"
+                for i in items
+            )
+            + ")"
+        )
+    types = {i.get("record_type") for i in items}
+    if len(types) < 2:
+        problems.append(f"every item shares one record_type: {sorted(map(str, types))}")
+    assert not problems, (
+        "pre-register birth planned as if a baptism could be found:\n  - "
+        + "\n  - ".join(problems)
     )

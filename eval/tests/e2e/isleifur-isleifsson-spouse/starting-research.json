@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_isleifur_isleifsson_spouse",
+    "objective": "Did Ísleifur Ísleifsson of Kross, Rangárvallasýsla have a son Einar christened 28 September 1856 by a Thórunn Einarsdóttir — or does that baptism belong to a different Ísleifur Ísleifsson?",
+    "subject_person_ids": [
+      "KCS6-8SG"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

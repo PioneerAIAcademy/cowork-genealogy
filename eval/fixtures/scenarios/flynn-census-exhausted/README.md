@@ -9,7 +9,15 @@ Differs from `mid-research-flynn` in these ways:
 - **`questions[q_001].status`:** `in_progress` — same as `mid-research-flynn`.
 - **`proof_summaries[ps_001].tier`:** `probable` — same as `mid-research-flynn`.
 - **`conflicts[c_001]`:** resolved — same as `mid-research-flynn`.
-- **Everything else** (log, sources, assertions, person_evidence, hypotheses, timelines): identical to `mid-research-flynn`.
+- **`log`, `assertions`, `person_evidence`:** identical to `mid-research-flynn`
+  (5, 13 and 6 entries). The log identity is what `pli_006`/`log_006` broke when
+  `fd8edb28c` added a probate item and a probate search here; both are removed
+  again, so it holds.
+- **`sources`:** 4 entries, against `mid-research-flynn`'s 9 — it does not carry
+  `src_005`–`src_009`.
+- **`hypotheses`:** empty, against `mid-research-flynn`'s `h_001`.
+- **`timelines`:** one `t_001` in both, but not the same content — this one's
+  differs in `hypothesis_id` and `label`, following from the absent hypothesis.
 
 ## Used by
 

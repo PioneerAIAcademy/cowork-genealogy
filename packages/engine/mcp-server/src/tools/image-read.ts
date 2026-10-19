@@ -1,9 +1,14 @@
+import type { Principal } from "../auth/principal.js";
 import {
   resolveFsImageInput,
   fetchFsImageBytes,
+  extractImageContextQuery,
+  foldImageArkInput,
   type FsImageInput,
 } from "../utils/fs-image-fetch.js";
+import { imageViewerUrl } from "../utils/ark.js";
 import { saveSourceImage } from "../utils/image-store.js";
+import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
 
 // The MCP transport between this server and the calling agent caps a single
 // response near 1 MiB. Base64 inflates raw bytes by ~33%, so this floor on
@@ -14,6 +19,9 @@ import { saveSourceImage } from "../utils/image-store.js";
 const MAX_INLINE_IMAGE_BYTES = 700_000;
 
 export interface ImageReadInput extends FsImageInput {
+  /** Another name for `ark`: record_read returns a page image under it.
+   *  Folded into `ark` before anything else reads the input. */
+  imageArk?: string;
   /** Absolute project-folder path. When given, the fetched JPEG is saved
    *  under images/<key>.jpg and its project-relative path returned as
    *  `imageRef`, mirroring image_transcribe's save behavior. */
@@ -22,6 +30,9 @@ export interface ImageReadInput extends FsImageInput {
 
 export interface ImageReadResult {
   url: string;
+  /** FamilySearch viewer URL for the image. Present for imageId and ark inputs;
+   *  absent for memoryArtifactUrl (issue #2854). */
+  viewerUrl?: string;
   mimeType: string;
   sizeBytes: number;
   /** Project-relative path of the saved scan (images/<key>.jpg), present only
@@ -29,16 +40,31 @@ export interface ImageReadResult {
   imageRef?: string;
 }
 
-export async function imageReadTool(input: ImageReadInput): Promise<{
+export async function imageReadTool(input: ImageReadInput, principal: Principal): Promise<{
   imageData: string;
   metadata: ImageReadResult;
 }> {
-  const { url, label, fallbackUrl } = resolveFsImageInput(input, "image_read");
+  input = foldImageArkInput(input, "image_read");
+  const { url, label, fallbackUrl, memoryShape } = resolveFsImageInput(
+    input,
+    "image_read",
+  );
 
+  // The hard image cap (spec image-transcribe §5.8): refuse before the fetch.
+  const browse = await checkImageBrowseCap(input, input.projectPath, "image_read");
+
+  // `memoryShape` must be forwarded, not defaulted. `ImageReadInput extends
+  // FsImageInput`, so `memoryArtifactUrl` is already accepted here and the
+  // schema has no `additionalProperties: false` -- dropping the flag sent the
+  // FamilySearch bearer to an artifact URL that needs no credential, and made a
+  // PDF artifact fail as "Expected an image response".
   const { bytes, contentType, sizeBytes, resolvedUrl } = await fetchFsImageBytes(
     url,
-    fallbackUrl
+    fallbackUrl,
+    principal,
+    memoryShape
   );
+  await recordImageBrowse(browse);
 
   // Refuse oversized images before encoding — returning them would overflow
   // the MCP transport buffer and crash the session (see MAX_INLINE_IMAGE_BYTES).
@@ -75,10 +101,16 @@ export async function imageReadTool(input: ImageReadInput): Promise<{
     }
   }
 
+  const viewerUrl = imageViewerUrl(
+    { imageId: input.imageId, ark: input.ark },
+    extractImageContextQuery,
+  );
+
   return {
     imageData,
     metadata: {
       url: resolvedUrl,
+      ...(viewerUrl ? { viewerUrl } : {}),
       mimeType: contentType,
       sizeBytes,
       ...(imageRef ? { imageRef } : {}),
@@ -94,6 +126,8 @@ export const imageReadToolSchema = {
     "when you have one; use ark when you only have a document-image ARK " +
     "(e.g. from fulltext_search's id field), a resolver URL for one, or an " +
     "already-resolved distribution URL. " +
+    "A FamilySearch Memories PAGE url (familysearch.org/photos/artifacts/<id> " +
+    "or /memories/<id>) is not resolved here — use image_transcribe. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -110,7 +144,8 @@ export const imageReadToolSchema = {
         description:
           "A FamilySearch document-image ARK, when no imageId is available " +
           "— ark:/61903/3:1:... or 3:2:... (e.g. from fulltext_search's " +
-          "`id`), a bare 3:1:.../3:2:... id, a full resolver URL for one, " +
+          "`id`), a bare 3:1:.../3:2:... id, an unprefixed XXXX-XXXX-XXXX-X " +
+          "id (treated as 3:1:), a full resolver URL for one, " +
           "or an already-resolved DeepZoomCloud (ending in /$dist) or DGS " +
           "(dgs:.../dist.jpg) distribution URL. " +
           "IMPORTANT: some document-image ARKs are waypoints into a multi-image " +

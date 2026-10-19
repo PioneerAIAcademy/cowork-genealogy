@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_kierstin_jonsdotter_daughter",
+    "objective": "Was the Anna christened 12 January 1777 at Rättvik, daughter of Anders Ersson and Kierstin Jöransdotter, a daughter of Kierstin Jonsdotter and Anders Hansson?",
+    "subject_person_ids": [
+      "K8LX-YMK"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

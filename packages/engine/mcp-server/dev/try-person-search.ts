@@ -10,6 +10,7 @@
  * Positional args: <surname> [givenName]. Flags override / add fields.
  * Remember the surname-plus-one rule: a surname alone is rejected.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { personSearchTool } from "../src/tools/person-search.js";
 import type { PersonSearchInput } from "../src/types/person-search.js";
 
@@ -50,5 +51,5 @@ if (!input.surname) {
   process.exit(1);
 }
 
-const result = await personSearchTool(input);
+const result = await personSearchTool(input, LOCAL);
 console.log(JSON.stringify(result, null, 2));

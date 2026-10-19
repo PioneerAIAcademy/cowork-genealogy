@@ -11,7 +11,9 @@ import { DEATHLIKE_FACT_TYPES } from "../../src/utils/mob.js";
  * The family is the mechanism behind `hasEventAfterDeath1` -- a fact of one of
  * these types raises the death anchor rather than violating it -- so the skill
  * cannot reason about that tag without the list, and the list is duplicated
- * into three prose files that nothing read. Adding a tenth type to the Set
+ * into three prose sites that nothing read -- two of them now appendices of
+ * `agents/check-warnings.md` (issue #2118), where each pattern matches exactly
+ * one passage. Adding a tenth type to the Set
  * would leave all three silently stale, and a genealogist following stale
  * doctrine would call a legitimate probate record a contradiction.
  *
@@ -50,12 +52,12 @@ interface Site {
 
 const SITES: Site[] = [
   {
-    path: "packages/engine/plugin/skills/check-warnings/references/warning-checks.md",
+    path: "packages/engine/plugin/agents/check-warnings.md", // Appendix A (was references/warning-checks.md)
     list: /That family is ([\s\S]*?);/,
     omits: [],
   },
   {
-    path: "packages/engine/plugin/skills/check-warnings/references/warnings-as-identity-signals.md",
+    path: "packages/engine/plugin/agents/check-warnings.md", // Appendix B (was references/warnings-as-identity-signals.md)
     list: /violate it: ([\s\S]*?)\(`hasEventAfterDeath1`\)/,
     omits: ["Death"],
   },
@@ -78,7 +80,7 @@ describe("the death-like family in prose matches DEATHLIKE_FACT_TYPES", () => {
     expect(DEATHLIKE_FACT_TYPES.size).toBeGreaterThan(0);
   });
 
-  it.each(SITES)("$path restates the family exactly", ({ path, list, omits }) => {
+  it.each(SITES)("$path /$list/ restates the family exactly", ({ path, list, omits }) => {
     const body = readFileSync(join(projectRoot, path), "utf-8").split(CR).join("");
     const match = body.match(list);
     // A miss means the passage was reworded or removed, so the check has gone

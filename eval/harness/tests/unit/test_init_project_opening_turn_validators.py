@@ -21,13 +21,16 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_init_project import (  # noqa: E402
     _DEFAULT_OBJECTIVE,
     test_objective_default_verbatim as check_objective,
+    test_objective_kept_in_the_users_words as check_stated,
     test_profile_defaults_when_all_default as check_profile,
+    test_volunteered_subscriptions_normalized as check_volunteered,
 )
 
 
 OBJECTIVE_TAGGED = {"tags": ["objective-default"]}
 UNTAGGED = {"tags": []}
 PROFILE_TAGGED = {"tags": ["opening-turn-all-defaults"]}
+VOLUNTEERED_TAGGED = {"tags": ["volunteered-access"]}
 
 
 # --- test_objective_default_verbatim ------------------------------------
@@ -83,11 +86,15 @@ def test_untagged_profile_test_is_skipped():
         check_profile(_research(), UNTAGGED)
 
 
-def test_both_defaults_present_passes():
-    check_profile(
-        _research({"experience_level": "intermediate", "subscriptions": ["none"]}),
-        PROFILE_TAGGED,
-    )
+def test_fixed_level_passes():
+    check_profile(_research({"experience_level": "novice"}), PROFILE_TAGGED)
+
+
+def test_absent_subscriptions_passes():
+    """The site-access question was dropped on 2026-08-31, so the field is left
+    absent rather than defaulted. This is the shape the validator must accept —
+    it is the whole point of the ruling, not an omission."""
+    check_profile(_research({"experience_level": "novice"}), PROFILE_TAGGED)
 
 
 def test_absent_profile_fails():
@@ -96,18 +103,159 @@ def test_absent_profile_fails():
 
 
 def test_wrong_experience_level_fails():
+    """A volunteered or mapped level is a defect now: the profile is fixed at
+    `novice` and the question is never asked (lead ruling 2026-09-18)."""
     with pytest.raises(AssertionError, match="experience_level"):
+        check_profile(
+            _research({"experience_level": "intermediate"}),
+            PROFILE_TAGGED,
+        )
+
+
+def test_volunteered_subscriptions_do_not_fail():
+    """A researcher can still volunteer access and it can still be recorded — the
+    ruling dropped the question, not the field. The validator must not reject a
+    profile that carries one."""
+    check_profile(
+        _research({"experience_level": "novice", "subscriptions": ["Ancestry"]}),
+        PROFILE_TAGGED,
+    )
+
+
+def test_defaulted_none_subscriptions_fails():
+    """The regression guard. `["none"]` is the pre-2026-08-31 default: it asserts
+    the researcher told us they have nothing, the opposite of what the ruling now
+    assumes. Nothing else catches a reintroduction — the value is schema-valid,
+    so `validate_research_schema` passes it happily."""
+    with pytest.raises(AssertionError, match="subscriptions"):
         check_profile(
             _research({"experience_level": "novice", "subscriptions": ["none"]}),
             PROFILE_TAGGED,
         )
 
 
-def test_wrong_subscriptions_fails():
+def test_defaulted_empty_subscriptions_fails():
+    """The same defect wearing a different shape, and equally schema-valid."""
     with pytest.raises(AssertionError, match="subscriptions"):
         check_profile(
-            _research(
-                {"experience_level": "intermediate", "subscriptions": ["ancestry"]}
-            ),
+            _research({"experience_level": "novice", "subscriptions": []}),
             PROFILE_TAGGED,
         )
+
+
+# --- test_volunteered_subscriptions_normalized --------------------------
+
+
+def _vol_research(subscriptions):
+    return {
+        "research_json": {
+            "project": {"objective": "Identify the parents of Patrick Flynn."},
+            "researcher_profile": {
+                "experience_level": "novice",
+                "subscriptions": subscriptions,
+            },
+        }
+    }
+
+
+def test_untagged_volunteered_test_is_skipped():
+    with pytest.raises(pytest.skip.Exception):
+        check_volunteered(_vol_research(["Ancestry", "LibraryAccess"]), UNTAGGED)
+
+
+def test_normalized_set_passes():
+    """The accept direction: the exact normalized set the scenario produces
+    (Ancestry + the family history centre as LibraryAccess) must pass, in any
+    order."""
+    check_volunteered(_vol_research(["Ancestry", "LibraryAccess"]), VOLUNTEERED_TAGGED)
+    check_volunteered(_vol_research(["LibraryAccess", "Ancestry"]), VOLUNTEERED_TAGGED)
+
+
+def test_familysearch_stored_fails():
+    """A bare FamilySearch account is the baseline, not an enum value — storing
+    it verbatim is the exact defect this test's name calls out."""
+    with pytest.raises(AssertionError, match="FamilySearch"):
+        check_volunteered(
+            _vol_research(["Ancestry", "LibraryAccess", "FamilySearch"]),
+            VOLUNTEERED_TAGGED,
+        )
+
+
+def test_family_history_centre_flattened_to_other_fails():
+    """The family history centre has its own enum value (LibraryAccess); mapping
+    it to `other` loses that and must fail."""
+    with pytest.raises(AssertionError, match="Ancestry|LibraryAccess|added or dropped"):
+        check_volunteered(_vol_research(["Ancestry", "other"]), VOLUNTEERED_TAGGED)
+
+
+def test_dropped_library_access_fails():
+    """Dropping a volunteered route (only Ancestry survives) is a departure from
+    the normalized set."""
+    with pytest.raises(AssertionError, match="added or dropped"):
+        check_volunteered(_vol_research(["Ancestry"]), VOLUNTEERED_TAGGED)
+
+
+def test_absent_subscriptions_fails_when_volunteered():
+    """The user volunteered access, so the field must be written — absence here is
+    the opposite defect to the all-defaults case, where absence is correct."""
+    with pytest.raises(AssertionError, match="must be written"):
+        check_volunteered(_vol_research(None), VOLUNTEERED_TAGGED)
+
+
+def test_missing_research_json_fails_volunteered():
+    with pytest.raises(AssertionError, match="volunteered-access requires"):
+        check_volunteered({"research_json": None}, VOLUNTEERED_TAGGED)
+
+
+# --- test_objective_kept_in_the_users_words ------------------------------
+
+DOYLE = (
+    "Start a new research project to identify the origins of Thomas Doyle, born around "
+    "1830 in Ireland and died 1895 in Northumberland County, Pennsylvania. His FamilySearch "
+    "person ID is MKVT-7XR.\n\nprojectPath: <workspace>"
+)
+STATED = {"tags": ["objective-stated"], "delegation": DOYLE}
+
+
+def _stored(objective):
+    return {"research_json": {"project": {"objective": objective}}}
+
+
+def test_untagged_stated_objective_test_is_skipped():
+    with pytest.raises(pytest.skip.Exception):
+        check_stated(_stored("x"), {"tags": [], "delegation": DOYLE})
+
+
+@pytest.mark.parametrize("objective", [
+    "Identify the origins of Thomas Doyle, born around 1830 in Ireland and died 1895 in "
+    "Northumberland County, Pennsylvania.",
+    "Identify the origins of Thomas Doyle (born about 1830, Ireland).",
+    "The origins of Thomas Doyle, who died in Pennsylvania in 1895.",
+])
+def test_the_users_own_words_pass(objective):
+    check_stated(_stored(objective), STATED)
+
+
+def test_the_generic_default_fails_when_an_objective_was_stated():
+    with pytest.raises(AssertionError, match="must not replace it"):
+        check_stated(_stored(_DEFAULT_OBJECTIVE), STATED)
+
+
+@pytest.mark.parametrize("objective,added", [
+    ("Identify the origins of Thomas Doyle: where in Ireland he came from, and who his "
+     "parents were.", "parents"),
+    ("Identify the Irish origins of Thomas Doyle: county, parish, or townland.", "irish"),
+])
+def test_an_added_direction_fails(objective, added):
+    with pytest.raises(AssertionError, match=added):
+        check_stated(_stored(objective), STATED)
+
+
+def test_reads_the_user_message_on_the_skill_arm():
+    check_stated(_stored("Identify the origins of Thomas Doyle."),
+                 {"tags": ["objective-stated"], "user_message": DOYLE})
+
+
+def test_missing_research_json_fails_a_stated_objective_test():
+    with pytest.raises(AssertionError, match="objective-stated requires"):
+        check_stated({"research_json": None}, STATED)

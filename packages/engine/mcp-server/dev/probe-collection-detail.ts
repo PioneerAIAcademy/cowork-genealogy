@@ -46,6 +46,7 @@
  *   npx tsx dev/probe-collection-detail.ts                # uses default 1473181
  *   npx tsx dev/probe-collection-detail.ts 1743384        # Alabama Marriages
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { fetchAllCollections } from "../src/tools/collections-search.js";
 
@@ -163,7 +164,7 @@ async function main(): Promise<void> {
   const id = process.argv[2] ?? DEFAULT_ID;
   console.log(`Probing collection detail for ID: ${id}\n`);
 
-  const token = await getValidToken();
+  const token = await getValidToken(LOCAL);
 
   // ----------------------------------------------------------------
   // Section 0: what does the cached list endpoint already give us?
@@ -171,7 +172,7 @@ async function main(): Promise<void> {
   console.log("================================================================");
   console.log("SECTION 0 — Already-cached record for this ID (list endpoint)");
   console.log("================================================================");
-  const list = await fetchAllCollections(token);
+  const list = await fetchAllCollections(token, LOCAL);
   const match = (list.entries ?? [])
     .map((e) => e.content?.gedcomx?.collections?.[0])
     .filter((c): c is NonNullable<typeof c> => c?.id === id);

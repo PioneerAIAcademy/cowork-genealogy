@@ -12,6 +12,7 @@ import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateRawSync } from "node:zlib";
 import { resolvePython } from "./python-interpreter.mjs";
+import { buildVersion, gitStamp } from "./build-stamp.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGIN = join(ROOT, "packages", "engine", "plugin");
@@ -37,6 +38,17 @@ const entries = files.map((abs) => ({
   data: readFileSync(abs),
   mtime: statSync(abs).mtime,
 }));
+// Stamp the zipped plugin.json (in memory — the tracked file stays at its base
+// version) with the same build id shape the .mcpb carries, so a tester's two
+// installed artifacts can be told apart by build (#2126). The engine cannot
+// compare the two at runtime (host vs VM); the stamp is for humans and the
+// agent to quote.
+const pluginJson = entries.find((e) => e.name === ".claude-plugin/plugin.json");
+if (!pluginJson) throw new Error(".claude-plugin/plugin.json not found in the plugin tree");
+const plugin = JSON.parse(pluginJson.data.toString("utf8"));
+plugin.version = buildVersion(plugin.version, gitStamp(ROOT));
+pluginJson.data = Buffer.from(JSON.stringify(plugin, null, 2) + "\n", "utf8");
+console.log(`Stamped plugin.json version: ${plugin.version}`);
 mkdirSync(RELEASES, { recursive: true });
 writeFileSync(OUT, buildZip(entries));
 console.log(`Done. Created ${OUT} (${entries.length} files)`);

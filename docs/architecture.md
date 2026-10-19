@@ -7,8 +7,8 @@ verified, it says so.
 **This file is meant to stay true without maintenance.** Two shapes are
 therefore banned in it, and both were swept out on 2026-08-09: a **line-number
 citation** (cite the heading, symbol, or a distinctive quotable string instead —
-`doc-links.test.ts` blocks new `.ts`/`.py`/`.mjs` ones, and the `.md` ones it
-cannot yet see went stale within the hour twice), and a **register** — a list of
+`doc-links.test.ts` blocks new `.ts`/`.py`/`.mjs`/`.md` ones under `docs/`,
+outside `docs/plan/` and the dated `docs/deep-dives/` records), and a **register** — a list of
 open gaps, open questions, or issue numbers that GitHub already owns and that
 goes stale without telling anyone. Where you need a number that moves, name the
 command that recomputes it.
@@ -36,8 +36,8 @@ is `eval/JUNIOR-WALKTHROUGH.md` (first PR) and `eval/SENIOR-WALKTHROUGH.md`
 | Give an agent a new tool · Restrain something · Change `PROTECTED_PROJECT_FILES` · Add a hook | [§5](#if-youre-asked-to-2) |
 | Add a field to `research.json` · Add an enum value · Add a tree field | [§6](#if-youre-asked-to-3) |
 | Add a viewer feature · Change what the sandbox runs · Add a control-plane endpoint | [§7](#if-youre-asked-to-4) |
-| Change hosted agent config | [§8](#if-youre-asked-to-5) |
-| Verify a change · Debug a failing e2e run · Add a unit eval test · Write a spec · **Write a rule that behaves differently under `--autonomous`** | [§9](#if-youre-asked-to-6) |
+| Change hosted agent config · Deploy or rehearse the prototype on Beanstalk | [§8](#if-youre-asked-to-5) |
+| Verify a change · Debug a failing e2e run · Add a unit eval test · Write a spec · **Write a rule that behaves differently when no user is present** | [§9](#if-youre-asked-to-6) |
 
 > **Before you trust a green CI run, read [§9.4 — What nothing checks](#94-what-nothing-checks).**
 > Much of this system has no automated guard, and several of those gaps fail
@@ -67,7 +67,7 @@ uses freely: *assertion*, *source*, *proof summary*, *tier*, *exhaustiveness*,
 | **assertion** | One evidence claim extracted from one source, persisted in `research.json`. |
 | **proof summary / `ps_id`** | The written argument resolving one research question, carrying a confidence **tier**: `proved`, `probable`, `possible`, `not_proved`, or `disproved` (a closed enum — `enums.schema.json`). "Tier ≥ probable" in §4 means `proved` or `probable`. |
 | **sidecar** | A raw search payload stored at `results/<log_id>.json` instead of inside `research.json`, so the co-edited file stays small (§6.1). |
-| **staging** | The host-side write of a sidecar into `results/.staging/` by the search tool that produced it, later finalized by `research_log_append` (§6.1). |
+| **staging** | The host-side write of a sidecar into `results/.staging/` by the search tool that produced it, later finalized by `research_log_append` (§6.1). Acquisition tools stage through the same envelope: `record_read` and `image_transcribe` (which `research_log_append` can finalize, though no shipped flow logs one with its ref), and `person_read`, whose staged read `project_create` takes by reference (`personReadRef`) and builds the starting tree from, instead of the model re-typing it. |
 | **projection** | A compact, filtered read of a large document — what `project_context` and `research_query` return instead of the whole file (§6.3). |
 | **compaction** | When a long session's context is summarized to fit the window. Skill bodies can be evicted by it — the reason §3.1 exists. |
 | **fixture** | Two different things. `eval/fixtures/mcp/` holds **mocked tool responses** for unit runs; `eval/tests/e2e/<slug>/` holds a **benchmark case** (a starting project plus expected findings). |
@@ -85,8 +85,8 @@ uses freely: *assertion*, *source*, *proof summary*, *tier*, *exhaustiveness*,
    nothing else needs running before a PR. See §9.1 for the per-suite targets.
 2. Read [`docs/gps-research-flow.md`](gps-research-flow.md) (the domain).
 3. Read §§1–3 here (the shape).
-4. Open one skill (`packages/engine/plugin/skills/record-extraction/SKILL.md`),
-   one agent (`packages/engine/plugin/agents/record-extractor.md`), and one tool
+4. Open one skill (`packages/engine/plugin/skills/research/SKILL.md`),
+   one agent (`packages/engine/plugin/agents/record-structurer.md`), and one tool
    spec (`docs/specs/record-search-tool-spec-v2.md`) side by side. That triangle
    is the whole system in miniature.
 5. Then §§4–9.
@@ -143,6 +143,7 @@ routing surface — find your task, then open that ADR.
 | [0009](adrs/ADR-0009-refuted-agent-design-claims.md) | Keep a standing ledger of refuted agent-design claims | propose a `same_person` write-boundary discriminator · propose "routing as a tool" as the fix for a routing failure · quote a compliance rate, violation count or cost figure from an older write-up · vet an issue whose premise is one of those rows |
 | [0010](adrs/ADR-0010-record-structural-bets-in-a-ledger.md) | Record every structural bet in one ledger, and treat only a researched rejection as a bar | run `/find-big-wins` · wonder what happened to a structural idea that was proposed and never filed · want a `docs/ideas/` folder or anywhere else to park ideas · cite a ledger row against a new proposal · re-propose an idea the ledger says was rejected |
 | [0011](adrs/ADR-0011-put-guardrails-at-the-write-boundary.md) | Put a guardrail that must hold at the write boundary, not in skill prose | answer a compliance failure by strengthening a `SKILL.md` sentence · decide where a new "this must always hold" rule lives · design a completion gate, a write invariant, or a lockdown · argue a boundary check would be too strict to ship · convert a skill into a skill-agent pair · route the orchestrator to a paired agent |
+| [0012](adrs/ADR-0012-read-locality-and-record-type-guidance-from-the-wiki.md) | Read locality and record-type guidance from the FamilySearch wiki at runtime; never restate it in the plugin | write a per-country or per-record-type rule into a prompt · author a reference guide for a country's records · fold a skill's `references/` into an agent body · notice a shipped rule assumes the US federal census |
 
 Conventions, and how to add one: [`docs/adrs/README.md`](adrs/README.md).
 Not yet written: state and the writer/projection tools, self-contained agent
@@ -162,7 +163,7 @@ engine.
 | **Artifacts** | a `.mcpb` desktop extension + a plugin `.zip` | a FastAPI control plane + a React client, deployed |
 | **Where it runs** | user's machine (host) + the Cowork VM | Fly.io today, AWS in production |
 | **Source** | `packages/engine/{mcp-server,plugin}` | `apps/{server,web,electron}`, `packages/{viewer-ui,schema}` |
-| **Toolchain** | **npm** | **pnpm + turborepo** (`apps/{web,electron}`, `packages/*`); **uv / Python** (`apps/server`) |
+| **Toolchain** | **npm** | **pnpm + turborepo** (`apps/{web,electron}`, `packages/*`, `eval/app`); **uv / Python** (`apps/server`) |
 | **Build** | `make mcpb`, `make plugin` | `make server`, `make web`, `make deploy` |
 | **Covered by** | §§2–6, 8 | §7 |
 
@@ -171,8 +172,10 @@ carries a `!packages/engine/**` negation. The reason is the lockfile, not the
 build: both shipped artifacts — the `.mcpb` staged by `scripts/build-mcpb.mjs`
 and the E2B sandbox image built from `apps/server/sandbox/e2b.Dockerfile` —
 install a clean production tree with `npm ci --omit=dev` from
-`packages/engine/mcp-server/package-lock.json`, and **no CI job builds either
-one**, so a lockfile that stopped being npm's would first go wrong at a release.
+`packages/engine/mcp-server/package-lock.json`. The required `vitest` job builds
+the `.mcpb` and the plugin `.zip` on every PR and verifies the `.mcpb` with
+`scripts/verify-mcpb.sh`, but **no CI job builds the E2B image**, so a lockfile
+that stopped being npm's would first go wrong there, at a release.
 Neither artifact copies the development `node_modules`, and the plugin `.zip`
 has no dependency step at all. The dependency runs one way only: **the web side
 depends on `packages/schema`, never on the engine.**
@@ -218,11 +221,16 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **5** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **3** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **29** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The five agents are `gps-mentor`, `record-extractor`, `image-reader`,
-`proof-conclusion` and `research-exhaustiveness`.
+The twenty-nine agents are `gps-mentor`, `record-structurer`, `image-reader`,
+`proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
+`search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
+`search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
+`hypothesis-tracking`, `locality-guide`, `historical-context`,
+`timeline`, `search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
+`init-project`, `tree-survey` and `research-plan`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -283,9 +291,10 @@ how to word it:
 | for one delegated agent | **that agent's `tools:`** — omit the capability — or a narrowed tool (§5.3) | `extraction_append` |
 | within a single skill invocation | **skill prose** — this is what prose is *for* | "consult the stop criteria before draining the plan" |
 
-> **Direction.** Both gates the §4 law named have moved into the tool: the
-> **mentor gate** as a refusal, and the **tree-encoding gate** as a warning on
-> `opWarnings` — it diffs the final tree against a write-once
+> **Direction.** Both gates the §4 law named moved into the tool: the
+> **mentor gate** as a refusal — since removed, with gps-mentor off the default
+> `/research` path — and the **tree-encoding gate** as a warning on
+> `opWarnings`, which diffs the final tree against a write-once
 > `starting-tree.gedcomx.json` baseline, and ships warn-only rather than as a
 > refusal per the 2026-08-24 no-override ruling (a shape-match gate cannot
 > hard-block correct work when a wrong refusal has no override). **If you are
@@ -346,13 +355,21 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-19 of the 27 skills carry a `references/` folder, loaded on demand, in-session,
+1 of the 3 skills carries a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
-**A reference is loaded only if its own `SKILL.md` names it** — or if a
-reference the body names links on to it. Nothing lists a `references/` folder at
-runtime, so a file neither route reaches is unreachable: it costs no prompt
-tokens and carries every byte of the drift risk.
+**A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
+a reference the body names links on to it. Nothing lists a `references/` folder at
+runtime, so a file neither route reaches is never loaded on purpose: in the normal
+path it costs no prompt tokens, while carrying every byte of the drift risk.
+
+Both halves of that are claims about the normal path, not about reach. **An
+unnamed file is not out of reach.** Both environments put every skill's
+`references/` folder in front of a session — the harness copies each skill
+directory into the workspace's `.claude/skills/`, and the Cowork `.zip` ships the
+whole plugin — so a model that globs can read any of them, unreviewed. Measured,
+not theorised: `ut_convert_dates_012` globbed `**/*`, read three files on that
+test's exemption list, and one of them changed its answer.
 
 `tests/packaging/skill-reference-reachability.test.ts` enforces that, and is
 where the still-unreached files are listed. Its exemption list **only shrinks** —
@@ -363,10 +380,13 @@ it carries a measured reason per file, which a grep cannot.
 
 The same test pins the other direction: **a `SKILL.md` naming a `references/`
 file that is not on disk fails CI too**, since the agent is then told to read
-something it cannot open. One is exempt — `project-status` names
-`output-formats.md` twice as the render source for both its summaries, and that
-file has never existed in this repo. Writing it decides what the skill outputs,
-which is a content call owing a paid eval run rather than a mechanical fix.
+something it cannot open. **Nothing is exempt from this half** — its exemption
+list is empty, so a dangling pointer fails outright. The one entry it ever
+carried was `project-status` naming a render source for both its summaries that
+had never existed in this repo; both pointers were deleted rather than the file
+written, because `SKILL.md` already states what each summary must carry and
+`rubric.md` grades them on that coverage and on being distinct from each other,
+so there was no layout contract to lose.
 
 **Reachable is not read, and what gates it is the skill's reference-manifest
 block — not the file, and not the strength of the wording.** A file listed in the
@@ -385,6 +405,13 @@ so a skipped `Read` does leave a trace:
 | an imperative trailing a paragraph about something else | `person-evidence/evidence-standards.md` | **0/18** |
 | a bare noun phrase, not an instruction | `check-warnings/warning-checks.md` | **0/16** |
 | point-of-use, gated on "for that year" | `search-records/census-field-availability.md` | **0/25** |
+
+The last row is a historical measurement: that file has since been **deleted**,
+which is what the 0/25 argued for. Its census-schedule content is now
+fetched from the wiki by an unconditional member of a labelled Step 2 pre-work
+block (ADR-0012), and the craft the wiki does not carry was folded into the body.
+The row stays because it is the sharpest measurement of the effect this section
+documents — a bolded, unconditional, point-of-use imperative that still read zero.
 
 Positive unit fixtures only — a negative fixture is a skill correctly declining,
 which loads nothing, and including them understates every row.
@@ -431,7 +458,7 @@ with no manifest block to sit in.
 
 **The first of those two is now measured, and it lands harder than the block
 does.** A `craftNotes` payload returned from `project_context` — a call
-`record-extractor` makes on every spawn — was adopted on **289 of 289** eligible
+`record-extractor` (since retired) made on every spawn — was adopted on **289 of 289** eligible
 assertions across 12 of 12 census tests, against a baseline of **0 of 1,638 over
 six runs**, while honouring every carve-out the note declared (zero leak onto the
 record types it excluded). It was adopted **even though it contradicted the census
@@ -450,46 +477,55 @@ Code's relative-path resolution from one SKILL.md into another skill's folder is
 unreliable (claude-code#17741). So guidance several skills must follow
 identically is **physically duplicated** into each one rather than linked.
 
-Three families are duplicated today, and only one is lint-guarded:
+**One family is duplicated today, and it is the lint-guarded one:**
 
 | File | Copies | Distinct contents | Lint |
 |---|---|---|---|
-| `places-guidance.md` | 9 | 2 | `tests/packaging/skill-guidance.test.ts` |
-| `validation-protocol.md` | 2 | **2** | **none** |
-| `research-log-protocol.md` | 1 | 1 | **none** |
+| `places-guidance.md` | 5 | 2 | `tests/packaging/skill-guidance.test.ts` |
 
-The last two were 11 and 3 until the unreachable copies were deleted. Nine
+The other two families are **gone**. `validation-protocol.md` ran 11 → 2 → 1
+(the `citation` copy went) → **0**, and `research-log-protocol.md` 3 → 1 → **0**,
+both retiring when the last `search-records` copies were deleted. The
+long-standing note here that "the two surviving `validation-protocol.md` copies
+contradict each other" described a two-file disagreement that no longer has two
+files: what each copy said is now either enforced by the writer tool's own error
+contract or stated once in the body that used to point at it.
+
+The history is worth keeping because it is the argument for the lint: nine
 `validation-protocol.md` copies and two `research-log-protocol.md` copies were
-named by no `SKILL.md`, so no session could load them; three of the nine also
-carried the retired "run `validate_research_schema` after writing" doctrine, and
-four named a `check-warnings` trigger their skill cannot reach — it writes
-`questions` or `plans`, never `assertions` or `person_evidence`. The two
-surviving `validation-protocol.md` copies still **contradict each other**, and
-that is now a two-file disagreement rather than a nine-way one.
+named by no `SKILL.md`, so nothing loaded them deliberately; three of the nine
+also carried the retired "run `validate_research_schema` after writing"
+doctrine, and four named a `check-warnings` trigger their skill cannot reach —
+it writes `questions` or `plans`, never `assertions` or `person_evidence`. A
+duplicated family with no lint decayed in exactly the way the guarded one did
+not.
 
-The `places-guidance` lint holds 8 copies byte-identical to a canonical at
+The `places-guidance` lint holds 4 copies byte-identical to a canonical at
 `packages/engine/plugin/references/places-guidance.md` — a path deliberately
 **absent from `package-plugin.mjs`'s `INCLUDE`**, so the canonical is a
-build-time anchor that never ships into the VM. The 9th copy belongs to
-`research-plan`, which had three place tools dropped from its `allowed-tools`
-in 8bf43be2 (and never held a fourth), so the canonical text would name tools it
-cannot call. It is exempted **by name** in `SKILLS_WITH_SPECIALIZED_COPY` — but
-pinned to a **sha256 of its own content**, so an edit inside it fails CI until
-the hash moves in the same diff. **Copy that shape, not a bare exemption**, when
-a fourth family gets a lint: every skill must land in exactly one of the two
-lists, and the test asserts that too.
+build-time anchor that never ships into the VM. The 5th copy belongs to
+`init-project`, whose canonical "copy it from a `person_read` result" bullet
+names a step it no longer takes (`project_create` carries the
+`standard_place`). It is exempted **by name** in `SKILLS_WITH_SPECIALIZED_COPY`
+— but pinned to a **sha256 of its own content**, so an edit inside it fails CI
+until the hash moves in the same diff. `research-plan` carried a specialized
+copy too until it was deleted under the lead's 2026-08-31 ruling and the two
+rules it needed were inlined into its body (now `agents/research-plan.md`). **Copy that shape, not a bare
+exemption**, when a fourth family gets a lint: every skill must land in exactly
+one of the two lists, and the test asserts that too.
 
 > **Today:** editing a duplicated reference means editing every copy by hand and
-> knowing which divergences are deliberate. For `validation-protocol.md`,
-> **nothing records which is which** — its two survivors disagree on whether a
-> post-write `validate_research_schema` pass is required.
+> knowing which divergences are deliberate — now only for `places-guidance.md`,
+> which is the family that has the lint.
 > **Direction:** either lint a shared core plus a
 > per-skill "who calls what" section, or derive each copy at build time from the
-> skill's `allowed-tools`. The cheaper move is to *shrink* them —
-> `validation-protocol.md` largely restates rules `research_append`'s error
-> contract already enforces at write time, and a rule the tool rejects can be one
-> sentence. **Before adding a copy, say why in the PR — and name it in the
-> `SKILL.md`, or you are shipping a file nothing can read.**
+> skill's `allowed-tools`. **The cheapest move is the one actually taken: delete
+> them.** `validation-protocol.md` largely restated rules `research_append`'s
+> error contract already enforces at write time, and a rule the tool rejects
+> needs no prose copy at all — so the two unguarded families were removed rather
+> than shrunk or linted. **Before adding a copy, say why in the PR — and name it
+> in the `SKILL.md`, or you are shipping a file nothing loads on purpose — and
+> that a globbing model can still read, unreviewed.**
 
 ### 3.4 Agent bodies are self-contained — do not split them
 
@@ -525,10 +561,10 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `record-extractor`, `image-reader`, `proof-conclusion` + `research-exhaustiveness` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
-| **Session effort** | `.claude/settings.json` `effortLevel`; never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted inherits |
+| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching subagents on CLI 2.1.215 and 2.1.220 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12; the harnesses' CLI 2.1.139 is unprobed); never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted sets none, and the CLI default already sends `output_config.effort: high` on a `claude-sonnet-4-6` subagent's request |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
 > unit harness (`harness/orchestrator.py` honours the field, falling back to
@@ -561,6 +597,22 @@ agents.**
 > as the current population, and re-measure it rather than quoting it at a
 > proposal that would change it.
 
+**`.claude/settings.json` also carries a `permissions.allow` list**, reducing
+repeat permission prompts for commands verified genuinely read-only or
+scratch-scoped in practice but not covered by Claude Code's built-in
+auto-allow set (which includes undocumented "read-only forms of `git`" per
+its own docs, without enumerating which subcommands qualify — an explicit
+entry here removes that ambiguity rather than duplicating a guarantee).
+JSON carries no comments, so the file itself is not the rationale's home:
+the safety case for each entry — what was checked, what was ruled out, and
+why — lives in the commit message that added it. Read the current file for
+the exact list; `git log -p -- .claude/settings.json` for why each entry is
+there. `record_search` is the one non-obvious entry — it is not read-only (stages a sidecar under
+`results/.staging/`, pruned after 24h — `results-staging.ts`), kept because
+the writes stay in the tool's own scratch directory — the entry itself is a
+bare string, and the adding commit's own text doesn't make that argument: it
+calls `record_search` read-only outright, which this paragraph corrects.
+
 ### 3.6 The lane rule — classify a finding before you edit prose
 
 An e2e failure, an eval miss, or a user complaint is **not** automatically a
@@ -570,7 +622,7 @@ prose bug. Before editing any `SKILL.md` or agent body, classify it:
 |---|---|---|
 | 1 | a tooling defect | an MCP tool PR |
 | 2 | an eval defect (judge, rubric, or fixture is wrong) | an eval PR |
-| 3 | a **record-type craft gap** — this census/probate/deed handled wrong, other types fine | **Depends on whose gap it is.** An *agent* finding → the table for that type inside the agent body (e.g. the census informant table in `agents/record-extractor.md`); agents carry no sibling reference files, by decision (§3.4). A *skill* finding → that skill's own `references/` file — skills do have them (§3.3). Either way a table edit is scoped: it changes one type and nothing else. |
+| 3 | a **record-type craft gap** — this census/probate/deed handled wrong, other types fine | **Depends on whose gap it is.** An *agent* finding → the table for that type inside the agent body ; agents carry no sibling reference files, by decision (§3.4). Extraction is not an agent finding: roles and classifications are decided in code (`src/utils/record-extract.ts`, `src/utils/structured-document.ts`), so an extraction craft gap is lane 1. A *skill* finding → that skill's own `references/` file — skills do have them (§3.3). Either way a table edit is scoped: it changes one type and nothing else. |
 | 4 | **core doctrine** — a rule that applies across record types or skills | the stewarded prose edit, gated by the unit suite. **Often the same file as lane 3; the difference is blast radius, not location.** If your edit changes behavior on records you didn't look at, it's lane 4. |
 | 5 | a **triggering / routing miss** — the skill never ran | the `description` (§3.2) or the routing table (§4), **never the body**. See "Fix a skill that isn't triggering" at the end of §4. |
 
@@ -590,12 +642,20 @@ Architecturally:
   template.
 - **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
-  `allToolSchemas`, **and** parses `src/index.ts` for the dispatch chain —
+  `allToolSchemas`, **and** parses `src/server.ts` for the dispatch chain —
   advertised-but-undispatched, dispatched-but-unregistered, and duplicate cases
   all fail. Forgetting the `if (request.params.name === "…")` block used to ship
   a tool that fell through to the `Unknown tool: …` throw closing
-  `src/index.ts`'s `CallToolRequestSchema` handler, on its first real
-  call with CI green; that is now a CI failure. A commented-out `case` does not
+  `src/server.ts`'s `CallToolRequestSchema` handler, on its first real
+  call with CI green; that is now a CI failure. The chain lives in
+  `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
+  `LOCAL`) and `src/http.ts` (the search-agent prototype's Streamable HTTP
+  tool server, binding each request's bearer and a `PgS3ProjectStore` from its
+  `X-Genealogy-Project-Id` header, fenced on the worker attempt's claim
+  (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`), and 403 unless the bearer is
+  the one stamped on that open turn of that project, U4) are entrypoints that only connect
+  a transport, so a new arm goes in `server.ts` and both get it. A
+  commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
   extraction guard fails rather than silently passing.
 - **If your tool signals failure by RETURNING `{ ok: false }` rather than
@@ -616,13 +676,19 @@ Architecturally:
   return `noProjectResult()` (`"read"` for a read or a preview), so a user who
   is not in a research project gets an answer rather than `research.json not
   found in projectPath`. Then add the tool to `CALLS` in
-  `tests/tools/no-project.test.ts` — that list is hand-maintained and nothing
-  derives it, so a tool left out is uncovered.
+  `tests/tools/no-project.test.ts` — that list is backed by a derivation test
+  that traces each tool's imports transitively and flags any project-reading tool
+  absent from both `CALLS` and `OPTIONAL_PROJECT_TOOLS`. Read and write through the
+  `project-io` / `results-staging` / `image-store` helpers or `getProjectStore()`
+  (`src/store/`), with project-relative refs — never `fs` and never an absolute
+  path. A tool that imports `fs` fails `tests/packaging/no-fs-outside-store.test.ts`,
+  because the same tool has to work under a backend that is not a directory.
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
-  `tests/tools/<name>.test.ts`, `README.md`'s tool table, and — if a skill will
-  call it — an `eval/fixtures/mcp/` fixture.
+  `tests/tools/<name>.test.ts`, `docs/catalog.md`'s tool table, `READ_ONLY` in
+  `src/tool-schemas.ts` if concurrent calls cannot corrupt project state (§5.2),
+  and — if a skill will call it — an `eval/fixtures/mcp/` fixture.
 - **Changing an existing tool's response type also breaks its fixtures**, in the
   other direction: add or rename a required field and every fixture for that tool
   is now a shape the tool cannot return.
@@ -634,14 +700,14 @@ Architecturally:
   `~/.familysearch-mcp/config.json`. **Never a `process.env` fallback** — the
   file is the sole source. Throw **LLM-instruction errors**: the message must
   tell Claude what to do next, not just what failed.
-- **Every network leg goes through `fetchWithTimeout` (`src/utils/http.ts`)** —
+- **Every network leg goes through `fetchWithRetry` (`src/utils/http.ts`)** —
   the global `fetch` never times out and a stalled upstream hangs the call
   forever. Size the budget under **60s** or accept that Cowork loses the tail:
   the device bridge caps every MCP call at 60s (see "Other environment
   differences that bite"), so any budget above it is honoured only on the
   stdio paths (harnesses and hosted, both verified) and silently truncated in
   Cowork. Size a raise from the measured e2e corpus, not by guessing.
-- **Reuse before you write:** `getValidToken()` for auth (never re-implement
+- **Reuse before you write:** `getValidToken(principal)` for auth (never re-implement
   token plumbing), `place-resolver.ts` / `place-api.ts` for places, and
   `BROWSER_USER_AGENT` from `src/constants.ts` for any FamilySearch endpoint —
   FS sits behind Imperva and **403s non-browser UAs**.
@@ -657,22 +723,30 @@ Architecturally:
   points at the compiled `build/`, and a live session holds the old catalog. The
   harness targets (`harness-test`, `eval-skill`, `e2e-run`) carry `$(ENGINE_BUILD)`
   and rebuild for you. Cowork: `make mcpb` and reinstall the extension, then fully
-  quit and reopen Claude Desktop. Hosted: `make sandbox-image` — the
-  `genealogy-agent` image bakes its own engine and `make server-e2b` does **not**
-  rebuild it (§7). `docs/skill-lifecycle.md` → "Rebuilding and reinstalling"
+  quit and reopen Claude Desktop. Hosted: `make deploy` (which rebuilds the image),
+  or `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` to verify against a
+  dev template first — the `genealogy-agent` image bakes its own engine and
+  `make server-e2b` does **not** rebuild it (§7). A bare `make sandbox-image`
+  rebuilds PRODUCTION's template in place. `docs/skill-lifecycle.md` → "Rebuilding and reinstalling"
   covers the Claude Code and Cowork rows; the hosted row is only here.
 
 > **On the User-Agent, the rule is conditional.** `genealogy-mcp-server/<version>`
 > is what the four non-FamilySearch tools send today (`wikipedia`, `wiki_search`,
-> `wiki_read`, `wiki_place_page`) and is correct for them. It is also exactly
+> `wiki_read`, `wiki_place_page`) and is correct for them; `wikipedia` adds the
+> repo's URL, because Wikimedia throttles agents without contact details. It is also exactly
 > what Imperva 403s on any FamilySearch endpoint. So: **FamilySearch →
 > `BROWSER_USER_AGENT`; anything else → the service's own convention.** The
 > deleted `mcp-tool-scaffolder` subagent stated it unconditionally — because its
 > canonical template was one of the non-FS tools — which is part of why it and
 > its two siblings were removed.
 
-**Add a skill.** Copy `packages/engine/plugin/skills/search-wikipedia/` — the
-canonical minimal example of the full pipeline. Don't mutate it. Then:
+**Add a skill.** Note first that under the lead's 2026-09-22 ruling a new
+capability is an **agent**, not a skill — copy
+`packages/engine/plugin/agents/search-images.md`, the smallest agent that
+carries the `summary_for_user` return contract, and see "Agent frontmatter"
+below. **Do not copy `agents/search-wikipedia.md`**: it is exempt from that
+contract, and a copy of it fails `agent-return-contract.test.ts`. What follows
+applies to the skills that remain. Don't mutate the reference file. Then:
 `docs/skill-authoring-guide.md` for the body; the `description` is linted twice
 at 1024 chars (§3.2); a skill meant to run inside `/research` also needs a
 **routing row** (§4) or it will never be reached; no network in `scripts/`; no
@@ -684,17 +758,19 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 
 > Touching *anything* under `packages/engine/plugin/skills/**` — including a
 > `references/` file or a comment — arms `.github/workflows/check-runlogs.yml`,
-> which **blocks the PR** unless the newest full-skill run log's snapshot matches
-> your branch and its `.ann.json` carries a correction for every dimension of
+> which **blocks the PR** unless the run log you add (or, if you add none, the
+> newest full-skill run log) has a snapshot that matches your branch and an
+> `.ann.json` that carries a correction for every dimension of
 > each **sampled** test — the tests named in the run log's `review_sample`
-> (3 rotation + 1 targeted + 1 random, plus every test that failed or scored a 1 or 2 on any dimension, so the
+> (3 rotation + 1 targeted + 1 random, plus every test that failed, scored a 1 or 2 on any dimension, or carries a coerced_routing_negative_to_na warning, so the
 > count varies by run).
 > A run log without that field, which is every one written before
 > sampling shipped, still owes every dimension of every test.
 > Annotations are written **only** through the CRUD UI (`make
 > eval-ui`); hand-writing them is forbidden. A behavior-neutral edit can instead
-> take the `eval-cosmetic-skip` label from a senior, which relaxes **the snapshot
-> rule only** — the annotation rule still runs against the prior run log — and
+> take the `eval-cosmetic-skip:<skill>` label from a senior for each skill whose
+> change is behavior-neutral, which relaxes **the snapshot rule only**, for that
+> skill only — the annotation rule still runs against the prior run log — and
 > expires on every new push. **`forget-and-rederive` is exempt**
 > (`RUNLOG_GATE_EXEMPT_SKILLS`), because it has no unit suite. `research` was
 > formerly exempt but gained a trigger corpus and is now gated. Full rules:
@@ -704,8 +780,13 @@ Remember the unit suite grades a *single invocation in fresh context* — it wil
 happily bless a cut that removes something only a multi-hour session needs.
 
 **Add a plugin agent.** Write the body self-contained (§3.4), spell every
-tool (§5.2), and pin `model:` deliberately. Then run `make agent-smoke` (§8) —
-and note that no CI job runs it.
+tool (§5.2), pin `model:` deliberately, and give it an `AGENT_WRITABLE_SECTIONS`
+lane if it holds `research_append` (plus `agentCallers` rows for every writer
+tool it holds — "Give an agent a new tool", §5). Register it in the worker's
+`EXPECTED_AGENTS`, in `DELEGATION_EDGES`, and in `agent-return-contract.test.ts`
+(heading or `PENDING`) — the full list, with
+what each wants, is in `docs/skill-to-agent-pair-conversion.md` → "What adding an
+agent trips". Then run `make agent-smoke` (§8) — and note that no CI job runs it.
 
 ---
 
@@ -724,45 +805,66 @@ There **is** an orchestrator, and it is a skill:
    reads `research.json` through `research_query` and derives where the project
    is: which questions have plans, which log entries lack assertions, which
    conflicts are open, which proofs lack verdicts.
-2. **A 17-row routing table maps state → next sub-skill** — in
+2. **A 21-row routing table maps state → next sub-skill** — in
    `research/SKILL.md` under `## What to do`, the table whose header row reads
    `| If research.json has... | Invoke |`. The table is the source of truth and
-   is not duplicated here. Its `Invoke` column is a **literal
-   `Skill` tool call** — "writing `proceed to research-exhaustiveness` and then
-   hand-authoring the fields that skill would have written is not invoking it."
-   Agents are delegated as `Task` calls using the bare `@plugin:<name>` form.
+   is not duplicated here. Its `Invoke` column is a **literal tool call, by the
+   name written in the cell** — "writing `proceed to research-exhaustiveness`
+   and then hand-authoring the fields that skill would have written is not
+   invoking it." The column is **mixed**, and the spelling is what says which:
+   an entry spelled `@plugin:<name>` is an `Agent` spawn of that agent, and
+   every other entry is a `Skill` call. The formerly paired rows —
+   `research-exhaustiveness`, `proof-conclusion` and `person-evidence` — take
+   the spawn, and their same-named thin skills have all been deleted:
+   the agent is now the only entry point, for the
+   orchestrator, for a user who names it, and for its unit-eval suite
+   (`docs/skill-to-agent-pair-conversion.md` §0, which owns this rule).
    **The table is not the only routing surface in the file.** The section headed
    `## Direct user requests name a destination, not a shortcut`
    overrides a direct request for a downstream skill and sends the router back
    through the table; a change to routing behaviour that edits only the table
    can be reversed by that section.
-3. **Two modes.** Interactive surfaces meaningful decisions to the user.
-   `--autonomous` runs the loop in one continuous turn: no clarifying questions
-   and decisions logged to the audit-trail fields. **The router does not yield on
-   a mentor verdict.** The one verdict table in the file is advisory in both modes
+3. **One mode, in the router.** It runs the loop in one continuous turn — no
+   clarifying questions, decisions logged to the audit-trail fields — for every
+   run, with no flag to turn it on. **`--autonomous` gates no branch in any
+   plugin body**: the router's went with S2, and six others
+   (`search-external-sites`, `question-selection`, `search-records`,
+   `research-plan`, `agents/proof-conclusion.md`, `agents/gps-mentor.md`) were
+   folded in beside it on the lead's call, because the browser never sends the
+   flag and every one of those branches was dead on a hosted run.
+   `agents/person-evidence.md` was left out: its resolve-downward rule still
+   applies only to "an autonomous `/research` run", in words rather than the
+   flag, which a browser turn never is. The string survives in exactly two
+   places: the trigger list in `research/SKILL.md`'s description, and the
+   message the e2e harness and `make proto-demo` still build. So no offline suite
+   sees the difference; only the paid eval runs do.
+   **gps-mentor runs only when the user asks for a second opinion, and the router
+   does not yield on its verdict.** The one verdict table in the file is advisory
    — `address_first` is surfaced and recorded, and does not block, re-open a
    resolved question, or force a remediation skill. A second, blocking table
    said the opposite for seven weeks — a merge had restored text that an
    earlier change deliberately deleted — and it was ruled out and removed.
-4. **Completion is gated twice.** Before `project.status = "completed"` is
-   written via `research_append`: the **tree-encoding gate** — every
-   tier-≥-probable conclusion must be encoded in `tree.gedcomx.json`; and the
-   **mentor gate** — every `ps_id` a resolved question references must carry a
-   `focus: "proof-critique"` verdict in `evaluations[]`, written by
-   `@plugin:gps-mentor`. The mentor gate is mandatory to *invoke and record*; its
-   recommendation stays advisory and never forces rework. **Who owns that write
-   is an open question**, not a settled "one direct write": the routing table's
-   last-but-one row has the orchestrator write it, while the same file's
-   "Re-invocation behavior" section says the router writes "nothing directly."
-   The lead has to pick one; until then, do not build a check that assumes
-   either.
+4. **Completion is gated once in the router, once in the tool.** Before
+   `project.status = "completed"` is written via `research_append`, the router
+   checks the **tree-encoding gate** — every tier-≥-probable conclusion must be
+   encoded in `tree.gedcomx.json` — and the tool refuses while a blocking conflict
+   is unresolved. No `proof-critique` verdict is required: gps-mentor is off the
+   default path, and `proof-conclusion`'s completing summary tells the user they
+   can ask for a second opinion. **`proof-conclusion` owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` when
+   continuous work shipped (2026-09-23). Three surfaces already said so and the router
+   contradicted all three: `docs/specs/schemas/ownership.json` names
+   `agent:init-project` and `agent:proof-conclusion` as the `project` section's
+   only callers, `agents/proof-conclusion.md` §8 makes the call, and the
+   router's own `allowed-tools` grants no writer tool. The router verifies the
+   tree-encoding gate and re-invokes `proof-conclusion`; it never writes the
+   status.
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
    or a genuine logged blocker. Nothing else — finishing a sub-skill is mid-loop.
 
 **Two contracts the orchestrator enforces on itself**, both load-bearing for
 §§5–6: it never extracts records inline (every positive/partial log entry routes
-through `record-extraction`, which delegates one `record-extractor` agent per
-record), and it never writes identity links or eliminations inline
+through `extraction_append` — `recordIds` for FamilySearch records, one
+`record-structurer` spawn for any other source), and it never writes identity links or eliminations inline
 (`person-evidence`, `conflict-resolution`, `hypothesis-tracking` own those).
 
 > **Direction.** Only **6 of the 17 rows are mechanically
@@ -779,9 +881,10 @@ record), and it never writes identity links or eliminations inline
 > corpus (15 tests) plus stubbed routing tests covering rows 1–4 and the
 > shortcut guard. Row 14 (post-verdict `address_first` handler) is now
 > gradeable — the contradiction it was blocked on is gone (item 3 above).
-> Row 16 (`project.status = "completed"`) stays blocked, on who owns that
-> write rather than on a verdict table. A live e2e run is still the only
-> instrument for routing-table rows the unit suite does not yet cover.
+> Row 16 (`project.status = "completed"`) is no longer blocked on who owns
+> that write — item 4 above settles it — but no unit test covers it yet. A
+> live e2e run is still the only instrument for routing-table rows the unit
+> suite does not yet cover.
 
 ### If you're asked to…
 
@@ -794,6 +897,16 @@ back through the table anyway. The trigger corpus catches routing
 *into* `research` from the description, but not the internal routing table; a
 live e2e run is still the only instrument for table changes. Name the fixture
 you ran in the PR, or say you ran none.
+
+**A row spelled `@plugin:<name>` is an agent spawn, and the compliance
+detectors need no edit for it.** They credit a guardrail arm on either route: a
+`Skill` call naming it, or a typed `Agent`/`Task` spawn whose `subagent_type`
+(plugin namespace stripped) names it. So flipping a guardrail row from a skill
+to its agent, or converting another guardrail skill, keeps compliance green as
+long as the agent carries the arm's name. Adding the agent file still needs its
+name in `DEDICATED_AGENT_NAMES` (`eval/harness/harness/skill_invocation.py`),
+whose guard test goes red until it is there. An untyped spawn is still a bypass —
+the rule and its reason are in `docs/specs/guardrail-enforcement-spec.md` §2.
 
 The runlog CI gate now applies to `research` (armed by adding
 `eval/tests/unit/research/`). `forget-and-rederive` remains exempt
@@ -846,7 +959,7 @@ the most expensive mistake in this layer, because two of the three fail
 |---|---|---|
 | Skill `allowed-tools:` | **bare** (`research_query`) | **No** — neither production path nor the unit harness narrows per skill. The field is a grant, not a restriction. Advisory only: the `test_tool_allowlist` validator warns on undeclared calls. |
 | Agent `tools:` | **spelled under all three registrars**, matched exactly | **Yes** — a tool omitted from it is absent from the agent even under `bypassPermissions` (measured, §5.2). This is the whole of an agent's capability boundary: `disallowedTools:` was deleted from all five agents on 2026-08-30, because every deny restated the omission above it. |
-| `PreToolUse` hook | n/a — matches on tool name + input | **Yes** — and it carries more than the raw-write lockdown: it also routes `research_append` by **caller identity** (§5.4), which is the only surface that can restrain the main thread. Neither harness loads the plugin's `hooks.json`, but both harness hooks **import its predicates**, so the rules bind in all four environments (§5.4). |
+| `PreToolUse` hook | n/a — matches on tool name + input | **Yes** — and it carries more than the raw-write lockdown: it also routes `research_append` by **caller identity** (§5.4), which is the only surface that can restrain the main thread. Neither harness loads the plugin's `hooks.json`, but both harness hooks **import its predicates**, so the rules bind in all four environments (§5.4). **Measured in one of the four**: `make hook-smoke` (§9.1) drives the hosted SDK loader end to end and requires the guard script's own deny text back. Cowork, where this hook is the *only* guardrail, was probed live on 2026-07-30 (§5.4, ADR-0005) — with a broader matcher and only for `Write`/`Bash`, before the `research_append` arm existed (2026-08-21). That arm is still unmeasured there and it stays on the `nothing-checks` register. |
 
 ### 5.1 Skill `allowed-tools` — declarative everywhere
 
@@ -897,9 +1010,11 @@ against the harness's arbitrary dict key rather than the product's name. The
 bare `display_name` registration repeated the shape one registrar later — that spelling was missing,
 `record-extractor` was refused outright with all 16 of its entries named
 unrecognized, and the lint agreed with the omission because it derived its expected
-prefixes from the two registrars we knew about. (`gps-mentor` is the exception: it
-declares a bare `Read`, which always resolves, so it would spawn holding that
-alone rather than be refused.) Listing every
+prefixes from the two registrars we knew about. (An agent that declares the
+built-in `Read` bare is the exception: `Read` always resolves, so it spawns
+holding that alone rather than be refused. Today that is `proof-conclusion` and
+`research-exhaustiveness`; every other agent, `gps-mentor` included, is MCP-only
+and a registrar miss refuses it.) Listing every
 spelling is safe because unrecognized entries are ignored so long as one resolves.
 
 **`disallowedTools:` was never the load-bearing layer — and this half of the
@@ -908,11 +1023,11 @@ ADR-0004, ADR-0006, ADR-0011, two specs, the packaging test and three agent
 bodies all said "a deny binds even under `bypassPermissions`; an omission alone
 is not." Seven of them cited the birkeland lane breach for it,
 which says nothing about `bypassPermissions`, denies, or omissions. Probed
-2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128 (`make
+2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
 probe-agent-binding`, reproduced twice): under `bypassPermissions` **both**
 bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
-denied one is. So the omission is what keeps `record-extractor` off the broad
-`research_append`, and its deny restates that rather than being the last line.
+denied one is. So the omission is what kept `record-extractor` (since retired) off the broad
+`research_append`, and its deny restated that rather than being the last line.
 
 **So all five deny blocks were deleted on 2026-08-30.** Every one named a tool
 already absent from its agent's `tools:`, which makes it a restatement, and 83
@@ -938,9 +1053,10 @@ is pinned synthetically because no agent ships a deny for it to fire on.
 **One cost, accepted.** `check_rubric_tool_drift.py` asks whether a tool named
 in an agent body appears in either list, and `disallowedTools:` was doubling as
 the marker for a deliberate "you do NOT have this tool" mention. Removing the
-denies took that marker away, so its agent-body warnings went 5 → 12. It is
-warn-only and does not block a build; the suppression mechanism it wants is
-`gh issue list --state open --search "check_rubric_tool_drift suppression"`.
+denies took that marker away, increasing its agent-body warnings (run
+`python eval/harness/scripts/check_rubric_tool_drift.py` for the current
+count). It is warn-only and does not block a build; known false positives
+are handled by the `SUPPRESSIONS` list in the script.
 
 **Two standing prohibitions:**
 
@@ -959,6 +1075,36 @@ All of this is CI-linted by `tests/packaging/agent-tool-names.test.ts`, which
 derives the bridge prefix from `display_name` (so an extension rename fails
 loudly in CI) and asserts all five registration sites still agree on `genealogy`.
 
+**Agents do not spawn agents.** When a request belongs to another agent, the
+agent hands it back: it names the owning agent in its caller-facing return
+lines (never in the researcher-facing `next_step`) and the main thread spawns
+it, so every spawn stays one level deep (lead ruling 2026-09-23). The same packaging test
+fails any agent whose `tools:` grants `Task` or `Agent` unless it is on its
+`SPAWN_ALLOWED` list, which is empty and takes a lead ruling to extend.
+
+The capability exists if that list ever needs it. `make probe-agent-nesting`
+(2026-09-23, Claude Code 2.1.220, SDK 0.2.128, hosted loader):
+
+| grant in the driver's `tools:` | depth-2 spawn | tool actually called |
+|---|---|---|
+| `Task` | yes | `Agent` |
+| `Agent` | yes | `Agent` |
+| both | yes | `Agent` |
+| neither (control) | no | — |
+
+`Task` is an alias for `Agent`, so either grant binds. The SDK streams **no**
+depth-2 messages: what the nested agent did reaches the caller only through its
+result text, so a harness cannot inspect it. **Cowork and depth 3 are
+unmeasured.**
+
+The record-extraction shape was measured directly (`--arm extractor-parallel`):
+a driver holding only `Read`, `ToolSearch` and `Agent` spawned three real
+`record-extractor`s in one message with `run_in_background: false`. They ran
+concurrently, all three sources and 53 assertions landed with distinct ids, the
+wall-clock was 694 s against ~1,419 s back to back, and the main thread received
+626 characters. A background spawn is killed when the driver returns, so the
+driver must wait.
+
 > **Correction to three comments in the code (verified 2026-08-02).**
 > `ENABLE_TOOL_SEARCH=true` **enables** deferred/tool-search mode. It does *not*
 > eager-load schemas. Confirmed against the installed CLI (v2.1.220): a truthy
@@ -969,23 +1115,54 @@ loudly in CI) and asserts all five registration sites still agree on `genealogy`
 > Vertex, and under `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`.) **Five sites
 > described the opposite and have been corrected** — the
 > three harness/hosted comments plus `CLAUDE.md` and this repo's own packaging
-> test. The flag **values** are unchanged; flipping them is separate work that
-> has to re-measure the tool mix before and after, and
-> `eval/harness/e2e/mcp_health.py`'s mid-run backstop now *depends* on deferral
-> being on, so it is no longer a one-line experiment
-> (`gh issue list --state open --search "ENABLE_TOOL_SEARCH"`). The
+> test. The flag **values** are unchanged: on everywhere by default. Both eval
+> harnesses take an experiment-only off switch, `--no-tool-search` (`make e2e-run`
+> / `make eval-skill` with `TOOL_SEARCH=0`); an e2e run made with it must go to a
+> `RUNLOG_ROOT` outside `eval/runlogs/e2e/` (the harness refuses, CI rejects a
+> commit), and a unit run made with it is a `scratch_` log.
+> `eval/harness/e2e/mcp_health.py`'s mid-run backstop *depends* on deferral being
+> on and is inert under the switch. What off costs against on is recorded in
+> `docs/plan/cost-latency-10x.md` §5 once measured (T1.7). The
 > repo's own data corroborates the flag being live: ToolSearch is a steady few
 > percent of all tool calls across the committed e2e corpus *while the flag is
 > set to `true`*. This does not change the bare-name rule above, which is
 > correct either way.
+>
+> **Exception: `ALWAYS_LOAD` (`src/tool-schemas.ts`).** Those tools carry
+> `_meta: {"anthropic/alwaysLoad": true}` in `tools/list`, which the Claude Code
+> CLI honors under any server name (verified on 2.1.139 and 2.1.220; unverified in
+> Cowork). The set is sized from the September e2e corpus. 76 of 82
+> `research_append` re-loads follow a `compact_boundary`, which is consistent with
+> compaction dropping a ToolSearch-loaded schema. An always-loaded one is not
+> dropped.
+> `record_search` stays deferred, because its 18.5 KB schema costs more than the
+> calls it would save. **The unit harness still defers the set**, because
+> `mock_mcp.py` copies only `name`/`description`/`inputSchema` into its catalog
+> and the SDK's `@tool` cannot emit that `_meta` key. So `make eval-skill`
+> diverges from production here. Nothing on the unit plane grades ToolSearch
+> counts.
+>
+> **Read-only tools run side by side: `READ_ONLY` (`src/tool-schemas.ts`).**
+> Those tools carry `annotations: {"readOnlyHint": true}` in `tools/list`, which
+> the Claude Code CLI reads as concurrency-safe (verified on 2.1.139, 2.1.220 and
+> 2.1.302), so several in one assistant message run at once. A tool belongs in the
+> set when concurrent calls cannot corrupt project state and their order does not
+> matter: a pure read, or a read that only stages its own result file, appends a
+> log line, writes `external-collections.json` under `withProjectLock`, or
+> rewrites its own retained scan under `images/`. Every other tool —
+> anything that writes `research.json` or the tree, or whose effect a later call
+> in the batch can depend on — stays serial: it runs alone, in order, after the
+> calls before it finish. `tests/packaging/read-only-tools.test.ts` pins the set
+> and refuses a writer in it. The unit harness stays serial, since `mock_mcp.py`
+> copies no annotations; whether Cowork's bridge passes them on is unverified.
 
 ### 5.3 Capability restriction by tool identity
 
 Where a boundary must hold against a **misdirected caller**, this system narrows
 the *tool*, not the prompt.
 
-`extraction_append` is `research_append` restricted to the two sections
-`record-extractor` owns (`sources`, `assertions`) — same implementation, gated
+`extraction_append` is `research_append` restricted to the two extraction
+sections (`sources`, `assertions`) — same implementation, gated
 by a **second function parameter** (`researchAppend(input, { allowedSections, toolName })`)
 that a tool caller structurally cannot reach, because dispatch builds only the
 first argument from tool input.
@@ -1027,14 +1204,25 @@ the file-write tools, because two of the three rules act on `research_append`
 itself:
 
 1. **The raw-write lockdown.** Denies raw `Write` / `Edit` / `NotebookEdit` on
-   `research.json` and `tree.gedcomx.json` (`PROTECTED_PROJECT_FILES`), matched
+   `research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json` and
+   `external-collections.json` (`PROTECTED_PROJECT_FILES`), matched
    on basename with both path separators handled.
 2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
-   `proof_summaries` to `proof-conclusion`, and `OWNED_DECLARATIONS` reserves
-   `questions.exhaustive_declaration` to `research-exhaustiveness`.
-3. **The reverse rule.** `AGENT_WRITABLE_SECTIONS` stops an owning agent writing
-   *outside* its own set, added after a measured 2026-08-19 incident in which
+   `proof_summaries` to `proof-conclusion` and `person_evidence` to
+   `person-evidence`, `OWNED_DECLARATIONS` reserves
+   `questions.search_stop` (any non-null `stopped_because`) to `research-exhaustiveness`, and
+   `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`, and
+   `OWNED_CLAIMS` reserves a conflict's analytical product — a resolve, a moot,
+   or any of its analysis fields set — to `conflict-resolution`. The four differ
+   in granularity and key: a whole section, a field at a particular claim value,
+   a field on presence alone, and a claim spread over several fields of one
+   section. `project` is co-written — `init-project` authors it and any writer
+   may refresh `updated` — so only the one field is routed; `conflicts` is
+   opened by six skills, so only the analysis is.
+3. **The reverse rule.** `AGENT_WRITABLE_SECTIONS` stops every agent that holds
+   `research_append` writing *outside* its own set (a test requires the lane),
+   added after a measured 2026-08-19 incident in which
    `proof-conclusion` wrote `status: "resolved"` onto a conflict it does not own.
 
 Rule 2 is why this layer matters more than any allow-list: **caller identity is
@@ -1123,16 +1311,24 @@ enforcing-vs-shadow status.
 
 - **A `tools:` entry grants a capability; it does not create a behavior.** The
   agent will not call a tool its body never tells it to call. `record-extractor`
-  has held `place_search` and `place_search_all` since 2026-07-12, under two
-  spellings since 07-18 and all three since 2026-08-05, while its body tells
-  it to *omit* `standard_place` (`record-extractor.md`, its `standard_place`
-  instruction) — dead grants that every lint
-  passes. **Every tool addition is two edits: the frontmatter, and the
+  (since retired) held `place_search` and `place_search_all` from 2026-07-12, under two
+  spellings from 07-18 and all three from 2026-08-05, while its body told
+  it to *omit* `standard_place` — dead grants that every lint
+  passed. **Every tool addition is two edits: the frontmatter, and the
   instruction in the body that makes the call happen.**
+- **A writer tool also needs the ownership manifest.** Name the agent in
+  `agentCallers` (with the tool in its `tools`) on every row that tool reaches,
+  and give an agent that gains `research_append` an `AGENT_WRITABLE_SECTIONS`
+  lane in `hooks/guard_project_files.py`. `ownership-manifest.test.ts` and
+  `plugin-hooks.test.ts` fail until both are done.
 - `tests/packaging/agent-tool-names.test.ts` checks the spelling and cannot see
   the body. **No CI job checks that the tool actually binds at runtime** (§9.4);
   `make agent-smoke` verifies name resolution only, and `make
   probe-agent-binding` verifies binding but is a live billed probe, not a check.
+- **Never grant `Task` or `Agent`.** An agent hands work back by naming
+  the owning agent in its return, and the main thread spawns it; the packaging test
+  fails the grant (§5.2). `make probe-agent-nesting` is what shows a spawn grant
+  binds in the hosted loader, if a lead ruling ever allows one.
 - **Do not add a `disallowedTools:` block alongside it.** No agent ships one; a
   tool in both lists is denied, and the deny is applied before the zero-tools
   spawn check, which can make the runtime refuse the agent — see §5.2.
@@ -1165,29 +1361,62 @@ carries `"hooks"`, so the directory ships; a script not named in `hooks.json`
 does not run.) The script is stdlib-only Python, no network, and **must never
 raise** — every failure path falls through to allowing the call. Model it on
 `guard_project_files.py` and extend `tests/packaging/plugin-hooks.test.ts`, which
-runs the real script.
+runs the real script. Then run **`make hook-smoke`** (§9.1): `plugin-hooks.test.ts`
+proves the script *decides* correctly, and nothing else proves a runtime *binds*
+it — which, because the script must never raise, fails silently.
 
 > A plugin hook binds in Cowork and the hosted path and in **neither harness**.
 > All three of the unit harness, the e2e harness, and the hosted control plane
-> pass their *own* `hooks=` — and the unit harness's carries no protected-file
-> rule at all. If the guardrail must hold in an e2e run or in production, port it
-> there too — and give the copies a parity test, the way
-> `PROTECTED_PROJECT_FILES` has one. Only that rule is covered today.
+> pass their *own* `hooks=`. If the guardrail must hold in an e2e run or in
+> production, port it there too — and give the copies a parity test, the way
+> `PROTECTED_PROJECT_FILES` has one (`test_write_lockdown_parity.py`, which fails
+> on an unregistered fourth copy).
+>
+> **Two things this blockquote used to say are no longer true.** The unit
+> harness's hook is not bare: `context_policy.py`'s `protected_file_denial`
+> *imports* `guard_project_files.protected_target` from the shipped script — an
+> import, not a copy — wired through `skill_runner.py`'s `pretool_hook`. And the
+> raw-write rule is not the only one covered: the e2e harness has called the
+> shipped `owner_denied` since 2026-08-23 and the unit plane since 2026-09-02, so
+> the caller-ownership rules are covered too (§5.4, and
+> `guardrail-enforcement-spec.md` §4). What is still uncovered is *binding*, in
+> every environment but the hosted one.
 
 ---
 
 ## 6. State
 
-### 6.1 Three persisted locations, all in the project folder
+### 6.1 The persisted locations, all in the project folder
 
 **There is no host-side store.** Cowork sessions are ephemeral; only the project
 folder persists. There is no `~/.cowork-genealogy/` to write to.
+
+The three the model co-edits or triages from:
 
 | Location | What |
 |---|---|
 | `research.json` | the research document — questions, plans, log, assertions, conflicts, proofs, researcher profile |
 | `tree.gedcomx.json` | the simplified GedcomX tree |
 | `results/<log_id>.json` | search-result sidecars — raw payloads kept out of `research.json` so the co-edited file stays lean |
+
+Plus host-written bookkeeping the model never serializes, which is what makes it
+trustworthy rather than merely present:
+
+| Location | What |
+|---|---|
+| `results/.staging/<uuid>.json` | a search response staged by its producer, pending `research_log_append` finalizing it; or an acquisition read (`record_read`, `image_transcribe`, `person_read`), which no shipped flow logs; `project_create` reads the `person_read` one. 24h TTL. |
+| `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. No TTL. |
+| `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail. |
+| `results/image-browse.jsonl` | the image cap's log: one line per distinct `imageId` first read through `image_read`, `image_transcribe` or `volume_bisect`, so the 20-per-group cap survives a restart (`image-transcribe-tool-spec.md` §5.8). Append-only, best-effort, no TTL. |
+| `external-collections.json` (project root) | FamilySearch's curated external collections per place, written by `external_links_search` given a `projectPath`, read back by `research_query` (`external_collections`) and `project_context`. At the root rather than in `research.json`, because the hosted viewer re-sends `research.json` whole on every write. Not schema-validated (API data); raw writes denied like the two project documents (`external-links-search-tool-spec.md`, "Stored list"). |
+
+**The dot-directories are load-bearing, not cosmetic.** The validator's orphan
+check lists `results/` non-recursively and errors on any top-level `*.json` no
+log entry references, so anything under `results/` that is not a finalized
+sidecar must hide in a dot-segment. The same asymmetry bites the hosted viewer
+from the other side: its watcher walks the project recursively while its
+hydration snapshot does not, so `_emit_change` filters dot-segments or it
+broadcasts a `sidecar_updated` naming a log id that does not exist.
 
 The two documents and the sidecars are **written by different mechanisms**, and
 conflating them is the easy mistake. The documents go through validating writer
@@ -1223,8 +1452,13 @@ tool and it belongs in that module**, so there is no second copy to drift.
 memory and block only on errors the call itself introduces** — pre-existing
 schema drift in a section the call does not touch is demoted to a warning rather
 than freezing the write (`validation/introduced-errors.ts`); a call that
-introduces an error still writes nothing. The tools assign all ids; callers never
-predict them.
+introduces an error still writes nothing. **One exception, and it is the only
+one:** `research_append`'s assertion-`update` op also rewrites the tree fact
+that assertion minted, and a rewrite that fails validation is rolled back and
+degraded to a warning rather than refusing the assertion correction, which is
+the legitimate write the caller asked for. So that call writes `research.json`
+and not the tree. `tree-materialization-spec.md` §4.4 says why refusing would be
+wrong. The tools assign all ids; callers never predict them.
 
 `validate_research_schema` is a read-only check for files touched *outside* the
 writer tools. Defensive validate passes between writer-tool steps are explicitly
@@ -1245,8 +1479,8 @@ edit and re-emit.**
 
 > **Today:** `research_query` returns 50 items per call with a `truncated` flag
 > and an `offset` parameter for paging past 50, and covers
-> **11 of the 15** `research.json` sections — missing `project`,
-> `researcher_profile`, `known_holdings`, and `localities`. On the tree side,
+> **12 of the 15** `research.json` sections — missing `project`,
+> `researcher_profile`, and `known_holdings`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,
 > sourceRefs), but there is **no query surface over `tree.gedcomx.json`** the way
 > `research_query` gives one over `research.json`.
@@ -1295,12 +1529,13 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-26 of the 27 skills carry a `**Narration:**` line — 22 of them as the first line
-of the body, the other four further down — instructing Claude to read
+All 3 skills carry a `**Narration:**` line near the top of the body —
+directly after the frontmatter for `forget-and-rederive`, right after the
+title heading for the other two — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
-invocation's narration style. `init-project` writes the profile from two
-questions it answers from the opening message or from defaults — it **never
-blocks** waiting for them.
+invocation's narration style. The `init-project` agent writes the profile at
+project creation as fixed values and asks only the research objective — it
+**never blocks** waiting for it.
 
 It exists because of the same constraint as §3.3: with no plugin-level
 `CLAUDE.md` auto-load and no shared reference loading, a cross-cutting
@@ -1312,16 +1547,24 @@ duplicated and the *value* it reads is centralized in project state.
 **Add a field or section to `research.json`.** Ten sites in the shipping product
 — and **two of them are checked by nothing.** *(Unprefixed paths are under
 `packages/engine/mcp-server/`. The eval CRUD UI carries a parallel scenario
-viewer, `eval/app/components/scenario/`, that a field change also touches; it is
-outside this list and outside every check.)*
+viewer, `eval/app/components/scenario/`. Its **types** are no longer a site:
+`lib/schema.ts` re-exports `@genealogy/schema`, so site 5 covers it and
+`pnpm turbo run typecheck` compiles it. Its **section components** still are —
+a hand-maintained subset of `packages/viewer-ui/src/components/sections/`,
+reached by no check, which is the parallel of site 7 for that app. One half of one shared
+component is the exception: `eval/app/tests/unit/statusBadgeParity.test.ts`
+fails when a status viewer-ui colours is one this tree renders gray. Its
+sibling `statusLabelMap` has no counterpart here and is pinned by nothing, so
+the same value reads "not proved" in this viewer and "not established" in the
+product one.)*
 
 | # | Site | What catches a miss |
 |---|---|---|
 | 1 | `docs/specs/schemas/research.schema.json` | `make engine-test` |
-| 2 | the prose table in `docs/specs/research-schema-spec.md` | **nothing** |
+| 2 | the prose table in `docs/specs/research-schema-spec.md` (and `simplified-gedcomx-spec.md` Section 5) | `make engine-test` (`enum-drift.test.ts`) — closed-enum value rows only; the field tables and prose descriptions stay unchecked |
 | 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema) | `make engine-test` |
-| 4 | `packages/schema/schemas/research.schema.json` | **`make harness-test`** only |
-| 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches |
+| 4 | `packages/schema/schemas/research.schema.json` | `make harness-test` — held **byte-identical** to site 1 (and every schema) by `test_schema_mirrors.py`, which loops both trees |
+| 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches. One value-type constraint is now held, by a type-level assertion in that package's own `tsc` rather than by this lint: `Plan.items` is a non-empty tuple, mirroring the schema's only property-level `minItems` (`packages/schema/src/type-assertions.ts`) |
 | 6 | `src/tools/research-append-examples.ts` — the worked-example registry | round-trip validity only |
 | 7 | `packages/viewer-ui/src/components/sections/<X>Section.tsx` (+ `.module.css`) | `make engine-test` (`field-render-drift.test.ts`) — but only as a **sibling outlier**: if the object renders nothing at all, nothing fires |
 | 8 | the `SKILL.md` of whichever skill must populate it | **nothing** |
@@ -1336,12 +1579,12 @@ Two things the site list alone won't tell you:
   validity and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
   A change touching only 1–5 is a schema change, not a feature.
 - **Run `make test-all`.** A schema field lands in four different suites —
-  `engine-test` (sites 1, 3, 6, 7), `harness-test` (the JSON-schema mirror,
-  site 4), `test-js` (the TS-interface mirror, site 5) and `typecheck` (site 10)
-  — and no shorter target reaches all four. Naming them individually is how the
-  last one gets skipped.
+  `engine-test` (sites 1, 3, 6, 7), `harness-test` (the JSON-schema mirror, site 4,
+  byte-identical across both trees via `test_schema_mirrors.py`), `test-js` (the
+  TS-interface mirror, site 5) and `typecheck` (site 10) — and no shorter target
+  reaches all four. Naming them individually is how the last one gets skipped.
 
-**Add a value to a closed enum** (e.g. `evidence_type`, `proof_tier`). The enum
+**Add a value to a closed enum** (e.g. `record_basis`, `proof_tier`). The enum
 lives in `enums.schema.json` (`$defs`), **not** `research.schema.json` (which
 only `$ref`s it). Edit `enums.schema.json` in **both** schema trees,
 `CLOSED_ENUMS` in `validator.ts`, and the prose tables.
@@ -1349,7 +1592,7 @@ only `$ref`s it). Edit `enums.schema.json` in **both** schema trees,
 
 **Do not hand-edit the TypeScript union.** `packages/schema/src/enums.generated.ts`
 is emitted from that package's own `schemas/enums.schema.json` by
-`scripts/gen-enums.mjs`, chained into `build`, `typecheck` and each app's `dev`
+`packages/schema/scripts/gen-enums.mjs`, chained into `build`, `typecheck` and each app's `dev`
 (ADR-0008 tier 2), and gitignored. `src/index.ts` re-exports it. Every closed enum
 in `enums.schema.json` is generated, with no exceptions. Regeneration is automatic
 and typing a union by hand creates a sixth copy — `gen-enums.mjs` throws rather
@@ -1361,12 +1604,24 @@ than let a hand-written union silently shadow a generated one.
 > remember. `packages/schema`'s enum unions are generated; everything else is
 > linted. **Don't add a fifth copy.** If your change would, say so in the PR.
 
-**Add a field to the tree (simplified GedcomX).** Everything above, **plus** the
-closed per-object field allow-lists in `src/validation/tree-shape.ts`. The
-validator enforces `additionalProperties: false` from those sets, so an unlisted
-field makes **every writer tool reject the write.** `tests/validation/tree-shape-drift.test.ts`
-diffs those sets against the schema. Check whether the change needs a heal rule
-in `tree-sanitize.ts` for pre-change trees.
+**Add a field to the tree (simplified GedcomX).** Everything above, **plus** two
+engine sites the research.json list has no counterpart for:
+
+- the closed per-object field allow-lists in `src/validation/tree-shape.ts`. The
+  validator enforces `additionalProperties: false` from those sets, so an
+  unlisted field makes **every writer tool reject the write.**
+  `tests/validation/tree-shape-drift.test.ts` diffs those sets against the
+  schema, by field NAME only.
+- the matching `Simplified*` interface in `src/types/gedcomx.ts`, which the tools
+  are typed against, **and** the field's type check in `validator.ts`'s
+  `checkTree*` function. `tree-shape.ts` admits the key; only `checkTreeStrings`
+  (or its sibling) says what type it must be, so a field added to the allow-list
+  and not there is accepted by the runtime validator at the wrong type and
+  rejected by the JSON Schema. Nothing catches that, because the drift test
+  compares names.
+
+Check whether the change needs a heal rule in `tree-sanitize.ts` for pre-change
+trees.
 
 ---
 
@@ -1383,7 +1638,7 @@ workbench locally"); this section is the shape.
 | `packages/schema` | **single source** of `research.json` + simplified-GedcomX TS types and JSON Schemas. Consumed by viewer-ui, web, and server. Mirrors the engine's schemas (§6.4). |
 | `packages/viewer-ui` | the extracted renderer — App, the section components in `src/components/sections/`, shared components, `ResearchDataProvider`. **Transport-agnostic** via a `ResearchTransport` interface (`src/transport.ts`). |
 | `apps/electron` | the desktop viewer, consuming `viewer-ui` over an **IPC** transport. |
-| `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. |
+| `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. With `VITE_SESSION_TRANSPORT=sse` (`make web-proto`) the same client runs over **SSE + REST** against the search-agent prototype's web tier (`apps/server/proto/web`); the `SessionConnection` interface is the seam. |
 | `apps/server` | the **FastAPI control plane** (Python/uv): auth + allowlist, session/sandbox orchestration behind a vendor-neutral `SandboxProvider`, and `app/agent/` (the in-sandbox `agent_runner`, mock + real). |
 
 **The `ResearchTransport` seam is the reuse mechanism.** The provider talks only
@@ -1395,9 +1650,9 @@ in `apps/web`.
 > **Don't restate the section count as a literal anywhere.** It has been written
 > as 11, 13 and 14 in four documents at once. `ls
 > packages/viewer-ui/src/components/sections/*.tsx` is the answer, and it cannot
-> go stale. `hosted-web-workbench-spec.md` and `docs/plan/3-pane-workbench-ui.md`
-> still carry 11, but only where it is the historically correct count for the
-> date they describe, and each says so at the site.
+> go stale. `hosted-web-workbench-spec.md` still carries
+> 11, but only where it is the historically correct count for the date it
+> describes, and it says so at the site.
 
 ### 7.2 The sandbox is the per-session server
 
@@ -1439,20 +1694,23 @@ match the flow above. There is no idle-suspend loop, and no Ably code anywhere i
 `apps/server/tests/conftest.py` and `deploy/fly.toml`.
 
 **FamilySearch tokens are injected, and encrypted at rest.**
-`sessions.sync_fs_token` refreshes the user's grant and writes it into the
-sandbox's `~/.familysearch-mcp/tokens.json` on session create *and again on every
+`sessions.sync_fs_token` refreshes the user's grant and writes **an access token
+only** (no refresh token) into the sandbox's
+`~/.familysearch-mcp/tokens.json` on session create *and again on every
 `/connect`*, returning an `ok` / `expired` / `none` state that drives the
 client's "Reconnect FamilySearch" banner. Re-injecting on connect is the only
-path by which a *fresh* login reaches a sandbox that already exists. The stored
-`access_token` / `refresh_token` columns are Fernet-encrypted by
-`crypto.EncryptedStr` at SQLAlchemy's Core layer, so no caller can forget to; a
-decrypt failure soft-fails to `None`, which `auth.fresh_fs_token` turns into
-"expired", so a legacy or wrong-key row self-heals on the next login rather than
-500-ing. **The copy inside the sandbox stays plaintext by design** — the
-in-sandbox MCP needs it, and both copies die on the same FS grant clock (8h idle
-/ 24h absolute). That 24h ceiling is why the at-rest encryption is
-belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
-**it is not a gap and no decision waits on it.**
+path by which a *fresh* login reaches a sandbox that already exists. The control
+plane is the sole refresh owner: concurrent refreshes are serialized with a
+per-user `asyncio.Lock`, and a successful refresh pushes the new token to every
+live sandbox the user has. The stored `access_token` /
+`refresh_token` columns are Fernet-encrypted by `crypto.EncryptedStr` at
+SQLAlchemy's Core layer, so no caller can forget to; a decrypt failure soft-fails
+to `None`, which `auth.fresh_fs_token` turns into "expired", so a legacy or
+wrong-key row self-heals on the next login rather than 500-ing. **The copy inside
+the sandbox stays plaintext by design** — the in-sandbox MCP needs it, and both
+copies die on the same FS grant clock (8h idle / 24h absolute). That 24h ceiling
+is why the at-rest encryption is belt-and-braces rather than a gate on anything:
+it costs nothing at runtime, and **it is not a gap and no decision waits on it.**
 
 **Known gaps:**
 
@@ -1469,16 +1727,35 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
 - **E2B Hobby caps *uninterrupted* runtime at 1 hour — not total session
   length.** `_RUNNING_TIMEOUT_S = 3600` is the maximum the tier permits, not a
   backstop we chose: create with 7200 fails 400 "Timeout cannot be greater than 1
-  hours" (measured 2026-08-09), while `set_timeout` past the ceiling returns 204
-  and silently no-ops — so an over-large value fails loudly at create and
+  hours" (measured 2026-08-09), while `set_timeout` with a value over 3600 returns
+  204 and silently no-ops — so an over-large value fails loudly at create and
   silently everywhere else. But **the window resets on pause/resume**: the
-  sandbox is created with `on_timeout: pause` + `auto_resume` and `resume()`
-  re-arms the full window on every `/connect`, so reaching the cap pauses rather
-  than kills and the next request resumes (~1s). A session therefore runs for as
-  many hours as it needs. **Do not read the cap as a session-length limit** —
-  both "there is a 1-hour cap" and "sessions run for hours" are true at once.
-  Whether a pause landing mid-turn breaks that turn is **asserted, not
-  measured**.
+  sandbox is created with `on_timeout: pause` + `auto_resume`, so reaching the cap
+  pauses rather than kills, and the next request resumes it (~1s) with a fresh
+  hour. A session therefore runs for as many hours as it needs. **Do not read the
+  cap as a session-length limit** —
+  both "there is a 1-hour cap" and "sessions run for hours" are true at once. The
+  control plane sets the outer limit: `/connect` refuses a session more than 72 h
+  past `projects.created` with a 410 (`SESSION_MAX_AGE` in `app/sessions.py`),
+  because its sandbox still runs the agent code it was created with. `/resume` and
+  the read endpoints stay open, so an ended session's research can still be read.
+  **A turn cannot run through the cap, though.** `set_timeout` cannot push a
+  running sandbox's end time past its hour: five minutes after create,
+  `set_timeout(3600)` returns success and leaves the end time at start + 3600,
+  while `set_timeout(1800)` does move it in (measured 2026-10-15 by
+  `apps/server/dev/probe_e2b_heartbeat.py`). So **a turn that runs past one hour
+  of continuous sandbox runtime is paused, and the call in flight can fail.** An
+  alpha session's feedback bundle (submitted 2026-10-12) froze four times
+  mid-turn, each about an hour after a `/connect` or `/resume`; three of the four
+  calls in flight failed on resume
+  (`image_transcribe` aborted after 15,061 s; `API Error: Failed to parse JSON`,
+  twice), and the fourth turn sat until the user came back. That matters because
+  a turn is a whole research job — median 53.9 minutes, p90 107.9 — so under
+  continuous work one user message reaches the cap mid-flight on about half of
+  runs. The heartbeat the 2026-09-21 continuous-work ruling chose, a control-plane
+  loop calling `set_timeout` every 300 s, could not prevent this and was removed
+  once the probe above measured the cap. Making a turn survive the pause (the Pro
+  tier, or pause-aware turns) is not built.
 
 - **The delete-janitor for abandoned sandboxes is unimplemented** — paused
   sandboxes are never reclaimed, by us or by E2B (never reaping them is what
@@ -1492,11 +1769,12 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
   Opus on the model picker
   (`gh issue list --state open --search "delete-janitor"`).
 
-- **Four settings are boot-enforced in production, and one of them can never be
+- **Five settings are boot-enforced in production, and one of them can never be
   rotated.** When `PUBLIC_URL` starts with `https` — the sole production
   discriminant — `config.assert_production_config` refuses to boot if
-  `session_secret`, `ws_signing_key`, or `fs_token_enc_key` is still at its
-  declared default, or if `DATABASE_URL` is unset or blank (which would put a Fly
+  `session_secret`, `ws_signing_key`, `fs_token_enc_key`, or
+  `anthropic_proxy_signing_key` is still at its declared default, or if
+  `DATABASE_URL` is unset or blank (which would put a Fly
   deploy on SQLite over an unmounted rootfs). It runs as the first statement of
   `main.py`'s lifespan and names every offender at once, so one deploy fixes all
   of them. **`ws_signing_key` is set-once in practice:** `E2BProvider.create`
@@ -1506,6 +1784,9 @@ belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
   plane mints against the new key, the sandbox verifies against the old, and
   every handshake fails with no recovery but a new session
   (`gh issue list --state open --search "WS_TOKEN_SECRET rotation"`).
+  **`anthropic_proxy_signing_key` has the same caveat:**
+  `HMAC(anthropic_proxy_signing_key, sandbox_id)` is the per-sandbox proxy
+  token; rotating the key orphans existing sandboxes the same way.
 
 > **Read the two source docs for reasoning, not for current state — this guide is
 > the current-state reference.** `docs/realtime-architecture.md` carries the
@@ -1525,19 +1806,23 @@ other. Both `apps/electron` and `apps/web` must still typecheck (`make typecheck
 
 **Change anything the sandbox runs.** `make server-e2b` does **not** rebuild the
 engine — the `genealogy-agent` image bakes its own. After changing
-`app/sandbox_server.py` or `app/agent/*`, run `make sandbox-image` or the microVM
-runs stale code.
+`app/sandbox_server.py` or `app/agent/*`, rebuild the image or the microVM runs
+stale code: `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` to verify,
+since a bare `make sandbox-image` rebuilds PRODUCTION's template in place.
+`make deploy` rebuilds the production one as part of the deploy.
 
-**Add a control-plane endpoint.** `apps/server/app/v1.py` for the public REST
-API (see `DEVELOPMENT.md` "Public `/v1` REST API"), `sessions.py` for session
-lifecycle. Run `make server-test`. Keep the control plane out of the streaming
-path.
+**Add a control-plane endpoint.** Pick the router it belongs to — `sessions.py`
+(session lifecycle), `auth.py`, `feedback.py` or `anthropic_proxy.py`; `main.py`
+mounts those four and nothing else. Run `make server-test`. Keep the control
+plane out of the streaming path.
 
 ---
 
 ## 8. Environments — who loads what
 
-Four environments run the engine, and they load the plugin differently.
+Four environments run the engine, and they load the plugin differently. A fifth,
+the search-agent prototype, runs a worker and a tool server, shipped as Beanstalk
+bundles by `make eb-bundles` (U12).
 
 **There is one Cowork row, not two.** Every live census has found the same
 configuration — the agent runs in a cloud sandbox (`cwd = /home/claude`) and
@@ -1552,10 +1837,11 @@ bridge-free path has never been observed.
 
 | Environment | Skills | Agents | Hooks | Permission mode | MCP server |
 |---|---|---|---|---|---|
-| **Cowork** | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` — the exposed spelling has **moved over time**, not by run mode (§5.2) |
-| **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
+| **Cowork** | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** — and the only guardrail here, so a binding failure is unguarded rather than merely un-redundant. **Partly measured**: probed live 2026-07-30 (ADR-0005) for `Write`/`Bash` under a broader matcher; the `research_append` arm (added 2026-08-21) is unmeasured here, and `hook-smoke` drives the hosted loader, not this one | `default` | host `.mcpb` — the exposed spelling has **moved over time**, not by run mode (§5.2) |
+| **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** — the plugin half is the one arm of this column that is **measured**, by `make hook-smoke` (§9.1) | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — not the plugin's `hooks.json`, but it **imports the shipped predicates**, so the write lockdown and the ownership rules bind (§5.4) | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
+| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store, plus the `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` claim fence (U6) that makes a superseded attempt's writes roll back; a project request is refused 403 unless its bearer's sha256 is the one the attempt stamped on that open turn (U4) |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
 unit tier disagree about raw writes for reasons that have nothing to do with the
@@ -1582,8 +1868,10 @@ Other environment differences that bite:
   **shipped** `protected_target` predicate and returns the deny. So the raw-write
   class is gated at call time here too — what differs between the tiers is the
   permission mode, not the lockdown.
-- **Tool deferral.** Cowork defers tool schemas above a size threshold and offers
-  no control over it, so `ToolSearch` is the real load path there (§5.2).
+- **Tool deferral.** Cowork defers tool schemas above a size threshold, so
+  `ToolSearch` is the real load path there (§5.2) for every tool outside
+  `ALWAYS_LOAD` (`src/tool-schemas.ts`), whose `_meta` `anthropic/alwaysLoad` opts
+  it out of deferral. Whether Cowork honors that key is unverified.
 - **The Cowork bridge caps every MCP call at 60s.** A client-side ceiling this
   repo does not set — no `MCP_TOOL_TIMEOUT`/`MCP_TIMEOUT` or equivalent per-tool
   ceiling is defined anywhere in the code — and cannot change from the plugin or
@@ -1594,11 +1882,11 @@ Other environment differences that bite:
   register the server over stdio and are **not** capped (committed e2e run
   logs carry `image_transcribe`'s own 180s timeout as a result, so calls ran
   past 60s there). `image_transcribe`'s `OCR_TIMEOUT_MS = 180s` is the first
-  budget this bites (roughly 10-15% of healthy calls exceed 60s — see the
-  spec's Timeout budget section for why it is a range, not a point), but
+  budget this bites (though measured 2026-09-08, none of 59 live reads exceeded
+  60s — p50 18.7s, max 50.1s; see the spec's Timeout budget section), but
   it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
-  budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
-  above the ceiling too. **No automated check reaches this** — neither harness
+  budgets in `wiki-search.ts`/`collections-search.ts` sit at or above the
+  ceiling too (`wikipedia.ts` shares one 55s deadline across its requests). **No automated check reaches this** — neither harness
   goes through the bridge — so it is only observable in a live Cowork session.
 
 ### If you're asked to…
@@ -1611,7 +1899,52 @@ CI job runs it.** It needs `ANTHROPIC_API_KEY` or an `eval/.env` entry. The targ
 sets `AGENT_SMOKE=1`, which turns the underlying test's skips into hard errors, so
 a missing key fails loudly here while the same test still skips under a plain
 `make server-test`. Resolution is not binding: for whether a granted tool actually
-*binds*, run `make probe-agent-binding`.
+*binds*, run `make probe-agent-binding`; for whether the plugin's `PreToolUse`
+hook binds, `make hook-smoke`. `agent-smoke` reads the init handshake, which
+carries no hook state at all, so it cannot see a hook either way.
+
+**Deploy or rehearse the prototype on Beanstalk.** Use
+`apps/server/proto/eb-rehearsal/rehearse.py`. Its README is the runbook, and it implements
+the deployment guide in `docs/plan/familysearch-handoff.md` (section 3) for one AWS
+account. `plan --dry-run` prints every command and calls nothing. The sites a change
+touches:
+
+- **A tier variable.** Pass it through `check_options`. The dev-only names come from
+  `scripts/eb_bundles/layout.py`. The environment-value set and the secret-name pattern are
+  copies of `apps/server/tests/test_proto_bundles.py`'s, and a test pins them equal. A
+  secret goes in `TIER_SECRETS` as an `environmentsecrets` ARN, never as a value.
+- **sqsd values.** `up --phase worker` sets both namespaces of
+  `apps/server/proto/eb-worker/.ebextensions/01-sqsd.config` at API level, and API-level
+  settings override the bundle's. A re-size in that file reaches a running worker only on
+  the next `up --phase worker`. `status` reports drift against the work dir's option-settings
+  file, not against the template.
+- **A probe case.** Add it to the closed `CASES` table. A case that touches `MaxRetries`,
+  `VisibilityTimeout` or `RetentionPeriod` sets its `SQSD_*` mirror too, and a test fails
+  otherwise.
+- **A resource kind.** It needs an entry in `KINDS`, a `down` step and a `prove-empty`
+  check. The test's own kind-to-call maps fail until all three exist.
+- **A systemd setting on a tier** (the worker's root drop-in). Write it under
+  `/usr/lib/systemd/system/web.service.d/`. Every deploy, app or configuration, deregisters
+  `web` and deletes `/etc/systemd/system/web.service.d` after predeploy and before the
+  restart, and a configuration deploy runs no `.platform/hooks/`. A test pins the path.
+- **A `.ebextensions` file.** Name it `*.config`. Beanstalk ignores any other name without an
+  error; `scripts/eb_bundles/verify.py` refuses one.
+- **Between sessions,** `pause` scales the tiers to 0/0 and stops RDS and the bastion;
+  `resume` reverses it. AWS restarts a stopped RDS instance after seven days.
+
+**What nothing checks here.** The tests run against a fake `aws`, so they prove the
+commands the tool sends, never that AWS accepts them. The option names in the
+`aws:elasticbeanstalk:sqsd`, `aws:elbv2:*` and `environmentsecrets` namespaces come from AWS
+documentation: `describe-configuration-options` lists them only for an existing
+environment's tier. Only a live run checks them: the first (fts-int, 2026-10-07) found four
+faults the fake could not (RDS capacity, a zone without the instance type, drift as
+Beanstalk reports options back, a rejected update read as success), and no CI job runs one.
+Beanstalk itself reports a deploy successful while the app exits at once, so environment
+health is the only signal that a tier refused to start.
+The account-id leak check (`rehearse.py leak-check`) runs only where `.local/` exists, so
+CI skips it. In CI, that rule is enforced only by the 12-digit account-id scan in
+`apps/server/tests/test_proto_rehearsal.py`, over the paths in its `SCAN_PATHS`; each of those
+outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a test pins.
 
 ---
 
@@ -1623,15 +1956,21 @@ a missing key fails loudly here while the same test still skips under a plain
 |---|---|---|
 | **`make test-all`** (= `scripts/test.sh`) | **everything offline**: typecheck, JS workspace, `apps/server`, engine + packaging lints, CRUD UI, eval harness. The target delegates to the script, so the two are one command; the PR template names it. Runs every suite before reporting, so one failure doesn't hide the next. Deterministic and free — **no suite in it calls a model**, which is what keeps it ~30s and therefore actually run. | anything needing a model or a live API: a single tool (`dev/try-<tool>.ts`), agent tool binding (`make agent-smoke`), skill behaviour (`make eval-skill`) |
 | `make test` | `test-js` + `server-test` | **engine, packaging lints, harness** — an engine-only change gets *zero* coverage, and this is **not** the eval-harness gate despite what `CLAUDE.md` and `DEVELOPMENT.md` imply |
-| `make test-js` | the JS workspace (turbo): web, electron, viewer-ui, schema — including the **`packages/schema` TypeScript mirror** (`schema-interface-drift.test.ts`) | Python; the engine (npm-managed, outside the pnpm workspace) |
+| `make test-js` | the JS workspace (turbo): web, electron, viewer-ui, schema, eval/app — including the **`packages/schema` TypeScript mirror** (`schema-interface-drift.test.ts`) | Python; the engine (npm-managed, outside the pnpm workspace); eval/app's Playwright suite (needs a browser — its own CI job) |
 | `make engine-test` | `packages/engine/mcp-server` (vitest) + all packaging lints | the `packages/schema` mirror; anything needing a live API |
+| `make engine-test-pg` | the same suite with every tool's project I/O on `PgS3ProjectStore` (`PROTO_STORE=pg`, the compose Postgres + MinIO; CI's `vitest-pg` job), failing on any skipped test, then the harness's live `--store pg` cases (`test_pg_store_switch.py`), then `proto-store-test`'s keyless arm. The tests still seed and assert on disk: `tests/helpers/pg-routing-store.ts` mirrors each project directory into its own Postgres project around every call | the cases marked `fileStoreOnly(...)` (symlinks, nesting, permissions, the rename seam, a document that is not JSON), which run on the file store in this leg too; per-request binding and the claim fence (`http-server-pg.test.ts` and the store suite own those); any skill or agent on Postgres (the paid half of U15) |
 | `make harness-test` | `eval/harness` (pytest) — including the **`packages/schema/schemas/` JSON mirror** (`test_schema_mirrors.py`) and the three write-lockdown copies' parity | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug. **Not** the TS half of the `packages/schema` mirror — that is `make test-js` |
 | `make typecheck` | the whole JS workspace (turbo) | Python; and it is not the only viewer gate — `make test-js` runs viewer-ui's vitest suite (including `schema-interface-drift.test.ts`), and `make engine-test` runs `field-render-drift.test.ts` against the viewer's section components |
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
-| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names (arm 1), and that a dead MCP server triggers the init-message abort with captured stderr and no files written (arm 2) — fails loudly with no API key, since the target sets `AGENT_SMOKE=1` | whether a granted tool actually **binds** — that is `make probe-agent-binding`; the ToolSearch backstop and `run_e2e_test` fallback abort paths |
+| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names (arm 1), and that a dead MCP server triggers the init-message abort with captured stderr and no files written (arm 2) — fails loudly with no API key, since the target sets `AGENT_SMOKE=1` | whether a granted tool actually **binds** — that is `make probe-agent-binding`; **anything hook-shaped** — it reads the init handshake, which carries no hook state at all, so a `hooks.json` that stopped loading passes it silently (that is `make hook-smoke`); the ToolSearch backstop and `run_e2e_test` fallback abort paths |
+| **`make hook-smoke`** | that the **hosted SDK loader actually binds** the plugin's `PreToolUse` hook: reads `hooks/hooks.json`, matches a real `research_append`, shells `guard_project_files.py` and blocks — attributed by requiring the guard's own reason text, with the SDK-side hook cleared and a hooks-removed control arm. Hard-errors without a key | **Cowork's loader**, which is a different one and reachable only by a human in a live session; the guard script's *decisions* (that is `plugin-hooks.test.ts` and the parity test). The Cowork half stays on the `nothing-checks` register either way |
+| **`make probe-agent-nesting`** | that the **hosted SDK loader** lets a plugin agent spawn another at depth 2, and which `tools:` spelling binds the spawn tool (`Task` and `Agent` both do; the call is named `Agent`) — read off the driver's own `tool_use`, with a no-grant control arm, plus a driver spawning three real `record-extractor`s in parallel, verified by what lands in `research.json`. Hard-errors without a key; ~$5 | **Cowork**, depth 3, and anything the nested agent did — the SDK streams no depth-2 messages |
+| `make replay-sizes` | the **size** of the local-state read tools' answers (`research_query`, `project_context`, `person_warnings`, `merge_warnings`, `validate_research_schema`) — a base build vs the working build, re-asked every call the committed e2e runs recorded, over `research.json` rebuilt as of each call. Free, no model, no network, ~25 s; exact (an unchanged build reads Δ = 0) | the network tools — FamilySearch and wiki, ~57% of answer chars (T1.4c); writers; the tree's state mid-run (the final tree stands in); how many later turns re-read an answer, so no dollars; turn count; prose; anything about research quality |
+| `make replay-collapse` | rule `plan-log`: that one `research_query {log, questionId}` call returns **exactly** the entries a recorded `log × planItemId` walk read; rule `plural-id` (`RULE=plural-id`): that one call carrying a **list** of `personId`/`assertionId`/`sourceId`/`recordId` returns exactly the union of the recorded one-id walk's answers (the base build's own singular pages), with `count` and `countById` right on every page and no page past the 50,000-char spill. Both report how many calls that removes (N → M) — free, no model, ~15 s; refuses to pass on an empty or wrong notebook (each replayed walk count must match the recorded one; plural-id classifies a miss as `source-id-unstamped`, allowed, or `ledger-missing-writes`, allowed only for its pinned groups, and anything else is exit 3) | **whether agents adopt the filter** — that is model behaviour, measured on a unit or e2e run; runs whose capture was stripped (their walks report `unverifiable`); **turns**, except on runs whose timeline carries message ids; the `contains`-mode sections (`conflicts`, `hypotheses`, `timelines`, `proof_summaries`) — no recorded walk uses them, so only vitest covers their list path |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
+| `make eval-skill SKILL=<name> STORE=pg` + `make unit-pg-parity` | the same suite with every live tool call on `PgS3ProjectStore` (U15; non-releasable, logged to `eval/runlogs/unit-pg/`), and its parity with the newest file-store log: outcome flips and any live response that reads as a store fault | a fixture-backed tool's I/O (only live tools touch the store); the hosted worker's per-request binding and claim fence; anything after 2026-10-12 — no job re-runs it, so it is a dated measurement, not a check |
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
-| `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
+| `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. |
 
 ### 9.2 The lint layer
 
@@ -1639,22 +1978,22 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 
 | Test | Asserts |
 |---|---|
-| `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas`, **and** that every registered tool has a dispatch case in `src/index.ts` (none missing, none orphaned, none duplicated) |
+| `manifest.test.ts` | `manifest.json`'s `tools` ↔ `allToolSchemas`, **and** that every registered tool has a dispatch case in `src/server.ts` (none missing, none orphaned, none duplicated) |
 | `agent-tool-names.test.ts` | all three spellings; derives both `display_name` prefixes from the manifest; all five registration sites agree on `genealogy`; no `select:mcp__…` in any plugin body |
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
-| `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical, the 9th pinned to its own sha256, and every skill in exactly one of the two lists |
+| `skill-guidance.test.ts` | 4 `places-guidance.md` copies byte-identical to the canonical, the 5th (`init-project`) pinned to its own sha256, and every skill in exactly one of the two lists |
 | `skill-reference-reachability.test.ts` | both directions between a skill's `references/` folder and its `SKILL.md`: every file present is named by the body or by a reference the body names (one transitive hop), and every file the body names is present. Carries each pending case as a **shrink-only** exemption list with a measured reason, and fails when an entry becomes stale — deleted, wired up, or created — so neither list can outlive the problem |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
-| `readme-catalog.test.ts` | every registered tool, shipped skill, and plugin agent is named in `README.md`, and any stated tool or skill count matches the code |
+| `catalog.test.ts` | every registered tool, shipped skill, and plugin agent is named in `docs/catalog.md`, and any stated tool or skill count matches the code |
 | `tool-schema-enums.test.ts` | no MCP tool input schema re-types a closed enum's values, exactly **or stale**; two documented `sex` exemptions |
 | `research-append-examples.test.ts` | the worked `research_append` payloads ↔ their `research.schema.json` `$def` — field names, enum values, and one example per writable section |
 | `field-render-drift.test.ts` | a `research.json` field is not an unexplained outlier among its own siblings in the viewer — if its object is displayed, each field renders or carries a reason it should not |
 | `gps-mentor-craft-doctrine.test.ts` | the four clauses of `gps-mentor`'s craft mode whose silent deletion would be invisible until a user hit it — the required scope sentence, the refusal row, advisory severity, and the `craft: true` marker (`gps-mentor-agent-spec.md` §6.4) |
-| `gps-terminology.test.ts` | no plugin prose collapses the two evidence axes into "primary/secondary source" or "primary/secondary evidence", with an allow-list keyed to (file, line) for the `citation` skill, which must quote the wrong phrasing back to correct it |
-| `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
-| `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
-| `prompt-budget.test.ts` | nothing. It **reports** the byte delta a PR introduces to every `SKILL.md` and agent body, one line per changed file written to the `vitest` job log, and is **warn-only — it never fails**. Nothing sets a ceiling, so prompt bodies grow unopposed: the two largest are `search-records/SKILL.md` and `agents/record-extractor.md`, both around 50 KB. Its unit half does assert, over the delta arithmetic only |
+| `gps-terminology.test.ts` | no plugin prose collapses the two evidence axes into "primary/secondary source" or "primary/secondary evidence", with an allow-list keyed to (file, line) for the `citation` agent, which must quote the wrong phrasing back to correct it |
+| `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves. `doc-links.test.ts` now also checks every section of every ADR, so this path check is a subset of that one |
+| `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md`, `CLAUDE.md`, `docs/skill-to-agent-pair-conversion.md` and by **`.claude/{agents,commands,skills}`** still resolves; the same minus slash commands for every `.md` under **`docs/`** except `docs/plan/` and `docs/deep-dives/`. A path absent on purpose — retired, gitignored, cited in a dated record as it stood then, or named as a file still to create — is a named `KNOWN_ABSENT` entry with its reason. Also bans `:NNN` line cites to `.ts`/`.py`/`.mjs`/`.md` files anywhere under `docs/` except `docs/plan/` and `docs/deep-dives/`. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
+| `prompt-budget.test.ts` | warn-only: prints the byte-size change a PR makes to every `SKILL.md`, agent body and `CLAUDE.md`, reading the base side from `origin/<base>` with `git ls-tree`. No ceiling, no threshold, nothing committed. Tool descriptions are not covered |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
 `check_skill_frontmatter.py` (for **skills and agents**: description length and
@@ -1663,14 +2002,16 @@ the directory or file stem — also run by the packaging script),
 `check_runlogs.py` (the blocking run-log/annotation gate on any skill change,
 §3 — plus a **warn-only** arm that maps a changed shared fixture
 (`eval/fixtures/{scenarios,mcp}/<name>`) to the skills whose tests reference it
-and warns when their run logs go stale), and three **warn-only** lints
-worth knowing because they fire right after the three most common tasks:
+and warns when their run logs go stale), and four **warn-only** lints
+worth knowing because they fire right after the most common tasks:
 `check_tool_coverage.py` (a skill declares a tool with no fixture in its corpus —
 what happens after you add a tool), `check_rubric_tool_drift.py` (a tool named
 in a rubric, `judge_context`, or an **agent body** that isn't in its declared
-tools — what happens after you grant one), and `check_negative_reciprocity.py`
+tools — what happens after you grant one), `check_negative_reciprocity.py`
 (a negative routing edge `A → B` with no `B → A` test backing it — what happens
-after you widen a description).
+after you widen a description), and `check_slot_queue.py` (an open issue's
+`**Touches:**` line names a path in the eval snapshot this PR is about to make
+stale — what happens right before you buy a paid run).
 
 **These live outside `tests/packaging/`, and the inventory above will not
 lead you to them:**
@@ -1703,10 +2044,10 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and negative routing tests across 26 skill suites. **433** committed
+  run logs, and negative routing tests across 25 skill suites. **446** committed
   test definitions (`make eval-inventory`) — one JSON file per test under
-  `eval/tests/unit/` — and across the 26 live suites the latest run log per suite
-  totals **433 rows, 379 passing (88%)**. Those two numbers count different things
+  `eval/tests/unit/` — and across the 25 live suites the latest run log per suite
+  totals **446 rows, 389 passing (87%)**. Those two numbers count different things
   and can diverge in either direction: a test defined after its suite's last run
   has no row, and a row survives for a test since deleted. Both numbers are facts
   about the snapshots — not an identity, so re-derive rather than quoting them.
@@ -1716,8 +2057,15 @@ lead you to them:**
   human `.ann.json` annotations, and `calibrate_judge` measuring judge-vs-human
   agreement **offline** rather than inferring it from expensive live runs. Three
   axes: `verdict` (genealogical), `compliance` (guardrail), and
-  `outcome` (the gate) — so a run whose answer is right but whose audit trail was
-  not earned **fails**.
+  `outcome` (the gate, which carries the genealogical verdict) — so a run whose
+  answer is right but whose audit trail was not earned **passes the gate with the
+  bypass recorded on the compliance axis**. It failed until 2026-09-25, when the
+  §8 detectors were demoted for not discriminating; the accepted costs are in
+  `docs/specs/guardrail-enforcement-spec.md` §8. The tier is sampled on a **fixed four-fixture panel**,
+  filed one issue per run by `/file-e2e-panel` (on demand, not on a cadence) and
+  read by `make e2e-panel`: the fixtures are held constant because fixture difficulty
+  varies enough that a changing mix, not a changing system, would explain most of
+  any month-to-month move.
 
 ### 9.4 What nothing checks
 
@@ -1758,12 +2106,27 @@ changes how a correct change is made:
    live, billed probe rather than a check — run it when the CLI or the SDK moves.
    And it answers the question only for the **hosted** options it builds; Cowork
    still has no instrument but a live session, and only for the spelling that
-   session exposes.
-2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
-   not rebuild the `genealogy-agent` E2B image production runs the agent on, and
-   both guards over it are advisory. Production can run weeks-old skills, agents,
-   and MCP tools while CI, the deploy, and `/api/health` all look correct, and
-   nothing surfaces the baked commit. Run `make sandbox-image` (§7).
+   session exposes. `make probe-agent-nesting` does the same for the spawn tool
+   (`Task` vs `Agent`), with the same hosted-only limit.
+
+   **The same shape holds for the `PreToolUse` hook, and it is worse there.** No
+   CI job proves the plugin's hook binds either — and unlike a toolless agent,
+   which the runtime refuses out loud, a hook that stops binding is *silent by
+   construction*: `guard_project_files.py`'s contract is "never raise, fall
+   through to allowing the call", so a hook with no binding is indistinguishable
+   from a hook with no opinion. `make hook-smoke` is the analogue of
+   `probe-agent-binding` here — it drives the real `build_options`, provokes a
+   `research_append` on `proof_summaries` (the arm with no redundant copy in the
+   hosted path) and requires the guard's own deny text, with a hooks-removed
+   control arm so the deny is attributable. Hosted-only, for the same reason.
+2. **Nothing checks the sandbox image itself.** `make deploy` now builds and
+   pushes the `genealogy-agent` E2B image, and `/api/health` reports the commit
+   baked into it, so a deploy no longer silently leaves production on weeks-old
+   skills, agents and MCP tools. What remains unchecked is the image as an
+   artifact: no CI job builds or verifies the template, `make server-e2b` runs
+   whatever is baked into the one it resolves, and a bare `make sandbox-image`
+   rebuilds PRODUCTION's template in place from the working tree. Build a dev
+   template (`E2B_TEMPLATE_NAME=genealogy-agent-dev`) when verifying (§7).
 3. **Every measurement in this repo describes the eval corpus, not production.**
    There is no production telemetry: `apps/server/app/obs.py` is PII-free stdout
    logging, and `sandbox_server.py`'s buffer is a reconnect *replay*, not a tool
@@ -1799,11 +2162,17 @@ reason it exists.
 remove a *pause*, or a *capability*?**
 
 Removing the pause is correct and is the established shape. `agents/proof-conclusion.md`
-states it for one gate — under `--autonomous`, route to the missing skill
-automatically instead of asking, because "autonomous mode changes who decides, not
-whether the gate runs." **Generalized: it changes who decides, not what the run can
-reach.** `question-selection` applies the same shape — with no user to answer, skip
-the ask and take the action. Production behaviour is preserved; only the prompt is
+states it for one gate — route to the missing skill instead of asking, because who
+decides changes nothing about whether the gate runs. **Generalized: it changes who
+decides, not what the run can reach.** `question-selection` applies the same shape —
+with nobody waiting to answer, skip the ask and take the action.
+
+Since 2026-09-23 this is no longer a *mode* difference at all: no plugin body reads
+`--autonomous`, so the rule is unconditional and the question is only ever "can a human
+act on this right now?". Two bodies keep a genuine two-sided answer because a human
+sometimes CAN — `agents/person-evidence.md` (a user who asked for a link can adjudicate
+it; mid-run nobody can) and `search-external-sites` (a user who named the plan item will
+capture it; mid-run nobody will). Both have eval fixtures on each side. Production behaviour is preserved; only the prompt is
 gone.
 
 Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
@@ -1820,7 +2189,7 @@ both green in CI for months. The first is fixed; the second stands:
   a second half — the orchestrator's dispatch row is now scoped to the **active** plan,
   because a revision leaves unexecuted items behind on the plan it retired.
 - **External-site captures.** `search-external-sites` marks a plan item `skipped`
-  under `--autonomous` because no user can click a paywalled link. Controlling for
+  when no user is present to click a paywalled link. Controlling for
   fallback items, that produces a 76% skip rate on primary Ancestry items against
   12% on FamilySearch — so corpus breadth on external repositories cannot be read as
   production breadth.
@@ -1857,8 +2226,10 @@ run `make test-all`, which the PR template requires. **If you cannot name the
 check that would have caught your change, say so in the PR** rather than implying
 CI covered you (§9.4).
 
-**Write a rule that behaves differently under `--autonomous`.** Ask which of the two
-things it removes — a pause, or a capability (§9.5). Removing the pause is the
+**Write a rule that behaves differently when no user is present.** Ask which of the two
+things it removes — a pause, or a capability (§9.5). Note that the flag itself is
+retired: no plugin body reads `--autonomous`, so the condition is the situation, not a
+string in the message. Removing the pause is the
 established shape and is fine: decide instead of asking, and log the decision.
 Removing a capability makes the benchmark stop measuring production, silently, and
 is almost never what you want. If a headless run genuinely cannot perform the step,
@@ -1871,10 +2242,22 @@ and `make e2e-login` (the FS token lasts ~24h, and its absence looks exactly lik
 an agent failure). Then `make e2e-view TEST=<slug>` loads the run into the viewer,
 `make e2e-corpus` gives the three axes plus violation counts, the per-arm split
 and per-fixture concentration, across the last 14 days of committed runs —
-every run-log reader windows that way, `SINCE=all` to opt out — `make
+most run-log readers window that way, `SINCE=all` to opt out — `make
 e2e-agent-tools` reports, per plugin agent, which declared tools it never
-actually called across those runs, and the
-`/interpret-e2e-result` skill exists to read the log for you. Mechanics:
+actually called across those runs, `make e2e-rule-adherence` reports, per
+registered rule, how many episodes obeyed the instruction over those runs
+(counts, not rates), `make e2e-writer-attribution` reports which
+subagent wrote a project document and whether an ownership row says it may
+(the one reader that defaults to the whole corpus, because a manifest gap is not
+a freshness question), and the
+`/interpret-e2e-result` skill exists to read the log for you. `make
+e2e-ranked-reads` reports whether the main thread's `record_read` calls landed
+inside the ranker's **visible** top 3 — visible is the limit, because
+`judge.py` truncates `ranked.matches` past three entries, so it cannot tell a
+read at rank 7 from a read of an unranked record. It says nothing about
+subagent reads, which never saw the `ranked` block and are counted separately,
+and it prints counts rather than a rate for the reason §9.4 gap 3 gives.
+Mechanics:
 `docs/e2e-testing-guide.md`. Before concluding the agent regressed, rule out the
 four other causes: an eval defect, FamilySearch data drift, single-run jitter, and
 a sub-skill regression rather than a routing one.
@@ -1896,7 +2279,7 @@ re-run until it comes back green (`docs/skill-lifecycle.md` carries the
 symptom-to-fix table). Because the pin also makes the `flaky` flag dead by
 construction, catching one is on you: re-run a suspect test with
 `run_tests.py --test <id> --runlogs-root <tmp>` and fix whatever differs.
-94 of the 433 definitions are **negative** tests that exist to prove
+97 of the 446 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is
@@ -1921,6 +2304,7 @@ something already decided. The live register is the board:
 
 ```sh
 gh issue list --state open --label needs-decision   # blocked on one answer from the lead
+gh issue list --state open --label high-priority    # take these first in your lane (soft ordering; /fill-ready owns it)
 ```
 
 That label — not `senior`, which is work that stays hard after every question is
@@ -1959,7 +2343,7 @@ questions that only look open.
 | How do I build / run / test / deploy? | [`DEVELOPMENT.md`](../DEVELOPMENT.md) |
 | What rule must I follow to make a correct change? | [`CLAUDE.md`](../CLAUDE.md) — the operating manual, auto-loaded every session |
 | What does tool X do? | `docs/specs/<tool>-tool-spec.md` — **wins over this guide on conflict** |
-| What tools / skills / agents exist, for a user? | [`README.md`](../README.md) |
+| What tools / skills / agents exist? | [`docs/catalog.md`](catalog.md) |
 | Which skill or agent runs when, and what does it read and write? | [`docs/skill-dataflow.md`](skill-dataflow.md) — every skill and agent in call order with its gate, its responsibility, and its reads and writes, plus the inverse view of who may write each section of persisted state |
 | Why is it built this way? | [`docs/adrs/`](adrs/) — one decision per file, with the alternatives that were tried and rejected. Index in §0. For decisions with no ADR yet, the linked spec. |
 | Has this idea already been tried and disproved? | [`ADR-0009`](adrs/ADR-0009-refuted-agent-design-claims.md), each ADR's `Alternatives considered`, and [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) §9 "Options set aside" — three ledgers, all negative records. Plus [`ADR-0010`](adrs/ADR-0010-record-structural-bets-in-a-ledger.md)'s structural-bet ledger, where **only a `rejected` row is a bar** — its `set aside` and `deferred` rows record ideas nobody researched, and re-proposing one is expected |
@@ -1968,7 +2352,7 @@ questions that only look open.
 | The write boundary and the `extraction_append` lane | [`research-append-tool-spec.md`](specs/research-append-tool-spec.md) §11 |
 | The persisted schemas | [`research-schema-spec.md`](specs/research-schema-spec.md), [`simplified-gedcomx-spec.md`](specs/simplified-gedcomx-spec.md) |
 | The projection tools | [`project-context-tool-spec.md`](specs/project-context-tool-spec.md), [`research-query-tool-spec.md`](specs/research-query-tool-spec.md) |
-| Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`image-reader-agent-spec.md`](specs/image-reader-agent-spec.md) (`record-extractor` has no standalone spec — its lane is `research-append-tool-spec.md` §11) |
+| Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`image-reader-agent-spec.md`](specs/image-reader-agent-spec.md) , [`record-structurer-agent-spec.md`](specs/record-structurer-agent-spec.md) |
 | How do I write a skill? How does it get tuned, tested, and rebuilt? | [`skill-authoring-guide.md`](skill-authoring-guide.md), [`skill-lifecycle.md`](skill-lifecycle.md) |
 | The eval harness — formats, workflow, run logs, CI rules | [`unit-test-spec.md`](specs/unit-test-spec.md) (the live format — [`unit-test-spec-v2.md`](specs/unit-test-spec-v2.md) is a **plan** for deferred features, not the format), [`e2e-test-spec.md`](specs/e2e-test-spec.md), [`e2e-testing-guide.md`](e2e-testing-guide.md), `eval/README.md`, `eval/CLAUDE.md` |
 | Setup paths the harness can't reach | `docs/testing-guides/` — OAuth tokens, `.mcpb` install, gps-mentor |

@@ -100,6 +100,16 @@ def blocked_protected_writes() -> list:
 
 
 @pytest.fixture
+def blocked_owned_section_writes() -> list:
+    """`research_append` ops the shipped ownership rule refused, denied by the
+    PreToolUse hook (issue #2022).
+
+    Empty is the healthy case, so it is also the right standalone default.
+    """
+    return []
+
+
+@pytest.fixture
 def skill_frontmatter() -> dict:
     return {}
 
@@ -127,6 +137,18 @@ def skills_invoked() -> list:
 
 
 @pytest.fixture
+def builtin_tool_calls() -> list:
+    """Built-in (non-MCP) tool calls, as {"tool", "args", "agent_id"?}.
+
+    The direct-agent arm's validators read the `Agent`/`Task` records out of this
+    (issue #2246). Empty is the right standalone default: with no spawn recorded
+    those validators skip, because a test carrying no `delegation` is not on that
+    arm at all.
+    """
+    return []
+
+
+@pytest.fixture
 def attempted_mcp_calls() -> list:
     """MCP calls the model emitted that never reached a fixture match, denied
     by policy, fixture caps or aborts.
@@ -139,7 +161,8 @@ def attempted_mcp_calls() -> list:
 
 @pytest.fixture
 def text_response() -> str:
-    """Every assistant text block concatenated, not the final reply alone.
+    r"""Every assistant turn's text, not the final reply alone — turns joined
+    with "\n\n", blocks within one turn with no separator.
 
     Empty is the right standalone default for the same reason the lists above
     default empty: a validator asserting a reply does NOT contain something

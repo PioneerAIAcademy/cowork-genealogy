@@ -1,10 +1,17 @@
 // materialize_facts — I/O types (spec docs/specs/tree-materialization-spec.md §4).
 //
-// The tool takes REFERENCES only (a persona = recordId + recordRole, plus the
-// target personId) and reads the persona's assertions from research.json itself,
-// so the LLM never hand-assembles a document and cannot drop the provenance
-// chain. Parameter names are camelCase (the MCP wire boundary); the persisted
-// tree stays snake_case.
+// Two op shapes, and the difference matters. The PERSONA op takes REFERENCES
+// only (a persona = recordId + recordRole, plus the target personId) and reads
+// the persona's assertions from research.json itself, so the LLM never
+// hand-assembles a document and cannot drop the provenance chain. The
+// NAMED-PARTY op (§4.6) serves a party who has no persona to reference — a
+// bride named inside the groom's marriage assertion — so it necessarily takes
+// one piece of caller-supplied data, her name, and nothing else: the tool
+// resolves and enforces the source-ref the caller cannot drop. What is
+// structural in both is the PROVENANCE, not the input shape.
+//
+// Parameter names are camelCase (the MCP wire boundary); the persisted tree
+// stays snake_case.
 
 /** One competing single-valued/vital fact type surfaced for conflict-resolution
  *  (materialize_facts reports; it never writes `conflicts` entries — §4.4). */
@@ -29,15 +36,80 @@ export interface MaterializeFactsOp {
   recordRole: string;
 }
 
-export interface MaterializeFactsInput extends Partial<MaterializeFactsOp> {
-  /** Absolute path to the project directory (tree.gedcomx.json + research.json). */
-  projectPath: string;
-  // Batch form — supply ops; when present the single-op fields above are
-  // ignored. Every op applies to one in-memory tree; the tool validates once
-  // and writes once (all-or-nothing). Ids assigned earlier in the batch are
-  // visible to later ops (the allocator rescans the live tree).
-  ops?: MaterializeFactsOp[];
+/** The name of a party an assertion names but gives no persona of its own.
+ *  Both parts are optional individually; at least one must be non-empty. */
+export interface NamedPartyName {
+  given?: string;
+  surname?: string;
 }
+
+/** One NAMED-PARTY reference (§4.6) — mint or enrich the party a
+ *  `relationship`/`marriage` assertion NAMES but does not give its own
+ *  `record_role`: the bride in the groom's marriage register is the canonical
+ *  case. She has no persona, so there is nothing for the persona op above to
+ *  select on. A parent named in a child's baptism is the same shape in
+ *  principle, but in this corpus extraction gives that parent its own persona,
+ *  so the arm refuses it and points at the persona form — check before
+ *  reaching for this one on a parentage assertion.
+ *
+ *  The caller supplies the name because the assertion usually does not carry
+ *  one in machine-readable form (8 of 167 corpus `relationship`/`marriage`
+ *  assertions put it in `structured_value`, under five distinct key shapes).
+ *  The tool
+ *  supplies the source-ref, resolved from the assertion's own `source_id`, and
+ *  refuses the write without it — so the ref is ENFORCED rather than
+ *  remembered, which is the leak this closes. The name is not and cannot be
+ *  validated against the record. */
+export interface MaterializeFactsNamedPartyOp {
+  /** The `relationship`/`marriage` assertion that names this party
+   *  (matches assertion.id). Selects this op shape. */
+  assertionId: string;
+  /** The role of the party being minted — the one that is NOT the persona
+   *  ("bride", "mother"). Use the record's own spelling where it has one. It is
+   *  checked against the assertion's own `record_role` AND against every
+   *  `record_role` on that record: if a persona with this role exists and could
+   *  be materialized instead, the call is refused and names the
+   *  `{ recordId, recordRole }` to use, because that form writes her facts too.
+   *  Used twice more after that guard: it selects the sibling personas whose facts
+   *  the fact pass writes, and the corroboration gate compares
+   *  `structured_value.related_person_role` against it. Never persisted, though —
+   *  nothing on a tree person holds a role, and this tool
+   *  never writes research.json. Required rather than optional because a guard
+   *  a caller can skip by omitting it is not a guard, and best-effort because
+   *  both roles are free text (spec section 4.6). */
+  relatedRole: string;
+  /** The name the record gives this party. At least one part non-empty. */
+  name: NamedPartyName;
+  /** Optional gender for the minted person; fills only an absent/Unknown one. */
+  gender?: string;
+  /** Optional name type ("BirthName", "MarriedName", …). OMITTED when absent:
+   *  a party named inside another persona's assertion is often named by a
+   *  surname that is not her birth surname, so the tool asserts no type it
+   *  cannot support from the record. */
+  nameType?: string;
+  /** Target tree person. Omit to mint a brand-new person with the next `I` id. */
+  personId?: string;
+}
+
+/** One element of a batch `ops` — either shape. Discriminated by the presence
+ *  of `assertionId`; the narrowing guard lives with its caller in
+ *  `tools/materialize-facts.ts`, since `src/types/` carries no runtime code. */
+export type MaterializeFactsAnyOp = MaterializeFactsOp | MaterializeFactsNamedPartyOp;
+
+// A `type` intersection, NOT `interface extends Partial<A | B>`: `Partial`
+// distributes over a union and an interface cannot extend one (TS2312).
+export type MaterializeFactsInput = Partial<MaterializeFactsOp> &
+  Partial<MaterializeFactsNamedPartyOp> & {
+    /** Absolute path to the project directory (tree.gedcomx.json + research.json). */
+    projectPath: string;
+    // Batch form — supply ops; when present the single-op fields above are
+    // ignored. Every op applies to one in-memory tree; the tool validates once
+    // and writes once (all-or-nothing). Ids assigned earlier in the batch are
+    // visible to later ops (the allocator rescans the live tree).
+    ops?: MaterializeFactsAnyOp[];
+    // Justifications for genealogical warnings this write introduces (issue #2840).
+    warningJustifications?: Array<{ warningId: string; justification: string }>;
+  };
 
 /** The per-persona result payload — the body of a single call's success, or
  *  one element of a batch `results`. */
@@ -70,8 +142,28 @@ export type MaterializeFactsResult =
       results: MaterializeFactsOpResult[];
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
+      /** Competing biological parentage the batch created while passing the
+       *  warning gate — a gender it filled in (tree-edit-tool-spec.md §6). */
+      conflicts_surfaced?: ConflictSurfaced[];
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  // The warning gate's refusal rides this same arm.
+  | {
+      ok: false;
+      errors: string[];
+      reason?: "no_project" | "unjustified_warnings";
+      message?: string;
+      warnings?: Array<{
+        warningId?: string;
+        issueType?: string;
+        severity?: string;
+        personId?: string;
+        personName?: string;
+        message: string;
+        facts?: unknown;
+        relatedPersonId?: string;
+      }>;
+      conflicts_surfaced?: ConflictSurfaced[];
+    };

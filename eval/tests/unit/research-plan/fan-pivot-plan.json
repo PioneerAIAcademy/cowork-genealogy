@@ -11,11 +11,12 @@
       "family-associates-neighbors",
       "parentage",
       "research-plan-new-plan-for-q-001",
-      "new-plan-items-planned-status"
+      "new-plan-items-planned-status",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Direct census and vital records haven't proved parentage yet — create a new plan that takes a FAN approach for the parentage question.",
+    "delegation": "Direct census and vital records haven't proved parentage yet — create a new plan that takes a FAN approach for the parentage question.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-census-exhausted-surveyed"
   },
   "mcp_fixtures": [
@@ -31,7 +32,16 @@
     "place-population-schuylkill",
     "wiki-place-page-pennsylvania-research-tips",
     "wiki-place-page-pennsylvania-online-records",
-    "volume-search-schuylkill"
+    "volume-search-schuylkill",
+    "collections-search-us-national",
+    "wiki-read-ireland-military-records",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "Background on what the test author was looking for. None of it is a dimension. Grade what it describes inside the dimensions you were given, and do not add one named after anything below.",
@@ -42,7 +52,8 @@
   ],
   "judge_reads_files": true,
   "execution": {
-    "max_wall_clock_seconds": 600,
-    "max_turns": 35
+    "max_wall_clock_seconds": 900,
+    "max_turns": 35,
+    "sdk_message_silence_seconds": 360
   }
 }

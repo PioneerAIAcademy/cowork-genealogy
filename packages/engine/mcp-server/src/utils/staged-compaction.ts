@@ -24,6 +24,8 @@
 
 import type { RecordSearchResult, RecordSearchToolResponse } from "../types/record-search.js";
 import type { FulltextSearchResponse } from "../types/fulltext-search.js";
+import type { RankSearchMatchesResult } from "../types/rank-search-matches.js";
+import { arkToBareId } from "./ark.js";
 
 /**
  * Slim `record_search`'s INLINE projection so a broad search can't overflow the
@@ -68,7 +70,7 @@ export function compactStagedRecordSearch(
   out: RecordSearchToolResponse,
 ): RecordSearchToolResponse {
   const collections: Record<string, string> = {};
-  for (const r of out.results) {
+  for (const r of out.results ?? []) {
     delete r.gedcomx;
 
     // Derivable from collectionId; nothing reads it off the inline stub.
@@ -133,5 +135,78 @@ export function compactStagedFulltextSearch(
   for (const r of out.results) {
     delete r.textDocument;
   }
+  return out;
+}
+
+/**
+ * Annotate the search rows with the ranking, in place, and return them best
+ * first.
+ *
+ * ONE ROW LIST, NEVER TWO (#1212 ruling, 2026-09-15). The shape this replaces
+ * shipped `ranked.matches` and dropped `results`, which meant the same records
+ * existed in two shapes and needed a four-branch conditional to decide which to
+ * send and a packaging guard to hold the two field sets in step. Annotating the
+ * row removes the question.
+ *
+ * `searchRank` is what keeps the re-ordering AUDITABLE rather than lossy: the
+ * response comes back sorted by match score, so the position FamilySearch
+ * actually returned would otherwise be unrecoverable from the response alone.
+ *
+ * The STAGED SIDECAR IS NOT TOUCHED. It keeps FamilySearch's search order,
+ * because it is an audit record of what the repository returned and re-sorting
+ * an audit trail by a score computed afterwards is exactly the thing to regret.
+ * It is also written before ranking runs, so the divergence is real rather than
+ * theoretical — the spec says so.
+ *
+ * A row the ranker never scored keeps its search position and gains no score
+ * fields, and sorts after every scored row rather than being dropped.
+ *
+ * Matching is by `recordId` reduced with `arkToBareId`: production emits a
+ * canonical ARK on both sides, but fixtures predate that and carry a bare
+ * `MXHY-TP4` against a full `ark:/61903/1:1:MXHY-TP4`. Exact matching silently
+ * annotates nothing there, which is the same failure as not calling this.
+ *
+ * Mutates and returns `out`.
+ */
+export function annotateResultsWithRanking(
+  out: RecordSearchToolResponse,
+): RecordSearchToolResponse {
+  const ranked = out.ranked;
+  if (!ranked || !ranked.matches || ranked.matches.length === 0) return out;
+  if (!out.results || out.results.length === 0) return out;
+
+  const stubById = new Map(
+    ranked.matches.map((m) => [arkToBareId(m.recordId), m]),
+  );
+  for (const row of out.results) {
+    const stub = stubById.get(arkToBareId(row.recordId));
+    if (!stub) continue;
+    row.matchRank = stub.matchRank;
+    row.searchRank = stub.searchRank;
+    row.matchScore = stub.matchScore;
+    if (stub.matchConfidence !== undefined) row.matchConfidence = stub.matchConfidence;
+    if (stub.candidateFactCount !== undefined) {
+      row.candidateFactCount = stub.candidateFactCount;
+    }
+    if (stub.attachedToSubject !== undefined) {
+      row.attachedToSubject = stub.attachedToSubject;
+    }
+    if (stub.attachedToOther !== undefined) {
+      row.attachedToOther = stub.attachedToOther;
+    }
+  }
+
+  // Best first. An unscored row has no matchRank and sorts last, keeping its
+  // relative search order — it is not dropped, it is simply not ranked.
+  out.results.sort((a, b) => {
+    const ra = a.matchRank ?? Number.POSITIVE_INFINITY;
+    const rb = b.matchRank ?? Number.POSITIVE_INFINITY;
+    if (ra !== rb) return ra - rb;
+    return (a.searchRank ?? 0) - (b.searchRank ?? 0);
+  });
+
+  // `ranked` keeps its metadata and gives up its row list: the rows are on
+  // `results` now, and shipping both is the duplication this ruling removed.
+  delete (out.ranked as { matches?: unknown }).matches;
   return out;
 }

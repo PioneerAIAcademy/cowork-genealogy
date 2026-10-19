@@ -22,15 +22,15 @@ import styles from './EvaluationsSection.module.css'
  */
 
 const FOCUS_LABELS: Record<string, string> = {
-  'pre-exhaustiveness': 'Before declaring exhaustive',
+  'pre-exhaustiveness': 'Before stopping the search',
   'conclusion-readiness': 'Before concluding',
-  'proof-critique': 'Proof critique',
+  'proof-critique': 'Review of the finding',
   'on-demand': 'On demand'
 }
 
 const TARGET_LABELS: Record<string, string> = {
   question: 'question',
-  proof_summary: 'proof summary',
+  proof_summary: 'finding',
   project: 'project'
 }
 
@@ -42,7 +42,10 @@ export default function EvaluationsSection(): React.JSX.Element {
     return (
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Mentor Evaluations</h2>
-        <p className={styles.empty}>No mentor evaluations recorded.</p>
+        <p className={styles.empty}>
+          No mentor evaluations recorded. These are added when the mentor
+          reviews the research against genealogy standards.
+        </p>
       </div>
     )
   }

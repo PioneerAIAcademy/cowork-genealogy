@@ -12,6 +12,16 @@ San Diego, California.
 > Kenneth Werner Quass have any other children? Identify each
 > additional child and that child's birth and death dates.
 
+## Bundled captures (`provided-documents/`)
+
+One Find a Grave page is committed here to give the harness direct access to Ivyl's family listing without a live browser session (issue #2083):
+
+| File | Source | What it shows |
+|------|--------|---------------|
+| `findagrave-ivyl-quass.pdf` | findagrave.com | Memorial for Ivyl Phylena Greenley Quass (1914–2005) — lists her children: Alice Jeanette "Jeanne" Quass (1940–1955) and Donald Wendell Quass (1940–2024) |
+
+This is an authentic page saved from findagrave.com in a credentialed browser. It directly confirms the existence and dates of both children, supporting f1 (the relationship finding).
+
 ## What was removed from the starting tree
 
 - Removed the daughter person **Alice Jeannette "Jeannie" Quass**

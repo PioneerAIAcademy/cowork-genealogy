@@ -18,7 +18,30 @@ from validators_lib import (  # noqa: E402
     assert_log_append_only,
     assert_no_section_deletions,
     assert_only_writes_to_sections,
+    check_no_gate_stop,
+    new_log_entries,
+    new_section_entries,
 )
+
+
+def _wrap(section, entries):
+    return {"research_json": {section: entries}}
+
+
+# --- new_section_entries: include_modified (main covers the new-only cases) ---
+
+
+def test_new_section_entries_without_include_modified_ignores_an_inplace_change():
+    before = _wrap("localities", [{"id": "loc_001", "place": "A"}])
+    after = _wrap("localities", [{"id": "loc_001", "place": "B"}])
+    assert new_section_entries(before, after, "localities") == []
+
+
+def test_new_section_entries_include_modified_catches_an_inplace_change():
+    before = _wrap("localities", [{"id": "loc_001", "place": "A"}])
+    after = _wrap("localities", [{"id": "loc_001", "place": "B"}])
+    got = new_section_entries(before, after, "localities", include_modified=True)
+    assert [e["place"] for e in got] == ["B"]
 
 
 # --- assert_no_section_deletions ------------------------------------------
@@ -167,3 +190,114 @@ def test_log_append_only_fails_when_entry_deleted():
     after = {"log": [{"id": "log_1"}]}
     with pytest.raises(AssertionError, match="deleted"):
         assert_log_append_only(before, after)
+
+
+# --- new_section_entries / new_log_entries -----------------------------
+#
+# `new_log_entries` had no coverage here at all before #2390, despite four
+# validator files depending on it. It is now a one-line alias for the general
+# form, so both are exercised together.
+# (`_wrap` is defined once at module top; this section reuses it.)
+
+
+def test_new_section_entries_returns_only_what_is_new():
+    before = _wrap("sources", [{"id": "src_001"}])
+    after = _wrap("sources", [{"id": "src_001"}, {"id": "src_002"}])
+    assert [e["id"] for e in new_section_entries(before, after, "sources")] == ["src_002"]
+
+
+def test_new_section_entries_skips_non_dict_entries():
+    """The `isinstance` guard, which the shared helper on main already carried."""
+    before = _wrap("log", [{"id": "log_1"}, "junk"])
+    after = _wrap("log", [{"id": "log_1"}, "junk", {"id": "log_2"}])
+    assert [e["id"] for e in new_section_entries(before, after, "log")] == ["log_2"]
+
+
+def test_new_section_entries_tolerates_an_explicit_null_section():
+    """`"log": null` satisfies a `.get(section, [])` default and then raises
+    TypeError on iteration. NEW here — the shared helper on main used
+    `after.get("log", [])` — and it fires on 0 of the 2130 committed unit runs
+    across 27 skills, so it is hardening rather than a fix. The section being
+    caller-supplied is what widens the shapes that reach here."""
+    before = _wrap("log", None)
+    after = _wrap("log", [{"id": "log_1"}])
+    assert [e["id"] for e in new_section_entries(before, after, "log")] == ["log_1"]
+
+
+def test_new_section_entries_tolerates_a_missing_research_json():
+    assert new_section_entries({}, {}, "log") == []
+
+
+def test_new_log_entries_is_the_log_section_of_the_general_form():
+    before = _wrap("log", [{"id": "log_1"}])
+    after = _wrap("log", [{"id": "log_1"}, {"id": "log_2"}])
+    assert new_log_entries(before, after) == new_section_entries(before, after, "log")
+
+
+def test_new_log_entries_does_not_see_other_sections():
+    """A sources write must not read as a new log entry."""
+    before = _wrap("log", [])
+    after = {"research_json": {"log": [], "sources": [{"id": "src_001"}]}}
+    assert new_log_entries(before, after) == []
+
+
+# --- check_no_gate_stop ------------------------------------------------------
+#
+# This is the whole verdict for the `grade_on_invariant` tests that carry the
+# `no-exhaustive-declaration` tag, in BOTH the research-exhaustiveness and
+# research suites (issue #2738). It had no test: replacing its `return bad`
+# with `return []` left the entire harness suite green.
+
+
+def _q(qid="q_001", stopped_because=None, status="in_progress"):
+    return {"id": qid, "status": status, "search_stop": {"stopped_because": stopped_because}}
+
+
+def _state(*questions):
+    return {"research_json": {"questions": list(questions)}}
+
+
+def test_flipping_declared_to_true_is_reported():
+    bad = check_no_gate_stop(_state(_q()), _state(_q(stopped_because="question_answered")))
+    assert len(bad) == 1 and "q_001" in bad[0] and "stopped_because" in bad[0]
+
+
+def test_setting_status_to_exhaustive_declared_is_reported():
+    bad = check_no_gate_stop(
+        _state(_q()), _state(_q(status="exhaustive_declared"))
+    )
+    assert len(bad) == 1 and "exhaustive_declared" in bad[0]
+
+
+def test_both_violations_are_reported_together():
+    bad = check_no_gate_stop(
+        _state(_q()), _state(_q(stopped_because="question_answered", status="exhaustive_declared"))
+    )
+    assert len(bad) == 2
+
+
+def test_an_unchanged_decline_is_clean():
+    assert check_no_gate_stop(_state(_q()), _state(_q())) == []
+
+
+def test_a_question_already_declared_before_the_run_is_not_reported():
+    """Only a flip counts. A question that arrived with a stop-gate value was not
+    written by this run, so re-reporting it would fail every re-evaluation."""
+    before = _state(_q(stopped_because="question_answered", status="exhaustive_declared"))
+    assert check_no_gate_stop(before, before) == []
+
+
+def test_other_questions_are_untouched_by_one_flip():
+    before = _state(_q("q_001"), _q("q_002"))
+    after = _state(_q("q_001"), _q("q_002", stopped_because="question_answered"))
+    bad = check_no_gate_stop(before, after)
+    assert len(bad) == 1 and "q_002" in bad[0]
+
+
+def test_missing_research_json_returns_empty_so_callers_must_skip_first():
+    """Pins the contract the two wrappers depend on: this returns `[]` rather
+    than raising, and `[]` is indistinguishable from "no violation". Both
+    callers skip on a None state BEFORE calling, because
+    `validator_runner` records a bare pass as evidence the invariant held."""
+    assert check_no_gate_stop({"research_json": None}, _state(_q())) == []
+    assert check_no_gate_stop(_state(_q()), {"research_json": None}) == []

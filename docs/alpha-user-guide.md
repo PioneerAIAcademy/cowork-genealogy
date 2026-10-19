@@ -95,19 +95,9 @@ off the tree and you'll learn very little.
 
 ### Also tell it about you
 
-Whichever path you take, include these two — the setup runs in **one pass**, so it
-won't come back and ask:
-
-- **Your experience level** — just starting out / some research / experienced /
-  professional.
-- **Your subscriptions** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
-  GenealogyBank, FindAGrave-Plus, or none. Free access counts, so say so if you
-  get partner subscriptions through your FamilySearch account or use a library
-  or family history centre — both are recorded, and neither is "none". A plain
-  FamilySearch account is the baseline, so there's no need to mention it.
-
-Skip them and it quietly assumes "intermediate" and "none", which changes how much
-it explains as it works. You can correct it later, but it's easier up front.
+Whichever path you take, you don't need to say anything about yourself. Every
+project gets plain-language narration, and every subscription site is assumed
+reachable — mention a site you hold and it's recorded, but nothing is asked.
 
 ### Bringing in a document
 
@@ -205,6 +195,9 @@ Being straight with you, so you don't waste time:
 - **The cost figure restarts when you reload the page.** It's per page-load, not
   per session.
 - **You can't reset a project.** To start over, create a new session.
+- **A session can be continued for 72 hours after you create it.** After that it
+  shows as "ended": you can still see its research (the tree and findings), but
+  not its chat, and you need a new session to keep researching.
 - **Living people:** please don't enter information about anyone living. Nothing
   is encrypted yet.
 - **We can read your sessions, and so may FamilySearch.** We use them to fix
@@ -220,7 +213,8 @@ Being straight with you, so you don't waste time:
 | What you see | What's happening |
 |---|---|
 | "Your address isn't permitted" | We allowlisted a different address. Send us the one on the page — it's the email on your FamilySearch account. |
-| The agent says it can't reach FamilySearch | Its access may have gone stale on an older session. Start a new session; tell us if it keeps happening. |
+| The agent says it can't reach FamilySearch | Start a new session; tell us if it keeps happening. |
+| "This session is more than 72 hours old and can't be continued" | Sessions can be continued for 72 hours. Start a new session to keep researching; the old one's research is still there to read. |
 | It stops mid-research | Say "continue". If it stalls again, that's worth reporting. |
 | It's slow | Real research is genuinely slow — it reads records one at a time. Minutes is normal. |
 | It asks who you want to research after you already said | It missed your first message. Repeat it with the details. |

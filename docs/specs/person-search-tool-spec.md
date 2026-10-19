@@ -23,7 +23,7 @@ place_search(query: "Kentucky")              // (optional) confirm an ambiguous 
   ↓
 person_search({ givenName, surname, ... })   // find candidate tree persons
   ↓  user picks one → personId (e.g. "LZJW-C31")
-person_read({ personId, relatives: true })   // expand to parents, spouse, children
+person_read({ personId })   // expands to parents, siblings, spouse, children
 ```
 
 Sibling to `record_search`: that tool searches indexed historical
@@ -313,7 +313,7 @@ Example:
 ### Picking a result (why this output is terminal)
 
 When the user chooses a match, the LLM passes only the `personId` string
-to `person_read({ personId, relatives: true })`. `person_read` re-fetches
+to `person_read({ personId })`. `person_read` re-fetches
 the authoritative person from FamilySearch by ID and runs its own
 GedcomX→simplified conversion. This tool's `gedcomx` is therefore never
 read back as input, and the simplified→raw reverse converter
@@ -349,10 +349,10 @@ surname.
 
 ## Authentication
 
-Requires a valid FamilySearch access token. Calls `getValidToken()` from
+Requires a valid FamilySearch access token. Calls `getValidToken(principal)` from
 `src/auth/refresh.ts` — the single entry point for authenticated tools.
 Do not re-implement token plumbing. If the user is not authenticated,
-`getValidToken()` throws an LLM-instruction error directing them to the
+`getValidToken(principal)` throws an LLM-instruction error directing them to the
 `login` tool; the handler lets it propagate (same pattern as the other
 tools in `index.ts`).
 
@@ -501,7 +501,7 @@ For each `entry` in `response.entries`:
 | `<event>YearFrom` without `<event>YearTo` (or vice versa) | Throw: `"<event>YearFrom and <event>YearTo must be provided together."` |
 | `<event>YearFrom > <event>YearTo` | Throw: `"<event>YearFrom must be <= <event>YearTo."` |
 | `sex` not in `{Male, Female, Unknown}` (case-insensitive) | Throw: `"sex must be 'Male', 'Female', or 'Unknown' (case-insensitive)."` |
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error. |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error. |
 | API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 400 | Read body as JSON, extract error detail, throw: `"FamilySearch tree search rejected the query: ${detail}."` Fall back to a generic message if the body isn't parseable. |
 | API returns 429 | Throw: `"FamilySearch rate limit reached. Wait a moment and try again."` |
@@ -612,7 +612,7 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 ### Manual Layer 2 (Claude Code)
 - *"Find Abraham Lincoln born 1809 in Kentucky in the family tree."* — Claude calls `person_search`, surfaces the ranked matches.
-- *"Now show me his parents and children."* — Claude chains to `person_read({ personId: "LZJW-C31", relatives: true })`.
+- *"Now show me his parents and children."* — Claude chains to `person_read({ personId: "LZJW-C31" })`.
 
 ### Manual Layers 0–3 (smoke → Inspector → Claude Code → Cowork)
 Run `dev/try-person-search.ts` for the smoke layer; OAuth setup per

@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "True, not partial. The requested claim is fully represented in the final tree: I1 Martina Eulalia Goni with ParentChild from both G18D-QZW and G18D-LD4, the correct spouse I2 Francisco Casimiro Yriarte, and the Couple marriage fact 10 Sep 1872 at Elizondo. The evidence path is weaker than the fixture's: the father-surname join is not independently established. The two records that name Martina's parents (the 1872 marriage index ark:/61903/1:2:WN68-B1PZ and her son Canuto's 1878 baptism ark:/61903/1:1:H6WT-8J6Z) both give the father as a bare 'Juan Jose' with no surname, and the record that does supply all four grandparents (sibling Miguel Francisco Crisanto, 1858, ark:/61903/1:1:H6WT-W93Z) never mentions Martina Eulalia. So the join to G18D-QZW rests mainly on the name pair. That weakens the proof, not the recall, and does not make the claim absent or only partial. Proof quality 2 (thin) for that reason: not unsound, since two independent records name her parents, but the identity join is the gap. Her own baptism (10 Dec 1845, Elizondo, ark:/61903/1:1:664D-73X6) would have closed it directly by naming her and all four grandparents in one document; the agent's stated search window of c. 1848-1855 excludes the true date, which is likely why it missed. Graded blind: run-<ts>.json was not read, only the fixture, the final tree and the final research. Scored independently of the 8 person_evidence-without-same_person guardrail bypasses and the orphaned I5-I10, which are structural/guardrail concerns and were deliberately not allowed to move this finding's label."
+  },
+  "annotator": "ernest",
+  "findings_hash": "fba6fa5a78185abf51a9cc82e629654a13a76b02181627be06c2389a35aaed99"
+}

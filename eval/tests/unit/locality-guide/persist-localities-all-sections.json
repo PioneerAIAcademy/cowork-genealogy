@@ -10,16 +10,18 @@
       "localities",
       "localities-persist",
       "wiki-place-page",
-      "persist"
+      "persist",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "We're researching in Schuylkill County, Pennsylvania (1840-1880). Produce the locality research guide and save it to the project.",
+    "delegation": "We're researching in Schuylkill County, Pennsylvania (1840-1880). Produce the locality research guide and save it to the project.\n\nprojectPath: <workspace>",
     "scenario": "flynn-first-plan"
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",
     "place-search-pennsylvania",
+    "place-search-any",
     "place-search-all-any",
     "place-population-any",
     "collections-search-schuylkill",

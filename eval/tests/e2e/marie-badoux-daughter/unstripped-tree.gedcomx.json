@@ -1,0 +1,152 @@
+{
+  "persons": [
+    {
+      "id": "LT9H-SK3",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Marie",
+          "surname": "Badoux"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6919fdab-6fa1-4616-93a9-07a10d6c0014",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GGCT-VVW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Marie",
+          "surname": "Fromin"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f3c1e587-6ecb-4351-9a9b-41b6b580a498",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GGCT-6PZ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Pierre",
+          "surname": "Badoux"
+        }
+      ],
+      "facts": [
+        {
+          "id": "18e094b1-9457-44ff-8f1f-0f7646d92cd8",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "2S86-XWG",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Philippe",
+          "surname": "Thénot"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fc9f72ef-7c7e-4c0d-940d-a1fcd7984c2b",
+          "type": "Birth",
+          "date": "12 septembre 1751",
+          "standard_date": "12 Sep 1751",
+          "place": "Romenay, Saône-et-Loire, Bourgogne, France",
+          "standard_place": "Romenay, Saône-et-Loire, France"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "avant 1810",
+          "standard_date": "Bef 1810"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "2S86-XWG",
+      "person2": "LT9H-SK3",
+      "facts": [
+        {
+          "id": "c71fe9af-ffe1-4389-84f6-61a7b4457aea",
+          "type": "Marriage",
+          "date": "22 février 1773",
+          "standard_date": "22 Feb 1773",
+          "place": "Romenay, Saône-et-Loire, Bourgogne, France",
+          "standard_place": "Romenay, Saône-et-Loire, France"
+        },
+        {
+          "id": "04151d47-251c-4b56-8087-fcd0cfdb82ef",
+          "type": "Marriage",
+          "date": "22 Feb 1773",
+          "standard_date": "22 Feb 1773",
+          "place": "Romenay, Saône-et-Loire, Bourgogne-Franche-Comté, France",
+          "standard_place": "Romenay, Saône-et-Loire, France"
+        },
+        {
+          "id": "d2a753af-29d9-4927-9c97-57ab20f03a93",
+          "type": "Marriage",
+          "date": "27 Jun 1780",
+          "standard_date": "27 Jun 1780",
+          "place": "Romenay, Saône-et-Loire, Bourgogne-Franche-Comté, France",
+          "standard_place": "Romenay, Saône-et-Loire, France"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GGCT-6PZ",
+      "person2": "GGCT-VVW"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GGCT-6PZ",
+      "child": "LT9H-SK3"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GGCT-VVW",
+      "child": "LT9H-SK3"
+    }
+  ],
+  "sources": [
+    {
+      "id": "QKYX-6XV",
+      "title": "Marie Claudine Bourgeois, \"France, Saône-et-Loire, registres paroissiaux et d’état civil, 1530-1892\"",
+      "citation": "\"France, Saône-et-Loire, registres paroissiaux et d’état civil, 1530-1892\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:W5XG-BTPZ : Sat Mar 09 10:22:30 UTC 2024), Entry for Philippe Thenot and Jean Thenot, 27 Jun 1780.",
+      "url": "https://familysearch.org/ark:/61903/1:1:W5XG-BY3Z"
+    },
+    {
+      "id": "QVMK-NBH",
+      "title": "Marie Badoux, \"France, Saône-et-Loire, registres paroissiaux et d’état civil, 1530-1892\"",
+      "citation": "\"France, Saône-et-Loire, registres paroissiaux et d’état civil, 1530-1892\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:W5XJ-F7T2 : Sat Mar 09 14:34:34 UTC 2024), Entry for Philippes Thenot and Jean Thenot, 22 Feb 1773.",
+      "url": "https://familysearch.org/ark:/61903/1:1:W5XJ-FW6Z"
+    }
+  ]
+}

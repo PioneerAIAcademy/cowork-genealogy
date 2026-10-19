@@ -4,13 +4,21 @@
     "skill": "search-wikipedia",
     "name": "Historical event lookup",
     "type": "positive",
-    "description": "Wikipedia lookup for a genealogically relevant historical event (the Great Famine in Ireland). Exercises a topic whose title contains parentheses, testing slug normalization.",
-    "tags": ["wikipedia", "event", "slug-parens", "slug-great-famine-ireland"]
+    "description": "Wikipedia lookup for a genealogically relevant historical event (the Great Famine in Ireland). Exercises a returned title containing parentheses, which the logged notes' H1 must keep verbatim.",
+    "tags": [
+      "wikipedia",
+      "event",
+      "title-parens",
+      "title-great-famine-ireland",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "I'm researching an Irish ancestor who emigrated around 1850. Can you look up the Great Famine in Ireland on Wikipedia?",
-    "scenario": null
+    "delegation": "I'm researching an Irish ancestor who emigrated around 1850. Can you look up the Great Famine in Ireland on Wikipedia?\n\ntopic: the Great Famine in Ireland\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
-  "mcp_fixtures": ["wikipedia-search-great-famine-ireland"],
+  "mcp_fixtures": [
+    "wikipedia-search-great-famine-ireland"
+  ],
   "judge_context": []
 }

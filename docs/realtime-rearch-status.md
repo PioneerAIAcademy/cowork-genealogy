@@ -62,7 +62,7 @@ without it (`config.assert_production_config`, issue #1123).
 > both gates app access via the email allowlist *and* persists the data token
 > every sandbox-create injects. There is **no Google sign-in** and **no
 > per-session "Connect FamilySearch" step** — both are gone, along with
-> `GOOGLE_CLIENT_ID`/`SECRET`. There is also no `make web-oauth` target; the
+> `GOOGLE_CLIENT_ID`/`SECRET`. There is also no `web-oauth` make target; the
 > FamilySearch path is `make web` (`:1837`). With `FAMILYSEARCH_WEB_ENABLED` off,
 > a **dev-login** (allowlisted email, no round-trip) stands in and the agent runs
 > in mock mode — pair that with `make server-dev` / `make server-mock` on `:8000`
@@ -96,8 +96,9 @@ sidecar, feedback) — never the stream.
   `wikiMarkdownDir`. All three work in the sandbox wherever the API is reachable.
 - **1h Hobby cap:** a session force-pauses after ~1h of *continuous running*, and
   the window resets on resume, so total session wall-clock is unbounded (measured
-  2026-08-09). Resume takes ~1s. Whether a mid-turn pause breaks the turn is
-  asserted, not measured. Proactive between-turn pause deferred.
+  2026-08-09). Resume takes ~1s. A mid-turn pause can break the turn (measured in
+  #3305: three of four in-flight calls failed on resume). Proactive between-turn
+  pause deferred.
 - **Delete-janitor** (abandoned-sandbox GC) deferred — use the explicit DELETE.
 - `ws_signing_key` defaults to a dev value. Since issue #1123 this is enforced rather
   than documented: an https `PUBLIC_URL` plus a default `ws_signing_key` (or

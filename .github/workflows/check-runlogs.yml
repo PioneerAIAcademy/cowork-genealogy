@@ -5,20 +5,29 @@ name: Check runlog discipline
 #   Rule 1 (blocking): At most one newly-added-or-renamed-into-place
 #   v{N}.json (released) per eval/runlogs/unit/<skill>/ per PR.
 #
-#   Rule 2 (blocking): The latest full-skill run log per touched skill
-#   must be "active on skill-side files" — its embedded snapshot matches
-#   the current PR-branch state of all snapshot-tracked files.
+#   Rule 2 (blocking): The run log this PR adds per touched skill (a
+#   released v{N}.json it adds, else its newest candidate) must be "active
+#   on skill-side files": its embedded snapshot matches the current
+#   PR-branch state of all snapshot-tracked files. A PR that adds no run
+#   log is held to the latest full-skill run log on disk instead.
 #
-#   Rule 2b (warn-only): The same run log's judge_prompt_hash matches the
-#   current eval/harness/judge/prompt.md. Mismatch surfaces a warning
-#   annotation but does not block merge — judge-prompt edits are a
-#   separate project-wide cadence.
+#   Rule 2b (blocking on a judge-prompt PR): The same run log's
+#   judge_prompt_hash matches the current eval/harness/judge/prompt.md.
+#   Blocks only when this PR edits prompt.md (satisfied by `make
+#   judge-regrade`); warns on any other PR.
 #
-#   Rule 3 (blocking): The latest full-skill run log's .ann.json contains
+#   Rule 2c (blocking on suite-specific inputs): The same run log's
+#   `instrument` fingerprint matches the current validators and advertised
+#   tool schemas. A change to the suite's own validator file or to a tool its
+#   fixtures serve blocks; a change to the shared validators, the LIVE_TOOLS
+#   schemas or a live tool's compiled module warns. Needs the engine build,
+#   so this job builds it.
+#
+#   Rule 3 (blocking): The same run log's .ann.json contains
 #   a correction entry for every (test_id, dimension_source, dimension_name)
 #   triple of the tests named in the run log's `review_sample` (3 rotation,
-#   1 targeted, 1 random, plus every test that failed or scored a 1 or 2 on
-#   any dimension — so the count varies by run). A run log with no
+#   1 targeted, 1 random, plus every test that failed, scored a 1 or 2 on
+#   any dimension, or carries a coerced_routing_negative_to_na warning — so the count varies by run). A run log with no
 #   `review_sample` — every one written before sampling shipped — still owes
 #   all of them.
 #
@@ -44,16 +53,31 @@ on:
 # is stripped by cosmetic-skip-strip.yml, not here. That matters because this is
 # the one PR job that checks out and executes PR-authored Python (the harness
 # scripts at the bottom), so it is the one job that should hold no write token
-# at all. `pull-requests: read` is what the `scope` and `cosmetic` steps need.
+# at all. `pull-requests: read` is what the `scope` and `cosmetic` steps need, and
+# `issues: read` is what check_slot_queue.py needs.
+#
+# `issues: read` is spelled out rather than left to chance. Naming ANY scope sets
+# every unnamed scope to `none`, and until check_slot_queue.py shipped every
+# post-gate lint was pure-local, so nothing in this job had ever made an API call
+# for issues. Whether a public-repo issues read would succeed without it is
+# unverified — and a scope that happens to work on one event type and 403s on
+# another is indistinguishable from a quiet check, which is precisely what that
+# script must never be.
 permissions:
   contents: read
   pull-requests: read
+  issues: read
 
-# Cosmetic-skip escape hatch (rule 2 only). A senior applies the
-# `eval-cosmetic-skip` label on a PR whose only skill-side change is
-# behavior-neutral (rewording, typo) to keep the prior run log active without
-# a re-run + re-grade. The label must exist in the repo once:
-# `gh label create eval-cosmetic-skip`.
+# Cosmetic-skip escape hatch (rules 2 and 2c), PER SKILL. A senior applies
+# `eval-cosmetic-skip:<skill>` for each skill whose change is behavior-neutral
+# (rewording, typo), keeping that skill's prior run log active without a re-run
+# + re-grade. `<skill>` is the run-log directory name, the one rule 2's error
+# prints. Every other touched skill keeps the hard block, and the bare
+# `eval-cosmetic-skip` label waives nothing. The `cosmetic` step below only
+# passes the raw label names through; check_runlogs.py matches them, so its
+# tests cover the matching and nothing here parses a label. Each label must
+# exist in the repo once (`gh label create eval-cosmetic-skip:<skill>`; the loop
+# over every skill is in eval/README.md "Cosmetic-change exemption").
 #
 # SAFETY PROPERTY: a new commit voids the bypass, so it can never outlive the
 # commit a senior approved it for — they must re-apply after each push.
@@ -75,8 +99,8 @@ permissions:
 #      2026-07-31, which turned that from theory into a live gap.
 #
 # So the property is now decided from the EVENT, not from the label: on
-# `synchronize`, skip=0 unconditionally. No token needed, so it holds
-# identically on a fork PR and an in-repo branch. Removing the label is now
+# `synchronize`, no labels are passed, unconditionally. No token needed, so it
+# holds identically on a fork PR and an in-repo branch. Removing the label is now
 # purely cosmetic — it keeps the PR's UI honest so nobody misreads a lapsed
 # label as an active bypass — and lives in cosmetic-skip-strip.yml, which runs
 # on `pull_request_target` and therefore has the write token forks deny this
@@ -97,15 +121,21 @@ jobs:
     steps:
       # The former `paths:` filter, moved into the job. `agents/**` is here so
       # the frontmatter lint gates plugin agent descriptions too, not just
-      # skills. MCP source (packages/engine/mcp-server/src/**) is intentionally
-      # absent: it is no longer embedded in the run-log snapshot, so a src-only
-      # change cannot affect run-log activeness (rule 2).
+      # skills. MCP source (packages/engine/mcp-server/src/**) and the engine's
+      # build inputs are here for rule 2c: a tool description edit moves the
+      # `instrument` fingerprint of every suite that advertises the tool.
       - name: Does this PR touch run logs, unit tests, skills, agents, fixtures, or the harness?
         id: scope
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^docs/|^CLAUDE\.md$|^DEVELOPMENT\.md$|^README\.md$|^\.github/workflows/check-runlogs\.yml$'
+          PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^eval/skills/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^docs/|^CLAUDE\.md$|^DEVELOPMENT\.md$|^README\.md$|^\.github/workflows/check-runlogs\.yml$|^packages/engine/mcp-server/src/|^packages/engine/mcp-server/(package\.json|package-lock\.json|tsconfig\.json)$'
+          # The subset that can put a suite in front of rule 2c, which reads the
+          # engine's tool catalog. A docs-only PR matches PATTERNS but grades no
+          # suite, so it skips the engine build. Fails closed: a path that reached
+          # the catalog without matching here would make the gate error naming the
+          # missing build, never pass silently.
+          ENGINE_PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^eval/skills/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^packages/engine/mcp-server/'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -116,6 +146,11 @@ jobs:
             echo "relevant=false" >> "$GITHUB_OUTPUT"
             echo "::notice::No run-log, unit-test, skill, agent, fixture, or harness path changed; reporting success without running the discipline checks."
           fi
+          if printf '%s\n' "$files" | grep -qE "$ENGINE_PATTERNS"; then
+            echo "needs_engine=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_engine=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Resolve cosmetic-skip state
         if: steps.scope.outputs.relevant == 'true'
@@ -123,26 +158,27 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # A new commit voids the bypass, decided from the EVENT and without
+          # A new commit voids every bypass, decided from the EVENT and without
           # consulting the labels API at all. Doing it this way needs no write
           # token, which is what makes the rule hold on a fork PR — see the
-          # header note. Do not "improve" this by reading the label here.
+          # header note. Do not "improve" this by reading the labels here.
           if [ "${{ github.event.action }}" = "synchronize" ]; then
-            echo "skip=0" >> "$GITHUB_OUTPUT"
-            echo "::notice::New commit pushed — any eval-cosmetic-skip bypass is void until a senior re-applies the label."
+            echo "labels=" >> "$GITHUB_OUTPUT"
+            echo "::notice::New commit pushed — any eval-cosmetic-skip:<skill> bypass is void until a senior re-applies the label."
             exit 0
           fi
 
           # Every other event (opened / reopened / labeled / unlabeled) reads
-          # the live label. Reading is available to a fork token too.
+          # the live labels. Reading is available to a fork token too. The raw
+          # names go to check_runlogs.py one per line; nothing is filtered here.
           labels=$(gh pr view "${{ github.event.pull_request.number }}" \
             --repo "${{ github.repository }}" --json labels --jq '.labels[].name')
-          if echo "$labels" | grep -qx "eval-cosmetic-skip"; then
-            echo "skip=1" >> "$GITHUB_OUTPUT"
-            echo "::notice::eval-cosmetic-skip label present — rule 2 will be bypassed for this PR."
-          else
-            echo "skip=0" >> "$GITHUB_OUTPUT"
-          fi
+          delim="LABELS_$(openssl rand -hex 16)"
+          {
+            echo "labels<<$delim"
+            printf '%s\n' "$labels"
+            echo "$delim"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Check out PR with full history
         if: steps.scope.outputs.relevant == 'true'
@@ -156,17 +192,45 @@ jobs:
         with:
           python-version: '3.12'
 
+      # Rule 2c reads the advertised tool schemas from the compiled engine
+      # (build/tool-schemas.js), which is gitignored. Same setup as
+      # engine-tests.yml: the engine's .npmrc is engine-strict on npm >=11.12,
+      # which Node 22's bundled npm 10 fails.
+      - name: Set up Node
+        if: steps.scope.outputs.needs_engine == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: packages/engine/mcp-server/package-lock.json
+
+      - name: Install the pinned npm (from the packageManager field)
+        if: steps.scope.outputs.needs_engine == 'true'
+        run: |
+          NPM_VER="$(node -p "require('./packages/engine/mcp-server/package.json').packageManager.split('@')[1]")"
+          npm install -g "npm@${NPM_VER}"
+          echo "Using npm $(npm --version)"
+
+      - name: Build the engine (rule 2c reads its tool catalog)
+        if: steps.scope.outputs.needs_engine == 'true'
+        working-directory: packages/engine/mcp-server
+        run: |
+          npm ci
+          npm run build
+
       - name: Run runlog discipline checks
         if: steps.scope.outputs.relevant == 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          COSMETIC_SKIP: ${{ steps.cosmetic.outputs.skip }}
+          # Raw PR label names, one per line (empty on a push). Set through env,
+          # never interpolated into a script: a label name is repo-controlled text.
+          COSMETIC_SKIP_LABELS: ${{ steps.cosmetic.outputs.labels }}
         run: python eval/harness/scripts/check_runlogs.py
 
       # `!cancelled()` here and on every step below: an `if:` with no
       # status-check function carries an implicit `success()`, so a failure in
-      # the gate above skipped all four lints. A step added below inherits this
+      # the gate above skipped every lint below it. A step added below inherits this
       # — check_negative_reciprocity.py was added without it.
       - name: Check skill tool-coverage drift (warn-only)
         if: ${{ !cancelled() && steps.scope.outputs.relevant == 'true' }}
@@ -201,3 +265,16 @@ jobs:
       - name: Check negative routing reciprocity (warn-only)
         if: ${{ !cancelled() && steps.scope.outputs.relevant == 'true' }}
         run: python eval/harness/scripts/check_negative_reciprocity.py
+
+      # The only post-gate lint that makes a NETWORK call, and the only one that
+      # needs BASE_SHA/HEAD_SHA — the four above are pure-local. It never fails the
+      # build; on any API or git failure it warns that it could not read the queue
+      # and exits 0, because a silent pass is indistinguishable from "no queued
+      # work". Rationale in full: the script's docstring, and issue #2589.
+      - name: Check the eval-slot queue for the skills this PR touches (warn-only)
+        if: ${{ !cancelled() && steps.scope.outputs.relevant == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python eval/harness/scripts/check_slot_queue.py

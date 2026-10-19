@@ -34,12 +34,17 @@ def _envelope(doc_json: str) -> str:
 # envelope and the unwrapped form.
 UNREACHABLE_WIKI = '{"error":"Could not reach wiki-query-api at https://x/wiki. Is the server running?"}'
 UNREACHABLE_POP = '{"error":"Population data service is unavailable. Is the Pop Stats API running?"}'
+# The #3031 wording, which names the base URL and the socket cause; the two above
+# are what run logs recorded before it.
+UNREACHABLE_WIKI_CAUSE = '{"error":"Could not reach wiki-query-api at https://x/wiki (fetch failed <- ETIMEDOUT: connect ETIMEDOUT 208.111.35.209:443)."}'
+UNREACHABLE_POP_CAUSE = '{"error":"Population data service is unavailable at https://x/pop (fetch failed <- ECONNREFUSED: connect ECONNREFUSED 127.0.0.1:443)."}'
 UPSTREAM_WIKI = '{"error":"wiki-query-api error: 502"}'
 UPSTREAM_POP = '{"error":"Population API error: 502 Bad Gateway"}'
 NO_WIKI_PAGE = '{"error":"No wiki page found for \\"Bohemia\\"."}'
 NO_POP_SERIES = '{"error":"Place not found","place_id":"1355104"}'
 NO_POP_SERIES_2 = '{"place": {"place_id": "1926993", "name": "Isle of Man", "level": "country"}}'
 UNRESOLVABLE = '{"error":"Could not resolve \\"County Waterford, Ireland\\" to a single FamilySearch place."}'
+AMBIGUOUS = '{"error":"\\"Baltimore, Maryland, United States\\" matches more than one place: Baltimore, Maryland, United States (Independent City); Baltimore, Maryland, United States (County). Pass one of these exactly as listed, including the parenthesised type, as standardPlace, or call place_search to see the full list."}'
 LEGACY_DIR = '{"error":"Wiki markdown directory is not configured. Add wikiMarkdownDir."}'
 WIKI_SEARCH_OK = '{"query": "Bohemia genealogy", "total_chunks_searched": 1240565, "results": []}'
 WIKI_PAGE_OK = '{"url": "https://www.familysearch.org/en/wiki/Norway_Genealogy", "content": "# Norway"}'
@@ -50,11 +55,14 @@ def test_each_service_failure_bucket_in_both_shapes():
     cases = [
         ("wiki_search", UNREACHABLE_WIKI, "unreachable"),
         ("place_population", UNREACHABLE_POP, "unreachable"),
+        ("wiki_read", UNREACHABLE_WIKI_CAUSE, "unreachable"),
+        ("place_population", UNREACHABLE_POP_CAUSE, "unreachable"),
         ("wiki_place_page", UPSTREAM_WIKI, "upstream_5xx"),
         ("place_population", UPSTREAM_POP, "upstream_5xx"),
         ("wiki_place_page", NO_WIKI_PAGE, "no_wiki_page"),
         ("place_population", NO_POP_SERIES, "no_population_series"),
         ("place_population", UNRESOLVABLE, "unresolvable_place"),
+        ("place_population", AMBIGUOUS, "unresolvable_place"),
         ("wiki_place_page", LEGACY_DIR, "legacy_markdown_dir"),
     ]
     for tool, doc, expected in cases:

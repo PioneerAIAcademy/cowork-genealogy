@@ -21,6 +21,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any, Iterable
@@ -44,7 +45,16 @@ _AGENT_REF_RE = re.compile(r"@plugin:([a-z0-9-]+)")
 # `HASH_RE` in eval/app/lib/snapshot.ts.
 _HASH_RE = re.compile(r"^[a-f0-9]{64}$")
 
-_COSMETIC_TEST_FIELDS = ("name", "description", "tags")
+# Stripped from a test JSON before hashing: prose a human reads, which cannot
+# change how the test is graded. `expected_outcome` is deliberately NOT here and
+# must not be added (issue #2684) — it decides whether check_runlogs.py's rule 6
+# suppresses a failing test, so changing it changes grading, and a skill whose
+# marker moved owes a re-run. Only the marker's PROSE (`xfail_reason`) is a
+# candidate for this tuple; that is a separate card.
+# `tags` was removed from this tuple for the same reason (issue #2694): it
+# selects validators and changes outcome computation, so it is grading input,
+# not decoration.
+_COSMETIC_TEST_FIELDS = ("name", "description")
 _JSON_EXTS = {".json"}
 _TEXT_EXTS = {
     ".md",
@@ -69,7 +79,7 @@ def normalize(repo_relative_path: str, content: bytes) -> str:
     Rules:
       - `.json`: parse and re-emit with `sort_keys=True, indent=2`, trailing
         newline. Test JSONs (under `eval/tests/unit/`) also strip the
-        cosmetic top-level `test.{name,description,tags}` fields so typo
+        cosmetic top-level `test.{name,description}` fields so typo
         fixes there don't invalidate the active-state check.
       - Text-ish extensions: CRLF -> LF, ensure trailing newline.
       - Other extensions: best-effort UTF-8 decode; falls back to hex.
@@ -137,6 +147,10 @@ def build_snapshot(
       - `packages/engine/plugin/agents/<name>.md` for each `@plugin:<name>`
         reference in the skill's SKILL.md (the agent prompt is part of the
         skill's behavior, so editing it must flip the run log inactive)
+      - `packages/engine/plugin/agents/<skill>.md` when one exists, for an
+        agent-keyed suite whose `test.skill` names an agent rather than a
+        skill directory (issue #1253) — a no-op for every skill-agent pair,
+        whose SKILL.md already names its own agent via `@plugin:`
       - `eval/tests/unit/<skill>/**` (rubric + test files)
       - `eval/fixtures/scenarios/<name>/**` for each scenario referenced
         by an included test
@@ -149,7 +163,9 @@ def build_snapshot(
     dependency of a run and tracking it produced churn with no eval signal
     — a `src/` edit flipped every skill's run log inactive even though the
     run never executed that code. Tool-code correctness is Vitest's job
-    (`packages/engine/mcp-server/tests/`), not this framework's.
+    (`packages/engine/mcp-server/tests/`), not this framework's. What the
+    model is *advertised* is tracked separately, in the envelope's
+    `instrument` field (`harness.instrument`, check_runlogs rule 2c).
 
     When `test_ids` is given, only those tests' scenarios + fixtures are
     embedded. When None, every test in the skill contributes.
@@ -157,6 +173,10 @@ def build_snapshot(
     snapshot: dict[str, str] = {}
 
     skill_dir = repo_root / "packages" / "engine" / "plugin" / "skills" / skill
+    if not skill_dir.is_dir() and (repo_root / "eval" / "skills" / skill).is_dir():
+        # A test-only skill (lead, 2026-09-30): its body is what the suite runs,
+        # so editing it must flip the run log inactive, as for a plugin skill.
+        skill_dir = repo_root / "eval" / "skills" / skill
     _embed_tree(snapshot, skill_dir, repo_root)
 
     # Plugin-agent files the skill delegates to via `@plugin:<name>`.
@@ -167,6 +187,25 @@ def build_snapshot(
             agent_path = repo_root / rel
             if agent_path.is_file():
                 snapshot[rel] = normalize(rel, agent_path.read_bytes())
+
+    # The suite's OWN agent, for an agent-keyed suite (issue #1253). Such a
+    # suite — `eval/tests/unit/<agent>/` with no skill directory, e.g.
+    # `gps-mentor` — reaches its agent through `test.skill` naming the agent
+    # file directly, and there is no SKILL.md for the `@plugin:` scan above to
+    # read. Without this the snapshot omits the very body the suite grades:
+    # editing the agent leaves the run log ACTIVE and its grades are quoted
+    # forward against prose that changed.
+    #
+    # Unconditional rather than gated on "no skill directory", for two reasons.
+    # For the four existing pairs the `@plugin:` scan already embeds this exact
+    # path, so this is a no-op — same key, same bytes, no run log invalidated
+    # and no paid re-run bought. And it keeps the body embedded if a pair's
+    # SKILL.md ever stops naming its own agent, which is precisely what issue
+    # #2738 does when it deletes the thin routers.
+    own_agent_rel = f"packages/engine/plugin/agents/{skill}.md"
+    own_agent_path = repo_root / own_agent_rel
+    if own_agent_path.is_file():
+        snapshot[own_agent_rel] = normalize(own_agent_rel, own_agent_path.read_bytes())
 
     tests_dir = repo_root / "eval" / "tests" / "unit" / skill
     _embed_tree(snapshot, tests_dir, repo_root)
@@ -229,8 +268,15 @@ def diff_snapshot_vs_disk(snapshot: dict[str, str], repo_root: Path) -> dict[str
     for rel, expected in snapshot.items():
         if rel.startswith(_MCP_SRC_PREFIX):
             continue
-        abs_path = repo_root / rel
-        if not abs_path.is_file():
+        # `rel` is a snapshot KEY — an arbitrary string per the schema, arriving
+        # from a run log another contributor committed. Contained before the read,
+        # and skipped rather than raised so one bad key cannot discard the rest of
+        # the comparison. The TypeScript twin does exactly this; without it the
+        # two disagreed on a traversing key (it returned "missing-on-disk", this
+        # read the outside file and returned "content-differs") and no vector on
+        # either side had one.
+        abs_path = _contained_abs_path(repo_root, rel)
+        if abs_path is None or not abs_path.is_file():
             out[rel] = "missing-on-disk"
             continue
         actual = normalize(rel, abs_path.read_bytes())
@@ -242,6 +288,29 @@ def diff_snapshot_vs_disk(snapshot: dict[str, str], repo_root: Path) -> dict[str
 
 
 # ---- internal helpers ----------------------------------------------------
+
+
+def _contained_abs_path(repo_root: Path, rel: str) -> Path | None:
+    """`rel` resolved under `repo_root`, or None if it escapes.
+
+    Mirrors `resolveWithin` in eval/app/lib/fs/safe-path.ts, which the twin of
+    this module has to agree with.
+
+    Deliberately LEXICAL. `os.path.abspath` normalizes `..` without following
+    symlinks, which is what `path.resolve` does on the TypeScript side.
+    `Path.resolve()` would follow them, so a symlink inside the base pointing
+    out would be refused here and allowed there — trading the traversal
+    divergence for a symlink one, in exactly the case the TypeScript helper
+    documents as its accepted gap. Both sides share that gap; closing it means
+    realpath at every sink on both, and is not this change.
+    """
+    if not rel or "\0" in rel:
+        return None
+    base = os.path.abspath(repo_root)
+    abs_path = os.path.abspath(os.path.join(base, rel))
+    if abs_path != base and not abs_path.startswith(base + os.sep):
+        return None
+    return Path(abs_path)
 
 
 def _ext_of(path: str) -> str:

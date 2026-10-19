@@ -62,17 +62,30 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
         avg_cost = sum(costs) / len(costs)
         total_cost = sum(costs)
         print(f"  avg cost: ${avg_cost:.2f} / run     total cost: ${total_cost:.2f}")
+        # A stall-resume starts a new CLI process and `total_cost_usd` covers the
+        # last process only (#3128), so a resumed run makes both figures a floor.
+        resumed = sum(
+            1
+            for r in results
+            if r.usage.get("total_cost_usd") and (r.usage.get("resumes") or 0) > 0
+        )
+        if resumed:
+            print(
+                f"  ({resumed} resumed after a stall: their cost covers the last "
+                "process only, so these figures are a floor)"
+            )
     if durations:
         avg_dur = sum(durations) / len(durations)
         total_dur = sum(durations)
         print(
             f"  avg wall-clock: {avg_dur / 60:.1f} min / run     "
-            f"total: {total_dur / 60:.1f} min  (active; excludes system sleep)"
+            f"total: {total_dur / 60:.1f} min  (active; excludes detected system sleep)"
         )
     # Surface system sleep so an inflated real-clock never reads as a stall.
+    # `slept_seconds` covers sleep on every platform (spec §6 "Clocks").
     total_slept = sum((r.usage.get("slept_seconds") or 0) for r in results)
     if total_slept > 60:
         print(
             f"  note: machine slept ~{total_slept / 60:.0f} min during run(s) — "
-            "not counted above; use `caffeinate` to avoid (see e2e-run)"
+            "not counted above; see eval/README.md \"Keep the machine awake during a run\""
         )

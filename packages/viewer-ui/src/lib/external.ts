@@ -17,3 +17,20 @@ export function setOpenExternal(fn: (url: string) => void): void {
 export function openExternal(url: string | undefined | null): void {
   if (url) impl(url)
 }
+
+// The constrained sibling (#1018). Deliberately NOT defaulted to window.open:
+// an unwired FamilySearch link must do nothing rather than open an unchecked
+// destination, which is the whole point of the channel. In Electron an unwired
+// call would be denied by setWindowOpenHandler anyway; failing closed here makes
+// that explicit instead of platform-dependent.
+let fsImpl: ((value: string) => void) | null = null
+
+/** Wire the platform implementation. See `setOpenExternal` for the why. */
+export function setOpenFamilySearch(fn: (value: string) => void): void {
+  fsImpl = fn
+}
+
+/** Open a FamilySearch link. No-ops on empty input, or before wiring. */
+export function openFamilySearch(value: string | undefined | null): void {
+  if (value && fsImpl) fsImpl(value)
+}

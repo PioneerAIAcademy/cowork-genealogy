@@ -1,0 +1,106 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Elena",
+          "surname": "Asmundsdotter",
+          "id": "PID-TODO-name-1"
+        }
+      ]
+    },
+    {
+      "id": "p-husband-jons",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "J\u00f6ns",
+          "surname": "J\u00f6nsson",
+          "id": "p-husband-jons-name-1"
+        }
+      ]
+    },
+    {
+      "id": "p-child-asmund",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Asmund",
+          "surname": "J\u00f6nsson",
+          "id": "p-child-asmund-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "p-child-asmund-fact-christening",
+          "type": "Christening",
+          "date": "11 September 1718",
+          "standard_date": "11 Sep 1718",
+          "place": "Barseb\u00e4ck parish, Malm\u00f6hus, Sweden",
+          "standard_place": "Barseb\u00e4ck, Malm\u00f6hus, Sweden"
+        },
+        {
+          "id": "p-child-asmund-fact-death",
+          "type": "Death",
+          "date": "4 February 1768",
+          "standard_date": "4 Feb 1768",
+          "place": "Barseb\u00e4ck parish, Malm\u00f6hus, Sweden",
+          "standard_place": "Barseb\u00e4ck, Malm\u00f6hus, Sweden"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-jons-elena",
+      "type": "Couple",
+      "person1": "p-husband-jons",
+      "person2": "PID-TODO"
+    },
+    {
+      "id": "rel-jons-asmund",
+      "type": "ParentChild",
+      "parent": "p-husband-jons",
+      "child": "p-child-asmund"
+    },
+    {
+      "id": "rel-elena-asmund",
+      "type": "ParentChild",
+      "parent": "PID-TODO",
+      "child": "p-child-asmund"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-barseback-christening-1718",
+      "title": "Barseb\u00e4ck parish (Malm\u00f6hus, Sweden), christening register, entry for Asmund J\u00f6nsson christened 11 September 1718, son of J\u00f6ns J\u00f6nsson and his wife Elena Asmundsdotter."
+    },
+    {
+      "id": "S1",
+      "title": "Kavlinge, Malm\u00f6hus, Sweden Genealogy 1954 \u2014 LDS Extraction Form (FamilySearch image ark:/61903/3:1:3QS7-L9QY-4758)",
+      "author": "LDS Church (compiler)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9QY-4758"
+    },
+    {
+      "id": "S2",
+      "title": "H\u00f6gs och Keflinge Kyrkobok 1685-1733 (copy made 1758 by Pastor P. Stevenius), K\u00e4llinge (Keflinge) parish, Harjager h\u00e4rad, Malm\u00f6hus, Sweden \u2014 FamilySearch image 004516861_00304",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS6Z-C9F4"
+    },
+    {
+      "id": "S3",
+      "title": "K\u00e4llinge (Keflinge) kyrkobok 1685-1733 (copy 1758 by P. Stevenius), image 004516861_00308, births/deaths/marriages 1700-1701",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89BT-4308"
+    },
+    {
+      "id": "S4",
+      "title": "K\u00e4llinge (Keflinge) kyrkobok 1685-1733 [copy 1758], image 004516861_00307 \u2014 births, deaths, marriages 1698-1699",
+      "author": "P. Stevenius (copyist)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSGM-B9W9"
+    }
+  ]
+}

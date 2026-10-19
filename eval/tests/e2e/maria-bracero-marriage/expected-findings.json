@@ -1,0 +1,35 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Maria Bracero, born about 1883, married Gregorio Morales, born about 1849 and the son of Tomas Morales and Leonarda Bracero, on 23 June 1907; the marriage was registered in the civil register of Mayagüez, Puerto Rico.",
+      "details": {
+        "subject_person": "Maria Bracero (LL4N-82C)",
+        "fact_type": "Marriage",
+        "date": "23 June 1907",
+        "place": "Mayagüez, Puerto Rico"
+      },
+      "supporting_sources": [
+        "ark:/61903/1:1:QVJH-YRN1 — deciding marriage record, INDEX (Puerto Rico, Registro Civil, 1805-2002): Gregorio Morales (b. 1849, son of Tomas Morales and Leonarda Bracero) married Maria Bracero (b. 1883, daughter of Juan Bracero and Juana Irizarri), 23 Jun 1907, registered Mayagüez. The groom matches tree person Gregorio Morales (G8M9-59S), b. 1850, Hormigueros; Mayagüez borders Hormigueros (Maria's 1910/1920 residence) and her children carry Mayagüez birth registrations"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Maria Bracero's parents were Juan Bracero and Juana Irizarri, per the same marriage entry.",
+      "details": {
+        "subject_person": "Maria Bracero (LL4N-82C)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Juan Bracero and Juana Irizarri"
+        }
+      },
+      "supporting_sources": [
+        "ark:/61903/1:1:QVJH-YRN1 — marriage INDEX naming the bride Maria Bracero's parents Juan Bracero and Juana Irizarri. Corroborated by the tree's own sources: the 1920 census indexes her 'Maria Bracero Y Irizarry' and a 1973 civil entry (ark:/61903/1:1:QVJX-8L5R) pairs 'Maria Bracero Irizarry' with a Juan Bracero"
+      ],
+      "required": true
+    }
+  ]
+}

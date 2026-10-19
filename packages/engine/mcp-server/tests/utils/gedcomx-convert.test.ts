@@ -1349,6 +1349,65 @@ describe("gedcomx-convert — fact-type URI cleanup on toSimplified", () => {
     });
     expect(result.persons?.[0].facts?.[0].type).toBe("Bad%ZZ");
   });
+
+  /** The custom types one live read held (KNDX-MKG and its parents, 2026-10-09). */
+  function typesOf(rawTypes: string[]): (string | undefined)[] {
+    const result = toSimplified({
+      persons: [{ id: "p1", facts: rawTypes.map((type) => ({ type })) }],
+    });
+    return result.persons?.[0].facts?.map((f) => f.type) ?? [];
+  }
+
+  it("reads `+` in a data: label as a space, so both spellings of one label agree", () => {
+    expect(typesOf(["data:,Previous+Residence", "data:,Previous%20Residence"])).toEqual([
+      "Previous Residence",
+      "Previous Residence",
+    ]);
+    expect(typesOf(["data:,C%2B%2B+Programmer"])).toEqual(["C++ Programmer"]);
+  });
+
+  it("raises a lowercase first letter, which the tree refuses", () => {
+    expect(typesOf(["data:,will", "data:,scholastic-achievement"])).toEqual([
+      "Will",
+      "Scholastic-achievement",
+    ]);
+  });
+
+  it("drops one pair of wrapping quotes and the space around the label", () => {
+    expect(typesOf(["data:,%22Presented+to+Society%22", "data:,+%E2%80%9CElected%E2%80%9D+"])).toEqual([
+      "Presented to Society",
+      "Elected",
+    ]);
+  });
+
+  it("keeps a label that cannot start with an uppercase letter whole, behind `Custom `", () => {
+    expect(typesOf(["data:,100%25+english", "data:,%C3%A9lu", "data:,"])).toEqual([
+      "Custom 100% english",
+      "Custom élu",
+      "Custom",
+    ]);
+  });
+
+  it("round-trips a prefixed label under http://gedcomx.org/, like any other custom type", () => {
+    const simplified = toSimplified({
+      persons: [{ id: "p1", facts: [{ type: "data:,100%25+english" }, { type: "data:,will" }] }],
+    });
+    const back = toGedcomX(simplified);
+    expect(back.persons?.[0].facts?.map((f) => f.type)).toEqual([
+      "http://gedcomx.org/Custom 100% english",
+      "http://gedcomx.org/Will",
+    ]);
+  });
+
+  it("returns a type the tree accepts for every custom label one live read held", () => {
+    const live = [
+      "data:,%22Presented+to+Society%22", "data:,100%25+english",
+      "data:,87.5%25english%2C+12.5%25+french", "data:,Alt.%20Death",
+      "data:,Alternate+death+place", "data:,Held+public+office", "data:,Probate%3B+will",
+      "data:,Will+probated", "data:,scholastic-achievement", "data:,will",
+    ];
+    for (const type of typesOf(live)) expect(type).toMatch(/^[A-Z]/);
+  });
 });
 
 describe("gedcomx-convert — fact.value preservation", () => {
@@ -1457,5 +1516,193 @@ describe("fsmcp:quality boundaries", () => {
       sources: [{ id: "S1", title: "T" }],
     } as any);
     expect(JSON.stringify(seven)).not.toContain('"fsmcp:quality"');
+  });
+});
+
+describe("gedcomx-convert — source description coverage and resource_type", () => {
+  it("carries resource_type and coverage through toSimplified", () => {
+    const raw: GedcomX = {
+      persons: [],
+      sourceDescriptions: [
+        {
+          id: "SD1",
+          resourceType: "http://gedcomx.org/DigitalArtifact",
+          titles: [{ value: "Some Record" }],
+          coverage: [
+            {
+              spatial: { description: "#12345" },
+              temporal: { original: "1850/1860", formal: "+1850/+1860" },
+              recordType: "http://gedcomx.org/Census",
+            },
+          ],
+        },
+      ],
+    };
+    const simplified = toSimplified(raw);
+    const sd = simplified.sources?.[0];
+    expect(sd?.resource_type).toBe("DigitalArtifact");
+    expect(sd?.coverage).toEqual({
+      place_rep_id: "12345",
+      date_range: "1850/1860",
+      record_type: "Census",
+    });
+  });
+
+  it("falls back to temporal.formal when temporal.original is absent", () => {
+    const raw: GedcomX = {
+      persons: [],
+      sourceDescriptions: [
+        {
+          id: "SD1",
+          resourceType: "http://gedcomx.org/DigitalArtifact",
+          titles: [{ value: "Some Record" }],
+          coverage: [
+            {
+              spatial: { description: "#12345" },
+              temporal: { formal: "+1850/+1860" },
+              recordType: "http://gedcomx.org/Census",
+            },
+          ],
+        },
+      ],
+    };
+    const simplified = toSimplified(raw);
+    expect(simplified.sources?.[0]?.coverage?.date_range).toBe("+1850/+1860");
+  });
+
+  it("omits coverage when absent on raw source description", () => {
+    const raw: GedcomX = {
+      persons: [],
+      sourceDescriptions: [
+        {
+          id: "SD1",
+          titles: [{ value: "Plain Source" }],
+        },
+      ],
+    };
+    const simplified = toSimplified(raw);
+    expect(simplified.sources?.[0]?.resource_type).toBeUndefined();
+    expect(simplified.sources?.[0]?.coverage).toBeUndefined();
+  });
+});
+
+describe("gedcomx-convert — person principal field", () => {
+  it("carries principal: true through toSimplified", () => {
+    const raw: GedcomX = {
+      persons: [
+        {
+          id: "P1",
+          principal: true,
+          gender: { type: "http://gedcomx.org/Male" },
+          names: [{ nameForms: [{ fullText: "John Smith" }] }],
+        },
+      ],
+    };
+    const simplified = toSimplified(raw);
+    expect(simplified.persons?.[0]?.principal).toBe(true);
+  });
+
+  it("omits principal when false or absent", () => {
+    const raw: GedcomX = {
+      persons: [
+        {
+          id: "P1",
+          principal: false,
+          gender: { type: "http://gedcomx.org/Female" },
+          names: [{ nameForms: [{ fullText: "Jane Doe" }] }],
+        },
+        {
+          id: "P2",
+          gender: { type: "http://gedcomx.org/Male" },
+          names: [{ nameForms: [{ fullText: "John Doe" }] }],
+        },
+      ],
+    };
+    const simplified = toSimplified(raw);
+    expect(simplified.persons?.[0]?.principal).toBeUndefined();
+    expect(simplified.persons?.[1]?.principal).toBeUndefined();
+  });
+});
+
+// `simplifySourceRef` prefers `descriptionId` over `description`. It was measured only on
+// TREE person refs, but this converter is shared — record_read, record_search,
+// person_search and the merge tools all run through it — so the precedence is pinned here
+// rather than inferred from the one caller that needed it.
+describe("source-reference id precedence", () => {
+  it("prefers descriptionId over a full-URL description", () => {
+    // The case the preference exists for: a relative's ref is a full URL to a description
+    // the body does not contain. A URL never equals the bare id a fetched description
+    // carries, so a consumer matching refs against `sources[]` ids by string equality
+    // would drop every one of them.
+    const out = toSimplified({
+      persons: [
+        {
+          id: "P1",
+          sources: [
+            {
+              description: "https://api.familysearch.org/platform/sources/descriptions/ZZZZ-999",
+              descriptionId: "ZZZZ-999",
+            },
+          ],
+        },
+      ],
+    } as never);
+    expect(out.persons?.[0].sources).toEqual([{ ref: "ZZZZ-999" }]);
+  });
+
+  it("still strips a leading # when only description is present", () => {
+    // The subject's own refs are `#<id>` fragments and carry no `descriptionId`. They
+    // produced a bare id before this change and must still.
+    const out = toSimplified({
+      persons: [{ id: "P1", sources: [{ description: "#OWN-1" }] }],
+    } as never);
+    expect(out.persons?.[0].sources).toEqual([{ ref: "OWN-1" }]);
+  });
+
+  it("keeps page and quality qualifiers alongside the preferred id", () => {
+    const out = toSimplified({
+      persons: [
+        {
+          id: "P1",
+          sources: [
+            {
+              description: "https://api.familysearch.org/platform/sources/descriptions/A-1",
+              descriptionId: "A-1",
+              qualifiers: [
+                { name: "http://gedcomx.org/CitationDetail", value: "p. 7" },
+                { name: "fsmcp:quality", value: "3" },
+              ],
+            },
+          ],
+        },
+      ],
+    } as never);
+    expect(out.persons?.[0].sources).toEqual([{ ref: "A-1", page: "p. 7", quality: 3 }]);
+  });
+})
+
+describe("gedcomx-convert — non-place phrases keep no standard_place (#1962)", () => {
+  it("drops FamilySearch's normalized value for a non-place phrase, keeps it for a real place", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            {
+              type: "http://gedcomx.org/Residence",
+              place: { original: "Same House", normalized: [{ value: "Same, Manufahi, Timor-Leste", lang: "en" }] },
+            },
+            {
+              type: "http://gedcomx.org/Residence",
+              place: { original: "Wayne, Ohio", normalized: [{ value: "Wayne, Ohio, United States", lang: "en" }] },
+            },
+          ],
+        },
+      ],
+    });
+    const facts = result.persons?.[0].facts ?? [];
+    expect(facts[0].place).toBe("Same House");
+    expect(facts[0].standard_place).toBeUndefined();
+    expect(facts[1].standard_place).toBe("Wayne, Ohio, United States");
   });
 });

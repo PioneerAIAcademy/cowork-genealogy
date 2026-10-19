@@ -169,3 +169,49 @@ describe("toSimplifiedStandardized — hybrid", () => {
     expect(mockResolve).toHaveBeenCalledWith("Freetext");
   });
 });
+
+describe("standardizePlaces — country-contradiction guard", () => {
+  it("omits a resolved place that contradicts the recorded country", () => {
+    // The four highest-volume consumers of this pass (record_search,
+    // person_read, person_search, person_ancestors) previously wrote every
+    // resolved place unchecked while both write paths checked. A read path has
+    // no warning channel to the model, so the value is omitted rather than
+    // stored — record_read's rule: never fabricate a wrong one.
+    mockResolve.mockResolvedValue("West, Cameroon");
+    const facts: SimplifiedFact[] = [
+      { type: "Birth", place: "West Bromwich, Staffordshire, England, United Kingdom" },
+    ];
+    return standardizePlaces(facts).then(() => {
+      expect(facts[0].standard_place).toBeUndefined();
+    });
+  });
+
+  it("keeps a resolved place the guard does not object to", async () => {
+    mockResolve.mockResolvedValue("West Bromwich, Staffordshire, England, United Kingdom");
+    const facts: SimplifiedFact[] = [
+      { type: "Birth", place: "West Bromwich, Staffordshire, England" },
+    ];
+    await standardizePlaces(facts);
+    expect(facts[0].standard_place).toBe("West Bromwich, Staffordshire, England, United Kingdom");
+  });
+
+  it("keeps a place whose recorded text names no country (nothing to contradict)", async () => {
+    mockResolve.mockResolvedValue("Schuylkill, Pennsylvania, United States");
+    const facts: SimplifiedFact[] = [
+      { type: "Residence", place: "Schuylkill County, Pennsylvania" },
+    ];
+    await standardizePlaces(facts);
+    expect(facts[0].standard_place).toBe("Schuylkill, Pennsylvania, United States");
+  });
+
+  it("guards each fact in a deduped group independently of the others", async () => {
+    mockResolve.mockResolvedValue("Manger, Bavaria, Germany");
+    const facts: SimplifiedFact[] = [
+      { type: "Birth", place: "Manger, Hordaland, Norge" },
+      { type: "Death", place: "Manger, Hordaland, Norge" },
+    ];
+    await standardizePlaces(facts);
+    expect(facts.map((f) => f.standard_place)).toEqual([undefined, undefined]);
+    expect(mockResolve).toHaveBeenCalledTimes(1); // still deduped to one lookup
+  });
+});

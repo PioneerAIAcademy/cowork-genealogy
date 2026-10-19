@@ -5,11 +5,12 @@ SandboxProvider and records the user→sandbox map in `projects`.
 from __future__ import annotations
 
 import json
+import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from . import agent_secrets, fs_oauth
@@ -21,6 +22,10 @@ from .sandbox import SandboxProvider, SandboxSpec
 from .sandbox.base import PROJECT_DIR, SANDBOX_WS_PORT
 from .ws_token import mint_token
 from .seed import seed_sample_project
+
+logger = logging.getLogger(__name__)
+
+_RUNNING_TIMEOUT_S = 3600
 
 # Sidecar log ids are filenames; constrain them so a crafted id can't escape the
 # results dir (the validate_research_schema path-traversal concern, spec §13).
@@ -52,6 +57,7 @@ class ProjectOut(BaseModel):
     created: datetime
     updated: datetime
     last_active: datetime
+    continuable: bool
 
     @classmethod
     def of(cls, p: Project) -> "ProjectOut":
@@ -59,22 +65,8 @@ class ProjectOut(BaseModel):
             id=p.id, title=p.title, model=p.model, status=p.status,
             sandbox_id=p.sandbox_id, agent_session_id=p.agent_session_id,
             created=p.created, updated=p.updated, last_active=p.last_active,
+            continuable=_continuable(p),
         )
-
-
-class FsTokenIn(BaseModel):
-    """A FamilySearch token bundle a `/v1` client supplies at session create. Unlike
-    the browser path (whose token comes from the FS app-login row), `/v1` clients never
-    run FS OAuth, so they pass the token here; it is injected straight into the sandbox
-    and **never persisted** to the control-plane DB.
-
-    Include `refresh_token` (OAuth `offline_access`) so the in-sandbox MCP can
-    self-refresh: with it the session lasts as long as the sandbox; without it the
-    session works only until the access token expires (FS access tokens last ~1h, so a
-    multi-hour session needs the refresh token)."""
-    access_token: str = Field(min_length=1)
-    refresh_token: str | None = None
-    expires_in: int | None = None  # seconds from now; defaults to 3600 (FS default)
 
 
 class CreateSessionBody(BaseModel):
@@ -88,6 +80,25 @@ class CreateSessionBody(BaseModel):
 class PatchSessionBody(BaseModel):
     title: str | None = None
     model: str | None = None
+
+
+# A sandbox keeps running the agent code it was created with, so an old one
+# drifts from the current control plane (issue #3406). Lead ruling 2026-10-13:
+# past this age a session can be read but not continued.
+SESSION_MAX_AGE = timedelta(hours=72)
+
+_EXPIRED_DETAIL = (
+    "This session is more than 72 hours old and can't be continued. "
+    "Start a new session."
+)
+
+
+def _continuable(project: Project) -> bool:
+    created = project.created
+    # SQLite reads DateTime(timezone=True) back naive; Postgres keeps tzinfo.
+    if created.tzinfo is None:
+        created = created.replace(tzinfo=timezone.utc)
+    return utcnow() - created < SESSION_MAX_AGE
 
 
 def _owned(session: Session, user: User, session_id: str) -> Project:
@@ -118,8 +129,9 @@ def _derive_title_from_objective(objective: str | None) -> str | None:
 def _maybe_backfill_title(session: Session, project: Project, research: object) -> None:
     """Fallback session naming for a still-default session. The browser relays
     the agent-written project.title live (the primary path); this backstops the
-    cases with no browser relaying (e.g. the /v1 API). Prefer the agent's title;
-    derive from the objective only for legacy projects without one. One-time,
+    cases with no browser relaying — a tab closed before the agent named the
+    project, or a session resumed elsewhere. Prefer the agent's title; derive
+    from the objective only for legacy projects without one. One-time,
     persisted — keeps the list from being a wall of 'New research session'."""
     if project.title != _DEFAULT_TITLE or not isinstance(research, dict):
         return
@@ -133,31 +145,88 @@ def _maybe_backfill_title(session: Session, project: Project, research: object) 
         session.refresh(project)
 
 
-async def sync_fs_token(session: Session, user: User, sandbox) -> str:
+async def push_token_to_live_sandboxes(
+    session: Session,
+    user_id: str,
+    access_token: str,
+    expires_at: datetime,
+    provider: SandboxProvider,
+    exclude_sandbox_id: str | None = None,
+) -> None:
+    """Push a refreshed access token to every recently-active sandbox the user
+    has, excluding the one that triggered the refresh (it already got its token
+    from sync_fs_token).
+
+    "Recently active" means last_active within _RUNNING_TIMEOUT_S. Sandboxes
+    outside that window are paused/dead and will get a fresh token on their next
+    /connect via sync_fs_token.
+
+    Uses provider.get() -- not resume() -- so the running timeout is not
+    extended; only resume() calls set_timeout(). A paused target wakes either
+    way: _connect() calls connect(), which auto-resumes, only on a cache miss,
+    and on a cached handle the token write is itself inbound traffic, which
+    auto_resume answers. The last_active filter means targeted sandboxes are
+    likely still running, so the auto-resume is a no-op in practice.
+
+    Failures are swallowed and logged per sandbox: a failed push to one sandbox
+    must not break the connecting sandbox's /connect."""
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=_RUNNING_TIMEOUT_S)
+    projects = session.exec(
+        select(Project).where(
+            Project.user_id == user_id,
+            Project.status == "active",
+            Project.last_active >= cutoff,
+        )
+    ).all()
+    for project in projects:
+        if project.sandbox_id == exclude_sandbox_id:
+            continue
+        try:
+            sb = await provider.get(project.sandbox_id)
+            await fs_oauth.write_tokens(sb, access_token, expires_at)
+        except Exception:
+            logger.warning(
+                "push_token_to_live_sandboxes: failed for sandbox %s (project %s), skipping",
+                project.sandbox_id, project.id, exc_info=True,
+            )
+
+
+async def sync_fs_token(
+    session: Session, user: User, sandbox, provider: SandboxProvider | None = None,
+) -> str:
     """Refresh the user's FamilySearch grant if needed and (re-)inject it into
     `sandbox`. Returns the state the client renders: `ok` | `expired` | `none`.
 
     **Why on every connect and not just at create.** FS caps a grant at 8h idle
     / 24h absolute, so the token baked in at sandbox-create is dead by the next
-    day no matter how diligently the in-sandbox MCP self-refreshes. Re-injecting
-    here is also the only path by which a *fresh* front-door login reaches a
-    sandbox that already exists — which is what makes the "Reconnect
-    FamilySearch" banner actually able to fix anything.
+    day. Re-injecting here is also the only path by which a *fresh* front-door
+    login reaches a sandbox that already exists -- which is what makes the
+    "Reconnect FamilySearch" banner actually able to fix anything.
 
-    `none` (the user never had a grant — dev-login / mock mode) is deliberately
+    `none` (the user never had a grant -- dev-login / mock mode) is deliberately
     distinct from `expired`: only the latter is worth interrupting someone over.
 
     On `expired` the sandbox's own tokens.json is left ALONE rather than
-    cleared. The in-sandbox MCP refreshes on its own schedule, so its copy can
-    outlive the control plane's by a few minutes; clobbering it would turn a
-    stale-but-working session into a broken one.
-    """
-    if session.get(FamilySearchToken, user.id) is None:
+    cleared. The sandbox holds only an access token (no refresh token -- the
+    control plane is the sole refresh owner, issue #2887), so clearing it gives
+    the sandbox nothing; the user must reconnect via the web app.
+
+    When `provider` is given and a refresh happened, the new token is pushed to
+    every other recently-active sandbox the user has (step 3 of issue #2887)."""
+    existing = session.get(FamilySearchToken, user.id)
+    if existing is None:
         return "none"
+    old_access = existing.access_token
     row = await fresh_fs_token(session, user.id)
     if row is None:
         return "expired"
-    await fs_oauth.write_tokens(sandbox, row.access_token, row.refresh_token, row.expires_at)
+    await fs_oauth.write_tokens(sandbox, row.access_token, row.expires_at)
+    # If a refresh happened, push the new token to every other live sandbox.
+    if provider is not None and row.access_token != old_access:
+        await push_token_to_live_sandboxes(
+            session, user.id, row.access_token, row.expires_at,
+            provider, exclude_sandbox_id=sandbox.id,
+        )
     return "ok"
 
 
@@ -169,13 +238,9 @@ async def create_project(
     title: str | None = None,
     model: str | None = None,
     sample: bool = False,
-    fs_token: FsTokenIn | None = None,
 ) -> Project:
-    """Provision a sandbox + record the user→sandbox map. Shared by the browser
-    `create_session` route and the public `/v1` create route.
-
-    `fs_token`, when given, is a caller-supplied FamilySearch token (the `/v1` path)
-    that takes precedence over the user's stored row and is injected but not persisted.
+    """Provision a sandbox + record the user→sandbox map. Used by the browser
+    `create_session` route.
     """
     import uuid
 
@@ -185,22 +250,12 @@ async def create_project(
         SandboxSpec(template=settings.e2b_template, labels={"user_id": user.id}, model=model)
     )
     # Inject the FamilySearch token so the in-sandbox MCP is authenticated without an
-    # interactive login (which it cannot run). Two sources, explicit wins:
-    #   • /v1: the caller supplies the token in the create request (no DB row exists —
-    #     /v1 clients authenticate by bearer key, never via FS OAuth).
-    #   • browser: the user's row, persisted at FS app login (the front door).
-    # The offline/dev-login (mock-agent) path has neither and needs none — mock mode
-    # never reads it. In create_project (not the route) so the /v1 path injects too.
-    if fs_token is not None:
-        token_json = {"expires_in": fs_token.expires_in} if fs_token.expires_in is not None else {}
-        await fs_oauth.write_tokens(
-            sandbox, fs_token.access_token, fs_token.refresh_token,
-            fs_oauth.expires_at_from(token_json),
-        )
-    else:
-        # Refreshes first if the stored grant is stale — creating a session hours
-        # after signing in must not hand the sandbox an already-dead token.
-        await sync_fs_token(session, user, sandbox)
+    # interactive login (which it cannot run). The source is the user's row,
+    # persisted at FS app login (the front door). The offline/dev-login
+    # (mock-agent) path has none and needs none — mock mode never reads it.
+    # Refreshes first if the stored grant is stale — creating a session hours
+    # after signing in must not hand the sandbox an already-dead token.
+    await sync_fs_token(session, user, sandbox, provider=provider)
     # Provision the sandbox's ~/.familysearch-mcp/config.json. `hosted` tells the
     # in-sandbox MCP it is running in the VM, where the desktop `login` tool's
     # loopback OAuth flow can never complete — see fs_oauth.hosted_config().
@@ -458,6 +513,10 @@ async def connect_session(
     of the streaming path. Identical for both providers (E2B microVM / local
     subprocess); each returns its own wss:// or ws:// URL."""
     project = _owned(session, user, session_id)
+    # Refuse before resume, so this call does not wake the sandbox. Viewing an
+    # ended session still does: /resume and /state resume it to read files.
+    if not _continuable(project):
+        raise HTTPException(status_code=410, detail=_EXPIRED_DETAIL)
     sandbox = await provider.resume(project.sandbox_id)
     # Refresh the operator secrets BEFORE the agent can be handed a turn, so a
     # rotated Anthropic key reaches sandboxes created under the old one.
@@ -465,7 +524,7 @@ async def connect_session(
     # Same reasoning for the engine's config document: sandboxes are persistent,
     # so a create-time-only write leaves every existing session on whatever the
     # sidecar URLs and OpenRouter key were then. merge_config, not write_config —
-    # configure_openrouter writes this same file from inside the VM.
+    # the file may carry keys the control plane does not own (openRouterModel).
     settings = get_settings()
     await fs_oauth.merge_config(
         sandbox,
@@ -481,7 +540,7 @@ async def connect_session(
     # tells the client whether to show the "Reconnect" banner. Every reconnect
     # lands here (WsSessionConnection re-fetches credentials per attempt), which
     # is what makes a tab left open overnight recover on its own.
-    fs_state = await sync_fs_token(session, user, sandbox)
+    fs_state = await sync_fs_token(session, user, sandbox, provider=provider)
     conn = await sandbox.expose_port(SANDBOX_WS_PORT)
     token = mint_token(project.sandbox_id)
     project.last_active = utcnow()

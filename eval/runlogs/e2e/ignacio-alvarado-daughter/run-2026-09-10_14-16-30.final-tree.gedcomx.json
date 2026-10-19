@@ -1,0 +1,359 @@
+{
+  "persons": [
+    {
+      "id": "K21K-P1C",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Ignacio",
+          "surname": "Alvarado",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N8",
+          "given": "Ygnacio",
+          "surname": "Alvarado",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K48R-R8W",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Bienvenida",
+          "surname": "Alvarado Duran"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1896",
+          "standard_date": "1896",
+          "place": "San Jos\u00e9, San Jos\u00e9, Costa Rica",
+          "standard_place": "San Jos\u00e9, San Jos\u00e9, Costa Rica"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K4JL-NPF",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Teodosia",
+          "surname": "Duran",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1876",
+          "standard_date": "1876",
+          "place": "San Jos\u00e9, San Jos\u00e9, Costa Rica",
+          "standard_place": "San Jos\u00e9, San Jos\u00e9, Costa Rica"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K21K-P1H",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Maria Rosa de Las Piedades",
+          "surname": "Alvarado Duran"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "5 Jun 1889",
+          "standard_date": "5 Jun 1889"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K21K-P18",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Teodora",
+          "surname": "Dur\u00e1n"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N6",
+          "given": "Angela",
+          "surname": "Alvarado Duran",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N7",
+          "given": "Angela Procesa Maria de las Piedades",
+          "surname": "Alvarado Duran",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N9",
+          "given": "Angela",
+          "surname": "Charado Duran",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Burial",
+          "date": "20 Jun 1880",
+          "place": "Nuestra Se\u00f1ora del Carmen, Carmen, San Jos\u00e9, San Jos\u00e9, Costa Rica",
+          "standard_place": "Nuestra Se\u00f1ora del Carmen, Carmen, San Jos\u00e9, San Jos\u00e9, Costa Rica",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            },
+            {
+              "ref": "S1",
+              "quality": 2
+            },
+            {
+              "ref": "S3",
+              "quality": 1
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F2",
+          "type": "Birth",
+          "date": "~1879",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            },
+            {
+              "ref": "S2",
+              "quality": 2
+            },
+            {
+              "ref": "S3",
+              "quality": 2
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F3",
+          "type": "Christening",
+          "date": "27 Mar 1879",
+          "place": "San Vicente Ferrer, San Vicente, Moravia, San Jos\u00e9, Costa Rica",
+          "standard_place": "San Vicente Ferrer, San Vicente, Moravia, San Jos\u00e9, Costa Rica",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "type": "Cause Of Death",
+          "value": "Alfericia (infantile convulsions / eclampsia)",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 1
+            }
+          ],
+          "id": "F4"
+        },
+        {
+          "type": "Marital Status",
+          "value": "hija legitima (legitimate daughter of married parents)",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 1
+            }
+          ],
+          "id": "F5"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "K21K-P1C",
+      "person2": "K4JL-NPF"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "K21K-P1C",
+      "person2": "K21K-P18"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "K21K-P1C",
+      "child": "K21K-P1H"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "K21K-P18",
+      "child": "K21K-P1H"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "K21K-P1C",
+      "child": "K48R-R8W"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "K4JL-NPF",
+      "child": "K48R-R8W",
+      "subtype": "Biological"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "K21K-P1C",
+      "child": "I1",
+      "id": "R7",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "K4JL-NPF",
+      "child": "I1",
+      "id": "R8",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "Costa Rica, registros parroquiales y diocesanos, 1595-2022 \u2014 burial entry for Angela Alvarado Duran, 20 Jun 1880",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:HSWX-8HMF"
+    },
+    {
+      "id": "S2",
+      "title": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", FamilySearch, entry for Angela Procesa Maria de las Piedades Alvarado Duran, 27 Mar 1879",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:NQ24-QZQ"
+    },
+    {
+      "id": "S3",
+      "title": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", FamilySearch index entry for Angela Charado Duran, 20 Jun 1880",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MW8K-734"
+    },
+    {
+      "id": "S4",
+      "title": "Nuestra Se\u00f1ora del Carmen, Libro de Defunciones (Burial Register), Vol. 18, Nov 1877\u2013Oct 1881, entry 814, p. 297",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-63K2-3Z"
+    }
+  ]
+}

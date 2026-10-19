@@ -43,10 +43,13 @@ Constraints to keep in mind:
   [CLAUDE.md](./CLAUDE.md) for the full architecture rule.
 - **Frontmatter shapes routing.** Each `SKILL.md` needs a
   `description` that tells Claude *when* to fire and *when not to* (the
-  positive-trigger + negative-guard pattern most of the 23 existing
-  skills use). `citation/SKILL.md` and `record-extraction/SKILL.md`
-  are good templates for the richer pattern; `search-wikipedia/SKILL.md`
-  is intentionally minimal as a copy-from starter.
+  positive-trigger + negative-guard pattern most of the existing
+  skills use). `record-extraction/SKILL.md` is a good template for the
+  richer pattern, as is `agents/citation.md` for an agent's own
+  `description`; `agents/search-images.md` is the smallest copy-from starter
+  that carries the `summary_for_user` return contract. Do not start from
+  `agents/search-wikipedia.md` — it is exempt from that contract, and a copy
+  fails `agent-return-contract.test.ts`.
 - **The researcher profile is extensible.** If your skill needs new
   per-project context (e.g., `dna_companies` for a DNA-specialty
   skill, or `region_focus` for a regional researcher's profile),
@@ -54,9 +57,9 @@ Constraints to keep in mind:
   `docs/specs/schemas/research.schema.json`, the
   `docs/specs/research-schema-spec.md` table, and the validator at
   the TypeScript validator at `packages/engine/mcp-server/src/validation/validator.ts`.
-- **Validation.** Add an `init-project` interview question if your
-  field needs to be captured at project start, or read the field
-  with a sensible default if absent.
+- **Validation.** If your field must exist at project start, have
+  `init-project` write it (it asks nothing about the researcher);
+  otherwise read the field with a sensible default if absent.
 
 To submit: fork, add the skill directory under `packages/engine/plugin/skills/`, write
 the `SKILL.md`, add any reference docs under
@@ -98,7 +101,7 @@ sanctioned scraping MCP, or a future API integration:
 - MyHeritage — broad indexed records and family trees
 - FindMyPast — UK and Ireland records
 
-The current `search-external-sites` skill works around the API gap by
+The current `search-external-sites` agent works around the API gap by
 guiding the user through manual captures. An MCP would make those
 workflows direct.
 

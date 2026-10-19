@@ -1,0 +1,266 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Elena",
+          "surname": "Asmundsdotter",
+          "id": "PID-TODO-name-1"
+        }
+      ]
+    },
+    {
+      "id": "p-husband-jons",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "J\u00f6ns",
+          "surname": "J\u00f6nsson",
+          "id": "p-husband-jons-name-1"
+        }
+      ]
+    },
+    {
+      "id": "p-child-asmund",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Asmund",
+          "surname": "J\u00f6nsson",
+          "id": "p-child-asmund-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "p-child-asmund-fact-christening",
+          "type": "Christening",
+          "date": "11 September 1718",
+          "standard_date": "11 Sep 1718",
+          "place": "Barseb\u00e4ck parish, Malm\u00f6hus, Sweden",
+          "standard_place": "Barseb\u00e4ck, Malm\u00f6hus, Sweden"
+        },
+        {
+          "id": "p-child-asmund-fact-death",
+          "type": "Death",
+          "date": "4 February 1768",
+          "standard_date": "4 Feb 1768",
+          "place": "Barseb\u00e4ck parish, Malm\u00f6hus, Sweden",
+          "standard_place": "Barseb\u00e4ck, Malm\u00f6hus, Sweden"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Elena",
+          "surname": "Asmundsdotter",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N4",
+          "given": "Ellina",
+          "surname": "",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Birth",
+          "date": "1695-11-15",
+          "place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "standard_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "assertion_id": "a_022",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Christening",
+          "date": "~1695-11-17",
+          "place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "standard_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "assertion_id": "a_023",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "standard_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "assertion_id": "a_024",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "given": "J\u00f6ns",
+          "surname": "J\u00f6nsson",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N3",
+          "given": "Asmund",
+          "surname": "J\u00f6nsson",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "1718-09-11",
+          "assertion_id": "a_003",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "place": "Barseb\u00e4ck, Malm\u00f6hus, Sweden",
+          "standard_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden"
+        },
+        {
+          "id": "F2",
+          "type": "Christening",
+          "date": "~1718-09-21",
+          "place": "Barseb\u00e4ck, Malm\u00f6hus, Sweden",
+          "standard_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "assertion_id": "a_005",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N5",
+          "given": "Osmund",
+          "surname": "Dugmundsson",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F6",
+          "type": "Residence",
+          "place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "standard_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "assertion_id": "a_026",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-jons-elena",
+      "type": "Couple",
+      "person1": "p-husband-jons",
+      "person2": "PID-TODO"
+    },
+    {
+      "id": "rel-jons-asmund",
+      "type": "ParentChild",
+      "parent": "p-husband-jons",
+      "child": "p-child-asmund"
+    },
+    {
+      "id": "rel-elena-asmund",
+      "type": "ParentChild",
+      "parent": "PID-TODO",
+      "child": "p-child-asmund"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-barseback-christening-1718",
+      "title": "Barseb\u00e4ck parish (Malm\u00f6hus, Sweden), christening register, entry for Asmund J\u00f6nsson christened 11 September 1718, son of J\u00f6ns J\u00f6nsson and his wife Elena Asmundsdotter."
+    },
+    {
+      "id": "S1",
+      "title": "Barseb\u00e4ck Parish kyrkobok (F\u00f6dde), Malm\u00f6hus, Sweden, 1718, p. 164 \u2014 baptism of Asmund J\u00f6nsson",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:004514823_00247"
+    },
+    {
+      "id": "S2",
+      "title": "Barseb\u00e4ck Parish Register, Baptisms, pre-1700, book page 98 \u2014 Baptism of Ellina daughter of Osmund Dugmundsson, c. 15\u201317 November 1695",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:004514823_00106"
+    }
+  ]
+}

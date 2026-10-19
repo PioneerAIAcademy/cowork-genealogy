@@ -58,7 +58,7 @@ You'll install three things outside the repo, then run a single batch file insid
    Setup.bat
    ```
 
-   Either way, the script installs `uv`, runs `npm install` in `eval/app/`, runs `uv sync` in `eval/harness/`, and prompts for your Anthropic API key (saved to `eval/.env`).
+   Either way, the script installs `uv` and `pnpm`, runs `pnpm install` at the repo root, runs `uv sync` in `eval/harness/`, and prompts for your Anthropic API key (saved to `eval/.env`).
 
 You only do all this once per machine.
 
@@ -67,6 +67,7 @@ You only do all this once per machine.
 ```bash
 # Git: usually pre-installed; if not: brew install git (macOS) / apt install git (Linux)
 brew install node                                      # or nvm install --lts
+npm install -g pnpm@9.15.9                             # same pin as eval/Setup.bat; brew's node has npm, not pnpm
 brew install uv                                        # or curl -LsSf https://astral.sh/uv/install.sh | sh
 brew install gh                                        # or follow https://cli.github.com/
 
@@ -74,7 +75,7 @@ gh auth login                                          # GitHub.com → HTTPS �
 
 git clone <repo-url> ~/cowork-genealogy
 cd ~/cowork-genealogy/eval/harness && uv sync
-cd ~/cowork-genealogy/eval/app && npm install
+cd ~/cowork-genealogy && pnpm install
 echo "ANTHROPIC_API_KEY=sk-ant-..." > ~/cowork-genealogy/eval/.env
 ```
 
@@ -103,7 +104,7 @@ Skim the diff for:
 - **Rubric changes** (`eval/tests/unit/<skill>/rubric.md`) — only if the junior had to change grading dimensions to capture something new.
 - **Scenario / fixture changes** — usually rare on a per-skill PR. If present, did they affect tests in other skills?
 
-The CI `check-runlogs` action has already verified: ≤1 new released `v{N}.json`, latest run log is active on skill-side files, and its `.ann.json` is complete. If the action is green, you don't have to manually check these.
+The CI `check-runlogs` action has already verified: ≤1 new released `v{N}.json`, the run log the PR adds (else the latest) is active on skill-side files, and its `.ann.json` is complete. If the action is green, you don't have to manually check these.
 
 ## 3. Launch the CRUD UI
 
@@ -117,12 +118,12 @@ The CI `check-runlogs` action has already verified: ≤1 new released `v{N}.json
   Start.bat
   ```
 
-A browser tab opens at <http://localhost:3000>; keep the command-prompt window open while reviewing — closing it stops the app.
+A browser tab opens at <http://127.0.0.1:3000>; keep the command-prompt window open while reviewing — closing it stops the app.
 
-**macOS / Linux:** from `eval/app/`:
+**macOS / Linux:** from the repo root:
 
 ```bash
-npm run dev
+pnpm --filter cowork-genealogy-eval-app dev
 ```
 
 Then open <http://localhost:3000/results>. Find the skill the PR touches.

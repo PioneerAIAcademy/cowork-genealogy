@@ -393,4 +393,25 @@ describe('annotations — sampledTestIds fails closed', () => {
     const log = build({ tests: ['ut_000'], cursor: [], seed: 0 });
     expect(sampledTestIds(log)).toEqual(new Set(['ut_000']));
   });
+
+  it('a validator-failing test is gradeable through review_dimensions', () => {
+    // As the harness writes it: `fail`, aggregate empty by ruling (#2057), the
+    // judge's rows in `review_dimensions`. While every reader keyed on the
+    // aggregate this test looked ungraded — the sample guard fell back, the
+    // modal showed no rows, and completeness never asked for it — so 4 of the
+    // 7 non-passing tests on one record-extraction run were never annotated.
+    const log = build({ tests: ['ut_000'], cursor: [], seed: 0 }, { abortedIds: ['ut_000'] });
+    log.tests[0].outcome = 'fail';
+    log.tests[0].outcome_summary.review_dimensions = [
+      { source: 'base', name: 'A', score: 2, rationale: 'graded for diagnosis' },
+    ];
+    expect(log.tests[0].outcome_summary.aggregated_dimensions).toEqual([]);
+    expect(sampledTestIds(log)).toEqual(new Set(['ut_000']));
+    expect(unreviewedDimensions(log, emptyAnn)).toEqual([
+      { test_id: 'ut_000', dimension_source: 'base', dimension_name: 'A' },
+    ]);
+    expect(isAnnotationComplete(log, emptyAnn)).toBe(false);
+    // The control is the test above this one: the same shape with no
+    // `review_dimensions` — an old-harness log — still falls back.
+  });
 });

@@ -1,0 +1,218 @@
+{
+  "tool": "tree_gaps",
+  "description": "CONSTRUCTED for the tree-survey ranking test -- six holes. Only the generation-3 hole (TGAP-H3A) has a pending hint that fits it (`pendingHints` fitting 1), so tree_gaps returns it first and the rest nearest the root first. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "args": {
+    "personId": "TGAP-ROT"
+  },
+  "response": {
+    "root": {
+      "personId": "TGAP-ROT",
+      "name": "Walter Ashby"
+    },
+    "gaps": [
+      {
+        "type": "missing_parents",
+        "personId": "TGAP-H3A",
+        "name": "Samuel Weis",
+        "lifespan": "1830-1899",
+        "generation": 3,
+        "detail": "Father and mother are both missing from the tree.",
+        "yearRange": {
+          "start": 1829,
+          "end": 1833
+        },
+        "place": "Lancaster, Lancaster, Pennsylvania, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ],
+          "censusYears": [
+            1900,
+            1910,
+            1920
+          ],
+          "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 1,
+          "total": 1
+        }
+      },
+      {
+        "type": "no_death_date",
+        "personId": "TGAP-H1A",
+        "name": "Edmund Ashby",
+        "lifespan": "1850-",
+        "generation": 1,
+        "detail": "Deceased, but the tree gives no death date.",
+        "yearRange": {
+          "start": 1850,
+          "end": 1940
+        },
+        "place": "Lancaster, Lancaster, Pennsylvania, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ],
+          "censusYears": [
+            1900,
+            1910,
+            1920
+          ],
+          "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
+        }
+      },
+      {
+        "type": "no_spouse",
+        "personId": "TGAP-H1B",
+        "name": "August Ashby",
+        "lifespan": "1858-1931",
+        "generation": 1,
+        "detail": "Died at 73 with no spouse in the tree.",
+        "yearRange": {
+          "start": 1876,
+          "end": 1931
+        },
+        "place": "Lancaster, Lancaster, Pennsylvania, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ],
+          "censusYears": [
+            1900,
+            1910,
+            1920
+          ],
+          "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
+        }
+      },
+      {
+        "type": "missing_parents",
+        "personId": "TGAP-H2A",
+        "name": "Hannah Pruitt",
+        "lifespan": "1861-1934",
+        "generation": 2,
+        "detail": "Father and mother are both missing from the tree.",
+        "yearRange": {
+          "start": 1860,
+          "end": 1864
+        },
+        "place": "Lancaster, Lancaster, Pennsylvania, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ],
+          "censusYears": [
+            1900,
+            1910,
+            1920
+          ],
+          "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
+        }
+      },
+      {
+        "type": "no_birth_info",
+        "personId": "TGAP-H4A",
+        "name": "Louise Marsh",
+        "lifespan": "-1901",
+        "generation": 4,
+        "detail": "No birth place is recorded.",
+        "yearRange": {
+          "start": 1811,
+          "end": 1901
+        },
+        "place": "Lancaster, Lancaster, Pennsylvania, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ],
+          "censusYears": [
+            1900,
+            1910,
+            1920
+          ],
+          "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
+        }
+      },
+      {
+        "type": "missing_surname",
+        "personId": "TGAP-H5A",
+        "name": "Anna (no surname)",
+        "lifespan": "1790-1860",
+        "generation": 5,
+        "detail": "The wife's surname is missing from the tree.",
+        "yearRange": {
+          "start": 1810,
+          "end": 1816
+        },
+        "place": "Lancaster, Lancaster, Pennsylvania, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ],
+          "censusYears": [
+            1900,
+            1910,
+            1920
+          ],
+          "placeLevel": "locality"
+        },
+        "spouseId": "TGAP-H5B",
+        "spouseName": "Karl Ruhl",
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
+        }
+      }
+    ],
+    "scanned": {
+      "ancestorGenerations": 8,
+      "descendantGenerations": 4,
+      "persons": 120,
+      "descendancyReads": 12,
+      "stoppedEarly": false,
+      "stopReason": null
+    },
+    "notes": []
+  }
+}

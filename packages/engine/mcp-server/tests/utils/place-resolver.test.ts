@@ -17,6 +17,7 @@ import {
   resolveStandardPlace,
   standardPlaceToRepId,
   standardPlaceToPlaceId,
+  resolveStandardPlaceToPlaceId,
   repIdToStandardPlace,
   standardPlaceToCoords,
   placeIdToRepIds,
@@ -24,7 +25,10 @@ import {
   mapWithConcurrency,
   countryConsistency,
   deriveContextName,
+  sharedJurisdiction,
   __clearPlaceResolverCachesForTests,
+  __usePlaceTableForTests,
+  isNonPlacePhrase,
 } from "../../src/utils/place-resolver.js";
 
 const mockSearchPlace = vi.mocked(searchPlace);
@@ -53,17 +57,26 @@ afterEach(() => {
 });
 
 describe("resolveStandardPlace", () => {
-  it("returns the best-scored candidate's fullName for free text", async () => {
+  it("returns the best-scored candidate's fullName for free text with a parent", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "p1", fullName: "Lexington, Fayette, Kentucky, United States", score: 0.4 }),
+      entry({ placeRepId: "2", placeId: "p2", fullName: "Lexington, Fayette, Kentucky, United States", score: 0.9 }),
+    ]);
+    expect(await resolveStandardPlace("Lexington, Ky")).toBe("Lexington, Fayette, Kentucky, United States");
+  });
+
+  it("leaves a bare name unresolved when its top hit is a settlement", async () => {
+    // Was "Ky" -> "Kent, England, United Kingdom", the top hit; here Kent is a city.
     mockSearchPlace.mockResolvedValue([
       entry({ placeRepId: "1", placeId: "p1", fullName: "Kentucky, United States", score: 0.4 }),
       entry({ placeRepId: "2", placeId: "p2", fullName: "Kent, England, United Kingdom", score: 0.9 }),
     ]);
-    expect(await resolveStandardPlace("Ky")).toBe("Kent, England, United Kingdom");
+    expect(await resolveStandardPlace("Ky")).toBeNull();
   });
 
   it("caches a resolved value (second call does not re-search)", async () => {
     mockSearchPlace.mockResolvedValue([
-      entry({ placeRepId: "1", fullName: "Ohio, United States", score: 1 }),
+      entry({ placeRepId: "1", fullName: "Ohio, United States", type: "State", score: 1 }),
     ]);
     expect(await resolveStandardPlace("Ohio")).toBe("Ohio, United States");
     expect(await resolveStandardPlace("ohio")).toBe("Ohio, United States"); // normalized key
@@ -138,7 +151,7 @@ describe("resolveStandardPlace", () => {
     vi.useFakeTimers();
     mockSearchPlace.mockRejectedValue(new Error("network"));
 
-    const first = resolveStandardPlace("Paris");
+    const first = resolveStandardPlace("Paris, France");
     await vi.runAllTimersAsync();
     expect(await first).toBeNull();
 
@@ -146,7 +159,7 @@ describe("resolveStandardPlace", () => {
     mockSearchPlace.mockResolvedValueOnce([
       entry({ placeRepId: "9", fullName: "Paris, France", score: 1 }),
     ]);
-    const second = resolveStandardPlace("Paris");
+    const second = resolveStandardPlace("Paris, France");
     await vi.runAllTimersAsync();
     expect(await second).toBe("Paris, France");
   });
@@ -220,6 +233,188 @@ describe("standardPlaceToPlaceId", () => {
   });
 });
 
+describe("resolveStandardPlaceToPlaceId", () => {
+  it("resolves to a placeId when exact matches agree", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P", fullName: "Berlin, Germany", score: 0.9 }),
+    ]);
+    expect(await resolveStandardPlaceToPlaceId("Berlin, Germany")).toEqual({
+      kind: "resolved",
+      placeId: "P",
+    });
+  });
+
+  // The whole point of the discriminated form: the wrapper collapses this and
+  // the case below to the same `null`.
+  it("reports ambiguous with one candidate per distinct placeId", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Franklin, Virginia, United States", type: "County", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Franklin, Virginia, United States", type: "Independent City", score: 0.9 }),
+    ]);
+    expect(await resolveStandardPlaceToPlaceId("Franklin, Virginia, United States")).toEqual({
+      kind: "ambiguous",
+      candidates: [
+        "Franklin, Virginia, United States (County)",
+        "Franklin, Virginia, United States (Independent City)",
+      ],
+    });
+  });
+
+  it("reports unresolved when nothing carries a placeId", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", fullName: "Nowhere", score: 0.9 }),
+    ]);
+    expect(await resolveStandardPlaceToPlaceId("Nowhere")).toEqual({ kind: "unresolved" });
+  });
+
+  // One line per distinct placeId, not per rep: two reps of one spot are not a
+  // choice the caller has to make.
+  it("collapses several reps of one placeId to a single candidate", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Berlin, Germany", type: "City", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P1", fullName: "Berlin, Germany", type: "City", score: 0.8 }),
+      entry({ placeRepId: "3", placeId: "P2", fullName: "Berlin, Germany", type: "State", score: 0.7 }),
+    ]);
+    const r = await resolveStandardPlaceToPlaceId("Berlin, Germany");
+    expect(r).toEqual({
+      kind: "ambiguous",
+      candidates: ["Berlin, Germany (City)", "Berlin, Germany (State)"],
+    });
+  });
+
+  it("caps the candidate list at 8", async () => {
+    mockSearchPlace.mockResolvedValue(
+      Array.from({ length: 12 }, (_unused, i) =>
+        entry({ placeRepId: `r${i}`, placeId: `P${i}`, fullName: "Springfield", type: "City", score: 0.9 })
+      )
+    );
+    const r = await resolveStandardPlaceToPlaceId("Springfield");
+    expect(r.kind).toBe("ambiguous");
+    expect(r.kind === "ambiguous" && r.candidates).toHaveLength(8);
+  });
+
+  // No exact fullName match, so the fallback pool (everything with a placeId)
+  // is what gets described -- and a blank `type` must not leave a dangling
+  // " ()" on the end of the line.
+  it("omits the type qualifier when the entry has none", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Alpha, X", type: "", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Beta, Y", type: "", score: 0.9 }),
+    ]);
+    const r = await resolveStandardPlaceToPlaceId("Gamma");
+    expect(r).toEqual({ kind: "ambiguous", candidates: ["Alpha, X", "Beta, Y"] });
+  });
+
+  // ── (Type) suffix disambiguation (issue #2886) ──────────────────────────
+
+  it("resolves when the input carries a (Type) suffix matching one candidate", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Franklin, Virginia, United States", type: "County", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Franklin, Virginia, United States", type: "Independent City", score: 0.9 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Franklin, Virginia, United States (County)")
+    ).toEqual({ kind: "resolved", placeId: "P1" });
+  });
+
+  it("resolves each member of a same-fullName pair to its own placeId", async () => {
+    const entries = [
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Franklin, Virginia, United States", type: "County", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Franklin, Virginia, United States", type: "Independent City", score: 0.9 }),
+    ];
+    mockSearchPlace.mockResolvedValue(entries);
+    expect(
+      await resolveStandardPlaceToPlaceId("Franklin, Virginia, United States (County)")
+    ).toEqual({ kind: "resolved", placeId: "P1" });
+
+    __clearPlaceResolverCachesForTests();
+    mockSearchPlace.mockResolvedValue(entries);
+    expect(
+      await resolveStandardPlaceToPlaceId("Franklin, Virginia, United States (Independent City)")
+    ).toEqual({ kind: "resolved", placeId: "P2" });
+  });
+
+  it("parses a (Type) suffix whose type itself carries parentheses", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Channel Islands", type: "Island(s)", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Channel Islands", type: "Region", score: 0.9 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Channel Islands (Island(s))")
+    ).toEqual({ kind: "resolved", placeId: "P1" });
+  });
+
+  it("returns unresolved when the (Type) suffix matches no candidate", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Franklin, Virginia, United States", type: "County", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Franklin, Virginia, United States", type: "Independent City", score: 0.9 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Franklin, Virginia, United States (Township)")
+    ).toEqual({ kind: "unresolved" });
+  });
+
+  it("matches the (Type) suffix case-insensitively", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Rattvik, Kopparberg, Sweden", type: "Lutheran Parish", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Rattvik, Kopparberg, Sweden", type: "District", score: 0.9 }),
+      entry({ placeRepId: "3", placeId: "P3", fullName: "Rattvik, Kopparberg, Sweden", type: "Municipality", score: 0.9 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Rattvik, Kopparberg, Sweden (lutheran parish)")
+    ).toEqual({ kind: "resolved", placeId: "P1" });
+  });
+
+  it("strips the (Type) suffix before calling the search API", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Franklin, Virginia, United States", type: "County", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Franklin, Virginia, United States", type: "Independent City", score: 0.9 }),
+    ]);
+    await resolveStandardPlaceToPlaceId("Franklin, Virginia, United States (County)");
+    expect(mockSearchPlace).toHaveBeenCalledWith(
+      "Franklin, Virginia, United States",
+      expect.anything(),
+    );
+  });
+
+  it("returns unresolved when the suffixed input has no exact-fullName matches", async () => {
+    // No entry's fullName matches "Gamma, Z", so exact is empty. The fallback
+    // pool must not be type-filtered — it can hold unrelated places of that type.
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Alpha, X", type: "County", score: 0.9 }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Beta, Y", type: "County", score: 0.8 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Gamma, Z (County)")
+    ).toEqual({ kind: "unresolved" });
+  });
+
+  it("returns unresolved when a single-candidate pool has a non-matching (Type) suffix", async () => {
+    // Mora has one jurisdiction (Municipality). An agent sending
+    // "(Lutheran Parish)" must not silently resolve to the Municipality.
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Mora, Kopparberg, Sweden", type: "Municipality", score: 0.9 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Mora, Kopparberg, Sweden (Lutheran Parish)")
+    ).toEqual({ kind: "unresolved" });
+  });
+
+  it("returns unresolved when a real fullName ends in a parenthetical that parseTypeSuffix misreads", async () => {
+    // "Forfarshire (Angus)" is a real fullName (renamed county). The regex
+    // parses it as bareName="Forfarshire", type="Angus". The search for
+    // "Forfarshire" returns one entry whose fullName is "Forfarshire (Angus)",
+    // which does not match "Forfarshire" exactly, so exact is empty and the
+    // type filter returns unresolved rather than silently resolving the bare name.
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", placeId: "PBARE", fullName: "Forfarshire (Angus)", type: "County", score: 0.9 }),
+    ]);
+    expect(
+      await resolveStandardPlaceToPlaceId("Forfarshire (Angus)")
+    ).toEqual({ kind: "unresolved" });
+  });
+});
+
 describe("empty / whitespace input short-circuits without a network search", () => {
   it("standardPlaceToPlaceId returns null and never searches", async () => {
     expect(await standardPlaceToPlaceId("   ")).toBeNull();
@@ -233,6 +428,27 @@ describe("empty / whitespace input short-circuits without a network search", () 
 
   it("resolveStandardPlace returns null and never searches", async () => {
     expect(await resolveStandardPlace("  ")).toBeNull();
+    expect(mockSearchPlace).not.toHaveBeenCalled();
+  });
+});
+
+describe("non-place phrases are never standardized (#1962)", () => {
+  it("recognizes the whole-text phrase, ignoring case, spacing and periods", () => {
+    for (const p of ["Same House", "  same   PLACE ", "R.F.D.", "Do.", "Ditto", "N/A"]) {
+      expect(isNonPlacePhrase(p), p).toBe(true);
+    }
+  });
+
+  it("accepts a real place, including one that contains a phrase word", () => {
+    for (const p of ["Same Place, Wayne, Ohio", "Same, Manufahi, Timor-Leste", "Homer", "Rural Retreat", "Dover", "Home, Clermont, Ohio"]) {
+      expect(isNonPlacePhrase(p), p).toBe(false);
+    }
+  });
+
+  it("resolveStandardPlace returns null without searching, with or without record context", async () => {
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "1", fullName: "Same, Manufahi, Timor-Leste", type: "Town" })]);
+    expect(await resolveStandardPlace("Same House")).toBeNull();
+    expect(await resolveStandardPlace("Do", { contextPlaces: ["Wayne, Ohio, United States"] })).toBeNull();
     expect(mockSearchPlace).not.toHaveBeenCalled();
   });
 });
@@ -263,13 +479,14 @@ describe("standardPlaceToCoords", () => {
     expect(await standardPlaceToCoords("Rome, Italy")).toEqual({
       latitude: 41.9,
       longitude: 12.5,
+      type: "City",
     });
     expect(mockGetPlaceById).not.toHaveBeenCalled();
   });
 
   it("falls back to the description endpoint when the entry lacks coords", async () => {
     mockSearchPlace.mockResolvedValue([
-      entry({ placeRepId: "7", fullName: "Atlantis", score: 1 }),
+      entry({ placeRepId: "7", fullName: "Atlantis", type: "Town", score: 1 }),
     ]);
     mockGetPlaceById.mockResolvedValue({
       placeRepId: "7",
@@ -279,9 +496,11 @@ describe("standardPlaceToCoords", () => {
       latitude: 1.1,
       longitude: 2.2,
     } as Awaited<ReturnType<typeof getPlaceById>>);
+    // The type is the matched search entry's, not the description's.
     expect(await standardPlaceToCoords("Atlantis")).toEqual({
       latitude: 1.1,
       longitude: 2.2,
+      type: "Town",
     });
   });
 });
@@ -350,5 +569,388 @@ describe("mapWithConcurrency", () => {
 
   it("handles an empty list", async () => {
     expect(await mapWithConcurrency([], 8, async (x) => x)).toEqual([]);
+  });
+});
+
+// The three guards around the `+date:` qualifier. Each fails on main, and each
+// fails if its own guard is removed while the rest of the change stays — the
+// suite was previously green with place-resolver.ts reverted wholesale.
+describe("resolveStandardPlace date qualifier and its guards", () => {
+  const rochdale = (score: number, fullName: string) =>
+    entry({ placeRepId: "r", fullName, score });
+
+  it("passes the fact's year to searchPlace as a date option", async () => {
+    mockSearchPlace.mockResolvedValue([
+      rochdale(95, "Rochdale, Lancashire, England, United Kingdom"),
+    ]);
+    await resolveStandardPlace("Rochdale, England", { date: "12 May 1880" });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rochdale, England", { date: 1880 });
+  });
+
+  it("sends no date when the caller supplies none", async () => {
+    mockSearchPlace.mockResolvedValue([rochdale(95, "Rochdale, Greater Manchester, England, United Kingdom")]);
+    await resolveStandardPlace("Rochdale, England");
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rochdale, England", { date: undefined });
+  });
+
+  it("does not date-qualify a single-segment input", async () => {
+    // "Germany" at 1827 resolves to a village in the Russian Empire when the
+    // year is applied: with no parent segment there is nothing to anchor it.
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "g", fullName: "Germany", score: 99 })]);
+    await resolveStandardPlace("Germany", { date: "about 1827" });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Germany", { date: undefined });
+  });
+
+  it("ignores a date it cannot parse instead of guessing", async () => {
+    mockSearchPlace.mockResolvedValue([rochdale(95, "Rochdale, Lancashire, England, United Kingdom")]);
+    await resolveStandardPlace("Rochdale, England", { date: "sometime in the war" });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rochdale, England", { date: undefined });
+  });
+
+  it("falls back to an undated query when the dated one returns nothing", async () => {
+    // `+date:` is a hard filter: where no representation records coverage for
+    // the year FamilySearch returns nothing at all, and a measured share of
+    // corpus places went blank before this guard existed. The rate is quoted
+    // once, in `getSearchEntries` (src/utils/place-resolver.ts) beside the
+    // probe that emits it — restating it here is how the two drifted apart,
+    // and nothing checks either copy.
+    mockSearchPlace
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([entry({ placeRepId: "m", fullName: "Manger, Hordaland, Norway", score: 90 })]);
+    expect(await resolveStandardPlace("Manger, Hordaland, Norge", { date: "1801" }))
+      .toBe("Manger, Hordaland, Norway");
+    expect(mockSearchPlace).toHaveBeenNthCalledWith(1, "Manger, Hordaland, Norge", { date: 1801 });
+    expect(mockSearchPlace).toHaveBeenNthCalledWith(2, "Manger, Hordaland, Norge");
+  });
+
+  it("falls back to the undated answer when the guard cannot confirm the dated one", async () => {
+    // "Bavaria" names no country the alias table reads, so the verdict here is
+    // `unverifiable`, NOT `contradiction` — which is exactly why the trigger is
+    // `!== "ok"`. Keying it on `contradiction` alone would persist the dated
+    // rendering with the guard having confirmed nothing, so this case is the
+    // rail on that trigger: revert it and this test fails.
+    mockSearchPlace
+      .mockResolvedValueOnce([entry({ placeRepId: "b1", fullName: "Bavaria", score: 99 })])
+      .mockResolvedValueOnce([entry({ placeRepId: "b2", fullName: "Bavaria, Germany", score: 95 })]);
+    expect(await resolveStandardPlace("Bavaria, Germany", { date: "1843" }))
+      .toBe("Bavaria, Germany");
+    expect(mockSearchPlace).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps a dated answer the guard does not object to", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "f", fullName: "Forfarshire, Scotland, United Kingdom", score: 97 }),
+    ]);
+    expect(await resolveStandardPlace("Forfarshire, Scotland", { date: "1865" }))
+      .toBe("Forfarshire, Scotland, United Kingdom");
+    expect(mockSearchPlace).toHaveBeenCalledTimes(1);
+  });
+
+  it("keys the cache by year, so two dates on one place do not collide", async () => {
+    mockSearchPlace
+      .mockResolvedValueOnce([entry({ placeRepId: "1", fullName: "Rochdale, Lancashire, England, United Kingdom", score: 95 })])
+      .mockResolvedValueOnce([entry({ placeRepId: "2", fullName: "Rochdale, Greater Manchester, England, United Kingdom", score: 95 })]);
+    expect(await resolveStandardPlace("Rochdale, England", { date: "1880" }))
+      .toBe("Rochdale, Lancashire, England, United Kingdom");
+    expect(await resolveStandardPlace("Rochdale, England", { date: "1990" }))
+      .toBe("Rochdale, Greater Manchester, England, United Kingdom");
+    expect(mockSearchPlace).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("countryConsistency — diacritics and endonyms", () => {
+  it("folds diacritics so an accented country name is still recognised", () => {
+    // Before folding, "Guerrero, México" returned "unverifiable" while the
+    // unaccented "Guerrero, Mexico" returned "ok" — the same place, the same
+    // correct answer, and the guard silently switching itself off on an accent.
+    expect(countryConsistency("Guerrero, México", "Guerrero, Mexico")).toBe("ok");
+    expect(countryConsistency("Peñas de San Pedro, Albacete, España", "Peñas de San Pedro, Albacete, Spain")).toBe("ok");
+    expect(countryConsistency("Wien, Österreich", "Vienna, Austria")).toBe("ok");
+  });
+
+  it("reads endonyms on the recorded side against English on the standard side", () => {
+    expect(countryConsistency("Manger, Hordaland, Norge", "Manger, Hordaland, Norway")).toBe("ok");
+    expect(countryConsistency("Bayern, Deutschland", "Bavaria, Germany")).toBe("ok");
+    expect(countryConsistency("Hurup, Refs, Thisted, Danmark", "Hurup, Refs, Thisted, Denmark")).toBe("ok");
+    expect(countryConsistency("Paks, Tolna, Magyarország", "Paks, Tolna, Hungary")).toBe("ok");
+    expect(countryConsistency("Wanroij, Noord-Brabant, Nederland", "Wanroij, North Brabant, Netherlands")).toBe("ok");
+    expect(countryConsistency("Faenza, Ravenna, Italia", "Faenza, Ravenna, Emilia-Romagna, Italy")).toBe("ok");
+  });
+
+  it("now CATCHES a wrong resolution under an endonym that used to pass", () => {
+    // These are the cases the English-only map waved through: the recorded place
+    // names a country, the standard place is on another continent, and the
+    // verdict was "unverifiable" purely because the country was not in English.
+    expect(countryConsistency("Bayern, Deutschland", "Bavaria, Minnesota, United States")).toBe("contradiction");
+    expect(countryConsistency("Manger, Hordaland, Norge", "Manger, Bavaria, Germany")).toBe("contradiction");
+  });
+
+  it("still declines to judge a place that names no country at all", () => {
+    // The bulk of "unverifiable" is this, not language: a trailing US state or
+    // English county names no country, so there is nothing to compare.
+    expect(countryConsistency("Schuylkill County, Pennsylvania", "Schuylkill, Pennsylvania, United States")).toBe("unverifiable");
+    expect(countryConsistency("Sheffield, Staffordshire", "Sheffield, Staffordshire, England")).toBe("unverifiable");
+  });
+
+  it("declines to judge when the STANDARD place names no country it recognises", () => {
+    // The endonyms lit up the recorded side and exposed an asymmetry on the
+    // standard side: "…, Rakousko" (Czech for Austria) is now readable, and a
+    // Bohemian or Moravian place standardises to "…, Bohemia" / "…, Moravia",
+    // which the alias table does not carry. Falling through to "contradiction"
+    // reported "plainly lacks" when it meant "cannot read", and research_append
+    // rejects the ENTIRE append on a contradiction. These four resolutions are
+    // correct — "Křičeň, Bezirk Pardubitz, Bohemia" scores 100 live.
+    expect(countryConsistency("Křičeň, Pardubice, Čechy, Rakousko", "Křičeň, Bezirk Pardubitz, Bohemia")).toBe("unverifiable");
+    expect(countryConsistency("Bystré 30, Polička, Čechy, Rakousko", "Bistrau, Polička, Bohemia")).toBe("unverifiable");
+    expect(countryConsistency("Stašov, Polička, Čechy, Rakousko", "Dittersbach, Polička, Bohemia")).toBe("unverifiable");
+    expect(countryConsistency("Svitavy, Moravská Třebová, Morava, Rakousko", "Svitavy, Moravská Třebová, Moravia, Czechoslovakia")).toBe("unverifiable");
+  });
+
+  it("keeps catching garbage that hides BEHIND a historical polity", () => {
+    // The rail on the fix above. An earlier attempt returned early whenever any
+    // standard segment named a polity, which reads these as unjudgeable too —
+    // and they are exactly what the guard exists for. Both strings are real, in
+    // eval/tests/e2e/anna-findejsova-daughter/starting-tree.gedcomx.json: the
+    // polity is genuine and the garbage is appended AFTER it.
+    expect(countryConsistency(
+      "Svitavy, Moravská Třebová, Morava, Rakousko",
+      "Zwittau, Mährisch Trübau, Moravia, Changgŭm-ni, SHIN-WON-GUN, South Hwanghae, North Korea",
+    )).toBe("contradiction");
+    expect(countryConsistency(
+      "Křičeň, Pardubice, Čechy, Rakousko",
+      "Křičeň, Bezirk Pardubitz, Bohemia, Manchester, Lancashire, England, United Kingdom",
+    )).toBe("contradiction");
+  });
+
+  it("keeps the ok verdicts a polity-blind fix would have inverted", () => {
+    // Six corpus pairs the guard already gets right, because the standard side
+    // names BOTH the polity and a country the table carries. Nothing else
+    // covers them, so a regression here would ship green.
+    expect(countryConsistency("Bystré 41, Polička, Čechy, Rakousko", "Bistrau, Polička, Bohemia, Austria")).toBe("ok");
+    expect(countryConsistency("Svitavy, Moravská Třebová, Morava, Rakousko", "Zwittau, Mährisch Trübau, Moravia, Austria")).toBe("ok");
+    expect(countryConsistency(", Pommerania, Preussen, Germany", "Pomerania, Prussia, Germany")).toBe("ok");
+    expect(countryConsistency("Höchst, Hessen-Nassau, Preußen, Deutschland", "Höchst, Hesse-Nassau, Prussia, Germany")).toBe("ok");
+    expect(countryConsistency("Sindlingen, Kreis Höchst, Hessen-Nassau, Preußen, Deutschland", "Sindlingen, Höchst, Hesse-Nassau, Prussia, Germany")).toBe("ok");
+    expect(countryConsistency("Prussia, Germany", "Prussia, Germany")).toBe("ok");
+  });
+
+  it("reads both spellings of Preußen, since ß survives the diacritic fold", () => {
+    // NFD decomposes "ö" into "o" + combining diaeresis, so the fold strips it;
+    // it does NOT decompose "ß", so "Preußen" folds to "preußen" and misses an
+    // ASCII-only key. Both spellings are in the corpus. The pair below is
+    // synthetic on purpose: in every corpus string the Prussian segment is
+    // followed by "Deutschland"/"Germany", and the guard reads only the
+    // trailing segment, so no corpus case reaches this key at all.
+    expect(countryConsistency("Posen, Preußen", "Poznan, Bavaria, Germany")).toBe("ok");
+    expect(countryConsistency("Posen, Preussen", "Poznan, Bavaria, Germany")).toBe("ok");
+  });
+
+  it("declares a contradiction against a country carried only for that purpose", () => {
+    // cameroon / north korea are in COUNTRY_ALIASES for no other reason than
+    // this: the guard cannot contradict a country it cannot read, and these are
+    // where the corpus's mis-resolutions actually land. Deleting either
+    // silently disarms the catch, which is why both are asserted here.
+    expect(countryConsistency("West Bromwich, England", "Bamenda, Mezam, Northwest Region, Cameroon")).toBe("contradiction");
+    expect(countryConsistency("Bayern, Deutschland", "Changgŭm-ni, South Hwanghae, North Korea")).toBe("contradiction");
+  });
+});
+
+describe("resolveStandardPlace — FamilySearch year bounds", () => {
+  // FamilySearch accepts +date: 1000..9999 and 400s outside it. A 400 throws
+  // inside searchPlace, burns all three withRetry attempts, and returns null
+  // UNCACHED, so every later call for that place burns them again. The
+  // empty-result fallback does not catch a throw, so the year is dropped before
+  // it is ever sent. Reachable through earliestYear's own fudge offsets.
+  it.each([
+    ["abt 1000", "a year below the floor (1000 - 1 for `abt`)"],
+    ["44 BC", "a negative year"],
+    ["est 1005", "an estimate that lands below the floor (-10)"],
+  ])("drops %s — %s", async (date) => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "x", fullName: "Rome, Lazio, Italy", score: 90 }),
+    ]);
+    await resolveStandardPlace("Rome, Italy", { date });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rome, Italy", { date: undefined });
+  });
+
+  it("still sends a year inside the accepted range", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "x", fullName: "Rome, Lazio, Italy", score: 90 }),
+    ]);
+    await resolveStandardPlace("Rome, Italy", { date: "1010" });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rome, Italy", { date: 1010 });
+  });
+});
+
+
+// ── A bare single-segment place (genealogist ruling 2026-10-06, option C) ──
+// "Shenandoah" beside "Borough of Shenandoah, County of Schuylkill" in one will
+// resolved to New Zealand on PR #3007's trials; "Logan LDS Temple" to France.
+describe("resolveStandardPlace — a bare single-segment name", () => {
+  const byName = (table: Record<string, Entry[]>) =>
+    mockSearchPlace.mockImplementation(async (name: string) => table[name] ?? []);
+
+  it("with no context, leaves a same-named place on another continent unresolved", async () => {
+    byName({ Shenandoah: [
+      entry({ placeRepId: "nz", fullName: "Shenandoah, Westland, New Zealand", score: 0.95 }),
+      entry({ placeRepId: "pa", fullName: "Shenandoah, Schuylkill, Pennsylvania, United States", score: 0.9 }),
+    ] });
+    expect(await resolveStandardPlace("Shenandoah")).toBeNull();
+  });
+
+  it("with no context, resolves to a county, and to a state from an abbreviation", async () => {
+    byName({
+      Gloucestershire: [entry({ placeRepId: "gl", fullName: "Gloucestershire, England, United Kingdom", type: "County (Top level)", score: 1 })],
+      Ky: [
+        entry({ placeRepId: "ky", fullName: "Kentucky, United States", type: "State", score: 0.9 }),
+        entry({ placeRepId: "kn", fullName: "Kent, England, United Kingdom", type: "County", score: 0.4 }),
+      ],
+    });
+    expect(await resolveStandardPlace("Gloucestershire")).toBe("Gloucestershire, England, United Kingdom");
+    expect(await resolveStandardPlace("Ky")).toBe("Kentucky, United States");
+  });
+
+  it("with no context, leaves a settlement unresolved even when it is the only match", async () => {
+    byName({ Dallerup: [entry({ placeRepId: "d", fullName: "Dallerup, Tyrsted, Vejle, Denmark", type: "Populated Place", score: 1 })] });
+    expect(await resolveStandardPlace("Dallerup")).toBeNull();
+  });
+
+  it("with no context, still resolves a country or a state to itself", async () => {
+    byName({
+      Ireland: [entry({ placeRepId: "ie", fullName: "Ireland", type: "Country", score: 1 })],
+      Ohio: [entry({ placeRepId: "oh", fullName: "Ohio, United States", type: "State", score: 1 })],
+    });
+    expect(await resolveStandardPlace("Ireland")).toBe("Ireland");
+    expect(await resolveStandardPlace("Ohio")).toBe("Ohio, United States");
+  });
+
+  it("resolves the sibling place that spells it out instead", async () => {
+    byName({
+      Shenandoah: [entry({ placeRepId: "nz", fullName: "Shenandoah, Westland, New Zealand", score: 0.95 })],
+      "Borough of Shenandoah, County of Schuylkill": [
+        entry({ placeRepId: "pa", fullName: "Shenandoah, Schuylkill, Pennsylvania, United States", score: 0.9 }),
+      ],
+    });
+    expect(
+      await resolveStandardPlace("Shenandoah", {
+        contextPlaces: ["Borough of Shenandoah, County of Schuylkill", "Mahanoy City, Schuylkill"],
+      }),
+    ).toBe("Shenandoah, Schuylkill, Pennsylvania, United States");
+  });
+
+  it("does not take a sibling whose first segment merely contains the name", async () => {
+    byName({ Logan: [entry({ placeRepId: "x", fullName: "Logan, Somewhere, France", score: 0.9 })] });
+    expect(await resolveStandardPlace("Logan", { contextPlaces: ["Loganville, Walton, Georgia"] })).toBeNull();
+  });
+
+  it("does not take 'New York' as the fuller form of 'York'", async () => {
+    byName({
+      York: [entry({ placeRepId: "y", fullName: "York, England, United Kingdom", type: "County", score: 0.9 })],
+      "New York, New York, United States": [
+        entry({ placeRepId: "ny", fullName: "New York, New York, United States", score: 1 }),
+      ],
+    });
+    expect(
+      await resolveStandardPlace("York", { contextPlaces: ["New York, New York, United States"] }),
+    ).toBe("York, England, United Kingdom");
+  });
+
+  it("keeps a bare country or state as itself beside a same-named place in the record's area", async () => {
+    byName({
+      Germany: [
+        entry({ placeRepId: "de", fullName: "Germany", type: "Country", score: 0.9 }),
+        entry({ placeRepId: "gt", fullName: "Germany Township, Adams, Pennsylvania, United States", score: 0.8 }),
+      ],
+      Ohio: [
+        entry({ placeRepId: "oh", fullName: "Ohio, United States", type: "State", score: 0.9 }),
+        entry({ placeRepId: "ot", fullName: "Ohio Township, Allegheny, Pennsylvania, United States", score: 0.8 }),
+      ],
+    });
+    expect(await resolveStandardPlace("Germany", { contextPlaces: ["Gettysburg, Adams, Pennsylvania"] })).toBe("Germany");
+    expect(await resolveStandardPlace("Ohio", { contextPlaces: ["Beaver, Beaver, Pennsylvania"] })).toBe("Ohio, United States");
+  });
+
+  it("matches a shared jurisdiction as a whole segment, not a substring", async () => {
+    byName({ Lexington: [
+      entry({ placeRepId: "ky", fullName: "Lexington, Fayette, Kentucky, United States", score: 0.9 }),
+      entry({ placeRepId: "kt", fullName: "Lexington, Kent, England, United Kingdom", score: 0.5 }),
+    ] });
+    expect(
+      await resolveStandardPlace("Lexington", { contextPlaces: ["Maidstone, Kent", "Dover, Kent"] }),
+    ).toBe("Lexington, Kent, England, United Kingdom");
+  });
+
+  it("does not take a variant-name hit inside the shared jurisdiction", async () => {
+    byName({ Lexington: [
+      entry({ placeRepId: "va", fullName: "Lexington, Virginia, United States", score: 0.9 }),
+      entry({ placeRepId: "lx", fullName: "Laxton, Nottinghamshire, England, United Kingdom", score: 0.3 }),
+    ] });
+    expect(
+      await resolveStandardPlace("Lexington", { contextPlaces: ["Dover, Kent, England", "Canterbury, Kent, England"] }),
+    ).toBeNull();
+  });
+
+  it("confines the search to the jurisdiction the siblings share", async () => {
+    byName({ "Logan LDS Temple": [
+      entry({ placeRepId: "fr", fullName: "Logan, Haute-Saône, Bourgogne-Franche-Comté, France", score: 0.9 }),
+      entry({ placeRepId: "ut", fullName: "Logan Utah Temple, Logan, Cache, Utah, United States", score: 0.5 }),
+    ] });
+    expect(
+      await resolveStandardPlace("Logan LDS Temple", {
+        contextPlaces: ["Logan, Cache, Utah", "Providence, Cache, Utah"],
+      }),
+    ).toBe("Logan Utah Temple, Logan, Cache, Utah, United States");
+  });
+
+  it("leaves it unresolved when nothing falls inside the shared jurisdiction", async () => {
+    byName({ "Logan LDS Temple": [
+      entry({ placeRepId: "fr", fullName: "Logan, Haute-Saône, Bourgogne-Franche-Comté, France", score: 0.9 }),
+    ] });
+    expect(
+      await resolveStandardPlace("Logan LDS Temple", { contextPlaces: ["Logan, Cache, Utah"] }),
+    ).toBeNull();
+  });
+
+  it("leaves a multi-segment place on the existing path", async () => {
+    byName({ "Shenandoah, Westland": [
+      entry({ placeRepId: "nz", fullName: "Shenandoah, Westland, New Zealand", score: 0.9 }),
+    ] });
+    expect(await resolveStandardPlace("Shenandoah, Westland")).toBe("Shenandoah, Westland, New Zealand");
+  });
+});
+
+describe("sharedJurisdiction", () => {
+  it("returns the shared tail, most specific first, excluding each sibling's own locality", () => {
+    expect(sharedJurisdiction([["Logan", "Cache", "Utah"], ["Providence", "Cache", "Utah"]])).toEqual(["cache", "utah"]);
+    expect(sharedJurisdiction([["Logan", "Cache", "Utah"], ["Ogden", "Weber", "Utah"]])).toEqual(["utah"]);
+  });
+
+  it("returns nothing when the siblings share no tail or there are none", () => {
+    expect(sharedJurisdiction([["Logan", "Cache", "Utah"], ["Cork", "Ireland"]])).toEqual([]);
+    expect(sharedJurisdiction([])).toEqual([]);
+  });
+});
+
+describe("__usePlaceTableForTests (the eval harness's offline resolver)", () => {
+  afterEach(() => {
+    __usePlaceTableForTests(null);
+    __clearPlaceResolverCachesForTests();
+  });
+
+  it("answers from the table, normalized, and never searches", async () => {
+    mockSearchPlace.mockClear();
+    __usePlaceTableForTests({ "Boston, Massachusetts": "Boston, Suffolk, Massachusetts, United States" });
+    expect(await resolveStandardPlace("  boston,   MASSACHUSETTS ")).toBe("Boston, Suffolk, Massachusetts, United States");
+    expect(await resolveStandardPlace("Ballyowen")).toBeNull();
+    expect(mockSearchPlace).not.toHaveBeenCalled();
+  });
+
+  it("searches again once the table is removed", async () => {
+    __usePlaceTableForTests({});
+    __usePlaceTableForTests(null);
+    mockSearchPlace.mockClear();
+    mockSearchPlace.mockResolvedValue([]);
+    await resolveStandardPlace("Boston, Massachusetts");
+    expect(mockSearchPlace).toHaveBeenCalled();
   });
 });

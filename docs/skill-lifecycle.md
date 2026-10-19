@@ -266,6 +266,13 @@ That id is the `TEST=` value for step 6. (Older tests have numeric ids like
 > test after the fix has landed, the bug no longer reproduces on the un-edited
 > skill, the gate comes back `INCONCLUSIVE`, and nothing is proven either way.
 
+> **A mined test merges only in the PR that makes it pass.** Never ahead of
+> the fix, and never with an `expected_outcome: xfail` marker (lead,
+> 2026-10-06; `eval/CLAUDE.md` rules 6 and 10). If your task only finds the
+> failure, push the test to a branch, link it from the issue that owns the
+> fix, and leave the merge to that issue's PR, which runs steps 4–8 from this
+> test.
+
 > **First time improving this skill? You'll need hold-out tests.** Read the
 > hold-out note in step 4 now — they have to be set *before* the run you're
 > about to do, and setting them afterwards invalidates it.
@@ -314,7 +321,7 @@ has nothing to compare to.
 Now read the **sampled** tests and correct the judge. The sidebar marks the
 rest `not sampled` — a handful of tests per run get reviewed, not all of them,
 and the Release button only waits on those. Five are chosen for you, and **every
-test that failed — or scored a 1 or 2 on any dimension — is added**, so a run
+test that failed, scored a 1 or 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning is added**, so a run
 with a low score anywhere is more than five. The UI pre-fills every dimension with
 the judge's score, so there are two separate things to do:
 
@@ -409,12 +416,13 @@ held. Place every finding first:
    own `references/` directory (e.g.
    `citation/references/gps-citation-standards.md`), which the skill loads on
    demand — keeping the main body short. A *plugin agent* finding goes **inline,
-   into the table for that record type inside the agent body** (e.g. the census
-   informant table in `packages/engine/plugin/agents/record-extractor.md`):
+   into the table for that record type inside the agent body**:
    agents carry no sibling reference files, by decision, because on-demand
    `Read` was measured to skip silently (`docs/architecture.md` §3.4). Sending an
    agent finding to a `references/` file creates a file the agent will never
-   read.
+   read. An extraction gap is neither: roles and classifications are decided in
+   code (`src/utils/record-extract.ts`, `src/utils/structured-document.ts`), so it
+   is a tooling defect (lane 1).
 4. **Core doctrine** (a genuine cross-record-type behavior change) → **first
    ask whether it can be a tool rule; only then a SKILL.md edit**, gated by the
    unit suite.
@@ -631,11 +639,13 @@ pushing a *new commit per round* (don't amend). Most PRs land in 1–2 rounds;
 things your step-4 run can no longer satisfy, because the skill changed
 underneath it:
 
-- The latest run log per touched skill must be **active** — its snapshot still
-  matching the branch's current skill files, tests and rubric. Edit any of
-  those and the UI shows "no active version" until you re-run; that's your
-  signal the results are stale.
-- Its `.ann.json` must carry a correction for **every** (test, dimension) pair.
+- The run log your PR adds for each touched skill (or, if it adds none, the
+  latest one) must be **active** — its snapshot still matching the branch's
+  current skill files, tests and rubric. Edit any of those and the UI shows
+  "no active version" until you re-run; that's your signal the results are
+  stale.
+- Its `.ann.json` must carry a correction for **every** dimension of each
+  sampled test, and a comment on each one that is not a confirmed pass.
 
 **One *problem* per PR — which is usually, but not always, one skill.** A
 locator rule that belongs in `citation` alone is a one-skill PR. But a doctrine
@@ -654,9 +664,12 @@ share a branch.
 **Where:** 🤖 Claude Code at the repo root (or any text editor — the skill is
 just `packages/engine/plugin/skills/<skill>/SKILL.md`).
 
-Occasionally you're not fixing a skill but creating one. For a new
-tool-wrapping skill, copy `packages/engine/plugin/skills/search-wikipedia/` —
-the canonical minimal example of the full pipeline — and write to the prose
+Occasionally you're not fixing a skill but creating one — though under the
+lead's 2026-09-22 ruling a new capability is an **agent**. For a new
+tool-wrapping body, copy `packages/engine/plugin/agents/search-images.md` —
+the smallest agent carrying the `summary_for_user` return contract; **not**
+`search-wikipedia.md`, whose exemption from it fails
+`agent-return-contract.test.ts` on a copy — and write to the prose
 standard in [`docs/skill-authoring-guide.md`](skill-authoring-guide.md). (That
 guide's "What kind of skill are you writing?" section covers whether it should
 be a skill at all, and which of the three kinds — workflow, reference, or
@@ -712,6 +725,7 @@ hand-catching the same class of issue ten rounds in, the loop isn't learning.
 |---|---|---|---|
 | 0 Branch | ⌨️ terminal | `git checkout -b <short-task-name>` | GitHub Desktop → New branch… |
 | 1 Start from a failure | 🤖 / ⌨️ / 🖥️ | `make feedback-case ZIP=…` · `/interpret-e2e-result` · `make e2e-project TEST=…` | `scripts\setup-feedback-case.bat` · `eval\SeedProject.bat` |
+| *(side)* measure a hosted run | ⌨️ terminal | `make feedback-profile ZIP=…` — time and cost per session, agent, skill and tool | in `eval\harness`: `uv run python -m e2e.feedback_profile <zip>` |
 | 2 Whose fault? | 🤖 Claude Code | read the project's `results/` files | same |
 | 3 Capture | 🤖 Claude Code | `/mine-unit-test [--project \| --e2e-run <dir>]` | same |
 | 4 Run + grade *(baseline)* | ⌨️ terminal → 🌐 browser | `make eval-skill SKILL=<name>`, `make eval-ui` | `eval\RunTests.bat`, `eval\Start.bat` |
@@ -719,7 +733,7 @@ hand-catching the same class of issue ten rounds in, the loop isn't learning.
 | 6 Verify | ⌨️ terminal | `make gate-skill SKILL=<name> TEST=<id>` | `eval\GateSkill.bat` |
 | 7 Confirm in Cowork | 🖥️ Cowork | `make plugin`, `make mcpb`, then reinstall | `eval\BuildPlugin.bat`, `eval\BuildMcpb.bat` |
 | 8 Re-run + grade + PR | ⌨️ terminal → 🌐 → GitHub | `make eval-skill`, grade all, commit, PR | `eval\RunTests.bat`, then GitHub Desktop |
-| *(side)* new skill | 🤖 Claude Code | the authoring guide + copy `search-wikipedia/` | same |
+| *(side)* new capability | 🤖 Claude Code | the authoring guide + copy `agents/search-images.md` | same |
 | *(side)* description | ⌨️ terminal | `make optimize-skill SKILL=<name>` | `eval\OptimizeSkill.bat` |
 
 **To run the improver on skill `X`:** it needs an *active*, *annotated* run

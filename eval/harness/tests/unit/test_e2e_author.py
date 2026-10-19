@@ -508,6 +508,39 @@ def test_normalize_warns_about_duplicate_incoming_ids():
     assert any("duplicate person id 'P1'" in w for w in warnings)
 
 
+def test_cross_holder_duplicate_fact_id_does_not_warn_strip_refuses():
+    raw = {
+        "persons": [
+            _person("P1", "John", "Smith", living=False, facts=[
+                {"id": "F1", "type": "Birth", "date": "1900"},
+            ]),
+            _person("P2", "Jane", "Doe", living=False, facts=[
+                {"id": "F1", "type": "Birth", "date": "1905"},
+            ]),
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    _, warnings = normalize_tree(raw)
+    assert not any("strip will refuse" in w for w in warnings)
+
+
+def test_same_holder_duplicate_fact_id_warns_strip_refuses():
+    raw = {
+        "persons": [
+            _person("P1", "John", "Smith", living=False, facts=[
+                {"id": "F1", "type": "Birth", "date": "1900"},
+                {"id": "F1", "type": "Death", "date": "1970"},
+            ]),
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    _, warnings = normalize_tree(raw)
+    assert any("strip will refuse" in w for w in warnings)
+    assert any("duplicate fact id 'F1' on P1" in w for w in warnings)
+
+
 def test_strip_refuses_a_tree_with_duplicate_fact_ids():
     # Two facts sharing an id would BOTH be removed by one selector, and the
     # removals log would list only one — a silent, unrecorded removal from
@@ -823,6 +856,53 @@ def test_strip_none_refuses_to_mix_with_selectors(fixtures_root, tree, capsys):
     assert "--none means nothing is stripped" in capsys.readouterr().err
 
 
+def _strip_lint_fixture(fixtures_root, slug, tree):
+    """A fixture `strip` can lint, with NO fixture.json — the first-strip state.
+
+    `test_strip_none_writes_the_snapshot_verbatim` covers the same shape with a
+    non-colliding finding, so no suspect is raised and the advice is never
+    printed. The finding here overlaps a tree person on purpose.
+    """
+    fixture_dir = fixtures_root / slug
+    fixture_dir.mkdir()
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps(tree), encoding="utf-8"
+    )
+    (fixture_dir / "expected-findings.json").write_text(
+        json.dumps({"findings": [_finding("f1", "Robert Smith")]}), encoding="utf-8"
+    )
+    return fixture_dir
+
+
+def test_strip_none_wires_record_hint_advice_with_no_fixture_json(
+    fixtures_root, tree, capsys
+):
+    """`cmd_strip`'s call site, on the path an author actually reaches first.
+
+    `fixture_genre()` returns "strip" WITHOUT raising when fixture.json is
+    absent, so deciding the genre through it — even inside a try/except — hands
+    a `--none` author the strip wording the genre forbids. Dropping the third
+    argument here left the three suites green at 367 passed (#2306 review).
+    """
+    _strip_lint_fixture(fixtures_root, "rhstrip", tree)
+    assert author.main(["strip", "--slug", "rhstrip", "--none"]) == 0
+    err = capsys.readouterr().err
+    assert "edit either tree" in err
+    assert "delete that person" not in err
+
+
+def test_strip_prints_strip_advice_when_something_is_stripped(
+    fixtures_root, tree, capsys
+):
+    """The other direction: a call site hardcoding record-hint wording, or one
+    that reads `--none` and never consults the genre, passes the test above."""
+    _strip_lint_fixture(fixtures_root, "ststrip", tree)
+    assert author.main(["strip", "--slug", "ststrip", "--persons", "M4TT-2BC"]) == 0
+    err = capsys.readouterr().err
+    assert "delete that person" in err
+    assert "edit either tree" not in err
+
+
 def test_scaffold_writes_the_genre(fixtures_root):
     args = [
         "scaffold", "--slug", "rh3", "--name", "RH3", "--pid", "KNDX-MKG",
@@ -842,6 +922,42 @@ def test_scaffold_writes_the_genre(fixtures_root):
         (fixtures_root / "rh3b" / "fixture.json").read_text(encoding="utf-8")
     )
     assert meta["genre"] == "strip"
+
+
+def test_validate_wires_the_genre_into_the_advice_it_prints(fixtures_root, tree, capsys):
+    """`author validate`'s own wiring, not just `format_suspect`'s branch.
+
+    `validate_fixture`'s call site is pinned by
+    `test_cli_wires_the_fixture_genre_into_the_advice_it_prints`; author.py's
+    two call sites were not. Dropping the third argument at both left the whole
+    unit suite green at 4110 passed while this CLI told record-hint reviewers
+    to edit `starting-tree.gedcomx.json` — the advice the genre forbids, and
+    the defect this PR exists to fix (#2306 review).
+    """
+    findings = {"findings": [_finding("f1", "Robert Smith")]}
+    _write_record_hint_fixture(fixtures_root, "rhgenre", tree, findings=findings)
+    assert author.main(["validate", "--slug", "rhgenre"]) == 0
+    err = capsys.readouterr().err
+    # Two record-hint phrasings exist ("**Do not edit either tree**" and
+    # "**Do not delete the person and do not edit either tree.**"); match the
+    # half both share.
+    assert "edit either tree" in err
+    assert "Remove it from starting-tree.gedcomx.json" not in err
+
+
+def test_validate_still_prints_strip_advice_for_a_strip_fixture(
+    fixtures_root, tree, capsys
+):
+    """The other direction: a call site hardcoding record-hint wording, or a
+    genre lookup that swallowed every fixture, passes the test above."""
+    findings = {"findings": [_finding("f1", "Robert Smith")]}
+    _write_record_hint_fixture(
+        fixtures_root, "stgenre", tree, findings=findings, genre="strip"
+    )
+    author.main(["validate", "--slug", "stgenre"])
+    err = capsys.readouterr().err
+    assert "starting-tree.gedcomx.json" in err
+    assert "edit either tree" not in err
 
 
 def test_validate_record_hint_skips_the_presence_mirror(fixtures_root, tree, capsys):
@@ -961,18 +1077,67 @@ def test_validate_runs_the_integrity_gate_not_just_the_schema(fixtures_root, cap
     assert "dangling" in capsys.readouterr().err
 
 
-def test_person_level_sources_are_dropped_with_a_warning():
-    # Persons carry no `sources` in the tree format — references live on
-    # names/facts/relationships. A candidate document that has them (the old
-    # format allowed them) must shed them loudly, not silently.
+def test_person_level_sources_are_kept_and_dangling_ones_dropped():
+    # Persons carry the refs FamilySearch attaches at the person level (#2696).
+    # A resolving ref survives with its unknown keys (FamilySearch's `tags`)
+    # pruned; a ref to a source not in the tree is dropped with a warning, the
+    # same rule names and facts follow.
     raw = {
         "persons": [
             _person("KNDX-MKG", "John", "Smith", living=False,
-                    sources=[{"ref": "7BL6-KLH"}])
+                    sources=[{"ref": "#7BL6-KLH", "tags": ["Name"]},
+                             {"ref": "ZZZZ-999"}])
         ],
         "relationships": [],
         "sources": [{"id": "7BL6-KLH", "title": "1850 Census"}],
     }
     tree, warnings = normalize_tree(raw)
+    assert tree["persons"][0]["sources"] == [{"ref": "7BL6-KLH"}]
+    assert any("ZZZZ-999" in w and "no such source" in w for w in warnings)
+
+
+def test_person_with_only_dangling_refs_loses_the_key():
+    raw = {
+        "persons": [
+            _person("KNDX-MKG", "John", "Smith", living=False,
+                    sources=[{"ref": "ZZZZ-999"}])
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    tree, _ = normalize_tree(raw)
     assert "sources" not in tree["persons"][0]
-    assert any("'sources'" in w for w in warnings)
+
+
+def test_same_relationship_duplicate_fact_id_warns_strip_refuses():
+    # Relationships are walked too; without this case, dropping them from the
+    # holder loop leaves every test green.
+    raw = {
+        "persons": [_person("P1", "John", "Smith", living=False),
+                    _person("P2", "Jane", "Doe", living=False)],
+        "relationships": [{"id": "R1", "type": "Couple", "person1": "P1", "person2": "P2",
+                           "facts": [{"id": "F1", "type": "Marriage", "date": "1920"},
+                                     {"id": "F1", "type": "Marriage", "date": "1921"}]}],
+        "sources": [],
+    }
+    _, warnings = normalize_tree(raw)
+    assert any("duplicate fact id 'F1' on R1" in w for w in warnings)
+
+
+def _drift_tree(sources_key=True, refs=("S1",)):
+    person = _person("KNDX-MKG", "John", "Smith", living=False)
+    if sources_key:
+        person["sources"] = [{"ref": r} for r in refs]
+    return {"persons": [person], "relationships": [],
+            "sources": [{"id": "S1", "title": "A"}, {"id": "S2", "title": "B"}]}
+
+
+def test_drift_ignores_person_refs_a_fixture_never_recorded():
+    """A fixture snapshotted before person_read carried person-level refs has no
+    `sources` key: a fresh snapshot carrying them is not upstream drift."""
+    assert diff_trees(_drift_tree(sources_key=False), _drift_tree()) == []
+
+
+def test_drift_reports_a_person_ref_that_moved_upstream():
+    report = diff_trees(_drift_tree(refs=("S1",)), _drift_tree(refs=("S2",)))
+    assert any("person changed upstream: KNDX-MKG" in line for line in report)

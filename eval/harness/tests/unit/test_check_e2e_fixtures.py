@@ -1,10 +1,16 @@
-"""Unit tests for scripts/check_e2e_fixtures.py — the e2e grading gate."""
+"""Unit tests for scripts/check_e2e_fixtures.py — the e2e discipline gates."""
 
 from __future__ import annotations
 
 import importlib.util
 import json
+import os
+import re
+import shutil
+import subprocess
 from pathlib import Path
+
+import pytest
 
 _SPEC = importlib.util.spec_from_file_location(
     "check_e2e_fixtures",
@@ -26,8 +32,57 @@ def _make_e2e_run(repo_root: Path, slug: str, ts: str, *, tree: bool, ann: bool)
     if tree:
         (d / f"run-{ts}.final-tree.gedcomx.json").write_text("{}", encoding="utf-8")
     if ann:
-        (d / f"run-{ts}.ann.json").write_text("{}", encoding="utf-8")
+        # A valid inert annotation: has per_finding with a null value, so
+        # validate_e2e_annotations skips it at rung 3 (incomplete).
+        (d / f"run-{ts}.ann.json").write_text(
+            json.dumps({"per_finding": {"f1": None}}), encoding="utf-8"
+        )
     return Path("eval/runlogs/e2e") / slug / f"run-{ts}.json"
+
+
+def _siblings(rel: Path) -> tuple[str, str]:
+    """(tree, ann) repo-relative paths for a run log, as git spells them."""
+    stem = rel.name[: -len(".json")]
+    return (
+        (rel.parent / f"{stem}.final-tree.gedcomx.json").as_posix(),
+        (rel.parent / f"{stem}.ann.json").as_posix(),
+    )
+
+
+def _git_repo(tmp_path, monkeypatch):
+    """A throwaway git repo + ``commit(*rel_paths) -> head_sha``, with
+    ``check_e2e_fixtures.REPO_ROOT`` repointed at it.
+
+    Repointing REPO_ROOT is load-bearing, not bookkeeping: ``_in_head_tree``
+    shells with ``cwd=REPO_ROOT``, and against a bare ``tmp_path`` git exits 128
+    for every call, so every "exempt" / "no violation" row would pass without git
+    ever being consulted. `test_in_head_tree_true_for_a_committed_file` is what
+    stops that: it is the only row here that reds when the probe answers False to
+    everything, and the four `== []` rows rely on it.
+    """
+    if shutil.which("git") is None:
+        pytest.skip("git is not available")
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    env = {
+        **os.environ,
+        "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+        "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t",
+    }
+    run = lambda *a: subprocess.run(  # noqa: E731
+        ["git", "-C", str(repo), *a], check=True, capture_output=True,
+        text=True, encoding="utf-8", env=env,
+    )
+    run("init", "-q")
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", repo)
+
+    def commit(*rels: str) -> str:
+        for r in rels:
+            run("add", "--", str(r))
+        run("commit", "-q", "-m", "x")
+        return run("rev-parse", "HEAD").stdout.strip()
+
+    return repo, commit
 
 
 def test_is_primary_runlog_excludes_siblings():
@@ -39,25 +94,141 @@ def test_is_primary_runlog_excludes_siblings():
     assert not ok("run-2026-06-15_10-00-00.transcript.md")
 
 
+TS = "2026-06-15_10-00-00"
+
+
+def test_in_head_tree_true_for_a_committed_file(tmp_path, monkeypatch):
+    """Positive control for the probe itself.
+
+    Without this, a wholly-broken `_in_head_tree` (wrong cwd, missing git, a
+    flipped returncode test) reads False for everything, which silently turns
+    every "exempt" / "no violation" row below green for the wrong reason.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=False, ann=False)
+    head = commit(rel.as_posix())
+    assert check_e2e_fixtures._in_head_tree(head, rel) is True
+    assert check_e2e_fixtures._in_head_tree(head, Path("eval/nope.json")) is False
+
+
 def test_graded_run_with_tree_and_ann_passes(tmp_path, monkeypatch):
-    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
-    rel = _make_e2e_run(tmp_path, "smith", "2026-06-15_10-00-00", tree=True, ann=True)
-    assert check_e2e_fixtures.check_added_runlogs_graded([rel]) == []
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=True)
+    tree, ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree, ann)
+    assert check_e2e_fixtures.check_added_runlogs_graded([rel], head) == []
+
+
+def test_ann_on_disk_but_uncommitted_is_a_violation(tmp_path, monkeypatch):
+    """The defect in issue #2469, first direction.
+
+    The annotation is written but never committed. Reading the working
+    directory this passes and prints "OK (1 added run log(s) checked)"; reading
+    the HEAD tree — which is where the run log itself was selected from — it is
+    a violation, which is what CI would say.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=True)
+    tree, _ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree)  # ann deliberately left uncommitted
+    violations = check_e2e_fixtures.check_added_runlogs_graded([rel], head)
+    assert len(violations) == 1
+    assert f"run-{TS}.ann.json" in violations[0]
+
+
+def test_ann_committed_then_deleted_from_disk_still_passes(tmp_path, monkeypatch):
+    """The direction a replay cannot test: committed, absent from the worktree.
+
+    A guard that fell back to the working directory would red here, which is how
+    `committed or on_disk` would be caught.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=True)
+    tree, ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree, ann)
+    (repo / ann).unlink()
+    assert check_e2e_fixtures.check_added_runlogs_graded([rel], head) == []
 
 
 def test_run_with_tree_missing_ann_is_violation(tmp_path, monkeypatch):
-    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
-    rel = _make_e2e_run(tmp_path, "smith", "2026-06-15_10-00-00", tree=True, ann=False)
-    violations = check_e2e_fixtures.check_added_runlogs_graded([rel])
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, _ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree)
+    violations = check_e2e_fixtures.check_added_runlogs_graded([rel], head)
     assert len(violations) == 1
-    assert "run-2026-06-15_10-00-00.ann.json" in violations[0]
+    assert f"run-{TS}.ann.json" in violations[0]
+
+
+def _set_stop_reason(repo: Path, rel: Path, stop_reason: str) -> None:
+    """Rewrite an already-created run log so it carries `stop_reason`.
+
+    `_make_e2e_run` writes a bare `{"verdict": "pass"}`; the grading gate's
+    host_slept exemption keys on `stop_reason` read from the HEAD tree, so a test
+    of it has to put the field in the committed blob."""
+    (repo / rel).write_text(
+        json.dumps({"verdict": "skipped", "stop_reason": stop_reason}),
+        encoding="utf-8",
+    )
+
+
+def test_host_slept_run_with_tree_missing_ann_is_exempt(tmp_path, monkeypatch):
+    """#2974: a host_slept run HAS a tree but is ungraded by design — the judge
+    was skipped past the inactivity cap — so it owes no annotation and must not
+    red the blocking grading gate. This is the one case treelessness does not
+    cover, and the whole point is that the gate treats it differently from every
+    other committed-with-tree run."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    _set_stop_reason(repo, rel, "host_slept")
+    tree, _ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree)  # no ann committed, deliberately
+    assert check_e2e_fixtures.check_added_runlogs_graded([rel], head) == []
+
+
+def test_non_host_slept_stop_reason_with_tree_still_demands_ann(tmp_path, monkeypatch):
+    """The other direction: the exemption is keyed on host_slept specifically,
+    NOT on "the log carries a stop_reason". An ordinary graded run that stopped
+    for any other reason (here `timeout`) still owes its annotation — otherwise
+    the guard would silently waive the whole corpus."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    _set_stop_reason(repo, rel, "timeout")
+    tree, _ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree)
+    violations = check_e2e_fixtures.check_added_runlogs_graded([rel], head)
+    assert len(violations) == 1
+    assert f"run-{TS}.ann.json" in violations[0]
 
 
 def test_treeless_run_is_exempt(tmp_path, monkeypatch):
     """A crashed/skipped run with no final tree owes no annotation."""
-    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
-    rel = _make_e2e_run(tmp_path, "smith", "2026-06-15_10-00-00", tree=False, ann=False)
-    assert check_e2e_fixtures.check_added_runlogs_graded([rel]) == []
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=False, ann=False)
+    head = commit(rel.as_posix())
+    assert check_e2e_fixtures.check_added_runlogs_graded([rel], head) == []
+
+
+def test_tree_on_disk_but_uncommitted_is_exempt(tmp_path, monkeypatch):
+    """The defect in issue #2469, second direction — opposite sign.
+
+    A tree written by a local run but not yet committed made the gate demand an
+    annotation that CI, seeing no committed tree, would exempt as treeless.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    head = commit(rel.as_posix())  # tree deliberately left uncommitted
+    assert check_e2e_fixtures.check_added_runlogs_graded([rel], head) == []
+
+
+def test_tree_committed_then_deleted_from_disk_still_demands_ann(tmp_path, monkeypatch):
+    """Second sibling, the replay-proof direction: committed but not on disk."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, _ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree)
+    (repo / tree).unlink()
+    assert len(check_e2e_fixtures.check_added_runlogs_graded([rel], head)) == 1
 
 
 def test_git_added_returns_none_without_pr_env(monkeypatch):
@@ -135,21 +306,411 @@ def test_two_runs_of_one_draft_fixture_warn_once(tmp_path, monkeypatch):
     assert len(check_e2e_fixtures.check_added_runlogs_resolved(rels)) == 1
 
 
+# --- 1M-window gate (blocking, #2581) --------------------------------------
+
+_1M = ["context-1m-2025-08-07"]
+QDIR = "eval/runlogs/_2491-exploratory-quarantine"
+
+
+def _write_log(repo: Path, rel: str, usage) -> Path:
+    """Write a run log at an arbitrary repo-relative path. `usage` is placed
+    verbatim, so a caller can hand it a non-dict to exercise a wrong shape."""
+    p = repo / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    body = {"verdict": "pass"}
+    if usage is not _ABSENT:
+        body["usage"] = usage
+    p.write_text(json.dumps(body), encoding="utf-8")
+    return Path(rel)
+
+
+_ABSENT = object()
+
+
+def _ar(repo, commit, monkeypatch, *rels: str) -> tuple[list, str]:
+    """Commit `rels` and return (selector output, head) with the env set the way
+    main() sees it. Drives the REAL selector — never a stub.
+
+    `monkeypatch.setenv`, never `os.environ[...] = `: a direct assignment leaks
+    BASE_SHA/HEAD_SHA into every later test in the file, which silently flips
+    four main() tests that stub only the A-selector into running the real
+    AR one. Caught the hard way.
+    """
+    head = commit(*rels)
+    base = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD~1"],
+        capture_output=True, text=True, encoding="utf-8", check=True,
+    ).stdout.strip()
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", head)
+    return check_e2e_fixtures.git_ar_e2e_runlogs(), head
+
+
+def test_1m_run_added_to_the_corpus_is_a_violation(tmp_path, monkeypatch):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_not_1m(sel, head)
+    assert len(v) == 1, v
+    assert f"run-{TS}.json" in v[0]
+    # The error must name the sanctioned home (#2581 requires it). Assert the
+    # mechanism substring, not the whole sentence, so a reflow cannot red this.
+    assert "outside eval/runlogs/e2e/" in v[0], v[0]
+
+
+def test_1m_run_RENAMED_into_the_corpus_is_a_violation(tmp_path, monkeypatch):
+    """The case `--diff-filter=A` cannot see: promotion out of quarantine."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    src = _write_log(repo, f"{QDIR}/smith/run-{TS}.json", {"betas": _1M})
+    commit(src.as_posix())
+    dst = f"eval/runlogs/e2e/smith/run-{TS}.json"
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    sel, head = _ar(repo, commit, monkeypatch, src.as_posix(), dst)
+    assert [p.as_posix() for p in sel] == [dst], sel
+    assert len(check_e2e_fixtures.check_added_runlogs_not_1m(sel, head)) == 1
+    # The A-scoped selector the two warn checks read cannot see this at all.
+    assert check_e2e_fixtures.git_added_e2e_runlogs() == []
+
+
+def test_a_1m_log_left_in_quarantine_is_not_selected(tmp_path, monkeypatch):
+    """Selector-level on purpose: the path filter lives there, so calling the
+    CHECK directly with a quarantine path would red a correct implementation."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"{QDIR}/smith/run-{TS}.json", {"betas": _1M})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    assert sel == []
+    assert check_e2e_fixtures.check_added_runlogs_not_1m(sel, head) == []
+
+
+def test_moving_a_run_OUT_of_the_corpus_is_not_a_violation(tmp_path, monkeypatch):
+    """The false-positive direction, and the remediation path a reddened
+    developer takes. Under a selector that took the rename's SOURCE this reds."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    src = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    commit(src.as_posix())
+    dst = f"{QDIR}/smith/run-{TS}.json"
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    sel, head = _ar(repo, commit, monkeypatch, src.as_posix(), dst)
+    assert sel == []
+    assert check_e2e_fixtures.check_added_runlogs_not_1m(sel, head) == []
+
+
+def test_the_rule_reads_the_HEAD_TREE_not_the_working_directory(tmp_path, monkeypatch):
+    """Committed clean, then edited on disk to look like a 1M run.
+
+    A `Path.read_text` implementation reds here. Every other row in this block
+    writes AND commits, so without this one the issue's central requirement --
+    read from the HEAD_SHA tree -- is falsified by nothing.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": []})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    (repo / rel).write_text(json.dumps({"usage": {"betas": _1M}}), encoding="utf-8")
+    assert check_e2e_fixtures.check_added_runlogs_not_1m(sel, head) == []
+
+
+def test_a_1m_run_committed_then_blanked_on_disk_still_reds(tmp_path, monkeypatch):
+    """The inverse. A working-directory read would go green here."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    (repo / rel).write_text(json.dumps({"usage": {"betas": []}}), encoding="utf-8")
+    assert len(check_e2e_fixtures.check_added_runlogs_not_1m(sel, head)) == 1
+
+
+def test_a_1m_log_written_but_never_committed_is_not_selected(tmp_path, monkeypatch):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    head = commit("seed.txt")
+    _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    monkeypatch.setenv("BASE_SHA", head)
+    monkeypatch.setenv("HEAD_SHA", head)
+    assert check_e2e_fixtures.git_ar_e2e_runlogs() == []
+
+
+@pytest.mark.parametrize("usage", [
+    {"betas": []},            # the shape spriggs-parents-1898 actually carries
+    _ABSENT,                  # 174 of the 175 committed runs
+    {},                       # usage present, betas absent
+    {"betas": None},
+    {"betas": "context-1m-2025-08-07"},   # truthy NON-list
+    {"betas": {}},
+    None,                     # usage null
+    [],                       # usage not a dict
+    5,
+])
+def test_shapes_that_are_not_a_1m_run_pass_without_crashing(tmp_path, monkeypatch, usage):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", usage)
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    assert check_e2e_fixtures.check_added_runlogs_not_1m(sel, head) == []
+
+
+def test_malformed_json_is_skipped_not_crashed(tmp_path, monkeypatch):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = Path(f"eval/runlogs/e2e/smith/run-{TS}.json")
+    (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+    (repo / rel).write_text("{not json", encoding="utf-8")
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    assert check_e2e_fixtures.check_added_runlogs_not_1m(sel, head) == []
+
+
+def test_a_sibling_carrying_betas_is_not_selected(tmp_path, monkeypatch):
+    """`.ann.json` / `.final-*` are excluded by `_is_primary_runlog`."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    a = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.ann.json", {"betas": _1M})
+    t = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.final-tree.gedcomx.json", {"betas": _1M})
+    sel, _head = _ar(repo, commit, monkeypatch, a.as_posix(), t.as_posix())
+    assert sel == []
+
+
 # --- main() exit-code behavior --------------------------------------------
+
+def test_main_fails_on_a_1m_run_and_does_not_claim_OK(tmp_path, monkeypatch, capsys):
+    """Drives main() through the REAL selectors — no stub on either.
+
+    Without this the exit-code wiring is untested: replacing the rule's result
+    with `[]` in main() left all 57 other tests green. The OK-line assertion is
+    the separate half — "wired the return but forgot to move the success line"
+    is its own defect, and it prints a pass banner on a failing run.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    tree, ann = _siblings(rel)
+    (repo / tree).write_text("{}", encoding="utf-8")
+    (repo / ann).write_text("{}", encoding="utf-8")   # graded, so ONLY the 1M rule fires
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::error::" in out and "1M context window" in out, out
+    assert "E2E gates OK" not in out, "claimed OK on a run it failed"
+
+
+def test_main_reports_BOTH_gates_when_both_fire(tmp_path, monkeypatch, capsys):
+    """The issue requires the new rule's output stay visible when the grading
+    gate also fails, and this is the realistic shape: the quarantine's runs
+    carry a tree and no annotation, so an added 1M run trips both.
+
+    An implementation that appended the beta block after the grading gate's
+    early `return 1` passes every other row in this file.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    tree, _ann = _siblings(rel)
+    (repo / tree).write_text("{}", encoding="utf-8")   # tree, NO ann -> grading gate fires too
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree))
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert f"run-{TS}.ann.json" in out, "grading-gate error missing"
+    assert "1M context window" in out, "1M error missing"
+
+
+def test_promoting_an_UNGRADED_run_out_of_quarantine_is_caught(tmp_path, monkeypatch, capsys):
+    """The grading gate reads the AR set, so a rename-in no longer slips past.
+
+    Every run in eval/runlogs/_2491-exploratory-quarantine/ has a final tree and
+    no annotation (measured: 4 trees, 0 anns), so this is the exact population
+    the gate rejects arriving by the one route `--diff-filter=A` cannot see.
+    Point the gate back at the A set and this row reds on its own.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    src = Path(f"{QDIR}/smith/run-{TS}.json")
+    src_tree = Path(f"{QDIR}/smith/run-{TS}.final-tree.gedcomx.json")
+    for q in (src, src_tree):
+        (repo / q).parent.mkdir(parents=True, exist_ok=True)
+        (repo / q).write_text("{}", encoding="utf-8")
+    base = commit(src.as_posix(), src_tree.as_posix())
+
+    dst = Path(f"eval/runlogs/e2e/smith/run-{TS}.json")
+    dst_tree, _dst_ann = _siblings(dst)
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    shutil.move(str(repo / src_tree), str(repo / dst_tree))
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(
+        src.as_posix(), src_tree.as_posix(), dst.as_posix(), dst_tree))
+    assert check_e2e_fixtures.main() == 1
+    assert f"run-{TS}.ann.json" in capsys.readouterr().out
+
+
+def test_main_OK_line_reports_both_denominators(tmp_path, monkeypatch, capsys):
+    """A pure quarantine->corpus rename adds nothing, so an N-only line would
+    read `OK (0 added run log(s) checked)` on a run that checked one file."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    src = _write_log(repo, f"{QDIR}/smith/run-{TS}.json", {"betas": []})
+    base = commit(src.as_posix())
+    dst = f"eval/runlogs/e2e/smith/run-{TS}.json"
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(src.as_posix(), dst))
+    assert check_e2e_fixtures.main() == 0
+    out = capsys.readouterr().out
+    assert re.search(r"1 added-or-renamed run log\(s\) checked; 0 of them newly added", out), out
+
+
+# --- Tool-search-off gate (blocking, T1.6) ---------------------------------
+
+
+def test_tool_search_off_run_added_to_the_corpus_is_a_violation(tmp_path, monkeypatch):
+    """Only the FLAT `usage.tool_search` is set, as `--no-tool-search` writes it
+    on a run whose init carried no `tools` list. Reading the nested SDK block
+    (`usage.usage`) finds nothing and greens this row."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"tool_search": False})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_tool_search_on(sel, head)
+    assert len(v) == 1, v
+    assert f"run-{TS}.json" in v[0] and "usage.tool_search = false" in v[0]
+    assert "outside eval/runlogs/e2e/" in v[0], v[0]
+
+
+def test_tool_search_off_run_RENAMED_into_the_corpus_is_a_violation(tmp_path, monkeypatch):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    src = _write_log(
+        repo, f"{QDIR}/smith/run-{TS}.json",
+        {"tool_search": False, "tool_search_offered": False},
+    )
+    commit(src.as_posix())
+    dst = f"eval/runlogs/e2e/smith/run-{TS}.json"
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    sel, head = _ar(repo, commit, monkeypatch, src.as_posix(), dst)
+    assert [p.as_posix() for p in sel] == [dst], sel
+    assert len(check_e2e_fixtures.check_added_runlogs_tool_search_on(sel, head)) == 1
+
+
+def test_requested_on_but_offered_off_is_a_violation(tmp_path, monkeypatch):
+    """An "on" run turned off underneath it (an inherited
+    CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS): what was asked says on, the init
+    list says off. A gate that read only `tool_search` greens this row."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(
+        repo, f"eval/runlogs/e2e/smith/run-{TS}.json",
+        {"tool_search": True, "tool_search_offered": False},
+    )
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_tool_search_on(sel, head)
+    assert len(v) == 1 and "usage.tool_search_offered = false" in v[0], v
+
+
+@pytest.mark.parametrize("usage", [
+    _ABSENT,                                              # every run committed before T1.6
+    {},                                                   # usage present, both keys absent
+    {"betas": []},                                        # the shape the corpus carries today
+    {"tool_search": True},
+    {"tool_search": True, "tool_search_offered": True},
+    {"tool_search": True, "tool_search_offered": None},   # init carried no `tools` list
+    {"tool_search": None},
+    {"tool_search": 0, "tool_search_offered": ""},        # falsy, but not False
+    {"usage": {"tool_search": False}},                    # the NESTED SDK block is not the field
+    None,
+    [],
+])
+def test_shapes_that_are_not_a_tool_search_off_run_pass(tmp_path, monkeypatch, usage):
+    """Strict `is False`. A truthiness test (`not usage.get(...)`) reds the
+    absent rows — the whole committed corpus."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", usage)
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    assert check_e2e_fixtures.check_added_runlogs_tool_search_on(sel, head) == []
+
+
+def test_a_tool_search_off_log_left_outside_the_corpus_is_not_selected(tmp_path, monkeypatch):
+    """The sanctioned home: the same log in a sibling directory is not read."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"{QDIR}/smith/run-{TS}.json", {"tool_search": False})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    assert sel == []
+    assert check_e2e_fixtures.check_added_runlogs_tool_search_on(sel, head) == []
+
+
+def test_main_fails_on_a_tool_search_off_run_and_does_not_claim_OK(tmp_path, monkeypatch, capsys):
+    """Graded, not 1M, no credential — so ONLY this gate can fire. Dropping its
+    wiring in main() greens the exit code."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _write_log(
+        repo, f"eval/runlogs/e2e/smith/run-{TS}.json",
+        {"betas": [], "tool_search": False, "tool_search_offered": False},
+    )
+    tree, ann = _siblings(rel)
+    (repo / tree).write_text("{}", encoding="utf-8")
+    (repo / ann).write_text("{}", encoding="utf-8")
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::error::" in out and "tool search off" in out, out
+    assert "E2E gates OK" not in out, "claimed OK on a run it failed"
+
+
+def test_main_passes_a_tool_search_on_run(tmp_path, monkeypatch, capsys):
+    """The other direction through main(): a graded run that recorded both
+    fields True is accepted."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _write_log(
+        repo, f"eval/runlogs/e2e/smith/run-{TS}.json",
+        {"betas": [], "tool_search": True, "tool_search_offered": True},
+    )
+    tree, ann = _siblings(rel)
+    (repo / tree).write_text("{}", encoding="utf-8")
+    # The inert annotation `_make_e2e_run` writes, so validation skips it.
+    (repo / ann).write_text(json.dumps({"per_finding": {"f1": None}}), encoding="utf-8")
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
+    assert check_e2e_fixtures.main() == 0
+    assert "E2E gates OK" in capsys.readouterr().out
+
+
 
 
 def test_main_grading_gate_blocks_missing_ann(tmp_path, monkeypatch):
-    """A PR-added run log with a tree but no ann fails main()."""
-    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
-    rel = _make_e2e_run(tmp_path, "smith", "2026-06-15_10-00-00", tree=True, ann=False)
-    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
+    """A PR-added run log with a committed tree but no ann fails main()."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, _ann = _siblings(rel)
+    # Both selectors real, no stub: the grading gate reads the AR set now, and
+    # stubbing only the A one would leave the gate looking at an empty list.
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree))
     assert check_e2e_fixtures.main() == 1
 
 
 def test_main_grading_gate_passes_when_graded(tmp_path, monkeypatch):
-    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
-    rel = _make_e2e_run(tmp_path, "smith", "2026-06-15_10-00-00", tree=True, ann=True)
-    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=True)
+    tree, ann = _siblings(rel)
+    # Both selectors real, no stub: the gate reads the AR set, so a stub on the
+    # A selector alone leaves it looking at an empty list and the test vacuous.
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
     assert check_e2e_fixtures.main() == 0
 
 
@@ -159,12 +720,218 @@ def test_main_skips_without_pr_context(monkeypatch):
     assert check_e2e_fixtures.main() == 0
 
 
+def test_main_refuses_an_unresolvable_head_sha(tmp_path, monkeypatch, capsys):
+    """A HEAD_SHA that names no commit must refuse, with a line worth reading.
+
+    Deliberately does NOT stub `git_added_e2e_runlogs`: the failure happens
+    inside it, and stubbing it out is what previously made this test pass while
+    the real path raised an uncaught CalledProcessError and printed a traceback
+    instead of an ::error::.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, _ann = _siblings(rel)
+    monkeypatch.setenv("BASE_SHA", commit(rel.as_posix(), tree))
+    monkeypatch.setenv("HEAD_SHA", "0" * 40)  # valid shape, absent from this repo
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::error::" in out and "could not diff" in out, out
+    assert "run log(s) checked" not in out, "must not report a count it never read"
+
+
+def test_main_refuses_when_repo_root_is_not_a_repo(tmp_path, monkeypatch, capsys):
+    """The other broken environment, isolated from the one above.
+
+    The sha is REAL and resolvable in its own repo; only REPO_ROOT is wrong. The
+    earlier version of this test set both a bogus sha and a non-repo root, so it
+    passed identically with either cause removed — it was a duplicate wearing a
+    different name.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, _ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree)
+    not_a_repo = tmp_path / "elsewhere"
+    not_a_repo.mkdir()
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", not_a_repo)
+    monkeypatch.setenv("BASE_SHA", head)
+    monkeypatch.setenv("HEAD_SHA", head)
+    assert check_e2e_fixtures.main() == 1
+    assert "::error::" in capsys.readouterr().out
+
+
+def test_the_gate_reads_the_HEAD_SHA_tree_not_the_checkout_s_HEAD(tmp_path, monkeypatch):
+    """The `head` argument must be what is consulted, not the working HEAD.
+
+    CI checks out the MERGE commit while HEAD_SHA is the PR head, so the two
+    trees genuinely differ there: an annotation present on the base branch is in
+    the merge tree and absent at HEAD_SHA. Every other test here builds its repo
+    so the commit it makes IS HEAD, which makes the two indistinguishable —
+    swapping `head` for the literal "HEAD" left the whole suite green.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=True)
+    tree, ann = _siblings(rel)
+    graded_head = commit(rel.as_posix(), tree, ann)
+    # A LATER commit removes the annotation, so the working HEAD no longer has it.
+    (repo / ann).unlink()
+    commit(ann)
+    # Judged at `graded_head` the run is graded; judged at HEAD it is a violation.
+    assert check_e2e_fixtures.check_added_runlogs_graded([rel], graded_head) == []
+
+
+def test_the_gate_does_not_credit_an_annotation_added_after_HEAD_SHA(tmp_path, monkeypatch):
+    """The other direction: an ann that arrives only in a LATER commit does not
+    count at `head`. Together with the test above this pins the argument in both
+    signs — one fails if `head` is ignored, the other if it is ignored the other
+    way."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    ungraded_head = commit(rel.as_posix(), tree)
+    (repo / ann).write_text("{}", encoding="utf-8")
+    commit(ann)
+    assert len(check_e2e_fixtures.check_added_runlogs_graded([rel], ungraded_head)) == 1
+
+
+def test_the_1m_rule_reads_the_head_ARGUMENT_not_the_checkouts_HEAD(tmp_path, monkeypatch):
+    """The 1M rule's `head` must be consulted, not the working HEAD.
+
+    Sibling of `test_the_gate_reads_the_HEAD_SHA_tree_not_the_checkout_s_HEAD`
+    on the grading-gate side, and it exists for the same reason: the two
+    HEAD-tree rows above build their repo so the commit they make IS HEAD, which
+    makes `head` and the literal "HEAD" indistinguishable — swapping them left
+    the whole suite green. CI checks out the MERGE commit while HEAD_SHA is the
+    PR head, so the trees genuinely differ there.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    # A LATER commit blanks it: the working HEAD is clean, `head` is not.
+    _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": []})
+    commit(rel.as_posix())
+    assert len(check_e2e_fixtures.check_added_runlogs_not_1m(sel, head)) == 1
+
+
+def test_the_AR_selector_reads_its_head_not_the_working_tree(tmp_path, monkeypatch):
+    """A run log that arrives only in a commit AFTER `head` is not selected.
+
+    Dropping `head` from the diff args (`base` alone, i.e. base..working tree)
+    left the whole suite green, and in CI's merge-commit checkout that selects
+    run logs that landed on the base branch after BASE_SHA — other people's
+    runs, failed against this PR.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    commit("seed.txt")
+    mine = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": []})
+    sel, _head = _ar(repo, commit, monkeypatch, mine.as_posix())
+    assert [p.as_posix() for p in sel] == [mine.as_posix()], sel
+    # Someone else's run lands after HEAD_SHA; the pinned range must not see it.
+    later = _write_log(repo, "eval/runlogs/e2e/jones/run-2026-07-01_09-00-00.json", {"betas": _1M})
+    commit(later.as_posix())
+    assert [p.as_posix() for p in check_e2e_fixtures.git_ar_e2e_runlogs()] == [mine.as_posix()]
+
+
+def test_both_selectors_pin_rename_detection_against_the_runners_gitconfig(tmp_path, monkeypatch):
+    """`diff.renames=false` in the ambient gitconfig must not change either set.
+
+    Git reports a promotion as `R100 src dst` with rename detection on and as a
+    plain `A dst` with it off. The AR selector returns the destination either
+    way, so removing ITS pin reds nothing — but the A selector flips, from
+    nothing to the destination, which recounts the promotion as an added run.
+    So this row asserts the A-selector pin specifically: without it this file
+    fails two rows under `GIT_CONFIG_GLOBAL=<diff.renames=false>`.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "diff.renames", "false"],
+        check=True, capture_output=True, text=True, encoding="utf-8",
+    )
+    src = _write_log(repo, f"{QDIR}/smith/run-{TS}.json", {"betas": _1M})
+    commit(src.as_posix())
+    dst = f"eval/runlogs/e2e/smith/run-{TS}.json"
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    sel, _head = _ar(repo, commit, monkeypatch, src.as_posix(), dst)
+    assert [p.as_posix() for p in sel] == [dst], sel
+    assert check_e2e_fixtures.git_added_e2e_runlogs() == []
+
+
+def test_a_non_1m_beta_is_still_a_violation(tmp_path, monkeypatch):
+    """The rule flags ANY non-empty `usage.betas`, not just the 1M one.
+
+    The producer only ever writes the 1M list or `[]` today, so this pins the
+    behaviour rather than describing a case in the corpus: a run carrying some
+    other beta is equally not corpus-comparable, and a future beta must not slip
+    through by not being the one named in the message.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    commit("seed.txt")
+    rel = _write_log(
+        repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": ["some-other-beta"]}
+    )
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    assert len(check_e2e_fixtures.check_added_runlogs_not_1m(sel, head)) == 1
+
+
+def test_an_unreadable_blob_refuses_instead_of_reading_as_not_1m(tmp_path, monkeypatch):
+    """A file the selector reported but `git show` cannot read must not be clean.
+
+    The blob is known to be in the tree at `head` -- that is how it was
+    selected -- so a non-zero `git show` is an anomaly, not evidence of no
+    betas. Returning None here reported a file that was never opened as
+    not-a-1M-run, and nothing in the output distinguished the two: the OK line
+    counts files SELECTED, not files PARSED.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    commit(rel.as_posix())
+    with pytest.raises(check_e2e_fixtures.GateUnavailable):
+        check_e2e_fixtures.check_added_runlogs_not_1m([rel], "0" * 40)
+
+
+def test_main_turns_an_unreadable_blob_into_an_error_not_a_traceback(
+    tmp_path, monkeypatch, capsys
+):
+    """The refusal above has to reach main()'s handler.
+
+    The two gate calls sit OUTSIDE the try that wraps the selectors, so without
+    its own handler this escapes as a six-frame traceback -- the failure shape
+    the selector's GateUnavailable exists to eliminate.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": []})
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix()))
+
+    def boom(head, r):
+        raise check_e2e_fixtures.GateUnavailable("simulated unreadable blob")
+
+    monkeypatch.setattr(check_e2e_fixtures, "_read_at_head", boom)
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::error::" in out and "simulated unreadable blob" in out, out
+    assert "gates OK" not in out, out
+
+
 def test_main_draft_warning_does_not_fail_the_job(tmp_path, monkeypatch, capsys):
     """An unresolved-draft fixture warns but must never change the exit code —
     20 people working drafts in parallel can't have this blocking their PRs."""
-    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
-    rel = _make_e2e_run(tmp_path, "smith", "2026-06-15_10-00-00", tree=True, ann=True)
-    _write_fixture_readme(tmp_path, "smith", draft=True)
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=True)
+    tree, ann = _siblings(rel)
+    _write_fixture_readme(repo, "smith", draft=True)  # warn check reads disk
+    # Real BASE_SHA so the AR selector -- and so both blocking gates -- actually
+    # see this run rather than an empty list; the stub below is the warn side.
+    _write_log(repo, "seed.txt", _ABSENT)
+    monkeypatch.setenv("BASE_SHA", commit("seed.txt"))
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
     monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
     assert check_e2e_fixtures.main() == 0
     assert "::warning::" in capsys.readouterr().out
@@ -196,6 +963,7 @@ def _write_expected_findings(repo_root: Path, slug: str, findings: list) -> None
     (d / "expected-findings.json").write_text(
         json.dumps({"findings": findings}), encoding="utf-8"
     )
+    (d / "fixture.json").write_text(json.dumps({"slug": slug}), encoding="utf-8")
 
 
 def test_derive_matched_link_tally():
@@ -401,16 +1169,22 @@ def test_missing_expected_findings_treats_all_as_non_avoid(tmp_path, monkeypatch
 
 def test_main_drift_warning_does_not_fail_the_job(tmp_path, monkeypatch, capsys):
     """A matched-vs-components disagreement warns but never changes the exit code."""
-    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    repo, commit = _git_repo(tmp_path, monkeypatch)
     rel = _write_e2e_run_with_findings(
-        tmp_path, "smith", "2026-06-15_10-00-00",
+        repo, "smith", TS,
         [{"finding_id": "f1", "matched": "partial", "components": [_link("supported")]}],
     )
-    # Give it a tree + ann so the blocking gate stays satisfied (exit stays 0).
-    slug_dir = tmp_path / "eval" / "runlogs" / "e2e" / "smith"
-    (slug_dir / "run-2026-06-15_10-00-00.final-tree.gedcomx.json").write_text("{}", encoding="utf-8")
-    (slug_dir / "run-2026-06-15_10-00-00.ann.json").write_text("{}", encoding="utf-8")
-    _write_expected_findings(tmp_path, "smith", [{"id": "f1", "type": "source"}])
+    # Give it a COMMITTED tree + ann so the blocking gate stays satisfied (exit 0).
+    # The annotation must be valid-inert (per_finding with null) so the new
+    # annotation validation gate doesn't block.
+    tree, ann = _siblings(rel)
+    (repo / tree).write_text("{}", encoding="utf-8")
+    (repo / ann).write_text(json.dumps({"per_finding": {"f1": None}}), encoding="utf-8")
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    # Real BASE_SHA, as above: without it both blocking gates check nothing.
+    _write_log(repo, "seed.txt", _ABSENT)
+    monkeypatch.setenv("BASE_SHA", commit("seed.txt"))
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
     monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
     assert check_e2e_fixtures.main() == 0
     out = capsys.readouterr().out
@@ -422,16 +1196,462 @@ def test_main_drift_warning_prints_even_when_grading_gate_fails(tmp_path, monkey
     """The warn loops run before the blocking gate so the drift warning is
     visible even on the exit-1 path (a tree with no committed ann fails the
     gate). Guards against a later reorder silently swallowing the warning."""
-    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
     rel = _write_e2e_run_with_findings(
-        tmp_path, "smith", "2026-06-15_10-00-00",
+        repo, "smith", TS,
         [{"finding_id": "f1", "matched": "partial", "components": [_link("supported")]}],
     )
-    slug_dir = tmp_path / "eval" / "runlogs" / "e2e" / "smith"
-    # Tree present, ann missing → blocking grading gate fails (exit 1).
-    (slug_dir / "run-2026-06-15_10-00-00.final-tree.gedcomx.json").write_text("{}", encoding="utf-8")
-    _write_expected_findings(tmp_path, "smith", [{"id": "f1", "type": "source"}])
-    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
+    # Tree COMMITTED, ann missing → blocking grading gate fails (exit 1).
+    tree, _ann = _siblings(rel)
+    (repo / tree).write_text("{}", encoding="utf-8")
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree))
     assert check_e2e_fixtures.main() == 1
     out = capsys.readouterr().out
     assert "::warning::" in out and "f1" in out
+
+
+# --- Annotation structural validation gate (main()) -------------------------
+
+
+def _make_graded_ann(repo_root: Path, slug: str, ts: str, per_finding: dict) -> None:
+    """Write a graded e2e .ann.json with the given per_finding labels."""
+    d = repo_root / "eval" / "runlogs" / "e2e" / slug
+    d.mkdir(parents=True, exist_ok=True)
+    (d / f"run-{ts}.ann.json").write_text(
+        json.dumps({"per_finding": per_finding}), encoding="utf-8"
+    )
+
+
+def test_main_annotation_gate_blocks_bad_label(tmp_path, monkeypatch, capsys):
+    """A PR-added annotation with a bad label (e.g. 'yes') must exit 1."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    # Write a graded annotation with a bad label
+    _make_graded_ann(repo, "smith", TS, {"f1": "yes"})
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::error::" in out
+    assert "per_finding labels" in out
+
+
+def test_main_annotation_gate_passes_valid_label(tmp_path, monkeypatch, capsys):
+    """A PR-added annotation with valid labels must exit 0."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    _make_graded_ann(repo, "smith", TS, {"f1": "true"})
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
+    assert check_e2e_fixtures.main() == 0
+    out = capsys.readouterr().out
+    assert "E2E gates OK" in out
+
+
+# --- Parity test: CI rungs vs calibrate_judge rungs -------------------------
+
+
+def test_validate_e2e_annotations_parity_with_calibrate_judge(tmp_path):
+    """The stdlib CI rungs (check_e2e_fixtures.validate_e2e_annotations) and
+    calibrate_judge.load_annotated_runs must flag the same files as errors.
+
+    This test catches drift between the two implementations without sharing
+    code (the CI script runs on bare python and cannot import calibrate_judge).
+    """
+    try:
+        from e2e.calibrate_judge import load_annotated_runs
+    except ImportError:
+        pytest.skip("calibrate_judge not importable (bare interpreter)")
+
+    runlogs = tmp_path / "runlogs"
+    fixtures = tmp_path / "fixtures"
+
+    def _write(slug: str, ts: str, ann: dict, *, tree: bool = True,
+               expected: list | None = None) -> None:
+        d = runlogs / slug
+        d.mkdir(parents=True, exist_ok=True)
+        (d / f"run-{ts}.json").write_text("{}", encoding="utf-8")
+        (d / f"run-{ts}.ann.json").write_text(
+            json.dumps(ann), encoding="utf-8"
+        )
+        if tree:
+            (d / f"run-{ts}.final-tree.gedcomx.json").write_text("{}", encoding="utf-8")
+        fx = fixtures / slug
+        fx.mkdir(parents=True, exist_ok=True)
+        if expected is not None:
+            (fx / "expected-findings.json").write_text(
+                json.dumps({"findings": expected}), encoding="utf-8"
+            )
+            (fx / "fixture.json").write_text(
+                json.dumps({"slug": slug}), encoding="utf-8"
+            )
+
+    # Good annotation
+    _write("good", "2026-01-01_00-00-00",
+           {"per_finding": {"f1": "true"}},
+           expected=[{"id": "f1", "type": "source"}])
+    # Bad label
+    _write("bad-label", "2026-01-01_00-00-00",
+           {"per_finding": {"f1": "yes"}},
+           expected=[{"id": "f1", "type": "source"}])
+    # Unknown key
+    _write("unknown-key", "2026-01-01_00-00-00",
+           {"per_finding": {"f1": "true"}, "extra": 1},
+           expected=[{"id": "f1", "type": "source"}])
+    # Missing per_finding
+    _write("no-pf", "2026-01-01_00-00-00",
+           {"annotator": "t"})
+    # Key drift
+    _write("key-drift", "2026-01-01_00-00-00",
+           {"per_finding": {"f99": "true"}},
+           expected=[{"id": "f1", "type": "source"}])
+
+    ex = [{"id": "f1", "type": "source"}]
+    ts = "2026-01-01_00-00-00"
+    _write("hash-drift", ts, {"per_finding": {"f1": "true"}, "findings_hash": "0" * 64}, expected=ex)
+    _write("bad-pq", ts, {"per_finding": {"f1": "true"}, "proof_quality_score": "2"}, expected=ex)
+    _write("bad-notes", ts, {"per_finding": {"f1": "true"}, "notes": {"f9": "x"}}, expected=ex)
+    _write("no-tree", ts, {"per_finding": {"f1": "true"}}, tree=False, expected=ex)
+    _write("inert", ts, {"per_finding": {"f1": None}}, expected=ex)
+    _write("tree-bad", ts, {"per_finding": {"f1": "true"}}, expected=ex)
+    (runlogs / "tree-bad" / f"run-{ts}.final-tree.gedcomx.json").write_text("{bad", encoding="utf-8")
+    _write("research-bad", ts, {"per_finding": {"f1": "true"}}, expected=ex)
+    (runlogs / "research-bad" / f"run-{ts}.final-research.json").write_text("{bad", encoding="utf-8")
+    _write("no-fixture-json", ts, {"per_finding": {"f1": "true"}}, expected=ex)
+    (fixtures / "no-fixture-json" / "fixture.json").unlink()
+    (runlogs / "bad-json").mkdir(parents=True)
+    (runlogs / "bad-json" / f"run-{ts}.ann.json").write_text("{bad", encoding="utf-8")
+
+    ci_errors = check_e2e_fixtures.validate_e2e_annotations(runlogs, fixtures)
+    _, cj_problems = load_annotated_runs(runlogs, fixtures)
+    cj_errors = [p for p in cj_problems if p.severity == "error"]
+
+    # Both must flag the same annotation files as errors. Extract the
+    # .ann.json filename (shared between the two since both walk the same dir).
+    def _ann_name(s: str) -> str:
+        """Extract the .ann.json filename from an error string or path."""
+        for part in s.replace("`", " ").replace("'", " ").split():
+            if part.endswith(".ann.json"):
+                return "/".join(Path(part).parts[-2:])
+        return s
+
+    ci_names = {_ann_name(e) for e in ci_errors}
+    cj_names = {_ann_name(p.file) for p in cj_errors}
+    assert ci_names == cj_names, (
+        f"CI rungs flagged {sorted(ci_names)}, calibrate_judge flagged {sorted(cj_names)}"
+    )
+
+
+def test_main_digest_mismatch_blocks_even_when_ann_untouched(tmp_path, monkeypatch, capsys):
+    """A PR that edits a stamped annotation's final-tree (but not the
+    .ann.json itself) must exit 1 on the blind_bundle_digest mismatch.
+    This is the case PR C exists for."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+
+    # Create a fixture with expected-findings + fixture.json
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    fx = repo / "eval" / "tests" / "e2e" / "smith" / "fixture.json"
+    fx.write_text(json.dumps({"slug": "smith"}), encoding="utf-8")
+
+    # Create a run with tree + research
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    research = str(Path(tree).parent / f"run-{TS}.final-research.json")
+    (repo / research).write_text("{}", encoding="utf-8")
+
+    # Compute the correct digest and stamp the annotation
+    import hashlib
+    def _hash_file(p):
+        if not (repo / p).exists():
+            return ""
+        raw = (repo / p).read_text(encoding="utf-8")
+        parsed = json.loads(raw)
+        normalized = json.dumps(parsed, sort_keys=True, indent=2, ensure_ascii=False) + "\n"
+        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+    bundle_files = [
+        f"eval/tests/e2e/smith/expected-findings.json",
+        f"eval/tests/e2e/smith/fixture.json",
+        tree,
+        research,
+    ]
+    file_map = {Path(p).name: _hash_file(p) for p in bundle_files}
+    digest = hashlib.sha256(
+        json.dumps(file_map, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+
+    # Write stamped annotation
+    ann_path = repo / ann
+    ann_path.parent.mkdir(parents=True, exist_ok=True)
+    ann_path.write_text(json.dumps({
+        "per_finding": {"f1": "true"},
+        "blind_bundle_digest": digest,
+    }), encoding="utf-8")
+
+    # Commit everything as baseline
+    commit_head = commit(
+        rel.as_posix(), tree, ann, research,
+        f"eval/tests/e2e/smith/expected-findings.json",
+        f"eval/tests/e2e/smith/fixture.json",
+    )
+
+    # Now edit the final-tree (changing the bundle without touching the ann)
+    (repo / tree).write_text(json.dumps({"persons": []}), encoding="utf-8")
+    new_head = commit(tree)
+
+    monkeypatch.setenv("BASE_SHA", commit_head)
+    monkeypatch.setenv("HEAD_SHA", new_head)
+    rc = check_e2e_fixtures.main()
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "blind_bundle_digest mismatch" in out
+
+
+def test_main_annotation_gate_blocks_a_modified_annotation(tmp_path, monkeypatch, capsys):
+    """A PR that edits an already-committed annotation into a bad label must exit 1."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    _make_graded_ann(repo, "smith", TS, {"f1": "true"})
+    fx = "eval/tests/e2e/smith"
+    base = commit(rel.as_posix(), tree, ann, f"{fx}/expected-findings.json", f"{fx}/fixture.json")
+    _make_graded_ann(repo, "smith", TS, {"f1": "yes"})
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(ann))
+    assert check_e2e_fixtures.main() == 1
+    assert "per_finding labels" in capsys.readouterr().out
+
+
+def test_main_annotation_gate_blocks_a_fixture_edit_under_a_graded_run(tmp_path, monkeypatch, capsys):
+    """A PR that changes expected-findings.json under a graded run must exit 1."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    _make_graded_ann(repo, "smith", TS, {"f1": "true"})
+    fx = "eval/tests/e2e/smith"
+    base = commit(rel.as_posix(), tree, ann, f"{fx}/expected-findings.json", f"{fx}/fixture.json")
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}, {"id": "f2", "type": "source"}])
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(f"{fx}/expected-findings.json"))
+    assert check_e2e_fixtures.main() == 1
+    assert "per_finding keys" in capsys.readouterr().out
+
+
+def _stamped_run(repo, commit):
+    """A graded run whose .ann.json carries BOTH stamps, as step 7 writes it."""
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source", "description": "d"}])
+    fx = repo / "eval" / "tests" / "e2e" / "smith" / "fixture.json"
+    fx.write_text(json.dumps({"slug": "smith"}), encoding="utf-8")
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    research = str(Path(tree).parent / f"run-{TS}.final-research.json")
+    (repo / research).write_text("{}", encoding="utf-8")
+    fixtures = repo / "eval" / "tests" / "e2e"
+    runlogs = repo / "eval" / "runlogs" / "e2e"
+    (repo / ann).write_text(json.dumps({
+        "per_finding": {"f1": "true"},
+        "findings_hash": check_e2e_fixtures._findings_hash_local(fixtures / "smith" / "expected-findings.json"),
+        "blind_bundle_digest": check_e2e_fixtures._bundle_digest_local("smith", f"run-{TS}", fixtures, runlogs),
+    }), encoding="utf-8")
+    return commit(
+        rel.as_posix(), tree, ann, research,
+        "eval/tests/e2e/smith/expected-findings.json",
+        "eval/tests/e2e/smith/fixture.json",
+    )
+
+
+@pytest.mark.parametrize("edit", ["content", "add_finding", "delete_tree"])
+def test_main_expected_findings_or_tree_edit_under_stamped_ann_blocks(tmp_path, monkeypatch, capsys, edit):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    commit("seed.txt")
+    base = _stamped_run(repo, commit)
+
+    # Positive control: the stamps are correct, so an empty diff is green.
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", base)
+    assert check_e2e_fixtures.main() == 0
+    capsys.readouterr()
+
+    ef = "eval/tests/e2e/smith/expected-findings.json"
+    tree = f"eval/runlogs/e2e/smith/run-{TS}.final-tree.gedcomx.json"
+    if edit == "content":
+        _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source", "description": "EDITED"}])
+        head = commit(ef)
+    elif edit == "add_finding":
+        _write_expected_findings(repo, "smith", [
+            {"id": "f1", "type": "source", "description": "d"},
+            {"id": "f2", "type": "source", "description": "new"},
+        ])
+        head = commit(ef)
+    else:
+        (repo / tree).unlink()
+        head = commit(tree)
+
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", head)
+    assert check_e2e_fixtures.main() == 1
+    assert "blind_bundle_digest mismatch" in capsys.readouterr().out
+
+
+# --- Credential gate (blocking): a committed run log must carry no live secret ---
+# The agent's Read of a host credential file (~/.familysearch-mcp/{config,tokens}.json)
+# can land its contents verbatim in response_summary; this backstops the capture-time
+# redactor. All secrets below are FAKE (never a real revoked token).
+
+
+def _write_runlog_body(repo_root: Path, slug: str, ts: str, body: str) -> Path:
+    """Write a run log with an arbitrary raw body (so a test can embed a fake
+    credential shape) and return its repo-relative Path."""
+    d = repo_root / "eval" / "runlogs" / "e2e" / slug
+    d.mkdir(parents=True, exist_ok=True)
+    (d / f"run-{ts}.json").write_text(body, encoding="utf-8")
+    return Path("eval/runlogs/e2e") / slug / f"run-{ts}.json"
+
+
+def _runlog_with_summary(summary: str) -> str:
+    """A minimal run-log JSON whose one tool call carries ``summary`` as its
+    response_summary. ``json.dumps`` escapes the inner quotes exactly as the real
+    persister does, so a credential embedded here lands in the escaped form."""
+    return json.dumps(
+        {"verdict": "pass", "tool_calls": [{"tool": "Read", "response_summary": summary}]}
+    )
+
+
+def test_credential_gate_fails_on_leaked_tokens_json_shape(tmp_path, monkeypatch):
+    """Case (a): the exact shape leaked in commit 805df5003 — a tokens.json Read
+    captured into response_summary."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    summary = (
+        '1\t{\n2\t  "accessToken": "p0-FAKEACCESSTOKEN123",\n'
+        '3\t  "refreshToken": "-9999999-FAKEREFRESH",\n4\t}'
+    )
+    rel = _write_runlog_body(repo, "leaky", TS, _runlog_with_summary(summary))
+    head = commit(rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_no_credentials([rel], head)
+    assert len(v) == 1
+    assert "FS-ACCESS-TOKEN" in v[0] and "FS-REFRESH-TOKEN" in v[0]
+
+
+def test_credential_gate_fails_on_openrouter_key(tmp_path, monkeypatch):
+    """The config.json half of the same leak: an OpenRouter key."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    summary = '1\t{\n2\t  "openRouterApiKey": "sk-or-v1-FAKE0penR0uterKey"\n3\t}'
+    rel = _write_runlog_body(repo, "leaky", TS, _runlog_with_summary(summary))
+    head = commit(rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_no_credentials([rel], head)
+    assert len(v) == 1 and "OPENROUTER-KEY" in v[0]
+
+
+def test_credential_gate_fails_on_nested_stringified_credential(tmp_path, monkeypatch):
+    """Case (b): a credential nested inside a stringified-JSON value within the
+    response_summary (an extra level of escaping)."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    inner = json.dumps({"openRouterApiKey": "sk-or-v1-FAKEnestedKey"})
+    rel = _write_runlog_body(
+        repo, "leaky", TS, _runlog_with_summary(f"read config file: {inner}")
+    )
+    head = commit(rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_no_credentials([rel], head)
+    assert len(v) == 1 and "OPENROUTER-KEY" in v[0]
+
+
+def test_credential_gate_scans_unparseable_log(tmp_path, monkeypatch):
+    """A malformed (non-JSON) run log must still be scanned — the raw-text path
+    must not silently skip it the way a json.loads path would."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _write_runlog_body(repo, "leaky", TS, "not json at all { sk-or-v1-FAKEmalformed")
+    head = commit(rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_no_credentials([rel], head)
+    assert len(v) == 1 and "OPENROUTER-KEY" in v[0]
+
+
+def test_credential_gate_passes_on_clean_run_log(tmp_path, monkeypatch):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _write_runlog_body(
+        repo, "clean", TS, _runlog_with_summary("a normal search returned three records")
+    )
+    head = commit(rel.as_posix())
+    assert check_e2e_fixtures.check_added_runlogs_no_credentials([rel], head) == []
+
+
+def test_credential_gate_ignores_benign_near_misses(tmp_path, monkeypatch):
+    """Prove the other direction: strings that resemble but are not credentials
+    must not red a legitimate run log."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    summary = "she drank sk-orange-juice; her will mentions a token of affection"
+    rel = _write_runlog_body(repo, "benign", TS, _runlog_with_summary(summary))
+    head = commit(rel.as_posix())
+    assert check_e2e_fixtures.check_added_runlogs_no_credentials([rel], head) == []
+
+
+def test_credential_gate_passes_on_the_real_redacted_tip():
+    """Case (c): the actual committed, already-redacted run log must PASS — its
+    [REDACTED-...] placeholders must not be re-flagged (the regression the
+    negative lookahead in the field patterns guards)."""
+    tip = (
+        check_e2e_fixtures.REPO_ROOT
+        / "eval" / "runlogs" / "e2e" / "hannah-earnest-children"
+        / "run-2026-09-28_17-11-04.json"
+    )
+    if not tip.exists():
+        pytest.skip("redacted tip run log not present")
+    assert check_e2e_fixtures.scan_for_credentials(tip.read_text(encoding="utf-8")) == []
+
+
+def test_credential_gate_sees_a_modified_run_log(tmp_path, monkeypatch):
+    """A credential introduced by EDITING an already-committed run log (net
+    status M) must be caught. AR never reports M; the credential gate reads the
+    ARM set, so this is the fix for that blind spot."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _write_runlog_body(repo, "smith", TS, _runlog_with_summary("a clean summary"))
+    base = commit(rel.as_posix())
+    (repo / rel).write_text(
+        _runlog_with_summary('read config: "openRouterApiKey": "sk-or-v1-FAKEmodified"'),
+        encoding="utf-8",
+    )
+    head = commit(rel.as_posix())
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", head)
+    arm = check_e2e_fixtures.git_arm_e2e_runlogs()
+    assert [p.as_posix() for p in arm] == [rel.as_posix()]  # ARM sees the modify
+    assert check_e2e_fixtures.git_ar_e2e_runlogs() == []  # AR is blind to it
+    v = check_e2e_fixtures.check_added_runlogs_no_credentials(arm, head)
+    assert len(v) == 1 and "OPENROUTER-KEY" in v[0]
+
+
+def test_credential_specs_match_redact_module():
+    """Drift guard: the specs duplicated into check_e2e_fixtures.py must stay
+    byte-identical to the single source of truth in harness/redact.py, and the
+    two scan_for_credentials copies must AGREE on a battery of inputs (so a
+    divergent function body, not just divergent specs, is caught)."""
+    from harness import redact
+
+    assert check_e2e_fixtures.CREDENTIAL_PATTERN_SPECS == redact.CREDENTIAL_PATTERN_SPECS
+    battery = [
+        '{"accessToken": "p0-X", "refreshToken": "-1-Y"}',
+        r'\"openRouterApiKey\": \"sk-or-v1-Z\"',
+        r'\\"accessToken\\": \\"p0-DOUBLE\\"',
+        "sk-ant-FAKE_ant-123",
+        '"accessToken": "[REDACTED-FS-ACCESS-TOKEN]"',
+        "benign sk-orange and a token",
+        "",
+    ]
+    for s in battery:
+        assert check_e2e_fixtures.scan_for_credentials(s) == redact.scan_for_credentials(s), s

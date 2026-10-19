@@ -11,6 +11,7 @@ import path from 'node:path';
 import { testsUnitDir, scenariosDir, fixturesDir } from '../paths';
 import type { BlockedReason, UnitTestFile, UnitTestListEntry } from '../types';
 import { atomicWriteJson } from './atomic';
+import { resolveWithin, PathEscapeError } from './safe-path';
 
 /** Result of a `listTests` call — separates clean rows from corrupt ones. */
 export interface ListTestsResult {
@@ -35,13 +36,36 @@ async function computeBlockedReason(
     return { kind: 'scenario-notes-present', notes: test.input.scenario_notes };
   }
   if (scenario) {
-    const scenarioPath = path.join(scenariosDir(), scenario);
+    // Existence oracle: `fs.access` on a caller-supplied name leaks whether an
+    // arbitrary path exists. A traversing value is reported as missing rather
+    // than probed.
+    //
+    // Resolved ONCE and the resolved value used. The first version validated one
+    // `path.join` and then built a second for the sink — which is precisely what
+    // the comment in `snapshot.ts` calls the bug class this PR closes. Same
+    // commit, opposite sides.
+    let scenarioPath: string;
+    try {
+      scenarioPath = resolveWithin(scenariosDir(), scenario);
+    } catch (e) {
+      // Only a containment refusal is "missing" — reporting a broken `evalDir()`
+      // as a missing scenario hides a misconfiguration behind a content error.
+      // Matches the four other sinks (#2000 review).
+      if (e instanceof PathEscapeError) return { kind: 'missing-scenario', scenario };
+      throw e;
+    }
     if (!(await exists(scenarioPath))) {
       return { kind: 'missing-scenario', scenario };
     }
   }
   for (const fix of test.mcp_fixtures ?? []) {
-    const fixPath = path.join(fixturesDir(), `${fix}.json`);
+    let fixPath: string;
+    try {
+      fixPath = resolveWithin(fixturesDir(), `${fix}.json`);
+    } catch (e) {
+      if (e instanceof PathEscapeError) return { kind: 'missing-fixture', fixture: fix };
+      throw e;
+    }
     if (!(await exists(fixPath))) {
       return { kind: 'missing-fixture', fixture: fix };
     }
@@ -173,11 +197,15 @@ export async function writeTest(test: UnitTestFile): Promise<string> {
   const existing = await readTest(test.test.id);
   let filePath: string;
 
+  // `test.skill` (a directory) and `test.id` (a basename) both arrive in the
+  // request body and both build this path. Contained on every branch — the
+  // else-branch takes a basename from disk but still joins an untrusted
+  // `test.skill`, so it needs the check as much as the first.
   if (!existing) {
-    filePath = path.join(testsUnitDir(), test.test.skill, `${test.test.id}.json`);
+    filePath = resolveWithin(testsUnitDir(), test.test.skill, `${test.test.id}.json`);
   } else {
-    const targetDir = path.join(testsUnitDir(), test.test.skill);
-    filePath = path.join(targetDir, path.basename(existing.filePath));
+    const targetDir = resolveWithin(testsUnitDir(), test.test.skill);
+    filePath = resolveWithin(targetDir, path.basename(existing.filePath));
   }
 
   await atomicWriteJson(filePath, test);
@@ -251,7 +279,10 @@ export async function nextTestId(skill: string): Promise<string> {
   // and the random-suffix ones.
   let prefix = `ut_${skill.replace(/-/g, '_')}_`;
 
-  const skillPath = path.join(testsUnitDir(), skill);
+  // Runs a readdir BEFORE the guarded write, from a POST body field. Throws
+  // rather than returning a fallback: this is the id-allocation step of a write,
+  // and this PR's rule is that a refused write is loud.
+  const skillPath = resolveWithin(testsUnitDir(), skill);
   let files: string[] = [];
   try {
     files = await fs.readdir(skillPath);
@@ -288,7 +319,7 @@ export async function nextTestId(skill: string): Promise<string> {
  * "content-changed" warning.
  *
  * `test.holdout` is included because the snapshot normalization strips
- * only the cosmetic `test.{name,description,tags}` — holdout survives
+ * only the cosmetic `test.{name,description}` — holdout survives
  * into the snapshot, so flipping it changes the content hash and flips
  * the active run log inactive (forces a re-run), even though it never
  * changes grading. (It governs only the skill-improver's behavior; see
@@ -299,34 +330,14 @@ export async function nextTestId(skill: string): Promise<string> {
  *
  * `test.expected_outcome` / `test.xfail_reason` are included on the same
  * grounds: they survive normalization, and expected_outcome changes how
- * the harness labels the result (`fail` → `xfail`, `pass` → `xpass`), so
+ * a result is read — a `fail` beside an `xfail` marker is a suppressed
+ * (non-regressing) failure, and a `pass` beside it is an unexpected pass — so
  * a run log recorded under the old marking no longer describes the test.
  * Marking a test xfail therefore forces a re-run — that is correct, not a
- * wrinkle to design around: the re-run is what produces a log that reads
- * `xfail` instead of `fail`.
+ * wrinkle to design around: the re-run is what produces a log whose
+ * `expected_outcome` matches the test.
  */
-export const GRADING_RELEVANT_FIELDS = [
-  'input.user_message',
-  'input.scenario',
-  'mcp_fixtures',
-  'judge_context',
-  'negative',
-  'test.holdout',
-  'test.expected_outcome',
-  'test.xfail_reason',
-  'judge_reads_files',
-] as const;
-
-/** True if any grading-relevant field differs between `before` and `after`. */
-export function hasGradingRelevantChange(before: UnitTestFile, after: UnitTestFile): boolean {
-  if (before.input.user_message !== after.input.user_message) return true;
-  if ((before.input.scenario ?? null) !== (after.input.scenario ?? null)) return true;
-  if (JSON.stringify(before.mcp_fixtures ?? []) !== JSON.stringify(after.mcp_fixtures ?? [])) return true;
-  if (JSON.stringify(before.judge_context) !== JSON.stringify(after.judge_context)) return true;
-  if (JSON.stringify(before.negative ?? null) !== JSON.stringify(after.negative ?? null)) return true;
-  if ((before.test.holdout ?? false) !== (after.test.holdout ?? false)) return true;
-  if ((before.test.expected_outcome ?? 'pass') !== (after.test.expected_outcome ?? 'pass')) return true;
-  if ((before.test.xfail_reason ?? '') !== (after.test.xfail_reason ?? '')) return true;
-  if ((before.judge_reads_files ?? false) !== (after.judge_reads_files ?? false)) return true;
-  return false;
-}
+// Moved to ../gradingRelevance so the authoring UI (a 'use client' component
+// that cannot import this node:fs module) shares one definition instead of a
+// hand-synced copy. Re-exported for existing callers and tests.
+export { GRADING_RELEVANT_FIELDS, hasGradingRelevantChange } from '../gradingRelevance';

@@ -5,16 +5,16 @@
     "name": "FamilySearch wiki — Italian birth records",
     "type": "positive",
     "holdout": true,
-    "description": "The happy path: the user explicitly names the FamilySearch wiki and asks a how-to research question. Exercises the core workflow — call wiki_search, synthesize the ranked sections, and save a markdown file with cited sources.",
-    "tags": ["fs-wiki", "how-to", "happy-path", "expects-file-italian-birth-records"]
+    "description": "The happy path: the user explicitly names the FamilySearch wiki and asks a how-to research question. Exercises the core workflow — call wiki_search, synthesize the ranked sections, and log the summary with cited sources as one research-log entry.",
+    "tags": ["fs-wiki", "how-to", "happy-path", "direct-arm"]
   },
   "input": {
-    "user_message": "Search the FamilySearch wiki for guidance on how to find Italian birth records",
-    "scenario": null
+    "delegation": "Search the FamilySearch wiki for guidance on how to find Italian birth records\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": ["wiki-search-italian-birth-records"],
   "judge_context": [
     "Should call wiki_search with a natural-language query about finding Italian birth records",
-    "The saved file should synthesize the returned wiki sections and cite their source URLs — no fabricated guidance beyond what the tool returned"
+    "The logged entry's notes should synthesize the returned wiki sections and cite their source URLs — no fabricated guidance beyond what the tool returned"
   ]
 }

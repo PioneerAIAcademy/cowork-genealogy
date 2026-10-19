@@ -14,8 +14,9 @@ import {
   personPersonMatches,
   recordRecordMatches,
 } from "../src/tools/match-by-id.js";
+import { LOCAL, type Principal } from "../src/auth/principal.js";
 
-const fns: Record<string, (input: { id: string }) => Promise<unknown>> = {
+const fns: Record<string, (input: { id: string }, principal: Principal) => Promise<unknown>> = {
   pr: personRecordMatches,
   person_record_matches: personRecordMatches,
   rp: recordPersonMatches,
@@ -41,7 +42,7 @@ async function runOne(which: string, id: string): Promise<void> {
   }
   console.log(`\n=== ${which} id=${id} ===`);
   try {
-    const result = await fn({ id });
+    const result = await fn({ id }, LOCAL);
     console.log(JSON.stringify(result, null, 2));
   } catch (err) {
     console.log(`ERROR: ${err instanceof Error ? err.message : String(err)}`);

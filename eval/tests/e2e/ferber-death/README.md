@@ -35,6 +35,19 @@ ways to miss are (a) failing to search for a death at all and concluding
 "unknown," or (b) grabbing the wrong record — see the deliberate
 distractor below.
 
+## Bundled captures (`provided-documents/`)
+
+One Find a Grave page is committed here to let the harness exercise its off-FamilySearch burial plan item
+without a live browser session (issue #2083):
+
+| File | Source | What it shows |
+|------|--------|---------------|
+| `findagrave-william-ferber-1903-spring-grove.pdf` | findagrave.com | Memorial #78928396 — William H Ferber, born 28 Nov 1869, died 11 Mar 1903 Cincinnati, buried Spring Grove Cemetery Section 113 Lot 27 Space 3 |
+
+This is an authentic page saved from findagrave.com in a credentialed browser. It names Spring Grove Cemetery
+specifically, corroborating the FamilySearch Find a Grave Index (which supplies only the burial locale,
+Cincinnati) and giving the agent access to the cemetery-name evidence for the bonus burial finding (f2).
+
 ## Notes for reviewers
 
 - **Required finding (f1):** died **11 March 1903, Cincinnati, Hamilton

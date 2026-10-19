@@ -1,0 +1,240 @@
+{
+  "persons": [
+    {
+      "id": "GMH9-3BJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "María Concepción",
+          "surname": "Fuenmayor"
+        }
+      ],
+      "facts": [
+        {
+          "id": "26bc7d82-1036-4fc1-bd00-eccb6fbc0099",
+          "type": "Birth",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "Maracaibo, Venezuela",
+          "standard_place": "Zulia, Venezuela"
+        },
+        {
+          "id": "9706e78a-5057-4153-8129-d7069d315097",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GMHM-THG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "María Rosario",
+          "surname": "Berrueta Fuenmayor"
+        }
+      ],
+      "facts": [
+        {
+          "id": "11f849d1-3694-4a84-94f8-da4586b26ccf",
+          "type": "Birth",
+          "date": "8 de mayo de 1913",
+          "standard_date": "8 May 1913",
+          "place": "Maracaibo, Venezuela",
+          "standard_place": "Zulia, Venezuela"
+        },
+        {
+          "id": "f62c1236-4ca5-48ae-adeb-846328e3503c",
+          "type": "Baptism",
+          "date": "10 May 1913",
+          "standard_date": "10 May 1913",
+          "place": "Nuestra Señora de la Chiquinquirá y San Juan de Dios, Maracaibo, Zulia, Venezuela",
+          "standard_place": "Maracaibo, Zulia, Venezuela"
+        },
+        {
+          "id": "fbc5b375-c632-415d-a8c8-d525aece693b",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GHJ3-G2V",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Luis Alberto",
+          "surname": "Berrueta Fuenmayor"
+        }
+      ],
+      "facts": [
+        {
+          "id": "93688950-9775-4d1c-8c55-2d8382397ac6",
+          "type": "Baptism",
+          "date": "04 Aug 1917",
+          "standard_date": "4 Aug 1917",
+          "place": "Nuestra Señora de la Chiquinquirá y San Juan de Dios, Maracaibo, Zulia, Venezuela",
+          "standard_place": "Basílica de Nuestra Señora de Chiquinquirá, Maracaibo, Zulia, Venezuela"
+        },
+        {
+          "id": "8ab18fd9-41b9-4076-846c-8b5937e2281a",
+          "type": "Birth",
+          "date": "1918",
+          "standard_date": "1918"
+        },
+        {
+          "id": "c492e531-268a-441a-a6f9-336a578cfa9d",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GMHM-LXG",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Eduardo",
+          "surname": "Berrueta Fernandez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f8c7dc87-a41d-4eae-ac7c-ee02fc6572f4",
+          "type": "Birth",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "Maracaibo, Venezuela",
+          "standard_place": "Zulia, Venezuela"
+        },
+        {
+          "id": "66c88ece-4d15-4188-9e15-ceeee2fc98ba",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GMHM-LXG",
+      "person2": "GMH9-3BJ"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GMHM-LXG",
+      "child": "GMHM-THG"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GMH9-3BJ",
+      "child": "GMHM-THG"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GMHM-LXG",
+      "child": "GHJ3-G2V"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GMH9-3BJ",
+      "child": "GHJ3-G2V"
+    }
+  ],
+  "sources": [
+    {
+      "id": "391J-Q5Q",
+      "title": "María Concepción Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-4QTH : Fri Mar 08 20:13:58 UTC 2024), Entry for Luis Alberto Berrueta Fuenmayor and Eduardo Berrueta, 04 Aug 1917.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-4QTZ"
+    },
+    {
+      "id": "391N-NLL",
+      "title": "Maria Concepción Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-H2G1 : Thu May 16 03:05:04 UTC 2024), Entry for Godardo Luis Berrueta Fuenmayor and Eudardo Berrueta, 27 Apr 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-H2P9"
+    },
+    {
+      "id": "391N-PYD",
+      "title": "Maria Concepción Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-HGT4 : Thu May 16 03:05:08 UTC 2024), Entry for Olga Josefina Berrueta Fuenmayor and Eudaldo Berrueta, 12 Apr 1928.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-HGTC"
+    },
+    {
+      "id": "391N-54S",
+      "title": "María Concepcion Fuenmayor de Berrueta, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-45X8 : Thu May 16 03:05:16 UTC 2024), Entry for Carmen María Berrueta Fuenmayor and Eudardo Berrueta, 10 Feb 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-45X6"
+    },
+    {
+      "id": "391N-XL4",
+      "title": "Maria Concepcion Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-Z5RF : Sat Jul 20 00:13:52 UTC 2024), Entry for Luis Alberto Berrueta and Eduardo Berrueta, 26 Mar 1938.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-Z5RJ"
+    },
+    {
+      "id": "3K73-DGB",
+      "title": "María Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-WZZY : Fri Mar 08 22:37:20 UTC 2024), Entry for Maria del Rosario Berreta Fuenmayor and Eduardo Berreta, 10 May 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-WZZ1"
+    },
+    {
+      "id": "391N-N65",
+      "title": "Maria Concepcion Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-W19M : Fri Mar 08 00:44:34 UTC 2024), Entry for Casilda Berrueta Fuenmayor and Eudardo Berrueta, 22 Apr 1916.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-W19S"
+    },
+    {
+      "id": "391N-565",
+      "title": "María Concepción Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-4GWL : Fri Mar 08 18:41:04 UTC 2024), Entry for Alejandro Berrueta Fuenmayor and Enidaldo Berrueta, 15 Aug 1919.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-4GWP"
+    },
+    {
+      "id": "391N-FP3",
+      "title": "María Concepción Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-45XY : Thu May 16 03:05:16 UTC 2024), Entry for Carmen Maria Berrueta Fuenmayor and Eduardo Berrueta, 10 Feb 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-45X1"
+    },
+    {
+      "id": "391N-N9T",
+      "title": "Concepción Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-WB4D : Fri Mar 08 14:53:39 UTC 2024), Entry for Angel Robinson Berrueta Fuenmayor and Eudardo Berrueta, 16 Jan 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-WB4X"
+    },
+    {
+      "id": "391N-J9T",
+      "title": "María Concepción Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-ZJ9V : Sun Mar 10 10:57:35 UTC 2024), Entry for Angel Robinson Berrueta and Eduardo Berrueta, 31 Dec 1936.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-ZJ92"
+    },
+    {
+      "id": "391N-JFZ",
+      "title": "Concepción Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-WBHM : Sun Mar 10 14:34:46 UTC 2024), Entry for Angel Robínson Barueta Fuenmayor and Eudardo Barueta, 16 Jan 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-WBHS"
+    },
+    {
+      "id": "3K73-628",
+      "title": "Marìa Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMV-89LF : Sun Mar 10 09:30:18 UTC 2024), Entry for Luis Antonio Urdaneta and Emiliano Urdaneta, 13 Apr 1928.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMV-89L2"
+    },
+    {
+      "id": "3K73-D1W",
+      "title": "María Fuenmayor, \"Venezuela, registros parroquiales y diocesanos, 1577-2022\"",
+      "citation": "\"Venezuela, registros parroquiales y diocesanos, 1577-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVMK-HJ5P : Wed Jul 17 13:30:42 UTC 2024), Entry for Luis Antonio Urdaneta Urdaneta and Emiliano Urdaneta, 13 Apr 1928.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVMK-HJ5B"
+    }
+  ]
+}

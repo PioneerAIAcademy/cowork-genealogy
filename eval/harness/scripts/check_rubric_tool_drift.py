@@ -13,9 +13,9 @@ standalone step): the judge kept failing correct runs for not making calls
 the architecture had retired.
 
 Does the same check for plugin agents: a tool name mentioned in an agent's
-body that is in neither its `tools:` nor its `disallowedTools:` frontmatter
-(the union, since naming a disallowed tool to explain why it's denied is a
-legitimate, expected mention, not drift).
+body that is not in its `tools:` frontmatter (nor in `disallowedTools:`, if
+one is ever re-added — no agent declares one today, but the code unions both
+as insurance for a re-added deny; CLAUDE.md § "Re-adding a deny").
 
 This is the exact inverse of check_tool_coverage.py's reverse check (a test
 fixture referencing a tool absent from allowed-tools): that check catches
@@ -39,16 +39,20 @@ Warn-only: this never fails the build (always exits 0). There is a third,
 NOT mechanically filterable, false-positive shape: grading prose naming a
 tool that belongs to a *different* skill (a routing test's judge_context
 naming the destination skill's tool, or "not this skill's job, that's
-$OTHER_SKILL's" prose). Distinguishing that from real drift would require
-either an allow-comment convention or fragile natural-language matching —
-left as an open decision (issue #1003) rather than guessed at here.
+$OTHER_SKILL's" prose). These are handled by the per-site SUPPRESSIONS list
+below (issue #1522). Inline comments were rejected: judge_context strings
+go verbatim into the judge prompt (eval/harness/judge/prompt.md), agent
+bodies forbid comments (CLAUDE.md § "Cowork plugin agents"), and touching
+~15 skill directories to add per-file markers would trigger ~15 blocking
+eval re-runs at $8–12 each. The list is shrink-only: a stale entry whose
+(file, tool) no longer fires fails the unit test
+(test_check_rubric_tool_drift.py), so removing entries is always safe and
+adding one requires that it still corresponds to a live hit.
 
-Together the two filters above took the first real-corpus run from 86 hits to
-68. Roughly 20% of the remaining 68 are genuine drift; the list needs triaging,
-not suppressing, before anyone makes this blocking.
-
-Run by .github/workflows/check-runlogs.yml. Self-contained: stdlib only
-(the workflow installs no dependencies).
+Run `python eval/harness/scripts/check_rubric_tool_drift.py` against a built
+manifest for the current hit count. Run by
+.github/workflows/check-runlogs.yml. Self-contained: stdlib only (the
+workflow installs no dependencies).
 """
 
 from __future__ import annotations
@@ -89,6 +93,702 @@ COMMON_WORD_EXEMPTIONS: dict[str, str] = {
     "logout": "same collision as login, for the same reason.",
 }
 
+# -- Per-site suppression list ------------------------------------------
+#
+# Each entry suppresses one (file, tool) warning. This is the ONLY
+# suppression mechanism for this check — inline comments were rejected
+# (issue #1522): judge_context strings go verbatim into the judge prompt,
+# agent bodies forbid comments, and touching ~15 skill dirs to add per-file
+# markers would trigger ~15 blocking eval re-runs at $8–12 each.
+#
+# Shrink-only: every entry must still match a hit the script would otherwise
+# emit. test_check_rubric_tool_drift.py asserts both directions — a stale
+# entry (one whose (file, tool) no longer fires) fails the test, and a
+# suppressed entry does not mask an unrelated genuine hit. Removing entries
+# is always safe; adding one requires a reason longer than 20 characters.
+#
+# Keys: "file" (repo-relative, matches the file= arg in gh_warning),
+#        "tool" (bare tool name), "reason" (why this is not drift), and
+#        "quotes" (the exact span(s) the reason cites FROM THAT FILE).
+#
+# "quotes" is separate from "reason" so it can be checked mechanically:
+# test_every_suppression_quote_is_verbatim asserts each one still appears
+# in the file the entry names. Six entries once quoted a SIBLING file's
+# wording — the verdict was right but the proof pointed at the wrong
+# text, and nothing caught it. Prose in "reason" may mention a phrase
+# that is deliberately ABSENT (patronymic-drop names "and expected" to
+# say it is not there); only "quotes" is held to the file.
+SUPPRESSIONS: list[dict[str, str]] = [
+    {
+        "file": "eval/tests/unit/init-project/rubric.md",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "init-project has no schema-validation tool in its `allowed-tools`, so this is graded by reading the file against the schema, not by expecting a `validate_research_schema` call",
+        ],
+        "reason": (
+            "not-needed, and says so explicitly - 'init-project has no "
+            "schema-validation tool in its `allowed-tools`, so this is "
+            "graded by reading the file against the schema, not by "
+            "expecting a `validate_research_schema` call'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json",
+        "tool": "tree_correct",
+        "quotes": [
+            "nothing in this agent's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
+        ],
+        "reason": (
+            "negative mention: names the tool to say the agent lacks it - "
+            "'nothing in this agent's toolset can raise the gender "
+            "afterwards, since `tree_correct update_person` is not granted "
+            "to it'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/person-evidence/patronymic-mismatch-caps-confidence.json",
+        "tool": "record_search",
+        "quotes": [
+            "this assertion is record_search-sourced (record_persona_id CP1 is non-null), so same_person is available here",
+        ],
+        "reason": (
+            "descriptive provenance, not a call: names where the assertion "
+            "came from - 'this assertion is record_search-sourced "
+            "(record_persona_id CP1 is non-null), so same_person is "
+            "available here'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/proof-conclusion/direct-no-image-claim-without-tool-confirmation.json",
+        "tool": "record_read",
+        "quotes": [
+            "record_read was never called to check for a digitized image",
+        ],
+        "reason": (
+            "descriptive ground truth about a call that was NOT made "
+            "upstream - 'record_read was never called to check for a "
+            "digitized image'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/proof-conclusion/direct-no-image-claim-without-tool-confirmation.json",
+        "tool": "record_search",
+        "quotes": [
+            "Its notes and log_001 explicitly state that record_search returned no imageId/artifacts field for this hit",
+        ],
+        "reason": (
+            "descriptive ground truth about an upstream skill's call - 'Its "
+            "notes and log_001 explicitly state that record_search returned "
+            "no imageId/artifacts field for this hit'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/question-selection/ut_question_selection_005.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3",
+        ],
+        "reason": (
+            "not-needed: a purely conditional score-UP rule that never "
+            "penalizes an absence - 'if the skill calls "
+            "validate_research_schema, gets a validation error, "
+            "self-corrects, and re-validates successfully, score Tool "
+            "Arguments=3'. question-selection holds only research_append"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/question-selection/ut_question_selection_006.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3",
+        ],
+        "reason": (
+            "not-needed: a purely conditional score-UP rule that never "
+            "penalizes an absence - 'if the skill calls "
+            "validate_research_schema, gets a validation error, "
+            "self-corrects, and re-validates successfully, score Tool "
+            "Arguments=3'. question-selection holds only research_append"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-exhaustiveness/direct-declare-exhaustive-complete.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "Claude does not need to call validate_research_schema - it is not in this skill's allowed-tools, and per SKILL.md, research_append validates-before-persist",
+            "Do NOT penalize Tool Arguments or Completeness for the absence of a separate validate_research_schema call",
+        ],
+        "reason": (
+            "not-needed, naming the allowed-tools fact outright - 'Claude "
+            "does not need to call validate_research_schema - it is not in "
+            "this skill's allowed-tools, and per SKILL.md, research_append "
+            "validates-before-persist ... Do NOT penalize Tool Arguments or "
+            "Completeness for the absence of a separate "
+            "validate_research_schema call'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-exhaustiveness/honest-early-termination.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "Claude does not need to call validate_research_schema - it is not in this skill's allowed-tools, and per SKILL.md, research_append validates-before-persist",
+            "Do NOT penalize Tool Arguments or Completeness for the absence of a separate validate_research_schema call",
+        ],
+        "reason": (
+            "not-needed, naming the allowed-tools fact outright - 'Claude "
+            "does not need to call validate_research_schema - it is not in "
+            "this skill's allowed-tools, and per SKILL.md, research_append "
+            "validates-before-persist ... Do NOT penalize Tool Arguments or "
+            "Completeness for the absence of a separate "
+            "validate_research_schema call'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-exhaustiveness/child-link-marriage-not-sufficient.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "Tool Arguments: this is a decline/review response - Claude is not expected to call validate_research_schema.",
+        ],
+        "reason": (
+            "not-needed - 'Tool Arguments: this is a decline/review "
+            "response - Claude is not expected to call "
+            "validate_research_schema.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-exhaustiveness/tentative-value-alternative-record-gate.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "Tool Arguments: this is a decline/review response - Claude is not expected to call validate_research_schema.",
+        ],
+        "reason": (
+            "not-needed - 'Tool Arguments: this is a decline/review "
+            "response - Claude is not expected to call "
+            "validate_research_schema.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-exhaustiveness/decline-incomplete-research.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "Tool Arguments: This is a decline/review response - Claude is not expected to call validate_research_schema.",
+        ],
+        "reason": (
+            "not-needed - 'Tool Arguments: This is a decline/review "
+            "response - Claude is not expected to call "
+            "validate_research_schema.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-exhaustiveness/exhaustiveness-decisive-record-gate.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "Tool Arguments: This is a decline/review response - Claude is not expected to call validate_research_schema.",
+        ],
+        "reason": (
+            "not-needed - 'Tool Arguments: This is a decline/review "
+            "response - Claude is not expected to call "
+            "validate_research_schema.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-exhaustiveness/direct-refuse-while-in-progress.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "If Claude does call validate_research_schema that is acceptable but not required since no changes were made",
+        ],
+        "reason": (
+            "not-needed - 'If Claude does call validate_research_schema "
+            "that is acceptable but not required since no changes were "
+            "made'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-exhaustiveness/already-declared-no-redeclare.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "Since no changes are being made to research.json, calling validate_research_schema is not required",
+        ],
+        "reason": (
+            "not-needed - 'Since no changes are being made to "
+            "research.json, calling validate_research_schema is not "
+            "required'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-exhaustiveness/sealed-record-not-a-gap.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "if the skill declares, it writes via research_append (and may call validate_research_schema)",
+        ],
+        "reason": (
+            "not-needed, permissive 'may' - 'if the skill declares, it "
+            "writes via research_append (and may call "
+            "validate_research_schema)'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/locality-survey-first-plan.json",
+        "tool": "wiki_search",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright - 'it should "
+            "NOT call wiki_search / wiki_place_page / place_population "
+            "(research-plan no longer holds those tools - the know-how "
+            "comes from the localities entry). Do NOT fail it for not "
+            "surveying.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/locality-survey-first-plan.json",
+        "tool": "wiki_place_page",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright - 'it should "
+            "NOT call wiki_search / wiki_place_page / place_population "
+            "(research-plan no longer holds those tools - the know-how "
+            "comes from the localities entry). Do NOT fail it for not "
+            "surveying.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/locality-survey-first-plan.json",
+        "tool": "place_population",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright - 'it should "
+            "NOT call wiki_search / wiki_place_page / place_population "
+            "(research-plan no longer holds those tools - the know-how "
+            "comes from the localities entry). Do NOT fail it for not "
+            "surveying.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/plan-danish-parentage-includes-levy-rolls.json",
+        "tool": "wiki_search",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright - 'it should "
+            "NOT call wiki_search / wiki_place_page / place_population "
+            "(research-plan no longer holds those tools). Do NOT fail it "
+            "for not surveying.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/plan-danish-parentage-includes-levy-rolls.json",
+        "tool": "wiki_place_page",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright - 'it should "
+            "NOT call wiki_search / wiki_place_page / place_population "
+            "(research-plan no longer holds those tools). Do NOT fail it "
+            "for not surveying.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/plan-danish-parentage-includes-levy-rolls.json",
+        "tool": "place_population",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright - 'it should "
+            "NOT call wiki_search / wiki_place_page / place_population "
+            "(research-plan no longer holds those tools). Do NOT fail it "
+            "for not surveying.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/search-full-text/parentage-compound-surname-cooccurrence.json",
+        "tool": "record_search",
+        "quotes": [
+            "Should NOT scope the full-text search to a record `collectionId` guessed from record_search or a collections survey",
+        ],
+        "reason": (
+            "negative mention of another skill's tool - 'Should NOT scope "
+            "the full-text search to a record `collectionId` guessed from "
+            "record_search or a collections survey'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/search-records/patronymic-drop-farmname-anchor-on-parent.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "a validate_research_schema call is acceptable if made",
+        ],
+        "reason": (
+            "not-needed, and the ONLY search-records "
+            "validate_research_schema line without the 'and expected' "
+            "clause - 'a validate_research_schema call is acceptable if "
+            "made'. The other 11 assert an expectation and stay "
+            "unsuppressed as genuine drift"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/search-records/pivot-to-fulltext-on-lowindex-probate.json",
+        "tool": "fulltext_search",
+        "quotes": [
+            "search-records must NOT run or delegate the full-text search",
+            "Do NOT require `fulltext_search` in the tool calls",
+        ],
+        "reason": (
+            "negative mention - 'search-records must NOT run or delegate "
+            "the full-text search ... Do NOT require `fulltext_search` in "
+            "the tool calls'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/tree-edit/add-occupation-fact-with-place.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "Should NOT need a separate validate_research_schema call",
+            "and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
+        ],
+        "reason": (
+            "not-needed, covering BOTH directions - 'Should NOT need a "
+            "separate validate_research_schema call ... and the tool is not "
+            "in this skill's allowed-tools. Do not score down for omitting "
+            "it; do not reward calling it.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/tree-edit/correct-typo-death-date.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "Should NOT need a separate validate_research_schema call",
+            "and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
+        ],
+        "reason": (
+            "not-needed, covering BOTH directions - 'Should NOT need a "
+            "separate validate_research_schema call ... and the tool is not "
+            "in this skill's allowed-tools. Do not score down for omitting "
+            "it; do not reward calling it.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/tree-edit/create-sibling-with-parentchild.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "Should NOT need a separate validate_research_schema call",
+            "and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
+        ],
+        "reason": (
+            "not-needed, covering BOTH directions - 'Should NOT need a "
+            "separate validate_research_schema call ... and the tool is not "
+            "in this skill's allowed-tools. Do not score down for omitting "
+            "it; do not reward calling it.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/tree-edit/person-merge-stub-into-fs-person.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "Should NOT need a separate validate_research_schema call",
+            "and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
+        ],
+        "reason": (
+            "not-needed, covering BOTH directions - 'Should NOT need a "
+            "separate validate_research_schema call ... and the tool is not "
+            "in this skill's allowed-tools. Do not score down for omitting "
+            "it; do not reward calling it.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/tree-edit/create-sibling-with-parentchild.json",
+        "tool": "materialize_facts",
+        "quotes": [
+            "materializing sourced facts onto a tree person is person-evidence's materialize_facts (extraction is assertion-only), not this ad-hoc tree-edit call",
+        ],
+        "reason": (
+            "cross-owner - 'materializing sourced facts onto a tree person "
+            "is person-evidence's materialize_facts (extraction is "
+            "assertion-only), not this ad-hoc tree-edit call'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/tree-edit/guardian-after-remarriage-step-hypothesis.json",
+        "tool": "project_context",
+        "quotes": [
+            "if the run DOES attempt ANY tool - a writer, or a reader such as `project_context` probing for a project - and the call fails BECAUSE NO PROJECT EXISTS (`no_project`), that attempt is NOT a fault in itself",
+        ],
+        "reason": (
+            "not-needed: a stateless test where the tool is named only to "
+            "exempt a failed probe - 'if the run DOES attempt ANY tool - a "
+            "writer, or a reader such as `project_context` probing for a "
+            "project - and the call fails BECAUSE NO PROJECT EXISTS "
+            "(`no_project`), that attempt is NOT a fault in itself'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/tree-edit/rubric.md",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "`merge_tree_persons` validates before persisting, so a separate `validate_research_schema` call is neither required nor available to this skill (SKILL.md § Validation)",
+        ],
+        "reason": (
+            "not-needed, naming unavailability outright - "
+            "'`merge_tree_persons` validates before persisting, so a "
+            "separate `validate_research_schema` call is neither required "
+            "nor available to this skill (SKILL.md § Validation)'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/tree-edit/rubric.md",
+        "tool": "materialize_facts",
+        "quotes": [
+            "A fact, name, or relationship edge extracted from a source lands on a tree person as research proceeds (at identity-link time, normally via person-evidence's `materialize_facts`)",
+        ],
+        "reason": (
+            "cross-owner - 'A fact, name, or relationship edge extracted "
+            "from a source lands on a tree person as research proceeds (at "
+            "identity-link time, normally via person-evidence's "
+            "`materialize_facts`)'"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/gps-mentor.md",
+        "tool": "record_search",
+        "quotes": [
+            "You do NOT have search tools (`record_search`, `fulltext_search`, `person_read`)",
+        ],
+        "reason": (
+            "negative mention, the canonical shape - 'You do NOT have "
+            "search tools (`record_search`, `fulltext_search`, "
+            "`person_read`)'"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/gps-mentor.md",
+        "tool": "fulltext_search",
+        "quotes": [
+            "You do NOT have search tools (`record_search`, `fulltext_search`, `person_read`)",
+        ],
+        "reason": (
+            "negative mention, the canonical shape - 'You do NOT have "
+            "search tools (`record_search`, `fulltext_search`, "
+            "`person_read`)'"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/gps-mentor.md",
+        "tool": "person_read",
+        "quotes": [
+            "You do NOT have search tools (`record_search`, `fulltext_search`, `person_read`)",
+        ],
+        "reason": (
+            "negative mention, the canonical shape - 'You do NOT have "
+            "search tools (`record_search`, `fulltext_search`, "
+            "`person_read`)'"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/image-reader.md",
+        "tool": "record_read",
+        "quotes": [
+            "The pivot recommendation: read the **indexed** record for this image",
+            "Do NOT use for indexed records (use record_read / record_search)",
+        ],
+        "reason": (
+            "cross-owner: named as the pivot the agent RECOMMENDS to its "
+            "caller, never calls - 'The pivot recommendation: read the "
+            "**indexed** record for this image (`record_read` / "
+            "`record_search` / `search-full-text`)'; its description line "
+            "says 'Do NOT use for indexed records (use record_read / "
+            "record_search)'"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/image-reader.md",
+        "tool": "record_search",
+        "quotes": [
+            "The pivot recommendation: read the **indexed** record for this image",
+            "Do NOT use for indexed records (use record_read / record_search)",
+        ],
+        "reason": (
+            "cross-owner: named as the pivot the agent RECOMMENDS to its "
+            "caller, never calls - 'The pivot recommendation: read the "
+            "**indexed** record for this image (`record_read` / "
+            "`record_search` / `search-full-text`)'; its description line "
+            "says 'Do NOT use for indexed records (use record_read / "
+            "record_search)'"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/proof-conclusion.md",
+        "tool": "collections_search",
+        "quotes": [
+            "Only describe a source as having an \"accessible\" or \"digitized\" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`)",
+        ],
+        "reason": (
+            "descriptive provenance of record data the agent READS, not "
+            "calls - 'Only describe a source as having an \"accessible\" or "
+            "\"digitized\" image when the record data actually contains an "
+            "image reference (e.g. an `imageId`/`artifacts` field on the "
+            "record, or a nonzero image count from "
+            "`collections_search`/`volume_search`)'"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/proof-conclusion.md",
+        "tool": "volume_search",
+        "quotes": [
+            "Only describe a source as having an \"accessible\" or \"digitized\" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`)",
+        ],
+        "reason": (
+            "descriptive provenance of record data the agent READS, not "
+            "calls - 'Only describe a source as having an \"accessible\" or "
+            "\"digitized\" image when the record data actually contains an "
+            "image reference (e.g. an `imageId`/`artifacts` field on the "
+            "record, or a nonzero image count from "
+            "`collections_search`/`volume_search`)'"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-exhaustiveness.md",
+        "tool": "record_search",
+        "quotes": [
+            "nil across `record_search` / `fulltext_search` / `image_search` / external sites after the bounded search-records attempts",
+        ],
+        "reason": (
+            "descriptive: names the searches OTHER skills already ran, as "
+            "the evidence this agent weighs - 'nil across `record_search` / "
+            "`fulltext_search` / `image_search` / external sites after the "
+            "bounded search-records attempts'"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-exhaustiveness.md",
+        "tool": "fulltext_search",
+        "quotes": [
+            "nil across `record_search` / `fulltext_search` / `image_search` / external sites after the bounded search-records attempts",
+        ],
+        "reason": (
+            "descriptive: names the searches OTHER skills already ran, as "
+            "the evidence this agent weighs - 'nil across `record_search` / "
+            "`fulltext_search` / `image_search` / external sites after the "
+            "bounded search-records attempts'"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-exhaustiveness.md",
+        "tool": "image_search",
+        "quotes": [
+            "nil across `record_search` / `fulltext_search` / `image_search` / external sites after the bounded search-records attempts",
+        ],
+        "reason": (
+            "descriptive: names the searches OTHER skills already ran, as "
+            "the evidence this agent weighs - 'nil across `record_search` / "
+            "`fulltext_search` / `image_search` / external sites after the "
+            "bounded search-records attempts'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/direct-first-plan-orchestrator-phrasing.json",
+        "tool": "wiki_search",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright, copied from ut_research_plan_005 (whose three entries above suppress the same line): the direct twin _d02 grades the same localities-entry consumer"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/direct-first-plan-orchestrator-phrasing.json",
+        "tool": "wiki_place_page",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright, copied from ut_research_plan_005 (whose three entries above suppress the same line): the direct twin _d02 grades the same localities-entry consumer"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/direct-first-plan-orchestrator-phrasing.json",
+        "tool": "place_population",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright, copied from ut_research_plan_005 (whose three entries above suppress the same line): the direct twin _d02 grades the same localities-entry consumer"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-plan.md",
+        "tool": "wiki_search",
+        "quotes": [
+            "`locality-guide` (which owns `wiki_search`, `wiki_place_page`, `place_population`), read back from the `localities` section. research-plan does not call those three.",
+        ],
+        "reason": (
+            "negative mention: the body says locality-guide owns these three and research-plan does not call them (folded verbatim from the deleted research-plan SKILL.md, issue #2116)"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-plan.md",
+        "tool": "wiki_place_page",
+        "quotes": [
+            "`locality-guide` (which owns `wiki_search`, `wiki_place_page`, `place_population`), read back from the `localities` section. research-plan does not call those three.",
+        ],
+        "reason": (
+            "negative mention: the body says locality-guide owns these three and research-plan does not call them (folded verbatim from the deleted research-plan SKILL.md, issue #2116)"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-plan.md",
+        "tool": "place_population",
+        "quotes": [
+            "`locality-guide` (which owns `wiki_search`, `wiki_place_page`, `place_population`), read back from the `localities` section. research-plan does not call those three.",
+        ],
+        "reason": (
+            "negative mention: the body says locality-guide owns these three and research-plan does not call them (folded verbatim from the deleted research-plan SKILL.md, issue #2116)"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-plan.md",
+        "tool": "extraction_append",
+        "quotes": [
+            "extraction: `extraction_append` for a FamilySearch record, the record-structurer agent for any other source",
+        ],
+        "reason": (
+            "hand-back routing row: the agent names extraction_append as the owner of a record-extraction request and calls no tool (ROUTING section, issue #2116)"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-plan.md",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "No separate `validate_research_schema` step is needed.",
+        ],
+        "reason": (
+            "negative mention: the body tells the agent the call is not needed (folded verbatim from the deleted research-plan SKILL.md, issue #2116)"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-plan.md",
+        "tool": "record_search",
+        "quotes": [
+            "indexed `record_search` on the surname will fail no matter how many variants you try",
+        ],
+        "reason": (
+            "describes why an indexed search fails and a full-text item is planned instead; research-plan plans the search, search-records runs it (Appendix B, folded verbatim from record-type-guide.md, issue #2116)"
+        ),
+    },
+]
+
+
+def is_suppressed(file: str, tool: str) -> bool:
+    """True when (file, tool) is in the SUPPRESSIONS list."""
+    return any(s["file"] == file and s["tool"] == tool for s in SUPPRESSIONS)
+
+
 _PLUGIN_DELEGATION_RE = re.compile(r"@plugin:([a-z0-9-]+)")
 
 
@@ -100,7 +800,7 @@ def load_manifest_tools(manifest: Path) -> set[str] | None:
         return None
     try:
         data = json.loads(manifest.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         return None
     names = {t.get("name") for t in data.get("tools", []) if isinstance(t, dict)}
     return {n for n in names if isinstance(n, str)}
@@ -196,7 +896,7 @@ def judge_context_mentions(
     """Tool names mentioned in a test's judge_context that aren't declared."""
     try:
         test = json.loads(test_json.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         return set()
     context = test.get("judge_context")
     if not isinstance(context, list):
@@ -251,8 +951,8 @@ def agent_declared_tools(agent_md: Path) -> tuple[set[str], set[str]]:
 
 
 def agent_body_mentions(agent_md: Path, vocabulary: set[str]) -> set[str]:
-    """Tool names mentioned in an agent's body that are in neither its
-    tools: nor its disallowedTools: frontmatter."""
+    """Tool names mentioned in an agent's body that are not in its
+    tools: (or disallowedTools:, if re-added) frontmatter."""
     if not agent_md.exists():
         return set()
     text = agent_md.read_text(encoding="utf-8")
@@ -270,6 +970,7 @@ def main() -> int:
     vocabulary = usable_vocabulary(manifest_tools)
 
     drift_hits = 0
+    suppressed_count = 0
 
     if SKILLS_DIR.is_dir():
         for skill_dir in sorted(SKILLS_DIR.iterdir()):
@@ -284,6 +985,10 @@ def main() -> int:
 
             rubric_md = skill_tests / "rubric.md"
             for tool in sorted(rubric_mentions(rubric_md, vocabulary, declared=declared)):
+                rel_file = f"eval/tests/unit/{skill}/rubric.md"
+                if is_suppressed(rel_file, tool):
+                    suppressed_count += 1
+                    continue
                 drift_hits += 1
                 gh_warning(
                     f"skill `{skill}`'s rubric.md mentions `{tool}`, which is "
@@ -291,7 +996,7 @@ def main() -> int:
                     f"If `{tool}` was folded into another tool, update the "
                     f"grading prose — don't fail runs for not calling a tool "
                     f"the skill can't call.",
-                    file=f"eval/tests/unit/{skill}/rubric.md",
+                    file=rel_file,
                 )
 
             if skill_tests.is_dir():
@@ -299,6 +1004,10 @@ def main() -> int:
                     for tool in sorted(
                         judge_context_mentions(test_path, vocabulary, declared=declared)
                     ):
+                        rel_file = f"eval/tests/unit/{skill}/{test_path.name}"
+                        if is_suppressed(rel_file, tool):
+                            suppressed_count += 1
+                            continue
                         drift_hits += 1
                         gh_warning(
                             f"test `{test_path.name}` (skill `{skill}`) has a "
@@ -306,20 +1015,74 @@ def main() -> int:
                             f"`{skill}`'s allowed-tools {sorted(declared) or '[]'}. "
                             f"The judge is being told to expect a call the skill "
                             f"can't make — update judge_context.",
-                            file=f"eval/tests/unit/{skill}/{test_path.name}",
+                            file=rel_file,
                         )
+
+    # A suite whose subject is an AGENT, not a skill. The loop above keys on
+    # SKILLS_DIR, so a skill-to-agent conversion silently took that suite's
+    # rubric.md and judge_context out of this check entirely -- `citation`
+    # (issue #2799) and `proof-conclusion` (issue #2822) both left by that
+    # door, and `gps-mentor` was never in. The declared set is the agent's
+    # own `tools:`; there is no skill frontmatter to union in.
+    if TESTS_DIR.is_dir():
+        for suite_dir in sorted(TESTS_DIR.iterdir()):
+            suite = suite_dir.name
+            if not suite_dir.is_dir() or (SKILLS_DIR / suite).is_dir():
+                continue
+            agent_md = AGENTS_DIR / f"{suite}.md"
+            if not agent_md.exists():
+                continue
+            declared, _disallowed = agent_declared_tools(agent_md)
+
+            rubric_md = suite_dir / "rubric.md"
+            for tool in sorted(rubric_mentions(rubric_md, vocabulary, declared=declared)):
+                rel_file = f"eval/tests/unit/{suite}/rubric.md"
+                if is_suppressed(rel_file, tool):
+                    suppressed_count += 1
+                    continue
+                drift_hits += 1
+                gh_warning(
+                    f"agent `{suite}`'s rubric.md mentions `{tool}`, which is "
+                    f"not in its `tools:` {sorted(declared) or '[]'}. If "
+                    f"`{tool}` was folded into another tool, update the "
+                    f"grading prose — don't fail runs for not calling a tool "
+                    f"the agent can't call.",
+                    file=rel_file,
+                )
+
+            for test_path in sorted(suite_dir.glob("*.json")):
+                for tool in sorted(
+                    judge_context_mentions(test_path, vocabulary, declared=declared)
+                ):
+                    rel_file = f"eval/tests/unit/{suite}/{test_path.name}"
+                    if is_suppressed(rel_file, tool):
+                        suppressed_count += 1
+                        continue
+                    drift_hits += 1
+                    gh_warning(
+                        f"test `{test_path.name}` (agent `{suite}`) has a "
+                        f"judge_context mentioning `{tool}`, which is not in "
+                        f"its `tools:` {sorted(declared) or '[]'}. The judge is "
+                        f"being told to expect a call the agent can't make "
+                        f"— update judge_context.",
+                        file=rel_file,
+                    )
 
     if AGENTS_DIR.is_dir():
         for agent_md in sorted(AGENTS_DIR.glob("*.md")):
             agent = agent_md.stem
             for tool in sorted(agent_body_mentions(agent_md, vocabulary)):
+                rel_file = f"packages/engine/plugin/agents/{agent_md.name}"
+                if is_suppressed(rel_file, tool):
+                    suppressed_count += 1
+                    continue
                 drift_hits += 1
                 gh_warning(
                     f"agent `{agent}` mentions `{tool}` in its body, but "
-                    f"`{tool}` is in neither its `tools:` nor its "
-                    f"`disallowedTools:` frontmatter. Add it to whichever list "
-                    f"is correct, or update the body if the mention is stale.",
-                    file=f"packages/engine/plugin/agents/{agent_md.name}",
+                    f"`{tool}` is not in its `tools:` frontmatter (no agent "
+                    f"currently declares `disallowedTools:`). Add it to "
+                    f"`tools:` or update the body if the mention is stale.",
+                    file=rel_file,
                 )
 
     if drift_hits:
@@ -330,6 +1093,12 @@ def main() -> int:
     else:
         print("No rubric/judge_context/agent tool-mention drift found.")
 
+    if suppressed_count:
+        print(
+            f"Suppressed {suppressed_count} known false positive(s) "
+            f"({len(SUPPRESSIONS)} entries in SUPPRESSIONS)."
+        )
+
     print("\nWord-collision exemptions (never scanned for, structurally noisy):")
     for tool, reason in sorted(COMMON_WORD_EXEMPTIONS.items()):
         print(f"  - {tool}: {reason}")
@@ -337,9 +1106,9 @@ def main() -> int:
     write_step_summary(
         "Rubric / judge_context / agent tool-mention drift (warn-only)",
         footer=(
-            "Warn-only: this check does not block the build. Roughly 20% of these "
-            "are genuine drift — read them, do not assume noise (see eval/CLAUDE.md "
-            "and issue #1003). Never scanned for: "
+            "Warn-only: this check does not block the build. Unsuppressed "
+            "warnings need triage — read them, do not assume noise (see "
+            "eval/CLAUDE.md and issue #1522). Never scanned for: "
             f"{', '.join(sorted(COMMON_WORD_EXEMPTIONS))}."
         ),
     )

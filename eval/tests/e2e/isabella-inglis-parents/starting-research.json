@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_isabella_inglis_parents",
+    "objective": "Who were the parents of Isabella Inglis, wife of David Young of Edinburgh, and when did the couple marry?",
+    "subject_person_ids": [
+      "KHL9-LKF"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

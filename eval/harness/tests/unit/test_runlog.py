@@ -16,6 +16,8 @@ from harness.runlog import (
     assemble_test_entry,
     build_run_log,
     derive_activated,
+    suppressed_failure,
+    unexpected_pass,
     validate_run_log,
     write_run_log,
 )
@@ -55,7 +57,8 @@ def _stub_run(outcome="pass", validators_passed=True, judge=None, activated=True
         validators=ValidatorResult(
             passed=validators_passed,
             results=[{"name": "test_log_append_only", "passed": validators_passed,
-                      "error": None}],
+                      "error": None,
+                      "outcome": "passed" if validators_passed else "failed"}],
         ),
         judge=judge or _stub_judge(),
     )
@@ -130,19 +133,41 @@ def test_aborted_entry():
     assert entry["outcome"] == "aborted"
 
 
-def test_xfail_remap_failing_run_becomes_xfail():
+def test_xfail_marked_failing_run_keeps_fail_outcome():
+    # Issue #2842: an xfail marker no longer relabels the aggregate. `outcome`
+    # stays the real `fail`; suppression is read from `expected_outcome`.
     judge = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
     entry = _make_entry(
         expected_outcome="xfail",
         runs=[_stub_run(outcome="fail", validators_passed=False, judge=judge)],
     )
-    assert entry["outcome"] == "xfail"
+    assert entry["outcome"] == "fail"
+    assert entry["expected_outcome"] == "xfail"
     assert entry["outcome_summary"]["per_run_outcomes"] == ["fail"]
+    assert suppressed_failure(entry["outcome"], entry["expected_outcome"]) is True
+    assert unexpected_pass(entry["outcome"], entry["expected_outcome"]) is False
 
 
-def test_xfail_remap_passing_run_becomes_xpass():
+def test_xfail_marked_passing_run_keeps_pass_outcome():
+    # Issue #2842: a declared-xfail test that passes keeps `outcome: pass`; the
+    # marker beside it is what flags it as an unexpected pass.
     entry = _make_entry(expected_outcome="xfail")
-    assert entry["outcome"] == "xpass"
+    assert entry["outcome"] == "pass"
+    assert entry["expected_outcome"] == "xfail"
+    assert unexpected_pass(entry["outcome"], entry["expected_outcome"]) is True
+    assert suppressed_failure(entry["outcome"], entry["expected_outcome"]) is False
+
+
+def test_suppression_predicates_ignore_unmarked_tests():
+    # Without an xfail marker, neither predicate fires — an ordinary fail is a
+    # regression and an ordinary pass is clean.
+    assert suppressed_failure("fail", "pass") is False
+    assert suppressed_failure("fail", None) is False
+    assert unexpected_pass("pass", "pass") is False
+    assert unexpected_pass("pass", None) is False
+    # partial is never suppressed or an unexpected pass, even when marked.
+    assert suppressed_failure("partial", "xfail") is False
+    assert unexpected_pass("partial", "xfail") is False
 
 
 def test_xfail_does_not_remap_aborted_runs():
@@ -185,6 +210,24 @@ def test_flaky_false_when_all_outcomes_match():
     entry = _make_entry(runs=runs)
     assert entry["flaky"] is False
     assert entry["outcome"] == "pass"
+
+
+def test_flaky_true_but_outcome_pass_on_majority_green():
+    """Acceptance shape for --runs-per-test 3 (issue #2816): a test whose
+    three runs disagree pass/pass/fail records flaky=true even though the
+    modal outcome aggregates to `pass`. This is the case a gate reading
+    `outcome` would call green — the reason the human reads `flaky`, not
+    `outcome`, off the scratch log."""
+    runs = [
+        _stub_run(outcome="pass"),
+        _stub_run(outcome="pass"),
+        _stub_run(outcome="fail", validators_passed=False,
+                  judge=JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)),
+    ]
+    entry = _make_entry(runs=runs)
+    assert entry["flaky"] is True
+    assert entry["outcome"] == "pass"  # modal; tie-break not reached
+    assert entry["outcome_summary"]["per_run_outcomes"] == ["pass", "pass", "fail"]
 
 
 # ---- aggregate helpers ---------------------------------------------------
@@ -265,6 +308,51 @@ def test_envelope_scratch_run_validates():
     assert log["releasable"] is False
 
 
+@pytest.mark.parametrize("retired", ["xfail", "xpass"])
+def test_validate_rejects_retired_outcome_values(retired):
+    # Issue #2842: xfail/xpass are no longer valid `outcome` enum values. The
+    # harness validates every log it writes (runlog.py write path), so tightening
+    # the enum is enforced on write. Break the enum edit and this test goes green,
+    # which is the falsifiability check.
+    import jsonschema
+
+    log = _wrap_envelope(_make_entry())
+    log["tests"][0]["outcome"] = retired
+    with pytest.raises(jsonschema.ValidationError):
+        validate_run_log(log)
+
+
+@pytest.mark.parametrize("tool_search", [True, False])
+def test_envelope_records_tool_search_and_validates(tool_search):
+    """The schema is `additionalProperties: false`, so a recorded setting the
+    schema does not list fails the write — here, mid-run, after the money."""
+    log = build_run_log(
+        skill="search-familysearch-wiki", version=None, released=False,
+        releasable=False, invocation="skill", timestamp="2026-10-09_10-30-00",
+        harness_version="0.2.0", model="claude-sonnet-4-6",
+        judge_prompt_hash="b" * 64, snapshot={}, tests=[_make_entry()],
+        tool_search=tool_search,
+    )
+    assert log["tool_search"] is tool_search
+    validate_run_log(log)
+
+
+def test_envelope_omits_tool_search_when_not_given():
+    """Absent is the shape of every log written before the field."""
+    log = _wrap_envelope(_make_entry())
+    assert "tool_search" not in log
+    validate_run_log(log)
+
+
+def test_validate_rejects_a_non_boolean_tool_search():
+    import jsonschema
+
+    log = _wrap_envelope(_make_entry())
+    log["tool_search"] = "false"
+    with pytest.raises(jsonschema.ValidationError):
+        validate_run_log(log)
+
+
 def test_envelope_totals_sum_across_tests():
     e1 = _make_entry(test_id="ut_001")
     e2 = _make_entry(test_id="ut_002")
@@ -285,6 +373,51 @@ def test_envelope_totals_sum_across_tests():
     assert log["totals"]["input_tokens"] == 2 * e1["totals"]["input_tokens"]
     assert log["totals"]["total_cost_usd"] == pytest.approx(2 * e1["totals"]["total_cost_usd"])
     validate_run_log(log)
+
+
+def test_trigger_grading_mode_entry_validates_against_both_schema_trees():
+    """A run-log entry with grading_mode='trigger' must pass the real write-path
+    validator (validate_run_log, docs tree) AND the packages/schema mirror.
+
+    The 2026-09-13 paid `research` run aborted exactly here (issue #2156): the
+    harness computed grading_mode='trigger' but the schema enum omitted it, so
+    validation raised mid-run. This exercises the actual jsonschema validators,
+    not a string check, and fails if either schema tree rejects 'trigger'.
+    """
+    import jsonschema
+    from referencing import Registry, Resource
+
+    entry = assemble_test_entry(
+        test_id="ut_research_001",
+        test_type="positive",
+        expected_outcome="pass",
+        scenario=None,
+        mcp_fixtures=[],
+        runs=[_stub_run()],
+        timestamp_for_run_id="2026-09-13_15-11-07",
+        grading_mode="trigger",
+        dimensions_gate_outcome=False,
+    )
+    log = _wrap_envelope(entry, skill="research")
+
+    # Real write-path validator (docs/specs/schemas tree) — the exact call the
+    # harness makes before writing a run log.
+    validate_run_log(log)
+
+    # packages/schema mirror — rebuild the same validator against that tree so a
+    # divergence there also fails.
+    schemas_dir = Path(__file__).resolve().parents[4] / "packages/schema/schemas"
+    schema = json.loads((schemas_dir / "run-log.schema.json").read_text(encoding="utf-8"))
+    registry = Registry()
+    enums_path = schemas_dir / "enums.schema.json"
+    if enums_path.exists():
+        registry = registry.with_resource(
+            uri="enums.schema.json",
+            resource=Resource.from_contents(
+                json.loads(enums_path.read_text(encoding="utf-8"))
+            ),
+        )
+    jsonschema.Draft202012Validator(schema, registry=registry).validate(log)
 
 
 # ---- write_run_log -------------------------------------------------------
@@ -384,6 +517,34 @@ def test_activated_negative_skill_in_skills_invoked_but_pure_routing_text():
     ) is False
 
 
+def test_activated_counts_the_hand_off_a_stop_at_stub_run_ended_on():
+    """A `stop_at_stub` run ends at the router's first stubbed hand-off, before it
+    can write or summarize, so its short narration naming the next row is routing,
+    not activation, unless the recorded hand-off counts (#3119)."""
+    text = "No questions yet. Routing to question-selection first, then research-plan."
+    kwargs = dict(
+        skill="research",
+        skills_invoked=["research"],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=[],
+        text_response=text,
+        other_skill_names={"research-plan"},
+    )
+    assert derive_activated(**kwargs) is False
+    assert derive_activated(**kwargs, handed_off=True) is True
+
+
+def test_a_hand_off_does_not_activate_a_skill_that_never_ran():
+    assert derive_activated(
+        skill="research",
+        skills_invoked=[],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=[],
+        text_response="",
+        handed_off=True,
+    ) is False
+
+
 def test_activated_files_created_attributed_only_when_skill_invoked():
     """A sibling skill wrote a markdown file; the skill under test was
     never invoked. Should not be attributed."""
@@ -477,8 +638,9 @@ def test_write_prunes_the_annotation_sibling_too(tmp_path):
 
 
 def test_write_never_prunes_the_newest(tmp_path):
-    """check_runlogs rule 2 gates on a skill's latest run log; pruning must
-    never move which file that is."""
+    """check_runlogs rule 2 gates on the newest candidate a PR adds, or on the
+    skill's latest run log when it adds none; pruning must never move which file
+    that is."""
     for d in range(1, 10):
         _write_at(tmp_path, f"2026-07-{d:02d}_10-00-00")
     assert _candidates(tmp_path)[-1] == "v1_2026-07-09_10-00-00.json"
@@ -599,3 +761,346 @@ def test_a_run_log_without_the_new_fields_still_validates():
             del run["cache_creation_input_tokens"]
             del run["model_usage"]
     validate_run_log(log)
+
+
+def test_aggregate_excludes_a_validator_failing_run():
+    """#2057: a validator-failing run is GRADED but stays out of the modal.
+
+    Load-bearing test for the `r.validators.passed is False` disjunct, and it
+    has to be synthetic. Over the 129 committed run logs, ZERO runs have
+    `validators.passed is False` together with `judge.skipped is False`, because
+    the behaviour that produces that shape is the one this PR introduces. So a
+    dump-and-diff of `aggregate_dimensions` over committed data is empty whether
+    the guard is the intended one, `or False`, or absent.
+
+    **THE ARITHMETIC IS THE TEST, and getting it wrong makes this vacuous.**
+    The excluded run's score must be the MAJORITY, or the modal lands on the
+    same value with and without the guard and the assertion pins nothing. This
+    test shipped once in that broken form: `(3,pass),(3,pass),(1,fail)` gives 3
+    either way (2-1 modal), and `(3,pass),(1,pass),(1,fail)` gives 1 either way.
+    Both looked like flips and neither was one. `(3,pass),(1,fail),(1,fail)` is
+    the shape that discriminates: 3 with the guard, 1 without.
+    """
+    def _r(score, validators_passed):
+        return SingleRun(
+            outcome="pass", aborted_reason=None, duration_ms=0,
+            input_tokens=0, cached_input_tokens=0, output_tokens=0, skill_cost_usd=0.0,
+            output={"text_response": "", "activated": True, "skills_invoked": [],
+                    "tool_calls": [], "files_created": []},
+            validators=ValidatorResult(passed=validators_passed, results=[]),
+            judge=JudgeResult(
+                skipped=False,
+                dimensions=[{"source": "base", "name": "Correctness",
+                             "score": score, "rationale": "x"}],
+                judge_cost_usd=0.0,
+            ),
+        )
+
+    # ONE clean run at 3, TWO validator-failing runs at 1. Dropping the failures
+    # leaves a lone 3; counting them makes 1 the 2-1 majority. So the guard is
+    # the only thing that can produce 3 here.
+    excluded = aggregate_dimensions([_r(3, True), _r(1, False), _r(1, False)])
+    assert [d["score"] for d in excluded] == [3], (
+        "a validator-failing run's scores must stay out of aggregated_dimensions; "
+        "getting 1 here means the guard is not excluding them"
+    )
+
+    # THE FLIP. Identical dimensions, only validators.passed moves. This is what
+    # makes the assertion above a test: the same three scores must aggregate
+    # DIFFERENTLY once the two failing runs are allowed in.
+    moved = aggregate_dimensions([_r(3, True), _r(1, True), _r(1, True)])
+    assert [d["score"] for d in moved] == [1], (
+        "with every run counted the modal follows the 2-1 majority, so the "
+        "excluded case above cannot be explained by the modal logic alone"
+    )
+
+    # `include_validator_failed=True` is the switch `review_dimensions` is
+    # built with. Same runs as `excluded`, only the flag moves: it must land
+    # where `moved` did, or the flag lifts nothing.
+    lifted = aggregate_dimensions(
+        [_r(3, True), _r(1, False), _r(1, False)], include_validator_failed=True
+    )
+    assert [d["score"] for d in lifted] == [1]
+
+
+def test_aggregate_excludes_a_validator_failing_run_even_when_it_is_the_only_run():
+    """The single-run case, which is the ONLY shape the committed corpus has:
+    2120 of 2120 test entries carry exactly one run, so modal-across-runs never
+    actually runs on real data. A lone validator-failing run must produce an
+    empty aggregate — which is what keeps every committed baseline where it
+    was. It no longer keeps the test out of review: the next test pins that
+    its scores reach `review_dimensions` instead."""
+    run = SingleRun(
+        outcome="fail", aborted_reason=None, duration_ms=0,
+        input_tokens=0, cached_input_tokens=0, output_tokens=0, skill_cost_usd=0.0,
+        output={"text_response": "", "activated": True, "skills_invoked": [],
+                "tool_calls": [], "files_created": []},
+        validators=ValidatorResult(passed=False, results=[]),
+        judge=JudgeResult(
+            skipped=False,
+            dimensions=[{"source": "base", "name": "Correctness", "score": 1,
+                         "rationale": "graded for diagnosis"}],
+            judge_cost_usd=0.0,
+        ),
+    )
+    assert run.judge.dimensions, "the run IS graded — that is #2057"
+    assert aggregate_dimensions([run]) == [], "but it is not in the aggregate"
+
+
+def test_review_dimensions_carry_a_validator_failing_test_the_aggregate_drops():
+    """Every annotation plane — the sampler's `is_gradeable`, CI rule 3, the
+    CRUD UI's completeness — reads ONE array per test. While that array was
+    `aggregated_dimensions`, a validator-failing test (`fail`, judge-scored,
+    mandatory by every trigger) demanded zero corrections and was filtered out
+    before the mandatory slot ran: 4 of the 7 non-passing tests on one
+    record-extraction run never reached review while CI passed. The array they
+    read now is `review_dimensions`; the aggregate keeps the #2057 exclusion.
+    """
+    entry = _make_entry(runs=[_stub_run(outcome="fail", validators_passed=False)])
+    assert entry["outcome"] == "fail"
+    summary = entry["outcome_summary"]
+    assert summary["aggregated_dimensions"] == [], "the #2057 exclusion stands"
+    assert [(d["source"], d["name"], d["score"]) for d in summary["review_dimensions"]] == [
+        (d["source"], d["name"], d["score"]) for d in _stub_judge().dimensions
+    ]
+    # And the schema admits the field — the run log is what CI and the UI read.
+    validate_run_log(_wrap_envelope(entry))
+
+
+def test_review_dimensions_equal_the_aggregate_whenever_it_has_rows():
+    """Only the empty aggregate is replaced. A clean test's review rows ARE its
+    aggregate, and on a MIXED test — one clean run beside a validator-failing
+    one — the review rows are still the clean modal, not a re-modal over both.
+    Otherwise a correction's `llm_score` would disagree with the aggregate row
+    `judge_report` and `skill_gate` join it to."""
+    clean = _make_entry(runs=[_stub_run()])
+    assert clean["outcome_summary"]["review_dimensions"] == clean["outcome_summary"]["aggregated_dimensions"]
+    assert clean["outcome_summary"]["review_dimensions"], "vacuous if both are empty"
+
+    all_ones = JudgeResult(
+        skipped=False,
+        dimensions=[
+            {**d, "score": 1, "rationale": "defective"} for d in _stub_judge().dimensions
+        ],
+        judge_cost_usd=0.001,
+    )
+    mixed = _make_entry(
+        runs=[_stub_run(), _stub_run(outcome="fail", validators_passed=False, judge=all_ones)]
+    )
+    summary = mixed["outcome_summary"]
+    assert summary["review_dimensions"] == summary["aggregated_dimensions"]
+    assert [d["score"] for d in summary["review_dimensions"]] == [3, 3, None, 3], (
+        "the failing run's 1s must not leak into the review rows when a clean "
+        "run supplied an aggregate"
+    )
+
+
+def test_review_dimensions_stay_empty_when_nothing_was_judged():
+    """A skipped judge (abort, or the judge raised) has no rows anywhere, so the
+    test stays ungradeable and rule 3 still warns about it rather than
+    requiring it."""
+    skipped = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
+    entry = _make_entry(runs=[_stub_run(outcome="fail", validators_passed=False, judge=skipped)])
+    assert entry["outcome_summary"]["aggregated_dimensions"] == []
+    assert entry["outcome_summary"]["review_dimensions"] == []
+
+
+def test_aggregate_still_counts_a_run_whose_validators_are_unknown():
+    """`validators.passed` is `None` (not False) on paths where validators never
+    ran to a verdict — `_aborted_entry` builds exactly that
+    (`ValidatorResult(passed=None, ...)`, used at test_runlog.py:126,155). A
+    truthiness guard would silently drop those too. This pins that the disjunct
+    keys on a real failure, and it is the one case where `not passed` and
+    `passed is False` disagree."""
+    run = SingleRun(
+        outcome="pass", aborted_reason=None, duration_ms=0,
+        input_tokens=0, cached_input_tokens=0, output_tokens=0, skill_cost_usd=0.0,
+        output={"text_response": "", "activated": True, "skills_invoked": [],
+                "tool_calls": [], "files_created": []},
+        validators=ValidatorResult(passed=None, results=[]),
+        judge=JudgeResult(
+            skipped=False,
+            dimensions=[{"source": "base", "name": "Correctness", "score": 3,
+                         "rationale": "x"}],
+            judge_cost_usd=0.0,
+        ),
+    )
+    assert [d["score"] for d in aggregate_dimensions([run])] == [3]
+def test_no_result_message_reaches_the_run_log_and_validates():
+    """Issue #2189: SingleRun is a dataclass, but assemble_test_entry hand-
+    builds the persisted `run_entry` dict field by field rather than via
+    reflection — a field added only to the dataclass (and to skill_runner.py/
+    orchestrator.py's threading) never reaches this dict or the JSON anyone
+    reads. Caught in plan review before landing; this is the regression test
+    that would have caught it during implementation."""
+    run = _stub_run()
+    run.no_result_message = True
+    entry = assemble_test_entry(
+        test_id="ut_no_result_message_001", test_type="negative",
+        expected_outcome="pass", scenario=None, mcp_fixtures=[], runs=[run],
+        timestamp_for_run_id="2026-09-07_10-00-00",
+    )
+    log = _wrap_envelope(entry)
+    validate_run_log(log)
+
+    logged = log["tests"][0]["runs"][0]
+    assert logged["no_result_message"] is True
+
+
+def test_as_dicts_output_satisfies_the_run_log_schema():
+    """The real path, end to end: whatever `as_dicts` emits must validate.
+
+    Every other test in this file hand-writes the validator result dicts, so
+    they pin the schema against a fixture rather than against the harness's own
+    output — dropping `outcome` from `as_dicts` leaves all of them green. This
+    is the only test that goes red when the writer and the schema disagree.
+    """
+    from harness.validator_runner import ValidatorRunResult, as_dicts
+
+    results = as_dicts([
+        ValidatorRunResult(name="test_ran", passed=True, error=None),
+        ValidatorRunResult(name="test_failed", passed=False, error="boom"),
+        ValidatorRunResult(name="test_skipped", passed=True,
+                           error="skipped: not this scenario", skipped=True),
+    ])
+    judge = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
+    run = _stub_run(outcome="fail", validators_passed=False, judge=judge)
+    run.validators = ValidatorResult(passed=False, results=results)
+
+    log = _wrap_envelope(_make_entry(expected_outcome="xfail", runs=[run]))
+    validate_run_log(log)  # raises ValidationError on a shape the schema refuses
+
+    emitted = log["tests"][0]["runs"][0]["validators"]["results"]
+    assert [r["outcome"] for r in emitted] == ["passed", "failed", "skipped"]
+
+
+# --- one-word skill names: a name, not the English word ---------------------
+
+_OTHERS = {"research", "timeline", "record-extraction"}
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        # Verbatim from ut_search_wiki_004, v1_2026-09-21_18-16-58.
+        "I'm sorry, but I only handle genealogy research tasks — looking up "
+        "Albert Einstein on Wikipedia falls outside that scope.",
+        "This request is outside this toolkit's scope. I build a timeline of events.",
+        # The other direction for the markup arm: emphasis around an ordinary
+        # English use is still ordinary English. Widening the class until these
+        # matched would re-break the decline the arm exists to allow.
+        "This agent handles genealogy **research** tasks such as lookups.",
+        "She has good research skills and reads Latin.",
+    ],
+)
+def test_a_one_word_skill_name_used_as_english_is_not_routing(text):
+    from harness.runlog import _is_substantive
+
+    assert _is_substantive(text, other_skill_names=_OTHERS) is True
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Use the `research` skill for that.",
+        "Try /research instead.",
+        "That belongs to the research skill.",
+        "The timeline agent handles that one.",
+        "This is a record-extraction job.",
+        # Closing markup between the name and "skill". The suffix arm matched
+        # only an unadorned name, so these two -- the common way a decline names
+        # the lane it hands off to -- were scored substantive.
+        "That belongs to the **timeline** skill.",
+        'Try the "research" skill.',
+    ],
+)
+def test_a_skill_name_written_as_a_name_is_still_routing(text):
+    from harness.runlog import _is_substantive
+
+    assert _is_substantive(text, other_skill_names=_OTHERS) is False
+
+
+# ---- busiest-moment capture (subagents / main_thread) ---------------------
+
+
+def _validate_both_schema_trees(log):
+    """The write-path validator (docs tree) and the packages/schema mirror."""
+    import jsonschema
+    from referencing import Registry, Resource
+
+    validate_run_log(log)
+    schemas_dir = Path(__file__).resolve().parents[4] / "packages/schema/schemas"
+    schema = json.loads((schemas_dir / "run-log.schema.json").read_text(encoding="utf-8"))
+    registry = Registry()
+    enums_path = schemas_dir / "enums.schema.json"
+    if enums_path.exists():
+        registry = registry.with_resource(
+            uri="enums.schema.json",
+            resource=Resource.from_contents(
+                json.loads(enums_path.read_text(encoding="utf-8"))
+            ),
+        )
+    jsonschema.Draft202012Validator(schema, registry=registry).validate(log)
+
+
+def _captured_entry(run):
+    entry = assemble_test_entry(
+        test_id="ut_check_warnings_001",
+        test_type="positive",
+        expected_outcome="pass",
+        scenario=None,
+        mcp_fixtures=[],
+        runs=[run],
+        timestamp_for_run_id="2026-10-06_10-00-00",
+    )
+    return entry, _wrap_envelope(entry, skill="check-warnings")
+
+
+def test_a_captured_run_serializes_and_validates_against_both_schema_trees():
+    """Both trees declare `additionalProperties: false` on a run, so a field the
+    serializer writes and a schema omits makes every paid suite end with no log."""
+    run = _stub_run()
+    run.subagents = [{
+        "agent_type": "check-warnings",
+        "num_assistant_turns": 3,
+        "max_output_tokens": 900,
+        "hit_output_cap": False,
+        "runaway_thinking": False,
+        "usage": {"input_tokens": 9, "output_tokens": 900,
+                  "cache_read_input_tokens": 40_000, "cache_creation_input_tokens": 1_200},
+        "peak_window_tokens": 41_230,
+        "compactions": [{"trigger": "auto", "pre_tokens": 167_000, "post_tokens": None}],
+        "models": ["claude-sonnet-4-6"],
+    }]
+    run.subagent_capture_status = "captured"
+    run.main_thread = {"peak_window_tokens": 9_100, "compactions": [],
+                       "models": ["claude-sonnet-4-6"]}
+    entry, log = _captured_entry(run)
+
+    written = entry["runs"][0]
+    assert written["subagents"][0]["peak_window_tokens"] == 41_230
+    assert written["subagent_capture_status"] == "captured"
+    assert written["main_thread"]["peak_window_tokens"] == 9_100
+    _validate_both_schema_trees(log)
+
+
+def test_an_uncaptured_run_writes_no_capture_keys_and_still_validates():
+    """Absent means "not captured" — never an empty list or a zeroed block."""
+    entry, log = _captured_entry(_stub_run())
+    written = entry["runs"][0]
+    assert "subagents" not in written
+    assert "subagent_capture_status" not in written
+    assert "main_thread" not in written
+    _validate_both_schema_trees(log)
+
+
+def test_a_malformed_main_thread_is_rejected_by_both_schema_trees():
+    """The schema must be able to fail: an extra key in main_thread is refused."""
+    import jsonschema
+
+    run = _stub_run()
+    run.subagents, run.subagent_capture_status = [], "matched_no_transcripts"
+    run.main_thread = {"peak_window_tokens": 1, "compactions": [], "models": [], "extra": 1}
+    _, log = _captured_entry(run)
+    with pytest.raises(jsonschema.ValidationError):
+        _validate_both_schema_trees(log)

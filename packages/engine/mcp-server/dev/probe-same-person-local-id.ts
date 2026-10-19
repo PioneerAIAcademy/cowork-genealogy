@@ -38,6 +38,7 @@
  * Usage:
  *   npx tsx dev/probe-same-person-local-id.ts
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { samePerson } from "../src/tools/same-person.js";
 import type { SimplifiedGedcomX } from "../src/types/gedcomx.js";
 
@@ -115,7 +116,7 @@ for (const arm of arms) {
       primaryId1: "I1",
       gedcomx2: arm.tree,
       primaryId2: "I1",
-    });
+    }, LOCAL);
     const score = "score" in result ? (result.score as number) : null;
     scores[arm.label] = score;
     console.log(`${arm.label}  ->  score=${score}`);

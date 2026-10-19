@@ -3,9 +3,18 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
 import { api, ApiError } from '../api'
-import { foldChatEvent, type ChatMessage } from './chatEvents'
+import {
+  foldChatEvent,
+  trackLiveTask,
+  withOpeningTurn,
+  stripOpeningTurn,
+  type ChatMessage,
+  clearQueued,
+  turnOutcomeLabel
+} from './chatEvents'
 
-const OPENING_TURN = "Let's start a new genealogy research project."
+export const SESSION_EXPIRED_TEXT =
+  "This session is more than 72 hours old and can't be continued. Start a new session."
 
 // How close to the bottom still counts as "at the bottom". Deliberately not an
 // equality check: fractional device pixel ratios and sub-pixel scrollHeight
@@ -140,6 +149,10 @@ export default function ChatPane({
 }): React.JSX.Element {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
+  // Reasoning blocks are hidden by default: the lay user never asked for the
+  // model's private reasoning, and two alpha testers read the collapsed block's
+  // label as a cryptic message. The toggle is for whoever wants to look.
+  const [showThinking, setShowThinking] = useState(false)
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -150,7 +163,19 @@ export default function ChatPane({
   const [elapsed, setElapsed] = useState(0)
   const turnStartRef = useRef(0)
   const [activity, setActivity] = useState<AgentActivity | null>(null)
+  // Subagent tasks currently running, keyed by task_id. A ref, not state: it is
+  // read inside the setMessages updater, which must see the value as of the
+  // event being folded, not as of the last render. See trackLiveTask.
+  const liveTasksRef = useRef<ReadonlySet<string>>(new Set())
   const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
+  // Set when /connect refused the session as more than 72 h old (#3406). The
+  // connection never opens, so the composer is replaced for good.
+  const [expired, setExpired] = useState<string | null>(null)
+  // 1c: the label for how the last turn ended, or null for an ordinary finish.
+  const [outcome, setOutcome] = useState<string | null>(null)
+  // 1b: the server is holding a message for this session. Distinct from the per-bubble
+  // `queued` flag, which only the tab that sent it knows about.
+  const [queuedOnServer, setQueuedOnServer] = useState(false)
   const { detached, follow, scrollToBottom } = useStickToBottom(scrollRef)
 
   // Append agent_event content onto the last assistant message (the streaming one).
@@ -159,12 +184,28 @@ export default function ChatPane({
     if (kind === 'turn_done') {
       setBusy(false)
       setActivity(null)
+      // 1b: a message held while the turn ran is picked up now, so nothing
+      // should still read as waiting.
+      setMessages(clearQueued)
+      // 1c: say WHY the run ended. Without this a budget-capped or stalled run is
+      // indistinguishable from a finished one.
+      setOutcome(turnOutcomeLabel(ev.outcome, ev.limit))
+      // A task killed via TaskUpdated emits no task_done on the wire, so the
+      // set is reset at turn end rather than trusted to drain itself.
+      liveTasksRef.current = new Set()
       return
     }
+    // Deliberately inert here. Busy is set in send() and on a `turn_active`
+    // status, never from this frame -- but without an explicit return it falls
+    // through to foldChatEvent, which appends an empty assistant bubble. That
+    // is invisible whenever the reply fills it, and stays on screen when a turn
+    // ends with no content: a Stop taken before the first token.
+    if (kind === 'turn_start') return
     // Subagent lifecycle. Not chat content — this drives the status line, so a
-    // long delegation reads as "record-extractor · person_read · 12 tools"
+    // long delegation reads as "record-structurer · sidecar_read · 2 tools"
     // instead of an unattributed spinner.
     if (kind === 'task_started' || kind === 'task_progress') {
+      liveTasksRef.current = trackLiveTask(liveTasksRef.current, kind, ev)
       setActivity({
         agent: String(ev.agent ?? 'subagent'),
         lastTool: String(ev.last_tool ?? ''),
@@ -173,9 +214,12 @@ export default function ChatPane({
       return
     }
     if (kind === 'task_done') {
+      liveTasksRef.current = trackLiveTask(liveTasksRef.current, kind, ev)
       setActivity(null)
       return
     }
+    // Not chat content: without this return the fold would open an empty bubble.
+    if (kind === 'auto_continue_paused') return
     if (kind === 'usage') {
       // Per-turn cost/tokens, emitted once just before turn_done. Not a chat
       // message — bubble it up to the (alpha-gated) session cost meter.
@@ -189,7 +233,7 @@ export default function ChatPane({
     }
     // The text/thinking/tool accumulation lives in `foldChatEvent` (chatEvents.ts)
     // so it can be unit-tested without a DOM — see #1312.
-    setMessages((prev) => foldChatEvent(prev, kind, ev))
+    setMessages((prev) => foldChatEvent(prev, kind, ev, liveTasksRef.current))
   }
 
   useEffect(() => {
@@ -198,13 +242,30 @@ export default function ChatPane({
       else if (msg.type === 'user_msg')
         // Replayed transcript on (re)connect — the server only sends user_msg
         // during history replay; live input is added locally in send().
-        setMessages((prev) => [...prev, { role: 'user', text: String(msg.text ?? ''), tools: [] }])
+        setMessages((prev) => [
+          ...prev,
+          { role: 'user', text: stripOpeningTurn(String(msg.text ?? '')), tools: [] }
+        ])
       else if (msg.type === 'status' && msg.state === 'chat_ready') setReady(true)
       // A turn was already running when we (re)connected — a reload mid-turn, or
       // a second tab. Without this the indicator is idle while the agent works,
       // because busy is otherwise set only locally in send(). turn_done clears it.
       else if (msg.type === 'status' && msg.state === 'turn_active') setBusy(true)
+      // 1b: a message is held on the server. The bubble is marked locally in send(),
+      // but a reload or a second tab learns it only from here.
+      else if (msg.type === 'status' && msg.state === 'turn_queued') setQueuedOnServer(true)
+      else if (msg.type === 'status' && msg.state === 'turn_unqueued') setQueuedOnServer(false)
       else if (msg.type === 'conn_state') setConnState(msg.state as 'open' | 'reconnecting')
+      else if (msg.type === 'status' && msg.state === 'session_expired') {
+        // A turn may have been running when the old socket dropped; nothing will
+        // ever end it, so clear every indicator that would keep ticking.
+        setReady(false)
+        setConnState('open')
+        setBusy(false)
+        setQueuedOnServer(false)
+        setOutcome(null)
+        setExpired(String(msg.message ?? SESSION_EXPIRED_TEXT))
+      }
       else if (msg.type === 'status' && msg.state === 'chat_error') {
         setReady(false)
         // Reconnect attempts are over — stop the "Reconnecting…" spinner so the
@@ -239,9 +300,20 @@ export default function ChatPane({
 
   const send = (text: string): void => {
     const trimmed = text.trim()
-    if (!trimmed || busy) return
-    setMessages((prev) => [...prev, { role: 'user', text: trimmed, tools: [] }])
-    conn.send({ type: 'user_msg', text: trimmed })
+    // 1b: `busy` is NOT a reason to refuse. Under continuous work a turn is the
+    // whole job -- a median of 53 minutes -- so the old `|| busy` guard meant
+    // typing and pressing Enter did nothing at all, silently, for most of a run.
+    // The server holds a message sent mid-turn and enqueues it when the turn
+    // ends; the bubble says so.
+    if (!trimmed) return
+    // A new session's first message is the opening turn: the canned opener goes
+    // on the wire ahead of it so init-project runs and consumes the objective in
+    // one turn (PR #2649), instead of a canned turn that asks "who?" first.
+    const opening = isNew && !startedRef.current
+    startedRef.current = true
+    setMessages((prev) => [...prev, { role: 'user', text: trimmed, tools: [], queued: busy }])
+    conn.send({ type: 'user_msg', text: opening ? withOpeningTurn(trimmed) : trimmed })
+    setOutcome(null) // 1c: a new message supersedes how the last turn ended
     setBusy(true)
     setInput('')
     // Sending is an unambiguous "I'm back at the live edge" — re-attach even if
@@ -249,9 +321,11 @@ export default function ChatPane({
     scrollToBottom()
   }
 
-  // Ask the agent to abort the running turn. The runner forwards this to the SDK
-  // (or cancels the mock); either way the turn ends with turn_done, which clears
-  // busy. Fire-and-forget — the button reflects intent, turn_done confirms it.
+  // Ask the agent to abort the running turn. On the alpha the runner forwards this to
+  // the SDK (or cancels the mock); on the prototype POST /interrupt raises a flag the
+  // worker reads before the next tool call, which it halts. Either way the turn ends with
+  // turn_done, which clears busy. Fire-and-forget — the button reflects intent,
+  // turn_done confirms it.
   const stop = (): void => {
     if (!busy) return
     conn.send({ type: 'interrupt' })
@@ -276,15 +350,6 @@ export default function ChatPane({
     }
   }
 
-  // New session: auto-send the opening turn so init-project runs conversationally.
-  useEffect(() => {
-    if (isNew && !startedRef.current) {
-      startedRef.current = true
-      send(OPENING_TURN)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isNew])
-
   return (
     <div className="chatBody">
       <div className="chatScrollArea">
@@ -292,7 +357,11 @@ export default function ChatPane({
           {messages.length === 0 && (
             <div className="chatPlaceholder">
               <p className="muted small">
-                {ready ? 'Say hello to start.' : 'Connecting to the agent…'}
+                {expired
+                  ? "This session's chat can't be shown."
+                  : ready
+                    ? 'Say who you want to research and what you want to find out.'
+                    : 'Connecting to the agent…'}
               </p>
             </div>
           )}
@@ -308,7 +377,7 @@ export default function ChatPane({
                   ))}
                 </div>
               )}
-              {(m.thinking || m.streamThinking) && (
+              {showThinking && (m.thinking || m.streamThinking) && (
                 <details className="thinkingBlock">
                   <summary>💭 Model&rsquo;s private reasoning — not its answer</summary>
                   <div className="thinkingBody">
@@ -322,6 +391,16 @@ export default function ChatPane({
                   <Markdown remarkPlugins={[remarkGfm]}>{m.text}</Markdown>
                 </div>
               )}
+              {/* 1b: the agent is mid-turn, so this one waits for the next step
+                  boundary rather than interrupting. Without the label a message
+                  that visibly went nowhere reads as dropped. */}
+              {/* Set locally at send time, so it renders on BOTH transports -- and only
+                  the prototype answers at a step boundary. The alpha's runner holds a
+                  pending message until `turn_task` is done, which under 1d is the whole
+                  job, so a step promise here is false for alpha testers. The
+                  server-confirmed line below keeps the specific wording: it is driven by
+                  a `turn_queued` frame only the prototype sends. */}
+              {m.queued && <div className="msgQueued">Waiting — sent, not yet picked up</div>}
               {/* In-flight text, rendered as plain preformatted text: markdown is
                   routinely mid-token at delta granularity, and re-parsing a partial
                   document every frame makes list/code blocks flicker as they close. */}
@@ -338,6 +417,13 @@ export default function ChatPane({
               as progress (the failure mode that hid the 2026-07-20 disconnect). */}
           {connState === 'reconnecting' ? (
             <div className="typing">●●● Reconnecting…</div>
+          ) : outcome && !busy ? (
+            <div className="turnOutcome">{outcome}</div>
+          ) : queuedOnServer && !messages.some((m) => m.queued) ? (
+            // The server is holding a message this tab did not send — another tab, or
+            // this one before a reload. Without this the feed looks idle while a message
+            // sits waiting.
+            <div className="turnOutcome">A message is waiting to be picked up at the next step.</div>
           ) : (
             busy && (
               <div className="typing">
@@ -379,57 +465,82 @@ export default function ChatPane({
 
       {uploadError && <div className="chatUploadError">{uploadError}</div>}
 
-      <form
-        className="chatInputBar"
-        onSubmit={(e) => {
-          e.preventDefault()
-          send(input)
-        }}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          style={{ display: 'none' }}
-          onChange={(e) => {
-            const f = e.target.files?.[0]
-            if (f) void handleFile(f)
+      {expired ? (
+        <div className="chatExpired" role="status">
+          {expired}
+        </div>
+      ) : (
+        <form
+          className="chatInputBar"
+          onSubmit={(e) => {
+            e.preventDefault()
+            send(input)
           }}
-        />
-        <button
-          type="button"
-          className="chatAttach"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={busy || uploading || !ready}
-          title="Attach a document or image for the agent to read"
-          aria-label="Attach a document or image"
         >
-          {uploading ? '…' : '📎'}
-        </button>
-        <textarea
-          className="chatTextarea"
-          placeholder={ready ? 'Message the agent…' : 'Connecting…'}
-          value={input}
-          rows={2}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              send(input)
-            }
-          }}
-        />
-        {/* While a turn runs, Send becomes Stop — the only escape from a long
-            turn used to be a page reload (interrupt was a no-op end to end). */}
-        {busy ? (
-          <button className="chatStop" type="button" onClick={stop} title="Stop the current turn">
-            Stop
+          <input
+            ref={fileInputRef}
+            type="file"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) void handleFile(f)
+            }}
+          />
+          <label className="chatAdvanced" title="Show the model's reasoning blocks">
+            <input
+              type="checkbox"
+              checked={showThinking}
+              onChange={(e) => setShowThinking(e.target.checked)}
+            />
+            Reasoning
+          </label>
+          <button
+            type="button"
+            className="chatAttach"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={busy || uploading || !ready}
+            title="Attach a document or image for the agent to read"
+            aria-label="Attach a document or image"
+          >
+            {uploading ? '…' : '📎'}
           </button>
-        ) : (
-          <button className="chatSend" type="submit" disabled={!input.trim()}>
+          <textarea
+            className="chatTextarea"
+            placeholder={
+              !ready
+                ? 'Connecting…'
+                : isNew && messages.length === 0
+                  ? 'Who do you want to research, and what do you want to find out?'
+                  : 'Message the agent…'
+            }
+            value={input}
+            rows={2}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                send(input)
+              }
+            }}
+          />
+          {/* 1b: Send sits BESIDE Stop while a turn runs, it does not replace it.
+              Under continuous work a turn is the whole job, so a composer that
+              only offers Stop for 53 minutes is a composer you cannot use. */}
+          {busy && (
+            <button className="chatStop" type="button" onClick={stop} title="Stop the current turn">
+              Stop
+            </button>
+          )}
+          <button
+            className="chatSend"
+            type="submit"
+            disabled={!input.trim()}
+            title={busy ? 'The agent is working — this is queued, not dropped' : 'Send'}
+          >
             Send
           </button>
-        )}
-      </form>
+        </form>
+      )}
     </div>
   )
 }

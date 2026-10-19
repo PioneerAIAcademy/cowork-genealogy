@@ -5,7 +5,7 @@ Runs inside the agent_runner — a long-lived, clean `asyncio.run` stdio loop (o
 per session). So it holds a PERSISTENT ClaudeSDKClient: connect once, query per
 turn. That gives **cross-turn conversation memory** for free (the SDK keeps the
 session across queries), which the conversational flows need — notably the
-multi-turn init-project onboarding interview and follow-ups ("explain that").
+multi-turn init-project onboarding and follow-ups ("explain that").
 The research work itself is state-driven (the skills re-read research.json), so
 project state never depended on conversation memory; this adds the conversation.
 
@@ -34,13 +34,28 @@ turn and rebuilds the client when it changes.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import shutil
 import sys
+import urllib.request
 from collections.abc import AsyncIterator
 from pathlib import Path
 
+from .build_info import BUILD_INFO_PATH, build_label
+from .continue_policy import (
+    CONTINUE_REASON,
+    DELEGATION_TOOLS,
+    DELIVERED_REASON,  # noqa: F401 - tests read it off this module
+    DELIVERED_TOOL,
+    delivered_stop_reason,
+    foreground_rewrite,
+    DELIVERY_GUIDANCE,
+    env_int,
+    read_research_json,
+    should_continue_run,
+)
 from .errors import UNEXPECTED, classify, log_operator
 from .mcp_health import (
     GENEALOGY_TOOL_PREFIX,
@@ -82,14 +97,14 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
     ``packages/engine/plugin/agents/*.md`` — but it registers each one under the
     plugin-NAMESPACED name ``genealogy-research:<agent>``, and nothing under the
     bare name. Every SKILL.md delegates by the bare name
-    (``@plugin:record-extractor``), so on the plugin path the Task call
-    hard-errors — "Agent type 'record-extractor' not found" — and the model then
+    (``@plugin:record-structurer``), so on the plugin path the Task call
+    hard-errors — "Agent type 'record-structurer' not found" — and the model then
     improvises: guess the namespaced spelling, fall back to ``general-purpose``,
     or do the work inline. The fallback is the dangerous one, because a
     general-purpose stand-in holds the session's whole tool set instead of the
-    agent's ``tools:`` allow-list and binds none of its ``disallowedTools:``
-    denies — the deny being the only thing keeping ``record-extractor`` off the
-    broad ``research_append`` under ``bypassPermissions`` (issue #695).
+    agent's ``tools:`` allow-list — the allow-list being the only thing keeping
+    an agent such as ``record-structurer`` off the broad ``research_append``
+    under ``bypassPermissions`` (issue #695).
 
     Staging into ``.claude/agents/`` is exactly what both eval harnesses do
     (``eval/harness/harness/workspace.py``, ``eval/harness/e2e/orchestrator.py``)
@@ -138,7 +153,7 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
 # from eval/ or from the control-plane package (see the module docstring).
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); overwriting it would defeat that gate.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # Tools that write a file directly, by `file_path`. Bash is deliberately NOT
 # here: the skills run their stdlib-only scripts through it, and the only way to
@@ -162,6 +177,129 @@ _FILE_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
 # Mirrored in all three lockdown copies even though only the plugin one ever
 # sees the bridge; the parity test holds them to one vector set.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
+
+# The third arm's tool. `_pretool_hook` denies a Bash command that combines a
+# credential marker with a network egress tool (the exfiltration speed bump from
+# issue #1018 Task 3), so `Bash` has to reach the hook for that arm to run at
+# all — which means it belongs in the matcher below.
+#
+# A CONSTANT RATHER THAN A LITERAL, and the arm reads it too, because the two
+# diverging is the whole failure mode `_PRETOOL_MATCHER` is derived to avoid.
+# This is not hypothetical: that arm landed while the matcher was still `None`,
+# so it bound by accident, and narrowing the matcher without this line left a
+# shipped security guard inert with the suite green.
+_EXFIL_GUARD_TOOLS = ("Bash",)
+
+# The credential-read arm's directory marker, the tools it inspects, and the
+# tuple the matcher unpacks. A path that has `.familysearch-mcp` as a SEGMENT
+# (not a substring) is a credential read — `~/.familysearch-mcp/tokens.json`,
+# `~/.familysearch-mcp/config.json`, etc. No `os`/`posixpath`/`re` inside the
+# predicate: the parity test's `_load` lifts only literal assignments and
+# `_`-prefixed functions with no imports, so a call to `os.path.realpath`
+# would raise `NameError` there.
+_CREDENTIAL_DIR = ".familysearch-mcp"
+_CREDENTIAL_READ_TOOLS = {
+    "Read": ("file_path",),
+    "Grep": ("path", "glob"),
+    "Glob": ("path", "pattern"),
+}
+_CREDENTIAL_READ_GUARD_TOOLS = tuple(_CREDENTIAL_READ_TOOLS)
+
+# The PreToolUse matcher, DERIVED from the deny arms above rather than restated.
+# `matcher=None` fired the hook for EVERY tool, which is how one unanswered hook
+# callback took down `ToolSearch` — a purely local call with nothing to deny
+# (issue #1915). Narrowing it means a starved callback can only ever fail the
+# calls this hook could actually refuse — and THAT CLAIM NEEDED THE ANCHORS
+# BELOW to be true. Raised in review: the bundled CLI (2.1.220) applies a matcher
+# that does not fit its own charset as `new RegExp(t).test(e)`, an unanchored
+# SEARCH. Read out of the binary:
+#
+#     function IF_(e,t,r,n){ if(!t||t==="*")return!0;
+#       if((r?/^[a-zA-Z0-9_|, -]+$/:/^[a-zA-Z0-9_|]+$/).test(t))
+#           return t.split(...).map(...).flatMap(...).includes(e);   // EXACT LIST
+#       try{ let i=new RegExp(t); if(i.test(e))return!0; ... }catch{...} }
+#
+# So an unanchored `Write|Edit|...|Bash` also bound `TodoWrite`, `MultiEdit`,
+# `BashOutput`, `KillBash` and `EditNotebook` — every one of which this hook
+# denies nothing about. `TodoWrite` is precisely the "purely local call with
+# nothing to deny" class that `ToolSearch` died in, so the over-match reopened
+# the failure this narrowing exists to close. The bare names are anchored with
+# `^(...)$` for that reason; the device-bridge arm stays a search because it must
+# match a prefix it cannot predict.
+#
+# THE PATTERN MUST KEEP A CHARACTER OUTSIDE BOTH CHARSETS ABOVE (`.` and `*` do
+# it). If a future edit ever makes it fit — someone dropping `.*` on the
+# reasoning that a search matches anyway — the CLI silently switches to EXACT
+# STRING LIST membership and every namespaced spelling stops binding. The CLI's
+# own warning text a few bytes earlier says "it is compared as an exact string".
+# `test_the_matcher_stays_in_the_clis_regex_branch` pins this.
+#
+# Derived, not written out, because a restated list is exactly what let the
+# plugin's matcher and its predicate diverge with every test green
+# (docs/specs/guardrail-enforcement-spec.md, "Closed 2026-08-17/18"; ADR-0005,
+# "The matcher is part of the guardrail").
+#
+# The device-bridge name takes a `.*` prefix: Cowork namespaces it
+# (`mcp__remote-devices__device_commit_files`) and `_device_bridge_target`
+# matches on the BARE TAIL, so the prefix is what makes this bind under an
+# anchored full match as well as a substring search. A bare
+# `device_commit_files` is the form that shipped inert once. `research_append`
+# is deliberately absent, unlike the plugin's matcher: this hook returns `{}`
+# for it (see `direct_project_file_write`), so matching it would only widen the
+# blast radius of a starved callback.
+#
+# IF YOU ADD A DENY ARM TO `_pretool_hook`, ADD ITS TOOLS HERE IN THE SAME
+# COMMIT. `test_the_matcher_covers_every_tool_the_hook_can_deny` fails when the
+# hook denies something this string does not match, because a matcher narrower
+# than its predicate is a guard that is inert with the whole suite green.
+_PRETOOL_MATCHER = "|".join(
+    (
+        # Anchored, so a search cannot bind a tool that merely CONTAINS one of
+        # these names. FIVE constants: DELEGATION_TOOLS joined with the four deny arms.
+        "^("
+        + "|".join((*_FILE_WRITE_TOOLS, *_EXFIL_GUARD_TOOLS, *_CREDENTIAL_READ_GUARD_TOOLS, *sorted(DELEGATION_TOOLS)))
+        + ")$",
+        # Trailing `$`: the tail is compared WHOLE. Without it the pattern also
+        # bound `*device_commit_files_v2` spellings, which this hook can deny
+        # nothing about - the last 8 over-matches of the 136 spellings measured
+        # in review. The parity suite already declares `_v2` a name that must not
+        # match. `.`, `*` and `$` all keep the pattern outside the CLI's
+        # literal-list charsets, so the regex branch still applies.
+        *(f".*{t}$" for t in DEVICE_WRITE_TOOLS),
+    )
+)
+
+# How long the CLI waits for a PreToolUse callback before giving up on it.
+#
+# Unset, the effective value is the CLI's own default, and that default IS
+# findable — an earlier version of this comment said it was not, named the wrong
+# CLI (2.1.258; the SDK pinned in uv.lock bundles 2.1.220, as lines 102 and 492
+# already say) and cited two literals that are not hook timeouts. Corrected in
+# review by reading the PreToolUse executor itself out of the binary:
+#
+#     var Hm=600000, frd=30000;
+#     async function*VOt(e,t,r,n,o,i,s=Hm,a){ ...
+#       yield*lM({hookInput:u, toolUseID:t, matchQuery:e, signal:i, timeoutMs:s, ...})
+#
+# The executor's own timeout parameter defaults to `Hm` = 600000 ms and hands it
+# to the dispatcher as `timeoutMs`. 600 s — which is exactly what the wedged
+# session observed per call, so the measurement and the default agree rather
+# than leaving three unexplained numbers. (`Timeout ?? 60000` in that binary is
+# an HTTP server's `headersTimeout`; `timeout ?? 600000` as spaced does not
+# occur at all.) The SDK's own `HookMatcher` docstring advertises 60 and
+# documents the unit as SECONDS (`claude_agent_sdk/types.py`), so the value
+# below is 10 s.
+#
+# Set explicitly anyway: 600 s is far too long for a callback this cheap, and a
+# shorter timeout makes a starved callback fail faster rather than succeed.
+#
+# Ten seconds: the callback is in-process and does a bounded walk over the tool
+# payload with no I/O, so this is orders of magnitude of headroom, while a
+# starved call now fails in 10s instead of 600s.
+#
+# A MITIGATION, NOT THE FIX. A shorter timeout makes a starved callback fail
+# faster; it does not make it succeed. `_drain_background` is the fix.
+_PRETOOL_TIMEOUT_S = 10.0
 
 # A path has no newline and is no longer than the platform allows. Both bounds
 # keep the payload walk below off file CONTENT travelling alongside the paths,
@@ -234,8 +372,52 @@ def direct_project_file_write(tool_name: str, tool_input: dict | None) -> str | 
     return name if name in PROTECTED_PROJECT_FILES else None
 
 
+_SECRETS_MARKERS = (
+    "session.json",
+    ".familysearch-mcp",
+    "ANTHROPIC_API_KEY",
+    "sk-ant-",
+)
+_NETWORK_TOOLS = ("curl", "wget", "nc ", "ncat ", "socat ",
+                  "urllib", "requests", "httpx", "http.client", "socket")
+
+
+def _bash_secrets_exfil(command: str) -> bool:
+    """True when a Bash command references credentials AND a network egress tool."""
+    lower = command.lower()
+    has_secret = any(m.lower() in lower for m in _SECRETS_MARKERS)
+    has_net = any(t in lower for t in _NETWORK_TOOLS)
+    return has_secret and has_net
+
+
+def credential_read_denied(tool_name: str, tool_input) -> str | None:
+    """The tool name if a read targets the credentials directory, else None.
+
+    Inspects Read.file_path, Grep.path, Grep.glob, Glob.path, Glob.pattern.
+    Denies when any path argument, with backslashes folded to forward slashes
+    and lowercased, has a path segment equal to `.familysearch-mcp`.
+
+    Never raises: a non-string or missing argument means allow.
+    No os/posixpath/re — the parity test's _load runs no imports.
+    """
+    keys = _CREDENTIAL_READ_TOOLS.get(tool_name)
+    if keys is None:
+        return None
+    input_dict = tool_input if isinstance(tool_input, dict) else {}
+    for key in keys:
+        value = input_dict.get(key)
+        if not isinstance(value, str):
+            continue
+        segments = value.replace("\\", "/").lower().split("/")
+        if _CREDENTIAL_DIR in segments:
+            return tool_name
+    return None
+
+
 async def _pretool_hook(input_data, _tool_use_id, _ctx):
-    """PreToolUse: deny raw writes to the two project files.
+    """PreToolUse: deny raw writes to the two project files, deny reads of the
+    credentials directory, and block Bash commands that combine credential access
+    with network egress.
 
     A hook binds under `bypassPermissions` — the unit harness has run exactly
     this combination since the per-context policy landed
@@ -248,33 +430,82 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
     the e2e tree-read block behaves.
     """
     tool_name = input_data.get("tool_name", "")
-    protected = direct_project_file_write(tool_name, input_data.get("tool_input"))
-    if not protected:
-        return {}
-    _log(f"[agent] denied raw {tool_name} on {protected}")
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": (
-                f"{tool_name} on {protected} is disabled — all writes to "
-                "research.json/tree.gedcomx.json must go through the writer tools. "
-                "To CREATE a new project use project_create, which writes both files "
-                "together; to add to an existing one use research_append, "
-                "research_log_append, tree_edit or tree_correct. These validate "
-                "before persisting. Direct file writes never validate."
-            ),
-        },
-    }
+    tool_input = input_data.get("tool_input") or {}
+
+    protected = direct_project_file_write(tool_name, tool_input)
+    if protected:
+        _log(f"[agent] denied raw {tool_name} on {protected}")
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": (
+                    f"{tool_name} on {protected} is disabled — all writes to "
+                    "research.json/tree.gedcomx.json must go through the writer tools. "
+                    "To CREATE a new project use project_create, which writes both files "
+                    "together; to add to an existing one use research_append, "
+                    "research_log_append, tree_edit or tree_correct. These validate "
+                    "before persisting. Direct file writes never validate. "
+                    "external-collections.json is written only by external_links_search given a projectPath."
+                ),
+            },
+        }
+
+    cred_denied = credential_read_denied(tool_name, tool_input)
+    if cred_denied:
+        _log(f"[agent] denied {tool_name} on credentials directory")
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": (
+                    f"{tool_name} on the credentials directory is not permitted. "
+                    "FamilySearch auth goes through the login flow, and a missing "
+                    "OpenRouter key is reported by image_transcribe itself."
+                ),
+            },
+        }
+
+    if tool_name in _EXFIL_GUARD_TOOLS and _bash_secrets_exfil(
+        str(tool_input.get("command", ""))
+    ):
+        _log("[agent] denied Bash: credential access combined with network egress")
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": (
+                    "Bash commands that access session credentials and send data "
+                    "over the network are not permitted."
+                ),
+            },
+        }
+
+    # Run every delegation in the FOREGROUND. Not a deny: the call is allowed and
+    # its input rewritten, so this is the one arm here that changes a call rather
+    # than refusing it. Without it the Stop hook nudges a turn that is waiting on
+    # its own background subagent, and the model answers the nudge by spawning a
+    # duplicate (see DELEGATION_TOOLS). Every call not explicitly False is
+    # rewritten, because CLI 2.1.220 backgrounds an agent when the flag is absent
+    # and the measured incidents carried no flag at all.
+    # Shared with the prototype: one predicate, one rewrite, so a mutation in either
+    # fails tests on both planes. Logged because the stated acceptance is a LIVE hosted
+    # turn, and this file's own doctrine is that an inert arm looks identical to a
+    # working one.
+    if (rewritten := foreground_rewrite(tool_name, tool_input)) is not None:
+        _log(f"[agent] foregrounded {tool_name} delegation")
+        return rewritten
+
+    return {}
 
 
 def current_api_key() -> str:
-    """The operator's Anthropic key for the next turn.
+    """The proxy token (or real key in legacy setups) for the next turn.
 
-    Prefers the per-connect secrets file so a rotated key reaches a long-lived
+    Prefers the per-connect secrets file so a rotated token reaches a long-lived
     sandbox whose create-time env is frozen (the whole point of the file
     channel). Falls back to the env var when the file is missing, unreadable, or
-    carries no key — local dev, and any sandbox created before this existed.
+    carries no value — local dev, and any sandbox created before this existed.
     """
     env_key = os.environ.get("ANTHROPIC_API_KEY", "")
     try:
@@ -285,7 +516,269 @@ def current_api_key() -> str:
     return key if isinstance(key, str) and key else env_key
 
 
-def build_options(project_dir: Path, resume: str | None = None, api_key: str | None = None):
+def _current_base_url() -> str | None:
+    """The proxy base URL for the next turn, if any.
+
+    Prefers the per-connect secrets file (same channel as the API key) so a
+    sandbox created before the proxy deploy still routes through it after
+    reconnect. Falls back to the env var for sandboxes whose secrets file
+    predates this field.
+    """
+    try:
+        doc = json.loads(Path(_SECRETS_PATH).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return os.environ.get("ANTHROPIC_BASE_URL")
+    url = doc.get("anthropic_base_url") if isinstance(doc, dict) else None
+    if isinstance(url, str) and url:
+        return url
+    return os.environ.get("ANTHROPIC_BASE_URL")
+
+
+_PROXY_SUFFIX = "/api/anthropic-proxy"
+
+
+def _turn_cost_url() -> str | None:
+    """The control plane's per-turn cost endpoint, or None when there is no proxy
+    (local dev), since the proxy token is what authenticates the report."""
+    base = _current_base_url()
+    if not base or not base.endswith(_PROXY_SUFFIX):
+        return None
+    return base[: -len(_PROXY_SUFFIX)] + "/api/turn-cost"
+
+
+_BUILD_INFO = Path(BUILD_INFO_PATH)
+
+
+def _sandbox_build() -> str | None:
+    """The build this sandbox's code came from, for the cost report. None outside the
+    image (local dev) or when the stamp is unreadable."""
+    try:
+        return build_label(_BUILD_INFO.read_bytes())
+    except (OSError, ValueError):
+        return None
+
+
+def _post_turn_cost(url: str, api_key: str, payload: dict) -> None:
+    """Blocking; run off the event loop. A failed report is logged, never raised."""
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode(),
+        headers={"content-type": "application/json", "x-api-key": api_key},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10):
+            pass
+    except Exception as exc:
+        _log(f"turn cost report failed: {exc!r}")
+
+
+def _sdk_env(api_key: str | None = None) -> dict[str, str]:
+    """Build the env dict for the Claude Agent SDK subprocess.
+
+    Both the API key and the base URL are read from the per-connect secrets
+    file (written by ``agent_secrets.write_secrets`` on every resume), with
+    env-var fallback for sandboxes whose file predates the field. This ensures
+    a sandbox created before the proxy deploy still routes through the proxy
+    after reconnect. ``ENABLE_TOOL_SEARCH=true`` is set unconditionally, which
+    keeps tool search on regardless of the base URL (measured: probe P3b,
+    2026-09-11, ``make probe-gateway-path``).
+    """
+    env: dict[str, str] = {
+        "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
+        "ENABLE_TOOL_SEARCH": "true",
+    }
+    base_url = _current_base_url()
+    if base_url:
+        env["ANTHROPIC_BASE_URL"] = base_url
+    return env
+
+
+# PR #2870 item 1d. The alpha's veto cap, per SESSION -- `nudges_used` below is created
+# once and never reset at a turn boundary. This said "per turn" until 2026-10-13 and was
+# wrong; the full consequence is written up on `Settings.autonomous_max_nudges`.
+#
+# Sized like the prototype's on STEP count rather than on the nudge histogram. Re-derived
+# 2026-10-13 by `test_proto_config._steps_per_run`'s method over the committed e2e corpus
+# (203 runs that day): median 15, p90 26, p99 48, max 76. 0 turns the hook off.
+#
+#: Matches `Settings.autonomous_max_nudges`, and a test pins them equal. This is the
+#: in-sandbox fallback used when the control plane sets no env var, so leaving it at 60
+#: while the setting moved to 30 would make the two disagree exactly where nobody looks.
+_DEFAULT_MAX_NUDGES = 30
+
+
+def _max_nudges(env=None) -> int:
+    """``AUTONOMOUS_MAX_NUDGES``, defensively -- see ``env_int``. This module is imported
+    at agent start inside the sandbox AND by the prototype worker
+    (``proto/worker/options.py``), where ``runner._make_agent``'s ``except ImportError``
+    does not catch a ValueError, so a typo'd variable crash-loops the container.
+    ``AutoContinue.from_env`` in runner.py is the third reader of this same variable."""
+    return env_int(
+        "AUTONOMOUS_MAX_NUDGES", _DEFAULT_MAX_NUDGES, env=env,
+        on_error=lambda name, raw, default: _log(
+            f"[agent] {name}={raw!r} is not an integer; using {default}"
+        ),
+    )
+
+
+AUTONOMOUS_MAX_NUDGES = _max_nudges()
+
+
+
+def make_stop_hook(project_dir: Path, *, max_nudges: int, tool_count,
+                   pending_user_message=None, delivered=None):
+    """The alpha's ``Stop`` callback (1d): veto the model's voluntary yield while the
+    project is unfinished, so one user message runs a whole research job.
+
+    The decision itself is ``continue_policy.should_continue_run`` -- the SAME function the
+    prototype worker binds, imported rather than copied. What differs is only where the
+    state comes from: research.json off the sandbox's own disk here, the ``documents`` row
+    on the turn's Postgres connection there.
+
+    Never raises: any exception allows the stop, exactly like the worker's. A Stop hook
+    that raises ends the turn in ERROR, which is strictly worse than letting it end.
+    """
+    state = {"nudges_used": 0, "tool_count_at_last_nudge": -1}
+
+    async def _stop(_input_data, _tool_use_id, _ctx):
+        try:
+            count = int(tool_count())
+            # The shared predicate accepted `pending_user_message` from the start and
+            # this plane passed it not at all, so a message typed mid-turn waited a JOB
+            # boundary rather than a step.
+            if not should_continue_run(
+                research=read_research_json(project_dir),
+                nudges_used=state["nudges_used"],
+                max_nudges=max_nudges,
+                tool_count=count,
+                tool_count_at_last_nudge=state["tool_count_at_last_nudge"],
+                pending_user_message=bool(pending_user_message and pending_user_message()),
+                delivered=bool(delivered and delivered()),
+            ):
+                return {}
+            state["nudges_used"] += 1
+            state["tool_count_at_last_nudge"] = count
+            _log(f"[agent] continue-nudge {state['nudges_used']}/{max_nudges}")
+        except Exception as exc:  # noqa: BLE001 - a raising hook ends the turn in error
+            _log(f"[agent] stop hook failed, allowing the stop: {type(exc).__name__}: {exc}")
+            return {}
+        return {"decision": "block", "reason": CONTINUE_REASON}
+
+    return _stop
+
+
+def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
+    """The session's hooks. PreToolUse is the only restraint on a bypassPermissions
+    session; ``Stop`` (1d) is what makes one user message run a whole research job.
+
+    The tool counter is per SESSION and lives here rather than on a module global, so two
+    sandboxes in one process cannot read each other's progress. It is what
+    ``should_continue_run``'s no-progress arm compares between two stops: without it the
+    second nudge always looks like no progress and the run stops after one."""
+    counter = {"tool_calls": 0, "turn_tool_calls": 0, "delivered": False, "continuations": 0}
+    # Published so `handle_turn` can clear the per-TURN half at the turn boundary.
+    # `tool_calls` is deliberately session-scoped (the no-progress arm compares it
+    # across two stops); `delivered` is not, and the dict outlives the turn because
+    # the SDK client is built once and cached (`if self._client is None`).
+    if agent is not None:
+        agent._hook_counter = counter
+
+    async def count_only(_input_data, _tool_use_id, _ctx):
+        """Counts, and does nothing else. Bound with ``matcher=None`` because the count
+        has to see EVERY call -- ``_PRETOOL_MATCHER`` covers seven tool names (Write, Edit,
+        NotebookEdit, Bash, device_commit_files, Agent, Task) and a research loop runs almost none of
+        them, so counting behind it stays at 0 all run and the Stop hook's no-progress arm
+        ends the job after ONE nudge.
+
+        ``matcher=None`` is what issue #1915 narrowed the DENY hook away from, and the
+        reason was a callback that could go unanswered and time out every tool including
+        ToolSearch. That reason does not transfer: this is a dict increment with no I/O,
+        no await and no way to block. The deny hook keeps its narrow matcher below.
+
+        **It is also the plane's only halt that fires on every step.** The ``Stop`` hook
+        is consulted at a VOLUNTARY YIELD, which the corpus puts at a median of once per
+        run with 31% of runs never yielding at all -- so a bound carried only there is
+        not a bound. Same reasoning, and the same halt fields (``continue`` /
+        ``stopReason``, never a permission deny, which the model argues with), as the
+        prototype's ``PreToolUse`` halt. Both reads are in-memory, so the no-I/O promise
+        above still holds."""
+        counter["tool_calls"] += 1
+        counter["turn_tool_calls"] += 1
+        data = _input_data or {}
+        # Both arms below are gated on the MAIN thread -- membership, not truthiness: the
+        # key is absent on the main thread, and a subagent whose `agent_id` is None or ""
+        # is still a subagent. Delivered: a subagent calling it means only its own leg is
+        # done. Pending message (#3376): halting a subagent mid-task strands the
+        # orchestrator, which takes its last in-progress note as the final report and
+        # re-does the work in a fresh subagent.
+        main_thread = "agent_id" not in data
+        # A bounded request was met and the model is stopping on purpose (#2813 item 1).
+        if data.get("tool_name") == DELIVERED_TOOL and main_thread:
+            counter["delivered"] = True
+            _log("[agent] delivered — allowing the stop")
+            # Prepend the model's own one-sentence summary, as the prototype does
+            # (`options.py`). It is the whole reason the tool takes a `summary`:
+            # without it the researcher is told a delivery happened but not what
+            # was delivered, and the two planes claim a parity they do not have.
+            delivered_input = data.get("tool_input") or {}
+            return {
+                "continue": False,
+                "stopReason": delivered_stop_reason(delivered_input.get("summary")),
+            }
+        # The researcher typed mid-turn. Main-thread only (#3376): a subagent runs to the
+        # end of its task and the message is taken at the orchestrator's next tool call.
+        # The count guard is the prototype's one-call rule (worker.py, handover_clause):
+        # two messages typed in quick succession are held together by runner.serve, and
+        # the turn released for the first must do some work on it before handing over to
+        # the second -- without the guard it halts at its own first tool call and the
+        # first message gets no work at all. Counted per TURN (`turn_tool_calls`, reset in
+        # `_begin_turn_hook_state`): the hooks dict lives for the session, so the
+        # session-wide `tool_calls` would pass the guard on every turn after the first.
+        # This hook counts BEFORE deciding, so the turn's first call sees 1.
+        if agent is not None and main_thread and counter["turn_tool_calls"] >= 2:
+            try:
+                if agent.pending_user_message():
+                    return {"continue": False,
+                            "stopReason": "The researcher sent a message; taking it now."}
+            except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
+                _log(f"[agent] halt check failed, allowing: {type(exc).__name__}: {exc}")
+        return {}
+
+    hooks = {
+        "PreToolUse": [
+            HookMatcher(matcher=None, hooks=[count_only], timeout=_PRETOOL_TIMEOUT_S),
+            HookMatcher(
+                matcher=_PRETOOL_MATCHER,
+                hooks=[_pretool_hook],
+                timeout=_PRETOOL_TIMEOUT_S,
+            ),
+        ]
+    }
+    if AUTONOMOUS_MAX_NUDGES > 0:
+        stop = make_stop_hook(
+            project_dir, max_nudges=AUTONOMOUS_MAX_NUDGES,
+            tool_count=lambda: counter["tool_calls"],
+            pending_user_message=(agent.pending_user_message if agent else None),
+            delivered=lambda: counter["delivered"],
+        )
+
+        async def counted_stop(input_data, tool_use_id, ctx):
+            """Counts the stops it overrides, so each turn's cost report says how much
+            of the turn ran past a stop the model chose."""
+            out = await stop(input_data, tool_use_id, ctx)
+            if out.get("decision") == "block":
+                counter["continuations"] += 1
+            return out
+
+        hooks["Stop"] = [
+            HookMatcher(matcher=None, hooks=[counted_stop], timeout=_PRETOOL_TIMEOUT_S)
+        ]
+    return hooks
+
+
+def build_options(project_dir: Path, resume: str | None = None, api_key: str | None = None,
+                  agent=None):
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher
 
     # Side effect, deliberately here: the plugin's agents are registered by
@@ -309,7 +802,11 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         add_dirs=[str(project_dir)],
         model=os.environ.get("MODEL") or None,
         permission_mode="bypassPermissions",  # operator-controlled, headless
-        system_prompt={"type": "preset", "preset": "claude_code", "append": project_note},
+        system_prompt={
+            "type": "preset",
+            "preset": "claude_code",
+            "append": f"{project_note}\n\n{DELIVERY_GUIDANCE}",
+        },
         # "project" only — the same source both eval harnesses load
         # (workspace.py, e2e/orchestrator.py) and what registers the agents
         # stage_plugin_agents just wrote. "user" was also listed, which read a
@@ -324,11 +821,13 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         },
         # The only restraint on this session. permission_mode is
         # bypassPermissions with no allowlist, so the hook is what keeps raw
-        # Write/Edit off research.json and tree.gedcomx.json (see
-        # _pretool_hook). matcher=None fires it for every tool.
-        hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[_pretool_hook])]},
+        # Write/Edit off research.json and tree.gedcomx.json AND blocks Bash
+        # commands that combine credential access with network egress (see
+        # _pretool_hook). Scoped to the tools it can actually deny, and given an
+        # explicit timeout — see _PRETOOL_MATCHER and _PRETOOL_TIMEOUT_S.
+        hooks=_build_hooks(HookMatcher, project_dir, agent),
         # Stream partial assistant content. Without it a block reaches the UI only
-        # when its whole message completes, so a long turn — a record-extraction
+        # when its whole message completes, so a long turn — an extraction
         # subagent reasoning before its next tool call — shows nothing at all for
         # minutes. The deltas are also what keeps the socket's data frames flowing
         # through the sandbox's edge proxy during that stretch.
@@ -344,29 +843,32 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
         #
         # So "true" below means hosted sessions run WITH tool search: the
-        # ~38-tool genealogy server's schemas are deferred and re-discovered via
-        # ToolSearch mid-session. Speedup plan §3a wanted the opposite; flipping
-        # to "false" is a separate, tracked decision that requires re-measuring
-        # the tool mix, so the value is left as it has been running — and kept in
-        # sync with the e2e orchestrator either way.
-        env={
-            "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
-            "ENABLE_TOOL_SEARCH": "true",
-        },
+        # ~38-tool genealogy server's schemas are deferred (except ALWAYS_LOAD in
+        # tool-schemas.ts) and re-discovered via ToolSearch mid-session. Speedup
+        # plan §3a wanted the opposite; flipping to "false" is a separate,
+        # tracked decision that requires re-measuring the tool mix, so the value
+        # is left as it has been running — and kept in sync with the e2e
+        # orchestrator either way.
+        env=_sdk_env(api_key),
     )
     if resume:
         kwargs["resume"] = resume  # reload the prior conversation transcript
     return ClaudeAgentOptions(**kwargs)
 
 
-def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | None = None) -> list[dict]:
+def map_message(
+    message,
+    tool_names: dict[str, str],
+    tasks: dict[str, str] | None = None,
+    live: set[str] | None = None,
+) -> list[dict]:
     """SDK message → the wire events the UI consumes.
 
     Two things here are easy to miss:
 
     **Subagent turns arrive on this same stream**, tagged with
     ``parent_tool_use_id`` rather than nested. Without reading it, a
-    record-extractor's text/thinking/tool calls are indistinguishable from the
+    record-structurer's text/thinking/tool calls are indistinguishable from the
     main agent's — they land in the same chat bubble and read as if the
     orchestrator did the work itself. Every event carries an ``agent`` label when
     it came from a subagent, resolved through ``tasks`` (tool_use_id → the Task's
@@ -381,9 +883,11 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
     from claude_agent_sdk import (
         AssistantMessage,
         StreamEvent,
+        TERMINAL_TASK_STATUSES,
         TaskNotificationMessage,
         TaskProgressMessage,
         TaskStartedMessage,
+        TaskUpdatedMessage,
         TextBlock,
         ThinkingBlock,
         ToolResultBlock,
@@ -392,6 +896,7 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
     )
 
     tasks = tasks if tasks is not None else {}
+    live = live if live is not None else set()
 
     def _event_for(msg, kind: str, **kw) -> dict:
         """Attach the originating subagent's label, when there is one."""
@@ -401,8 +906,15 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
     out: list[dict] = []
     if isinstance(message, TaskStartedMessage):
         label = message.description or message.task_type or "subagent"
+        # ATTRIBUTION is keyed on `tool_use_id`, which the SDK types as
+        # `str | None` — a Task without one simply goes unlabelled.
         if message.tool_use_id:
             tasks[message.tool_use_id] = label
+        # LIVENESS is keyed on `task_id`, which is a required `str`. These were
+        # one dict until review: keying liveness on the optional field meant a
+        # Task with no `tool_use_id` registered nothing, so the drainer never
+        # started and the fix silently did not engage.
+        live.add(message.task_id)
         out.append(_event("task_started", agent=label, task_id=message.task_id))
     elif isinstance(message, TaskProgressMessage):
         usage = message.usage or {}
@@ -416,6 +928,7 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
             duration_ms=usage.get("duration_ms"),
         ))
     elif isinstance(message, TaskNotificationMessage):
+        live.discard(message.task_id)
         out.append(_event(
             "task_done",
             agent=tasks.pop(message.tool_use_id or "", "subagent"),
@@ -423,6 +936,26 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
             status=message.status,
             summary=str(message.summary or "")[:160],
         ))
+    elif isinstance(message, TaskUpdatedMessage):
+        # A terminal state can arrive ONLY here, with no accompanying
+        # TaskNotificationMessage: the SDK's own lifecycle note says a task
+        # stopped via TaskStop reports `status="killed"` on this message and the
+        # matching notification "is sometimes suppressed", so consumers tracking
+        # active ids must clear on a terminal status from EITHER message. Without
+        # this arm a killed subagent stayed in the liveness set forever and every
+        # later turn spawned a drainer for a phantom. Harmless while the set was
+        # only attribution labels; still useful as the operator log's count.
+        #
+        # `status` and `patch["status"]` are both read because the dataclass
+        # carries the field while the CLI reports it inside the patch, and
+        # TERMINAL_TASK_STATUSES spans both vocabularies (`killed` here,
+        # `stopped` on a notification).
+        status = message.status or (message.patch or {}).get("status")
+        if status in TERMINAL_TASK_STATUSES:
+            live.discard(message.task_id)
+        # No wire event: delivering task_updated to the browser would extend this
+        # change into runner.py/sandbox_server.py/apps/web, which Decision A
+        # keeps out of scope.
     elif isinstance(message, StreamEvent):
         # Raw Anthropic stream event. Only the incremental content deltas are
         # useful here; block start/stop is implied by the canonical block event.
@@ -520,12 +1053,27 @@ class RealAgent:
         self._resume_id: str | None = None
         self._tool_names: dict[str, str] = {}  # tool_use_id → name, for tool_result tagging
         self._tasks: dict[str, str] = {}  # Task tool_use_id → subagent label, for attribution
+        # True from the moment a turn is queried until that turn consumes its own
+        # ResultMessage. A turn abandoned at a yield — which is what Stop does —
+        # never clears it, and that is the signal the SDK stream still owes a
+        # terminal frame. See _handle_abandoned_stream.
+        self._stream_dirty = False
+        # Liveness, keyed on the REQUIRED task_id rather than the optional
+        # tool_use_id above. This is what gates the drainer; see map_message.
+        self._live_tasks: set[str] = set()
+        # The background stream drainer, when one is running. At most one, ever
+        # — see _stop_drain for why that is not merely tidy.
+        self._drain_task: asyncio.Task | None = None
         # Running cumulative cost/usage last seen from the SDK, so we can emit
         # per-turn deltas (see _usage_delta). The SDK's ResultMessage reports
         # session totals, not per-turn values.
         self._cum_cost = 0.0
         self._cum_in = 0
         self._cum_out = 0
+        # Set by the runner to `lambda: bool(pending)` -- it owns the backlog. Read by
+        # both halts so a message typed mid-turn is taken at the next STEP rather than at
+        # the end of a job that may run for hours.
+        self.pending_user_message = lambda: False
         # #941/#1126 — genealogy MCP health, read off the CLI's `system`/`init`
         # message. Session-scoped, not turn-scoped: a re-spawned CLI emits a
         # FRESH init, so both counters have to outlive the turn or the warning
@@ -539,9 +1087,215 @@ class RealAgent:
             except OSError:
                 self._resume_id = None
 
+    async def _handle_abandoned_stream(self) -> None:
+        """Drop the client when the previous turn never finished reading its stream.
+
+        THE DEFECT THIS CLOSES. `handle_turn` breaks out of its receive loop at
+        the ResultMessage. When the generator is abandoned at a `yield` instead —
+        which is exactly what Stop does, via `_run_turn`'s cancellation — that
+        loop never runs again, so the turn's tail INCLUDING its ResultMessage
+        stays queued. The next turn then calls `client.query(text)` and
+        `receive_response()` reads that stale terminal frame first and returns
+        immediately: the new turn delivers nothing, its own frames stay unread,
+        and the stream is one turn behind from then on. Reproduced over a fake
+        transport — turn 2 emits zero text events and two frames are left unread,
+        so it persists rather than self-correcting.
+
+        WHY DROP THE CLIENT RATHER THAN DRAIN. Draining until the stream goes
+        idle looks cheaper and is wrong: the abandoned turn's ResultMessage may
+        not have ARRIVED yet when the next turn starts, so a short drain finds
+        nothing, declares the stream clean, and the late frame still terminates
+        the next turn. Draining until a ResultMessage appears needs a deadline,
+        and a turn that will never produce one then hangs the next. A fresh
+        client has no such race: the stream is new by construction. The cost is a
+        CLI respawn, paid only after a Stop, which a person does rarely — and
+        `_remember_session` has already persisted the session id, so
+        `_ensure_client` resumes rather than starting the conversation over.
+
+        Not a substitute for the post-turn drain (issue #1915): that one keeps a
+        COMPLETED turn's subagent tail from filling the SDK's 100-slot buffer and
+        stalling the transport. This one handles a turn that never completed. The
+        two compose.
+        """
+        if not self._stream_dirty:
+            return
+        self._stream_dirty = False
+        log_operator(
+            "abandoned_stream",
+            "previous turn ended without consuming its ResultMessage (Stop); "
+            "rebuilding the client so the next turn does not read its tail",
+        )
+        await self._close_client()
+
+    async def _stop_drain(self) -> None:
+        """Hand the SDK stream back before anything else reads it.
+
+        NEVER TWO CONCURRENT READERS, and this is the mechanism.
+        `Query.receive_messages` iterates ONE anyio memory object stream, which
+        hands each item to exactly one receiver. A drainer still running when
+        the next turn starts would steal that turn's messages — including its
+        `ResultMessage`, and `handle_turn` waits for that forever. So every path
+        about to read the stream calls this first, and it is an explicit
+        handoff rather than a hope about scheduling.
+
+        An in-flight item can be lost by cancelling mid-await, and that is
+        acceptable here rather than untrue: anyio's `MemoryObjectSendStream`
+        pops the waiting receiver, sets `receiver.item` and fires the event
+        before returning, so a cancellation landing between that and the
+        receiver resuming drops the item. What this task reads it discards
+        anyway, so losing one costs nothing. The messages that must not be lost
+        are the NEXT turn's, and those have not been sent yet — the handoff
+        happens before `query()`.
+
+        THE WAIT IS DELIBERATELY UNBOUNDED. A slow iterator teardown therefore
+        delays the next turn before `client.query()`, inside the window where
+        the UI is spinning with Send disabled. That was raised in review with a
+        timeout as the remedy, and a timeout is the wrong trade: giving up on
+        the wait means starting the turn with the drainer still attached to the
+        stream, which is two readers on one stream — it would take this turn's
+        `ResultMessage` and `handle_turn` waits for that forever. A bounded wait
+        converts a visible delay into a hang, so the delay stays.
+        """
+        task, self._drain_task = self._drain_task, None
+        if task is None or task.done():
+            return
+        task.cancel()
+        # `gather(..., return_exceptions=True)` rather than `await task` inside a
+        # bare `except CancelledError: pass`. That arm could not tell the task we
+        # just cancelled ending from THIS COROUTINE being cancelled, so it
+        # swallowed the caller's cancellation and let the turn run on: `serve`
+        # cancels `turn_task` when `interrupt()` raises, and on stdin EOF, and a
+        # dropped Stop there means `_run_turn` never emits `(stopped)` and the
+        # turn proceeds into `client.query(text)`. Here the task's own
+        # CancelledError comes back as a RESULT, so the only thing that can raise
+        # out of this await is a cancellation aimed at us — which must propagate.
+        (outcome,) = await asyncio.gather(task, return_exceptions=True)
+        if isinstance(outcome, Exception):  # best-effort teardown
+            _log(f"[agent] background drain ended with an error (ignored): {outcome}")
+
+    async def _drain_background(self, client) -> None:
+        """Keep the SDK stream read while background subagents are still writing.
+
+        WHY THIS EXISTS (issue #1915). Background subagents keep streaming after
+        the parent turn ends — the SDK holds stdin open for exactly that. Those
+        messages land in a stream with `max_buffer_size=100`
+        (`claude_agent_sdk/_internal/query.py`), and with
+        `include_partial_messages=True` and several subagents emitting thinking
+        and text deltas, 100 slots fill in seconds. Once full, the SDK's
+        transport read loop blocks on `await self._message_send.send(message)`.
+        That same loop is what dispatches the CLI's `control_request` frames, so
+        every PreToolUse callback goes unanswered and the CLI times each one
+        out. The session then cannot run ANY tool call — a live session died
+        this way with a purely local `ToolSearch` timing out at 600s.
+
+        WHAT IT DOES WITH WHAT IT READS: discards it, after an operator log
+        line. Delivering these events to the browser was considered and
+        deferred — it would extend this change into `runner.py`,
+        `sandbox_server.py` and `apps/web`, and reopen the
+        one-`turn_done`-per-turn contract that `_run_turn` owns. The contract is
+        real — `_run_turn` emits it unconditionally at the end and its own
+        docstring says "exactly one" — but `test_runner_interrupt.py` does not
+        pin it: that file asserts `events[-1] == {"kind": "turn_done"}` three
+        times, which is "ends with", and carries no count assertion. This
+        citation said "pins" and was inherited from the issue; corrected in
+        review rather than left to imply coverage that is not there. The user-visible half stays with issue
+        #1971 (a wedged session and a finished turn look identical) and issue
+        #1125. Recorded in docs/specs/hosted-web-workbench-spec.md §7.
+
+        IT RUNS OUTSIDE THE TURN, deliberately. Draining inside `handle_turn`
+        would hold that generator open, and `runner.serve` drops any `user_msg`
+        while the turn task is alive — leaving the UI spinning and Send disabled
+        until the last subagent finished, which is the symptom the reporter
+        filed rather than a fix for it.
+        """
+        dropped = 0
+        # Held in a name so the close below is explicit rather than implicit.
+        #
+        # NO TEST DETECTS REMOVING THAT CLOSE, and the comment here used to claim
+        # one did — it cited test_the_next_turn_loses_none_of_its_own_messages as
+        # having measured two readers live on one stream without it. Checked in
+        # review: deleting the `aclose()` leaves the whole suite green. Probed
+        # afterwards to find out why, rather than just dropping the claim:
+        # cancelling this task throws CancelledError INTO the generator at its
+        # await point, so the generator's own teardown runs from the cancellation
+        # itself and `aclose()` completes as a no-op — it is ordered second in
+        # the log. On the paths that exit without a cancellation, `stream` is a
+        # local whose last reference drops at return, and CPython's refcounting
+        # finalizes it there.
+        #
+        # So the close is redundant on every path, and it is kept as explicit
+        # deterministic teardown rather than as a guard: it costs one await and
+        # it stops the correctness of this function depending on refcount timing,
+        # which is a CPython implementation detail rather than a language
+        # guarantee. It is NOT load-bearing, and nothing should be built on the
+        # belief that it is.
+        stream = client.receive_messages()
+        try:
+            async for message in stream:
+                # THIS LOOP HAS NO SELF-EXIT, AND THAT IS THE POINT.
+                #
+                # It used to `break` on `not self._tasks`. That reads a signal
+                # which is legitimately zero *between* subagents: t1's terminal
+                # message can arrive before t2's TaskStartedMessage, and the
+                # drainer stopped on that zero and left the producer to stall at
+                # the 100-slot bound — the pre-fix wedge exactly, while the
+                # operator line read "0 subagent(s) still running" and looked
+                # like success. Caught in review; the original fixture could not
+                # see it because it emitted its only task_done last, which made
+                # the zero terminal there.
+                #
+                # There is no reliable "nothing more is coming" signal to read:
+                # the buffer's own emptiness is not observable from here. So the
+                # lifetime belongs to `_stop_drain`, which every path that is
+                # about to read the stream calls, and which is what the handoff
+                # test pins.
+                try:
+                    map_message(message, self._tool_names, self._tasks, self._live_tasks)
+                except Exception as exc:
+                    # One unmappable message must not end draining. This arm used
+                    # to sit outside the loop, so a single failure stopped the
+                    # drainer until the next turn ended — which is precisely the
+                    # window the wedge lived in.
+                    log_operator("background_drain", f"skipped an unmappable message: {exc}")
+                dropped += 1
+        except asyncio.CancelledError:
+            raise  # the handoff in _stop_drain; not an error
+        except Exception as exc:
+            # A dead STREAM (not a bad message) must not take the session with
+            # it: the next turn rebuilds or reuses the client on its own terms.
+            log_operator("background_drain", classify(exc), exc=exc)
+        finally:
+            try:
+                await stream.aclose()
+            except (asyncio.CancelledError, Exception):
+                # Teardown of an iterator we are discarding. Both are swallowed
+                # so a close failure cannot mask the reason we are unwinding,
+                # and CancelledError is listed because it is a BaseException.
+                pass
+            if dropped:
+                log_operator(
+                    "background_drain",
+                    f"discarded {dropped} post-turn message(s) from background "
+                    f"subagents; {len(self._live_tasks)} subagent(s) still running",
+                )
+
     async def _close_client(self) -> None:
         """Drop the live client. State is cleared FIRST so a disconnect that
         throws can't leave a half-dead client cached for the next turn."""
+        # Before the client goes: the drainer is reading its stream.
+        await self._stop_drain()
+        # And the task state goes with it. The old client's subagents can never
+        # emit on the new client's stream, so a surviving id is a phantom that
+        # no terminal message will ever clear - the exact failure the
+        # TaskUpdatedMessage arm was added to prevent, on a path that arm cannot
+        # reach. Raised in review round 2 (item 5).
+        self._tasks.clear()
+        self._live_tasks.clear()
+        # The respawn flag goes with the client. Left set, a close from any path
+        # other than the abandoned-stream one costs the NEXT turn a redundant
+        # rebuild, which makes the flag mean "maybe dirty" rather than "dirty".
+        # Harmless but untrue; raised in review.
+        self._stream_dirty = False
         client, self._client, self._client_key = self._client, None, None
         if client is None:
             return
@@ -553,17 +1307,17 @@ class RealAgent:
     async def _ensure_client(self):
         key = current_api_key()
         if self._client is not None and key != self._client_key:
-            # The operator rotated the key under a live client. Rebuild so the
-            # new one takes effect without waiting for the sandbox to be
-            # recreated. Conversation survives: the rebuild passes
-            # resume=<session id>, the same path a runner restart takes.
-            _log("[agent] Anthropic key rotated — rebuilding the SDK client")
+            # The proxy token (or legacy raw key) changed — rebuild. Under the
+            # credential proxy this fires only when anthropic_proxy_signing_key
+            # rotates; Anthropic API key rotation is transparent (the proxy reads
+            # the current key from config on every request).
+            _log("[agent] API credential rotated — rebuilding the SDK client")
             await self._close_client()
         if self._client is None:
             from claude_agent_sdk import ClaudeSDKClient
 
             client = ClaudeSDKClient(
-                options=build_options(self.dir, resume=self._resume_id, api_key=key)
+                options=build_options(self.dir, resume=self._resume_id, api_key=key, agent=self)
             )
             # Assign only after a successful connect, so a failed start is
             # retried next turn instead of caching a client that never opened.
@@ -571,6 +1325,30 @@ class RealAgent:
             self._client = client
             self._client_key = key
         return self._client
+
+    def _begin_turn_hook_state(self) -> None:
+        """Clear the per-TURN half of the hook counter. Called at the turn boundary.
+
+        `delivered` means "THIS turn delivered what was asked". The hooks dict is
+        built once per SESSION, because the SDK client is cached (`if self._client
+        is None`), so without this the flag set by one bounded turn authorises a
+        voluntary stop in every later turn -- the next research job ends after a
+        single sub-skill, with no error and nothing in the log.
+
+        A method rather than three inline lines so it can be driven by a test. The
+        first cut cleared on the next tool call instead, and was wrong twice: a turn
+        that yields without calling any tool never cleared it, and the clearing was
+        not main-thread gated, so a straggler subagent call could clear a
+        main-thread delivery. `continuations` counts THIS turn's overridden stops for
+        the cost report. `turn_tool_calls` is the pending-message halt's one-call guard.
+        `tool_calls` is deliberately NOT reset -- the no-progress arm compares it across
+        two stops.
+        """
+        counter = getattr(self, "_hook_counter", None)
+        if counter is not None:
+            counter["turn_tool_calls"] = 0
+            counter["delivered"] = False
+            counter["continuations"] = 0
 
     def _usage_delta(self, cost, in_tok, out_tok):
         """Convert the SDK's cumulative session totals into per-turn increments.
@@ -660,6 +1438,22 @@ class RealAgent:
             log_operator("import_sdk", UNEXPECTED, exc=exc)
             yield _event("error", text=UNEXPECTED)
             return
+        # The handoff, and it is FIRST rather than after `_ensure_client`. A
+        # drainer from the previous turn is reading this stream and would take
+        # this turn's ResultMessage if left running. It used to sit below the
+        # block that follows, whose `except` arm ends in a bare `return`, so the
+        # `_ensure_client` failure path never reached the handoff at all —
+        # against `_stop_drain`'s own contract that every path about to read the
+        # stream calls it first. Latent, because that path issues no `query()`;
+        # moved rather than argued, since the ordering costs nothing.
+        # `_ensure_client` may itself replace the client, and `_close_client`
+        # calls `_stop_drain` too — it is idempotent, so calling it here first is
+        # strictly safe.
+        await self._stop_drain()
+        # BEFORE acquiring the client, not after: a turn abandoned mid-flight left
+        # its tail in the stream, and this may drop the client so the next
+        # `receive_response()` cannot read that instead of this turn's reply.
+        await self._handle_abandoned_stream()
         try:
             client = await self._ensure_client()
         except Exception as exc:
@@ -669,12 +1463,16 @@ class RealAgent:
             return
         try:
             await client.query(text)
+            self._stream_dirty = True
+            self._begin_turn_hook_state()
             # Whether an errored AssistantMessage has already told the user about
             # this turn. Turn-scoped, not session-scoped: a later turn's failure
             # is a new fact the user needs.
             error_emitted = False
             async for message in client.receive_response():
-                for ev in map_message(message, self._tool_names, self._tasks):
+                for ev in map_message(
+                    message, self._tool_names, self._tasks, self._live_tasks
+                ):
                     if ev.get("kind") == "tool_use" and str(
                         ev.get("tool") or ""
                     ).startswith(GENEALOGY_TOOL_PREFIX):
@@ -737,6 +1535,9 @@ class RealAgent:
                         classification = classify(status=status)
                         log_operator("result_message", classification, status=status)
                         yield _event("error", text=classification)
+                    # This turn read its own terminal frame, so the stream owes
+                    # nothing and the next turn can reuse the client.
+                    self._stream_dirty = False
                     self._remember_session(message)  # persist for resume on relaunch
                     # Per-turn cost/usage for the operator cost meter (alpha
                     # mode, web only). The SDK's ResultMessage carries
@@ -753,6 +1554,19 @@ class RealAgent:
                     d_cost, d_in, d_out = self._usage_delta(
                         getattr(message, "total_cost_usd", None), in_tok, out_tok
                     )
+                    url = _turn_cost_url()
+                    if url and d_cost is not None:
+                        counter = getattr(self, "_hook_counter", None)
+                        asyncio.get_running_loop().run_in_executor(
+                            None, _post_turn_cost, url, current_api_key(), {
+                                "cost_usd": d_cost,
+                                "model": os.environ.get("MODEL") or None,
+                                "input_tokens": d_in,
+                                "output_tokens": d_out,
+                                "build": _sandbox_build(),
+                                "continuations": counter.get("continuations") if counter else None,
+                            },
+                        )
                     yield _event(
                         "usage",
                         cost_usd=d_cost,
@@ -764,3 +1578,42 @@ class RealAgent:
             classification = classify(exc)
             log_operator("receive_loop", classification, exc=exc)
             yield _event("error", text=classification)
+
+        # Subagents outlive the turn. Hand the stream to a background drainer so
+        # the SDK's 100-slot buffer cannot fill and stall the transport read loop
+        # that answers hook callbacks — see _drain_background.
+        #
+        # AFTER the loop, never inside it: this generator has to finish so the
+        # runner emits its single `turn_done` and the UI stops being busy.
+        #
+        # What happens on Stop, corrected in review — the previous comment here
+        # was wrong in both halves. `serve` cancels `turn_task` only when
+        # `agent.interrupt()` returns falsy or raises; on the ordinary Stop it
+        # returns True, nothing is cancelled, this generator completes normally,
+        # and a drainer DOES start. That is the right outcome rather than an
+        # accident: Stop ends the parent turn, and background subagents keep
+        # streaming regardless, which is the whole reason this drainer exists.
+        # And on the path that genuinely does abandon the generator, nothing
+        # closes the client — `_close_client` has exactly one production caller,
+        # the key-rotation rebuild in `_ensure_client`.
+        # NOT gated on `self._live_tasks`, and that is the round-2 fix.
+        #
+        # Sampling liveness ONCE to decide whether to start is the last remnant
+        # of the pattern removed from the loop above, and it fails in both
+        # orderings. A terminal `task_updated` arriving INSIDE the turn clears
+        # the set before this line runs, so no drainer starts while that
+        # subagent's notification and deltas are still queued; measured on the
+        # bounded fake, `produced=103 of 154` against `154 of 154` once the
+        # condition is dropped. A `TaskStartedMessage` arriving AFTER the
+        # `ResultMessage` has the same shape from the other side: `101 of 152`.
+        # Both are the #1915 wedge, and what they strand is the completion prose
+        # the issue is about.
+        #
+        # So the lifetime belongs entirely to `_stop_drain`: start unconditionally
+        # while a client exists, and let the handoff end it. A drainer with
+        # nothing to read costs one idle task awaiting a stream, and every path
+        # that reads the stream hands it off first. The property to assert is
+        # that the drainer is always handed off, never that it is sometimes not
+        # started.
+        if self._client is not None:
+            self._drain_task = asyncio.create_task(self._drain_background(self._client))

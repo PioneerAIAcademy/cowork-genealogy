@@ -26,16 +26,31 @@ A *case* is that zip unpacked into a working research project — not an archive
 The point of the shape below is that a triager can open the folder, re-issue
 the tester's prompt, and watch the same failure happen against the same state.
 
-Two producers emit the bundle — the Electron viewer
-(`apps/electron/src/main/feedback.ts`) and the hosted web workbench
-(`apps/server/app/feedback.py`). They emit the **same** structure so the triage
-workflow consumes either unchanged; `feedback.json`'s `platform` field is what
-tells you which one you have.
+Three producers emit the bundle — the Electron viewer
+(`apps/electron/src/main/feedback.ts`), the hosted web workbench
+(`apps/server/app/feedback.py`), and the search-agent prototype's web tier
+(`apps/server/proto/web/feedback.py`, U20). They emit the **same** structure so
+the triage workflow consumes any of them unchanged; `feedback.json`'s `platform`
+field is what tells you which kind you have. The prototype also says `"web"`:
+its `viewer_version` is `web <built_at> (<git_sha>)` from the Beanstalk bundle's
+`BUILD-INFO.json`, or `web dev (dev)` off a bundle.
+
+**The prototype stores its bundle and sends it nowhere.** It reads the project
+from Postgres and S3 instead of a folder (`documents` rows, rendered the way the
+engine's `readText` renders them, and `blobs` bytes; `results/.staging/` is
+skipped as the alpha's walker skipped dot-dirs) and the transcript from
+`session_entries` instead of `~/.claude/projects/`. The zip goes to the data
+bucket at `feedback/<owner_id>/<project_id>/feedback-<ts>-<hex>.zip` — no
+Drive, no Apps Script, so **no triage issue is opened** (where it goes next is
+the lead's open question, behind `forward_stored_feedback`). A lifecycle rule
+expires `feedback/` at 90 days. The pure half of the alpha's code is vendored
+into the prototype, and `apps/server/tests/test_proto_feedback.py`'s parity
+tests hold the two copies equal.
 
 ## 2. Capture-time guarantees
 
-Two things are true of every bundle *before* it leaves the tester's machine or
-sandbox. Both are the producer's job, not the triager's.
+Three things are true of every bundle *before* it leaves the tester's machine or
+sandbox. All are the producer's job, not the triager's.
 
 ### 2.1 Living-person redaction
 
@@ -46,11 +61,65 @@ never reaches the Drive folder at all.
 Implemented as `_redact_living` (`apps/server/app/feedback.py`) and
 `redactLivingPersons` (`apps/electron/src/main/feedback.ts`). The rule:
 
-- **A person is living unless `living` is exactly `false`.** A *missing* flag
-  counts as living. `living` is optional in simplified GedcomX, and defaulting
-  an absent flag to "probably deceased" is the wrong bet for data about to
-  leave the machine. This is the same rule as the e2e fixture gate
-  (`eval/harness/e2e/author.py::living_gate`).
+- **A person whose `living` key is present is living unless it is exactly
+  `false`.** Every present value keeps this rule, including the non-boolean
+  ones (`null`, `0`, `"true"`) — `living` is optional in simplified GedcomX and
+  its type is not enforced, so an unexpected value must not be read as a
+  licence to un-redact.
+- **A person with no `living` key is deceased only on evidence**, of which
+  there are three kinds. Otherwise they are living, as before. A tree built by
+  `tree_edit` carries no flag on any person, so the older "absent counts as
+  living" rule blanked every person in such a bundle — in one reported case all
+  11 of a project's 19th-century ancestors — which made those bundles useless
+  for triage.
+  - A **death-type fact**: `Death`, `Burial`, `Cremation` or `Probate`. Probate
+    can only follow a death; a `Will` cannot, because a will is written while
+    alive, so `Will` is not on the list.
+  - A **birth** more than 110 years ago. `Birth`, `Christening` and `Baptism`
+    all date a birth, but an explicit `Birth` fact wins over the other two,
+    which in a FamilySearch-derived tree may be a posthumous ordinance dated
+    long after death. Within a kind the earliest year wins, so the answer does
+    not depend on the order facts appear in.
+  - A **last-seen-alive year** more than 110 years ago: the most recent year on
+    any dated fact that is neither a birth nor a death. A census, residence,
+    marriage or military entry places the person alive that year, which bounds
+    their birth no later than it. This is defined as "everything else" rather
+    than a list of types, because the fact-type enum is open and any list would
+    be under-inclusive by construction — which is how an ancestor known only
+    from a census stayed blanked.
+  - Only a **string** date is read. `str()` in Python renders a dict's contents
+    while `String()` in JavaScript renders `"[object Object]"`, so an unguarded
+    coercion would let the two implementations disagree about a malformed date.
+  - The comparison is year arithmetic, so the effective threshold is anywhere
+    between 110 and 111 years depending on the birth month.
+- This **deliberately differs** from the e2e fixture gate
+  (`eval/harness/e2e/author.py::living_gate`) in two ways, and the two are not
+  being brought back into line. The gate refuses a missing flag outright,
+  because fixtures are committed to a public repo; a bundle goes only to
+  maintainers. And the gate presumes living only when
+  `birth_year > current_year - 110`, so it treats a person born exactly 110
+  years ago as deceased, where the redactor still redacts them — one year more
+  conservative, on the side that protects.
+- **Which files get redacted is decided by shape, not by filename.** Any
+  bundled file that parses as a JSON object with a `persons` array is redacted.
+  Keying on the two canonical names meant every other copy of a tree shipped
+  whole — not only build residue, but a researcher's own
+  `tree-backup.gedcomx.json` or a Finder duplicate, which no skip rule has any
+  reason to drop. `research.json` has no top-level `persons`, so it is
+  unaffected; a cheap first-byte check keeps media files away from the parser.
+  A leading byte-order mark is tolerated — a Windows editor readily saves one,
+  and a parse failure here does not fail closed: it falls through to the
+  pass-through below, shipping the file with its living people intact.
+- **Stale copies are additionally skipped by the walker**: any name ending
+  `.bak`, and any name ending `.tmp-<hex>`. Matching is case-insensitive,
+  because the researcher team is on Windows. `.bak` files were written by older
+  `.mcpb` builds; `.tmp-<uuid>` files are crash residue from the
+  pre-ProjectStore `atomicWriteJson`, whose temp name was not dot-prefixed.
+  Neither is written any more, but neither is deleted from project folders that
+  already hold one. They are skipped rather than merely redacted because
+  nothing reads them and they are noise in a bundle — and **each one is named
+  in FEEDBACK.md's skipped list**, like every other drop reason, so a triager
+  can tell a file was removed rather than never existed.
 - A redacted person keeps `id` — relationships reference it, so removing the
   person would dangle every edge — and keeps `gender`.
 - Their `names` become a single `{id, given: "Living", surname}` placeholder,
@@ -77,9 +146,10 @@ a leak test asserting no redacted name, date, place or ark survives anywhere in
 the bundled tree.
 
 **Scope.** This covers `tree.gedcomx.json` — the structured, high-density store
-of person data. It does not scrub free text in `research.json`, `results/`, or
-the session transcript. That is accepted: researchers work on deceased people,
-and agent narration does not reach a committed test.
+of person data. It does not scrub *person* data out of free text in
+`research.json`, `results/`, or the transcripts. That is accepted: researchers
+work on deceased people, and agent narration does not reach a committed test.
+API keys in those places are a separate pass — §2.3.
 
 ### 2.2 The session transcript
 
@@ -87,6 +157,75 @@ The bundle carries the Claude Code session JSONL at
 `_feedback/session-log.jsonl`. It holds the narration, full tool I/O, and the
 agent's reasoning that the persisted project files do not — for diagnosing
 *why* the agent did something, it is the highest-value file in the bundle.
+
+Work the agent delegated to a subagent is **not** in that file. Claude Code
+writes each subagent its own transcript, and the bundle carries them at
+`_feedback/subagents/agent-*.jsonl`, each with an `agent-*.meta.json` naming
+the parent `Agent` call that spawned it; a session other than the newest ships
+under `_feedback/sessions/<session-id>/` with its own parent log beside it. Two
+guardrail owner arms do their protected write from inside a subagent, so a
+consumer reading only the main log cannot tell a clean session from an unseen
+one. Layout, the rejected merge, and the no-`agentType`-filter rule:
+`apps/electron/docs/feedback-json-spec.md` §6.
+
+**The prototype's transcript** is the same layout built from `session_entries`
+rows: a `(session_id, subpath)` group per file, one compact JSON line per row in
+`seq` order, a subagent's `agent_metadata` rows becoming its `.meta.json` (the
+last one, `type` dropped, as the SDK's own resume materialiser writes it), and
+each group's largest `seq` standing in for a file's mtime in "newest first". The
+active session is the web session's `sdk_session_id`. Rows are streamed in
+500-row batches, so a transcript over what is left of the shared budget stops
+at the first batch past it and is named `(over the transcript size budget)` —
+where the alpha would have read it whole first. A nested subagent subpath
+(`subagents/workflows/…`), which the alpha's one-level directory read never saw
+either, is named as not bundled.
+
+### 2.3 API-key redaction
+
+A tester who pasted an OpenRouter or Anthropic key into the chat has it in the
+transcript, and one who typed it into the feedback dialog has it in their
+free-text answers. Both used to ship in the clear. Redaction happens at
+**capture** time for the same reason as §2.1: the Drive folder is shared, and a
+key that reaches it is already disclosed.
+
+Implemented as `_redact_api_keys` / `_redact_api_keys_str`
+(`apps/server/app/feedback.py`) and `redactApiKeys`
+(`apps/electron/src/main/feedback.ts`). Three token shapes are replaced with
+`[REDACTED_API_KEY]`: `sk-ant-…`, `sk-or-…`, and any `sk-` token of 40+
+characters. The rule:
+
+- **Every member of the transcript set, not just the main log.** The redaction
+  call sits inside the `admit` helper that charges each transcript to the shared
+  size budget, so the active parent log, a grouped session's parent, every
+  subagent transcript, and every `agent-*.meta.json` all pass through it. A
+  per-call-site redaction is the shape that lets the *next* member of the set
+  ship a key, which is exactly how the subagent transcripts of §2.2 would have
+  shipped one.
+- **Charged to the budget after redaction**, so `sessionLogSize` /
+  `session_log_size` is the number of bytes that actually leave. The
+  replacement is never longer than the token it replaces, so redaction cannot
+  push a transcript over the cap.
+- The five free-text feedback fields (`userPrompt`, `agentDid`,
+  `agentShouldHave`, `correctAnswer`, `notes`) are redacted at normalization
+  time, before they reach either `FEEDBACK.md` or `feedback.json`.
+- Like §2.1 this is a filter, not a validator: it never fails a submission.
+
+Tests: `test_session_log_redacts_api_keys_in_every_member_of_the_set`
+(`apps/server/tests/test_feedback.py`) and its named mirror in
+`apps/electron/src/main/__tests__/feedback.test.ts`, both of which plant a key
+in the parent, the child, and the child's meta.
+
+**Bearer tokens (prototype only).** The prototype's worker writes the owner's
+FamilySearch access token into its per-turn `mcp.json` as
+`Authorization: Bearer …`. A turn that read that file would leave the token in a
+`session_entries` tool result, which the three `sk-` shapes do not match. The
+worker now refuses that read (`apps/server/proto/worker/deny.py`), and the
+prototype's `admit` and its form fields add two passes after the API-key one:
+any `Bearer <16+ token characters>` becomes `Bearer [REDACTED_TOKEN]` — an
+older turn's row holds the token *that* turn had, possibly rotated since — and
+the owner's current access and refresh tokens are replaced literally, for token
+text with no `Bearer` in front. Test: `test_living_people_api_keys_and_tokens_are_redacted`
+(`apps/server/tests/test_proto_feedback.py`).
 
 ## 3. The case directory contract
 
@@ -102,9 +241,10 @@ Given a zip, the setup script MUST:
 | 2 | Refuse a non-empty destination unless `--force` (`FORCE=1`) is given. |
 | 3 | Write `.feedback-repo-root` containing the absolute path of the repo checkout the script itself lives in. This is how the workflow skills find the repo to write test output into — they MUST resolve it from this marker rather than assuming the cwd. |
 | 4 | Append `.claude/` to the case's `.gitignore`, preserving any existing entries, creating the file if absent. |
-| 5 | `git init` and make exactly one commit titled **`imported`**. |
-| 6 | Create `.claude/skills/` as a **real directory** (never a symlink) holding one symlink per skill — every skill in `packages/engine/plugin/skills/` and every dev skill in the repo's `.claude/skills/`. Symlinks mean a `SKILL.md` edit takes effect on the next run with no rebuild, which is what makes the fix loop cheap. |
-| 7 | Print the tester's `user_prompt` verbatim, for first paste. The submission dialog does not require that box, so it may legitimately be empty. **Neither script handles that case yet**: the `.sh` falls through to "see feedback.json (user_prompt field)", pointing at the empty field, and the `.bat` prints the heading and both rules with nothing between them. Until that lands, a triager who sees either should read `_feedback/session-log.jsonl` instead, remembering that a trimmed log drops its oldest entries and so the prompt first. |
+| 5 | `git init` and make exactly one commit titled **`imported`**. Both scripts pass a fixed identity on that one call (`git -c user.name="feedback-case" -c user.email="feedback-case@localhost"`), so the baseline is made without a global git identity — GitHub Desktop, which the Windows team is told to use, configures none. `-c` writes nothing to the user's global config and nothing to the case repo's own. |
+| 6 | Create `.claude/skills/` as a **real directory** (never a symlink) holding one symlink per skill — every skill in `packages/engine/plugin/skills/` and every dev skill in the repo's `.claude/skills/`. Symlinks mean a `SKILL.md` edit takes effect on the next run with no rebuild, which is what makes the fix loop cheap. The `.sh` verifies each entry is a symlink (`[ -L ... ]`) after creation; when one is not (e.g. Git Bash on Windows without Developer Mode, where `ln -s` silently copies), it exits non-zero and directs the user to `scripts\setup-feedback-case.bat`. |
+| 8 | Strip injected config files (`.claude/`, `.claude.json`, `.mcp.json`, `.gitattributes`, `.git/`) and rename every `CLAUDE.md` at any depth to `CLAUDE.md.submitted`. The strip runs after the completeness check but before `.gitignore`, `git init`, and the script's own `.claude/`. |
+| 7 | Print the tester's `user_prompt` verbatim, for first paste. The submission dialog does not require that box, so it may legitimately be empty. Both scripts distinguish a read that returned nothing from a read that failed. Blank — `""`, an explicit `null`, a missing key, or whitespace only — is reported as blank and points at `_feedback/session-log.jsonl`, noting that the log is optional (a Cowork submission never has one) and that a trimmed log drops its oldest entries, so the prompt goes first. A read that failed still points at the `user_prompt` field. Blankness is decided with whitespace stripped; a non-blank prompt is still printed exactly as submitted. |
 
 Ordering matters: the marker and `.gitignore` are written **before** the commit
 (so the marker is in the baseline), and the symlinks **after** it (so they stay
@@ -163,7 +303,7 @@ Stateless skills (read-only, narration-only, pure query) legitimately say "this
 skill writes no project state; safe to re-invoke."
 
 The section must live **inside SKILL.md**, not a separate file: Claude Code's
-relative-path resolution from SKILL.md is unreliable (issue #17741), and Cowork
+relative-path resolution from SKILL.md is unreliable (claude-code#17741), and Cowork
 does not load `packages/engine/plugin/CLAUDE.md` as context — plugins
 contribute context through skills, agents and hooks rather than CLAUDE.md.
 

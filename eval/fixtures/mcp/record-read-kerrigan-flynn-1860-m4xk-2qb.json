@@ -1,0 +1,177 @@
+{
+  "tool": "record_read",
+  "description": "FamilySearch record_read response for record M4XK-2QB: the 1860 census household of Silas Kerrigan, Schuylkill County, with the Flynns in it. Shaped like a live read (a Record and a Collection source description, per-persona indexFields).",
+  "args": {
+    "recordId": "~M4XK-2QB"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_1",
+            "type": "BirthName",
+            "given": "Silas",
+            "surname": "Kerrigan"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "Occupation",
+            "value": "Laborer"
+          },
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1798",
+            "place": "Ireland"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_2",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_2",
+            "type": "BirthName",
+            "given": "Thomas",
+            "surname": "Flynn"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "Occupation",
+            "value": "Miner"
+          },
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1818",
+            "place": "Ireland"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_3",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "n_3",
+            "type": "BirthName",
+            "given": "Mary",
+            "surname": "Flynn"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1822",
+            "place": "Ireland"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_4",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_4",
+            "type": "BirthName",
+            "given": "Patrick",
+            "surname": "Flynn"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1845",
+            "place": "Pennsylvania"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "src_r_1",
+        "resource_type": "Record",
+        "title": "Entry for Silas Kerrigan and Thomas Flynn, \"United States, Census, 1860\"",
+        "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4XK-2QB : accessed 30 September 2026), Entry for Silas Kerrigan and Thomas Flynn.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M4XK-2QB"
+      },
+      {
+        "id": "sd_c_1",
+        "resource_type": "Collection",
+        "title": "United States, Census, 1860"
+      }
+    ],
+    "places": [],
+    "indexFields": {
+      "p_1": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_000",
+        "age": "62",
+        "householdId": "1"
+      },
+      "p_2": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_001",
+        "age": "42",
+        "householdId": "1"
+      },
+      "p_3": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_002",
+        "age": "38",
+        "householdId": "1"
+      },
+      "p_4": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_003",
+        "age": "15",
+        "householdId": "1"
+      }
+    }
+  }
+}

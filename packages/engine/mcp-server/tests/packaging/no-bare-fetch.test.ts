@@ -4,10 +4,10 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, relative } from "node:path";
 
 // Guards against reintroducing the 236-minute hang (issue #1369): every
-// network call in src/ must go through fetchWithTimeout() in utils/http.ts,
-// the only file allowed to call the global fetch directly. Node's fetch has
-// no timeout of its own, so a bare fetch() elsewhere hangs forever on a
-// stalled upstream connection with no CI signal to catch it.
+// network call in src/ must go through fetchWithRetry() (or fetchWithTimeout()
+// for excluded sites) in utils/http.ts — the only file allowed to call the
+// global fetch directly. Node's fetch has no timeout of its own, so a bare
+// fetch() elsewhere hangs forever on a stalled upstream connection.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const srcRoot = join(here, "..", "..", "src");
@@ -38,7 +38,7 @@ describe("no bare fetch() outside utils/http.ts", () => {
     }
     expect(
       offenders,
-      `bare fetch() found outside utils/http.ts — use fetchWithTimeout() instead:\n${offenders.join("\n")}`
+      `bare fetch() found outside utils/http.ts — use fetchWithRetry() instead:\n${offenders.join("\n")}`
     ).toEqual([]);
   });
 });

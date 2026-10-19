@@ -9,7 +9,7 @@
 > (pre-merge, "what-if") warnings entry point — plus the data-model additions
 > that capability needs.
 >
-> **Superseded on the write path (2026-07-18, `#701`).** The monolithic "fold
+> **Superseded on the write path (2026-07-18).** The monolithic "fold
 > the candidate document" step is **rewired to the per-persona
 > `materialize_facts` flow** (`tree-materialization-spec.md` §3-§4, §9), and the
 > coherence gate's **invocation owner moves from proof-conclusion to
@@ -27,8 +27,8 @@
 > `simplified-gedcomx-spec.md`, and the skill specs under
 > `packages/engine/plugin/skills/`.
 >
-> Warnings behavior is ported from FamilySearch's `MobWarnings.java` (attached
-> to Issue #250 as the authoritative reference). §7 and §16 map every ported
+> Warnings behavior is ported from FamilySearch's `MobWarnings.java`, the
+> authoritative reference. §7 and §16 map every ported
 > check back to it.
 
 The goal is one reviewable description of how a found record becomes correct
@@ -40,7 +40,7 @@ Susan, Bill, and Mary, merged into a tree holding John, Susan, and William.
 ## 1. Why this exists
 
 Today the record→tree flow is real but **distributed across skills with no
-single contract**: `search-records` triages, `record-extraction` extracts,
+single contract**: `search-records` triages, `extraction_append` extracts,
 `person-evidence` matches, `proof-conclusion` decides, the `merge_*` tools
 execute, and `check-warnings` runs *after* the write. Two things are missing:
 
@@ -72,7 +72,7 @@ candidate-document fold.
 - The skill updates needed to wire all of the above (§5.0).
 
 **Out of scope (referenced, not re-specified):**
-- The internal behavior of `search-records`, `record-extraction`,
+- The internal behavior of `search-records`, `extraction_append`,
   `proof-conclusion`, `tree-edit`, `materialize_facts`,
   `merge_tree_persons` — owned by their existing specs/skills.
 - Selective field-level merge tooling and `tree_edit` source-write operations
@@ -131,8 +131,8 @@ this workflow; each pair drives one per-persona `materialize_facts` write
   merge-mode warnings are **MCP tools** (host). Skills orchestrate them; they
   never compute matches or warnings in the VM.
 - **Recovery, not undo (§12).** A research project is a single run; the
-  recovery model for a bad merge is "start over." Backups (`*.bak`) are
-  retained for accidents but there is no merge receipt / programmatic unmerge.
+  recovery model for a bad merge is "start over." The tools write no `*.bak`;
+  there is no merge receipt / programmatic unmerge.
 
 ---
 
@@ -146,7 +146,7 @@ this workflow; each pair drives one per-persona `materialize_facts` write
 | `proof-conclusion` | Weigh the materialized evidence and set `primary`/`preferred` on the concluded value (§5.6). **No longer runs the coherence gate** (that moved to person-evidence) and no longer folds a candidate document. | Small |
 | `check-warnings` | Update the "does NOT cover merge-mode" caveat; document the new pre-merge capability. Remains the post-materialization *final-mode* owner. | Small |
 | `tree-edit` | Provides `add_relationship` for the household edges person-evidence writes (each carrying a source-ref). The old `merge_record_into_tree` "unpaired carry-in" note is dropped — this workflow no longer folds a candidate document. | Small |
-| `search-records`, `record-extraction`, `research` | Referenced unchanged; verify routing only. | None/minimal |
+| `search-records`, `research`, and the `extraction_append` tool | Referenced unchanged; verify routing only. | None/minimal |
 
 **Ownership call:** `person-evidence` invokes the merge-mode warnings dry-run
 directly — it assembles the household match set and owns the record→tree
@@ -161,9 +161,9 @@ Triage results with `same_person`; check `source_attachments` to detect records
 already attached; `record_read` to fetch full simplified GedcomX for the
 chosen record. Unchanged.
 
-### 5.2 record-extraction *(reference)*
+### 5.2 extraction_append *(reference)*
 
-Extract assertions for **all** personas in the record (John, Susan, Bill, Mary)
+`extraction_append` extracts assertions for **all** personas in the record (John, Susan, Bill, Mary)
 into `research.json`, **unattached** (keyed by `record_id` + `record_role`).
 Unchanged.
 
@@ -185,8 +185,11 @@ The matching step produces the `merges` pair-set. For each record persona:
    catches independent-pairwise incoherence (John↔treeJohn but Susan↔a
    *different* tree woman) that no single `same_person` call sees.
 5. **New-person handling.** A persona with no acceptable match (Mary) is given a
-   tree id — a name-only stub (`tree_edit add_person`) — so the pair-set carries
-   a tree id the coherence gate can score. `materialize_facts` create-or-enrich
+   tree id so the pair-set carries one the coherence gate can score. **Superseded
+   2026-09-10 on the tool:** person-evidence mints her with `materialize_facts`,
+   not `tree_edit add_person`, which enforces no source-ref on names and leaves a
+   record-derived person provenance-less (`tree-materialization-spec.md` section
+   4.6). `materialize_facts` create-or-enrich
    then lands her census facts *onto that stub* after the gate clears (§5.5), so
    — unlike the old empty-stub path — she never stays fact-less
    (`tree-materialization-spec.md` §4.3).
@@ -232,8 +235,10 @@ folds a candidate document.
 
 ### 5.7 Post-materialization
 
-Run `check-warnings` (final mode) on each affected anchor; verify
-`research.json` reference integrity. (`materialize_facts` and the `tree_edit`
+Verify `research.json` reference integrity. `check-warnings` is no longer a
+required post-merge step: the merge tools refuse a write that introduces an
+unjustified genealogical warning, so the impossibility this step looked for is
+refused at the write boundary. (`materialize_facts` and the `tree_edit`
 edge writes validate the would-be project before persisting and write nothing on
 a call-introduced error (pre-existing drift rides as a warning) —
 `tree-materialization-spec.md` §4.1.)
@@ -272,6 +277,12 @@ particular is strong evidence the pairing is wrong.
 ---
 
 ## 7. Merge-mode warnings primitive
+
+> **Warning gate.** `merge_tree_persons` now refuses a merge that
+> introduces unjustified genealogical warnings. The gate runs after validation
+> and before the write, using `introduced-warnings.ts` to compute the delta.
+> Pre-existing warnings on collapsed persons are remapped to survivors before
+> diffing. `merge_warnings` is kept as an optional preview — it is not retired.
 
 The analog of `MobWarnings.getWarnings(targetMob, candidateMob, mergedMob,
 isFinalWarnings)` (`warnings.java`). The current TS port
@@ -373,6 +384,10 @@ inputs differ fundamentally (a pair-set + a candidate document vs. a single
 `personId`), and a separate tool keeps each schema honest. `person_warnings`
 remains the single-anchor final-mode tool.
 
+A candidate persona with no tree match is left unpaired — it is omitted from
+`merges` and the dry-run previews it as a new person. Passing a non-existent
+tree id as a survivor is rejected with an error naming the valid tree ids.
+
 ### 7.5 Output shape
 
 A discriminated union on `ok`, mirroring `merge_record_into_tree`'s envelope so
@@ -388,7 +403,7 @@ a malformed-merge / unpersistable-merge failure is surfaced rather than thrown:
       scoreType, issueType, severity: "contradiction" | "implausible",
       personId, personName,         // who the warning is about (may be a relative or the survivor)
       message,
-      factIds?, relatedPersonId?,
+      facts?, relatedPersonId?,
       mobRole?: "target" | "candidate" | "merged" | "relative"   // which side surfaced it
     }
   ]
@@ -434,7 +449,7 @@ Each addition updates the **three** places per the repo rule:
 
   **Phase 0 finding (resolved — no schema change needed).** Census collection
   titles already live in the top-level `SimplifiedGedcomX.sources[].title`
-  (`SimplifiedSourceDescription`, `gedcomx.ts:161`), populated by
+  (`SimplifiedSourceDescription` in `src/types/gedcomx.ts`), populated by
   `simplifySourceDescription` from the raw `titles[0].value`. They are reached
   via a `ref → id` join from the anchor's source references — on the **record**
   side typically `person.sources[]`, on the **tree** side typically
@@ -497,6 +512,10 @@ candidate / relative mobs (warnings).
 `hasEventBeforeBirth365_2`, `hasChristeningBeforeBirth`, `hasBurialBeforeDeath`,
 `hasAgeRangeGreaterThan120`, `hasDeathBeforeChildBirth*`,
 `hasEventsOutsideLifespanFar` — biological/temporal impossibilities.
+`hasEventBeforeBirth365_2` reads each date as generously as it allows
+(`person-warnings-tool-spec.md`, its divergence note), so a cross-record
+spread of approximate births (`Abt 1850` / `Abt 1853`) does not block; that
+spread is advised by `birthRangeGreaterThan3` / `birthLikeRangeGreaterThan8`.
 
 **Advise (`warning`):** the parent-age, marriage-timing, too-many-*, similar-*,
 close-child, `hasChildDeathAfterParentBirth200` / `hasDeathAfterChildBirth90`
@@ -504,7 +523,7 @@ close-child, `hasChildDeathAfterParentBirth200` / `hasDeathAfterChildBirth90`
 `hasEventsOutsideLifespanNear` checks — improbable but possible.
 
 The authoritative per-check severities follow
-`check-warnings/references/warning-checks.md`; this catalog only fixes the
+Appendix A of `agents/check-warnings.md`; this catalog only fixes the
 block/advise split for the gate. (`warnings.java` itself carries **no** severity —
 `WarningSaver` records bare tags — so severity is assigned TS-side from
 `warning-checks.md`, not ported. `hasChildDeathAfterParentBirth200` is classified
@@ -536,9 +555,11 @@ under Block — corrected to match.)
 ## 12. Reversibility & recovery
 
 "Recovery, not undo." A project is a single research run; the recovery model for
-a wrong merge is **start over**. `*.bak` backups are retained for accidents.
-There is no merge receipt and no programmatic unmerge — deliberately, given the
-start-over model and the cost of maintaining reversibility metadata.
+a wrong merge is **start over**. The tools write no `*.bak` — nothing read it and
+the feedback bundler shipped it unredacted — so recovery falls back on the project
+folder's version history (git or the viewer's snapshots). There is no merge
+receipt and no programmatic unmerge — deliberately, given the start-over model and
+the cost of maintaining reversibility metadata.
 
 ---
 
@@ -572,7 +593,7 @@ start-over model and the cost of maintaining reversibility metadata.
 Settled with Dallan over 2026-06-21; recorded so implementation doesn't
 re-litigate.
 
-> **Superseded on the write path (`#701`, 2026-07-18):** decision (8)'s
+> **Superseded on the write path (2026-07-18):** decision (8)'s
 > `merge_warnings`-mirrors-`merge_record_into_tree` design note still stands (the
 > tool is retired only in a later phase), but (9) "whole-fold default" is
 > replaced by the per-persona `materialize_facts` flow and (5)'s stub carry-in is

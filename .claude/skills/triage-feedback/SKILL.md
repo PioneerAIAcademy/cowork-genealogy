@@ -32,7 +32,7 @@ PROJ_ID="PVT_kwDOC-DkVc4BUEYb"
 STATUS_FIELD="PVTSSF_lADOC-DkVc4BUEYbzhBPBf8"
 # Feedback 429222f8 / Backlog 0207fe08 / Not planned c44314b0
 
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 | jq -r '
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 | jq -r '
   [.items[] | select(.status == "Feedback")]
   | sort_by(.content.number)
   | .[] | "\(.content.number)\t\(.id)\t\(.content.title)"'
@@ -42,10 +42,13 @@ Each item carries `id` (needed to move the card), `content.number`, `status`,
 `title` and `labels`. **The list truncates silently at `--limit`** — if the row
 count equals the limit you asked for, you lost rows.
 
-**The project API throttles separately from the GraphQL budget.** A burst of
-reads returns "API rate limit exceeded" while `gh api rate_limit` still shows
-5000/5000. Read the board once at the start of the run and work from that
-snapshot, re-reading only before a write.
+**This full-board read is the expensive call.** It pages every card with full
+issue bodies — about 30s, and a large share of the GraphQL points budget. Run it
+**once** per run and work from that snapshot. Repeating it returns "API rate
+limit exceeded" while `gh api rate_limit` still shows 5000/5000: that is the
+points budget, not the hourly window, and it clears in minutes, so do not wait
+for the `reset` timestamp. **Never re-read the board to check one card** — use
+the single-card query in Section 6.
 
 **Oldest first**, and **cap the run at about eight.** The column is the queue, so
 an item you did not reach is still there next run. Say how many are left when you
@@ -57,9 +60,23 @@ not two bugs. Open both before triaging either.
 ## 1. Report the feedback
 
 The issue body carries the tester's own words — the five prose fields and their
-`worked as expected` verdict. **Read the body; do not download the bundle** unless
-the prose is genuinely insufficient, which is rare and worth saying out loud when
-it happens. The Drive link is in the body when you need it.
+`worked as expected` verdict. **Never triage from the body alone: read the bundle
+first, every item.** The prose hides what matters. A tester's "it couldn't find the
+entry" was a 403 on a Memories artifact, and a "yes, worked well" bundle had its
+whole tree blanked by redaction.
+
+The zip is at `~/Downloads/feedback-<timestamp>.zip`, named in the body's
+`make feedback-case ZIP=...` line. If it is not there, stop and ask the lead to
+download it from the body's Drive link. Unzip it to the scratchpad and read:
+
+- `_feedback/session-log.jsonl` and `_feedback/subagents/*.jsonl`: what the agent
+  actually called, passed and got back. A Cowork bundle has none (its `FEEDBACK.md`
+  says so); read the project state instead.
+- `research.json` (`log[]`, `sources[]`, `plans[]`), `tree.gedcomx.json` and
+  `starting-tree.gedcomx.json`: what the session wrote.
+- `FEEDBACK.md`: the redaction and session-log notes. A redacted person's facts are
+  gone, so compare person and fact counts before trusting the tree. Any other file
+  in the bundle (a stray `.bak`) is a finding in itself.
 
 Give the lead, in this order and nothing else:
 
@@ -83,8 +100,9 @@ For each claim, say which it is:
 - **Confirmed** — you found the code, the doc, or the state that shows it.
 - **Refuted** — the thing the tester says is missing or broken is present and
   working. Then ask what they actually saw, because something did happen.
-- **Unverifiable from here** — needs the bundle, a live session, or a decision.
-  Say so rather than guessing; "unverifiable" is a legitimate report.
+- **Unverifiable from here** — needs a live session or a decision that the bundle
+  cannot settle. Say so rather than guessing, but never call a claim unverifiable
+  before you have read the bundle.
 
 **Name the files you read.** A verdict with no cited path is an opinion.
 
@@ -101,7 +119,7 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open \
 
 **Search by fix site, not by symptom.** Issues that collide almost never share a
 title — they want different lines in the same file. Read `**Touches:**` lines.
-`/audit-board` owns merge doctrine; use its verdicts, do not invent one here.
+`/merge-issues` owns merge doctrine; use its verdicts, do not invent one here.
 
 Search the open pool once, then stop. A second search rarely finds what the first
 missed, and this skill is not the whole-board pass.
@@ -136,7 +154,8 @@ none of your context, and `/review-ready` will read it before a junior does.
 **Retitle it first.** A submission is titled `[feedback] 2026-08-25T22:22Z`,
 which is a filing stamp, not a task. It reaches Ready as an ordinary issue and
 someone self-serves from that column by reading titles — and `/fill-ready`,
-`/audit-board` and `/merge-recent-issues` all rank, cluster and search on them.
+`/audit-board`, `/merge-issues` and `/merge-recent-issues` all rank, cluster and
+search on them.
 Give it the same shape as every other issue on the board: what is wrong, stated
 so it can be recognised without opening it.
 
@@ -148,8 +167,9 @@ gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
 Write into the body:
 
 - **`**Touches:**`** — the files the work would change, repo-relative,
-  comma-separated, one line, near the top. This is what `/audit-board` and
-  `/merge-recent-issues` search on later.
+  comma-separated, one line, near the top. This is what `/merge-issues`,
+  `/merge-recent-issues` and `/fill-ready`'s collision detector search on later;
+  an issue without one is invisible to every one of them.
 - **What the tester saw**, kept as evidence — leave the reproduced prose in place.
 - **What you verified**, with paths, and which claims you refuted.
 - **What to do about it**, concretely enough to start: the approach, the files,
@@ -203,8 +223,25 @@ with a mechanical pass/fail — lints, CI, validators, harness, MCP tools, tooli
 bugs. `genealogist` for fixture adjudication, record research, doctrine prose.
 
 **Check the board write landed.** A `gh` token without the `project` scope fails
-it while still reporting success, which looks exactly like it worked. Re-read the
-item and confirm the column before you report the item done.
+it while still reporting success, which looks exactly like it worked. Confirm the
+column with this single-card query — never by re-reading the board:
+
+```sh
+gh api graphql -f owner=PioneerAIAcademy -f repo=cowork-genealogy -F number=<N> \
+  -f query='query($owner:String!,$repo:String!,$number:Int!){
+    repository(owner:$owner,name:$repo){issue(number:$number){
+      number state stateReason
+      projectItems(first:5){nodes{id project{number}
+        fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}' \
+| jq -r '.data.repository.issue
+    | "#\(.number) \(.state)/\(.stateReason // "-") column=\(.projectItems.nodes[0].fieldValueByName.name // "none") item=\(.projectItems.nodes[0].id)"'
+```
+
+0.5s against 30s, and it returns the `<ITEM_ID>` the `item-edit` above needs, so
+it replaces looking that up from the board snapshot too. After a close the card
+reads Done for up to a minute, until project-status-sync moves it to Not planned.
+Run the same query after that, and move the card yourself only if it is still in
+Done.
 
 **Never set an assignee.** People self-serve from Ready and the lead hands work
 out at standup.

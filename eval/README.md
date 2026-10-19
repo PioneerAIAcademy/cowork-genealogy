@@ -54,7 +54,12 @@ the e2e benchmark; see
 ## Prerequisites
 
 - **Python 3.12+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
-- **Node.js 20+** with npm.
+- **Node.js 20+** with npm, plus **pnpm** — the CRUD UI installs from the repo-root
+  pnpm workspace, and Node ships npm only:
+  ```
+  npm install -g pnpm@9.15.9
+  ```
+  `Setup.bat` does this for you on Windows; macOS/Linux users run it once.
 - **Claude Code CLI** — required. The harness drives the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-python), which spawns the `claude` CLI as a subprocess. Install once:
   ```
   npm install -g @anthropic-ai/claude-code
@@ -66,7 +71,16 @@ the e2e benchmark; see
   ```
   Or set it in your shell. The **skill runner** prefers your Claude Code subscription (`~/.claude/`) when one is available, billing it rather than the metered key, and only falls back to the API key when no subscription session is found. The judge always uses the key regardless. See `eval/harness/harness/auth.py` for resolution rules.
 
-  **In a git worktree:** `eval/.env` is gitignored, so a fresh worktree does not have it and the judge cannot run there. `make install-hooks` (now part of `make install`) makes every *new* worktree link it automatically; for a worktree that already exists, run `make worktree-link` inside it. The harness refuses to start without a judge key when any selected test is positive, so a missing link fails in a second rather than after a paid-for suite — override with `--allow-missing-judge` if you deliberately want an ungraded run.
+  **In a git worktree:** `eval/.env` is gitignored, so a fresh worktree does not have it and the judge cannot run there. `make install-hooks` (now part of `make install`) makes every *new* worktree link it automatically; for a worktree that already exists, run `make worktree-link` inside it.
+
+  Both harnesses refuse to start without a judge key, so a missing link fails in a second rather than after a paid-for run — but they take different flags, because the flags mean different things:
+
+  | Harness | Refuses when | Override |
+  |---|---|---|
+  | unit (`run_tests.py`) | any selected test is `positive` (a negative test grades on routing and survives a dead judge) | `--allow-missing-judge` |
+  | e2e (`run_e2e.py`) | always | `--skip-judge` |
+
+  The e2e arm was added 2026-09-23 after a `catharina-gosner-daughter` run cost $4.87 and 28.5 minutes in a fresh worktree and then discarded its own grade. An e2e run started with `--skip-judge` is still committable and can be graded later without re-running the research.
 
 ## Running manually (macOS / Linux)
 
@@ -108,28 +122,27 @@ Tests run serially (~30s/test). Scope runs with `--skill`, `--test`, or `--tag` 
 ### CRUD UI
 
 ```bash
-cd eval/app
-
-# One-time setup (installs deps + generates Zod schemas)
-npm install
+# One-time setup, from the repo root (installs deps + generates Zod schemas).
+# eval/app is a pnpm workspace member, so it installs with everything else.
+pnpm install
 
 # Launch the dev server
-npm run dev
+pnpm --filter cowork-genealogy-eval-app dev
 ```
 
-Then open <http://localhost:3000>. The CRUD UI reads + writes the same `eval/` tree the harness writes to — keep them on the same filesystem checkout.
+Then open <http://127.0.0.1:3000>. The CRUD UI reads + writes the same `eval/` tree the harness writes to — keep them on the same filesystem checkout.
 
 ### Useful harness flags
 
 - `--list-skills` — list every skill directory that has at least one runnable test JSON, then exit.
 - `--runlogs-root <dir>` — write run logs somewhere other than the default. Useful for one-off experiments that shouldn't pollute the committed tree.
 - `--tests-dir <dir>` — point the harness at a non-default test corpus.
-- `--max-cost-usd <n>` — suite-wide spend cap. Default 50. When projected cost exceeds it the remaining tests are skipped; the run still exits on the outcomes seen so far, so a capped run can exit 0 without covering the whole suite.
+- `--max-cost-usd <n>` — suite-wide spend cap. Default 50 per selected skill. When projected cost exceeds it the remaining tests are skipped, the run exits 3, and every skill left with an unrun test writes a `scratch_` log rather than a releasable candidate.
 - `--max-wall-clock-seconds <n>` — suite-wide wall-clock cap. Default 14400 (4 hours). Same skip-the-rest behavior as the cost cap.
 
 ### Harness exit codes
 
-- `0` — every test passed or was an expected xfail.
+- `0` — every test passed, was partial, or was a declared-xfail test that failed as declared.
 - `1` — harness crash, or any test failed or unexpectedly passed. On a crash,
   submission stops but every still-running test is allowed to finish, and the
   completed tests are saved as a `scratch_<ts>.json` run log per skill with the
@@ -155,10 +168,10 @@ E2E tests at `eval/harness/tests/e2e/` hit the real Anthropic API and are desele
 The CRUD UI has Vitest unit + integration tests:
 
 ```bash
-cd eval/app
-npm test                # one-shot
-npm run test:watch      # watch mode
-npm run typecheck       # tsc --noEmit
+# From the repo root:
+pnpm --filter cowork-genealogy-eval-app test        # one-shot
+pnpm --filter cowork-genealogy-eval-app test:watch  # watch mode
+pnpm --filter cowork-genealogy-eval-app typecheck   # tsc --noEmit
 ```
 
 ## Run log naming
@@ -183,10 +196,11 @@ Run logs are JSON envelopes validated against [`docs/specs/schemas/run-log.schem
 
 - `schema_version` (currently `3`), `skill`, `version`, `released`, `releasable`, `invocation`, `timestamp`, `model`, `harness_version`.
 - `judge_prompt_hash` — SHA-256 of the normalized `eval/harness/judge/prompt.md` at run time (NOT in the snapshot — the judge prompt is project-global, so it's tracked separately so judge edits don't clobber every skill on activate).
+- `instrument` — what produced and graded the run, beside the skill-side `snapshot`: `validators.{suite,shared}` (normalised AST of the validator files), `tools.{fixture,live}` (the advertised tool schemas) and `live_modules` (the compiled module of each live tool the run called). Optional; read by check_runlogs rule 2c, which blocks on the suite-specific halves and warns on the rest.
 - `snapshot` — `{repo-relative-path: sha256-of-normalized-content}` of every skill-side file used to produce this run (`packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures). Values are digests, not content: git already holds the bytes, and the active-state check only has to compare. MCP source (`packages/engine/mcp-server/src/**`) is **not** tracked — the harness serves tool calls from mock fixtures, so a `src/` change does not make prior run logs inactive.
 - `tests[]` — per-test entries:
-  - `outcome` (`pass | partial | fail | aborted | xfail | xpass`)
-  - `flaky`, `outcome_summary.aggregated_dimensions[]` (1–3 per-dimension scores)
+  - `outcome` (`pass | partial | fail | aborted`; suppression of a declared-xfail failure is read from the `expected_outcome` marker beside it)
+  - `flaky`, `outcome_summary.aggregated_dimensions[]` (per-dimension scores; `1`–`3`, or `null` for N/A)
   - `runs[]` — per-execution detail: `output.text_response`, `tool_calls`, `validators`, `judge.dimensions[]` with rationales
 - `totals` — token + cost aggregates summed across tests.
 
@@ -214,9 +228,9 @@ See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.
 
 1. Junior edits a skill / tests / scenarios / fixtures.
 2. Junior runs `make eval-skill SKILL=<skill>` (or `cd eval/harness && uv run python run_tests.py --skill <skill>`) → harness writes a `v{N}_<ts>.json` candidate. The harness also **prunes that skill down to its 5 newest candidates**, deleting older ones with their annotations — so `git status` will show deletions you did not make. Commit them; they are the retention rule doing its job (GitHub issue #985). Released `v{N}.json` and the newest candidate are never pruned.
-3. Junior opens the CRUD UI and reviews the **sampled** tests on the latest candidate — marked in the sidebar; the rest read `not sampled`. The sample is five chosen tests plus **every test that failed or scored a 1 or 2 on any dimension**, so a run with a low score anywhere is more than 5 (median 6, at most 11 across the committed corpus). Every dimension of a sampled test needs an entry, and every one that is not a confirmed pass (judge 3, you agree 3) needs a written comment.
+3. Junior opens the CRUD UI and reviews the **sampled** tests on the latest candidate — marked in the sidebar; the rest read `not sampled`. The sample is five chosen tests plus **every test that failed, scored a 1 or 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning**, so a run with a low score anywhere is more than 5 (measured 2026-09-11 over the 117 committed logs carrying a sample: median 5, at most 13 as committed; median 6, at most 15 recomputed with no prior cursor). Every dimension of a sampled test needs an entry, and every one that is not a confirmed pass (judge 3, you agree 3) needs a written comment.
 4. Junior commits the candidate + annotation + any pruned deletions, pushes the PR.
-5. GH Action enforces (blocking): ≤1 added released file, latest full-skill run log is active on skill-side files (snapshot matches working tree), and its `.ann.json` is complete. Four warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture), the inverse direction (`check_rubric_tool_drift.py` — a rubric or `judge_context` naming a tool the skill can't call), negative-routing reciprocity (`check_negative_reciprocity.py` — a negative test pinning one direction of a routing pair with nothing backing the other), and a judge-prompt-hash match (rule 2b).
+5. GH Action enforces (blocking): ≤1 added released file; the run log this PR adds (else the latest full-skill run log) is active on skill-side files (snapshot matches working tree); its `.ann.json` is complete; no two test files share a `test.id`; every committed `.ann.json` parses; and no unsuppressed test in a run log **this PR adds** resolves to `fail` or `aborted` (rule 6 — zero reds, no carry list, no exemption). Four warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture), the inverse direction (`check_rubric_tool_drift.py` — a rubric or `judge_context` naming a tool the skill can't call), negative-routing reciprocity (`check_negative_reciprocity.py` — a negative test pinning one direction of a routing pair with nothing backing the other), and a judge-prompt-hash match (rule 2b).
 6. Senior reviews via GitHub diff + the CRUD UI compare page. Disagreements go to PR comments via the 📋 button.
 7. Senior clicks **Release** on the active candidate → `v{N}_<ts>.json` → `v{N}.json` rename. Commits, pushes, approves.
 8. Project owner merges.
@@ -229,6 +243,14 @@ That edit changes the skill-side snapshot, which flips the latest run log
 (~$1–3) *and* a complete re-grade, even though the behavior can't have
 changed. A senior can waive that for a genuinely behavior-neutral edit by
 applying a **PR label** — no branch checkout, no commands, nothing to install.
+
+The same label waives rule 2c for that skill, so a typo fix in an advertised tool description does not owe a paid re-run either.
+
+**The waiver is per skill.** The label is `eval-cosmetic-skip:<skill>`, where
+`<skill>` is the name in `eval/runlogs/unit/<skill>/` — the name rule 2's error
+prints. It waives that one skill. Every other skill the PR touches keeps the
+hard block, so one neutral edit can't carry a behavioral edit elsewhere in the
+same PR through the gate. The bare `eval-cosmetic-skip` label waives nothing.
 
 **It exempts the PR from both:** no harness re-run, and no re-correcting
 scores. The prior run log stays the active one, and its already-complete
@@ -243,13 +265,19 @@ scenario), it is **not** cosmetic: re-run the harness.
 ### How a senior sets the flag (entirely in the GitHub web UI)
 
 1. Open the PR on github.com.
-2. In the right-hand sidebar, under **Labels**, add **`eval-cosmetic-skip`**.
+2. In the right-hand sidebar, under **Labels**, add
+   **`eval-cosmetic-skip:<skill>`** for each skill whose change is
+   behavior-neutral (the red check's error names the exact label). Adding
+   several labels starts one run each; once the last is added, check that the
+   latest `Check runlog discipline` run is green, and re-run it if an earlier
+   run finished last.
 3. (Recommended) leave a one-line comment saying *why* it's behavior-neutral —
    e.g. "Reworded step 3 'Look for' → 'Search for'; no behavior change." The
    label records *who* and *when*; the comment records *why*.
 
-The `Check runlog discipline` check re-runs automatically when the label is
-added and turns green, with a warning noting the bypass so reviewers see it.
+The `Check runlog discipline` check re-runs automatically when a label is
+added. It turns green once every touched skill is either current or waived,
+with a warning naming each waiving label so reviewers see it.
 
 ### Safety: the waiver expires on every new push
 
@@ -259,7 +287,7 @@ the check goes red again and the senior must re-apply the label (after
 confirming the new commits are still cosmetic). This is the same "voids on any
 further edit" guarantee a re-run would give, with none of the work.
 
-The label is removed from the PR on that push too, so what you see matches what
+The labels are removed from the PR on that push too, so what you see matches what
 is in force. If it ever lingers — the strip is a separate workflow and can fail
 — the waiver is still void; the stale label has no effect. To clear a stuck red
 check in that case, remove the label and re-apply it (re-applying alone does
@@ -267,13 +295,20 @@ nothing, since GitHub fires no event for a label that is already there).
 
 ### One-time repo setup
 
-The label has to exist before anyone can apply it. An admin creates it once:
+Each label has to exist before anyone can apply it. An admin creates one per
+skill, from the repo root:
 
 ```bash
-gh label create eval-cosmetic-skip \
-  --description "Senior waiver: skill change is behavior-neutral; skip the eval re-run" \
-  --color FBCA04
+for skill in $(ls eval/runlogs/unit); do
+  gh label create "eval-cosmetic-skip:$skill" \
+    --description "Senior waiver: $skill's change is behavior-neutral; skip its eval re-run" \
+    --color FBCA04 --force
+done
 ```
+
+**A new skill needs its label created** the same way (`gh label create
+eval-cosmetic-skip:<skill>`). Until it exists, that skill has no waiver and rule
+2 blocks, which is the safe direction.
 
 Seniors need **Triage** or **Write** access on the repo to apply labels.
 
@@ -286,14 +321,31 @@ Seniors need **Triage** or **Write** access on the repo to apply labels.
 
 `Setup.bat` performs the one-time setup. Then `Start.bat` launches the CRUD UI and `RunTests.bat` runs the harness against the current corpus.
 
+> **First run on a checkout that predates the eval-app workspace move.** The
+> repo-root `preinstall` deletes the old npm-managed `eval\app\node_modules`
+> once, so pnpm's lockfile wins instead of the stale packages under it. It
+> prints `[preinstall] … removing it` and then installs. If Windows refuses
+> the delete with `EPERM` — an antivirus scan or an open editor holding a file
+> handle — the install **stops** rather than proceeding over a tree it knows is
+> wrong. Close anything sitting in that folder and re-run; if it still fails,
+> delete `eval\app\node_modules` by hand and run again. This is one-time: once
+> the folder is gone the step is a silent no-op forever after.
+>
+> `Start.bat` and `Setup.bat` clear that folder *before* calling pnpm, so they do
+> it in one pass. A bare `pnpm install` cannot: pnpm decides what to link before
+> it runs the hook, so the hook removes the folder and then stops the install on
+> purpose rather than finishing one that would leave `eval\app` unlinked. Run the
+> same command again and it goes through.
+
 ## E2e tests
 
 Separate from the unit-test framework documented above. E2e tests
 exercise the full GPS research flow autonomously against live
 FamilySearch APIs via the `/research --autonomous` skill. They're a
 stakeholder-facing benchmark, not a regression suite — much more
-expensive per run than unit tests (20–60 min, $3–10 each), so they
-run on demand.
+expensive per run than unit tests (about an hour and single-digit dollars
+each, with a long tail; the guide's overview table, row 5, has the measured
+median), so they run on demand.
 
 - **How-to:** [`../docs/e2e-testing-guide.md`](../docs/e2e-testing-guide.md) — creating fixtures, running tests, reading results, investigating failures.
 - **Spec:** [`../docs/specs/e2e-test-spec.md`](../docs/specs/e2e-test-spec.md) — fixture format, judge contract, result schema.
@@ -333,14 +385,18 @@ equivalent in parentheses:
 6. `eval\ValidateFixture.bat` → enter the slug (`make e2e-validate
    TEST=<slug>`) → resolve any `WARN`.
 7. `eval\RunE2E.bat` → enter the slug (`make e2e-run TEST=<slug>`) →
-   live run (20–60 min, $3–10).
-8. `/interpret-e2e-result` → read the verdict.
-9. `eval\ViewE2E.bat` → enter the slug (`make e2e-view TEST=<slug>`) → launch
+   live run (about an hour and single-digit dollars; the guide's overview
+   table, row 5, has the measured median).
+8. `/grade-e2e-run` → label each expected finding, blind. It writes
+   `run-<ts>.ann.json`.
+9. `/interpret-e2e-result` → see what it recovered and why it stopped. Run it
+   after step 8: reading it first anchors your grade.
+10. `eval\ViewE2E.bat` → enter the slug (`make e2e-view TEST=<slug>`) → launch
    the Research Viewer with `eval\Viewer.bat` (`make electron`) and open
    `eval\e2e-view` in it (its **Open Project** button) to inspect the agent's
    final tree, research log, and each finding's direct/indirect badge. Keep the
    viewer open — re-running `ViewE2E.bat` refreshes it live.
-10. If it passes, commit the fixture (and optionally its run log), and
+11. If it passes, commit the fixture (and optionally its run log), and
    open a PR.
 
 ### Debug a fixture interactively (Cowork + the viewer)
@@ -349,7 +405,8 @@ Before — or instead of — a headless `RunE2E.bat`, run the fixture **live in
 Claude Cowork** and watch it unfold. This is the recommended starting point
 for debugging *why* the agent did or didn't do something, and it keeps the
 test-improve loop fast: you watch the fix work in minutes instead of waiting
-20–60 min for a headless verdict.
+about an hour for a headless verdict (the guide's overview table, row 5, has
+the measured median).
 
 **First time (and after any skill or MCP-server change):** run
 `eval\CoworkInstall.bat` (`make cowork-install`). It builds **both** artifacts
@@ -382,12 +439,20 @@ headless run. Re-seed a fresh project (wiping any work) with `FORCE=1`.
 
 ### Keep the machine awake during a run
 
-A run is long (20–60 min) and the machine must **not sleep** partway through.
-If it does, the work pauses until the machine wakes — the result is still
-valid, but the run takes much longer in real time. The harness measures
-**active** time (so a sleep does not corrupt the wall-clock metric) and prints
-a `machine slept ~N min` note when it detects one — treat that note as your cue
-to set one of these up:
+A run is long (about an hour; the guide's overview table, row 5, has the measured
+median) and the machine must **not sleep** partway through.
+If it does, the work pauses until the machine wakes, and the run takes much
+longer in real time. The harness detects a sleep, leaves it out of the reported
+wall-clock time, and prints a `machine slept ~N min` note. Treat that note as
+your cue to set one of these up. On macOS and Linux a sleep does not count
+against the run's time caps. **On Windows it does:** Modern Standby still uses
+up the wall-clock and inactivity caps. A long sleep (`>= caps.inactivity_seconds`
+of counted sleep) no longer books that as an agent `timeout`/`inactivity`,
+though — the run stops as `host_slept`: committed so you can see it, but not
+graded and excluded from the outcome rates (issue #2974). You still want the
+machine awake — a slept run is a wasted run — but it can no longer masquerade as
+a capability failure. A sleep during setup or the judge call, after the agent
+finishes, is not detected at all.
 
 - **Windows:** there's no per-command keep-awake tool, so set the power plan
   once — `powercfg /change standby-timeout-ac 0` (add `powercfg /change

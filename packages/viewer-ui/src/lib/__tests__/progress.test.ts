@@ -80,6 +80,6 @@ describe('inferProgress', () => {
   it('stage labels are human-readable', () => {
     const result = inferProgress(emptyResearch)
     expect(result[0].label).toBe('Init')
-    expect(result[6].label).toBe('Proof Summary')
+    expect(result[6].label).toBe('Findings')
   })
 })

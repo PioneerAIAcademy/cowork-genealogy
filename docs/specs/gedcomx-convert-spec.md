@@ -166,6 +166,11 @@ export type SimplifiedFact = {
   standard_date?: string;    // GEDCOM-canonical form of `date` (set by toSimplified when parseable)
   place?: string;            // Verbatim from GedcomX place.original
   standard_place?: string;   // Standardized place name (snake_case form of standardPlace). See Rule 7.
+  assertion_id?: string;     // Backlink to the research.json assertion this fact was minted from.
+                             // A third simplified-format-only sidecar, like standard_date and
+                             // standard_place: `expandFact`'s allow-list drops it on the reverse
+                             // path by construction. Never produced by toSimplified (raw GedcomX
+                             // has no such concept) — only materialize_facts stamps it.
   sources?: SimplifiedSourceReference[];
 };
 
@@ -323,17 +328,37 @@ these to clean PascalCase / space-separated names:
 "http://gedcomx.org/Birth"                  →  "Birth"
 "data:,Baptism"                             →  "Baptism"
 "data:,Military%20Draft%20Registration"     →  "Military Draft Registration"
+"data:,Military+Draft+Registration"         →  "Military Draft Registration"
+"data:,will"                                →  "Will"
+"data:,%22Presented+to+Society%22"          →  "Presented to Society"
+"data:,100%25+english"                      →  "Custom 100% english"
 "http://familysearch.org/v1/Foo"            →  "Foo"
 "Foo" (already a short name)                →  "Foo"
 ```
 
 Algorithm:
 1. If the value starts with `http://gedcomx.org/`, strip that prefix.
-2. Else if it starts with `data:,`, strip that prefix.
+2. Else if it starts with `data:,`, strip that prefix, and read each `+` in
+   what remains as a space (a literal plus arrives as `%2B`).
 3. Else if it contains `://`, take the trailing path segment.
 4. Otherwise pass through.
 5. URL-decode the result (`decodeURIComponent`). If decoding throws on a
-   malformed percent sequence, the undecoded value is returned.
+   malformed percent sequence, the undecoded value is kept.
+6. Tidy it into a type the tree accepts: trim, drop one pair of wrapping
+   quotes (straight or curly), and raise a lowercase first letter. If it
+   still does not start with an uppercase letter, prefix it with `Custom `
+   (an empty one becomes `Custom`). No colon after `Custom`: the reverse path
+   reads a leading `word:` as a URI scheme and would not re-prefix the type.
+
+Steps 2 and 6 exist because a `data:,` type is a label a FamilySearch user
+typed, so it arrives however they wrote it. One live tree (KNDX-MKG and its
+parents' reads, 2026-10-09) held the same label as both `Previous+Residence`
+and `Previous%20Residence`, and held `will`, `scholastic-achievement`,
+`"Presented to Society"` and `100% english`. The tree requires a fact type to
+start with an uppercase letter (`checkTreeFact`, simplified-gedcomx-spec.md),
+and one such fact on any relative made `project_create` refuse the whole
+starting tree. The `Custom ` prefix keeps a label that cannot be tidied
+whole rather than drop the fact.
 
 `toGedcomX` re-prepends `http://gedcomx.org/` on the reverse path. Custom
 fact types that originated as `data:,X` round-trip to
@@ -366,6 +391,15 @@ name: `toSimplified` (pure) takes it from `place.normalized` — preferring the
 `lang === "en"` entry, else the first. The `description` reference is dropped;
 richer place data lives in the top-level `places[]` array (Rule 12).
 
+A census or register answer that names no place ("Same House", "Same Place",
+"Do", "Rural", …: `NON_PLACE_PHRASES` in `place-resolver.ts`, whole text
+only, case, spacing and periods ignored) keeps `place` and never gets a
+`standard_place`, neither from `normalized` nor from the resolver below.
+Resolved, these became a real place sharing the word ("Same House" →
+"Same, Manufahi, Timor-Leste"; "Do" → "Dominican Republic"). A phrase
+followed by a jurisdiction ("Same Place, Wayne, Ohio") is not matched and
+standardizes as usual.
+
 `standard_place` is a simplified-format-only sidecar (like `standard_date`):
 `toGedcomX` writes only `{ original: placeString }` and ignores
 `standard_place` on the reverse path.
@@ -374,7 +408,10 @@ Free-text places with no `normalized` value are left without a
 `standard_place` by the pure converter. The async wrapper
 `toSimplifiedStandardized` fills them by resolving `place` through
 `place_search` (network) — deduping identical strings, resolving ≤8 in
-parallel, best-effort (never throws, leaves the field empty on failure). Tools
+parallel, best-effort (never throws, leaves the field empty on failure).
+A resolved value is also omitted when `countryConsistency(place, resolved)`
+returns `contradiction`: this is a read path with no warning channel to the
+model, so an unset field is the only honest outcome. Tools
 that return facts to the model call `toSimplifiedStandardized` (single doc) or
 run `standardizePlaces` over the flattened facts of a multi-result response
 (`record_search` / `person_search`). The pure `toSimplified` remains for
@@ -529,6 +566,56 @@ GedcomX qualifier.
 - `about` → `url`
 
 The top-level array is renamed `sourceDescriptions` ↔ `sources`.
+
+#### Source description fields carried by `simplifySourceDescription`
+
+The raw GedcomX `sourceDescriptions` from the recapi persona endpoint carry
+two fields that `simplifySourceDescription` now propagates into the simplified
+format as `resource_type` and `coverage`:
+
+- **`resourceType`** → `resource_type` — identifies the source description kind
+  (e.g. `"DigitalArtifact"`, `"Record"`, with the URI prefix stripped).
+  9 of 12 probed records carried a `DigitalArtifact` entry; without `resourceType`
+  the simplified output gives no way to distinguish it from the other 6–7
+  source descriptions a persona returns.
+
+- **`coverage[]`** → `coverage` (first entry only) — volume-level provenance on
+  `DigitalArtifact` entries: `place_rep_id` (from `spatial.description`, resolvable
+  via `repIdToStandardPlace`; `record_read` resolves it to `standard_place`),
+  `date_range` (from `temporal.original`, falling back to `temporal.formal`), and `record_type` (URI prefix stripped).
+  Coverage describes **the volume the image sits in**, not the event — on 4 of
+  9 records with coverage, the coverage place or date range contradicted the
+  record's own facts (e.g. Tallapoosa county coverage on a Talladega birth;
+  `Birth 1841–1890` coverage on an 1848 marriage record). Agreement rate among
+  records with coverage: 4/9 (44%) agree, 4/9 partial, 1/9 disagree.
+
+  Measured 2026-09-14, `npx tsx dev/probe-record-read-artifact-coverage.ts`,
+  n=12 records across 4 families (2 returned 404). The probe changes no
+  behaviour and writes nothing.
+
+These fields are record-only: `sanitizeCandidate` strips both before a merge
+write (§5b.2 of `merge-gedcomx-spec.md`), and the tree validator rejects them
+on tree sources (`TREE_SOURCE_FIELDS` does not include them).
+
+#### Persona role fields carried through simplification
+
+The raw GedcomX persons from FamilySearch carry role information:
+
+- **`principal`** — boolean marking the record's principal subject, now carried
+  through `toSimplified` onto `SimplifiedPerson.principal`. Present on
+  **100% of both endpoints** (50/50 recapi, 2,655/2,655 search).
+  `sanitizeCandidate` strips it before a merge write; the tree validator
+  rejects it on tree persons (`TREE_PERSON_FIELDS` does not include it).
+
+- **`display.role`** — the persona's role on the record (`"Principal"`,
+  `"Father"`, `"Mother"`, `"Spouse"`, `"Other"`). Present on **100% of search
+  personas** (2,655/2,655 across 3 collections) but **0% of recapi personas**
+  (0/50). The search endpoint populates it; the recapi persona endpoint does not.
+  `record_search` surfaces it as a flat `role` field on each result (survives
+  the staged slim block). Not on `SimplifiedPerson` — it is search-only.
+
+  Measured 2026-09-14, `npx tsx dev/probe-persona-role-coverage.ts`,
+  n=50 recapi personas + 2,655 search personas across 3 search pools.
 
 ### 12. Place descriptions
 
@@ -979,3 +1066,16 @@ all surviving fields.
   — abstract data model independent of serialization
 - [GedcomX Date Format Spec](https://github.com/FamilySearch/gedcomx/blob/master/specifications/date-format-specification.md)
   — formal date encoding (`+YYYY`, `A+YYYY`, ranges, before/after)
+
+## Source-reference id precedence
+
+A source reference simplifies to `{ ref, page?, quality? }`. `ref` takes
+**`descriptionId` first**, falling back to `description` with a leading `#` stripped.
+
+Both name the same description wherever both appear (measured: 102/102 and 77/77 URL-form
+refs, `descriptionId` equal to the URL's last segment in every one). The precedence
+matters because `description` is a **full URL** on a relative's ref, pointing at a
+description the tree-read body does not contain — and a URL never equals the bare id a
+fetched description carries, so a consumer matching refs against `sources[]` ids by string
+equality would drop every one of them. Preferring the id upstream already sends also
+cannot drift from the id it names, which deriving it from the URL could.

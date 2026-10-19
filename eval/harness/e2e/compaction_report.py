@@ -1,5 +1,20 @@
 """record_search subjectId supply, segmented by compaction boundary.
 
+## Verdict: a main-thread peak-window token figure is a compaction ceiling (#2491)
+
+Recorded here so it is not re-bought. The e2e main context auto-compacts, so
+its peak window is governed by the SDK/CLI compaction threshold (~167-172k),
+not by anything the agent or a skill's architecture does. Measured free over
+the committed corpus (#2491, 2026-09-15): 165 of 167 runs carrying a
+`usage.timeline` compact at least once, and ALL 67 runs >=60 min compact
+(2-8 boundaries). A matched pair built to move record-extraction's fan-out loop
+between the skill and `/research` produced main-thread peaks of 167,201 vs
+167,420 — identical, because both saturated the ceiling. So peak-window cannot
+discriminate a main-thread architecture change; use a compaction-*rate* measure
+(compactions/hour, per extracted record), never the raw peak or count. The
+tool-call/timeline cursor this module already exposes as `aligned_calls` is the
+one implementation of per-call elapsed time — reuse it, do not write a second.
+
 GitHub issue #1155. The ranking fold (`record-search.ts`: `subjectId &&
 projectPath` triggers host-side ranking) is pinned in code and cannot decay —
 that part is a property of the code, confirmed by
@@ -12,7 +27,9 @@ posture as `nudge_report.py`, `corpus_report.py`, and `latency_report.py`.
 
 ## How a call is placed into a segment
 
-`usage.timeline` is `[[elapsed_s, kind, tool_names?], ...]`. A
+`usage.timeline` is `[[elapsed_s, kind, tool_names, wall_ts, message_id], ...]`
+since 2026-10-02 (#2582); rows written before that are 3- or 2-wide, so index
+rather than unpack. A
 `system:compact_boundary` entry increments the segment counter (segment 0 is
 before the first compaction). An `assistant` entry's `tool_names` list (added
 by #895, 2026-07-26 — runs before that date carry the 2-element form and
@@ -97,18 +114,21 @@ class RecordSearchCall(NamedTuple):
     has_subject: bool
 
 
-def segment_run(doc: dict) -> tuple[list[tuple[int, bool]], str | None]:
-    """(calls, exclusion_reason) for one run's record_search calls.
+def aligned_calls(doc: dict) -> tuple[list[tuple[float, int, dict]], str | None]:
+    """Every `tool_calls[]` entry aligned to its timeline elapsed time and
+    compaction segment, via the cursor the module docstring describes.
 
-    `calls` is a list of `(segment, has_subjectId)` tuples, one per
-    `record_search` call recovered from `tool_calls`. `exclusion_reason` is
-    `None` on success, else `"unsegmentable-timeline"` or
-    `"tool-count-mismatch"` — see the module docstring.
+    Returns `(calls, exclusion_reason)`. `calls` is
+    `[(elapsed_s, segment, call), ...]` in timeline order; `exclusion_reason`
+    is `None` on success, else `"unsegmentable-timeline"` or
+    `"tool-count-mismatch"`. This is the SINGLE cursor-alignment implementation
+    — `segment_run` and any ad-hoc analysis (issue #2491's censored re-read)
+    reuse it rather than re-deriving per-call elapsed time.
     """
     timeline = (doc.get("usage") or {}).get("timeline") or []
     tool_calls = doc.get("tool_calls") or []
 
-    calls: list[tuple[int, bool]] = []
+    out: list[tuple[float, int, dict]] = []
     cursor = 0
     segment = 0
     for entry in timeline:
@@ -118,18 +138,44 @@ def segment_run(doc: dict) -> tuple[list[tuple[int, bool]], str | None]:
             continue
         if kind != "assistant":
             continue
-        if len(entry) != 3:
+        # `< 3`, not `!= 3`: this reader needs columns 0 and 2, and the row grew
+        # to five on 2026-10-02 (#2582 added `wall_ts` and `message_id`). Under
+        # `!= 3` every run written after that date would have returned
+        # `unsegmentable-timeline` here — an *exclusion reason*, not an error, so
+        # `make e2e-compaction` and `make e2e-ranked-reads` (which imports this
+        # same function) would have kept printing and looked healthy while
+        # silently dropping every new run. The legacy 2-wide row stays rejected,
+        # which `test_e2e_compaction_report.py` pins.
+        if len(entry) < 3:
             return [], "unsegmentable-timeline"
+        elapsed = entry[0]
         for _ in entry[2]:
             if cursor >= len(tool_calls):
                 return [], "tool-count-mismatch"
-            call = tool_calls[cursor]
+            out.append((elapsed, segment, tool_calls[cursor]))
             cursor += 1
-            if bare_tool_name(call.get("tool") or "") == "record_search":
-                has_subject = bool((call.get("args") or {}).get("subjectId"))
-                calls.append((segment, has_subject))
     if cursor != len(tool_calls):
         return [], "tool-count-mismatch"
+    return out, None
+
+
+def segment_run(doc: dict) -> tuple[list[tuple[int, bool]], str | None]:
+    """(calls, exclusion_reason) for one run's record_search calls.
+
+    `calls` is a list of `(segment, has_subjectId)` tuples, one per
+    `record_search` call recovered from `tool_calls`. `exclusion_reason` is
+    `None` on success, else `"unsegmentable-timeline"` or
+    `"tool-count-mismatch"` — see the module docstring. Thin filter over
+    `aligned_calls` (the shared cursor).
+    """
+    aligned, reason = aligned_calls(doc)
+    if reason is not None:
+        return [], reason
+    calls = [
+        (segment, bool((call.get("args") or {}).get("subjectId")))
+        for _elapsed, segment, call in aligned
+        if bare_tool_name(call.get("tool") or "") == "record_search"
+    ]
     return calls, None
 
 

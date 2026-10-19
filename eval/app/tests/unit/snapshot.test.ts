@@ -64,9 +64,46 @@ describe('normalize', () => {
     const parsed = JSON.parse(out);
     expect(parsed.test.name).toBeUndefined();
     expect(parsed.test.description).toBeUndefined();
-    expect(parsed.test.tags).toBeUndefined();
+    // tags is NOT cosmetic — it selects validators (issue #2694).
+    expect(parsed.test.tags).toEqual(['foo']);
     expect(parsed.test.id).toBe('ut_001');
     expect(parsed.test.skill).toBe('search-familysearch-wiki');
+  });
+
+  it('tag edit changes normalized output (tags are not cosmetic, issue #2694)', () => {
+    const base = {
+      test: { id: 'ut_001', skill: 's', name: 'n', description: 'd', tags: ['grade:trigger'], type: 'positive' },
+      input: { user_message: 'm' },
+    };
+    const p = 'eval/tests/unit/s/ut_001.json';
+    const outA = normalize(p, Buffer.from(JSON.stringify(base)));
+    const edited = { ...base, test: { ...base.test, tags: ['1850-census'] } };
+    const outB = normalize(p, Buffer.from(JSON.stringify(edited)));
+    expect(outA).not.toBe(outB);
+  });
+
+  it('name/description edit does NOT change normalized output', () => {
+    const base = {
+      test: { id: 'ut_001', skill: 's', name: 'original', description: 'original desc', tags: ['a'], type: 'positive' },
+      input: { user_message: 'm' },
+    };
+    const p = 'eval/tests/unit/s/ut_001.json';
+    const outA = normalize(p, Buffer.from(JSON.stringify(base)));
+    const edited = { ...base, test: { ...base.test, name: 'RENAMED', description: 'NEW desc' } };
+    const outB = normalize(p, Buffer.from(JSON.stringify(edited)));
+    expect(outA).toBe(outB);
+  });
+
+  it('produces the shared digest vector (must match Python test_shared_digest_vector)', () => {
+    const raw = Buffer.from(JSON.stringify({
+      test: { id: 'ut_001', skill: 's', name: 'ignored', description: 'also ignored', tags: ['grade:trigger'], type: 'positive' },
+      input: { user_message: 'hello' },
+    }));
+    const normalized = normalize('eval/tests/unit/s/ut_001.json', raw);
+    const digest = hashContent(normalized);
+    // Pinned: the Python twin asserts the same digest for the same input JSON.
+    // If this value changes, update test_snapshot.py too.
+    expect(digest).toBe('a96c04ecadb2576600c24d749c867052596e518f780685017a6b1b4193178150');
   });
 
   it('does NOT strip cosmetic fields outside eval/tests/unit/', () => {

@@ -243,6 +243,20 @@ skill was invoked but it skipped the citation step.")
 
 ## MCP tool calls
 
+Each call's output is its `response_summary`. Use them to tell Claude's
+wording from a tool's: text in "Claude's full text response" that appears in
+no `response_summary` (and not in the before-state or file changes above) is
+Claude's own wording, not a tool's. Attribute it to Claude. Not appearing in
+any `response_summary` is not by itself a grounding failure, so do not deduct
+as if a tool had said it. This is about attribution, not support: a factual
+claim of Claude's that nothing in this prompt supports is still graded under
+Correctness. One exception: where the harness cut the record, text that could
+have come from the cut part cannot be attributed either way. That is a
+`response_summary` string ending in `[truncated by harness for prompt size; …]`,
+a `{"_truncated_for_depth": true, …}` value, or a calls list preceded by a
+`(_dropped_for_size: N earliest tool calls dropped …)` line, which means the
+earliest calls were dropped whole.
+
 {tool_calls}
 
 ## Deterministic validators that FAILED
@@ -272,6 +286,24 @@ Weigh each against the response and the tool calls you already have above, the
 same way you would weigh anything you noticed yourself. A match does not require
 a deduction of any size, and none of them names a dimension or a score. If a
 match is unrelated to the dimension you are scoring, ignore it.
+
+## Harness observations on persisted project state
+
+{state_observations}
+
+These are checks the harness ran over the project documents the skill wrote
+(research.json, tree.gedcomx.json), not over its text reply. They are
+observations, not verdicts: a match says a pattern was present in the persisted
+state, not that the skill is wrong, and a pattern can match correct state.
+**Only matches appear here** — a check that found nothing is deliberately not
+listed.
+
+Weigh each on its own terms, against the file changes summary and the tool calls
+above where those carry enough detail — the summary may show only which sections
+changed, not what was written. Treat the observation as describing the persisted
+document directly. A match does not require a deduction of any size, and none of
+them names a dimension or a score. If a match is unrelated to the dimension you
+are scoring, ignore it.
 
 ────────────────────────────────────────
 # Critical: Negative tests (decline / routing / non-activation)

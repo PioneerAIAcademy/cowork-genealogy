@@ -11,11 +11,11 @@
       "1840s",
       "pennsylvania",
       "famine",
-      "research-relevant"
-    ]
+      "research-relevant",
+      "topical-fixture-required", "direct-arm"]
   },
   "input": {
-    "user_message": "What historical context should I know about Irish immigration to Schuylkill County, Pennsylvania in the 1840s?",
+    "delegation": "What historical context should I know about Irish immigration to Schuylkill County, Pennsylvania in the 1840s?",
     "scenario": null
   },
   "mcp_fixtures": [
@@ -32,6 +32,8 @@
     "wikipedia-search-philadelphia-immigration",
     "wiki-search-ancient-order-hibernians",
     "wiki-search-any",
+    "wiki-read-united-states-emigration-and-immigration",
+    "wiki-read-any",
     "wikipedia-search-any"
   ],
   "judge_context": [

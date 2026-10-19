@@ -1,5 +1,9 @@
 # Eval run log versioning + active/release semantics — design
 
+**Status:** Shipped; nothing is pending. The senior-onboarding note (§ Open
+items 2) is `eval/SENIOR-WALKTHROUGH.md`. Kept because 19 other files cite it as
+the contract and its rationale has not been folded into `docs/specs/eval-crud-ui-spec.md`.
+
 > Implementation plan for a redesign of the eval test harness, CRUD UI,
 > and PR review process. Supersedes parts of `docs/specs/eval-crud-ui-spec.md`
 > and `docs/per-pr-review-workflow.md` (see "Supersessions" below).
@@ -48,8 +52,9 @@ it as a self-contained, reproducible artifact.
    invocations (`--test`, `--tag`) produce **scratch runs** that are
    gitignored, never released, never compared, never activated.
 5. **`.ann.json` is sparse**: entries only for dimensions the junior
-   has explicitly reviewed. GH Action enforces the latest full-skill
-   run's `.ann.json` has an entry for every dimension before merge.
+   has explicitly reviewed. GH Action enforces that the `.ann.json` of
+   the run the PR adds (else the latest full-skill run) has an entry
+   for every dimension before merge.
 6. **Active detection is per-skill, lazy**: only computed when viewing
    that skill's results page. No dashboard-wide check.
 7. **Score-correction view**: integrated test-centric page (trace +
@@ -138,10 +143,15 @@ Activating an older version restores skill-only files; the UI tells
 the user that historical scores may differ from a re-run because the
 judge has moved on.
 
-**`judge_model` is removed from the run log entirely** — it's
-project-global, not a per-run choice worth versioning. If we change
-judge models, that's a separate decision tracked in CHANGELOG-class
-files, and we accept it invalidates historical comparisons.
+**`judge_model` is stamped on the run log envelope** (reversed by
+issue #2479). It was removed from the run
+log in the original versioning plan on the grounds that a judge-model
+bump was out-of-band tracked elsewhere; the reversal makes it a dated
+field on the artifact instead, so `make judge-regrade` can refresh it
+alongside `judge_prompt_hash` and a mixed-era corpus comparison can tell
+which model graded which log. The field is OPTIONAL — pre-reversal
+logs omit it and the writer only emits the key when it is non-empty, so
+no historical bytes change.
 
 ### A3. Path scheme
 
@@ -203,8 +213,8 @@ UI check side (TypeScript) — they must agree byte-for-byte.
 Rules:
 - **JSON files** (`.json`): parse → re-emit with sorted object keys,
   `indent=2`, trailing newline. Skip cosmetic-only fields in test JSONs
-  (`name`, `description`, `tags`) so they don't trigger active-state
-  drift.
+  (`name`, `description`) so they don't trigger active-state
+  drift. (`tags` is **not** cosmetic — it selects validators; issue #2694.)
 - **Text files** (`.md`, `.txt`, `.yaml`, `.yml`, `.py`, etc.):
   CRLF → LF, ensure trailing newline, no other changes.
 - **Anything else**: exact bytes (no normalization).
@@ -462,8 +472,8 @@ Action does not require pruning.
 
 ### C6. GitHub Action enforcement
 
-`.github/workflows/check-runlogs.yml` enforces four rules — rules 1–3
-per skill changed in the PR, rule 4 across the whole test corpus:
+`.github/workflows/check-runlogs.yml` enforces six rules — rules 1–3 and 6
+per skill changed in the PR, rules 4 and 5 across the whole test corpus:
 
 **Rule 1**: At most one **newly added or renamed-into-place**
 `v{N}.json` file per skill subdirectory. Detection uses
@@ -472,22 +482,26 @@ catches new files, `R` catches the dev → released rename. Filtering
 on `--diff-filter=A` alone (today's pattern) misses every renamed
 release; this is the fix.
 
-**Rule 2 (blocking)**: The latest full-skill run log (released
-`v{N}.json` if added in this PR, else the highest `v{N}_<ts>.json`
-from this PR or main) is **active on skill-side files** — its
-snapshot matches the current PR-branch state of all snapshot-tracked
-files, normalized per §A7.
+**Rule 2 (blocking)**: The run log this PR adds is **active on
+skill-side files**: its snapshot matches the current PR-branch
+state of all snapshot-tracked files, normalized per §A7. That is
+the released `v{N}.json` if added in this PR, else the highest
+`v{N}_<ts>.json` it adds; else, for a PR that adds no run log, the
+latest full-skill run log, as `latest_full_skill_runlog` resolves
+it.
 
-**Rule 2b (warn-only)**: The same run log's `judge_prompt_hash`
-matches the current `judge/prompt.md` (normalized). A mismatch
-produces a warning annotation on the PR but does not block merge.
-Rationale: judge-prompt edits are project-wide events on a separate
-cadence; we don't want every open PR to fail every time the monthly
-judge review lands. The active state still applies to skill-side
-files; the warning just notes that a re-run today would score
-differently than the historical numbers.
+**Rule 2b (blocks on judge-prompt PRs)**: On a PR that touches
+`eval/harness/judge/prompt.md`, every suite's latest full-skill run
+log must carry a `judge_prompt_hash` that matches the current prompt;
+satisfy with `make judge-regrade`. Warns instead on a log that rule 2
+already reports skill-side stale (those owe a `make eval-skill` run,
+not a judge-only regrade). On a PR that does **not** touch the judge
+prompt a `judge_prompt_hash` mismatch stays non-blocking — a mixed-era
+corpus is expected across judge-prompt cadences, and the cheap
+satisfaction path only exists when the PR itself is the thing moving
+the hash.
 
-**Rule 3**: The latest full-skill run log's `.ann.json` is
+**Rule 3**: The same run log's `.ann.json` is
 **complete** — has an entry for every `(test_id, dimension_source,
 dimension_name)` triple present in the run log.
 
@@ -512,11 +526,54 @@ deferred follow-up. Full rationale: `eval/CLAUDE.md` § "GitHub Action
 rules".
 
 Scratch runs (`scratch_*.json`) are gitignored and never reach the
-action. Implementation is a Python script that loads the latest run
-log's snapshot and diffs vs working tree, using the same
-`normalize()` contract as the harness.
+action. Implementation is a Python script that loads the snapshot of
+the run log Rule 2 grades and diffs it vs working tree, using the
+same `normalize()` contract as the harness.
 
 ---
+
+**Rule 5** (blocking): every committed `eval/runlogs/unit/**/*.ann.json` parses
+as JSON. Corpus-wide rather than per-skill: an unparseable annotation used to
+abort the whole check with a raw `JSONDecodeError`, naming no file and leaving
+every later skill unchecked.
+
+**Rule 6** (blocking): no **unsuppressed** test in a run log **this PR adds**
+resolves to `fail` or `aborted`.
+
+Each test is resolved from `runs[].outcome` — whose enum is
+`pass|partial|fail|aborted` — and aggregated by
+`harness.outcomes.aggregate_per_run_outcome`, the same function the runner uses,
+so the gate and `run_tests.py` cannot drift. The aggregate `outcome` shares that
+enum (issue #2842 retired the `xfail`/`xpass` values); suppression is read from
+the `expected_outcome` marker beside it. `partial` never blocks (lead ruling
+2026-09-18: "tests must pass, or partial, consistently").
+
+An `expected_outcome: "xfail"` marker declares a known **failure**, so it
+suppresses `fail` only. A suppressed test that **aborts** blocks — an abort is an
+ungraded run, not evidence of the declared defect. One that **passes** warns, as
+a stale-marker signal.
+
+Rule 6 grades the log the PR **added**, resolved from the AR diff, not the one
+`latest_full_skill_runlog` returns: that helper prefers any released `v{N}.json`
+over every candidate regardless of date, so a PR adding a red `v2_<ts>.json`
+beside a clean released `v1.json` would read as clean. `init-project` has exactly
+that shape. A PR that adds no run log — annotation-only, or SKILL.md-only — is
+not accountable for the committed baseline and is not graded here; without that,
+a skill carrying reds could satisfy neither rule 3 nor rule 6, and its
+annotations could never land.
+
+**Zero reds, not zero new reds** (lead ruling 2026-09-22, reversing the
+2026-09-21 decision). There is no carry list, no review-by date and no per-entry
+exemption. A run log a PR adds must be clean whether or not the red predates the
+PR: "it was already red before my change" is the excuse the rule exists to
+remove, because a suite carrying reds cannot answer "did my refactor break
+something", which is the one question it exists to answer. Cost and elapsed time
+are explicitly not factors in that trade.
+
+A warn-only arm resolves each `expected_outcome: xfail` marker's cited issue and
+says so when it is closed, since a marker whose stated removal condition names a
+closed issue can never be met. It needs the network, so it is inert without `gh`
+or a token, never blocks, and swallows every error.
 
 ## Supersessions
 

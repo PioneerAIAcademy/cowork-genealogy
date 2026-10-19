@@ -48,6 +48,13 @@ from struck text and layered amendments is actively dangerous: it costs tokens o
 every read, and a model skimming a strikethrough acts on the retired clause. A
 coherent document that states one thing is the digestible form.
 
+**"What is true now" is the decision, not the code.** An ADR states the
+architecture we have decided on — the one a change should move toward. Where a
+file has not caught up, say which file and name the work; do not water the
+decision down to match the lag. A measurement belongs in an ADR as evidence for
+a decision or as a refutation of a claim, never as a bound on the decision
+itself.
+
 **The history is in `git log -p docs/adrs/`.** It does not need to be in the
 reading path.
 

@@ -37,7 +37,7 @@ rebuilding it.**
 
 6. Connect context to action, not just history — explain how it affects the user's
    specific research, not just narrate background.
-7. Consider multiple factor categories before settling on one explanation.
+7. Consider multiple factor categories before settling on one explanation. Order them by likelihood only when a tool returned content about the subject; when no tool returned anything about it, present them as unranked general possibilities, not a confident "most likely" list, and lead with what to check (is the name colloquial for a real jurisdiction?).
 8. Every response that called a wiki/Wikipedia tool must end with a "Sources
    consulted" list, title linked to its real URL.
 9. A claim with no returned URL to trace is not a finding — flag the gap rather than

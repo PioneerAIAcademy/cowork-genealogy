@@ -1,6 +1,7 @@
-"""Direct tests for the four search-full-text validators added in the #1651
-deep dive (log-fidelity, first-call scoping, collection-id absoluteness,
-plan-item completion congruence).
+"""Direct tests for the search-full-text validators: the four added in the
+#1651 deep dive (log-fidelity, first-call scoping, collection-id
+absoluteness, plan-item completion congruence), plus the wiki pre-work
+fetch check added with the #2253 wiki move.
 
 Same reason as `test_init_project_validator.py`: `pyproject.toml` sets
 `testpaths = ["tests"]`, so nothing under `validators/` is collected by
@@ -24,10 +25,13 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_search_full_text import (  # noqa: E402
+    test_wiki_prework_fetch_runs_when_required as check_wiki_prework,
+    test_topical_fixture_actually_used as check_topical_fixture,
     test_log_query_traces_to_fulltext_search_call as check_log_fidelity,
-    test_first_fulltext_search_call_is_unscoped as check_first_call_unscoped,
+    test_filtered_nil_is_followed_by_unfiltered_retry as check_filtered_nil_retry,
     test_fulltext_search_never_scopes_to_collection_id as check_never_scopes_to_collection_id,
     test_plan_item_completion_matches_its_own_record_type as check_plan_item_completion,
+    test_record_place_filters_use_facet_form as check_record_place_form,
 )
 
 
@@ -97,57 +101,77 @@ def test_log_fidelity_does_not_guess_when_the_entry_cannot_be_correlated_to_a_ca
     check_log_fidelity(before, after, calls)
 
 
-# --- test_first_fulltext_search_call_is_unscoped ------------------------
-# Deep dive #1651 finding 2: `ut_search_full_text_002`, run
-# `v1_2026-07-27_22-27-37` -- the first fulltext_search call for the turn
-# already carried recordType/yearFrom/yearTo, before any unfiltered hit
-# count was ever observed. Confirmed by the fix: after SKILL.md named the
-# actual arguments explicitly, a re-run of the same test's first call
-# (`ut_search_full_text_007`, run `v1_2026-08-19_14-12-22`) came back clean.
-
-FIRING_FIRST_CALL_CALLS = [
-    call(
-        "fulltext_search",
-        keywords="+Flynn +Patrick",
-        recordType="Probate Records",
-        yearFrom=1870,
-        yearTo=1890,
-        count=20,
-    ),
-]
-
-PASSING_FIRST_CALL_CALLS = [
-    call("fulltext_search", keywords="+Patrick +Fl?n*", count=20),
-]
+# --- test_filtered_nil_is_followed_by_unfiltered_retry -----------------
+# SKILL.md step 4 / query-syntax.md (2026-09-30): a filtered fulltext_search
+# that returns zero results must be followed by an unfiltered retry for the
+# same topic. A nil under a filter may be a metadata mismatch, not a true
+# negative.
 
 
-def test_first_call_unscoped_fires_on_a_prefiltered_first_call():
-    with pytest.raises(AssertionError) as e:
-        check_first_call_unscoped(FIRING_FIRST_CALL_CALLS)
-    msg = str(e.value)
-    assert "recordType" in msg
-    assert "yearFrom" in msg
-    assert "yearTo" in msg
+def _filtered_nil_call(keywords, **filter_kwargs):
+    """A fulltext_search call with filters that returns zero results."""
+    c = call("fulltext_search", keywords=keywords, **filter_kwargs)
+    c["response"] = {"results": [], "totalResults": 0}
+    return c
 
 
-def test_first_call_unscoped_passes_on_a_clean_first_call():
-    check_first_call_unscoped(PASSING_FIRST_CALL_CALLS)
+def _unfiltered_call(keywords, **kwargs):
+    c = call("fulltext_search", keywords=keywords, **kwargs)
+    c["response"] = {"results": [{"recordId": "ark:/61903/1:1:XXXX"}], "totalResults": 1}
+    return c
 
 
-def test_first_call_unscoped_skips_when_no_fulltext_search_was_called():
-    with pytest.raises(pytest.skip.Exception):
-        check_first_call_unscoped([call("research_log_append", planItemId=None)])
-
-
-def test_first_call_unscoped_only_checks_the_literal_first_call():
-    """Documented narrower scope (see the validator's own docstring): a
-    second, later fulltext_search call in the same turn that adds a filter
-    is not what this check is about, and must not trip it."""
+def test_filtered_nil_retry_fires_when_no_retry_follows():
+    """Validator fires when a filtered nil has no unfiltered follow-up."""
     calls = [
-        call("fulltext_search", keywords="+Naveda +Somarriba", count=50),
-        call("fulltext_search", keywords="+Naveda +Somarriba", recordPlace1="Spain"),
+        _filtered_nil_call("+Flynn +Patrick", recordPlace1="Pennsylvania"),
     ]
-    check_first_call_unscoped(calls)
+    with pytest.raises(AssertionError) as e:
+        check_filtered_nil_retry(calls)
+    msg = str(e.value)
+    assert "recordPlace1" in msg
+    assert "+Flynn +Patrick" in msg
+
+
+def test_filtered_nil_retry_passes_when_unfiltered_retry_follows():
+    """Validator passes when a filtered nil is followed by an unfiltered call."""
+    calls = [
+        _filtered_nil_call("+Flynn +Patrick", recordPlace1="Pennsylvania"),
+        _unfiltered_call("+Flynn +Patrick", count=50),
+    ]
+    check_filtered_nil_retry(calls)
+
+
+def test_filtered_nil_retry_skips_when_no_fulltext_search_was_called():
+    with pytest.raises(pytest.skip.Exception):
+        check_filtered_nil_retry([call("research_log_append", planItemId=None)])
+
+
+def test_filtered_nil_retry_passes_when_filtered_call_returns_results():
+    """A filtered call that returns hits needs no retry."""
+    c = call("fulltext_search", keywords="+Flynn +Patrick", recordPlace1="Pennsylvania")
+    c["response"] = {"results": [{"recordId": "ark:/61903/1:1:XXXX"}], "totalHits": 5}
+    check_filtered_nil_retry([c])
+
+
+def test_filtered_nil_variant_is_not_covered_by_the_canonical_spelling():
+    """SKILL.md step 4: a variant's filtered nil needs its own unfiltered retry."""
+    calls = [
+        _unfiltered_call("+Flynn +witness"),
+        _filtered_nil_call("+Flinn +witness", recordPlace1="Pennsylvania"),
+    ]
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry(calls)
+
+
+def test_filtered_nil_is_not_covered_by_a_broader_positive_search():
+    """A positive +Flynn search does not retry the +Flynn +Patrick nil."""
+    calls = [
+        _unfiltered_call("+Flynn"),
+        _filtered_nil_call("+Flynn +Patrick", recordPlace1="Pennsylvania"),
+    ]
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry(calls)
 
 
 # --- test_plan_item_completion_matches_its_own_record_type --------------
@@ -379,3 +403,273 @@ def test_collection_id_check_passes_when_never_sent():
 def test_collection_id_check_skips_when_no_fulltext_search_was_called():
     with pytest.raises(pytest.skip.Exception):
         check_never_scopes_to_collection_id([])
+
+
+def facets_call(keywords, filter_params=None):
+    """Build a call dict for an includeFacets=true fulltext_search with a mocked response."""
+    items = [{"filterParam": fp} for fp in (filter_params or [])]
+    return {
+        "tool": "mcp__genealogy__fulltext_search",
+        "args": {"keywords": keywords, "includeFacets": True},
+        "response": {"facets": [{"name": "Collection", "count": 1, "items": items}]},
+    }
+
+
+def scoped_call(keywords, collection_id):
+    return {"tool": "mcp__genealogy__fulltext_search", "args": {"keywords": keywords, "collectionId": collection_id}}
+
+
+def test_collection_id_check_passes_when_id_matches_prior_filter_param():
+    calls = [
+        facets_call("+Flynn +Patrick", filter_params=["2220359", "2017696"]),
+        scoped_call("+Flynn +Patrick", "2220359"),
+    ]
+    check_never_scopes_to_collection_id(calls)
+
+
+def test_collection_id_check_fires_when_id_not_in_prior_filter_params():
+    calls = [
+        facets_call("+Flynn +Patrick", filter_params=["2220359"]),
+        scoped_call("+Flynn +Patrick", "9999999"),
+    ]
+    with pytest.raises(AssertionError) as e:
+        check_never_scopes_to_collection_id(calls)
+    assert "9999999" in str(e.value)
+    assert "2220359" in str(e.value)
+
+
+def test_collection_id_check_fires_when_prior_facets_response_was_empty():
+    """An empty facets response offers no id, so a scoped follow-up borrowed it."""
+    calls = [
+        facets_call("+Flynn +Patrick", filter_params=[]),
+        scoped_call("+Flynn +Patrick", "9999999"),
+    ]
+    with pytest.raises(AssertionError):
+        check_never_scopes_to_collection_id(calls)
+
+
+def test_filtered_nil_is_not_answered_by_a_different_filter():
+    """Swapping one place filter for another is not the unfiltered retry."""
+    calls = [
+        _filtered_nil_call("+Flynn", recordPlace1="Pennsylvania"),
+        _unfiltered_call("+Flynn", recordPlace2="Schuylkill"),
+    ]
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry(calls)
+
+
+def test_filtered_nil_is_answered_by_dropping_one_filter():
+    """Keeping the place and dropping the year IS a looser retry."""
+    calls = [
+        _filtered_nil_call("+Flynn", recordPlace1="Pennsylvania", yearFrom=1880),
+        _unfiltered_call("+Flynn", recordPlace1="Pennsylvania"),
+    ]
+    check_filtered_nil_retry(calls)
+
+
+# --- test_wiki_prework_fetch_runs_when_required ------------------------
+# Added with the #2253 wiki move. Tag-gated on `wiki-prework`; the two
+# tests carrying that tag today are latin-american-notarial.json and
+# parentage-compound-surname-cooccurrence.json. No committed run log
+# exercises the firing branch yet (the tag and the validator land in the
+# same PR), so every case here is hand-built.
+#
+# The spelling cases are not decoration: agent `tools:` lists an MCP tool
+# under three server spellings (CLAUDE.md, "Dual-spelled tool names") and
+# which one a session exposes has been observed to move, so a check that
+# matched only `mcp__genealogy__` would pass in the harness and be blind
+# in Cowork. `.endswith("wiki_read")` is what makes all three work, and
+# this is what holds it to that.
+
+TAGGED = {"tags": ["wiki-prework", "latin-american"]}
+UNTAGGED = {"tags": ["transcription-quirk"]}
+
+WIKI_READ_SPELLINGS = [
+    "wiki_read",
+    "mcp__genealogy__wiki_read",
+    "mcp__remote-devices__Genealogy_Research__wiki_read",
+    "mcp__Genealogy_Research__wiki_read",
+]
+
+
+def test_wiki_prework_fires_when_the_tagged_test_never_fetched():
+    with pytest.raises(AssertionError) as e:
+        check_wiki_prework([call("fulltext_search", keywords="+Naveda +Somarriba")], TAGGED)
+    assert "pre-work block" in str(e.value)
+
+
+@pytest.mark.parametrize("spelling", WIKI_READ_SPELLINGS)
+def test_wiki_prework_passes_on_every_server_spelling(spelling):
+    """One qualified spelling binding is not the same as the check working:
+    see the module comment above."""
+    check_wiki_prework(
+        [call("fulltext_search", keywords="+Naveda"), {"tool": spelling, "args": {}}],
+        TAGGED,
+    )
+
+
+def test_wiki_prework_skips_on_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_wiki_prework([call("fulltext_search", keywords="+Flynn")], UNTAGGED)
+
+
+def test_wiki_prework_skips_when_the_test_declares_no_tags_at_all():
+    with pytest.raises(pytest.skip.Exception):
+        check_wiki_prework([], {})
+
+
+def test_wiki_prework_fires_rather_than_raising_on_empty_and_none_tool_calls():
+    """A tagged test that issued no calls at all did not fetch, so this is a
+    firing case and not an error one. `None` reaches here whenever the
+    runner captured no calls, and must not become a TypeError that reads as
+    a harness bug."""
+    for empty in ([], None):
+        with pytest.raises(AssertionError):
+            check_wiki_prework(empty, TAGGED)
+
+
+def test_wiki_prework_fires_rather_than_raising_on_a_malformed_call_entry():
+    """A call entry with a null or absent `tool` is not a wiki_read, and is
+    not a crash either."""
+    for entry in ({"tool": None}, {}):
+        with pytest.raises(AssertionError):
+            check_wiki_prework([entry], TAGGED)
+
+
+def test_wiki_prework_is_not_satisfied_by_a_different_wiki_tool():
+    """`wiki_search` is a search, not the page fetch SKILL.md step 3 names.
+    A skill that searched and never opened the page built its query from a
+    snippet list, which is the failure this check exists to catch."""
+    with pytest.raises(AssertionError):
+        check_wiki_prework([call("wiki_search", query="Spanish naming customs")], TAGGED)
+
+
+# --- test_topical_fixture_actually_used --------------------------------
+# The backstop for the catch-all hole: `check_wiki_prework` is satisfied by
+# ANY wiki_read, including a fall-through to `wiki-read-any`. Mirrors
+# `test_historical_context.py`'s guard (issue #2283). The firing case is
+# real, not hypothetical -- `ut_search_full_text_009`'s Cuba_Naming_Customs
+# call was served Spain's fixture in `v1_2026-09-22_22-33-05` because the
+# predicate was an unscoped `~Naming_Customs` substring.
+
+TOPICAL_TAGS = {"id": "ut_search_full_text_013",
+                "tags": ["wiki-prework", "topical-fixture-required"]}
+
+
+def hit(stem):
+    return {"tool": "mcp__genealogy__wiki_read", "args": {}, "response_fixture": stem}
+
+
+def test_topical_fixture_fires_when_one_expected_stem_never_matched():
+    with pytest.raises(AssertionError) as e:
+        check_topical_fixture([hit("wiki-read-spanish-word-list"), hit("wiki-read-any")], TOPICAL_TAGS)
+    assert "wiki-read-spain-naming-customs" in str(e.value)
+
+
+def test_topical_fixture_fires_when_everything_fell_through_to_the_catch_all():
+    with pytest.raises(AssertionError) as e:
+        check_topical_fixture([hit("wiki-read-any"), hit("wiki-search-any")], TOPICAL_TAGS)
+    assert "wiki-read-any" in str(e.value)
+
+
+def test_topical_fixture_passes_when_every_expected_stem_matched():
+    check_topical_fixture(
+        [hit("wiki-read-spain-naming-customs"), hit("wiki-read-spanish-word-list"), hit("wiki-read-any")],
+        TOPICAL_TAGS,
+    )
+
+
+def test_topical_fixture_skips_a_test_without_the_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_topical_fixture([hit("wiki-read-any")], {"id": "ut_search_full_text_002", "tags": ["wiki-prework"]})
+
+
+def test_topical_fixture_fires_when_a_mapped_test_lost_its_tag():
+    """The map-to-tag direction, asserted BEFORE the skip. A skip keeps
+    `passed=True`, so without this, deleting the tag from a spec disarms the
+    guard and the run log still reads clean.
+
+    Deliberately NOT `pytest.raises(AssertionError)`. If the assertion is ever
+    moved below the skip, the call raises `Skipped` instead, `raises` does not
+    catch it, and this test turns into a SKIP that reads green in the summary
+    -- it would stop guarding the ordering at the moment the ordering broke.
+    Measured: moving the assert below the skip turns the bare `raises` form
+    into "6 passed, 1 skipped" and reds nothing."""
+    try:
+        check_topical_fixture(
+            [hit("wiki-read-any")],
+            {"id": "ut_search_full_text_013", "tags": ["wiki-prework"]},
+        )
+    except AssertionError as e:
+        assert "restore the tag" in str(e)
+    except pytest.skip.Exception:
+        pytest.fail(
+            "the map-to-tag assertion ran AFTER the skip: dropping the tag from a "
+            "spec now disarms this guard silently"
+        )
+    else:
+        pytest.fail("expected the map-to-tag assertion to fire")
+
+
+def test_topical_fixture_fires_when_tagged_but_unmapped():
+    with pytest.raises(AssertionError) as e:
+        check_topical_fixture([hit("wiki-read-any")], {"id": "ut_search_full_text_777",
+                                                       "tags": ["topical-fixture-required"]})
+    assert "_TOPICAL_FIXTURES_BY_TEST_ID" in str(e.value)
+
+
+def test_topical_fixture_fires_rather_than_raising_on_none_and_unfixtured_calls():
+    for calls in (None, [], [{"tool": "mcp__genealogy__wiki_read", "args": {}}]):
+        with pytest.raises(AssertionError):
+            check_topical_fixture(calls, TOPICAL_TAGS)
+
+
+# --- test_record_place_filters_use_facet_form (issue #1828 review) ---------
+# The committed run v1_2026-10-05_14-51-42 sent plain-text recordPlace1/2 in six
+# of nineteen tests and passed them all, because the fixtures ignore the value.
+
+
+def test_record_place_passes_a_facet_filter_param():
+    check_record_place_form([call("fulltext_search", keywords="+Flynn", recordPlace1="10,Pennsylvania")])
+
+
+def test_record_place_passes_plain_text_in_the_place_field():
+    check_record_place_form([call("fulltext_search", keywords="+Flynn", place="Schuylkill County, Pennsylvania")])
+
+
+def test_record_place_passes_a_call_with_no_place_filter():
+    check_record_place_form([call("fulltext_search", keywords="+Flynn", collectionId="2220359")])
+
+
+@pytest.mark.parametrize(
+    "key,value",
+    [("recordPlace1", "Pennsylvania"), ("recordPlace2", "Schuylkill"), ("recordPlace0", "United States")],
+)
+def test_record_place_fails_a_plain_text_value(key, value):
+    with pytest.raises(AssertionError, match="plain-text recordPlace"):
+        check_record_place_form([call("fulltext_search", keywords="+Flynn", **{key: value})])
+
+
+def test_record_place_fails_plain_text_on_a_later_call_only():
+    calls = [
+        call("fulltext_search", keywords="+Flynn", includeFacets=True),
+        call("fulltext_search", keywords="+Flynn", recordPlace1="10,Pennsylvania", recordPlace2="Schuylkill"),
+    ]
+    with pytest.raises(AssertionError, match="recordPlace2"):
+        check_record_place_form(calls)
+
+
+# `place` joined POST_SEARCH_FILTER_KEYS when the skill started recommending it
+# for a named jurisdiction (issue #1828 review): a nil under it owes a retry.
+
+
+def test_filtered_nil_retry_fires_on_a_place_nil_with_no_retry():
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry([_filtered_nil_call("+Flynn +Patrick", place="Schuylkill County, Pennsylvania")])
+
+
+def test_filtered_nil_retry_passes_a_place_nil_followed_by_an_unfiltered_retry():
+    check_filtered_nil_retry([
+        _filtered_nil_call("+Flynn +Patrick", place="Schuylkill County, Pennsylvania"),
+        _unfiltered_call("+Flynn +Patrick"),
+    ])

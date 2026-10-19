@@ -1,0 +1,1471 @@
+{
+  "project": {
+    "id": "rp_elena_asmundsdotter_origin",
+    "objective": "Where was Elena Asmundsdotter \u2014 the mother of Asmund J\u00f6nsson (born 11 September 1718 in Barseb\u00e4ck parish, Malm\u00f6hus, Sweden) \u2014 born, and who were her parents?",
+    "subject_person_ids": [
+      "PID-TODO"
+    ],
+    "status": "active",
+    "created": "2026-07-03",
+    "updated": "2026-07-03"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Elena Asmundsdotter, wife of J\u00f6ns J\u00f6nsson and mother of Asmund J\u00f6nsson (born 11 September 1718, Barseb\u00e4ck parish, Malm\u00f6hus, Sweden)?",
+      "rationale": "The patronymic 'Asmundsdotter' establishes that Elena's father was named Asmund, but his full identity \u2014 surname, parish of residence, and the identity of Elena's mother \u2014 is unknown. Identifying her parents is the core of the research objective. Swedish parish registers (baptismal records, household examination books) for Barseb\u00e4ck and surrounding Malm\u00f6hus parishes in the late 17th / early 18th century are the primary record classes to search; many are digitized on FamilySearch and Riksarkivet. Resolving this question will simultaneously address the birthplace sub-question, since a baptismal entry records both parents and the child's parish of birth.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "goal_alignment blocks: the identification of Elena's father remains probable, not proved. A critical complication emerged during pli_007 (log_009): the Barseb\u00e4ck marriage register (image 004514823_00244, c. April 1718) records 'Elna Asmundsdotter' marrying Per Olsson \u2014 a different woman from our subject (wife of J\u00f6ns J\u00f6nsson) \u2014 with 'Asmund Persson' named as first surety (caverant), indicating he is that Elena's father. This means at least two women named Elena Asmundsdotter coexisted in Barseb\u00e4ck in 1718, with two different candidate fathers (Osmund Dugmundsson for src_002's Ellina; Asmund Persson for the Per Olsson bride). No source has been found that directly bridges src_002 (1695 Ellina, daughter of Osmund Dugmundsson) to src_001 (1718 Elena, wife of J\u00f6ns J\u00f6nsson). No husf\u00f6rh\u00f6rsl\u00e4ngd was found in the browsed volumes. ArkivDigital \u2014 a major Swedish repository confirmed in the locality guide as covering Barseb\u00e4ck and likely holding pre-1715 marriage registers and husf\u00f6rh\u00f6rsl\u00e4ngd \u2014 was not searched (subscription, autonomous mode; pli_010 skipped). Neighboring parishes (pli_009) were also skipped. These represent genuinely unsearched, accessible avenues, not inaccessible ones. Terminating search here would leave an unresolved ambiguity between two candidate fathers and no independent verification of either as Elena's parent.",
+        "log_entry_ids": [
+          "log_002",
+          "log_003",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_012",
+          "log_013",
+          "log_014"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "FAILS. No convincing, proved answer exists. The identification of Osmund Dugmundsson as Elena's father (via src_002) is probable but not documented with a direct bridge to src_001. Worse, log_009 revealed a competing candidate: Asmund Persson appears as surety for a different Elna Asmundsdotter (wife of Per Olsson) in April 1718 in the same parish, introducing an unresolved ambiguity about which Asmund-named man fathered our subject. No source names Osmund Dugmundsson and Elena/J\u00f6ns J\u00f6nsson in the same document.",
+          "repository_breadth": "FAILS. FamilySearch national indexes (coll. 1520594, 1520596) confirmed as lacking Malm\u00f6hus/Barseb\u00e4ck coverage for this period. Barseb\u00e4ck kyrkobok volumes on FamilySearch were browsed (images 004514823 and 004514824), but: (1) volume 004514824 proved to be 19th-century departure certificates, not the expected 1696-1729 husf\u00f6rh\u00f6rsl\u00e4ngd; (2) ArkivDigital, the major Swedish subscription service identified in the locality guide as covering Barseb\u00e4ck with high-quality scans, was not searched at all (pli_010 skipped); (3) neighboring Harjager hundred parishes (Hofterup, K\u00e4vlinge, Lackal\u00e4nga \u2014 pli_009 skipped) were not checked; (4) the J\u00f6ns J\u00f6nsson x Elena Asmundsdotter marriage was not found (register begins 1715; pre-1715 marriages unrecorded in the browsed volume). FAN research was attempted (godparent patterns noted) but not completed. These are unsearched, accessible repositories.",
+          "original_substitution": "MET. Both sources accessed are original parish register images: src_001 is an original image of the 1718 baptism entry (Barseb\u00e4ck kyrkobok, image 004514823_00247); src_002 is an original image of the pre-1700 baptism register (image 004514823_00106). No derivative substituted for an obtainable original.",
+          "independent_verification": "FAILS. Only two sources, and they cover different individuals whose connection is inferred, not documented. src_001 records Elena Asmundsdotter as mother of Asmund J\u00f6nsson in 1718 \u2014 confirming her patronymic only. src_002 records Ellina as daughter of Osmund Dugmundsson in 1695. No second source independently confirms that Osmund Dugmundsson is Elena's father. The two sources count as one unit for the parentage fact because the link between them is not yet proved. The Per Olsson marriage entry (log_009) provides a competing assertion (Asmund Persson as surety for a different Elena) that has not been resolved.",
+          "evidence_class": "PARTIAL. src_001 is an original record with primary information (parents as informants at the 1718 baptism), which directly gives Elena's patronymic but not her parents. src_002 is an original record with primary information (father as presenting parent at the c. 1695 baptism) naming 'Ellina daughter of Osmund Dugmundsson.' If the identification of Ellina = Elena were proved, this would be an original record with primary information directly naming a parent. As identification stands at probable, the evidence class criterion cannot be fully credited for the parentage conclusion.",
+          "conflict_resolution": "FAILS. Two competing father-candidates are present in the evidence: (1) Osmund Dugmundsson (src_002, probable identification with our Elena via name, parish, and age); (2) Asmund Persson (surety for a different Elna Asmundsdotter who married Per Olsson in April 1718, log_009). No conflict entry was recorded in research.json, and no analysis has resolved which Asmund is our Elena's father, or demonstrated that these are two distinct women (one the src_002 Ellina, one unidentified). The conflict is real and unresolved.",
+          "overturn_risk": "HIGH. At least one unsearched, accessible repository (ArkivDigital) covers pre-1715 Barseb\u00e4ck records and likely contains husf\u00f6rh\u00f6rsl\u00e4ngd entries or earlier marriage registers that could establish whether J\u00f6ns J\u00f6nsson x Elena Asmundsdotter were resident in Barseb\u00e4ck, confirm Elena's birth parish, and resolve which Asmund fathered our subject. The Per Olsson / Asmund Persson finding (log_009) is itself a plausible challenge to the current Osmund Dugmundsson identification. An unsearched source could plausibly change the conclusion."
+        }
+      },
+      "created": "2026-09-18"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-09-18",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Malm\u00f6hus, Sweden (nationwide baptism index)",
+          "date_range": "1675-1710",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1520594 'Sweden, Baptisms, 1611-1920' contains 7M+ indexed records and is the fastest free first pass. Search for Elena (variants: Elna, Elin, Helena) with surname Asmundsdotter in Malm\u00f6hus or Barseb\u00e4ck, 1675-1710. If Elena's baptism is in this index, it will directly name her father (Asmund) and mother, answering q_001 immediately. The loc_001 guide confirms all local Barseb\u00e4ck volumes are browse-only, so this national index is the only name-searchable path on FamilySearch.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Malm\u00f6hus, Sweden (nationwide marriage index)",
+          "date_range": "1705-1725",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1520596 'Sweden, Marriages, 1630-1920' contains 1.7M+ indexed records. Search for Elena Asmundsdotter \u00d7 J\u00f6ns J\u00f6nsson marriage in Malm\u00f6hus, c. 1705-1725 (Elena must have married before son Asmund's birth in Sep 1718; likely 1705-1717). The marriage entry will name Elena's father (Asmund) via her patronymic \u2014 and in some Swedish registers also her mother. This is a required dedicated search for the marriage linking the subject to her family, per parentage-question protocol.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Malm\u00f6hus, Sweden",
+          "date_range": "1675-1725",
+          "repository": "Ancestry",
+          "rationale": "Ancestry collection 2225 'Sweden Church Records, 1451-1943' is an indexed extraction from Swedish church books with broader Malm\u00f6hus coverage than FamilySearch's own indexes. Search for Elena (Elna, Elin, Helena) Asmundsdotter and J\u00f6ns J\u00f6nsson in Malm\u00f6hus. Also search Ancestry collection 60361 'Sweden, Select Baptisms, 1611-1909' specifically for Elena's baptism. Fallback for pli_001 if the FamilySearch national baptism index has no Barseb\u00e4ck entries.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "date_range": "1696-1729",
+          "repository": "FamilySearch",
+          "rationale": "Browse image groups 004514824_001, 004514824_002, 004514824_003 (Barseb\u00e4ck/Hofterup, 1696-1729; 543 images total). These volumes directly cover the period of Asmund J\u00f6nsson's known baptism (11 Sep 1718 in Barseb\u00e4ck). Finding that entry confirms Elena Asmundsdotter as his mother and J\u00f6ns J\u00f6nsson as his father, establishing the core family unit. These volumes may also contain husf\u00f6rh\u00f6rsl\u00e4ngd entries for J\u00f6ns and Elena's household listing her origin parish. All volumes are browse-only (0% indexed, not full-text searchable per loc_001); must be read image by image in Swedish. The loc_001 guide identifies these as the primary target volumes for this date range.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "date_range": "1680-1861",
+          "repository": "FamilySearch",
+          "rationale": "Browse image group 004514823_002 (428 images, covering 1680-1861) \u2014 the largest Barseb\u00e4ck volume on FamilySearch. Priority target is the husf\u00f6rh\u00f6rsl\u00e4ngd (household examination books), which in Swedish practice from the late 17th century onward typically recorded each parishioner's place of origin, allowing the identification of Elena's birth parish if she was born elsewhere and moved to Barseb\u00e4ck upon marriage. The husf\u00f6rh\u00f6rsl\u00e4ngd also shows the full household structure and may list Elena with notes on her father's identity. Per loc_001 quirk: prioritize husf\u00f6rh\u00f6rsl\u00e4ngd when baptismal entries are ambiguous.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "date_range": "1648-1720",
+          "repository": "FamilySearch",
+          "rationale": "Browse image groups 004514823_001 (157 images, 1648-1678/1681-1861) and 004514823_003 (164 images, 1674-1677/1681-1861) for the baptism register. Search for Elena's own baptism c. 1680-1710 under her father 'Asmund' \u2014 in the Swedish patronymic system the entry reads 'Asmund [surname/farm] och hans hustru [wife's name] \u2014 dotter Elena, d\u00f6pt [date]'. This directly names Elena's father and mother and provides her birthplace. Must be browsed image by image (0% indexed per loc_001). Also look for any siblings of Elena (other children of Asmund), who can independently corroborate the family.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+          "date_range": "1700-1725",
+          "repository": "FamilySearch",
+          "rationale": "Browse the marriage registers within image groups 004514823_001/002/003 for the marriage of J\u00f6ns J\u00f6nsson and Elena Asmundsdotter, c. 1705-1720 (prior to Asmund J\u00f6nsson's Sep 1718 birth). The marriage entry in this period will include Elena's patronymic (Asmundsdotter) confirming her father's given name, and some Sk\u00e5ne registers of this era also name the bride's parish of origin \u2014 a FAN element that may reveal where Elena and her father Asmund lived before this marriage. Marriage witnesses may include Elena's father or brothers, providing additional leads.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "church",
+          "jurisdiction": "Barseb\u00e4ck or Elena's identified birth parish, Malm\u00f6hus, Sweden",
+          "date_range": "1665-1720",
+          "repository": "FamilySearch",
+          "rationale": "Dedicated search for the marriage of Elena's parents \u2014 her father Asmund and her unnamed mother \u2014 required for a parentage question per planning standards. Date range set to 1665-1720 based on the creator's (Asmund's) plausible lifespan: Elena born c. 1680-1710 implies her parents married c. 1668-1708; Asmund could plausibly survive to ~1740. This item is sequenced after the steps that will identify Asmund's location and surname (pli_005/pli_006), since the search cannot be targeted until his parish is known. Once his parish is identified from Elena's baptism or husf\u00f6rh\u00f6rsl\u00e4ngd, browse the relevant marriage register or search the FamilySearch national Marriages index (coll. 1520596) under 'Asmund' in that parish.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "church",
+          "jurisdiction": "Harjager hundred neighboring parishes (Hofterup, K\u00e4vlinge, Lackal\u00e4nga), Malm\u00f6hus, Sweden",
+          "date_range": "1675-1715",
+          "repository": "FamilySearch",
+          "rationale": "If Elena's baptism is not found in Barseb\u00e4ck registers (pli_006), she was likely born in a neighboring Harjager hundred parish and moved to Barseb\u00e4ck upon marriage to J\u00f6ns J\u00f6nsson. Hofterup parish records appear in the same FamilySearch image groups as Barseb\u00e4ck (loc_001 quirk: 004514823 and 004514824 series cover both). K\u00e4vlinge and Lackal\u00e4nga are adjacent parishes in Harjager hundred and would be covered under the Malm\u00f6hus Church Records collection (1974200) in separate image groups. Browse these for a daughter 'Elena' (Elna/Elin/Helena) of a father named 'Asmund', c. 1680-1710. FAN element: neighbors and witnesses in these parishes may also name Asmund's family.",
+          "fallback_for": "pli_006",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 10,
+          "record_type": "church",
+          "jurisdiction": "Malm\u00f6hus, Sweden",
+          "date_range": "1648-1750",
+          "repository": "ArkivDigital",
+          "rationale": "ArkivDigital (https://www.arkivdigital.se/) is a major Swedish subscription service identified in loc_001 with high-quality scans of Malm\u00f6hus parish registers. Use as a fallback if FamilySearch image quality for the Barseb\u00e4ck volumes is too poor to read \u2014 ArkivDigital often provides clearer or better-indexed scans of the same physical volumes. Access requires a subscription. Covers the full range of Barseb\u00e4ck church records 1648-1750, including baptism, marriage, burial, and husf\u00f6rh\u00f6rsl\u00e4ngd.",
+          "fallback_for": "pli_004",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-09-18T19:46:16.774Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Malm\u00f6hus, Sweden",
+        "startYear": 1650,
+        "endYear": 1750
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 160,
+      "notes": "External links survey for Malm\u00f6hus, Sweden 1650-1750 during locality guide (loc_001) phase. 160 total curated resources; 50 examined. Key repositories identified: ArkivDigital, Riksarkivet/NAD, Ancestry collections 2225 and 60361. Staged file expired before logging."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-18T19:46:16.774Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Elena",
+        "surname": "Asmundsdotter",
+        "birthYearFrom": 1675,
+        "birthYearTo": 1710,
+        "collectionId": "1520594",
+        "recordCountry": "Sweden",
+        "sex": "Female"
+      },
+      "outcome": "partial",
+      "results_examined": 42,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 42,
+      "notes": "42 results all show Elena as role=Mother in children's baptism records (not her own baptism as principal). Batch probes of top results confirm all are from \u00c4lvsborg county, western Sweden \u2014 NOT Malm\u00f6hus/Sk\u00e5ne. National baptism index (coll. 1520594) has no Malm\u00f6hus/Barseb\u00e4ck coverage for 1675-1710. Indexed FamilySearch path exhausted; local image browse (pli_004+) is only remaining FamilySearch option."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-09-18T19:46:16.785Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1520596",
+        "givenName": "Elena",
+        "surname": "Asmundsdotter",
+        "marriageYearFrom": 1705,
+        "marriageYearTo": 1725,
+        "recordCountry": "Sweden",
+        "sex": "Female"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. National marriage index (coll. 1520596) has no record of Elena Asmundsdotter x J\u00f6ns J\u00f6nsson in Malm\u00f6hus 1705-1725. Same coverage gap as coll. 1520594 for early Malm\u00f6hus. Browse-only route required."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-18T19:47:16.842Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "2225",
+        "givenName": "Elena",
+        "surname": "Asmundsdotter",
+        "birthYear": 1690,
+        "birthPlace": "Malm\u00f6hus, Sweden"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/2225/?name=Elena_Asmundsdotter&birth=1690&birthplace=Malm%C3%B6hus%2C+Sweden",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous run, no user to capture. Ancestry collection 2225 (Sweden Church Records, 1451-1943) search for Elena Asmundsdotter in Malm\u00f6hus c.1690 requires interactive browser capture. URL generated: https://www.ancestry.com/search/collections/2225/?name=Elena_Asmundsdotter&birth=1690&birthplace=Malm%C3%B6hus%2C+Sweden \u2014 access: subscription. A second search on collection 60361 (Select Baptisms) and a marriage search for J\u00f6ns J\u00f6nsson \u00d7 Elena Asmundsdotter should also be run interactively. FamilySearch national indexes already confirmed no Malm\u00f6hus coverage (log_002, log_003); Ancestry independently indexed records may differ."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-09-18T20:03:56.584Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "004514823_002",
+        "standardPlace": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+        "recordType": "Kyrkobok (F\u00f6dde, Vigde, D\u00f6de) 1700-1806",
+        "imagesExamined": "00158, 00229-00233"
+      },
+      "outcome": "partial",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 428,
+      "notes": "Browsing Barseb\u00e4ck kyrkobok 1700-1806 (image group 004514823_002, 428 images). Title page confirmed at image 00158. Navigated to 1718 baptism section: image 00230 (July 1718, entries for Benta and Nills on page 132); image 00231 (page 134, baptism entries 12\u201314: entry 12=18 Aug, entry 13=20 Sep, entry 14=9 Nov 1718; page 135 shows marriage section starting with 27 Nov 1715 Lars Persson \u00d7 Kirstina Olufs dotter). Entry for Asmund J\u00f6nsson (11 Sep 1718, J\u00f6ns J\u00f6nsson \u00d7 Elena Asmundsdotter) NOT found between entries 12 and 13 \u2014 chronological gap noted. Image 00232 showed Nov-Dec 1718 baptism entries 15-17. Image 00233 showed entries 18-20 including an inverted-name family (entry 20: J\u00f6ns Asmundsson & Elne J\u00f6nsdotter \u2192 son Ole, 10 Sep). Marriage section starting page 135 found; J\u00f6ns \u00d7 Elena marriage search ongoing. Sub-group image_search calls (004514823_001/002/003) return 404 \u2014 navigation done by sequential imageId increments. Browse continues.\""
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-09-18T20:06:48.046Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "004514823",
+        "standardPlace": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+        "note": "bare-number group; sub-group 004514823_002 returns 404"
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 749,
+      "notes": "image_search for 004514823 (bare number) returns 749 images (004514823_00001 through 004514823_00749). Sub-group calls 004514823_001/002/003 all returned 404 \u2014 correct imageGroupNumber is the bare number. 749 images considerably more than the 428 cited in pli_005 rationale, suggesting the group covers more material. Images 00001\u201300157 precede the kyrkobok title page at 00158 and may contain husf\u00f6rh\u00f6rsl\u00e4ngd or an earlier register. Kyrkobok (F\u00f6dde, Vigde, D\u00f6de) 1700\u20131806 occupies images 00158\u201300749 (or a portion thereof). Browse in progress."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-18T20:06:48.046Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "004514824",
+        "standardPlace": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+        "note": "bare-number group; sub-group 004514824_001/002/003 return 404"
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 543,
+      "notes": "image_search for 004514824 (bare number) returns 543 images (004514824_00001 through 004514824_00543). Sub-group calls 004514824_001/002/003 all returned 404. Content unknown \u2014 pli_004 rationale says date range 1696\u20131729 covering Barseb\u00e4ck/Hofterup. Beginning image 004514824_00001 will be read next to determine record type and structure. Browse starting."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-09-18T20:19:28.751Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "004514823",
+        "imagesExamined": "00228, 00231-00236",
+        "standardPlace": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+        "recordType": "Kyrkobok F\u00f6dde/Vigde/D\u00f6de 1700-1806"
+      },
+      "outcome": "positive",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 749,
+      "notes": "Browse of Barseb\u00e4ck kyrkobok 1700-1806 (image group 004514823, 749 images). Key findings: (1) Marriage section (Vigde) starts at page 135 (image 00231) with 27 Nov 1715 Lars Persson x Kirstina Olufs dotter; marriage columns before page 135 are struck through and empty. (2) SIGNIFICANT: Image 00236 (pages 144-145, Anno 1716, March entry): Piga 'Elna Asmunds.' (Elena Asmundsdotter) listed as godmother (unmarried) alongside 'Asmund Perss.' (Asmund Persson) as godfather in the same baptism entry for son Pehr of \u00c5ke Persson. This is likely Elena Asmundsdotter (our subject) appearing with her father Asmund Persson. Confirms Elena was still unmarried in March 1716. (3) Marriage section 1715-1716 marriages found so far: Nov 1715 Lars Persson x Kirstina; Jan 1716 Peter Montin x Ingeborg Jacobs Dotter; Apr 1716 Tr\u00e4ls Arweson x Giertrud Nielsdotter. (4) Target baptism Asmund J\u00f6nsson (11 Sep 1718) NOT found in entries 12-14 (image 00231, pages 134-135). Continue searching marriage section images 00237+ for J\u00f6ns J\u00f6nsson x Elena Asmundsdotter marriage (must be post-Mar 1716).\""
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_007",
+      "performed": "2026-09-18T20:30:31.979Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "004514823",
+        "standardPlace": "Barseb\u00e4ck, Malm\u00f6hus, Sweden",
+        "recordType": "Marriage Register",
+        "imagesExamined": "00231-00244"
+      },
+      "outcome": "positive",
+      "results_examined": 14,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 749,
+      "notes": "Browsed Barseb\u00e4ck kyrkobok (Vigde/Gifte section), image group 004514823, images 00231\u201300244. Marriage section begins at page 135 / image ~00231 with entry for 27 Nov 1715. On image 00244, page 160: CRITICAL FINDING \u2014 \"A:o 1718. Dom: quasi modo geniti, copulerades Ungkarlen Per Olsson och Pigan Elna Asm\u00fcndsdotter. F\u00f6r them cavera Asm\u00fcnd Persson och Ungr Rasm\u00ff Andersson.\" \u2014 bachelor Per Olsson married maiden Elna Asmundsdotter (Quasimodo Sunday 1718, ~26 Apr 1718), with Asmund Persson named as first surety (caverant). This is DIRECT evidence that Asmund Persson is Elena Asmundsdotter's father. DISCREPANCY: the groom is Per Olsson, not J\u00f6ns J\u00f6nsson as stated in the research question. Son Asmund J\u00f6nsson's patronymic requires a father named J\u00f6ns \u2014 so there may be two women named Elena Asmundsdotter in this parish, or a separate J\u00f6ns \u00d7 Elena marriage still to be found. Also on image 00236 (godparent evidence, March 1716): both Asmund Persson AND Piga Elna Asmundsdotter served as godparents at \u00c5ke Persson's son Pehr's baptism, confirming Elena was still unmarried (Piga) in March 1716 and that Asmund Persson is her likely father. Image 00239 (December 1716): J\u00f6ns J\u00f6nsson appeared as godfather in same year. Continuing to read forward in marriage register to check for second J\u00f6ns \u00d7 Elena entry."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_007",
+      "performed": "2026-09-18T20:38:19.739Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "004514823",
+        "standardPlace": "Barseb\u00e4ck, Malm\u00f6hus, Sweden",
+        "recordType": "Marriage Register",
+        "imagesExamined": "00244-00248",
+        "imageIds": [
+          "004514823_00244",
+          "004514823_00245",
+          "004514823_00246",
+          "004514823_00247",
+          "004514823_00248"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 749,
+      "notes": "Continued browsing Barseb\u00e4ck marriage register (Vigde/Gifte), images 00244\u201300248. Second marriage entry on images 00245/00246 (page 162, Dom. 7 Trinitatis 1718 = c. 3 Aug 1718): groom Matz Persson, bride confirmed as Elna M\u00c5NSDOTTER (not Asmundsdotter \u2014 initial reading in error). Page 166 marriage column (image 00248): blank, pen flourish only. NO marriage of J\u00f6ns J\u00f6nsson \u00d7 Elena Asmundsdotter found in images 00231\u201300248. The Barseb\u00e4ck marriage register begins in 1715; the J\u00f6ns \u00d7 Elena marriage is either pre-1715 (and thus unrecorded in this volume) or occurred in another parish. SEPARATELY: image 00247, page 164 (September section) contains the KEY CONFIRMED BAPTISM \u2014 son of J\u00f6ns J\u00f6nsson and wife Elena Asmuns dotter, baptized Dom. 14 p. Trinitatis 1718, named Asmund. This confirms the research premise and confirms that Elena's father bore the name Asmund. Godparents: Klockaren Peter Montin; h: Kirsti P\u00e5l Rasmy:; h: Else rasmy and:; h: Elna hr. Nils: carried child. J\u00f6ns J\u00f6nsson also appears as godfather at Aug 17 baptism on same page. Planned to hand image 00247 to record-extraction."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": null,
+      "performed": "2026-09-18T20:38:52.454Z",
+      "tool": "external_site",
+      "query": {
+        "imageArk": "004514823_00247",
+        "page": 164,
+        "description": "Barseb\u00e4ck parish kyrkobok, Malm\u00f6hus, Sweden \u2014 baptism of Asmund J\u00f6nsson, 1718"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": {
+        "site": "familysearch_web",
+        "url_generated": "https://www.familysearch.org/ark:/61903/3:1:004514823_00247",
+        "capture_received": true,
+        "capture_filename": "004514823_00247"
+      },
+      "results_ref": null,
+      "notes": "Browsed FamilySearch image 004514823_00247, page 164 of Barseb\u00e4ck kyrkobok (Malm\u00f6hus). Found baptism entry for Asmund J\u00f6nsson (born 11 Sep 1718, baptized Dom. 14 p. Trinitatis 1718), son of J\u00f6ns J\u00f6nsson and Elena Asmundsdotter. Record provided as transcription by researcher."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_005",
+      "performed": "2026-09-18T20:54:36.710Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "004514823",
+        "standardPlace": "Barseb\u00e4ck, Malm\u00f6hus, Sweden",
+        "recordType": "Husf\u00f6rh\u00f6rsl\u00e4ngd / Household Examination Book",
+        "imagesExamined": "00158-00248"
+      },
+      "outcome": "negative",
+      "results_examined": 90,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 749,
+      "notes": "Browsed the kyrkobok 1700-1806 section of image group 004514823 (images 00158-00248) seeking a husf\u00f6rh\u00f6rsl\u00e4ngd (household examination book) that might give Elena Asmundsdotter's birth parish. The volume is a combined register of Births (F\u00f6dde), Marriages (Vigde/Gifte), and Deaths (D\u00f6de) only \u2014 no husf\u00f6rh\u00f6rsl\u00e4ngd section found. Also browsed image group 004514824 at images 00001, 00010, 00050: volume 004514824 appears to contain primarily 19th-century outgoing servant testimonials (Utg\u00e5ende Attest, 1825) and blank pages, not the expected 1696-1729 husf\u00f6rh\u00f6rsl\u00e4ngd. Need to probe 004514824 further at higher image numbers to determine if early 18th-century content exists in the volume. KEY POSITIVE FINDING from this browse (image 00175, page 24 of the kyrkobok, c. 1703): '\u00c5smund M\u00e5nsson' appears as godfather alongside 'M\u00e4tta \u00c5smunds doter' (daughter of Asmund) and 'Inger P\u00e4r \u00c5smund' in Entry 3 for the baptism of P\u00e4r Lars's son M\u00e5rten. Critically, 'J\u00f6ns J\u00f6nss' also appears as godfather in Entry 2 on the same page (c. 1703). This places \u00c5smund M\u00e5nsson and J\u00f6ns J\u00f6nsson in the same Barseb\u00e4ck social circle c. 1703. \u00c5smund M\u00e5nsson's daughter M\u00e4tta \u00c5smundsdotter and another woman 'Inger P\u00e4r \u00c5smund' also present."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-18T20:58:43.190Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "004514824",
+        "standardPlace": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+        "recordType": "Husf\u00f6rh\u00f6rsl\u00e4ngd / Household Examination",
+        "imagesExamined": "00001-00100"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 543,
+      "notes": "Probed volume 004514824 at images 00001, 00010, 00050, 00100. Image 00001 shows only microfilm reference number '144966' (blank cover). Images 00010 and 00100 are pre-printed outgoing servant testimonials (Utg\u00e5ende Attest) from V\u00e4stra Karaby parish, dated 1825 and 1827 respectively. Image 00050 is blank (bleed-through only). Volume 004514824 appears to be a 19th-century outgoing testimonial book for V\u00e4stra Karaby/Barseb\u00e4ck area, NOT the expected 1696-1729 husf\u00f6rh\u00f6rsl\u00e4ngd. The plan item (pli_004) expected early 18th-century registers from sub-groups 004514824_001/002/003 (Barseb\u00e4ck/Hofterup, 1696-1729, 543 images) but the volume's actual content is 19th-century departure certificates. The expected husf\u00f6rh\u00f6rsl\u00e4ngd for Barseb\u00e4ck c. 1696-1729 does not appear to be digitized in the expected location. Elena Asmundsdotter's birth parish cannot be determined from this volume.\""
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_006",
+      "performed": "2026-09-18T21:02:12.771Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "004514823",
+        "standardPlace": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+        "recordType": "Baptism Register (pre-1700)",
+        "imagesExamined": "00090-00115",
+        "imageIds": [
+          "004514823_00090",
+          "004514823_00098",
+          "004514823_00106",
+          "004514823_00112",
+          "004514823_00115"
+        ]
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 157,
+      "notes": "Browsed Barseb\u00e4ck pre-1700 baptism register (image group 004514823, images 00090-00115). CRITICAL POSITIVE FINDING on image 00106 (page 98, c. 1693-1695, likely 1695): 'd: 15 Novemb: L\u00e6rdes Osmund Dugmundssons D\u00e5tter som war effter Kyrkelag Beg\u00e6rt d\u00f6pt Dominica d: 23 S\u00f6ndag Trinitatis benembd Ellina.' Father: Osmund Dugmundsson. Child: Ellina (Elena). Born: 15 November. Baptized: Dominica 23 post Trinitatis. \u2014 'Osmund' is an orthographic variant of '\u00c5smund'; the daughter 'Ellina' with father 'Osmund' would bear the patronymic '\u00c5smundsdotter' (= Asmundsdotter), matching the target subject Elena Asmundsdotter (wife of J\u00f6ns J\u00f6nsson). Year is c. 1695 based on liturgical calendar calculation: Easter 1695 April 21, Trinity Sunday June 9, Dom 23 post Trin \u2248 November 17, 1695 \u2014 consistent with a child born November 15 and baptized November 17. If confirmed, Elena was born 15 November 1695 in Barseb\u00e4ck. Father's full name Osmund (=\u00c5smund) Dugmundsson (son of Dagmund/Dugmund); mother's name not recorded. Godparents: Anders P\u00e4rs, Lars Olufsson, Nils Bengtsson, Hindrich Pehrsson, Bendt Rasmusson, Kirsten Pehrs D\u00e5tter, Synne Rasmus Hansen, Tyren P\u00e4rs P\u00e4der, Pernilla Jeppe Pehrsons; bearer: Berethe P\u00e4r J\u00f6ns. This identification remains tentative pending corroboration. Also noted: 'Osmund Dugmundsson' is a DIFFERENT person from '\u00c5smund M\u00e5nsson' (image 00175, c.1703, different patronymic), '\u00c5smund Hermandsson' (image 00112, c.1695-1699), and 'Asmund Persson' (images 00236/00244, 1716-1718). Multiple Asmund-family lines in Barseb\u00e4ck. Image 00098 (page 90, 1690-1691): no Asmund as father. Image 00112 (c.1695-1699): '\u00c5smund Hermandsson' as godfather, 'Mette \u00c5smund' as godmother \u2014 possibly another Asmund family. Image 00115 (mid-17th c.): 'J\u00f6ns \u00c5smundsson' as godfather (twice) \u2014 earlier Asmund lineage.\""
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": null,
+      "performed": "2026-09-18T21:06:06.004Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:004514823_00106",
+        "description": "Barseb\u00e4ck parish baptism register, pre-1700, book page 98, image group 004514823"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Found baptism entry for Ellina, daughter of Osmund Dugmundsson, born 15 November [~1695], baptized on the 23rd Sunday after Trinity. This is a possible baptism record for Elena Asmundsdotter, wife of J\u00f6ns J\u00f6nsson. Year ~1695 inferred from liturgical calendar (23rd Sunday post Trinity, consistent with Easter 1695 = April 21). Nine godparents/witnesses named. No mother named."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "Barseb\u00e4ck Parish, Malm\u00f6hus, Sweden, kyrkobok (F\u00f6dde section), Anno 1718, p. 164, entry for Asmund J\u00f6nsson baptism, 14th Sunday after Trinity 1718; FamilySearch image 004514823_00247 (https://www.familysearch.org/ark:/61903/3:1:004514823_00247), accessed 18 September 2026.",
+      "citation_detail": {
+        "who": "Asmund J\u00f6nsson, son of J\u00f6ns J\u00f6nsson and Elena Asmundsdotter",
+        "what": "Baptism register entry (kyrkobok, F\u00f6dde section), Barseb\u00e4ck parish, Malm\u00f6hus, Sweden",
+        "when_created": "1718",
+        "when_accessed": "18 September 2026",
+        "where": "FamilySearch, image group 004514823",
+        "where_within": "Image 004514823_00247, page 164, Anno 1718, September section"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (image of Barseb\u00e4ck kyrkobok, Malm\u00f6hus, Sweden; original held at Landsarkivet i Lund / Riksarkivet)",
+      "access_date": "2026-09-18",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:004514823_00247",
+      "transcription": "d. 11. F\u00f8ddes J\u00f6ns J\u00f6nssons och hust: Elena Asmuns dotters S\u00f8n, som Christnades Dom: 14. p. Trin: och wid Dopot kallades Asmund.\nFaddrar.\nKlockaren Peter Montin.\nh: Elna hr. Nils: bar barnet\nh: Kirsti P\u00e5l Rasmy:\nh: Else rasmy and:",
+      "notes": "Original Lutheran baptism register examined via FamilySearch digital image. Page headed 'Anno 1718'; entry falls in the September section. 'hust:' = hustru (wife); 'F\u00f8ddes' = was born; 'Christnades' = was baptized; 'Dom. 14. p. Trin.' = 14th Sunday after Trinity, approximately 21 September 1718. 'Elena Asmuns dotter' is an abbreviated form of 'Elena Asmundsdotter' (patronymic construction). 'bar barnet' = carried the child (godmother bearer role). Godparents: Klockaren (parish clerk) Peter Montin; h. Elna wife of Hr. Nils (bearer); h. Kirsti wife of P\u00e5l Rasmusson; h. Else wife of Rasmusson Andersson.",
+      "log_entry_id": "log_011",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "Barseb\u00e4ck Parish (Malm\u00f6hus, Sweden), F\u00f6rsamlingsbok / Dopbok [pre-1700 baptism register], book page 98, entry for Ellina daughter of Osmund Dugmundsson, c. 15\u201317 November 1695; FamilySearch image 004514823_00106 (https://www.familysearch.org/ark:/61903/3:1:004514823_00106), accessed 18 September 2026; original held at Riksarkivet (Landsarkivet i Lund), Sweden.",
+      "citation_detail": {
+        "who": "Ellina, daughter of Osmund Dugmundsson",
+        "what": "Lutheran parish baptism register (pre-1700), Barseb\u00e4ck parish, Malm\u00f6hus, Sweden; book page 98",
+        "when_created": "c. 1695 (entry recorded at time of baptism)",
+        "when_accessed": "18 September 2026",
+        "where": "FamilySearch (https://www.familysearch.org), image group 004514823; original at Riksarkivet / Landsarkivet i Lund, Sweden",
+        "where_within": "Image 004514823_00106, book page 98"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (image of Barseb\u00e4ck parish pre-1700 baptism register, Malm\u00f6hus, Sweden; original held at Riksarkivet / Landsarkivet i Lund)",
+      "access_date": "2026-09-18",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:004514823_00106",
+      "transcription": "d: 15 Novemb: L\u00e6rdes Osmund Dugmundssons D\u00e5tter som war effter Kyrkelag Beg\u00e6rt d\u00f6pt Dominica d: 23 S\u00f6ndag Trinitatis benembd Ellina.\nFaddrarna.\nAnders P\u00e4rs. Berethe P\u00e4r J\u00f6ns bar dita Barnet \u00f6fver d\u00e5upet.\nLars Olufsson. Synne Rasmus Hansen\nNils Bengtsson. Tyren P\u00e4rs P\u00e4der\nHindrich Pehrsson. Pernilla Jeppe Pehrsons.\nBendt Rasmusson. Kirsten Pehrs D\u00e5tter.",
+      "notes": "Year ~1695 is inferred from the liturgical calendar: the 23rd Sunday after Trinity in 1695 falls on approximately 17 November 1695 (Easter 1695 = 21 April; Trinity Sunday = 9 June; +23 \u00d7 7 days = c. 17 November). Consistent with a child born 15 November being baptized two days later. The phrase 'effter Kyrkelag Beg\u00e6rt d\u00f6pt' indicates baptism requested per church law \u2014 possibly an emergency home baptism followed by formal church reception. Mother not named in this entry. This is a possible baptism record for Elena Asmundsdotter (wife of J\u00f6ns J\u00f6nsson, mother of Asmund J\u00f6nsson b. 1718): 'Osmund' is an orthographic variant of '\u00c5smund'; 'Ellina' = Elena; Barseb\u00e4ck parish matches later family records; age ~22\u201323 at birth of Asmund J\u00f6nsson is consistent; naming of grandson Asmund after maternal grandfather is a plausible Swedish naming pattern. The identification is PROBABLE but NOT PROVEN \u2014 no direct documentary link between this Ellina and the later Elena Asmundsdotter wife of J\u00f6ns J\u00f6nsson; marriage register starts too late.",
+      "log_entry_id": "log_015",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Asmund",
+      "structured_value": {
+        "given": "Asmund",
+        "surname": "J\u00f6nsson"
+      },
+      "information_quality": "primary",
+      "informant": "J\u00f6ns J\u00f6nsson and Elena Asmundsdotter (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "J\u00f6ns J\u00f6nsson and Elena Asmundsdotter (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "born 11 September 1718",
+      "date": "1718-09-11",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "J\u00f6ns J\u00f6nsson and Elena Asmundsdotter (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "born in Barseb\u00e4ck parish, Malm\u00f6hus, Sweden",
+      "place": "Barseb\u00e4ck, Malm\u00f6hus, Sweden",
+      "information_quality": "primary",
+      "informant": "J\u00f6ns J\u00f6nsson and Elena Asmundsdotter (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001",
+      "standard_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden"
+    },
+    {
+      "id": "a_005",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "baptized Dom. 14. p. Trinitatis (approximately 21 September 1718) at Barseb\u00e4ck parish church, called Asmund at baptism",
+      "date": "~1718-09-21",
+      "date_certainty": "approximate",
+      "place": "Barseb\u00e4ck, Malm\u00f6hus, Sweden",
+      "information_quality": "primary",
+      "informant": "parish officiant (Lutheran pastor, Barseb\u00e4ck parish)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001",
+      "standard_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden"
+    },
+    {
+      "id": "a_006",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "father_of_child",
+      "fact_type": "name",
+      "value": "J\u00f6ns J\u00f6nsson",
+      "structured_value": {
+        "given": "J\u00f6ns",
+        "surname": "J\u00f6nsson"
+      },
+      "information_quality": "primary",
+      "informant": "J\u00f6ns J\u00f6nsson and Elena Asmundsdotter (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "father_of_child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "J\u00f6ns J\u00f6nsson and Elena Asmundsdotter (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "father_of_child",
+      "fact_type": "relationship",
+      "value": "father of Asmund J\u00f6nsson (baptized 1718)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "J\u00f6ns J\u00f6nsson and Elena Asmundsdotter (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "mother_of_child",
+      "fact_type": "name",
+      "value": "Elena Asmundsdotter",
+      "structured_value": {
+        "given": "Elena",
+        "surname": "Asmundsdotter"
+      },
+      "information_quality": "primary",
+      "informant": "J\u00f6ns J\u00f6nsson and Elena Asmundsdotter (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Record abbreviates her name as 'Elena Asmuns dotter' \u2014 a patronymic contraction; full form is Elena Asmundsdotter. The patronymic 'Asmundsdotter' indicates her father's given name was Asmund, which is directly relevant to q_001 (identifying Elena's parents), but this record does not explicitly name her parents.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "mother_of_child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "J\u00f6ns J\u00f6nsson and Elena Asmundsdotter (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "mother_of_child",
+      "fact_type": "relationship",
+      "value": "mother of Asmund J\u00f6nsson (baptized 1718)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "J\u00f6ns J\u00f6nsson and Elena Asmundsdotter (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "godparent_1",
+      "fact_type": "name",
+      "value": "Peter Montin",
+      "structured_value": {
+        "given": "Peter",
+        "surname": "Montin"
+      },
+      "information_quality": "primary",
+      "informant": "Peter Montin (parish clerk, godfather)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Identified in the record as 'Klockaren Peter Montin' \u2014 the parish clerk (klockare). He served as godfather and was personally present at the baptism.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "godparent_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Peter Montin (parish clerk, godfather)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "godparent_2",
+      "fact_type": "name",
+      "value": "Elna hr. Nils [surname unknown] (bearer)",
+      "structured_value": {
+        "given": "Elna"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Identified as 'h: Elna hr. Nils:' \u2014 wife of Hr. (Herr) Nils, surname not given. She 'bar barnet' (carried/bore the child at the font). Her husband's title 'hr.' suggests a man of some status (possibly clergy or official). Full identification not possible from this entry alone.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "godparent_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "godparent_3",
+      "fact_type": "name",
+      "value": "Kirsti, wife of P\u00e5l Rasmusson [surname unknown]",
+      "structured_value": {
+        "given": "Kirsti"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Identified as 'h: Kirsti P\u00e5l Rasmy:' \u2014 Kirsti, wife of P\u00e5l Rasmusson (abbreviated 'Rasmy:'). Her own surname not separately recorded; known only as wife of P\u00e5l Rasmusson.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "godparent_3",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "godparent_4",
+      "fact_type": "name",
+      "value": "Else, wife of Rasmusson Andersson [given name unclear]",
+      "structured_value": {
+        "given": "Else"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Identified as 'h: Else rasmy and:' \u2014 Else, wife of Rasmusson Andersson (abbreviated 'rasmy and:'). The abbreviation is ambiguous; may indicate a different surname form or a second household. Her own surname not separately recorded.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "capture:barseback-kyrkobok-004514823_00247-p164",
+      "record_role": "godparent_4",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Ellina",
+      "structured_value": {
+        "given": "Ellina",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent (Osmund Dugmundsson, father)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Father presented the child; name was supplied by the family. This Ellina is a possible identification with Elena Asmundsdotter (wife of J\u00f6ns J\u00f6nsson): same name (Ellina = Elena), father's name Osmund = variant of \u00c5smund matching the patronymic Asmundsdotter, same parish, and age consistent with bearing Asmund J\u00f6nsson in 1718. Identification PROBABLE but NOT PROVEN \u2014 no direct documentary link to later records.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent (Osmund Dugmundsson, father)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Stated in the record as 'D\u00e5tter' (daughter).",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "born 15 November [~1695]",
+      "date": "1695-11-15",
+      "date_certainty": "approximate",
+      "place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+      "information_quality": "primary",
+      "informant": "presenting parent (Osmund Dugmundsson, father)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Day and month (15 November) are directly stated in the register as 'd: 15 Novemb:'. The year ~1695 is inferred from the liturgical calendar (23rd Sunday after Trinity 1695 = c. 17 November 1695) and is not directly stated; date_certainty set to approximate accordingly. Birth place is the parish of registration; actual birth location within Barseb\u00e4ck not specified.",
+      "source_id": "src_002",
+      "standard_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden"
+    },
+    {
+      "id": "a_023",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "baptized on the 23rd Sunday after Trinity [~17 November 1695], named Ellina; 'effter Kyrkelag Beg\u00e6rt d\u00f6pt' (baptized at request of church law)",
+      "date": "~1695-11-17",
+      "date_certainty": "approximate",
+      "place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+      "information_quality": "primary",
+      "informant": "parish officiant / recording pastor",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "The baptism date is given liturgically as 'Dominica d: 23 S\u00f6ndag Trinitatis' (23rd Sunday after Trinity). The calendar date ~17 November 1695 is computed from Easter 1695 (21 April) + Trinity Sunday (9 June) + 23 weeks. The year is not stated in the entry; it is inferred from context of the surrounding register entries and liturgical arithmetic. The phrase 'effter Kyrkelag Beg\u00e6rt d\u00f6pt' may indicate an emergency baptism performed at home before the formal church ceremony, per Swedish church law of the period. The pastor recorded the event in his official capacity.",
+      "source_id": "src_002",
+      "standard_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden"
+    },
+    {
+      "id": "a_024",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "child",
+      "fact_type": "residence",
+      "value": "Barseb\u00e4ck parish, Malm\u00f6hus, Sweden",
+      "place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+      "information_quality": "primary",
+      "informant": "parish officiant / recording pastor",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Residence in Barseb\u00e4ck parish is attested by the family's registration in this parish's baptism register.",
+      "source_id": "src_002",
+      "standard_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden"
+    },
+    {
+      "id": "a_025",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Osmund Dugmundsson",
+      "structured_value": {
+        "given": "Osmund",
+        "surname": "Dugmundsson"
+      },
+      "information_quality": "primary",
+      "informant": "Osmund Dugmundsson (self, as father presenting child)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "The father's name is given as 'Osmund Dugmundsson' in the register. 'Osmund' is a Danish/Swedish orthographic variant of '\u00c5smund' used in late 17th-century Sk\u00e5ne records (Sk\u00e5ne was under Danish rule until 1658 and retained Danish naming conventions into the 1690s). His patronymic indicates his own father was named Dugmund/\u00d0ugmundr. If this Ellina is Elena Asmundsdotter, then Osmund Dugmundsson would be Elena's father \u2014 the patronymic 'Asmundsdotter' would reflect the Latinized/Swedified form of 'Osmund' as '\u00c5smund'. This identification is probable but not proven.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "father",
+      "fact_type": "residence",
+      "value": "Barseb\u00e4ck parish, Malm\u00f6hus, Sweden",
+      "place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+      "information_quality": "primary",
+      "informant": "parish officiant / recording pastor",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Residence inferred from registration of child's baptism in Barseb\u00e4ck parish.",
+      "source_id": "src_002",
+      "standard_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden"
+    },
+    {
+      "id": "a_027",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Osmund Dugmundsson",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent (Osmund Dugmundsson, father)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "The register explicitly states 'Osmund Dugmundssons D\u00e5tter' (daughter of Osmund Dugmundsson), directly stating the parent-child relationship.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "godparent_1",
+      "fact_type": "name",
+      "value": "Berethe P\u00e4r J\u00f6ns",
+      "structured_value": {
+        "given": "Berethe",
+        "surname": ""
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Named in the register as 'Berethe P\u00e4r J\u00f6ns' who 'bar dita Barnet \u00f6fver d\u00e5upet' (carried this child over the baptismal font) \u2014 the bearer/godmother. Her name suggests she is the wife of P\u00e4r J\u00f6ns (i.e., Berethe, wife of P\u00e4r J\u00f6ns). FAN associate of Osmund Dugmundsson's family. The identity of the person who reported her name to the parish register is unknown.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "godparent_2",
+      "fact_type": "name",
+      "value": "Anders P\u00e4rs",
+      "structured_value": {
+        "given": "Anders",
+        "surname": "P\u00e4rs"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Named as godparent ('Faddrarna'). FAN associate of the Dugmundsson family. 'P\u00e4rs' likely a patronymic (son of P\u00e4r/Per).",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "godparent_3",
+      "fact_type": "name",
+      "value": "Lars Olufsson",
+      "structured_value": {
+        "given": "Lars",
+        "surname": "Olufsson"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Named as godparent ('Faddrarna'). FAN associate of the Dugmundsson family.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "godparent_4",
+      "fact_type": "name",
+      "value": "Nils Bengtsson",
+      "structured_value": {
+        "given": "Nils",
+        "surname": "Bengtsson"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Named as godparent ('Faddrarna'). FAN associate of the Dugmundsson family.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "godparent_5",
+      "fact_type": "name",
+      "value": "Hindrich Pehrsson",
+      "structured_value": {
+        "given": "Hindrich",
+        "surname": "Pehrsson"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Named as godparent ('Faddrarna'). FAN associate of the Dugmundsson family.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "godparent_6",
+      "fact_type": "name",
+      "value": "Bendt Rasmusson",
+      "structured_value": {
+        "given": "Bendt",
+        "surname": "Rasmusson"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Named as godparent ('Faddrarna'). FAN associate of the Dugmundsson family.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "godparent_7",
+      "fact_type": "name",
+      "value": "Kirsten Pehrs D\u00e5tter",
+      "structured_value": {
+        "given": "Kirsten",
+        "surname": "Pehrs D\u00e5tter"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Named as godparent ('Faddrarna'). Female godparent \u2014 'Pehrs D\u00e5tter' = daughter of Pehr/Per. FAN associate of the Dugmundsson family.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "godparent_8",
+      "fact_type": "name",
+      "value": "Synne Rasmus Hansen",
+      "structured_value": {
+        "given": "Synne",
+        "surname": "Rasmus Hansen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Named as godparent ('Faddrarna'). The name structure 'Synne Rasmus Hansen' reflects Danish naming conventions (wife or daughter of Rasmus Hansen) \u2014 consistent with late 17th-century Sk\u00e5ne (formerly Danish). FAN associate of the Dugmundsson family.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "godparent_9",
+      "fact_type": "name",
+      "value": "Tyren P\u00e4rs P\u00e4der",
+      "structured_value": {
+        "given": "Tyren",
+        "surname": "P\u00e4rs P\u00e4der"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Named as godparent ('Faddrarna'). 'P\u00e4rs P\u00e4der' may mean wife/daughter of P\u00e4r P\u00e4der (a compound patrilineal name). Reading of 'Tyren' is as transcribed; could be 'Tyri' or 'Tyren' (a Scandinavian female given name). FAN associate of the Dugmundsson family.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "capture:barseback-baptism-004514823_00106-p98-ellina",
+      "record_role": "godparent_10",
+      "fact_type": "name",
+      "value": "Pernilla Jeppe Pehrsons",
+      "structured_value": {
+        "given": "Pernilla",
+        "surname": "Jeppe Pehrsons"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Named as godparent ('Faddrarna'). 'Jeppe Pehrsons' likely indicates wife or daughter of Jeppe Pehrson. FAN associate of the Dugmundsson family.",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_001 records the given name 'Asmund' for the child in Asmund J\u00f6nsson's 1718 Barseb\u00e4ck baptism entry. I3 is the tree person created for this child from this same record. Name matches exactly. Record is an original Lutheran baptism register; information is primary. No record persona is reachable for scoring (image capture, not an indexed FamilySearch record). The child is the unique subject of this record and the match is direct.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_002 records male sex for the child in Asmund J\u00f6nsson's 1718 baptism. I3 (Asmund J\u00f6nsson) is male. Same-record match; the child is the unique subject.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_003 records birth date 11 September 1718 for the child in this baptism entry. I3 (Asmund J\u00f6nsson) was born on this date per this original parish register. Direct, exact record of a unique event in a unique individual's life.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_004 records birth place Barseb\u00e4ck for the child in this baptism entry. I3 (Asmund J\u00f6nsson) is attested in Barseb\u00e4ck. Direct match on a unique event.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_005 records the christening of Asmund J\u00f6nsson at Barseb\u00e4ck, c. 21 September 1718 (14th Sunday after Trinity). I3 is this child. Original primary record.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_006 records the name 'J\u00f6ns J\u00f6nsson' for the father of Asmund J\u00f6nsson in the 1718 Barseb\u00e4ck baptism entry. I2 is the tree person created for J\u00f6ns J\u00f6nsson from this record. Name matches exactly. The father role is uniquely occupied by this individual in this entry.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_007 records male sex for the father of Asmund J\u00f6nsson. I2 (J\u00f6ns J\u00f6nsson) is male. Direct same-record match.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_008 records J\u00f6ns J\u00f6nsson's role as father of the child Asmund J\u00f6nsson baptized 1718. I2 is J\u00f6ns J\u00f6nsson, the unique occupant of the father_of_child role in this record.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_008 is a relationship assertion naming J\u00f6ns J\u00f6nsson as father of 'the child' in this baptism \u2014 that child is I3 (Asmund J\u00f6nsson). This assertion bears on both the father (I2) and the child (I3); both parties receive a pe_ link.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_009 records the name 'Elena Asmundsdotter' (abbreviated 'Elena Asmuns dotter' in original) for the mother of child Asmund J\u00f6nsson in the 1718 Barseb\u00e4ck baptism. I1 is Elena Asmundsdotter, the tree person for this woman. Name matches. This is an original primary record; the mother herself was a presenting parent and household member. The patronymic 'Asmundsdotter' is key evidence for q_001.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_010 records female sex for the mother_of_child role in Asmund J\u00f6nsson's 1718 baptism. I1 (Elena Asmundsdotter) is female. Direct same-record match.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_011 records Elena Asmundsdotter's role as mother of Asmund J\u00f6nsson (baptized 1718). I1 is Elena Asmundsdotter, the unique occupant of the mother_of_child role in this entry.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_011 is a relationship assertion naming Elena Asmundsdotter as mother of 'the child' in this baptism \u2014 that child is I3 (Asmund J\u00f6nsson). This assertion bears on both the mother (I1) and the child (I3); both parties receive a pe_ link.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_020 records the given name 'Ellina' for the child baptized c. 17 November 1695 in Barseb\u00e4ck, daughter of Osmund Dugmundsson (src_002). I1 is Elena Asmundsdotter, attested in Barseb\u00e4ck in 1718 as wife of J\u00f6ns J\u00f6nsson. Identification as probable: (1) 'Ellina' is a documented orthographic variant of 'Elena/Elina' in 17th-century Sk\u00e5ne; (2) the patronymic 'Asmundsdotter' in the 1718 record directly matches 'daughter of Osmund [= \u00c5smund] Dugmundsson'; (3) birth c. 1695 gives age ~22\u201323 at the 1718 baptism of Asmund J\u00f6nsson, consistent with motherhood; (4) both records are in Barseb\u00e4ck parish; (5) the naming of a son 'Asmund J\u00f6nsson' is consistent with the Swedish custom of naming after a maternal grandfather named \u00c5smund/Osmund; (6) no other daughter of any \u00c5smund/Asmund/Osmund was found in the browsed Barseb\u00e4ck records. Gap: no direct documentary link (marriage register, husf\u00f6rh\u00f6rsl\u00e4ngd) bridges the ~23-year gap between these two records. Confidence capped at probable. No same_person score available \u2014 record is an image capture with no indexed FamilySearch persona.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_021 records female sex for the child 'Ellina' in src_002. I1 (Elena Asmundsdotter) is female. Identification at probable per the reasoning in a_020's pe_ link \u2014 same-source assertion, same overall identification.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_022 records birth date c. 15 November 1695, Barseb\u00e4ck, for Ellina daughter of Osmund Dugmundsson. If Elena Asmundsdotter (I1) is this Ellina, her birth year was ~1695. Age ~22\u201323 at the September 1718 birth of Asmund J\u00f6nsson is fully consistent with motherhood. Confidence probable per overall identification rationale (see a_020).",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_023",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_023 records the christening of Ellina c. 17 November 1695 at Barseb\u00e4ck. If Elena Asmundsdotter (I1) is this Ellina, this is her baptism. Confidence probable per overall identification rationale (see a_020).",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_024 records Ellina's residence as Barseb\u00e4ck parish. I1 (Elena Asmundsdotter) is also attested in Barseb\u00e4ck (Asmund J\u00f6nsson's 1718 baptism). Parish continuity supports identification at probable.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_027",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_027 records 'Ellina is child of Osmund Dugmundsson' \u2014 a parentage assertion. If Ellina = Elena Asmundsdotter (I1), this assertion bears on I1 as the child. Confidence probable per overall identification rationale (see a_020). This assertion also bears on I4 (Osmund Dugmundsson) as the father; see separate pe_ link.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_027",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_027 records Osmund Dugmundsson as father of Ellina (src_002). I4 is Osmund Dugmundsson, the tree person created from the father role on this record. Confidence probable: (1) I4 was created from this record as a new stub; (2) the identification is direct within src_002 \u2014 the register explicitly names 'Osmund Dugmundssons D\u00e5tter'; (3) however I4 is a new person with no corroborating records yet, so confident is not warranted. The overall identification chain (Ellina = Elena = I1's probable father = I4) is also probable pending discovery of bridging records.",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_025",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_025 records the name 'Osmund Dugmundsson' for the father in src_002. I4 is the tree person created for Osmund Dugmundsson from this record. The name matches exactly. I4 is a new stub person; no corroborating records exist yet, so confidence is probable rather than confident. The register is an original primary record and the father was a presenting parent (self-informant for his own name).",
+      "created": "2026-09-18"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_026",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_026 records Osmund Dugmundsson's residence as Barseb\u00e4ck parish. I4 is Osmund Dugmundsson in the tree. Residence attribution is direct from this original record. Probable confidence as a new stub awaiting corroboration.",
+      "created": "2026-09-18"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Malm\u00f6hus, Sweden",
+      "for_place": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden",
+      "time_period": "1650-1750",
+      "jurisdictions": [
+        {
+          "name": "Barseb\u00e4ck, Harjager, Malm\u00f6hus, Sweden (Lutheran Parish)",
+          "date_range": "1648-1996"
+        },
+        {
+          "name": "Malm\u00f6hus, Sweden (County)",
+          "date_range": "1809-1997"
+        },
+        {
+          "name": "Sk\u00e5ne (Scania), Sweden (Province)",
+          "date_range": "1658-present (Swedish); Danish before 1658"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1974200",
+          "title": "Sweden, Malm\u00f6hus, Church Records, 1541-1918; index 1646-1860",
+          "date_range": "1541-1918"
+        },
+        {
+          "id": "1520594",
+          "title": "Sweden, Baptisms, 1611-1920",
+          "date_range": "1611-1920"
+        },
+        {
+          "id": "1520596",
+          "title": "Sweden, Marriages, 1630-1920",
+          "date_range": "1630-1920"
+        },
+        {
+          "id": "1520597",
+          "title": "Sweden, Burials, 1649-1920",
+          "date_range": "1649-1920"
+        }
+      ],
+      "quirks": [
+        "All 6 Barseb\u00e4ck volumes on FamilySearch are 0% name-indexed and not full-text searchable \u2014 every search requires browsing images page by page; researcher must read 17th\u201318th-century Swedish script (Kurrent-influenced).",
+        "Hofterup parish records appear in the SAME image groups as Barseb\u00e4ck (volumes 004514824 series and 004514823 series) \u2014 search both parishes together.",
+        "Sk\u00e5ne was Danish territory until the Treaty of Roskilde (1658); records pre-1658 are under Danish administration. Swedish Lutheran record-keeping at Barseb\u00e4ck begins c. 1648.",
+        "Husf\u00f6rh\u00f6rsl\u00e4ngder (household examination books) often provide the most reliable family structure for this period \u2014 prioritize them when baptismal entries are ambiguous.",
+        "FamilySearch Wiki pages for Sweden were unavailable during this survey (wiki-query-api server unreachable); consult https://www.familysearch.org/en/wiki/Sweden_Church_Records directly.",
+        "ArkivDigital (https://www.arkivdigital.se/) is a major Swedish subscription service with high-quality Malm\u00f6hus parish register scans \u2014 use as complement or fallback to FamilySearch.",
+        "Riksarkivet / Landsarkivet i Lund holds physical originals for Sk\u00e5ne parishes; accessible via NAD (https://sok.riksarkivet.se/nad).",
+        "For Elena's parents: image groups 004514824_001 and 004514824_002 cover 1696\u20131729 and are the primary target for finding Asmund J\u00f6nsson's 1718 baptism and nearby household entries for Elena.",
+        "Image group series 004514823 (001/002/003) covers 1648\u20131861 and likely contains Elena's own baptism (c. 1680s\u20131700s) \u2014 start with vol. 004514823_002 (428 images, 1680\u20131861).",
+        "Neighboring Harjager hundred parishes (K\u00e4vlinge, Lackal\u00e4nga, Hofterup) should be checked if Elena was not born in Barseb\u00e4ck itself."
+      ],
+      "guide_markdown": "## Locality Guide \u2014 Barseb\u00e4ck parish, Harjager hundred, Malm\u00f6hus, Sweden (c. 1650\u20131750)\n\n### Jurisdictional context\nBarseb\u00e4ck is a small Lutheran parish within **Harjager hundred** (*h\u00e4rad*), **Malm\u00f6hus County** (*Malm\u00f6hus l\u00e4n*), in the province of **Sk\u00e5ne (Scania)**. Sk\u00e5ne was Danish territory until the **Treaty of Roskilde (1658)** ceded it to Sweden; records before 1658 may be in Danish registers. Swedish Lutheran record-keeping at the parish begins c. 1648. The patronymic naming convention was universal in rural Sweden \u2014 Elena **Asmundsdotter** confirms her father's given name was Asmund.\n\n### Digitized volumes for Barseb\u00e4ck (1650\u20131750) \u2014 ALL BROWSE-ONLY\n\n| Image Group | Images | Coverage |\n|---|---|---|\n| `004514823_001` (M9SW-1C2) | 157 | 1648\u20131678, 1681\u20131861 |\n| `004514823_002` (M9SW-1CL) | 428 | 1648\u20131678, 1680\u20131861 |\n| `004514823_003` (M9SW-1CG) | 164 | 1674\u20131677, 1681\u20131861 |\n| `004514824_001` (M9S4-MFK) | 258 | **1696\u20131729**, 1825\u20131835 |\n| `004514824_002` (M9S4-MF2) | 257 | **1696\u20131729**, 1825\u20131835 |\n| `004514824_003` (M9S4-MFL) | 28 | **1696\u20131729**, 1825\u20131835 |\n\n### Key repositories\n- **FamilySearch coll. 1974200** \u2014 Malm\u00f6hus Church Records, 1541\u20131918; 1,639,027 browse-only images\n- **ArkivDigital** (https://www.arkivdigital.se/) \u2014 Swedish subscription service, often superior image quality\n- **Riksarkivet/NAD** (https://sok.riksarkivet.se/nad) \u2014 physical originals held at Landsarkivet i Lund\n- **Ancestry** 'Sweden Church Records, 1451\u20131943' (coll. 2225) and 'Sweden, Select Baptisms, 1611\u20131909' (coll. 60361) \u2014 partial indexed extracts worth checking first\n\n### Research strategy\n1. Search Ancestry indexed collections (coll. 2225 and 60361) for any indexed Barseb\u00e4ck/Harjager entries.\n2. Browse FS image groups 004514824_001/002 (1696\u20131729) for Asmund J\u00f6nsson's 1718 baptism and nearby husf\u00f6rh\u00f6rsl\u00e4ngd entries.\n3. Browse 004514823_002 (1680\u20131861, 428 images) for Elena's own baptism c. 1680s\u20131700s.\n4. Check ArkivDigital if FamilySearch scans are illegible.\n5. Extend to neighboring Harjager parishes (Hofterup, K\u00e4vlinge, Lackal\u00e4nga) if Elena not found in Barseb\u00e4ck.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-09-18"
+    }
+  ]
+}

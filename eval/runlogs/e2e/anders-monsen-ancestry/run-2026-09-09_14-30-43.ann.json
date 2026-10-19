@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Date 25 June 1786 is supported, but Hamre as the marriage place is inferred from the source parish scope, not explicitly stated on the marriage line. That makes the full fact only partially supported.",
+    "f2": "The claimed FamilySearch marriage collection/ark is not present among the final tree's sources. The tree instead contains S1, a 1963 Family Group Sheet that cites Hamre parish records."
+  },
+  "annotator": "Emruthwill",
+  "findings_hash": "bbedf735a335074de029068986ec084ff7cf9b5d997effee5c728690fec8618a"
+}

@@ -40,38 +40,6 @@ export interface FSCollectionsResponse {
   entries?: FSCollectionEntry[];
 }
 
-// GET /service/search/hr/v2/collections/{id}?embedWikiAboutCollection=true
-
-export interface FSSourceDescription {
-  id?: string;
-  about?: string;
-  modified?: string;
-  descriptions?: { lang?: string; value?: string }[];
-  citations?: { value?: string }[];
-  titles?: { lang?: string; value?: string }[];
-  rights?: string[];
-  coverage?: {
-    spatial?: { original?: string; description?: string };
-    temporal?: { original?: string; formal?: string };
-    recordType?: string;
-  }[];
-}
-
-export interface FSDocument {
-  id?: string;
-  text?: string;
-  textType?: string;
-  extracted?: boolean;
-}
-
-export interface FSCollectionDetailResponse {
-  id?: string; // the collection id, echoed at the document root
-  description?: string; // GEDCOMX "#id" ref into sourceDescriptions
-  sourceDescriptions?: FSSourceDescription[];
-  collections?: FSCollectionData[];
-  documents?: FSDocument[];
-}
-
 // Tool Output Types
 
 export interface Collection {
@@ -102,9 +70,3 @@ export interface CollectionsSearchResult {
   totalForPlace: number;
   results: Collection[];
 }
-
-// collection_read detail output is a pass-through of FSCollectionDetailResponse
-// with two HTML-bearing string fields converted to markdown:
-//   - sourceDescriptions[*].citations[*].value
-//   - documents[*].text   (textType also flipped from "html" to "markdown")
-export type CollectionDetailResult = FSCollectionDetailResponse;

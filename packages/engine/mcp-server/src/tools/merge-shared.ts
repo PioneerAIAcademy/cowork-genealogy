@@ -2,15 +2,17 @@
 // merge_warnings dry-run). The pure tree merge lives in utils/merge-gedcomx.ts;
 // this module owns the tool-layer concerns those wrappers share: reading the
 // project files, validating an inline candidate, deriving the compact summary
-// from the merged document, backing up before an irreversible overwrite, and
-// the Mode-2 research.json person-id remap. Spec: merge-gedcomx-spec.md §5b.
+// from the merged document, and the Mode-2 research.json person-id remap.
+// Spec: merge-gedcomx-spec.md §5b.
 
-import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
+import type { SimplifiedGedcomX, SimplifiedPerson, SimplifiedSourceReference } from "../types/gedcomx.js";
+import type { ConflictSurfaced } from "../types/materialize-facts.js";
+import type { WarningGateRefusal } from "./tree-edit.js";
+import { TREE_SOURCE_REF_FIELDS } from "../validation/tree-shape.js";
 import { validateGedcomx } from "../validation/validator.js";
 import { createReport, isValid } from "../validation/types.js";
 import { iteratePersonIdRefs } from "../validation/person-id-refs.js";
 import {
-  backupIfExists,
   readProjectJson as readProjectJsonBase,
   formatIssues,
   NoProjectError as NoProjectErrorBase,
@@ -19,7 +21,7 @@ import {
 // merge core and materialize_facts's conflict-surfacing gate (spec §4.4).
 import { VITAL_PRIMARY_TYPES } from "../utils/merge-gedcomx.js";
 
-export { backupIfExists, formatIssues };
+export { formatIssues };
 
 export interface MergePairSummary {
   survivorId: string;
@@ -36,6 +38,7 @@ export interface ResearchRefsUpdated {
   person_evidence: number;
   timelines: number;
   known_holdings: number;
+  proof_summaries: number;
 }
 
 export interface MergeSuccess {
@@ -45,22 +48,25 @@ export interface MergeSuccess {
   newRelatives: string[];
   researchRefsUpdated?: ResearchRefsUpdated;
   validation: { valid: true; warnings: string[] };
+  /** Competing biological parentage the merge created while passing the
+   *  warning gate (issue #2525). */
+  conflicts_surfaced?: ConflictSurfaced[];
 }
 
-export interface MergeFailure {
+export interface MergeFailure extends Partial<Pick<WarningGateRefusal, "message" | "warnings" | "conflicts_surfaced">> {
   ok: false;
   errors: string[];
-  /** Marks the one ok:false that is an answer rather than a failure — the user
-   *  is not in a research project (see `noProjectResult`). Optional so every
+  /** `no_project` marks the one ok:false that is an answer rather than a
+   *  failure — the user is not in a research project (see `noProjectResult`).
+   *  `unjustified_warnings` is the warning gate's refusal. Optional so every
    *  existing `if (!r.ok) r.errors…` keeps narrowing as it does today. */
-  reason?: "no_project";
+  reason?: "no_project" | "unjustified_warnings";
 }
 
 export type MergeResult = MergeSuccess | MergeFailure;
 
 /** Re-exported so the merge tools' outer catches can build the no-project
- *  answer without importing project-io directly (the same back-compat shape
- *  this module already uses for `backupIfExists`). */
+ *  answer without importing project-io directly. */
 export { NoProjectError, noProjectResult } from "../utils/project-io.js";
 
 /** Raised for expected input problems; the tool turns these into `{ ok: false }`. */
@@ -87,11 +93,14 @@ export async function readProjectJson(
 /**
  * Strip the parts of a candidate document that are legal in tool output
  * (`record_read`'s `gedcomx`, `toSimplified` results) but not in the persisted
- * tree format: top-level `places[]` (the tree carries places as names on
- * facts) and person-level `sources[]` (tree source references hang off
- * names/facts/relationships). Returns a cleaned deep copy plus one warning
- * per stripped kind — the input is never mutated, and a candidate that
- * carries these must not be rejected for it.
+ * tree format: top-level `places[]`, the record-only fields `principal`,
+ * `resource_type` and `coverage`, and any person-level source ref that is not
+ * a well-formed `{ref, page?, quality?}` naming a source in this candidate.
+ * Person-level refs that pass are kept: they are tree format. Returns a cleaned
+ * deep copy plus one warning per stripped kind — the input is never mutated,
+ * and a candidate that carries these must not be rejected for it (most
+ * hand-written `record_read` fixtures give persons `{id, title}` entries, and
+ * agents re-id candidate sources and leave persona refs behind).
  */
 export function sanitizeCandidate(candidate: SimplifiedGedcomX): {
   candidate: SimplifiedGedcomX;
@@ -108,20 +117,64 @@ export function sanitizeCandidate(candidate: SimplifiedGedcomX): {
   }
   delete cleaned.places;
 
+  const candidateSourceIds = new Set(
+    (cleaned.sources ?? []).map((s) => s?.id).filter((id): id is string => typeof id === "string"),
+  );
   let personSourceRefs = 0;
+  let strippedPersonFields = 0;
   for (const person of cleaned.persons ?? []) {
-    if (Array.isArray(person.sources)) personSourceRefs += person.sources.length;
-    delete person.sources;
+    if ("sources" in person) {
+      const refs: unknown[] = Array.isArray(person.sources) ? person.sources : [person.sources];
+      const kept = refs.filter(
+        (r): r is SimplifiedSourceReference =>
+          isTreeSourceRef(r) && candidateSourceIds.has(r.ref),
+      );
+      personSourceRefs += refs.length - kept.length;
+      if (kept.length > 0) person.sources = kept;
+      else delete person.sources;
+    }
+    if (person.principal !== undefined) { delete person.principal; strippedPersonFields++; }
   }
   if (personSourceRefs > 0) {
     warnings.push(
-      `dropped ${personSourceRefs} person-level source reference(s) — the ` +
-        `tree format carries source references on names/facts/relationships, ` +
-        `not on persons`,
+      `dropped ${personSourceRefs} person-level source reference(s) that were not a ` +
+        `{ref, page?, quality?} naming a source in this candidate`,
+    );
+  }
+  if (strippedPersonFields > 0) {
+    warnings.push(
+      `dropped record-only person fields (principal) — ` +
+        `these describe a record persona's role, not a tree person`,
+    );
+  }
+
+  let strippedSourceFields = 0;
+  for (const sd of cleaned.sources ?? []) {
+    if (sd.resource_type !== undefined) { delete sd.resource_type; strippedSourceFields++; }
+    if (sd.coverage !== undefined) { delete sd.coverage; strippedSourceFields++; }
+  }
+  if (strippedSourceFields > 0) {
+    warnings.push(
+      `dropped record-only source description fields (resource_type/coverage) — ` +
+        `these describe the scanned volume, not a tree source`,
     );
   }
 
   return { candidate: cleaned, warnings };
+}
+
+/** A persisted tree source ref: only `ref`/`page`/`quality`, `ref` a non-empty
+ *  string, `page` a string, `quality` a QUAY integer 0-3. */
+function isTreeSourceRef(r: unknown): r is { ref: string; page?: string; quality?: number } {
+  if (!r || typeof r !== "object" || Array.isArray(r)) return false;
+  const o = r as Record<string, unknown>;
+  if (!Object.keys(o).every((k) => TREE_SOURCE_REF_FIELDS.has(k))) return false;
+  if (typeof o.ref !== "string" || o.ref === "") return false;
+  if ("page" in o && typeof o.page !== "string") return false;
+  if ("quality" in o && !(Number.isInteger(o.quality) && (o.quality as number) >= 0 && (o.quality as number) <= 3)) {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -129,8 +182,8 @@ export function sanitizeCandidate(candidate: SimplifiedGedcomX): {
  * `toSimplified` omits empty sections, so a valid record may legitimately have
  * no `relationships`/`sources` key — normalize absent sections to `[]` first so
  * the section-presence check doesn't spuriously reject it. Callers pass the
- * `sanitizeCandidate` output, so no `places` / person `sources` remain by the
- * time the runtime validator sees it. Returns [] when valid.
+ * `sanitizeCandidate` output, so no `places` and no malformed or dangling
+ * person-level ref remain by the time the runtime validator sees it. Returns [] when valid.
  */
 export function validateCandidateGedcomx(candidate: unknown): string[] {
   if (candidate === null || typeof candidate !== "object") {
@@ -166,6 +219,7 @@ export function remapResearchPersonIds(
     person_evidence: 0,
     timelines: 0,
     known_holdings: 0,
+    proof_summaries: 0,
   };
   for (const ref of iteratePersonIdRefs(research)) {
     const survivor = collapseMap.get(ref.pid);

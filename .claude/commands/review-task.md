@@ -61,7 +61,7 @@ Every verdict has a write; a verdict you cannot act on does nothing.
 |---|---|
 | `ready` | `reviewed` label only |
 | `ready-after-edit` | Prepend the agent's text, then `reviewed` |
-| `needs-a-decision` | `needs-decision` label — **not** `senior`. One answer unblocks it and the work behind it is often junior |
+| `needs-a-decision` | `needs-decision` label. One answer unblocks it and the work behind it is often junior. Add `senior` as well when the work would still be hard after the answer |
 | `senior` | `senior` label, no assignee. Keep the `developer`/`genealogist` label: it picks the lane, and CODEOWNERS routes the review by it |
 | `stale-rewrite` | Replace the ask, keeping the original under an `## Original issue` heading |
 | `close` | `gh issue close --reason "not planned"` with the reason |
@@ -83,13 +83,18 @@ Four rules on the writes:
 - **`reviewed` goes on last**, after the body write lands. Labelling first and
   failing on the body leaves an issue that looks vetted and is not.
 
-**Never apply both `senior` and `needs-decision`.** They are different states
-with different remedies — one wants a person, the other wants an answer — and an
-issue carrying both tells the board neither.
+**`senior` and `needs-decision` are orthogonal — apply both when both are
+true.** `senior` says *who* does the work once it is startable; `needs-decision`
+says *what* is blocking it now. What you must not do is reach for `senior` on an
+item that is merely undecided — that sends a sentence looking for a scarce
+person.
 
-**Never answer a fork yourself.** Every open fork gets its `## Decision needed`
-block and the `needs-decision` label. `/make-decisions` is the only place a
-ruling is taken and applied.
+**Decide the forks that fail the four-way test yourself.** A fork is the lead's
+only if one live option spends money the card does not budget, sets doctrine or
+precedent, adds hard-to-reverse surface, or touches a prior ruling. Those get the
+`## Decision needed` block and the `needs-decision` label; the rest go into the
+body as `**Decided (review-ready, <date>): A, <consequence>.**`.
+`/make-decisions` is the only place a lead ruling is taken and applied.
 
 ## Step 5 — Do not move the board
 

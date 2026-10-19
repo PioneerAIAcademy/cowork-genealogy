@@ -39,9 +39,11 @@ import {
   Title,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useSelectedSkill } from '@/lib/useSelectedSkill';
+import { hasGradingRelevantChange } from '@/lib/gradingRelevance';
+import { stripUnusedInputKey } from '@/lib/testInput';
 import type { ExpectedOutcome, SkillInfo, UnitTestFile, UnitTestListEntry } from '@/lib/types';
 
 interface TestFormProps {
@@ -61,6 +63,7 @@ const EMPTY_TEST: UnitTestFile = {
   },
   input: {
     user_message: '',
+    delegation: '',
     scenario: null,
     scenario_notes: null,
   },
@@ -72,29 +75,10 @@ function deepClone<T>(x: T): T {
   return JSON.parse(JSON.stringify(x)) as T;
 }
 
-function hasGradingRelevantChange(before: UnitTestFile, after: UnitTestFile): boolean {
-  if (before.input.user_message !== after.input.user_message) return true;
-  if ((before.input.scenario ?? null) !== (after.input.scenario ?? null)) return true;
-  if (JSON.stringify(before.mcp_fixtures ?? []) !== JSON.stringify(after.mcp_fixtures ?? [])) return true;
-  if (JSON.stringify(before.judge_context) !== JSON.stringify(after.judge_context)) return true;
-  if (JSON.stringify(before.negative ?? null) !== JSON.stringify(after.negative ?? null)) return true;
-  // holdout survives snapshot normalization (only name/description/tags are
-  // stripped), so toggling it changes the content hash. Keep this in sync with
-  // GRADING_RELEVANT_FIELDS in lib/fs/tests.ts.
-  if ((before.test.holdout ?? false) !== (after.test.holdout ?? false)) return true;
-  // judge_reads_files likewise survives normalization and changes what the
-  // judge sees — toggling it invalidates the content hash.
-  if ((before.judge_reads_files ?? false) !== (after.judge_reads_files ?? false)) return true;
-  // expected_outcome / xfail_reason survive normalization too, and
-  // expected_outcome changes how the harness labels the result — so a run
-  // log taken under the old marking no longer describes the test.
-  if ((before.test.expected_outcome ?? 'pass') !== (after.test.expected_outcome ?? 'pass')) return true;
-  if ((before.test.xfail_reason ?? '') !== (after.test.xfail_reason ?? '')) return true;
-  return false;
-}
 
 export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [headerSkill] = useSelectedSkill();
 
   const form = useForm<UnitTestFile>({
@@ -113,7 +97,16 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
             : null,
       },
       input: {
-        user_message: (v) => (v?.trim() ? null : 'user_message is required'),
+        // Exactly one of the two, per the schema's `input.oneOf`: a routed test
+        // carries a user turn, a direct-agent test carries a delegation.
+        user_message: (v, values) =>
+          (v ?? '').trim() || (values.input.delegation ?? '').trim()
+            ? null
+            : 'Either user_message or delegation is required',
+        delegation: (v, values) =>
+          (v ?? '').trim() && (values.input.user_message ?? '').trim()
+            ? 'A test carries user_message OR delegation, never both'
+            : null,
       },
     },
   });
@@ -227,6 +220,8 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
     // Empty string scenarios → null so the API/file shape matches the schema.
     if (payload.input.scenario === '') payload.input.scenario = null;
     if (payload.input.scenario_notes === '') payload.input.scenario_notes = null;
+    // A test is routed OR direct; the unused key must be absent, not blank.
+    stripUnusedInputKey(payload.input);
     // Strip empty judge-context entries.
     payload.judge_context = (payload.judge_context ?? []).map((s) => s.trim()).filter(Boolean);
 
@@ -245,6 +240,14 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
       const json = await res.json();
       notifications.show({ color: 'green', title: 'Saved', message: `Test ${mode === 'create' ? 'created' : 'updated'}.` });
       onSaved?.(payload);
+      // Refetch what the destination reads before navigating — the cache rule in
+      // docs/specs/eval-crud-ui-spec.md §7 "API routes" (issue #1605).
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['tests'], refetchType: 'all' }),
+        mode === 'edit'
+          ? queryClient.invalidateQueries({ queryKey: ['test', payload.test.id], refetchType: 'all' })
+          : Promise.resolve(),
+      ]);
       if (mode === 'create' && json.id) {
         router.push(`/tests/${json.id}`);
       } else {
@@ -320,7 +323,7 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
                 />
                 <Select
                   label="Expected outcome"
-                  description="Mark a test xfail when you know it fails for a documented reason and you don't want that failure read as a regression. Its failures report as xfail instead of fail; if it starts passing, the harness reports xpass so you know to investigate and remove the marker."
+                  description="Mark a test xfail when you know it fails for a documented reason and you don't want that failure read as a regression. Its outcome stays fail, but that failure is treated as suppressed (not a regression); if it starts passing, the pass beside the xfail marker is flagged as unexpected so you know to investigate and remove the marker."
                   data={[
                     { value: 'pass', label: 'pass — the test should pass' },
                     { value: 'xfail', label: 'xfail — known failure, not a regression' },
@@ -356,11 +359,17 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
                 <Title order={5}>Input</Title>
                 <Textarea
                   label="User message"
-                  description="The exact user input fed to the test harness."
+                  description="The exact user input fed to the test harness. Leave empty for a direct-agent test."
                   autosize
                   minRows={3}
-                  required
                   {...form.getInputProps('input.user_message')}
+                />
+                <Textarea
+                  label="Delegation (direct-agent arm)"
+                  description="The exact text handed to the pair's agent, in place of a user turn. The harness relays it verbatim and fails the test if it does not. Fill this OR User message, never both."
+                  autosize
+                  minRows={3}
+                  {...form.getInputProps('input.delegation')}
                 />
                 <Group grow>
                   <Select

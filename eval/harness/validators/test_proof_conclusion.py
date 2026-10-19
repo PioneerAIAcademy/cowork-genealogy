@@ -1,4 +1,4 @@
-"""Skill-specific validators for the proof-conclusion skill.
+"""Validators for the proof-conclusion agent (its routing skill was deleted, issue #2822).
 
 proof-conclusion keeps its `rubric.md` — all three dimensions (Tier
 justification, Narrative standalone, Evidence completeness) are GPS
@@ -20,7 +20,11 @@ signature contract.
 
 from __future__ import annotations
 
+import re
+
 import pytest
+
+from harness.skill_runner import agent_return_text
 
 
 # --- Tool allowlist ---
@@ -124,7 +128,7 @@ def test_q001_probable_tier(after_state, test):
 def test_q001_proved_tier(after_state, test):
     """For the proved-tier-with-exhaustive-search test: the proof summary
     for q_001 must have tier == 'proved'. The flynn-resolved scenario
-    has exhaustive_declaration populated with stop_criteria and the
+    has search_stop populated with stop_criteria and the
     negative-probate search completed — the search is reasonably
     exhaustive and three independent sources converge."""
     if "tier-proved-q001" not in test.get("tags", []):
@@ -140,17 +144,28 @@ def test_q001_proved_tier(after_state, test):
 
 
 def test_q001_possible_tier(after_state, test):
-    """For the thin-evidence test: the proof summary for q_001 must have
-    tier == 'possible'. A single uncorroborated indirect co-residence (the
-    1850 census alone) is a credible lead but cannot support 'probable'; it
-    still leans toward Thomas, so it is stronger than 'not_proved'."""
+    """Tagged `tier-possible-q001`: the proof summary for q_001 must have
+    tier == 'possible' EXACTLY — neither a higher tier nor a lower one.
+
+    This tag now binds only `possible-tier-thin-evidence` (_004): a single
+    uncorroborated indirect co-residence (the 1850 census alone) is a credible
+    lead but cannot support 'probable'; it still leans toward Thomas, so it is
+    stronger than 'not_proved'.
+
+    `bounded-death-encoded-not-collapsed` (_018) formerly carried this tag,
+    pinning its bounded death to `possible` (the 2026-08-21 ceiling); issue
+    #2930 relaxed it to accept `possible` OR `probable` — the tier flips
+    between the two run-to-run even on neutral wording — so 018 dropped the tag and
+    is now guarded by `test_bounded_conclusion_is_tiered_and_encoded`'s floor
+    (off `not_proved`, Death fact encoded) instead."""
     if "tier-possible-q001" not in test.get("tags", []):
         pytest.skip("not a tier-possible-q001 scenario")
     ps = _proof_summary_for_question(after_state, "q_001")
     assert ps is not None, "no proof_summaries entry for q_001 found in after_state"
     assert ps.get("tier") == "possible", (
-        f"q_001 proof tier should be 'possible' (one uncorroborated "
-        f"indirect source); got {ps.get('tier')!r}"
+        f"q_001 proof tier should be 'possible' exactly — this test's key "
+        f"fixes the tier, and a HIGHER one fails it just as a lower one does; "
+        f"got {ps.get('tier')!r}"
     )
 
 
@@ -323,13 +338,28 @@ def test_conflict_blocks_proved(after_state, test):
         "conflict and what would settle it, then route to conflict-resolution."
     )
     # 2. At not_proved — not proved, and not probable either.
+    #
+    # The conflict's state is READ, not asserted in prose. The message used to
+    # hardcode "(c_001, birthplace) is open", which asserts the opposite of the
+    # truth on a run that legitimately settled it first — and reading that
+    # sentence is part of why this failure was originally filed as two separate
+    # defects rather than one chain (issue #2022).
+    c_001 = next(
+        (c for c in after.get("conflicts", []) if c.get("id") == "c_001"), None
+    )
+    c_state = (
+        "absent" if c_001 is None else f"status={c_001.get('status')!r}"
+    )
     bad = [ps for ps in for_q if ps.get("tier") != "not_proved"]
     assert not bad, (
         "proof-conclusion concluded q_001 at "
-        f"{[ps.get('tier') for ps in bad]} while an unresolved conflict on an "
-        "identifying attribute (c_001, birthplace) is open. The disputed "
-        "attribute goes to whether the cited sources describe the same person, "
-        "so no tier is available — record it at `not_proved`."
+        f"{[ps.get('tier') for ps in bad]} while the conflict on an "
+        f"identifying attribute (c_001, birthplace) reads {c_state}. The "
+        "disputed attribute goes to whether the cited sources describe the "
+        "same person, so no tier is available — record it at `not_proved`. If "
+        "c_001 reads as resolved, check whether this run resolved it ITSELF: "
+        "that is an out-of-lane write, and test_no_out_of_lane_section_writes "
+        "is the assertion for it."
     )
     # 3. The question stays open — resolving it is the downstream step's call.
     q = next((x for x in after.get("questions", []) if x.get("id") == "q_001"), None)
@@ -354,13 +384,10 @@ def test_bounded_conclusion_is_tiered_and_encoded(after_state, test):
     not do is collapse to `not_proved` because the exact value is unreachable,
     or reach a tier and never touch the tree.
 
-    `possible` is the expected tier for the committed fixture, and for a reason
-    worth keeping: a reachable, unsearched 1880 census would halve its bracket,
-    which is a Component 1 failure rather than a corroboration gap. A bracket
-    with a named record that would narrow it is not reasonably exhaustive.
-
-    Deterministic on purpose — both halves were judge-graded before, and the
-    test failed on 2026-08-19 with a rationale that misread its own fixture.
+    `possible` or `probable` are both accepted; the committed run used
+    `possible`, but the tier may vary between runs. The `tier-possible-q001`
+    ceiling was removed from 018 on 2026-09-30, so this floor is now its only
+    tier guard.
     """
     if "bounded-conclusion" not in test.get("tags", []):
         pytest.skip("not a bounded-conclusion scenario")
@@ -506,3 +533,258 @@ def test_open_candidate_blocks_closure(before_state, after_state, test):
             f"{qid} was marked resolved while {', '.join(open_h)} is still "
             f"`active`"
         )
+
+
+# --- Per-claim tier breakdown (#1711) -----------------------------------
+#
+# A parentage question whose two claims carry different evidence strength
+# must not let the stronger claim's scalar `tier` license writing the
+# weaker claim's relationship. `flynn-split-parentage-tiers` ships paternity
+# (I2->I1) strongly evidenced and maternity (I3->I1) resting on a single
+# 0.0002-scored match -- exactly the real-world case that raised #1711.
+
+def test_per_claim_tree_encoding(before_state, after_state, test):
+    """Tagged `per-claim-tier-split`: the proof summary for q_001 must carry
+    a `claims[]` breakdown with paternity at `probable` and maternity at
+    `possible`, and the tree must reflect each claim's OWN tier — not the
+    scalar. The scalar `tier` (the stronger claim, per
+    research-schema-spec.md §7) legitimately reads `probable`, but that must
+    not license writing the maternal relationship too; only the paternal one
+    may land.
+
+    Deliberately not `no-tree-write` (its whole-tree-diff premise breaks on
+    a mixed proof that legitimately writes one relationship and not the
+    other) or `tree-write-expected` (which pins a single parent/child pair).
+    """
+    if "per-claim-tier-split" not in test.get("tags", []):
+        pytest.skip("not a per-claim-tier-split scenario")
+
+    ps = _proof_summary_for_question(after_state, "q_001")
+    assert ps is not None, "no proof_summaries entry for q_001 found in after_state"
+
+    claims = ps.get("claims") or []
+    assert claims, (
+        "no `claims[]` breakdown on the q_001 proof summary — paternity and "
+        "maternity carry different evidence strength here and must be tiered "
+        "independently (#1711), not folded into one scalar `tier`"
+    )
+
+    paternity = next((c for c in claims if c.get("claim") == "paternity"), None)
+    maternity = next((c for c in claims if c.get("claim") == "maternity"), None)
+    assert paternity is not None, f"no 'paternity' entry in claims[]: {claims!r}"
+    assert maternity is not None, f"no 'maternity' entry in claims[]: {claims!r}"
+
+    assert paternity.get("proof_tier") == "probable", (
+        f"paternity should be 'probable' (three independent original sources "
+        f"converge); got {paternity.get('proof_tier')!r}"
+    )
+    assert maternity.get("proof_tier") in ("possible", "not_proved"), (
+        f"maternity should be 'possible' or weaker (a single 0.0002-scored "
+        f"same-person match, no record naming Bridget as Patrick's mother); "
+        f"got {maternity.get('proof_tier')!r}"
+    )
+
+    before = _tree(before_state)
+    after = _tree(after_state)
+    if before is None or after is None:
+        pytest.skip("Missing tree.gedcomx.json for diff")
+
+    def has_pc(tree, parent, child):
+        return any(
+            r.get("type") == "ParentChild"
+            and r.get("parent") == parent
+            and r.get("child") == child
+            for r in (tree or {}).get("relationships", [])
+        )
+
+    assert not has_pc(before, "I2", "I1") and not has_pc(before, "I3", "I1"), (
+        "scenario pre-state already contains a concluded ParentChild "
+        "relationship — flynn-split-parentage-tiers must ship both "
+        "candidate-parent links absent so this guard can verify which one "
+        "the skill actually wrote"
+    )
+
+    assert has_pc(after, "I2", "I1"), (
+        "proof-conclusion did not write the paternal ParentChild relationship "
+        "(I2 -> I1) even though paternity reached `probable` — see "
+        "proof-conclusion agent body §6. post-state relationships="
+        f"{after.get('relationships', [])!r}"
+    )
+    assert not has_pc(after, "I3", "I1"), (
+        "proof-conclusion wrote the maternal ParentChild relationship "
+        "(I3 -> I1) even though maternity is only `possible` — this is the "
+        "exact defect #1711 reports: a `probable` scalar tier (the stronger "
+        "claim) must never license writing a claim whose own tier is "
+        "`possible`. post-state relationships="
+        f"{after.get('relationships', [])!r}"
+    )
+
+
+#: Tiers that are a final answer rather than a stalled one. A disproved
+#: conclusion is as settled as a proved one -- the evidence refutes the claim --
+#: so asking why it is not "higher" is a category error. `not_proved` is
+#: deliberately excluded: it is a non-answer, not a negative answer.
+CONCLUSIVE_TIERS = frozenset({"proved", "disproved"})
+
+
+def test_shortfall_matches_document_state(after_state, test):
+    """`shortfall` must agree with the document it sits in.
+
+    The write boundary already refuses a MISSING `shortfall` — it is a required
+    field and `research_append` is live in the unit harness. What nothing checked
+    is whether the value is RIGHT, and a well-formed wrong value is the failure
+    mode that matters: `ceiling` says *the reachable record is exhausted, a
+    higher tier is not obtainable*, and asserting that over a question whose own
+    `search_stop.stopped_because` is null is exactly the overclaim this
+    field was added to expose.
+
+    Three rules, each read off the document rather than off the tier alone:
+
+    1. The CONCLUSIVE tiers <-> ``none``, both directions. ``proved`` and
+       ``disproved`` are both terminal answers -- one establishes the claim,
+       the other affirmatively refutes it -- so neither has anything holding it
+       back, and nothing else may claim it does not. ``not_proved`` is NOT
+       conclusive: it means the evidence will not support a call either way,
+       which is itself a shortfall.
+    2. An unresolved conflict naming this summary's question in its
+       ``blocks_question_ids`` forces ``conflict``. Question-scoped, matching
+       proof-conclusion's decision rules: a conflict open on another question
+       does not bear on this conclusion.
+    3. ``ceiling`` requires ``search_stop.stopped_because`` to be a stop-gate value
+       (``question_answered``, ``record_exhausted``, or ``nothing_further_reachable``).
+       Only ``ceiling`` makes the finished-searching claim, so only ``ceiling``
+       is constrained — ``gap`` is always permitted, including on a
+       declared-exhaustive question, where a reachable source may still be
+       named as unreached.
+
+    Deliberately NOT checked: that ``gap`` names its outstanding source. That is
+    a judgement about prose, which is the rubric's job (ADR-0011 limit 1 — a
+    semantic gate prefers a false allow).
+
+    Runs on every proof-conclusion test rather than behind a tag: any test that
+    writes a proof summary should get this, and one that writes none is silently
+    fine.
+    """
+    research = (after_state or {}).get("research_json") or {}
+    summaries = research.get("proof_summaries") or []
+    if not summaries:
+        return
+
+    questions = {
+        q.get("id"): q for q in (research.get("questions") or []) if isinstance(q, dict)
+    }
+    conflicts = research.get("conflicts") or []
+
+    for ps in summaries:
+        if not isinstance(ps, dict):
+            continue
+        sid = ps.get("id")
+        qid = ps.get("question_id")
+        tier = ps.get("tier")
+        shortfall = ps.get("shortfall")
+
+        if tier in CONCLUSIVE_TIERS:
+            assert shortfall == "none", (
+                f"{sid}: tier {tier!r} is a conclusive answer, so it requires "
+                f"shortfall 'none' — nothing is holding it back; got "
+                f"{shortfall!r}"
+            )
+        else:
+            assert shortfall != "none", (
+                f"{sid}: shortfall 'none' says nothing is holding this "
+                f"conclusion back, but its tier is {tier!r}, which reached no "
+                f"conclusive answer — so something is. Name it: ceiling, gap "
+                f"or conflict"
+            )
+
+        blocking = [
+            c.get("id")
+            for c in conflicts
+            if isinstance(c, dict)
+            and c.get("status") == "unresolved"
+            and qid in (c.get("blocks_question_ids") or [])
+        ]
+        # Guarded on the tier for the same reason _check_ceiling is: a
+        # conclusive tier already owes `none`, and proof-conclusion.md:211
+        # blocks only Proved on an open conflict, so `disproved` with one is
+        # legitimate. Without the guard that shape satisfies no value at all.
+        if blocking and tier not in CONCLUSIVE_TIERS:
+            assert shortfall == "conflict", (
+                f"{sid}: conflict(s) {blocking} are unresolved and name {qid} in "
+                f"blocks_question_ids, so this conclusion is blocked by a dispute "
+                f"— shortfall should be 'conflict'; got {shortfall!r}"
+            )
+
+        question = questions.get(qid)
+        if question is None:
+            # Nothing to check the ceiling claim against; a dangling
+            # question_id is a different validator's business.
+            continue
+        _STOP_GATE_VALUES = frozenset({"question_answered", "record_exhausted", "nothing_further_reachable"})
+        ss = question.get("search_stop") or {}
+        stopped_because = ss.get("stopped_because")
+        is_gate = stopped_because in _STOP_GATE_VALUES
+
+        def _check_ceiling(value, where):
+            if value == "ceiling":
+                assert is_gate, (
+                    f"{sid}{where}: shortfall 'ceiling' claims the reachable "
+                    f"record is exhausted, but {qid}'s "
+                    f"search_stop.stopped_because is {stopped_because!r} (not a stop-gate value). "
+                    f"Use 'gap' while a reachable source remains unsearched — 'ceiling' "
+                    f"is the stronger claim and the document does not support it"
+                )
+
+        if tier not in CONCLUSIVE_TIERS:
+            _check_ceiling(shortfall, "")
+        for i, claim in enumerate(ps.get("claims") or []):
+            if isinstance(claim, dict) and "shortfall" in claim:
+                _check_ceiling(claim["shortfall"], f" claims[{i}]")
+
+
+# --- summary_for_user on the completing call (issue #2951) -------------
+
+_BANNED_USER_WORDS = re.compile(r"\b(proofs?|GPS|exhaustive(?:ly)?)\b", re.IGNORECASE)
+
+
+def _summary_for_user(text: str) -> str | None:
+    """The text after the last line that is exactly `---`, or None."""
+    lines = text.splitlines()
+    marks = [i for i, line in enumerate(lines) if line.strip() == "---"]
+    if not marks:
+        return None
+    return "\n".join(lines[marks[-1] + 1 :]).strip()
+
+
+def _project_status(state) -> str | None:
+    return ((state.get("research_json") or {}).get("project") or {}).get("status")
+
+
+def test_completion_summary_offers_second_opinion(
+    before_state, after_state, agent_returns, text_response, test
+):
+    """Every call that moves `project.status` to `completed` ends its
+    user-facing summary with a second-opinion offer — gps-mentor is off the
+    default path, so this sentence is the user's only route to it — and never
+    says "proof", "GPS" or "exhaustive". Read from the documents, not from a
+    tag, so it binds on every test whose run completes the project. A test
+    tagged `summary-for-user-completion` must also complete it. Reads the
+    agent's own return, not the main thread's relay of it, falling back to
+    `text_response` when the agent returned nothing."""
+    tagged = "summary-for-user-completion" in test.get("tags", [])
+    before, after = _project_status(before_state), _project_status(after_state)
+    if tagged:
+        assert after == "completed", (
+            f"concluding the project's only question should set project.status to "
+            f"'completed'; got {after!r}"
+        )
+    elif not (after == "completed" and before != "completed"):
+        pytest.skip("this call did not complete the project")
+    reply = agent_return_text(agent_returns, "proof-conclusion") or (text_response or "")
+    summary = _summary_for_user(reply)
+    assert summary, "no summary_for_user: the reply has no line that is exactly `---`"
+    assert re.search(r"second opinion", summary, re.IGNORECASE), (
+        "the completing summary_for_user does not offer a second opinion"
+    )
+    banned = sorted({m.group(0) for m in _BANNED_USER_WORDS.finditer(summary)})
+    assert not banned, f"summary_for_user uses words kept out of user text: {banned}"

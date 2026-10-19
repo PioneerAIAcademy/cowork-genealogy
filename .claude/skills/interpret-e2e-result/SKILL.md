@@ -33,14 +33,16 @@ That means all of:
   score;
 - the top-level **`verdict`** — this is the judge's genealogical conclusion
   verbatim;
-- the top-level **`outcome`** — the combined gate, which equals `verdict`
-  whenever `compliance` is `pass`, so reporting it leaks the verdict.
+- the top-level **`outcome`** — the gate, which since the §8 detectors were
+  demoted simply IS `verdict`, so reporting it leaks the verdict always rather
+  than only when `compliance` is `pass`.
 
 Those are the judge's *grades*: the thing the maintainer calibrates, and
-unnecessary for explaining what the agent did. The user runs `/grade-e2e-run`
-right after this to grade the run **blind**; if you surface the judge's labels
-here, that grade is no longer independent and the calibration number is
-corrupted.
+unnecessary for explaining what the agent did. The human grade comes first
+(`/grade-e2e-run`, blind) and must stay independent of the judge. Your report
+says which expected findings the tree recovered, which is what the grader
+labels, so it comes after the grade. If you also surface the judge's labels, a
+later re-grade is anchored and the calibration number is corrupted.
 
 **`compliance` and `guardrail_bypass_violations` are NOT judge output** — read
 and report them freely (Step 2d). They are a deterministic harness check on
@@ -80,9 +82,25 @@ is a fabrication.
 
 ### Step 1 — Locate the run log
 
-If the user pointed at a specific `run-<ts>.json`, use it. Otherwise
-ask which fixture and which timestamp, or take the most recent if
-only one is present.
+If the user pointed at a specific `run-<ts>.json`, or a `scratch_<ts>.json` (the
+harness's name for a run the judge skipped), use it. Otherwise ask which fixture
+and which timestamp, or take the most recent if only one is present.
+
+**Grade first.** When the run owes a grade, tell the user to run `/grade-e2e-run`
+first and stop. Do not produce the per-finding report. A run owes a grade when all
+of these hold: it is under `eval/runlogs/e2e/` (a quarantine directory is not the
+corpus); it is a `run-<ts>.json`, not a `scratch_` file; its
+`run-<ts>.final-tree.gedcomx.json` sibling is on disk; its top-level `stop_reason`
+(not `usage.stop_reason`) is not `host_slept`; and no `run-<ts>.ann.json` is on
+disk. These are the exemptions `check_added_runlogs_graded` applies in
+`eval/harness/scripts/check_e2e_fixtures.py`, read from the files on disk rather
+than from a commit, so a run that is not committed yet still owes its grade.
+Otherwise interpret as below, and also when the user says they will not grade
+this run or is mining a unit test from it.
+
+**A slept run.** When the top-level `stop_reason` is `host_slept`, go straight to
+Step 3's `host_slept` entry. It is the whole interpretation, so skip every other
+step.
 
 The fixture's `expected-findings.json` lives in `eval/tests/e2e/<id>/`.
 Read it alongside the run so you can compare expected vs found yourself.
@@ -118,7 +136,7 @@ conclusion it *wrote* — the claim, the evidence it cites, and the
 confidence/tier it asserted. Report observable characteristics as facts (e.g.
 "rests on a single 1910 census entry," "notes an unresolved date conflict,"
 "claims a `proof_argument` tier"). **Do not score its soundness** (1 / 2 / 3) —
-that's what the user grades blind next. If no proof summary was written, say so;
+that is what `/grade-e2e-run` scores. If no proof summary was written, say so;
 it's not itself a failure, just nothing to describe.
 
 ### Step 2c — Note any blocked tree-reads or context-writes
@@ -135,31 +153,47 @@ from records). Each entry is a denied attempt.
   autonomous run. Repeated attempts may indicate the skill is leaning on
   tree-reading instead of records, which is worth a look at the `/research` primer.
 
-Then check `blocked_context_calls` — the twin denied by a different guard. Each
-entry is a main-thread call to a subagent-only tool the harness blocked
-(`blocked_by: "context"`): the router doing a subagent's own work because that
-subagent failed to spawn. Two tools land here — an `extraction_append` (the
-record-extractor's write, #942) or an `image_read` (the image reader's read,
-which would overflow the transport). Read the entry's `tool` to see which. Same
-shape as above (`{tool, args, blocked_by}`), and the denied attempt also shows
-up in `narration[]` with `kind: "blocked"`.
+Then check `blocked_context_calls` — the twin denied by a different guard. Every
+entry carries `blocked_by: "context"`, but **two different guards land here and
+`blocked_by` cannot tell them apart. Read the entry's `tool`:**
+
+- **`research_append`** — an owned-section write: a caller wrote a section it does
+  not own. This is the arm that actually fires; every entry in the committed
+  corpus is one. **Not** evidence of a spawn failure, and the shipped plugin hook
+  holds the same rule, so a user would hit it too. Do not assume the main thread:
+  `owner_denied` has four rules — `routed`, `out_of_lane`, `declaration` and
+  `owned_field` (a field routed on presence, `project.status`) — and
+  `out_of_lane` fires for a **named subagent** reaching outside its own lanes.
+  `tool` is `research_append` for all four, so it cannot tell them apart — read
+  `narration[]` for the rule and `tool_calls[]` for the caller.
+- **`extraction_append`** or **`image_read`** — a subagent-only tool called on the
+  main thread, which *does* suggest the owning subagent failed to spawn
+  (record-extractor for the write, the image reader for the read). Neither has
+  been observed in the committed corpus.
+
+Same shape as above (`{tool, args, blocked_by}`), and the denied attempt also
+shows up in `narration[]` with `kind: "blocked"`.
 
 - **Empty** — normal; say nothing.
-- **Non-empty** — the router tried to substitute for a failed spawn and was
-  blocked, so the subagent's work was not done on the main thread. Flag it: it
-  points at a spawn failure for the tool's owning subagent (`record-extractor`
-  for `extraction_append`), not a records gap. No agent owns `image_read` since
-  `image-reader-opus` was retired, so a blocked `image_read` is the router
-  reaching for a scan instead of delegating to `image-reader`.
-  Read the matching `narration[]` turn to see where the spawn failed.
+- **Non-empty** — a call was denied and that work was not done. Flag it, and say
+  which arm: an owned-section `research_append` is an ownership slip, not a spawn
+  failure, so name the caller from `tool_calls[]` rather than assuming the main
+  thread. Only the subagent-only tools point at a spawn failure for their owning
+  subagent (`record-extractor` for `extraction_append`), not a records gap. No
+  agent owns `image_read` since `image-reader-opus` was retired, so a blocked
+  `image_read` is the router reaching for a scan instead of delegating to
+  `image-reader`. Read the matching `narration[]` turn: for a subagent-only tool
+  it shows where the spawn failed, and for an owned-section write it names which
+  rule fired.
 
 ### Step 2d — Note any GPS guardrail bypasses
 
 Check `compliance` and `guardrail_bypass_violations[]` in `run-<ts>.json`.
 This is a harness check, not a judge grade: it asks whether the agent actually
 invoked the GPS guardrail skills whose effects appear in the final project
-state — `person-evidence`, `conflict-resolution`, `proof-conclusion`,
-`research-exhaustiveness`, and the mandatory `gps-mentor` proof critique.
+state — `person-evidence`, `conflict-resolution`, `proof-conclusion` and
+`research-exhaustiveness`. `gps-mentor` is not among them: it runs only when the
+user asks for a second opinion, so a run with no critique is not a violation.
 
 - **`compliance: "pass"`** — nothing to say.
 - **`compliance: "fail"`** — report each violation string as a fact. This is
@@ -169,6 +203,12 @@ state — `person-evidence`, `conflict-resolution`, `proof-conclusion`,
   and this skill is the only place the user will see the second one.
 - **`compliance` absent** (a run log written before this axis existed) — say
   nothing; it was never checked.
+- **`harness_schema_version` 6 or below** — a "was never successfully invoked"
+  violation for an agent the run spawned typed and without error (an
+  `Agent`/`Task` call whose `subagent_type` is that name and whose `is_error` is
+  not `true`) is the retired Skill-only rule, not a bypass: today's detector
+  credits that spawn. Check `tool_calls` for the spawn and say so instead of
+  reporting it as a skipped step. An untyped or errored spawn is still a bypass.
 
 Do not translate a compliance failure into a pass/fail judgement of the run
 overall — that is the `outcome` gate, which is judge-derived and off-limits.
@@ -207,18 +247,28 @@ Translate `stop_reason` into something a researcher can act on:
   preceded an entry, so for the last call — index `len(tool_calls) - 1` — the
   narration that followed it carries `tool_calls_before == len(tool_calls)`.
   That entry is usually where the issue shows.
-- `timeout` — wall-clock cap fired (default 60 min). Either the
-  question is too big for the cap or the agent looped. Skim the tail
-  of `tool_calls` for repeating patterns.
-- `tool_cap` — agent hit the per-run tool-call cap (default 200).
+- `timeout` — wall-clock cap fired (default 120 min; a fixture's `caps` can
+  override). Either the question is too big for the cap or the agent looped.
+  Skim the tail of `tool_calls` for repeating patterns.
+- `tool_cap` — agent hit the per-run tool-call cap (default 300).
   Almost always means looping. Read the last 20 tool calls; the loop
   shape is usually obvious.
-- `cost_cap` — hit the per-run cost cap. Same diagnosis as `tool_cap`
-  but the cap caught it first.
+- `cost_cap` — spent past the cost threshold. **Not an interruption** — it
+  is a post-hoc label (the cost-cap row of the stop-reason table in
+  `docs/specs/e2e-test-spec.md`), so read `usage.stop_reason` to see how the
+  run actually ended before calling it unfinished.
 - `max_turns` — SDK turn limit fired. Rare; usually means a
   conversational loop rather than a tool loop.
 - `error` — SDK or harness exception. Read `result.error` for the
   message and the last `narration` entries for the surrounding context.
+- `host_slept` — **an environment failure, not a research result.** The
+  harness counted at least the inactivity cap's worth of host sleep
+  (`usage.counted_sleep_seconds`), labeled the run `host_slept` and skipped
+  the judge. The run is left out of outcome rates and owes no grade. Tell the
+  researcher to commit its three files with no `.ann.json`, keep the machine
+  awake (`eval/README.md`, "Keep the machine awake during a run") and re-run.
+  The whole interpretation is this paragraph: do not report what the run
+  recovered, and do not read its misses as agent failures.
 - `mcp_unavailable` — **an environment failure, not a research result.**
   The genealogy MCP tools were absent from the session, so the agent had
   no way to search anything. Tell the researcher to **re-run the test —
@@ -264,8 +314,10 @@ useful questions are about *this* run:
   `fulltext_search` in `tool_calls`). The GPS loop didn't advance.
   Pointer: tool counts (no FS search tools) + the last `narration` entry.
 - **It ran out of budget** — `stop_reason` is `max_turns` / `timeout` /
-  `tool_cap` / `cost_cap`. It researched but didn't finish. Pointer: high
+  `tool_cap`. It researched but didn't finish. Pointer: high
   turn/tool counts; check whether `proof-conclusion` was ever reached.
+  (`cost_cap` is deliberately not in this list — it is applied after the
+  run has already ended, so it never cut a run short.)
 - **The evidence wasn't recoverable** — it searched genuinely but the
   finding isn't findable from records (and isn't a `provided-documents/`
   case). The fixture may be unsolvable as authored — a fixture problem,
@@ -280,9 +332,13 @@ These are the regression causes:
   `tool_calls[]` against the last passing run for the same fixture.
 - **`/research` skill regression** — the agent skipped a GPS step or
   picked the wrong sub-skill. Read the ordered sub-skills the agent ran
-  from `run-<ts>.json`'s `tool_calls` — the `Skill` entries' `args.skill`,
-  in order (`[tc['args'].get('skill') for tc in tool_calls if tc['tool']=='Skill']`).
-  If `proof-conclusion` never appears, that's the smoking gun; if
+  from `run-<ts>.json`'s `tool_calls` — the `Skill` entries' `args.skill`
+  **and** the typed `Agent`/`Task` entries' `args.subagent_type` (strip a
+  `genealogy-research:` prefix), in order:
+  `[tc['args'].get('skill') if tc['tool']=='Skill' else (tc['args'].get('subagent_type') or 'UNTYPED').split(':')[-1] for tc in tool_calls if tc['tool'] in ('Skill','Agent','Task')]`.
+  The orchestrator spawns every destination its routing table spells
+  `@plugin:<name>` directly as an agent, so a `Skill`-only list misses them. If `proof-conclusion` never appears on either route, that's the
+  smoking gun; an `UNTYPED` spawn standing where it should be is a bypass; if
   `question-selection` is missing where a gap needed one, that's another.
 - **Sub-skill regression** — the right sub-skill ran but produced
   worse output than before. Pointer: the relevant `tool_calls` block
@@ -293,10 +349,16 @@ These are the regression causes:
   run. The agent isn't at fault. First compare `harness_schema_version`
   on both runs. Across the `1` → `2` boundary the capture format
   changed, not the data — roughly half of all captures differ there, so
-  do not read a `response_summary` diff across it. The later
+  do not read a `response_summary` diff across it. The `4` → `5`
+  boundary likewise moves `response_summary`, but only for
+  `image_transcribe`: `5` preserves the full `transcription` where `4`
+  truncated it at 500 chars, so a transcribe-call diff across it is the
+  capture change, not FS drift. The `7` → `8` boundary does the same for
+  `Agent`/`Task` calls: `8` keeps the subagent's full return where `7` cut it
+  at 500 chars. The later
   `tool_calls[].is_error` boundary does **not** affect
   `response_summary`, so a drift comparison still holds across it; what
-  it does move is `compliance` / `outcome` and the guardrail violation
+  it does move is `compliance` — no longer `outcome` — and the guardrail violation
   counts, which get stricter once the key is present (an errored call no
   longer counts as a successful invocation). That boundary is the commit
   main `4541a4c5`, not cleanly a version — a `3` log has the key, a `2`
@@ -324,12 +386,8 @@ ambiguity:
 - File a regression issue if the cause looks like an agent or
   sub-skill regression.
 
-**Then remind the user to grade this run.** Whatever the outcome — the run
-recovered everything, some, or none — it's committed and owes a calibration
-grade: tell the user to run `/grade-e2e-run` next to label the findings blind
-and write `run-<ts>.ann.json`. Because you stayed blind to the judge's grade, that
-grade is still independent. Grading is same-PR, and CI blocks committing a run
-that produced a tree without its `.ann.json` (a treeless skip run is exempt).
+The run and its `run-<ts>.ann.json` land in the same PR; CI blocks a run that
+produced a tree without its `.ann.json` (a treeless or `host_slept` run is exempt).
 
 ## What you do not do
 
@@ -355,7 +413,8 @@ User: "Why did the <slug> run fail?"
 
 You should:
 1. Read `eval/runlogs/e2e/<slug>/run-<latest>.json` (harness
-   fields only — skip `judge_output`, `verdict`, and `outcome`).
+   fields only — skip `judge_output`, `verdict`, and `outcome`) and check that
+   `run-<latest>.ann.json` exists.
 2. Read `eval/tests/e2e/<slug>/expected-findings.json` and the
    final tree; the tree contains **none** of the required findings.
 3. See `stop_reason: tool_cap`.
@@ -363,12 +422,11 @@ You should:
    on `place_search` for "Augusta County" with three near-duplicate
    queries.
 5. Tell the user: "Recovered none of the required findings; stopped at the
-   tool cap (200 calls). Agent looped on `place_search` from turn 47 onward —
+   tool cap (300 calls). Agent looped on `place_search` from turn 47 onward —
    three near-duplicate queries for Augusta County. Likely cause: `/research`
    skill regression (place-disambiguation guidance is weaker than the last
    passing run). Recommend diffing `tool_calls[]` against the previous green
-   run for this fixture before changing the skill. Then grade this run blind
-   with `/grade-e2e-run`."
+   run for this fixture before changing the skill."
 
 ## Re-invocation behavior
 

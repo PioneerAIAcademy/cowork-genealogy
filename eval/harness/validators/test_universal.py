@@ -1,4 +1,4 @@
-"""Universal validators that run on every test, regardless of skill.
+r"""Universal validators that run on every test, regardless of skill.
 
 These check structural correctness of the output files against
 the research schema spec (docs/specs/research-schema-spec.md).
@@ -25,8 +25,9 @@ before_state/after_state.**
       tools that the PreToolUse hook denied, with shape
       {"tool": "image_read", "args": dict}. Empty = healthy. These calls
       were blocked, so they never appear in `tool_calls`.
-  - `text_response` (str): every assistant text block concatenated, not
-      the final reply alone — the same string the run log stores as
+  - `text_response` (str): every assistant turn's text, not the final
+      reply alone — turns joined with "\n\n", blocks within one turn with
+      no separator — the same string the run log stores as
       `output.text_response`. Empty when the run produced no assistant
       text. For a LITERAL property of the text (a phrase that must never
       appear, an identifier that must be named); not for re-grading prose
@@ -38,6 +39,8 @@ treated as "not applicable to this state" — recorded as passed with a
 skip marker, not as a failure.
 """
 
+import json
+import re
 from pathlib import Path
 
 import pytest
@@ -46,11 +49,13 @@ from harness.ownership import (
     RESEARCH_JSON,
     TREE_GEDCOMX_JSON,
     writer_sets,
+    writer_tool_sets,
 )
 from harness.schema_validator import (
     validate_research_json,
     validate_tree_gedcomx_json,
 )
+from harness.skill_invocation import find_tree_facts_disagreeing_with_assertions
 from harness.ts_validator import validate_parsed
 
 
@@ -116,6 +121,45 @@ def test_tree_gedcomx_json_validates_schema(after_state):
     assert not errors, (
         "tree.gedcomx.json failed schema validation:\n  - "
         + "\n  - ".join(errors)
+    )
+
+
+def test_tree_facts_agree_with_linked_assertions(after_state):
+    """A materialized fact must not disagree with the assertion it came from.
+
+    The rule itself is `find_tree_facts_disagreeing_with_assertions`, which
+    carries the reported defect, the four compared attributes and the five
+    legitimate false-positive directions it skips. This is the only one of that
+    predicate's three call sites that ASSERTS; the two on the e2e side REPORT
+    the same findings in shadow mode, live (`collect_post_hoc_shadow`) and on
+    replay (`replay_post_hoc`). Do not re-derive the rule here -- a second copy
+    diverges at the first correction to either one.
+
+    The two skips stay on this side because a plain function cannot skip: the
+    predicate answers `[]` for an absent or malformed document, which is right
+    for a live e2e run reading files off disk and wrong here, where "these
+    documents were never produced" must not read as "they agree".
+    """
+    research = after_state.get("research_json")
+    tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
+    if research is None or tree is None:
+        pytest.skip("both research.json and tree.gedcomx.json required")
+    # A malformed document is the schema validators' business, not this one's.
+    # Without the isinstance test a list-shaped research.json raised
+    # AttributeError out of `.get` instead of producing a verdict.
+    if not isinstance(research, dict) or not isinstance(tree, dict):
+        pytest.skip("malformed project documents — the schema validators report this")
+
+    # Each finding's `detail` names the diverging FIELD and both values, and it
+    # is rendered here rather than summarised: the field name appears nowhere
+    # else in this message, and it is what tells a reader whether a display
+    # string or a place-AUTHORITY value went stale.
+    mismatches = [v["detail"] for v in find_tree_facts_disagreeing_with_assertions(research, tree)]
+
+    assert not mismatches, (
+        "tree fact(s) disagree with the assertion they were materialized from — "
+        "a correction to the assertion never reached the fact (#2472):\n  - "
+        + "\n  - ".join(mismatches)
     )
 
 
@@ -409,8 +453,27 @@ def test_id_references_resolve(after_state):
 #    correct writes, which is what a replay of the old literals over the
 #    committed corpus measured.
 #
-# A skill named by no row is read-only (search-wikipedia, historical-context);
+# A skill named by no row is read-only (convert-dates, translation);
 # it fails these checks if it touches a project file at all.
+
+
+def _healer_normalized(tree: dict) -> dict:
+    """The tree as `tree-sanitize.ts` leaves it on every tree write: an empty
+    `facts` array on a person or a relationship is deleted, so `facts: []` and
+    no `facts` are the same tree. Without this, a legitimate write (an
+    extraction_append adding a source) reads as editing an untouched person
+    whose scenario carries `facts: []`, which 24 scenario trees do
+    (ut_search_records_015, issue #2116)."""
+    out = dict(tree)
+    for key in ("persons", "relationships"):
+        items = tree.get(key)
+        if isinstance(items, list):
+            out[key] = [
+                {k: v for k, v in item.items() if not (k == "facts" and v == [])}
+                if isinstance(item, dict) else item
+                for item in items
+            ]
+    return out
 
 
 def _modified_sections(before: dict, after: dict, sections: list[str]) -> list[str]:
@@ -442,7 +505,193 @@ def _only_project_updated_changed(before: dict, after: dict) -> bool:
     return bp_copy == ap_copy and bp.get("updated") != ap.get("updated")
 
 
-def test_ownership_table(before_state, after_state, skill_frontmatter, test):
+
+def _bare_tool_name(tool: str) -> str:
+    """`mcp__genealogy__merge_tree_persons` -> `merge_tree_persons`.
+
+    The server prefix is chosen by whoever registers the MCP server and is not
+    stable across environments (CLAUDE.md, "Dual-spelled tool names"), so match
+    on the last segment rather than on any one spelling.
+    """
+    return tool.rsplit("__", 1)[-1] if tool else ""
+
+
+def _tools_called(tool_calls) -> set[str]:
+    return {_bare_tool_name(c.get("tool", "")) for c in (tool_calls or []) if isinstance(c, dict)}
+
+
+def _merge_remap(tool_calls) -> dict[str, str]:
+    """`collapsedId -> survivorId` accumulated over every merge call in the run.
+
+    `merge_tree_persons` takes `merges: [[survivorId, collapsedId], ...]`. An id
+    may not be both a survivor and a collapsed id (the tool rejects chains), so
+    the pairs compose into a flat mapping.
+    """
+    remap: dict[str, str] = {}
+    for call in tool_calls or []:
+        if not isinstance(call, dict) or _bare_tool_name(call.get("tool", "")) != "merge_tree_persons":
+            continue
+        # A merge that did not succeed wrote nothing, so it explains no delta.
+        # Requiring `ok is True` rather than rejecting `ok is False` is what makes
+        # this right on the unit plane: `merge_tree_persons` is not in LIVE_TOOLS
+        # and no fixture declares it, so a call there returns
+        # `{"error": "fixture_not_found"}` with no `ok` key at all. Reading that
+        # as an authorization would let a skill call the merge, watch it fail,
+        # hand-write the permutation with `research_append`, and be waved through
+        # by the one plane that guards the section.
+        if (call.get("response") or {}).get("ok") is not True:
+            continue
+        for pair in (call.get("args") or {}).get("merges") or []:
+            if isinstance(pair, (list, tuple)) and len(pair) == 2:
+                survivor, collapsed = pair
+                if isinstance(survivor, str) and isinstance(collapsed, str):
+                    remap[collapsed] = survivor
+    return remap
+
+
+def _remap_collapsing(value, remap: dict[str, str]):
+    """Substitute collapsed ids, dropping ONLY the repeats the substitution made.
+
+    Merging B into A turns `subject_person_ids: [A, B]` into `[A]`, so the
+    remapped before-state must collapse `[A, A]` back to `[A]` or a legitimate
+    merge would be refused. It must NOT dedupe generally: deduping both sides
+    erases every pre-existing repeat from the comparison, so a delta that is
+    only `["I5", "I5", "I7"] -> ["I5", "I7"]` reads as "explained" by a merge
+    over ids that appear nowhere in the section.
+
+    An element is dropped only when its image is already present AND that
+    presence involves the substitution — either this element was remapped, or
+    the occurrence already in `out` got there by being remapped. Both
+    orderings therefore collapse (`[A, B]` and `[B, A]` alike), while a repeat
+    that predates the merge survives on both sides and breaks the comparison,
+    which is what it should do.
+
+    Only lists of plain strings collapse — `person_evidence[]` entries stay
+    distinct objects even when two come to share a `person_id`.
+    """
+    if isinstance(value, str):
+        return remap.get(value, value)
+    if isinstance(value, list):
+        if value and all(isinstance(v, str) for v in value):
+            out: list[str] = []
+            from_remap: set[str] = set()
+            for v in value:
+                nv = remap.get(v, v)
+                if nv in out and (v in remap or nv in from_remap):
+                    continue
+                if v in remap:
+                    from_remap.add(nv)
+                out.append(nv)
+            return out
+        return [_remap_collapsing(v, remap) for v in value]
+    if isinstance(value, dict):
+        return {k: _remap_collapsing(v, remap) for k, v in value.items()}
+    return value
+
+
+def _explained_by_appends(before_section, after_section) -> bool:
+    """True when `after_section` is `before_section` plus new entries only.
+
+    What `extraction_append` does to each section it writes: it appends a
+    source, its assertions and its log entry, and changes nothing already there.
+    Keyed on entry `id`, so order does not matter; an entry with no `id`, an
+    existing entry changed or removed, or a section that is not a list fails
+    closed.
+    """
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    after_by_id: dict[str, dict] = {}
+    for e in after_section:
+        if not isinstance(e, dict) or not isinstance(e.get("id"), str):
+            return False
+        after_by_id[e["id"]] = e
+    for e in before_section:
+        if not isinstance(e, dict) or after_by_id.get(e.get("id")) != e:
+            return False
+    return len(after_section) > len(before_section)
+
+
+#: The assertion fields any caller may update through `research_append`.
+#: Mirrors CALLER_ASSERTION_FIELDS in research-append.ts; a literal because this
+#: plane is Python. A field added there and not here is refused here, which
+#: fails closed.
+_CALLER_ASSERTION_FIELDS = frozenset({"informant_bias_notes"})
+
+#: Fields `research_append`'s update arm may rewrite on the MERGED entry, so a
+#: notes-only update to a legacy assertion can change them too:
+#: normalizeDateFields, normalizeAccessDate and canonicalizeAssertionLabels.
+_UPDATE_NORMALIZED_FIELDS = frozenset({"date", "standard_date", "access_date", "fact_type", "place"})
+
+
+def _caller_notes_update_ids(tool_calls) -> set[str]:
+    """Assertion ids a `research_append` update op named with caller fields only."""
+    ids: set[str] = set()
+    for call in tool_calls or []:
+        if not isinstance(call, dict) or _bare_tool_name(call.get("tool", "")) != "research_append":
+            continue
+        args = call.get("args")
+        if not isinstance(args, dict):
+            continue
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            try:
+                ops = json.loads(ops)
+            except (ValueError, TypeError):
+                ops = None
+        candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+        for op in candidates:
+            if not isinstance(op, dict) or op.get("section") != "assertions" or op.get("op") != "update":
+                continue
+            fields = op.get("fields")
+            entry_id = op.get("entryId")
+            if isinstance(fields, dict) and fields and set(fields) <= _CALLER_ASSERTION_FIELDS and isinstance(entry_id, str):
+                ids.add(entry_id)
+    return ids
+
+
+def _explained_by_caller_assertion_update(before_section, after_section, updated_ids: set[str]) -> bool:
+    """True when the only change to `assertions` is the one write
+    `research_append` accepts from any caller: an update op naming an existing
+    entry with caller fields only, plus what the update arm's normalizers
+    rewrite on that entry. Same ids, no duplicates, nothing else changed.
+    """
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    before_ids = [e.get("id") if isinstance(e, dict) else None for e in before_section]
+    after_ids = [e.get("id") if isinstance(e, dict) else None for e in after_section]
+    if None in before_ids or None in after_ids or len(set(after_ids)) != len(after_ids):
+        return False
+    if set(before_ids) != set(after_ids) or len(before_ids) != len(after_ids):
+        return False
+    before_by_id = dict(zip(before_ids, before_section))
+    changed = False
+    for e in after_section:
+        old = before_by_id[e["id"]]
+        diff = {k for k in set(old) | set(e) if old.get(k) != e.get(k)}
+        if not diff:
+            continue
+        if e["id"] not in updated_ids or not diff & _CALLER_ASSERTION_FIELDS:
+            return False
+        if diff - _CALLER_ASSERTION_FIELDS - _UPDATE_NORMALIZED_FIELDS:
+            return False
+        changed = True
+    return changed
+
+
+def _explained_by_merge(before_section, after_section, remap: dict[str, str]) -> bool:
+    """True when the section's whole delta is the merge's id permutation.
+
+    Deliberately exact: the remapped before-state must equal the after-state.
+    A run that merges *and* also edits the section on its own fails, because the
+    extra edit survives the substitution and breaks the comparison. That is the
+    false-pass this authorization path would otherwise open.
+    """
+    if not remap:
+        return False
+    return _remap_collapsing(before_section, remap) == after_section
+
+
+def test_ownership_table(before_state, after_state, skill_frontmatter, test, tool_calls=None):
     """Universal: skill may only modify research.json sections it owns.
 
     Driven by the ownership manifest's research.json rows. A skill modifying a
@@ -453,17 +702,64 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
     frontmatter is missing a name, we skip rather than fail (caller
     error, not a skill defect).
 
+    **Two authorization paths.** A section diff is allowed when the calling
+    skill is in the section's `callers`, OR when the run called a tool the
+    section's `toolAuthorized` names and the whole delta is explained by that
+    tool's write. Ownership is expressed at skill granularity, but a merge is a
+    tool-granular operation: `merge_tree_persons` repoints every reference to a
+    collapsed person in one atomic write, and the skill that calls it is never
+    an owner of the four sections it touches. Widening `callers` instead would
+    grant that skill the section by *any* path, including a direct
+    `research_append` — strictly more than the merge needs, and it reopens the
+    failure the `person_evidence` row names.
+
+    `extraction_append` is the second tool-identity path: it decides roles and
+    classifications in code, so which skill calls it does not matter, and it is
+    authorized for appends only (`_explained_by_appends`). The third is
+    `research_append`'s one caller write to `assertions`, an update of
+    `informant_bias_notes` alone (`_explained_by_caller_assertion_update`).
+
+    The merge path is scoped to research.json. `test_tree_ownership_table` does
+    NOT take it: the tree rows already list `merge_tree_persons` among their
+    `writerTools` *and* name tree-edit a caller, so the clause would authorize
+    nothing there that is not already authorized, while silently widening
+    `materialize_facts` and `tree_forget` to callers that have never asked.
+
     Skipped on negative tests: the skill under test is supposed to
     decline, so any research.json change was made by the routed-to
     skill, which has its own ownership rights — attributing those
     writes to the skill under test is a false positive. A negative
     test where the skill *does* wrongly activate already fails on the
     routing check.
+
+    Skipped on stubbed runs (issue #2156 ruling, 2026-09-09, re-affirmed by the
+    lead 2026-09-14; also the policy for issue #2023's ownership question —
+    decided here, not re-decided there). When execution.stub_skills is non-empty
+    the owning callee is denied, so the section can only ever be written by the
+    caller: the check would measure the stub/caller rather than the skill under
+    test. Same rationale as the negative-test skip, and the stub's own denial
+    text tells the caller both to carry on ("finish your own remaining steps —
+    logging, status, summary") AND not to substitute for the callee ("do not
+    attempt to do its work yourself"): the caller writing `log`/`project`/status
+    is obeying the first clause, not violating ownership.
+
+    The skip is deliberately keyed on **any** stub being present (whole-run),
+    not evaluated per-section. A per-section form gives opposite answers
+    depending on whether it keys on the section's declared owner or on any
+    permitted writer, and on `research`'s `_005` that fork re-breaks the test
+    over `project.status = "completed"` — a write `research`'s own SKILL.md
+    orders and whose ownership contradiction is issue #1335's to resolve, not
+    this check's. Keying on the whole run avoids adjudicating that here.
     """
     if test.get("type") == "negative":
         pytest.skip(
             "ownership is not checked on negative tests — writes belong "
             "to the routed-to skill, not the skill under test"
+        )
+    if (test.get("execution") or {}).get("stub_skills"):
+        pytest.skip(
+            "stubbed run — a denied callee cannot write, so ownership measures "
+            "the stub/caller, not the skill under test"
         )
 
     before = before_state.get("research_json")
@@ -475,7 +771,14 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
     if not skill_name:
         pytest.skip("skill_frontmatter has no `name` field")
 
-    owners = writer_sets(RESEARCH_JSON)
+    # `subject` lets a row name this suite's own agent as a caller and still be
+    # enforced here (issue #2799). Any OTHER agent caller is DROPPED, not raised:
+    # it is authorizable on its own suite, where it is the subject, and a
+    # manifest invariant proves every one of them owns such a suite.
+    owners = writer_sets(RESEARCH_JSON, subject=skill_name)
+    identity_tools = writer_tool_sets(RESEARCH_JSON)
+    called = _tools_called(tool_calls)
+    remap = _merge_remap(tool_calls)
     modified = _modified_sections(before, after, sorted(owners))
     unauthorized = []
     for section in modified:
@@ -484,6 +787,26 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
             # If the only delta inside `project` is that timestamp, don't
             # flag it as an ownership violation.
             if section == "project" and _only_project_updated_changed(before, after):
+                continue
+            # Authorized by tool identity: a declared writer tool ran and the
+            # whole delta is that tool's write. Anything the substitution does
+            # not explain still fails, so a run cannot launder an unrelated
+            # edit through a merge call.
+            if "merge_tree_persons" in (identity_tools.get(section) or set()) and (
+                "merge_tree_persons" in called
+            ) and _explained_by_merge(before.get(section), after.get(section), remap):
+                continue
+            # extraction_append: roles and classifications are set in code, so
+            # any skill may call it. Authorized only for appends.
+            if "extraction_append" in (identity_tools.get(section) or set()) and (
+                "extraction_append" in called
+            ) and _explained_by_appends(before.get(section), after.get(section)):
+                continue
+            # research_append: any caller may update an assertion's
+            # caller-writable fields and nothing else.
+            if section == "assertions" and _explained_by_caller_assertion_update(
+                before.get(section), after.get(section), _caller_notes_update_ids(tool_calls)
+            ):
                 continue
             unauthorized.append(section)
 
@@ -496,7 +819,201 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
         )
 
 
-def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test):
+#: The tree-fact attributes `research_append`'s assertion-`update` rewrite may
+#: change. Mirrors ASSERTION_FACT_ATTRS in materialize-facts.ts; kept as a
+#: literal because this plane is Python and cannot import it. A fifth attribute
+#: added there and not here silently stops being authorized, which fails CLOSED
+#: (the write is refused) rather than open.
+_REWRITABLE_FACT_ATTRS = ("place", "standard_place", "date", "value")
+
+
+def _corrected_assertion_ids(tool_calls) -> set[str]:
+    """Assertion ids this run corrected through the two rewriting tools.
+
+    Only an assertion an `update` op actually named can have caused a rewrite,
+    so this is what the authorization is keyed on. Without it the path would
+    authorize any four-attribute edit to any already-backlinked fact.
+    """
+    ids: set[str] = set()
+    for call in tool_calls or []:
+        if not isinstance(call, dict):
+            continue
+        if _bare_tool_name(call.get("tool", "")) not in {"research_append", "extraction_append"}:
+            continue
+        args = call.get("args")
+        if not isinstance(args, dict):
+            continue
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            # `research_append` runs `coerceJsonArg` on this argument precisely
+            # because the model routinely emits the array as a JSON string, so
+            # the write lands. The run log records what the model emitted, so
+            # without this the authorization false-fails a legitimate write.
+            try:
+                ops = json.loads(ops)
+            except (ValueError, TypeError):
+                ops = None
+        candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+        for op in candidates:
+            if not isinstance(op, dict):
+                continue
+            if op.get("section") != "assertions" or op.get("op") != "update":
+                continue
+            # Only an op that touched a MIRRORED field can have caused a rewrite.
+            fields = op.get("fields")
+            if not isinstance(fields, dict) or not (set(fields) & set(_REWRITABLE_FACT_ATTRS)):
+                continue
+            entry_id = op.get("entryId")
+            if isinstance(entry_id, str) and entry_id:
+                ids.add(entry_id)
+    return ids
+
+
+def _fact_identity(fact: dict) -> tuple:
+    """What must survive the rewrite untouched, for one fact.
+
+    A POSITIVE list rather than "everything else must be byte-equal", because
+    `research_append` runs `sanitizeTree` on every call and persists the healed
+    document whenever it writes the tree. A legacy `quality: "3"` coerced to `3`,
+    or an unknown key pruned, rides along with a perfectly legitimate rewrite and
+    must not red the run for something the TOOL did. Source REFS are compared,
+    not whole ref objects, for exactly that reason.
+    """
+    refs = tuple(
+        sorted(
+            r.get("ref")
+            for r in (fact.get("sources") or [])
+            if isinstance(r, dict) and isinstance(r.get("ref"), str)
+        )
+    )
+    # `primary` normalized: the sanitizer deletes a stored `primary: false`
+    # (`pruneFlag`), so absent and False are the same claim and only `true` is a
+    # real flag. `id` is deliberately absent from this tuple for the same reason
+    # -- the sanitizer MINTS a missing one -- and the per-person zip already
+    # pins fact order and count, so an id cannot be swapped without the rest of
+    # the fact moving with it.
+    return (fact.get("type"), fact.get("primary") is True,
+            fact.get("standard_date"), fact.get("assertion_id"), refs)
+
+
+def _person_identity(person: dict) -> tuple:
+    """The same, for one person: nothing but its facts' mirrored attrs may move."""
+    names = tuple(
+        # Everything but `id`, which `sanitizeTree` mints when a legacy name
+        # lacks one. Comparing four keys let a name's prefix, suffix and source
+        # refs change and ride the authorization through.
+        tuple(sorted((k, repr(v)) for k, v in n.items() if k not in _SANITIZER_MINTED_KEYS))
+        for n in (person.get("names") or [])
+        if isinstance(n, dict)
+    )
+    # Person-level source refs (#2696) are identity too: a fact rewrite must not
+    # move them. Ref STRINGS, sorted, as `_fact_identity` compares, so the
+    # healer's own coercions (a string quality, pruned keys) and a reorder do
+    # not read as a move. The healer also drops a person-level ref naming no
+    # source; that needs a before-tree holding a dangling ref, which the fixture
+    # gate and the runtime validator both reject.
+    person_refs = tuple(
+        sorted(
+            r.get("ref")
+            for r in (person.get("sources") or [])
+            if isinstance(r, dict) and isinstance(r.get("ref"), str)
+        )
+    )
+    return (person.get("id"), person.get("gender"), person.get("ark"),
+            person.get("living"), names, person_refs)
+
+
+#: Keys `sanitizeTree` may add or remove on its own, so a difference in one is a
+#: heal rather than a write. Everything else on a name is compared.
+_SANITIZER_MINTED_KEYS = frozenset({"id"})
+
+
+def _explained_by_fact_rewrite(before_section, after_section, research_after, corrected) -> bool:
+    """True when the whole persons delta is the assertion-backlink fact rewrite.
+
+    `research_append` / `extraction_append` reach `tree.gedcomx.json`'s `persons`
+    only by rewriting a fact ALREADY carrying a corrected assertion's
+    `assertion_id`. They are therefore absent from that row's `callers` and
+    authorized by tool identity instead, exactly as `merge_tree_persons` is on
+    the research side. Anything the rewrite does not explain still fails.
+
+    Three things are checked, and the last two are what stop the path becoming a
+    blanket grant:
+
+      - no person and no fact added or removed, and each person's identity
+        (`_person_identity`) and each fact's identity (`_fact_identity`)
+        unchanged — which covers the two the row's `failure` line is about, an
+        added unsourced person and a set `primary`, plus names, refs and `type`;
+      - every fact whose mirrored attributes changed kept the same
+        `assertion_id`, and that id is one this run's ops actually corrected;
+      - the changed attributes now equal that assertion's post-call values.
+    """
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    if len(before_section) != len(after_section):
+        return False
+    if not corrected:
+        return False
+
+    assertions = {}
+    if isinstance(research_after, dict):
+        assertions = {
+            a.get("id"): a
+            for a in (research_after.get("assertions") or [])
+            if isinstance(a, dict)
+        }
+
+    for b_person, a_person in zip(before_section, after_section):
+        if not isinstance(b_person, dict) or not isinstance(a_person, dict):
+            return False
+        if _person_identity(b_person) != _person_identity(a_person):
+            return False
+
+        b_facts = b_person.get("facts") or []
+        a_facts = a_person.get("facts") or []
+        if not isinstance(b_facts, list) or not isinstance(a_facts, list):
+            return False
+        if len(b_facts) != len(a_facts):
+            return False
+
+        for b_fact, a_fact in zip(b_facts, a_facts):
+            if not isinstance(b_fact, dict) or not isinstance(a_fact, dict):
+                return False
+            if _fact_identity(b_fact) != _fact_identity(a_fact):
+                return False
+            changed = [
+                k for k in _REWRITABLE_FACT_ATTRS if b_fact.get(k) != a_fact.get(k)
+            ]
+            if not changed:
+                continue
+            link = b_fact.get("assertion_id")
+            if not isinstance(link, str) or not link or link not in corrected:
+                return False
+            source = assertions.get(link)
+            if not isinstance(source, dict):
+                return False
+            for key in changed:
+                got = a_fact.get(key)
+                want = source.get(key)
+                if got is None:
+                    # Absent on the fact is how the rewrite expresses "the
+                    # assertion withdrew this", so it is legitimate only when the
+                    # assertion withdrew it. The one exception is
+                    # `standard_place`, which the country guard CLEARS rather
+                    # than writing when the resulting pair contradicts. Without
+                    # this narrowing all four attributes could be deleted from a
+                    # backlinked fact while the assertion still asserted them.
+                    if key == "standard_place":
+                        continue
+                    if want is None or (isinstance(want, str) and want.strip() == ""):
+                        continue
+                    return False
+                if got != want:
+                    return False
+    return True
+
+
+def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test, tool_calls=None):
     """Universal: skill may only modify tree.gedcomx.json sections it owns.
 
     Parallel to test_ownership_table, but for tree.gedcomx.json. Driven by the
@@ -507,25 +1024,78 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
     Skipped on negative tests for the same reason as test_ownership_table
     — a routed-to skill's legitimate writes would otherwise be
     misattributed to the skill under test.
+
+    Skipped on stubbed runs for the same reason again, and on the same ruling
+    (#2156, 2026-09-09, re-affirmed by the lead 2026-09-14), which that sibling
+    records as policy "decided here, not re-decided there". It reached the
+    research half first and this half second, only because the two landed in
+    different PRs. The gap it leaves is not hypothetical: `research` carries 10
+    stubbed positive tests and owns no tree section, while its stub list includes
+    `person-evidence` and `proof-conclusion`, which own `persons` and
+    `relationships` — so the caller's write is attributed to `research` and the
+    check measures the stub.
     """
     if test.get("type") == "negative":
         pytest.skip(
             "ownership is not checked on negative tests — writes belong "
             "to the routed-to skill, not the skill under test"
         )
+    if (test.get("execution") or {}).get("stub_skills"):
+        pytest.skip(
+            "stubbed run — a denied callee cannot write, so ownership measures "
+            "the stub/caller, not the skill under test"
+        )
 
     before = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
     after = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
     if before is None or after is None:
         pytest.skip("Missing tree.gedcomx.json for ownership diff")
+    before = _healer_normalized(before)
+    after = _healer_normalized(after)
 
     skill_name = (skill_frontmatter or {}).get("name")
     if not skill_name:
         pytest.skip("skill_frontmatter has no `name` field")
 
-    owners = writer_sets(TREE_GEDCOMX_JSON)
+    # `subject`, exactly as the research.json call above: without it an
+    # `agent:` caller on a tree row resolves to nobody (ownership.py's agent
+    # rule keys on the suite subject), so every tree-writing test in a
+    # converted suite fails ownership on its own legitimate writes. The free
+    # suites cannot show that -- it only appears in a paid run.
+    owners = writer_sets(TREE_GEDCOMX_JSON, subject=skill_name)
+    identity_tools = writer_tool_sets(TREE_GEDCOMX_JSON)
+    called = _tools_called(tool_calls)
     modified = _modified_sections(before, after, sorted(owners))
-    unauthorized = [s for s in modified if skill_name not in owners[s]]
+    unauthorized = []
+    for section in modified:
+        if skill_name in owners[section]:
+            continue
+        # Authorized by tool identity: `research_append`/`extraction_append`
+        # reach `persons` only through the assertion-backlink fact rewrite, and
+        # only for the delta that rewrite can produce. A skill that is not a
+        # declared caller gets no broader access from this -- anything the
+        # rewrite does not explain still fails.
+        rewriters = {"research_append", "extraction_append"} & (identity_tools.get(section) or set())
+        if (
+            section == "persons"
+            and rewriters & called
+            and _explained_by_fact_rewrite(
+                before.get(section),
+                after.get(section),
+                after_state.get("research_json"),
+                _corrected_assertion_ids(tool_calls),
+            )
+        ):
+            continue
+        # extraction_append mints each `S` entry beside the `src_` it writes.
+        if (
+            section == "sources"
+            and "extraction_append" in (identity_tools.get(section) or set())
+            and "extraction_append" in called
+            and _explained_by_appends(before.get(section), after.get(section))
+        ):
+            continue
+        unauthorized.append(section)
 
     if unauthorized:
         owners_summary = {s: sorted(owners[s]) for s in unauthorized}
@@ -574,15 +1144,39 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test, attempted_mcp_calls
         return
     declared = set((skill_frontmatter or {}).get("allowed-tools", []) or [])
 
+    # An agent-keyed suite (issue #1253) is handed the AGENT's frontmatter,
+    # which declares `tools` rather than `allowed-tools`, qualified rather than
+    # bare. Without this the declared set is empty for every test in such a
+    # suite and the advisory below fires unconditionally — and an advisory that
+    # always fires teaches its reader to ignore it. Only when `allowed-tools`
+    # yielded nothing, so no existing skill's set changes.
+    if not declared:
+        from harness.allowed_tools import bare_tool_names
+
+        declared = set(bare_tool_names((skill_frontmatter or {}).get("tools", []) or []))
+
     # Widen with referenced plugin agents' tools (bare MCP names only —
     # built-in tools like Read never appear in tool_calls).
-    from harness.allowed_tools import agent_refs_for_skill, load_skill_frontmatter
+    from harness.allowed_tools import (
+        agent_refs_for_skill,
+        load_skill_frontmatter,
+        suite_body_path,
+    )
     from harness.workspace import DEFAULT_PLUGIN_AGENTS
 
     _repo_root = Path(__file__).resolve().parents[3]
-    _skill_md = (
-        _repo_root / "packages" / "engine" / "plugin" / "skills"
-        / str(test.get("skill", "")) / "SKILL.md"
+    # Resolves the agent file for an agent-keyed suite, which has no SKILL.md.
+    # Scanning the missing path returned no refs, so such a suite was not
+    # widened by anything it delegates to. LATENT rather than live: no agent
+    # body carries an `@plugin:` reference today, so the population is empty
+    # and this changes no current run. It is here because the frontmatter this
+    # function reads is now resolved that way, and a body scanned from a
+    # different file than the frontmatter is the inconsistency that made the
+    # declared set wrong in the first place.
+    _skill_md = suite_body_path(
+        str(test.get("skill", "")),
+        _repo_root / "packages" / "engine" / "plugin" / "skills",
+        agents_dir=DEFAULT_PLUGIN_AGENTS,
     )
     for _agent in agent_refs_for_skill(_skill_md):
         _agent_fm = load_skill_frontmatter(DEFAULT_PLUGIN_AGENTS / f"{_agent}.md")
@@ -649,9 +1243,22 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test, attempted_mcp_calls
 # any skill that holds the tool, not just citation.
 
 def test_write_then_validate(before_state, after_state, tool_calls, skill_frontmatter, test):
-    """If research.json was modified, validate_research_schema must have been called."""
+    """If research.json was modified, validate_research_schema must have been called.
+
+    Skipped on stubbed runs (issue #2156 ruling, 2026-09-09). When
+    execution.stub_skills is non-empty the routed-to callee is denied, so any
+    research.json write was performed by the stub/caller, not the skill under
+    test — the check would measure the stub. This matters here specifically
+    because `research`'s own SKILL.md forbids defensive validate passes, so
+    demanding one on its stubbed runs grades against the skill's own doctrine.
+    """
     if test.get("type") == "negative":
         pytest.skip("negative test — tool calls belong to the routed-to skill")
+    if (test.get("execution") or {}).get("stub_skills"):
+        pytest.skip(
+            "stubbed run — the write measures the stub/caller, not the skill "
+            "under test"
+        )
     allowed = (skill_frontmatter or {}).get("allowed-tools", []) or []
     if "validate_research_schema" not in allowed:
         pytest.skip("skill does not declare validate_research_schema")
@@ -686,6 +1293,19 @@ PROJECT_WRITER_TOOLS = {
     "materialize_facts",
     "merge_tree_persons",
 }
+# Writers only when called with a projectPath: `build_external_search_url`
+# appends its in-flight hand-off log entry then, and writes nothing otherwise.
+# Counted only when it carried one, so a pure URL build cannot vouch for a
+# hand edit made in the same run.
+CONDITIONAL_PROJECT_WRITER_TOOLS = {"build_external_search_url"}
+
+
+def _is_project_writer_call(call: dict) -> bool:
+    name = (call.get("tool") or "").rsplit("__", 1)[-1]
+    if name in PROJECT_WRITER_TOOLS:
+        return True
+    args = call.get("args")
+    return name in CONDITIONAL_PROJECT_WRITER_TOOLS and isinstance(args, dict) and bool(args.get("projectPath"))
 
 
 def test_project_file_changes_route_through_writer_tools(
@@ -694,9 +1314,8 @@ def test_project_file_changes_route_through_writer_tools(
     """Universal: a modified research.json / tree.gedcomx.json requires at
     least one writer-tool call in the session.
 
-    The writer tools validate-before-persist, allocate ids, and keep the
-    `.bak` safety copy; a direct file write (Write/Edit/python) bypasses
-    all three. Evidence this happens: tree-edit ut_012 (2026-07-12) made
+    The writer tools validate-before-persist and allocate ids; a direct file
+    write (Write/Edit/python) bypasses both. Evidence this happens: tree-edit ut_012 (2026-07-12) made
     ZERO tool calls yet research.json grew a person_evidence entry with a
     fabricated `created` date — and every validator passed, because
     nothing checked the write PATH, only the resulting state.
@@ -732,14 +1351,10 @@ def test_project_file_changes_route_through_writer_tools(
     if not changed:
         return
 
-    writer_calls = [
-        c
-        for c in (tool_calls or [])
-        if (c.get("tool") or "").rsplit("__", 1)[-1] in PROJECT_WRITER_TOOLS
-    ]
+    writer_calls = [c for c in (tool_calls or []) if _is_project_writer_call(c)]
     assert writer_calls, (
         f"project file {' and '.join(changed)} modified with no writer-tool "
-        f"call — direct file writes bypass validation/id-allocation/.bak; "
+        f"call — direct file writes bypass validation/id-allocation; "
         f"route through the writer tools "
         f"({', '.join(sorted(PROJECT_WRITER_TOOLS))})"
     )
@@ -753,9 +1368,9 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
     the run. Image reads must be delegated to the image-reader subagent, which
     absorbs the base64 in a throwaway context and returns text.
 
-    `extraction_append` writes the extracted assertions and sources. That is
-    the record-extractor subagent's job; a main-thread call is the router
-    substituting for a failed spawn and doing the extraction itself (#942).
+    `extraction_append` was the other guarded tool (#942) until issue #2937
+    routed indexed-record extraction through code called from the main thread.
+    It is no longer in `SUBAGENT_ONLY_TOOLS`, so it can no longer appear here.
 
     This is the deterministic half of what the LLM judge used to grade by
     transcript inference — badly: across the 2026-07-16 runs it caught the
@@ -777,10 +1392,6 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
             "image_read → @plugin:image-reader, so the base64 never enters the "
             "router's context"
         ),
-        "extraction_append": (
-            "extraction_append → @plugin:record-extractor; if that subagent "
-            "failed to spawn, report the failure rather than extracting here"
-        ),
     }
     offending_tools = sorted({c.get("tool", "?") for c in blocked_context_calls})
     fixes = "; ".join(
@@ -799,24 +1410,26 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
 
 def test_activated_run_produces_response(
     activated, aborted_reason, num_turns, output_tokens, text_response, test,
-    skills_invoked,
+    skills_invoked, builtin_tool_calls,
 ):
     """An activated run that produced no output is a dead run — fail it.
 
-    Gate on six conditions: activated is True, not aborted, no skills
-    invoked, num_turns == 0, output_tokens == 0, AND text_response shorter
-    than 200 characters. The skills_invoked check is the strongest signal —
-    a run that invoked a skill did real work even when telemetry reports zero
-    (343 of 1945 committed runs report zero telemetry normally). The 200-char
-    floor avoids flagging telemetry-only dropouts where a real response
-    exists.
+    Gate on five conditions: activated is True, not aborted, did not hand
+    off to another skill, num_turns == 0 AND output_tokens == 0, AND
+    text_response shorter than 200 characters. The handoff check skips
+    runs that routed to a different skill (zero telemetry is expected
+    there — the SDK stops after capturing the correct-skill invocation).
+    The 200-char floor avoids flagging telemetry-only dropouts where a
+    real response exists.
     """
     if activated is not True:
         pytest.skip("skill did not activate")
     if aborted_reason is not None:
         pytest.skip("run was aborted — already flagged separately")
-    if skills_invoked:
-        return  # a run that invoked a skill is not a dead run
+    from harness.skill_runner import handoffs
+
+    if set(handoffs(skills_invoked, builtin_tool_calls)) - {test.get("skill")}:
+        return  # handed off to another skill or agent — not a dead run
     if num_turns != 0 or output_tokens != 0:
         return  # telemetry shows work happened
     if len(text_response or "") >= 200:
@@ -825,6 +1438,194 @@ def test_activated_run_produces_response(
         f"activated run produced no meaningful output: num_turns=0, "
         f"output_tokens=0, text_response length={len(text_response or '')} "
         f"(< 200 chars) — the run did not happen"
+    )
+
+
+# --- Direct-agent arm (issue #2246) --------------------------------------
+#
+# A direct test reaches its agent by an `Agent` spawn from a bare main thread
+# instead of through its routing skill, so `skills_invoked` is empty by
+# construction and every check below reads the recorded spawn instead. All three
+# gate on `test["delegation"]`, which the orchestrator threads in from
+# `input.delegation`; a routed test has none and skips.
+
+
+def _spawn_records(builtin_tool_calls, agent=None):
+    from harness.skill_runner import spawn_prompts, spawned_agents
+
+    # `agent` anchors the prompts to the spawn that received them. The two
+    # lists are otherwise separate walks, and an unanchored verbatim check
+    # passes when one spawn carried the delegation and a DIFFERENT one was
+    # the pair's agent.
+    return spawned_agents(builtin_tool_calls), spawn_prompts(
+        builtin_tool_calls, agent
+    )
+
+
+def test_direct_test_spawned_its_agent(test, builtin_tool_calls):
+    """A direct test must actually spawn the pair's agent.
+
+    Without this the arm is vacuous: a main thread that answered from its own
+    context, spawned the wrong agent, or spawned nothing would leave the run
+    graded on whatever text it happened to produce.
+    """
+    if not test.get("delegation"):
+        pytest.skip("not a direct-agent test")
+    expected = test.get("skill")
+    agents, _ = _spawn_records(builtin_tool_calls)
+    assert expected in agents, (
+        f"direct test did not spawn its agent: expected subagent_type "
+        f"{expected!r}, recorded spawns = {agents or '(none)'}. A spawn with no "
+        f"`subagent_type` is a general-purpose subagent and does not count."
+    )
+
+
+def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
+    """The recorded spawn prompt must contain the test's delegation verbatim.
+
+    THE assertion this arm exists for. Nothing else records whether the
+    delegation the main thread actually sent is the one the test wrote, and the
+    adversarial twins turn entirely on exact phrasing: without this check the
+    main thread can soften "Appropriate tier: Probable" into something the agent
+    was never asked to resist, the agent passes, and the suite reports having
+    survived an attack that never arrived.
+
+    `in`, not `==`: a harmless preamble is tolerated, a reword is not. What the
+    substring check permits is reported separately by
+    `report_direct_delegation_extra_text`.
+    """
+    delegation = test.get("delegation")
+    if not delegation:
+        pytest.skip("not a direct-agent test")
+    _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
+    if any(delegation in p for p in prompts):
+        return
+    from harness.skill_runner import BUILTIN_ARG_TRUNCATE, _UNTRUNCATED_ARGS
+
+    cut_note = ""
+    if any(len(p) == BUILTIN_ARG_TRUNCATE for p in prompts):
+        cut_note = (
+            f"\n\nNOTE: a recorded prompt is exactly {BUILTIN_ARG_TRUNCATE} chars, "
+            f"the truncation length. Only {sorted(_UNTRUNCATED_ARGS)} are exempt, so "
+            f"this may be a RECORDING cut rather than a reworded relay."
+        )
+    rendered = "\n---\n".join(prompts) if prompts else "(no spawn prompt recorded)"
+    assert False, (
+        "the main thread did not relay the delegation verbatim.\n\n"
+        f"EXPECTED to find, as an exact substring:\n{delegation}\n\n"
+        f"ACTUAL spawn prompt(s):\n{rendered}{cut_note}"
+    )
+
+
+def report_direct_delegation_extra_text(test, builtin_tool_calls):
+    """Tier 2 — what the main thread added AROUND the delegation.
+
+    The verbatim check is a substring test, so it passes a relay that prepends
+    or appends its own framing. That framing can still change what the agent
+    faces ("note: the preconditions may not hold"), which is the whole attack
+    surface this arm measures. Reported, never gating: a preamble is not by
+    itself a defect, and turning one into a failure would make the arm flaky
+    over harmless phrasing.
+    """
+    delegation = test.get("delegation")
+    if not delegation:
+        pytest.skip("not a direct-agent test")
+    _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
+    extras = []
+    for p in prompts:
+        if delegation not in p:
+            continue
+        before, _, after = p.partition(delegation)
+        if before.strip() or after.strip():
+            extras.append(
+                f"before={before.strip()[:300]!r} after={after.strip()[:300]!r}"
+            )
+    assert not extras, (
+        "the main thread wrapped the delegation in text of its own: "
+        + "; ".join(extras)
+    )
+
+
+# --- A Skill call must name a skill that ships ---------------------------
+
+def test_skill_calls_name_a_shipped_skill(builtin_tool_calls, test=None):
+    """Every main-thread `Skill` call names a directory under plugin/skills/.
+
+    A skill converted to an agent loses its directory, but a caller body left
+    saying `Skill("<name>")` still passes its suite: the harness's `stub_skills`
+    answers the call with the canned response and `handoffs()` records it, so the
+    test goes green while production fails the call and the step never runs
+    (issue #2118, where three `tree-edit` sites were nearly missed). Main thread
+    only: a subagent record carries `agent_id`. A call whose name cannot be read
+    is skipped here; the runner already surfaces it as `unread_skill_calls`.
+    A test-only skill (`eval/skills/`) counts only in its own suite, the one
+    place the harness stages it.
+    """
+    from harness.skill_runner import read_skill_tool_input
+    from harness.workspace import DEFAULT_PLUGIN_SKILLS, TEST_ONLY_SKILLS
+
+    suite = (test or {}).get("skill")
+
+    missing = []
+    for call in builtin_tool_calls or []:
+        if call.get("tool") != "Skill" or call.get("agent_id"):
+            continue
+        name, _unread = read_skill_tool_input(call.get("args") or {})
+        if not name:
+            continue
+        bare = name.rsplit(":", 1)[-1]
+        if (DEFAULT_PLUGIN_SKILLS / bare / "SKILL.md").is_file():
+            continue
+        if bare == suite and (TEST_ONLY_SKILLS / bare / "SKILL.md").is_file():
+            continue
+        missing.append(name)
+    assert not missing, (
+        f"Skill call(s) to {sorted(set(missing))}, which ship no "
+        f"plugin/skills/<name>/SKILL.md. A converted skill is an agent now: "
+        f"invoke it as `@plugin:<name>` (an Agent spawn), not `Skill(...)`."
+    )
+
+
+# --- An out-of-lane request is handed back to its owner ------------------
+
+def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_returns=None):
+    """On a hand-back test the agent makes no MCP tool call and its reply names
+    the owner, read off `negative.correct_skill[0]`.
+
+    Tag-gated: skips unless the test carries the 'hand-back' tag. Paired with
+    negative.grade_on_invariant: true, this is the test's whole verdict. Lifted
+    from check-warnings' suite (issue #2118) when tree-edit became its second
+    user (issue #2805).
+
+    The agent bodies say: "Return one caller-facing line, `Hand-back: <owner> —
+    <the request in one clause>`". WHERE in the reply the name sits is not
+    graded, because a routed reply may reword it. WHOSE reply is graded is
+    `subject_reply_text`: on a direct test, the agent's own return and nothing
+    else.
+
+    An empty `correct_skill` means the owner is not a skill (extraction is a
+    tool call and an agent; genealogist ruling 2026-09-30, option B), so the
+    reply must carry a `Hand-back:` line without a name to look for.
+    """
+    from harness.skill_runner import subject_reply_text
+
+    if "hand-back" not in test.get("tags", []):
+        pytest.skip("not a hand-back test")
+    owners = (test.get("negative") or {}).get("correct_skill") or []
+
+    assert (tool_calls or []) == [], (
+        "a hand-back makes no tool call; got "
+        f"{len(tool_calls or [])} call(s): "
+        + ", ".join(c.get("tool", "?") for c in (tool_calls or []))
+    )
+    reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
+    if not owners:
+        assert "hand-back:" in reply.lower(), "the reply carries no `Hand-back:` line"
+        return
+    owner = owners[0]
+    assert owner in reply.lower(), (
+        f"the reply never names {owner}, so the caller cannot tell which owner "
+        "to spawn"
     )
 
 
@@ -970,7 +1771,7 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
 
     Those two documents must be written only through the MCP writer tools
     (research_append, research_log_append, tree_edit, tree_correct), which
-    validate, allocate ids, and keep a `.bak` before persisting. A direct file
+    validate and allocate ids before persisting. A direct file
     write skips all of that. The rule ships as a PreToolUse deny in Cowork, the
     hosted control plane, and the e2e harness; this validator is the unit tier's
     half of it (issue #1493).
@@ -997,3 +1798,297 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
         f"tools (research_append, research_log_append, tree_edit, tree_correct), "
         f"which validate before persisting."
     )
+
+
+def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
+    """No `research_append` op reached a section its caller does not own.
+
+    Four rules, all from the SHIPPED hook: `routed` — a section reserved to an
+    owning agent, reached by someone else; `out_of_lane` — a known agent reaching
+    outside the sections its own skill is a declared caller for; `declaration` —
+    a routed claim, field-scoped and keyed on the value; `owned_field` — a routed
+    field keyed on presence alone (`project.status`). This check is rule-agnostic
+    and reports whatever `rule` the predicate returns, so a new arm needs no edit
+    here.
+
+    This is the unit tier's half of a rule that already binds in Cowork, the
+    hosted path and the e2e harness. Until issue #2022 this plane called the
+    predicate NOWHERE, and `docs/specs/guardrail-enforcement-spec.md` said so
+    outright.
+
+    What that absence cost is PREVENTION, not detection. The universal
+    `test_ownership_table` already catches an out-of-lane write after the fact —
+    both committed runs that wrote `conflicts` failed on it. What it cannot do is
+    stop the write landing: once the conflict is cleared, `research_append`'s own
+    preconditions correctly see nothing unresolved and correctly allow a tier, so
+    the chain completes before any validator runs.
+
+    This check also reaches two cases the manifest one cannot: it keys on the
+    calling AGENT rather than the skill's frontmatter name, and it runs on
+    negative tests, which the manifest check skips.
+
+    Deterministic, like `test_no_main_thread_subagent_only_calls` and
+    `test_no_raw_writes_to_protected_files`, and failing for the same reason:
+    a run that recovers after a deny must not grade clean, or the gap is
+    invisible again. The hook blocks the call, so it never reaches `tool_calls`
+    — this list is the only place the attempt is visible. Empty is healthy.
+    """
+    if not blocked_owned_section_writes:
+        return
+
+    offending = sorted(
+        {
+            f"{c.get('caller') or '<main thread>'} → {c.get('section', '?')} "
+            f"[{c.get('rule', '?')}]"
+            for c in blocked_owned_section_writes
+        }
+    )
+    # Only mention the batch when one of the denied calls actually carried
+    # sibling ops. Said unconditionally it reads as though ops were lost on a
+    # one-op call, where there were none to lose.
+    batched = any(
+        len(((c.get("args") or {}).get("ops")) or []) > 1
+        for c in blocked_owned_section_writes
+    )
+    batch_note = (
+        " The deny is per CALL, not per op: every other op in the same "
+        "research_append batch was refused with it."
+        if batched
+        else ""
+    )
+    raise AssertionError(
+        f"research_append op(s) to a section the caller does not own, denied by "
+        f"the hook ({len(blocked_owned_section_writes)} call(s)): "
+        f"{'; '.join(offending)}. Route the write through the owning skill, or "
+        f"stay inside this agent's declared lane "
+        f"(docs/specs/schemas/ownership.json).{batch_note}"
+    )
+
+
+# --- Parent-child age plausibility (write-time gate) ------------------
+#
+# Bounds reused verbatim from packages/engine/mcp-server/src/tools/
+# person-warnings.ts (earliestChildBirthToBirth12, earliestChildBirthToBirthMale14,
+# latestChildBirthToBirth80) rather than invented here. person-warnings.ts gained a
+# female-specific LOWER bound (earliestChildBirthToBirthFemale14) in issue #2007, so
+# the tool now catches the mother's age-14 birth that motivated issue #1642 Finding 2
+# (jimmie-jewel-neal/run-2026-07-31_13-02-13, the Wood-family adoption). This
+# validator deliberately does NOT mirror it: adding a bound changes what runs are
+# flagged, which changes grading, and that is a measured change rather than a side
+# effect. Same shape as _PARENT_AGE_UPPER_FEMALE below, which is documented here and
+# likewise not enforced.
+#
+# _PARENT_AGE_UPPER_FEMALE (45, person-warnings.ts's latestChildBirthToBirthFemale45)
+# is deliberately NOT enforced here -- chesworthrm review, issue #1642. It was live
+# briefly and measured against the full repo: 3 committed, non-exempt relationships
+# (anders-monsen-ancestry R2, mccarley-spouse R23/R25 -- mothers aged 46-51) would
+# fail it with no way for any skill to comply. relationship.notes[] is fully
+# specified (docs/specs/simplified-gedcomx-spec.md SS4.2) and already in
+# tree-shape.ts's allow-lists, so tree_edit accepts it at write time -- but no
+# skill is ever told to write it, and adding that instruction to the seven callers
+# that can create a ParentChild/Couple edge is real cross-skill work with its own
+# paid re-run per skill touched, not something to scatter into this PR. Issue #1837
+# proposes the better fix -- a tree_edit write-time precondition instead of
+# per-skill prose, since the age computation needs nothing the tool doesn't already
+# have in hand. Restore this bound once #1837 lands.
+
+_PARENT_AGE_LOWER_GENERAL = 12
+_PARENT_AGE_LOWER_MALE = 14
+_PARENT_AGE_UPPER_GENERAL = 80
+
+_UNCERTAINTY_MARKERS = (
+    r"needs?-?review",
+    r"speculative",
+    r"uncertain",
+    r"infer",
+    r"unconfirmed",
+    r"possible\s+namesake",
+    r"not\s+(?:yet\s+)?confirmed",
+    r"tentative",
+)
+
+
+def _birth_year_and_gender(tree, person_id):
+    """(birth year, gender) for a tree person, or (None, gender) if no dated
+    birth-like fact is found. Reads Birth/Christening/Baptism, in that order
+    of preference, taking the first 4-digit year in the fact's `standard_date`,
+    falling back to `date`."""
+    for p in (tree.get("persons") or []):
+        if p.get("id") != person_id:
+            continue
+        gender = p.get("gender")
+        for fact_type in ("Birth", "Christening", "Baptism"):
+            for f in (p.get("facts") or []):
+                if f.get("type") != fact_type:
+                    continue
+                raw = f.get("standard_date") or f.get("date")
+                if not isinstance(raw, str):
+                    continue
+                m = re.search(r"\b(1[0-9]{3}|20[0-9]{2})\b", raw)
+                if m:
+                    return int(m.group(0)), gender
+        return None, gender
+    return None, None
+
+
+def test_parent_child_age_plausibility_flagged(before_state, after_state):
+    """Universal: a new ParentChild relationship implying an implausible
+    parent age at the child's birth must carry an uncertainty note.
+
+    Issue #1642 Finding 2 (mercyokum): jimmie-jewel-neal run
+    2026-07-31_13-02-13 adopted a same-surname Wood household as Martha's
+    birth family with an implied parent age of 14 at the child's birth, no
+    needs-review marker, after the run's own mid-session gps-mentor check had
+    already disproved a different wrong Wood lineage. Not scoped to
+    search-records specifically -- this checks the write (tree.gedcomx.json),
+    wherever it came from (record-extraction, tree-edit, merge_tree_persons),
+    matching the "research.json / tree.gedcomx.json... after-state" shape of
+    mercyokum's own validator request.
+
+    Detection primitive reused, not reinvented: the age bounds are a subset of
+    what packages/engine/mcp-server/src/tools/person-warnings.ts already treats
+    as implausible for `check-warnings` (earliestChildBirthToBirth12 / Male14,
+    latestChildBirthToBirth80) -- see the module comment above for the bounds
+    this deliberately does not mirror: the Female14 lower bound, which the tool
+    has and this validator does not enforce, and the Female45 upper bound,
+    dropped pending issue #1837.
+
+    A relationship this flags must carry a `notes[]` entry using inference/
+    uncertainty language (see _UNCERTAINTY_MARKERS) -- the shape the search-log
+    pre-1880 census check had before it moved into research_log_append (issue
+    #3054), applied to the tree side rather than the search log.
+    """
+    before_tree = before_state.get("tree_gedcomx_json") or before_state.get(
+        "tree_gedcomx"
+    )
+    after_tree = after_state.get("tree_gedcomx_json") or after_state.get(
+        "tree_gedcomx"
+    )
+    if before_tree is None or after_tree is None:
+        pytest.skip("missing tree.gedcomx.json for diff")
+    before_relationships = before_tree.get("relationships") or []
+    before_ids = set()
+    for r in before_relationships:
+        before_ids.add(r.get("id"))
+    after_relationships = after_tree.get("relationships") or []
+    new_rels = []
+    for r in after_relationships:
+        if r.get("type") != "ParentChild":
+            continue
+        if r.get("id") in before_ids:
+            continue
+        new_rels.append(r)
+    if not new_rels:
+        pytest.skip("no new ParentChild relationships")
+    offenders = []
+    for rel in new_rels:
+        parent_year, parent_gender = _birth_year_and_gender(after_tree, rel.get("parent"))
+        child_year, _ = _birth_year_and_gender(after_tree, rel.get("child"))
+        if parent_year is None or child_year is None:
+            continue
+        age = child_year - parent_year
+        too_young_general = age <= _PARENT_AGE_LOWER_GENERAL
+        too_young_male = parent_gender == "Male" and age <= _PARENT_AGE_LOWER_MALE
+        too_old_general = age >= _PARENT_AGE_UPPER_GENERAL
+        implausible = too_young_general or too_young_male or too_old_general
+        if not implausible:
+            continue
+        rel_notes = rel.get("notes") or []
+        notes = " ".join(rel_notes)
+        flagged = False
+        for pattern in _UNCERTAINTY_MARKERS:
+            if re.search(pattern, notes, re.IGNORECASE):
+                flagged = True
+        if flagged:
+            continue
+        offenders.append((rel.get("id"), rel.get("parent"), rel.get("child"), age, notes))
+    messages = []
+    for rid, pid, cid, age, notes in offenders:
+        messages.append(f"{rid}: parent {pid} age {age} at child {cid}'s birth (notes={notes!r})")
+    assert not offenders, (
+        "new ParentChild relationship(s) imply an implausible parent age at "
+        "the child's birth with no uncertainty note (issue #1642 Finding 2) -- "
+        "flag needs-review/speculative before writing a plain link: "
+        + "; ".join(messages)
+    )
+
+
+# --- Lay mode: no internal identifiers in user-facing text ----------------
+
+# Schema ids, project file names, tool names. What the researcher must never
+# read (issue #2493, lead ruling 2026-09-14: technical jargon stays out of user
+# messages; lay-mode ruling 2026-09-18). `q_NNN` and `ps_NNN` are included
+# although #2493 left them open as navigation aids: this validator only reports.
+_INTERNAL_ID_RE = re.compile(
+    r"\b(?:q|pli|a|ps|log|src|pe|c|h|ev|kh|tl)_\d{3,}\b"
+    r"|\b(?:research\.json|tree\.gedcomx\.json)\b"
+    r"|\b(?:conflicts|hypotheses|assertions|sources|questions|plans|evaluations"
+    r"|proof_summaries|person_evidence|known_holdings|timelines|log)\[\]"
+    r"|\bmcp__[A-Za-z_]+"
+    r"|\b(?:research_append|research_query|extraction_append|research_log_append"
+    r"|tree_edit|tree_correct|tree_forget|project_create|materialize_facts"
+    r"|validate_research_schema|record_search|record_read|person_read)\b"
+)
+
+
+def report_no_internal_identifiers_in_response(text_response, test):
+    """Tier 2 — reports, never gates (issue #2493 step 4; lay-mode plan
+    2026-09-18).
+
+    The researcher is a non-genealogist who never asked to see our schema, so a
+    reply that says "q_001 written" or names `research.json` is speaking our
+    language, not theirs. Advisory rather than gating because this runs on every
+    test of every suite and, measured over 33 hosted sessions, a quarter of all
+    reply blocks carried one of these today: an ungated test would red every
+    other suite on its next run. It hardens per suite as each agent gains the
+    `summary_for_user` return contract.
+
+    A literal property of the text — the identifiers themselves — not a
+    re-grade of prose quality, which is the judge's job.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("negative test — the decline text is graded elsewhere")
+    response = text_response or ""
+    if not response.strip():
+        pytest.skip("no assistant text")
+    hits = sorted({m.group(0) for m in _INTERNAL_ID_RE.finditer(response)})
+    # Neutral wording on purpose: this text reaches the judge as an observation
+    # on every suite, and a verdict-shaped sentence ("should never see") reads
+    # as a rule where the judge prompt says a match is not a verdict.
+    assert not hits, "internal identifiers in the reply: " + ", ".join(hits)
+
+
+# --- Lay mode: no GPS vocabulary in user-facing text ----------------------
+
+# Issue #2984 (lead ruling 2026-09-14): "GPS", "proof"/"proved" and
+# "exhaustive" stay out of what the researcher reads; `disproved` is the
+# same tier family. Whole words only, so `improved` and `not_proved` do not
+# count, and the hyphenated agent names (`proof-conclusion`, `proof-critique`,
+# `gps-mentor`) are ours to route by.
+_GPS_JARGON_RE = re.compile(
+    r"\b(?:GPS|proofs?|(?:dis)?proved|exhaustive)\b(?!-(?:conclusion|critique|mentor))",
+    re.IGNORECASE,
+)
+
+
+def report_no_gps_jargon_in_response(text_response, test):
+    """Tier 2 — reports, never gates (issue #2984).
+
+    Advisory because a gated version would fail about 18% of current runs
+    across 16 skills (measured 2026-09-28: "GPS" as a whole word in 76 of 412
+    `text_response`s). A word the test's own prompt uses is left alone: a
+    reply to "does my proof meet the GPS" may say both back.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("negative test — the decline text is graded elsewhere")
+    response = text_response or ""
+    if not response.strip():
+        pytest.skip("no assistant text")
+    # The runner threads both in flat (orchestrator.py), `user_message`
+    # already falling back to `delegation`; there is no `input` key here.
+    prompt = test.get("user_message") or test.get("delegation") or ""
+    echoed = {m.group(0).lower() for m in _GPS_JARGON_RE.finditer(prompt)}
+    hits = sorted({
+        m.group(0).lower() for m in _GPS_JARGON_RE.finditer(response)
+    } - echoed)
+    assert not hits, "GPS vocabulary in the reply: " + ", ".join(hits)

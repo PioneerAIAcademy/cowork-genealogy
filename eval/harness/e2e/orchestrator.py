@@ -16,12 +16,14 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import posixpath
 import re
 import shutil
 import sys
 import tempfile
 import time
 from dataclasses import dataclass, replace
+from datetime import datetime, timezone
 from pathlib import Path
 from collections.abc import Callable
 from typing import Any
@@ -36,13 +38,14 @@ from claude_agent_sdk import (
     ToolResultBlock,
     ToolUseBlock,
     UserMessage,
-    query,
 )
 
 from e2e.mcp_stderr import read_mcp_stderr_lines
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
+    OWNED_FIELDS as OWNED_FIELD_OWNERS,  # the SHIPPED hook's map, not a copy
+    OWNED_CLAIMS as OWNED_CLAIM_ROUTES,  # the SHIPPED hook's map, not a copy
     OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
     is_subagent_call,
@@ -52,11 +55,15 @@ from harness.context_policy import (
     SUBAGENT_ONLY_TOOLS,
 )
 from harness.judge import _summarize_response
+from harness.redact import redact_secrets
+from harness.sdk_query import close_query, open_query
+import harness.workspace as _workspace
 from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
     find_citation_nulling_in_conclusions,
     find_citation_nulling_in_tree_sources,
     find_conclusions_without_tree_encoding,
+    find_tree_facts_disagreeing_with_assertions,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
@@ -71,6 +78,7 @@ from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
     GENEALOGY_SERVER_NAME,
+    TOOL_SEARCH_NAME,
     backstop_fired,
     classify_server_status,
     find_server_entry,
@@ -80,14 +88,32 @@ from e2e.mcp_health import (
     tool_search_miss_streak,
     unavailable_message,
 )
-from e2e.result import E2eResult, timestamp_slug, write_result_files
+from e2e.result import (
+    E2eResult,
+    result_message_covers_last_query_only,
+    timestamp_slug,
+    write_result_files,
+)
 from e2e.stop_checker import (
+    COUNTED_TERMINAL_REASONS,
+    classify_hand_back,
     derive_stop_reason,
+    hand_back_key,
+    project_completed,
     read_research_json,
     read_tree_json,
     should_continue_run,
+    terminal_reason,
 )
-from e2e.subagent_capture import collect_subagents
+from e2e.subagent_capture import (
+    collect_subagents,
+    find_session_transcript,
+    find_subagent_transcripts,
+    pair_tool_calls,
+    parse_jsonl,
+    sdk_cache_dir,
+    transcript_agent_id,
+)
 from e2e import judge as judge_module
 
 
@@ -109,8 +135,8 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_MCP_SERVER_ENTRY = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"
 DEFAULT_RUNLOG_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
-DEFAULT_PLUGIN_SKILLS = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
-DEFAULT_PLUGIN_AGENTS = REPO_ROOT / "packages" / "engine" / "plugin" / "agents"
+DEFAULT_PLUGIN_SKILLS = _workspace.DEFAULT_PLUGIN_SKILLS
+DEFAULT_PLUGIN_AGENTS = _workspace.DEFAULT_PLUGIN_AGENTS
 
 # Tools always allowed alongside MCP tools. See e2e-test-spec.md §6.
 # "Task" lets the /research orchestrator delegate to the gps-mentor
@@ -148,6 +174,12 @@ BASELINE_ALLOWED_TOOLS = [
 #   person_person_matches(subjectPID)
 #       surfaces tree persons matched to the subject — can leak a stripped
 #       relative in a parents/siblings fixture.
+#   person_quality(subjectPID)
+#       reads FamilySearch's quality issues for the subject's live profile.
+#       Its sentences interpolate values straight off that profile ("… is
+#       missing a standardized date for {originalDate}"), so a stripped date or
+#       place can come back verbatim. Committed e2e runs made 39 such calls
+#       across 20 fixtures before this was blocked.
 #
 # NOT blocked (legitimate research): record_search / record_read /
 # fulltext_search / image_* / collections_search (the agent must find
@@ -165,6 +197,7 @@ BLOCKED_TREE_TOOLS = frozenset(
         "person_ancestors",
         "person_record_matches",
         "person_person_matches",
+        "person_quality",
     }
 )
 
@@ -189,28 +222,48 @@ def is_turn_cap_error(detail: str | None) -> bool:
     return "maximum number of turns" in str(detail or "").lower()
 
 
-def is_blocked_tree_tool(tool_name: str) -> bool:
+# Tools that read the live tree only in one MODE, so the bare name cannot decide
+# it. Currently empty — kept for the next tool whose block depends on an argument.
+LIVE_TREE_ARG_TOOLS = {}
+
+
+def is_blocked_tree_tool(
+    tool_name: str, tool_input: dict[str, Any] | None = None
+) -> bool:
     """Whether a tool call should be denied as a live-tree answer-read.
 
     Only MCP genealogy tools are candidates; baseline tools (Read, Skill,
-    …) are never blocked. Matched on the bare advertised name.
+    …) are never blocked. Matched on the bare advertised name, except for
+    LIVE_TREE_ARG_TOOLS, where the deciding argument is inspected too — pass
+    `tool_input` for those or a live call reads as legitimate research.
     """
     if not tool_name.startswith("mcp__"):
         return False
-    return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
+    bare = _bare_tool_name(tool_name)
+    if bare in BLOCKED_TREE_TOOLS:
+        return True
+    arg = LIVE_TREE_ARG_TOOLS.get(bare)
+    return arg is not None and bool((tool_input or {}).get(arg))
 
 
 def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
     """Whether this is a main-thread call to a `SUBAGENT_ONLY_TOOLS` member.
 
-    Both members are declared by NO skill's `allowed-tools`: `extraction_append`
-    lives only on `agents/record-extractor.md` (the #942 case), and `image_read`
-    is declared by no agent at all since `image-reader-opus` was retired (issue
-    #2013) — the deny is kept regardless, because it is what keeps inline base64
-    off the main thread. A call on the main thread (no `agent_id`) is the router
-    substituting for a failed spawn and doing the work itself.
+    The set has ONE member today: `image_read`, declared by no skill and by no
+    agent since `image-reader-opus` was retired (issue #2013) — the deny is kept
+    regardless, because it is what keeps inline base64 off the main thread. A
+    call on the main thread (no `agent_id`) is the router substituting for a
+    failed spawn and doing the work itself.
 
-    The policy binds in e2e for both because `agent_id` presence alone is a
+    `extraction_append` was the other member (the #942 case) and LEFT the set in
+    issue #2937, which routes indexed-record extraction through code called from
+    the main thread. See `harness.context_policy`'s set comment for what that
+    retires — in particular that this predicate is exactly the arm that cannot
+    express the declared-tools exemption, so the unindexed-path substitution #942
+    guarded is now unchecked in e2e, which is filed on the `nothing-checks`
+    register.
+
+    The policy binds in e2e because `agent_id` presence alone is a
     sufficient discriminator — which is all e2e can see, since its sub-skills run
     in the same session via the `Skill` tool with no `agent_id` to attribute them
     (see `harness.context_policy` docstring). We deny the bare tool directly
@@ -285,7 +338,7 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
 # docs/specs/guardrail-enforcement-spec.md §6. starting-tree.gedcomx.json is the
 # write-once baseline the tree-encoding gate diffs against (issue #1490);
 # overwriting it would defeat that gate.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 # The device-bridge writer, matched on the BARE TAIL because Cowork namespaces it
 # (`mcp__remote-devices__device_commit_files`) and the plugin cannot control the
 # prefix. This is the route that actually mattered: measured live 2026-08-15,
@@ -299,6 +352,18 @@ PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.
 # Mirrored in all three lockdown copies even though only the plugin one ever
 # sees the bridge; the parity test holds them to one vector set.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
+
+# The credential-read arm's directory marker and the tools it inspects.
+# A path that has `.familysearch-mcp` as a SEGMENT (not a substring) is a
+# credential read. No `os`/`posixpath`/`re` inside the predicate: the parity
+# test's `_load` lifts only literal assignments and `_`-prefixed functions
+# with no imports.
+_CREDENTIAL_DIR = ".familysearch-mcp"
+_CREDENTIAL_READ_TOOLS = {
+    "Read": ("file_path",),
+    "Grep": ("path", "glob"),
+    "Glob": ("path", "pattern"),
+}
 
 # A path has no newline and is no longer than the platform allows. Both bounds
 # keep the payload walk below off file CONTENT travelling alongside the paths,
@@ -375,6 +440,211 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
     return name if name in PROTECTED_PROJECT_FILES else None
 
 
+def credential_read_denied(tool_name: str, tool_input) -> str | None:
+    """The tool name if a read targets the credentials directory, else None.
+
+    Inspects Read.file_path, Grep.path, Grep.glob, Glob.path, Glob.pattern.
+    Denies when any path argument, with backslashes folded to forward slashes
+    and lowercased, has a path segment equal to `.familysearch-mcp`.
+
+    Never raises: a non-string or missing argument means allow.
+    No os/posixpath/re — the parity test's _load runs no imports.
+    """
+    keys = _CREDENTIAL_READ_TOOLS.get(tool_name)
+    if keys is None:
+        return None
+    input_dict = tool_input if isinstance(tool_input, dict) else {}
+    for key in keys:
+        value = input_dict.get(key)
+        if not isinstance(value, str):
+            continue
+        segments = value.replace("\\", "/").lower().split("/")
+        if _CREDENTIAL_DIR in segments:
+            return tool_name
+    return None
+
+
+# --- P2: the two opt-in filesystem denials (--deny-shell, --deny-project-reads)
+#
+# The measurement behind them: does removing the filesystem cost research
+# quality? The hosted sandbox holds no project folder — the agent reads the
+# project through project_context / research_query / record_read / sidecar_read
+# and has no shell — so an e2e run with both flags on is the closest the harness gets to
+# that posture. Both default off; every existing run is unaffected.
+#
+# Pure functions, for the reason person_evidence_deny_decision gives: the hook
+# they serve spawns the SDK and the real MCP server, so a closure-local
+# implementation would be reachable only from a paid e2e run.
+
+# The read tools the project-read denial inspects, and the argument each names
+# its target in. Read takes an absolute `file_path`; Grep/Glob take an optional
+# `path` that defaults to the working directory — which in an e2e run IS the
+# project root, so an absent path is a read of the project.
+_PROJECT_READ_TOOLS = {"Read": "file_path", "Grep": "path", "Glob": "path"}
+SHELL_TOOLS = ("Bash", "PowerShell")
+
+
+def _normalise_path(value: str, *, cwd: str) -> str:
+    """`value` as a forward-slash, absolute, `..`-free path.
+
+    A Windows path arrives with backslashes (`C:\\Users\\...\\research.json`)
+    and the model may compose either separator; both are folded to `/` before
+    any prefix test. A relative path is resolved against `cwd` (Grep/Glob
+    accept one; Read documents `file_path` as absolute but is normalised the
+    same way rather than trusting the model). A leading `~` expands to the
+    home directory so a `~/.claude/...` spelling matches `config_root`. The
+    comparison in `project_read_denied` runs on `realpath`s of the result so both
+    spellings of a symlinked workspace compare equal: macOS hands out `/var/folders/...` while the model reads
+    `/private/var/folders/...`, and the first P2 run (2026-09-10) allowed every project
+    read because the two never prefix-matched.
+    """
+    text = str(value).replace("\\", "/")
+    if text.startswith("~"):
+        text = os.path.expanduser(text).replace("\\", "/")
+    if not (text.startswith("/") or re.match(r"^[A-Za-z]:/", text)):
+        text = cwd.replace("\\", "/").rstrip("/") + "/" + text
+    return posixpath.normpath(text)
+
+
+def _real(path: str) -> str:
+    """`path` with symlinks resolved, forward-slashed — for comparison only; the
+    recorded path stays the model's own spelling."""
+    return os.path.realpath(path).replace("\\", "/")
+
+
+def _under(path: str, root: str) -> bool:
+    """Whether `path` is `root` or lies beneath it (both already normalised).
+
+    `os.path.normcase` folds case on Windows, where the model may compose
+    `c:/users/...` for a workspace the harness knows as `C:\\Users\\...`; on
+    POSIX it is the identity. It also swaps `/` for `\\` there, on both sides
+    alike, which is why the separator appended below is `os.sep`.
+    """
+    p, r = os.path.normcase(path), os.path.normcase(root.rstrip("/"))
+    return p == r or p.startswith(r + os.sep)
+
+
+def _project_read_target(tool_name: str, tool_input: dict | None, *, cwd: str) -> str | None:
+    """The normalised path a Read/Grep/Glob call reads, or None for any other tool."""
+    key = _PROJECT_READ_TOOLS.get(tool_name)
+    if key is None:
+        return None
+    raw = (tool_input or {}).get(key)
+    return _normalise_path(str(raw) if raw else cwd, cwd=cwd)
+
+
+def _project_read_route(target: str, root: str) -> str:
+    """The MCP tool that replaces a direct read of `target`."""
+    if _under(target, root + "/results"):
+        return "record_read({recordId, resultsRef})"
+    if _under(target, root + "/evaluations") or _under(target, root + "/uploads"):
+        return "sidecar_read({projectPath, ref})"
+    if _basename(target) == "research.json":
+        return "research_query"
+    return "project_context"
+
+
+def project_read_denied(
+    tool_name: str,
+    tool_input: dict | None,
+    *,
+    cwd: str | os.PathLike[str],
+    project_root: str | os.PathLike[str],
+    config_root: str | os.PathLike[str],
+) -> str | None:
+    """Why a Read/Grep/Glob of the project folder is denied, or None to allow it.
+
+    Denies a read under `<project_root>/` — except under `<project_root>/.claude/`,
+    which holds the staged skills and agents the run needs — and allows
+    everything else. `<config_root>/projects/**/tool-results/**` is allowed
+    explicitly rather than by falling through: that is where the CLI spills an
+    oversized tool result for the model to Read back, and the carve-out has to
+    survive if the default outside the project ever flips to deny.
+
+    The reason names the MCP route that replaces the read, chosen by target: a
+    `results/` sidecar -> `record_read({recordId, resultsRef})`; a verdict body
+    under `evaluations/` or a text upload under `uploads/` ->
+    `sidecar_read({projectPath, ref})`; research.json -> `research_query`;
+    anything else -> `project_context`.
+    """
+    cwd_s = str(cwd)
+    target = _project_read_target(tool_name, tool_input, cwd=cwd_s)
+    if target is None:
+        return None
+    root = _normalise_path(str(project_root), cwd=cwd_s)
+    spill_root = _normalise_path(str(config_root), cwd=cwd_s) + "/projects"
+    t_r, root_r, spill_r = _real(target), _real(root), _real(spill_root)
+    if _under(t_r, spill_r):
+        rest = t_r[len(spill_r):].strip("/").split("/")
+        if "tool-results" in rest:
+            return None
+    if not _under(t_r, root_r) or _under(t_r, root_r + "/.claude"):
+        return None
+    rel = t_r[len(root_r):].strip("/") or "the project root"
+    return (
+        f"{tool_name} on {rel} is disabled in this run — the project folder is "
+        "not readable directly. Read it through the MCP tools instead: "
+        f"{_project_read_route(t_r, root_r)}."
+    )
+
+
+def _pretool_deny(reason: str) -> dict[str, Any]:
+    """The PreToolUse deny payload, in the shape every arm of the hook returns."""
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+    }
+
+
+def filesystem_denial(
+    tool_name: str,
+    tool_input: dict | None,
+    *,
+    deny_shell: bool,
+    deny_project_reads: bool,
+    cwd: str | os.PathLike[str],
+    project_root: str | os.PathLike[str],
+    config_root: str | os.PathLike[str],
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """The `blocked_tree_reads` entry and the deny payload for a filesystem call
+    one of the P2 flags refuses, or None to let the call through.
+
+    With both flags off this is always None, so the hook arm that calls it is
+    inert on every run that did not opt in. The entry carries the same
+    `{tool, args, blocked_by}` keys as the tree and fixture denials, plus
+    `reason` and — for a read — `path`.
+    """
+    args = dict(tool_input or {})
+    bare = _bare_tool_name(tool_name)
+    if deny_shell and tool_name in SHELL_TOOLS:
+        reason = (
+            f"{tool_name} is unavailable in this run — there is no shell. Use the "
+            "MCP tools instead: project_context and research_query to read the "
+            "project, record_read for a saved search result, sidecar_read for a "
+            "verdict body or a text upload, and the writer tools "
+            "(research_append, research_log_append, tree_edit, tree_correct) to "
+            "change it."
+        )
+        return (
+            {"tool": bare, "args": args, "blocked_by": "shell", "reason": reason},
+            _pretool_deny(reason),
+        )
+    if deny_project_reads:
+        reason = project_read_denied(
+            tool_name, tool_input, cwd=cwd, project_root=project_root, config_root=config_root
+        )
+        if reason is not None:
+            path = _project_read_target(tool_name, tool_input, cwd=str(cwd))
+            return (
+                {"tool": bare, "args": args, "blocked_by": "path", "path": path, "reason": reason},
+                _pretool_deny(reason),
+            )
+    return None
+
+
 # Cap on how many person ids the issue-#963 shadow entry names inline. A single
 # batch research_append can append person_evidence for many new persons; without
 # a cap the recorded detail string could balloon to an unreadable length. Show
@@ -415,7 +685,7 @@ def load_seed_person_ids(starting_tree_path: Path) -> set[str] | None:
     """
     try:
         seed = json.loads(starting_tree_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as e:
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
         print(
             f"  [warn] could not read seed tree {starting_tree_path} "
             f"({type(e).__name__}: {e}) — issue #963 same_person check DISABLED "
@@ -516,47 +786,47 @@ def person_evidence_gap_reason(unguarded: list[str]) -> str:
         # person, and the agent believes it DID call same_person. The cause is an
         # id mismatch, so the reason has to name the one shape that satisfies the
         # gate. See docs/specs/guardrail-enforcement-spec.md §4's last row.
-        f"These are LOCAL tree ids minted by tree_edit (which rejects "
-        f"caller-supplied ids), not FamilySearch ids, so score them by passing "
-        f"the TREE side as `gedcomx2` — a subset simplified-GedcomX holding the "
-        f"person plus their matching mob — with `primaryId2: \"{example}\"`, and "
-        "the record side as `gedcomx1`/`primaryId1` (person-evidence/SKILL.md, "
-        "'Score the match with same_person'). "
+        # The satisfying shape, restated for the project-relative arm (#1731).
+        # It is what ADR-0009 constraint 6 requires this text to name, and the
+        # old hand-assembled recipe is now the SLOW path: naming it here would
+        # steer the agent straight back to the cost that caused the skipped
+        # call this gate fires on.
+        f"Score them with the project-relative form, which assembles both "
+        f"documents for you: `same_person({{ projectPath, assertionId, "
+        f"treePersonId: \"{example}\" }})`. `assertionId` is the assertion the "
+        "link cites. The tool resolves the record itself and builds the tree "
+        "side as that person's matching mob, so you hand-build nothing "
+        "(person-evidence, 'Call it with references, not documents'). "
         # A PreToolUse deny is all-or-nothing on the call, and the batches this
         # fires on have a median of 17 ops (max 152), 11% of which carry ops in
         # OTHER sections. Without this sentence the agent cannot tell what it lost.
         "If this call was denied, the entire batch was rejected — including any "
         "ops in other sections — and must be re-issued after the same_person "
         "call. "
-        # The old escape ("not record_search-sourced, so no record_persona_id")
-        # is gone: the check no longer flags a link whose provenance lane cannot
-        # yield a persona from what the run retained, so no flagged link is that case. What replaces
-        # it is the retrieval recipe, because the reason has to tell the agent
-        # HOW to get the persona it is being asked to score.
-        #
-        # Branch on the LOG ENTRY'S TOOL, not on record_persona_id being null:
-        # a sidecar-backed search with a null persona already has its gedcomx in
-        # `results/<log_id>.json`, so branching on nullity would send the agent
-        # to record_read for a document it is holding.
-        "Get the record persona and score it: from the log entry's sidecar "
-        "(`results/<log_id>.json`) when the entry has a `results_ref`, or by "
-        "re-opening the record with `record_read({ recordId })` when the "
-        "assertion came from `record_read`. `primaryId1` is the persona for the "
-        "person THIS link is about: `record_persona_id` when it is set AND the "
-        "link is about the assertion's own `record_role` party, otherwise the "
-        "`persons[].id` matching that party's name — a relationship assertion "
-        "names two parties and gets a link for each, and reusing the first "
-        "party's persona for the second is how a near-zero score gets "
-        "manufactured and then explained away. "
+        # The retrieval recipe this used to spell out is now the TOOL's job
+        # (#1731): it tries the retained sidecar, then a fresh read, then a
+        # persona projected from the record's own extracted assertions. So the
+        # reason no longer teaches the agent how to fetch a document — only how
+        # to name the party, which is the one thing the tool cannot infer.
+        "A relationship or marriage assertion names two parties and gets a link "
+        "for each. The call is about the assertion's own `record_role` party by "
+        "default; for the OTHER party add `recordRole` (or `recordPersonaId`) "
+        "naming it. Reusing the first party's persona for the second is how a "
+        "near-zero score gets manufactured and then explained away. "
         # The narrower exit that survives. NOT the refuted escape: that one
         # excused a REACHABLE persona. This one covers the only case the check
         # still flags without one — provenance it could not resolve at all —
         # which the predicate deliberately does not exempt, because exempting on
         # an absent field would let an assertion written with no log_entry_id
         # shed the requirement entirely.
-        "If the assertion or its log entry cannot be resolved at all, say so in "
-        "the link's `rationale` and proceed — the gap is still recorded; the "
-        "rationale is the record of why, not a waiver. "
+        "If the tool answers that the record holds no persona for that party, "
+        "or that the candidate is a stub minted from the very persona you would "
+        "be scoring (circular), say so in the link's `rationale` and proceed — "
+        "the gap is still recorded; the rationale is the record of why, not a "
+        "waiver. How the assertion was RETRIEVED is not such a case: a "
+        "full-text hit, an image, a PDF and a sidecar-less search are all "
+        "scorable, because the tool derives the record side from the record's "
+        "own assertions when it cannot fetch a document. "
         # There is deliberately NO escape for "the id is a locally-minted stub".
         # person-evidence/SKILL.md said such an id returns a degenerate score to
         # be treated as "no score available", but that guidance (2026-07-02)
@@ -674,7 +944,7 @@ class FixtureCaps:
     # steps, so a stingy cap ends the loop before proof-conclusion. The
     # no-progress check (see should_continue_run) is the real backstop against
     # a genuinely idle agent; this cap only bounds the worst case.
-    max_continue_nudges: int = 20
+    max_continue_nudges: int = 40
 
 
 @dataclass
@@ -719,7 +989,7 @@ def load_fixture(fixture_dir: Path) -> Fixture:
         )
         for sid in (starting_research.get("project") or {}).get("subject_person_ids") or []:
             subject_ids.add(str(sid))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         pass
     src = fixture_json.get("source_pid")
     if src and "TODO" not in str(src):
@@ -848,9 +1118,11 @@ def build_workspace(
     # NOT (it's output-only — verified). This is *a* working effort lever, not
     # the only one: `ClaudeAgentOptions.effort` also works and always has —
     # the SDK's subprocess transport emits `--effort` unconditionally when the
-    # option is set, at every version this repo has pinned. The settings-file
-    # route is kept because it is the one that provably reaches subagents; the
-    # SDK option's subagent propagation is unverified. Do not restate this as
+    # option is set, at every version this repo has pinned. Both reach
+    # subagents: `apps/server/dev/probe_effort_capture.py` read a person-evidence
+    # subagent's request body carrying `medium` under either lever (CLI 2.1.215 and
+    # 2.1.220, 2026-10-12, issue #3263). This harness runs CLI 2.1.139, where subagent
+    # reach is unprobed for either lever. Do not restate this as
     # "the only lever" — that claim shaped a spend decision before it was
     # checked. Session-wide (parent + every subagent that does not pin its own
     # `effort:` — agent frontmatter overrides this, verified live in Cowork and
@@ -859,7 +1131,9 @@ def build_workspace(
     # deep enough that the record-extractor subagent can spend its whole output
     # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
     # freeze the run; lower it here to A/B whether that clears (read the runlog's
-    # `subagents[].runaway_thinking`). Valid: low | medium | high | xhigh | max.
+    # `subagents[].runaway_thinking`; an empty list means read
+    # `subagent_capture_status` before concluding no runaway).
+    # Valid: low | medium | high | xhigh | max.
     if effort_level is not None:
         claude_dir = target / ".claude"
         claude_dir.mkdir(parents=True, exist_ok=True)
@@ -969,8 +1243,108 @@ _RUNLOG_STRING_MAX = 500
 # acceptable at 0.7%, but that is the trade, not an absence of one.
 _RUNLOG_MAX_CHARS = 4000
 
+# An `Agent` result is the one payload whose VALUE is the thing being measured:
+# issue #3188 compares what a subagent returned against what the main thread
+# relayed, and a raw side cut at 500 chars reports "the relay dropped content"
+# for content the LOG dropped. Measured over the 203 committed e2e logs: 834
+# truncated strings inside `Agent` summaries, full lengths median 2,274 / p90
+# 5,684 / p95 7,092 / max 21,578, ~2.06 MB dropped corpus-wide. 8,000 covers
+# 97% of them and recovers ~1.97 MB of that; 25,000 would be needed for the
+# last 3%, which is the tail this bound deliberately keeps out of a committed
+# artifact. The whole-response companion is sized for two text blocks (the
+# return, then the `agentId:/<usage>` announcement) plus the JSON envelope.
+#
+# NOT done through `_RUNLOG_EXEMPT_KEYS`: that path saves ONE value per key,
+# last wins — safe for `image_transcribe` (always one text block) and wrong
+# here, where 807 of 845 corpus summaries carry two text blocks and the
+# announcement is last in all 845. Exempting `text` would save the
+# announcement and overwrite the return with it.
+_RUNLOG_AGENT_STRING_MAX = 8000
+_RUNLOG_AGENT_MAX_CHARS = 12000
 
-def _summarize_tool_response(content: Any) -> str:
+
+def _is_agent_tool(tool_name: str | None) -> bool:
+    """Suffix match, as `_exempt_keys_for` does, so every server spelling
+    resolves (CLAUDE.md "Dual-spelled tool names"). The corpus spells it
+    `Agent` in all 1,738 calls; `Task` is accepted for the same reason."""
+    return bool(tool_name) and (
+        tool_name.endswith("Agent") or tool_name.endswith("Task")
+    )
+
+# Per-key exemptions from the string and backstop caps above. Each entry is
+# (bare_tool_suffix, response_key): a tool matched by suffix (so every server
+# spelling resolves — CLAUDE.md § "Dual-spelled tool names") and a top-level
+# key in the unwrapped response dict. The full value is preserved verbatim,
+# bypassing both `_RUNLOG_STRING_MAX` and `_RUNLOG_MAX_CHARS`.
+#
+# Scope of the bypass: `if not saved` below skips the backstop for the WHOLE
+# response, not just the exempt key's bytes. Harmless for image_transcribe,
+# where the transcription IS the payload. But a future (tool, key) pair added
+# for a tool with a large non-exempt sibling field would take that sibling out
+# of the cap too — silently. If that arises, split the backstop to exempt only
+# the saved key's contribution and cap the rest.
+#
+# Shape follows the unit tier's `{(tool, response_key)}` convention (issue #2561).
+_RUNLOG_EXEMPT_KEYS: set[tuple[str, str]] = {
+    ("image_transcribe", "transcription"),
+    # The hand-off URL replay rebuilds the log entry from; a curated link can
+    # run past the cut, and a cut URL would replay as a different hand-off.
+    ("build_external_search_url", "url"),
+}
+
+
+def _serialize_result(content: Any) -> str:
+    """The full serialized tool result, before any truncation.
+
+    Split out of `_summarize_tool_response` so `_raw_result_chars` can measure
+    the untruncated payload without a second, drifting copy of the fallback
+    ladder below.
+    """
+    try:
+        return content if isinstance(content, str) else json.dumps(content)
+    except (TypeError, ValueError):
+        return repr(content)
+    except RecursionError:
+        # NOT `repr(content)`: repr recurses too, so on the only input class that
+        # can raise here the fallback raises identically and the guard is a no-op.
+        # (Measured: a 20,000-deep nested list raises in json.dumps AND in repr.)
+        # Letting it escape aborts a run costing $7-25, so degrade to a marker
+        # instead. Unreachable today — `ToolResultBlock.content` is a str or a
+        # shallow list of dicts — but this function had no `json.dumps` of caller
+        # data at all before, so the exposure is new.
+        return f"<unserializable {type(content).__name__}: nesting too deep>"
+
+
+def _raw_result_chars(content: Any) -> int:
+    """Length of the tool result as the harness serialized it, untruncated.
+
+    `response_summary` caps at `_RUNLOG_MAX_CHARS`, so a saturated capture is a
+    floor rather than a measurement — 51 of 520 main-thread `record_search`
+    results across the committed corpus sit exactly at the cap with their true
+    size unrecorded. Joined with `agent_id`, this field is what makes per-tool,
+    per-thread payload size readable from a committed run.
+
+    Chars, not tokens: chars are exact, and the ÷4 estimate belongs in the
+    analysis where its error can be stated. Measures the result as *the harness*
+    serialized it, which is not necessarily byte-identical to what the model saw.
+    """
+    return len(_serialize_result(content))
+
+
+def _exempt_keys_for(tool_name: str | None) -> set[str]:
+    """Response keys exempted from truncation for this tool, if any."""
+    if not tool_name:
+        return set()
+    return {
+        key
+        for suffix, key in _RUNLOG_EXEMPT_KEYS
+        if tool_name.endswith(suffix)
+    }
+
+
+def _summarize_tool_response(
+    content: Any, *, tool_name: str | None = None
+) -> str:
     """Key-preserving summary of a tool result for the run log.
 
     This head-truncated at 497 chars before `HARNESS_SCHEMA_VERSION` 2, which
@@ -1005,32 +1379,64 @@ def _summarize_tool_response(content: Any) -> str:
     `docs/specs/e2e-test-spec.md` tells readers to diff `response_summary` across
     runs. And grepping a quoted key (`'"rankingSkipped"'`) undercounts, because the
     escaped form does not contain it — grep the bare name, which matches both.
+
+    `tool_name` (HARNESS_SCHEMA_VERSION 5): when the tool has keys listed in
+    `_RUNLOG_EXEMPT_KEYS`, those keys bypass both `_RUNLOG_STRING_MAX` and
+    `_RUNLOG_MAX_CHARS`. `image_transcribe`'s `transcription` is the first
+    exemption: at v4 the field was truncated at 500 chars though the
+    transcriptions were often many times longer, making extraction-accuracy
+    audits impossible. `make e2e-transcription-join SINCE=all` reports the
+    current truncated-capture count over its window.
     """
-    try:
-        raw = content if isinstance(content, str) else json.dumps(content)
-    except (TypeError, ValueError):
-        raw = repr(content)
-    except RecursionError:
-        # NOT `repr(content)`: repr recurses too, so on the only input class that
-        # can raise here the fallback raises identically and the guard is a no-op.
-        # (Measured: a 20,000-deep nested list raises in json.dumps AND in repr.)
-        # Letting it escape aborts a run costing $7-25, so degrade to a marker
-        # instead. Unreachable today — `ToolResultBlock.content` is a str or a
-        # shallow list of dicts — but this function had no `json.dumps` of caller
-        # data at all before, so the exposure is new.
-        raw = f"<unserializable {type(content).__name__}: nesting too deep>"
+    raw = _serialize_result(content)
     if len(raw) <= _RUNLOG_VERBATIM_MAX:
         return raw
 
+    exempt = _exempt_keys_for(tool_name)
+    unwrapped = _unwrap_mcp_text_blocks(content)
+
+    # Save full values of exempt keys before summarization truncates them.
+    # One value per key: if multiple text blocks carry the same key, the last
+    # wins. Safe for image_transcribe (always one text block).
+    saved: dict[str, Any] = {}
+    if exempt:
+        docs = unwrapped if isinstance(unwrapped, list) else [unwrapped]
+        for doc in docs:
+            if isinstance(doc, dict):
+                for key in exempt:
+                    if key in doc:
+                        saved[key] = doc[key]
+
+    agentish = _is_agent_tool(tool_name)
     summary = _summarize_response(
-        _unwrap_mcp_text_blocks(content), string_max=_RUNLOG_STRING_MAX
+        unwrapped,
+        string_max=_RUNLOG_AGENT_STRING_MAX if agentish else _RUNLOG_STRING_MAX,
     )
+
+    # Re-insert full values of exempt keys, replacing truncated copies.
+    if saved:
+        if isinstance(summary, dict):
+            summary.update(saved)
+        elif isinstance(summary, list):
+            for item in summary:
+                if isinstance(item, dict):
+                    for key, val in saved.items():
+                        if key in item:
+                            item[key] = val
+
     try:
         text = summary if isinstance(summary, str) else json.dumps(summary)
     except (TypeError, ValueError):
         text = repr(summary)
-    if len(text) > _RUNLOG_MAX_CHARS:
-        text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
+
+    # The backstop cap is skipped when exempt keys contributed content — it
+    # exists for git size on the long tail, and the whole point of an exemption
+    # is to preserve the full value (issue #2561 item 2: the largest
+    # transcriptions run past the 4000-char backstop, so it would truncate them
+    # without this bypass).
+    max_chars = _RUNLOG_AGENT_MAX_CHARS if agentish else _RUNLOG_MAX_CHARS
+    if not saved and len(text) > max_chars:
+        text = text[: max_chars - 3] + "..."
 
     # Never emit a SHORTER capture than the old head-truncation would have. A
     # key-preserving summary can come out shorter on a long list of small items —
@@ -1065,8 +1471,109 @@ def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: st
     `bool | None`, `None` when the call succeeded) into a clean bool the gates
     and the acceptance test can rely on.
     """
-    entry["response_summary"] = summary
+    # Scrub any credential the agent's Read of a host secret file (e.g.
+    # ~/.familysearch-mcp/config.json or tokens.json) captured verbatim into the
+    # summary, before it is persisted to the run log. Best-effort; never raises.
+    entry["response_summary"] = redact_secrets(summary)
     entry["is_error"] = block.is_error is True
+    # The untruncated length, which `response_summary` cannot carry past
+    # `_RUNLOG_MAX_CHARS`. See `_raw_result_chars`.
+    entry["result_chars"] = _raw_result_chars(block.content)
+
+
+# The spawn announcement an `Agent`/`Task` result carries for a background
+# subagent: "Async agent launched … agentId: <id>". This is the canonical way to
+# identify a background agent — the same signal issue #3045's measurement recipe
+# uses — and the only one that distinguishes it from a synchronous agent whose
+# stream entries happen to carry no `agent_id`.
+_ASYNC_AGENT_ID = re.compile(r"Async agent launched.*?agentId:\s*([A-Za-z0-9]+)", re.S)
+
+
+def backfill_background_tool_calls(
+    workspace: Path, tool_calls: list[dict[str, Any]]
+) -> None:
+    """Append a background subagent's tool calls to `tool_calls`, from its transcript.
+
+    A synchronous subagent's calls are recorded by `_consume` from the parent
+    message stream (with `agent_id`/`agent_type` joined from
+    `caller_by_tool_use_id`). A BACKGROUND subagent ("Async agent launched") runs
+    in its own sub-session whose messages never flow through that stream, so its
+    calls were missing from `tool_calls` while its turns still showed up in
+    `subagents[].turns` — the run log contradicted itself (#3045).
+
+    Source is the transcript, not the stream (`subagent_capture.pair_tool_calls`),
+    so these entries are appended AFTER the main-stream entries and `tool_calls`
+    is therefore NOT chronological across agents. Mutating in place is safe only
+    here: every consumer that reads `tool_calls` by order, index or length —
+    `narration`'s `tool_calls_before`, the guardrail shadow-window scanners
+    (`find_unguarded_protected_writes`, `recently_succeeded`) and
+    `same_person_scored_ids` — has already run by this call site. These entries
+    are therefore RECORDED, not re-scored; they were invisible to those scanners
+    before this existed and remain so.
+
+    Only agents the log ANNOUNCED as background are backfilled — those with an
+    `Agent`/`Task` result reading "Async agent launched … agentId: <id>". A
+    synchronous agent is therefore never backfilled, even when its stream entries
+    carry no `agent_id` (an entry whose result never arrived at a cap/timeout, or
+    a call to a nonexistent tool refused before the hook runs, both leave
+    `agent_id` unset — so an "already in `existing`" test alone would re-add them).
+    A transcript already present in `existing` is skipped too, before parsing,
+    which keeps the large synchronous transcripts from being re-read. If a
+    background announcement is ever absent, that agent stays missing, which is the
+    behaviour today.
+
+    Backfilled entries carry `agent_id` (from the filename) and `agent_type` (from
+    `meta.json`) even when the call's result never arrived — unlike the sync
+    "result never came" entry, which carries neither; `docs/specs/e2e-test-spec.md`
+    §8.1.1 records that difference.
+
+    Best-effort — never raises, matching `collect_subagents`: a missing or
+    unparseable transcript leaves `tool_calls` exactly as it was.
+    """
+    try:
+        background = {
+            m.group(1)
+            for tc in tool_calls
+            if tc.get("tool") in ("Agent", "Task")
+            for m in _ASYNC_AGENT_ID.finditer(str(tc.get("response_summary") or ""))
+        }
+        existing = {tc["agent_id"] for tc in tool_calls if tc.get("agent_id")}
+        for jsonl, meta_path in find_subagent_transcripts(workspace):
+            agent_id = transcript_agent_id(jsonl)
+            if agent_id not in background or agent_id in existing:
+                continue
+            records = parse_jsonl(jsonl, errors="replace")
+            if not records:
+                continue
+            agent_type: str | None = None
+            if meta_path is not None:
+                try:
+                    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+                    meta = None
+                if isinstance(meta, dict):
+                    agent_type = meta.get("agentType")
+            for raw in pair_tool_calls(records):
+                content = raw.get("content")
+                tool_calls.append(
+                    {
+                        "tool": raw["tool"],
+                        "args": raw["args"],
+                        "response_summary": (
+                            _summarize_tool_response(content, tool_name=raw["tool"])
+                            if content is not None
+                            else None
+                        ),
+                        "is_error": raw["is_error"],
+                        "result_chars": (
+                            _raw_result_chars(content) if content is not None else 0
+                        ),
+                        "agent_id": agent_id,
+                        "agent_type": agent_type,
+                    }
+                )
+    except Exception:  # noqa: BLE001 — capture must never fail an otherwise-loggable run
+        return
 
 
 def _timeline_tool_label(tool: str, args: dict | None) -> str:
@@ -1096,9 +1603,17 @@ def _timeline_tool_label(tool: str, args: dict | None) -> str:
 # block and the estimator that prices it can never silently diverge (#1484).
 _USAGE_FIELDS = pricing.PRICED_FIELDS
 
+# The SDK beta that asks for the 1M-token context window. `SdkBeta` is a Literal
+# of exactly this one value on the pinned claude-agent-sdk (0.1.81), and the CLI
+# receives it as `--betas`. Its docstring says "(Sonnet 4/4.5 only)", which may
+# be stale against 4.6's 1M support or may be literal — unverified, which is why
+# a cheap reachability probe gates the paid arm rather than the other way round.
+_BETAS_1M = ("context-1m-2025-08-07",)
 
-def _accumulate_usage(acc: dict[str, dict[str, int]], message: Any) -> None:
-    """Record one AssistantMessage's usage, keyed by its message id.
+
+def _accumulate_usage(acc: dict[str, dict[str, int]], message: Any) -> str:
+    """Record one AssistantMessage's usage, keyed by its message id, and
+    return the key it used.
 
     Do NOT sum on arrival. The SDK re-emits the same assistant message once
     per content block, and every copy carries the SAME cumulative usage for
@@ -1111,6 +1626,13 @@ def _accumulate_usage(acc: dict[str, dict[str, int]], message: Any) -> None:
     Best-effort by design: the SDK types `usage` loosely (a dict on the
     observed path, an object on some versions) and a malformed or absent
     block must never take down a run.
+
+    The returned key exists so a caller can tag the same entry in a parallel
+    dict (`msg_thread`). It cannot be recomputed from `message` alone: the
+    anonymous fallback below depends on `len(acc)` at call time, so a caller
+    that re-derived it would misfile every untagged message. Adding a return
+    value breaks no caller — all nine call sites in the unit suite are bare
+    statements.
     """
     msg_id = getattr(message, "message_id", None)
     # No id to dedupe on — count it once under a synthetic key rather than
@@ -1125,6 +1647,162 @@ def _accumulate_usage(acc: dict[str, dict[str, int]], message: Any) -> None:
         return raw if isinstance(raw, int) else 0
 
     acc[key] = {field: _get(field) for field in _USAGE_FIELDS}
+    return key
+
+
+# The window a message was sent against: everything the model had to read to
+# produce it. `output_tokens` is deliberately NOT here — the stream reports it
+# as a message-START snapshot (1-33 tokens on every message across the four
+# #2491 instrumented runs, against a real main-thread emit of ~27,500 tokens a
+# run), so a per-message output figure measures nothing on either thread.
+_WINDOW_FIELDS = ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")
+
+
+def _thread_usage(
+    acc: dict[str, dict[str, int]], msg_thread: dict[str, str]
+) -> tuple[list[list[Any]], dict[str, dict[str, int]]]:
+    """Per-message context windows split by thread, plus a per-thread summary.
+
+    Returns `(message_usage, thread_windows)`:
+
+      message_usage  [[thread, input, cache_read, cache_creation], ...]
+      thread_windows {"main": {"peak_window_tokens": N, "message_count": N},
+                      "sub":  {"message_count": N}}
+
+    A message's window is the sum of the three `_WINDOW_FIELDS`, and a thread's
+    peak is the MAX of those, never the sum — the point of the field is how
+    close the context came to the compaction ceiling, not cumulative traffic.
+
+    `sub` carries no peak on purpose. It would be computed over only those
+    subagent messages that surface on the main stream, which issue #2491 Phase 3
+    measured as undercounting real subagent work by 150-250x. `message_count`
+    stays because it is the only signal that the thread tag populated at all;
+    it counts subagent MESSAGES THAT REACHED THE MAIN STREAM, not subagent turns.
+
+    A module-level function, not inline at the call site, because the caller is
+    inside `_run_agent` — which `tests/unit/test_e2e_orchestrator.py` excludes
+    by charter ("spawns the SDK + real MCP server"). Everything that can be
+    wrong here — column order, max-vs-sum, the thread split — has to live
+    somewhere the unit suite can reach.
+    """
+    rows: list[list[Any]] = []
+    windows: dict[str, int] = {}
+    counts: dict[str, int] = {}
+    for key, fields in acc.items():
+        thread = msg_thread.get(key, "main")
+        window = sum(fields.get(f, 0) for f in _WINDOW_FIELDS)
+        rows.append([thread, *(fields.get(f, 0) for f in _WINDOW_FIELDS)])
+        windows[thread] = max(windows.get(thread, 0), window)
+        counts[thread] = counts.get(thread, 0) + 1
+    return rows, {
+        "main": {
+            "peak_window_tokens": windows.get("main", 0),
+            "message_count": counts.get("main", 0),
+        },
+        "sub": {"message_count": counts.get("sub", 0)},
+    }
+
+
+def wall_ts(run_started_wall: float, run_started: float, now: float) -> str:
+    """Wall-clock time of a timeline row, as ISO-8601 UTC with milliseconds.
+
+    Derived rather than read: the loop already holds a monotonic `now`, and
+    monotonic is the right clock for the elapsed column because it cannot jump
+    backwards over an NTP correction mid-run. Anchoring that offset to the wall
+    clock captured once at run start gives a timestamp without giving up that
+    property.
+
+    The format is not cosmetic. It is byte-for-byte what the two join targets
+    write — a subagent transcript record carries
+    `"timestamp": "2026-09-18T06:52:42.431Z"` and so does the copied
+    `.session.jsonl` — so lining a timeline row up against a transcript record is
+    a match rather than a conversion, and a conversion is somewhere to be wrong.
+    `datetime.isoformat()` is not used: it emits `+00:00`, not `Z`, and drops the
+    fractional part entirely when microseconds happen to be 0.
+    """
+    moment = datetime.fromtimestamp(run_started_wall + (now - run_started), tz=timezone.utc)
+    return f"{moment.strftime('%Y-%m-%dT%H:%M:%S')}.{moment.microsecond // 1000:03d}Z"
+
+
+def merge_whole_run_usage(
+    usage: dict[str, Any] | None,
+    subagents: list[dict[str, Any]] | None,
+) -> tuple[dict[str, int] | None, float | None]:
+    """`(whole_run_usage, whole_run_cost_usd_estimated)` — main thread + subagents.
+
+    Module-level and pure so it can be tested: the only call site is inside
+    `run_e2e_test`, which no unit test can reach.
+
+    `usage["usage"]` counts the **main thread only** — subagent turns run in
+    their own SDK sub-session and never enter it. That is the defect (#2582), and
+    it is why every cost figure in `docs/plan/cost-latency-10x.md` is priced off a
+    residual (total minus main) rather than a measurement. Appendix A3 item 4 of
+    that plan is a published claim that was nothing but this gap restated.
+
+    Five rules, each returning `None` rather than a plausible-but-wrong number,
+    because a wrong figure here gets compared against real costs from clean runs:
+
+    1. **No main-thread token block** -> `(None, None)`. Nothing to add to.
+    2. **`usage_source == "streamed_fallback"`** -> `(None, None)`. That path's
+       `output_tokens` is a start-of-message snapshot, and since commit 76bc0655b
+       its accumulator *already holds* subagent messages that surfaced on the main
+       stream. Adding subagent totals to it would double-count them on top of a
+       field that is wrong to begin with. Null follows the precedent
+       `docs/specs/e2e-test-spec.md` §8.1.2 sets.
+    3. **A subagent summary with no dict `usage`** -> `(None, None)`. Every run
+       committed before this field existed is that shape. Do **not** fall back to
+       summing `subagents[].turns[]`: those are one entry per content *block*, each
+       repeating its message's totals, so the sum overstates cache reads by ~2x.
+       Unknown is unknown.
+    4. **No subagents at all** -> main's four fields, copied. A one-query run
+       with no delegation, and a run whose capture failed
+       (`subagent_capture_status` non-ok, which yields an empty list), both land
+       here and both are correct: the merged figure equals the main-thread one
+       and nothing errors. A multi-query run returns at rule 5 first.
+    5. **More than one query** (`result_message_covers_last_query_only`) ->
+       `(None, None)`. The ResultMessage counted the last query only, so the main
+       block is a fraction of the run's and adding the subagents to it would give
+       a figure that looks complete and is not (#3128). Summing each query's
+       ResultMessage would recover almost none of the corpus: a query cut off by a
+       stall never emits one.
+
+    The returned dict is always a fresh object carrying exactly
+    `pricing.PRICED_FIELDS`, never the caller's inner block and never its extra
+    keys (`server_tool_use`, `service_tier`, `cache_creation`, `iterations`),
+    which are not summable.
+    """
+    if not isinstance(usage, dict):
+        return None, None
+    if usage.get("usage_source") == "streamed_fallback":
+        return None, None
+    if result_message_covers_last_query_only(usage):
+        return None, None
+    inner = usage.get("usage")
+    if not isinstance(inner, dict):
+        return None, None
+
+    merged = {field: _as_token_int(inner.get(field)) for field in _USAGE_FIELDS}
+    for summary in subagents or []:
+        if not isinstance(summary, dict):
+            return None, None
+        sub_usage = summary.get("usage")
+        if not isinstance(sub_usage, dict):
+            return None, None
+        for field in _USAGE_FIELDS:
+            merged[field] += _as_token_int(sub_usage.get(field))
+
+    return merged, pricing.estimate_cost_usd(merged)
+
+
+def _as_token_int(value: Any) -> int:
+    """A token count, or 0. Mirrors `subagent_capture._as_int`; see it for why."""
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    return 0
 
 
 def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str, Any]:
@@ -1169,6 +1847,129 @@ def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str
     }
 
 
+class SleepDetector:
+    """Counts host sleep that `time.monotonic()` did NOT leave out (issue #2983).
+
+    On macOS/Linux monotonic pauses while the machine sleeps, so `real - active`
+    already measures the sleep. On Windows it keeps advancing through Modern
+    Standby, so that difference reads ~0. A heartbeat that should tick every
+    `tick_seconds` sees such a sleep as one monotonic gap far above the interval;
+    `gap - tick_seconds` of it is counted. A sleep monotonic left out shows no
+    monotonic gap and adds nothing, so the two cases never double-count.
+
+    A blocked event loop produces the same gap and is counted as sleep too.
+    Nothing distinguishes the two: the guarantee is structural, via
+    `run_with_heartbeat`, which observes only a window that never blocks.
+    """
+
+    def __init__(
+        self,
+        *,
+        tick_seconds: float = 5.0,
+        gap_threshold_seconds: float = 60.0,
+        monotonic: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self.tick_seconds = tick_seconds
+        self.gap_threshold_seconds = gap_threshold_seconds
+        self._monotonic = monotonic
+        self._last = monotonic()
+        self.counted_sleep_seconds = 0.0
+
+    def tick(self) -> None:
+        now = self._monotonic()
+        gap = now - self._last
+        self._last = now
+        if gap > self.gap_threshold_seconds:
+            self.counted_sleep_seconds += gap - self.tick_seconds
+
+
+async def run_with_heartbeat(coro, detector: SleepDetector):
+    """Await `coro` with `detector` ticking alongside it, and only alongside it.
+
+    The heartbeat starts here and is cancelled and awaited before this returns,
+    so a gap before or after `coro` (workspace build, the judge) is never
+    observed. The last `tick()` in `finally` counts a sleep that ends as a cap
+    fires, rather than leaving it to timer-heap order.
+    """
+
+    async def _beat() -> None:
+        while True:
+            await asyncio.sleep(detector.tick_seconds)
+            detector.tick()
+
+    beat = asyncio.create_task(_beat())
+    try:
+        return await coro
+    finally:
+        detector.tick()
+        beat.cancel()
+        try:
+            await beat
+        except asyncio.CancelledError:
+            # The heartbeat's own cancel is expected; an outer cancel that
+            # landed during this `finally` must still propagate.
+            current = asyncio.current_task()
+            if current is not None and current.cancelling():
+                raise
+
+
+def sleep_usage_fields(
+    active_seconds: float, real_seconds: float, counted_sleep_seconds: float
+) -> dict[str, float]:
+    """The run log's clock fields (spec §6 "Clocks").
+
+    `active_seconds` is monotonic, `real_seconds` is `time.time()`. Sleep is the
+    part monotonic left out (`real - active`, macOS/Linux) plus the part the
+    heartbeat counted (Windows), and `wall_clock_seconds` is active time with the
+    counted part removed, so it means the same thing on all three platforms.
+    """
+    return {
+        "wall_clock_seconds": active_seconds - counted_sleep_seconds,
+        "real_clock_seconds": real_seconds,
+        "slept_seconds": max(0.0, real_seconds - active_seconds)
+        + counted_sleep_seconds,
+        "counted_sleep_seconds": counted_sleep_seconds,
+    }
+
+
+# Abort reasons a detected host sleep can override. On Windows `time.monotonic()`
+# advances through Modern Standby, so these three caps/watchdogs count the sleep
+# as run time and cut the run (issue #2974); when the heartbeat proves the cut
+# was a sleep, the run is relabeled `host_slept` and left ungraded rather than
+# scored as a capability timeout/stall.
+_SLEEP_RELABELABLE = (
+    "max_wall_clock_seconds",
+    "sdk_stream_silence",
+    "no_progress_stall",
+)
+
+
+def sleep_relabel(
+    aborted_reason: str | None,
+    counted_sleep_seconds: float,
+    inactivity_seconds: float,
+) -> str | None:
+    """Relabel a cap/watchdog abort as `host_slept` when host sleep caused it.
+
+    Returns `"host_slept"` when `aborted_reason` is one a sleep can consume
+    (`_SLEEP_RELABELABLE`) and the heartbeat counted at least `inactivity_seconds`
+    of sleep; otherwise returns `aborted_reason` unchanged. Pure and
+    side-effect-free on purpose: it is the whole stop decision the lead ruling
+    picks, so it is unit-testable without spinning the SDK query loop (issue
+    #2974). The threshold is CUMULATIVE counted sleep — the ruling's
+    ">= caps.inactivity_seconds" reading — so several shorter sleeps summing past
+    the cap relabel too, which is correct: on Windows every counted second was
+    billed against the wall-clock budget, so the grade is untrustworthy however
+    the sleep was distributed.
+    """
+    if (
+        aborted_reason in _SLEEP_RELABELABLE
+        and counted_sleep_seconds >= inactivity_seconds
+    ):
+        return "host_slept"
+    return aborted_reason
+
+
 async def _run_agent(
     *,
     fixture: Fixture,
@@ -1178,6 +1979,10 @@ async def _run_agent(
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
     person_evidence_guard: str = PERSON_EVIDENCE_GUARD_SHADOW,
+    deny_shell: bool = False,
+    deny_project_reads: bool = False,
+    context_1m: bool = False,
+    tool_search: bool = True,
 ) -> tuple[
     list[dict[str, Any]],  # tool_calls
     list[dict[str, Any]],  # narration
@@ -1242,6 +2047,11 @@ async def _run_agent(
     # skill_invocation.py caller-aware instead of guessing from Skill/Agent
     # adjacency in the flat list.
     caller_by_tool_use_id: dict[str, tuple[str | None, str | None]] = {}
+    # P2 — where the CLI spills oversized tool results (`<config>/projects/
+    # <slug>/<session>/tool-results/`), the one tree project_read_denied keeps
+    # readable outside `.claude/`. The agent subprocess inherits os.environ, so
+    # the same variable decides its config dir.
+    config_root = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
@@ -1257,10 +2067,12 @@ async def _run_agent(
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
-    # Every denied main-thread `extraction_append` — the router doing the
-    # record-extractor's job because the subagent failed to spawn (#942). The
-    # attempt itself is in `tool_calls` (streamed from the ToolUseBlock before
-    # the PreToolUse deny); this list is the record that it did not run.
+    # Every call the per-context policy denied — BOTH arms, not just the one this
+    # comment used to name: a main-thread `image_read` (the
+    # router doing a subagent's job after a failed spawn, #942/#1273), and an
+    # owned-section `research_append` (#1273), which fires for a named subagent
+    # too. The attempt itself is in `tool_calls` (streamed from the ToolUseBlock
+    # before the PreToolUse deny); this list is the record that it did not run.
     blocked_context_calls: list[dict[str, Any]] = []
     # Continue-nudge state: when the agent voluntarily yields before
     # project.status == "completed" (the known "narrated next step then
@@ -1268,6 +2080,9 @@ async def _run_agent(
     # bounded by max_continue_nudges + a no-progress check (see
     # should_continue_run) so a genuinely stuck run still ends and fails.
     continue_nudges = {"n": 0}
+    # Per-class hand-back tallies (#2328). Counts hand-backs INCLUDING terminal ones,
+    # so it exceeds `continue_nudges`, which stays the nudge total.
+    hand_back_classes: dict[str, int] = {}
     last_nudge_activity_count = {"n": -1}
     # #941 — the genealogy MCP surface's health. `unavailable` latches True on
     # the first detector hit and is read by the Stop hook (so an in-flight
@@ -1286,7 +2101,10 @@ async def _run_agent(
     # check started" log-file filter needs its own real-clock timestamp.
     run_started_wall = time.time()
 
-    # Per-message timeline for forensics: [elapsed_seconds, kind, tool_names].
+    # Per-message timeline for forensics:
+            # [elapsed_seconds, kind, tool_names, wall_ts, message_id].
+            # `wall_ts` joins a row to a subagent transcript record or the copied
+            # .session.jsonl, neither of which is committed (#2582).
     # Lets a later analysis split a run into structural vs stall time, pinpoint
     # a no-progress gap, AND segment a run by Skill-phase boundaries — all
     # WITHOUT a session.jsonl (which isn't reliably copied, and is gitignored
@@ -1306,19 +2124,36 @@ async def _run_agent(
     # discrepancy can be checked against a version delta (the local CLI the SDK
     # spawns may differ from Cowork's bundled one).
     cli_version: dict[str, str | None] = {"v": None}
+    # The current session's stream, so the close after the wall-clock block
+    # reaches it however `_consume` ended (None once closed), and a close still
+    # running when the wall-clock cap cancelled the resume path.
+    live: dict[str, Any] = {"it": None, "closing": None}
+    # Whether the FIRST init's `tools` list offered ToolSearch; None when that
+    # init carried no list. Listed at init; blind to the per-model gate (see
+    # env_for_sdk) — `False` proves tool search was off, `True` does not prove
+    # it was on.
+    tool_search_offered: dict[str, Any] = {"v": None, "seen": False}
     resumes = {"n": 0}  # how many times we resumed after a stall (capped)
     MAX_RESUME = 2
 
     # Streamed usage accumulator. The SDK's ResultMessage carries the
-    # authoritative duration/turns/cost, but it only arrives on a CLEAN end —
-    # a wall-clock timeout, an inactivity abort or a no-progress stall cuts the
-    # stream before it, so `usage` stayed {} and the run landed in the runlog
-    # with no turns, no duration and no tokens at all. That silently blinded
-    # every `timeout` run (9 of 9 in the corpus as of 2026-07-20) — exactly the
-    # runs whose cost and turn count you most want to see. Accumulating per
-    # AssistantMessage gives a fallback that is always available. See
-    # _fallback_usage below for what is and isn't recoverable this way.
+    # authoritative duration/turns/cost (on a run with more than one query its
+    # duration and turns cover the last query and its cost the last CLI
+    # process, see `result_message_covers_last_query_only`), but it only
+    # arrives on a CLEAN end — a wall-clock timeout, an inactivity abort or a
+    # no-progress stall cuts the stream before it, so `usage` stayed {} and the
+    # run landed in the runlog with no turns, no duration and no tokens at all.
+    # That silently blinded every `timeout` run (9 of 9 in the corpus as of
+    # 2026-07-20) — exactly the runs whose cost and turn count you most want to
+    # see. Accumulating per AssistantMessage gives a fallback that is always
+    # available. See _fallback_usage below for what is and isn't recoverable this
+    # way.
     streamed: dict[str, dict[str, int]] = {}
+    # Thread tag per accumulated message, keyed the same way `streamed` is.
+    # Declared HERE, beside `streamed` — not inside `_consume` or its
+    # session-restart loop, either of which would drop every pre-resume key and
+    # KeyError the usage merge after a paid run.
+    msg_thread: dict[str, str] = {}
 
     def _emit(line: str) -> None:
         """Live progress to stderr so a long, otherwise-silent run shows
@@ -1368,18 +2203,64 @@ async def _run_agent(
                         "To CREATE a new project use project_create, which writes both "
                         "files together; to add to an existing one use research_append, "
                         "research_log_append, tree_edit or tree_correct. These validate "
-                        "before persisting. Direct file writes never validate."
+                        "before persisting. Direct file writes never validate. "
+                        "external-collections.json is written only by external_links_search given a projectPath."
                     ),
                 },
             }
+
+        # Credential-read lockdown (unconditional). Deny Read/Grep/Glob on
+        # ~/.familysearch-mcp/ — the agent must not read FamilySearch tokens
+        # or the OpenRouter key. Auth goes through the login tool; a missing
+        # key is reported by image_transcribe itself. After the write lockdown
+        # and OUTSIDE the opt-in filesystem denials below, because the
+        # PR #2990 leak was a default run.
+        cred_denied = credential_read_denied(tool_name, input_data.get("tool_input") or {})
+        if cred_denied:
+            _emit(f"[blocked credential read] {tool_name}")
+            return _pretool_deny(
+                f"{tool_name} on the credentials directory is not permitted. "
+                "FamilySearch auth goes through the login flow, and a missing "
+                "OpenRouter key is reported by image_transcribe itself."
+            )
+
+        # P2 — the two opt-in filesystem denials (--deny-shell,
+        # --deny-project-reads). After the write lockdown, which is
+        # unconditional, and before the mcp__ filter, because what these
+        # refuse are the built-in Read/Grep/Glob/Bash. Inert unless a flag was
+        # passed: filesystem_denial is None with both off.
+        if deny_shell or deny_project_reads:
+            fs_denial = filesystem_denial(
+                tool_name,
+                input_data.get("tool_input") or {},
+                deny_shell=deny_shell,
+                deny_project_reads=deny_project_reads,
+                cwd=workspace,
+                project_root=workspace,
+                config_root=config_root,
+            )
+            if fs_denial is not None:
+                entry, deny = fs_denial
+                blocked_tree_reads.append(entry)
+                narration.append(
+                    {
+                        "tool_calls_before": len(tool_calls),
+                        "kind": "blocked",
+                        "text": f"`{entry['tool']}` denied — {entry['reason']}",
+                    }
+                )
+                where = f" -> {entry['path']}" if "path" in entry else ""
+                _emit(f"[blocked {entry['blocked_by']}] {entry['tool']}{where}")
+                return deny
 
         if not tool_name.startswith("mcp__"):
             return {}
 
         # The per-context tool policy (harness/context_policy.py): a main-thread
         # call to any SUBAGENT_ONLY_TOOLS member is the router substituting for a
-        # failed subagent spawn. Both members are enforced here — `extraction_append`
-        # (#942) and `image_read` — since neither is declared by any skill and
+        # failed subagent spawn. Every member is enforced here — today just
+        # `image_read`, since `extraction_append` (#942) left the set in issue
+        # #2937 — because no remaining member is declared by any skill and
         # `agent_id` presence alone discriminates, which is all e2e can see (its
         # sub-skills run in this same session via the Skill tool with no `agent_id`).
         # We deny the bare tool directly rather than through `subagent_only_violation`,
@@ -1399,9 +2280,8 @@ async def _run_agent(
             # this line alone. For image_read the recovery is the transcription
             # plugin @plugin:image-reader, which is now also the only image reader
             # (image-reader-opus retired, issue #2013).
-            # The fallback covers a future third guarded tool.
+            # The fallback covers a future second guarded tool.
             recovery = {
-                "extraction_append": "@plugin:record-extractor",
                 "image_read": "@plugin:image-reader",
             }.get(bare, "the owning subagent")
             narration.append(
@@ -1419,7 +2299,7 @@ async def _run_agent(
 
         # An owned SECTION, not an owned tool — a separate arm on purpose. The
         # block above says the whole tool is reserved for a subagent, which is
-        # true of extraction_append and false of research_append: that one is
+        # true of image_read and false of research_append: that one is
         # the general writer, called from the main thread constantly for plans,
         # questions, conflicts and the log. Sharing the branch handed the agent
         # a deny telling it the tool was off-limits, and a narration naming the
@@ -1438,7 +2318,7 @@ async def _run_agent(
             # for the `routed` arm. A `declaration` denial names a dotted
             # `section.field` and an `out_of_lane` one names a section the map
             # deliberately does not hold, so an unconditional lookup raises on
-            # the two arms this was widened to serve.
+            # the three arms this was widened to serve.
             if rule == "routed":
                 text = (
                     f"`{bare}` denied on `{owned}` — that section is routed to the "
@@ -1450,10 +2330,30 @@ async def _run_agent(
                 owned_section, _, field = owned.partition(".")
                 agent = OWNED_DECLARATION_OWNERS[(owned_section, field)]
                 text = (
-                    f"`{bare}` denied on `{owned_section}` — declaring a question "
-                    f"exhaustive is routed to the {agent} agent. Creating a question "
-                    "and recording an honest `declared: false` termination are both "
-                    "unaffected; delegate the claim rather than making it here."
+                    f"`{bare}` denied on `{owned_section}` — writing a stop-gate "
+                    f"`stopped_because` value is routed to the {agent} agent. "
+                    "Writing `stopped_because: null` (new question) and non-gate "
+                    "values (`resources_spent`, `blocked_by_conflict`) are both "
+                    "unaffected; delegate the stop-gate claim rather than making "
+                    "it here."
+                )
+            elif rule == "owned_field":
+                owned_section, _, field = owned.partition(".")
+                agent = OWNED_FIELD_OWNERS[(owned_section, field)]
+                text = (
+                    f"`{bare}` denied on `{owned_section}` — setting `{field}` is "
+                    f"routed to the {agent} agent. Every other write to "
+                    f"`{owned_section}` is unaffected; delegate this field rather "
+                    "than setting it here."
+                )
+            elif rule == "claim":
+                agent = OWNED_CLAIM_ROUTES[owned][0]
+                text = (
+                    f"`{bare}` denied on `{owned}` — recording a conflict's analysis "
+                    f"or resolution is routed to the {agent} agent. Opening a "
+                    "conflict with its required fields, and re-opening one as "
+                    "`unresolved`, are both unaffected; delegate the analysis "
+                    "rather than writing it here."
                 )
             else:
                 text = (
@@ -1471,7 +2371,7 @@ async def _run_agent(
         # call never runs, so it shouldn't consume the budget. The run
         # continues (no stopReason); the agent must find a records path.
         bare = _bare_tool_name(tool_name)
-        if is_blocked_tree_tool(tool_name):
+        if is_blocked_tree_tool(tool_name, dict(input_data.get("tool_input") or {})):
             blocked_tree_reads.append(
                 {
                     "tool": bare,
@@ -1693,6 +2593,27 @@ async def _run_agent(
         # known stall. Veto it (decision=block) and tell the agent to resume,
         # bounded by should_continue_run() so a stuck run still ends + fails.
         research = read_research_json(workspace)
+
+        # Classify the hand-back BEFORE the gate, so the stop that actually ENDS a run
+        # is not invisible — it returns {} below and used to be counted nowhere. The
+        # class is telemetry only; the reply below never depends on it (U17).
+        # Only the agent's last words count, and only when no tool call landed after
+        # them: 2 of the 71 committed narration nudges have tool calls between the last
+        # TextBlock and the nudge, and a hand-back narrated before a batch of calls
+        # would otherwise read as `step` on a turn that ended silently.
+        last_text = None
+        for entry in reversed(narration):
+            # `blocked` is a hook-deny message, not the agent's words — and a
+            # denied call never lands in `tool_calls`, so it shares the same
+            # `tool_calls_before` and would otherwise read as the closing text.
+            if entry.get("kind") in ("harness", "blocked"):
+                continue
+            if entry.get("tool_calls_before") == len(tool_calls):
+                last_text = entry.get("text")
+            break
+        hand_back = classify_hand_back(last_text)
+        completed_now = project_completed(research)
+
         if not should_continue_run(
             research=research,
             nudges_used=continue_nudges["n"],
@@ -1701,7 +2622,27 @@ async def _run_agent(
             tool_count_at_last_nudge=last_nudge_activity_count["n"],
             mcp_unavailable=mcp_state["unavailable"],
         ):
+            # Terminal. Count the class only where the stop is a defect — `completed`
+            # is the successful path (134 of 181 committed runs), `mcp_unavailable`
+            # is infrastructure (#941) and `ok` has no project (#3274); attributing any
+            # of them to the agent's hand-back would make the rate dominated by runs
+            # that did the right thing.
+            reason = terminal_reason(
+                research=research,
+                nudges_used=continue_nudges["n"],
+                max_nudges=fixture.caps.max_continue_nudges,
+                mcp_unavailable=mcp_state["unavailable"],
+            )
+            if reason in COUNTED_TERMINAL_REASONS:
+                key = hand_back_key(hand_back, project_is_completed=completed_now)
+                hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
+            else:
+                key = f"terminal_{reason}"
+                hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
             return {}
+
+        counter_key = hand_back_key(hand_back, project_is_completed=completed_now)
+        hand_back_classes[counter_key] = hand_back_classes.get(counter_key, 0) + 1
         continue_nudges["n"] += 1
         last_nudge_activity_count["n"] = activity_count["n"]
         narration.append(
@@ -1710,22 +2651,29 @@ async def _run_agent(
                 "kind": "harness",
                 "text": (
                     f"continue-nudge {continue_nudges['n']}/"
-                    f"{fixture.caps.max_continue_nudges}: agent yielded before "
-                    "project.status=='completed'; instructing it to resume the loop."
+                    f"{fixture.caps.max_continue_nudges}: agent yielded "
+                    f"({counter_key}) before project.status=='completed'; "
+                    "instructing it to resume the loop."
                 ),
             }
         )
         _emit(
             f"[continue-nudge {continue_nudges['n']}/"
-            f"{fixture.caps.max_continue_nudges}] agent yielded; resuming"
+            f"{fixture.caps.max_continue_nudges}] agent yielded "
+            f"({counter_key}); resuming"
         )
+        # One reply for every vetoed stop, whatever its class: the worker's
+        # CONTINUE_REASON (apps/server/app/agent/continue_policy.py), verbatim. A
+        # `Next: <step>. Continue?` is the agent asking the patron, which the worker
+        # vetoes with these words too; answering it "Yes." here gave the e2e grade a
+        # Stop policy the prototype does not run (U17). This tree cannot import the
+        # constant, so `test_continue_policy_parity.py` pins the copy.
         return {
             "decision": "block",
             "reason": (
                 "You are mid-run in an autonomous /research session and the "
                 "project is not yet complete (project.status is not "
-                "'completed'). Do not stop to report progress or announce the "
-                "next step. Re-read research.json and invoke the next GPS "
+                "'completed'). Re-read research.json and invoke the next GPS "
                 "sub-skill now; keep going until project.status is "
                 "'completed' or you hit a genuine, logged blocker."
             ),
@@ -1759,24 +2707,16 @@ async def _run_agent(
         # hook, not the allowlist, so it can deny per-call with arguments.
         allowed_tools=BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"],
         permission_mode="dontAsk",
-        # ENABLE_TOOL_SEARCH turns tool search ON, not off. This comment used to
-        # say "forcing tool search off" while setting "true"; the polarity is
-        # inverted (issue #1110). Read off the installed CLI (v2.1.220): a truthy
-        # value (`true|1|yes|on`) selects deferred/tool-search mode, `auto`/
-        # `auto:N` is the adaptive variant, and only a FALSY value
-        # (`false|0|no|off`) selects "standard" mode, where every schema is
-        # loaded up front. Unset also lands on tool-search mode, so deleting the
-        # variable eager-loads nothing. (Additionally forced off on a
-        # non-first-party ANTHROPIC_BASE_URL, on Vertex, and under
-        # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
-        #
-        # So "true" below means e2e runs WITH tool search: the ~38-tool
-        # genealogy server's schemas are deferred and re-discovered via
-        # ToolSearch mid-session (the 17x in the spriggs run, ~11% of all tool
-        # calls across recent runs). Idea 3a of the speedup plan wanted the
-        # opposite; flipping to "false" is a separate, tracked decision that
-        # requires re-measuring the tool mix, so the value is left as it has been
-        # running. `env` MERGES onto the inherited environment (claude_agent_sdk
+        # ENABLE_TOOL_SEARCH has ONE source, env_for_sdk (its docstring holds
+        # the polarity: truthy or unset = on, falsy = off). `tool_search`
+        # (default True; `--no-tool-search` turns it off, experiment-only)
+        # picks the value. On, the ~38-tool genealogy server's schemas are
+        # deferred (except ALWAYS_LOAD in tool-schemas.ts) and re-discovered via
+        # ToolSearch mid-session. Off, every schema is loaded up front and the
+        # #941 mid-run backstop below is inert: it counts no-match ToolSearch
+        # replies, and there are none. A literal "true" used to sit in this dict
+        # ahead of env_for_sdk's own key, which always won, so it set nothing.
+        # `env` MERGES onto the inherited environment (claude_agent_sdk
         # subprocess_cli merges os.environ, then options.env), so this adds the
         # var without dropping PATH.
         #
@@ -1793,13 +2733,18 @@ async def _run_agent(
         # fills the output budget with thinking (see subagent_capture); recorded
         # in the runlog. Applies session-wide (parent + every subagent).
         env={
-            "ENABLE_TOOL_SEARCH": "true",
             **({"CLAUDE_CODE_MAX_OUTPUT_TOKENS": str(max_output_tokens)} if max_output_tokens else {}),
-            **env_for_sdk(resolve_auth()),
+            **env_for_sdk(resolve_auth(), tool_search=tool_search),
         },
         # Parent model: the --agent-model override (also applied to staged
         # subagents in build_workspace) or the fixture's default.
         model=agent_model or fixture.agent_model,
+        # Off by default. The corpus runs on a 200k window and auto-compacts at
+        # ~85% of it (167-172k across every instrumented run); this asks for 1M.
+        # A run with it on is not comparable to one without — different
+        # compaction count, different cache-gap structure — which is why it is
+        # opt-in per run and recorded in `usage.betas`.
+        betas=list(_BETAS_1M) if context_1m else [],
         max_turns=fixture.caps.max_turns,
         # The SDK's stdio transport defaults to a 1 MiB max_buffer_size for a
         # single JSON message (claude_agent_sdk _DEFAULT_MAX_BUFFER_SIZE). A
@@ -1834,6 +2779,19 @@ async def _run_agent(
             and not pending_tool_uses
             and resumes["n"] < MAX_RESUME
         )
+
+    async def _shutdown(it) -> None:
+        """Close a session's stream and wait for its CLI subprocess to exit.
+
+        The close runs on its own task, shielded: the resume path calls this
+        inside `_consume`, under the wall-clock cap, and a cap cancel that cut
+        the SDK's teardown short would leave the CLI running and drop it from
+        the SDK's atexit kill. A cancelled caller leaves the task in
+        `live["closing"]` for the close after the wall-clock block to finish.
+        """
+        live["closing"] = asyncio.ensure_future(close_query(it))
+        await asyncio.shield(live["closing"])
+        live["closing"] = None
 
     async def _consume():
         nonlocal usage, error, aborted_reason
@@ -1891,27 +2849,12 @@ async def _run_agent(
             )
             _emit("[abort] genealogy MCP server unavailable — this run never happened")
 
-        async def _shutdown(it) -> None:
-            """Close the query stream so the CLI subprocess exits before we go.
-
-            This abort fires seconds into a run, while every other stop reason
-            takes minutes and then spends ~30s in the judge. That difference
-            matters on Windows: a live CLI child still holds handles inside the
-            workspace, so `TemporaryDirectory.__exit__` raises
-            `PermissionError [WinError 32]` — and because `__exit__` runs before
-            our exception propagates, that error *replaces* McpUnavailableError,
-            burying the operator message and returning the wrong exit code
-            (observed 2026-08-04). Mirrors the resume path's teardown below.
-            """
-            try:
-                await asyncio.wait_for(it.aclose(), timeout=15)
-            except Exception:  # noqa: BLE001 — teardown is best-effort
-                pass
-
         current_options = options
         current_prompt = user_message
         while True:  # session (re)start loop — re-entered only to resume a stall
-            iterator = query(prompt=current_prompt, options=current_options).__aiter__()
+            iterator = live["it"] = open_query(
+                prompt=current_prompt, options=current_options
+            ).__aiter__()
             _emit("agent started" if resumes["n"] == 0
                   else f"resumed session (attempt {resumes['n']}) after stall")
             restart = False
@@ -1924,7 +2867,27 @@ async def _run_agent(
                 except StopAsyncIteration:
                     return
                 except asyncio.TimeoutError:
-                    # No SDK message at all within the window (true silence).
+                    # No SDK message at all within the window. On Windows this
+                    # can be a Modern Standby, not a genuine silence — force a
+                    # heartbeat tick so `counted_sleep_seconds` is current
+                    # regardless of `_beat`/timeout wake order (issue #2974),
+                    # then relabel before resuming: a slept run must NOT consume
+                    # a resume as if it had stalled.
+                    sleep_detector.tick()
+                    if (
+                        sleep_relabel(
+                            "sdk_stream_silence",
+                            sleep_detector.counted_sleep_seconds,
+                            fixture.caps.inactivity_seconds,
+                        )
+                        == "host_slept"
+                    ):
+                        aborted_reason = "host_slept"
+                        error = (
+                            f"host slept {sleep_detector.counted_sleep_seconds:.0f}s "
+                            f">= inactivity cap {fixture.caps.inactivity_seconds}s"
+                        )
+                        return
                     if _should_resume():
                         restart = True
                         break
@@ -1947,6 +2910,22 @@ async def _run_agent(
                                     "tool_calls_before": len(tool_calls),
                                     "kind": "assistant",
                                     "text": block.text,
+                                    # Which thread said it. A subagent's own
+                                    # AssistantMessages stream through this same
+                                    # branch -- `usage.thread_windows.sub` is
+                                    # non-zero in 28 of the 28 committed logs
+                                    # carrying it, reaching 223 messages in one
+                                    # run -- so without this a relay-fidelity
+                                    # reader cannot tell the main thread's words
+                                    # from the subagent's it is supposed to be
+                                    # compared against (#3188). Same test the
+                                    # usage tagger below already uses.
+                                    "thread": (
+                                        "main"
+                                        if getattr(message, "parent_tool_use_id", None)
+                                        is None
+                                        else "sub"
+                                    ),
                                 }
                             )
                             one_line = " ".join(block.text.split())
@@ -1971,9 +2950,27 @@ async def _run_agent(
                             progressed = True
                     # Record before the timeline append so a message that
                     # arrives moments before a timeout still counts.
-                    _accumulate_usage(streamed, message)
+                    _usage_key = _accumulate_usage(streamed, message)
+                    # The SDK tags the thread exactly: `parent_tool_use_id` is
+                    # None on the main thread and the spawning Task's id on a
+                    # subagent (populated at message_parser.py:175; read the
+                    # same way by apps/server's real_agent). No heuristic is
+                    # needed here — `cache_window.row_threads` infers the thread
+                    # from `task_progress` adjacency only because it reads
+                    # COMMITTED logs, which have no message object to ask.
+                    msg_thread[_usage_key] = (
+                        "main"
+                        if getattr(message, "parent_tool_use_id", None) is None
+                        else "sub"
+                    )
                     timeline.append(
-                        [round(now - run_started, 1), "assistant", assistant_tool_names]
+                        [
+                            round(now - run_started, 1),
+                            "assistant",
+                            assistant_tool_names,
+                            wall_ts(run_started_wall, run_started, now),
+                            getattr(message, "message_id", None),
+                        ]
                     )
                 elif isinstance(message, UserMessage):
                     # Tool results return as UserMessages with ToolResultBlock content.
@@ -1983,7 +2980,10 @@ async def _run_agent(
                         for block in content:
                             if isinstance(block, ToolResultBlock):
                                 entry = pending_tool_uses.pop(block.tool_use_id, None)
-                                summary = _summarize_tool_response(block.content)
+                                summary = _summarize_tool_response(
+                                    block.content,
+                                    tool_name=entry["tool"] if entry else None,
+                                )
                                 if entry is not None:
                                     apply_tool_result(entry, block, summary)
                                     # spec §11 Step 0 — join caller identity onto
@@ -2008,8 +3008,9 @@ async def _run_agent(
                                     # AFTER init, when there is no init message
                                     # left to read. Absence surfaces only as
                                     # ToolSearch finding nothing (the genealogy
-                                    # schemas are deferred under
-                                    # ENABLE_TOOL_SEARCH), so count consecutive
+                                    # schemas outside ALWAYS_LOAD are
+                                    # deferred under ENABLE_TOOL_SEARCH),
+                                    # so count consecutive
                                     # no-match lookups while not one `mcp__`
                                     # call has ever succeeded. Threshold and
                                     # reset rule are calibrated against the
@@ -2039,11 +3040,16 @@ async def _run_agent(
                                             backstop=True,
                                             queries=mcp_state["queries"],
                                         )
-                                        await _shutdown(iterator)
                                         return
                                 progressed = True
                     timeline.append(
-                        [round(now - run_started, 1), "tool_result", tool_result_names]
+                        [
+                            round(now - run_started, 1),
+                            "tool_result",
+                            tool_result_names,
+                            wall_ts(run_started_wall, run_started, now),
+                            None,
+                        ]
                     )
                 elif isinstance(message, SystemMessage):
                     # Init / config / hint messages. Capture the session id (for
@@ -2053,11 +3059,33 @@ async def _run_agent(
                     sid = data.get("session_id")
                     if sid:
                         session_id["id"] = sid
-                    ver = data.get("version") or data.get("cli_version")
+                    # 2.1.139's init carries `claude_code_version`; the other
+                    # two keys are kept for a CLI that spells it either way.
+                    ver = (
+                        data.get("claude_code_version")
+                        or data.get("version")
+                        or data.get("cli_version")
+                    )
                     if ver:
                         cli_version["v"] = ver
+                    # First init only: a resume re-spawns the CLI with the same
+                    # env, so a later list says nothing new.
+                    if message.subtype == "init" and not tool_search_offered["seen"]:
+                        tool_search_offered["seen"] = True
+                        tools_listed = data.get("tools")
+                        tool_search_offered["v"] = (
+                            TOOL_SEARCH_NAME in tools_listed
+                            if isinstance(tools_listed, list)
+                            else None
+                        )
                     timeline.append(
-                        [round(now - run_started, 1), f"system:{message.subtype}", []]
+                        [
+                            round(now - run_started, 1),
+                            f"system:{message.subtype}",
+                            [],
+                            wall_ts(run_started_wall, run_started, now),
+                            None,
+                        ]
                     )
                     # #941 — the decisive check, and it costs nothing: the CLI's
                     # init message lists every MCP server it tried to connect
@@ -2110,6 +3138,10 @@ async def _run_agent(
                             "inconclusive": (
                                 "still connecting (normal at init); the "
                                 "ToolSearch backstop covers it from here"
+                                if tool_search
+                                else "still connecting (normal at init); tool "
+                                "search is OFF, so the ToolSearch backstop is "
+                                "inactive — watch for zero genealogy calls"
                             ),
                             "unavailable": (
                                 "UNAVAILABLE — aborting"
@@ -2137,10 +3169,17 @@ async def _run_agent(
                         )
                         if abort_now:
                             _abort_mcp_unavailable(find_server_entry(servers))
-                            await _shutdown(iterator)
                             return
                 elif isinstance(message, ResultMessage):
-                    timeline.append([round(now - run_started, 1), "result", []])
+                    timeline.append(
+                        [
+                            round(now - run_started, 1),
+                            "result",
+                            [],
+                            wall_ts(run_started_wall, run_started, now),
+                            None,
+                        ]
+                    )
                     usage = {
                         "duration_ms": message.duration_ms,
                         "duration_api_ms": message.duration_api_ms,
@@ -2150,6 +3189,11 @@ async def _run_agent(
                         "total_cost_usd": message.total_cost_usd,
                         "usage": message.usage,
                     }
+                    # The SDK's own per-model ledger, helpers included (T1.11):
+                    # the reconciliation source for per-model pricing. Only
+                    # written when the SDK supplied it — absent, never null or {}.
+                    if isinstance(getattr(message, "model_usage", None), dict):
+                        usage["model_usage"] = message.model_usage
                     if message.is_error and aborted_reason is None:
                         detail = message.result or message.stop_reason or ""
                         # The SDK surfaces a turn-cap hit as an *error result*
@@ -2173,12 +3217,47 @@ async def _run_agent(
                     if aborted_reason is None and message.stop_reason == "max_turns":
                         aborted_reason = "max_turns"
 
+                # The PreToolUse deny's `continue_: False` does not end the session:
+                # past the cap every call is denied, a denied call still counts as
+                # activity, and the Stop hook nudged the agent on until cost or the
+                # wall clock ended it (hannah 2026-10-05: 56 denied calls, 38 nudges).
+                # The cap is crossed mid-run, so it outranks a cost_cap set from the
+                # final ResultMessage.
+                if tool_call_count["n"] > fixture.caps.tool_calls and aborted_reason in (
+                    None,
+                    "cost_cap",
+                ):
+                    aborted_reason = "max_tool_calls"
+                    error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
+                    return
+
                 # Progress watchdog: a stall is "stream alive, no progress". The
                 # plain inactivity timer above misses it (messages keep arriving),
                 # which is why the observed stall burned to the wall-clock cap.
                 if progressed:
                     last_progress["t"] = now
                 elif now - last_progress["t"] > fixture.caps.progress_stall_seconds:
+                    # Same Windows-sleep guard as the inactivity timer above: a
+                    # Modern Standby looks like a no-progress stall on the
+                    # monotonic clock, so force a tick and relabel before the
+                    # resume decision — otherwise a slept run is resumed as if it
+                    # had stalled (issue #2974), the exact case spec §6 "Clocks"
+                    # says cannot happen.
+                    sleep_detector.tick()
+                    if (
+                        sleep_relabel(
+                            "no_progress_stall",
+                            sleep_detector.counted_sleep_seconds,
+                            fixture.caps.inactivity_seconds,
+                        )
+                        == "host_slept"
+                    ):
+                        aborted_reason = "host_slept"
+                        error = (
+                            f"host slept {sleep_detector.counted_sleep_seconds:.0f}s "
+                            f">= inactivity cap {fixture.caps.inactivity_seconds}s"
+                        )
+                        return
                     if _should_resume():
                         restart = True
                         break
@@ -2194,10 +3273,10 @@ async def _run_agent(
             if not restart:
                 return
             resumes["n"] += 1
-            try:
-                await asyncio.wait_for(iterator.aclose(), timeout=15)
-            except Exception:  # noqa: BLE001 — best-effort teardown of a hung subprocess
-                pass
+            # Wait for the stalled CLI to exit before the resumed one starts on
+            # the same session, so the two never run at once.
+            await _shutdown(iterator)
+            live["it"] = None
             _emit(f"stall — resuming session {session_id['id']!r} (attempt {resumes['n']})")
             current_options = replace(options, resume=session_id["id"], fork_session=False)
             current_prompt = (
@@ -2205,8 +3284,14 @@ async def _run_agent(
             )
             last_progress["t"] = time.monotonic()
 
+    # Spans exactly `_consume()`: the judge and workspace build stay outside it,
+    # because a blocked loop there would read as a Windows sleep (issue #2983).
+    sleep_detector = SleepDetector()
     try:
-        await asyncio.wait_for(_consume(), timeout=fixture.caps.wall_clock_seconds)
+        await asyncio.wait_for(
+            run_with_heartbeat(_consume(), sleep_detector),
+            timeout=fixture.caps.wall_clock_seconds,
+        )
     except asyncio.TimeoutError:
         aborted_reason = "max_wall_clock_seconds"
         error = f"wall-clock timeout after {fixture.caps.wall_clock_seconds}s"
@@ -2217,29 +3302,85 @@ async def _run_agent(
         # way the ResultMessage branch does, so it isn't mislabeled `error`.
         aborted_reason = "max_turns" if is_turn_cap_error(detail) else "error"
         error = detail
+    finally:
+        consume_ended = time.monotonic()
+        # The one close for every way `_consume` ends: each early `return`, an
+        # exception, a cap, and a resume close the cap interrupted. Here rather
+        # than inside `_consume` so the wall-clock cap cannot interrupt it or
+        # relabel a reason `_consume` already decided. A live CLI child also
+        # holds handles inside the workspace, so on Windows the temp-dir
+        # cleanup would raise `PermissionError [WinError 32]` and replace the
+        # run's own error (observed 2026-08-04 on the MCP-unavailable abort).
+        if live["closing"] is not None:
+            await live["closing"]
+        elif live["it"] is not None:
+            await _shutdown(live["it"])
+        live["it"] = live["closing"] = None
 
     if aborted_reason is None and tool_call_count["n"] > fixture.caps.tool_calls:
         aborted_reason = "max_tool_calls"
         error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
 
-    # A ResultMessage populates `usage` with the SDK's authoritative numbers.
-    # Every abort path (wall-clock timeout, inactivity silence, no-progress
-    # stall) cuts the stream before it, leaving `usage` empty — so fall back to
-    # what the stream already told us. `usage_source` marks which one you're
-    # reading: a fallback block has exact token counts but a null cost, and
-    # must not be compared against a clean run's `total_cost_usd`.
+    # The wall-clock cap runs on `time.monotonic()`, which advances through
+    # Windows Modern Standby, so a slept run trips it recorded as
+    # `max_wall_clock_seconds` (issue #2974). The cap's TimeoutError cancelled
+    # `run_with_heartbeat`, whose `finally` already ticked, so
+    # `counted_sleep_seconds` is current here. Relabel to `host_slept` when the
+    # heartbeat proves the cut was a sleep. (The resume-site guards above catch
+    # `sdk_stream_silence`/`no_progress_stall`; this is idempotent for them —
+    # below threshold it returns the reason unchanged.)
+    aborted_reason = sleep_relabel(
+        aborted_reason,
+        sleep_detector.counted_sleep_seconds,
+        fixture.caps.inactivity_seconds,
+    )
+    if aborted_reason == "host_slept" and error and "host slept" not in error:
+        error = (
+            f"host slept {sleep_detector.counted_sleep_seconds:.0f}s "
+            f">= inactivity cap {fixture.caps.inactivity_seconds}s"
+            f" (was: {error})"
+        )
+
+    # A ResultMessage populates `usage` with the SDK's authoritative numbers,
+    # except on a run with more than one query, where its tokens, turns and
+    # duration cover the last query and its cost and API time the last CLI
+    # process (`result_message_covers_last_query_only`). Every abort path (wall-clock
+    # timeout, inactivity silence, no-progress stall) cuts the stream before it,
+    # leaving `usage` empty — so fall back to what the stream already told us.
+    # `usage_source` marks which one you're reading: a fallback block has exact
+    # token counts but a null cost, and must not be compared against a clean run's
+    # `total_cost_usd`.
     result_message_seen = "num_turns" in usage
     if not result_message_seen:
+        # To the start of the teardown, not to now: waiting for the CLI to
+        # exit (about 10s at most) is not time the run spent, as in skill_runner.
         usage = _fallback_usage(
-            streamed, int((time.monotonic() - run_started) * 1000)
+            streamed, int((consume_ended - run_started) * 1000)
         )
+
+    # Both new fields are written HERE, after the fallback branch above, so they
+    # land on `result_message` and `streamed_fallback` runs alike. Writing them
+    # inside `_fallback_usage` — where the `_USAGE_FIELDS` sums already live —
+    # would yield them on aborted runs and nowhere else.
+    _message_usage, _thread_windows = _thread_usage(streamed, msg_thread)
 
     usage = {
         **usage,
         "usage_source": "result_message" if result_message_seen else "streamed_fallback",
+        "message_usage": _message_usage,
+        "thread_windows": _thread_windows,
         "continue_nudges": continue_nudges["n"],
+        # Read by run_e2e_test's clock fields (sleep_usage_fields).
+        "counted_sleep_seconds": sleep_detector.counted_sleep_seconds,
+        # Per-class hand-back tallies (#2328). Counts hand-backs INCLUDING the
+        # terminal one, so a hook-terminated run carries one more than
+        # continue_nudges — but NOT universally: a run killed by the wall clock, the
+        # tool cap, inactivity or an error never reaches this hook and records no
+        # terminal class. Additive: branch on key presence, no schema bump.
+        "hand_back_classes": hand_back_classes,
         # Stall-resume + forensics (added with the progress watchdog). `timeline`
-        # is [elapsed_seconds, kind] per SDK message — split structural vs stall
+        # is [elapsed_seconds, kind, tool_names, wall_ts, message_id] per SDK
+        # message — split structural vs stall
         # time and locate a no-progress gap without a session.jsonl. `caps` makes
         # the runlog self-describing so a `timeout` is never ambiguous again.
         "session_id": session_id["id"],
@@ -2252,6 +3393,10 @@ async def _run_agent(
         # means the CLI default (sonnet-5 -> 32000).
         "max_output_tokens": max_output_tokens,
         "cli_version": cli_version["v"],
+        # What the CLI offered at init, not what took effect: blind to the
+        # per-model gate — `false` proves off, `true` does not prove on.
+        # `tool_search` (what was asked for) is added in run_e2e_test.
+        "tool_search_offered": tool_search_offered["v"],
         "caps": {
             "wall_clock_seconds": fixture.caps.wall_clock_seconds,
             "inactivity_seconds": fixture.caps.inactivity_seconds,
@@ -2274,7 +3419,7 @@ async def _run_agent(
     if guardrail_shadow_violations:
         _emit(
             f"[guardrail-shadow] {len(guardrail_shadow_violations)} protected write(s) "
-            "with no recent matching Skill invocation (shadow mode — not denied)"
+            "with no recent matching Skill call or typed agent spawn (shadow mode — not denied)"
         )
     # issue #963 — fold in the hook-sourced provenance gaps collected live in
     # pretool_hook. Same list because both answer "a guardrail's effect landed
@@ -2326,8 +3471,8 @@ async def _run_agent(
 def collect_post_hoc_shadow(
     workspace: Path, *, emit: Callable[[str], None] | None = None
 ) -> list[dict[str, Any]]:
-    """The two SHADOW-MODE post-hoc checks that read the FINAL research.json,
-    rather than scanning `tool_calls`. Returns entries for
+    """The three SHADOW-MODE post-hoc checks that read the FINAL project
+    documents, rather than scanning `tool_calls`. Returns entries for
     `guardrail_shadow_violations`; never fails a run.
 
     - **citation-nulling** (issue #1133): a source that BACKS A WRITTEN CONCLUSION
@@ -2337,21 +3482,31 @@ def collect_post_hoc_shadow(
       resolved conflict that no structured `conflicts[]` entry backs, so the
       resolution lives only in prose and the viewer's Conflicts section stays
       blank.
+    - **tree-fact/assertion disagreement** (issues #2472, #2558): a materialized
+      tree fact holds a value the assertion it was minted from no longer holds,
+      so a correction never reached the fact. The one check here that reads the
+      tree as well as research.json.
 
-    Both share `guardrail_shadow_violations`, discriminated by `kind` so the
+    All three share `guardrail_shadow_violations`, discriminated by `kind` so the
     shadow report counts each in its own bucket.
 
     **Extracted from `_run_agent` so it can be tested at all.** Inline, this ran
     only inside a coroutine that needs the Claude Agent SDK and a live model, so
-    nothing offline could reach it — and `read_research_json` returns None on a
-    missing or unparseable file while both detectors return `[]` on None, which
-    means a broken workspace read is indistinguishable from a clean project. That
+    nothing offline could reach it — and both workspace readers return None on a
+    missing or unparseable file while every detector here returns `[]` on None,
+    which means a broken workspace read is indistinguishable from a clean
+    project. That
     is exactly the "is the behaviour absent or is the detector broken" ambiguity
     this phase exists to remove, sitting in the one path no test covered. The
     citation-nulling check has never fired on the corpus, so this is its only
     positive control.
     """
     research = read_research_json(workspace)
+    # The tree is read here too, for the agreement check below. Both reads
+    # return None on a missing or unparseable file and every detector answers
+    # [] on None, so a broken workspace read stays indistinguishable from a
+    # clean project — the ambiguity this function's own tests pin.
+    tree = read_tree_json(workspace)
     out: list[dict[str, Any]] = []
 
     citation_nulling = find_citation_nulling_in_conclusions(research)
@@ -2370,39 +3525,66 @@ def collect_post_hoc_shadow(
             emit(
                 f"[guardrail-shadow] {len(conflict_unpersisted)} concluded "
                 "question(s) relying on an unpersisted conflict resolution "
-                "(shadow mode — not failed)"
+                "(reported, not failed here — research_append refuses the write "
+                "at the writer tool)"
+            )
+
+    fact_disagreements = find_tree_facts_disagreeing_with_assertions(research, tree)
+    if fact_disagreements:
+        out.extend(fact_disagreements)
+        if emit:
+            emit(
+                f"[guardrail-shadow] {len(fact_disagreements)} tree fact "
+                "attribute(s) disagreeing with the assertion they were "
+                "materialized from (shadow mode — not failed)"
             )
     return out
+
+
+def _write_readable_report(result_path: Path) -> None:
+    """Write the run's readable `.txt` into `<runlog dir>/reports/`. Never raises.
+
+    Beside the run log it describes, so a run redirected with `--runlog-root`
+    stays self-contained. The grade stays hidden in it until the run is graded
+    (spec §7.4) — see `e2e.run_report`. A report that fails to render must never
+    cost a run whose log is already written, so this only prints.
+    """
+    try:
+        from e2e.run_report import write_reports
+
+        written, _skipped, unreadable = write_reports([result_path], force=True)
+        for report in written:
+            print(f"  readable report: {report}")
+        if unreadable:
+            print(f"  (no readable report: {result_path} could not be read)")
+    except Exception as exc:  # noqa: BLE001 — a report must never fail the run
+        print(f"  (no readable report: {type(exc).__name__}: {exc})")
 
 
 def _find_session_transcript(workspace: Path) -> Path | None:
     """Locate the Agent SDK's raw session JSONL for this run.
 
     The SDK runs Claude Code as a subprocess, which writes a session transcript
-    to ``~/.claude/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
+    to ``<config-root>/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
     the workspace tempdir, so it survives the TemporaryDirectory cleanup — but it
     is otherwise only discoverable by hand. It is strictly richer than the
     runlog's own structured trace: only the JSONL has
     per-message timestamps, per-turn token/cache usage, thinking blocks, and
     untruncated tool payloads — everything needed to diagnose latency and cost.
 
-    Matched on the unique tempdir leaf (``e2e-<id>-<rand>``), which appears
-    verbatim in the slug, so this does not depend on the exact path-slug
-    transform. Returns the newest matching JSONL, or None if none is found.
+    Resolved through ``subagent_capture.sdk_cache_dir``, which asks the SDK for
+    the key. An earlier version matched on the tempdir leaf and claimed it
+    "appears verbatim in the slug, so this does not depend on the exact path-slug
+    transform" — that was wrong in both halves, and it silently cost this file
+    its sibling ``.session.jsonl`` on roughly one run in five (#2468).
+
+    Returns the newest matching JSONL, or None if none is found. Never raises:
+    a failure here must not cost the run its log.
+
+    The lookup itself is `subagent_capture.find_session_transcript`, shared with
+    the unit harness's main-thread capture.
     """
-    projects = Path.home() / ".claude" / "projects"
-    if not projects.is_dir():
-        return None
-    leaf = workspace.name
-    candidates = [
-        p
-        for d in projects.iterdir()
-        if d.is_dir() and d.name.endswith(leaf)
-        for p in d.glob("*.jsonl")
-    ]
-    if not candidates:
-        return None
-    return max(candidates, key=lambda p: p.stat().st_mtime)
+    return find_session_transcript(workspace)
 
 
 async def run_e2e_test(
@@ -2417,6 +3599,10 @@ async def run_e2e_test(
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
     person_evidence_guard: str = PERSON_EVIDENCE_GUARD_SHADOW,
+    deny_shell: bool = False,
+    deny_project_reads: bool = False,
+    context_1m: bool = False,
+    tool_search: bool = True,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
 
@@ -2438,7 +3624,9 @@ async def run_e2e_test(
         )
 
     started_at = time.time()  # real clock (counts system sleep)
-    started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
+    # Pauses during macOS/Linux sleep but NOT Windows Modern Standby; the
+    # heartbeat in _run_agent counts that part (sleep_usage_fields).
+    started_mono = time.monotonic()
     # Provenance (#1091), captured at run start from the repo files this run
     # stages — the prompt identity, so a committed run ties back to what produced
     # it. `agents_dir` MUST match the one `build_workspace` uses below (it takes
@@ -2484,6 +3672,10 @@ async def run_e2e_test(
             max_output_tokens=max_output_tokens,
             agent_model=agent_model,
             person_evidence_guard=person_evidence_guard,
+            deny_shell=deny_shell,
+            deny_project_reads=deny_project_reads,
+            context_1m=context_1m,
+            tool_search=tool_search,
         )
 
         final_research = read_research_json(workspace)
@@ -2525,9 +3717,14 @@ async def run_e2e_test(
             raise McpUnavailableError(fallback_message)
 
         judge_seconds = 0.0
-        if skip_judge or final_tree is None:
-            # Both cases produce no verdict: --skip-judge by request, or no
-            # tree for the judge to grade (agent crashed before writing one).
+        if skip_judge or final_tree is None or stop_reason == "host_slept":
+            # No verdict is produced: --skip-judge by request, no tree for the
+            # judge to grade (agent crashed before writing one), or the host
+            # slept past the inactivity cap (issue #2974) — the run's budget was
+            # spent on standby, so grading it would score the power settings, not
+            # the agent. Unlike mcp_unavailable above, host_slept does NOT raise:
+            # the run log IS committed (see runlog_prefix) so the operator can
+            # see why, but it carries no verdict and is excluded from rates.
             judge_output: dict[str, Any] = {}
             verdict = "skipped"
         else:
@@ -2561,21 +3758,19 @@ async def run_e2e_test(
             judge_seconds = time.monotonic() - judge_start
 
         # The COMPLIANCE axis (§4.4). Deliberately does not touch `verdict` —
-        # `E2eResult` derives `compliance` and the combined `outcome` gate
-        # from these violations. See check_guardrail_compliance.
+        # `E2eResult` derives `compliance` from these violations, and since the
+        # §8 detectors were demoted (lead ruling 2026-09-25) that is ALL it
+        # derives: they no longer move the `outcome` gate.
+        # See check_guardrail_compliance.
         guardrail_bypass_violations = check_guardrail_compliance(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
 
-        # SHADOW MODE ONLY (issue #1193) — a new ParentChild/Couple relationship
-        # was written this run but the free, deterministic `person_warnings`
-        # guardrail was never called. Folded into the same already-plumbed
-        # `guardrail_shadow_violations` field, discriminated by its `kind` key so
-        # the shadow report counts it in its own bucket. Logs; never fails the
-        # run — unlike guardrail_bypass_violations above, this does not feed
-        # compliance/outcome. Promotion to a hard gate, or a mandatory call in the
-        # `/research` orchestrator so an inlined write is still gated, is gated on
-        # measuring this fire rate across the corpus (issue #1193, question b).
+        # SHADOW MODE ONLY (issue #2840) — a tree writer returned
+        # unjustified_warnings but the agent never re-called with
+        # warningJustifications. The engine gate (PR 1 of #2840) now prevents
+        # unjustified writes from landing; this detects the case where the agent
+        # gave up after a refusal.
         warnings_unchecked_shadow = find_relationship_writes_without_warnings_check(
             tool_calls, final_tree, starting_tree=starting_tree
         )
@@ -2584,10 +3779,14 @@ async def run_e2e_test(
                 guardrail_shadow_violations + warnings_unchecked_shadow
             )
 
-        # The TREE-side citation-nulling arm (issue #1358). Wired here, not beside
-        # the research-side call above, because that site has no tree in scope —
-        # this one has `final_research`, `final_tree` and `starting_tree`
-        # together, which is what the gate needs.
+        # The TREE-side citation-nulling arm (issue #1358). This arm reads
+        # `final_research` and `final_tree` and no seed, so since issue #2558 gave
+        # `collect_post_hoc_shadow` a tree read it could equally sit there; the
+        # original reason recorded here, that the other site had no tree in scope,
+        # has stopped being true. It stays beside the two arms below, which DO
+        # diff against `starting_tree` and can only live at this site: moving one
+        # of the three alone would split the tree-reading arms across two call
+        # sites and buy nothing.
         #
         # Shadow only, and deliberately not graduated by this card. Its sibling
         # measures ZERO across the corpus (1,884 concluded sources, all cited),
@@ -2619,19 +3818,21 @@ async def run_e2e_test(
                 guardrail_shadow_violations + tree_encoding_shadow
             )
 
-        # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it
-        # matches the wall-clock cap and the stall watchdog (also monotonic) and
-        # is NOT inflated by laptop sleep. `real_clock_seconds` is the literal
-        # elapsed (time.time); `slept_seconds` (their gap) is ≈ time the machine
-        # slept, so a long idle never masquerades as a stall again. `judge_seconds`
-        # is the post-agent judge call, kept separate from the agent run.
-        active_seconds = time.monotonic() - started_mono
-        real_seconds = time.time() - started_at
+        # Clocks: spec §6 "Clocks". `wall_clock_seconds` is active time: monotonic
+        # minus the sleep the heartbeat counted, which matters on Windows, where
+        # monotonic advances through Modern Standby. `slept_seconds` adds the
+        # part monotonic left out (macOS/Linux) to that counted part. The caps
+        # and watchdogs still run on raw monotonic, so on Windows a standby still
+        # consumes them (what a slept run becomes: issue #2974). Sleep during the
+        # workspace build or the judge falls outside the heartbeat and is not
+        # counted. `judge_seconds` is the post-agent judge call.
         usage = {
             **usage,
-            "wall_clock_seconds": active_seconds,
-            "real_clock_seconds": real_seconds,
-            "slept_seconds": max(0.0, real_seconds - active_seconds),
+            **sleep_usage_fields(
+                time.monotonic() - started_mono,
+                time.time() - started_at,
+                usage.get("counted_sleep_seconds") or 0.0,
+            ),
             "judge_seconds": judge_seconds,
             # Reasoning config, so a run is self-describing when A/B'ing effort ×
             # output-budget × model vs subagents[] behavior. `agent_model` is the
@@ -2650,14 +3851,46 @@ async def run_e2e_test(
             # find_person_evidence_missing_same_person sees no person_evidence
             # entry for that person and its compliance arm passes VACUOUSLY.
             "person_evidence_guard": person_evidence_guard,
+            # P2 — the two filesystem denials, off by default. Recorded because
+            # a run made with either on is not comparable to one without: its
+            # reads were rerouted through the MCP tools, and every refused
+            # attempt sits in blocked_tree_reads as blocked_by "shell"/"path".
+            "deny_shell": deny_shell,
+            "deny_project_reads": deny_project_reads,
+            # The SDK betas this run requested. `[]` when off. A 1M-window run
+            # compacts differently from the corpus, so a reader comparing runs
+            # has to be able to see it without inferring it from the numbers.
+            "betas": list(_BETAS_1M) if context_1m else [],
+            # What `--no-tool-search` asked for; `tool_search_offered` (from
+            # _run_agent) is what the CLI offered. Off is not comparable to the
+            # corpus — every schema is loaded up front — and CI rejects a run
+            # with either one False committed under eval/runlogs/e2e/.
+            "tool_search": tool_search,
         }
 
         # Summarize any subagent transcripts (record-extractor, image-reader, …)
         # from the SDK's ephemeral cache while `workspace` is still in scope (the
-        # cache lives outside the tempdir, keyed on workspace.name). Best-effort;
+        # cache lives outside the tempdir; see sdk_cache_dir for how it is
+        # located). Best-effort;
         # surfaces a runaway-thinking subagent freeze directly in the committed
         # runlog, which tool_calls alone can't show. See subagent_capture.py.
-        subagents = collect_subagents(workspace)
+        subagents, subagent_capture_status = collect_subagents(workspace)
+        # #3045 — a background ("Async agent launched") subagent's tool calls never
+        # reach the message stream `_consume` builds `tool_calls` from, so recover
+        # them here from the same transcripts `collect_subagents` reads and append
+        # them (out of chronological order; see backfill_background_tool_calls).
+        backfill_background_tool_calls(workspace, tool_calls)
+
+        # The whole-run figure (#2582). `usage["usage"]` is main-thread only, so
+        # until this merge every cost figure over this corpus was main plus a
+        # subtraction. Written as two siblings rather than by correcting
+        # `usage["usage"]` in place: that field is what `corpus_report`'s spend
+        # tally and the 0.90x cost calibration read, and silently widening it
+        # would move every historical comparison under them.
+        whole_run_usage, whole_run_cost = merge_whole_run_usage(usage, subagents)
+        if isinstance(usage, dict):
+            usage["whole_run_usage"] = whole_run_usage
+            usage["whole_run_cost_usd_estimated"] = whole_run_cost
 
         result = E2eResult(
             test_id=fixture.id,
@@ -2676,6 +3909,7 @@ async def run_e2e_test(
             guardrail_shadow_violations=guardrail_shadow_violations,
             protected_writes_by_unnamed_delegate=unnamed_delegate_violations,
             subagents=subagents,
+            subagent_capture_status=subagent_capture_status,
             git_sha=run_git_sha,
             skills_hash=run_skills_hash,
         )
@@ -2688,6 +3922,7 @@ async def run_e2e_test(
             final_research=final_research,
             timestamp=result.captured_at,
         )
+        _write_readable_report(paths["result"])
 
         # Copy the raw SDK session transcript next to the runlog. The runlog
         # carries a summarized trace; this JSONL carries per-message

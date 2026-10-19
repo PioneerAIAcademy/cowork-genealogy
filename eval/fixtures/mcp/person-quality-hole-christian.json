@@ -1,6 +1,6 @@
 {
   "tool": "person_quality",
-  "description": "person_quality on Christian P. Hole (KD96-TV2) -- the real captured FamilySearch response (Polk Co., Minnesota): overall 0.97 with 7 completeness/verifiability issues (burial missing a date, marriage place missing a city, 5 untagged residences). Used by ut_check_warnings_014 and _015.",
+  "description": "person_quality on Christian P. Hole (KD96-TV2) -- the real captured FamilySearch response (Polk Co., Minnesota): overall 0.97 with 7 completeness/verifiability issues (burial missing a date, marriage place missing a city, 5 untagged residences).",
   "args": { "personId": "KD96-TV2" },
   "response": {
     "personId": "KD96-TV2",

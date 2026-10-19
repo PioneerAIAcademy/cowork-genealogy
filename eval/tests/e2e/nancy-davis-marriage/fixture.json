@@ -1,0 +1,20 @@
+{
+  "id": "nancy-davis-marriage",
+  "name": "Nancy Davis — marriage in May 1868, Newton County, Missouri",
+  "genre": "record-hint",
+  "source_pid": "LJK2-JBH",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Nancy Davis, born about 1837 in Bradley County, Tennessee, and living in Neosho, Newton County, Missouri in 1850, marry William James Brewer?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1860s",
+    "geography": "US-MO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "image_basis": false,
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 27, hint-samples.csv row 896, flag adds_marriage, confidence 3). Resolved OUTCOME 2 (the answer is something else — the tree links the wrong woman to Brewer) on an INDEX/CENSUS route. The 12 May 1868 Newton County, Missouri marriage of William Bremer (Brewer) and Nancy Angeline Davis (ark:/61903/1:1:V28T-J7T, ark:/61903/1:1:V28T-J7R, ark:/61903/1:1:6XNV-J1Z3) is NOT the tree person LJK2-JBH's. LJK2-JBH is Nancy Davis b. ~1837 Tennessee (only own source the 1850 census ark:/61903/1:1:MDZF-Q7C, Thomas J. Davis household at Neosho, Newton County; Moreland daughters b.1858/1860 TN), wrongly coupled to William James Brewer. Brewer's actual wife is a DISTINCT person, Nancy Angelina Davis (L8YY-CBX), b. 4 May 1853 Missouri, d. 1904 Eastland TX, who already holds the 1868 marriage (bride personas ark:/61903/1:1:V28T-J7T, ark:/61903/1:1:6XNV-J1ZQ), the Brewer children, and her own census personas (1860 ark:/61903/1:1:MHZ1-XC1, 1870 ark:/61903/1:1:MXLB-P9R, 1880 ark:/61903/1:1:M66Z-BVH, 1900 ark:/61903/1:1:M3L5-BTK; Nancy A. b.1853/May 1853 MO, marriage 1868) and her 1904 death records (ark:/61903/1:1:K3SF-DKR) -- the household/head personas MXLB-P95 (1870) and M3L5-BTV (1900) belong to William James Brewer, not to Nancy. A woman born ~1853 cannot be the ~1837 Nancy of the 1850 census, so these are two people and the hint is a false match for LJK2-JBH. Findings follow the adelaida-martinez-mother precedent (two required findings) and name L8YY-CBX as the strongest, not-required identification. image_basis false: the register image (ark:/61903/3:1:3QS7-998M-Y8G2) returned HTTP 403 and was NOT read, so no register field was verified and no Step 1a calibration was performed; the resolution rests on index/census evidence."
+}

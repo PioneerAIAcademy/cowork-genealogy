@@ -3,9 +3,12 @@ dev-login (local, no allowlist) → create sample session → list → resume �
 delete. Also asserts the sample seed lands real project files on the sandbox FS.
 """
 from fastapi.testclient import TestClient
+from sqlmodel import Session, select
 
 from app.config import get_settings
+from app.db import get_engine
 from app.main import app
+from app.models import User
 
 
 def test_unauthenticated_is_rejected():
@@ -115,3 +118,218 @@ def test_session_image_serves_saved_scan():
             ), bad
 
         client.delete(f"/api/sessions/{sid}")
+
+
+def test_logout_revokes_all_sessions():
+    """After logout, a copied session cookie from the same user is rejected."""
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "revoke-logout@example.com"})
+        assert client.get("/auth/me").status_code == 200
+
+        stolen = client.cookies.get("wb_session")
+
+        client.post("/auth/logout")
+        assert client.get("/auth/me").status_code == 401
+
+        # A second client presenting the pre-logout cookie is also rejected.
+        with TestClient(app, cookies={"wb_session": stolen}) as thief:
+            r = thief.get("/auth/me")
+            assert r.status_code == 401, "stolen cookie must be rejected after logout"
+
+    with Session(get_engine()) as s:
+        u = s.exec(
+            select(User).where(
+                User.email == "revoke-logout@example.com"
+            )
+        ).first()
+        if u:
+            s.delete(u)
+            s.commit()
+
+
+def test_logout_clears_cookie_when_revocation_write_fails(monkeypatch):
+    """A dead connection during the revocation write must not stop logout from
+    clearing the cookie."""
+    email = "dbfail@example.com"
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": email})
+
+        def boom(self):
+            raise RuntimeError("neon connection dropped")
+
+        monkeypatch.setattr(Session, "commit", boom)
+        r = client.post("/auth/logout")
+        monkeypatch.undo()
+
+        assert r.status_code == 200, f"logout must not fail: {r.status_code}"
+        assert r.headers.get("set-cookie"), \
+            "logout must clear the cookie even when the revocation write fails"
+        assert client.get("/auth/me").status_code == 401
+
+    with Session(get_engine()) as s:
+        u = s.exec(select(User).where(User.email == email)).first()
+        if u:
+            s.delete(u)
+            s.commit()
+
+
+def test_login_after_revocation_works():
+    """A fresh login after logout works immediately: the new cookie's iat is
+    strictly greater than the revocation stamp, which is never cleared."""
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "relogin@example.com"})
+        client.post("/auth/logout")
+        assert client.get("/auth/me").status_code == 401
+
+        client.post("/auth/dev-login", json={"email": "relogin@example.com"})
+        assert client.get("/auth/me").status_code == 200, \
+            "fresh login after revocation must succeed"
+
+    with Session(get_engine()) as s:
+        u = s.exec(
+            select(User).where(
+                User.email == "relogin@example.com"
+            )
+        ).first()
+        if u:
+            s.delete(u)
+            s.commit()
+
+
+def test_pre_feature_cookie_rejected_after_revocation():
+    """A cookie minted before the iat feature (no iat field) is rejected once
+    sessions_revoked_at is set — it defaults to iat=0, which is always older."""
+    from app.auth import _serializer, COOKIE_NAME, COOKIE_MAX_AGE
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "legacy-cookie@example.com"})
+
+        with Session(get_engine()) as s:
+            user = s.exec(
+                select(User).where(
+                    User.email == "legacy-cookie@example.com"
+                )
+            ).first()
+            uid = user.id
+
+        legacy_token = _serializer().dumps({"uid": uid})
+
+        client.post("/auth/logout")
+
+        with TestClient(app, cookies={"wb_session": legacy_token}) as legacy:
+            r = legacy.get("/auth/me")
+            assert r.status_code == 401, \
+                "pre-feature cookie (no iat) must be rejected after revocation"
+
+    with Session(get_engine()) as s:
+        u = s.get(User, uid)
+        if u:
+            s.delete(u)
+            s.commit()
+
+
+def test_revoked_cookie_is_not_resurrected_by_a_later_login():
+    """A stolen cookie must stay dead even after the victim logs back in."""
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "v@example.com"})
+        stolen = client.cookies.get("wb_session")
+
+        def stolen_works():
+            with TestClient(app) as thief:
+                thief.cookies.set("wb_session", stolen)
+                return thief.get("/api/sessions").status_code
+
+        assert stolen_works() == 200
+        client.post("/auth/logout")
+        assert stolen_works() == 401
+        client.post("/auth/dev-login", json={"email": "v@example.com"})
+        assert client.get("/api/sessions").status_code == 200
+        assert stolen_works() == 401, "revoked cookie must stay revoked"
+
+    with Session(get_engine()) as s:
+        u = s.exec(select(User).where(User.email == "v@example.com")).first()
+        if u:
+            s.delete(u)
+            s.commit()
+
+
+# --- issue #3406: a session more than 72 h old can be read but not continued ---
+
+
+def _new_session_aged(client: TestClient, hours: float) -> str:
+    from datetime import timedelta
+
+    from app.models import Project, utcnow
+
+    sid = client.post("/api/sessions", json={}).json()["id"]
+    with Session(get_engine()) as s:
+        p = s.get(Project, sid)
+        p.created = utcnow() - timedelta(hours=hours)
+        s.add(p)
+        s.commit()
+    return sid
+
+
+def _count_resumes(monkeypatch) -> list[str]:
+    provider = app.state.provider
+    real = provider.resume
+    calls: list[str] = []
+
+    async def counting(sandbox_id, *a, **kw):
+        calls.append(sandbox_id)
+        return await real(sandbox_id, *a, **kw)
+
+    monkeypatch.setattr(provider, "resume", counting)
+    return calls
+
+
+def test_connect_refuses_a_session_older_than_72h_without_waking_it(monkeypatch):
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = _new_session_aged(client, 73)
+        resumes = _count_resumes(monkeypatch)
+        r = client.post(f"/api/sessions/{sid}/connect")
+        assert r.status_code == 410, r.text
+        assert "more than 72 hours old" in r.json()["detail"]
+        assert resumes == []
+        # Reading stays open.
+        assert client.post(f"/api/sessions/{sid}/resume").status_code == 200
+        assert client.get(f"/api/sessions/{sid}/state").status_code == 200
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_connect_accepts_a_session_younger_than_72h():
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = _new_session_aged(client, 71)
+        r = client.post(f"/api/sessions/{sid}/connect")
+        assert r.status_code == 200, r.text
+        assert r.json()["token"]
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_session_list_reports_continuable():
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        old = _new_session_aged(client, 73)
+        young = _new_session_aged(client, 71)
+        rows = {p["id"]: p for p in client.get("/api/sessions").json()}
+        assert rows[old]["continuable"] is False
+        assert rows[young]["continuable"] is True
+        client.delete(f"/api/sessions/{old}")
+        client.delete(f"/api/sessions/{young}")
+
+
+def test_continuable_handles_aware_and_naive_created():
+    """Postgres reads `created` back tz-aware; SQLite, which every test above
+    runs on, reads it back naive. Called directly so both branches run."""
+    from datetime import timedelta
+
+    from app.models import Project, utcnow
+    from app.sessions import _continuable
+
+    old, young = utcnow() - timedelta(hours=73), utcnow() - timedelta(hours=71)
+    assert _continuable(Project(created=old)) is False
+    assert _continuable(Project(created=young)) is True
+    assert _continuable(Project(created=old.replace(tzinfo=None))) is False
+    assert _continuable(Project(created=young.replace(tzinfo=None))) is True

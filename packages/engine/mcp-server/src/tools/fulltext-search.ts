@@ -1,6 +1,6 @@
-import { getValidToken } from "../auth/refresh.js";
+import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import { toArk } from "../utils/ark.js";
 import type {
   FulltextSearchInput,
@@ -18,13 +18,38 @@ import {
   formatUnloggedRefs,
   UNLOGGED_SEARCHES_NOTE,
   NIL_SEARCH_NEEDS_LOG_NOTE,
+  NOT_FULLTEXT_SEARCHABLE_NOTE,
 } from "../utils/results-staging.js";
 import { compactStagedFulltextSearch } from "../utils/staged-compaction.js";
+import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
 
 export type { FulltextSearchInput } from "../types/fulltext-search.js";
 
 const FS_FULLTEXT_URL =
   "https://www.familysearch.org/service/search/fulltext/search";
+
+const RECORD_PLACE_EXAMPLES: Record<string, string> = {
+  recordPlace0: '"10"',
+  recordPlace1: '"10,Alabama"',
+  recordPlace2: '"10,Alabama,Autauga"',
+  recordPlace3: '"10,Alabama,Autauga,Booth"',
+};
+
+function validateRecordPlace(field: string, value: string, level: number): void {
+  // Pattern: a leading numeric segment followed by exactly `level` non-empty
+  // comma-separated segments.  e.g. level 0 → /^\d+$/, level 1 → /^\d+,[^,]+$/
+  const pattern = level === 0
+    ? /^\d+$/
+    : new RegExp(`^\\d+${`(?:,[^,]+)`.repeat(level)}$`);
+  if (!pattern.test(value)) {
+    throw new Error(
+      `${field} value "${value}" is not in the required facet form ` +
+      `(e.g. ${RECORD_PLACE_EXAMPLES[field]}). ` +
+      `Call fulltext_search with includeFacets: true to get Place facet items, ` +
+      `then pass the filterParam value from the facet response.`
+    );
+  }
+}
 
 function validateInput(input: FulltextSearchInput): void {
   if (!input.keywords && !input.name && !input.place && !input.nlQuery && !input.imageGroupNumber) {
@@ -54,6 +79,13 @@ function validateInput(input: FulltextSearchInput): void {
   ) {
     throw new Error("yearFrom must be <= yearTo.");
   }
+  for (let n = 0; n <= 3; n++) {
+    const field = `recordPlace${n}` as keyof FulltextSearchInput;
+    const value = input[field];
+    if (value !== undefined) {
+      validateRecordPlace(field, value as string, n);
+    }
+  }
 }
 
 function buildUrl(input: FulltextSearchInput): string {
@@ -78,6 +110,9 @@ function buildUrl(input: FulltextSearchInput): string {
 
   add("count", input.count ?? 5);
   add("offset", input.offset ?? 0);
+
+  // m.queryRequireDefault=on requires at least one of the listed terms/phrases
+  // to appear in the document.
   add("m.queryRequireDefault", "on");
 
   if (input.includeFacets) {
@@ -134,6 +169,25 @@ function mapEntry(entry: FSFulltextEntry): FulltextResult | null {
   return result;
 }
 
+function parseFilterParam(raw: string): string {
+  // Upstream facet `params` are compound: "c.recordPlace1=on&f.recordPlace0=10"
+  // or "c.collectionId=on&f.collectionId=M9J1-97G". Extract the value of the
+  // last f.<key>=<value> segment. Observed upstream responses carry exactly one
+  // f. segment; taking the last is a defensive fallback for an unobserved
+  // multi-f. case.
+  const segments = raw.split("&");
+  let lastFilterValue: string | null = null;
+  for (const seg of segments) {
+    if (seg.startsWith("f.")) {
+      const eqIdx = seg.indexOf("=");
+      if (eqIdx !== -1) {
+        lastFilterValue = decodeURIComponent(seg.slice(eqIdx + 1));
+      }
+    }
+  }
+  return lastFilterValue ?? raw;
+}
+
 function mapFacets(raw: FSFulltextFacetItem[]): FulltextFacet[] {
   return raw
     .filter((f) => f.displayName && f.facets?.length)
@@ -141,12 +195,12 @@ function mapFacets(raw: FSFulltextFacetItem[]): FulltextFacet[] {
       name: f.displayName!,
       count: f.count,
       items: (f.facets ?? [])
-        .filter((item) => item.displayName)
+        .filter((item) => item.displayName && item.params)
         .slice(0, 20)
         .map((item) => ({
           name: item.displayName!,
           count: item.count,
-          filterParam: item.params ?? "",
+          filterParam: parseFilterParam(item.params ?? ""),
         })),
     }));
 }
@@ -160,23 +214,22 @@ function echoQuery(input: FulltextSearchInput): Record<string, string | number |
 }
 
 export async function fulltextSearchTool(
-  input: FulltextSearchInput
+  input: FulltextSearchInput,
+  principal: Principal
 ): Promise<FulltextSearchResponse> {
   validateInput(input);
 
-  const token = await getValidToken();
   const url = buildUrl(input);
 
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
+  const fetchHeaders: Record<string, string> = {
     Accept: "application/json",
     "User-Agent": BROWSER_USER_AGENT,
   };
   if (input.nlQuery) {
-    headers["X-FS-Feature-Tag"] = "search_naturalLanguageSupport";
+    fetchHeaders["X-FS-Feature-Tag"] = "search_naturalLanguageSupport";
   }
 
-  const response = await fetchWithTimeout(url, { headers });
+  const response = await fsFetch(principal, url, { headers: fetchHeaders });
 
   if (!response.ok) {
     if (response.status === 401) {
@@ -220,6 +273,36 @@ export async function fulltextSearchTool(
       ? await unloggedStagedSearches(input.projectPath)
       : [];
 
+  // A nil on an image group the volume metadata reports as NOT full-text
+  // searchable is a fact about the volume, not about the person. The session
+  // behind issue #1988 ran exactly this search against a group already returned
+  // with `fulltextSearchable: false` and read the guaranteed zero as evidence of
+  // absence. Stated, not enforced: the endpoint can answer unknown, and refusing
+  // on unknown would block a legitimate search.
+  let notSearchableNote: string | undefined;
+  if (
+    // Truthiness, NOT `!== undefined`: `buildUrl` gates the `q.groupName`
+    // filter the same way, so an empty string runs an UNSCOPED full-corpus
+    // search. Gated on `!== undefined` the note then told the caller a nil from
+    // the whole corpus was a fact about a volume it never searched -- and, on a
+    // `projectPath` call, contradicted `nilSearchNeedsLog` in the same response,
+    // discarding a real negative finding.
+    input.imageGroupNumber &&
+    results.length === 0 &&
+    (data.results ?? 0) === 0
+  ) {
+    // Bounded to the nil + imageGroupNumber case on purpose: this is an extra
+    // upstream leg, and it buys nothing on a search that returned rows.
+    const searchable = await fetchFulltextSearchable(
+      [input.imageGroupNumber],
+      principal,
+    );
+    // `null` is UNKNOWN, not false — no note rather than a wrong one.
+    if (searchable !== null && !searchable.has(input.imageGroupNumber)) {
+      notSearchableNote = NOT_FULLTEXT_SEARCHABLE_NOTE;
+    }
+  }
+
   const out: FulltextSearchResponse = {
     query: echoQuery(input),
     totalResults: data.results ?? 0,
@@ -245,6 +328,8 @@ export async function fulltextSearchTool(
     ...(input.projectPath !== undefined && results.length === 0 && (data.results ?? 0) === 0
       ? { nilSearchNeedsLog: NIL_SEARCH_NEEDS_LOG_NOTE }
       : {}),
+    // Precedes `results` with the other notes, for the same size-bound reason.
+    ...(notSearchableNote ? { notFulltextSearchable: notSearchableNote } : {}),
     results,
   };
 
@@ -296,6 +381,10 @@ export const fulltextSearchToolSchema = {
     "(+ require, - exclude, \"...\" phrase, * wildcard). Finds people mentioned anywhere in a document " +
     "(witnesses, neighbors, heirs, appraisers), not just indexed principals. " +
     "No fuzzy matching — use + to require terms, otherwise default is OR. " +
+    "Coverage is an incomplete, continuously growing subset of FamilySearch's images — " +
+    "weighted toward English-language records from the Americas, the UK and Australasia, " +
+    "and weaker on non-Latin scripts and continental Europe. Verify coverage before reading " +
+    "a nil result as absence: the document may be unsearchable rather than missing. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -309,7 +398,8 @@ export const fulltextSearchToolSchema = {
       name: {
         type: "string",
         description:
-          "Search within name fields only. Same operator syntax as keywords.",
+          "Search within name fields only. Do not prefix terms with + (m.queryRequireDefault requires at least one term to match). " +
+          "Use get_name_variants to get explicit variant forms before querying.",
       },
       place: {
         type: "string",
@@ -344,20 +434,27 @@ export const fulltextSearchToolSchema = {
       },
       recordPlace0: {
         type: "string",
-        description: "Filter by region.",
+        description:
+          "Filter by region. Must be the numeric filterParam from a Place facet " +
+          '(e.g. "10" for United States). Call with includeFacets: true first.',
       },
       recordPlace1: {
         type: "string",
         description:
-          "Filter by country (or state within US/Mexico/Canada/UK).",
+          "Filter by country/state. Must be the filterParam from a Place facet " +
+          '(e.g. "10,Alabama"). Drill down: send recordPlace0 with includeFacets: true.',
       },
       recordPlace2: {
         type: "string",
-        description: "Filter by county.",
+        description:
+          "Filter by county. Must be the filterParam from a Place facet " +
+          '(e.g. "10,Alabama,Autauga"). Drill down from recordPlace1.',
       },
       recordPlace3: {
         type: "string",
-        description: "Filter by city.",
+        description:
+          "Filter by city. Must be the filterParam from a Place facet " +
+          '(e.g. "10,Alabama,Autauga,Booth"). Drill down from recordPlace2.',
       },
       count: {
         type: "number",

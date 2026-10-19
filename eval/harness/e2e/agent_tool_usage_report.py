@@ -19,10 +19,34 @@ for it, which is what makes the finding actionable (Dallan, PR #1085 review):
 
 - **not mentioned in the body** — granted but never asked for; a candidate to
   drop from the agent's `tools:`.
-- **mentioned in the body** — the body tells the agent to call it, yet it never
-  does (`gps-mentor`'s two wiki tools). Either the body is not forcing enough, or
-  the grant did not bind — and *that* split is exactly what #1084's live probe
-  resolves; this offline report cannot.
+- **mentioned in the body** — the body names the tool, yet it is never called
+  (`gps-mentor`'s two wiki tools). Four readings, not two, and this offline
+  report separates none of them:
+  1. the body is not forcing enough — the agent read the instruction and did not
+     comply;
+  2. the grant did not bind — partly closed on 2026-08-30 by
+     `make probe-agent-binding`, but only for the **hosted** option set
+     (ADR-0004 § Enforcement). This corpus comes from `e2e/orchestrator.py`, a
+     different one, so #1084 stays open for the path measured here;
+  3. **the instruction sits in a branch the orchestrator no longer enters.**
+     Check the routing table before reading a never-called tool as
+     non-compliance. Worked example: three of the five `wiki_place_page` sites
+     #1344 cites live in `gps-mentor.md`'s `### pre-exhaustiveness` rubric, and
+     `/research` deleted the rows that invoked that gate on 2026-07-07 (commit
+     `1bc84e58e`, PR #597) — so those three cannot fire, whatever the agent does.
+     Reading 3 does **not** dispose of #1344: the surviving mode-agnostic site
+     still applies under `proof-critique`, and its condition demonstrably obtains
+     — of the 30 focus-attributed `proof-critique` verdicts, 12 carry a
+     `standard` naming Standard 14, and 7 name topical breadth or repository
+     diversity specifically — with the tool still uncalled. It narrows which
+     sites are live; it does not explain the zero;
+  4. **the mention BOUNDS the tool rather than asking for it** — a last-resort
+     note, or an only-if-X condition — so zero calls is the instruction working,
+     not failing. Read the mention itself, not just its presence. The live
+     example is `gps-mentor`'s `wiki_search`, whose only site marks it
+     "Last-resort for finding published guidance" — an instruction that is
+     working precisely when the count stays at zero, so reading it as
+     non-compliance inverts its meaning.
 
 Adds NO instrumentation to a run (same posture as `corpus_report.py` /
 `guardrail_shadow_report.py` / `latency_report.py`): pure analysis over
@@ -171,6 +195,16 @@ class UsageScan(NamedTuple):
     across both sources. `captures` counts `subagents[]` entries per agent_type.
     The three coverage counters describe attribution reach — see `coverage_line`.
     `problems` holds one message per unreadable file.
+
+    `pair_calls` and `pair_runs` are the same data at (agent_type, tool)
+    granularity, for readers that need to name one pair rather than diff a whole
+    agent (`writer_attribution_report`). They are separate fields, not a finer
+    `used`, because they count different things: `pair_calls` counts INVOCATIONS
+    and comes from the capture blocks alone, while `pair_runs` counts distinct
+    runs and unions both sources — a pair recovered only through #1027
+    `tool_calls` attribution therefore has runs and no calls, which is honest
+    rather than a gap. Summing the two sources into one call count would
+    double-count every capture that `tool_calls` also attributed.
     """
 
     used: dict[str, set[str]]
@@ -181,15 +215,22 @@ class UsageScan(NamedTuple):
     no_field: int  # runs with no `subagents` key at all
     recovered_by_toolcalls: int  # capture-less runs still attributed via tool_calls
     problems: list[str]
+    pair_calls: Counter  # (agent_type, bare tool) -> capture-block invocations
+    pair_runs: dict[tuple[str, str], set[str]]  # same key -> `<slug>/<run stem>` ids
 
 
-def _tools_from_capture(sub: dict[str, Any]) -> set[str]:
-    """Bare tool names a single `subagents[]` capture called, from its turn blocks."""
-    tools: set[str] = set()
+def tools_from_capture(sub: dict[str, Any]) -> Counter:
+    """Bare tool names a single `subagents[]` capture called, WITH multiplicity.
+
+    A Counter rather than a set so a caller that needs invocation counts has
+    them; a caller that only needs membership iterates it, which yields its keys,
+    so `set().update(...)` over the result is unchanged.
+    """
+    tools: Counter = Counter()
     for turn in sub.get("turns") or []:
         for block in turn.get("blocks") or []:
             if isinstance(block, str) and block.startswith("tool_use:"):
-                tools.add(block.split(":", 1)[1])
+                tools[block.split(":", 1)[1]] += 1
     return tools
 
 
@@ -205,6 +246,8 @@ def scan(paths: list[Path]) -> UsageScan:
     """
     used: dict[str, set[str]] = {}
     captures: Counter = Counter()
+    pair_calls: Counter = Counter()
+    pair_runs: dict[tuple[str, str], set[str]] = {}
     runs = with_captures = empty_captures = no_field = recovered = 0
     problems: list[str] = []
 
@@ -220,6 +263,7 @@ def scan(paths: list[Path]) -> UsageScan:
             # the running totals below, after every read has succeeded.
             file_used: dict[str, set[str]] = {}
             file_captures: Counter = Counter()
+            file_pair_calls: Counter = Counter()
             for sub in subs_list:
                 if not isinstance(sub, dict):
                     continue
@@ -227,7 +271,10 @@ def scan(paths: list[Path]) -> UsageScan:
                 if not agent:
                     continue  # a capture with no agent_type can't be attributed
                 file_captures[agent] += 1
-                file_used.setdefault(agent, set()).update(_tools_from_capture(sub))
+                called = tools_from_capture(sub)
+                file_used.setdefault(agent, set()).update(called)
+                for tool, n in called.items():
+                    file_pair_calls[(agent, tool)] += n
 
             # #1027 attribution: fold in tool_calls tagged with an agent_type,
             # skipping entries the runlog marked `is_error` — a call the harness
@@ -243,14 +290,23 @@ def scan(paths: list[Path]) -> UsageScan:
                     continue
                 toolcall_attr = True
                 file_used.setdefault(agent, set()).add(name)
-        except (OSError, json.JSONDecodeError, TypeError, AttributeError) as e:
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError, TypeError, AttributeError) as e:
             problems.append(f"{path}: {e}")
             continue
 
         runs += 1
+        # `<slug>/<stem>`, the house run identity (`wiki_failure_report`,
+        # `ranked_read_report`, `compaction_report`, `image_transcribe_report`).
+        # The parent directory alone is the FIXTURE: 39 of the 108 committed
+        # slugs hold more than one run, up to 9, so keying on it would count
+        # fixtures and report them as runs.
+        run_id = f"{path.parent.name}/{path.stem}"
         for agent, tools in file_used.items():
             used.setdefault(agent, set()).update(tools)
+            for tool in tools:
+                pair_runs.setdefault((agent, tool), set()).add(run_id)
         captures.update(file_captures)
+        pair_calls.update(file_pair_calls)
 
         # Bucket on the SHAPE of `subagents`, not on whether any entry was
         # attributable: a non-empty list IS a captured delegation even if a
@@ -268,7 +324,16 @@ def scan(paths: list[Path]) -> UsageScan:
             no_field += 1
 
     return UsageScan(
-        used, captures, runs, with_captures, empty_captures, no_field, recovered, problems
+        used,
+        captures,
+        runs,
+        with_captures,
+        empty_captures,
+        no_field,
+        recovered,
+        problems,
+        pair_calls,
+        pair_runs,
     )
 
 
@@ -383,7 +448,11 @@ def format_report(
             mentioned = set(d.mentioned_in_body)
             for tool in d.declared_never_used:
                 if tool in mentioned:
-                    action = "mentioned in body → clarify the body, or a binding gap (#1084)"
+                    action = (
+                        "mentioned in body → non-compliance, a binding gap "
+                        "(#1084), an unrouted branch, or a bounded/last-resort "
+                        "mention where zero is correct — check which"
+                    )
                 else:
                     action = "not in body → candidate to drop from tools:"
                 lines.append(f"    {tool:22} {action}")
@@ -412,11 +481,22 @@ def format_report(
             "Limits (this is a report, not a gate):",
             "  - A never-called tool is a candidate, not a defect. `not in body` "
             "→ likely drop it",
-            "    from `tools:`; `mentioned in body` → clarify the body or check "
-            "binding (#1084).",
+            "    from `tools:`; `mentioned in body` → one of four, and this "
+            "report separates none:",
+            "    non-compliance, a binding gap (#1084), an instruction in a "
+            "branch the",
+            "    orchestrator no longer routes to, or a mention that BOUNDS the "
+            "tool (a",
+            "    last-resort or only-if note) where zero calls is the "
+            "instruction working —",
+            "    read the skill's routing table and the mention itself before "
+            "concluding",
+            "    non-compliance (worked example in the module docstring).",
             "    The body scan is a whole-word name match — it cannot tell a "
             "genuine call site",
-            "    from a mere mention, only presence from absence.",
+            "    from a mere mention, nor a mode-agnostic instruction from one "
+            "confined to a",
+            "    focus mode; only presence from absence.",
             "  - Capture coverage is partial (see the coverage line) — absence of "
             "a call is",
             "    sometimes absence of a capture, not proof the tool was never "
@@ -440,6 +520,12 @@ def format_report(
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
+    # and dies on the arrows and box glyphs this module prints; the team it is
+    # written for is on Windows. Guarded by tests/unit/test_encoding_lint.py.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(
         description=(
             "Declared-but-never-called tools per plugin agent, over committed "

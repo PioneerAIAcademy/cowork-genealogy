@@ -9,8 +9,9 @@ Or from the repo root with PYTHONPATH set:
   PYTHONPATH=eval/harness python -m e2e.run_e2e --test <fixture-id>
 
 **One fixture per invocation, by design.** There is deliberately no
-full-suite flag and no tag sweep: a run costs 20-60 minutes and $3-10, so a
-10-fixture sweep is 4-10 hours and $30-100. Anyone who genuinely needs a
+full-suite flag and no tag sweep: a run takes about an hour and single-digit
+dollars, with a long tail (the guide's overview table, row 5, has the measured
+median), so a 10-fixture sweep is ten times that. Anyone who genuinely needs a
 batch drives it with a shell loop and budgets for it explicitly, rather than
 having a one-word flag make that spend easy to trigger by accident.
 """
@@ -64,6 +65,27 @@ def _print_compliance(result: E2eResult) -> None:
         print(f"    - {text}")
 
 
+def _print_blocked_context_calls(result: E2eResult) -> None:
+    """Count the per-context denials, as a fact — not as a gate.
+
+    Printed from the call site rather than from inside `_print_compliance`,
+    for two reasons. That function returns early on the pass branch, so a line
+    added after its compliance line would be unreachable on exactly the runs
+    where the two axes disagree; and its own docstring says it is "the one axis
+    it is safe to print here", which a second fact does not join.
+
+    Silent at zero. 146 committed runs predate the field entirely, so
+    a printed `0` would read as a measured zero rather than a structural one.
+
+    The per-deny lines already stream during the run (`orchestrator.py`); this
+    is the end-of-run total, so someone who scrolled past them still sees it.
+    """
+    n = len(result.blocked_context_calls)
+    if not n:
+        return
+    print(f"  [blocked context call] {n}    (denied, not a gate — compliance is unaffected)")
+
+
 # The verdicts that mean the judge actually reached a conclusion.
 #
 # A deliberate local literal, NOT an import from result.py. Gradedness and
@@ -97,14 +119,15 @@ def ungradeable_reason(result: E2eResult, *, skip_judge: bool = False) -> str:
     that genuinely failed — which is what issue #1245 was reported as.
 
     **Blindness-safe** (spec §7.4, and the same line `_run_one` walks above):
-    this reads only whether `judge_output` carries an `error` key, never a
-    grade field. A judge crash is a harness fact, like `stop_reason` and
-    `compliance`, not a genealogical conclusion. The prohibition in
-    `result.py` on reading `judge_output` binds `interpret-e2e-result`, whose
-    job is explaining what the agent recovered; it is not a blanket ban.
+    this reads only `stop_reason` and whether `judge_output` carries an `error`
+    key, never a grade field. A judge crash is a harness fact, like
+    `stop_reason` and `compliance`, not a genealogical conclusion. The
+    prohibition in `result.py` on reading `judge_output` binds
+    `interpret-e2e-result`, whose job is explaining what the agent recovered;
+    it is not a blanket ban.
 
     Pure and free of I/O so every arm is testable — `_run_one` cannot be, since
-    it drives a live 20-to-60-minute run.
+    it drives a live run that takes about an hour.
     """
     judge_error = (result.judge_output or {}).get("error")
     if judge_error:
@@ -112,6 +135,12 @@ def ungradeable_reason(result: E2eResult, *, skip_judge: bool = False) -> str:
             f"the judge itself failed ({judge_error}) — the agent's work and its "
             "tree are intact, so this can be re-graded without re-running the "
             "research"
+        )
+    if result.stop_reason == "host_slept":
+        return (
+            "the host slept past the inactivity cap, so the judge was skipped on "
+            "purpose; the tree is intact, but grading it would measure the power "
+            "settings, not the agent"
         )
     if skip_judge:
         return "--skip-judge was passed, so no grade was requested"
@@ -126,15 +155,20 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     result, paths = await run_e2e_test(fixture_dir=fixture_dir, **kwargs)
 
     # DELIBERATELY NOT PRINTED: the judge's `verdict`, its `proof_quality`
-    # score, or the combined `outcome` (which reveals the verdict whenever
-    # compliance is clean). The person who runs a fixture is usually the same
+    # score, or `outcome` (which since the §8 detectors were demoted IS the
+    # verdict, so it reveals it unconditionally rather than only when
+    # compliance is clean — spec §7.4's residual leak, widened by the
+    # 2026-09-25 ruling and accepted there). The person who runs a fixture is usually the same
     # person who then grades it with /grade-e2e-run, and spec §7.4 wants that
     # grade drawn blind — printing the grade here anchors it before they
     # start. `stop_reason` and `compliance` are harness facts and are safe;
     # everything else is what /interpret-e2e-result exists to walk them
     # through, from the final tree rather than from the judge (issue #972).
+    # `blocked_context_calls` joins them as a harness fact (issue #1281): a
+    # denied tool call is not a genealogical conclusion, and it moves no gate.
     print(f"  stop_reason: {result.stop_reason}")
     _print_compliance(result)
+    _print_blocked_context_calls(result)
     print(f"  result: {paths['result']}")
     # Two independent axes, reported separately (#1245). Fusing them is what
     # made a judge crash unreadable: "the judge didn't run" was printed as a
@@ -151,15 +185,40 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
             f"  no grade: "
             f"{ungradeable_reason(result, skip_judge=bool(kwargs.get('skip_judge')))}"
         )
-    if is_committable_run(result.verdict):
+    if result.stop_reason == "host_slept":
+        # Committed (so the operator can see why it dropped out of the rates) but
+        # ungraded on purpose — the host slept past the inactivity cap, so there
+        # is nothing to interpret or grade (issue #2974).
         print(
-            "  Next: /interpret-e2e-result to see what it recovered, then "
-            "/grade-e2e-run to grade it.\n"
+            "  host slept past the inactivity cap — run excluded from rates, "
+            "not graded.\n"
+            "  Commit its three files so the drop is visible; there is no .ann.json.\n"
+            "  Keep the machine awake (eval/README.md, \"Keep the machine awake "
+            "during a run\") and re-run."
+        )
+    elif is_committable_run(result.verdict, result.stop_reason):
+        print(
+            "  Next: /grade-e2e-run to grade it blind, then /interpret-e2e-result "
+            "to see what it recovered.\n"
             "  Commit the run log + its .ann.json together before landing."
         )
     else:
         print("  (scratch run — gitignored)")
     return result
+
+
+#: Outcomes the process exit code treats as a failed run.
+#:
+#: Module-level so a test can import it rather than restate the literal — a
+#: test that re-types the set proves nothing about this code. It carries more
+#: weight since the §8 compliance detectors were demoted from the gate: an
+#: `ungraded` or `skipped` verdict used to reach `outcome` already downgraded
+#: to "fail" by the veto, and now arrives as itself.
+#:
+#: NOT the complement of `result._COMMITTABLE_VERDICTS`, which is about whether
+#: a run joins the corpus — `fail` and `ungraded` are in both sets, `skipped`
+#: is in this one only. Two sets, two jobs; do not derive one from the other.
+FAILING_OUTCOMES = frozenset({"fail", "skipped", "ungraded"})
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -225,10 +284,11 @@ def main(argv: list[str] | None = None) -> int:
             "(.claude/settings.json effortLevel). Session-wide. Default: high "
             "(matches Cowork). setting_sources=['project'] already isolates from "
             "the user's effortLevel, and CLAUDE_EFFORT is output-only. This is "
-            "not the only lever — ClaudeAgentOptions.effort also works — but it "
-            "is the one proven to reach subagents. Vary it to test whether a "
+            "not the only lever — ClaudeAgentOptions.effort also works, and both "
+            "reached subagents on CLI 2.1.215/2.1.220 (probe_effort_capture.py; "
+            "this harness's 2.1.139 is unprobed). Vary it to test whether a "
             "runaway-thinking subagent freeze clears (see "
-            "subagents[].runaway_thinking)."
+            "subagents[].runaway_thinking; if empty, read subagent_capture_status)."
         ),
     )
     parser.add_argument(
@@ -274,6 +334,57 @@ def main(argv: list[str] | None = None) -> int:
             "vacuously. Recorded in the runlog's usage block."
         ),
     )
+    parser.add_argument(
+        "--context-1m",
+        action="store_true",
+        help=(
+            "Request the 1M-token context window (SDK beta "
+            "'context-1m-2025-08-07'). Default OFF: it changes run behaviour — a "
+            "1M window compacts differently, so a run made with it is NOT "
+            "comparable to the corpus and must not be committed under "
+            "eval/runlogs/e2e/. Deliberately absent from eval/RunE2E.bat. "
+            "Recorded in the runlog's usage block as `betas`. CI now REJECTS such a run committed under eval/runlogs/e2e/ (check_e2e_fixtures.py)."
+        ),
+    )
+    parser.add_argument(
+        "--tool-search",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Deferred tool loading (ENABLE_TOOL_SEARCH). ON by default, as the "
+            "corpus runs. --no-tool-search loads every tool schema up front — "
+            "EXPERIMENT-ONLY: the run is not comparable to the corpus, so it is "
+            "refused unless --runlog-root points outside the default root, and CI "
+            "rejects one committed under eval/runlogs/e2e/. It also silences the "
+            "#941 mid-run backstop (it counts no-match ToolSearch replies, and "
+            "there are none), so a server that dies after init shows only as zero "
+            "genealogy calls. Recorded in the runlog's usage block as "
+            "`tool_search` and `tool_search_offered`."
+        ),
+    )
+    parser.add_argument(
+        "--deny-shell",
+        action="store_true",
+        help=(
+            "Deny Bash and PowerShell for the whole run, with a reason pointing "
+            "the agent at the MCP tools (P2: does removing the filesystem cost "
+            "research quality?). Every attempt lands in blocked_tree_reads with "
+            "blocked_by: shell. Default off. Recorded in the runlog's usage block."
+        ),
+    )
+    parser.add_argument(
+        "--deny-project-reads",
+        action="store_true",
+        help=(
+            "Deny Read/Grep/Glob of the project folder — research.json, the tree, "
+            "results/ sidecars, evaluations/, uploads/ — so the agent must use "
+            "project_context, research_query, record_read and sidecar_read instead, as the "
+            "hosted sandbox would. The staged .claude/ tree and the CLI's "
+            "tool-results spill files stay readable. Every attempt lands in "
+            "blocked_tree_reads with blocked_by: path. Default off. Recorded in "
+            "the runlog's usage block."
+        ),
+    )
     args = parser.parse_args(argv)
 
     fixtures_root: Path = args.fixtures_root
@@ -286,13 +397,57 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Fixture not found: {fixture_dir}", file=sys.stderr)
         return 2
 
-    # Key-validity preflight. A duplicated or revoked key is truthy, so the
-    # agent run proceeds (it uses the SDK's own auth), but the judge silently
-    # fails — and a $7+ e2e run's result is discarded. Catch bad keys before
-    # spending anything. Does NOT abort on a missing key: --skip-judge already
-    # handles that (produces verdict="skipped"), and the e2e path has never
-    # blocked on absence.
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    # An off run lands where every local reader (all_result_jsons, e2e-corpus,
+    # e2e-agent-spend) scans the working tree, so an uncommitted one would still
+    # skew them; CI only catches a commit. Resolved on both sides, and "inside"
+    # as well as "equal", so a relative spelling or a subfolder cannot slip by.
+    if not args.tool_search and args.runlog_root.resolve().is_relative_to(
+        DEFAULT_RUNLOG_ROOT.resolve()
+    ):
+        print(
+            "Refusing --no-tool-search under the default run-log root "
+            f"({DEFAULT_RUNLOG_ROOT}).\n"
+            "A run with tool search off is not comparable to the corpus, and the "
+            "local reports scan that folder whether or not the run is committed.\n"
+            "\n"
+            "  Fix: pass --runlog-root <dir outside it> "
+            "(make e2e-run ... TOOL_SEARCH=0 RUNLOG_ROOT=<dir>).",
+            file=sys.stderr,
+        )
+        return 2
+
+    # Judge preflight, two arms, both before anything is spent.
+    #
+    # Absent key: abort. This used to fall through on the reasoning that
+    # --skip-judge already covers it — but that flag is an explicit opt-in, so
+    # it only protects an operator who already knows the key is gone. The case
+    # that actually happens is not knowing: eval/.env is gitignored, so a fresh
+    # worktree has none until `make worktree-link`, and the run completes and
+    # discards its own grade. Measured 2026-09-23: $4.87 and 28.5 min spent for
+    # an ungraded run on catharina-gosner-daughter. --skip-judge remains the way
+    # to ask for an ungraded run deliberately.
+    #
+    # Present but bad key: a duplicated or revoked key is truthy, so the agent
+    # run proceeds (it uses the SDK's own auth) while the judge silently fails.
+    # Catch that too.
+    #
+    # Stripped, so "" and "   " take the absent arm rather than reaching the API.
+    api_key = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
+    if not api_key and not args.skip_judge:
+        print(
+            "Judge preflight failed: no ANTHROPIC_API_KEY is set.\n"
+            "A $5-8 e2e run would complete and then discard its own result, "
+            "because the judge cannot grade it.\n"
+            "\n"
+            "  Fix: set ANTHROPIC_API_KEY in eval/.env or in your shell.\n"
+            "  In a git worktree, eval/.env is gitignored and has to be "
+            "linked in: make worktree-link\n"
+            "\n"
+            "Re-run with --skip-judge to run without grading "
+            '(the run is committable and re-gradable; verdict="skipped").',
+            file=sys.stderr,
+        )
+        return 2
     if api_key and not args.skip_judge:
         from e2e.judge import DEFAULT_JUDGE_MODEL
         from harness.auth import verify_judge_key
@@ -322,6 +477,10 @@ def main(argv: list[str] | None = None) -> int:
         "max_output_tokens": args.max_output_tokens,
         "agent_model": args.agent_model,
         "person_evidence_guard": args.person_evidence_guard,
+        "deny_shell": args.deny_shell,
+        "deny_project_reads": args.deny_project_reads,
+        "context_1m": args.context_1m,
+        "tool_search": args.tool_search,
     }
 
     results: list[E2eResult] = []
@@ -345,12 +504,17 @@ def main(argv: list[str] | None = None) -> int:
 
     print()
     print_rollup(results)
-    # Exit nonzero if the test failed or aborted. Keyed on the combined gate,
-    # which preserves the pre-#972 behavior exactly: a guardrail bypass used to
-    # force `verdict = "fail"`, and now forces `outcome = "fail"` instead.
-    # Verified against all 122 committed runs — the gate distribution is
-    # byte-identical to the old fused verdict's.
-    failed = sum(1 for r in results if r.outcome in {"fail", "skipped", "ungraded"})
+    # Exit nonzero if the test failed or aborted. Keyed on the gate, which is
+    # the genealogical verdict: a guardrail bypass used to
+    # force `verdict = "fail"`; it then forced `outcome = "fail"` instead, and
+    # since the §8 detectors were demoted it forces neither — a bypassing
+    # run is counted by its verdict alone.
+    # That behaviour-preservation claim is what this change ends, so the old
+    # measurement ("byte-identical to the fused verdict's, over 122 runs") is
+    # gone rather than restated: the gate distribution is now the RECALL
+    # distribution. Measured at 2c00dfd76, `make e2e-corpus SINCE=all` prints
+    # the gate and recall lines identically.
+    failed = sum(1 for r in results if r.outcome in FAILING_OUTCOMES)
     return 1 if failed else 0
 
 

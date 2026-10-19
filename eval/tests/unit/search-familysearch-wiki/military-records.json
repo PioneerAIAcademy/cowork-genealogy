@@ -6,17 +6,17 @@
     "type": "positive",
     "holdout": true,
     "description": "User asks how to find military service records for a Civil War ancestor. Tests that the skill handles a conflict-scoped military query.",
-    "tags": ["fs-wiki", "how-to", "military", "expects-file-civil-war-military-service-records"]
+    "tags": ["fs-wiki", "how-to", "military", "direct-arm"]
   },
   "input": {
-    "user_message": "Search the FamilySearch wiki for how to find military service records for a Civil War ancestor",
-    "scenario": null
+    "delegation": "Search the FamilySearch wiki for how to find military service records for a Civil War ancestor\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": ["wiki-search-military-records"],
   "judge_context": [
     "Should call wiki_search with a query about finding Civil War military service records",
     "Summary should explain what military records exist and where to find them",
     "No fabricated details about specific regiments, repositories, or record dates beyond what the wiki returned",
-    "SOURCES GRADING NOTE: per the rubric's existing grading note on 'Sources cited correctly', the file contents are not visible to the judge. Score the dimension `pass` if the skill called the file-write or Edit tool with a Sources block (visible in the tool-call transcript or the file_changes diff), even if the formatted bullet list does not appear verbatim in the text response. Do NOT score partial purely because the URLs/bullets aren't echoed in the response text."
+    "The Sources section is part of the logged entry's notes, which appear in the file changes summary as the new `log` entry. Score Sources cited correctly from those notes; the bullets need not appear in the text response, and test_sources_section_matches_wiki_results checks them against the tool response."
   ]
 }

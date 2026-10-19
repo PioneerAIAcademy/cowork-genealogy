@@ -1,0 +1,33 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Jesse",
+          "surname": "Neal",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "1857",
+          "place": "Yell County, Arkansas"
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1885",
+          "place": "Union County, South Carolina"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

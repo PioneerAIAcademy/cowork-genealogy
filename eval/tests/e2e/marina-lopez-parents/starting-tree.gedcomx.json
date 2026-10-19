@@ -1,0 +1,188 @@
+{
+  "persons": [
+    {
+      "id": "P874-7BV",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Marina",
+          "surname": "Lopez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8db3903a-4a55-4312-837b-1b150f96080d",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P874-PJ5",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Rafael Bautista",
+          "surname": "Pichardo Lopez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ede8727f-49fc-4868-a9d4-7c9b3b28d4aa",
+          "type": "Birth",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Dominican Republic",
+          "standard_place": "Dominican Republic"
+        },
+        {
+          "id": "08f9d9cc-2823-4e5f-a02e-702b1ca3a40f",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P874-8F5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Altagracia Herminia",
+          "surname": "Pichardo Lopez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "82959961-a36c-4371-8eae-cc732eaf0928",
+          "type": "Birth",
+          "date": "31 January 1934",
+          "standard_date": "31 Jan 1934"
+        },
+        {
+          "id": "6490603c-85dd-4e72-b1b1-9e2c5f271d22",
+          "type": "Death",
+          "date": "9 August 2014",
+          "standard_date": "9 Aug 2014",
+          "place": "San José de Ocoa, San José de Ocoa, San José de Ocoa, Dominican Republic",
+          "standard_place": "San José de Ocoa, San José de Ocoa, San José de Ocoa, Dominican Republic"
+        },
+        {
+          "id": "83792eeb-c3d4-484b-b483-3e88e1927f06",
+          "type": "Occupation",
+          "value": "Abogado"
+        },
+        {
+          "id": "cd2d108b-e4c5-4bca-a1bb-3dd247bd490a",
+          "type": "Nationality",
+          "value": "Dominicano"
+        },
+        {
+          "id": "dc2a7e55-5c3e-49a9-bad3-129cb5c11dbf",
+          "type": "Residence",
+          "place": "San José de Ocoa, Dominican Republic",
+          "standard_place": "San José de Ocoa, Dominican Republic"
+        }
+      ]
+    },
+    {
+      "id": "LRQR-QM9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Juan de Dios",
+          "surname": "Pichardo Chalas"
+        }
+      ],
+      "facts": [
+        {
+          "id": "931b5e3a-767f-43fb-a3f9-79b957afaf21",
+          "type": "Birth",
+          "date": "8 December 1902",
+          "standard_date": "8 Dec 1902",
+          "place": "San José de Ocoa, Peravia, República Dominicana",
+          "standard_place": "San José de Ocoa, Peravia, Dominican Republic"
+        },
+        {
+          "id": "24fbd909-5a0a-424e-a90e-85750133cfbe",
+          "type": "Christening",
+          "date": "6 May 1913",
+          "standard_date": "6 May 1913",
+          "place": "San José de Ocoa, Peravia, Dominican Republic",
+          "standard_place": "San José de Ocoa, Peravia, Dominican Republic"
+        },
+        {
+          "id": "7c3c50ca-aaae-473b-9c05-a4afcde103de",
+          "type": "Death",
+          "date": "6 November 1978",
+          "standard_date": "6 Nov 1978",
+          "place": "San José de Ocoa, Dominican Republic",
+          "standard_place": "San José de Ocoa, Dominican Republic"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LRQR-QM9",
+      "person2": "P874-7BV"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "LRQR-QM9",
+      "child": "P874-8F5"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "P874-7BV",
+      "child": "P874-8F5"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LRQR-QM9",
+      "child": "P874-PJ5"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "P874-7BV",
+      "child": "P874-PJ5"
+    }
+  ],
+  "sources": [
+    {
+      "id": "WWBW-2YJ",
+      "title": "Marina Lopez, \"República Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"República Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66H3-5D6G : Tue Oct 08 00:33:52 UTC 2024), Entry for Juan de Dios Pichardo Chalas and Jose Cayetano Pichardo, 1978.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66H3-5D6R"
+    },
+    {
+      "id": "WWBW-DW8",
+      "title": "Marina Lopez, \"República Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"República Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6R28-9KNF : Mon Dec 08 07:41:57 UTC 2025), Entry for Rafael Bautista Pichardo Lopez and Juan De Dios Pichardo, 29 Sep 1967.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6R28-7ZZS"
+    },
+    {
+      "id": "WWBW-8CP",
+      "title": "Marina Lopez, \"República Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"República Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65TX-LPM1 : Sun Mar 10 01:45:13 UTC 2024), Entry for Actagracia Herminia Puhardo Lopez and Juan de Dios Puhardo, 9 de agosto de 2014.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65TX-LP99"
+    },
+    {
+      "id": "WWBW-PPB",
+      "title": "Manuel Lopez, \"República Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"República Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6TMN-HQ5T : Tue May 07 19:09:26 UTC 2024), Entry for Juan de Dios Pichardo Blalas and Jose Cayetano Pichardo, 7 Nov 1978.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6TMN-HQ51"
+    }
+  ]
+}

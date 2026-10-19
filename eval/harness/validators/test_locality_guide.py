@@ -10,11 +10,53 @@ tree.gedcomx.json — enforced by
 `test_universal.py::test_tree_ownership_table` (locality-guide is on no
 tree row, so any tree write triggers a violation).
 
-All rubric dimensions for locality-guide (Jurisdiction accuracy,
-Record availability, Research strategy) require reading the narrative
-output for genealogical judgment, so they stay in `rubric.md` rather
-than migrating to deterministic validators. This file exists to document
-that fact and as a placeholder for future tag-gated regression checks.
+The three rubric dimensions (Jurisdiction accuracy, Record availability,
+Research strategy) require reading the narrative output for genealogical
+judgment, so they stay in `rubric.md`. The deterministic checks below
+guard the structural properties a validator can settle without judgment
+(issue #1886, from the locality-guide deep dive #1664):
+
+  - test_localities_persisted_with_full_page_coverage — tag-gated; the
+    only assertion that a localities entry was persisted AT ALL.
+  - test_persisted_localities_entry_shape (VR1) — presence-gated: on any
+    run that wrote a localities entry, checks the two properties the shared
+    schema validator does NOT cover — source == "locality-guide" and
+    coverage of all four wiki sections. The nested key-sets
+    (jurisdictions/collections/pages_read) are already enforced by
+    `test_universal.py::test_research_json_validates_schema` against
+    `research.schema.json` ($defs.locality, additionalProperties:false),
+    so VR1 does not re-check them.
+  - test_survey_run_calls_both_collections_and_volume_search (VR4) — gating:
+    a records survey that called one Step-3 search must have called both.
+
+Of the two other checks the deep dive proposed, VR3 was dropped and VR2 is held
+(NOT shipped here, and NOT dropped on the reasons first given — those don't hold):
+  - VR2 (persisted collection id must trace to a same-run collections_search /
+    volume_search response) — held pending the locality-guide skill->agent
+    conversion, which may relocate where such a validator lives (#1886). Its
+    earlier "drop" rationale was wrong and is corrected here so it is not carried
+    as fact: it is NOT circular — #1886 scopes grounding to the run's own cs/vs
+    responses, read via `tc.get("response")` (`mock_mcp.py`), not project_context;
+    it does NOT duplicate `test_research_plan` — `validator_runner` loads only
+    test_universal + test_<skill>, so that never runs on locality-guide; and it
+    does NOT duplicate `provenance_report` — that is non-gating and reads fixtures
+    at rest, not live responses. VR2 is genuinely class-closing (#1886 measures 58
+    persisted ids / 0 untraceable, and no other gating guard catches a fabricated
+    collections[].id here), so there is no valid ground to drop it — only to defer.
+  - VR3 (digitization label requires a volume_search call) — dropped as
+    subsumed by VR4, and it would only ever false-fire. A wiki-grounded label
+    is NOT a legitimate substitute for the call: agents/locality-guide.md Step 3 makes
+    volume_search a required Step-3 call, and Step 4 derives every label from
+    its result — even the "No match in volume_search" branch presupposes the
+    call was made, with the wiki as a cross-check, not a substitute. VR4
+    already gates "a survey must call volume_search". In the acceptance run
+    (v1_2026-09-21_13-46-57) every survey with volume_search available called
+    it (VR4: 22 passed, 0 survey skipped it). The one run that assigns a
+    digitization label without a volume_search call is ut_002, whose fixtures
+    don't register volume_search (fixture-backed, absent from LIVE_TOOLS) so the
+    tool was uncallable — exactly where VR3 would fire wrongly. (ut_023 makes no
+    such classification at all: with the search tools unregistered it reports
+    the coverage gap plainly rather than labelling.)
 
 See `test_universal.py` module docstring for the full validator
 function-signature contract. The `test` argument is the parsed test
@@ -29,7 +71,21 @@ from __future__ import annotations
 
 import pytest
 
+from validators_lib import bare_tool_name, new_section_entries
+
 REQUIRED_WIKI_SECTIONS = {"home", "getting_started", "online_records", "research_tips"}
+
+
+def _written_localities(before_state, after_state):
+    """localities[] entries this run created or modified in place.
+    `include_modified=True` so an in-place rewrite (research_append op:"update")
+    is re-checked, not skipped as a new-id-only diff would. The top-level entry
+    is always an object (validator.ts `isObjectEntry` rejects a non-object at
+    write time), so no entry-level guard is needed here.
+    """
+    return new_section_entries(
+        before_state, after_state, "localities", include_modified=True
+    )
 
 
 def test_localities_persisted_with_full_page_coverage(after_state, test):
@@ -37,6 +93,10 @@ def test_localities_persisted_with_full_page_coverage(after_state, test):
     must persist a localities[] entry whose pages_read attempts all four wiki
     sections. Guards the '1-of-4 under-read' — a section that 404s is recorded
     found:false, but every section must appear.
+
+    This is the ONLY validator that asserts persistence happened; VR1 below
+    checks a persisted entry but skips when nothing was written, so it cannot
+    stand in for this. Do not fold the two together.
     """
     if "localities-persist" not in (test.get("tags") or []):
         pytest.skip("not a localities-persist test")
@@ -55,3 +115,167 @@ def test_localities_persisted_with_full_page_coverage(after_state, test):
         f"pages_read is missing wiki sections {sorted(missing)} — locality-guide "
         "must attempt all four (home / getting_started / online_records / research_tips)"
     )
+
+
+def test_persisted_localities_entry_shape(before_state, after_state):
+    """VR1 — presence-gated check on any localities[] entry this run wrote,
+    covering the two properties the shared schema validator does not:
+
+      1. source == "locality-guide"
+      2. pages_read attempts all four wiki sections.
+
+    The nested key-sets (jurisdictions/collections/pages_read) are enforced by
+    `test_universal.py::test_research_json_validates_schema` against
+    `research.schema.json` ($defs.locality, additionalProperties:false + required
+    keys), so VR1 does not duplicate them. (That enforcement is the EVAL plane:
+    the production runtime validator `validator.ts` deliberately does NOT
+    deep-check those nested items — see its `checkLocalities` note — so the guard
+    VR1 leans on is the schema check in this suite, not a production guarantee.)
+    Presence-gated rather than tag-gated:
+    the ~20 `empty-project-just-created` survey tests carry that scenario
+    without the `localities-persist` tag, so on any that DO persist this catches
+    source/section defects the tag-gated test above never sees. (How many
+    persist is a separate, currently-low number — 2 of 26 in v1_2026-09-21_13-46-57;
+    that population question is tracked on #1886, not asserted here.)
+
+    Skips when the run wrote no entry (standalone Q&A / decline). Persistence
+    itself is asserted only by the tag-gated test above, so a skill that stops
+    persisting fails there, never silently here.
+    """
+    written = _written_localities(before_state, after_state)
+    if not written:
+        pytest.skip("no localities entry created or modified this run")
+    for loc in written:
+        lid = loc.get("id")
+        assert loc.get("source") == "locality-guide", (
+            f"localities[{lid}] source should be 'locality-guide', got {loc.get('source')!r}"
+        )
+        sections = {p.get("section") for p in (loc.get("pages_read") or []) if isinstance(p, dict)}
+        missing = REQUIRED_WIKI_SECTIONS - sections
+        assert not missing, (
+            f"localities[{lid}] pages_read is missing wiki sections {sorted(missing)} — "
+            "must attempt all four (home / getting_started / online_records / research_tips)"
+        )
+
+
+def test_survey_run_calls_both_collections_and_volume_search(tool_calls):
+    """VR4 (gating) — a records-availability survey that called one of the Step-3
+    searches must have called both: collections_search and volume_search are both
+    required Step-3 calls (agents/locality-guide.md Step 3, "do not drop any call").
+
+    Grades call PRESENCE, not the result: the skill *making* both calls is the
+    behaviour under test. A `fixture_not_found` response means the skill DID call
+    a *registered* tool with args no fixture matched (a test-corpus gap, not
+    skill misbehaviour); in production the call always returns. That is distinct
+    from a tool with NO fixture at all: collections_search and volume_search are
+    fixture-backed and absent from LIVE_TOOLS, so a test that declares no fixture
+    for one never registers it and the skill cannot call it — which is why ut_002
+    (which declares NEITHER search fixture) is a no-search run VR4 skips, not a
+    `fixture_not_found`. Grounding of a result is not this validator's concern.
+
+    LIMIT (documented, not a bug): a run that called NEITHER search is skipped —
+    it cannot be distinguished from a legitimate non-survey (standalone Q&A, a
+    wiki-only guide, or a decline). `ut_locality_guide_023` is exactly such a
+    deliberate no-collection-tool test (its judge_context forbids naming a
+    collection), so VR4 correctly stands down there; `ut_002` is a plain records
+    survey that stands down only because its fixture list omits the searches.
+    Catching "a survey that should have called both but called neither" would
+    need an intent signal (e.g. the `volume-search` tag already on 12 tests, none
+    of them the seven rewired here) VR4 does not yet consult — a deliberate
+    choice, tracked on #1886, not an absence.
+    """
+    tools = {bare_tool_name(tc.get("tool")) for tc in (tool_calls or [])}
+    called_cs = "collections_search" in tools
+    called_vs = "volume_search" in tools
+    if not (called_cs or called_vs):
+        pytest.skip("not a records survey — called neither collections_search nor volume_search")
+    missing = [
+        name
+        for name, called in (("collections_search", called_cs), ("volume_search", called_vs))
+        if not called
+    ]
+    assert not missing, (
+        f"records survey called {sorted(tools & {'collections_search', 'volume_search'})} "
+        f"but not {missing} — both are required Step-3 calls (agents/locality-guide.md Step 3)"
+    )
+
+
+def test_catalog_search_called_and_broadened(tool_calls, test):
+    """VR5 (issue #3107) — scoped to ut_locality_guide_028: the agent must call
+    catalog_search, and when it gets 0 hits, broaden by calling catalog_search
+    again on a wider standardPlace.
+
+    Grades call PRESENCE and COUNT, not the result content: the skill *making*
+    the initial call and then broadening is the behaviour under test. Skips for
+    all other tests — catalog_search is not registered in their fixtures, so they
+    cannot call it.
+    """
+    if (test.get("id") or "") != "ut_locality_guide_028":
+        pytest.skip("not the catalog-search broadening test")
+    calls = [
+        tc for tc in (tool_calls or [])
+        if bare_tool_name(tc.get("tool")) == "catalog_search"
+    ]
+    assert calls, (
+        "ut_locality_guide_028 must call catalog_search at least once"
+    )
+    places = [(tc.get("args") or {}).get("standardPlace") or "" for tc in calls]
+
+    def parts(place):
+        return [p.strip().lower() for p in place.split(",") if p.strip()]
+
+    def is_parent(broader, narrower):
+        b, n = parts(broader), parts(narrower)
+        return 0 < len(b) < len(n) and n[-len(b):] == b
+
+    assert any(
+        is_parent(places[j], places[i])
+        for i in range(len(places))
+        for j in range(i + 1, len(places))
+    ), (
+        f"catalog_search places in call order: {places}. After the 0-hit village "
+        "call, a later call must name one of its parent jurisdictions (the text "
+        "after its first comma), not a sibling or the same place"
+    )
+
+
+def test_single_jurisdiction_enforced(before_state, after_state, tool_calls, test):
+    """VR6 (issue #3186) — tag-gated (`single-jurisdiction`): when delegated
+    several separate jurisdictions, the agent must survey only one. Asserts:
+
+      1. Exactly one localities[] entry is persisted (not one per county).
+      2. volume_search standardPlace arguments target at most one county
+         (broadening to a parent jurisdiction is allowed).
+
+    Guards the context-overflow bug: surveying three counties in parallel
+    produces ~30 tool calls whose results exceed the agent's context window.
+    """
+    if "single-jurisdiction" not in (test.get("tags") or []):
+        pytest.skip("not a single-jurisdiction test")
+    # 1. Exactly one localities entry persisted
+    written = _written_localities(before_state, after_state)
+    assert len(written) == 1, (
+        f"expected exactly 1 localities entry, got {len(written)} — "
+        "the agent should survey one jurisdiction per call, not all of them"
+    )
+    # 2. volume_search calls target at most one county
+    vs_calls = [
+        tc for tc in (tool_calls or [])
+        if bare_tool_name(tc.get("tool")) == "volume_search"
+    ]
+    if vs_calls:
+        # Extract the most-specific component (first comma part) of each
+        # standardPlace argument. Broadening calls (e.g. "Kentucky, United
+        # States") have fewer components than county-level calls (e.g.
+        # "Pulaski, Kentucky, United States"), so only county-level calls
+        # (3+ components for US places) contribute a distinct first part.
+        county_firsts = set()
+        for tc in vs_calls:
+            sp = (tc.get("args") or {}).get("standardPlace") or ""
+            parts = [p.strip() for p in sp.split(",") if p.strip()]
+            if len(parts) >= 3:
+                county_firsts.add(parts[0].lower())
+        assert len(county_firsts) <= 1, (
+            f"volume_search called for multiple counties: {sorted(county_firsts)} — "
+            "the agent should survey only one jurisdiction per call"
+        )

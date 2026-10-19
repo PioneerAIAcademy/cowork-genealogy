@@ -5,10 +5,10 @@
     "name": "Pre-adoption Catholic Europe date — no Gregorian equivalent existed yet",
     "type": "positive",
     "description": "User asks to convert a Madrid parish date of '14 September 1582' to Gregorian. Spain's switch was Julian 4 October 1582 -> Gregorian 15 October 1582, so this date PRECEDES the Gregorian calendar's existence: there is no contemporaneous Gregorian equivalent, only a proleptic one. The skill should say so and record the date as written rather than asserting a converted day as fact. convert_calendar is specified to reject julianToGregorianDay before 1582-10-15 as an input error (convert-calendar-tool-spec.md section 7), so a bare '24 September 1582' is an answer the tool will not produce. The 10-day offset band itself is exercised by ut_convert_dates_009 (Wuerttemberg 1699).",
-    "tags": ["julian-gregorian", "1582", "spain", "catholic-europe", "pre-adoption", "no-gregorian-equivalent", "proleptic"]
+    "tags": ["julian-gregorian", "1582", "spain", "catholic-europe", "pre-adoption", "no-gregorian-equivalent", "proleptic", "direct-arm"]
   },
   "input": {
-    "user_message": "Convert this Spanish parish-record date to the modern Gregorian calendar: '14 September 1582, Madrid'.",
+    "delegation": "Convert this Spanish parish-record date to the modern Gregorian calendar: '14 September 1582, Madrid'.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "judge_context": [

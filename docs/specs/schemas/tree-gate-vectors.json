@@ -368,6 +368,75 @@
       }
     },
     {
+      "name": "fact-assertion-id",
+      "description": "assertion_id on a fact — the backlink materialize_facts stamps so a later assertion correction can find the fact it minted. Optional and a plain string; every gate must accept it, or the writer tools reject a document they themselves produce.",
+      "expect": {
+        "schema": true,
+        "integrity": true,
+        "runtime": true
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ],
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "2 Oct 1876",
+                "assertion_id": "a_011"
+              }
+            ]
+          }
+        ],
+        "relationships": [],
+        "sources": []
+      }
+    },
+    {
+      "name": "fact-assertion-id-nonstring",
+      "description": "assertion_id as a number. The allow-list admits the KEY, so only the per-field type check refuses it; a field added to one and not the other is accepted by the runtime validator and rejected by the JSON Schema, which the name-only drift test cannot see.",
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ],
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "assertion_id": 123
+              }
+            ]
+          }
+        ],
+        "relationships": [],
+        "sources": []
+      }
+    },
+    {
       "name": "preferred-false",
       "description": "preferred is const true — omit rather than setting false (the convention that keeps multi-name persons token-lean).",
       "expect": {
@@ -485,7 +554,81 @@
     },
     {
       "name": "person-level-sources",
-      "description": "Source references hang off names/facts/relationships, never persons (simplified-gedcomx-spec §4.4; the merge tools strip these from candidates).",
+      "description": "A person carries the sources FamilySearch attached to it, as refs into sources[] (simplified-gedcomx-spec §4.4). Valid in every gate.",
+      "expect": {
+        "schema": true,
+        "integrity": true,
+        "runtime": true
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ],
+            "sources": [
+              {
+                "ref": "S1"
+              }
+            ]
+          }
+        ],
+        "relationships": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Census"
+          }
+        ]
+      }
+    },
+    {
+      "name": "dangling-person-source-ref",
+      "description": "A person-level source ref naming a source that is not in sources[]: the fixture gate and the runtime validator catch it; the JSON Schema cannot see references.",
+      "expect": {
+        "schema": true,
+        "integrity": false,
+        "runtime": false
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ],
+            "sources": [
+              {
+                "ref": "S9"
+              }
+            ]
+          }
+        ],
+        "relationships": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Census"
+          }
+        ]
+      }
+    },
+    {
+      "name": "person-sources-nonarray",
+      "description": "A person-level `sources` that is not an array. The runtime validator used to treat any non-array `sources` as empty; it now rejects it, as the JSON Schema does. The fixture gate checks references, not types.",
       "expect": {
         "schema": false,
         "integrity": true,
@@ -504,9 +647,38 @@
                 "surname": "Doe"
               }
             ],
-            "sources": [
+            "sources": "S1"
+          }
+        ],
+        "relationships": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Census"
+          }
+        ]
+      }
+    },
+    {
+      "name": "name-sources-nonarray",
+      "description": "The same non-array `sources` on a name: the one validator check covers every holder (names, facts, relationships, persons).",
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "living": false,
+            "gender": "Male",
+            "names": [
               {
-                "ref": "S1"
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe",
+                "sources": "S1"
               }
             ]
           }

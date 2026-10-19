@@ -20,7 +20,7 @@ Two callers need this and neither can get it from the data alone:
   to tell a conclusion this session encoded from a fact that was already seeded.
   `research_append` loads only the *current* tree, so without the baseline it has
   no way to make that distinction.
-- **The viewer and `project_status`** want the same "what did this session change"
+- **The viewer and a status answer** want the same "what did this session change"
   delta for display.
 
 The tool is the shared, tested implementation both use, so neither re-derives a
@@ -54,8 +54,10 @@ not what any caller asks for).
 
 - `PersonDelta = { id, addedFacts, removedFacts }` — facts in one tree not matched
   by content in the other.
-- `RelationshipDelta = { key, type, relationship }` — `key` is the endpoint
-  identity, `relationship` the full object from the tree it is unique to.
+- `RelationshipDelta = { key, type, relationship }` — `key` is the endpoint-and-
+  subtype identity (rule 2), `relationship` the full object from the tree it is
+  unique to. A retype therefore reads as one removed and one added, not as an
+  unchanged relationship; the subtype is on `relationship`, not on the delta.
 - `RelationshipFactDelta = { key, type, relationship, addedFacts, removedFacts }` —
   a relationship present in both trees whose `facts[]` changed, e.g. a Marriage
   fact dated onto an already-seeded Couple. Its endpoints join
@@ -67,12 +69,27 @@ conclusion's person gain any tree structure this session?"
 ## Identity rules — the landmines
 
 1. **Persons key on `id`.**
-2. **Relationships key on their ENDPOINTS, never on `id`.** A `ParentChild`
-   carries `parent`/`child` (directional); a `Couple` carries `person1`/`person2`
-   (unordered — sorted before keying). Some seeded trees point a relationship at a
-   `PID-TODO` placeholder the agent re-points during the run while keeping the same
-   `id`; an id key would read that genuinely re-pointed relationship as unchanged.
-   Shared with the merge tool via `relationshipKey`.
+2. **Relationships key on their ENDPOINTS AND SUBTYPE, never on `id`.** A
+   `ParentChild` carries `parent`/`child` (directional); a `Couple` carries
+   `person1`/`person2` (unordered — sorted before keying). Some seeded trees point
+   a relationship at a `PID-TODO` placeholder the agent re-points during the run
+   while keeping the same `id`; an id key would read that genuinely re-pointed
+   relationship as unchanged. Shared with the merge tool via `relationshipKey`.
+
+   The **subtype joins the key** because a Step and a Biological parent on one
+   pair are two relationships, not one recorded twice. Without it the two
+   collided and a Step edge added beside a Biological one read as *no change at
+   all* — an empty `relationshipsAdded`.
+
+   This is the exact-identity question. "Is this relationship already here"
+   is a looser one, and `relationshipMatches` answers it: an untyped edge
+   restates a typed one and matches it, while two different explicit subtypes
+   never match. `add_relationship`'s corroboration and the import de-dup in
+   `person-read-tree.ts` use the matcher; tree-diff uses the key, and the merge
+   dedup buckets on type and endpoints alone, then matches within the bucket —
+   bucketing on the key would give an untyped edge a bucket of its own and
+   leave it beside the typed edge it restates. Keying where a match was wanted lets an untyped
+   repeat through.
 3. **A `Marriage`/`Divorce` fact lives on the Couple relationship's `facts[]`,**
    not on a person. An added Couple carrying a Marriage fact is one added
    relationship, not a person-fact change.

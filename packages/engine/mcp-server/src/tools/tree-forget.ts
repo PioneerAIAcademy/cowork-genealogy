@@ -25,7 +25,6 @@
 // person, and that restriction is load-bearing for allowlist-enforceable write
 // authority. Spec: docs/specs/tree-forget-tool-spec.md.
 
-import { join } from "path";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -46,7 +45,8 @@ import {
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "../utils/date-helpers.js";
-import { COUPLE_EVENT_TYPES } from "./materialize-facts.js";
+import { COUPLE_EVENT_TYPES } from "../utils/record-persona.js";
+import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 
 /** The pre-removal snapshot. Dot-prefixed on purpose — it still holds the
  *  answer, and both the agent's file browsing and the feedback bundler skip
@@ -89,7 +89,7 @@ const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
 // carrier when the relatives were never added as tree persons).
 //
 // `SWEPT_SPOUSE_FACT_TYPES` is the full set of couple-event types from
-// `COUPLE_EVENT_TYPES` in `materialize-facts.ts`, per the lead's 2026-08-24
+// `COUPLE_EVENT_TYPES` in `utils/record-persona.ts`, per the lead's 2026-08-24
 // ruling: sweep all couple events. `SWEPT_PARENT_FACT_TYPES` remains a
 // narrower, evidence-confirmed set (#1314).
 export const SWEPT_SPOUSE_FACT_TYPES: readonly string[] = [...COUPLE_EVENT_TYPES];
@@ -159,12 +159,10 @@ const persons = (tree: SimplifiedGedcomX): SimplifiedPerson[] => tree.persons ??
 const relationships = (tree: SimplifiedGedcomX): SimplifiedRelationship[] =>
   tree.relationships ?? [];
 
-/** The two person ids a relationship connects, whatever its type. */
-function endpoints(rel: SimplifiedRelationship): string[] {
-  return rel.type === "ParentChild"
-    ? [rel.parent ?? "", rel.child ?? ""]
-    : [rel.person1 ?? "", rel.person2 ?? ""];
-}
+/** The person ids a relationship connects, whatever its type.
+ *  Thin alias over the shared reader — the only caller tests membership in a
+ *  person set, where a blank endpoint and a missing one behave identically. */
+const endpoints = (rel: SimplifiedRelationship): string[] => relationshipEndpoints(rel);
 
 function requirePerson(tree: SimplifiedGedcomX, personId: string | undefined, sel: string): string {
   if (!personId) throw new TreeForgetError(`'${sel}' requires personId`);
@@ -937,6 +935,18 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     const sanitized = sanitizeTree(raw);
     const tree = sanitized.tree;
     const research = await readJson(projectPath, "research.json");
+
+    // Plan-phase gate (#1357): forget-and-rederive is a project-start exercise.
+    const plans = Array.isArray(research.plans) ? research.plans : [];
+    if (plans.length > 0) {
+      throw new TreeForgetError(
+        "tree_forget is a project-start tool. This project already has a plan " +
+          "in research.json — forgetting tree data after planning has begun would " +
+          "discard structure the plan was built against. To run a forget-and-rederive " +
+          "exercise, start a new project."
+      );
+    }
+
     // Post-heal, pre-removal snapshot: block only on errors THIS call
     // introduces, not pre-existing drift in a section it never touches (#1572).
     const beforeTree = structuredClone(tree);
@@ -969,15 +979,14 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
 
     // Snapshot the pre-removal tree — but only if there isn't one already, so
     // the restore point keeps pointing at the ORIGINAL rather than at an
-    // already-forgotten intermediate (spec §5). No `.bak`: backupIfExists would
-    // write a non-dot-prefixed copy of the answer, which is the one thing the
-    // dot-prefix exists to prevent.
-    const restorePath = join(projectPath, RESTORE_FILE);
-    if (!(await fileExists(restorePath))) {
-      await atomicWriteJson(restorePath, original);
+    // already-forgotten intermediate (spec §5). The restore file is
+    // dot-prefixed so the feedback bundler skips it: a non-dot-prefixed copy
+    // of the answer is the one thing the dot-prefix exists to prevent.
+    if (!(await fileExists(projectPath, RESTORE_FILE))) {
+      await atomicWriteJson(projectPath, RESTORE_FILE, original);
     }
 
-    await atomicWriteJson(join(projectPath, "tree.gedcomx.json"), tree);
+    await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
 
     result.filesWritten = ["tree.gedcomx.json"];
 
@@ -986,9 +995,8 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     // pre-forget tree, a fact the agent re-derives would read as "no new
     // structure" and the tree-encoding gate would false-flag the conclusion.
     // Only when a baseline already exists — tree_forget never creates one.
-    const baselinePath = join(projectPath, "starting-tree.gedcomx.json");
-    if (await fileExists(baselinePath)) {
-      await atomicWriteJson(baselinePath, tree);
+    if (await fileExists(projectPath, "starting-tree.gedcomx.json")) {
+      await atomicWriteJson(projectPath, "starting-tree.gedcomx.json", tree);
       result.filesWritten.push("starting-tree.gedcomx.json");
     }
 
@@ -1012,7 +1020,8 @@ export const treeForgetSchema = {
     "This is the ONLY tool that deletes tree persons outright (tree_correct's " +
     "remove never does, and merge_tree_persons collapses duplicates instead). " +
     "Use it only for the forget-and-rederive exercise — never to correct a " +
-    "wrong fact (tree_correct) or to clean up a duplicate (merge_tree_persons).\n" +
+    "wrong fact (tree_correct) or to clean up a duplicate (merge_tree_persons). " +
+    "Project-start only: refused once research.json holds any plan.\n" +
     "\n" +
     "Selection is STRUCTURAL: pass tree person/fact/relationship ids and the " +
     "tool walks the tree's own relationships to resolve relatives. You do not " +

@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from pathlib import Path
 
 import e2e.validate_fixture as vf
@@ -108,6 +110,58 @@ def test_an_avoid_finding_still_flags_but_carries_its_polarity():
     warn = vf.format_suspect("fx", suspects[0])
     assert "avoid" in warn
     assert "must NOT" in warn
+
+
+# --- non-ASCII names (issue #3490) -----------------------------------
+
+def test_cyrillic_unstripped_target_flags_suspect():
+    """An all-Cyrillic answer left in the tree is caught. With an ASCII-only
+    letter class every Cyrillic name tokenized to nothing and never matched."""
+    expected = {"findings": [_rel_finding("Григорий Захаров Кокоша")]}
+    tree = {"persons": [
+        _person("I1", "Захар Иванов", "Кокошенко"),
+        _person("I9", "Григорий Захаров", "Кокоша"),  # the un-stripped answer
+    ]}
+    suspects = check_stripping(expected, tree)
+    assert [s.person_id for s in suspects] == ["I9"]
+    assert {"кокоша", "захаров"} <= suspects[0].shared
+
+
+def test_cyrillic_surname_only_overlap_does_not_flag():
+    expected = {"findings": [_rel_finding("Григорий Кокоша")]}
+    tree = {"persons": [_person("I2", "Илья", "Кокоша")]}
+    assert check_stripping(expected, tree) == []
+
+
+def test_accented_name_is_one_token_and_matches_its_unaccented_spelling():
+    """"João" must not split into "jo" + "o"; folding lets it match "Joao"."""
+    assert vf._tokens("João Gomes") == {"joao", "gomes"}
+    expected = {"findings": [_rel_finding("João Gomes de Sousa")]}
+    tree = {"persons": [_person("I9", "Joao", "Gomes de Souza")]}
+    assert [s.person_id for s in check_stripping(expected, tree)] == ["I9"]
+
+
+def test_cli_prints_a_cyrillic_warn_on_a_cp1252_console(tmp_path):
+    """The WARN line now carries Cyrillic tokens; on a Windows console
+    (cp1252) printing it must not raise UnicodeEncodeError."""
+    import os
+    import subprocess
+    import sys
+
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I9", "Григорий", "Кокоша")),
+        findings={"findings": [_rel_finding("Григорий Кокоша")]},
+    )
+    proc = subprocess.run(
+        [sys.executable, "-m", "e2e.validate_fixture", str(tmp_path)],
+        cwd=Path(vf.__file__).resolve().parents[1],
+        env={**os.environ, "PYTHONIOENCODING": "cp1252"},
+        capture_output=True,
+        encoding="utf-8",
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert "кокоша" in proc.stdout
 
 
 # --- subject-person leak regression (spriggs-parents-1898) -----------
@@ -443,10 +497,16 @@ def test_lint_fixture_rejects_an_unrecognized_finding_field(tmp_path):
 
 # --- record-hint ark citation (issue #970 / #1025) --------------------
 
-def _write_record_hint_meta(fixture_dir, *, resolved: bool, genre: str = "record-hint"):
-    (fixture_dir / "fixture.json").write_text(
-        json.dumps({"id": fixture_dir.name, "genre": genre}), encoding="utf-8"
-    )
+_UNSET = object()  # distinguishes "omit image_basis" from writing `null`
+
+
+def _write_record_hint_meta(
+    fixture_dir, *, resolved: bool, genre: str = "record-hint", image_basis=_UNSET
+):
+    meta = {"id": fixture_dir.name, "genre": genre}
+    if image_basis is not _UNSET:
+        meta["image_basis"] = image_basis  # may be a non-bool / None on purpose
+    (fixture_dir / "fixture.json").write_text(json.dumps(meta), encoding="utf-8")
     body = "Notes for reviewers\n\n" + (
         "Resolved: false match, no findable substitute."
         if resolved
@@ -549,3 +609,243 @@ def test_lint_fixture_passes_a_resolved_record_hint_fixture_with_an_ark(tmp_path
     _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "John", "Smith")), findings=findings)
     _, errors = lint_fixture(tmp_path)
     assert errors == []
+
+
+# --- image_basis flag (issue #2877) -----------------------------------
+#
+# `image_basis` is a declared flag: a record-hint resolution that rested on
+# reading the original page images sets `"image_basis": true`, which raises the
+# citation bar from "any full ark" to "an image ark (3:1:/3:2:)". The check
+# keys on the flag, NOT on README prose about images — the pair of tests below
+# proves it, since identical findings (only index arks) pass with the flag
+# absent and fail with it on.
+
+_INDEX_ONLY = {"f1": ["marriage register (ark:/61903/1:1:6PFD-Q43C)"]}
+_WITH_IMAGE = {"f1": ["marriage register image (ark:/61903/3:1:9Q97-YSRZ-GWP)"]}
+
+
+def test_image_basis_true_requires_an_image_ark(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=True)
+    errors = record_hint_citation_errors(tmp_path, _avoid_pair_findings(_INDEX_ONLY))
+    assert any("image ark" in e for e in errors)
+
+
+def test_image_basis_true_passes_with_an_image_ark(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=True)
+    assert record_hint_citation_errors(tmp_path, _avoid_pair_findings(_WITH_IMAGE)) == []
+
+
+def test_image_basis_absent_passes_with_only_index_arks(tmp_path):
+    # The other half of the meaningful pair: identical index-only findings, no
+    # flag. A one-directional test would pass even if the check ignored the flag.
+    _write_record_hint_meta(tmp_path, resolved=True)
+    assert record_hint_citation_errors(tmp_path, _avoid_pair_findings(_INDEX_ONLY)) == []
+
+
+def test_image_basis_false_passes_with_only_index_arks(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=False)
+    assert record_hint_citation_errors(tmp_path, _avoid_pair_findings(_INDEX_ONLY)) == []
+
+
+def test_image_basis_non_bool_string_is_error(tmp_path):
+    # "true" would read as truthy and wrongly enable the check; it must be a
+    # hard error instead, even though the findings carry a valid image ark.
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis="true")
+    errors = record_hint_citation_errors(tmp_path, _avoid_pair_findings(_WITH_IMAGE))
+    assert any("must be a boolean" in e for e in errors)
+
+
+def test_image_basis_non_bool_int_is_error(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=1)
+    errors = record_hint_citation_errors(tmp_path, _avoid_pair_findings(_WITH_IMAGE))
+    assert any("must be a boolean" in e for e in errors)
+
+
+def test_image_basis_null_is_error(tmp_path):
+    # JSON null -> Python None; caught via key presence, distinct from absent.
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=None)
+    errors = record_hint_citation_errors(tmp_path, _avoid_pair_findings(_WITH_IMAGE))
+    assert any("must be a boolean" in e for e in errors)
+
+
+def test_image_basis_non_bool_does_not_also_fire_the_image_check(tmp_path):
+    # Strict `is True`: a non-bool is flagged for its type but must NOT ALSO
+    # trigger the image-ark check, or one typo yields two errors for one cause.
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis="true")
+    errors = record_hint_citation_errors(tmp_path, _avoid_pair_findings(_INDEX_ONLY))
+    assert any("must be a boolean" in e for e in errors)
+    assert not any("image ark" in e for e in errors)
+
+
+def test_image_basis_ignored_on_strip_genre(tmp_path):
+    # The non-record-hint skip precedes the flag check, so a strip fixture with
+    # image_basis true and no ark at all is not checked here at all.
+    _write_record_hint_meta(tmp_path, resolved=True, genre="strip", image_basis=True)
+    assert record_hint_citation_errors(tmp_path, _avoid_pair_findings({})) == []
+
+
+def test_image_basis_ignored_on_draft(tmp_path):
+    # The draft-marker skip likewise precedes the flag check.
+    _write_record_hint_meta(tmp_path, resolved=False, image_basis=True)
+    assert record_hint_citation_errors(tmp_path, _avoid_pair_findings(_INDEX_ONLY)) == []
+
+
+def test_lint_fixture_hard_fails_image_basis_true_without_an_image_ark(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=True)
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I1", "John", "Smith")),
+        findings=_avoid_pair_findings(_INDEX_ONLY),
+    )
+    _, errors = lint_fixture(tmp_path)
+    assert any("image ark" in e for e in errors)
+
+
+def test_lint_fixture_passes_image_basis_true_with_an_image_ark(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, image_basis=True)
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I1", "John", "Smith")),
+        findings=_avoid_pair_findings(_WITH_IMAGE),
+    )
+    _, errors = lint_fixture(tmp_path)
+    assert errors == []
+
+
+@pytest.mark.parametrize(
+    "slug",
+    ["heinrich-zinsmeister-death", "katalin-horak-son", "cornelius-booysen-death"],
+)
+def test_committed_no_image_read_fixtures_still_pass(slug):
+    # These resolved record-hint fixtures mention images in their README only to
+    # record that the reading was NOT relied on; they set no image_basis flag.
+    # The check keys on the flag, not the README wording, so they must pass.
+    fixture_dir = vf.DEFAULT_FIXTURES_ROOT / slug
+    assert fixture_dir.is_dir(), f"missing corpus fixture {slug}"
+    _, errors = lint_fixture(fixture_dir)
+    assert errors == [], errors
+
+
+# --- genre-aware WARN advice (issue #2306 / PR #2634) ------------------
+#
+# Every branch of `format_suspect` used to tell the reader to edit
+# `starting-tree.gedcomx.json`. That is right for a `strip` fixture and
+# forbidden on a `record-hint` one, where nothing was stripped and the two
+# trees are committed byte-identical. These pin BOTH directions: the
+# record-hint wording appears when it should, and the strip wording is
+# unchanged when it should be. A one-directional test here would pass
+# happily if the genre branch swallowed every fixture.
+
+_EDIT_TREE_PHRASES = (
+    "delete that person and its relationship from starting-tree.gedcomx.json",
+    "Remove it from starting-tree.gedcomx.json",
+)
+
+
+def _suspect(polarity="recover", finding_type="relationship"):
+    return vf.Suspect(
+        finding_id="f1",
+        finding_type=finding_type,
+        person_id="ABCD-123",
+        shared={"smith"},
+        reason="",
+        polarity=polarity,
+    )
+
+
+def test_record_hint_advice_never_tells_you_to_edit_a_tree():
+    for polarity in ("recover", "avoid"):
+        warn = vf.format_suspect("fx", _suspect(polarity), "record-hint")
+        assert "Do not" in warn
+        for phrase in _EDIT_TREE_PHRASES:
+            assert phrase not in warn, f"{polarity}: still says {phrase!r}"
+
+
+def test_strip_genre_advice_is_unchanged():
+    # The other direction. If this ever starts failing because the strip
+    # wording drifted toward the record-hint wording, the genre branch has
+    # stopped discriminating and the test above proves nothing.
+    assert _EDIT_TREE_PHRASES[0] in vf.format_suspect("fx", _suspect("recover"), "strip")
+    assert _EDIT_TREE_PHRASES[1] in vf.format_suspect("fx", _suspect("avoid"), "strip")
+
+
+def test_genre_defaults_to_strip_when_omitted():
+    # Three call sites pass it; a fourth added later must not silently get
+    # record-hint wording.
+    assert vf.format_suspect("fx", _suspect("recover")) == vf.format_suspect(
+        "fx", _suspect("recover"), "strip"
+    )
+
+
+def test_fact_findings_keep_their_own_advice_on_a_strip_fixture():
+    warn = vf.format_suspect("fx", _suspect("recover", "fact"), "strip")
+    assert "only a problem if the stripped fact is still on" in warn
+
+
+# The tests above all call `format_suspect` directly, so they prove the
+# advice *branches* correctly and nothing about whether `main()` reaches it.
+# Deleting `genre = suspect_genre(fixture_dir)` and the third argument at the
+# CLI call site left the whole suite green while the command-line linter went
+# back to telling record-hint reviewers to edit a tree the genre forbids
+# (senior review, PR #2634). These two run the CLI end to end, both
+# directions.
+
+
+def _genre_fixture(path: Path, genre: str) -> None:
+    """A fixture that lints clean but raises one suspect, at `genre`."""
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    _write_fixture(
+        path,
+        _valid_tree(
+            _valid_person("I1", "John", "Smith"),
+            _valid_person("I9", "Robert", "Smith"),  # the suspect
+        ),
+        {"findings": [finding]},
+    )
+    (path / "fixture.json").write_text(
+        json.dumps({"id": path.name, "genre": genre}), encoding="utf-8"
+    )
+
+
+def test_cli_wires_the_fixture_genre_into_the_advice_it_prints(tmp_path, capsys):
+    _genre_fixture(tmp_path, "record-hint")
+    assert vf.main([str(tmp_path)]) == 0  # suspects are warn-only
+    out = capsys.readouterr().out
+    assert "Do not" in out
+    for phrase in _EDIT_TREE_PHRASES:
+        assert phrase not in out, f"CLI still says {phrase!r} on a record-hint fixture"
+
+
+def test_cli_still_prints_strip_advice_for_a_strip_fixture(tmp_path, capsys):
+    # The other direction: a CLI that hardcoded record-hint wording, or a
+    # `suspect_genre` that swallowed every fixture, passes the test above.
+    _genre_fixture(tmp_path, "strip")
+    assert vf.main([str(tmp_path)]) == 0
+    out = capsys.readouterr().out
+    assert _EDIT_TREE_PHRASES[1] in out
+
+
+def test_suspect_genre_reads_fixture_json(tmp_path: Path):
+    (tmp_path / "fixture.json").write_text(
+        json.dumps({"genre": "record-hint"}), encoding="utf-8"
+    )
+    assert vf.suspect_genre(tmp_path) == "record-hint"
+
+
+def test_suspect_genre_falls_back_to_strip_rather_than_crashing(tmp_path: Path):
+    # Advice text must never be the thing that takes the linter down. Four
+    # broken shapes, since "it returns a string" is easy to satisfy by
+    # accident: missing file, unparseable, not an object, and genre null.
+    assert vf.suspect_genre(tmp_path) == "strip"  # no fixture.json at all
+
+    (tmp_path / "fixture.json").write_text("{not json", encoding="utf-8")
+    assert vf.suspect_genre(tmp_path) == "strip"
+
+    (tmp_path / "fixture.json").write_text("[]", encoding="utf-8")
+    assert vf.suspect_genre(tmp_path) == "strip"
+
+    (tmp_path / "fixture.json").write_text(
+        json.dumps({"genre": None}), encoding="utf-8"
+    )
+    assert vf.suspect_genre(tmp_path) == "strip"

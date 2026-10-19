@@ -27,7 +27,7 @@ rebuilding it.**
    `sources`, or `tree.gedcomx.json` (:451).
 2. Never modify `proof_summaries` — including `resolved_conflict_ids`. Recommend
    `proof-conclusion` instead (:444).
-3. Do not re-classify assertions inline. Trust `evidence_type`, directness and
+3. Do not re-classify assertions inline. Trust `record_basis`, directness and
    `informant` **as recorded**; if a classification looks wrong, note it, recommend
    `record-extraction`, and proceed with what is on file (:78–83).
 4. Do not invoke `record-extraction` or `check-warnings` from here (:80).
@@ -41,9 +41,12 @@ rebuilding it.**
    with place and date with date (:90–95).
 8. Compare on `place` / `standard_place`, `date`, `structured_value` — never the
    free-text `value` (:96).
-9. Multi-valued fact types (`Occupation`, `Residence`, `Census`, `Citizenship`) are
-   never conflicts. Do not manufacture a conflict entry for differing occupations or
-   residences (:119–124).
+9. Multi-valued fact types (`Occupation`, `Residence`, `Census`, `Citizenship`,
+   `Immigration`, `Emigration`, `Naturalization` — every non-vital type) are never
+   conflicts. Do not manufacture a conflict entry for differing occupations,
+   residences, or repeat crossings (:119–125). The closed single-valued set is the
+   vitals named in the bullet above it, matching `VITAL_PRIMARY_TYPES` in
+   `merge-gedcomx.ts`.
 10. Never a second `c_` for a conflict between the same set of assertion ids — update
     the existing entry in place (:504).
 11. A fact conflict carries `disputed_attribute` and **≥2** `competing_assertion_ids`;

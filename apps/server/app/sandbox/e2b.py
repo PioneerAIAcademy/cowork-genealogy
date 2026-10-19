@@ -8,11 +8,10 @@ straight to the sandbox. `sandbox_server` spawns `agent_runner` itself on the
 first browser connection, so no host process owns the agent or watches /project.
 
 **`expose_port` is load-bearing — do not delete it.** It is what turns a
-sandbox id into the `wss://` URL the browser dials, and it has two live callers:
-`app/sessions.py` (`POST /api/sessions/{id}/connect`) and `app/v1.py` (the
-device-bridge `/connect` reuse). Both call it on every connect and reconnect,
-not just at create. `LocalProvider` implements the same method for the local
-dev path.
+sandbox id into the `wss://` URL the browser dials, and it has one live caller:
+`app/sessions.py` (`POST /api/sessions/{id}/connect`). It calls it on every
+connect and reconnect, not just at create. `LocalProvider` implements the same
+method for the local dev path.
 
 Verified against the `e2b` SDK (2.x) — Phase 0 findings:
 - `AsyncSandbox.create(template, metadata, envs, allow_internet_access, timeout,
@@ -29,8 +28,11 @@ The `e2b` SDK is imported lazily (module-local) so non-e2b runs/CI don't need it
 """
 from __future__ import annotations
 
+import asyncio
 import inspect
+import logging
 
+from ..agent.build_info import AGENT_HOME, BUILD_INFO_PATH, build_label
 from ..config import get_settings
 from ..ws_token import sandbox_secret
 from .base import (
@@ -46,23 +48,41 @@ from .base import (
     SandboxState,
 )
 
+log = logging.getLogger(__name__)
+
 # Continuous-running backstop, and — with no host-side idle loop — effectively
 # THE suspend driver. With lifecycle on_timeout=pause, hitting it pauses (FS
-# preserved) rather than killing, and connect() auto-resumes. `resume()` calls
-# set_timeout with this same value, so the clock restarts on every /connect.
+# preserved) rather than killing, and connect() auto-resumes.
 # Nothing else suspends a sandbox: `SandboxProvider.suspend()` has no route and
 # no background task behind it (only LocalProvider.delete() and the tests call
 # it). A session therefore ends by aging out here, not by being reaped.
 #
 # 3600 is E2B's Hobby-tier MAXIMUM, not a value we picked: create with 7200 fails
-# 400 "Timeout cannot be greater than 1 hours" (measured 2026-08-09). Raising it
-# here without a tier upgrade breaks create() outright. On Pro it becomes 86400.
-# Note set_timeout past the ceiling returns 204 and silently no-ops, so an
-# over-large value fails loudly at create and silently everywhere else.
+# 400 "Timeout cannot be greater than 1 hours" (measured 2026-08-09, again
+# 2026-10-15). Raising it here without a tier upgrade breaks create() outright. On
+# Pro it becomes 86400. Note set_timeout with a value over 3600 returns 204 and
+# silently no-ops (measured 2026-08-09), so an over-large value fails loudly at
+# create and silently everywhere else.
+#
+# Nothing extends a running sandbox past its hour on Hobby. Five minutes after
+# create, set_timeout(3600) returns success and leaves the end time at start + 3600;
+# set_timeout(1800) moves it in, and a second set_timeout(3600) is clamped back to
+# start + 3600 (measured 2026-10-15, dev/probe_e2b_heartbeat.py, #3305). The #3305
+# alpha bundle shows the same hour counted from each resume. So a turn still running
+# an hour after its sandbox started or last resumed is paused mid-flight.
 _RUNNING_TIMEOUT_S = 3600
 # The image's fixed prefix (e2b.Dockerfile AGENT_HOME). E2B commands.run does NOT
 # inherit the Dockerfile ENV, so the WS server launch must pass these explicitly.
-_AGENT_HOME = "/opt/genealogy-agent"
+_AGENT_HOME = AGENT_HOME
+
+# Baked by apps/server/sandbox/build-image.sh (the Dockerfile's last COPY):
+# {"commit": "<sha|dev>", "dirty": <bool>, "built_at": "<iso8601>"}. Read back
+# once per create() so /api/health can answer which build a session is on.
+_BUILD_INFO_PATH = BUILD_INFO_PATH
+# Bound on that read. It is a ~100-byte file on a microVM that has just booted,
+# and it sits inside create(), so an unbounded await would hang session creation
+# on a stalled SDK call for a value that is only observability.
+_PROVENANCE_READ_TIMEOUT_S = 10
 
 
 class E2BSandbox(Sandbox):
@@ -176,10 +196,30 @@ class E2BProvider(SandboxProvider):
             )
         self._api_key = api_key
         self._template = template
+        # Last provenance read off a created sandbox's image. Refreshed on EVERY
+        # create, not once per process: `make sandbox-image` rebuilds the
+        # template IN PLACE by name and does not restart this process, so a
+        # read-once cache would report the pre-rebuild commit for the life of the
+        # process — the stale-image blindness this field exists to remove.
+        self._image_commit: str | None = None
         # Trivial handle cache (§3.1): no lock, no eviction machinery. connect()
         # is idempotent and E2B sandboxes don't vanish, so there's nothing to
         # evict on; dropped on suspend()/delete().
         self._cache: dict[str, object] = {}
+
+    @property
+    def sandbox_image_commit(self) -> str | None:
+        """The commit `${AGENT_HOME}/BUILD_INFO.json` carried on the last sandbox
+        this process created, with a `+dirty` suffix when the image was built over
+        an unclean tree. None until the first create, and after a create whose
+        read-back failed **only if no earlier one succeeded** — a failed read never
+        discards a value already known.
+
+        A plain attribute read. /api/health serves it, and that endpoint is Fly's
+        health check (`deploy/fly.toml`: every 15s, 5s timeout, against the single
+        always-on machine), so nothing here may do I/O, block, or raise.
+        """
+        return self._image_commit
 
     def _sdk(self):
         from e2b import AsyncSandbox
@@ -195,10 +235,24 @@ class E2BProvider(SandboxProvider):
         return sb
 
     def _agent_env(self, model: str) -> dict[str, str]:
+        from ..anthropic_proxy import proxy_active
+
         s = get_settings()
-        env = {"AGENT_MODE": s.agent_mode, "MODEL": model}
-        if s.anthropic_api_key:
-            env["ANTHROPIC_API_KEY"] = s.anthropic_api_key
+        env: dict[str, str] = {
+            "AGENT_MODE": s.agent_mode,
+            "MODEL": model,
+            "AUTO_CONTINUE": "1" if s.auto_continue else "0",
+            "AUTO_CONTINUE_MAX_STEPS": str(s.auto_continue_max_steps),
+            # 1d: the SDK Stop hook's cap, read by real_agent INSIDE the sandbox. It has
+            # to be passed explicitly -- commands.run does not inherit the image ENV, and
+            # without it an operator setting this on the control plane changes nothing
+            # while the sandbox quietly keeps its compiled-in default. `auto_continue` is
+            # honoured because that flag already meant "one turn per message": a new
+            # mechanism that ignored it would silently remove an existing kill switch.
+            "AUTONOMOUS_MAX_NUDGES": str(s.autonomous_max_nudges if s.auto_continue else 0),
+        }
+        if proxy_active():
+            env["ANTHROPIC_BASE_URL"] = f"{s.public_url}/api/anthropic-proxy"
         return env
 
     async def create(self, spec: SandboxSpec) -> Sandbox:
@@ -207,6 +261,10 @@ class E2BProvider(SandboxProvider):
             template=spec.template or self._template,
             metadata={**spec.labels, "model": spec.model},
             envs={**spec.env, **agent_env},
+            # Required: MCP tools call FamilySearch, wiki-query-api, and
+            # OpenRouter. E2B exposes only a boolean, not a domain allowlist,
+            # so all outbound traffic is permitted. An egress proxy restricting
+            # traffic to the known API hosts is the planned mitigation (#1018).
             allow_internet_access=True,
             timeout=_RUNNING_TIMEOUT_S,
             lifecycle={"on_timeout": "pause", "auto_resume": True},
@@ -218,7 +276,7 @@ class E2BProvider(SandboxProvider):
         # it spawns agent_runner itself on first browser connection. The per-sandbox
         # WS_TOKEN_SECRET is derived so a leaked sandbox can't forge other sessions.
         ws_env = {
-            **agent_env,  # AGENT_MODE, MODEL, ANTHROPIC_API_KEY
+            **agent_env,  # AGENT_MODE, MODEL
             "WS_TOKEN_SECRET": sandbox_secret(sb.sandbox_id),
             "WS_PORT": str(SANDBOX_WS_PORT),
             # commands.run does NOT inherit the image ENV → pass the baked paths
@@ -237,14 +295,47 @@ class E2BProvider(SandboxProvider):
             "nohup python3 -m app.sandbox_server > /tmp/ws.log 2>&1",
             background=True, envs=ws_env,
         )
-        return E2BSandbox(sb, sandbox_id=sb.sandbox_id, model=spec.model)
+        out = E2BSandbox(sb, sandbox_id=sb.sandbox_id, model=spec.model)
+        await self._refresh_image_commit(out)
+        return out
+
+    async def _refresh_image_commit(self, sandbox: Sandbox) -> None:
+        """Read the image's baked provenance off a freshly created sandbox.
+
+        Deliberately the LAST thing create() does, and bounded, so a stalled read
+        cannot hang session creation: the value is only observability, and no
+        failure to observe it may break a session. On any failure the previous
+        value stands, so one bad read cannot blank a commit reported before.
+
+        Every failure is LOGGED AT WARNING, and the level is load-bearing rather
+        than stylistic. `obs.setup_logging()` handles the `app` logger at INFO
+        (#3305), but wherever it has not run, only WARNING and above reach
+        Python's last-resort handler. Silence would be
+        indistinguishable from the healthy "no session created yet" state,
+        because both surface as a null on /api/health — a feature whose whole job
+        is making an invisible staleness visible must not have an invisible
+        failure mode of its own.
+        """
+        try:
+            raw = await asyncio.wait_for(
+                sandbox.read_file(_BUILD_INFO_PATH), _PROVENANCE_READ_TIMEOUT_S
+            )
+            self._image_commit = build_label(raw)
+        except Exception as exc:  # noqa: BLE001 - never break create() over provenance
+            log.warning(
+                "could not read build provenance from %s (%s); /api/health cannot "
+                "report which build this session runs",
+                _BUILD_INFO_PATH, exc,
+            )
 
     async def get(self, sandbox_id: str) -> Sandbox:
         from e2b.exceptions import SandboxNotFoundException
 
-        # NOTE: connect() auto-resumes a paused VM, so E2B get() wakes a
-        # suspended sandbox and can't report SUSPENDED (unlike LocalProvider's
-        # non-destructive get()). Harmless here: both callers — familysearch
+        # NOTE: E2B get() can't report SUSPENDED, and using what it returns wakes
+        # a suspended sandbox (unlike LocalProvider's non-destructive get()): a
+        # cache miss calls connect(), which auto-resumes, and on a cached handle
+        # the first request does, since auto_resume wakes a paused sandbox on
+        # inbound traffic. Harmless here: both callers — familysearch
         # /status (called only on session open + right after a connect attempt;
         # NOT polled on a timer) and the sessions sidecar read — fire during
         # active session use, when the sandbox is being resumed anyway, and an
@@ -262,18 +353,21 @@ class E2BProvider(SandboxProvider):
         from e2b.exceptions import SandboxNotFoundException
 
         try:
-            sb = await self._connect(sandbox_id)  # connect() auto-resumes a paused VM
+            # Only a cache miss calls AsyncSandbox.connect, which auto-resumes a paused VM.
+            sb = await self._connect(sandbox_id)
         except SandboxNotFoundException:
             # Parity with get()/LocalProvider: never raise on a gone sandbox.
             return E2BSandbox(None, sandbox_id=sandbox_id, state=SandboxState.MISSING)
-        # Give the session a fresh window on each /connect so a long turn isn't
-        # paused mid-flight (connect() can reset the VM timeout to a short
-        # default). on_timeout=pause is still the backstop — but it fires on
-        # continuous runtime, not on idleness. Best-effort.
+        # On a cache miss, connect resumed a paused VM on the SDK's 300 s default
+        # (`default_sandbox_timeout`); this lifts it to the full hour. It cannot extend
+        # a running sandbox past its hour (see _RUNNING_TIMEOUT_S). What it does to a
+        # paused sandbox through a cached handle is unmeasured (#3305); the next request
+        # to the sandbox resumes it (auto_resume). Best-effort, but a failure is logged.
         try:
             await sb.set_timeout(_RUNNING_TIMEOUT_S)
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning("resume: set_timeout failed for sandbox %s (%s: %s)",
+                        sandbox_id, type(exc).__name__, exc)
         return E2BSandbox(sb, sandbox_id=sandbox_id)
 
     async def suspend(self, sandbox_id: str) -> None:

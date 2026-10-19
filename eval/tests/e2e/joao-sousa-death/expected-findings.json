@@ -1,0 +1,26 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "The death of a João Gomes de Souza on 14 December 1919 in Câmara de Lobos, Madeira, Portugal (civil death extract nº 480, book 9, 1919, son of João Gomes de Souza and Maria Henriques, indexed 'Barria' on one copy and 'Correia' on the other) is a genuine record of this family, but it cannot be assigned with confidence to the João born 13 October 1851. His parents had an elder son also named João, baptised 10 November 1839, who married Ana Augusta de Jesus on 30 April 1865 and is recorded alive and married in November 1905; the 1851 João has no located record after his 1852 baptism. The death extract states no age, marital status or spouse, so nothing in it separates the two brothers. Pass = the report engages the 14 December 1919 death entry (ark:/61903/1:1:6YP6-D37M or its second copy) and names the elder namesake brother João (baptised 1839, or the groom of the 1865 marriage to Ana Augusta de Jesus) as a candidate for that death that it has not ruled out, leaving the 1851 João's identification with it unresolved or explicitly qualified on that ground. Fail = it states that the João born in 1851 died on 14 December 1919 without addressing the elder namesake brother. A report that leaves the death undated without engaging the 1919 entry and naming the brother does not pass: failing to find or confirm a death is not this finding.",
+      "details": {
+        "subject_person": "João Gomes de Sousa (GLRZ-VRK), born 13 October 1851",
+        "fact_type": "Death",
+        "date": "unresolved — the 14 December 1919 death fits him or his elder namesake brother",
+        "place": "Câmara de Lobos, Madeira, Portugal",
+        "target_person": {
+          "name": "unresolved identity: the decedent of the 14 December 1919 death entry"
+        }
+      },
+      "supporting_sources": [
+        "Portugal, Registro Civil, 1437-2023 — death extract nº 480, book 9, 1919, Câmara de Lobos: João Gomes de Souza, died 14 Dec 1919, son of João Gomes de Souza and Maria 'Barria' (second copy indexed 'Correia') Henriques; no age, marital status or spouse on the extract form (ark:/61903/1:1:6YP6-D37M, image ark:/61903/3:1:3Q9M-CSM5-Q9MC-1; second copy indexed as ark:/61903/1:1:6B9P-F8GR, mis-dated 1900, image ark:/61903/3:1:3Q9M-CSQ7-C9LL-L)",
+        "Portugal Baptisms, 1570-1910 — baptism of João, son of João Gomes de Sousa and Maria Correa Henriques, 10 Nov 1839, São Sebastião, Câmara de Lobos — the elder namesake brother (ark:/61903/1:1:F2W4-HXP)",
+        "Portugal, Registro Civil, 1437-2023 — marriage of João Gomes de Souza (born 1840, son of João Gomes de Sousa and Maria Correa Henriques) and Anna Augusta de Jesus, 30 Apr 1865, Câmara de Lobos (ark:/61903/1:1:X911-WXWP)",
+        "Portugal, Registro Civil, 1437-2023 — marriage of their son Francisco Gomes de Souza, 29 Nov 1905, Câmara de Lobos, naming his father João Gomes de Souza as living and married (ark:/61903/1:1:X91B-LBSN)",
+        "Portugal, Madeira, Registros da Igreja Católica, 1044-1990 — baptism of João Gomes de Souza, born 13 Oct 1851, baptised 13 Jan 1852, Câmara de Lobos, mother Maria Correa Henriques (ark:/61903/1:1:6NGD-BL9Q)"
+      ],
+      "required": true
+    }
+  ]
+}

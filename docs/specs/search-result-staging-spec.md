@@ -43,7 +43,36 @@ The sidecar-producing search tools: **`record_search`**, **`fulltext_search`**,
 and **`external_links_search`** (`tool: "external_links_search"`) — the tools whose
 payloads become `results/` sidecars per `research-log-protocol.md`. The staging
 logic is a shared util so adding a producer is a one-line opt-in
-(`external_links_search` was added as the third, 2026-07 — GitHub #696).
+(`external_links_search` was added as the third, 2026-07).
+
+**Two acquisition producers joined them:** **`image_transcribe`**
+and **`record_read`** (a live read given a `projectPath`). Acquisition has the same problem
+search had — a page transcription or an ARK-fetched record crossed the conversation as text and
+was retained nowhere until extraction wrote `sources[].transcription` — and ADR-0002's seam rule
+("whatever a step acquires, the host fetches and stages") puts it in this channel. They stage a
+**single document**, so the envelope is a **one-element `results[]`** (§5) rather than a second
+shape: `returned_count` is 1 and finalize recomputes it as usual. The engine exports the two sets
+separately — `STAGING_SEARCH_TOOLS` (the three above) and `STAGING_CAPABLE_TOOLS` (every producer)
+— and the eval mock's search notes mirror the SEARCH set (`eval/CLAUDE.md`, "Eval vs production parity").
+**Every nag stays on the search set:** the nil-search note, the unlogged-search note (the reader
+skips an acquisition file) and `research_log_append`'s retained-none warning (§6). Record-extraction
+logs an upload as `user_provided` and a `record_read` with no `stagedResultsRef`, so an acquisition
+file never pairs with a log entry, and a nag on it would tell the model to undo a correctly logged
+read. An acquisition file that is never finalized is removed by the TTL prune like any other.
+
+**A third acquisition producer, `person_read`** (given a `projectPath`), stages the tree read
+it returns. It is in `STAGING_CAPABLE_TOOLS` only, never `STAGING_SEARCH_TOOLS`,
+so none of the search notes fire on it. Its file is not a log sidecar: no shipped flow
+finalizes it with `research_log_append`. `project_create` builds the starting tree
+from it (`personReadRef`; `project-create-tool-spec.md` §4) without consuming it, and it is otherwise
+TTL-pruned. The eval mock
+stages a canned `person_read` through the tool's own compiled `stagePersonRead`, so the envelope
+has one definition.
+
+**The inline-strip rule below has one exemption:** `image_transcribe` keeps returning its
+`transcription` inline. The shipped `image-reader` agent and `person_read`'s memories leg read it
+today, and the consumer that reads the sidecar instead is the `document-capture` agent; the
+strip belongs to the PR that lands that consumer.
 
 The change is **purely additive and back-compatible**: no `projectPath` → the tools
 behave exactly as today.
@@ -55,9 +84,12 @@ sidecar, which `record_read` and `rank_search_matches` read host-side. Each
 producer strips its own heavy field: `record_search` drops `gedcomx`,
 `fulltext_search` drops `textDocument` (the AI-transcribed page), and
 `external_links_search` bounds the inline `results[]` (optional `host` filter +
-a backstop cap) while staging the full year-filtered set. The strip is
-unconditional once staged (so the protection can't be forgotten) and never runs
-on an un-staged search (nothing was retained to re-read).
+a 200-row cap) while staging the full year-filtered set. The `record_search` and
+`fulltext_search` strips are unconditional once staged (so the protection can't be
+forgotten) and never run on an un-staged search (nothing was retained to re-read).
+`external_links_search`'s cap is the exception: it applies on every call, staged or
+not, because the tool also keeps the full list in `external-collections.json` and
+says when it cut (`inlineCapped`; `external-links-search-tool-spec.md`).
 
 Out of scope: `research_log_append` itself (its spec), the other search tools
 (image/volume/collections/person — they don't write `results/` sidecars today), and
@@ -69,12 +101,12 @@ any validator rule change.
 
 | Fact | Source |
 |------|--------|
-| `record_search` returns `{ query, totalMatches, returned, offset, hasMore, results[] }`; each result has `recordId`, `primaryId`, `gedcomx` | `src/tools/record-search.ts:511`, `:413` |
-| `fulltext_search` returns `{ query, totalResults, returned, offset, hasMore, results[] }` | `src/tools/fulltext-search.ts:206` |
+| `record_search` returns `{ query, totalMatches, returned, offset, hasMore, results[] }`; each result has `recordId`, `primaryId`, `gedcomx` | `src/tools/record-search.ts`, the `out: RecordSearchToolResponse` return (`totalMatches: data.results`) |
+| `fulltext_search` returns `{ query, totalResults, returned, offset, hasMore, results[] }` | `src/tools/fulltext-search.ts`, the `out: FulltextSearchResponse` return (`totalResults: data.results`) |
 | For both, `returned === results.length` — i.e. the sidecar `returned_count` invariant | record-search.ts:515, fulltext-search.ts:209 |
 | No search tool takes a `projectPath` or writes to the project folder today | `grep writeFile\|mkdir src/tools` → none |
-| `validateSidecars` orphan check reads `results/` **non-recursively** and flags only top-level `*.json` not referenced by a log entry | `src/validation/validator.ts:1034–1043` |
-| Existing path-traversal guard pattern for project-relative refs | `src/validation/validator.ts:988` |
+| `validateSidecars` orphan check reads `results/` **non-recursively** and flags only top-level `*.json` not referenced by a log entry | `validateSidecars`, the `"orphan sidecar — no log entry references it"` check |
+| Existing path-traversal guard pattern for project-relative refs | `validateSidecars`, the `isInsideProject` guard (`"escapes the project directory"`) |
 
 The orphan-check fact is load-bearing: staging files placed in the
 `results/.staging/` **subdirectory** are invisible to that check (it neither
@@ -141,30 +173,117 @@ The handle returned to the model is just `{ resultsRef, returnedCount }` (enough
 for narration like "retained 12 results"); the payload itself is not echoed back as
 part of `staged`.
 
+**Single-document producers** use the same envelope with a one-element
+`results[]`:
+
+- `image_transcribe` — `payload: { query: { imageId | ark | memoryArtifactUrl | file, lookingFor? },
+  results: [ { id, source, content_type, size_bytes, model, transcription, truncated?, found? } ] }`,
+  where `id` is the FamilySearch identifier or `capture:<basename>` for an uploaded file (the
+  extraction id convention, as `record-structurer` uses it). The tool also returns a `digest` beside the handle.
+- `record_read` — `payload: { query: { recordId }, results: [ { recordId, gedcomx, indexFields? } ] }`:
+  `record_search`'s element shape plus one field, so `record_read({ recordId, resultsRef })` still
+  reads it back unchanged.
+
+  `indexFields` maps each persona's `gedcomx.persons[].id` to the per-person index values the raw
+  FamilySearch body carries in `fields[]` and `toSimplified` drops — `relationshipToHead`,
+  `sortKey`, `personNbr`, `lineNbr`, `householdId`, `age`, `fatherBirthPlace`, `motherBirthPlace`,
+  each optional. It is omitted entirely when no persona carries any, so a record type with no
+  index data stages what it always did.
+
+  **Only `record_read` stages it, and that asymmetry is the point.** A `record_search` response
+  populates `fields[]` for the searched persona alone; every co-resident arrives with names and
+  facts and nothing else. Code that assigns a role per household therefore cannot be fed from a
+  search sidecar, which is why the record extractor takes a `record_read` sidecar. Evidence:
+  `packages/engine/mcp-server/dev/probe-census-persona-fields.ts`.
+- `person_read` — `payload: { query: { personId, relatives, sourceDescriptions }, results: [ { personId, gedcomx } ] }`,
+  where the element `personId` is the post-redirect id and `gedcomx` is the whole response minus
+  `staged`/`stagingError` (`person-read-tool-spec.md`, "Staging the read").
+
 ---
 
 ## 6. Finalize handshake with `research_log_append`
+
+### 6.0 Near-copy resolution (`resolveStagedRef`)
+
+Every consumer of a staged ref — `research_log_append` (each op), `project_create`
+(`personReadRef`), and the read-only `readStagedResults` behind `record_read` and
+`rank_search_matches` — first maps a mis-copied ref onto the one staged file it
+names, then runs its own checks on that canonical ref.
+
+- An existing ref is used unchanged.
+- A ref whose directory is absent (a bare `<uuid>` or `<uuid>.json`) or `.staging/`
+  is read as `results/.staging/<name>`.
+- Otherwise the ref's name is compared with every `results/.staging/*.json` name: a
+  name within **3 edits**, or a name the ref is a prefix of when the ref has **at
+  least 8 characters**, is a candidate.
+- **Exactly one candidate** is used. Zero or several, a ref naming any other
+  directory, or a ref containing `..`, is left unchanged and refused by the
+  consumer's own check as before — the resolver never guesses.
+- A writing consumer reports each correction in `validation.warnings`
+  (`<field> '<given>' matched no staged file; used '<canonical>', ...`); the
+  read-only `readStagedResults` reads through without persisting anything.
+
+A staged name is a random v4 UUID, so two staged files within 3 edits of each other
+do not occur in practice; the single-candidate rule still refuses that case.
 
 When the log editor is called with `stagedResultsRef`, it (host-side):
 
 1. Resolves `stagedResultsRef` and **rejects anything not inside
    `projectPath/results/.staging/`** (path-traversal guard, mirroring
-   validator.ts:988).
+   `validateSidecars`'s `isInsideProject` guard).
 2. Reads the staged file. Verifies its `tool` matches the log entry's `tool`.
 3. **Recomputes `returned_count` from `payload.results.length`** — authoritative,
    per `research-log-editor-spec.md` §4 ("never trusted from the caller"); the
    staged file's count is advisory.
 4. Wraps it as the full sidecar `{ log_id, tool, retrieved, returned_count,
    payload }` and writes `results/<log_id>.json`.
-5. Unlinks the staged file.
+5. **After `research.json` commits**, removes the staged file
+   (`consumeStagedResults`). Never before: finalize itself only writes, so a call
+   refused after finalizing — a later op in a batch, the `query`-required check, or
+   the final validation — leaves every staged file for the corrected re-send.
+
+Steps 1–3 run for every op **before any op is applied** (`checkStagedResults`), so a
+bad ref in op[1] is refused before op[0] writes a sidecar, and a batch naming one
+staged ref in two ops is refused up front: with removal deferred, both ops would
+otherwise finalize it into two sidecars.
+
+The removal is best-effort by the store's own contract (an absent ref is not an
+error) and is **not** wrapped in a catch: on the Postgres backend the whole call is
+one transaction still open at step 5, and a swallowed query error would abort it,
+so the call would report success while its `research.json` write rolled back.
 
 This is a host-side byte move — **the model never serializes the payload.** (This
 refines the log-editor spec §6's "rename the staged file" wording: it is a wrap +
-write + unlink, because `log_id` and the authoritative `returned_count` are injected
-at finalize, not a pure rename.)
+write, then a remove after the commit, because `log_id` and the authoritative
+`returned_count` are injected at finalize, not a pure rename.)
 
 If `stagedResultsRef` is absent (Option A fallback, or a nil/external-site search),
 the log editor behaves exactly as its own spec describes.
+
+**The staged `query` (`payloadQuery`).** `record_search` and `fulltext_search`
+stage their whole response, which carries `query: echoQuery(input)`: every
+argument the call sent, `undefined` dropped and `null` kept. No other producer
+stages an echo of its arguments — `external_links_search` stages only its links,
+and `image_transcribe` and `record_read` stage an identifier they build
+themselves (`person_read` likewise builds its own `{ personId, relatives,
+sourceDescriptions }`, and drops `projectPath`). Finalize returns that `query` with host plumbing removed
+(`projectPath`, an absolute host path meaningless on another machine, and
+`subjectId`, a tree id) as `payloadQuery`, or nothing when the payload's `query`
+is not a plain object. The log editor uses it two ways, and both read the same
+stripped value (`stripQueryPlumbing`):
+
+- **Default.** When the caller omits `query`, the entry's `query` is
+  `payloadQuery`, so the model never re-serializes an ARK-dense object it can
+  only get wrong.
+- **Ground truth.** When the caller supplies `query`, it is kept as sent, never
+  rewritten, but refused if it names a filter `payloadQuery` does not carry at
+  all (`research-log-editor-spec.md` §8.3). That check reads the staged file
+  before any op is finalized (`readStagedEnvelopeQuery`, read-only), so the
+  refusal is reported before any op writes a sidecar.
+
+The eval mock echoes the call's arguments into `query` for these two tools
+rather than serving a fixture's recorded query, so the unit harness stages the
+same ground truth production does.
 
 ---
 
@@ -173,8 +292,12 @@ the log editor behaves exactly as its own spec describes.
 - **Cross-turn survival.** The staged file is on disk, so a search in one turn and
   the `research_log_append` in a later turn work without any in-memory cache — the
   reason Option B beats a token cache (§5 of the log-editor spec, Option C).
-- **Finalize consumes it.** A successful `research_log_append` unlinks the staged
-  file (§6 step 5).
+- **A successful log consumes it; a refused one never does.** `research_log_append`
+  removes the staged file only after its `research.json` write commits (§6 step 5).
+  Every refusal — whatever stage it comes from — leaves the file, so a corrected
+  re-send finds it. A ref that is missing gets a message saying each staged ref can
+  be logged once, and whether to re-run the search or leave it: already logged,
+  pruned, or never staged.
 - **Un-finalized staging files** (the LLM searched but never logged, or the turn
   died) are pruned opportunistically: on each `stageSearchResults` write, delete
   `results/.staging/*.json` older than a TTL (24h, by `mtime`). Safe unconditionally
@@ -183,15 +306,16 @@ the log editor behaves exactly as its own spec describes.
 - **TTL vs. long sessions.** The 24h prune can delete a staged file before a slow
   multi-turn session logs it (search early, `research_log_append` >24h later). That
   is not corruption: the stale `stagedResultsRef` simply fails the finalize guard
-  (§6 steps 1–2), and `research_log_append` writes nothing and returns a clear error.
+  (§6 steps 1–2), and `research_log_append` writes nothing and returns a clear error
+  that names the re-run.
   The **skill** recovers by re-running the search (cheap — it re-stages); the
   consuming skills should document that fallback. Raising the TTL trades disk for
   fewer misses; 24h fits genealogy research cadence and is the v1 default.
 - **The un-finalized set is also a signal, not only garbage.** `stageSearchResults`
-  prunes it; `unloggedStagedSearches(projectPath)` *reads* it, and all three staging
-  tools surface what it returns as an advisory note (contract in
+  prunes it; `unloggedStagedSearches(projectPath)` *reads* its search files, and all three staging
+  search tools surface what it returns as an advisory note (contract in
   `record-search-tool-spec-v2.md`). What makes it a signal rather than a file count is
-  the pairing rule: `research_log_append` only WARNS when a staging-capable tool logs
+  the pairing rule: `research_log_append` only WARNS when a staging search tool logs
   `results_available > 0` with no `stagedResultsRef` (§6), so that entry's staged file
   survives the full TTL although its search WAS logged — measured at 126 of 1242
   non-nil staging-capable entries across the committed corpus. Each staged file
@@ -215,8 +339,8 @@ the log editor behaves exactly as its own spec describes.
   gedcomx from the staged/finalized sidecar — no live FS fetch — returning the
   search stage's standardized places as-is (a live read uses pure `toSimplified`,
   keeping only the record's own normalized places, never resolver-derived ones);
-  used by record-extraction /
-  search-records to avoid re-fetching a record they already searched). Both share
+  used by search-records to avoid re-fetching a record it already searched;
+  `extraction_append` does not use it — it always reads the record live). Both share
   the dual-location read helper `readStagedResults` (staged handle OR finalized
   `results/<log_id>.json`) and never unlink, so a staged handle can still be
   finalized afterward.
@@ -282,3 +406,8 @@ output change.
   guidance entirely.
 - `validate-project-refactor-spec.md` — unaffected; the staged file is not a sidecar
   until finalized, and the orphan check already ignores the subdir.
+- `image-transcribe-tool-spec.md` §5.4/§5.5, `record_read` and `person-read-tool-spec.md` — the three acquisition producers. **Ownership boundary:** this spec and those tools own the writer, the envelope
+  and finalize. *Reading a staged transcription's full text back* is the consumer's design —
+  the `document-capture` agent returns `{ recordId, logId, resultsRef, digest }` and decides
+  whether extraction reads the text host-side or through a paged reader; `sidecar_read`
+  deliberately does not serve `results/` (its spec §7), so no reader was added here.

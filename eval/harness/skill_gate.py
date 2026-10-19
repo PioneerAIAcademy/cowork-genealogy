@@ -53,8 +53,46 @@ from typing import Any
 from harness.auth import AuthConfig, AuthError, resolve_auth
 from harness.loader import InvalidTestError, TestSpec, load_test
 from harness.orchestrator import REPO_ROOT, OrchestratorPaths, run_one_test
+from harness.instrument import stale_build_files
+from harness.snapshot import diff_snapshot_vs_disk
 
 _SCORE_LABEL = {3: "pass", 2: "partial", 1: "fail", None: "n/a"}
+
+
+def gated_body_paths(skill: str) -> tuple[str, ...]:
+    """The files a gated edit lands in: the skill's SKILL.md, the plugin agent
+    body of the same name for a suite keyed on an agent (e.g. person-evidence,
+    which has no `skills/` dir), or a test-only skill's SKILL.md under
+    `eval/skills/` (e.g. extraction-append). All are listed so no kind reads as
+    drift or as "no edit"; a path that does not exist matches nothing."""
+    return (
+        f"packages/engine/plugin/skills/{skill}/SKILL.md",
+        f"packages/engine/plugin/agents/{skill}.md",
+        f"eval/skills/{skill}/SKILL.md",
+    )
+
+
+def stale_snapshot_paths(
+    snapshot: dict[str, str], skill: str, repo_root: Path
+) -> list[str]:
+    """Baseline paths that differ from disk, other than the gated skill's own body."""
+    if not snapshot:
+        return []
+    own = gated_body_paths(skill)
+    return [p for p in sorted(diff_snapshot_vs_disk(snapshot, repo_root)) if p not in own]
+
+
+def drift_signal(signal: "GateSignal", snapshot_drifted: list[str]) -> "GateSignal":
+    """Force NEEDS YOUR EYES when the baseline drifted outside the gated skill."""
+    if not snapshot_drifted:
+        return signal
+    shown = snapshot_drifted[:5]
+    tail = " ..." if len(snapshot_drifted) > 5 else ""
+    reason = (
+        f"baseline snapshot drifted on {len(snapshot_drifted)} path(s) outside "
+        f"this skill — the comparison may be stale: " + ", ".join(shown) + tail
+    )
+    return GateSignal("NEEDS YOUR EYES", [reason] + signal.reasons)
 
 
 # --------------------------------------------------------------------------
@@ -65,7 +103,10 @@ _SCORE_LABEL = {3: "pass", 2: "partial", 1: "fail", None: "n/a"}
 def scores_of(entry: dict[str, Any]) -> dict[tuple[str, str], int | None]:
     """Map (source, name) -> aggregated score for one candidate test entry.
 
-    An aborted or judge-skipped entry has no aggregated_dimensions -> empty map.
+    An aborted, judge-skipped or validator-failing entry has no
+    aggregated_dimensions -> empty map. Since #2057 a validator-failing entry
+    is graded but excluded from the modal, so it reaches here empty without
+    the judge having been skipped.
     """
     dims = (entry.get("outcome_summary") or {}).get("aggregated_dimensions") or []
     return {(d.get("source", ""), d.get("name", "")): d.get("score") for d in dims}
@@ -182,7 +223,7 @@ def compute_signal(
         )
 
     # Coverage gap: a dimension the baseline graded that the candidate did NOT
-    # (the candidate test aborted or the judge was skipped). `candidate=None`
+    # (the candidate test aborted, the judge was skipped, or a validator failed - which is graded but excluded from the modal). `candidate=None`
     # can't be a "regression" score-wise, but it means we can't confirm the
     # result on that test — so it must block LOOKS GOOD, not pass silently.
     def _has_gap(rows: list[DimRow]) -> bool:
@@ -256,6 +297,7 @@ class Baseline:
     #: read as human-verified.
     corrected: int = 0
     total: int = 0
+    snapshot: dict[str, str] = field(default_factory=dict)
 
 
 def incumbent_baseline(
@@ -308,7 +350,11 @@ def incumbent_baseline(
                     n_corrected += 1
         scores[tid] = dims
 
-    return Baseline(scores=scores, path=log_path, corrected=n_corrected, total=n_total)
+    return Baseline(
+        scores=scores, path=log_path,
+        corrected=n_corrected, total=n_total,
+        snapshot=env.get("snapshot") or {},
+    )
 
 
 # --------------------------------------------------------------------------
@@ -402,14 +448,14 @@ def render_report(
 
 
 def _has_uncommitted_skill_edit(skill: str) -> bool:
-    """True if the working-tree SKILL.md has uncommitted changes vs `git HEAD` —
-    i.e. there is an edit to actually evaluate. A single `git diff --quiet` sanity
-    check (NOT the heavy tree machinery); on any git error, assume an edit exists
-    so the gate never blocks on a non-git checkout."""
-    rel = f"packages/engine/plugin/skills/{skill}/SKILL.md"
+    """True if the working-tree SKILL.md or agent body has uncommitted changes vs
+    `git HEAD` — i.e. there is an edit to actually evaluate. A single `git diff
+    --quiet` sanity check (NOT the heavy tree machinery); on any git error, assume
+    an edit exists so the gate never blocks on a non-git checkout."""
     try:
         r = subprocess.run(
-            ["git", "-C", str(REPO_ROOT), "diff", "--quiet", "HEAD", "--", rel]
+            ["git", "-C", str(REPO_ROOT), "diff", "--quiet", "HEAD", "--",
+             *gated_body_paths(skill)]
         )
     except (OSError, ValueError):
         return True
@@ -421,17 +467,12 @@ def _has_uncommitted_skill_edit(skill: str) -> bool:
 def _build_is_stale() -> bool:
     """Mirror of run_tests._check_mcp_build_fresh: a stale build makes LIVE_TOOLS
     fail inside the run and looks like a skill failure."""
-    src = REPO_ROOT / "packages" / "engine" / "mcp-server" / "src"
-    build = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
-    if not src.exists():
-        return False
-    for ts in src.rglob("*.ts"):
-        if ts.name.endswith(".d.ts"):
-            continue
-        js = build / ts.relative_to(src).with_suffix(".js")
-        if not js.exists() or js.stat().st_mtime < ts.stat().st_mtime:
-            return True
-    return False
+    return bool(
+        stale_build_files(
+            REPO_ROOT / "packages" / "engine" / "mcp-server" / "src",
+            REPO_ROOT / "packages" / "engine" / "mcp-server" / "build",
+        )
+    )
 
 
 # --------------------------------------------------------------------------
@@ -512,10 +553,16 @@ def main(argv: list[str] | None = None) -> int:
     # Is there actually an uncommitted edit to evaluate? (git diff vs HEAD.) A
     # stale baseline with no current edit is the main false-positive trap — the
     # gate would otherwise credit unrelated committed drift (or judge noise) as a
-    # "fix." Comparing against the baseline *snapshot* body can't catch this (a
-    # stale baseline differs from the working tree for unrelated reasons), so ask
-    # git whether the operator has actually changed the skill.
+    # "fix." The snapshot comparison below catches *committed* drift in other
+    # files; this catches the *uncommitted* edit to the skill itself.
     no_edit = not _has_uncommitted_skill_edit(args.skill)
+
+    # --- Snapshot drift: does the baseline match the current working tree? ---
+    # The gated skill's own body (SKILL.md or agent .md) always differs from the
+    # baseline (it IS the edit being gated), so exclude it. Any OTHER path
+    # differing means the baseline was recorded against different repo state —
+    # fixtures, other skills, other agent bodies — and the comparison is stale.
+    snapshot_drifted = stale_snapshot_paths(baseline.snapshot, args.skill, REPO_ROOT)
 
     gate_specs = [mined_spec]
     from harness.versioning import now_utc_filename_timestamp
@@ -532,11 +579,12 @@ def main(argv: list[str] | None = None) -> int:
     signal = compute_signal(mined_rows, named_dimension=args.dimension)
     if no_edit and signal.verdict != "NEEDS YOUR EYES":
         signal = GateSignal("NEEDS YOUR EYES", [
-            "no uncommitted edit to this skill's SKILL.md — there is nothing to "
+            "no uncommitted edit to this skill's SKILL.md or agent body — there is nothing to "
             "evaluate (apply the improver's edits first). The baseline run-log may "
             "also predate the committed body; run a fresh `make eval-skill` if "
             "unsure.",
         ] + signal.reasons)
+    signal = drift_signal(signal, snapshot_drifted)
     total_cost = sum(
         float((e.get("totals") or {}).get("total_cost_usd") or 0.0)
         for e in cand_entries.values()

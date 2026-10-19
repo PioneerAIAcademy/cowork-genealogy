@@ -1,14 +1,14 @@
-"""Skill-specific validators for the citation skill.
+"""Validators for the citation agent's unit suite.
 
 citation keeps its `rubric.md` — all three dimensions (Evidence
 Explained compliance, Replication test, Source vs information
 distinction) are pure GPS craft and stay graded by the LLM judge.
 
 This file holds structural invariants: the append-only source-section
-check, creator-vs-custody slot validation (V5), informant-not-in-who
-(V10), invented-locator detection (V3), example-value leak (V4),
-negative-search fidelity (V11), and framework-walkthrough detection
-(V12). Tool-allowlist and write-then-validate enforcement are delegated
+check, creator-vs-custody slot validation (V5), unknown-marker
+vocabulary (V6), informant-not-in-who (V10), invented-locator
+detection (V3), example-value leak (V4), negative-search fidelity
+(V11), and framework-walkthrough detection (V12). Tool-allowlist and write-then-validate enforcement are delegated
 to universal validators.
 
 See test_universal.py module docstring for the validator function-
@@ -77,8 +77,8 @@ def test_does_not_add_new_source_entries(before_state, after_state, test):
     """citation refines existing source entries — it must not create new
     ones. New record discovery is search-records / record-extraction's job.
 
-    Per SKILL.md: "This skill never creates new source entries — it only
-    refines entries created by record-extraction."
+    Per the agent body: "Citation only refines existing sources" — it never
+    creates one, and declines and routes to record-extraction when asked to.
     """
     # Runs on every positive citation test, and on negative tests tagged
     # `no-new-source` (e.g. ut_citation_012): those negatives DO run a
@@ -176,6 +176,106 @@ def test_creator_not_in_custody(before_state, after_state, test):
         + "\n  ".join(violations)
     )
 
+
+# --- V6: Unknown markers must name framework elements only ---------------
+
+# Custody / physical-media keywords — a marker whose content contains any
+# of these names a `where` layer (access point → medium → original custodian),
+# not a required framework element.  Such markers belong in `notes`.
+_CUSTODY_KEYWORDS = frozenset({
+    "repository", "physical", "archive", "microfilm", "microfiche",
+    "fhl", "catalog", "accession", "call number", "custody",
+})
+
+_MARKER_RE = re.compile(r'\[([^\]]*?)\s*NOT\s+RECORDED\]', re.IGNORECASE)
+
+
+def test_unknown_markers_framework_only(before_state, after_state, test):
+    """[... NOT RECORDED] markers must name Who/What/When/Where/Wherein elements.
+
+    Three checks, scoped per field:
+    1. Position — a marker that IS the entire `citation_detail.where` value
+       means the skill recorded no access point at all.  Under "cite what
+       you see" the access point is always known (the agent body's "Cite
+       What You See" principle), so
+       a bare marker fails.
+    2. Empty element — a bare `[NOT RECORDED]` with no element name before
+       NOT names nothing at all, so it cannot be a valid framework element.
+       Fails in non-where citation_detail fields only (see exemption below).
+    3. Content — a marker whose text contains a custody / physical-media
+       keyword (repository, archive, microfilm, …) names a `where` layer,
+       not a required element.  It belongs in `notes`.  Fails in non-where
+       citation_detail fields only (see exemption below).
+
+    Custody exemption (Edmond ruling, applied to `where` and `citation`):
+    the agent body defines `where` as a layered path from access point
+    back to origin; layer 3 is the original custodian.  A custody marker
+    there is the field working as designed, not a defect.  The assembled
+    `citation` string embeds the where layer, so the same exemption applies.
+    Only the position rule (check 1) survives for `where`.
+
+    Tier 1 — gates.  Reads persisted citation_detail fields only; the
+    assembled `citation` string is exempt (see the custody exemption above).
+    """
+    if test.get("type") == "negative":
+        pytest.skip("negative test")
+    before_rj = before_state.get("research_json")
+    after_rj = after_state.get("research_json")
+    if before_rj is None or after_rj is None:
+        pytest.skip("missing research.json")
+
+    before_sources = {s["id"]: s for s in before_rj.get("sources", [])}
+    violations = []
+
+    for src in after_rj.get("sources", []):
+        sid = src.get("id")
+        if sid not in before_sources:
+            continue
+
+        # Check citation string — custody markers here are the where-layer
+        # working as designed (Edmond ruling); exempt from checks 2 + 3.
+        # No check survives for the assembled citation string.
+
+        # Check citation_detail fields
+        cd = src.get("citation_detail") or {}
+        for field in ("who", "what", "when_created", "when_accessed",
+                      "where", "where_within"):
+            val = cd.get(field) or ""
+            for m in _MARKER_RE.finditer(val):
+                marker_content = m.group(1).strip()
+                if field == "where" and val.strip() == m.group(0):
+                    # Check 1 (position): the marker IS the entire `where`
+                    # value — no access point at all.
+                    violations.append(
+                        f"{sid}.citation_detail.where: marker "
+                        f"[{marker_content} NOT RECORDED] is the entire "
+                        f"`where` value — no access point recorded"
+                    )
+                elif field == "where":
+                    # Custody exemption: any marker inside `where` alongside
+                    # a present access point is the field working as designed.
+                    continue
+                elif not marker_content:
+                    # Check 2 (empty element): bare [NOT RECORDED] names no
+                    # framework element.
+                    violations.append(
+                        f"{sid}.citation_detail.{field}: bare "
+                        f"[NOT RECORDED] names no framework element"
+                    )
+                elif any(kw in marker_content.lower()
+                         for kw in _CUSTODY_KEYWORDS):
+                    # Check 3 (content): custody keyword in a non-where field.
+                    violations.append(
+                        f"{sid}.citation_detail.{field}: marker "
+                        f"[{marker_content} NOT RECORDED] names a "
+                        f"custody/location element; use `notes` instead"
+                    )
+
+    assert not violations, (
+        "unknown-markers must name Who/What/When/Where/Wherein framework "
+        "elements only; custody chains and physical-location detail belong "
+        "in notes:\n  " + "\n  ".join(violations)
+    )
 
 
 # --- V10: Informant never reaches `who` (literal half) -----------------
@@ -302,7 +402,7 @@ def test_no_invented_locators_persisted(before_state, after_state, test):
     on_file = _extract_on_file_numerals(before_rj, tree)
     # Also add numerals from the user's message (test input) — mirrors the
     # response half (report_no_invented_locators_response).
-    user_msg = (test.get("input", {}) or {}).get("user_message", "") or ""
+    user_msg = test.get("user_message", "") or ""
     for m in re.finditer(r'\b(\d+)\b', user_msg):
         on_file.add(m.group(1))
     before_sources = {s["id"]: s for s in before_rj.get("sources", [])}
@@ -354,7 +454,7 @@ def report_invented_locators_response(before_state, text_response, test):
         pytest.skip("no response text to check")
     on_file = _extract_on_file_numerals(before_rj, tree)
     # Also add numerals from the user's message (test input)
-    user_msg = (test.get("input", {}) or {}).get("user_message", "") or ""
+    user_msg = test.get("user_message", "") or ""
     for m in re.finditer(r'\b(\d+)\b', user_msg):
         on_file.add(m.group(1))
     # Strip code blocks (JSON blocks are the sanctioned form)
@@ -391,7 +491,7 @@ def _citation_text_fields(source):
 # --- V4: Skill's own example values not emitted -------------------------
 
 def test_no_skill_example_values_persisted(before_state, after_state, test, skill_frontmatter):
-    """V4 persisted half: example values from the SKILL.md body must not
+    """V4 persisted half: example values from the agent body must not
     appear in persisted citation fields unless on file in the scenario.
 
     Tier 1 — gates. Harvests deny-list from the skill body's fenced Example
@@ -401,14 +501,14 @@ def test_no_skill_example_values_persisted(before_state, after_state, test, skil
     if test.get("type") == "negative":
         pytest.skip("negative test")
     if (skill_frontmatter or {}).get("name") != "citation":
-        pytest.skip("not the citation skill")
+        pytest.skip("not the citation suite")
     before_rj = before_state.get("research_json")
     after_rj = after_state.get("research_json")
     if before_rj is None or after_rj is None:
         pytest.skip("missing research.json")
     deny_list = _harvest_skill_examples()
     if not deny_list:
-        pytest.skip("could not extract example values from SKILL.md")
+        pytest.skip("no example values in the citation agent body")
     # Subtract values present in the before-state
     before_text = ""
     for src in before_rj.get("sources", []):
@@ -438,7 +538,8 @@ def test_no_skill_example_values_persisted(before_state, after_state, test, skil
                         f"value {example_val!r}"
                     )
     assert not violations, (
-        "example values from SKILL.md appear in persisted citation fields "
+        "example values from the citation agent body appear in persisted "
+        "citation fields "
         "but are absent from the on-file data — these are illustrative, "
         "not data:\n  "
         + "\n  ".join(violations)
@@ -446,7 +547,7 @@ def test_no_skill_example_values_persisted(before_state, after_state, test, skil
 
 
 def report_skill_example_values_in_response(before_state, text_response, test, skill_frontmatter):
-    """V4 response half: example values from the SKILL.md body must not
+    """V4 response half: example values from the agent body must not
     appear in the text response unless on file in the scenario.
 
     Tier 2 — reports.
@@ -454,7 +555,7 @@ def report_skill_example_values_in_response(before_state, text_response, test, s
     if test.get("type") == "negative":
         pytest.skip("negative test")
     if (skill_frontmatter or {}).get("name") != "citation":
-        pytest.skip("not the citation skill")
+        pytest.skip("not the citation suite")
     response = text_response or ""
     if not response.strip():
         pytest.skip("no response text to check")
@@ -463,7 +564,7 @@ def report_skill_example_values_in_response(before_state, text_response, test, s
         pytest.skip("missing research.json")
     deny_list = _harvest_skill_examples()
     if not deny_list:
-        pytest.skip("could not extract example values from SKILL.md")
+        pytest.skip("no example values in the citation agent body")
     # Subtract values present in the before-state
     before_text = ""
     for src in before_rj.get("sources", []):
@@ -484,31 +585,98 @@ def report_skill_example_values_in_response(before_state, text_response, test, s
             matches.append(example_val)
     if matches:
         raise AssertionError(
-            "the response contains example values from SKILL.md that are "
+            "the response contains example values from the citation agent "
+            "body that are "
             "absent from the on-file data: "
             + ", ".join(f"'{v}'" for v in matches[:5])
         )
 
 
 def _harvest_skill_examples():
-    """Extract example locator values from the citation SKILL.md body.
+    """Extract example locator values from the citation suite's own body.
 
-    Every locator-shaped literal in the skill body is illustrative. The
+    Every locator-shaped literal in that body is illustrative. The
     templates carry theirs outside quotes and outside an "Example:"
     prefix (Will Book 9, p. 113; Deed Book 41, pp. 88-90), which the
     three narrower scans missed. On-file values are subtracted by the
     caller, so a wider harvest costs nothing.
+
+    Resolved through `suite_body_path`, the same resolver the harness uses
+    for the suite's frontmatter, so the body this scans and the frontmatter
+    the caller gates on can never come from different files. That matters
+    from issue #2799 on: `citation` is an agent, there is no
+    `skills/citation/SKILL.md`, and the previous hard-coded path would
+    resolve to nothing.
+
+    Raises rather than returning an empty set when the body is missing. An
+    empty deny-list makes both V4 halves skip, which reads as a pass while
+    enforcing nothing -- the same default-deny-becomes-default-allow shape
+    `harness.ownership.load_manifest` refuses for the same reason.
     """
-    from pathlib import Path
-    skill_md = (
-        Path(__file__).resolve().parents[3]
-        / "packages" / "engine" / "plugin" / "skills"
-        / "citation" / "SKILL.md"
-    )
-    if not skill_md.exists():
-        return set()
-    text = skill_md.read_text(encoding="utf-8")
+    from harness.allowed_tools import suite_body_path
+    from harness.workspace import DEFAULT_PLUGIN_AGENTS
+
+    body = suite_body_path("citation", DEFAULT_PLUGIN_AGENTS.parent / "skills")
+    if not body.is_file():
+        raise AssertionError(
+            f"citation suite body not found at {body} -- V4 cannot build its "
+            f"deny-list, and an empty deny-list would skip both halves and "
+            f"report a pass that checked nothing"
+        )
+    text = body.read_text(encoding="utf-8")
     return {m.group(0).strip() for m in _LOCATOR_RE.finditer(text)}
+
+
+# --- V13: The probate office is fetched, not recalled --------------------
+
+_PROBATE_WIKI_RE = re.compile(r"/wiki/([A-Za-z_]+)_Probate_Records\b")
+
+
+def _probate_wiki_reads(tool_calls) -> list[str]:
+    """Every `{State}_Probate_Records` page this run fetched, by state."""
+    states = []
+    for tc in (tool_calls or []):
+        if not tc.get("tool", "").endswith("wiki_read"):
+            continue
+        url = ((tc.get("args") or {}).get("url") or "")
+        m = _PROBATE_WIKI_RE.search(url)
+        if m:
+            states.append(m.group(1))
+    return states
+
+
+def test_probate_office_came_from_the_wiki(tool_calls, test):
+    """V13: a probate refinement must `wiki_read` the state's probate page.
+
+    Tier 1 - gates. Gated on the `probate` tag.
+
+    The agent body used to name Pennsylvania's offices outright. ADR-0012 moved
+    that one-jurisdiction fact onto the wiki (issue #2262, carried into #2799),
+    so the body now says only "match the authority to the document" and "never
+    the courthouse building" and sends the agent to
+    `{State}_Probate_Records` for the office itself.
+
+    Nothing else can hold that. The judge grades the citation it is shown, and a
+    correct-looking "Register of Wills" is indistinguishable from a recalled one
+    -- which is the whole failure mode the move exists to prevent, because the
+    recall is right for Pennsylvania and wrong for most other states. Only the
+    tool ledger says whether the agent looked it up.
+    """
+    if "probate" not in (test.get("tags") or []):
+        pytest.skip("only applies to probate tests")
+    reads = _probate_wiki_reads(tool_calls)
+    assert reads, (
+        "this probate test refined a citation without fetching the creating "
+        "office: no `wiki_read` of a `{State}_Probate_Records` page is in the "
+        "tool ledger. The office named in `who` was recalled, not looked up "
+        "-- which is exactly what ADR-0012 moved out of the body. wiki_read "
+        "calls this run: "
+        + repr([
+            ((tc.get("args") or {}).get("url") or "")
+            for tc in (tool_calls or [])
+            if tc.get("tool", "").endswith("wiki_read")
+        ])
+    )
 
 
 # --- V11: Negative-search citation quotes log verbatim ------------------

@@ -4,18 +4,19 @@
     "skill": "research-plan",
     "name": "A confirmed geographic boundary split gets co-equal plan items, not a fallback_for chain",
     "type": "positive",
-    "description": "feliciana-parish-boundary-split: q_001 asks where Silas Bankston married circa 1828, after his family's documented residence in the old, undivided Feliciana Parish, Louisiana split into East and West Feliciana Parish in 1824. The locality entry already flags this as a geographic (not temporal) split whose successor is unknown without more information. A sound plan searches BOTH East and West Feliciana Parish marriage records as co-equal primaries, not one plus a fallback_for the other. Guards the SKILL.md 'A confirmed boundary split within the target date range is not a fallback_for' fix and the new 'boundaries changed within the date range' Key selection principle (issue #1472, Rule 1).",
+    "description": "feliciana-parish-boundary-split: q_001 asks where Silas Bankston married circa 1828, after his family's documented residence in the old, undivided Feliciana Parish, Louisiana split into East and West Feliciana Parish in 1824. The locality entry already flags this as a geographic (not temporal) split whose successor is unknown without more information. A sound plan searches BOTH East and West Feliciana Parish marriage records as co-equal primaries, not one plus a fallback_for the other. Guards the agent body's 'A confirmed boundary split within the target date range is not a fallback_for' fix and the new 'boundaries changed within the date range' Key selection principle (issue #1472, Rule 1).",
     "tags": [
       "planning",
       "boundary-change",
       "jurisdiction",
       "jurisdiction-accuracy",
       "louisiana",
-      "new-plan-items-planned-status"
+      "new-plan-items-planned-status",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Create the first research plan for q_001 — where did Silas Bankston marry, circa 1828?",
+    "delegation": "Create the first research plan for q_001 — where did Silas Bankston marry, circa 1828?\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "feliciana-parish-boundary-split"
   },
   "mcp_fixtures": [
@@ -25,16 +26,27 @@
     "place-search-all-feliciana",
     "collections-search-feliciana",
     "volume-search-feliciana",
-    "external-links-search-feliciana"
+    "external-links-search-feliciana",
+    "collections-search-us-national",
+    "place-search-united-states",
+    "external-links-search-any",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "The plan MUST include a co-equal plan item for BOTH East Feliciana Parish AND West Feliciana Parish marriage records for the target period (circa 1824-1830) — not one item with the other set as fallback_for. The 1824 split is geographic, not temporal, and the locality entry already says the records could be under either successor's name; that means both are primaries from the start, searched together, not one searched only if the other yields nothing. How the plan relates the two successor parishes to each other is what Jurisdiction accuracy turns on for this test: assess whether each is planned as a primary in its own right, or whether one is made conditional on the other.",
     "A plan item's rationale should reflect the split (citing the 1824 date and that the successor is unknown without more information) — ideal but grade generously if the reasoning is present even without citing the exact year.",
     "fallback_for chains ARE appropriate elsewhere in the same plan (e.g. an Ancestry item as a fallback for a FamilySearch item of the SAME jurisdiction) — the failure is specifically using fallback_for to relate the two SUCCESSOR JURISDICTIONS to each other, not the mechanism itself.",
+    "This binds Correctness and Jurisdiction accuracy alike. A repository fallback (Ancestry or another site) whose fallback_for names ONE successor parish's FamilySearch item is the same-jurisdiction fallback allowed above, even when its rationale also says to check the other parish in that search: it does not make either successor conditional on the other. Score 1 only when one successor parish is itself planned as the other's fallback_for, or is missing as a primary. When both successor parishes are primaries with no fallback_for between them, the failure under test is absent.",
     "Additional breadth items (census, church records, land records for either parish) strengthen the plan but are not individually required."
   ],
   "judge_reads_files": true,
   "execution": {
+    "sdk_message_silence_seconds": 360,
     "max_wall_clock_seconds": 600,
     "max_turns": 40
   }

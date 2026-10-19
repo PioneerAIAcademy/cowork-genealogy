@@ -9,10 +9,14 @@ import {
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-const mockStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
-vi.mock("../../src/utils/place-resolver.js", () => ({
-  standardPlaceToPlaceId: mockStandardPlaceToPlaceId,
-}));
+const mockResolveStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
+vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
+  const real = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
+  return {
+    resolveStandardPlaceToPlaceId: mockResolveStandardPlaceToPlaceId,
+    ambiguousPlaceError: real.ambiguousPlaceError,
+  };
+});
 
 // The staging util is exercised by tests/utils/results-staging.test.ts; here we
 // only assert the tool calls it correctly and shapes the inline copy around it.
@@ -33,8 +37,8 @@ const mockedUnlogged = vi.mocked(unloggedStagedSearches);
 // Runs before every test (in addition to the per-describe fetch resets);
 // default the resolver to a successful placeId so existing cases reach fetch.
 beforeEach(() => {
-  mockStandardPlaceToPlaceId.mockReset();
-  mockStandardPlaceToPlaceId.mockResolvedValue("1927089");
+  mockResolveStandardPlaceToPlaceId.mockReset();
+  mockResolveStandardPlaceToPlaceId.mockResolvedValue({ kind: "resolved", placeId: "1927089" });
   mockedStage.mockReset();
   mockedUnlogged.mockReset();
   mockedUnlogged.mockResolvedValue([]);
@@ -44,7 +48,9 @@ function jsonResponse(body: unknown, status = 200): Response {
   return {
     ok: status >= 200 && status < 300,
     status,
+    statusText: status === 200 ? "OK" : `Status ${status}`,
     json: async () => body,
+    headers: new Headers(),
   } as unknown as Response;
 }
 
@@ -207,47 +213,44 @@ describe("externalLinksSearchTool — fetches the full set", () => {
     mockFetch.mockReset();
   });
 
-  it("fetches every page until totalForPlace is exhausted", async () => {
-    const makePage = (offset: number, size: number) =>
-      Array.from({ length: size }, (_, i) => ({
-        url: `https://example.com/c${offset + i}`,
-        linkText: `Collection ${offset + i}`,
-        place: "France",
-        startYear: "1900",
-        endYear: "1900",
-      }));
+  it("fetches the whole list in ONE request (offset=0, count=1000) — never pages", async () => {
+    const rows = Array.from({ length: 250 }, (_, i) => ({
+      url: `https://example.com/c${i}`,
+      linkText: `Collection ${i}`,
+      place: "France",
+    }));
+    mockFetch.mockResolvedValueOnce(singlePage(rows));
 
-    mockFetch
-      .mockResolvedValueOnce(pageAt(makePage(0, 100), 0, 250))
-      .mockResolvedValueOnce(pageAt(makePage(100, 100), 100, 250))
-      .mockResolvedValueOnce(pageAt(makePage(200, 50), 200, 250));
-
-    const result = await externalLinksSearchTool({
-      standardPlace: "France",
-      startYear: 1880,
-      endYear: 1950,
-    });
-
-    expect(mockFetch).toHaveBeenCalledTimes(3);
-    expect(result.totalForPlace).toBe(250);
-    expect(result.results).toHaveLength(250);
-    expect(result.results[0]?.url).toBe("https://example.com/c0");
-    expect(result.results.at(-1)?.url).toBe("https://example.com/c249");
-  });
-
-  it("stops looping when an empty page is returned (defensive)", async () => {
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ count: 0, offset: 0, totalResults: 999, collections: [] })
-    );
-
-    const result = await externalLinksSearchTool({
-      standardPlace: "France",
-      startYear: 1880,
-      endYear: 1950,
-    });
+    const result = await externalLinksSearchTool({ standardPlace: "France" });
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(result.results).toHaveLength(0);
+    const url = new URL(String(mockFetch.mock.calls[0][0]));
+    expect(url.searchParams.get("offset")).toBe("0");
+    expect(url.searchParams.get("count")).toBe("1000");
+    expect(result.totalForPlace).toBe(250);
+    expect(result.results).toHaveLength(200);
+    expect(result.inlineCapped).toBe(true);
+  });
+
+  it("refuses a response with no totalResults — completeness cannot be told", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({ collections: [{ url: "https://example.com/a" }] }));
+    await expect(externalLinksSearchTool({ standardPlace: "France" })).rejects.toThrow(/no totalResults/);
+  });
+
+  it("refuses a partial list (totalResults above the rows returned)", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ totalResults: 999, collections: [{ url: "https://example.com/a" }] }),
+    );
+    await expect(externalLinksSearchTool({ standardPlace: "France" })).rejects.toThrow(/1 of the 999/);
+  });
+
+  it("refuses a place over the 1,000-row cap and names a smaller scope", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ totalResults: 1998, collections: [{ url: "https://example.com/a" }] }),
+    );
+    await expect(externalLinksSearchTool({ standardPlace: "United States" })).rejects.toThrow(
+      /1998 curated links.*state or county, not a whole country/s,
+    );
   });
 
   it("returns empty results cleanly for a place with no collections", async () => {
@@ -271,17 +274,47 @@ describe("externalLinksSearchTool — error handling", () => {
     mockFetch.mockReset();
   });
 
-  it.each([
-    { label: "403", mock: () => jsonResponse({}, 403), pattern: /Wait 60 seconds and retry once/i },
-    { label: "429", mock: () => jsonResponse({}, 429), pattern: /Wait 60 seconds and retry once/i },
-    { label: "5xx (503)", mock: () => jsonResponse({}, 503), pattern: /retry once before giving up/i },
-    { label: "malformed JSON", mock: () => brokenJsonResponse(200), pattern: /not valid JSON/i },
-  ])("throws an instructional error on $label", async ({ mock, pattern }) => {
-    mockFetch.mockResolvedValueOnce(mock());
-
+  it("throws on 403 with WAF message", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({}, 403));
     await expect(
       externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 })
-    ).rejects.toThrow(pattern);
+    ).rejects.toThrow(/403 Forbidden/i);
+  });
+
+  it("recovers from a transient 429 and returns the result", async () => {
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({}, 429))
+      .mockResolvedValueOnce(singlePage([
+        { url: "https://example.com/a", linkText: "Link A", place: "France" },
+      ]));
+    const result = await externalLinksSearchTool({
+      standardPlace: "France",
+      startYear: 1900,
+      endYear: 1950,
+    });
+    expect(result.totalForPlace).toBe(1);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws on 429 with rate-limit message after retry exhaustion", async () => {
+    mockFetch.mockResolvedValue(jsonResponse({}, 429));
+    await expect(
+      externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 })
+    ).rejects.toThrow(/Wait 60 seconds/i);
+  });
+
+  it("throws on 5xx (503) after retry exhaustion", async () => {
+    mockFetch.mockResolvedValue(jsonResponse({}, 503));
+    await expect(
+      externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 })
+    ).rejects.toThrow(/503/);
+  });
+
+  it("throws on malformed JSON", async () => {
+    mockFetch.mockResolvedValueOnce(brokenJsonResponse(200));
+    await expect(
+      externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 })
+    ).rejects.toThrow(/not valid JSON/i);
   });
 });
 
@@ -295,7 +328,7 @@ describe("externalLinksSearchTool — handler-level guards", () => {
       externalLinksSearchTool({ standardPlace: "France", startYear: 1950, endYear: 1880 })
     ).rejects.toThrow(/endYear must be greater than or equal to startYear/i);
     expect(mockFetch).not.toHaveBeenCalled();
-    expect(mockStandardPlaceToPlaceId).not.toHaveBeenCalled();
+    expect(mockResolveStandardPlaceToPlaceId).not.toHaveBeenCalled();
   });
 
   it("accepts endYear === startYear (single-year query)", async () => {
@@ -316,15 +349,59 @@ describe("externalLinksSearchTool — handler-level guards", () => {
       externalLinksSearchTool({ standardPlace: "", startYear: 1900, endYear: 1950 })
     ).rejects.toThrow(/standardPlace is required/i);
     expect(mockFetch).not.toHaveBeenCalled();
-    expect(mockStandardPlaceToPlaceId).not.toHaveBeenCalled();
+    expect(mockResolveStandardPlaceToPlaceId).not.toHaveBeenCalled();
   });
 
   it("rejects an unresolvable standardPlace without hitting the network", async () => {
-    mockStandardPlaceToPlaceId.mockResolvedValueOnce(null);
+    mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({ kind: "unresolved" });
     await expect(
       externalLinksSearchTool({ standardPlace: "Nowhere", startYear: 1900, endYear: 1950 })
     ).rejects.toThrow(/Could not resolve "Nowhere"/i);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("passes a (Type)-suffixed standardPlace through verbatim and searches its placeId", async () => {
+    mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({ kind: "resolved", placeId: "3172" });
+    mockFetch.mockResolvedValueOnce(singlePage([]));
+    await externalLinksSearchTool({
+      standardPlace: "Baltimore, Maryland, United States (Independent City)",
+    });
+    expect(mockResolveStandardPlaceToPlaceId).toHaveBeenCalledWith(
+      "Baltimore, Maryland, United States (Independent City)"
+    );
+    expect(String(mockFetch.mock.calls[0][0])).toContain("q.placeId=3172");
+  });
+
+  it("names the candidates when the standard place is ambiguous", async () => {
+    mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({
+      kind: "ambiguous",
+      candidates: [
+        "Baltimore, Maryland, United States (Independent City)",
+        "Baltimore, Maryland, United States (County)",
+      ],
+    });
+    await expect(
+      externalLinksSearchTool({ standardPlace: "Baltimore, Maryland, United States" })
+    ).rejects.toThrow(
+      /matches more than one place:.*Independent City.*County.*including the parenthesised type/
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("does not reuse the unresolvable wording for an ambiguous place", async () => {
+    mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({
+      kind: "ambiguous",
+      candidates: ["A (County)", "B (City)"],
+    });
+    const err = await externalLinksSearchTool({
+      standardPlace: "Somewhere",
+    }).then(
+      () => null,
+      (e: unknown) => e as Error
+    );
+    expect(err, "an ambiguous place must still throw").toBeInstanceOf(Error);
+    expect(err?.message).not.toMatch(/Could not resolve/);
+    expect(err?.message).toContain("A (County)");
   });
 });
 
@@ -474,33 +551,32 @@ describe("externalLinksSearchTool — staging, host filter, and inline cap", () 
     expect(result.staged).toBeUndefined();
   });
 
-  it("caps the inline set to 50 only when staged; returns the full set un-staged", async () => {
-    const many = Array.from({ length: 120 }, (_, i) => ({
-      url: `https://example.com/c${i}`,
+  it("caps the inline set at 200 on every call and says so; the staged set stays full", async () => {
+    const many = Array.from({ length: 260 }, (_, i) => ({
+      url: `https://example.com/c${String(i).padStart(3, "0")}`,
       linkText: `Collection ${i}`,
     }));
 
-    // Un-staged: full set comes back (back-compat; nothing retained to recover).
     mockFetch.mockResolvedValueOnce(singlePage(many));
-    const unstaged = await externalLinksSearchTool({
-      standardPlace: "Pennsylvania, United States",
-    });
-    expect(unstaged.results).toHaveLength(120);
-    expect(unstaged.returned).toBe(120);
+    const unstaged = await externalLinksSearchTool({ standardPlace: "Pennsylvania, United States" });
+    expect(unstaged.results).toHaveLength(200);
+    expect(unstaged.returned).toBe(200);
+    expect(unstaged.inlineCapped).toBe(true);
 
-    // Staged: inline capped at 50, full 120 staged to disk.
     mockFetch.mockResolvedValueOnce(singlePage(many));
-    mockedStage.mockResolvedValueOnce({
-      resultsRef: "results/.staging/def.json",
-      returnedCount: 120,
-    });
+    mockedStage.mockResolvedValueOnce({ resultsRef: "results/.staging/def.json", returnedCount: 260 });
     const staged = await externalLinksSearchTool({
       standardPlace: "Pennsylvania, United States",
       projectPath: "/tmp/project",
     });
-    expect(staged.results).toHaveLength(50);
-    expect(staged.returned).toBe(50);
-    expect(mockedStage.mock.calls[0][0].response.results).toHaveLength(120);
+    expect(staged.results).toHaveLength(200);
+    expect(mockedStage.mock.calls[0][0].response.results).toHaveLength(260);
+  });
+
+  it("does not flag inlineCapped when everything fits", async () => {
+    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
+    const r = await externalLinksSearchTool({ standardPlace: "Pennsylvania, United States" });
+    expect(r.inlineCapped).toBeUndefined();
   });
 
   it("never fails the search when staging throws", async () => {

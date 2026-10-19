@@ -10,6 +10,33 @@ export function isFourDigitYear(value: number): boolean {
 }
 
 /**
+ * True for an absolute `http:`/`https:` URL. The shape check for any
+ * caller-composed, URL-typed string on its way into a URL the researcher will
+ * click (`build_external_search_url`'s `baseUrl`) or into `research.json`
+ * (`research_log_append`'s `externalSite.urlGenerated`) — a plain label, a
+ * `javascript:`/`data:` value, or a relative path is a caller error in both.
+ * `new URL()` strips leading/trailing whitespace before parsing, so a padded
+ * value passes here; callers that go on to use the string trim it first.
+ */
+export function isHttpUrl(u: string): boolean {
+  try {
+    const parsed = new URL(u);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * True for a non-negative integer no greater than `max` (unbounded by default).
+ * The one predicate behind `results_examined` (writer and validator alike) and
+ * `build_external_search_url`'s bounded tuning knobs, so the rule cannot drift.
+ */
+export function isNonNegativeInteger(n: unknown, max = Number.POSITIVE_INFINITY): n is number {
+  return typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= max;
+}
+
+/**
  * A display date range from a `startYear`/`endYear` pair.
  *
  * One format for every search tool that shows a span, so two tools cannot
@@ -44,27 +71,48 @@ export function normalizeSex(value: string): string | null {
 }
 
 /**
- * Pull a human-readable detail out of an FS search 400 error body
- * (shape: `{ errors: [{ message }] }` or `{ errors: ["..."] }`). Returns
+ * Pull a human-readable detail out of an FS search 400 error body.
+ *
+ * Two shapes, because FamilySearch is not one service: the search endpoints
+ * answer `{ errors: [{ message }] }` / `{ errors: ["..."] }`, while the
+ * Catalog answers RFC7807 — `{ detail, title, status, instance }`. Returns
  * null when nothing usable is present, so callers can fall back to a
  * generic message.
  */
 export function parseUpstreamErrorBody(body: unknown): string | null {
   if (!body || typeof body !== "object") return null;
+
+  // `errors` is tried FIRST and RFC7807 `detail` is only the fallback. The
+  // search endpoints' `errors[].message` names the offending parameter
+  // ("q.birthLikeDate.from must precede .to"); RFC7807 `detail` is generic
+  // ("Validation failure"). A body carrying both must not lose the specific
+  // one — record_search, person_search and person_ancestors built their
+  // messages around it long before the Catalog needed this helper.
   const errors = (body as { errors?: unknown }).errors;
-  if (!Array.isArray(errors) || errors.length === 0) return null;
-  const detail = errors
-    .map((e) => {
-      if (typeof e === "string") return e;
-      if (e && typeof e === "object") {
-        const msg = (e as { message?: unknown }).message;
-        if (typeof msg === "string") return msg;
-      }
-      return null;
-    })
-    .filter((s): s is string => s !== null)
-    .join("; ");
-  return detail || null;
+  const fromErrors = Array.isArray(errors)
+    ? errors
+        .map((e) => {
+          if (typeof e === "string") return e;
+          if (e && typeof e === "object") {
+            const msg = (e as { message?: unknown }).message;
+            if (typeof msg === "string") return msg;
+          }
+          return null;
+        })
+        .filter((s): s is string => s !== null)
+        .join("; ")
+    : "";
+  if (fromErrors) return fromErrors;
+
+  // Fallen through, not branched past: `errors` being PRESENT but yielding
+  // nothing usable (`[{ code: 400 }]`) must still reach the RFC7807 detail,
+  // or a body carrying both loses its only readable explanation.
+  // `title` is skipped — it restates the HTTP status line every caller
+  // already puts in its message.
+  const detailField = (body as { detail?: unknown }).detail;
+  return typeof detailField === "string" && detailField.length > 0
+    ? detailField
+    : null;
 }
 
 /**

@@ -1,8 +1,9 @@
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile } from "node:fs/promises";
 import type { AppConfig } from "../types/auth.js";
+import type { Principal } from "./principal.js";
 
 export const AUTHORIZATION_URL =
   "https://ident.familysearch.org/cis-web/oauth2/v3/authorization";
@@ -53,17 +54,49 @@ export const DEFAULT_OPENROUTER_MODEL = "google/gemini-3.7-flash";
 // only path that actually re-authenticates them, so the error must say that and
 // must NOT mention the login tool.
 export const HOSTED_REAUTH_INSTRUCTION =
-  "Your FamilySearch session has expired — FamilySearch sign-ins last at most " +
-  "24 hours. Click \"Reconnect FamilySearch\" at the top of the app to sign in " +
-  "again, then ask me to continue. (Do not call the login tool: it cannot open " +
-  "a sign-in page from here.)";
+  "FamilySearch is not accepting this session. Click \"Reconnect FamilySearch\" " +
+  "at the top of the app to sign in again, then ask me to continue. (Do not call " +
+  "the login tool: it cannot open a sign-in page from here.)";
 
 export const OPENROUTER_API_KEY_MISSING_MESSAGE =
-  "No OpenRouter API key is configured. Ask the user for their OpenRouter " +
-  "API key (from https://openrouter.ai/keys) and call configure_openrouter " +
-  "to save it for future projects.";
+  "No OpenRouter API key is configured. Tell the user to get one at " +
+  "https://openrouter.ai/keys and enter it in Claude Desktop under Settings → " +
+  "Extensions → Genealogy Research, or add it to " +
+  "~/.familysearch-mcp/config.json as the \"openRouterApiKey\" field. " +
+  "Do not ask the user to paste the key into the chat.";
 
-export async function loadConfig(): Promise<AppConfig> {
+// The one variable the stdio entrypoint reads. manifest.json's `user_config`
+// asks for the key in Claude Desktop's extension install dialog, and its
+// `mcp_config.env` hands the answer over under this name — an environment
+// variable is the only channel `user_config` has.
+export const INSTALL_OPENROUTER_KEY_ENV = "GENEALOGY_OPENROUTER_API_KEY";
+
+/**
+ * What the install dialog collected, as config for `localPrincipal`. A field
+ * left blank arrives empty or as the unsubstituted `${user_config...}`
+ * placeholder (the mcpb reference loader keeps a variable it has no value for);
+ * both mean "not set", so `config.json` still applies.
+ */
+export function installConfigFromEnv(env: NodeJS.ProcessEnv): AppConfig {
+  const key = env[INSTALL_OPENROUTER_KEY_ENV]?.trim();
+  return key && !key.startsWith("${") ? { openRouterApiKey: key } : {};
+}
+
+/**
+ * The per-user config `principal` acts with: the desktop's
+ * `~/.familysearch-mcp/config.json` for the local principal, with its
+ * `overlay` on top, and the config that travelled with the request for a
+ * bearer. Every getter below takes the principal for the same reason
+ * `getValidToken` does (auth/principal.ts).
+ */
+export async function loadConfig(principal: Principal): Promise<AppConfig> {
+  if (principal.kind === "bearer") {
+    return principal.config;
+  }
+  return { ...(await readConfigFile()), ...principal.overlay };
+}
+
+async function readConfigFile(): Promise<AppConfig> {
   try {
     const raw = await readFile(CONFIG_STORAGE_PATH, "utf8");
     const parsed: unknown = JSON.parse(raw);
@@ -81,16 +114,8 @@ export async function ensureStorageDir(): Promise<void> {
   await chmod(STORAGE_DIR, 0o700);
 }
 
-export async function saveConfig(patch: Partial<AppConfig>): Promise<void> {
-  const existing = await loadConfig();
-  const merged: AppConfig = { ...existing, ...patch };
-  await ensureStorageDir();
-  await writeFile(
-    CONFIG_STORAGE_PATH,
-    JSON.stringify(merged, null, 2),
-    { mode: 0o600 }
-  );
-}
+export const HOSTED_SESSION_MANAGED_MESSAGE =
+  "The FamilySearch session is managed by the web app in a hosted session; sign out there.";
 
 export async function getClientId(): Promise<string> {
   let raw: string;
@@ -118,23 +143,28 @@ export async function getClientId(): Promise<string> {
 // True inside a hosted sandbox (the control plane writes `hosted: true` into
 // config.json when it provisions one). Defaults to false, so the desktop .mcpb
 // — where interactive loopback login IS the right answer — is unaffected.
-export async function isHostedMode(): Promise<boolean> {
-  const config = await loadConfig();
+export async function isHostedMode(principal: Principal): Promise<boolean> {
+  if (principal.kind === "bearer") return true;
+  const config = await loadConfig(principal);
   return config.hosted === true;
 }
 
-export async function getWikiApiUrl(): Promise<string> {
-  const config = await loadConfig();
+export async function getWikiApiUrl(principal: Principal): Promise<string> {
+  const config = await loadConfig(principal);
   const url = config.wikiApiUrl?.trim().replace(/\/$/, "");
   return url || DEFAULT_WIKI_API_URL;
 }
 
 // OpenRouter key resolution is config-only (no env-var fallback, per the repo
-// rule): the server reads it here in every runtime. e2e and the hosted
-// sandbox bridge their env var into config.json at the orchestration layer —
-// see docs/specs/image-transcribe-tool-spec.md §6.5.
-export async function getOpenRouterApiKey(): Promise<string> {
-  const config = await loadConfig();
+// rule): the server reads it here in every runtime, and no tool reaches for it in
+// the environment. Each runtime fills the config before that: e2e and the hosted
+// sandbox write config.json at the orchestration layer, the prototype's two
+// container entrypoints layer their own environment over it (hosted-config-env.ts),
+// and the desktop stdio entrypoint layers the install dialog's answer over it
+// (installConfigFromEnv) — see docs/specs/image-transcribe-tool-spec.md, "Key
+// provisioning across runtimes".
+export async function getOpenRouterApiKey(principal: Principal): Promise<string> {
+  const config = await loadConfig(principal);
   const key = config.openRouterApiKey?.trim();
   if (!key) {
     throw new Error(OPENROUTER_API_KEY_MISSING_MESSAGE);
@@ -142,7 +172,7 @@ export async function getOpenRouterApiKey(): Promise<string> {
   return key;
 }
 
-export async function getOpenRouterModel(): Promise<string> {
-  const config = await loadConfig();
+export async function getOpenRouterModel(principal: Principal): Promise<string> {
+  const config = await loadConfig(principal);
   return config.openRouterModel?.trim() || DEFAULT_OPENROUTER_MODEL;
 }

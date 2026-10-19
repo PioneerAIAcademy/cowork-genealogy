@@ -77,7 +77,7 @@ All `sg30p0.familysearch.org` calls (group search, full-text searchability):
 
 | Header | Value | Notes |
 |--------|-------|-------|
-| `Authorization` | `Bearer <token>` | From `getValidToken()` |
+| `Authorization` | `Bearer <token>` | From `getValidToken(principal)` |
 | `Content-Type` | `application/json` | On the PUT (group search) |
 | `Accept` | `application/json` | |
 | `User-Agent` | `BROWSER_USER_AGENT` | From `src/constants.ts` — FS sits behind Imperva, which 403s non-browser UAs |
@@ -831,7 +831,7 @@ as absent rather than guessing.
 
 ## Authentication
 
-Uses `getValidToken()` from `src/auth/refresh.ts`. Same OAuth flow as
+Uses `getValidToken(principal)` from `src/auth/refresh.ts`. Same OAuth flow as
 all other authenticated tools. Do not re-implement token plumbing.
 
 ---
@@ -841,19 +841,21 @@ all other authenticated tools. Do not re-implement token plumbing.
 | Condition | Behavior |
 |-----------|----------|
 | `standardPlace` not provided | Throw: `"volume_search requires a standardPlace."` |
-| `standardPlace` unresolvable / ambiguous | Throw: `"Could not resolve \"<name>\" to a single place; use place_search ..."` |
+| `standardPlace` resolves to NOTHING | Throw: `"Could not resolve \"<name>\" to a single place; use place_search to get a standard place name first."` |
+| `standardPlace` resolves to SEVERAL distinct places | Throw, naming them: `"\"<name>\" matches more than one place: <candidate>; <candidate>. Pass one of these exactly as listed, including the parenthesised type, as standardPlace, or call place_search to see the full list."` Each candidate is `fullName (type)`, one per distinct placeId, capped at 8 as `record_search` caps its jurisdiction hints — the type qualifier is what separates the real pairs, since Virginia's Franklin County and City of Franklin share a `fullName`. **The parenthesised `(Type)` suffix is the disambiguation grammar**: passing `"Franklin, Virginia, United States (County)"` resolves to the County's placeId. The resolver strips the suffix before searching (so it never reaches FamilySearch) and filters the exact-fullName pool by type. A suffix matching no candidate returns `unresolved`. A bare name without a suffix still returns `ambiguous` — **never auto-pick**: choosing one silently researches the wrong jurisdiction and nothing downstream can tell |
 | `startYear` not an integer year | Throw: `"startYear must be an integer year (e.g., 1730)."` |
 | `endYear` not an integer year | Throw: `"endYear must be an integer year (e.g., 1810)."` |
 | `endYear` < `startYear` | Throw: `"endYear must be greater than or equal to startYear."` |
 | Resolved place has no placeRepIds | Throw: `"No place representations found for \"{standardPlace}\"."` |
 | `recordTypeGroups` contains an unrecognised name | Throw: `"Unknown record-type group(s): <names>. Valid groups: <list>."` — plural, because the input is an array and several entries can be wrong at once, so one error should let the caller fix them all. Never fall through to an unfiltered or empty search, since the API answers an unrecognised concept id with `totalCount: 0` and status `200`, which is indistinguishable from a genuine absence of records |
 | `recordTypeGroups` is not an array | Throw: `"recordTypeGroups must be an array of group names."` The schema's `enum` is advisory — nothing validates input against the advertised JSON Schema server-side — so a bare string (`"Tax"`) reaches the handler and would otherwise fail deep inside id expansion with an error naming neither the field nor the fix |
-| `recordType`, `record_type` or `recordTypes` supplied instead of `recordTypeGroups` | Throw, naming the offending field and the valid groups. Three sibling tools take a singular `recordType` and `research.json` uses snake_case, so these are the names an LLM reaches for here, and the endpoint ignores unknown request fields silently — see [the warning box](#relationship-to-the-other-record-type-filters-read-before-naming-anything) for the reasoning and the exact guard. Scoped to this field's own spellings: the year inputs have live aliases elsewhere too (`yearFrom`/`yearTo`, `fromYear`/`toYear`), and catching those is the schema-wide `additionalProperties` question this spec puts out of scope |
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
+| `recordType`, `record_type` or `recordTypes` supplied instead of `recordTypeGroups` | Throw, naming the offending field and the valid groups. Three sibling tools take a singular `recordType` and `research.json` uses snake_case, so these are the names an LLM reaches for here, and the endpoint ignores unknown request fields silently — see [the warning box](#relationship-to-the-other-record-type-filters--read-before-naming-anything) for the reasoning and the exact guard. Scoped to this field's own spellings: the year inputs have live aliases elsewhere too (`yearFrom`/`yearTo`, `fromYear`/`toYear`), and catching those is the schema-wide `additionalProperties` question this spec puts out of scope |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
 | Group-search API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | Group-search API returns 403 | Throw: `"FamilySearch volume search API error: 403 Forbidden."` |
-| Group-search API other non-OK | Throw: `"FamilySearch volume search API error: {status} {statusText}."` |
-| Group-search network error | Throw: `"Could not reach FamilySearch volume search API: {message}."` |
+| Group-search API returns 409 | Throw: `"FamilySearch volume search API error: 409.{ body, when non-empty } A pageToken is only valid alongside a byte-identical search and it expires; re-issue this search from the first page with the same standardPlace, year range and recordTypeGroups, omitting pageToken."` A real 409 arrives bodyless, so `statusText` is empty and the generic row below rendered it as `"409 ."` — a status, a space and a full stop. **Assert no cause**: no 409 on this path is reproducible, so the message says what to do, never why upstream refused. Not added to the retry set either — 409 is not transient, and a blind retry on a possibly-stale cursor can skip or duplicate rows |
+| Group-search API other non-OK | Throw: `"FamilySearch volume search API error: {status} {statusText}.{ body, when non-empty }"` |
+| Group-search network error | Throw: `"Could not reach FamilySearch volume search API: {cause}."` (`{cause}` from `describeFetchError`, `src/utils/http.ts`) |
 | Group missing inline count fields | Set `imageCount` and `recordSearchablePercent` to `null` for that group; continue |
 | **Full-text** check fails (after 3 retries) | Set `fulltextSearchable` to `null` for the batch; continue |
 
@@ -952,7 +954,10 @@ docs):
   same years always produce the same `fromDateString`/`toDateString` and
   hence the same body.
 - The token is a client-side cursor with a **~9-day TTL** (the database
-  is repaired every 9 days); stale tokens may skip or duplicate rows.
+  is repaired every 9 days); stale tokens may skip or duplicate rows. A
+  rejected cursor surfaces as a 409, and the error text names this recovery —
+  re-issue page 1 with the identical `standardPlace`, years and
+  `recordTypeGroups`, omitting `pageToken`.
 
 > **`standardPlace` re-resolution caveat (since the input is now a name, not a
 > placeId).** Each page re-resolves `standardPlace` → `placeId` → `placeRepIds`
@@ -996,14 +1001,14 @@ images are digitized, indexed, or full-text processed.
 | `manifest.json` | Add `{ "name": "volume_search" }` to the `tools` array |
 | `dev/try-volume-search.ts` | Create — one-shot smoke test |
 | `tests/tools/volume-search.test.ts` | Create — unit tests |
-| `README.md` | Add `volume_search` to the tool catalog |
+| `docs/catalog.md` | Add `volume_search` to the tool catalog |
 | `CLAUDE.md` | Point the code-reuse note at `src/utils/place-resolver.ts` as the home of `standardPlaceToPlaceId`/`placeIdToRepIds` (not the old `image-search.ts`). Nothing to add for the tool being authenticated — the auth section carries the rule and tells you to grep for `getValidToken`, not a tool list |
 
 ### Edits for record-type groups and structured dates
 
 | File | Edit |
 |---|---|
-| `src/utils/record-type-groups.ts` | **New.** The group table as data: `RECORD_TYPE_GROUP_NAMES` (the enum literals, exported for the schema) and a `name → { anchor, parent, strays }` lookup. Also exports `conceptIdsForGroups` (anchor + own strays + **every nested group's strays**, which is what makes a parent a superset of its children), `assertKnownGroupNames` (one unknown-group message for both the tool's `validate()` and the expansion backstop) and `assertAcyclicTable` (the whole-table cycle check the runtime guard cannot reach). `parent` is not sent upstream but decides which strays are, so it is behaviour, not documentation |
+| `src/utils/record-type-groups.ts` | **New.** The group table as data: `RECORD_TYPE_GROUP_NAMES` (the enum literals, exported for the schema) and a `name → { anchor, parent, strays }` lookup. Also exports `conceptIdsForGroups` (anchor + own strays + **every nested group's strays**, which is what makes a parent a superset of its children), `assertKnownGroupNames` (one unknown-group message for both the tool's `validate()` and the expansion backstop), `refuseRecordTypeAliases` (the refusal of record-type field names a tool does not take, shared by `validate()` and `collections_search`, each passing its own message) and `assertAcyclicTable` (the whole-table cycle check the runtime guard cannot reach). `parent` is not sent upstream but decides which strays are, so it is behaviour, not documentation |
 | `src/types/volume-search.ts` | Add `recordTypeGroups?: string[]` to `VolumeSearchInput`; `recordTypeConceptIds?: number[]` to `MetadataRmsCoverageRequest`; `recordTypeConceptId?`, `recordTypeConceptIdHierarchy?`, `fromdateString?`, `todateString?` to `MetadataRmsCoverageEntry`; `recordTypeConceptId?`, `startYear?`, `endYear?` to `SimplifiedCoverage` |
 | `src/tools/volume-search.ts` | Validate and expand `recordTypeGroups`; send `coverage.recordTypeConceptIds`; map the new coverage fields; add the input to `volumeSearchSchema` |
 | `tests/tools/volume-search.test.ts` | Cases 15a–15f |
@@ -1014,7 +1019,7 @@ images are digitized, indexed, or full-text processed.
 | `tests/utils/record-type-groups.test.ts` | **New.** The invariants this spec's tables cannot express: an expansion sends an anchor's strays and nothing extra, broadening to a parent loses no id, every parent chain terminates, and a non-string entry is named rather than joined into nothing |
 | `tests/utils/search-helpers.test.ts` | **New.** One case per `formatYearRange` branch |
 | `dev/try-volume-search.ts` | Add a comma-separated `--recordTypeGroups` flag so a filtered search is expressible from the shell |
-| `README.md` | Extend the `volume_search` catalog row to name `recordTypeGroups` and that selecting a group also returns the groups nested beneath it |
+| `docs/catalog.md` | Extend the `volume_search` catalog row to name `recordTypeGroups` and that selecting a group also returns the groups nested beneath it |
 | `CLAUDE.md` | Extend the `search-helpers.ts` note to name `collections_search`/`volume_search` among its consumers and `formatYearRange` as the single shared date-range format |
 
 ---
@@ -1050,6 +1055,13 @@ images are digitized, indexed, or full-text processed.
 | 17 | Throws on 401 with re-login guidance | Token-expired path |
 | 18 | Throws on network error | Connectivity failure |
 | 19 | Sends correct headers (Authorization, Content-Type, User-Agent, FS-User-Agent-Chain) | Header contract |
+| 20 | An ambiguous `standardPlace` throws naming each candidate as `fullName (type)`, one per distinct placeId, and advises the caller to include the parenthesised type | Ambiguity, never auto-picked |
+| 20a | A `standardPlace` with a `(Type)` suffix resolves to the matching candidate's placeId — the recovery path for the ambiguity error above | Disambiguation recovery |
+| 21 | An unresolvable `standardPlace` keeps its own wording and does not borrow the ambiguity text | The two failures stay distinguishable |
+| 22 | A candidate list longer than 8 is capped at 8 | Hint cap, mirroring `record_search` |
+| 23 | A bodyless 409 carries the re-issue-from-page-1 recovery and never renders as a bare `409 .` | Paging conflict |
+| 24 | A 409 **with** a body includes it alongside the recovery | Upstream detail preserved |
+| 25 | A non-409 non-OK keeps `{status} {statusText}.`, appends any body, and does **not** carry the pageToken advice | Generic arm, previously covered by no test |
 
 ### Smoke test
 
@@ -1115,7 +1127,7 @@ of them.
 
 **Unknown-field rejection happens in `validate()`, not the schema.** See the
 warning box under
-[Relationship to the other record-type filters](#relationship-to-the-other-record-type-filters-read-before-naming-anything).
+[Relationship to the other record-type filters](#relationship-to-the-other-record-type-filters--read-before-naming-anything).
 A schema-level `additionalProperties: false` is unenforced server-side, so it would
 read as a guard without being one.
 

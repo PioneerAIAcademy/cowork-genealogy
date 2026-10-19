@@ -1,39 +1,139 @@
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry, DEFAULT_RETRY_BUDGET_MS } from "../utils/http.js";
+import { readBuildInfo } from "../utils/build-info.js";
 import type {
   WikipediaAPIResponse,
+  WikipediaPageSearchResponse,
   WikipediaSearchResult,
 } from "../types/wikipedia.js";
 
 const WIKIPEDIA_API_BASE = "https://en.wikipedia.org/api/rest_v1/page/summary";
+const WIKIPEDIA_SEARCH_URL = "https://en.wikipedia.org/w/rest.php/v1/search/page";
 
-// One un-retried summary fetch, so a slow success today is a hard failure at
-// the 30s default with nothing behind it. Measured at 33.7s and 35.2s (2 of 19)
-// across the committed e2e run logs.
-const WIKIPEDIA_TIMEOUT_MS = 60_000;
+// Cowork's device bridge aborts any MCP call at 60s, so the summary, the search
+// and the second summary share one deadline under it, each request getting what
+// is left. A slow summary has run 33.7s and 35.2s (2 of 19 across the committed
+// e2e run logs), so the first may need most of it.
+const WIKIPEDIA_DEADLINE_MS = 55_000;
+
+// With less than this left, a request is not started.
+const MIN_REQUEST_MS = 1_000;
+
+// Wikimedia throttles every User-Agent without contact details in one shared
+// bucket: measured, a bare agent got 429s after about ten requests, while the
+// same agent with this URL went 20 of 20.
+const WIKIPEDIA_HEADERS = {
+  "User-Agent": `genealogy-mcp-server/${readBuildInfo().base} (https://github.com/PioneerAIAcademy/cowork-genealogy)`,
+};
 
 export interface WikipediaSearchInput {
   query: string;
 }
 
+type DeadlineFetch = (url: string) => Promise<Response>;
+
+/**
+ * A fetch whose timeout and retry budget are both capped at what is left
+ * before `deadline`. With too little left it throws `outOfTime()` rather than
+ * send a request bound to time out.
+ */
+function requestBefore(deadline: number, outOfTime: () => Error): DeadlineFetch {
+  return async (url) => {
+    const remaining = deadline - Date.now();
+    if (remaining < MIN_REQUEST_MS) throw outOfTime();
+    return fetchWithRetry(url, { headers: WIKIPEDIA_HEADERS }, remaining, {
+      budgetMs: Math.min(DEFAULT_RETRY_BUDGET_MS, remaining),
+    });
+  };
+}
+
+const summaryUrl = (title: string) => `${WIKIPEDIA_API_BASE}/${encodeURIComponent(title)}`;
+
+const SEARCH_HITS = 5;
+
+// Small words a title carries that the query need not repeat.
+const FUNCTION_WORDS = new Set([
+  "of", "the", "and", "in", "on", "at", "a", "an",
+  "de", "la", "le", "du", "des", "von", "van", "der",
+]);
+
+// Letters NFD does not decompose: the stroked ones, which a query types bare
+// ("Osteroy" for "Osterøy"), and ß, which case folding spells ss.
+const UNDECOMPOSED: Record<string, string> = { ø: "o", ł: "l", đ: "d", ħ: "h", ŧ: "t", ı: "i", ß: "ss" };
+
+/**
+ * Case-folded words with diacritics stripped, split on anything that is not a
+ * letter or digit. An apostrophe (', ’, ʼ) is removed, neither a letter nor a
+ * split, so "Mo'orea" reads as "Moʼorea", whose ʼ Unicode counts as a letter.
+ */
+function words(text: string): string[] {
+  return text
+    .replace(/['’ʼ]/g, "")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[øłđħŧıß]/g, (c) => UNDECOMPOSED[c])
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((w) => w !== "");
+}
+
+/**
+ * Whether the query spells out a search hit's title: every significant word of
+ * the title, less a trailing parenthetical, appears in the query. Search
+ * ranks by relevance, not meaning, so a query for a place with no article of
+ * its own gets some other article back ("Maddock North Dakota history" → "List
+ * of governors of North Dakota"), and the caller would take it as the answer.
+ */
+function titleMatches(title: string, queryWords: ReadonlySet<string>): boolean {
+  const significant = words(title.replace(/\s*\([^()]*\)\s*$/, "")).filter(
+    (w) => !FUNCTION_WORDS.has(w),
+  );
+  return significant.length > 0 && significant.every((w) => queryWords.has(w));
+}
+
+/** The first of Wikipedia's top search hits for `query` whose title matches it, or null. */
+async function matchingSearchTitle(query: string, request: DeadlineFetch): Promise<string | null> {
+  const response = await request(
+    `${WIKIPEDIA_SEARCH_URL}?q=${encodeURIComponent(query)}&limit=${SEARCH_HITS}`,
+  );
+  if (!response.ok) {
+    throw new Error(`Wikipedia search API error: ${response.status}`);
+  }
+  const data: WikipediaPageSearchResponse = await response.json();
+  const queryWords = new Set(words(query));
+  for (const page of data.pages ?? []) {
+    if (typeof page.title === "string" && titleMatches(page.title, queryWords)) return page.title;
+  }
+  return null;
+}
+
 export async function wikipediaSearch(
   input: WikipediaSearchInput
 ): Promise<WikipediaSearchResult> {
-  const url = `${WIKIPEDIA_API_BASE}/${encodeURIComponent(input.query)}`;
-
-  const response = await fetchWithTimeout(
-    url,
-    {
-      headers: {
-        "User-Agent": "genealogy-mcp-server/0.0.1",
-      },
-    },
-    WIKIPEDIA_TIMEOUT_MS
+  const notFound = () => new Error(`No Wikipedia article found for '${input.query}'`);
+  // Only the search fallback can find too little time left, and running out
+  // there is no evidence the article is missing.
+  const request = requestBefore(
+    Date.now() + WIKIPEDIA_DEADLINE_MS,
+    () =>
+      new Error(
+        `Wikipedia lookup for '${input.query}' timed out: it is not an exact article title, and too ` +
+          `little of the ${WIKIPEDIA_DEADLINE_MS / 1000}s limit was left to search for it. Retry, or ` +
+          "pass the exact article title.",
+      ),
   );
 
+  // The summary endpoint takes an exact title, so a descriptive query ("Luo
+  // people Kenya ethnic group history") 404s there; the first search hit whose
+  // title the query spells out is the article it meant.
+  let response = await request(summaryUrl(input.query));
+  if (response.status === 404) {
+    const title = await matchingSearchTitle(input.query, request);
+    if (title === null) throw notFound();
+    response = await request(summaryUrl(title));
+    if (response.status === 404) throw notFound();
+  }
+
   if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error(`No Wikipedia article found for '${input.query}'`);
-    }
     throw new Error(`Wikipedia API error: ${response.status}`);
   }
 

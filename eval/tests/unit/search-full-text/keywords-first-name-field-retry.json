@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_search_full_text_015",
+    "skill": "search-full-text",
+    "name": "Keywords-first strategy with name-field retry after nil keywords result",
+    "type": "positive",
+    "description": "The keywords search for Thomas Flynn in Schuylkill County probate records returns zero results. The skill should log the nil and then retry using the Name field per SKILL.md's nil ladder. The name-field retry finds Flynn as a named heir in an estate record.",
+    "tags": ["fulltext", "nil-ladder", "name-field-retry", "keywords-first"]
+  },
+  "input": {
+    "delegation": "I want to check whether Thomas Flynn appeared as a named beneficiary or executor in Schuylkill County probate records in the 1870s and 1880s. Please search the full-text index.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "fulltext-search-flynn-probate-empty",
+    "fulltext-search-flynn-estate-by-name",
+    "wiki-read-any",
+    "wiki-search-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
+    "The keywords search for Flynn returns zero results. The skill should log this nil and then retry using the Name field per SKILL.md's nil ladder. A skill that stops at the keywords nil without attempting the name-field retry scores PARTIAL on Query construction.",
+    "The name-field retry finds Thomas Flynn named as a beneficiary/heir in an estate administration record (Michael Flynn's estate, 1881). The skill should log and triage this result.",
+    "QUERY-CONSTRUCTION GRADING NOTE: Per SKILL.md's nil ladder, a keywords nil should be followed by a name-field retry before concluding no results exist. A skill that uses keywords AND then retries with name scores PASS. A skill that stops at the keywords nil without the name-field retry scores PARTIAL. A skill that uses only the name field (skipping keywords) is acceptable.",
+    "NEGATIVE RESULT HANDLING: The keywords search returned 0 results — the skill must log this nil with enough detail (what query, which collection or corpus, how many results examined) to support a future exhaustiveness claim. A bare 'no results' without that detail scores PARTIAL on negative result handling.",
+    "TOOL ARGUMENTS NOTE: The skill may try spelling variant calls beyond the primary searches — for example +Fl?nn, +Fl?n*, +Flinn +Thomas, or other wildcard or alternate-spelling forms. The fixture set covers the primary searches only. A fixture_not_found result on a structurally correct variant query (valid Lucene operators, sensible field choice, plausible alternate spelling) is NOT a Tool Arguments failure — score Tool Arguments PASS. The skill's label for the result ('environment artifact', 'fixture gap', etc.) is irrelevant. Penalize Tool Arguments only when the call had a true structural defect: wrong field for the intent, invalid operator syntax, or a query unrelated to Thomas Flynn."
+  ]
+}

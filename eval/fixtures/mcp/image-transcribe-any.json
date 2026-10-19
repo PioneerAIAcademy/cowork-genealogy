@@ -1,0 +1,12 @@
+{
+  "tool": "image_transcribe",
+  "description": "image_transcribe catch-all — matches ANY imageId (predicate '~' = empty-substring match) so a page read not covered by a more specific fixture degrades gracefully into an ordinary off-target page instead of aborting the run with unmatched_tool_call. MUST be ordered LAST among the image-transcribe fixtures in a test's mcp_fixtures so the specific-page fixtures win first. Mirrors image-search-any and volume-search-any. The page it returns is deliberately unremarkable and names nobody the tests are hunting: stepping through a volume must cost the agent a turn and give it nothing, exactly as a real browse does, so the suite still grades orientation rather than luck.",
+  "args": { "imageId": "~" },
+  "response": {
+    "transcription": "Will Book G, page 47. Schuylkill County, Pennsylvania.\n\nIn the name of God, Amen. I, HENRY SCHOENER, of the Township of Cass in the County of Schuylkill, being of sound mind and memory, do make this my last Will and Testament.\n\nItem. I give unto my wife CATHARINE all my household goods and the income of my farm during her widowhood.\n\nItem. I give unto my sons PETER and JACOB the farm whereon I now live, to be divided between them at the decease of my said wife.\n\nWitness my hand and seal this ninth day of November, A.D. 1873.\n\n                                        Henry Schoener  (seal)\n\nWitnesses:\n  Daniel Kaercher\n  [illegible]\n\nProved 28th November 1873.",
+    "metadata": {
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1663901
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_maria_fuenmayor_parents",
+    "objective": "Who were the parents of María Concepción Fuenmayor of Maracaibo, and when did she marry Eduardo Berrueta Fernández?",
+    "subject_person_ids": [
+      "GMH9-3BJ"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

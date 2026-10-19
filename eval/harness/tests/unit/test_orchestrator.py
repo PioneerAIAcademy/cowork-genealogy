@@ -1,6 +1,9 @@
 """Unit tests for orchestrator's pure helpers — outcome computation."""
 
+import json
 from types import SimpleNamespace
+
+import pytest
 
 from harness.loader import load_test_from_dict
 from harness.orchestrator import (
@@ -10,10 +13,68 @@ from harness.orchestrator import (
     _compute_outcome,
     _COMMISSION_VALIDATORS,
     _negative_judge_context,
+    _stop_at_stub,
+    _stopped_at_a_handoff,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
     flag_routing_negative_judge_fail,
 )
+from harness.warning_kinds import (
+    HARNESS_WARNING_KINDS,
+    JUDGE_WARNING_KINDS,
+    WARNING_KIND_SIDES,
+    UnregisteredWarningKind,
+    validate_warning_kinds,
+)
+
+
+# --- output.warnings kind registry: the guard's own coverage (#2025) ---------
+#
+# The old guard reconstructed "which kinds exist" by regex-scanning a hardcoded
+# two-file list for `"kind": "<literal>"`. Both assumptions were bypassable and
+# each silently reintroduced the dark-warning bug: a kind emitted from a third
+# file, and a kind built from a const/f-string. These pin the structural
+# closure — validation at the single `_build_warnings` chokepoint, by value.
+
+
+def test_build_warnings_rejects_kind_emitted_from_any_producer():
+    """FAILURE MODE 1 (third emission site). judge_warnings is the fold path by
+    which every *other* producer's warnings enter output.warnings — judge.py, the
+    routing flag, or a hypothetical new file. An unregistered kind arriving that
+    way must be rejected at the chokepoint, no matter which file built it."""
+    with pytest.raises(UnregisteredWarningKind):
+        _build_warnings([], judge_warnings=[{"kind": "kind_from_a_third_file"}])
+
+
+def test_warning_kind_validation_is_by_value_not_source_form():
+    """FAILURE MODE 2 (non-literal kind). Validation keys on the string VALUE,
+    so a kind built from a const/f-string is caught identically to a literal —
+    the exact case the regex scan missed (and that guardrail_shadow already builds
+    that way)."""
+    built = "".join(["not_", "registered"])  # not a source literal
+    with pytest.raises(UnregisteredWarningKind):
+        validate_warning_kinds([{"kind": built}])
+
+    # And a REGISTERED kind built the same non-literal way passes — proving the
+    # check is about registration, not source form.
+    ok = "".join(["prose_", "observation"])
+    validate_warning_kinds([{"kind": ok}])  # does not raise
+
+
+def test_build_warnings_accepts_every_registered_kind():
+    """Each registered kind survives the chokepoint — so validation never rejects
+    a real warning, and the registry is proven to cover the live set."""
+    for kind in WARNING_KIND_SIDES:
+        assert _build_warnings([], judge_warnings=[{"kind": kind}]) == [{"kind": kind}]
+
+
+def test_registry_partition_is_sane():
+    """Judge and harness sides partition the registry with no overlap and no
+    third side — a misclassified kind (wrong side) is a human-reviewable error
+    this makes visible."""
+    assert JUDGE_WARNING_KINDS.isdisjoint(HARNESS_WARNING_KINDS)
+    assert JUDGE_WARNING_KINDS | HARNESS_WARNING_KINDS == set(WARNING_KIND_SIDES)
+    assert set(WARNING_KIND_SIDES.values()) <= {"judge", "harness"}
 
 
 # --- Skill-tool contract drift -----------------------------------------
@@ -119,13 +180,15 @@ def _routing_dims(correctness=1, completeness=1):
     ]
 
 
-def test_judge_fail_on_correctly_routed_negative_is_reported_not_floored():
-    """The behaviour change: scores are left exactly as the judge set them.
+def test_judge_fail_on_correctly_routed_negative_is_coerced_to_na():
+    """#2196: the 1 becomes null, because it usually grades a truncated transcript.
 
-    This used to floor 1 -> 2. Replaying the floor's own guards over the 121
-    committed run logs, a human confirmed the judge's 1 on 20 of the 24
-    floor-eligible cells, so the floor overrode a correct grade far more often
-    than a wrong one."""
+    Not the floor coming back. The floor rewrote 1 -> 2, a claim the skill did
+    better than the judge said; replaying its guards over the 121 committed run
+    logs, a human confirmed the judge's 1 on 20 of 24 floor-eligible cells, so
+    it overrode a correct grade more often than a wrong one. N/A instead refuses
+    to grade a field the harness blanked, and routing alone still decides the
+    outcome."""
     dims = _routing_dims()
     warnings: list = []
     flag_routing_negative_judge_fail(
@@ -135,14 +198,56 @@ def test_judge_fail_on_correctly_routed_negative_is_reported_not_floored():
         skills_invoked=["search-records"],
         warnings=warnings,
     )
-    assert [d["score"] for d in dims] == [1, 1, None]
+    assert [d["score"] for d in dims] == [None, None, None]
     # Assert the RATIONALE too: a score-only assertion could not catch a
-    # reintroduced floor that rewrote the text but happened to keep the 1.
-    assert dims[0]["rationale"] == "No such routing occurred"
+    # coercion that dropped the score without saying why, which is what makes
+    # this class of defect untrendable.
+    assert dims[0]["rationale"].startswith("[coerced-to-na]")
+    assert "No such routing occurred" in dims[0]["rationale"], (
+        "the original judge rationale must survive inside the rewritten one"
+    )
+    # ONE warning per coerced cell, not two: the retired
+    # routing_negative_judge_fail fired on the identical condition, so emitting
+    # both would tally one cell under two kinds in the CLI summary.
     assert [w["kind"] for w in warnings] == [
-        "routing_negative_judge_fail",
-        "routing_negative_judge_fail",
+        "coerced_routing_negative_to_na",
+        "coerced_routing_negative_to_na",
     ]
+
+
+def test_coercion_leaves_a_partial_alone():
+    """Only a 1 is coerced. A 2 stays a 2, which is what keeps
+    `review_sample.is_mandatory`'s first trigger (`score in (1, 2)`) working on
+    it unchanged — without this the coercion would swallow the partials too and
+    the third trigger would be carrying a class it was not measured on."""
+    dims = _routing_dims(correctness=2, completeness=2)
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert [d["score"] for d in dims] == [2, 2, None]
+    assert warnings == []
+    assert dims[0]["rationale"] == "No such routing occurred"
+
+
+def test_coercion_still_coerces_without_a_warnings_list():
+    """`warnings` is optional on this signature. The score change is the
+    contract now, so it must not be silently conditional on a caller passing a
+    list — and the rewritten rationale names the original score, so a caller
+    with no list still leaves a trace."""
+    dims = _routing_dims()
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+    )
+    assert [d["score"] for d in dims] == [None, None, None]
+    assert "the judge's 1 was coerced to null" in dims[0]["rationale"]
 
 
 def test_reported_warning_carries_the_judge_score_and_rationale():
@@ -223,7 +328,10 @@ def test_no_warning_on_out_of_scope_negative():
     assert warnings == []
 
 
-def test_no_warning_on_grade_on_invariant():
+def test_grade_on_invariant_is_coerced_and_names_its_mode():
+    """Ruling on issue #2190 (2026-09-07): an invariant negative no longer
+    short-circuits. Its 1 is coerced like a routing negative's, but the warning
+    and rationale must say the validator decides it, not routing."""
     dims = _routing_dims()
     warnings: list = []
     flag_routing_negative_judge_fail(
@@ -233,6 +341,43 @@ def test_no_warning_on_grade_on_invariant():
         skills_invoked=["search-records"],
         warnings=warnings,
     )
+    assert [d["score"] for d in dims] == [None, None, None]
+    assert [w["kind"] for w in warnings] == ["coerced_routing_negative_to_na"] * 2
+    assert "decided by its invariant validator alone" in warnings[0]["advisory"]
+    assert "decided by its invariant validator alone" in dims[0]["rationale"]
+    assert "decided by routing" not in dims[0]["rationale"]
+
+
+def test_routing_negative_coercion_still_says_routing():
+    """The other direction: a negative without `grade_on_invariant` keeps the
+    routing wording."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert "decided by routing alone" in warnings[0]["advisory"]
+    assert "decided by routing alone" in dims[0]["rationale"]
+
+
+def test_activated_invariant_negative_is_not_coerced():
+    """The `activated` guard stays for invariant negatives: one may activate and
+    still pass on its validator, and there its 1 is left a 1 for the review
+    sample's first trigger to catch."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"], grade_on_invariant=True),
+        activated=True,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
     assert warnings == []
 
 
@@ -312,7 +457,7 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
         )
         return SkillRunResult(
             text_response="I saved the file.",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["research"],
             tool_calls=[
                 # LIVE, so this test also covers the production wiring of
                 # #1000's two new fields — the retention rule keeps a live
@@ -389,7 +534,7 @@ def test_uncovered_tool_call_continues_to_judge(tmp_path, monkeypatch):
         # registered) — Type 2.
         return SkillRunResult(
             text_response="(produced from an error response)",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["research"],
             tool_calls=[],
             duration_ms=10.0,
             usage={"total_cost_usd": 0.0, "usage": {}},
@@ -399,7 +544,7 @@ def test_uncovered_tool_call_continues_to_judge(tmp_path, monkeypatch):
             registered_mcp_tools={"wikipedia_search"},  # Tool exists, but call didn't match fixture
         )
 
-    # Stub validators to pass (search-wikipedia has validators that check for
+    # Stub validators to pass (the subject skill has validators that check for
     # output files, which we didn't create). We want to test the judge, not
     # validators, so make validators trivially pass.
     monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
@@ -459,7 +604,7 @@ def test_judge_dimension_warnings_flow_into_output_warnings(tmp_path, monkeypatc
         )
         return SkillRunResult(
             text_response="I saved the file.",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["research"],
             tool_calls=[
                 {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"},
                  "matched": {"kind": "predicate", "index": None},
@@ -515,7 +660,11 @@ def test_judge_dimension_warnings_flow_into_output_warnings(tmp_path, monkeypatc
     assert dropped[0]["name"] == "X"
 
 
-def _positive_spec(skill="search-wikipedia"):
+# `research` rather than `search-wikipedia` or `record-extraction`: both skill
+# directories were deleted, and `check_runnable` refuses a ROUTED spec whose
+# skill has none. These specs are synthetic labels, so the name only has to be a skill
+# that still ships.
+def _positive_spec(skill="research"):
     return load_test_from_dict({
         "test": {"id": "ut_o_001", "skill": skill, "name": "n", "type": "positive",
                   "description": "x", "tags": []},
@@ -527,7 +676,7 @@ def _positive_spec(skill="search-wikipedia"):
 _SENTINEL = object()
 
 
-def _negative_spec(skill="record-extraction", correct=_SENTINEL, grade_on_invariant=False):
+def _negative_spec(skill="research", correct=_SENTINEL, grade_on_invariant=False):
     if correct is _SENTINEL:
         correct = ["search-records"]
     negative = {"correct_skill": correct, "explanation": "x"}
@@ -569,7 +718,7 @@ def test_positive_fails_when_validators_failed():
     spec = _positive_spec()
     assert _compute_outcome(
         spec=spec, validators_passed=False, judge_dimensions=[],
-        aborted_reason=None, activated=True, skills_invoked=["search-wikipedia"],
+        aborted_reason=None, activated=True, skills_invoked=["research"],
     ) == "fail"
 
 
@@ -577,7 +726,7 @@ def test_positive_fails_when_not_activated():
     spec = _positive_spec()
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
-        aborted_reason=None, activated=False, skills_invoked=["search-wikipedia"],
+        aborted_reason=None, activated=False, skills_invoked=["research"],
     ) == "fail"
 
 
@@ -602,7 +751,7 @@ def test_positive_passes_with_skill_invoked_and_all_dims_pass():
     ]
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
-        aborted_reason=None, activated=True, skills_invoked=["search-wikipedia"],
+        aborted_reason=None, activated=True, skills_invoked=["research"],
     ) == "pass"
 
 
@@ -614,7 +763,7 @@ def test_positive_partial_when_any_dim_partial():
     ]
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
-        aborted_reason=None, activated=True, skills_invoked=["search-wikipedia"],
+        aborted_reason=None, activated=True, skills_invoked=["research"],
     ) == "partial"
 
 
@@ -625,12 +774,12 @@ def test_negative_fails_when_skill_under_test_activated():
     """Negative test fails iff the skill under test ACTIVATED (per spec §6
     step 1, not just `skill in skills_invoked` — a routing-only Skill call
     is allowed)."""
-    spec = _negative_spec()  # tested skill = record-extraction
+    spec = _negative_spec()  # tested skill = research
     # activated=True simulates "skill fired AND did substantive work"
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason=None, activated=True,
-        skills_invoked=["record-extraction"],
+        skills_invoked=["research"],
     ) == "fail"
 
 
@@ -646,7 +795,7 @@ def test_negative_passes_when_skill_under_test_was_invoked_but_declined():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
         aborted_reason=None, activated=False,
-        skills_invoked=["record-extraction", "search-records"],
+        skills_invoked=["research", "search-records"],
     ) == "pass"
 
 
@@ -667,6 +816,69 @@ def test_negative_fails_when_no_correct_skill_invoked():
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason=None, activated=False, skills_invoked=[],
     ) == "fail"
+
+
+def test_negative_passes_when_correct_skill_arrived_as_an_agent_spawn():
+    """A `correct_skill` naming a CONVERTED callee is satisfied by the `Agent`
+    spawn, which never lands in `skills_invoked` (issue #2825).
+
+    `runnability.py` resolves a `correct_skill` entry against the agents dir as
+    well as the skills dir (issue #2793), so such a test loads. Matching the
+    routing arm on `skills_invoked` alone made that acceptance a lie — the test
+    ran and then failed however correctly the run routed. Live instance:
+    `ut_init_project_009` spawned `project-status`, an agent since 2026-10-03,
+    and was graded a routing failure for it.
+    """
+    spec = _negative_spec(correct=["project-status"])
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=None, activated=False, skills_invoked=[],
+        builtin_tool_calls=[
+            {"tool": "Agent", "args": {"subagent_type": "project-status",
+                                       "prompt": "p"}}
+        ],
+    ) == "pass"
+
+
+def test_negative_still_fails_when_the_spawn_is_a_different_agent():
+    """The other direction: widening to hand-offs must not pass a run that
+    spawned SOMETHING, only one that spawned an acceptable destination."""
+    spec = _negative_spec(correct=["project-status"])
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=None, activated=False, skills_invoked=[],
+        builtin_tool_calls=[
+            {"tool": "Agent", "args": {"subagent_type": "gps-mentor",
+                                       "prompt": "p"}}
+        ],
+    ) == "fail"
+
+
+def test_negative_still_fails_when_the_correct_agent_was_spawned_by_a_subagent():
+    """A hand-off is the caller's. A spawn carrying `agent_id` was made INSIDE
+    another subagent, so it is not the routing decision under test and must not
+    satisfy `correct_skill`."""
+    spec = _negative_spec(correct=["project-status"])
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=None, activated=False, skills_invoked=[],
+        builtin_tool_calls=[
+            {"tool": "Agent", "args": {"subagent_type": "project-status",
+                                       "prompt": "p"},
+             "agent_id": "a1"}
+        ],
+    ) == "fail"
+
+
+def test_negative_routing_unaffected_when_no_builtin_tool_calls_recorded():
+    """A fixture that records only `skills_invoked` — no `builtin_tool_calls`
+    at all — keeps grading exactly as before."""
+    spec = _negative_spec(correct=["search-records"])
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=None, activated=False,
+        skills_invoked=["search-records"],
+    ) == "pass"
 
 
 def test_negative_with_empty_correct_skill_requires_empty_skills_invoked():
@@ -730,24 +942,143 @@ def test_negative_passes_when_judge_skipped_but_routing_correct():
     ) == "pass"
 
 
-def test_negative_judge_context_frames_decline_and_keeps_test_context():
-    """_negative_judge_context prepends negative-test framing (so the
-    base-only judge grades the decline, not the skill's craft task) and
-    appends the test's own judge_context unchanged."""
-    spec = load_test_from_dict({
+def _negative_ctx_spec(judge_context):
+    return load_test_from_dict({
         "test": {"id": "ut_o_003", "skill": "citation",
                   "name": "n", "type": "negative", "description": "x",
                   "tags": []},
         "input": {"user_message": "m", "scenario": None},
-        "negative": {"correct_skill": ["record-extraction"],
+        "negative": {"correct_skill": ["research"],
                       "explanation": "x"},
-        "judge_context": ["Should explicitly name record-extraction"],
+        "judge_context": judge_context,
     })
+
+
+def test_negative_judge_context_frames_decline_and_keeps_test_context():
+    """_negative_judge_context gives the negative-test framing (so the
+    base-only judge grades the decline, not the skill's craft task) and the
+    test's own judge_context unchanged, as two labeled groups."""
+    ctx = _negative_judge_context(_negative_ctx_spec(["Should explicitly name research"]))
+    assert len(ctx) == 2
+    harness, author = ctx
+    assert harness.startswith("Harness framing (")
+    assert "NEGATIVE test" in harness
+    assert "research" in harness
+    assert "citation" in harness
+    assert author.startswith("Test author's notes (")
+    assert author.endswith("\n  - Should explicitly name research")
+
+
+def test_negative_judge_context_keeps_machine_and_author_lines_apart():
+    """The harness's three lines sit only under the harness label, and the
+    author's lines only under the author label."""
+    harness, author = _negative_judge_context(
+        _negative_ctx_spec(["AUTHOR-NOTE-ONE", "AUTHOR-NOTE-TWO"])
+    )
+    assert harness.count("\n  - ") == 3
+    assert "AUTHOR-NOTE" not in harness
+    assert author.count("\n  - ") == 2
+    assert "NEGATIVE test" not in author
+    assert "AUTHOR-NOTE-ONE" in author and "AUTHOR-NOTE-TWO" in author
+
+
+def test_negative_judge_context_keeps_a_multi_line_note_inside_its_group():
+    _, author = _negative_judge_context(_negative_ctx_spec(["first line\nsecond line"]))
+    assert author.endswith("\n  - first line\n    second line")
+
+
+def test_run_judge_hands_a_negative_test_the_labeled_groups(monkeypatch):
+    """The wiring, not just the builder: a negative test's judge receives
+    the two labeled groups, not the test's raw judge_context."""
+    from harness import orchestrator
+    from harness.auth import AuthConfig
+    from harness.rubric import empty_rubric
+
+    seen = {}
+
+    def fake_grade(**kwargs):
+        seen.update(kwargs)
+        return "graded"
+
+    monkeypatch.setattr(orchestrator, "grade", fake_grade)
+    spec = _negative_ctx_spec(["AUTHOR-NOTE"])
+    result = SimpleNamespace(
+        text_response="t", skills_invoked=[], tool_calls=[],
+        builtin_tool_calls=[], agent_returns=[],
+    )
+    assert orchestrator._run_judge(
+        spec=spec, rubric=empty_rubric(spec.skill), scenario_readme="",
+        result=result, file_changes=[],
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        judge_model="stub",
+    ) == "graded"
+    ctx = seen["judge_context"]
+    assert ctx[0].startswith("Harness framing (")
+    assert ctx[1] == "Test author's notes (written for this test):\n  - AUTHOR-NOTE"
+
+
+def test_negative_judge_context_without_author_notes_has_no_author_group():
+    ctx = _negative_judge_context(_negative_ctx_spec([]))
+    assert len(ctx) == 1
+    assert ctx[0].startswith("Harness framing (")
+    assert "Test author's notes" not in ctx[0]
+
+
+def test_negative_judge_context_renders_as_two_nested_lists_in_the_judge_prompt():
+    """Through judge.py's real rendering: each label is one bullet and its
+    lines are nested bullets beneath it."""
+    from harness import judge
+    from harness.rubric import empty_rubric
+
+    prompt = judge.render_prompt(
+        rubric=empty_rubric("citation"),
+        judge_context=_negative_judge_context(_negative_ctx_spec(["AUTHOR-NOTE"])),
+        scenario_readme="r",
+        user_message="m",
+        skills_invoked=[],
+        text_response="t",
+        file_changes_summary="c",
+        tool_calls=[],
+    )
+    lines = prompt.splitlines()
+    lines = lines[lines.index(next(l for l in lines if l.startswith("- Harness framing ("))):]
+    assert lines[0] == (
+        "- Harness framing (written by the eval harness for every negative test, "
+        "not by this test's author):"
+    )
+    assert lines[1].startswith("  - This is a NEGATIVE test.")
+    author_at = lines.index("- Test author's notes (written for this test):")
+    assert lines[author_at + 1] == "  - AUTHOR-NOTE"
+    assert author_at == 4  # label + three harness lines precede it
+
+
+def test_negative_judge_context_self_route_only_renders_the_no_skill_arm():
+    """A `correct_skill` naming only the skill under test
+    (`ut_record_extraction_011`) must not tell the judge to route to the skill
+    it was told must not do its task; the emptied list takes the no-skill arm."""
+    spec = _negative_spec(skill="record-extraction", correct=["record-extraction"])
     ctx = _negative_judge_context(spec)
-    assert "NEGATIVE test" in ctx[0]
-    assert "record-extraction" in ctx[0]
-    assert "citation" in ctx[1]
-    assert ctx[-1] == "Should explicitly name record-extraction"
+    assert "decline without invoking any skill" in ctx[0]
+    assert "route the user to" not in ctx[0]
+
+
+def test_negative_judge_context_drops_the_skill_under_test_from_the_route():
+    """`ut_conflict_resolution_010`'s shape: the skill under test plus one
+    other. Only the other is named as the route."""
+    spec = _negative_spec(
+        skill="conflict-resolution",
+        correct=["record-extraction", "conflict-resolution"],
+    )
+    ctx = _negative_judge_context(spec)
+    assert "decline and route the user to: record-extraction." in ctx[0]
+
+
+def test_negative_judge_context_unchanged_when_skill_not_in_route():
+    """The other direction: a route not naming the skill under test is rendered
+    in full, in order."""
+    spec = _negative_spec(skill="citation", correct=["record-extraction", "timeline"])
+    ctx = _negative_judge_context(spec)
+    assert "decline and route the user to: record-extraction, timeline." in ctx[0]
 
 
 def test_negative_out_of_scope_fails_when_judge_scored_a_dimension_1():
@@ -790,7 +1121,7 @@ def test_negative_invariant_passes_despite_activation():
     spec = _negative_spec(grade_on_invariant=True)
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
-        aborted_reason=None, activated=True, skills_invoked=["record-extraction"],
+        aborted_reason=None, activated=True, skills_invoked=["research"],
     ) == "pass"
 
 
@@ -810,7 +1141,7 @@ def test_negative_invariant_fails_when_validators_failed():
     spec = _negative_spec(grade_on_invariant=True)
     assert _compute_outcome(
         spec=spec, validators_passed=False, judge_dimensions=[],
-        aborted_reason=None, activated=True, skills_invoked=["record-extraction"],
+        aborted_reason=None, activated=True, skills_invoked=["research"],
     ) == "fail"
 
 
@@ -1052,7 +1383,7 @@ def test_judge_skipped_after_passing_validators_fails():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason=None, activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["research"],
         judge_skipped=True,
     ) == "fail"
 
@@ -1063,19 +1394,24 @@ def test_judge_skipped_doesnt_override_aborted():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason="max_turns", activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["research"],
         judge_skipped=True,
     ) == "aborted"
 
 
 def test_judge_skipped_doesnt_override_validator_fail():
     """When validators failed, that's the load-bearing signal — don't
-    'fix it' to fail via judge_skipped (which is also True in this case)."""
+    'fix it' to fail via judge_skipped.
+
+    This test passes `judge_skipped=True` explicitly. It used to be that a
+    validator failure implied it, so the two arrived together and either could
+    have produced the `fail`; since #2057 they are independent and only the
+    validator branch can, which is what this pins."""
     spec = _positive_spec()
     assert _compute_outcome(
         spec=spec, validators_passed=False, judge_dimensions=[],
         aborted_reason=None, activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["research"],
         judge_skipped=True,
     ) == "fail"
 
@@ -1085,7 +1421,7 @@ def test_aborted_dominates_everything():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason="max_turns", activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["research"],
     ) == "aborted"
 
 
@@ -1121,7 +1457,7 @@ def test_commission_validator_failure_demotes_deterministic_cap_abort_to_fail(ca
         spec=spec, validators_passed=False,
         failed_validators=frozenset({_A_COMMISSION_VALIDATOR}),
         judge_dimensions=[], aborted_reason=cap, activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["research"],
     ) == "fail"
 
 
@@ -1138,7 +1474,7 @@ def test_omission_only_validator_failure_under_cap_stays_aborted(cap):
         spec=spec, validators_passed=False,
         failed_validators=frozenset({_AN_OMISSION_VALIDATOR}),
         judge_dimensions=[], aborted_reason=cap, activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["research"],
     ) == "aborted"
 
 
@@ -1150,7 +1486,7 @@ def test_clean_deterministic_cap_abort_stays_aborted(cap):
     assert _compute_outcome(
         spec=spec, validators_passed=True, failed_validators=frozenset(),
         judge_dimensions=[], aborted_reason=cap, activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["research"],
     ) == "aborted"
 
 
@@ -1165,7 +1501,7 @@ def test_commission_failure_does_not_demote_non_cap_abort(reason):
         spec=spec, validators_passed=False,
         failed_validators=frozenset({_A_COMMISSION_VALIDATOR}),
         judge_dimensions=[], aborted_reason=reason, activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["research"],
     ) == "aborted"
 
 
@@ -1223,7 +1559,7 @@ def test_type_1_unmatched_tool_call_aborts(tmp_path, monkeypatch):
     async def fake_run_skill(**kwargs):
         return SkillRunResult(
             text_response="I tried to use a tool that doesn't exist.",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["research"],
             tool_calls=[],  # No calls reached the mock
             duration_ms=100.0,
             usage={"num_turns": 1, "total_cost_usd": 0.0, "usage": {}},
@@ -1264,7 +1600,7 @@ def test_type_2_unmatched_tool_call_continues_to_judge(tmp_path, monkeypatch):
     async def fake_run_skill(**kwargs):
         return SkillRunResult(
             text_response="I searched but got an error.",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["research"],
             tool_calls=[
                 {
                     "tool": "mcp__genealogy__place_search",
@@ -1282,7 +1618,7 @@ def test_type_2_unmatched_tool_call_continues_to_judge(tmp_path, monkeypatch):
             registered_mcp_tools={"place_search"},  # place_search exists
         )
 
-    # Stub validators to pass (search-wikipedia has validators that check for
+    # Stub validators to pass (the subject skill has validators that check for
     # output files, which we didn't create). We want to test the judge, not
     # validators, so make validators trivially pass.
     monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
@@ -1339,7 +1675,7 @@ def test_live_tool_call_is_covered(tmp_path, monkeypatch):
     async def fake_run_skill(**kwargs):
         return SkillRunResult(
             text_response="Schema is valid.",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["research"],
             tool_calls=[
                 {
                     "tool": "mcp__genealogy__validate_research_schema",
@@ -1387,6 +1723,47 @@ def test_live_tool_call_is_covered(tmp_path, monkeypatch):
     assert entry["runs"][0]["judge"]["skipped"] is False
     warnings = entry["runs"][0]["output"].get("warnings", [])
     assert not any(w["kind"] == "uncovered_tool_call" for w in warnings)
+
+
+@pytest.mark.parametrize("passed, expected", [({"tool_search": False}, False), ({}, True)])
+def test_tool_search_reaches_run_skill(tmp_path, monkeypatch, passed, expected):
+    """`--no-tool-search` crosses four call sites to reach `run_skill`; a
+    dropped hop leaves the default True there and the run quietly runs ON."""
+    from harness.skill_runner import SkillRunResult
+    from harness.judge import JudgeOutput
+
+    monkeypatch.setattr(orchestrator, "build_workspace", lambda **kw: None)
+    monkeypatch.setattr(orchestrator, "snapshot_files", lambda ws: {
+        "research_json": {"researcher_profile": {}},
+        "tree_gedcomx_json": {"persons": []},
+        "files": [],
+    })
+    monkeypatch.setattr(orchestrator, "cleanup_session_store", lambda ws: None)
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+    seen: list = []
+
+    async def fake_run_skill(**kwargs):
+        seen.append(kwargs.get("tool_search", "MISSING"))
+        return SkillRunResult(
+            text_response="ok", skills_invoked=["record-extraction"], tool_calls=[],
+            duration_ms=1.0, usage={"num_turns": 1, "total_cost_usd": 0.0, "usage": {}},
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_run_judge", lambda **kw: JudgeOutput(
+        dimensions=[], cost_usd=0.0, input_tokens=0, cached_input_tokens=0,
+        output_tokens=0, prompt_hash="stub-hash",
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=_positive_spec(),
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        paths=OrchestratorPaths(runlogs_root=tmp_path),
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-09_10-30-00",
+        **passed,
+    ))
+    assert seen == [expected]
 
 
 # --- intentionally_invalid: file-validity validators are not counted -----
@@ -1542,7 +1919,7 @@ def test_orchestrator_passes_text_response_to_validators(tmp_path, monkeypatch):
         from harness.skill_runner import SkillRunResult
         return SkillRunResult(
             text_response=reply,
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["research"],
             tool_calls=[],
             duration_ms=1.0,
             usage={"total_cost_usd": 0.0, "usage": {}},
@@ -1571,3 +1948,902 @@ def test_orchestrator_passes_text_response_to_validators(tmp_path, monkeypatch):
         "validator that reads the reply is now inert"
     )
     assert captured["text_response"] == reply
+
+
+def test_orchestrator_threads_index_error_source_into_validators(tmp_path, monkeypatch):
+    """A test JSON's top-level `index_error_source` must reach the `test`
+    dict run_validators receives (issue #1606).
+
+    Same whitelist trap `refinement_targets` hit (#2021 F12), one field later:
+    `index_error_source` was declared in both unit-test schema mirrors and
+    read by `test_index_discrepancy_does_not_recommend_detaching`, but was
+    never added to the literal, so the guard reported "skipped: test
+    declares no index_error_source to protect" on both of the tests that
+    declare it — the whole population it was written for. Pinned
+    behaviourally, via a patched `run_validators` rather than a source
+    grep, so removing the threading line reddens this instead of quietly
+    disarming the guard.
+    """
+    spec = load_test(WIKI_TEST_PATH)
+    spec.raw["index_error_source"] = "Minnesota Death Index"
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="done",
+            skills_invoked=["research"],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    captured = {}
+
+    def fake_run_validators(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(
+        JudgeError("not under test")
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-08-22_00-00-00",
+    ))
+
+    assert captured["test"].get("index_error_source") == "Minnesota Death Index", (
+        "orchestrator did not thread spec.raw['index_error_source'] into "
+        "run_validators' test dict; "
+        "test_index_discrepancy_does_not_recommend_detaching asserts "
+        "nothing on every run"
+    )
+
+
+
+def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_path, monkeypatch):
+    """`input.delegation` and `builtin_tool_calls` must both reach run_validators.
+
+    The SAME whitelist trap as `refinement_targets` (#2021 F12) and
+    `index_error_source` (#1606) above, now a third time — and one hop worse.
+    The direct-agent arm (#2246) needs two things the previous fields did not:
+
+    - `delegation` threaded through the `test` dict literal, or all three
+      direct-arm validators skip on the whole population they were written for;
+    - `builtin_tool_calls` passed as its OWN argument, because it was never in
+      `run_validators`' `available_args` at all. A validator declaring an
+      unknown parameter is recorded `passed=False` (deliberately NOT
+      reporting_only, validator_runner.py), so omitting it would hard-fail
+      every test of all 27 skills rather than skipping quietly.
+
+    Driven through the real path with a patched `run_validators`, not a source
+    grep, so deleting either line reds this.
+    """
+    spec = load_test(WIKI_TEST_PATH)
+    # Retargeted onto a real pair: `_prompt_for` refuses a direct test whose
+    # `skill` has no same-named agent file, which is the guard working.
+    spec.skill = "research-exhaustiveness"
+    spec.raw["test"]["skill"] = "research-exhaustiveness"
+    spec.raw["input"]["delegation"] = "DELEGATION-SENTINEL"
+    spec.delegation = "DELEGATION-SENTINEL"
+    # Clear the routed fixture's own user_message, or the fallback never fires
+    # here and the assertion below would pass on the wrong value.
+    spec.raw["input"].pop("user_message", None)
+    spec.user_message = ""
+    spec.negative = {"correct_skill": ["NEGATIVE-SENTINEL"]}
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="done",
+            skills_invoked=["research-exhaustiveness"],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+            builtin_tool_calls=[
+                {"tool": "Agent", "args": {"subagent_type": "x", "prompt": "p"}}
+            ],
+        )
+
+    captured = {}
+
+    def fake_run_validators(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(
+        JudgeError("not under test")
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-08-22_00-00-00",
+    ))
+
+    assert captured["test"].get("negative") == {"correct_skill": ["NEGATIVE-SENTINEL"]}, (
+        "orchestrator did not thread spec.negative into run_validators' test "
+        "dict; test_hand_back_names_its_owner reads its owner from it and fails "
+        "every compliant hand-back without it (issue #2118)"
+    )
+    assert captured["test"].get("delegation") == "DELEGATION-SENTINEL", (
+        "orchestrator did not thread spec.delegation into run_validators' test "
+        "dict; all three direct-arm validators would skip on every direct test"
+    )
+    # The THIRD threading hop, and the one with no guard until now. `user_message`
+    # is threaded for report_unsourced_year_in_response (#1965) and falls back to
+    # the delegation on a direct test — without the fallback a year the delegation
+    # supplied reads as invented. Removing it left the whole harness suite green.
+    assert captured["test"].get("user_message") == "DELEGATION-SENTINEL", (
+        "orchestrator did not fall back to spec.delegation for the threaded "
+        "`user_message`; on a direct test the delegation is the only text the "
+        "run was given, so a figure it supplied would be reported as invented"
+    )
+    assert captured.get("builtin_tool_calls"), (
+        "orchestrator did not pass builtin_tool_calls to run_validators; the "
+        "direct-arm validators declare it, and an unknown validator parameter "
+        "is recorded passed=False for every test of every skill"
+    )
+
+def test_the_skill_runs_no_result_message_reaches_the_run_entry(tmp_path, monkeypatch):
+    """The same second hop, for `no_result_message` (#2189, review of #2356).
+
+    `runlog.py` persists it and a test covers that, but the value only reaches
+    `SingleRun` via `no_result_message=result.no_result_message` in
+    `_execute_single_run` — and deleting that line left the whole suite green,
+    exactly as it did for `error` one PR earlier. The persistence test builds
+    `SingleRun(no_result_message=True)` by hand, so it proves the serializer
+    and says nothing about the wiring. Without this, every committed run log
+    would carry `false` forever and nothing would notice.
+    """
+    import asyncio
+
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        return SkillRunResult(
+            text_response="Routing this to record-extraction.",
+            skills_invoked=["research"],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"num_turns": 1},
+            no_result_message=True,
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-09_10-00-00",
+    ))
+
+    run = entry["runs"][0]
+    assert run["no_result_message"] is True, (
+        "no_result_message must reach the committed run entry — it is the only "
+        "thing distinguishing a real 0 output_tokens from an absent count"
+    )
+
+
+def test_the_skill_runs_error_reaches_the_run_entry(tmp_path, monkeypatch):
+    """The second hop of the serializer trap (#2192, review of #2326).
+
+    `runlog.py` persists `SingleRun.error`, and a test covers that. But the
+    value only ever gets ONTO `SingleRun` via `error=result.error` in
+    `_execute_single_run`, and deleting that line left the entire 3313-test
+    suite green — the persistence test builds `SingleRun(error=…)` by hand, so
+    it proves the serializer and nothing about the wiring.
+
+    This drives the real path: a `SkillRunResult` carrying an error goes in,
+    and the assembled entry must carry it out. Deleting `error=result.error`
+    reds this and only this.
+    """
+    import asyncio
+
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    quota_error = (
+        "You've hit your limit [rate-limit signals: rate_limit_status=rejected "
+        "resets_at=1757260800]"
+    )
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        return SkillRunResult(
+            text_response="",
+            skills_invoked=[],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={},
+            aborted_reason="quota_exhausted",
+            error=quota_error,
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-08_10-00-00",
+    ))
+
+    run = entry["runs"][0]
+    assert run["aborted_reason"] == "quota_exhausted"
+    assert run["error"] == quota_error, (
+        "the SDK's error string must reach the committed run entry — this is "
+        "the only place a reader can see WHY a run aborted"
+    )
+
+
+def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monkeypatch):
+    """The orchestrator hop of the spawn stub (issue #2825). `_stub_agents` is
+    unit-tested, but only `stub_agents=` at the `_execute_single_run` call site
+    and the retry wrapper carry it to the hook; dropping either left the suite
+    green. `gps-mentor` ships as an agent with no skill directory."""
+    import asyncio
+    import json
+
+    raw = json.loads(WIKI_TEST_PATH.read_text(encoding="utf-8"))
+    raw["execution"] = {"stub_skills": ["gps-mentor", "search-records"]}
+    spec = load_test_from_dict(raw)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    seen = {}
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        seen.update(kwargs)
+        return SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[], duration_ms=1.0,
+            usage={}, aborted_reason="quota_exhausted", error="stop",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-22_10-00-00",
+    ))
+    assert seen.get("stub_agents") == {"gps-mentor": None}
+    assert seen.get("stub_skills") == {"gps-mentor": None, "search-records": None}
+
+
+# --- stop_at_stub: a test that ends at its first stubbed hand-off (#3119) -----
+
+
+def _positive_spec_with(execution, skill="research"):
+    return load_test_from_dict({
+        "test": {"id": "ut_o_003", "skill": skill, "name": "n", "type": "positive",
+                  "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "execution": execution,
+        "judge_context": [],
+    })
+
+
+_STOPPING = {"stop_at_stub": True, "stub_skills": ["question-selection"]}
+
+
+def test_stop_at_stub_is_on_only_when_a_positive_test_sets_it():
+    assert _stop_at_stub(_positive_spec_with(_STOPPING)) is True
+    assert _stop_at_stub(_positive_spec_with({"stub_skills": ["question-selection"]})) is False
+
+
+def test_stop_at_stub_is_off_on_a_negative_test():
+    """A negative test already stops on its own routing short-circuit, so the
+    field is ignored there even when it is set."""
+    spec = load_test_from_dict({
+        "test": {"id": "ut_o_004", "skill": "research", "name": "n", "type": "negative",
+                  "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "negative": {"correct_skill": ["search-records"], "explanation": "x"},
+        "execution": _STOPPING,
+        "judge_context": [],
+    })
+    assert spec.execution.get("stop_at_stub") is True
+    assert _stop_at_stub(spec) is False
+
+
+def _run_with(*builtin_calls):
+    from harness.skill_runner import SkillRunResult
+
+    return SkillRunResult(
+        text_response="", skills_invoked=["research"], tool_calls=[], duration_ms=1.0,
+        usage={}, builtin_tool_calls=list(builtin_calls),
+    )
+
+
+_ENTRY = {"tool": "Skill", "args": {"skill": "research"}}
+_SPAWN = {"tool": "Agent", "args": {"subagent_type": "question-selection"}}
+
+
+def test_stopped_at_a_handoff_needs_the_opt_in_and_a_stubbed_hand_off():
+    stopping = _positive_spec_with(_STOPPING)
+    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, _SPAWN)) is True
+    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY)) is False, (
+        "the skill's own entry is not a stubbed hand-off"
+    )
+    unstubbed = {"tool": "Agent", "args": {"subagent_type": "gps-mentor"}}
+    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, unstubbed)) is False, (
+        "a hand-off to an unstubbed name is not what the stop ends at"
+    )
+    plain = _positive_spec_with({"stub_skills": ["question-selection"]})
+    assert _stopped_at_a_handoff(plain, _run_with(_ENTRY, _SPAWN)) is False
+
+
+def test_a_run_stopped_at_its_first_hand_off_counts_as_activated(tmp_path, monkeypatch):
+    """The stop leaves only the narration before the hand-off, which can be short
+    and name the next row. That run still activated: the hand-off is its work."""
+    import asyncio
+    from harness.judge import JudgeOutput
+    from harness.skill_runner import SkillRunResult
+
+    spec = load_test(REPO_ROOT / "eval/tests/unit/research/route-shortcut-guard.json")
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        return SkillRunResult(
+            text_response="No questions yet. Routing to question-selection, then research-plan.",
+            skills_invoked=["research"],
+            tool_calls=[],
+            duration_ms=10.0,
+            usage={"num_turns": 3},
+            builtin_tool_calls=[
+                {"tool": "Skill", "args": {"skill": "research"}},
+                {"tool": "Agent", "args": {"subagent_type": "question-selection"}},
+            ],
+        )
+
+    def fake_run_judge(**kwargs):
+        return JudgeOutput(
+            dimensions=[
+                {"source": "base", "name": name, "score": 3, "rationale": "fine"}
+                for name in ("Correctness", "Completeness", "Tool Arguments")
+            ],
+            cost_usd=0.0, input_tokens=0, cached_input_tokens=0, output_tokens=0,
+            prompt_hash="stub-hash",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_run_judge", fake_run_judge)
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-05_10-00-00",
+    ))
+    assert entry["runs"][0]["output"]["activated"] is True
+    assert entry["outcome"] == "pass"
+
+
+def test_a_stop_at_stub_test_reaches_run_skill_with_the_stop(tmp_path, monkeypatch):
+    """The orchestrator hop of `stop_at_stub` (#3119): only the
+    `_execute_single_run` call site and the retry wrapper carry it to the hook,
+    and dropping either would leave `_stop_at_stub`'s own tests green."""
+    import asyncio
+    import json
+
+    raw = json.loads(WIKI_TEST_PATH.read_text(encoding="utf-8"))
+    raw["execution"] = {**raw.get("execution", {}), "stop_at_stub": True,
+                        "stub_skills": ["search-records"]}
+    spec = load_test_from_dict(raw)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    seen = {}
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        seen.update(kwargs)
+        return SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[], duration_ms=1.0,
+            usage={}, aborted_reason="quota_exhausted", error="stop",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-05_10-00-00",
+    ))
+    assert seen.get("stop_at_stub") is True
+
+
+# --- #2057: a failing validator no longer skips the judge --------------------
+#
+# The gate is in `_execute_single_run`, NOT in `_compute_outcome`. A test that
+# calls `_compute_outcome(validators_passed=False, judge_skipped=False)` passes
+# before and after this change and proves nothing, because
+# `if not validators_passed: return "fail"` runs ahead of every judge_skipped
+# branch. These drive the real path.
+
+# A negative fixture with a non-empty `correct_skill`. It needs no
+# `grade_on_invariant` exclusion any more: since issue #3080 deleted that early
+# return from flag_routing_negative_judge_fail, an invariant negative is coerced
+# too, so neither kind makes the coercion test below pass for the wrong reason.
+# This one is picked because its scenario exists and OrchestratorPaths resolves
+# it, and it sits in the research suite, which never converts to an agent. (It
+# was research-plan's `_008` until issue #2116 deleted that skill and the test.)
+NEGATIVE_TEST_PATH = (
+    REPO_ROOT / "eval/tests/unit/research/negative-next-question.json"
+)
+
+
+def _failing_gating_validator():
+    from harness.validator_runner import ValidatorRunResult
+    return [ValidatorRunResult(
+        name="test_no_out_of_lane_section_writes",
+        passed=False,
+        error="wrote localities, which research-plan does not own",
+        reporting_only=False,
+    )]
+
+
+def _judge_returning(dims):
+    from harness.judge import JudgeOutput
+
+    def fake(**kwargs):
+        return JudgeOutput(
+            dimensions=[dict(d) for d in dims],
+            cost_usd=0.0, input_tokens=0, cached_input_tokens=0,
+            output_tokens=0, prompt_hash="stub-hash",
+        )
+    return fake
+
+
+def test_a_failing_gating_validator_no_longer_skips_the_judge(tmp_path, monkeypatch):
+    """#2057: the judge grades every non-aborted run.
+
+    Before this change a single failing validator zeroed the judge for the whole
+    run, so dimensions with nothing to do with the failure went unscored. That
+    is why feedback #1772 could not be turned into a regression test: across
+    three paid runs an ownership failure meant Sequencing Logic and Jurisdiction
+    Accuracy were never graded — they did not fail, they never ran.
+
+    The outcome must still be `fail`: `_compute_outcome`'s
+    `if not validators_passed: return "fail"` runs AHEAD of the judge_skipped
+    branch, which is the ordering that keeps a defective run from grading green.
+    """
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="done", skills_invoked=["research"],
+            tool_calls=[], duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: _failing_gating_validator())
+    monkeypatch.setattr(orchestrator, "_run_judge", _judge_returning([
+        {"source": "base", "name": "Correctness", "score": 3, "rationale": "fine"},
+    ]))
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-10_00-00-00",
+    ))
+
+    run = entry["runs"][0]
+    assert run["validators"]["passed"] is False, "the validator must actually have failed"
+    assert run["judge"]["skipped"] is False, (
+        "a failing validator must no longer skip the judge (#2057)"
+    )
+    assert run["judge"]["dimensions"], "the graded dimensions must reach the run log"
+    assert entry["outcome"] == "fail", (
+        "grading a structurally-failed run must not turn it green — "
+        "_compute_outcome's validators_passed check runs first"
+    )
+    # The whole point of #2057: the diagnosis is per-run, and deliberately NOT
+    # in the modal aggregate, so no committed baseline shifts.
+    assert entry["outcome_summary"]["aggregated_dimensions"] == [], (
+        "a validator-failing run stays out of aggregated_dimensions (#2057)"
+    )
+
+
+def test_an_abort_still_skips_the_judge(tmp_path, monkeypatch):
+    """The abort guard is the half of the gate that stays. #2057 removed only
+    the `validators_passed` conjunct; an aborted run has no transcript worth
+    grading and paying for one is the cost the original gate existed to avoid.
+
+    COUNT THE CALLS. Asserting `skipped is True` and `dimensions == []` does
+    NOT pin this: `orchestrator.py:634`'s `except Exception` turns any raise
+    from the judge into exactly that shape, so a fake judge that raises looks
+    identical to a judge never called. This test shipped once in that form and
+    passed with the gate replaced by `if True:` while the judge ran. The call
+    counter and `error is None` are the only things that tell a real skip from
+    a swallowed call, and the diff's own runlog.py comment says as much: a
+    nonzero duration_ms beside `skipped: true` is a normal shape."""
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[], duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+            aborted_reason="wall_clock_cap",
+        )
+
+    calls: list = []
+
+    def counting_judge(**kwargs):
+        calls.append(kwargs)
+        raise AssertionError("the judge must not be called on an aborted run")
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+    monkeypatch.setattr(orchestrator, "_run_judge", counting_judge)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-10_00-00-00",
+    ))
+    assert not calls, (
+        f"the judge was called {len(calls)}x on an aborted run; the abort guard "
+        f"is gone and the raise was swallowed by orchestrator's except Exception"
+    )
+    judge = entry["runs"][0]["judge"]
+    assert judge["skipped"] is True
+    assert judge["dimensions"] == []
+    assert judge.get("error") is None, (
+        "a genuine skip records no error; an error here means the judge WAS "
+        "called and its exception was swallowed into the skipped shape"
+    )
+    assert not judge.get("duration_ms"), (
+        "duration_ms is set on every attempted branch, so a nonzero value here "
+        "is a judge call that happened"
+    )
+
+
+def test_coercion_reaches_a_validator_failing_negative(tmp_path, monkeypatch):
+    """THE INTERACTION between #2057 and #2196, which neither issue states.
+
+    `flag_routing_negative_judge_fail` is called at orchestrator.py:668, OUTSIDE
+    the judge gate — its only protection is `if not dimensions`. Before #2057 a
+    validator-failing run had zero dimensions, so the coercion silently no-opped
+    on this whole class. The moment the judge runs on those runs, the coercion
+    fires on them for the first time.
+
+    Zero committed runs have this shape (measured 2026-09-10: 0 validator-failing
+    non-activated negative runs), and exactly one negative-test run in the corpus
+    fails a validator at all — escaping only because its `activated` is true. So
+    this is one fixture away from live and a unit test is the only thing that
+    covers it.
+    """
+    spec = load_test(NEGATIVE_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        # Correctly routed: the skill under test declined, the accepted skill ran.
+        # Read off the fixture, so repointing NEGATIVE_TEST_PATH cannot leave a
+        # stale name here that the fixture does not accept.
+        return SkillRunResult(
+            text_response="", skills_invoked=list(spec.negative["correct_skill"][:1]),
+            tool_calls=[], duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: _failing_gating_validator())
+    monkeypatch.setattr(orchestrator, "_run_judge", _judge_returning([
+        {"source": "base", "name": "Correctness", "score": 1, "rationale": "did nothing"},
+        {"source": "base", "name": "Completeness", "score": 1, "rationale": "empty"},
+    ]))
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-10_00-00-00",
+    ))
+
+    run = entry["runs"][0]
+    assert run["validators"]["passed"] is False
+    assert run["judge"]["skipped"] is False, "#2057 opened the gate"
+    scores = {d["name"]: d["score"] for d in run["judge"]["dimensions"]}
+    assert scores == {"Correctness": None, "Completeness": None}, (
+        "#2196's coercion must fire on a validator-failing run once #2057 lets "
+        "the judge grade it — this is the interaction"
+    )
+    kinds = [w["kind"] for w in run["output"]["warnings"]]
+    assert kinds.count("coerced_routing_negative_to_na") == 2, kinds
+    # And it must survive _build_warnings' registry validation rather than
+    # raising UnregisteredWarningKind, which is what an unregistered kind does.
+    assert "routing_negative_judge_fail" not in kinds, (
+        "the retired kind must not be emitted alongside its replacement"
+    )
+
+
+# A record-extraction fixture that declares expected_classifications.
+# record-extraction is the only skill that declares them, so it is the only
+# skill on which apply_deterministic_deference can fire at all.
+CLASSIFICATION_TEST_PATH = (
+    REPO_ROOT / "eval/tests/unit/extraction-append/burial-index-dates-direct.json"
+)
+
+
+def test_deterministic_deference_reaches_a_validator_failing_run(tmp_path, monkeypatch):
+    """THE SECOND INTERACTION, which I missed on my own first pass.
+
+    `apply_deterministic_deference` (orchestrator.py:659) has the same shape as
+    the routing coercion: it runs OUTSIDE the judge gate, guarded only by
+    `if not has_expected_classifications or not dimensions`. So before #2057 a
+    validator-failing run had zero dimensions and it no-opped; now it floors
+    classification dimensions 1 -> 2 and rewrites their rationales on such runs
+    for the first time.
+
+    Unlike the coercion interaction this one IS reachable on committed data:
+    2 runs (`ut_record_extraction_g4k`, `ut_record_extraction_017`) have a
+    failing gating validator together with a PASSING
+    `test_expected_classifications`, so this fires on the next re-run of that
+    suite rather than hypothetically.
+
+    Note the two validator results below are the whole point: one gating
+    validator fails (so #2057's gate is what lets the judge run) while
+    `test_expected_classifications` passes (so deference applies). A test with
+    only the failure would not exercise deference at all.
+    """
+    from harness.validator_runner import ValidatorRunResult
+
+    # A copy under the test-only extraction-append skill: the record-extraction
+    # skill this fixture was written for is retired, and its suite is converted
+    # separately. Only `expected_classifications` matters here.
+    raw = json.loads(CLASSIFICATION_TEST_PATH.read_text(encoding="utf-8"))
+    raw["test"]["skill"] = "extraction-append"
+    copy = tmp_path / "classification-test.json"
+    copy.write_text(json.dumps(raw), encoding="utf-8")
+    spec = load_test(copy)
+    assert spec.raw.get("expected_classifications"), (
+        "fixture must declare expected_classifications or deference cannot fire"
+    )
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="extracted", skills_invoked=["research"],
+            tool_calls=[], duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    def fake_run_validators(**kw):
+        return [
+            ValidatorRunResult(
+                name="test_no_out_of_lane_section_writes", passed=False,
+                error="wrote a section it does not own", reporting_only=False,
+            ),
+            ValidatorRunResult(
+                name="test_expected_classifications", passed=True,
+                error=None, reporting_only=False,
+            ),
+        ]
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "_run_judge", _judge_returning([
+        {"source": "base", "name": "Correctness", "score": 3, "rationale": "ok"},
+        # Must be a member of _CLASSIFICATION_DIMENSIONS or deference cannot
+        # fire and this test would pass for the wrong reason.
+        {"source": "rubric", "name": "Evidence type accuracy", "score": 1,
+         "rationale": "judge disagrees with the declared classifications"},
+        {"source": "rubric", "name": "Informant identification", "score": 2,
+         "rationale": "a 2 must be left alone by deference"},
+    ]))
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-10_00-00-00",
+    ))
+
+    run = entry["runs"][0]
+    assert run["validators"]["passed"] is False, "a gating validator must have failed"
+    assert run["judge"]["skipped"] is False, "#2057 is what lets deference see anything"
+    dims = {d["name"]: d for d in run["judge"]["dimensions"]}
+    assert dims["Evidence type accuracy"]["score"] == 2, (
+        "deference must floor the classification 1 to 2 on a validator-failing "
+        "run now that the judge grades it - this is the second post-gate mutator"
+    )
+    assert dims["Evidence type accuracy"]["rationale"].startswith(
+        "[deterministic-deference]"
+    )
+    assert dims["Informant identification"]["score"] == 2, (
+        "deference floors only a 1; a 2 must be untouched"
+    )
+    assert not dims["Informant identification"]["rationale"].startswith(
+        "[deterministic-deference]"
+    )
+    assert entry["outcome"] == "fail", "the validator failure still decides the outcome"
+
+
+# --- the unmatched_tool_call gate counts the suppressed calls (issue #2740) ---
+
+
+def _gate_result(attempted, suppressed, tool_calls, registered):
+    """A SkillRunResult carrying only what the Type-1 gate reads."""
+    from harness.skill_runner import SkillRunResult
+
+    return SkillRunResult(
+        text_response="",
+        skills_invoked=[],
+        tool_calls=tool_calls,
+        duration_ms=1.0,
+        usage={},
+        attempted_mcp_calls=attempted,
+        suppressed_post_deny_calls=suppressed,
+        registered_mcp_tools=set(registered),
+    )
+
+
+def test_an_unregistered_tool_in_the_suppressed_turn_still_aborts():
+    """A hallucinated tool name in the post-deny turn must not be invisible.
+
+    It is withheld from `attempted_mcp_calls` so it cannot raise an advisory;
+    that must not also make it un-abortable.
+    """
+    from harness import orchestrator as orch
+
+    result = _gate_result(
+        attempted=[],
+        suppressed=[{"tool": "mcp__genealogy__no_such_tool", "args": {}}],
+        tool_calls=[],
+        registered={"research_append"},
+    )
+    orch._apply_unmatched_tool_call_abort(result)
+
+    assert result.aborted_reason == "unmatched_tool_call", (
+        "an unregistered tool named in the suppressed turn went unseen; "
+        f"aborted_reason={result.aborted_reason!r}"
+    )
+
+
+def test_a_matched_suppressed_call_cannot_mask_an_earlier_uncovered_one():
+    """`covered` counts what EXECUTED; the left side must count the same set.
+
+    A post-deny call that executes and matches a fixture raises `covered`. If
+    the left side excludes it, `len(attempted) > covered` goes false and an
+    unregistered call from an EARLIER turn is never scanned for.
+    """
+    from harness import orchestrator as orch
+
+    result = _gate_result(
+        attempted=[{"tool": "mcp__genealogy__no_such_tool", "args": {}}],
+        suppressed=[{"tool": "mcp__genealogy__research_append", "args": {}}],
+        tool_calls=[
+            {"tool": "mcp__genealogy__research_append", "matched": {"kind": "predicate"}}
+        ],
+        registered={"research_append"},
+    )
+    orch._apply_unmatched_tool_call_abort(result)
+
+    assert result.aborted_reason == "unmatched_tool_call", (
+        "an executed, fixture-matching reaction call raised `covered` and "
+        "masked the earlier unregistered call"
+    )
+
+
+# --- busiest-moment capture must run before the session store is deleted ---
+
+
+def test_capture_runs_before_session_cleanup(tmp_path, monkeypatch):
+    """The SDK cache holding the transcripts is the very directory
+    `cleanup_session_store` deletes. Capturing after it would record nothing,
+    silently, on every run — so the real cleanup runs here, against a
+    redirected home, and the capture must still have read both transcripts."""
+    import json as _json
+
+    from claude_agent_sdk import project_key_for_directory
+
+    from harness import workspace as workspace_mod
+
+    home = tmp_path / "home"
+    projects = home / ".claude" / "projects"
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    monkeypatch.setattr(workspace_mod, "_SESSION_STORE_ROOT", projects)
+    monkeypatch.setattr(orchestrator, "build_workspace", lambda **kw: None)
+    monkeypatch.setattr(orchestrator, "snapshot_files", lambda ws: {})
+
+    def _msg(mid, window):
+        return {"type": "assistant", "message": {
+            "role": "assistant", "id": mid, "model": "claude-sonnet-4-6",
+            "content": [{"type": "text"}],
+            "usage": {"input_tokens": 0, "output_tokens": 5,
+                      "cache_read_input_tokens": window, "cache_creation_input_tokens": 0}}}
+
+    seen = {}
+
+    async def fake_run_skill(**kwargs):
+        ws = kwargs["workspace"]
+        cache = projects / project_key_for_directory(str(ws))
+        (cache / "sess" / "subagents").mkdir(parents=True)
+        (cache / "sess.jsonl").write_text(_json.dumps(_msg("m1", 9_100)), encoding="utf-8")
+        (cache / "sess" / "subagents" / "agent-1.jsonl").write_text(
+            _json.dumps(_msg("a1", 41_230)), encoding="utf-8")
+        (cache / "sess" / "subagents" / "agent-1.meta.json").write_text(
+            _json.dumps({"agentType": "check-warnings"}), encoding="utf-8")
+        seen["cache"] = cache
+        return _retry_stub_result()
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    paths = OrchestratorPaths(runlogs_root=tmp_path / "runlogs")
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
+        run_index=0, spec=_positive_spec(), paths=paths,
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        base_delay=0,
+    ))
+
+    assert result.subagent_capture_status == "captured"
+    assert result.subagents[0]["agent_type"] == "check-warnings"
+    assert result.subagents[0]["peak_window_tokens"] == 41_230
+    assert "turns" not in result.subagents[0]
+    assert result.main_thread == {"peak_window_tokens": 9_100, "compactions": [],
+                                  "models": ["claude-sonnet-4-6"]}
+    # The real cleanup ran afterwards and removed the store.
+    assert not seen["cache"].exists()
+
+
+def test_pg_store_faults_reach_the_run_logs_warnings(tmp_path, monkeypatch):
+    """U15: the orchestrator collects the prelude's faults for the workspace
+    after the run and folds them into output.warnings, so a fault the mock-side
+    pipelines swallowed is still in the run log. Drives the real
+    `_run_one_test_async`; reverting the capture line or the fold fails here."""
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    seen_workspaces: list = []
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="done.", skills_invoked=[], tool_calls=[], duration_ms=10.0,
+            usage={"total_cost_usd": 0.0, "usage": {"input_tokens": 1, "output_tokens": 1}},
+            attempted_mcp_calls=[],
+        )
+
+    def fake_faults(workspace):
+        seen_workspaces.append(workspace)
+        return [{"op": "writeBytes", "message": "NoSuchBucket: gone"}]
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "seed_pg_workspace", lambda ws: None)
+    monkeypatch.setattr(orchestrator, "pg_store_faults", fake_faults)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(JudgeError("no judge")))
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-12_10-30-00",
+    ))
+    warnings = entry["runs"][0]["output"].get("warnings") or []
+    (w,) = [w for w in warnings if w["kind"] == "pg_store_fault"]
+    assert w["faults"] == [{"op": "writeBytes", "message": "NoSuchBucket: gone"}]
+    assert seen_workspaces, "the faults were read for the run's workspace"

@@ -4,6 +4,8 @@ import { join } from "path";
 import { tmpdir } from "os";
 
 import { projectContext } from "../../src/tools/project-context.js";
+import { readBuildInfo } from "../../src/utils/build-info.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 describe("project_context", () => {
   let dir: string;
@@ -48,8 +50,10 @@ describe("project_context", () => {
             id: "I1",
             gender: "Male",
             names: [
-              { id: "N1", given: "William", surname: "Bottermiller", preferred: true, sources: [{ ref: "S2" }] },
+              // Preferred name second on purpose: at index 0 the assertion below
+              // passes whether or not the code selects on `preferred` (#1389 review).
               { id: "N2", given: "Willie", surname: "Bottermiller" },
+              { id: "N1", given: "William", surname: "Bottermiller", preferred: true, sources: [{ ref: "S2" }] },
             ],
             facts: [
               { id: "F1", type: "Birth", date: "1863", sources: [{ ref: "S1" }] },
@@ -77,10 +81,11 @@ describe("project_context", () => {
       { id: "q_003", question: "Where was he in 1880?" },
       { id: "q_004", question: "Declared exhaustive" },
     ]);
+    const noFamily = { spouseIds: [], parentIds: [], childIds: [] };
     expect(r.persons).toEqual([
-      { id: "I1", name: "William Bottermiller", gender: "Male", sourceRefs: ["S1", "S2"] },
-      { id: "I2", name: "Mary Bottermiller", gender: "Female", sourceRefs: [] },
-      { id: "I3", name: null, gender: "Male", sourceRefs: [] },
+      { id: "I1", name: "William Bottermiller", gender: "Male", sourceRefs: ["S1", "S2"], ...noFamily, diedByYear: 1929 },
+      { id: "I2", name: "Mary Bottermiller", gender: "Female", sourceRefs: [], ...noFamily, diedByYear: null },
+      { id: "I3", name: null, gender: "Male", sourceRefs: [], ...noFamily, diedByYear: null },
     ]);
     expect(r.sources).toEqual([
       {
@@ -101,6 +106,92 @@ describe("project_context", () => {
     ]);
   });
 
+  it("gives each person its one-hop family from the tree's edges (#2537)", async () => {
+    await writeProject(
+      { project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      {
+        persons: [
+          { id: "I1", gender: "Male" },
+          { id: "I2", gender: "Female", facts: [{ id: "F1", type: "http://gedcomx.org/Burial", date: "1858" }] },
+          { id: "I3", gender: "Male" },
+          { id: "I4", gender: "Female" },
+          { id: "I5", gender: "Male", facts: [{ id: "F2", type: "Birth", date: "1850" }] },
+        ],
+        relationships: [
+          { id: "R1", type: "Couple", person1: "I1", person2: "I2" },
+          { id: "R2", type: "http://gedcomx.org/ParentChild", parent: "I1", child: "I3" },
+          { id: "R3", type: "ParentChild", parent: "I2", child: "I3" },
+          { id: "R4", type: "ParentChild", parent: "I1", child: "I3" }, // duplicate edge -> listed once
+          { id: "R5", type: "Couple", person1: "I1", person2: "I4" },
+          { id: "R6", type: "ParentChild", parent: "I9" }, // no child -> ignored
+          { id: "R7", type: "Unknown", person1: "I1", person2: "I5" }, // not a family edge
+        ],
+        sources: [],
+      },
+    );
+    const r = await projectContext({ projectPath: dir });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const byId = Object.fromEntries(r.persons.map((p) => [p.id, p]));
+    expect(byId.I1).toMatchObject({ spouseIds: ["I2", "I4"], parentIds: [], childIds: ["I3"], diedByYear: null });
+    expect(byId.I2).toMatchObject({ spouseIds: ["I1"], parentIds: [], childIds: ["I3"], diedByYear: 1858 });
+    expect(byId.I3).toMatchObject({ spouseIds: [], parentIds: ["I1", "I2"], childIds: [], diedByYear: null });
+    expect(byId.I4).toMatchObject({ spouseIds: ["I1"], diedByYear: null });
+    expect(byId.I5).toMatchObject({ spouseIds: [], parentIds: [], childIds: [], diedByYear: null });
+  });
+
+  it("reads diedByYear as the year a person was certainly dead by (#2537)", async () => {
+    const person = (id: string, facts: any[]) => ({ id, gender: "Female", facts });
+    await writeProject(
+      { project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      {
+        persons: [
+          person("I1", [{ id: "F1", type: "Death", date: "Abt 1890" }]),
+          person("I2", [{ id: "F2", type: "Death", date: "Bef 1870" }]),
+          // the earlier of two dated facts wins; an undated one is no evidence
+          person("I3", [
+            { id: "F3", type: "Burial", date: "1875" },
+            { id: "F4", type: "Death", date: "12 Mar 1874" },
+            { id: "F5", type: "Death" },
+          ]),
+          person("I4", [{ id: "F6", type: "http://gedcomx.org/Death", date: "not a date" }]),
+          person("I5", [{ id: "F7", type: "Birth", date: "1850" }]),
+          // no upper bound: "after 1850" could be 1880, so it is no evidence of when
+          person("I6", [{ id: "F8", type: "Death", date: "Aft 1850" }]),
+        ],
+        relationships: [],
+        sources: [],
+      },
+    );
+    const r = await projectContext({ projectPath: dir });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const byId = Object.fromEntries(r.persons.map((p) => [p.id, p.diedByYear]));
+    // the latest possible year, never the earliest: a death "Abt 1890" is not before 1891,
+    // and one "Bef 1870" can fall in 1869, after an 1865 household
+    expect(byId).toEqual({ I1: 1891, I2: 1870, I3: 1874, I4: null, I5: null, I6: null });
+  });
+
+  it("returns the objective verbatim and untruncated, and null when absent (#3026)", async () => {
+    const objective =
+      "Identify the parents of Rosalind Hartwell (b. ca. 1855, Ohio). Her recorded surname 'Hartwell' is " +
+      "unverified — it may be her birth (maiden) name or the married name she took from her husband.";
+    expect(objective.length).toBeGreaterThan(140);
+    await writeProject(
+      { project: { id: "rp_001", objective, status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir });
+    expect(r.ok && r.objective).toBe(objective);
+
+    await writeProject(
+      { project: { id: "rp_001", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const bare = await projectContext({ projectPath: dir });
+    expect(bare.ok && bare.objective).toBeNull();
+  });
+
   it("returns empty arrays for an empty project", async () => {
     await writeProject(
       { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
@@ -109,12 +200,110 @@ describe("project_context", () => {
     const r = await projectContext({ projectPath: dir });
     expect(r).toEqual({
       ok: true,
+      buildId: readBuildInfo().version,
       projectStatus: "active",
+      objective: "Fresh",
       openQuestions: [],
       questionStatuses: [],
       persons: [],
       sources: [],
       localities: [],
+      awaitingUser: [],
+    });
+  });
+
+  describe("awaitingUser: open external-site hand-offs (spec §2.3)", () => {
+    const URL_A = "https://www.archion.de/de/alle-archive/baden-wuerttemberg/x/baiersbronn";
+    const URL_B = "https://www.fold3.com/search?keywords=Flynn";
+    function ext(id: string, outcome: string, url: string, captureReceived: boolean, planItemId: string | null = null) {
+      return {
+        id,
+        plan_item_id: planItemId,
+        performed: `2026-09-2${id.slice(-1)}T00:00:00.000Z`,
+        tool: "external_site",
+        query: {},
+        outcome,
+        results_examined: 0,
+        external_site: { site: "archion", url_generated: url, capture_received: captureReceived },
+        results_ref: null,
+      };
+    }
+    async function withLog(log: any[]) {
+      await writeProject(
+        { project: { id: "rp_001", objective: "T", status: "active", created: "2026-01-01", updated: "2026-01-01" }, log },
+        { persons: [], relationships: [], sources: [] },
+      );
+      const r = await projectContext({ projectPath: dir });
+      expect(r.ok).toBe(true);
+      if (!r.ok) throw new Error("project_context failed");
+      return r.awaitingUser;
+    }
+
+    it("lists an open partial hand-off with its plan item and timestamp", async () => {
+      expect(await withLog([ext("log_001", "partial", URL_A, false, "pli_004")])).toEqual([
+        {
+          logId: "log_001",
+          site: "archion",
+          urlGenerated: URL_A,
+          planItemId: "pli_004",
+          performed: "2026-09-21T00:00:00.000Z",
+        },
+      ]);
+    });
+
+    it("drops it once a later entry for the same URL carries the capture", async () => {
+      expect(
+        await withLog([ext("log_001", "partial", URL_A, false), ext("log_002", "positive", URL_A, true)]),
+      ).toEqual([]);
+    });
+
+    it("drops it when the user could not access the site (a later error with no capture)", async () => {
+      expect(
+        await withLog([ext("log_001", "partial", URL_A, false), ext("log_002", "error", URL_A, false)]),
+      ).toEqual([]);
+    });
+
+    it("a later partial for the same URL is the link sent again: it opens a row and closes none", async () => {
+      const open = await withLog([ext("log_001", "partial", URL_A, false), ext("log_002", "partial", URL_A, false)]);
+      expect(open.map((o) => o.logId)).toEqual(["log_001", "log_002"]);
+    });
+
+    it("an autonomous deferral (negative, no capture) never opens a row", async () => {
+      expect(await withLog([ext("log_001", "negative", URL_A, false)])).toEqual([]);
+    });
+
+    it("a capture on a different URL closes nothing", async () => {
+      const open = await withLog([ext("log_001", "partial", URL_A, false), ext("log_002", "positive", URL_B, true)]);
+      expect(open.map((o) => o.logId)).toEqual(["log_001"]);
+    });
+
+    it("an EARLIER capture does not close a later hand-off of the same URL", async () => {
+      const open = await withLog([ext("log_001", "positive", URL_A, true), ext("log_002", "partial", URL_A, false)]);
+      expect(open.map((o) => o.logId)).toEqual(["log_002"]);
+    });
+
+    it("never lists a positive entry logged with capture_received: false (alpha feedback #2864)", async () => {
+      expect(
+        await withLog([ext("log_012", "positive", URL_A, false), ext("log_013", "positive", URL_B, false)]),
+      ).toEqual([]);
+    });
+
+    it("ignores entries that are not external_site hand-offs", async () => {
+      expect(
+        await withLog([
+          {
+            id: "log_001",
+            plan_item_id: null,
+            performed: "2026-09-21T00:00:00.000Z",
+            tool: "record_search",
+            query: {},
+            outcome: "partial",
+            results_examined: 0,
+            external_site: null,
+            results_ref: null,
+          },
+        ]),
+      ).toEqual([]);
     });
   });
 
@@ -185,6 +374,7 @@ describe("project_context", () => {
   });
 
   it("errors when a project file is missing or unparseable — never throws", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeFile(join(dir, "research.json"), JSON.stringify({ project: { status: "active" } }));
     const missingTree = await projectContext({ projectPath: dir });
     expect(missingTree.ok).toBe(false);
@@ -196,5 +386,55 @@ describe("project_context", () => {
     expect(badTree.ok).toBe(false);
     if (badTree.ok) return;
     expect(badTree.errors.join(" ")).toMatch(/tree\.gedcomx\.json is not valid JSON/);
+  });
+  // #2126 — project_context is the primary "which build is this?" surface (8
+  // skills call it), so the stamp rides on every return branch including the
+  // two failure shapes.
+  describe("buildId (#2126)", () => {
+    const expected = readBuildInfo().version;
+
+    it("carries the same stamped build on every return branch", async () => {
+      await writeProject({ project: { status: "active" }, questions: [], sources: [], assertions: [] }, { persons: [] });
+      const populated = await projectContext({ projectPath: dir });
+      expect(populated.buildId).toBe(expected);
+
+      await rm(join(dir, "tree.gedcomx.json")); // broken project: one file of two
+      const broken = await projectContext({ projectPath: dir });
+      expect(broken.ok).toBe(false);
+      expect(broken.buildId).toBe(expected);
+
+      await rm(join(dir, "research.json")); // not a project at all
+      const none = await projectContext({ projectPath: dir });
+      expect(none.ok).toBe(false);
+      if (!none.ok) expect(none.reason).toBe("no_project");
+      expect(none.buildId).toBe(expected);
+    });
+  });
+
+  // #2108 / #2031: proves the field reaches the payload, not just the helper.
+  it("questionStatuses carries storedStatus, including where it disagrees with state", async () => {
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        questions: [
+          { id: "q_001", question: "Has a summary but is still in progress", status: "in_progress" },
+          { id: "q_002", question: "No status key at all" },
+        ],
+        proof_summaries: [{ id: "ps_001", question_id: "q_001" }],
+      },
+      { persons: [], relationships: [], sources: [] },
+    );
+
+    const r = await projectContext({ projectPath: dir });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    const q1 = r.questionStatuses.find((q) => q.id === "q_001");
+    // Derived from the proof summary, while the question still says otherwise.
+    expect(q1?.state).toBe("concluded");
+    expect(q1?.storedStatus).toBe("in_progress");
+
+    const q2 = r.questionStatuses.find((q) => q.id === "q_002");
+    expect(q2?.storedStatus).toBeNull();
   });
 });

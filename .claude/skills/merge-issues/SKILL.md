@@ -1,0 +1,292 @@
+---
+name: merge-issues
+description: Use when the lead wants the Backlog merged down before anything is promoted — "merge the backlog", "merge issues", "these skills have too many issues", "cut the queue on record-extraction", "what should be merged", or a bare "/merge-issues". Owns merge doctrine for this repo; `/merge-recent-issues` and `/audit-board` both defer to it. Reads by eval-slot queue depth rather than by filing date: issues filed weeks apart on one skill's snapshot are where duplicate and subset scope piles up, each pays its own `make eval-skill` run, and the daily recency pass cannot see them. Runs `slots.py` to compute the queues, then merges N-way — not pairwise — wherever the issues are one piece of work: a duplicate, a subset, or small edits one person finishes in one sitting under one run. Sharing a snapshot alone is never a reason to merge. Run it before `/fill-ready`, twice a week. Proposes first and applies only what the lead approves; never starts the work, and never writes the project board.
+allowed-tools:
+  - Agent
+  - Read
+  - Bash
+  - Glob
+  - Grep
+---
+
+# Merge issues
+
+This skill **owns merge doctrine**. `/merge-recent-issues` is the daily catcher
+for a new issue landing on an existing one; `/audit-board` is the weekly pass for
+obsolescence, clusters and hygiene. Both defer here for *what merges*. If any of
+the three disagrees, this file wins and the disagreement is a finding to report.
+
+What only this pass can see: **N issues, filed weeks apart, queued on one skill's
+eval slot.** The recency pass reads a 2-day window and those queues span 30–40
+days of filing, so they are invisible to it by construction.
+
+**You propose, then apply what is approved.** No branches, no PRs, no code edits.
+You have no `Edit` or `Write` tool on purpose.
+
+**Never write the project board.** Closing an issue auto-moves its card to Not
+planned; nothing else here needs a column change. A `gh` token without the
+`project` scope fails a board write while appearing to succeed.
+
+## 0. Compute the queues
+
+```sh
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 400 \
+  --json number,title,body,labels,assignees,createdAt > /tmp/open.json
+gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
+  --json number,title,files > /tmp/prs.json
+python3 .claude/skills/merge-issues/slots.py /tmp/board.json /tmp/open.json /tmp/prs.json
+```
+
+`--limit` truncates silently. The board carries well over 1200 items; a returned
+count equal to the limit means rows were lost and every depth below is wrong.
+The script says so itself at 2000, but check the issue and PR pulls by hand.
+
+**Read the coverage block at the bottom before anything else.** It names two
+buckets, and between them they are the part of the pool the script cannot judge:
+issues with **no `**Touches:**` line**, which reach no queue at all, and issues
+**in no section above** — a body naming only a broad container directory, or only
+paths no second issue touches. Both are listed by number. Read them by hand and
+say in the report how many you got through.
+
+The pool is **unassigned non-icebox Backlog plus unassigned Ready**. An assigned card
+(an assigned Backlog card shows as an `occupant:` line), an In Progress card and a
+Review card are someone's work: never merge one, in either direction. An *unassigned*
+Ready card is both in the pool and its slot's holder, which makes it the natural target
+— it is furthest along. An agent-body card also queues under each skill naming it via
+`@plugin:`; a deleted `skills/<x>/` queues under `agent:<x>`. Both read the checkout:
+run `slots.py` from an up-to-date `main`.
+
+**A slot can be held and show no block above.** `block()` runs only for a queue of
+2 or more, so a slot held by an In Progress card, a Review card or an open PR — with
+0 or 1 mergeable cards behind it — used to render nowhere at all. The last section,
+**held, queue below 2**, is where those now appear. Read the block, not the heading:
+a queue of 1 still lists a mergeable card under its holder.
+
+**Absence of a block is not evidence a slot is free.** It means the slot has no
+holder, no open PR against its snapshot, and nothing queued. The coverage block at
+the bottom is what names the pool issues no section reached.
+
+Only an **unassigned Ready** card is tagged `merge INTO this one`. An In Progress or
+Review card reads `held`, because it is someone's work and is never merged in either
+direction.
+
+**Re-check state at apply time, not just at compute time.** The pool is a snapshot
+and a pass takes hours; a card can be assigned while you are still proposing. On
+2026-09-16 issue #2535 was an unassigned Ready target when the queues were computed
+and assigned before the merges were applied, which retires its whole group. Verify
+`state` and `assignees` per issue immediately before writing — those two fields are
+what the rule turns on, and they survive a `gh project` outage that takes the board
+pull down.
+
+## 1. The four verdicts
+
+**Duplicate — close one into the other.** Two issues whose fix is the same edit
+to the same lines. Prove it by opening the file both cite, not by comparing
+titles. Keep the one further along and carry any detail the loser adds.
+
+**Absorb — one is a strict subset.** The larger body usually says so already
+("both are in scope here", "a generator would close both at once"). Verify the
+claim, then either close the subset or narrow the superset so exactly one owns
+the scope.
+
+**Batch — small edits to one snapshot, one card.** Two or more small edits to
+the same skill's snapshot that one person finishes in one sitting. Merging them
+buys back a `make eval-skill` run (roughly $8–12 and 45–65 minutes) per issue
+absorbed. That run is the whole justification, so name it.
+
+**Split the lanes — only when each half finishes without the other.** One test: can each half be finished, reviewed and merged without
+waiting on the other? If yes, split at the lane boundary and move the content so
+neither issue points at the other for something it needs. If no, merge and let
+the card carry both labels.
+
+The one legitimate not-a-merge is a **one-way mechanical dependency**: issue B
+only needs to *apply* something issue A defines — a convention, a constant, a
+helper. Do not merge and do not cross-reference. **Edit B's body** so it reads as
+an instruction ("apply the convention issue #A defines") rather than a
+coordination requirement.
+
+## 2. Sharing a snapshot is not a reason to merge
+
+Prove every merge the same way, inside a slot or outside one. `/fill-ready`
+promotes issues that share a snapshot side by side (its Gate 4 only sequences
+them), and re-annotation is cheap (lead, 2026-09-20), so two independent issues
+on one snapshot can be worked in parallel and cost one extra run between them.
+A merge has to buy something more than that: the same edit, a strict subset, or
+a batch one person finishes in one sitting.
+
+**Reasons that keep two issues apart:**
+
+1. **A blocker on one side.** Never park an unblocked issue behind a blocked one
+   — check both bodies and resolve the blocker's state
+   (`gh issue view <N> --json state`).
+2. **One person cannot finish all of it in one sitting.** The one-sitting test
+   below, which is what stops a queue becoming a tracker.
+3. **A `needs-decision` label with no ruling yet**, where the other issue is
+   startable today. Merging strands the startable half behind the lead's answer.
+   `senior` is *not* on this list — it is orthogonal to `needs-decision` and
+   never a reason to split a card.
+
+## 3. Merge N-way, not pairwise
+
+A queue of fifteen does not come down pairwise in one pass. Read the whole queue
+at once and propose the **partition**: fifteen issues into four, naming which
+issues form each group and which survives as the target.
+
+**Fan out one agent per read-first slot.** Each gets exactly that slot's issue
+numbers, the doctrine in this file, and the instruction to return a partition
+with per-group evidence. A slot is the natural boundary — its issues have to be
+in one head, and no agent needs another slot's. Give each an explicit,
+non-overlapping list; generate the partition of slots, do not eyeball it. A slot
+appearing in two agents' lists produces two contradictory proposals for the same
+queue.
+
+Report coverage as a number and a rule: how many slots you read, how they were
+chosen, and which agents failed. Never report a sample as the whole pass.
+
+**Validate the returned partition before you act on it.** Agents that share an
+issue across slots will both claim it, and an issue can only close once. Check
+mechanically, not by eye: no issue appears as a loser twice, and no target is
+also someone's loser. On 2026-09-16 issue #2562 came back claimed by two groups;
+the tie broke on where its *acceptance criterion* lives (a test under
+`eval/tests/unit/research-plan/`), not on which body mentioned it first.
+
+**Budget the GitHub API.** Seven parallel agents each reading issue bodies and
+comments will exhaust the hourly limit, and the secondary write limit trips before
+any documented bucket shows it — `gh api rate_limit` reads full while every call
+is refused. Prepare the merge content as files and apply it in one idempotent pass
+rather than interleaving reads and writes; retrying during a secondary limit
+extends it.
+
+### The one-sitting test, which bounds all of this
+
+**Does one person, doing this once, finish all of it?** If no, they are separate
+issues no matter how alike the bodies read, and no queue depth changes that.
+
+**Never replace N issues with one issue holding N rows.** No trackers, no
+umbrellas, no index issues. A row cannot be assigned, cannot sit in a column,
+cannot be closed, and does not appear in anyone's queue. One card that is done
+when twenty independent adjudications are done is a card nobody can finish.
+
+**Template-filled bodies are the trap, and this pass sees the most of them.** A
+fleet of them looks like mass duplication and is not: twenty `test <slug>`
+record-hint adjudications are twenty different people, twenty records and four
+countries, and the shared text is `/resolve-record-hint` boilerplate. Each still
+costs its own run, so merging them buys nothing. **Sharing a slot is necessary
+and not sufficient** — the merge has to be coverable by *one* run.
+
+If a set genuinely wants shared scheduling rather than merging, the tools are the
+`cluster:*` label and the standing `next run: <skill>` issue, both owned by
+`/audit-board`. Say so in the report and let that pass place them.
+
+### No depth target
+
+Read every slot the script marks **READ FIRST**, and report how many you read
+and how many runs the merges buy back. A deep queue that comes back with no
+merges is a valid answer when its issues are independent; say so per slot.
+
+## 4. Prove it before proposing
+
+**Engine-only PRs buy no eval slot.** `packages/engine/mcp-server/src/**` is excluded from every skill's run-log snapshot (`eval/harness/harness/snapshot.py`), so a PR touching only that tree does not earn an eval run — do not count one when computing "runs bought back."
+
+**Open the files the issues name.** Framing resemblance is the dominant false
+positive and it is convincing — two issues both described as "a prose lint with a
+file-and-line allow-list" routinely share no mechanism, one comparing hashes
+across duplicated copies and the other matching a banned phrase.
+
+Per proposed group:
+
+1. **Same fix site?** Open the file. Quote the lines.
+2. **All unblocked, or all blocked the same way?** Rule 1 above.
+3. **Does one person finish the merged card in one sitting?** Say why.
+4. **How many runs does this buy back?** Group of four into one: three runs.
+   That number is the proposal's justification — state it per group, and total
+   it.
+
+An issue body is **a claim written on a particular day**. Verify any factual
+claim — a path, a line number, a measurement, a tool's behaviour — before
+repeating it, and cite what you checked.
+
+**The queue itself is a claim too.** `slots.py` reads one line out of each body,
+so a body that defeats the parser reaches the wrong queue and every depth below it
+is wrong. Two shapes do it: a review banner that mentions `**Touches:**` inline
+while discussing it, and a rescoped card whose superseded body keeps a stale line
+under an `## Original issue` fold. Both were live on 2026-09-16. When an issue's
+queue membership looks wrong, read its body's Touches lines — plural — before
+trusting the slot, and treat a disagreement as a defect in the instrument rather
+than a judgment call.
+
+**Do not re-litigate a pair `/merge-recent-issues` judged independent** without
+reading its reasoning in the issue comments first, and only overturn it with
+something that pass could not see — which here is the queue, not the pair.
+
+## 5. Applying an approved merge
+
+Four steps. Skipping any one of them loses something.
+
+1. **Fold the content into the target**, under a heading naming each source issue
+   and the date. Carry the detail each absorbed issue adds — its evidence, its
+   acceptance criteria, its sequencing gate, its extra `Touches:` paths. A merge
+   that drops the losers' specifics is a close and should have been reported as
+   one. Merge the `**Touches:**` lines into one union line: the next run of this
+   skill reads it.
+2. **Retitle the target** if its title no longer covers the merged scope. A title
+   describing a quarter of the work is how the rest gets forgotten.
+3. **Move every assignee and any label the target lacks.** An absorbed issue with
+   an assignee has someone expecting to do it — `gh issue edit <target>
+   --add-assignee <login>` — and say so in the report. A `nothing-checks`,
+   `needs-decision` or `cluster:*` label on a loser must survive too.
+4. **Close each loser with the reasoning, not just a pointer.**
+
+```sh
+gh issue close <N> --repo PioneerAIAcademy/cowork-genealogy \
+  --reason "not planned" \
+  --comment "Merged into issue #<target>.
+
+<why these are one piece of work — the same edit, the run they now share>"
+```
+
+Write the comment for someone who filed the issue and will wonder where it went.
+"Duplicate of #N" is not enough; name what they share, and say plainly that nothing
+was dropped and that they should reopen if they find otherwise.
+
+**A blocker cleared is a finding, and the board does not know it.** Verifying a
+merge means reading each card's blockers, which routinely turns up holds that were
+discharged weeks ago — on 2026-09-16, issue #2253's hold was a test that now passes
+in the newest committed run, and issues #2393, #2076 and #2251 had all been freed by
+cards that closed (#2262's two blockers had closed as well). Nobody learns this
+from a merge that does not happen. Post the correction as a comment on the
+unblocked issue, naming the run log or the closed issue you checked, and list it in
+the report's findings — a card sitting behind a dead blocker is invisible in
+exactly the way a deep queue is.
+
+If the target's body carries a banner asserting the two are separate, **rewrite
+it in the same pass**. A stale "keep these apart" note outliving the merge is
+worse than no note.
+
+**Never write "does not close #N"** anywhere. GitHub's parser matches the
+substring `close #N` and has no notion of negation.
+
+## 6. Output shape
+
+Open with the arithmetic: read-first queues, how many you read, and the runs
+bought back.
+
+1. **Merges** — one block per group: the members, the target, the shared slot and
+   the lines you read, the verdict, runs bought back, assignees and labels moving.
+2. **Kept apart** — for each read-first queue, one line saying why its remaining
+   issues are independent, citing the reasons above.
+3. **Body edits** — one-way mechanical dependencies, with the exact replacement
+   sentence.
+4. **Outside the slots** — merges from the file-convergence section, kept separate
+   because they buy a reviewer and a rebase, never a run.
+5. **Hand to `/audit-board`** — sets that want a `cluster:*` label or a `next run:`
+   issue rather than a merge.
+6. **Blockers found discharged** — every hold you checked and found already
+   cleared, with what you read. These leave the pass as comments on those issues,
+   and they are often worth more than the merges.
+7. **Not checked** — both coverage buckets you did not get through (no
+   `Touches:` line, and in no section above), and any slot whose agent failed.
+
+Then stop and wait for approval. Apply only what he approves. Do not begin any of
+the work the issues describe.

@@ -23,10 +23,13 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_init_project import (  # noqa: E402
-    _NARRATION_BY_LEVEL,
+    _DEFAULT_LEVEL,
+    _HOUSE_STYLE,
     test_every_fact_and_relationship_is_sourced as check_sourced,
-    test_narration_guidance_is_verbatim_for_the_level as check_narration,
-    test_person_read_passes_both_flags as check_flags,
+    test_existing_project_is_not_reinitialized as check_not_reinit,
+    test_narration_guidance_is_the_house_style as check_narration,
+    test_person_level_sources_carried as check_person_sources,
+    test_init_empty_sections as check_empty,
     test_returned_sources_reach_the_tree_without_notes as check_notes,
     test_search_before_stubs as check_search,
     test_standard_date_survives_from_the_tool as check_std_date,
@@ -41,7 +44,7 @@ SEARCH_TAGGED = {"type": "positive", "tags": ["expects-person-search"]}
 # --- helpers: the shape person-read-flynn-family.json returns -------------
 
 def _person_read_call(persons=None, sources=None, **args):
-    call_args = {"personId": "LZNY-BRF", "relatives": True, "sourceDescriptions": True}
+    call_args = {"personId": "LZNY-BRF"}
     call_args.update(args)
     return {
         "tool": "mcp__genealogy__person_read",
@@ -100,27 +103,102 @@ def _fails(check, *args):
     return str(excinfo.value)
 
 
-# --- V1: both person_read flags -----------------------------------------
+# --- V1: person-level sources reach the tree ------------------------------
 
-def test_v1_passes_when_both_flags_are_true():
-    check_flags([_person_read_call()])
+def _read_with_person_sources():
+    """person_read returning a subject with two person-level refs into its own
+    source ids, the shape `person-read-moreau-person-level-sources.json` has."""
+    return {
+        "tool": "mcp__genealogy__person_read",
+        "args": {"personId": "MRQ1-JBM"},
+        "response": {
+            "persons": [{
+                "id": "MRQ1-JBM", "gender": "Male", "living": False,
+                "names": [{"given": "Jean Baptiste", "surname": "Moreau"}],
+                "sources": [{"ref": "SD01-AAA"}, {"ref": "SD01-BBB"}],
+            }],
+            "relationships": [],
+            "sources": [
+                {"id": "SD01-AAA", "title": "Civil birth"},
+                {"id": "SD01-BBB", "title": "Church baptism"},
+            ],
+        },
+    }
 
 
-def test_v1_skips_when_person_read_was_never_called():
+def _tree_with(person_sources, sources=None):
+    return {"tree_gedcomx_json": {
+        "persons": [{
+            "id": "I1", "ark": "ark:/61903/4:1:MRQ1-JBM", "gender": "Male",
+            "names": [{"id": "N1", "given": "Jean Baptiste", "surname": "Moreau"}],
+            **({"sources": person_sources} if person_sources is not None else {}),
+        }],
+        "relationships": [],
+        "sources": sources if sources is not None else [
+            {"id": "S1", "title": "FamilySearch Family Tree"},
+            {"id": "S2", "title": "Civil birth"},
+            {"id": "S3", "title": "Church baptism"},
+        ],
+    }}
+
+
+def test_v1_passes_when_refs_are_remapped_to_the_tree_ids():
+    check_person_sources([_read_with_person_sources()],
+                         _tree_with([{"ref": "S2"}, {"ref": "S3"}]))
+
+
+def test_v1_fires_when_a_person_level_ref_is_dropped():
+    msg = _fails(check_person_sources, [_read_with_person_sources()], _tree_with([{"ref": "S2"}]))
+    assert "Church baptism" in msg
+
+
+def test_v1_fires_when_the_person_loses_the_key_entirely():
+    msg = _fails(check_person_sources, [_read_with_person_sources()], _tree_with(None))
+    assert "Civil birth" in msg and "Church baptism" in msg
+
+
+def test_v1_fires_when_a_ref_is_copied_unchanged_and_dangles():
+    msg = _fails(check_person_sources, [_read_with_person_sources()],
+                 _tree_with([{"ref": "SD01-AAA"}, {"ref": "SD01-BBB"}]))
+    assert "name no tree source" in msg
+
+
+def test_v1_fires_when_a_ref_points_at_the_wrong_source():
+    msg = _fails(check_person_sources, [_read_with_person_sources()],
+                 _tree_with([{"ref": "S1"}, {"ref": "S3"}]))
+    assert "Civil birth" in msg
+
+
+def test_v1_skips_an_unimported_person_instead_of_failing():
+    """The model read a candidate with person-level refs, then imported someone
+    else: not a V1 failure (V2 fails a run that imports without arks)."""
+    tree = _tree_with([{"ref": "S2"}, {"ref": "S3"}])
+    tree["tree_gedcomx_json"]["persons"][0]["ark"] = "ark:/61903/4:1:OTHR-001"
     with pytest.raises(pytest.skip.Exception):
-        check_flags([{"tool": "mcp__genealogy__place_search", "args": {}}])
+        check_person_sources([_read_with_person_sources()], tree)
 
 
-@pytest.mark.parametrize("dropped", ["relatives", "sourceDescriptions"])
-def test_v1_fires_when_either_flag_is_missing(dropped):
-    call = _person_read_call()
-    del call["args"][dropped]
-    assert dropped in _fails(check_flags, [call])
+def test_v1_counts_two_sources_that_share_a_title():
+    """FamilySearch titles are "Name, \"Collection\"": two events in one
+    collection share one. A set compare would hide the dropped second ref."""
+    call = _read_with_person_sources()
+    call["response"]["sources"] = [
+        {"id": "SD01-AAA", "title": "John Smith, \"US Census\"", "citation": "1900"},
+        {"id": "SD01-BBB", "title": "John Smith, \"US Census\"", "citation": "1910"},
+    ]
+    tree = _tree_with(
+        [{"ref": "S2"}],
+        sources=[
+            {"id": "S2", "title": "John Smith, \"US Census\"", "citation": "1900"},
+            {"id": "S3", "title": "John Smith, \"US Census\"", "citation": "1910"},
+        ],
+    )
+    assert "missing person-level sources" in _fails(check_person_sources, [call], tree)
 
 
-def test_v1_fires_on_an_explicit_false():
-    call = _person_read_call(relatives=False)
-    assert "relatives" in _fails(check_flags, [call])
+def test_v1_skips_when_no_returned_person_carries_sources():
+    with pytest.raises(pytest.skip.Exception):
+        check_person_sources([_person_read_call()], _tree_with(None))
 
 
 # --- V2: ark form and provenance ----------------------------------------
@@ -239,7 +317,7 @@ def _read_two_same_named():
                 "names": [{"given": "Patrick", "surname": "Flynn"}], "facts": []}
     return {
         "tool": "mcp__genealogy__person_read",
-        "args": {"personId": "LZNY-BRF", "relatives": True, "sourceDescriptions": True},
+        "args": {"personId": "LZNY-BRF"},
         "response": {"persons": [p("LZNY-BRF"), p("LZNY-P7Q")],
                      "relationships": [], "sources": []},
     }
@@ -248,7 +326,7 @@ def _read_two_same_named():
 def test_v2_passes_a_same_named_pair_each_carrying_its_own_ark():
     """Round 2 of review: keying one written person per name blamed each of a
     same-named pair for the other's pid, failing a CORRECT import. A failed
-    validator skips the judge, so that cost the test its whole grade."""
+    validator fails the test outright, so that cost the test its whole grade."""
     after = _tree(persons=[_named("I1", "ark:/61903/4:1:LZNY-BRF"),
                            _named("I2", "ark:/61903/4:1:LZNY-P7Q")])
     check_ark(after, [_read_two_same_named()])
@@ -329,6 +407,193 @@ def test_v3_fires_on_a_plausible_but_unreturned_standardization():
          "standard_place": "Boston, Suffolk County, Massachusetts, United States"},
     ]}])
     assert "match neither" in _fails(check_std_place, after, [_person_read_call()])
+
+
+_STAGED_REF = "results/.staging/x.json"
+
+
+def _as_built(after):
+    """The state as project_create leaves it: the same tree also written as the
+    write-once starting baseline, which is what V3 checks a host fill against."""
+    import json
+    tree = after["tree_gedcomx_json"]
+    return {**after, "files": {"starting-tree.gedcomx.json": json.dumps(tree)}}
+
+
+def _staged(call, ref=_STAGED_REF):
+    """The call with the `staged` handle production attaches when it stages."""
+    call["response"]["staged"] = {"resultsRef": ref}
+    return call
+
+
+def _unresolved_read():
+    """person_read returning a Death with a place it could not standardize."""
+    return _staged(_person_read_call(persons=[{
+        "id": "LZNY-BRF", "gender": "Male", "living": False,
+        "names": [{"given": "Patrick", "surname": "Flynn"}],
+        "facts": [{"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania"}],
+    }]))
+
+
+_REF_CREATE = {"tool": "mcp__genealogy__project_create",
+               "args": {"personReadRef": " " + _STAGED_REF},
+               "response": {"ok": True}}
+_ARK = "ark:/61903/4:1:LZNY-BRF"
+_FILLED = _tree(persons=[{"id": "I1", "ark": _ARK, "facts": [
+    {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+     "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"},
+]}])
+
+
+def test_v3_passes_a_value_the_host_retry_filled():
+    """#2944: project_create's host build retries a place the read left
+    unresolved, so the value matches no returned value and no place_search."""
+    check_std_place(_as_built(_FILLED), [_unresolved_read(), _REF_CREATE])
+
+
+def test_v3_still_fires_on_that_value_when_the_tree_was_hand_built():
+    """Without personReadRef no host build ran, so the model invented it."""
+    assert "match neither" in _fails(check_std_place, _as_built(_FILLED), [_unresolved_read()])
+
+
+def test_v3_passes_a_host_resolution_identical_to_the_raw_place():
+    """A resolved name can equal the raw text ("Ireland")."""
+    read = _staged(_person_read_call(persons=[{"id": "LZNY-BRF", "gender": "Male", "living": False,
+        "names": [{"given": "P", "surname": "F"}], "facts": [{"type": "Birth", "place": "Ireland"}]}]))
+    after = _tree(persons=[{"id": "I1", "ark": _ARK, "facts": [
+        {"type": "Birth", "place": "Ireland", "standard_place": "Ireland"}]}])
+    check_std_place(_as_built(after), [read, _REF_CREATE])
+
+
+def test_v3_passes_a_host_fill_on_the_second_of_two_same_type_facts():
+    read = _staged(_person_read_call(persons=[{"id": "LZNY-BRF", "gender": "Male", "living": False,
+        "names": [{"given": "P", "surname": "F"}], "facts": [
+            {"type": "Residence", "place": "Pottsville"},
+            {"type": "Residence", "place": "Reading", "standard_place": "Reading, Berks, Pennsylvania, United States"},
+        ]}]))
+    after = _tree(persons=[{"id": "I1", "ark": _ARK, "facts": [
+        {"type": "Residence", "place": "Pottsville", "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"},
+        {"type": "Residence", "place": "Reading", "standard_place": "Reading, Berks, Pennsylvania, United States"},
+    ]}])
+    check_std_place(_as_built(after), [read, _REF_CREATE])
+
+
+def test_v3_does_not_let_one_person_s_unresolved_fact_exempt_another_s():
+    """The read left Patrick's Death unresolved; a Death on his brother with the
+    same raw place and an invented value is not the host's fill."""
+    after = _tree(persons=[
+        {"id": "I1", "ark": _ARK, "facts": [{"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania"}]},
+        {"id": "I2", "ark": "ark:/61903/4:1:LZNY-B8S", "facts": [
+            {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+             "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"}]},
+    ])
+    message = _fails(check_std_place, _as_built(after), [_unresolved_read(), _REF_CREATE])
+    assert "I2/Death" in message
+
+
+def test_v3_does_not_exempt_a_fact_on_a_person_with_no_ark():
+    unarked = _tree(persons=[{"id": "I1", "facts": [
+        {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+         "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"},
+    ]}])
+    assert "match neither" in _fails(check_std_place, _as_built(unarked), [_unresolved_read(), _REF_CREATE])
+
+
+def _couple_read(place_fact):
+    read = _person_read_call(persons=[
+        {"id": "LZNY-BRF", "gender": "Male", "living": False, "names": [{"given": "P", "surname": "F"}]},
+        {"id": "LZNY-K2M", "gender": "Female", "living": False, "names": [{"given": "M", "surname": "K"}]},
+    ])
+    read["response"]["relationships"] = [
+        {"type": "Couple", "person1": "LZNY-BRF", "person2": "LZNY-K2M", "facts": [place_fact]}]
+    return _staged(read)
+
+
+def _couple_tree(person2_ark):
+    return _tree(
+        persons=[{"id": "I1", "ark": _ARK}, {"id": "I2", "ark": person2_ark}],
+        relationships=[{"id": "R1", "type": "Couple", "person1": "I2", "person2": "I1", "facts": [
+            {"type": "Marriage", "place": "Dublin", "standard_place": "Dublin, Ireland"}]}],
+    )
+
+
+def test_v3_passes_a_host_fill_on_a_relationship_fact_matched_by_its_endpoints():
+    read = _couple_read({"type": "Marriage", "place": "Dublin"})
+    check_std_place(_as_built(_couple_tree("ark:/61903/4:1:LZNY-K2M")), [read, _REF_CREATE])
+
+
+def test_v3_does_not_exempt_a_relationship_fact_on_other_endpoints():
+    read = _couple_read({"type": "Marriage", "place": "Dublin"})
+    message = _fails(check_std_place, _as_built(_couple_tree("ark:/61903/4:1:ZZZZ-999")), [read, _REF_CREATE])
+    assert "R1/Marriage" in message
+
+
+def test_v3_does_not_trust_a_second_read_the_ref_did_not_name():
+    """A second person_read's person joins as an addition; the host retry never
+    touched its facts, so its unresolved place does not excuse an invented value."""
+    second = _staged(_person_read_call(persons=[{
+        "id": "ZZZZ-001", "gender": "Male", "living": False,
+        "names": [{"given": "O", "surname": "K"}],
+        "facts": [{"type": "Birth", "place": "Cork"}],
+    }], personId="ZZZZ-001"), ref="results/.staging/other.json")
+    after = _tree(persons=[{"id": "I7", "ark": "ark:/61903/4:1:ZZZZ-001", "facts": [
+        {"type": "Birth", "place": "Cork", "standard_place": "Made Up Parish, Cork, Ireland"}]}])
+    assert "I7/Birth" in _fails(check_std_place, _as_built(after), [_unresolved_read(), second, _REF_CREATE])
+    # The same read, when it IS the one the ref named, is trusted.
+    named = {**_REF_CREATE, "args": {"personReadRef": "results/.staging/other.json"}}
+    check_std_place(_as_built(after), [second, named])
+
+
+@pytest.mark.parametrize("spelling", [
+    "./" + _STAGED_REF, "/abs/project/" + _STAGED_REF, "results//.staging/x.json",
+])
+def test_v3_matches_the_ref_in_any_spelling_project_create_accepts(spelling):
+    create = {**_REF_CREATE, "args": {"personReadRef": spelling}}
+    check_std_place(_as_built(_FILLED), [_unresolved_read(), create])
+
+
+def test_v3_does_not_exempt_a_value_the_starting_tree_does_not_hold():
+    """The host fill is what the write-once baseline holds. A different value on
+    that fact now (a copy of `place`, or one a later tree_edit invented) is not."""
+    baseline = _as_built(_tree(persons=[{"id": "I1", "ark": _ARK, "facts": [
+        {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania"}]}]))
+    for invented in ["Pottsville, Schuylkill, Pennsylvania", "Totally Invented"]:
+        after = {**_tree(persons=[{"id": "I1", "ark": _ARK, "facts": [
+            {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+             "standard_place": invented}]}]), "files": baseline["files"]}
+        assert "I1/Death" in _fails(check_std_place, after, [_unresolved_read(), _REF_CREATE])
+
+
+def test_v3_does_not_exempt_without_a_starting_tree():
+    assert "match neither" in _fails(check_std_place, _FILLED, [_unresolved_read(), _REF_CREATE])
+
+
+def test_v3_does_not_key_an_addition_with_a_record_ark_to_a_staged_person():
+    """project_create treats only a `4:1:` tree ark as naming a person from the
+    read, so an addition carrying the subject's RECORD ark is a separate person.
+    Its invented value at a place the host filled for the subject is not the
+    host's fill, though the addition is in the starting baseline too."""
+    after = _as_built(_tree(persons=[
+        {"id": "I1", "ark": _ARK, "facts": [
+            {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+             "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"}]},
+        {"id": "I7", "ark": "ark:/61903/1:1:LZNY-BRF", "facts": [
+            {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+             "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"}]},
+    ]))
+    message = _fails(check_std_place, after, [_unresolved_read(), _REF_CREATE])
+    assert "I7/Death" in message and "I1/Death" not in message
+
+
+def test_v3_does_not_trust_a_read_that_was_never_staged():
+    read = _unresolved_read()
+    del read["response"]["staged"]
+    assert "match neither" in _fails(check_std_place, _as_built(_FILLED), [read, _REF_CREATE])
+
+
+def test_v3_does_not_trust_a_refused_ref_call():
+    refused = {**_REF_CREATE, "response": {"ok": False, "errors": ["x"]}}
+    assert "match neither" in _fails(check_std_place, _as_built(_FILLED), [_unresolved_read(), refused])
 
 
 def test_v3_skips_when_nothing_was_standardized():
@@ -447,9 +712,42 @@ def test_v6_passes_when_the_note_is_dropped_and_the_source_kept():
 def test_v6_fires_when_the_note_is_copied_through():
     after = _tree(sources=[{"id": "S2", "title": _NOTED_SOURCE["title"],
                             "notes": _NOTED_SOURCE["notes"]}])
-    assert "has notes" in _fails(
+    assert "carries ['notes']" in _fails(
         check_notes, after, [_person_read_call(sources=[_NOTED_SOURCE])]
     )
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("text", "Patrick came over from County Mayo in 1867..."),
+        ("image_ref", "images/228755097.jpg"),
+    ],
+)
+def test_v6_fires_on_a_memory_field_copied_through(field, value):
+    """`notes` was the first field person_read emitted that a tree source may not
+    carry; a memory's `text` and `image_ref` are the second and third. The
+    validator checks the ALLOW-LIST, so it catches these without being taught
+    their names -- this is what proves that, rather than assuming it."""
+    source = {"id": "228755097", "title": "A family story", field: value}
+    after = _tree(sources=[{"id": "S3", "title": source["title"], field: value}])
+    assert f"carries ['{field}']" in _fails(
+        check_notes, after, [_person_read_call(sources=[source])]
+    )
+
+
+def test_v6_passes_when_the_memory_is_written_with_only_allowed_fields():
+    """The other direction: stripping the extra field and keeping the source is
+    exactly the right behaviour and must not be flagged."""
+    source = {
+        "id": "228755097",
+        "title": "A family story",
+        "url": "https://www.familysearch.org/memories/228755097",
+        "text": "Patrick came over from County Mayo in 1867...",
+    }
+    after = _tree(sources=[{"id": "S3", "title": source["title"],
+                            "url": source["url"]}])
+    check_notes(after, [_person_read_call(sources=[source])])
 
 
 def test_v6_fires_when_the_whole_source_is_dropped_to_dodge_the_rejection():
@@ -466,31 +764,32 @@ def test_v6_skips_when_no_sources_were_returned():
         check_notes(_tree(), [_person_read_call()])
 
 
-# --- V5: narration_guidance verbatim ------------------------------------
+# --- V5: the fixed profile, verbatim ------------------------------------
 
-@pytest.mark.parametrize("level", sorted(_NARRATION_BY_LEVEL))
-def test_v5_passes_on_every_verbatim_level(level):
+def test_v5_passes_on_the_fixed_profile():
     after = {"research_json": {"researcher_profile": {
-        "experience_level": level,
-        "narration_guidance": _NARRATION_BY_LEVEL[level],
+        "experience_level": _DEFAULT_LEVEL,
+        "narration_guidance": _HOUSE_STYLE,
     }}}
     check_narration(after)
 
 
 def test_v5_fires_on_a_paraphrase():
     after = {"research_json": {"researcher_profile": {
-        "experience_level": "experienced",
-        "narration_guidance": "No preambles. Be concise.",
+        "experience_level": _DEFAULT_LEVEL,
+        "narration_guidance": "Plain language. No identifiers. One paragraph.",
     }}}
     assert "verbatim" in _fails(check_narration, after)
 
 
-def test_v5_fires_on_another_levels_text():
+def test_v5_fires_on_a_volunteered_level():
+    """The user said they were experienced; the skill must not persist it -- the
+    profile is fixed and a user setting owns the level later."""
     after = {"research_json": {"researcher_profile": {
-        "experience_level": "professional",
-        "narration_guidance": _NARRATION_BY_LEVEL["experienced"],
+        "experience_level": "experienced",
+        "narration_guidance": _HOUSE_STYLE,
     }}}
-    assert "professional" in _fails(check_narration, after)
+    assert "novice" in _fails(check_narration, after)
 
 
 def test_v5_fires_on_an_unknown_level():
@@ -498,7 +797,7 @@ def test_v5_fires_on_an_unknown_level():
         "experience_level": "expert",
         "narration_guidance": "anything",
     }}}
-    assert "not one of" in _fails(check_narration, after)
+    assert "novice" in _fails(check_narration, after)
 
 
 def test_v5_skips_when_no_profile_was_written():
@@ -538,3 +837,290 @@ def test_v7_fires_when_a_tagged_test_stubs_without_searching():
 def test_v7_skips_when_no_tree_person_was_written():
     with pytest.raises(pytest.skip.Exception):
         check_search([], _tree(), SEARCH_TAGGED)
+
+
+# --- init-empty-sections: the memory-transcription exemption --------------
+
+_STORY = "Patrick came over from County Mayo in 1867, a boy of nineteen."
+_EMPTY_TAGGED = {"type": "positive", "tags": ["init-empty-sections"]}
+
+
+def _after(research):
+    return {"research_json": research}
+
+
+def _blank(**over):
+    r = {s: [] for s in (
+        "questions", "plans", "log", "sources", "assertions",
+        "person_evidence", "conflicts", "hypotheses", "timelines",
+        "proof_summaries",
+    )}
+    r.update(over)
+    return r
+
+
+def test_empty_sections_allows_a_verbatim_memory_transcription():
+    """The ruled behaviour: a memory's text is persisted at init."""
+    calls = [_person_read_call(sources=[{"id": "228755097", "title": "A story",
+                                         "text": _STORY}])]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S3",
+                                    "transcription": _STORY}]))
+    check_empty(after, _EMPTY_TAGGED, calls)
+
+
+def test_empty_sections_now_FIRES_on_the_untranscribed_memory_null_entry():
+    """Decision 5, 2026-09-17: an untranscribed memory gets NO sources entry.
+    It is already a tree source carrying title and URL, so the lead survives;
+    what the sources entry adds is the assertion it was examined, which is the
+    one thing that is not true. This test asserted the opposite until the
+    ruling."""
+    calls = [_person_read_call(sources=[{"id": "1", "title": "A story",
+                                         "text": _STORY}])]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S4",
+                                    "transcription": None}]))
+    assert "is null for a memory that was never transcribed" in _fails(
+        check_empty, after, _EMPTY_TAGGED, calls
+    )
+
+
+_ALL_UNTRANSCRIBED = [
+    {"id": "1", "title": "A will", "artifact_url": "https://sg30p0.familysearch.org/a/dist.pdf"},
+    {"id": "2", "title": "A deed", "artifact_url": "https://sg30p0.familysearch.org/b/dist.jpg"},
+]
+
+
+def test_acceptance_14_all_untranscribed_leaves_sources_EMPTY():
+    """Acceptance 14: on a person whose kept memories all came back
+    untranscribed, `sources` is empty after init. Both memories are still in
+    tree.gedcomx.json, which is where the lead lives."""
+    calls = [_person_read_call(sources=_ALL_UNTRANSCRIBED)]
+    check_empty(_after(_blank()), _EMPTY_TAGGED, calls)
+
+
+def test_acceptance_14_fires_when_an_untranscribed_memory_got_an_entry_anyway():
+    """The other direction, and the one that can actually regress: the skill
+    writing the entry the cap forbids. Text-gating made this invisible -- with
+    no text returned the exemption never engaged at all."""
+    calls = [_person_read_call(sources=_ALL_UNTRANSCRIBED)]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S1",
+                                    "transcription": None}]))
+    assert "is null for a memory that was never transcribed" in _fails(
+        check_empty, after, _EMPTY_TAGGED, calls
+    )
+
+
+def test_empty_sections_fires_when_more_nulls_than_memories_came_back():
+    """The other direction, and the hole the text-only gate left wide open:
+    once ANY text was present the null branch was unbounded, so invented
+    entries rode in behind one real memory. Two memories cannot justify three
+    sources."""
+    calls = [_person_read_call(sources=[
+        {"id": "1", "title": "A will", "artifact_url": "https://sg30p0.familysearch.org/a/dist.pdf"},
+        {"id": "2", "title": "A story", "text": _STORY},
+    ])]
+    after = _after(_blank(sources=[
+        {"gedcomx_source_description_id": "S1", "transcription": _STORY},
+        {"gedcomx_source_description_id": "S2", "transcription": _STORY},
+        {"gedcomx_source_description_id": "S3", "transcription": _STORY},
+    ]))
+    assert "cannot admit more entries than there were memories" in _fails(
+        check_empty, after, _EMPTY_TAGGED, calls
+    )
+
+
+def test_empty_sections_still_fires_on_an_invented_transcription():
+    """The exemption must not become a hole: a transcription person_read never
+    returned is exactly the fabrication the empty-sections rule exists to stop."""
+    calls = [_person_read_call(sources=[{"id": "1", "title": "A story",
+                                         "text": _STORY}])]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S3",
+                                    "transcription": "I made this up."}]))
+    assert "not verbatim from person_read" in _fails(check_empty, after,
+                                                     _EMPTY_TAGGED, calls)
+
+
+def test_empty_sections_unchanged_when_no_memories_came_back():
+    """Every pre-existing test takes this path: no memory text, so `sources`
+    must still be empty and the original message still fires."""
+    calls = [_person_read_call(sources=[{"id": "S1", "title": "A census"}])]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S1"}]))
+    assert "sources (1 entries)" in _fails(check_empty, after,
+                                           _EMPTY_TAGGED, calls)
+
+
+def test_empty_sections_still_fires_on_the_other_sections():
+    """The exemption is scoped to `sources` alone."""
+    calls = [_person_read_call(sources=[{"id": "1", "title": "A story",
+                                         "text": _STORY}])]
+    after = _after(_blank(questions=[{"id": "Q1"}]))
+    assert "questions (1 entries)" in _fails(check_empty, after,
+                                             _EMPTY_TAGGED, calls)
+
+
+
+# --- The host-built tree passes the provenance validators (#2944 Stage B) ---
+
+_ENGINE_BUILD = Path(__file__).resolve().parents[4] / "packages/engine/mcp-server/build"
+_FAMILY = Path(__file__).resolve().parents[3] / "fixtures/mcp/person-read-flynn-family.json"
+
+
+def _host_build(tmp_path, fixture=_FAMILY, pid="LZNY-BRF"):
+    """Stage a person_read fixture and create the project through the COMPILED
+    stagePersonRead + projectCreate, the path init-project now takes. Returns
+    (person_read response with its `staged` handle, written tree, the
+    project_create call as the log would record it)."""
+    import json, subprocess
+
+    response = json.loads(fixture.read_text(encoding="utf-8"))["response"]
+
+    def url(p):
+        posix = str(p).replace("\\", "/")
+        return ("file:///" + posix) if sys.platform == "win32" else posix
+
+    script = (
+        f"import {{ stagePersonRead }} from '{url(_ENGINE_BUILD / 'tools/person-read.js')}';"
+        f"import {{ projectCreate }} from '{url(_ENGINE_BUILD / 'tools/project-create.js')}';"
+        " import { readFileSync } from 'node:fs';"
+        " const i = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const { staged } = await stagePersonRead({ projectPath: i.dir, input: { personId: i.pid }, result: i.result });"
+        " const r = await projectCreate({ projectPath: i.dir, objective: 'Find Patrick Flynn\\'s parents', personReadRef: staged.resultsRef });"
+        " process.stdout.write(JSON.stringify({ r, staged }));"
+    )
+    proc = subprocess.run(
+        ["node", "--input-type=module", "--eval", script],
+        input=json.dumps({"dir": str(tmp_path).replace("\\", "/"), "result": response, "pid": pid}),
+        capture_output=True, text=True, encoding="utf-8", timeout=120,
+    )
+    assert proc.returncode == 0, proc.stderr
+    out = json.loads(proc.stdout)
+    result = out["r"]
+    assert result["ok"], result
+    tree = json.loads((tmp_path / "tree.gedcomx.json").read_text(encoding="utf-8"))
+    create = {"tool": "mcp__genealogy__project_create",
+              "args": {"personReadRef": out["staged"]["resultsRef"]}, "response": result}
+    return {**response, "staged": out["staged"]}, tree, create
+
+
+@pytest.mark.requires_engine_build
+def test_host_built_tree_passes_the_provenance_validators(tmp_path):
+    """The rules the model followed by hand now run on the host. Checked by the
+    validators written to grade the model, not by the builder's own reading."""
+    response, tree, create = _host_build(tmp_path)
+    calls = [{"tool": "mcp__genealogy__person_read", "args": {"personId": "LZNY-BRF"}, "response": response}, create]
+    after = {"tree_gedcomx_json": tree}
+    check_ark(after, calls)
+    check_std_place(after, calls)
+    check_std_date(after, calls)
+    check_sourced(after, POSITIVE)
+    check_notes(after, calls)
+
+
+@pytest.mark.requires_engine_build
+def test_host_built_tree_carries_person_level_sources(tmp_path):
+    """V1 over the moreau fixture, whose persons carry person-level refs (on the
+    family fixture V1 would pass vacuously). The refs must reach the written
+    persons, re-pointed at the tree's own `S` ids."""
+    moreau = _FAMILY.parent / "person-read-moreau-person-level-sources.json"
+    response, tree, _create = _host_build(tmp_path, moreau, "MRQ1-JBM")
+    calls = [{"tool": "mcp__genealogy__person_read", "args": {"personId": "MRQ1-JBM"}, "response": response}]
+    after = {"tree_gedcomx_json": tree}
+    check_person_sources(calls, after)
+    check_ark(after, calls)
+    assert any(p.get("sources") for p in tree["persons"]), "V1 checked nothing"
+
+
+# --- refuse-if-exists invariant --------------------------------------------
+
+_REFUSE = {"type": "negative", "tags": ["refuse-if-exists"]}
+_PROJECT = {"id": "rp_001", "created": "2026-01-01", "objective": "Find Patrick's parents"}
+
+
+def _states(after_project=None):
+    before = {"research_json": {"project": dict(_PROJECT)}}
+    after = {"research_json": {"project": dict(after_project or _PROJECT)}}
+    return before, after
+
+
+def test_not_reinit_passes_when_the_request_is_routed_without_init_work():
+    before, after = _states()
+    calls = [{"tool": "mcp__genealogy__research_query", "args": {}},
+             {"tool": "mcp__genealogy__project_context", "args": {}}]
+    check_not_reinit(before, after, calls, _REFUSE)
+
+
+@pytest.mark.parametrize("tool", ["person_read", "person_search", "project_create"])
+def test_not_reinit_fails_on_any_init_tool_call(tool):
+    before, after = _states()
+    with pytest.raises(AssertionError, match=f"called \\['{tool}'\\]"):
+        check_not_reinit(before, after, [{"tool": f"mcp__genealogy__{tool}", "args": {}}], _REFUSE)
+
+
+@pytest.mark.parametrize("key,value", [("id", "rp_002"), ("created", "2026-10-05"), ("objective", "General research")])
+def test_not_reinit_fails_when_the_existing_project_was_replaced(key, value):
+    before, after = _states({**_PROJECT, key: value})
+    with pytest.raises(AssertionError, match=f"project.{key} changed"):
+        check_not_reinit(before, after, [], _REFUSE)
+
+
+def test_not_reinit_refuses_a_scenario_with_no_existing_project():
+    with pytest.raises(AssertionError, match="needs a scenario"):
+        check_not_reinit({"research_json": None}, {"research_json": None}, [], _REFUSE)
+
+
+def test_not_reinit_skips_untagged_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_not_reinit({}, {}, [{"tool": "mcp__genealogy__person_read"}], POSITIVE)
+
+
+# --- V3: hand-built path, places project_create standardized itself ------
+
+_BOSTON = "Boston, Suffolk, Massachusetts, United States"
+
+
+def _hand_create(place="Boston, Massachusetts", value=_BOSTON, ok=True):
+    """A hand-built project_create (no personReadRef) reporting one place it resolved."""
+    return {"tool": "mcp__genealogy__project_create",
+            "args": {"objective": "x", "tree": {"persons": []}},
+            "response": {"ok": ok, "placesFilled": [{"place": place, "standardPlace": value}]}}
+
+
+def _hand_tree(value=_BOSTON, place="Boston, Massachusetts"):
+    return _tree(persons=[{"id": "I1", "facts": [
+        {"type": "Birth", "place": place, "standard_place": value}]}])
+
+
+def test_v3_passes_a_place_the_hand_built_create_standardized():
+    check_std_place(_as_built(_hand_tree()), [_hand_create()])
+
+
+def test_v3_fires_on_a_value_the_create_did_not_report():
+    after = _as_built(_hand_tree(value="Boston, Massachusetts, United States"))
+    assert "match neither" in _fails(check_std_place, after, [_hand_create()])
+
+
+def test_v3_fires_when_the_report_names_a_different_raw_place():
+    after = _as_built(_hand_tree(place="Boston, Mass."))
+    assert "match neither" in _fails(check_std_place, after, [_hand_create(place="Boston, Massachusetts")])
+
+
+def test_v3_fires_when_the_hand_built_create_was_refused():
+    assert "match neither" in _fails(check_std_place, _as_built(_hand_tree()), [_hand_create(ok=False)])
+
+
+def test_v3_fires_when_the_value_is_not_what_the_create_wrote():
+    import json
+    after = _hand_tree()
+    after = {**after, "files": {"starting-tree.gedcomx.json": json.dumps(
+        _hand_tree(value="Boston, Massachusetts, United States")["tree_gedcomx_json"])}}
+    assert "match neither" in _fails(check_std_place, after, [_hand_create()])
+
+
+def test_v3_passes_a_second_spelling_of_a_place_the_create_reported_once():
+    after = _as_built(_hand_tree(place="boston,  MASSACHUSETTS "))
+    check_std_place(after, [_hand_create(place="Boston, Massachusetts")])
+
+
+def test_v3_passes_an_addition_place_a_ref_create_standardized():
+    create = _hand_create()
+    create["args"] = {"objective": "x", "personReadRef": "results/.staging/x.json", "tree": {"persons": []}}
+    check_std_place(_as_built(_hand_tree()), [create])

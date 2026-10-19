@@ -64,4 +64,9 @@ export interface AncestorPerson extends SimplifiedPerson {
 export interface PersonAncestorsResult {
   persons: AncestorPerson[];
   relationships?: SimplifiedRelationship[];
+  /** Loss reporting: what endpoint closure dropped, and why. Absent when
+   *  nothing was dropped. Mirrors `PersonReadResult.notes` (issue #2747,
+   *  lead ruling 2026-09-22 option A — a dropped Couple carries a marriage
+   *  date and place, so a silent drop loses them with nothing to see). */
+  notes?: string[];
 }

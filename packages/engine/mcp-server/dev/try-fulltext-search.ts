@@ -9,13 +9,14 @@
  *   npx tsx dev/try-fulltext-search.ts "+Patrick +Flynn" --facets
  */
 
+import { LOCAL } from "../src/auth/principal.js";
 import { fulltextSearchTool } from "../src/tools/fulltext-search.js";
 import type { FulltextSearchInput } from "../src/types/fulltext-search.js";
 
 const args = process.argv.slice(2);
 if (args.length === 0) {
   console.error(
-    'Usage: npx tsx dev/try-fulltext-search.ts "+keywords" [--name NAME] [--place PLACE] [--collection ID] [--facets] [--count N]'
+    'Usage: npx tsx dev/try-fulltext-search.ts "+keywords" [--name NAME] [--place PLACE] [--collection ID] [--facets] [--count N] [--record-place0 VAL] [--record-place1 VAL] [--record-place2 VAL] [--record-place3 VAL]'
   );
   process.exit(1);
 }
@@ -47,6 +48,14 @@ while (i < args.length) {
     input.count = Number(args[++i]);
   } else if (flag === "--nl" && args[i + 1]) {
     input.nlQuery = args[++i];
+  } else if (flag === "--record-place0" && args[i + 1]) {
+    input.recordPlace0 = args[++i];
+  } else if (flag === "--record-place1" && args[i + 1]) {
+    input.recordPlace1 = args[++i];
+  } else if (flag === "--record-place2" && args[i + 1]) {
+    input.recordPlace2 = args[++i];
+  } else if (flag === "--record-place3" && args[i + 1]) {
+    input.recordPlace3 = args[++i];
   } else if (flag === "--facets") {
     input.includeFacets = true;
   }
@@ -56,5 +65,5 @@ while (i < args.length) {
 console.log("Input:", JSON.stringify(input, null, 2));
 console.log();
 
-const result = await fulltextSearchTool(input);
+const result = await fulltextSearchTool(input, LOCAL);
 console.log(JSON.stringify(result, null, 2));

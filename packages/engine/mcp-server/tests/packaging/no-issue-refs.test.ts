@@ -136,17 +136,6 @@ function findMatchesInFile(abs: string, rel: string): Match[] {
 // This is not an escape hatch for "the lint is inconvenient": a new violation
 // belongs in the spec or rubric, not here.
 const ALLOWLIST: Array<{ relPath: string; text: string; reason: string }> = [
-  {
-    relPath: "skills/init-project/SKILL.md",
-    text: "Call `person_read({ personId: \"<id>\", relatives: true, sourceDescriptions: true })`. **Both flags are required** — they default to `false`, and without them the call returns ONLY the subject's own facts (`relationships: []`, `sources: []`), which imports a subject-only tree with no spouse, children, or sources (issue #1475). With the flags it returns simplified GedcomX: person (name, gender, facts), relatives with IDs, relationships, and source descriptions. Auth error → tell user to log in.",
-    reason:
-      "pre-existing; leaves with init-project's next paid eval run. The parenthetical is the citation only — the instruction either side of it stays.",
-  },
-  {
-    relPath: "skills/init-project/SKILL.md",
-    text: "(issue #1471). Recording and testing the doubt is question-selection's job —",
-    reason: "pre-existing; leaves with init-project's next paid eval run",
-  },
 ];
 
 const allFiles = discoverBodies();
@@ -183,6 +172,9 @@ describe("no issue references in skill/agent bodies", () => {
   });
 
   describe("allow-list entries are still needed", () => {
+    // vitest refuses a describe with no tests, and an empty allow-list is the
+    // goal state, so give it one trivially true case.
+    if (ALLOWLIST.length === 0) it("is empty", () => expect(ALLOWLIST).toEqual([]));
     for (const { relPath, text, reason } of ALLOWLIST) {
       it(`${relPath} still contains its allowed line (${reason})`, () => {
         const stillMatches = allMatches.some(

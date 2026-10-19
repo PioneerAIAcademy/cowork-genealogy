@@ -63,7 +63,7 @@ command checks for you and stops.
 Already done? Skip ahead.
 
 - Cowork installed with the genealogy plugin + MCP server. See the
-  "Installation" section of `README.md`.
+  "Install" section of `README.md`.
 - Claude Code installed and signed in.
 - FamilySearch tokens in `~/.familysearch-mcp/tokens.json`. If you've used the
   plugin from Cowork this exists already; otherwise run the `login` tool once.
@@ -170,6 +170,22 @@ two people end up on the same bundle.
 The body carries the tester's own words and the zip link. Read the words first —
 you often do not need the bundle at all, and Step 2 tells you when you do.
 
+> **Prototype bundles open no issue.** The search-agent prototype's web tier
+> (`apps/server/proto/web/`, U20) stores its zip in its own S3 bucket instead of
+> posting it to Drive, and nothing opens a GitHub issue for it yet — where a
+> stored bundle goes next is an open question for the lead. Someone with access
+> to the bucket fetches it by hand and unpacks it with Step 2 as usual:
+>
+> ```bash
+> aws s3 cp s3://<bucket>/feedback/<owner>/<project>/<file> .
+> make feedback-case ZIP=<file>
+> ```
+>
+> `<owner>` is the patron's internal `usr_…` id, `<project>` the project id, and
+> `<file>` the `filename` the submit answered with. On the compose stack the
+> bucket is `projects` on the local MinIO. Bundles under `feedback/` expire after
+> 90 days.
+
 One task, one branch, always cut from an up-to-date `main` — you open a PR from
 it at the end. Name it with a few hyphenated words describing the fix — no
 slashes, no timestamps.
@@ -231,12 +247,24 @@ The script:
 - prints **Marta's original prompt** — copy it. You'll paste it in Step 3, and
   again on every retry. Re-asking the question in your own words is the easiest
   way to fail to reproduce a bug. The form does not require that box, so some
-  submissions print a pointer to an empty field instead of a prompt: take the
+  submissions print "the tester left blank" instead of a prompt: take the
   prompt from `_feedback/session-log.jsonl` when the bundle has one — check its
   head for a `_truncation_note`, since an oversized log is trimmed oldest-first
   and the opening prompt is the oldest entry — and otherwise reconstruct the
   question from the project state and the Notes box, and say on the issue that
   you did.
+
+> **Security: always unpack with the setup script, not plain `unzip`.** The
+> script strips injected config before wiring the skills in: `.claude/`,
+> `.claude.json`, `.mcp.json`, `.gitattributes`, and `.git/` are deleted, and
+> every `CLAUDE.md` at any depth is renamed to `CLAUDE.md.submitted` so it is
+> kept for reproduction but not loaded as instructions. A legitimate feedback
+> zip never contains dotfiles (both walkers skip them), so any of the first
+> five would be injected; `CLAUDE.md` arrives in ordinary submissions but
+> executes as project config if left in place. `.gitattributes` and `.git/`
+> execute through git filters during `git add`, not through Claude Code.
+> If the script prints a "Warning: stripped" or "Note: renamed" line, note it
+> on the issue.
 
 > **Why the snapshot matters — it's the retry mechanism.** The case folder is a
 > *capture*: unlike an e2e fixture, there is no `make e2e-project` to re-seed it
@@ -332,7 +360,9 @@ responses — check:
     open and work it like any other finding: classify it against the checks
     below, fix what's fixable, and close it only once you have. **Never close on
     the flag alone.** If the Notes are thin, the bundle's
-    `_feedback/session-log.jsonl` transcript has the tool-level detail.
+    `_feedback/session-log.jsonl` transcript has the tool-level detail — and
+    work the agent delegated is in its own file under `_feedback/subagents/`,
+    not in that one, so check there before concluding the agent did nothing.
 - Did `record_search` **return** the second Robert Schuster, and the skill
   ignore him? → a **skill** problem. Continue. ✅ *(This is the case.)*
 - Did the search **never surface** him? → a **tool** problem. Different fix, an
@@ -479,9 +509,10 @@ plugin loader, viewer context injection, OS-specific file handling. Diagnose it
 
 The `check-runlogs` CI gate is blocking and checks two things your Step-6
 baseline run can no longer satisfy, because `SKILL.md` changed underneath it:
-the latest run log per touched skill must be **active** (its snapshot matching
-the branch's current skill files), and its `.ann.json` must carry a correction
-for **every** (test, dimension) pair. `make gate-skill` writes no run logs by
+the run log your PR adds for each touched skill (or, if it adds none, the
+latest one) must be **active** (its snapshot matching the branch's current
+skill files), and its `.ann.json` must carry a correction for **every**
+dimension of each sampled test. `make gate-skill` writes no run logs by
 design, so do one full run against the edited skill:
 
 ```bash
@@ -565,6 +596,7 @@ Drive folder as the immutable record, so re-importing later is always possible.
 | 0 Notice | research; spot it; write Did/Should | 🌐 Workbench |
 | 1 Claim + branch | assign the issue to yourself; read the tester's words in the body, download the zip only if Step 2 needs it; `git checkout -b <short-task-name>` | 🌐 GitHub → ⌨️ Terminal (repo) |
 | 2 Unpack | `make feedback-case ZIP=<zip>`; copy the prompt it prints, or recover it from the session log when the box was left blank (check for a `_truncation_note`) | ⌨️ Terminal (repo) |
+| *(side)* Measure | `make feedback-profile ZIP=<zip>` prints the session's time and cost per agent, skill and tool (Windows: in `eval\harness`, `uv run python -m e2e.feedback_profile <zip>`) | ⌨️ Terminal (repo) |
 | 3 Reproduce | paste the user's prompt; viewer open; `/compare-state --against=what-went-wrong` | 🤖 Claude Code (case dir) + Viewer |
 | 4 Classify | skill, tool, or grading fault? | 🤖 Claude Code (case dir) |
 | 5 Capture | `/mine-unit-test --project <case-dir>`; scrub PII | 🤖 Claude Code (case dir) |
@@ -580,13 +612,15 @@ fresh session. Both halves, every time.
 
 ### Windows equivalents
 
-Every `make` target above has a batch file. Double-click it, or run it from
-`eval\`; each prompts for what it needs instead of taking `SKILL=`-style
-arguments, and rebuilds the MCP server first where that matters.
+Every `make` target above has a batch file except `make feedback-profile`,
+whose row gives the command to type in `eval\harness`. Double-click a batch
+file, or run it from `eval\`; each prompts for what it needs instead of taking
+`SKILL=`-style arguments, and rebuilds the MCP server first where that matters.
 
-| Instead of | Double-click |
+| Instead of | Use |
 |---|---|
 | `make feedback-case ZIP=<zip>` | `scripts\setup-feedback-case.bat <zip>` (pass the zip path) |
+| `make feedback-profile ZIP=<zip>` | in `eval\harness`: `uv run python -m e2e.feedback_profile <zip>` |
 | `make eval-skill SKILL=<skill>` | `eval\RunTests.bat` |
 | `make eval-ui` | `eval\Start.bat` |
 | `make gate-skill SKILL=… TEST=…` | `eval\GateSkill.bat` |
@@ -612,7 +646,11 @@ script first, then `cd` into the resulting directory.
 An empty field is not a broken submission. The dialog requires only the Yes/No
 answer, so `user_prompt` and `agent_did` may both legitimately be blank. When the
 bundle carries `_feedback/session-log.jsonl`, read that instead — it has the
-prompt and the conversation verbatim. Two limits: it is filtered to the `user`
+prompt and the conversation verbatim. Anything the agent delegated to a subagent
+is in a separate file under `_feedback/subagents/` (and, for a session other
+than the newest, under `_feedback/sessions/<session-id>/`), so a main log that
+looks idle for a stretch is usually a subagent working. Two limits: it is
+filtered to the `user`
 and `assistant` turns and scoped to that project's folder, so it is not the whole
 session; and a `_truncation_note` at its head means the log was trimmed, which
 drops the oldest entries and so the prompt first. That file is optional (§6 of the

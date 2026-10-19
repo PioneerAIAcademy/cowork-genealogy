@@ -5,10 +5,10 @@
     "name": "Verify birth fact matches resolved conflict — no-op edit",
     "type": "positive",
     "description": "Patrick Flynn's birth fact F1 in tree.gedcomx.json already shows `place: \"Ireland\"`, matching the resolved birthplace conflict c_001. Tests the edit-minimality dimension: a tree-edit invocation that finds the data is already correct should make NO changes rather than 'updating' to the same value (which would touch the file and trigger spurious diffs).",
-    "tags": ["tree-edit", "no-op-edit", "edit-minimality", "F1", "tree-edit-noop"]
+    "tags": ["tree-edit", "no-op-edit", "edit-minimality", "F1", "tree-edit-noop", "direct-arm"]
   },
   "input": {
-    "user_message": "tree-edit: confirm this fact is in the tree — Patrick Flynn's birth fact (F1) should show ~1845 in Ireland, matching the resolved birthplace conflict c_001. Check the tree and tell me whether F1 already reflects this, or whether an edit is needed.",
+    "delegation": "confirm this fact is in the tree — Patrick Flynn's birth fact (F1) should show ~1845 in Ireland, matching the resolved birthplace conflict c_001. Check the tree and tell me whether F1 already reflects this, or whether an edit is needed.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [

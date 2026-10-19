@@ -92,10 +92,9 @@ async def refresh_tokens(refresh_token: str) -> dict | None:
     JSON, or None when FamilySearch refuses — which the caller must treat as
     "this grant is dead, the user has to sign in at the front door again".
 
-    FamilySearch refresh tokens are capped at **8 hours idle / 24 hours
-    absolute** (docs/testing-guides/oauth-tool-testing-guide.md), so this
-    returning None is a routine daily event, not an error condition: no amount
-    of refreshing carries a grant past 24h from the original login."""
+    A FamilySearch session lasts at most 8 hours idle / 24 hours in all, and a
+    refresh starts a new session, so refreshing carries a grant past 24 h from
+    the original login. None means FamilySearch refused the refresh."""
     s = get_settings()
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
@@ -133,37 +132,49 @@ async def fetch_identity(access_token: str) -> dict | None:
     return users[0] if users else None
 
 
+# FamilySearch's token response carries no ``expires_in`` (measured 2026-09-23); an access
+# token lives 8 h idle / 24 h max, so 8 h from issue is a lower bound. Kept equal to the
+# engine's FS_ACCESS_TOKEN_LIFETIME_S (packages/engine/mcp-server/src/auth/refresh.ts).
+FS_ACCESS_TOKEN_LIFETIME_S = 8 * 60 * 60
+
+
 def expires_at_from(token_json: dict) -> datetime:
-    """Absolute UTC expiry from a token response's ``expires_in`` (seconds)."""
-    seconds = int(token_json.get("expires_in", 3600))
+    """Absolute UTC expiry from a token response's ``expires_in`` (seconds), else the
+    FamilySearch lifetime. A refresh revokes the previous access token, so an expiry
+    that is too short costs a needless refresh that kills the sandbox's live token."""
+    seconds = int(token_json.get("expires_in", FS_ACCESS_TOKEN_LIFETIME_S))
     return datetime.now(timezone.utc).replace(microsecond=0) + timedelta(seconds=seconds)
 
 
-def tokens_file_bytes(
-    access_token: str, refresh_token: str | None, expires_at: datetime
-) -> bytes:
-    """Serialize the engine-shaped tokens.json the in-sandbox MCP self-refreshes
-    from: ``{accessToken, refreshToken, expiresAt}`` with ``expiresAt`` an
-    absolute epoch-**ms** (matches getValidToken's isExpired in
-    packages/engine/mcp-server/src/auth/refresh.ts)."""
+def tokens_file_bytes(access_token: str, expires_at: datetime) -> bytes:
+    """Serialize the engine-shaped tokens.json for the in-sandbox MCP:
+    ``{accessToken, expiresAt}`` with ``expiresAt`` an absolute epoch-**ms**
+    (matches getValidToken's isExpired in
+    packages/engine/mcp-server/src/auth/refresh.ts).
+
+    No ``refreshToken`` is included: the control plane is the sole refresh
+    owner (issue #2887). Without a refresh token the engine cannot refresh,
+    and ``getValidToken`` already maps that to the hosted reconnect error."""
     # DB datetimes can come back naive (SQLite); treat naive as UTC so the epoch
     # is correct rather than shifted by the local tz offset.
     if expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
     payload = {
         "accessToken": access_token,
-        "refreshToken": refresh_token,
         "expiresAt": int(expires_at.timestamp() * 1000),
     }
     return json.dumps(payload, indent=2).encode()
 
 
 async def write_tokens(
-    sandbox, access_token: str, refresh_token: str | None, expires_at: datetime
+    sandbox, access_token: str, expires_at: datetime
 ) -> None:
-    """Inject the FamilySearch token into a sandbox at TOKENS_PATH."""
+    """Inject the FamilySearch access token into a sandbox at TOKENS_PATH.
+
+    Only the access token and expiry are written -- no refresh token.
+    The control plane is the sole refresh owner (issue #2887)."""
     await sandbox.write_file(
-        TOKENS_PATH, tokens_file_bytes(access_token, refresh_token, expires_at)
+        TOKENS_PATH, tokens_file_bytes(access_token, expires_at)
     )
 
 
@@ -211,9 +222,9 @@ async def write_config(sandbox, config: dict) -> None:
     Sibling of write_tokens: the control plane owns provisioning this file, the
     same way it provisions tokens.json.
 
-    Replaces the whole document. The control plane is not the only writer —
-    `configure_openrouter` writes this same file from inside the VM — so prefer
-    `merge_config` for any write after the sandbox has run."""
+    Replaces the whole document, discarding anything else in the file (an
+    `openRouterModel` set by hand, say), so prefer `merge_config` for any write
+    after the sandbox has run."""
     await sandbox.write_file(CONFIG_PATH, json.dumps(config, indent=2).encode())
 
 
@@ -235,13 +246,11 @@ async def read_config(sandbox) -> dict:
 
 
 async def merge_config(sandbox, updates: dict) -> None:
-    """Overlay operator-owned keys without discarding what the sandbox wrote.
+    """Overlay operator-owned keys without discarding what the file already holds.
 
-    The engine's own `saveConfig` merges (`{...existing, ...patch}` in
-    src/auth/config.ts), so this is its counterpart on the control plane and
-    the two writers no longer clobber each other. Without it a per-connect
-    refresh would drop an `openRouterApiKey` the agent set via
-    `configure_openrouter` from inside the VM.
+    A per-connect refresh keeps keys the control plane does not own. Without the
+    merge it would drop an `openRouterModel` set in the sandbox's file by hand.
+    (The key itself is written only by the control plane.)
 
     Operator keys win on conflict, matching `agent_secrets.write_secrets`: a
     rotated credential has to be able to reach a sandbox provisioned under the

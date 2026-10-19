@@ -1,7 +1,7 @@
 # person-evidence — prohibition list (Step 1 of the deep dive)
 
 Built 2026-08-24 for issue #1646, against
-`packages/engine/plugin/skills/person-evidence/SKILL.md` at `11c8e2cb` (725 lines).
+`packages/engine/plugin/agents/person-evidence.md` (formerly `skills/person-evidence/SKILL.md` at `11c8e2cb`, 725 lines; skill deleted in issue #2821).
 
 Every line below is a rule the body states and that **can be checked against a
 transcript** — the response text, `output.tool_calls`, or `output.file_changes`.
@@ -31,7 +31,7 @@ runs on tests carrying the tag, i.e. it is inert on the other ~19).
 | # | Rule | Where | Guard |
 |---|---|---|---|
 | B1 | Use "**`research_query`, not a whole-file `Read`** of research.json" when entering cold | tool_calls | `test_research_query_called_for_coverage` `[research-query-coverage]` |
-| B2 | "**`assertionId` is NOT a valid filter on the `assertions` section**" — query `person_evidence` with `assertionId` instead. "Do not guess" | tool_calls (args) | — |
+| B2 | ~~"**`assertionId` is NOT a valid filter on the `assertions` section**"~~ **RETIRED 2026-10-07** (#3254): `assertions` now accepts `assertionId`, matching the assertion's own `id`. The body's remaining advice stands — to check whether an assertion is LINKED, query `person_evidence`, where `assertionId` matches `assertion_id`; the two sections answer different questions. The agent body still carries the retired wording (#3257) because editing it buys a paid eval run; this register does not, so it is corrected here. | tool_calls (args) | — |
 
 ## C. Scoring with `same_person` (Step 2)
 

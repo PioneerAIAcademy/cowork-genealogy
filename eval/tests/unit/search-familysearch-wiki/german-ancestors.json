@@ -4,17 +4,18 @@
     "skill": "search-familysearch-wiki",
     "name": "FamilySearch wiki — researching German ancestors",
     "type": "positive",
-    "description": "User asks how to research German ancestors. Tests the country/region how-to path listed in the skill description.",
-    "tags": ["fs-wiki", "how-to", "germany", "country-research", "expects-file-german-ancestors"]
+    "description": "User asks how to research German ancestors, with NO project (scenario null, no projectPath). research_log_append answers reason no_project, so the agent logs nothing and returns the filled template above the `---` line instead. Tests the country/region how-to path listed in the agent description and the no-project path.",
+    "tags": ["fs-wiki", "how-to", "germany", "country-research", "no-project", "direct-arm"]
   },
   "input": {
-    "user_message": "Search the FamilySearch wiki for how to research my German ancestors",
+    "delegation": "Search the FamilySearch wiki for how to research my German ancestors",
     "scenario": null
   },
   "mcp_fixtures": ["wiki-search-german-ancestors"],
   "judge_context": [
     "Should call wiki_search with a natural-language query about researching German ancestors",
     "Summary should cover what records exist for Germany and how to find them on FamilySearch",
-    "Should not invent information the wiki did not provide — all claims must be traceable to the returned chunk_text"
+    "Should not invent information the wiki did not provide — all claims must be traceable to the returned chunk_text",
+    "There is no research project here, so `(no file changes)` is correct: the agent's return carries the filled template (summary plus Sources) above the `---` line instead of logging it. Grade the summary and Sources from that return. Its presence is checked by test_no_project_returns_template, not by you."
   ]
 }

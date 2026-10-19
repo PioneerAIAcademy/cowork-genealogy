@@ -24,7 +24,7 @@ Extended relatives not relevant to the marriage question (Mons's other marriages
 
 ## Expected difficulty
 
-Moderate — the marriage is indexed on FamilySearch in "Norway, Marriages, 1660-1926" (ark `1:1:NW44-PM2`), so the agent should find it via `record_search` rather than needing Digitalarkivet or other Norwegian-only archives. However, Norwegian patronymic naming (Anders Monsen = son of Mons; Unna Halsteinsdatter = daughter of Halstein) makes both names extremely common, so disambiguation rests on combining both spouses' names with the approximate 1786 date and Hordaland/Meland-area geography.
+Moderate, and harder than originally scoped — the marriage record is real and readable directly by ark (`record_read ark:/61903/1:1:NW44-PM2`, collection 1468080), and this premise held when the fixture was authored: run 1 (2026-07-09) recovered it via `record_search` itself, ranked #2 of 58, `attachedToSubject: true`. The record went missing from the `record_search` index around 2026-09-16/17 — confirmed by two independent checks a week apart, and by runs 8, 9 and 10 finding nothing under any query shape. The run-8 probe read that as the search index drifting rather than the premise being wrong, and said it might revert. **It did: collection 1468080 was reloaded on 2026-09-30 and the record returned.** Verified that day at rank 1 of 3, confidence 5, on `surname=Monsen givenName=Anders isPrincipal=true spouseGivenName=Urna spouseSurname=Halsteinsdr collectionId=1468080`. The Digitalarkivet route is therefore no longer the only path to `f2`. What remains hard is the spelling: the bride is indexed **Urna Halsteinsdr**, `Unna` and the expanded `Halsteinsdatter` do not find the record, and she is not indexed as a principal at all. Norwegian patronymic naming (Anders Monsen = son of Mons; Unna Halsteinsdatter = daughter of Halstein) also makes both names extremely common, so disambiguation rests on combining both spouses' names with the approximate 1786 date and Hordaland/Meland-area geography.
 
 ## Notes for reviewers
 
@@ -89,10 +89,12 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   marriage question and a separate `probable` conclusion for a self-added
   census-based question — good GPS-compliant behavior, just not the fixture's
   expected findings.
-- **Not yet tried:** dropping the marriage-year filter entirely on the
-  principal-only fallback search (relying on collection + place +
-  `rank_search_matches`'s own biographical scoring instead of a numeric year
-  range) — the likely next refinement if this fixture is revisited.
+- **Tried in run 8's probe (2026-09-09); was "not yet tried" until then:**
+  dropping the marriage-year filter entirely on the principal-only fallback
+  search (relying on collection + place + `rank_search_matches`'s own
+  biographical scoring instead of a numeric year range). It returns **165** hits
+  and does **not** reach the target — see the run-8 probe bullet below. This is
+  no longer an open refinement.
 - **Pattern across runs 3-5:** each attempt correctly exercised *some* piece of
   the accumulated guidance but not all of it in the same pass, and each miss had
   a different, well-evidenced proximate cause. This looks less like one
@@ -100,3 +102,150 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   multi-step search checklist the agent executes before satisficing on an
   alternate (honest, defensible, but off-target) research lead — worth keeping
   in mind before spending more live-run budget chasing a single clean pass.
+- **Runs 6-7 (2026-07-21 08:10 and 23:15)** — both failed; both annotated `f1`
+  partial, `f2` false, proof quality 3. Each identified the right couple through
+  indirect 1801-census evidence but never recovered the marriage date or place.
+  Both annotations concluded the "Norway, Marriages, 1660-1926" entry was
+  "genuinely absent, not a search-quality problem" after 27 and 9 search
+  strategies respectively — **a conclusion the run-8 probe below half-vindicates
+  and half-corrects**: they were right that no search reaches it (the record's
+  personas are not in that collection's search index today), but wrong that it
+  is "absent" — `record_read` returns it in full, and run 1 reached it through
+  `record_search` in July. Their operational advice was sound; their
+  explanation was not. Both
+  recorded `stop_reason: "error"` while still producing a full tree and a
+  committed grade. (Runs 3 and 4 in the narrative above have no committed run
+  logs; the five on disk before run 8 are runs 1, 2, 5, 6 and 7.)
+- **Run 8 (2026-09-09 14:30, `git_sha` 96cadcac5)** — `f1` partial, `f2` false,
+  proof quality 2; `stop_reason: completed`, `compliance: fail`. The first run
+  **since run 1** to recover the marriage date, and the first to reach it from a
+  source **other than the index record** (run 1 recovered both date and place
+  from the index record itself and graded `f1` true). It reached **25 Jun 1786**
+  by a route no prior run took: `image-reader` transcribed a **1963 LDS Family Group Sheet** (ark
+  `3:1:3QSQ-G979-7SPB`) whose submitter cites Hamre parish film 17885. It wrote a
+  `probable` proof summary and encoded the date on the `Couple` relationship,
+  flagging the place as inferred from the source's parish scope rather than
+  stated on the marriage line. Cost $11.58 / 102.9 min — roughly double this
+  fixture's prior mean, the excess spent on a second research loop after
+  `research-exhaustiveness` returned `declared: false`.
+- **What run 8 probed about `f2` (probed live 2026-09-09, after the run):** the
+  expected record is **not** absent. `record_read ark:/61903/1:1:NW44-PM2`
+  returns it in full — Anders Monsen + Urna Halsteinsdr, Marriage `25 Jun 1786`,
+  Hamre, Hordaland, collection 1468080. **Run 1 recovered this same record from
+  `record_search`** — same collection, `isPrincipal: true`, over a wider
+  `1770-1800` window (`tool_calls[29]`, then `rank_search_matches` ranked it #2
+  of 58, then `record_read` of the ark at `[32]`), and run 1's annotation grades
+  `f2` true. So `f2` is recoverable in principle, and any claim that this record
+  is inherently unsearchable is wrong.
+  **What changed is the index, not the query.** Re-running run 1's query
+  *verbatim* on 2026-09-09 — including its `recordType: marriage` and
+  `recordCountry: Norway` — returns **10** matches, not 58, and the target is
+  not among them. Eight configurations were probed and none reached it:
+  `marriageYear 1786-1786` (19 hits, all Anders-Monsen-as-*parent*);
+  `isPrincipal` + `1780-1790` (4); `isPrincipal` + `1770-1800` (10, with and
+  without run 1's two extra params); `isPrincipal` + `marriagePlace=Hamre`
+  (**82** — re-pulled in full during review on 2026-09-10, which also corrects
+  this line's original "50, target not in top 5": **all 82 were read and the
+  target is absent from every one**, and three of the 82 sit in the *same Hamre
+  extraction batch* as the target's own sibling entries, so the batch is indexed
+  and this one persona is not); `isPrincipal` + `marriagePlace=Hamre` +
+  `1770-1800` (**0**); and the previously "not yet tried" principal-only with
+  **no** year filter at all (165 hits). Most telling: the bride's own exact
+  indexed name from `record_read`, `Urna Halsteinsdr`, returns **0** in
+  collection 1468080 with no year filter and no `isPrincipal` — so the record's
+  personas are not in that collection's search index today, which is a stronger
+  and simpler explanation than year-range semantics.
+  **How to read an `f2` miss — superseded 2026-09-30, the index is back.** This
+  block used to say an `f2` miss was a fact about a drifting index rather than
+  about the agent. That held while the record was out of the index, 2026-09-16
+  to 2026-09-29. Collection 1468080 was reloaded on 2026-09-30 and the record
+  returned: it ranks 1 of 3, confidence 5, on `surname=Monsen givenName=Anders
+  isPrincipal=true spouseGivenName=Urna spouseSurname=Halsteinsdr
+  collectionId=1468080`. **So an `f2` miss from 2026-09-30 onward is about the
+  agent.** Confirm the index first — if that query still returns the record, the
+  miss is the run's. What makes it hard is the spelling: the bride is indexed
+  `Urna Halsteinsdr`, `Unna` and the expanded `Halsteinsdatter` do not return
+  the record, and she is not indexed as a principal at all, so searching her as
+  one returns zero. **No run since the reload has used `Urna`** — the
+  2026-09-30 re-run made twelve searches in the collection without it. Earlier
+  runs did use it: run 3 (2026-07-13) tried it extensively with the full
+  surname, and the 2026-09-29 run used it in 13 of its 59 `record_search`
+  calls, 7 of them in 1468080. **At `tool_calls[65]` that run issued exactly the query
+  above and got `totalMatches: 0`** — because the record was out of the index
+  that day. The same query returning nothing on 29 September and the record at
+  rank 1 on 30 September is this fixture's strongest evidence that the reload
+  is what changed, stronger than the verification on its own. Run 1, the only
+  success, dropped the spouse filter and spotted the record among 58
+  unfiltered candidates.
+- **Run 9 (2026-09-16 10:16) confirms the drift has not reverted, and sharpens the diagnosis.**
+  `f1` false, `f2` false, `stop_reason: tool_cap`, proof quality 3 — the tree's
+  `Couple` relationship carries no marriage fact at all this time (worse than
+  run 8's partial). Before grading, re-ran the run-8 probe's own exact
+  re-verification: `record_read ark:/61903/1:1:NW44-PM2` still returns the
+  record in full (Anders Monsen + Urna Halsteinsdr, 25 Jun 1786, Hamre,
+  collection 1468080); a targeted `record_search` on that exact spelling +
+  collection + year (34 results, both pages) does not include it; widening to
+  1780-1790 with no spouse filter (19 results) does not either. **A second,
+  independent check the next day (2026-09-17) went further and settles it**:
+  `isPrincipal` + 1786 alone, `isPrincipal` + a 1780-1790 window at Hamre,
+  `isPrincipal` + the spouse name, and — the query that removes any doubt —
+  the bride alone under her own exact indexed spelling `Urna Halsteinsdr`, no
+  year, no collection filter, across all of Norway: **10 results, she is not
+  among them.** That is the fixture's own premise being tested directly (a
+  bare exact-name search for the record's own indexed persona), not a query
+  someone forgot to try.
+  **Sharper framing than "ranking gap":** both personas are retrievable by ark
+  through `record_read`; neither is retrievable through `record_search` by its
+  own indexed name, under any query shape tried across nine attempts spanning
+  two independent checks a week apart. Calling this "a ranking gap" invites the
+  next reader to go looking for better query terms — there are none to find.
+  The fixture's `Expected difficulty` text has been corrected above and in
+  `fixture.json`'s `notes` to say so plainly -- not that the premise was wrong
+  when authored (run 1 recovered this record via `record_search` itself, and
+  the run-8 probe already established this is index drift, which may
+  revert), but that it does not hold *today*, confirmed twice a week apart.
+  Whether this fixture's `f2` remains achievable at all — short of an
+  interactive Digitalarkivet/Ancestry search this harness's autonomous mode
+  cannot perform — is now an open question for whoever next reviews this
+  fixture's continued inclusion in the panel, not something a future run
+  should be expected to solve with a cleverer FamilySearch query.
+- **Lead ruling (2026-09-22, issue #2709)** — that open question is answered:
+  **run it as filed; the fixture stays in the panel with both findings
+  required.** `f1` still discriminates between runs — run 8 reached 25 Jun 1786
+  from a 1963 family-group-sheet image, run 9 persisted no tree fact at all — so
+  a `partial` or `fail` here is data, not waste. Marking `f2` non-required was
+  considered and rejected: it would error the two stamped annotations at
+  `calibrate_judge` rung 7 and change what the month-over-month number
+  measures. Replacing the fixture was considered and rejected: the panel is
+  fixed by design. Grade `f2: false` as index drift and land the run.
+- **Run 10 (2026-09-24 07:23, post-ruling)** — recovered neither finding;
+  graded `f1: false`, `f2: false`, proof quality 2. `stop_reason: completed`,
+  and it finished well inside every cap: 43.4 min against a 120-minute wall,
+  $7.86 against a $15 ceiling, and **137 MCP calls against the 300-call cap**
+  (210 tool calls in all — the cap counts `mcp__*` only, as run 9's entry
+  notes). That is roughly half the wall-clock of runs 8 and 9, and 55-68% of
+  their cost ($11.58 and $14.26). The `Couple` relationship is unchanged from
+  the starting tree, and the only source added all run is the 1801 census
+  household of Nils Andersen (`1:2:4H6K-B56Z`), which documents no marriage.
+  **The drift is confirmed a third time, against a wider query set than either
+  earlier probe.** Counted by stated criteria over the run's 25 `record_search`
+  calls, so the next reader can re-derive rather than re-guess: **13** carried
+  `recordType: "marriage"`; **14** named the bride in any field (`Unna` or
+  `Halstein*`); **3** were scoped to `collectionId: 1468080`; **3** carried a
+  `marriage*` year or place parameter. Twenty distinct calls matched at least
+  one of those. Between them they covered the bride's exact indexed surname
+  alone, both spouse cross-references, the marriage collection directly, and a
+  1775-1800 window scoped to Hordaland. None returned the record. The agent
+  graded itself `not_proved` with `shortfall: gap` and named the two
+  repositories it did not reach — Digitalarkivet's browse-only pre-1797 Hamre
+  books and Ancestry's "Norway, Select Marriages" — as "the most likely
+  repositories for a direct marriage record", which is the same conclusion this
+  section reached.
+  `compliance: fail` on the single known bypass (a `proof_summaries` entry
+  written without `proof-conclusion` being invoked — issue #1851), as in both
+  2026-09 runs.
+  **One claim in that run's proof summary should not be carried forward:** it
+  states collection 1468080 was "confirmed **not to index** Hamre/Hammer
+  parish." That is a coverage claim inferred from a retrieval failure. The
+  record is in that collection and `record_read ark:/61903/1:1:NW44-PM2`
+  still returns it in full; what fails is `record_search`, not the indexing.

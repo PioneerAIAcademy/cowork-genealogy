@@ -19,8 +19,15 @@ import re
 
 import pytest
 
+from validators_lib import as_mapping as _as_mapping
+from validators_lib import bare_tool_name as _bare_tool_name
+from validators_lib import filter_claim_findings as _filter_claim_findings
+from validators_lib import hashable_key as _hashable_key
 from validators_lib import new_log_entries as _new_log_entries
+from validators_lib import record_search_sent as _record_search_sent
+from validators_lib import tool_input_keys as _tool_input_keys
 from validators_lib import (
+    assert_topical_fixture_used,
     assert_capture_pending_item_not_terminal as _assert_capture_pending_item_not_terminal,
 )
 
@@ -83,169 +90,79 @@ def test_log_outcome_honest_no_match(before_state, after_state, test):
 
 # --- Pre-1880 census: family structure must be marked inferred --------
 
-# Words a log note uses when it is describing the household around the hit,
-# rather than the hit alone. The rule below only applies once the note starts
-# describing the household — a note that reports the focus person and nothing
-# else has no family structure to qualify.
-_HOUSEHOLD_MENTIONS = (
-    "household",
-    "dwelling",
-    "co-resident",
-    "coresident",
-    "enumerated with",
-    "living with",
-)
-
-# Role assertions that can only be read off a relationship column. Bare role
-# words are deliberately NOT listed: a note may legitimately name a tree-side
-# relative ("searched for George's wife Catherine", where Catherine turns out
-# to be absent from the record), and that is not a claim about what the census
-# stated. These forms are — "head of household", "X as father" — so they
-# trigger the requirement even when the word "household" never appears.
-_ROLE_ASSERTIONS = (
-    r"head\s+of\s+household",
-    r"household\s+head",
-    r"\bas\s+[\"'“‘]?(?:his|her|the)?\s*[\"'“‘]?"
-    r"(?:head|wife|husband|son|daughter|father|mother)\b",
-)
-
-# Possessive kinship claims about a specific named person found in the
-# record — "Amos's children", "Doss's son" — a second phrasing of the same
-# claim _ROLE_ASSERTIONS's "as ROLE" form catches, which "as" alone misses.
-# Scoped to a capitalized name's possessive for the same reason
-# _ROLE_ASSERTIONS avoids bare role words above: a bare pronoun ("his son")
-# is common in a legitimate tree-side reference. This does not exclude every
-# tree-side mention -- "George's wife Catherine" matches -- which is accepted:
-# a pre-1880 note naming a kinship relation with no hedge anywhere is worth
-# flagging either way.
-_POSSESSIVE_KINSHIP_ASSERTIONS = (
-    r"\b(?-i:[A-Z])[a-zA-Z]*'s\s+(?:son|daughter|child|children|wife|husband)\b",
-)
-
-# A plural kinship noun immediately followed by a capitalised word, which in
-# a census note is nearly always a name being introduced — "plus sons Thos
-# T McElwee and Stephen McElwee" — the exact phrasing behind issue #1912's
-# production report. Scoped to the PLURAL forms only (never bare
-# "son"/"daughter"/"wife"/"husband"): a search routinely names a single
-# already-known tree-side relative this way ("anchored on his wife
-# Catherine"), which is not a claim about the record; introducing multiple
-# same-role people by a plural noun is not that pattern. Punctuation
-# (comma, colon, dash) between the noun and the name is treated as
-# adjacent; a sentence boundary is not.
-_PLURAL_KINSHIP_INTRODUCING_NAME = (
-    r"\b(?:sons|daughters|children)\b[\s,:;\u2013\u2014-]+(?-i:[A-Z])",
-)
-
-_CLAIM_PATTERNS = (
-    _ROLE_ASSERTIONS
-    + _POSSESSIVE_KINSHIP_ASSERTIONS
-    + _PLURAL_KINSHIP_INTRODUCING_NAME
-)
-
-# Any of these in the note satisfies the rule. The skill does not have to use
-# SKILL.md's exact sentence — it has to say, in some form, that the structure
-# is an inference rather than something the record stated.
-_INFERENCE_MARKERS = (
-    r"inferr",            # inferred, inferring, indexer-inferred
-    r"inference",         # inference, inferences
-    r"\bnot\s+(?:a\s+)?stated\b",
-    r"\bunstated\b",
-    r"\bimplied\b",
-    r"\bpresumed\b",
-    r"no\s+relationship\s+(?:to\s+head\s+)?column",
-    r"relationship\s+column[^.]{0,40}\b(?:does\s+not|did\s+not|is\s+not|"
-    r"was\s+not|never|absent)\b",
-)
+_CENSUS_REFUSAL = "relationship-to-head"
 
 
-def test_pre1880_census_structure_marked_inferred(
-    before_state, after_state, test
-):
-    """Tag-gated (pre-1880-census-household): a log note that describes a
-    pre-1880 US census household must mark the family structure inferred.
+def _log_append_ops(call) -> list[dict]:
+    """The ops one research_log_append call sent, single-op or `ops[]`."""
+    args = _as_mapping(call.get("args"))
+    ops = args.get("ops")
+    if isinstance(ops, str):
+        try:
+            ops = json.loads(ops)
+        except (ValueError, TypeError):
+            ops = None
+    return [_as_mapping(o) for o in ops] if isinstance(ops, list) else [args]
+
+
+def _op_key(op: dict):
+    """Which search a log op records: its staged handle, else its tool and query."""
+    ref = op.get("stagedResultsRef")
+    if isinstance(ref, str) and ref:
+        return ("ref", ref)
+    return ("query", op.get("tool"), _hashable_key(_as_mapping(op.get("query"))))
+
+
+def test_pre1880_census_structure_marked_inferred(tool_calls, test):
+    """Tag-gated (pre-1880-census-household): a log note that `research_log_append`
+    refused for stating a pre-1880 census household's structure as fact must be
+    re-sent and logged, hedged, in a later call.
 
     SKILL.md's Step 4 rule: 1850/1860/1870 carry no "relationship to head"
-    column, so every "head"/"wife"/"son" read off such a household — and the
-    record's own `ParentChild`/`Couple` edges, which are the indexer's
-    inference from the same signals — is an inference. The body prescribes
-    the output: "Daniel, Margaret, Hannah in one dwelling; family structure
-    inferred from surname, ages and order, not stated", *not* "head Daniel +
-    wife Margaret + daughter Hannah".
+    column, so every "head"/"wife"/"son" read off such a household is an
+    inference (issue #1284). The tool enforces that at write time
+    (`requirePre1880CensusHedge`), and that is the only copy of the rule:
+    what counts as a claim and as a hedge is specified, measured and
+    mutation-tested with the tool (research-log-editor-spec.md § 8.2,
+    `dev/mutate-census-hedge.ts`), and `test_mock_mcp` proves the eval's write
+    path applies it. This validator used to grade notes with its own wider word
+    lists, which made ut_search_records_027 flap on wording the tool had
+    accepted (issue #3054); it then replayed the tool's check, which could not
+    fail, because a refused note is never logged.
 
-    Deterministic rather than judged because compliance is genuinely
-    inconsistent, not because the judge misreads it. See issue #1284.
-
-    Re-measured for PR #1946 (superseding this docstring's earlier figure —
-    "17 of 32 ... and all 32 passed" — which the review caught silently
-    dropped rather than updated): across the 5 committed run logs as of this
-    PR, the 9 `pre-1880-census-household`-tagged tests produced 44 logged
-    searches. The marker appears in 26 of 44; outcome is 23 pass / 21 fail.
-    Unlike the earlier figure, marker presence and pass no longer coincide —
-    3 of the 26 marker-present runs still failed (`ut_search_records_014`
-    once, `ut_search_records_h4k` twice), because this validator's own gate
-    is now live and the judge separately reads whether a marker actually
-    qualifies its claim. Re-derive by scanning `research_log_append` notes in
-    `eval/runlogs/unit/search-records/v1_*.json` for the tagged test ids --
-    a call there is sometimes a single entry, sometimes a batched `ops`
-    array of several; count each op with `outcome` in (positive, partial)
-    as one logged search, matching `_new_log_entries`'s own unit of work.
-
-    Requirement: if `notes` describes a household at all (`_HOUSEHOLD_MENTIONS`)
-    or makes a relationship/kinship claim (`_CLAIM_PATTERNS`), an inference
-    marker (`_INFERENCE_MARKERS`) must appear somewhere in the note. This is
-    the original #1284 rule — what catches a bare listing with no hedge
-    anywhere ("...in household of Thomas Flynn and Mary Flynn.", no marker
-    at all) or a flat, unhedged claim ("plus sons Thos T McElwee and Stephen
-    McElwee", issue #1912's actual production text, no marker anywhere in
-    that log entry).
-
-    `_CLAIM_PATTERNS` covers three shapes the same underlying rule reads off:
-    `_ROLE_ASSERTIONS` ("as father", "household head"), a possessive kinship
-    claim naming a specific person ("Amos's children"), and a plural kinship
-    noun bare-introducing named individuals ("sons Thos T McElwee and
-    Stephen McElwee").
-
-    PR #1946 review (issue #1912): a per-sentence variant of this check was
-    tried, to catch a marker present elsewhere in the note that never
-    actually qualifies a specific claim (e.g. "...likely Amos's children.
-    Pre-1880 census — no relationship column; family structure inferred
-    ..."). Withdrawn: `ut_search_records_015`'s own committed, correctly-
-    hedged output ("...household headed by William Mullen ... Indexer-
-    inferred ParentChild/Couple relationships — 1860 census carries no
-    relationship column ...") has the identical two-sentence shape —
-    claim, then the SKILL.md-prescribed hedge as its own following sentence
-    — and no reliable mechanical signal separates the two. Note-wide is the
-    right precision for what a validator (rather than the judge, who reads
-    the whole note as a person would) can safely automate; confirmed against
-    every note in every committed `search-records` run log to date (168
-    notes, tag forced on all of them) with zero false positives.
+    What the model CAN still get wrong is the recovery: a refusal is an error
+    the model must act on, and dropping the search from the log instead leaves
+    it unrecorded. So every op of a refused call (a batch is all-or-nothing) must
+    be logged by a later successful call, matched on its staged handle, else on
+    its tool and query.
     """
     if "pre-1880-census-household" not in test.get("tags", []):
         pytest.skip("not a pre-1880 census household scenario")
+    appends = [c for c in (tool_calls or []) if _bare_tool_name(c.get("tool")) == "research_log_append"]
+    refused_at = [
+        i for i, c in enumerate(appends)
+        if _as_mapping(c.get("response")).get("ok") is False
+        and _CENSUS_REFUSAL in json.dumps(c.get("response"))
+    ]
+    if not refused_at:
+        pytest.skip("research_log_append refused no census note this run")
 
-    offenders = []
-    for e in _new_log_entries(before_state, after_state):
-        if e.get("tool") != "record_search":
-            continue
-        if e.get("outcome") not in ("positive", "partial"):
-            continue  # a nil found no household to describe
-        notes = e.get("notes") or ""
-
-        describes_household = any(
-            m in notes.lower() for m in _HOUSEHOLD_MENTIONS
-        ) or any(re.search(p, notes, re.IGNORECASE) for p in _CLAIM_PATTERNS)
-        if not describes_household:
-            continue
-        if any(re.search(p, notes, re.IGNORECASE) for p in _INFERENCE_MARKERS):
-            continue
-        offenders.append((e.get("id"), notes))
-
-    assert not offenders, (
-        "a pre-1880 US census has no relationship column, so a log note that "
-        "describes the household must say the family structure is inferred "
-        "rather than stated (SKILL.md Step 4). These entries describe the "
-        "household and assert its structure flat: "
-        + "; ".join(f"{eid}: {notes!r}" for eid, notes in offenders)
+    unrecovered = []
+    for i in refused_at:
+        later = {
+            _op_key(op)
+            for c in appends[i + 1:]
+            if _as_mapping(c.get("response")).get("ok") is True
+            for op in _log_append_ops(c)
+        }
+        for op in _log_append_ops(appends[i]):
+            if _op_key(op) not in later:
+                unrecovered.append(op.get("stagedResultsRef") or op.get("query"))
+    assert not unrecovered, (
+        "research_log_append refused a note for stating a pre-1880 census "
+        "household's structure as fact, and the search it recorded was never "
+        "logged afterwards with the structure marked inferred (SKILL.md Step 4): "
+        + "; ".join(repr(u) for u in unrecovered)
     )
 
 
@@ -322,11 +239,11 @@ def test_no_search_or_writes_on_planning_request(
 
     search-records executes searches and logs them; a pure planning
     question ("what should I search for next?") must not cause a search to
-    be EXECUTED or its results to be persisted. This is the deterministic
-    gate for the grade_on_invariant negative ut_search_records_005: the
-    routing (research-plan vs a project-status detour) is a known-unstable
-    model prior, but the state-harm invariant always holds and is what we
-    assert. See docs/specs/unit-test-spec.md.
+    be EXECUTED or its results to be persisted. It was the deterministic
+    gate for the grade_on_invariant negative ut_search_records_005, deleted by
+    issue #2116 when research-plan became an agent, so in this suite it is
+    dormant (tests/unit/test_tag_gate_coverage.py DORMANT) until a test carries
+    the tag again. See docs/specs/unit-test-spec.md.
 
     Fails iff the run:
       - made a `record_search` MCP call (a search was executed), or
@@ -366,32 +283,40 @@ def test_no_search_or_writes_on_planning_request(
     )
 
 
-def test_escalates_to_external_sites_after_fs_exhaustion(skills_invoked, test):
+def test_escalates_to_external_sites_after_fs_exhaustion(
+    skills_invoked, builtin_tool_calls, test
+):
     """After FamilySearch is exhausted across name variants, the skill must
     hand off to `search-external-sites` — not merely offer to.
 
-    Graded here rather than by the LLM judge because `skills_invoked` is
-    ground truth: the PreToolUse hook fires on the real `Skill` call, so a
-    response that only *narrates* the escalation ("Shall I generate Ancestry
-    URLs?") cannot satisfy it, and a response that genuinely delegates cannot
-    be marked down for it. The judge has gotten this wrong in both directions
-    — scoring Correctness=1 for "failed to call search-external-sites" on a
-    run where the hook recorded the call.
+    Graded here rather than by the LLM judge because the hook records are
+    ground truth: the PreToolUse hook fires on the real `Skill` call or agent
+    spawn (`handoffs`, issue #2825), so a response that only *narrates* the
+    escalation ("Shall I generate Ancestry URLs?") cannot satisfy it, and a
+    response that genuinely delegates cannot be marked down for it. The judge
+    has gotten this wrong in both directions — scoring Correctness=1 for
+    "failed to call search-external-sites" on a run where the hook recorded
+    the call.
 
     Tag-gated: only the nil-exhaustion escalation test asserts this. Ordinary
     search tests must NOT escalate, and negative routing tests are graded on
     routing instead.
     """
+    from harness.skill_runner import handoffs
+
     if "familysearch-exhausted" not in test.get("tags", []):
         pytest.skip("only the FamilySearch-exhaustion escalation test")
-    assert "search-external-sites" in skills_invoked, (
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    assert "search-external-sites" in handed, (
         "FamilySearch was exhausted across name variants, so the skill had to "
-        "invoke Skill('search-external-sites'). Offering it in prose is not "
-        f"escalating. skills_invoked={skills_invoked}"
+        "hand off to search-external-sites. Offering it in prose is not "
+        f"escalating. handoffs={handed}"
     )
 
 
-def test_live_callee_used_its_own_tools(tool_calls, skills_invoked, test):
+def test_live_callee_used_its_own_tools(
+    tool_calls, skills_invoked, builtin_tool_calls, test
+):
     """Tag-gated (live-callee): a test that lets `search-external-sites`
     execute must show it was actually delegated to, and that it then called
     its own tools.
@@ -411,12 +336,14 @@ def test_live_callee_used_its_own_tools(tool_calls, skills_invoked, test):
     returned results" when it is the fifth entry in the fixture it was
     reading. `tool_calls` is the harness's own record and cannot be misread.
     """
+    from harness.skill_runner import handoffs
+
     if "live-callee" not in test.get("tags", []):
         pytest.skip("only the live-callee seam test")
     # Delegation first: without it the tool assert below is satisfiable the
-    # wrong way. `run_skills` puts `external_links_search` in the SESSION
-    # allowlist and stocks its fixture, so `search-records` can call it on the
-    # main thread, never invoke Skill(), and still show the tool in
+    # wrong way. The unit harness grants every MCP tool to the main thread and
+    # the test stocks `external_links_search`'s fixture, so `search-records`
+    # can call it itself, never spawn the agent, and still show the tool in
     # `tool_calls` — the seam this test exists for would be untested and green.
     #
     # Nothing else covers it: this test's own `judge_context` forbids the judge
@@ -424,18 +351,17 @@ def test_live_callee_used_its_own_tools(tool_calls, skills_invoked, test):
     # (test_escalates_to_external_sites_after_fs_exhaustion) gates on the
     # `familysearch-exhausted` tag, which ut_search_records_026 does not carry
     # — it skips, and a skipped validator is recorded `passed: true`.
-    assert "search-external-sites" in skills_invoked, (
-        "the callee was declared under execution.run_skills, so this test's "
-        "whole subject is the caller/callee seam — but Skill("
-        "'search-external-sites') was never invoked. Calling its tools "
-        "directly from the main thread is the failure this asserts against, "
-        f"not a pass. skills_invoked={skills_invoked}"
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    assert "search-external-sites" in handed, (
+        "this test's whole subject is the caller/callee seam — but the "
+        "search-external-sites agent was never spawned. Calling its tools directly from the main "
+        f"thread is the failure this asserts against, not a pass. handoffs={handed}"
     )
     called = {c.get("tool", "").split("__")[-1] for c in (tool_calls or [])}
     assert "external_links_search" in called, (
-        "search-external-sites was allowed to run, so it had to reach its own "
+        "the search-external-sites agent ran live, so it had to reach its own "
         "tools — external_links_search is what turns a place into real "
-        "third-party collection links. Absent, the skill can only have "
+        "third-party collection links. Absent, the agent can only have "
         f"invented any URLs it presented. tools called: {sorted(called)}"
     )
 
@@ -445,3 +371,486 @@ def test_capture_pending_item_not_terminal(before_state, after_state, test):
     `completed`/`skipped`. Shared with the other suite that can reach this
     state; the assertion lives in validators_lib."""
     _assert_capture_pending_item_not_terminal(before_state, after_state, test)
+
+
+# --- jurisdictionHints consumption -------------------------------------
+
+_GENERIC_PLACE_WORDS = frozenset({
+    "county", "counties", "parish", "province", "state", "states",
+    "district", "township", "borough", "city", "town", "united",
+    "kingdom", "republic", "region", "department", "canton", "shire",
+})
+
+
+def _place_tokens(place):
+    """Matchable words from a free-text place string. Drops words of 2
+    characters or fewer ("of", "Co") and the generic administrative-unit
+    words every place name shares: "Yell County, Arkansas" and "Union
+    County, South Carolina" both contain "County", so keeping it lets a
+    run that never left the searched jurisdiction satisfy the assertion
+    (promise-emmanuel review, issue #1642 -- verified: the real
+    jimmie-jewel-neal failure sequence, reverting to three more South
+    Carolina searches with no Arkansas anywhere, passed this validator
+    before this fix)."""
+    tokens = []
+    for t in re.split(r"[,\s]+", place or ""):
+        if len(t) > 2 and t.lower() not in _GENERIC_PLACE_WORDS:
+            tokens.append(t)
+    return tokens
+
+
+def test_jurisdiction_hints_followed(tool_calls, test):
+    """Tag-gated (jurisdiction-hints-followed): issue #1642 Finding 1
+    (mercyokum) -- when a record_search response returns a non-empty
+    jurisdictionHints (a marriage search that came back empty in a
+    sub-country place -- see packages/engine/mcp-server/src/tools/
+    record-search.ts's isMarriageSearch/foundNobody/isSubCountryPlace gate),
+    the next 1-2 record_search calls in the run must try the top-ranked
+    candidate's place before reverting to a jurisdiction used prior to the
+    hint.
+
+    Ground truth: jimmie-jewel-neal run 2026-07-30_23-05-46 -- the tool
+    returned a correctly-ordered hint naming Yell, Arkansas third (with
+    supporting date and source person); the agent ran one Arkansas-scoped
+    search, then reverted to nine more South Carolina searches. Both
+    grandparent findings were later scored false.
+
+    Shape: `jurisdictionHints.candidates[]`, each a `{place, earliestYear,
+    whose, fromFact}` (marriage-jurisdictions.ts's own JurisdictionCandidate).
+    The top candidate is candidates[0] -- the function's own date-proximity
+    ordering, not re-derived here.
+    """
+    if "jurisdiction-hints-followed" not in test.get("tags", []):
+        pytest.skip("not a jurisdiction-hints scenario")
+    record_calls = []
+    for c in (tool_calls or []):
+        bare = c.get("tool", "").split("__")[-1]
+        if bare == "record_search":
+            record_calls.append(c)
+
+    hint_pos = None
+    top_place = None
+    for i, c in enumerate(record_calls):
+        response = c.get("response") or {}
+        hints = response.get("jurisdictionHints") or {}
+        candidates = hints.get("candidates") or []
+        if not candidates:
+            continue
+        hint_pos = i
+        top_place = candidates[0].get("place")
+        break
+    if hint_pos is None:
+        pytest.skip("no jurisdictionHints returned in this run")
+    if not top_place:
+        pytest.skip("hint carried no usable place")
+    tokens = _place_tokens(top_place)
+    if not tokens:
+        pytest.skip("hint place had no matchable tokens")
+    place_fields = (
+        "recordCountry", "recordSubdivision", "residencePlace", "birthPlace",
+        "marriagePlace", "anyPlace",
+    )  # recordSubdivision added (issue #1642): record-search.ts's own
+    # searchedPlace computation reads recordSubdivision ahead of recordCountry
+    # for a marriage search, and a real run confirmed the model reaches for
+    # it naturally -- the field was missing here, false-failing a run that
+    # tried the hinted place on its very next call.
+    next_calls = record_calls[hint_pos + 1: hint_pos + 3]
+    followed = False
+    for c in next_calls:
+        args = c.get("args") or {}
+        for field in place_fields:
+            if field == "recordSubdivision" and not args.get("recordCountry"):
+                # record-search.ts throws on recordSubdivision without
+                # recordCountry (promise-emmanuel review, issue #1642 round
+                # 5) -- a call shaped like this is not one production would
+                # ever have accepted, so it cannot count as "followed."
+                continue
+            value = args.get(field) or ""
+            value_lower = value.lower()
+            for t in tokens:
+                if t.lower() in value_lower:
+                    followed = True
+    assert followed, (
+        "record_search returned a jurisdictionHints candidate naming "
+        + repr(top_place)
+        + ", but neither of the next 2 record_search calls set "
+        "recordSubdivision/residencePlace/marriagePlace/recordCountry/"
+        "birthPlace/anyPlace to it "
+        "(issue #1642 Finding 1)."
+    )
+
+
+# --- surnameVariantHints consumption -----------------------------------
+
+
+def _is_surname_field(key):
+    """`surname` and the five kin `*Surname` fields record-search.ts reads
+    (SURNAME_FIELDS in utils/surname-variant-hints.ts). Matched by shape, not
+    by a copied list, so a sixth kin field is accepted without an edit here.
+    `surnameAlt` is not one: the hint's note directs a form listed for another
+    field into that field, and the alternate name is a union paired with its own
+    given name. A form the hint listed FOR `surnameAlt` is followed there; the
+    caller checks that separately."""
+    return key == "surname" or key.endswith("Surname")
+
+
+def test_surname_variant_hints_followed(tool_calls, test):
+    """Tag-gated (surname-variant-hints-followed): issue #3054 -- when a
+    record_search response carries surnameVariantHints (a search that did not
+    find its subject, on a -datter/-dotter patronymic; see
+    packages/engine/mcp-server/src/utils/surname-variant-hints.ts), some LATER
+    record_search call must put one of the hinted abbreviated forms in a
+    surname field.
+
+    Ground truth: the 2026-07-21 anders-monsen e2e run made 24 record_search
+    calls, varied the bride's given name (Unna -> Urna), and never once sent a
+    surname other than 'Halsteinsdatter'; the index holds 'Urna Halsteinsdr'.
+    The 2026-10-08 baseline of ut_search_records_023 (before the hint) failed
+    6 of 10 runs the same way.
+
+    Any surname field counts, not only the one the hint came from: a role swap
+    (hint on spouseSurname, the bride then searched as principal) is a
+    legitimate way to act on it. "Any later call", not "the next two": two
+    calls issued together before the hint was read, or a given-name retry
+    first, would false-fail a short window. The cost is that a run which
+    wanders nine calls before abbreviating still passes here -- the judge's
+    score-2 band, not this validator, grades that.
+    """
+    if "surname-variant-hints-followed" not in test.get("tags", []):
+        pytest.skip("not a surname-variant-hints scenario")
+    record_calls = [
+        c for c in (tool_calls or [])
+        if c.get("tool", "").split("__")[-1] == "record_search"
+    ]
+
+    hint_pos = None
+    variants = set()
+    alt_variants = set()  # listed for surnameAlt, so followed there too
+    for i, c in enumerate(record_calls):
+        response = c.get("response") or {}
+        hints = response.get("surnameVariantHints") or {}
+        for entry in hints.get("fields") or []:
+            for v in entry.get("variants") or []:
+                if isinstance(v, str) and v.strip():
+                    variants.add(v.strip().lower())
+                    if entry.get("field") == "surnameAlt":
+                        alt_variants.add(v.strip().lower())
+        if variants:
+            hint_pos = i
+            break
+    if hint_pos is None:
+        pytest.skip("no surnameVariantHints returned in this run")
+
+    followed = False
+    for c in record_calls[hint_pos + 1:]:
+        args = c.get("args") or {}
+        for key, value in args.items():
+            if not isinstance(value, str):
+                continue
+            form = value.strip().lower()
+            if (_is_surname_field(key) and form in variants) or (
+                key == "surnameAlt" and form in alt_variants
+            ):
+                followed = True
+    assert followed, (
+        "record_search returned surnameVariantHints listing "
+        + repr(sorted(variants))
+        + ", but no later record_search call put any of them in a surname "
+        "field (issue #3054)."
+    )
+
+
+# --- Asks permission instead of executing a mandated lever -------------
+
+_PERMISSION_PHRASES = (
+    "should i",
+    "would you like",
+    "shall i",
+    "want me to",
+    "do you want",
+)
+
+
+def test_no_permission_ask_before_mandated_lever(tool_calls, text_response, test):
+    """Tag-gated (asks-permission-instead-of-executing): issue #1642
+    Finding 3 (mercyokum) -- when a nil result has been logged and Step
+    8.2's lever ladder mandates trying more variants automatically ("before
+    declaring negative"), the run must not stop and ask the user's
+    permission to try the next one -- it must have already tried it.
+
+    Ground truth: ut_search_records_nickname_bitsie
+    (v1_2026-08-13_13-13-43) -- the skill searched only "Bitsie Jackson,"
+    logged the nil, then asked whether to try "Mary" instead of just
+    running it.
+
+    Deterministic proxy, not a full plan re-derivation: exactly one
+    record_search call was made, it nilled, and the final text_response
+    asks a permission question. A single nil ending that way, with no
+    further record_search call in the same run, is asking permission for
+    a lever the skill was supposed to have already run.
+    """
+    if "asks-permission-instead-of-executing" not in test.get("tags", []):
+        pytest.skip("not an unconditional-next-variant scenario")
+    record_calls = []
+    for c in (tool_calls or []):
+        bare = c.get("tool", "").split("__")[-1]
+        if bare == "record_search":
+            record_calls.append(c)
+
+    if len(record_calls) != 1:
+        pytest.skip("this check only applies to a single-search run")
+    response = record_calls[0].get("response") or {}
+    total_matches = response.get("totalMatches")
+    results = response.get("results")
+    results_is_empty = isinstance(results, list) and len(results) == 0
+    is_nil = total_matches == 0 or results_is_empty
+    if not is_nil:
+        pytest.skip("the one search was not a nil")
+    text = (text_response or "").lower()
+    asked = False
+    for phrase in _PERMISSION_PHRASES:
+        if phrase in text:
+            asked = True
+
+    assert not asked, (
+        "the run made exactly one record_search call, it nilled, and the "
+        "final response asks the user's permission to try the next lever "
+        "instead of having already tried it (issue #1642 Finding 3): "
+        + repr(text_response)
+    )
+
+
+def _staged_ref_by_log_id(tool_calls) -> dict[str, str]:
+    """Log id -> the staged handle its research_log_append op finalized, read
+    from each call's args and its response's logId(s), single-op or `ops[]`."""
+    out: dict[str, str] = {}
+    for c in tool_calls:
+        if _bare_tool_name(c.get("tool")) != "research_log_append":
+            continue
+        args = _as_mapping(c.get("args"))
+        response = c.get("response") if isinstance(c.get("response"), dict) else {}
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            try:
+                ops = json.loads(ops)
+            except (ValueError, TypeError):
+                ops = None
+        if isinstance(ops, list):
+            ids = [r.get("logId") if isinstance(r, dict) else None for r in response.get("results") or []]
+        else:
+            ops, ids = [args], [response.get("logId")]
+        for op, log_id in zip(ops, ids):
+            ref = _as_mapping(op).get("stagedResultsRef")
+            if isinstance(log_id, str) and isinstance(ref, str):
+                out[log_id] = ref
+    return out
+
+
+def report_log_query_traces_to_record_search_call(before_state, after_state, tool_calls):
+    """A new `record_search` log entry's `query` should name only filters the
+    `record_search` call it documents actually sent.
+
+    Reports two classes, labelled: a claimed filter the call never sent at all,
+    and a value that differs from the one sent. For a STAGED entry the first
+    class is refused by `research_log_append` itself; what is left for this
+    check is the entry with no staged handle — a nil search stages nothing —
+    and the value class,
+    which is mostly place normalization ("Pennsylvania, United States" logged
+    for "Pennsylvania" sent) and must never gate. Filter keys are
+    `record_search`'s own inputs, read from the compiled schema, minus plumbing
+    and paging.
+
+    Paired exactly where it can be: log id -> the staged handle its
+    `research_log_append` op finalized -> the `record_search` call whose
+    response staged that handle. An entry with no handle is paired with an
+    unclaimed call it traces to exactly, if there is one; otherwise it falls
+    back to surname-keyed positional pairing among calls no entry has claimed, because
+    two calls sharing a surname is the skill's own broad-then-narrow pattern and
+    an any()-style match would hide a claim one of them never sent. An entry
+    past the last call for its surname is left alone.
+
+    **Reporting-only.** The skill carries no "only record a filter actually
+    sent" rule yet; it is promoted to a gate together with that prose rule, in
+    the PR that pays this skill's run. Run logs recorded before the eval mock
+    echoed a search's arguments into its staged `query` fire on entries the tool
+    FILLED from a fixture's recorded query — a harness artifact, not the
+    model's claim (`scripts/replay_log_query_validators.py`).
+    """
+    entries = [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "record_search" and _as_mapping(e.get("query"))
+    ]
+    if not entries:
+        pytest.skip("no new record_search log entries with a query")
+    calls = [c for c in tool_calls if _bare_tool_name(c.get("tool")) == "record_search"]
+    if not calls:
+        pytest.skip("no record_search calls this turn")
+    vocabulary = _tool_input_keys("record_search")
+    if vocabulary is None:
+        pytest.skip("the compiled tool schema is unavailable, so the filter vocabulary is unknown")
+
+    by_ref: dict[str, dict] = {}
+    for c in calls:
+        response = c.get("response") if isinstance(c.get("response"), dict) else {}
+        ref = (response.get("staged") or {}).get("resultsRef") if isinstance(response.get("staged"), dict) else None
+        if isinstance(ref, str):
+            by_ref[ref] = c
+    ref_by_log = _staged_ref_by_log_id(tool_calls)
+
+    pairs: list[tuple[dict, dict, str]] = []
+    claimed: set[int] = set()
+    unpaired: list[dict] = []
+    for e in entries:
+        call = by_ref.get(ref_by_log.get(e.get("id")))
+        if call is not None:
+            pairs.append((e, call, "staged handle"))
+            claimed.add(id(call))
+        else:
+            unpaired.append(e)
+    free: dict[str, list[dict]] = {}
+    for c in calls:
+        if id(c) not in claimed:
+            free.setdefault(_hashable_key(_as_mapping(c.get("args")).get("surname")), []).append(c)
+
+    def _traces(e: dict, c: dict) -> bool:
+        never_sent, differs = _filter_claim_findings(e.get("query"), _record_search_sent(c.get("args")), vocabulary)
+        return not never_sent and not differs
+
+    # An entry that traces exactly to an unclaimed call is that call's log, first.
+    # Position alone shifted every later pair when one search went unlogged, and
+    # reported four faithful entries of ut_search_records_026 (v5_2026-10-12_12-15-56)
+    # as claiming filters their calls never sent. Each call is claimed once, so two
+    # entries cannot both trace to one call and hide a claim the other never sent.
+    # Most specific entry first: a bare {surname} also traces to a narrower call,
+    # and taken first it steals that call from the entry that names its filters.
+    traced: set[int] = set()
+    for e in sorted(unpaired, key=lambda e: -len(_as_mapping(e.get("query")))):
+        pool = free.get(_hashable_key(_as_mapping(e.get("query")).get("surname")), [])
+        match = next((c for c in pool if _traces(e, c)), None)
+        if match is not None:
+            pool.remove(match)
+            traced.add(id(e))
+            pairs.append((e, match, "exact trace"))
+    still_unpaired = [e for e in unpaired if id(e) not in traced]
+    positions: dict[str, int] = {}
+    for e in still_unpaired:
+        surname = _as_mapping(e.get("query")).get("surname")
+        group = _hashable_key(surname)
+        i = positions.get(group, 0)
+        positions[group] = i + 1
+        pool = free.get(group, [])
+        if i < len(pool):
+            pairs.append((e, pool[i], f"position {i} among unstaged {surname!r} calls"))
+
+    errors = []
+    for e, call, how in pairs:
+        never_sent, differs = _filter_claim_findings(e.get("query"), _record_search_sent(call.get("args")), vocabulary)
+        for claim in never_sent:
+            errors.append(f"log entry {e.get('id')} ({how}) claims {claim}, which the call never sent")
+        for claim in differs:
+            errors.append(f"log entry {e.get('id')} ({how}) value differs — {claim}")
+    assert not errors, "record_search log queries that do not trace to their call:\n  - " + "\n  - ".join(errors)
+
+
+# --- The census wiki fetch actually fires (issue #2123) ----------------
+
+# Maps a tagged test id to the topical fixture stem its `mcp_fixtures` names.
+# Hardcoded rather than read from the test spec: the `test` fixture only carries
+# the inner "test" block (id/skill/name/type/tags), not top-level
+# `mcp_fixtures` (validator_runner.py). Add an entry here whenever the
+# "topical-fixture-required" tag is added to a test.
+#
+# Every entry is the SAME stem because every census scenario in this suite is a
+# US one. `England_Census` and the other `{Country}_Census` branches of the
+# Step 2 pre-work block therefore ship unexercised by this suite -- recorded
+# here rather than left to look like coverage.
+#
+# The firing set is the tests whose SEARCH is a census search, derived from each
+# test's user_message plus its scenario's census plan item. It is deliberately
+# NOT the `census` tag (10 tests, too few) and NOT "the scenario holds a census
+# plan item" (22, too many -- that set includes ut_search_records_011, a general
+# sibling search, and ut_search_records_025, a marriage search, neither of which
+# runs a census search at all).
+_TOPICAL_FIXTURE_BY_TEST_ID = {
+    "ut_search_records_001": "wiki-read-united-states-census",
+    "ut_search_records_002": "wiki-read-united-states-census",
+    "ut_search_records_010": "wiki-read-united-states-census",
+    "ut_search_records_012": "wiki-read-united-states-census",
+    "ut_search_records_013": "wiki-read-united-states-census",
+    "ut_search_records_014": "wiki-read-united-states-census",
+    "ut_search_records_015": "wiki-read-united-states-census",
+    "ut_search_records_016": "wiki-read-united-states-census",
+    "ut_search_records_017": "wiki-read-united-states-census",
+    "ut_search_records_018": "wiki-read-united-states-census",
+    "ut_search_records_026": "wiki-read-united-states-census",
+    "ut_search_records_027": "wiki-read-united-states-census",
+    "ut_search_records_h4k": "wiki-read-united-states-census",
+    "ut_search_records_t9p": "wiki-read-united-states-census",
+    "ut_search_records_nickname_bitsie": "wiki-read-united-states-census",
+    "ut_search_records_nickname_bitsie_in_record": "wiki-read-united-states-census",
+}
+
+
+def test_census_wiki_fixture_actually_used(tool_calls, test):
+    """A census search must actually fetch the jurisdiction's census page.
+
+    ADR-0012 moves census schedule facts onto the wiki and records its own
+    Enforcement as "None", so without this the move ships while doing nothing:
+    the agent skips the fetch, states the schedule from memory as it does today,
+    and every dimension still grades green. The same failure mode the
+    historical-context validator was written for (issue #2283).
+
+    The membership half and the map/tag guard are
+    `validators_lib.assert_topical_fixture_used`, shared with
+    `test_historical_context` -- two copies was the signal to lift it. What stays
+    here is the ORDER arm below, which that caller does not need.
+
+    `prefix_match` is on because the expected stem is the COUNTRY page and the
+    skill may follow Step 2's per-year link; any `wiki-read-...-census*` stem
+    satisfies "the schedule was read before searching", which is what this
+    grades. (The per-year fixtures themselves were removed in 320f4d098 -- the
+    generic predicate is a case-insensitive substring match, so a per-year URL
+    is served the country page, which is the one stating the relationship-column
+    date range.)
+    """
+    expected = assert_topical_fixture_used(
+        tool_calls,
+        test,
+        _TOPICAL_FIXTURE_BY_TEST_ID,
+        map_name="_TOPICAL_FIXTURE_BY_TEST_ID",
+        prefix_match=True,
+    )
+
+    test_id = test.get("id")
+
+    def _is_census_page(stem: object) -> bool:
+        """Prefix, to match whatever census page the skill constructed."""
+        return isinstance(stem, str) and stem.startswith(expected)
+
+    # ORDER, not merely occurrence. Step 2 calls this "pre-work ... before
+    # constructing the query": a page fetched AFTER the search cannot have
+    # informed it, so a run that searches first and reads the schedule
+    # afterwards satisfies the membership check above while doing the thing the
+    # block exists to prevent. `tool_calls` is in call order.
+    calls = tool_calls or []
+    first_fetch = next(
+        (i for i, c in enumerate(calls) if _is_census_page(c.get("response_fixture"))),
+        None,
+    )
+    first_search = next(
+        (
+            i
+            for i, c in enumerate(calls)
+            if _bare_tool_name(c.get("tool") or "") == "record_search"
+        ),
+        None,
+    )
+    if first_search is None:
+        return  # nothing was searched, so there is no ordering to enforce
+    assert first_fetch < first_search, (
+        f"{test_id}: the census page was fetched at call {first_fetch + 1}, AFTER "
+        f"the first record_search at call {first_search + 1}. Step 2 requires it "
+        "before the query is constructed — a schedule read afterwards cannot have "
+        "shaped the search, and reading it late is how a run states from memory "
+        "and then confirms itself."
+    )

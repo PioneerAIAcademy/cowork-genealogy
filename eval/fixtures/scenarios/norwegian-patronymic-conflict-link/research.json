@@ -22,11 +22,12 @@
       "created": "2026-05-01",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     }
   ],
@@ -113,7 +114,7 @@
       "informant": "Census enumerator",
       "informant_proximity": "official_duty",
       "informant_bias_notes": "Patronymic recorded by the enumerator; 'Pedersen' denotes son of Peder.",
-      "evidence_type": "direct",
+      "record_basis": "stated",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_001"
@@ -137,7 +138,7 @@
       "informant": "Household member reporting to the enumerator",
       "informant_proximity": "household_member",
       "informant_bias_notes": "Age reported in the census; approximate.",
-      "evidence_type": "indirect",
+      "record_basis": "inferred",
       "log_entry_id": "log_001",
       "extracted_for_question_ids": [
         "q_001"

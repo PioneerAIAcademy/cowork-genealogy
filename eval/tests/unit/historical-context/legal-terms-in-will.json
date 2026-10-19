@@ -5,10 +5,10 @@
     "name": "Historical legal terminology in an 1832 will",
     "type": "positive",
     "description": "Tests whether the skill correctly explains archaic legal terms commonly found in 18th and 19th century English and American wills — specifically 'relict' (surviving spouse) and 'appurtenances' (attached property/rights). Tests terminology lookup and research-actionable guidance.",
-    "tags": ["legal-terminology", "probate", "will", "terminology"]
+    "tags": ["legal-terminology", "probate", "will", "terminology", "direct-arm"]
   },
   "input": {
-    "user_message": "An 1832 will for my ancestor uses the words 'relict' and 'appurtenances.' What do these mean and how do they help my research?",
+    "delegation": "An 1832 will for my ancestor uses the words 'relict' and 'appurtenances.' What do these mean and how do they help my research?",
     "scenario": null
   },
   "mcp_fixtures": [

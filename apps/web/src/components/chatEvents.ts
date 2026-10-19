@@ -20,6 +20,59 @@ export interface ChatMessage {
   streamText?: string
   streamThinking?: string
   error?: boolean
+  // Closed by an `auto_continue` event: the server answered this message's
+  // hand-back itself (issue #2653). The next content event opens a new bubble
+  // rather than folding onto this one, so each auto-continued step reads as
+  // its own reply.
+  handedBack?: boolean
+  // A user message typed WHILE a turn was running (PR #2870 item 1b). The
+  // server holds it rather than enqueueing it -- two turns on one session would
+  // resume the same SDK session -- so the bubble says it is waiting. Cleared at
+  // `turn_done`, which is when the held message becomes the next turn.
+  queued?: boolean
+}
+
+// PR #2870 item 1c: what the browser shows for each `turns.outcome`, carried on
+// the turn_done frame. complete() used to hardcode 'ok', so EVERY way a run ended
+// looked like success -- including the two ways an unattended run actually ends, a
+// spent budget and no progress. To a genealogist a half-finished run then reads as
+// "nothing more was found", which is a correctness bug in the product, not a cosmetic
+// one. `ok` is deliberately absent: an ordinary turn that simply finished says nothing.
+export const TURN_OUTCOME_LABELS: Record<string, string> = {
+  completed: 'Research complete.',
+  stopped: 'Stopped — send a message to carry on.',
+  queued: 'Picking up your message…',
+  budget: 'Paused: this run reached its step budget. Send a message to carry on.',
+  no_progress: 'Paused: the agent stopped making progress. Send a message to carry on.',
+  decision: 'Waiting on you — see the question above.',
+  // The ask was met and the JOB is still open. It must not read like `completed`
+  // ('Research complete.'), or a plan-only request looks like a finished project.
+  delivered: "Done — that's what you asked for. Send a message to carry on.",
+  mcp_unavailable: 'Paused: the genealogy tools became unavailable.',
+  retries_exhausted: 'This run was interrupted too many times and has stopped. Send a message to carry on.',
+  transcript_lost: "Stopped: a server problem kept this run's conversation from being saved. Findings written to the project are kept.",
+  signin_required: 'FamilySearch needs you to sign in again. Sign in, then send a message to carry on.'
+}
+
+// 1e: `budget` covers two different caps, and they need different advice. The nudge cap
+// ends a turn but not the sitting, so another message carries on where it left off. The
+// SPEND cap ends the sitting: the only way on is a new session on the same project, and a
+// run that stops at $35 looking finished is worse than no cap at all.
+export const SPEND_CAP_LABEL =
+  'Stopped: this session reached its spend limit. Everything found so far is saved — ' +
+  'start a new session on this project to carry on.'
+
+export function turnOutcomeLabel(outcome: unknown, limit?: unknown): string | null {
+  if (outcome === 'budget' && limit === 'spend') return SPEND_CAP_LABEL
+  return typeof outcome === 'string' ? (TURN_OUTCOME_LABELS[outcome] ?? null) : null
+}
+
+// `turn_done` is when a held message is picked up, so no bubble should still
+// claim to be waiting after it. Pure and returns the same array when nothing
+// was queued, so it cannot cause a needless re-render.
+export function clearQueued(messages: ChatMessage[]): ChatMessage[] {
+  if (!messages.some((m) => m.queued)) return messages
+  return messages.map((m) => (m.queued ? { ...m, queued: false } : m))
 }
 
 // Two canonical text blocks in one assistant turn are separate paragraphs, but
@@ -34,19 +87,89 @@ export function joinTextBlocks(existing: string, addition: string): string {
   return existing.replace(/\n+$/, '') + '\n\n' + addition
 }
 
+const NO_LIVE_TASKS: ReadonlySet<string> = new Set()
+
+// The set of subagent tasks currently running, keyed by the SDK's `task_id`.
+// Pure: returns the same set when nothing changed, a new set otherwise. Kept as
+// a set and not a flag because delegations overlap — one alpha session ran
+// eight extraction agents at once — and a single nullable "activity" value
+// clears on the first task_done while the others are still streaming.
+export function trackLiveTask(
+  set: ReadonlySet<string>,
+  kind: string,
+  ev: Record<string, unknown>
+): ReadonlySet<string> {
+  if (kind !== 'task_started' && kind !== 'task_done') return set
+  const id = typeof ev.task_id === 'string' ? ev.task_id : ''
+  if (!id) return set
+  const next = new Set(set)
+  if (kind === 'task_started') next.add(id)
+  else next.delete(id)
+  return next
+}
+
+// A new session's first message opens the project. The canned opener travels
+// on the wire ahead of whatever the user typed, so init-project runs and reads
+// the objective from the same turn; the bubble shows only the user's words.
+export const OPENING_TURN = "Let's start a new genealogy research project."
+
+export function withOpeningTurn(text: string): string {
+  return `${OPENING_TURN}\n\n${text}`
+}
+
+// Replayed history carries the wire text; give the bubble back its own words.
+export function stripOpeningTurn(text: string): string {
+  if (text === OPENING_TURN) return text
+  return text.startsWith(`${OPENING_TURN}\n\n`) ? text.slice(OPENING_TURN.length).trimStart() : text
+}
+
+// Drop any in-flight preview on the streaming assistant message. Used when a
+// labelled canonical block arrives: its deltas may already have previewed a
+// subagent's prose, and that prose must not stay on screen.
+function clearPreview(prev: ChatMessage[]): ChatMessage[] {
+  const last = prev[prev.length - 1]
+  if (!last || last.role !== 'assistant' || (!last.streamText && !last.streamThinking)) return prev
+  const next = [...prev]
+  next[next.length - 1] = { ...last, streamText: '', streamThinking: '' }
+  return next
+}
+
 // Fold one agent_event onto the last assistant message (the streaming one),
 // returning a new array. Pure: it clones the tail message before touching it and
 // never mutates `prev`. `kind` is the event kind and `ev` the raw event. Kinds
 // that are not chat content (turn_done, task_*, usage) are handled by the caller
-// and never reach here.
+// and never reach here; the caller tracks `liveTasks` with `trackLiveTask` and
+// passes it in.
+//
+// Subagent prose never reaches the chat. real_agent labels every subagent
+// event with `agent`; canonical `text`/`thinking` carrying that label are
+// dropped here. Deltas are the catch: `text_delta`/`thinking_delta` carry no
+// parent id (measured 2026-09-10, 545 stream events, none tagged), so they are
+// dropped whenever a subagent task is live. Tool chips keep their label and
+// still render — that is the status trail, not prose.
 export function foldChatEvent(
   prev: ChatMessage[],
   kind: string,
-  ev: Record<string, unknown>
+  ev: Record<string, unknown>,
+  liveTasks: ReadonlySet<string> = NO_LIVE_TASKS
 ): ChatMessage[] {
+  if ((kind === 'text' || kind === 'thinking') && typeof ev.agent === 'string') {
+    return clearPreview(prev)
+  }
+  if ((kind === 'text_delta' || kind === 'thinking_delta') && liveTasks.size > 0) return prev
+
   const next = [...prev]
   let last = next[next.length - 1]
-  if (!last || last.role !== 'assistant') {
+  if (kind === 'auto_continue') {
+    // The server is answering the hand-back itself: close the bubble the
+    // literal ended, so the synthetic turn's content opens a fresh one. No
+    // user bubble — the "Yes." was never a message the user sent.
+    if (last && last.role === 'assistant' && !last.handedBack) {
+      next[next.length - 1] = { ...last, handedBack: true }
+    }
+    return next
+  }
+  if (!last || last.role !== 'assistant' || last.handedBack) {
     last = { role: 'assistant', text: '', tools: [] }
     next.push(last)
   } else {

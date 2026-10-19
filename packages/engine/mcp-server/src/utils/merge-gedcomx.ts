@@ -97,12 +97,16 @@ function mergeCrossDocument(
       if (!surv.gender && content.gender) surv.gender = content.gender;
       if (content.names.length) (surv.names ??= []).push(...content.names);
       if (content.facts.length) (surv.facts ??= []).push(...content.facts);
+      if (content.sources.length) {
+        surv.sources = dedupSourceRefs([...(surv.sources ?? []), ...content.sources]);
+      }
     } else {
       const carried: SimplifiedPerson = { id: personIdMap.get(person.id) };
       if (content.ark !== undefined) carried.ark = content.ark;
       if (content.gender !== undefined) carried.gender = content.gender;
       if (content.names.length) carried.names = content.names;
       if (content.facts.length) carried.facts = content.facts;
+      if (content.sources.length) carried.sources = dedupSourceRefs(content.sources);
       result.persons.push(carried);
     }
   }
@@ -156,6 +160,9 @@ function mergeSameDocument(
     if (!surv.gender && coll.gender) surv.gender = coll.gender;
     if (coll.names?.length) (surv.names ??= []).push(...structuredClone(coll.names));
     if (coll.facts?.length) (surv.facts ??= []).push(...structuredClone(coll.facts));
+    if (coll.sources?.length) {
+      surv.sources = dedupSourceRefs([...(surv.sources ?? []), ...coll.sources]);
+    }
   }
 
   const collapsedIds = new Set(merges.map(([, c]) => c));
@@ -191,14 +198,14 @@ interface PersonContent {
   gender?: string;
   names: SimplifiedName[];
   facts: SimplifiedFact[];
+  sources: SimplifiedSourceReference[];
 }
 
 /**
- * Clone a candidate person's names/facts with fresh N/F ids and source refs
- * rewritten through `sourceIdMap`. The id itself is assigned by the caller
- * (survivor id for a collapse, fresh I id for a carry). Person-level
- * `sources` are not part of the tree format and are not carried (the tool
- * layer strips them from candidates before the merge).
+ * Clone a candidate person's names/facts with fresh N/F ids and every source
+ * ref (names, facts, and the person's own `sources`) rewritten through
+ * `sourceIdMap`. The id itself is assigned by the caller (survivor id for a
+ * collapse, fresh I id for a carry).
  */
 function remapPersonContent(
   person: SimplifiedPerson,
@@ -217,7 +224,8 @@ function remapPersonContent(
     if (c.sources) c.sources = remapSourceRefs(c.sources, sourceIdMap);
     return c;
   });
-  return { ark: person.ark, gender: person.gender, names, facts };
+  const sources = person.sources ? remapSourceRefs(person.sources, sourceIdMap) : [];
+  return { ark: person.ark, gender: person.gender, names, facts, sources };
 }
 
 /** Clone a candidate relationship with a fresh R id and all refs repointed. */
@@ -300,12 +308,17 @@ function buildSourceIdMap(
 function dedupRelationships(
   rels: SimplifiedRelationship[],
 ): SimplifiedRelationship[] {
-  const byKey = new Map<string, SimplifiedRelationship>();
+  // Bucket on endpoints so the match scan stays cheap, then scan the bucket in
+  // tree order: an untyped edge matches every typed edge on the pair, and the
+  // first one wins. Keying the map on the exact `relationshipKey` instead would
+  // make an untyped edge its own bucket and leave it beside the typed edge it
+  // restates.
+  const buckets = new Map<string, SimplifiedRelationship[]>();
   const out: SimplifiedRelationship[] = [];
   for (const r of rels) {
     if (isSelfRelationship(r)) continue;
-    const key = relationshipKey(r);
-    const kept = byKey.get(key);
+    const bucket = buckets.get(endpointKey(r)) ?? [];
+    const kept = bucket.find((k) => relationshipMatches(k, r));
     if (kept) {
       if (r.facts?.length) {
         kept.facts = mergeFacts([...(kept.facts ?? []), ...r.facts]);
@@ -313,9 +326,19 @@ function dedupRelationships(
       if (r.sources?.length) {
         kept.sources = dedupSourceRefs([...(kept.sources ?? []), ...r.sources]);
       }
+      if (r.notes?.length) {
+        kept.notes = [...new Set([...(kept.notes ?? []), ...r.notes])];
+      }
+      // The surviving edge takes the more specific statement: an untyped edge
+      // kept first adopts the subtype of the typed edge folding into it, so the
+      // result is the same whichever order the two arrived in.
+      if (kept.subtype === undefined && r.subtype !== undefined) {
+        kept.subtype = r.subtype;
+      }
       continue;
     }
-    byKey.set(key, r);
+    bucket.push(r);
+    buckets.set(endpointKey(r), bucket);
     out.push(r);
   }
   return out;
@@ -327,14 +350,61 @@ function isSelfRelationship(r: SimplifiedRelationship): boolean {
   return false;
 }
 
+/**
+ * A relationship's exact identity: type, endpoints AND subtype.
+ *
+ * The subtype is part of the key because a Step and a Biological edge on one
+ * pair are two different relationships, not one recorded twice (plan Decision
+ * 11: "edges can be retyped"). `tree-diff.ts` maps relationships by this key,
+ * so without the subtype a retype read as unchanged and a Step edge added
+ * beside a Biological one vanished from the delta.
+ *
+ * This is NOT the test for "does this new edge belong on an existing one" —
+ * that is `relationshipMatches`, which treats an absent subtype as compatible
+ * with any. Keep the two apart: an exact key cannot express "either is absent".
+ */
 export function relationshipKey(r: SimplifiedRelationship): string {
   const type = r.type ?? "?";
+  const sub = r.subtype ?? "";
   // Couple endpoints are unordered; ParentChild is directional.
+  if (r.person1 !== undefined || r.person2 !== undefined) {
+    const ends = [r.person1 ?? "", r.person2 ?? ""].sort();
+    return `${type}|couple|${ends[0]}|${ends[1]}|${sub}`;
+  }
+  return `${type}|pc|${r.parent ?? ""}|${r.child ?? ""}|${sub}`;
+}
+
+/** Type and endpoints only — the pair an edge joins, ignoring its subtype. */
+function endpointKey(r: SimplifiedRelationship): string {
+  const type = r.type ?? "?";
   if (r.person1 !== undefined || r.person2 !== undefined) {
     const ends = [r.person1 ?? "", r.person2 ?? ""].sort();
     return `${type}|couple|${ends[0]}|${ends[1]}`;
   }
   return `${type}|pc|${r.parent ?? ""}|${r.child ?? ""}`;
+}
+
+/**
+ * Do these two edges describe the same relationship?
+ *
+ * Same type and endpoints (a Couple's two persons in either order), and their
+ * subtypes agree OR either is absent. An untyped edge is a less specific
+ * statement of the same relationship, so it matches a typed one; two different
+ * explicit subtypes are two relationships and never match.
+ *
+ * One predicate, two callers: `add_relationship` corroborates into the first
+ * match rather than writing a second edge (plan Decision 37), and
+ * `dedupRelationships` folds by the same rule. They differ only in the
+ * subtype: a merge adopts the more specific one, while `add_relationship`
+ * keeps the existing edge's and warns.
+ */
+export function relationshipMatches(
+  a: SimplifiedRelationship,
+  b: SimplifiedRelationship,
+): boolean {
+  if (endpointKey(a) !== endpointKey(b)) return false;
+  if (a.subtype === undefined || b.subtype === undefined) return true;
+  return a.subtype === b.subtype;
 }
 
 // ─── Name equivalence (spec §7.1) ───────────────────────────────────────────
@@ -347,6 +417,7 @@ export function relationshipKey(r: SimplifiedRelationship): string {
 function mergeNames(names: SimplifiedName[]): SimplifiedName[] {
   if (names.length === 0) return names;
   if (names.length === 1) {
+    // Not preferredName(): names[0] is the only name here, so selection is vacuous.
     const only = structuredClone(names[0]);
     only.preferred = true;
     return [only];
@@ -427,7 +498,7 @@ function scoreName(n: SimplifiedName): number {
   return letters * 10 + diacritics;
 }
 
-function dedupSourceRefs(
+export function dedupSourceRefs(
   refs: SimplifiedSourceReference[],
 ): SimplifiedSourceReference[] {
   const seen = new Set<string>();
@@ -512,7 +583,16 @@ function validateMerges(
   const targetIds = new Set(targetPersons.map((p) => p.id));
   for (const id of survivors) {
     if (!targetIds.has(id)) {
-      throw new Error(`merge survivor id ${id} not found in target_gedcomx`);
+      const ids = [...targetIds];
+      const sample = ids.slice(0, 10).join(", ");
+      const suffix = ids.length > 10 ? ` …and ${ids.length - 10} more` : "";
+      const hint =
+        candidate !== null
+          ? "; a survivor must already be in the tree — leave a new person's persona out of merges"
+          : "";
+      throw new Error(
+        `merge survivor id ${id} not found in target_gedcomx (tree ids: ${sample}${suffix}${hint})`,
+      );
     }
   }
 
@@ -594,6 +674,17 @@ function mergeFactGroup(members: SimplifiedFact[]): SimplifiedFact {
 
   const valued = members.find((m) => m.value !== undefined && m.value !== "");
   setOrDelete(rep, "value", valued?.value);
+
+  // The assertion backlink survives only if EVERY member agrees on it (#2472).
+  // `rep` is a clone of members[0], but `date` and `place` above are taken from
+  // whichever member is best — possibly a different one — so keeping member[0]'s
+  // backlink would leave the fact claiming to have been minted from an assertion
+  // whose place it no longer carries. Two consequences, both real: the merged
+  // fact reads as drift to the tree-fact/assertion agreement check, and the next
+  // correction to that assertion overwrites the merged, most-specific value with
+  // its own narrower one.
+  const backlinks = new Set(members.map((m) => m.assertion_id));
+  setOrDelete(rep, "assertion_id", backlinks.size === 1 ? members[0].assertion_id : undefined);
 
   if (members.some((m) => m.primary === true)) rep.primary = true;
   else delete rep.primary;

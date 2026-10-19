@@ -10,9 +10,9 @@ this module asserts the manifest still produces them. Deleting an owner reddens
 this test. Adding one reddens it too, which is the point: a widening is a
 decision, and it should have to be written down here.
 
-Three deltas are declared explicitly below — one newly-enforced section, one
-widening, one narrowing — each with the reason it was made and the measurement
-behind it. They are the only three.
+Four deltas are declared explicitly below — one newly-enforced section, two
+widenings (one per artifact), one narrowing — each with the reason it was made
+and the measurement behind it. They are the only four.
 
 **This is not `make harness-test`'s ownership result.** `pyproject.toml` sets
 `testpaths = ["tests"]`, so `validators/test_universal.py::test_ownership_table`
@@ -26,6 +26,7 @@ from __future__ import annotations
 import pytest
 
 from harness.ownership import (
+    REPO_ROOT,
     RESEARCH_JSON,
     TREE_GEDCOMX_JSON,
     UNIT_PLANE,
@@ -66,7 +67,7 @@ FROZEN_OWNERSHIP_TABLE: dict[str, set[str]] = {
 }
 
 
-# ── The two deltas, and why each was made ──────────────────────────────────
+# ── The five deltas, and why each was made ─────────────────────────────────
 
 #: `localities` had a declared owner from the day the section shipped and was
 #: never once evaluated: the check iterated `REQUIRED_SECTIONS`, which the
@@ -85,7 +86,37 @@ NEWLY_ENFORCED = {"localities"}
 #: text, and the batches that write a summary and its resolve together all name
 #: `proof-conclusion`. A widening cannot newly fail a test; the matching skill
 #: body edit is a separate, eval-gated change.
-WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
+WIDENED: dict[str, set[str]] = {
+    "questions": {"proof-conclusion"},
+    #: `log` gains `survey-surname`. The agent calls `research_log_append` to log
+    #: each census-year search page, and its household table as one more entry
+    #: (issue #3414). The `agent:survey-surname` caller was added to
+    #: ownership.json's `callers` so the ownership validator resolves it when the
+    #: agent is the suite subject.
+    #:
+    #: `log` gains `search-hints` (issue #2029), a new agent. A hint the researcher
+    #: decided is a search result: its record-mode entry is what routes an accepted
+    #: hint to record-extraction, and before it a hint review persisted nothing. The
+    #: agent writes only through `research_log_append`, which takes no `section`, so
+    #: the widening adds a writer to an append-only, multi-writer section.
+    #:
+    #: `log` gains `search-wikipedia` and `search-familysearch-wiki` (#3244
+    #: option L, U20). Both agents delivered a loose `.md` through `Write`, which
+    #: never reaches the hosted ProjectStore; each now logs its lookup through
+    #: `research_log_append`, the article or guidance in the entry's `notes`.
+    #:
+    #: `log` gains `historical-context` (#3244 option L). Its overview lived only
+    #: in the chat and was lost with the session; inside a project it now logs its
+    #: wiki/Wikipedia lookups and one `historical_context` entry carrying the full
+    #: overview in `notes`.
+    "log": {"survey-surname", "search-hints", "search-wikipedia", "search-familysearch-wiki",
+            "historical-context"},
+    #: `sources` gains `init-project` (issue #2122). The skill always wrote one
+    #: `sources` entry per transcribed memory through `research_append` (its
+    #: Step 4a) with no row naming it; the agent's hook lane makes that write
+    #: explicit, so the manifest now says so. A widening cannot newly fail a test.
+    "sources": {"init-project"},
+}
 
 #: `assertions` loses `convert-dates`. The grant was dead on arrival: the skill's
 #: only tool is `convert_calendar`, it holds no writer tool, and its own body
@@ -97,7 +128,121 @@ WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
 #: Declaring it here rather than editing the frozen literal above is the point:
 #: the literal stays a verbatim copy of what was enforced before, and every
 #: departure from it is a line someone had to write.
-NARROWED: dict[str, set[str]] = {"assertions": {"convert-dates"}}
+#:
+#: `person_evidence` loses `person-evidence` from citation's vantage point.
+#: The skill directory was deleted and the caller flipped from `skill:person-evidence`
+#: to `agent:person-evidence` in ownership.json. An `agent:` caller only resolves
+#: when it IS the subject — SUBJECT="citation" here — so person-evidence disappears
+#: from the visible writer set for this fixed perspective. The write permission is
+#: unchanged: from person-evidence's own subject perspective it still owns all three
+#: sections it held before the conversion.
+#:
+#: `log`'s and `plans`'s `search-images` caller changed from `skill:` to
+#: `agent:` (issue #2268, thin-skill deletion). With SUBJECTS iterating every
+#: agent caller, `search-images` resolves when `subject="search-images"`, so
+#: the union still sees it — no NARROWED entry needed for either section.
+#: `plan_items` has `enforceableAt: []` so it never reaches the unit plane
+#: and needs no entry.
+NARROWED: dict[str, set[str]] = {
+    "assertions": {"convert-dates"},
+    "person_evidence": {"person-evidence"},
+}
+
+
+#: `record-extraction` is retired from every row it held. The skill and its
+#: `record-extractor` agent were deleted: a FamilySearch record is extracted by
+#: `extraction_append({ recordIds })` and any other source by the
+#: record-structurer agent's one `extraction_append({ documents })` call. The
+#: sections it wrote are authorized by tool identity (`toolAuthorized`), so no
+#: caller replaces it. `plans` loses it outright: extraction updates no plan item.
+RETIRED: dict[str, set[str]] = {
+    "plans": {"record-extraction"},
+    "log": {"record-extraction"},
+    "sources": {"record-extraction"},
+    "assertions": {"record-extraction"},
+}
+TREE_RETIRED: dict[str, set[str]] = {"sources": {"record-extraction"}}
+
+
+# The suite subject the research.json rows need to resolve (issue #2799). The
+# `sources` row names `agent:citation`, and `writer_sets` reads an `agent:`
+# caller only when it IS the subject — so the freeze below is taken from
+# citation's own vantage point. Note what that buys: the frozen set for
+# `sources` is UNCHANGED at {"record-extraction", "citation"}. The conversion
+# moved how the caller is spelled, not who may write, and this test is what
+# says so.
+#: Every agent that is both a unit-suite subject and an `agent:` caller in the
+#: manifest. `writer_sets` reads an `agent:` caller ONLY when it is the subject
+#: (ownership.py's agent rule), so no single vantage point can see the whole
+#: manifest any more: from `citation` the `proof-conclusion` rows resolve to
+#: nobody, and vice versa. The union over every subject is the manifest as the
+#: unit plane actually enforces it, one suite at a time.
+#:
+#: The frozen tables below stay unchanged across a conversion, and that is the
+#: point: it proves the conversion moved how a caller is SPELLED, not who may
+#: write. Editing a frozen table to drop a converted skill is the wrong fix --
+#: it makes this free suite green and the paid run red.
+#:
+#: Derived from the manifest, so the next conversion joins the union with no
+#: edit here; `test_a_unit_plane_agent_caller_is_a_suite_subject` is what
+#: keeps each of these a real suite.
+SUBJECTS = tuple(
+    sorted(
+        {
+            c[len("agent:") :]
+            for r in rows()
+            if UNIT_PLANE in (r.get("enforceableAt") or [])
+            for c in r.get("callers") or []
+            if c.startswith("agent:")
+        }
+    )
+)
+
+
+def _union_writer_sets(artifact: str) -> dict[str, set[str]]:
+    merged: dict[str, set[str]] = {}
+    for subject in SUBJECTS:
+        for section, writers in writer_sets(artifact, UNIT_PLANE, subject=subject).items():
+            merged.setdefault(section, set()).update(writers)
+    return merged
+
+
+#: tree `persons` and `relationships` gain `forget-and-rederive`. It holds
+#: `tree_forget` in its `allowed-tools`, and both rows list that tool among their
+#: `writerTools`, so it was a writer of both sections that no row named — one of
+#: the nine (holder, writer tool) pairs the new packaging guard finds
+#: (`ownership-manifest.test.ts`, "names every plugin holder of a writer tool").
+#: It is a `skill:`, so it goes straight into `callers` rather than the
+#: `agentCallers` the other eight needed.
+#:
+#: A widening cannot newly fail a test, and this one cannot fail anything at all:
+#: the skill has no unit suite (it is in `RUNLOG_GATE_EXEMPT_SKILLS` for exactly
+#: that reason), so no run is graded against this writer set.
+TREE_WIDENED: dict[str, set[str]] = {
+    "persons": {"forget-and-rederive"},
+    "relationships": {"forget-and-rederive"},
+}
+
+#: tree `persons` and `relationships` lose `person-evidence` from the no-subject
+#: vantage point. After the skill-to-agent conversion, the caller is
+#: `agent:person-evidence`, which only resolves when subject="person-evidence".
+#: The tree writer_sets call passes no subject, so person-evidence is invisible here.
+#: Write permission is unchanged from person-evidence's own subject perspective.
+TREE_NARROWED: dict[str, set[str]] = {
+    "persons": {"person-evidence"},
+    "relationships": {"person-evidence"},
+}
+
+
+def expected_tree_owners() -> dict[str, set[str]]:
+    expected = {k: set(v) for k, v in FROZEN_TREE_OWNERSHIP_TABLE.items()}
+    for section, added in TREE_WIDENED.items():
+        expected[section] |= added
+    for section, removed in TREE_NARROWED.items():
+        expected[section] -= removed
+    for section, removed in TREE_RETIRED.items():
+        expected[section] -= removed
+    return expected
 
 
 def expected_research_owners() -> dict[str, set[str]]:
@@ -106,6 +251,8 @@ def expected_research_owners() -> dict[str, set[str]]:
         expected[section] |= added
     for section, removed in NARROWED.items():
         expected[section] -= removed
+    for section, removed in RETIRED.items():
+        expected[section] -= removed
     return expected
 
 
@@ -113,13 +260,11 @@ def expected_research_owners() -> dict[str, set[str]]:
 
 
 def test_research_owners_match_the_frozen_tables():
-    assert writer_sets(RESEARCH_JSON, UNIT_PLANE) == expected_research_owners()
+    assert _union_writer_sets(RESEARCH_JSON) == expected_research_owners()
 
 
 def test_tree_owners_match_the_frozen_table():
-    assert writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE) == {
-        k: set(v) for k, v in FROZEN_TREE_OWNERSHIP_TABLE.items()
-    }
+    assert _union_writer_sets(TREE_GEDCOMX_JSON) == expected_tree_owners()
 
 
 def test_the_only_newly_enforced_section_is_localities():
@@ -130,12 +275,32 @@ def test_the_only_newly_enforced_section_is_localities():
     added to an existing one are different decisions with different costs.
     """
     before = set(FROZEN_OWNERSHIP_TABLE) - NEWLY_ENFORCED
-    after = set(writer_sets(RESEARCH_JSON, UNIT_PLANE))
+    after = set(_union_writer_sets(RESEARCH_JSON))
     assert after - before == NEWLY_ENFORCED
     assert before - after == set()
 
 
-def test_no_owner_was_dropped_except_the_declared_one():
+@pytest.mark.parametrize(
+    "agent, sections",
+    [
+        ("person-evidence", {"person_evidence"}),
+        ("question-selection", {"questions"}),
+    ],
+)
+def test_a_converted_agent_still_owns_its_sections_as_subject(agent, sections):
+    """An agent `NARROWED` hides from citation's vantage point keeps its writes.
+
+    `NARROWED` records a writer vanishing from one fixed perspective. That is only
+    harmless if the writer still resolves from its own — otherwise the entry is a
+    real drop wearing a comment, and the suite under test fails ownership on every
+    positive test it runs.
+    """
+    actual = writer_sets(RESEARCH_JSON, UNIT_PLANE, subject=agent)
+    for section in sections:
+        assert agent in actual.get(section, set()), section
+
+
+def test_no_owner_was_dropped_except_the_declared_ones():
     """Every writer the literals named is still a writer, bar `NARROWED`.
 
     Redundant with the mapping equality above only while that assertion holds
@@ -144,19 +309,21 @@ def test_no_owner_was_dropped_except_the_declared_one():
     the check — so the drop side gets its own named assertion and its own
     allow-list, which is a place a reviewer can look.
     """
-    actual = writer_sets(RESEARCH_JSON, UNIT_PLANE)
+    actual = _union_writer_sets(RESEARCH_JSON)
+    allowed = {s: NARROWED.get(s, set()) | RETIRED.get(s, set()) for s in FROZEN_OWNERSHIP_TABLE}
     dropped = {
-        section: sorted((frozen - actual.get(section, set())) - NARROWED.get(section, set()))
+        section: sorted((frozen - actual.get(section, set())) - allowed[section])
         for section, frozen in FROZEN_OWNERSHIP_TABLE.items()
-        if (frozen - actual.get(section, set())) - NARROWED.get(section, set())
+        if (frozen - actual.get(section, set())) - allowed[section]
     }
     assert dropped == {}
 
-    tree_actual = writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE)
+    tree_actual = _union_writer_sets(TREE_GEDCOMX_JSON)
+    tree_allowed = {s: TREE_NARROWED.get(s, set()) | TREE_RETIRED.get(s, set()) for s in FROZEN_TREE_OWNERSHIP_TABLE}
     tree_dropped = {
-        section: sorted(frozen - tree_actual.get(section, set()))
+        section: sorted((frozen - tree_actual.get(section, set())) - tree_allowed[section])
         for section, frozen in FROZEN_TREE_OWNERSHIP_TABLE.items()
-        if frozen - tree_actual.get(section, set())
+        if (frozen - tree_actual.get(section, set())) - tree_allowed[section]
     }
     assert tree_dropped == {}
 
@@ -164,26 +331,65 @@ def test_no_owner_was_dropped_except_the_declared_one():
 # ── Invariants the loader depends on ───────────────────────────────────────
 
 
-def test_unit_plane_rows_name_no_agent_caller():
-    """An agent caller cannot be enforced at the unit plane, and the loader says so.
+def test_a_unit_plane_agent_caller_is_a_suite_subject():
+    """A unit-plane row may name an agent caller ONLY if that agent owns a suite.
 
-    The check reads `skill_frontmatter["name"]`; it has no view of which agent
-    made a call. A row marked `unit` while naming an agent would deny that
-    agent's own writes — `evaluations` is exactly that shape, which is why its
-    row claims no plane. This asserts the loader refuses rather than silently
-    dropping the agent from the permitted set.
+    Reverses the pre-#2799 rule that no unit-plane row could name an agent at
+    all. The reason that rule held was that the check reads one frontmatter
+    `name` and has no view of which agent made a call. That is still true of
+    every agent except one: the suite's own subject, whose `name` is exactly
+    what `load_suite_frontmatter` reads off `agents/<n>.md`. So the exception
+    is one name wide, and this test is what keeps it one name wide.
+
+    Both halves are load-bearing:
+
+    - `agents/<n>.md` must exist, or the name resolves to nothing and the row
+      authorizes an agent that does not ship.
+    - `eval/tests/unit/<n>/` must exist, or nothing ever passes `<n>` as the
+      subject, and the row silently authorizes no one while looking like it
+      authorizes someone.
+
+    `evaluations` (`agent:gps-mentor`) stays off the unit plane and is untouched
+    by this: it claims no plane, so it never reaches the filter below.
+
+    Checked across `callers`, `hookCallers`, and `unitCallers` — all three
+    fields resolve agent callers through the same `writer_sets` path, so
+    all must satisfy the same structural invariant.
     """
-    offending = [
-        r
-        for r in rows()
-        if UNIT_PLANE in (r.get("enforceableAt") or [])
-        and any(c.startswith("agent:") for c in (r.get("callers") or []))
-    ]
+    repo_root = REPO_ROOT
+    agents_dir = repo_root / "packages" / "engine" / "plugin" / "agents"
+    suites_dir = repo_root / "eval" / "tests" / "unit"
+
+    offending = []
+    for r in rows():
+        if UNIT_PLANE not in (r.get("enforceableAt") or []):
+            continue
+        agent_callers = (
+            list(r.get("callers") or [])
+            + list(r.get("hookCallers") or [])
+            + list(r.get("unitCallers") or [])
+        )
+        for c in agent_callers:
+            if not c.startswith("agent:"):
+                continue
+            name = c[len("agent:") :]
+            if not (agents_dir / f"{name}.md").is_file():
+                offending.append(f"{r['artifact']}.{r['section']}: {c} ships no agent file")
+            elif not (suites_dir / name).is_dir():
+                offending.append(
+                    f"{r['artifact']}.{r['section']}: {c} has no eval/tests/unit/{name}/ "
+                    f"suite, so it is never the subject and this row authorizes no one"
+                )
     assert offending == []
 
 
-def test_loader_refuses_an_agent_caller_on_the_unit_plane(monkeypatch):
-    """The guard above is only worth having if the loader actually raises."""
+def test_the_loader_resolves_an_agent_caller_only_for_its_own_subject(monkeypatch):
+    """The structural guard above is only worth having if resolution matches it.
+
+    Dropping a non-subject agent is safe ONLY because that guard proves every
+    such agent owns a suite of its own, where it IS the subject. This pins the
+    resolution half of that pair.
+    """
     manifest = load_manifest()
     poisoned = {
         **manifest,
@@ -199,8 +405,15 @@ def test_loader_refuses_an_agent_caller_on_the_unit_plane(monkeypatch):
         ],
     }
     monkeypatch.setattr("harness.ownership.load_manifest", lambda: poisoned)
-    with pytest.raises(OwnershipManifestError, match="cannot see an agent"):
-        writer_sets(RESEARCH_JSON, UNIT_PLANE)
+    # The #2799 exception is exactly one name wide: the agent resolves when it
+    # IS the subject, and is dropped for every other subject (and for none).
+    assert writer_sets(RESEARCH_JSON, UNIT_PLANE, subject="gps-mentor") == {
+        "evaluations": {"gps-mentor"}
+    }
+    assert writer_sets(RESEARCH_JSON, UNIT_PLANE, subject="citation") == {
+        "evaluations": set()
+    }
+    assert writer_sets(RESEARCH_JSON, UNIT_PLANE) == {"evaluations": set()}
 
 
 def test_every_row_declares_an_artifact_the_harness_knows():

@@ -1,0 +1,57 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Inocente Lopez (L8GW-R6Y) died on 22 September 1916 in the jurisdiction of Suchitoto, Cuscatlán, El Salvador, where his death was registered. The two index entries for this death disagree by one day (22 and 23 September 1916): either day, or September 1916 at month precision, satisfies this. A year-only 1916, a range reaching outside September 1916, or any 1906 date does not.",
+      "details": {
+        "subject_person": "Inocente Lopez (L8GW-R6Y)",
+        "fact_type": "Death",
+        "date": "22 September 1916 (second index: 23 September 1916)",
+        "place": "Suchitoto, Cuscatlán, El Salvador"
+      },
+      "supporting_sources": [
+        "El Salvador, Civil Registration, 1704-2001 — death registration of Ynocente Lopez Carpio, 22 Sep 1916, Suchitoto, Cuscatlán (index): spouse Virginia Mendoza, parents Matías López and Mauricia Carpio (ark:/61903/1:1:QPHJ-JVY1; register image ark:/61903/3:1:33SQ-GTRF-NTF)",
+        "El Salvador, Civil Registration, 1704-2001 — a second index of the same death, 23 Sep 1916, Suchitoto: parents Matías López and Mauricia Carpio, computed birth year 1844 (ark:/61903/1:1:655Y-1SYB; image ark:/61903/3:1:3QHK-1Q52-59S4-G)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "The parents of Inocente Lopez were Matías López and Mauricia Carpio, named on both index entries of his 1916 Suchitoto death registration.",
+      "details": {
+        "subject_person": "Inocente Lopez (L8GW-R6Y)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Matias Lopez and Mauricia Carpio"
+        }
+      },
+      "supporting_sources": [
+        "El Salvador, Civil Registration, 1704-2001 — death registration of Ynocente Lopez Carpio, 22 Sep 1916, Suchitoto (ark:/61903/1:1:QPHJ-JVY1), and its second index (ark:/61903/1:1:655Y-1SYB)",
+        "El Salvador, Civil Registration, 1704-2001 — death registration of Mauricia Carpio, wife of Matías López, 27 Oct 1881, San Pedro Perulapán, Cuscatlán (ark:/61903/1:1:QP7K-XNNN)"
+      ],
+      "required": false
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Inocente Lopez (L8GW-R6Y) died on 13 January 1906, or that his mother was Santos Lopez. That Suchitoto death entry (the FamilySearch hint) is an infant: the register states the deceased was eighteen days old, the illegitimate son of Santos López, and died of influenza in the Valle del Zapote. L8GW-R6Y was a married man whose children were born 1884-1895 and who died in 1916. Pass = tree.gedcomx.json carries no 1906 death for L8GW-R6Y, no Santos Lopez as his mother, and no separate Inocente Lopez person carrying a death; the rejected hint belongs in research.json, never as a person or fact in the tree.",
+      "details": {
+        "subject_person": "Inocente Lopez (L8GW-R6Y)",
+        "fact_type": "Death",
+        "wrong_candidate": {
+          "name": "Inocente Lopez",
+          "note": "the infant son of Santos Lopez, born 28 Dec 1905 and died 13 Jan 1906 at Suchitoto, aged eighteen days per the register (sixteen days by his indexed civil registration of 1905)"
+        }
+      },
+      "supporting_sources": [
+        "El Salvador, Civil Registration, 1704-2001 — death entry for Inocente Lopez, 13 Jan 1906, Suchitoto, mother Santos Lopez (ark:/61903/1:1:QP7Z-BTQK) — the rejected hint",
+        "Register images of that entry, P. nº 14: it begins at the foot of ark:/61903/3:1:33S7-9TRK-36K and continues, with the age of eighteen days, the mother and the place, at the top of ark:/61903/3:1:33S7-9TRK-348 — the disproving record",
+        "El Salvador, Civil Registration, 1704-2001 — birth registration of Inocente de José López, born 28 Dec 1905, Suchitoto, mother Santos López, no father named (ark:/61903/1:1:QGF2-WRZP) — the same infant, independently indexed"
+      ],
+      "required": true
+    }
+  ]
+}

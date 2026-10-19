@@ -1,0 +1,42 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Jakub Wojtczak (PID PM7N-7HV), husband of Helena Bazelak, died on 19 March 1997 in Waterbury, New Haven County, Connecticut. That Connecticut death index entry is Frank J Wojtczak, a different man: the 1940 U.S. census shows Frank Wojtczak, born about 1917 in Connecticut, single and living as a son in the Naugatuck household of Thomas and Romanda Wojtczak, with no wife and no children aged about 7 and 4; his Social Security NUMIDENT entry gives the same 19 March 1997 death with parents Thomas J Wojtszak and Romualda M Cesarek; and his wife's 2006 obituary identifies her as Helen A Wojtczak, born Zgurzynski, mother of Barry, Richard and John. Pass = the final `tree.gedcomx.json` carries no 19 March 1997 death (or any 1997 Waterbury or Naugatuck death) for Jakub Wojtczak. A rejected candidate may be documented in `research.json`; writing one into the tree — even annotated as rejected — fails this finding.",
+      "details": {
+        "subject_person": "Jakub Wojtczak (PM7N-7HV)",
+        "fact_type": "Death",
+        "wrong_candidate": {
+          "name": "Frank J Wojtczak",
+          "note": "died 19 March 1997 in Waterbury, Connecticut, resident of Naugatuck, born 2 December 1917 (NUMIDENT: 1916) in Connecticut, son of Thomas Wojtczak and Romalda Cesarczyk; already attached to tree person GG6H-3LY"
+        }
+      },
+      "supporting_sources": [
+        "Connecticut, Death Index, 1949-2001 — death index entry for Frank J Wojtczak, 19 Mar 1997, Waterbury (ark:/61903/1:1:VZGY-L1L) — the rejected hint",
+        "United States, Census, 1940 — household of Thomas Wojtczak, Ward 3, Naugatuck, New Haven, Connecticut; son Frank Wojtczak, single, born 1917 Connecticut (ark:/61903/1:1:K71Y-ZVG) — the disproving record",
+        "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007 — Frank Joseph Wojtczak, born 2 Dec 1916 Union City, Connecticut, died 19 Mar 1997, parents Thomas J Wojtszak and Romualda M Cesarek (ark:/61903/1:1:6KML-34VT) — ties the hint's death to that son",
+        "United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015 — obituary of Helen A Wojtczak, died 15 Jun 2006, wife of Frank J Wojtczak, daughter of Stanley Zgurzynski and Florence Blecicka (ark:/61903/1:1:QKPK-M4T8) — the hint's spouse is not Helena Bazelak"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having searched for a death of Jakub Wojtczak after the 1942 birth of his youngest child, in Poland and worldwide, the agent should document a negative/exhausted-search conclusion: the 19 March 1997 Waterbury, Connecticut death is rejected as belonging to Frank J Wojtczak, a different man, and no record found establishes when or where Jakub Wojtczak died.",
+      "details": {
+        "subject_person": "Jakub Wojtczak (PM7N-7HV)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: death date and place not found",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "No death record for Jakub Wojtczak in FamilySearch's Polish record collections, 1942-2023 (record search restricted to Poland, by name, as a death and with any event; the collections reaching past 1942 are Poland, Church Books, 1568-1990; Częstochowa, Gliwice, Lublin and Radom Roman Catholic Church Books; and Poland, Evangelical Church Books, 1700-2005), nor a Jakub or Jacob Wojtczak death in any country, 1942-2023, nor a record naming him with spouse Helena Bazelak or as father of children by Helena"
+      ],
+      "required": true
+    }
+  ]
+}

@@ -34,6 +34,24 @@ class ValidatorRunResult:
     passed: bool
     error: str | None
     reporting_only: bool = False  # tier-2 report_* functions (issue #1749)
+    # A validator that raised pytest.skip() did not apply to this state and
+    # never executed its assertions. It stays `passed=True` — a validator that
+    # does not apply must not fail a test — but a skip is NOT evidence the
+    # thing it checks holds, and `passed` alone cannot tell the two apart.
+    # `outcome` is the field that can; keep it the discriminator rather than
+    # re-deriving one from the `error` prose.
+    skipped: bool = False
+    # True when the report_* function's signature draws only from
+    # before_state, after_state, test, and skill_frontmatter AND reads
+    # at least one of before_state/after_state — it reads persisted
+    # project state, not the response.
+    state_derived: bool = False
+
+    @property
+    def outcome(self) -> str:
+        if not self.passed:
+            return "failed"
+        return "skipped" if self.skipped else "passed"
 
 
 def run_validators(
@@ -47,8 +65,11 @@ def run_validators(
     test: dict[str, Any] | None = None,
     blocked_context_calls: list[dict[str, Any]] | None = None,
     blocked_protected_writes: list[dict[str, Any]] | None = None,
+    blocked_owned_section_writes: list[dict[str, Any]] | None = None,
     attempted_mcp_calls: list[dict[str, Any]] | None = None,
     skills_invoked: list[str] | None = None,
+    builtin_tool_calls: list[dict[str, Any]] | None = None,
+    agent_returns: list[dict[str, Any]] | None = None,
     text_response: str | None = None,
     activated: bool | None = None,
     num_turns: int | None = None,
@@ -73,6 +94,21 @@ def run_validators(
         # the LLM judge, which has misread it (a judge scored "failed to call
         # search-external-sites" on a run where the hook recorded the call).
         "skills_invoked": list(skills_invoked or []),
+        # Every built-in (non-MCP) tool call the run made, as
+        # {"tool", "args", "agent_id"?} — see skill_runner.builtin_call_record.
+        # The direct-agent arm (issue #2246) reads the `Agent`/`Task` records out
+        # of this to assert the spawn happened and that the delegation was
+        # relayed verbatim; `skills_invoked` cannot answer either, because a
+        # direct test invokes no skill at all. Derive with
+        # skill_runner.spawned_agents / spawn_prompts rather than re-walking it.
+        "builtin_tool_calls": list(builtin_tool_calls or []),
+        # What each spawned subagent returned. On the direct arm this is the
+        # AGENT's own text, where `text_response` is the dispatcher relaying
+        # it -- a reply-shape check must read this one or it grades the
+        # dispatcher. Empty when the agent under test returned nothing; a
+        # ROUTED run can spawn agents too, so a non-empty list is not a
+        # direct-arm signal.
+        "agent_returns": list(agent_returns or []),
         # Main-thread calls to subagent-only tools that the PreToolUse hook
         # denied (harness.context_policy). Non-empty means the skill broke the
         # context boundary. Note this is the *denied* set: because the hook
@@ -86,6 +122,13 @@ def run_validators(
         # `tool_calls`, so this is the only place a raw-write attempt is visible.
         # The universal validator asserts it is empty (issue #1493).
         "blocked_protected_writes": blocked_protected_writes or [],
+        # `research_append` ops the SHIPPED ownership rule refused and the hook
+        # denied (harness.context_policy.owner_denied). Same shape and rationale
+        # as the two above — the denied call never reaches `tool_calls`, so this
+        # is the only place an out-of-lane write is visible. Until issue #2022
+        # this plane never called that predicate, so a skill could write a
+        # section it does not own and still grade clean.
+        "blocked_owned_section_writes": blocked_owned_section_writes or [],
         # MCP calls the model emitted that never reached a fixture match —
         # denied by policy, fixture caps, or aborts. Distinct from tool_calls,
         # which records only successful dispatches. Used by test_tool_allowlist
@@ -98,9 +141,10 @@ def run_validators(
         # test-specific checks on test["tags"], e.g.
         #   if "slug-apostrophe" not in test.get("tags", []): pytest.skip(...)
         "test": test or {},
-        # Every assistant text block concatenated, not the final reply alone
-        # — the same string the run log stores as `output.text_response` and
-        # the judge grades.
+        # Every assistant turn's text, not the final reply alone — turns
+        # joined with "\n\n", blocks within one turn with no separator — the
+        # same string the run log stores as `output.text_response` and the
+        # judge grades.
         #
         # Here so a reply-shape rule can be decided mechanically instead of
         # inferred. Several skill bodies state one ("One sentence only", "do
@@ -171,6 +215,10 @@ def _import_validator_module(path: Path, name: str):
                 pass
 
 
+_STATE_ARGS = frozenset({"before_state", "after_state", "test", "skill_frontmatter"})
+_READS_STATE = frozenset({"before_state", "after_state"})
+
+
 def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResult]:
     out: list[ValidatorRunResult] = []
     for attr_name in dir(module):
@@ -182,6 +230,10 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
         if not callable(fn):
             continue
         sig = inspect.signature(fn)
+        params = set(sig.parameters)
+        is_state_derived = (
+            is_report and params <= _STATE_ARGS and bool(params & _READS_STATE)
+        )
         try:
             kwargs = {
                 name: available_args[name]
@@ -215,6 +267,7 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
             out.append(ValidatorRunResult(
                 name=attr_name, passed=True, error=None,
                 reporting_only=is_report,
+                state_derived=is_state_derived,
             ))
         except AssertionError as e:
             out.append(
@@ -222,17 +275,28 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
                     name=attr_name, passed=False,
                     error=str(e) or "assertion failed",
                     reporting_only=is_report,
+                    state_derived=is_state_derived,
                 )
             )
         except Skipped as e:
             # pytest.skip() raises Skipped (a BaseException subclass). Treat
-            # it as "validator did not apply" → passed with reason captured.
+            # it as "validator did not apply" → non-gating, with the reason
+            # captured and `outcome` recording that nothing was checked.
+            #
+            # The "skipped: " prefix on `error` is retained deliberately. It is
+            # the ONLY way to identify a skip in the run logs committed before
+            # `outcome` existed, so dropping it would make every corpus-wide
+            # count need two detection rules instead of one fallback. This is
+            # the single site that constructs a skip result, so the prefix and
+            # the flag cannot drift apart in harness-produced data.
             out.append(
                 ValidatorRunResult(
                     name=attr_name,
                     passed=True,
                     error=f"skipped: {e}",
                     reporting_only=is_report,
+                    skipped=True,
+                    state_derived=is_state_derived,
                 )
             )
         except Exception as e:  # noqa: BLE001 — validator bug, surface verbatim
@@ -255,22 +319,41 @@ def all_passed(results: list[ValidatorRunResult]) -> bool:
 
 def as_dicts(results: list[ValidatorRunResult]) -> list[dict[str, Any]]:
     return [
-        {"name": r.name, "passed": r.passed, "error": r.error}
+        {
+            "name": r.name,
+            "passed": r.passed,
+            "error": r.error,
+            "outcome": r.outcome,
+        }
         for r in results
         if not r.reporting_only
     ]
 
 
-def split_observations(results: list[ValidatorRunResult]) -> list[str]:
+def split_observations(
+    results: list[ValidatorRunResult],
+) -> tuple[list[str], list[str]]:
     """Extract anonymous observation texts from tier-2 report_* results.
 
-    Returns r.error (the observation text) for every reporting-only result
-    that failed and has an error message. Passing report_* results are
-    excluded (only fired findings appear). r.name (the function name) is
-    never included — it is a verdict, not an observation, and handing it
-    to the judge would anchor the grade.
+    Returns (response_observations, state_observations). Each list carries
+    r.error (the observation text) for every reporting-only result that
+    failed and has an error message. The partition is by function signature:
+    a report_* whose parameters draw only from before_state, after_state,
+    test, and skill_frontmatter AND include at least one of before_state or
+    after_state is state-derived (reads persisted project state); the rest
+    are response-derived.
+
+    Passing report_* results are excluded (only fired findings appear).
+    r.name (the function name) is never included — it is a verdict, not
+    an observation, and handing it to the judge would anchor the grade.
     """
-    return [
-        r.error for r in results
-        if r.reporting_only and not r.passed and r.error
-    ]
+    response_obs: list[str] = []
+    state_obs: list[str] = []
+    for r in results:
+        if not (r.reporting_only and not r.passed and r.error):
+            continue
+        if r.state_derived:
+            state_obs.append(r.error)
+        else:
+            response_obs.append(r.error)
+    return response_obs, state_obs

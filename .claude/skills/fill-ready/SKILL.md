@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks, each ten a mix of senior and junior work — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: a senior item ranks in its lane's pool alongside the junior work, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it is excluded from ranking until he answers, and the work behind it is often junior), `senior` (hard regardless, ranked into its lane's pool and picked up by a senior), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — both pools. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks, each ten a mix of senior and junior work — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: a senior item ranks in its lane's pool alongside the junior work, and no pool target covers the lead. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it is excluded from ranking until he answers, and the work behind it is often junior), `senior` (hard regardless, ranked into its lane's pool and picked up by a senior or by the lead), and logistics (unlabelled, anyone once cleared). Nothing on the board is ever pre-assigned: every item, multi-week structural bets included, is self-served from Ready. Promotes items that share a skill's eval snapshot and notes the sharing in both bodies, so whichever lands second knows it re-runs the eval. Gates every issue it moves through review-ready before promoting — both pools. Applies and removes the `high-priority` label on Ready cards from three criteria it re-derives every run — a soft "take this first" for whoever picks from the menu. The one exception is a card whose body carries a lead's `lead:` high-priority line: that is a ranking input wherever the card sits — promoted first and never swapped out. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -28,14 +28,14 @@ PROJ_ID="PVT_kwDOC-DkVc4BUEYb"
 STATUS_FIELD="PVTSSF_lADOC-DkVc4BUEYbzhBPBf8"
 # Backlog 0207fe08 / Ready f75ad846 / In Progress 47fc9ee4 / Review 4dc1cd86
 # Done 98236657 / Not planned c44314b0 — both terminal, closed issues only; never promote out of one
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000
 ```
 
 Each item carries `id` (the item id you need to move it), `content.number`,
 `status`, `assignees`, `title`, `labels`.
 
 **A closed issue counts for nothing, whatever column its card is in.** It fills
-no pool, holds no eval slot (Gate 4), loses no swap, and is never a blocker.
+no pool, shares no snapshot (Gate 4), loses no swap, and is never a blocker.
 `gh project item-list` reports the *column*, and the column follows the issue's
 state only when `.github/workflows/project-status-sync.yml` gets to it — so a
 just-closed card can still read `Review` for a while. Ready / In Progress /
@@ -44,9 +44,67 @@ ones, and "outside Backlog" is never the test for anything**, because it counts
 them too. **Feedback is none of the three** — it is an untriaged inbox that
 `/triage-feedback` owns and this skill never reads.
 
-**Re-read the board immediately before you apply anything.** The lead edits it
-while you work, so a snapshot taken at the start of a long analysis is stale by
-the end of it.
+**Verify the items you are about to move, immediately before you move them.**
+The lead edits the board while you work, so a snapshot taken at the start of a
+long analysis is stale by the end of it. That means re-reading *those items* —
+not re-listing all ~1200. Check each one with a single-node query, which is
+cheap and, unlike `item-list`, keeps working when the ProjectsV2 quota is
+exhausted:
+
+```sh
+gh api graphql -f query='query{node(id:"PVTI_..."){... on ProjectV2Item{
+  fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}}
+  content{... on Issue{number state
+    assignees(first:10){nodes{login}}
+    labels(first:30){nodes{name}}}}}}}'
+```
+
+**It has to return `assignees` and `labels`, not Status alone.** This skill
+promotes unassigned items and holds unassigned pool depths, so a self-assignment
+landing between your snapshot and the move is exactly what should stop it — and
+it is the most common mid-run change on this board. A Status-only check cannot
+see it, where the full re-list this replaces could.
+
+**Budget full `item-list` passes to two per run** — one to rank, one before the
+first write. One pass reads ~1200 items and costs ~1,300 points of a 5,000/hour
+GraphQL budget, so the fourth is already over the line and six in one run
+exhausted it mid-apply. Take the first at the top of § 1 "Measure Ready depth"
+and cache it — every board read in that section, in § 3 "The four gates" and in
+§ 6 "Above the junior pools" comes out of this file, not a fresh call:
+
+```sh
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+```
+
+Take the second when you rebuild the snapshot map before the first write (Gate 4),
+overwriting the same file. After those two, apply the moves you have made to the
+cached snapshot yourself and verify per item.
+
+**Read the budget live before a pass; `gh api rate_limit` cannot see it.**
+
+```sh
+gh api graphql -f query='query{rateLimit{remaining resetAt}}'   # costs 1 point
+```
+
+Measured 2026-09-14, seconds apart in one session: the GraphQL field read
+`remaining: 4994, used: 6` while `gh api rate_limit` read its `graphql` bucket as
+`5000/5000, used: 0`. The REST `reset` is blind the same way — sitting at
+`used: 0` it reported a full untouched hour, now + 60 min, while the real window
+had 53 left. So a wait computed from it overshoots by however long the real
+window has already been running. `rateLimit{resetAt}` is the true end, and the
+window opens on the first point you spend, not on the refusal.
+
+The single-node query above and `item-list --limit 1` cost **1 point each**
+(measured the same session), which is why both stay available when a full pass
+will not run.
+
+When the quota does trip: `gh issue view`/`edit` route through GraphQL and die
+with it, but REST has its own budget — `gh api repos/OWNER/REPO/issues/N` to
+read, `-X POST .../issues/N/labels -f 'labels[]=name'` to label. Column moves
+have no REST equivalent; poll `item-list --limit 1` until it succeeds — same
+endpoint, one row, so it answers the same question at a fraction of the cost —
+rather than sleeping to a reset timestamp. And never chain writes with `&&` — a
+mid-chain trip leaves an issue body edited and its labels not.
 
 Two labels carry the routing:
 
@@ -54,6 +112,14 @@ Two labels carry the routing:
 |---|---|
 | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
 | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose, prepared doctrine questions |
+
+**`high-priority` is a picker signal, not routing.** It tells whoever is scanning
+Ready *take this before any other card in your lane* — a soft ordering, not an
+interrupt. It is applied only to cards in Ready and is yours alone to add and
+remove: § 5 "Mark the high-priority cards". It is never a filing label, so one
+sitting anywhere but Ready is a hygiene finding, not a ranking input — **unless
+its body carries a `lead:` line**, which is the lead's standing order and the
+first thing the ranking reads ("The lead's `lead:` line ranks first").
 
 **The `feedback` label means untriaged, and nothing else.** An issue labelled
 `feedback` is a raw user bug report, filed automatically into the **Feedback**
@@ -83,6 +149,10 @@ with no decision behind them, filed there deliberately; `/review-icebox` owns
 that pool and promotes one by removing the label, at which point it ranks here
 normally.
 
+**Exclude `label:contributor` from the Backlog and Ready when ranking and when
+counting the pools.** Those cards are reserved for the Contributors
+(`docs/contributor-program.md`); their mentors hand them out.
+
 **Exclude `label:needs-decision` from the Backlog when ranking**, senior or not.
 The lead answers them in `/make-decisions`; the label coming off is what makes
 the item rankable here.
@@ -93,9 +163,9 @@ developer's review." That is fine on PRs and slightly wrong on issues. Don't
 re-litigate it; just know the label is doing two jobs.
 
 **Label only. Never set an assignee — on anyone, including the lead.** People
-self-serve from Ready and the lead hands work out at standup. This skill adds no
-assignee at all; the only pre-assigned items on the board are `cross-cutting`
-ones, and `/find-big-wins` assigns those at filing time.
+self-serve from Ready. This skill adds no assignee at all, and **nothing on this
+board arrives pre-assigned** — every item, structural bets included, is picked up
+by whoever takes it.
 
 **And never remove one either — a role/label mismatch is not a mis-route.** The
 lead is deliberately teaching the developers to be simple genealogists and the
@@ -122,27 +192,39 @@ today, and one lane can be short of eligible senior items through no fault of
 the ranking. Report the mix; do not swap a card out to hit a number.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1500 \
-  | jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0
-      and ((.labels|index("cross-cutting"))|not)) | .labels ]
+# The first of the two budgeted `item-list` passes (§ 0 "Board facts"). Everything
+# downstream reads this file; do not fetch the board again until the rebuild.
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0 and ((.labels|index("contributor"))|not)) | .labels ]
     | { developer: { total: map(select(index("developer")))|length,
-                     senior: map(select((index("developer")) and index("senior")))|length },
+                     senior: map(select((index("developer")) and index("senior")))|length,
+                     high_priority: map(select((index("developer")) and index("high-priority")))|length },
         genealogist: { total: map(select(index("genealogist")))|length,
-                       senior: map(select((index("genealogist")) and index("senior")))|length } }'
+                       senior: map(select((index("genealogist")) and index("senior")))|length,
+                       high_priority: map(select((index("genealogist")) and index("high-priority")))|length } }' \
+  /tmp/board.json
 ```
+
+**Report the `high-priority` share of each pool from the same numbers** —
+labelled over total, per lane. There is no cap, and the share is never a swap
+trigger; but when it passes half in a lane the ordering says nothing to a picker,
+and that sentence goes in the report.
 
 Count each pool **separately** — an item's label decides which target it counts
 against, and a pool at 16 while the other sits at 8 is invisible in a combined
 total. Assigned items do not count toward either target; someone is already on
 them.
 
-**There is no third pool for the lead.** He takes no issues — his job is coaching
-juniors into seniors — so nothing is ever assigned to `DallanQ` and no target
-covers him. Structural bets go to `/find-big-wins`; decisions get
-`needs-decision`, which `/make-decisions` drains daily.
+**There is no third pool for the lead.** His job is coaching juniors into
+seniors, so no target covers him — but he does take work, self-served from the
+`senior` pool like anyone else. Never assign to `DallanQ`, and never report a
+`senior` item as one he needs to pick up. Decisions get `needs-decision`, which
+`/make-decisions` drains daily.
 
-**`cross-cutting` items are outside both targets** — see "Cross-cutting items are
-the lead's direct assignments" below. Subtract them before you compute a pool.
+**A multi-week structural item is a pool member like any other.** It ranks in its
+lane against everything else and counts toward that lane's target while it sits
+unassigned; once someone takes it, the `(.assignees|length)==0` filter drops it
+out on its own. There is no separate class to subtract.
 
 **Do not size promotions to free people.** Busy people finish, and the menu has
 to be stocked when they do — how many people are idle right now is not the
@@ -167,6 +249,14 @@ back down. State the arithmetic either way so the lead can overrule it:
 
 **Promoting zero is a valid answer** when both pools are at target and nothing in
 Backlog outranks what is there. Say so plainly rather than padding to a number.
+
+**Return every Ready card that has gained `needs-decision` since it was promoted,
+senior or not, at any pool depth.** It is not a swap and does not wait for
+something to displace it — below target there is no swap for it to lose, and it
+is still a card nobody can pick up for a reason the card does not show. The
+Backlog exclusion cannot reach a card already in Ready, and `/review-ready` hands
+this case over by design ("on a standing-pool run the item is already in Ready;
+report it for the swap").
 
 ### What loses a swap
 
@@ -205,8 +295,8 @@ card**: it says whose approval can unblock a code PR, and who picks one of these
 off Ready. It is not a promotion out of the junior work — a senior still takes
 that too, which is why both kinds sit in one pool.
 
-**The lead is not the fallback.** He takes no issues, so "route it to him" is no
-longer an option.
+**The lead is not the fallback.** He self-serves from the `senior` pool like
+anyone else, so "route it to him" is not a move this skill makes.
 
 **Then ask the second question, which is the one that decides who can start: is
 it hard, or is it merely undecided?** Most items that fail the junior test fail it
@@ -266,39 +356,21 @@ pool is about to run dry, and the cheapest fix is usually the lead answering the
 Gate-2 questions that convert senior items into junior ones. Say that in the
 report — it is more actionable than the promotion list.
 
-### Cross-cutting items are the lead's direct assignments
+### Structural bets rank like everything else
 
-An issue labelled **`cross-cutting`** comes out of `/find-big-wins` — a
-structural bet the lead has already decided on and researched with Claude. It is
-the one thing on this board that arrives pre-assigned, because he hands it to a
-named person rather than leaving it on the menu for whoever gets there first.
+A structural bet out of `/find-big-wins` is a `senior` item with a long shape. It
+carries no special label and gets no special routing: it ranks in its lane's pool
+against the rest of the senior work, and a senior picks it up from Ready the same
+way they pick up anything.
 
-```sh
-gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 100 \
-  --label cross-cutting --json number,title,assignees,updatedAt \
-  -q '.[] | "\(.updatedAt[0:10])\t#\(.number)\t\(.assignees[0].login // "UNASSIGNED")\t\(.title)"' | sort
-```
+**Nobody assigns work on this board, including the lead.** He self-serves like
+everyone else. Never report an item as needing an owner, and never propose an
+assignment.
 
-Four rules:
-
-- **Assigned `cross-cutting` items skip the seniority routing entirely.** The
-  lead chose the person, having done the research himself. Do not re-run the
-  junior-safe / senior-required test on one, and never move one into an
-  unassigned pool — an unassigned structural bet is the worst possible board
-  object, since it looks pickable and is not.
-- **They count toward no target.** Someone is already on it, and its multi-week
-  shape would distort a menu meant to be picked from daily.
-- **One active `cross-cutting` item per person, not one per week.** These are
-  multi-week structural projects. If a second is assigned to someone who already
-  holds an active one, that is a finding for the report, not a promotion
-  decision — name both and let the lead pick which is active.
-- **An *unassigned* `cross-cutting` item is a mis-file, not a pool member.**
-  Report it and leave it in Backlog. `/find-big-wins` assigns at filing time, so
-  an unassigned one means the assignment step was skipped.
-
-Report the active ones every run as their own line: who holds each, and how long
-since it last moved. Nothing else on the board makes a multi-week project
-visible, and an idle one is the most expensive stalled card there is.
+Report any **unassigned item older than ~30 days in Ready** as its own line, with
+its age. That is the shape a multi-week bet decays into when nobody takes it, and
+it is the most expensive stalled card on the board — but the signal is the age, not
+a label.
 
 ### Arrival vs. closure — the trend that outranks the day's move
 
@@ -368,6 +440,13 @@ milestone's own question:
   (issues #998 / #999 / #1006), halt-on-tool-layer-loss (issue #941), and the
   wiki/pop-stats deployment (issue #290 — the defaults are one developer's
   tailnet and 28–35% of those calls fail, silently thinning locality guidance).
+  **Speed gates Beta too (lead, 2026-09-23):** a non-expert will not wait out a
+  multi-hour run, so work that makes a run faster or cheaper is Beta-gating. Today
+  that is the skill-to-agent conversions (`cluster:agent-conversion`) and every
+  open card those are blocked on. The model/effort floor search is
+  one system-wide sweep, Wave 4 of `docs/plan/cost-latency-10x.md`. Promise owns
+  it, and it has no card to rank. Derive the set from that label and each
+  card's `Blocked on` lines, not from a list.
 - **Public-launch gate** — *does a stranger's use, at volume and unsupervised,
   break the product or us?* That covers untrusted input reaching a
   write-capable agent, seeing quality for real users rather than fixtures, the
@@ -402,6 +481,21 @@ usually 10–20 of them. Ranking heuristics, in order:
    router sends the wrong question to, an unbounded hunt that burns a two-hour
    cap — these change what the product does. Rank on that, not on effort.
 4. **Everything else.**
+
+### The lead's `lead:` line ranks first
+
+An open card whose body carries `> **High priority (<date>):** lead: <login>` —
+in any column — ranks above heuristics 1–4 and above the critical-path reorder
+below. It is the lead's standing order, not a hint:
+
+- **Promote it first in its lane** whenever it passes Gate 1 (hard blocker) and
+  Gate 2 (open question). A blocked one stays in Backlog; name its blocker in
+  the report, and if that blocker is not itself lead-marked, say so.
+- **At target, it takes the slot of the lowest-ranked card without a `lead:`
+  line**, which goes back to Backlog in the same pass. It never loses a swap.
+- It still goes through `/review-ready` before promotion, like every card.
+
+Only Richard or Dallan adds or removes the line, by hand; never propose removing it.
 
 ### Critical path beats rank when the slack runs out
 
@@ -441,10 +535,11 @@ Deprioritise, explicitly and out loud: anything downstream of a broken
 measurement (assigning it buys numbers nobody can read), and anything whose
 cost is a paid eval run that a nearby issue is about to spend anyway.
 
-## 3. The four gates — nothing enters Ready that fails one
+## 3. The four gates
 
 A Ready item must be startable *today* by one person who reads only that issue.
-Check all four. They fail differently and the distinction matters.
+Check all four. Gates 1 and 2 keep an item out of Ready; Gates 3 and 4 only
+sequence it against other work, and never disqualify it.
 
 ### Gate 1 — hard blocker
 
@@ -486,9 +581,17 @@ designs without choosing, is **not Ready** regardless of its dependencies. A
 junior handed it either guesses at a decision that was the lead's, or stalls.
 
 These are not blocked on a task — they are blocked on a decision only the lead
-can make. **Label them `needs-decision`, not `senior`**: the work behind the fork
-is frequently junior, and calling it senior sends a sentence looking for a scarce
-person. Leave them in Backlog and name, in your report, the decision and the
+can make. **Label them `needs-decision` only when the fork passes `task-reviewer`'s
+four-way test**: one live option spends money the card does not budget, sets
+doctrine or precedent, adds hard-to-reverse surface, or touches a prior ruling.
+A fork whose every live option is $0, reversible, precedent-free and clear of any
+prior ruling is decided by the reviewer, not queued. Grep the comments for
+`Ruling` and `Decision` before labelling; a ruled question is applied, not
+re-asked. The work behind a real fork is frequently junior, and reaching for
+`senior` on an item that is merely undecided sends a
+sentence looking for a scarce person. Add `senior` **as well** when the work
+would still be hard after the answer — the two are orthogonal, and an item that
+is both carries both. Leave them in Backlog and name, in your report, the decision and the
 Ready-able task it unblocks. That pairing is the highest-value line you
 produce — one answer turns a stuck item into a junior task.
 
@@ -498,8 +601,8 @@ Two items that edit the same files are sequenced, not blocked. Promote them — 
 the pairing has to survive into the issues themselves, because the two people who
 pick them up will never read your report.
 
-**Contention over a skill's eval snapshot is the exception and is Gate 4** — that
-one is hard, because the second item cannot land without paying for a second run.
+**A shared skill eval snapshot is Gate 4**, and it is soft the same way — it
+only adds a re-run for whichever lands second.
 
 #### Finding them
 
@@ -518,7 +621,8 @@ lines, so it is only ever as good as they are — a missing line means an item
 simply does not appear.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 > /tmp/board.json
+# /tmp/board.json is the cached snapshot from § 1 "Measure Ready depth" — not refetched
+git fetch origin main --quiet
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
   --json number,title,body > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -528,13 +632,17 @@ python3 .claude/skills/fill-ready/collisions.py \
 ```
 
 **Three guards keep it from firing on almost everything. Do not remove one
-without re-measuring.**
+without re-measuring.** Guard 2 and the `**Touches:**` parsing live in
+`.claude/skills/lib/touches.py`, shared with `/merge-issues`' `slots.py` — a
+change there moves both passes, so re-run each after editing it.
 
 | Guard | What it means |
 |---|---|
 | A concrete file never implies its directory | Two files in `src/tools/` are not a collision |
 | A bare directory pairs only if it is a snapshot path or a **unit dir** — never an ordinary container | Naming `src/tools/` means "I add a file here", not "I edit all 47". A skill dir, a scenario, an e2e fixture *is* the unit, so naming it does mean all of it |
 | A file named by more than 3 candidates is a hub, reported once | `docs/architecture.md` is the repo's map; everyone edits it, in different sections |
+
+**"Touches paths deleted on origin/main"** lists paths a card names that `main` deleted, for the statuses the run was given; a Backlog card is checked only when `Backlog` is among them. Fix that card's Touches line to name where the work lives now, unless the card restores the path.
 
 **Do not swap the unit/container test back for a size threshold.** Size is a
 proxy that misses in both directions: `apps/server/app/sandbox` is 5 files and a
@@ -545,8 +653,8 @@ container, `eval/runlogs/unit/<skill>` is 11 and a unit.
 as punctuation. That is why the "too broad to pair" list exists and says *read
 these by hand* — it is the honest bucket, not a failure.
 
-The verdict it prints is advisory: a shared **snapshot** path means Gate 4 and is
-hard, anything else is Gate 3 and only needs the notes below. Read the pairs, do
+The verdict it prints is advisory: a shared **snapshot** path means Gate 4,
+anything else Gate 3. Both only need the notes below. Read the pairs, do
 not paste them — the script cannot tell "both edit this file" from "one deletes
 what the other adds".
 
@@ -575,60 +683,54 @@ Match the wording to the relationship:
 
 Then say it in your report as well, so the lead can hand both to one person.
 
-### Gate 4 — the skill's eval slot is already taken
+### Gate 4 — shared eval snapshot (does *not* disqualify)
 
-**At most one item touching a given skill's eval snapshot may be in an active
-column at a time** — Ready, In Progress, or Review. If one is already there, the
-next one is not Ready — leave it in Backlog and name the holder.
+Two items that change one skill's eval snapshot are sequenced, not blocked.
+Whichever lands first makes the other's run log inactive, so the second pays its
+own `make eval-skill` (roughly $8–12 and 45–65 minutes) plus a fresh `.ann.json`
+over its `review_sample`. Re-annotation is cheap (lead, 2026-09-20), so that
+re-run is the whole cost, and it is far smaller than an empty menu. Promote both.
 
-**An unstarted `senior` card yields the slot to a junior challenger** — it goes
-back to Backlog. An assigned or in-progress holder of either kind keeps it.
+**Then write the reciprocal note at the top of both bodies**, in the same place
+as Gate 3's:
 
-**Only an open issue in one of those three columns holds a slot.** Never test
-"outside Backlog" — that is wrong in both terminal directions, since Done and Not
-planned are outside Backlog too. A closed issue holds nothing: whatever it was
-going to change, it is not going to change it, so nothing is waiting on it and
-the next item can go.
-
-**When the column and the issue's state disagree, the state wins.** Closing an
-issue does not move its card — `.github/workflows/project-status-sync.yml` does,
-and it is a workflow, not an atomic write. So a card can sit in Review for a
-while after its issue closed, and a pass that reads the column alone will hold a
-whole skill shut on an issue nobody is working. Check `state` on any holder
-before you believe it, and say so when you find one:
-
-```sh
-gh issue view <holder> --repo PioneerAIAcademy/cowork-genealogy \
-  --json number,state,stateReason,title
+```
+**IMPORTANT**: Shares the `<skill>` eval snapshot with #N — whichever lands second rebases and re-runs `make eval-skill SKILL=<skill>`.
 ```
 
-It is hard rather than soft because a skill's run log goes inactive the moment
-any file under its snapshot changes. Two such items cannot share a run however
-they are sequenced: each pays its own `make eval-skill` **plus a fresh
-`.ann.json` with a correction entry for every dimension of every test** — 27
-tests for `record-extraction` — and whichever lands first invalidates the
-other's run log. Promoting both produces rework, not parallelism.
+When the other side is an open PR rather than an issue, the note goes on the
+issue alone and names the PR.
 
-**The snapshot set — an item takes the slot only if it changes one of these:**
+**A free snapshot is a tiebreaker, never a gate.** Between two items of
+comparable impact, prefer the one nobody else is changing the snapshot of.
+
+**Only an open issue in Ready, In Progress or Review, or an open PR, shares a
+snapshot.** A closed issue shares nothing, whatever column its card still reads —
+`.github/workflows/project-status-sync.yml` moves the card after the close, not
+atomically with it. Check `state` before you write a note naming one.
+
+**The snapshot set — an item shares a skill's snapshot only if it changes one of these:**
 
 - `packages/engine/plugin/skills/<skill>/**` — including `references/` and comments
 - `eval/tests/unit/<skill>/**` — `rubric.md` and the test JSON
 - `packages/engine/plugin/agents/<agent>.md` for an agent the skill references via
-  `@plugin:` — that gates **every** skill naming it, so check the fan-out:
+  `@plugin:` — that is **every** skill naming it, so check the fan-out:
   `grep -rl "@plugin:<agent>" packages/engine/plugin/skills/*/SKILL.md`
 
 **Key it on paths, not on the skill's name in the title.** Two PRs can both be
 titled `record-extraction:` while only one touches the snapshot, and a tool fix
-whose own DoD says *not* to edit the SKILL.md does not take the skill's slot.
+whose own DoD says *not* to edit the SKILL.md shares nothing with it.
 
-**Build the whole map in one pass, before you rank anything.** A per-skill query only
-answers about the skill you thought to ask about, and the slot you miss is the one whose
-holder's title never mentions it. Two inputs, and you need both: the changed paths of
+**Build the whole map in one pass, before you write any notes.** A per-skill query only
+answers about the skill you thought to ask about, and the sharer you miss is the one whose
+title never mentions it. Two inputs, and you need both: the changed paths of
 every open PR (the only input here that is not self-reported), and the `**Touches:**`
 line of every open issue in **Ready, In Progress or Review** — not Review and PRs alone.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 > /tmp/board.json
+# Ranking pass: reuse /tmp/board.json from § 1 "Measure Ready depth".
+# Pre-write rebuild: refresh it first — that is the second budgeted pass.
+#   gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
   --json number,title,body > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -672,39 +774,32 @@ PY
 **Read a `body-fallback` row as "unverified", never as "held".** It means the issue has
 no `Touches:` line and the skill name merely appears somewhere in its prose — open it and
 decide. An issue that cites a SKILL.md as *evidence* and edits none of its files is not a
-holder, and treating it as one blocks a free slot. An `AGENT:` row gates **every** skill
+sharer, and treating it as one writes a false note. An `AGENT:` row covers **every** skill
 naming that agent via `@plugin:` — check the fan-out with the grep above.
 
 **Neither shortcut works, and they fail in opposite directions.** Keying on the title
-misses a holder whose title names none of its skills — one issue's `Touches:` line held
-three slots that no title match could see. Keying on any body mention does the reverse
+misses a sharer whose title names none of its skills — one issue's `Touches:` line
+named three snapshots that no title match could see. Keying on any body mention does the reverse
 and manufactures the false positive above. Only the `Touches:` line, with the body as a
 flagged fallback, gets both right.
 
-**Scanning only open PRs and Review misses In Progress**, so a PR-only read reports a
-slot free the day after the deep dive holding it merged, and the next card in is
-un-startable.
+**Scanning only open PRs and Review misses In Progress**, so a PR-only read misses the
+sharer someone is actively working, and neither side gets its note.
 
 **A `**Touches:**` line is a hint, not proof. Where it and real paths disagree, the paths
 win.** Discount a `Touches:` line inherited from an issue since closed `not planned`.
 
 **The map is a snapshot.** It is right for the pass that produced it and stale by the next
-one — re-run it before you write anything to the board, and tell a junior to re-check the
-slot before opening a PR rather than trusting a table in an issue body.
+one — rebuild it before you write anything to the board (this is the second of the
+two budgeted `item-list` passes in § 0 "Board facts").
 
 **This map only sees snapshot paths, and that is correct — but it is not the whole
 collision picture.** `build_snapshot` deliberately excludes
 `packages/engine/mcp-server/src/**`, so two items rewriting one engine file collide
 without ever appearing here. That is Gate 3's detector, above; run both.
 
-**Reclaim a stalled slot.** A holder that has not moved in ~10 days is blocking a
-whole skill. Say so in your report with the assignee and the idle count, and
-propose returning it to Backlog so the next item can go. Do not reclaim
-silently — it is the lead's call.
-
-**A queue three or more deep is a finding, not a schedule.** Report it. The fix is
-to merge those issues into fewer, larger ones so one run carries what would have
-been three — that happens in `/audit-board`, not here. Note it and move on.
+**Three or more active items on one snapshot is worth a line in the report**, as a
+possible `/merge-issues` candidate — not a reason to hold anything back.
 
 ## 4. Split before you promote
 
@@ -726,15 +821,14 @@ Split when any of these holds:
 Do **not** split for size alone. Three edits to one file by one person is one
 task; splitting it triples the review and merge cost for nothing.
 
-**Do not split one skill-snapshot item into two.** Under Gate 4 the halves cannot
-run in parallel, and landing them sequentially buys a second paid run plus a
-second full annotation pass for work that would have shared one. Split only when
+**Do not split one skill-snapshot item into two.** Both halves would pay their
+own `make eval-skill` run for work that would have shared one. Split only when
 **at most one half touches the snapshot** — which is usually what the criteria
 above already select for. The model is an item whose doctrine question ("is a
 census residence fact primary or indeterminate?") touches no snapshot and is
 answerable by a genealogist today, while its mechanical half — adding the
-matchers once the answer exists — merges into whichever item next takes the
-skill's slot.
+matchers once the answer exists — merges into whichever item next changes the
+skill's snapshot.
 
 How:
 
@@ -776,12 +870,58 @@ gh project item-edit --id "$ITEM_ID" --project-id "$PROJ_ID" \
   --field-id "$STATUS_FIELD" --single-select-option-id "f75ad846"
 ```
 
-Verify with a fresh `gh project item-list`. New issues land in Backlog via an
+Verify with a single-node query per moved item (§ 0 "Board facts"), not a fresh
+full `item-list`. New issues land in Backlog via an
 auto-add workflow that sets nothing else — a freshly filed issue that belongs in
 Ready still needs this move. (A raw feedback submission is the exception: the
 same workflow files it into the Feedback column, where `/triage-feedback` moves
 it to Not planned or to Backlog, dropping the `feedback` label on the way. It
 reaches you as an ordinary issue and is promoted with this move like any other.)
+
+### Mark the high-priority cards
+
+After the promotions above, and over every card **in Ready** — nowhere else; the
+signal means something only to someone scanning the menu — decide which carry
+`high-priority`. A card qualifies on **any one**
+of three criteria. Effort is never one.
+
+1. **Critical path.** It gates a milestone and its honest lead time is longer
+   than the slack computed above — the same item the previous section already
+   sends to the top of its pool.
+2. **Live harm shipping now.** Heuristic 1: silent corruption, a wrong conclusion
+   reaching a user, a guardrail hole in a production path.
+3. **A lead's call.** Applied by hand by Richard or Dallan, to a card in any
+   column, and never proposed for removal here — only by hand. It is also the
+   one criterion that ranks: see "The lead's `lead:` line ranks first".
+
+**Every application writes one line into the body**, directly below any
+`> **Reviewed …**` line and above the body proper, naming the criterion and the
+date. It is what tells the next run — and the picker — why the card is marked:
+
+```
+> **High priority (2026-09-08):** critical path — gates Beta; ~5 wks lead vs 8 wks slack.
+> **High priority (2026-09-08):** live harm — <one clause>.
+> **High priority (2026-09-08):** lead: <login>.
+```
+
+**Re-derive criteria 1 and 2 every run.** A labelled card whose criterion has
+lapsed — the slack recovered, the harm fixed upstream — or that has left Ready,
+or whose line reads `holds <skill>` (a criterion retired 2026-09-25), gets a proposed `--remove-label high-priority`
+and the body line deleted in the same write. A card whose line reads `lead:` is
+left alone. A card whose criterion changed gets the line rewritten.
+
+Propose additions, removals and rewrites together in the report (Output shape,
+1c), each with its criterion, and apply only what is approved:
+
+```sh
+# add — the body line always goes in the same write as the label
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label high-priority
+gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy --json body -q .body > /tmp/body.md
+# insert `> **High priority (<date>):** <criterion> — <clause>.` below any `> **Reviewed` line, then:
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file /tmp/body.md
+# remove — same shape, deleting the line
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --remove-label high-priority
+```
 
 **Gate every issue you are moving into Ready through `/review-ready` before you
 promote it — both pools, not just `developer`, and not just the ones you
@@ -823,18 +963,19 @@ junior.
 
 Promote what comes back `ready` or `ready-after-edit`. A `senior` or
 `needs-a-decision` verdict on an item you had ranked junior is a seniority miss
-caught in time. **The two get different labels** (`senior` vs `needs-decision`)
-and different remedies, and the verdict tells you which: `needs-a-decision` means
-one answer unblocks it, so it leaves the ranking until `/make-decisions` drains
-it; `senior` means it is hard regardless, so it keeps its place in its lane's
-pool and is promoted with the label on. Running the gate after promotion instead
-works, but pays for the same deep read twice.
+caught in time. **The two labels answer different questions, and a verdict can
+earn both:** `needs-a-decision` means one answer unblocks it, so it leaves the
+ranking until `/make-decisions` drains it; `senior` means it is hard regardless,
+so it keeps its place in its lane's pool and is promoted with the label on. An
+item that is both waits for the answer and then goes to a senior. Running the
+gate after promotion instead works, but pays for the same deep read twice.
 
 ## 6. Above the junior pools — three states, not one
 
-**The lead takes no issues.** His job is coaching juniors into seniors, so there
-is no pool assigned to him, nothing here ever adds `DallanQ` as an assignee, and
-"route it to the lead" is not an available move.
+**No pool target covers the lead.** His job is coaching juniors into seniors, so
+no target counts him — he takes work by self-serving from the `senior` pool.
+Nothing here ever adds `DallanQ` as an assignee, and "route it to the lead" is
+not an available move.
 
 Work above the junior pools is **three states that look alike in a Backlog list
 and behave completely differently**, and telling them apart decides who can start.
@@ -848,17 +989,21 @@ and behave completely differently**, and telling them apart decides who can star
 **`needs-decision` is the one state that is never ranked.** The other two are
 promoted into their lane's pool once startable. A `needs-decision` card in Ready
 would be a card nobody can pick up for a reason the card does not show, which is
-the failure the labels exist to prevent. Carrying both labels puts an item in
-neither state; see "Do not label both" below.
+the failure the labels exist to prevent. This holds **senior or not** — § 0
+"Board facts" already excludes the label from the ranking unconditionally.
 
 **`needs-decision` is a distinct verdict, not a softer `senior`.** It is the
 label form of `task-reviewer`'s `needs-a-decision` verdict. An item that is
 merely undecided, labelled `senior`, is the worst case: it looks like it needs a
 rare person when it needs a sentence.
 
-**Do not label both.** If the decision is the only thing in the way, it is
-`needs-decision` — the work behind it may well be junior. Reach for `senior` only
-when the item would still be hard *after* every open question is answered.
+**The two labels are orthogonal — label both when both are true.** `senior`
+answers *who does the work* once the item is startable; `needs-decision` answers
+*what is blocking it now*. A hard item waiting on one answer is genuinely both:
+it stays out of the ranking until the lead rules, and then goes to a senior in
+its lane rather than into the junior pool. The table's three rows are the common
+cases, not an exclusive partition. The mistake to avoid is the one named above —
+`senior` on an item that is only undecided — not the pairing itself.
 
 ### Which lane a `senior` item goes to
 
@@ -898,10 +1043,11 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 
                  | test("(?m)^#{1,4} +(Ruling|Decision)\\b|\\*\\*(Ruling|Decision)\\b")] | any)
              then "ANSWERED" else "WAITING" end) as $s
       | "\(.updatedAt[0:10])\t\($s)\t#\(.number)\t\(.title)"' | sort
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1500 \
-  | jq -r '.items[] | select((.labels|index("senior"))
+# /tmp/board.json is the cached snapshot from § 1 "Measure Ready depth" — not refetched
+jq -r '.items[] | select((.labels|index("senior"))
       and (.status|IN("Backlog","Ready","In Progress","Review")))
-    | "\(.status)\t\(if (.assignees|length)==0 then "unassigned" else "assigned" end)\t#\(.content.number)\t\([.labels[]|select(.=="reviewed" or .=="needs-decision" or .=="icebox")]|join(","))"' | sort
+    | "\(.status)\t\(if (.assignees|length)==0 then "unassigned" else "assigned" end)\t#\(.content.number)\t\([.labels[]|select(.=="reviewed" or .=="needs-decision" or .=="icebox")]|join(","))"' \
+  /tmp/board.json | sort
 ```
 
 Report each separately — they have different remedies:
@@ -934,8 +1080,9 @@ Report each separately — they have different remedies:
 - **Which of either gate a milestone**, and how long they have sat.
 
 You do not assign from either queue. You **do** rank the `senior` one — those
-items rank in their lane's pool like anything else. The `needs-decision` queue
-you neither rank nor assign; it is `/make-decisions`' to drain.
+items rank in their lane's pool like anything else, unless they also carry
+`needs-decision`. The `needs-decision` queue you neither rank nor assign; it is
+`/make-decisions`' to drain.
 
 ### The milestones depend on both queues moving
 
@@ -1049,11 +1196,9 @@ how issue bodies come to carry figures that do not survive a re-run.
 
 **A paid eval run is the hidden price of most eval fixes.** Editing a skill body,
 a rubric, or a test file flips that skill's run log inactive, so landing it needs
-a fresh `--skill <name>` run plus a genealogist annotation — roughly $8–12 and
-45–65 minutes of machine time, plus real human hours. So:
+a fresh `--skill <name>` run plus a (now cheap) genealogist annotation —
+roughly $8–12 and 45–65 minutes of machine time. So:
 
-- Two Backlog items touching the same skill are **one** promotion, to one person.
-  Say it.
 - A one-line fix that costs a full run should ride along with a run already being
   spent. Name which.
 - Never propose a standalone one-line eval fix without naming its run cost.
@@ -1076,6 +1221,13 @@ list it does not appear in. Add state when it matters.
    junior-blocked / junior-after-a-decision / senior, and whether the junior pool
    is about to run dry. Add the arrival-vs-closure line for the last four weeks,
    flagged if arrival has led for three.
+1c. **High-priority cards** — every card carrying the label, with its criterion;
+   proposed additions, each with its criterion and the body line you will write;
+   proposed removals, each with the criterion that lapsed or the column it left; and the
+   per-lane share from section 1, with the sentence when a lane passes half.
+   `lead:` cards are listed — including those still in Backlog, each with what
+   blocks it — never proposed for removal. A picker reads the
+   label, not this report, so this is the only place the reasoning is visible.
 2. **Splits** — anything you broke in two, and which half is going to Ready. Skip
    the heading if you split nothing.
 3. **Promote to Ready** — a table: issue, the **impact clause** (what right
@@ -1092,17 +1244,15 @@ list it does not appear in. Add state when it matters.
    bottleneck is answers, not people. You do not rank or assign from either.
 6. **Held back, and why** — the items that failed a gate, named with the gate.
    This is the section that stops the lead re-asking about them tomorrow.
-6a. **Cross-cutting** — one line per active `cross-cutting` item: who holds it,
-   days since it last moved, and any person holding two. Flag any unassigned one
-   as a mis-file. Skip the heading when there are none.
-6b. **Skill slots** — one line per skill whose slot is held by an **open** issue
-   in Ready, In Progress or Review: the holder, its idle days, and how many are
-   queued behind it. Flag a holder idle ~10 days as a reclaim proposal, and a
-   queue three or more deep as a merge candidate for `/audit-board`. A holder
-   whose issue has closed frees the slot immediately — report it as freed, name
-   what is now promotable behind it, and do not wait for the card to move. Skip
-   the heading when every slot is free.
+6a. **Long-stalled in Ready** — one line per unassigned item that has sat in
+   Ready for ~30 days or more: its age and its lane. This is where a multi-week
+   structural bet nobody takes becomes visible. Skip the heading when there are
+   none.
+6b. **Shared snapshots** — one line per skill snapshot that two or more active
+   items (open issues in Ready, In Progress or Review, or open PRs) change: the
+   items, and whether the reciprocal notes are written. Flag three or more as a
+   possible `/merge-issues` candidate. Skip the heading when none are shared.
 7. **Grooming** — capped, with verdicts.
 
-Then stop and wait for approval. Apply only what he approves, re-reading the
-board first. Do not begin any of the work.
+Then stop and wait for approval. Apply only what he approves, verifying each
+item you move first (§ 0 "Board facts"). Do not begin any of the work.

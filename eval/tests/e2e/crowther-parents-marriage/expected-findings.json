@@ -17,7 +17,8 @@
       },
       "supporting_sources": [
         "1860 U.S. Census, 8th District, Baltimore County, Maryland — household including John Crowther, with daughter Mary. FamilySearch ark:/61903/1:1:M69G-C7P.",
-        "1880 U.S. Census, Baltimore County, Maryland — household of John Crowther, with Mary Crowther listed among residents. FamilySearch ark:/61903/1:1:MN31-HCJ."
+        "1880 U.S. Census, Baltimore County, Maryland — household of John Crowther, with Mary Crowther listed among residents. FamilySearch ark:/61903/1:1:MN31-HCJ.",
+        "Ancestry — Maryland Births 1854, search for Mary Crowther b. 1854: 0 results (bundled capture ancestry-md-births-1854-crowther-mary-NEGATIVE.pdf). Corroborates that no indexed Maryland birth record for Mary Crowther appears in this collection under that name and spelling."
       ],
       "required": true
     },
@@ -37,7 +38,8 @@
         }
       },
       "supporting_sources": [
-        "1860 U.S. Census, 8th District, Baltimore County, Maryland — household including John Crowther and (by marriage) Honor Crowther, with daughter Mary. FamilySearch ark:/61903/1:1:M69G-C7P."
+        "1860 U.S. Census, 8th District, Baltimore County, Maryland — household including John Crowther and (by marriage) Honor Crowther, with daughter Mary. FamilySearch ark:/61903/1:1:M69G-C7P.",
+        "Ancestry — Maryland Compiled Marriages, search for John Crowther × Honor Bosley: 0 results (bundled capture ancestry-md-marriages-crowther-john-bosley-honor-NEGATIVE.pdf). Corroborates that no indexed Maryland marriage record for this couple appears in this collection under those names and spellings."
       ],
       "required": true
     },
@@ -59,7 +61,8 @@
       "supporting_sources": [
         "1900 U.S. Census, Rochester, Monroe County, New York — entry for Edward Prizer and Mary Prizer with their children. FamilySearch ark:/61903/1:1:MSJW-8MY.",
         "1910 U.S. Census, South Orange, Essex County, New Jersey — entry for Edward Prizer and Mary Prizer. FamilySearch ark:/61903/1:1:MKY7-GXB.",
-        "New Jersey State Census, 1905 and 1915 — entries for Edward Prizer and Mary Prizer, South Orange / East Orange, Essex County, New Jersey."
+        "New Jersey State Census, 1905 and 1915 — entries for Edward Prizer and Mary Prizer, South Orange / East Orange, Essex County, New Jersey.",
+        "Ancestry — Maryland Compiled Marriages, search for Mary Crowther × Edward Prizer ca. 1883: 0 results (bundled capture ancestry-md-marriages-crowther-mary-prizer-1883-NEGATIVE.pdf). Corroborates that no single indexed Maryland marriage record for this union exists on Ancestry either."
       ],
       "required": true
     }

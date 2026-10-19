@@ -1,0 +1,174 @@
+"""U19: ``PgStore.delete_session`` against REAL Postgres (docs/plan/familysearch-handoff.md, U19).
+
+The SDK transcript is keyed by ``sessions.sdk_session_id`` (004), not the web session id,
+and a subagent's entries share it under a ``subagents/...`` subpath. The delete used to
+match the web id only, so every transcript row -- what the spend meter sums -- survived it.
+The transcript here is written through the worker's own ``PgSessionStore``, so this cannot
+drift from what the worker stores. The delete runs as a role holding only the services'
+grants, so a table it touches that no tier grants fails here rather than on a deploy.
+
+A delete is refused while a turn is running (``SessionBusy``): the attempt's unfenced
+writes would otherwise recreate rows for a session that no longer exists.
+
+Without the DSN the module skips, except under ``CI``, where it fails.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import sys
+import uuid
+
+import psycopg
+import pytest
+
+from proto import grants
+from proto.worker import worker
+from proto.worker.session_store import PgSessionStore
+from tests._proto_pg import (
+    PROTO, SUBPATHS, AsyncPausingConn, database, dml_role, populated, project_rows, session, session_rows, sql,
+    transcript, ungranted_advisory,
+)
+
+sys.path.insert(0, str(PROTO))
+
+import web.app as web_app  # noqa: E402
+from web.app import PgStore, SessionBusy  # noqa: E402
+
+WAIT_S = 10.0
+
+
+@pytest.fixture(scope="module")
+def pg_dsn():
+    with database(prefix="u19d_") as dsn:
+        yield dsn
+
+
+@pytest.fixture(scope="module")
+def role_dsn(pg_dsn):
+    with dml_role(pg_dsn) as (_role, dsn):
+        yield dsn
+
+
+def spend(dsn: str, sdk: str) -> float:
+    with psycopg.connect(dsn) as conn:
+        return worker.session_spend_usd(conn, sdk)
+
+
+async def test_delete_removes_the_sdk_transcript_at_every_subpath_and_keeps_the_sibling(pg_dsn, role_dsn):
+    pid = "proj_" + uuid.uuid4().hex[:10]
+    a, sdk_a = await populated(pg_dsn, project_id=pid)
+    b, sdk_b = await populated(pg_dsn, project_id=pid)
+    c, sdk_c = await populated(pg_dsn)
+    assert transcript(pg_dsn, sdk_a) == sorted(SUBPATHS) and spend(pg_dsn, sdk_a) > 0
+
+    assert await PgStore(role_dsn).delete_session(a.session_id) is True
+    assert transcript(pg_dsn, sdk_a) == [], "the SDK transcript survived the delete"
+    assert spend(pg_dsn, sdk_a) == 0
+    assert set(session_rows(pg_dsn, a.session_id).values()) == {0}, session_rows(pg_dsn, a.session_id)
+    assert transcript(pg_dsn, sdk_b) == sorted(SUBPATHS), "a sibling session's transcript went too"
+    assert set(project_rows(pg_dsn, pid).values()) == {1}, "the project went with a session that was not its last"
+
+    assert await PgStore(role_dsn).delete_session(b.session_id) is True
+    assert transcript(pg_dsn, sdk_b) == []
+    assert set(project_rows(pg_dsn, pid).values()) == {0}, project_rows(pg_dsn, pid)
+    assert transcript(pg_dsn, sdk_c) == sorted(SUBPATHS) and set(project_rows(pg_dsn, c.project_id).values()) == {1}
+
+
+async def test_a_session_the_worker_never_started_deletes(pg_dsn, role_dsn):
+    row = session(pg_dsn)
+    assert await PgStore(role_dsn).delete_session(row.session_id) is True
+    assert set(session_rows(pg_dsn, row.session_id).values()) == {0}
+    assert await PgStore(role_dsn).delete_session(row.session_id) is False
+
+
+def open_turn(dsn: str, row, *, enqueued_ago_s: int = 0, claimed_ago_s: int | None = None) -> str:
+    turn_id = "turn_" + uuid.uuid4().hex[:10]
+    sql(dsn, "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, claimed_at) "
+             "VALUES (%s, %s, %s, '{}', now() - make_interval(secs => %s), "
+             "now() - make_interval(secs => %s::int))",
+        (turn_id, row.session_id, row.project_id, enqueued_ago_s, claimed_ago_s))
+    return turn_id
+
+
+OLD_S = 3600
+
+
+@pytest.mark.parametrize("shape", ["queued unclaimed", "just claimed", "attempt connected"])
+async def test_a_turn_that_may_be_running_refuses_the_delete_and_keeps_every_row(pg_dsn, role_dsn, shape):
+    row, sdk = await populated(pg_dsn)
+    attempt = None
+    if shape == "queued unclaimed":
+        open_turn(pg_dsn, row)
+    elif shape == "just claimed":
+        open_turn(pg_dsn, row, enqueued_ago_s=OLD_S, claimed_ago_s=5)
+    else:  # claimed long ago, but run_turn's connection is still open: a long run
+        turn_id = open_turn(pg_dsn, row, enqueued_ago_s=OLD_S, claimed_ago_s=OLD_S)
+        attempt = psycopg.connect(pg_dsn, application_name=f"turn:{turn_id}")
+    try:
+        before = session_rows(pg_dsn, row.session_id)
+        with pytest.raises(SessionBusy):
+            await PgStore(role_dsn).delete_session(row.session_id)
+    finally:
+        if attempt is not None:
+            attempt.close()
+    assert session_rows(pg_dsn, row.session_id) == before
+    assert transcript(pg_dsn, sdk) == sorted(SUBPATHS)
+
+
+@pytest.mark.parametrize("claimed_ago_s", [None, OLD_S], ids=["never sent", "claim failed"])
+async def test_a_stranded_turn_does_not_block_the_delete(pg_dsn, role_dsn, claimed_ago_s):
+    """Nothing closes these short of the RetentionPeriod backstop, and Stop cannot: a turn
+    committed but never sent, and one whose last claim failed with no attempt left."""
+    row, sdk = await populated(pg_dsn)
+    open_turn(pg_dsn, row, enqueued_ago_s=OLD_S, claimed_ago_s=claimed_ago_s)
+    assert await PgStore(role_dsn).delete_session(row.session_id) is True
+    assert set(session_rows(pg_dsn, row.session_id).values()) == {0}
+    assert transcript(pg_dsn, sdk) == []
+
+
+async def test_a_held_message_alone_does_not_block_the_delete(pg_dsn, role_dsn):
+    row = session(pg_dsn, held=("later",))
+    assert await PgStore(role_dsn).delete_session(row.session_id) is True
+    assert set(session_rows(pg_dsn, row.session_id).values()) == {0}
+
+
+async def test_a_message_admitted_first_wins_and_the_delete_waits_then_refuses(pg_dsn):
+    """The delete takes the session's queue lock, so it cannot slip between admit_message's
+    check and its insert: it waits, then sees the admitted turn running and refuses."""
+    row = session(pg_dsn)
+    inside, go = asyncio.Event(), asyncio.Event()
+
+    async def pause():
+        inside.set()
+        await asyncio.wait_for(go.wait(), WAIT_S)
+
+    store = PgStore(pg_dsn)
+    real = store._connect
+
+    async def connect():
+        return AsyncPausingConn(await real(), "AS active", pause)
+
+    store._connect = connect  # type: ignore[method-assign]
+    admit = asyncio.ensure_future(store.admit_message(row, "go"))
+    await asyncio.wait_for(inside.wait(), WAIT_S)
+    delete = asyncio.ensure_future(PgStore(pg_dsn).delete_session(row.session_id))
+    try:
+        await ungranted_advisory(pg_dsn, grants.QUEUE_LOCK_NS, WAIT_S)
+    finally:
+        go.set()
+    await admit
+    with pytest.raises(SessionBusy):
+        await delete
+    assert session_rows(pg_dsn, row.session_id)["sessions"] == 1
+
+
+def test_every_table_with_a_session_id_column_is_one_the_delete_clears(pg_dsn):
+    """A per-session table added later and missed by delete_session leaves its rows
+    behind every delete. Keyed differently: session_entries (the SDK id) and sessions."""
+    cleared = set(grants.SESSION_TABLES) | {"session_entries", "sessions"}
+    found = {r[0] for r in sql(pg_dsn, "SELECT table_name FROM information_schema.columns "
+                                       "WHERE table_schema = 'public' AND column_name = 'session_id'")}
+    missed = sorted(found - cleared)
+    assert not missed, f"delete_session clears no rows from: {', '.join(missed)}"
+    assert cleared <= found, f"SESSION_TABLES names a table with no session_id column: {sorted(cleared - found)}"

@@ -70,40 +70,100 @@ def rows(artifact: str | None = None) -> list[dict[str, Any]]:
 
 
 def skill_name(identifier: str) -> str | None:
-    """`skill:record-extraction` -> `record-extraction`; an agent id -> None."""
+    """`skill:search-records` -> `search-records`; an agent id -> None."""
     if identifier.startswith(_SKILL_PREFIX):
         return identifier[len(_SKILL_PREFIX) :]
     return None
 
 
-def writer_sets(artifact: str, plane: str = UNIT_PLANE) -> dict[str, set[str]]:
-    """`section -> permitted skill names`, for the rows `plane` can enforce.
+def writer_tool_sets(artifact: str, plane: str = UNIT_PLANE) -> dict[str, set[str]]:
+    """`section -> writer TOOLS authorized by tool identity`, for the rows `plane` can enforce.
 
-    Bare skill names, because that is what the unit validator has to compare
-    against: it reads the calling skill's `SKILL.md` frontmatter `name`, and has
-    no view of which agent made a call.
+    Read from each row's `toolAuthorized`. The companion to `writer_sets`, which
+    answers "which skill may cause this write". This answers "which tool may
+    perform it", and the two are separate authorizations because some writes are
+    safe *whoever* asks for them: a tool that can only permute person ids cannot
+    assert a `match_score`, rewrite an objective, or regenerate a timeline, so
+    the guarantee the `callers` list protects survives granting it broadly. The
+    validator still checks the delta is that tool's own write. The packaging
+    guard (`ownership-manifest.test.ts`) reads the same field, so a holder of a
+    tool on a row that authorizes it here needs no caller entry there.
 
-    A row naming an **agent** caller therefore cannot be expressed on the unit
-    plane, and declaring it enforceable there would silently deny that agent's
-    legitimate writes. That is a declaration error, so it raises here rather than
-    being dropped — `evaluations` is exactly this shape, and its row carries
-    `enforceableAt: []` for this reason.
+    The manifest already uses that reasoning one row over — `person_evidence`'s
+    `requires` records that extraction is held off the section
+    "by tool identity: `extraction_append` does not accept it."
+
+    Keyed on the same `enforceableAt` filter as `writer_sets`: a row this plane
+    cannot enforce contributes no tools, so a caller cannot be authorized on a
+    plane the row never claimed.
+    """
+    sets: dict[str, set[str]] = {}
+    for row in rows(artifact):
+        if plane not in (row.get("enforceableAt") or []):
+            continue
+        sets[row["section"]] = set(row.get("toolAuthorized") or [])
+    return sets
+
+
+def agent_name(identifier: str) -> str | None:
+    """`agent:citation` -> `citation`; a skill id -> None. Mirror of `skill_name`."""
+    if identifier.startswith(_AGENT_PREFIX):
+        return identifier[len(_AGENT_PREFIX) :]
+    return None
+
+
+def writer_sets(
+    artifact: str,
+    plane: str = UNIT_PLANE,
+    *,
+    subject: str | None = None,
+) -> dict[str, set[str]]:
+    """`section -> permitted writer names`, for the rows `plane` can enforce.
+
+    Bare names, because that is what the unit validator has to compare against:
+    it reads the suite subject's frontmatter `name`.
+
+    **The agent rule (issue #2799).** The unit plane keys on one name — the
+    suite's subject — and has no view of which agent made any *other* call. So
+    an `agent:<n>` caller resolves to `<n>` when `<n>` IS `subject`, and is
+    dropped otherwise. The suite is that agent; `load_suite_frontmatter` reads
+    its `name` off `agents/<n>.md`, and the comparison the validator makes is
+    then exactly as sound as it is for a skill. Without this, every positive
+    test in a converted suite fails ownership on its own legitimate writes.
+
+    **Why dropping the others is safe now, when it never was before.** This
+    used to raise on any agent caller, because dropping one silently denied
+    that agent's legitimate writes and nothing else would have noticed. What
+    changed is not the risk but where the guarantee lives: every unit-plane
+    agent caller must now ship `agents/<n>.md` AND own an
+    `eval/tests/unit/<n>/` suite, checked against the filesystem by
+    `test_a_unit_plane_agent_caller_is_a_suite_subject`. So an agent dropped
+    here is always one that IS authorizable — on its own suite, where it is the
+    subject — and never one that has been left with no route to authorization.
+    Raising instead would fire on every OTHER suite's run, since `citation` is
+    not their subject.
+
+    That check is free and runs on every push; this function is reached only
+    inside a paid eval run. Keeping the structural rule in the free tier and
+    the resolution here is the same split the module docstring already
+    describes.
     """
     sets: dict[str, set[str]] = {}
     for row in rows(artifact):
         if plane not in (row.get("enforceableAt") or []):
             continue
         section = row["section"]
-        callers = row.get("callers") or []
-        agents = [c for c in callers if c.startswith(_AGENT_PREFIX)]
-        if agents and plane == UNIT_PLANE:
-            raise OwnershipManifestError(
-                f"{artifact} section '{section}' is declared enforceable at '{plane}' but "
-                f"names agent caller(s) {agents}. The unit plane keys on the calling "
-                f"skill's frontmatter name and cannot see an agent, so enforcing this row "
-                f"there would deny the owner's own writes."
-            )
-        sets[section] = {
-            name for name in (skill_name(c) for c in callers) if name is not None
-        }
+        callers = (
+            list(row.get("callers") or [])
+            + list(row.get("hookCallers") or [])
+            + list(row.get("unitCallers") or [])
+        )
+        resolved = set()
+        for c in callers:
+            name = skill_name(c)
+            if name is None and plane == UNIT_PLANE and agent_name(c) == subject:
+                name = subject
+            if name is not None:
+                resolved.add(name)
+        sets[section] = resolved
     return sets

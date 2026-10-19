@@ -1,4 +1,4 @@
-"""The freshness window every run-log reader shares.
+"""The freshness window most run-log readers share.
 
 A run log more than a fortnight old usually describes behaviour that has since
 been fixed. Both corpora are affected — `eval/runlogs/e2e/run-<ts>.json` and
@@ -9,9 +9,15 @@ families need opposite treatments:
 **Aggregating readers filter** (`e2e-corpus`, `e2e-guardrail-shadow`,
 `e2e-latency`, `e2e-skill-episodes`). They tally many runs into one number, so
 mixing eras corrupts it and the window genuinely changes the sample. Default:
-`DEFAULT_SINCE_DAYS`. One exception: `e2e-guardrail-shadow FEEDBACK_DIR=` reads
-hosted feedback bundles rather than run logs and is NOT windowed — that corpus
-is small and hand-collected, so a window would discard it, not refresh it.
+`DEFAULT_SINCE_DAYS`. Two exceptions, by two different mechanisms.
+`e2e-writer-attribution` passes `default="all"` to `add_since_arg` below: it
+answers a structural question (does the ownership manifest name the writers that
+exist) rather than a rate, so a gap does not become untrue by ageing and a
+window reads a strict subset of the same pairs as "fewer gaps".
+`e2e-guardrail-shadow` keeps the 14-day default for run logs and ignores
+`--since` altogether when `FEEDBACK_DIR=` points it at hosted feedback bundles —
+that corpus is small and hand-collected, so a window would discard it, not
+refresh it.
 
 **One-row-per-subject readers flag** (`eval-timings`, `skill-latency`). They
 already take only the newest 1-2 run logs per skill, so there is no sample to

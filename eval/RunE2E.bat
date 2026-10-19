@@ -4,7 +4,7 @@ cd %~dp0
 echo === Cowork Genealogy E2E Benchmark — Run a test ===
 echo.
 echo This runs ONE e2e fixture against LIVE FamilySearch. It is expensive:
-echo typically 20-60 minutes and $3-10 in API cost. Run one at a time.
+echo About an hour and single-digit dollars, with a long tail (docs\e2e-testing-guide.md, overview table, row 5). Run one at a time.
 echo.
 set /p SLUG="Which fixture (slug) do you want to run? (e.g. kenneth-quass-death): "
 
@@ -44,10 +44,30 @@ echo Running e2e fixture %SLUG%...
 echo.
 
 cd harness
-call uv run python -m e2e.run_e2e --test %SLUG%
+rem Optional P2 flags, set in the shell before launching (the Makefile's
+rem DENY_SHELL=1 / DENY_PROJECT_READS=1): deny the shell, and/or deny direct
+rem reads of the project folder so the agent must use the MCP tools.
+set E2E_FLAGS=
+if "%DENY_SHELL%"=="1" set E2E_FLAGS=%E2E_FLAGS% --deny-shell
+if "%DENY_PROJECT_READS%"=="1" set E2E_FLAGS=%E2E_FLAGS% --deny-project-reads
+rem The Makefile also has CONTEXT_1M=1 (--context-1m, the 1M-window SDK beta).
+rem It is DELIBERATELY not mirrored here, and this gap is a decision, not an
+rem oversight. A 1M-window run compacts differently, so it is not comparable to
+rem the corpus and must not be committed under eval/runlogs/e2e/. The panel runs
+rem the corpus is built from come from this entry point, so a flag that could be
+rem set by accident here would silently contaminate repo-wide figures. Run the
+rem 1M arm from the Makefile on a machine where that is the deliberate intent.
+rem CI rejects such a run if it is committed under eval/runlogs/e2e/.
+rem TOOL_SEARCH=0 (--no-tool-search, every tool schema loaded up front) is
+rem DELIBERATELY not mirrored either, for the same reason: an off run is not
+rem comparable to the corpus, the harness refuses it under eval/runlogs/e2e/,
+rem and CI rejects one committed there. Run it from the Makefile with
+rem RUNLOG_ROOT pointing outside the repo.
+call uv run python -m e2e.run_e2e --test %SLUG%%E2E_FLAGS%
 
 echo.
-echo Done. Four result files were written under eval\runlogs\e2e\%SLUG%\.
-echo Use InterpretE2E (the /interpret-e2e-result skill) to read the verdict,
-echo then commit the fixture and its passing run log via GitHub Desktop.
+echo Done. If the run finished, it wrote three result files under eval\runlogs\e2e\%SLUG%\.
+echo Next, in Claude Code: /grade-e2e-run first, then /interpret-e2e-result.
+echo Then commit the run log, its .ann.json and both .final-* files (plus the fixture, if you authored it) via GitHub Desktop.
+echo If it says the host slept, do not grade it: commit its three files, keep the machine awake (eval\README.md) and re-run.
 pause

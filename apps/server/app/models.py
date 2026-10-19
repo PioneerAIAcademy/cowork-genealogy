@@ -31,6 +31,7 @@ class User(SQLModel, table=True):
     # login for traceability; the allowlist still gates on email (plan Spike 0).
     familysearch_id: str | None = Field(default=None, index=True)
     created: datetime = Field(default_factory=utcnow, sa_type=_TZ)
+    sessions_revoked_at: datetime | None = Field(default=None, sa_type=_TZ, nullable=True)
 
 
 class AllowedEmail(SQLModel, table=True):
@@ -63,8 +64,47 @@ class Project(SQLModel, table=True):
     created: datetime = Field(default_factory=utcnow, sa_type=_TZ)
     updated: datetime = Field(default_factory=utcnow, sa_type=_TZ)
     last_active: datetime = Field(default_factory=utcnow, sa_type=_TZ)
-    # Per-session turn lock for the public /v1 API (one turn at a time). Holds the
-    # timestamp of the in-flight turn, NULL when idle. A guarded UPDATE on this
-    # column is the atomic, cross-instance lock (correct on SQLite + Postgres) —
-    # see app/v1.py.
-    turn_locked_at: datetime | None = Field(default=None, sa_type=_TZ, nullable=True)
+
+
+class TurnCost(SQLModel, table=True):
+    """One row per completed agent turn, reported by the sandbox (POST /api/turn-cost).
+    Sum by project_id for a session's cost, by user_id and day for a patron's, by build for
+    a deploy's. No foreign keys: a deleted session's spend still happened, so its rows
+    outlive the project. A column added here must be nullable and added to the live table
+    by ``db.add_missing_columns``."""
+    __tablename__ = "turn_costs"
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: str = Field(index=True)
+    user_id: str = Field(index=True)
+    model: str | None = None
+    cost_usd: float
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    # The sandbox image's commit (``<sha>`` or ``<sha>+dirty``), so a sandbox that
+    # outlives a deploy is still billed to the code it runs.
+    build: str | None = None
+    # Stops the Stop hook overrode during this turn; 0 when the hook is off.
+    continuations: int | None = None
+    created: datetime = Field(default_factory=utcnow, sa_type=_TZ, index=True)
+
+
+class ApiCall(SQLModel, table=True):
+    """One row per Messages API call the credential proxy relayed, with the usage Anthropic
+    reported for it (``anthropic_proxy``). Every sandbox's calls pass through the proxy,
+    whatever build it runs, so a day's sum is the alpha's whole bill; ``turn_costs`` sees
+    only the sandboxes new enough to report. Recorded, never enforced: the alpha has no
+    spend limit (lead ruling 2026-09-25). No foreign keys, as for ``turn_costs``."""
+    __tablename__ = "api_calls"
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: str = Field(index=True)
+    user_id: str = Field(index=True)
+    model: str | None = None
+    input_tokens: int = 0
+    cache_creation_input_tokens: int = 0
+    cache_read_input_tokens: int = 0
+    output_tokens: int = 0
+    cost_usd: float
+    # How old the session was when the call ended, so a reopened old session's spend can
+    # be told from a new one's.
+    session_age_s: int
+    created: datetime = Field(default_factory=utcnow, sa_type=_TZ, index=True)

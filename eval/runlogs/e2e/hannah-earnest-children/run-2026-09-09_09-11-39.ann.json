@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Lydia Grice present as I1, daughter of Edwin (R15) and Hannah (R16), with christening F23 = 8 Aug 1878 West Bromwich citing S5 (QL3R-C5SR). True label rests on the christening and parent relationships, not birth date precision: the tree's birth fact F5 reads ~1879, back-calculated from census ages, and no birth year from the 1878 register reaches the tree. Two citation-hygiene issues carried forward: (a) R15/R16 cite S1 (1881 census) rather than S5 (1878 baptism) which actually attests the parentage — same pattern flagged on 2026-07-22 and 2026-07-27 runs, still unfixed; (b) resolved_conflict_ids in ps_001 is empty despite c_001 being marked resolved. PQ 2: the 2026-07-27 run already had c_001 resolved with the same independence analysis and five-to-one weighing, but that run's own weighing held the Fanny mother link pending image verification of the register scan. This run makes the mother link (R18) and writes the tier as proved without reading the register image either — the caveat was dropped rather than met. Proved is overstated on a single register entry naming a different woman, attributed by preponderance within one informant chain and no image verification."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145"
+}

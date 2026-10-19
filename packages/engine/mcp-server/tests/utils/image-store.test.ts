@@ -14,7 +14,11 @@ import {
   saveSourceImage,
   gcUnreferencedImages,
   imageFilenameFor,
+  recordImageReadCap,
+  sourceImageCapState,
+  __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
+import { runWithProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 
 const dirs: string[] = [];
 async function tmp(): Promise<string> {
@@ -86,6 +90,26 @@ describe("gcUnreferencedImages", () => {
     expect((await stat(join(dir, "images", "cited.jpg"))).isFile()).toBe(true);
   });
 
+  it("keeps an image cited with a non-canonical ref — `./images/x.jpg` protects `images/x.jpg` (#2457 r4 note 6)", async () => {
+    // The cap join normalizes a relayed image_filename; the GC must canonicalize
+    // the referenced set the same way, or a source citing `./images/cited.jpg`
+    // (or a backslash spelling) leaves the real file unprotected and it is swept.
+    const dir = await tmp();
+    await makeImage(dir, "cited.jpg", 25 * 60 * 60 * 1000);
+    await gcUnreferencedImages(dir, new Set(["./images/cited.jpg"]));
+    expect((await stat(join(dir, "images", "cited.jpg"))).isFile()).toBe(true);
+  });
+
+  it("keeps an image cited with a doubled or interior separator — `images//x.jpg`, `images/./x.jpg` (#2457 r9 note)", async () => {
+    // normalizeImageRef folds via posix.normalize, so an LLM-relayed ref with a
+    // doubled `//` or interior `/./` still canonicalizes to `images/cited.jpg` and
+    // protects the file. Without the full fold the GC would delete a cited scan.
+    const dir = await tmp();
+    await makeImage(dir, "cited.jpg", 25 * 60 * 60 * 1000);
+    await gcUnreferencedImages(dir, new Set(["images//cited.jpg", "images/./other.jpg"]));
+    expect((await stat(join(dir, "images", "cited.jpg"))).isFile()).toBe(true);
+  });
+
   it("keeps a recent unreferenced image (TTL not elapsed)", async () => {
     const dir = await tmp();
     await makeImage(dir, "fresh.jpg", 60 * 1000); // 1 min old
@@ -96,5 +120,117 @@ describe("gcUnreferencedImages", () => {
   it("is a no-op when there is no images/ dir", async () => {
     const dir = await tmp();
     await gcUnreferencedImages(dir, new Set()); // must not throw
+  });
+});
+
+describe("truncated-source-image cache (#2457)", () => {
+  afterEach(() => __clearTruncatedSourceImagesForTests());
+
+  it("records a capped read so a source citing that image_filename reads truncated", () => {
+    recordImageReadCap("/proj", "images/004884748_02613.jpg", true);
+    expect(sourceImageCapState("/proj", "images/004884748_02613.jpg")).toBe(true);
+  });
+
+  it("reports false for an image never recorded", () => {
+    expect(sourceImageCapState("/proj", "images/never-seen.jpg")).toBe(false);
+  });
+
+  it("is sticky by construction: a later whole read does not clear a recorded cap (#2457 rulings, C 2026-09-21)", () => {
+    // The cap bounds output tokens and the prompt varies with lookingFor, so a
+    // narrower second read of the same image can come back uncapped. The store is
+    // add-only, so that whole read records nothing and cannot overwrite the partial.
+    recordImageReadCap("/proj", "images/x.jpg", true);
+    expect(sourceImageCapState("/proj", "images/x.jpg")).toBe(true);
+    recordImageReadCap("/proj", "images/x.jpg", false); // narrower, uncapped re-read
+    expect(sourceImageCapState("/proj", "images/x.jpg")).toBe(true); // still partial
+  });
+
+  it("is true-or-absent: a capped read is recorded, a whole read records nothing (#2457 rulings, C 2026-09-21)", () => {
+    // Membership is the whole state — no `false` and no `undefined` are stored.
+    recordImageReadCap("/proj", "images/partial.jpg", true);
+    expect(sourceImageCapState("/proj", "images/partial.jpg")).toBe(true);
+    recordImageReadCap("/proj", "images/whole.jpg", false); // whole read → add-only no-op
+    expect(sourceImageCapState("/proj", "images/whole.jpg")).toBe(false);
+    expect(sourceImageCapState("/proj", "images/never.jpg")).toBe(false); // unseen
+  });
+
+  it("is keyed by project — one project's cap does not leak into another", () => {
+    recordImageReadCap("/proj-a", "images/shared.jpg", true);
+    expect(sourceImageCapState("/proj-a", "images/shared.jpg")).toBe(true);
+    expect(sourceImageCapState("/proj-b", "images/shared.jpg")).toBe(false);
+  });
+
+  it("an ARK read is joinable too — its imageRef is what a source cites", () => {
+    // saveSourceImage sanitizes an ARK label to this ref; the cache keys on the
+    // same string, so an ARK read is NOT a join blind spot (only a no-persist
+    // read is). Mirrors imageFilenameFor("ark:/61903/3:1:3Q9M-CSNL").
+    const ref = `images/${imageFilenameFor("ark:/61903/3:1:3Q9M-CSNL")}`;
+    recordImageReadCap("/proj", ref, true);
+    expect(sourceImageCapState("/proj", ref)).toBe(true);
+  });
+
+  it("joins across a trailing separator on projectPath — record `/p/`, query `/p` (#2457 review, blocker 4a)", () => {
+    // projectPath arrives raw from an LLM relay, so record and query can spell
+    // the same project with and without a trailing slash. The key must normalize
+    // both or a capped read reads back clean.
+    recordImageReadCap("/proj/", "images/x.jpg", true);
+    expect(sourceImageCapState("/proj", "images/x.jpg")).toBe(true);
+    // …and the other direction.
+    __clearTruncatedSourceImagesForTests();
+    recordImageReadCap("/proj", "images/x.jpg", true);
+    expect(sourceImageCapState("/proj/", "images/x.jpg")).toBe(true);
+  });
+
+  it("joins across image_filename spelling variants — `./images/x.jpg` and backslashes (#2457 review r3, note 8)", () => {
+    // The read side joins on a source's image_filename, relayed by the agent, so it
+    // can carry a leading `./` or backslash separators the module-minted write-side
+    // ref never has. Without normalizing both, a capped read reads back clean.
+    recordImageReadCap("/proj", "images/x.jpg", true);
+    expect(sourceImageCapState("/proj", "./images/x.jpg")).toBe(true);
+    expect(sourceImageCapState("/proj", "images\\x.jpg")).toBe(true);
+    // …and the other direction: recorded with a variant, queried canonically.
+    __clearTruncatedSourceImagesForTests();
+    recordImageReadCap("/proj", "./images/y.jpg", true);
+    expect(sourceImageCapState("/proj", "images/y.jpg")).toBe(true);
+  });
+
+  it("isolates patrons under a shared-process store binding — same anchor path, different projectId, no collision (#2457 r8 B2)", async () => {
+    // Under http.ts every request presents the SAME anchor projectPath (`/project`);
+    // the bound store's projectId is the real identity. Keying the cap on projectId
+    // (not the anchor) keeps patron A's cap out of patron B's read, while still
+    // joining A's own record→read (same projectId across A's turns).
+    const store = (projectId: string) => ({ projectId }) as unknown as ProjectStore;
+    await runWithProjectStore(store("proj-A"), async () => {
+      recordImageReadCap("/project", "images/x.jpg", true);
+      expect(sourceImageCapState("/project", "images/x.jpg")).toBe(true);
+    });
+    // Patron B: identical anchor path and image, must NOT see A's cap.
+    await runWithProjectStore(store("proj-B"), async () => {
+      expect(sourceImageCapState("/project", "images/x.jpg")).toBe(false);
+    });
+    // A still sees its own (record→read join survives across A's turns).
+    await runWithProjectStore(store("proj-A"), async () => {
+      expect(sourceImageCapState("/project", "images/x.jpg")).toBe(true);
+    });
+  });
+
+  it("joins across a Windows projectPath spelled with backslashes vs forward slashes (#2457 review r5)", () => {
+    // The genealogist team is on Windows: a record under `C:\Users\proj` and a
+    // query under `C:/Users/proj` must join, or the truncation marker is silently
+    // lost. projectPath must normalize separators the same way imageRef does.
+    recordImageReadCap("C:\\Users\\proj", "images/x.jpg", true);
+    expect(sourceImageCapState("C:/Users/proj", "images/x.jpg")).toBe(true);
+    __clearTruncatedSourceImagesForTests();
+    recordImageReadCap("C:/Users/proj/", "images/x.jpg", true);
+    expect(sourceImageCapState("C:\\Users\\proj", "images/x.jpg")).toBe(true);
+  });
+
+  it("folds a projectPath's doubled `//`, interior `/./` and `/../` the same way it folds imageRef (#2457 r10)", () => {
+    // The projectPath side was normalized asymmetrically — only a trailing separator
+    // — so `/p//q`, `/p/./q`, `/p/sub/../q` missed and the marker was lost, fail-open.
+    recordImageReadCap("/p/q", "images/x.jpg", true);
+    expect(sourceImageCapState("/p//q", "images/x.jpg")).toBe(true);
+    expect(sourceImageCapState("/p/./q", "images/x.jpg")).toBe(true);
+    expect(sourceImageCapState("/p/sub/../q", "images/x.jpg")).toBe(true);
   });
 });

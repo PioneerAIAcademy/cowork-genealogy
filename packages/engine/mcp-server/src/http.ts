@@ -1,0 +1,151 @@
+// CLI for the Streamable HTTP tool server: `node build/http.js [--host H] [--port P]`.
+//
+// One long-lived process serving every patron's turns, so nothing that
+// identifies a patron or a project is process state. The contract is two
+// request headers:
+//   Authorization: Bearer <token>   → the principal (http-server.ts, never LOCAL)
+//   X-Genealogy-Project-Id: <id>    → a PgS3ProjectStore for that project, bound
+//                                     for the request through runWithProjectStore
+// plus a claim-fence pair (U6), both or neither (400 otherwise):
+//   X-Genealogy-Turn-Id: <turn>     → that store commits a write only while
+//   X-Genealogy-Claim-Epoch: <n>      `turns.claim_epoch` is still n, so an
+//                                     attempt a newer claim superseded writes nothing
+// A request that names a project is admitted only when its bearer is the grant
+// of an open attempt on it (U4, `authorizeAttempt`): the sha256 of the bearer
+// must be the `turns.bearer_sha256` the worker stamped on the fence's turn,
+// that turn must belong to the project, and it must not be completed. So the
+// fence is required with a project; anything else is a 403 before any store
+// exists, and a failed lookup is a 503. There is no opt-out. A request with no
+// project header is not checked and runs store-less tools only.
+// The process store is an `unboundProjectStore`, so a code path that runs
+// outside a request binding fails instead of reaching the file backend. The
+// Pg/S3 configuration is the one process-wide thing, read from the
+// GENEALOGY_* environment (store/pg-s3-env.ts; the project id is the header,
+// never a variable); a missing variable, a half-set S3 key pair or an invalid
+// GENEALOGY_S3_FORCE_PATH_STYLE (or orphan sweep variable) is one stderr line
+// and exit 2 before listen.
+// With neither S3 key set the AWS SDK default chain supplies credentials
+// (environment, ~/.aws shared config/SSO, web identity, then instance
+// metadata); one stderr line names the mode, never a key. A set debug hold
+// (debug-holds.ts) is one more stderr line, so a forgotten one shows in the
+// logs; with neither set, nothing is printed. Nothing connects
+// before listen: `GET /healthz` probes Postgres (schema included) and S3 per
+// request and answers 503 while either is unreachable, never exiting.
+//
+// The process also runs the S3 orphan sweep (store/s3-orphan-sweep.ts, U19):
+// GENEALOGY_ORPHAN_SWEEP_INTERVAL_S (3600; 0 = off; at most 2147483, setTimeout's
+// limit) and GENEALOGY_ORPHAN_GRACE_S
+// (86400, at least 3600). The first pass waits a minute so it never contends
+// with boot; each pass is one `ev=orphan_sweep` stderr line.
+import { parseArgs } from "node:util";
+import { LOCAL } from "./auth/principal.js";
+import { loadConfig } from "./auth/config.js";
+import { startHttpServer, MCP_PATH } from "./http-server.js";
+import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store.js";
+import { readPgS3Env } from "./store/pg-s3-env.js";
+import { startOrphanSweep, type OrphanSweepTimer } from "./store/s3-orphan-sweep.js";
+import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
+import { configFromEnv } from "./hosted-config-env.js";
+import { debugHoldStartupLine } from "./debug-holds.js";
+
+const { values } = parseArgs({
+  options: {
+    host: { type: "string", default: "127.0.0.1" },
+    port: { type: "string", default: "8787" },
+  },
+});
+
+const port = Number(values.port);
+if (!Number.isInteger(port) || port < 0 || port > 65535) {
+  console.error(`--port must be an integer 0-65535, got ${JSON.stringify(values.port)}`);
+  process.exit(2);
+}
+
+const storeEnv = readPgS3Env(process.env);
+if (storeEnv.missing.length > 0) {
+  process.stderr.write(`http: required environment not set: ${storeEnv.missing.join(", ")}\n`);
+  process.exit(2);
+}
+if (storeEnv.invalid.length > 0) {
+  process.stderr.write(
+    `http: environment set to an invalid value: ${storeEnv.invalid.join(", ")} ` +
+      "(GENEALOGY_S3_FORCE_PATH_STYLE takes true or false; the GENEALOGY_ORPHAN_* variables whole seconds, " +
+      "the grace at least 3600, the interval at most 2147483)\n",
+  );
+  process.exit(2);
+}
+const s3Options = storeEnv.backendOptions.s3;
+process.stderr.write(
+  `s3 credentials: ${s3Options.accessKeyId ? "static keys" : "SDK default chain"}; ` +
+    `region ${s3Options.region}; endpoint ${s3Options.endpoint ?? "AWS default"}\n`,
+);
+const { intervalS, graceS } = storeEnv.orphanSweep;
+process.stderr.write(
+  intervalS > 0 ? `orphan sweep: every ${intervalS} s, grace ${graceS} s\n` : "orphan sweep: off\n",
+);
+const holdLine = debugHoldStartupLine(process.env);
+if (holdLine) process.stderr.write(holdLine);
+
+// One pool and one S3 client for the process; a store per request over them.
+const backend = createPgS3Backend(storeEnv.backendOptions);
+const sweep: OrphanSweepTimer | undefined =
+  intervalS > 0
+    ? startOrphanSweep(backend, {
+        intervalMs: intervalS * 1000,
+        graceMs: graceS * 1000,
+        firstDelayMs: 60_000 + Math.floor(Math.random() * 30_000),
+      })
+    : undefined;
+setProjectStore(
+  unboundProjectStore("build/http.js binds a project store per request; nothing may run outside one"),
+);
+
+// The one LOCAL read in this entrypoint: the process-wide config file
+// (~/.familysearch-mcp/config.json — sidecar URLs, OpenRouter key, hosted
+// flag). Every tool call binds a per-request bearer instead (http-server.ts).
+//
+// The environment overlays it (hosted-config-env.ts): a container receives the
+// OpenRouter key as environment, so without the overlay `image_transcribe` has no key
+// here.
+const baseConfig = configFromEnv(process.env, await loadConfig(LOCAL));
+const server = await startHttpServer({
+  host: values.host as string,
+  port,
+  baseConfig,
+  bindStore: (projectId, signal, fence) =>
+    new PgS3ProjectStore(backend, { projectId, anchorPath: storeEnv.anchorPath, signal, fence }),
+  authorize: (req) => authorizeAttempt(backend, req),
+  checkReady: () => backend.checkReady(),
+});
+
+const address = server.address();
+const boundPort = typeof address === "object" && address ? address.port : port;
+console.error(`genealogy tool server listening on http://${values.host}:${boundPort}${MCP_PATH}`);
+
+/** How long a shutdown waits for in-flight requests and the pool to drain
+ *  before the process exits regardless. */
+const SHUTDOWN_GRACE_MS = 5_000;
+
+let shuttingDown = false;
+function shutdown(): void {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  sweep?.stop();
+  const closed = new Promise<void>((resolve) => server.close(() => resolve())).then(() =>
+    backend.close().catch(() => {}),
+  );
+  // server.close() waits without a deadline on an in-flight body, and
+  // pool.end() on a checked-out connection; give both a bounded grace, then
+  // drop the sockets so `docker stop` gets a clean exit.
+  const grace = new Promise<void>((resolve) =>
+    setTimeout(() => {
+      server.closeAllConnections();
+      resolve();
+    }, SHUTDOWN_GRACE_MS).unref(),
+  );
+  void Promise.race([closed, grace]).then(() => process.exit(0));
+}
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.on(signal, shutdown);
+}

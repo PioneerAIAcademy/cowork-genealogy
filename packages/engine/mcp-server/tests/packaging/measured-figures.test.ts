@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { allToolSchemas } from "../../src/tool-schemas.js";
 
 /**
  * Keeps the qualifier documentation honest about `dev/measured-figures.json`.
@@ -65,6 +66,21 @@ const EVIDENCE_SURFACES = [
   // predate `measured-figures.json` and are exempted by name; any NEW figure in that
   // spec must now trace.
   "docs/specs/person-search-tool-spec.md",
+  // The fulltext spec. Section J's verdicts guard the place-search claim at
+  // line 48; any future FIGURE-pattern match must trace to measured-figures.json.
+  "docs/specs/fulltext-search-tool-spec.md",
+  "docs/specs/gedcomx-convert-spec.md",
+  // The three specs PR #2473 edits. None were in any list, so every figure in
+  // them was unchecked — which is how that PR's own primary spec kept quoting
+  // `34,147 -> 32,585` for a design it had abandoned, with the suite green and
+  // its own test recording the figure as wrong. Being unlisted is the failure
+  // mode this file's header describes: coverage exists only where somebody
+  // remembered to add it.
+  "docs/specs/rank-search-matches-tool-spec.md",
+  "docs/specs/research-log-editor-spec.md",
+  // Carries no figure today. Listed anyway, because the cost of joining is zero
+  // while unlisted is how the other two rotted.
+  "docs/specs/source-attachments-tool-spec.md",
 ];
 
 /**
@@ -72,8 +88,15 @@ const EVIDENCE_SURFACES = [
  * It needs "an unqualified county scope barely narrows", not `35,509` — and a
  * figure here goes stale on every re-run, which is how six documents came to
  * disagree with each other and with the artifact.
+ *
+ * The markdown half is DERIVED, not listed (issue #2486): every skill body,
+ * skill reference and agent body in the plugin. A hand-written list covered
+ * whichever files somebody remembered — at one point 1 of 28 skill bodies and 0
+ * agent bodies — so a new skill quoting a stale total passed by not being on
+ * it. The two tool files below stay listed whole-file; every other tool is
+ * held through its advertised descriptions (`TOOL_DESCRIPTION_SURFACES`).
  */
-const AGENT_SURFACES = [
+const AGENT_TOOL_FILES = [
   // `person-search.ts` is a MODEL-READ surface, so it belongs here even though it
   // is deliberately not an EVIDENCE surface: this list forbids absolute totals,
   // which is exactly what should never appear in a description the ruling keeps
@@ -81,12 +104,72 @@ const AGENT_SURFACES = [
   // shipped `person_search` description with the whole suite green — the same hole
   // this file closes elsewhere, left open one file over.
   "packages/engine/mcp-server/src/tools/person-search.ts",
-  "packages/engine/plugin/skills/search-records/SKILL.md",
-  "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md",
-  "packages/engine/plugin/skills/search-records/references/place-date-mechanics.md",
-  "packages/engine/plugin/skills/search-records/references/search-strategy-levers.md",
-  "packages/engine/plugin/skills/search-records/references/collection-quirks.md",
+  // The fulltext tool file is model-read. Section J's FORBIDDEN_WHEN rules
+  // guard the place-parameter wording here via the union scan at line 579.
+  "packages/engine/mcp-server/src/tools/fulltext-search.ts",
 ];
+
+function pluginMarkdown(): string[] {
+  const plugin = "packages/engine/plugin";
+  const out: string[] = [];
+  const skills = join(projectRoot, plugin, "skills");
+  for (const d of readdirSync(skills).sort()) {
+    if (existsSync(join(skills, d, "SKILL.md"))) out.push(`${plugin}/skills/${d}/SKILL.md`);
+    const refs = join(skills, d, "references");
+    if (!existsSync(refs)) continue;
+    for (const f of readdirSync(refs).sort()) {
+      if (f.endsWith(".md")) out.push(`${plugin}/skills/${d}/references/${f}`);
+    }
+  }
+  for (const f of readdirSync(join(projectRoot, plugin, "agents")).sort()) {
+    if (f.endsWith(".md")) out.push(`${plugin}/agents/${f}`);
+  }
+  return out;
+}
+
+const AGENT_SURFACES = [...AGENT_TOOL_FILES, ...pluginMarkdown()].filter(
+  (s) => !EVIDENCE_SURFACES.includes(s)
+);
+
+function descriptionsOf(node: unknown, out: string[] = []): string[] {
+  if (Array.isArray(node)) node.forEach((n) => descriptionsOf(n, out));
+  else if (node && typeof node === "object") {
+    for (const [k, v] of Object.entries(node)) {
+      if (k === "description" && typeof v === "string") out.push(v);
+      else descriptionsOf(v, out);
+    }
+  }
+  return out;
+}
+
+/**
+ * Every advertised tool description, the nested parameter descriptions
+ * included — the text the model pays for, read from `allToolSchemas` rather
+ * than by a regex over the source, which misses concatenated literals and breaks
+ * under a reflow. `record_search` is skipped: its file is an EVIDENCE surface.
+ * Comments in a tool file are not scanned; only what is advertised.
+ */
+const TOOLS_DIR = "packages/engine/mcp-server/src/tools";
+const TOOL_FILE_TEXT = readdirSync(join(projectRoot, TOOLS_DIR))
+  .filter((f) => f.endsWith(".ts"))
+  .map((f) => ({ f, text: readFileSync(join(projectRoot, TOOLS_DIR, f), "utf8") }));
+
+/** The one file under src/tools/ declaring the tool; eight do not match by name. */
+function toolFileOf(name: string): string {
+  const hits = TOOL_FILE_TEXT.filter(({ text }) => new RegExp(`name:\\s*"${name}"`).test(text));
+  if (hits.length !== 1) {
+    throw new Error(`${name}: expected one file in ${TOOLS_DIR} declaring it, found ${hits.length}`);
+  }
+  return `${TOOLS_DIR}/${hits[0].f}`;
+}
+
+const TOOL_DESCRIPTION_SURFACES = allToolSchemas
+  .filter((s) => s.name !== "record_search")
+  .map((s) => ({
+    rel: toolFileOf(s.name),
+    name: s.name,
+    text: descriptionsOf(s).join("\n"),
+  }));
 
 /**
  * Scanned for CONTRADICTED WORDING.
@@ -181,6 +264,83 @@ const ABSOLUTE_TOTAL = /\b\d{1,3}(?:,\d{3})+\b/g;
  */
 const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
   [
+    36956,
+    {
+      reason: "payload size of the REJECTED drop shape at 50 rows, computed live by tests/utils/staged-compaction.test.ts, which pins it to +/-1% — not a qualifier probe figure. The test recomputes it from the fixture, so this exemption grants a pass to a number another check can still fail.",
+      scope: ["docs/specs/rank-search-matches-tool-spec.md"],
+    },
+  ],
+  [
+    35206,
+    {
+      reason: "payload size of the SHIPPED annotate-in-place shape at 50 rows, same test, same +/-1% pin",
+      scope: ["docs/specs/rank-search-matches-tool-spec.md"],
+    },
+  ],
+  [
+    34147,
+    {
+      reason: "the RETRACTED drop-shape figure, quoted in the spec only as the thing being corrected. Measured on a fixture with no `collectionTitle` to duplicate, so it priced a saving the real shape never had",
+      scope: ["docs/specs/rank-search-matches-tool-spec.md"],
+    },
+  ],
+  [
+    32585,
+    {
+      reason: "the RETRACTED Option-B-shape figure, its pair, quoted only as the correction's other half",
+      scope: ["docs/specs/rank-search-matches-tool-spec.md"],
+    },
+  ],
+  [
+    315871,
+    {
+      reason: "char count of one rare-surname broad search that overflowed context, from docs/record-search-compaction-scope.md — the compaction investigation, not the qualifier probe",
+      scope: ["docs/specs/rank-search-matches-tool-spec.md"],
+    },
+  ],
+  [
+    50,
+    {
+      reason: "the paging recall cliff (`offset: 50`) recorded in docs/record-search-compaction-scope.md; a page size, not a measured total",
+      scope: ["docs/specs/rank-search-matches-tool-spec.md"],
+    },
+  ],
+  [
+    4322,
+    {
+      reason: "the research_log_append notes corpus, derived from eval/runlogs by dev/measure-census-hedge-refusals.ts rather than the qualifier probe, and date-stamped in the spec. Keyed by EXACT value, so this entry must be re-keyed whenever the corpus is re-derived — which is the intended friction: the figure cannot move in the spec without someone touching this line. Re-derived 2026-10-04 (was 4062, then 4320)",
+      scope: ["docs/specs/research-log-editor-spec.md"],
+    },
+  ],
+  [
+    1490,
+    {
+      reason: "the calls not replayable (response stripped): the e2e research_log_append replay for the superseded-plan precondition, derived from eval/runlogs by eval/harness/scripts/measure_superseded_log_items.py rather than the qualifier probe, and date-stamped in the spec (2026-10-12 at 08e7ba018). Keyed by EXACT value: re-key 1490, 1283 and 1239 together whenever the corpus is re-derived",
+      scope: ["docs/specs/research-log-editor-spec.md"],
+    },
+  ],
+  [
+    1283,
+    {
+      reason: "the replayable ops naming a plan item: the e2e research_log_append replay for the superseded-plan precondition, derived from eval/runlogs by eval/harness/scripts/measure_superseded_log_items.py rather than the qualifier probe, and date-stamped in the spec (2026-10-12 at 08e7ba018). Keyed by EXACT value: re-key 1490, 1283 and 1239 together whenever the corpus is re-derived",
+      scope: ["docs/specs/research-log-editor-spec.md"],
+    },
+  ],
+  [
+    1239,
+    {
+      reason: "of those, the ops on an active plan: the e2e research_log_append replay for the superseded-plan precondition, derived from eval/runlogs by eval/harness/scripts/measure_superseded_log_items.py rather than the qualifier probe, and date-stamped in the spec (2026-10-12 at 08e7ba018). Keyed by EXACT value: re-key 1490, 1283 and 1239 together whenever the corpus is re-derived",
+      scope: ["docs/specs/research-log-editor-spec.md"],
+    },
+  ],
+  [
+    1998,
+    {
+      reason: "the staged record_search log entries carrying a note, from the same dev/measure-census-hedge-refusals.ts run and stamp as the 4322 notes corpus above; re-key both together. Re-derived 2026-10-03 (was 1867)",
+      scope: ["docs/specs/research-log-editor-spec.md"],
+    },
+  ],
+  [
     14095,
     {
       reason: "disclosed in the spec as measured in the original probe session under a query shape the committed probe does not run",
@@ -259,6 +419,34 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
     {
       reason: "the other half of that same #1088 transcript pair (947 -> 1,478); surfaced when the tolerance floor dropped from 2 to 0.5, which stopped it matching section X's current 948 by luck. Historical, like 1478 — not a re-measurement",
       scope: ["packages/engine/mcp-server/src/tools/record-search.ts"],
+    },
+  ],
+  [
+    2655,
+    {
+      reason: "persona role/principal coverage probe, dev/probe-persona-role-coverage.ts 2026-09-14 — search personas across 3 collection pools",
+      scope: ["docs/specs/gedcomx-convert-spec.md"],
+    },
+  ],
+  [
+    6665,
+    {
+      reason: "FamilySearch's user-searchable full-text auto-collection count, asserted from upstream documentation and measured by NO probe in this repo — there is no full-text section in dev/measured-figures.json and dev/try-fulltext-search.ts is a smoke script, not a probe. The spec says so in its Coverage section. This entry is the durable record that the figure is unverified; deleting it without landing a probe reds the traceability check",
+      scope: ["docs/specs/fulltext-search-tool-spec.md"],
+    },
+  ],
+  [
+    8000,
+    {
+      reason: "FamilySearch's INTERNAL auto-collection definition count (\"8,000+\"), the other half of the coverage mismatch the Coverage section records. Same provenance and same absence of a probe as 6665 above; exempt for the same reason and on the same surface only",
+      scope: ["docs/specs/fulltext-search-tool-spec.md"],
+    },
+  ],
+  [
+    40000,
+    {
+      reason: "sidecar_read's page-size cap, a design limit chosen to keep one page inside the host's tool-result budget — not a measurement, so nothing in the artifact can trace it",
+      scope: ["packages/engine/mcp-server/src/tools/sidecar-read.ts"],
     },
   ],
 ]);
@@ -406,6 +594,32 @@ describe("measured figures stay traceable to the probe artifact", () => {
     });
   }
 
+  for (const tool of TOOL_DESCRIPTION_SURFACES) {
+    it(`${tool.name}'s advertised descriptions carry no absolute totals`, () => {
+      const found = collectFigures(tool.text, ABSOLUTE_TOTAL)
+        .filter((f) => !API_LIMITS.has(f.value))
+        .filter((f) => {
+          const scope = EXEMPT.get(f.value)?.scope;
+          return !(scope && scope.includes(tool.rel));
+        })
+        .map((f) => f.raw);
+      expect(
+        [...new Set(found)],
+        `a tool description is model-read: describe the behaviour, not a total that\n` +
+          `  drifts on every re-run. A design limit belongs in EXEMPT, scoped to this file.`
+      ).toEqual([]);
+    });
+  }
+
+  it("the agent population is derived, and reaches every kind of model-read file", () => {
+    const has = (re: RegExp) => AGENT_SURFACES.some((s) => re.test(s));
+    expect(has(/\/skills\/[^/]+\/SKILL\.md$/), "skill bodies").toBe(true);
+    expect(has(/\/skills\/[^/]+\/references\/[^/]+\.md$/), "skill references").toBe(true);
+    expect(has(/\/agents\/[^/]+\.md$/), "agent bodies").toBe(true);
+    expect(TOOL_DESCRIPTION_SURFACES.length, "tool descriptions").toBeGreaterThan(40);
+    expect(TOOL_DESCRIPTION_SURFACES.some((t) => t.text.length === 0), "a tool with no description text").toBe(false);
+  });
+
   /**
    * Two sections must not record opposite answers to the same question.
    *
@@ -541,6 +755,44 @@ describe("measured figures stay traceable to the probe artifact", () => {
         /tolerates year-silent records|keeps (?:year-silent|undated) records|tolerates silence|no direction was measured|not a reliable way to include or exclude undated|what it does to undated records is not established|(?:year range|unqualified range|indexed year)[^.\n]{0,80}\bnot established\b/i,
       why: "the index places every persona in time; do not say an unqualified range keeps year-silent/undated records, nor that its treatment of undated records is unmeasured",
     },
+    {
+      // Section J measured q.recordPlace against a discriminating document
+      // (transcript says Virginia, metadata says Alabama). q.recordPlace=Virginia
+      // returned 0; q.recordPlace=Alabama found it. So q.recordPlace searches
+      // metadata only. Guard against prose that claims it searches transcripts.
+      // The [^.,;] clause boundary is a proxy for negation awareness — it stops
+      // the pattern before a semicoloned contrast or a comma-not clause can
+      // match. An em or en dash is a clause boundary like `,` and `;`
+      // ("metadata only — NOT transcript"), so the gap after the verb stops there too.
+      verdict: "J.verdict:q.recordPlace searches",
+      activeWhen: /^metadata only$/,
+      mustNotSay:
+        /q\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;—–]{0,40}(?:transcript|full[- ]?text|document text)|place[^.,;]{0,40}(?:searches|matches)[^.,;—–]{0,40}(?:transcript|both)/i,
+      why: "section J measured q.recordPlace as metadata-only; these phrasings assert it reaches transcripts",
+    },
+    {
+      // Same section. f.recordPlace1=10,Virginia returned 0 (transcript-only
+      // place); f.recordPlace1=10,Alabama found it (metadata place). Metadata
+      // only — same as q.recordPlace. The spec already says this ("matches
+      // against collection metadata"); guard against contradiction.
+      verdict: "J.verdict:f.recordPlace searches",
+      activeWhen: /^metadata only$/,
+      mustNotSay:
+        /f\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|full[- ]?text|document text)/i,
+      why: "section J measured f.recordPlace as metadata-only; these phrasings assert it reaches transcripts",
+    },
+    {
+      // Section J measured q.fullName against the same anchor. A non-name
+      // word ("executor") known to be in the transcript was NOT found by
+      // q.fullName, while an NLP-recognized name (Virginia A. Blackman) WAS
+      // found. So q.fullName searches name fields only, not the full
+      // transcript. Guard against prose that claims it searches transcripts.
+      verdict: "J.verdict:q.fullName searches",
+      activeWhen: /^name fields only$/,
+      mustNotSay:
+        /q\.fullName[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|document text|full[- ]?text(?!(?:\s+\w+)?\s+(?:endpoint|API|service))|entire (?:transcript|document|record))/i,
+      why: "section J measured q.fullName as name-fields-only; these phrasings assert it reaches the full transcript",
+    },
   ];
 
   for (const rule of FORBIDDEN_WHEN) {
@@ -551,8 +803,16 @@ describe("measured figures stay traceable to the probe artifact", () => {
       // Deduped: `person-search.ts` is in both AGENT_SURFACES (no absolute totals)
       // and WORDING_ONLY_SURFACES (contradicted wording), so without this it is read
       // twice and any offending line is reported twice in the failure message.
-      for (const rel of new Set([...EVIDENCE_SURFACES, ...AGENT_SURFACES, ...WORDING_ONLY_SURFACES])) {
-        const text = readFileSync(join(projectRoot, rel), "utf8");
+      const files = new Set([...EVIDENCE_SURFACES, ...AGENT_SURFACES, ...WORDING_ONLY_SURFACES]);
+      const sources = [
+        ...[...files].map((rel) => ({ rel, text: readFileSync(join(projectRoot, rel), "utf8") })),
+        // A tool whose whole file is already scanned above is not read twice.
+        ...TOOL_DESCRIPTION_SURFACES.filter((t) => !files.has(t.rel)).map((t) => ({
+          rel: `${t.rel} (description)`,
+          text: t.text,
+        })),
+      ];
+      for (const { rel, text } of sources) {
         // Test per line AND against a whitespace-collapsed whole-file copy. A claim
         // reflowed across two markdown lines ("birth, death, marriage and\nresidence
         // … on the record index") slips a per-line pattern entirely — which is how a
@@ -581,6 +841,56 @@ describe("measured figures stay traceable to the probe artifact", () => {
           `  with belief is re-measured, not reworded"). A verdict stuck at OPEN or\n` +
           `  NOT MEASURED is a measurement-design task, not a re-run.`
       ).toEqual([]);
+    });
+  }
+
+  // Converse arm for section J guards: correct prose that contrasts
+  // q.recordPlace/f.recordPlace (metadata) with q.text (transcript) must NOT
+  // be rejected. Without this, a pattern tightening that blocks the wrong
+  // direction can silently block the right direction too.
+  for (const [label, sentence] of [
+    ["contrast with semicolon", "q.recordPlace matches against collection metadata only; the transcript is reached by q.text."],
+    ["contrast with comma-not", "q.recordPlace matches collection metadata, not the transcript."],
+    // A dash is a clause boundary like a comma or semicolon:
+    // agents/search-full-text.md's Place row reads exactly this way.
+    ["contrast with dash-NOT", "| Place | Place name | Matches collection metadata only — NOT transcript text. |"],
+    ["plain metadata-only", "q.recordPlace matches against collection metadata only."],
+    ["generic advice", "Place qualifiers search metadata; use q.text for transcript terms."],
+  ] as const) {
+    it(`section J q.recordPlace guard accepts correct prose: ${label}`, () => {
+      const rule = FORBIDDEN_WHEN.find((r) => r.verdict === "J.verdict:q.recordPlace searches")!;
+      expect(rule.mustNotSay.test(sentence)).toBe(false);
+    });
+  }
+
+  // Reject direction for the same rule: false claims that carry "not"/"only"
+  // and must still be caught, so a boundary change cannot silently lose them.
+  for (const [label, sentence] of [
+    ["not only ... but also", "Place matches not only metadata but also transcript content."],
+    ["only the transcript", "q.recordPlace searches only the transcript text."],
+    ["not just ... but", "q.recordPlace covers not just metadata but transcript text too."],
+  ] as const) {
+    it(`section J q.recordPlace guard rejects a false claim: ${label}`, () => {
+      const rule = FORBIDDEN_WHEN.find((r) => r.verdict === "J.verdict:q.recordPlace searches")!;
+      expect(rule.mustNotSay.test(sentence)).toBe(true);
+    });
+  }
+
+  // Converse arm for the q.fullName guard: correct prose that names the
+  // fulltext endpoint or describes name-field behaviour must NOT be rejected.
+  // Without this, a pattern tightening that blocks the wrong direction can
+  // silently block the right direction too.
+  for (const [label, sentence] of [
+    ["plain name-fields-only", "q.fullName searches name fields only."],
+    ["contrast with q.text", "q.fullName matches name fields, not the transcript."],
+    ["names the endpoint", "q.fullName searches name fields on the fulltext endpoint."],
+    ["entire, of a name field", "q.fullName searches the entire name field."],
+    ["endpoint behind a qualifier", "q.fullName covers indexed names in the full-text search API."],
+    ["service noun", "q.fullName matches names on the full-text search service."],
+  ] as const) {
+    it(`section J q.fullName guard accepts correct prose: ${label}`, () => {
+      const rule = FORBIDDEN_WHEN.find((r) => r.verdict === "J.verdict:q.fullName searches")!;
+      expect(rule.mustNotSay.test(sentence)).toBe(false);
     });
   }
 

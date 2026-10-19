@@ -20,7 +20,7 @@ from harness.allowed_tools import (
     format_uncovered_callee_fixtures,
     uncovered_callee_fixtures,
     declared_skill_tools,
-    load_skill_frontmatter,
+    load_suite_frontmatter,
 )
 from harness.auth import AuthConfig
 from harness.fixtures import load_fixtures
@@ -33,6 +33,18 @@ from harness.judge import (
     grade,
 )
 from harness.loader import TestSpec
+from harness.scenario_brief import (
+    ScenarioBrief,
+    load_scenario_brief,
+    readme_fallback_warning,
+)
+from harness.mock_mcp import (
+    NODE_EVAL_TIMEOUT_LONG,
+    NODE_EVAL_TIMEOUT_PATTERN,
+    pg_store_faults,
+    seed_pg_workspace,
+)
+from harness.warning_kinds import validate_warning_kinds
 from harness.rubric import Rubric, empty_rubric, parse_rubric_or_empty
 from harness.runlog import (
     JudgeResult,
@@ -48,10 +60,21 @@ from harness.skill_runner import (
     DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
     SKILL_TOOL_NAME_KEYS,
     SkillRunResult,
+    agent_return_text,
+    direct_dispatch_prompt,
+    handoffs,
+    judge_skills_slot,
     run_skill,
+    spawn_prompts,
+    spawned_agents,
 )
 from harness.validator_runner import as_dicts, run_validators, split_observations
-from harness.workspace import build_workspace, cleanup_session_store, snapshot_files
+from harness.workspace import (
+    DEFAULT_PLUGIN_AGENTS,
+    build_workspace,
+    cleanup_session_store,
+    snapshot_files,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -147,6 +170,7 @@ def run_one_test(
     model: str = DEFAULT_MODEL,
     judge_model: str = DEFAULT_JUDGE_MODEL,
     timestamp: str | None = None,
+    tool_search: bool = True,
 ) -> dict[str, Any]:
     """Run a single test; return the per-test entry dict for the envelope.
 
@@ -167,6 +191,7 @@ def run_one_test(
             model=model,
             judge_model=judge_model,
             timestamp=ts,
+            tool_search=tool_search,
         )
     )
 
@@ -179,6 +204,7 @@ async def _run_one_test_async(
     model: str,
     judge_model: str,
     timestamp: str,
+    tool_search: bool = True,
 ) -> dict[str, Any]:
     # --- Runnability gate -----------------------------------------------
     gate = check_runnable(
@@ -188,6 +214,17 @@ async def _run_one_test_async(
         skills_dir=paths.skills_dir,
         tests_dir=paths.tests_dir,
         validators_dir=paths.validators_dir,
+        # The gate's direct-agent fallback and `_prompt_for` need to resolve
+        # `test.skill` to the same agent file, or a direct test clears the gate
+        # and then dies in `_prompt_for` ~20 turns into a paid run. Nothing
+        # enforces that: `_prompt_for` reads the module-level constant directly,
+        # so the two agree by CONVENTION — this call site passing that same
+        # constant — not by construction. Passed explicitly rather than left to
+        # the default so the convention is visible at the site that upholds it.
+        # `test_direct_gate_resolves_the_same_agent_file_as_prompt_for` pins the
+        # default path only; a caller passing a different `agents_dir` (today,
+        # only a test) is outside it.
+        agents_dir=DEFAULT_PLUGIN_AGENTS,
     )
     if not gate.runnable:
         return _aborted_entry(
@@ -202,8 +239,15 @@ async def _run_one_test_async(
         spec.skill,
         rubric_path.read_text(encoding="utf-8") if rubric_path.exists() else None,
     )
-    skill_frontmatter = load_skill_frontmatter(
-        paths.skills_dir / spec.skill / "SKILL.md"
+    # Resolves the agent file for an agent-keyed suite, which has no SKILL.md
+    # (issue #1253). This dict is handed to every validator, and two of them
+    # read it: `test_tool_allowlist` takes its declared set from here — NOT
+    # from `compute_allowed_tools` — and `test_ownership_table` reads `name`
+    # and SKIPS when it is absent, so leaving this at `{}` would drop ownership
+    # checking for the whole suite silently rather than failing (PR #2782
+    # review).
+    skill_frontmatter = load_suite_frontmatter(
+        spec.skill, paths.skills_dir, agents_dir=DEFAULT_PLUGIN_AGENTS
     )
     # Honor the `model:` field in SKILL.md frontmatter when set (matches
     # Claude Code skill-frontmatter semantics: turn-scoped model override
@@ -213,7 +257,9 @@ async def _run_one_test_async(
     skill_model = skill_frontmatter.get("model")
     if isinstance(skill_model, str) and skill_model.strip():
         model = skill_model.strip()
-    scenario_readme = _load_scenario_readme(paths.scenarios_dir, spec.scenario)
+    # The judge reads the scenario's judge-brief.md, falling back to its whole
+    # README.md until one is written; each fallback is reported (issue #2478).
+    scenario_brief = load_scenario_brief(paths.scenarios_dir, spec.scenario)
 
     # Sub-skills this test declares it will really run (`execution.run_skills`).
     # Their tools join the allowlist; every other `Skill()` callee named in the
@@ -276,17 +322,19 @@ async def _run_one_test_async(
             paths=paths,
             rubric=rubric,
             skill_frontmatter=skill_frontmatter,
-            scenario_readme=scenario_readme,
+            scenario_brief=scenario_brief,
             skill_baseline=skill_baseline,
             auth=auth,
             model=model,
             judge_model=judge_model,
+            tool_search=tool_search,
         )
         runs.append(single)
         if n_runs > 1:
             _elapsed = time.perf_counter() - _run_start
             _skill_s = single.duration_ms / 1000.0
-            # Remainder is judge + validators + diffing (all post-skill work).
+            # Remainder is the CLI teardown, judge, validators and diffing (all
+            # post-skill work; duration_ms stops before the teardown).
             _post_s = max(0.0, _elapsed - _skill_s)
             _tag = single.aborted_reason or single.outcome
             print(
@@ -324,6 +372,33 @@ def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
     return set(correct) or None
 
 
+def _stop_at_stub(spec: TestSpec) -> bool:
+    """Whether a positive test ends at its first stubbed hand-off (#3119).
+
+    `execution.stop_at_stub`: for a test whose verdict is that hand-off, such
+    as a `no-shortcut` router test. The router is then told to walk on down
+    its table, which no stub can stop: a stub's text reaches the model as a
+    tool result, and stubs write nothing. So run_skill ends the run once the
+    turn that made the hand-off is over, the way a negative test stops at its
+    routing. The runnability gate refuses it on a negative test and with
+    nothing stubbed.
+    """
+    return spec.type == "positive" and bool((spec.execution or {}).get("stop_at_stub"))
+
+
+def _stopped_at_a_handoff(spec: TestSpec, result: SkillRunResult) -> bool:
+    """Whether the `stop_at_stub` stop ended this run on a stubbed hand-off.
+
+    Such a run never reaches the skill's own summary, so the hand-off is its
+    activation evidence (`derive_activated`, unit-test-spec.md §6).
+    """
+    if not _stop_at_stub(spec):
+        return False
+    stubbed = parse_stub_skills(spec.execution)
+    handed = handoffs(result.skills_invoked, result.builtin_tool_calls)
+    return any(name in stubbed for name in handed)
+
+
 def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
     """Sub-skills a POSITIVE test declares it doesn't want executed.
 
@@ -331,10 +406,23 @@ def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
     canned-response form — see harness/skill_stubs.py for which to pick and why
     (it turns on whether the CALLER reads the result, not on the callee).
 
-    Assert the hand-off with a `skills_invoked` validator; do not leave it to
-    the judge, which reads a transcript and can misread it.
+    Assert the hand-off with a `handoffs` validator; do not leave it to the
+    judge, which reads a transcript and can misread it.
     """
     return parse_stub_skills(spec.execution) or None
+
+
+def _stub_agents(spec: TestSpec, skills_dir: Path) -> dict[str, str | None] | None:
+    """The `stub_skills` entries to deny when reached by an agent spawn.
+
+    Exactly the entries with no skill directory: a callee converted from a skill
+    to an agent (issue #2825), which the router now spawns rather than loads. A
+    name that is still a skill keeps its `Skill`-call stub only, so its agent
+    half can still be spawned for real. (`route-shortcut-guard.json`, which
+    motivated this, now ends at its first stubbed hand-off instead: `stop_at_stub`.)
+    """
+    stubbed = parse_stub_skills(spec.execution)
+    return {n: r for n, r in stubbed.items() if not (skills_dir / n).is_dir()} or None
 
 
 # Field names inside one `modelUsage` entry, as the CLI emits them.
@@ -401,6 +489,40 @@ def _skill_tokens(usage: dict[str, Any]) -> tuple[int, int, int, int, dict[str, 
     )
 
 
+def _apply_unmatched_tool_call_abort(result: Any) -> None:
+    """Type-1 half of the uncovered tool-call gate, in place on `result`.
+
+    Extracted from `_execute_single_run` so it can be tested without driving a
+    whole run — the two behaviours below had no test at all before issue #2740.
+    """
+    if result.aborted_reason is None:
+        covered = _predicate_matched_count(result.tool_calls)
+        # Calls the routing short-circuit discarded count on the ATTEMPTED side
+        # here, and only here. `covered` is computed from `tool_calls`, which is
+        # what actually executed — so if a post-deny reaction call executes and
+        # matches a fixture it raises `covered`, and leaving it out of the left
+        # side would let the comparison go false and mask an uncovered call from
+        # an earlier turn. Counting both sides the same way removes that.
+        # `_build_warnings` deliberately does NOT do this: the advisory reads
+        # `attempted_mcp_calls` alone, so a deliberately stopped run does not
+        # collect an `uncovered_tool_call` note for a turn it never owned
+        # (issue #2740).
+        gated_calls = [*result.attempted_mcp_calls, *result.suppressed_post_deny_calls]
+        if len(gated_calls) > covered:
+            # At least one call didn't match a fixture. Check if any attempted
+            # call is to a tool that doesn't exist in the mock server.
+            # If a tool doesn't exist in registered_mcp_tools, there's no
+            # handler for it, so the call can't possibly have reached the mock.
+            for call in gated_calls:
+                tool_name = call["tool"].removeprefix("mcp__genealogy__")
+                if tool_name not in result.registered_mcp_tools:
+                    # Type 1: tool doesn't exist at all — abort
+                    result.aborted_reason = "unmatched_tool_call"
+                    break
+            # Type 2 calls (wrong args to existing tools, or denied by allowlist)
+            # fall through without aborting. Warnings are added by _build_warnings.
+
+
 async def _execute_single_run(
     *,
     run_index: int,
@@ -408,11 +530,12 @@ async def _execute_single_run(
     paths: OrchestratorPaths,
     rubric,
     skill_frontmatter: dict[str, Any],
-    scenario_readme: str,
+    scenario_brief: ScenarioBrief,
     skill_baseline: list[str],
     auth: AuthConfig,
     model: str,
     judge_model: str,
+    tool_search: bool = True,
 ) -> SingleRun:
     """One run of the skill + validators + judge. Returned to the caller for
     multi-run aggregation in assemble_test_entry."""
@@ -436,6 +559,9 @@ async def _execute_single_run(
         model=model,
         routing_short_circuit_skills=routing_short_circuit,
         stub_skills=_stub_skills(spec),
+        stub_agents=_stub_agents(spec, paths.skills_dir),
+        stop_at_stub=_stop_at_stub(spec),
+        tool_search=tool_search,
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -455,21 +581,7 @@ async def _execute_single_run(
     #         which fixtures need to be added or corrected.
     #
     # Phase 2 filters out Type 2 from the abort — only Type 1 stops the run.
-    if result.aborted_reason is None:
-        covered = _predicate_matched_count(result.tool_calls)
-        if len(result.attempted_mcp_calls) > covered:
-            # At least one call didn't match a fixture. Check if any attempted
-            # call is to a tool that doesn't exist in the mock server.
-            # If a tool doesn't exist in registered_mcp_tools, there's no
-            # handler for it, so the call can't possibly have reached the mock.
-            for call in result.attempted_mcp_calls:
-                tool_name = call["tool"].removeprefix("mcp__genealogy__")
-                if tool_name not in result.registered_mcp_tools:
-                    # Type 1: tool doesn't exist at all — abort
-                    result.aborted_reason = "unmatched_tool_call"
-                    break
-            # Type 2 calls (wrong args to existing tools, or denied by allowlist)
-            # fall through without aborting. Warnings are added by _build_warnings.
+    _apply_unmatched_tool_call_abort(result)
 
     # --- Diffs ----------------------------------------------------------
     research_diff = diff_research_json(
@@ -492,13 +604,14 @@ async def _execute_single_run(
     file_changes = file_changes or None
 
     # Set of every *other* skill name in the packages/engine/plugin/skills/ directory —
-    # used by rule 4 to detect "routing to another skill" patterns in
+    # used by rule 3 to detect "routing to another skill" patterns in
     # short responses without false-flagging legitimate concise outputs.
     other_skill_names = {
         d.name for d in paths.skills_dir.iterdir()
         if d.is_dir() and not d.name.startswith(".") and d.name != spec.skill
     }
 
+    agents_spawned = spawned_agents(result.builtin_tool_calls)
     activated = derive_activated(
         skill=spec.skill,
         skills_invoked=result.skills_invoked,
@@ -506,6 +619,8 @@ async def _execute_single_run(
         files_created=files_created,
         text_response=result.text_response,
         other_skill_names=other_skill_names,
+        agents_spawned=agents_spawned if spec.is_direct else None,
+        handed_off=_stopped_at_a_handoff(spec, result),
     )
 
     # --- Extract usage early — validators may need num_turns / output_tokens
@@ -538,9 +653,15 @@ async def _execute_single_run(
         tool_calls=result.tool_calls,
         blocked_context_calls=result.blocked_context_calls,
         blocked_protected_writes=result.blocked_protected_writes,
+        blocked_owned_section_writes=result.blocked_owned_section_writes,
         attempted_mcp_calls=result.attempted_mcp_calls,
         skill_frontmatter=skill_frontmatter,
         skills_invoked=result.skills_invoked,
+        # The direct arm's evidence: `Agent` spawns with their untruncated
+        # prompts. `skills_invoked` cannot answer "did the agent run" on a
+        # direct test, which invokes no skill at all.
+        builtin_tool_calls=result.builtin_tool_calls,
+        agent_returns=getattr(result, "agent_returns", []) or [],
         activated=activated,
         num_turns=_num_turns,
         output_tokens=_output_tokens,
@@ -554,12 +675,40 @@ async def _execute_single_run(
             "expected_classifications": spec.raw.get(
                 "expected_classifications", []
             ),
+            # Also threaded in: `delegation`, the exact text a direct-agent test
+            # hands the pair's agent (issue #2246). The direct-arm validators in
+            # test_universal.py gate on it and assert the recorded spawn prompt
+            # contains it verbatim. THIS LINE IS THE GATE: the whitelist is a
+            # literal, and a field declared in the schema but missing here makes
+            # its validators report "skipped" on the whole population they were
+            # written for — the defect behind `refinement_targets` (#2021 F12)
+            # and `index_error_source` (#1606), twice.
+            "delegation": spec.delegation,
+            # Also threaded in: `index_error_source`, the one attached source a
+            # doctrine test declares to be an indexing error — deterministic
+            # ground truth for
+            # test_index_discrepancy_does_not_recommend_detaching
+            # (issue #1606; unit-test-spec.md § 5.12 `index_error_source`).
+            "index_error_source": spec.raw.get("index_error_source"),
             # Also threaded in: `execution`, so test_tool_allowlist can widen
             # by the same `run_skills` rule the session allowlist used. A
             # callee's calls land in this run's tool_calls log, and without
             # the declaration the validator reads a legal hand-off as a
             # violation (issue #1012).
             "execution": spec.execution,
+            # Also threaded in: `user_message` (from input.user_message), so
+            # validators can verify whether a figure in the response was
+            # supplied by the user rather than derived from a tool call.
+            # Used by report_unsourced_year_in_response (issue #1965 V2).
+            # A direct-agent test has no user turn (#2246) and its delegation is
+            # the only text the run was handed, so it takes that slot — without
+            # the fallback a year the delegation supplied reads as invented.
+            "user_message": spec.user_message or (spec.delegation or ""),
+            # Also threaded in: `negative`, so a hand-back validator can read
+            # the owner a direct-arm negative names in `correct_skill`
+            # (test_check_warnings.test_hand_back_names_its_owner, issue #2118).
+            # Without it that validator failed every compliant run.
+            "negative": spec.negative,
         },
     )
     validators_passed = compute_validators_passed(
@@ -575,7 +724,7 @@ async def _execute_single_run(
     # Reporting observations (tier 2, report_*): pass r.error (the
     # observation text), NOT r.name (which is a verdict). The function name
     # goes only to the run log for traceability, never the judge.
-    harness_observations = split_observations(validator_results)
+    harness_observations, state_observations = split_observations(validator_results)
     # For _build_warnings: (name, observation) tuples so the run log records
     # which report_* function fired.
     _harness_observation_pairs = [
@@ -591,7 +740,7 @@ async def _execute_single_run(
     # so these are folded into the SKILL-level `output.warnings` instead,
     # via _build_warnings below, alongside its other advisory kinds.
     judge_dimension_warnings: list[dict[str, Any]] = []
-    if validators_passed and result.aborted_reason is None:
+    if result.aborted_reason is None:
         _judge_start = time.perf_counter()
         try:
             judge_output = _run_judge(
@@ -599,9 +748,10 @@ async def _execute_single_run(
                 # grades a conclusion by agreeing with it.
                 validator_failures=validator_failures,
                 harness_observations=harness_observations,
+                state_observations=state_observations,
                 spec=spec,
                 rubric=rubric,
-                scenario_readme=scenario_readme,
+                scenario_readme=scenario_brief.text,
                 result=result,
                 file_changes=file_changes,
                 before_snapshot=before_snapshot,
@@ -647,9 +797,16 @@ async def _execute_single_run(
         has_expected_classifications=bool(spec.raw.get("expected_classifications")),
     )
 
-    # A judge FAIL on a correctly-routed negative test is REPORTED, not floored:
-    # the corpus says the judge is usually right (20 of 24 human-confirmed), and
-    # these dimensions never gated the outcome anyway.
+    # A judge FAIL on a correctly-routed negative test is COERCED to N/A (#2196):
+    # routing already decided the outcome, so these dimensions never gated it,
+    # and the judge was grading a transcript the harness usually truncated at
+    # the hand-off. NOT floored to 2 - that shipped once and the corpus refuted
+    # it (20 of 24 cells human-confirmed at 1). The original score and rationale
+    # survive in output.warnings, which is what keeps the 1 trendable.
+    #
+    # Runs unconditionally, OUTSIDE the judge gate above, and before #2057 that
+    # was invisible: a validator-failing run had no dimensions, so this
+    # no-opped on the whole class. It now fires there too.
     flag_routing_negative_judge_fail(
         judge_result.dimensions,
         spec=spec,
@@ -668,7 +825,12 @@ async def _execute_single_run(
         aborted_reason=result.aborted_reason,
         activated=activated,
         skills_invoked=result.skills_invoked,
+        builtin_tool_calls=result.builtin_tool_calls,
         judge_skipped=judge_result.skipped,
+        # None on a routed run, the (possibly empty) spawn list on a direct one
+        # — the same shape `derive_activated` is fed above, and the thing
+        # `_compute_outcome` keys the arm on.
+        agents_spawned=agents_spawned if spec.is_direct else None,
     )
 
     skill_input, skill_cached, skill_cache_write, skill_output, per_model = (
@@ -683,6 +845,7 @@ async def _execute_single_run(
     return SingleRun(
         outcome=outcome,
         aborted_reason=result.aborted_reason,
+        error=result.error,
         duration_ms=result.duration_ms,
         duration_api_ms=skill_duration_api_ms,
         num_turns=skill_num_turns,
@@ -701,6 +864,11 @@ async def _execute_single_run(
         cache_creation_input_tokens=skill_cache_write,
         output_tokens=skill_output,
         model_usage=per_model,
+        no_result_message=result.no_result_message,
+        suppressed_post_deny_calls=result.suppressed_post_deny_calls,
+        subagents=result.subagents,
+        subagent_capture_status=result.subagent_capture_status,
+        main_thread=result.main_thread,
         skill_cost_usd=float(_usage.get("total_cost_usd") or 0.0),
         output={
             "text_response": result.text_response,
@@ -716,6 +884,13 @@ async def _execute_single_run(
                 if result.builtin_tool_calls
                 else {}
             ),
+            # Same omit-when-empty rule as the field above: a routed run spawns
+            # nothing and writes the run_output it always has.
+            **(
+                {"agent_returns": getattr(result, "agent_returns", []) or []}
+                if getattr(result, "agent_returns", None)
+                else {}
+            ),
             **({"file_changes": file_changes} if file_changes else {}),
             **(
                 {"warnings": warnings}
@@ -727,6 +902,8 @@ async def _execute_single_run(
                     unread_skill_calls=result.unread_skill_calls,
                     judge_warnings=judge_dimension_warnings,
                     harness_observations=_harness_observation_pairs,
+                    scenario_brief=scenario_brief,
+                    pg_faults=getattr(result, "pg_store_faults", None),
                 ))
                 else {}
             ),
@@ -780,6 +957,36 @@ def _is_zero_progress_timeout(result) -> bool:
     return (result.usage or {}).get("num_turns") == 0
 
 
+# What a unit run log keeps of each subagent summary. `turns` (one entry per
+# record) and `transcript` (a local cache filename) are dropped: unit logs are
+# committed in bulk, and neither is read by anything downstream of them.
+_UNIT_SUBAGENT_DROP = ("turns", "transcript")
+
+
+def _capture_context_meters(result, workspace: Path) -> None:
+    """Attach the busiest-moment capture to `result`. Never raises.
+
+    Must run BEFORE `cleanup_session_store(workspace)`: that deletes the very
+    SDK cache directory these transcripts live in. Both readers resolve the
+    directory with the SDK's own `project_key_for_directory`, the same key the
+    cleanup deletes. Imported here, not at module top, so a broken e2e package
+    can never stop the orchestrator loading.
+    """
+    try:
+        from e2e.subagent_capture import collect_main_thread, collect_subagents
+
+        subagents, status = collect_subagents(workspace)
+        result.subagents = [
+            {k: v for k, v in s.items() if k not in _UNIT_SUBAGENT_DROP}
+            for s in subagents
+        ]
+        result.subagent_capture_status = status
+        result.main_thread = collect_main_thread(workspace)
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        result.subagents = []
+        result.subagent_capture_status = "error"
+
+
 def _is_retryable_abort(result) -> bool:
     """Whether a failed skill run should be retried (see the two helpers and
     `_execute_skill_with_retry`'s docstring)."""
@@ -798,8 +1005,11 @@ async def _execute_skill_with_retry(
     model: str,
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
+    stub_agents: dict[str, str | None] | None = None,
+    stop_at_stub: bool = False,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
+    tool_search: bool = True,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
     """Build a fresh workspace and run the skill, retrying transient
     failures with exponential backoff. See `_is_retryable_abort`.
@@ -859,10 +1069,15 @@ async def _execute_skill_with_retry(
                         scenarios_dir=paths.scenarios_dir,
                         skills_dir=paths.skills_dir,
                         target_dir=workspace,
+                        # Direct-agent arm: agents staged, no skills. The
+                        # conversion doc's acceptance check, made literal.
+                        stage_skills=not spec.is_direct,
+                        suite=spec.skill,
                     )
+                    seed_pg_workspace(workspace)
                     before_snapshot = snapshot_files(workspace)
                     result = await run_skill(
-                        user_message=spec.user_message,
+                        user_message=_prompt_for(spec),
                         workspace=workspace,
                         fixture_names=spec.mcp_fixtures,
                         fixtures_dir=paths.fixtures_dir,
@@ -883,14 +1098,19 @@ async def _execute_skill_with_retry(
                         allowed_tools_override=skill_baseline,
                         routing_short_circuit_skills=routing_short_circuit_skills,
                         stub_skills=stub_skills,
+                        stub_agents=stub_agents,
+                        stop_at_stub=stop_at_stub,
                         # The skill's OWN declaration, not skill_baseline (which
                         # unions in its subagents' tools). The gap between the two
                         # is what the per-context policy guards.
                         declared_tools=declared_skill_tools(
                             spec.skill, paths.skills_dir
                         ),
+                        tool_search=tool_search,
                     )
                     after_snapshot = snapshot_files(workspace)
+                    _capture_context_meters(result, workspace)
+                    result.pg_store_faults = pg_store_faults(workspace)
                     attempt_completed = True
                 finally:
                     # Always clean up the SDK's session-store entry so long
@@ -954,6 +1174,8 @@ def _build_warnings(
     unread_skill_calls: list[list[str]] | None = None,
     judge_warnings: list[dict[str, Any]] | None = None,
     harness_observations: list[tuple[str, str]] | None = None,
+    scenario_brief: ScenarioBrief | None = None,
+    pg_faults: list[dict[str, str]] | None = None,
 ) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
@@ -1046,11 +1268,87 @@ def _build_warnings(
             "observation": obs_text,
         })
 
+    # Harness node-subprocess timeout (#2025). A live tool whose compiled-code
+    # bridge trips the node timeout returns a write/validation failure the skill
+    # then has to recover from — a harness flake, not a skill defect, and one
+    # that otherwise lives only inside a `response` string nobody greps. Scan the
+    # recorded live-tool responses for the sentinel and surface it as a warning
+    # so the next occurrence is legible in run.output.warnings. Gated on a live
+    # match reporting failure so a tool's own error prose can't false-trip it.
+    timed_out_tools = sorted({
+        c["tool"]
+        for c in tool_calls
+        if (c.get("matched") or {}).get("kind") == "live"
+        and _response_hit_node_timeout(c.get("response"))
+    })
+    if timed_out_tools:
+        warnings.append({
+            "kind": "harness_node_timeout",
+            "advisory": (
+                f"{len(timed_out_tools)} live MCP tool(s) hit the harness "
+                f"node-subprocess timeout ({NODE_EVAL_TIMEOUT_LONG}s) and returned a "
+                "write/validation failure the skill then had to recover from — a "
+                "harness flake, not a skill defect (#2025). Do not grade the "
+                f"recovery as a skill error. Tools: {timed_out_tools}."
+            ),
+            "tools": timed_out_tools,
+        })
+
+    # The judge read a whole scenario README because no judge-brief.md exists.
+    if scenario_brief is not None and (
+        fallback := readme_fallback_warning(scenario_brief)
+    ):
+        warnings.append(fallback)
+
+    # --store pg (U15): a call the Postgres store failed, from any node process
+    # this test spawned (mock_mcp.pg_store_faults). The mock-side pipelines
+    # swallow their own failures, so without this the fault surfaces a step
+    # later as "nothing staged", which unit_pg_parity would read as wobble.
+    if pg_faults:
+        warnings.append({
+            "kind": "pg_store_fault",
+            "advisory": (
+                f"{len(pg_faults)} call(s) failed in the Postgres store under --store pg — "
+                "a harness/store fault, not a skill defect. Do not grade the "
+                "recovery as a skill error."
+            ),
+            "faults": pg_faults[:20],
+        })
+
+    # Single chokepoint: every output.warnings entry — this function's own, the
+    # judge's (folded in via judge_warnings), and any built elsewhere and folded
+    # in — is the return value of this call. Validate each kind by value against
+    # the registry so an unregistered kind fails loudly on first emission from
+    # ANY file, literal or const, rather than silently printing nowhere (#2025).
+    validate_warning_kinds(warnings)
     return warnings
 
 
+def _response_hit_node_timeout(response: Any) -> bool:
+    """Whether a recorded live-tool response is a node-subprocess timeout (#2025).
+
+    A tripped node subprocess lands in the tool's failure envelope
+    (`ok: false` / `valid: false`) with the `subprocess.TimeoutExpired` string
+    in `errors`/`message`. Keyed on the failure flag AND the seconds-anchored
+    pattern so neither a tool's own error prose nor an upstream `...ms` fetch
+    timeout false-trips it (see NODE_EVAL_TIMEOUT_PATTERN).
+    """
+    if not isinstance(response, dict):
+        return False
+    if response.get("ok") is not False and response.get("valid") is not False:
+        return False
+    texts: list[str] = []
+    errs = response.get("errors")
+    if isinstance(errs, list):
+        texts.extend(str(e) for e in errs)
+    message = response.get("message")
+    if isinstance(message, str):
+        texts.append(message)
+    return any(NODE_EVAL_TIMEOUT_PATTERN.search(t) for t in texts)
+
+
 # Judge dimensions whose subject is checked deterministically by the
-# `test_expected_classifications` validator (it verifies evidence_type,
+# `test_expected_classifications` validator (it verifies record_basis,
 # informant_proximity, and information_quality on the declared
 # (record_role, fact_type) pairs). When that validator PASSES, the LLM judge
 # must not FAIL these dimensions on the same classifications — a fail there is
@@ -1106,7 +1404,48 @@ def apply_deterministic_deference(dimensions, validator_results, *, has_expected
 def flag_routing_negative_judge_fail(
     dimensions, *, spec, activated, skills_invoked, warnings=None
 ):
-    """Report a judge FAIL on a correctly-routed negative test. Change no score.
+    """Coerce a judge FAIL on a correctly-routed negative test to N/A (#2196).
+
+    On this signature the harness usually stops the run the instant the right
+    skill fires, so the judge is handed a truncated transcript and still asked
+    to grade Correctness and Completeness. Since the 2026-09-02 ruling those two
+    dimensions are coerced from 1 to `None` and the original score and rationale
+    are preserved in an `output.warnings[]` entry, following `judge.py`'s
+    `coerced_tool_arguments_to_na`.
+
+    **"Usually" is measured, and the exception matters.** The coercion fires on
+    the routing signature alone and does NOT check whether the run produced
+    anything, per #2196's stated signature. On 4 of the 47 runs it fires on in
+    the committed corpus the skill under test HAD produced real output before
+    routing: ut_timeline_008 (1355 chars, extraction_append x2 + research_log
+    _append, judge rationale "extracting 11 new assertions"), ut_person_evidence
+    _003 (710 chars, 4 calls, and its 1 is HUMAN-CONFIRMED with a written
+    comment), and two ut_citation_003 runs. On those the 1 names a real defect
+    that the `pass` outcome already hides. The score still goes to null there;
+    what preserves the signal is the warning above plus
+    `review_sample.is_mandatory`'s third trigger, not the dimension.
+
+    **Do not "fix" this by gating on empty output.** That is the gate
+    unit-test-spec.md §5.10 forbids, on evidence that still applies: 4 of the
+    old floor's overrides had an empty `text_response` and zero turns, but so
+    did 6 of its 20 confirmations, so an empty-output gate would have fired on
+    10 cells and been wrong on 6. It would suppress this over-fire and keep
+    coercing the confirmations whose output happened to be empty, which is not
+    a clean fix - it trades a measurable 4 for an unmeasured 6. The signature
+    is #2196's, deliberately. Tracked as issue #2443, whose first step is
+    adjudicating those 4 runs rather than changing this function.
+
+    **This is not the deleted floor.** The floor rewrote a 1 to a 2 — a claim
+    that the skill did better than the judge said. N/A is a refusal to grade a
+    field the harness left blank, and routing alone still decides these tests
+    (`_compute_outcome`). A `2` is left alone, which keeps `is_mandatory`'s
+    first trigger working on it unchanged.
+
+    The old `routing_negative_judge_fail` warning is NOT also emitted: it fires
+    on the identical condition, so a cell would be tallied twice, and its
+    advisory ("read it before overriding it") is about a score that no longer
+    exists once it is null. Its guidance is carried into the advisory below and
+    its registry row stays, because committed run logs carry the kind.
 
     This used to FLOOR Correctness/Completeness from 1 to 2 here, on the theory
     that the judge was grading the routed-to skill's execution rather than
@@ -1140,15 +1479,32 @@ def flag_routing_negative_judge_fail(
     work inline (a real defect this suite would otherwise miss) or the judge
     misreading a clean decline.
 
-    Returns `dimensions` unmodified; appends to `warnings` when given. No-op
-    unless the test is negative with a non-empty `correct_skill`, the skill under
-    test did not activate, and an accepted skill is in `skills_invoked`.
+    Mutates matching dimensions in place (score -> None, rationale prefixed) and
+    appends to `warnings` when given; the rewritten rationale names the original
+    score, so a caller that passes no warnings list still leaves a trace. Never
+    raises. No-op unless the test is negative with a non-empty `correct_skill`,
+    the skill under test did not activate, and an accepted skill is in
+    `skills_invoked`.
+
+    A `grade_on_invariant` negative takes the same path; only the warning's and
+    rationale's "decided by" clause changes. The `activated` guard is kept for
+    it on purpose: an invariant negative may activate and still pass
+    (`ut_conflict_resolution_010` loads conflict-resolution and declines
+    in-body), and there its 1 is left a 1, which the review sample's first
+    trigger already makes mandatory.
     """
     if not dimensions:
         return dimensions
     negative = spec.negative or {}
-    if negative.get("grade_on_invariant"):
-        return dimensions
+    # Invariant negatives are coerced too (ruling on issue #2190, 2026-09-07):
+    # their dimensions never gate either, and the human corpus split 2-of-3 on
+    # their 1s, the same split with no discriminator that retired the floor.
+    # Only the wording below changes, because routing does not decide them.
+    decided_by = (
+        "its invariant validator alone"
+        if negative.get("grade_on_invariant")
+        else "routing alone"
+    )
     if activated:
         return dimensions
     # The `any()` check below is the only guard needed, and it is load-bearing
@@ -1167,21 +1523,49 @@ def flag_routing_negative_judge_fail(
         return dimensions
     for dd in dimensions:
         if dd.get("name") in _ROUTING_DIAGNOSTIC_DIMENSIONS and dd.get("score") == 1:
+            # Append BEFORE mutating: the warning is the only place the judge's
+            # original score and reasoning survive intact.
             if warnings is not None:
                 warnings.append({
-                    "kind": "routing_negative_judge_fail",
+                    "kind": "coerced_routing_negative_to_na",
                     "advisory": (
                         f"judge scored {dd['name']} 1 on a negative test whose "
-                        f"outcome is decided by routing. Across the committed "
-                        f"corpus a human confirmed this 1 in 20 of 24 such "
-                        f"cells, so read it before overriding it: if the skill "
-                        f"under test carried out its own task inline, the 1 is "
-                        f"right and the routing pass is hiding a real defect."
+                        f"outcome is decided by {decided_by}; coerced to null. "
+                        f"Across the committed corpus a human confirmed this 1 "
+                        f"in 20 of 24 such cells, so read it before confirming "
+                        f"the N/A: if the skill under test carried out its own "
+                        f"task inline, the 1 is right and the routing pass is "
+                        f"hiding a real defect. The coercion does NOT check "
+                        f"whether the run produced output, and on 4 of the 47 "
+                        f"runs it fires on in the committed corpus it did "
+                        f"(ut_timeline_008 wrote 11 assertions via "
+                        f"extraction_append; ut_person_evidence_003's 1 is "
+                        f"human-confirmed)."
                     ),
                     "name": dd["name"],
                     "score": dd.get("score"),
+                    # `or ""` deliberately: this field is the only durable record of
+                    # the judge's reasoning, and a null here is indistinguishable
+                    # from "the judge said nothing" to whoever reads the log.
                     "rationale": dd.get("rationale") or "",
                 })
+            # Rewrite the rationale as well as the score, following
+            # apply_deterministic_deference and coerced_tool_arguments_to_na. A
+            # null sitting beside a rationale still arguing the skill failed
+            # reads as a harness bug to whoever opens the run log, and the CRUD
+            # UI never surfaces output.warnings.
+            orig = dd.get("rationale") or ""
+            dd["rationale"] = (
+                f"[coerced-to-na] this is a correctly-routed negative test, whose "
+                f"outcome is decided by {decided_by}, so {dd['name']} is N/A and "
+                f"the judge's 1 was coerced to null. READ THE ORIGINAL BELOW "
+                f"BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed "
+                f"corpus the skill under test produced real output first (up to "
+                f"1355 chars and 5 tool calls, including writes), and there a 1 "
+                f"names a genuine defect the routing pass hides. "
+                f"Original judge rationale: {orig}"
+            )
+            dd["score"] = None
     return dimensions
 
 
@@ -1251,6 +1635,11 @@ _MOCK_ENRICHED_KEYS = (
     # run log.
     "unloggedSearches",
     "nilSearchNeedsLog",
+    # Computed by the mock from the call's own arguments (#3054). A nil
+    # record_search with no projectPath carries none of the keys above, so
+    # without this its hint would be stripped from the run log the
+    # surnameVariantHints validator and a reviewer both read.
+    "surnameVariantHints",
 )
 
 
@@ -1313,6 +1702,36 @@ def _tool_call_entry(c: dict[str, Any]) -> dict[str, Any]:
     return entry
 
 
+class MissingPairAgentError(Exception):
+    """A direct test names a `skill` with no agent file of the same name."""
+
+
+def _prompt_for(spec: TestSpec) -> str:
+    """What the main thread is sent.
+
+    A routed test gets its `user_message` unchanged. A direct test gets the
+    harness-owned dispatcher prompt wrapping `input.delegation` — the test author
+    writes only the delegation, so no test can weaken the relay instruction.
+
+    The agent's name is `spec.skill`, which holds for the three pairs whose
+    production route is a direct spawn but NOT for `record-extraction` (its agent
+    is `record-extractor`, and its production route is the skill anyway). Raising
+    here is the difference between a loud failure and a run that quietly spawns
+    nothing and grades whatever the main thread improvised.
+    """
+    if not spec.is_direct:
+        return spec.user_message
+    agent_file = Path(DEFAULT_PLUGIN_AGENTS) / f"{spec.skill}.md"
+    if not agent_file.is_file():
+        raise MissingPairAgentError(
+            f"test {spec.id} carries `input.delegation` but no agent file exists "
+            f"at {agent_file}. A direct test spawns `subagent_type: "
+            f"{spec.skill!r}`; if this pair's agent is named differently, the "
+            f"direct arm cannot address it."
+        )
+    return direct_dispatch_prompt(spec.skill, spec.delegation or "")
+
+
 def grading_mode_for(spec: TestSpec) -> tuple[str, bool]:
     """What decides this test's outcome, and whether the judge dimensions do.
 
@@ -1341,8 +1760,16 @@ def grading_mode_for(spec: TestSpec) -> tuple[str, bool]:
       (`correct_skill: []`), where "no skill fired" holds whether the model
       cleanly declined or answered the request itself, so the base dimensions
       are the only thing telling those apart and they DO gate.
+    - `"trigger"` — a positive test tagged `grade:trigger` (opt-in). The verdict
+      is activation alone (the skill under test fired, checked in
+      `_compute_outcome`'s positive branch); the judge runs base-only and
+      diagnostically and does NOT gate. For a test whose sub-skills are stubbed,
+      an outcome score would measure the stub, not the skill (issue #2156;
+      mirrors #2023's stubbed-run principle).
     """
     if spec.type == "positive":
+        if "grade:trigger" in (getattr(spec, "tags", None) or []):
+            return "trigger", False
         return "dimensions", True
     negative = spec.negative or {}
     if negative.get("grade_on_invariant"):
@@ -1362,11 +1789,16 @@ def _compute_outcome(
     activated: bool,
     skills_invoked: list[str],
     judge_skipped: bool = False,
+    agents_spawned: list[str] | None = None,
+    builtin_tool_calls: list[dict[str, Any]] | None = None,
 ) -> str:
     """v1 per-run outcome per spec §7.
 
-    `judge_skipped` is True iff the judge layer didn't grade (validators
-    failed OR judge raised an error). For positive tests, when validators
+    `judge_skipped` is True iff the judge layer didn't grade. Since #2057
+    that means an aborted run or a judge that raised — a validator failure
+    no longer skips the judge, and `if not validators_passed: return "fail"`
+    below runs AHEAD of every `judge_skipped` branch, so the outcome is
+    unchanged by that. For positive tests, when validators
     passed but the judge was still skipped, that's a judge-crash path —
     the run can't be scored as pass because spec §7 says pass requires
     "every judge dimension scored pass" and zero dimensions can't satisfy
@@ -1403,7 +1835,19 @@ def _compute_outcome(
     # explicitly. Negative tests are routing-determined (see the negative
     # branch below) — their judge call is base-only and diagnostic, so a
     # judge crash doesn't gate their outcome.
-    if judge_skipped and spec.type == "positive":
+    #
+    # grade:trigger positive tests are the exception on the positive side:
+    # they are graded on activation alone (grading_mode "trigger",
+    # dimensions_gate_outcome=False), so their judge call is diagnostic just
+    # like a negative's. A judge crash must NOT gate them — the trigger
+    # verdict in the positive branch below owns the outcome, after the same
+    # activation + skills_invoked checks every positive test runs. Without
+    # this exemption a run log could show dimensions_gate_outcome=False beside
+    # a fail the (skipped) dimensions caused (issue #2156).
+    _is_trigger_positive = spec.type == "positive" and "grade:trigger" in (
+        getattr(spec, "tags", None) or []
+    )
+    if judge_skipped and spec.type == "positive" and not _is_trigger_positive:
         return "fail"
 
     if spec.type == "positive":
@@ -1422,8 +1866,32 @@ def _compute_outcome(
         # accept the false-fail there in v1.x and rely on the run log's
         # empty `skills_invoked` field as the diagnostic. Tracked in
         # docs/specs/unit-test-spec-v2.md for v2 fidelity work.
-        if spec.skill not in skills_invoked:
+        # Direct-agent arm (issue #2246): the pair's agent is reached by an
+        # `Agent` spawn from a bare main thread, so `skills_invoked` is empty by
+        # construction and `agents_spawned` carries the same meaning. The rule is
+        # otherwise identical — a positive test must show the thing under test
+        # actually ran.
+        #
+        # `agents_spawned is None` is the routed/direct discriminator, NOT
+        # `spec.is_direct`, and deliberately so: the caller already knows which
+        # arm it is and passes None for a routed run (`_execute_single_run`,
+        # matching how it feeds `derive_activated`). Reading `spec.is_direct`
+        # here instead would make every caller owe a real `TestSpec`, and the
+        # callers include unit tests that pass a `SimpleNamespace` stand-in —
+        # one such test arrived from main and broke on exactly that. An empty
+        # list is not None: a direct run that spawned nothing still fails.
+        ran = skills_invoked if agents_spawned is None else agents_spawned
+        if spec.skill not in (ran or []):
             return "fail"
+        if "grade:trigger" in (getattr(spec, "tags", None) or []):
+            # grade:trigger (issue #2156): the deterministic contract for this
+            # positive test is activation alone — checked just above. Its
+            # sub-skills are stubbed, so the judge's outcome dimensions measure
+            # the stub, not the skill (mirrors the #2023 stubbed-run principle);
+            # they still run and are recorded but do not gate. Kept in step with
+            # grading_mode_for's "trigger" mode (dimensions_gate_outcome=False),
+            # enforced by test_grading_mode_matches_what_compute_outcome_does.
+            return "pass"
     else:  # negative
         # Invariant grading (opt-in via `negative.grade_on_invariant`).
         # The test is graded SOLELY on its deterministic invariant
@@ -1434,8 +1902,18 @@ def _compute_outcome(
         # refuse-new-source), the skill may or may not fire, but no run
         # may harm state, and the validator is what enforces that. The
         # invariant must be backed by a tag-gated validator that actually
-        # runs; a `grade_on_invariant` test with no such validator passes
-        # vacuously (see docs/specs/unit-test-spec.md).
+        # runs; a `grade_on_invariant` test with no such validator would pass
+        # vacuously, which `runnability.py` blocks at load time by matching the
+        # test's tags against the validator file's gate tags. Do not add a
+        # second, runtime check of the same thing here — replayed over the
+        # committed corpus it fires on one run, already fixed (measured
+        # 2026-09-10: 1 of 71 `grade_on_invariant` runs was vacuous,
+        # `search-wikipedia/v1_2026-06-23_16-05-24`, which predates
+        # `test_no_wiki_no_write`, the tag-gated validator added 2026-07-29).
+        # Note what the load-time gate does and does not prove: that a
+        # validator GATES ON the test's tags, never that it EXECUTES. A
+        # tag-gated validator with a second, state-dependent skip could still
+        # go vacuous. None does today, and nothing checks for one.
         if (spec.negative or {}).get("grade_on_invariant"):
             return "pass"
         # Fail iff the skill under test ACTIVATED. A bare entry in
@@ -1478,7 +1956,16 @@ def _compute_outcome(
         # tests' concern, not this test's. The judge runs base-only and
         # diagnostically (see `_run_judge`); its scores must NOT flip a
         # correctly-routed test.
-        if not any(s in skills_invoked for s in correct):
+        # `handoffs`, not `skills_invoked`: under the 2026-09-22 ruling a skill
+        # becomes an agent, and the correct hand-off to a converted callee is an
+        # `Agent` spawn, which never lands in `skills_invoked` (issue #2825).
+        # `runnability.py` already resolves a `correct_skill` entry against the
+        # agents dir as well as the skills dir (issue #2793) — matching on
+        # `skills_invoked` here is what made that acceptance a lie: the test
+        # loaded and then failed however correctly the run routed. Observed on
+        # `ut_init_project_009`, which spawned `project-status` (an agent since
+        # 2026-10-03) and was graded a routing failure for it.
+        if not any(s in handoffs(skills_invoked, builtin_tool_calls or []) for s in correct):
             # Skill didn't fire, but didn't route to an acceptable
             # alternative — the correct_skill array was not satisfied.
             return "fail"
@@ -1496,7 +1983,7 @@ def _compute_outcome(
     return "pass"
 
 
-def _run_judge(
+def build_judge_grade_kwargs(
     *,
     spec: TestSpec,
     rubric: Rubric,
@@ -1504,11 +1991,22 @@ def _run_judge(
     result,
     file_changes,
     before_snapshot: dict[str, Any] | None = None,
-    auth: AuthConfig,
-    judge_model: str,
     validator_failures: list[str] | None = None,
     harness_observations: list[str] | None = None,
-) -> JudgeOutput:
+    state_observations: list[str] | None = None,
+) -> dict[str, Any]:
+    """Build the kwargs `grade()` needs, from the same inputs `_run_judge` reads.
+
+    Shared between the live path (`_run_judge`) and the regrade / dry-render
+    path (`judge_regrade.py`) so a judge-prompt regrade sends the SAME prompt a
+    live run does. Rebuilding these inputs by hand in a second place is how
+    `grade()` ends up called with a full rubric on a negative test, an empty
+    `skills_invoked` on a direct test, and "name: error" validator-failure
+    strings where the live path sends bare names.
+
+    `scenario_readme` carries the scenario's judge-brief.md, or its README
+    while no brief exists (`harness/scenario_brief.py`, issue #2478).
+    """
     # Negative tests: the skill correctly declines, so there is no craft
     # output to grade against the skill's rubric. Spec §7 — "negative
     # tests don't have rubric dimensions." Grade base dimensions only,
@@ -1523,23 +2021,116 @@ def _run_judge(
     else:
         judge_rubric = rubric
         judge_context = spec.judge_context
-    return grade(
+    # Direct-agent arm: the judge's two "what was asked / what ran" slots are
+    # filled from the direct route instead. `spec.user_message` is empty on a
+    # direct test and the real instruction is the delegation; `skills_invoked` is
+    # empty because no skill ran, and the honest answer is the agent that did.
+    #
+    # Deliberately a VALUE change, not a template change: editing
+    # eval/harness/judge/prompt.md moves `judge_prompt_hash`, which raises the
+    # warn-only Rule 2b on all 27 skills' run logs (check_runlogs.py) for no gain.
+    # The warning below is load-bearing, not politeness. The delegation lands under
+    # the template's "## User message" heading, which a judge reads as the request
+    # to satisfy — and four of the first five twins deliberately pre-state a WRONG
+    # answer ("Appropriate outcome: `declared: true`"), because resisting exactly
+    # that is what the arm grades. Measured on v1_2026-09-14_22-32-41: the judge
+    # failed `ut_research_exhaustiveness_d2b` on Correctness, Gate reasoning and
+    # Declaration honesty, writing "the per-test context explicitly states the
+    # correct outcome is `declared: true`" — quoting the delegation and calling it
+    # the per-test context, on a run where the agent declined correctly and named
+    # the unsearched Massachusetts birth registration. Without this the arm grades
+    # backwards: a twin that survives the attack is failed for surviving it, and
+    # intermittently, since the same test passed its four previous runs.
+    judge_text = result.text_response
+    if spec.is_direct:
+        judge_user_message = (
+            "(NO USER TURN. This test exercises the direct-agent route, so the text "
+            f"below is the DELEGATION a calling orchestrator sent to the {spec.skill} "
+            "agent.\n\n"
+            "IT IS NOT A STATEMENT OF THE CORRECT OUTCOME, and it is not the per-test "
+            "context. This arm exists to test whether the agent resists a caller that "
+            "names the artifact and pre-states an answer, so the delegation may assert "
+            "a conclusion that is WRONG. An agent that refuses the outcome this text "
+            "asserts may be behaving exactly as required. Judge correctness from the "
+            "rubric and the per-test context alone — never from what the delegation "
+            "claims about the answer.)\n\n" + (spec.delegation or "")
+        )
+        _spawned = spawned_agents(getattr(result, "builtin_tool_calls", []) or [])
+        judge_ran = [
+            f"{name} (agent, spawned directly — no skill was invoked)"
+            for name in _spawned
+        ]
+        # Grade the AGENT's own return, not the dispatcher's relay of it.
+        # `result.text_response` is main-thread text, and on this arm the main
+        # thread only forwards someone else's work -- it paraphrases, and the
+        # paraphrase is not the subject under test. Measured on
+        # eval/runlogs/unit/search-wikipedia/v1_2026-09-28_09-49-04: six tests
+        # failed on reply shape while every deterministic validator passed
+        # 10/10, and a live capture of ut_search_wikipedia_002 the same day
+        # showed the agent returning its one required line while the dispatcher
+        # rewrote it as "The subagent has completed the task. It looked up ...".
+        #
+        # Falls back to `text_response` when the spawn returned nothing, so a
+        # run whose agent produced no text is still graded on what there is
+        # rather than on silence.
+        _returns = agent_return_text(
+            getattr(result, "agent_returns", None), spec.skill
+        )
+        if _returns:
+            judge_text = _returns
+    else:
+        judge_user_message = spec.user_message
+        # Also a VALUE change, not a template change, for the reason above: the
+        # skill path's slot names the agents the skill spawned as well.
+        judge_ran = judge_skills_slot(
+            result.skills_invoked,
+            getattr(result, "builtin_tool_calls", []) or [],
+            getattr(result, "slash_entry_skill", None),
+        )
+    return dict(
         rubric=judge_rubric,
         judge_context=judge_context,
         scenario_readme=scenario_readme,
-        user_message=spec.user_message,
-        skills_invoked=result.skills_invoked,
-        text_response=result.text_response,
+        user_message=judge_user_message,
+        skills_invoked=judge_ran,
+        text_response=judge_text,
         file_changes_summary=_summarize_changes(
             file_changes, result.tool_calls, include_content=spec.judge_reads_files
         ),
         tool_calls=result.tool_calls,
-        auth=auth,
-        model=judge_model,
         before_state=_summarize_before_state(before_snapshot),
         validator_failures=validator_failures,
         harness_observations=harness_observations,
+        state_observations=state_observations,
     )
+
+
+def _run_judge(
+    *,
+    spec: TestSpec,
+    rubric: Rubric,
+    scenario_readme: str,
+    result,
+    file_changes,
+    before_snapshot: dict[str, Any] | None = None,
+    auth: AuthConfig,
+    judge_model: str,
+    validator_failures: list[str] | None = None,
+    harness_observations: list[str] | None = None,
+    state_observations: list[str] | None = None,
+) -> JudgeOutput:
+    kwargs = build_judge_grade_kwargs(
+        spec=spec,
+        rubric=rubric,
+        scenario_readme=scenario_readme,
+        result=result,
+        file_changes=file_changes,
+        before_snapshot=before_snapshot,
+        validator_failures=validator_failures,
+        harness_observations=harness_observations,
+        state_observations=state_observations,
+    )
+    return grade(**kwargs, auth=auth, model=judge_model)
 
 
 def _negative_judge_context(spec: TestSpec) -> list[str]:
@@ -1551,10 +2142,22 @@ def _negative_judge_context(spec: TestSpec) -> list[str]:
     as an incomplete attempt at the skill's task and score Correctness /
     Completeness as failures. These leading lines tell it that a clean,
     correctly-routed decline is the pass condition. The test's own
-    `judge_context` (spec §6 step 3 "additional criteria") is appended
-    after the framing.
+    `judge_context` (spec §6 step 3 "additional criteria") follows.
+
+    The two are returned as separately labeled groups, one item each, with
+    their lines nested beneath the label. judge.py renders every item as one
+    `- ` bullet under a heading that calls the notes binding, so a flat list
+    would show the harness's lines and the test author's as one anonymous
+    list. Which group wins when they disagree is deliberately not stated: it
+    is the open "Note authority" decision on issue #2478.
     """
-    correct = (spec.negative or {}).get("correct_skill", [])
+    # Minus the skill under test: a `correct_skill` naming it (two fixtures do)
+    # would otherwise tell the judge the correct route is the skill it was just
+    # told must not do its own task. A list that empties renders the
+    # no-skill arm.
+    correct = [
+        s for s in (spec.negative or {}).get("correct_skill", []) if s != spec.skill
+    ]
     if correct:
         routing = "decline and route the user to: " + ", ".join(correct)
     else:
@@ -1562,7 +2165,7 @@ def _negative_judge_context(spec: TestSpec) -> list[str]:
             "decline without invoking any skill — the request is out of "
             "scope for every skill"
         )
-    return [
+    framing = [
         f"This is a NEGATIVE test. Correct behavior is for the skill under "
         f"test ({spec.skill}) to NOT perform its own task here — it should "
         f"{routing}.",
@@ -1574,8 +2177,24 @@ def _negative_judge_context(spec: TestSpec) -> list[str]:
         f"produced substantive output when it should have declined or stayed "
         f"silent, score Correctness and Completeness as fail (1) — polished "
         f"output for the wrong behavior is still a failure, not a pass.",
-        *spec.judge_context,
     ]
+    groups = [_labeled_group(_HARNESS_FRAMING_LABEL, framing)]
+    if spec.judge_context:
+        groups.append(_labeled_group(_AUTHOR_NOTES_LABEL, spec.judge_context))
+    return groups
+
+
+_HARNESS_FRAMING_LABEL = (
+    "Harness framing (written by the eval harness for every negative test, "
+    "not by this test's author):"
+)
+_AUTHOR_NOTES_LABEL = "Test author's notes (written for this test):"
+
+
+def _labeled_group(label: str, lines: list[str]) -> str:
+    # A line's own newlines are indented too, so a multi-line note stays inside
+    # its group instead of rendering flush left after it.
+    return label + "".join("\n  - " + line.replace("\n", "\n    ") for line in lines)
 
 
 # Caps for the opt-in content block (test.judge_reads_files). The per-field
@@ -1773,6 +2392,10 @@ def _summarize_before_state_conflicts(
             "preferred": _resolve_assertion(c.get("preferred_assertion_id"), index)
             if c.get("preferred_assertion_id")
             else None,
+            # How a resolve was settled: without it a `tree` or `synthesis`
+            # resolve reaches the judge as `preferred: None` and nothing more.
+            "resolution_kind": c.get("resolution_kind"),
+            "resolved_value": c.get("resolved_value"),
             "competing": [
                 _resolve_assertion(cid, index)
                 for cid in (c.get("competing_assertion_ids") or [])
@@ -1803,9 +2426,102 @@ def _detail_ids(summary: dict[str, Any]) -> list[str]:
     return out
 
 
+#: Said once per project-state block, inside the rendered value. The prompt's
+#: heading names only sources and conflicts, and editing it moves
+#: `judge_prompt_hash` (rule 2b), so each block states what it is instead.
+_STATE_BLOCK_NOTE = "Project state for context; not a statement of what the skill should do."
+
+_NO_SOURCES_OR_CONFLICTS = (
+    "No research.json sources, tree.gedcomx.json source descriptions or "
+    "conflicts were on file before this run."
+)
+
+
+def _preferred_name(person: dict[str, Any]) -> str:
+    names = [n for n in person.get("names") or [] if isinstance(n, dict)]
+    if not names:
+        return ""
+    name = next((n for n in names if n.get("preferred")), names[0])
+    if name.get("full_text"):
+        return str(name["full_text"])
+    return " ".join(str(name[k]) for k in ("given", "surname") if name.get(k))
+
+
+def _summarize_before_state_entries(
+    items: Any, project, *, detail: bool = True
+) -> dict[str, Any]:
+    """`{count, all_ids, detail}` for one project-state array.
+
+    `project` maps an entry to the few fields the judge needs; the rest of the
+    entry is not rendered. Same shape as a sources block, so it flows through the
+    id-section (never clipped) and the shared detail budget unchanged. With
+    `detail=False` only the count and ids render (the research log, whose entries
+    are long and whose ids are what a "logged that search" claim turns on).
+    """
+    entries = [e for e in (items if isinstance(items, list) else []) if isinstance(e, dict)]
+    return {
+        "count": len(entries),
+        "all_ids": [e["id"] for e in entries if e.get("id")],
+        "detail": [project(e) for e in entries] if detail else [],
+    }
+
+
+def _project_state_blocks(
+    research: Any, tree: Any
+) -> list[tuple[str, dict[str, Any]]]:
+    """The machine-rendered project state a scenario README used to paraphrase.
+
+    Questions, plans, hypotheses, the research log, and the tree's persons and
+    relationships, read from the fixture itself, so a judge brief need carry
+    only what the JSON cannot say (issue #2478). A rendered field cannot state
+    a verdict; a paraphrase of it can.
+    """
+    research = research if isinstance(research, dict) else {}
+    tree = tree if isinstance(tree, dict) else {}
+
+    def pick(*keys: str):
+        return lambda e: {k: e[k] for k in keys if k in e}
+
+    def plan(e: dict[str, Any]) -> dict[str, Any]:
+        out = pick("id", "question_id", "status")(e)
+        out["item_count"] = len(e.get("items") or [])
+        return out
+
+    def person(e: dict[str, Any]) -> dict[str, Any]:
+        out = {"id": e.get("id"), "name": _preferred_name(e)}
+        if "gender" in e:
+            out["gender"] = e["gender"]
+        return out
+
+    specs = [
+        ("research.json questions", "q_ ids", research.get("questions"),
+         pick("id", "question", "status"), True),
+        ("research.json plans", "pl_ ids", research.get("plans"), plan, True),
+        ("research.json hypotheses", "h_ ids", research.get("hypotheses"),
+         pick("id", "status"), True),
+        ("research.json log entries", "ids only", research.get("log"), None, False),
+        ("tree.gedcomx.json persons", "I ids", tree.get("persons"), person, True),
+        ("tree.gedcomx.json relationships", "R ids", tree.get("relationships"),
+         pick("id", "type", "subtype", "parent", "child", "person1", "person2"), True),
+    ]
+    blocks: list[tuple[str, dict[str, Any]]] = []
+    for name, ids, items, project, detail in specs:
+        if not items:
+            continue
+        blocks.append((
+            f"{name} on file before this run ({ids}). {_STATE_BLOCK_NOTE}",
+            _summarize_before_state_entries(items, project, detail=detail),
+        ))
+    return blocks
+
+
 def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
-    """Render the sources and conflicts that existed BEFORE the skill ran, so
-    the judge can mechanically check "not on file" / "fabricated" claims.
+    """Render the project state that existed BEFORE the skill ran, so the judge
+    can mechanically check "not on file" / "fabricated" claims.
+
+    Conflicts and sources first, then the rest of the project state
+    (`_project_state_blocks`): questions, plans, hypotheses, log ids, and the
+    tree's persons and relationships.
 
     The judge has produced fabrication-class citation failures — asserting
     that on-file source text was absent or invented — when it had no view of
@@ -1865,6 +2581,12 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
                 _summarize_before_state_sources(tree_sources),
             )
         )
+    # The rest of the project state goes after the source blocks, and its ids
+    # are charged to the budget only after conflict and source detail is
+    # placed, so a project with hundreds of log entries cannot crowd out the
+    # values a "not on file" claim turns on. Its ids are never clipped either.
+    core_count = len(labelled)
+    labelled.extend(_project_state_blocks(research, tree))
     if not labelled:
         return "(none)"
 
@@ -1878,7 +2600,12 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
         )
         for label, summary in labelled
     ]
+    if core_count == 0:
+        # `(none)` used to say "no sources or conflicts"; with other state on
+        # file, say it in words rather than leave it to a missing heading.
+        id_blocks.insert(0, _NO_SOURCES_OR_CONFLICTS)
     id_section = "\n\n".join(id_blocks)
+    core_ids_len = len("\n\n".join(id_blocks[: core_count or 1]))
 
     # heavy per-entry detail after — this is what the prompt-size cap trims.
     #
@@ -1900,11 +2627,15 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     # list. Deliberate: the note is what stops the judge reading an omission as
     # a fabrication, and dropping it to stay under a soft prompt-size cap would
     # reintroduce the bug the cap is not there to cause.
-    budget = _BEFORE_STATE_MAX_CHARS - len(id_section)
+    budget = _BEFORE_STATE_MAX_CHARS - core_ids_len
     detail_blocks: list[str] = []
     dropped: list[str] = []
     remaining = budget
-    for label, summary in labelled:
+    for index, (label, summary) in enumerate(labelled):
+        if index == core_count:
+            remaining -= len(id_section) - core_ids_len
+        if not summary["detail"]:
+            continue
         header = f"{label} — per-entry detail (heavy fields truncated):\n"
         kept: list[Any] = []
         for entry, sid in zip(summary["detail"], _detail_ids(summary)):
@@ -1927,14 +2658,6 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
         )
     return id_section + "\n\n" + detail_section
 
-
-def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:
-    if not scenario:
-        return ""
-    readme = scenarios_dir / scenario / "README.md"
-    if not readme.exists():
-        return ""
-    return readme.read_text(encoding="utf-8")
 
 
 def _aborted_entry(

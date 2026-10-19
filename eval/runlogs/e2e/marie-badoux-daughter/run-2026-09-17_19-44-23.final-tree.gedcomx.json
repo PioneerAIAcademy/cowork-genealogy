@@ -1,0 +1,697 @@
+{
+  "persons": [
+    {
+      "id": "LT9H-SK3",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Marie",
+          "surname": "Badoux",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "6919fdab-6fa1-4616-93a9-07a10d6c0014",
+          "type": "Death",
+          "date": "21 Mar 1780",
+          "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F1",
+          "type": "Burial",
+          "date": "22 Mar 1780",
+          "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "assertion_id": "a_004",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Birth",
+          "date": "~1754",
+          "assertion_id": "a_005",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "GGCT-VVW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Marie",
+          "surname": "Fromin",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "f3c1e587-6ecb-4351-9a9b-41b6b580a498",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GGCT-6PZ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Pierre",
+          "surname": "Badoux",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "18e094b1-9457-44ff-8f1f-0f7646d92cd8",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "2S86-XWG",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Philippe",
+          "surname": "Th\u00e9not"
+        },
+        {
+          "id": "N5",
+          "given": "Philippe",
+          "surname": "Thenot",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 3
+            },
+            {
+              "ref": "S5",
+              "quality": 3
+            },
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N6",
+          "given": "Philippes",
+          "surname": "Thenot",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fc9f72ef-7c7e-4c0d-940d-a1fcd7984c2b",
+          "type": "Birth",
+          "date": "12 septembre 1751",
+          "standard_date": "12 Sep 1751",
+          "place": "Romenay, Sa\u00f4ne-et-Loire, Bourgogne, France",
+          "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "avant 1810",
+          "standard_date": "Bef 1810"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N7",
+          "given": "Jean",
+          "surname": "Thenot",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N8",
+          "given": "Marie",
+          "surname": "Clau",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N13",
+          "given": "Marie Claudine",
+          "surname": "Bourgeois",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N9",
+          "given": "Jean",
+          "surname": "Thenot",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Christening",
+          "date": "22 Mar 1780",
+          "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "assertion_id": "a_011",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N10",
+          "given": "Marie Fran\u00e7oise",
+          "surname": "Thenot",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Birth",
+          "date": "9 Apr 1783",
+          "assertion_id": "a_038",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Christening",
+          "date": "10 Apr 1783",
+          "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "assertion_id": "a_039",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N11",
+          "given": "Marie",
+          "surname": "Joly",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            },
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N12",
+          "given": "Pierre",
+          "surname": "Thenot",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F6",
+          "type": "Birth",
+          "date": "22 Apr 1784",
+          "assertion_id": "a_048",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Christening",
+          "date": "22 Apr 1784",
+          "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "assertion_id": "a_049",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N14",
+          "given": "Marie Claudine",
+          "surname": "Bourgeois",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Claudine",
+          "surname": "Th\u00e9not",
+          "type": "BirthName",
+          "preferred": true,
+          "id": "N15"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Christening",
+          "date": "12 October 1781",
+          "place": "Romenay, Sa\u00f4ne-et-Loire, France",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 2
+            },
+            {
+              "ref": "S5",
+              "quality": 2
+            }
+          ],
+          "id": "F8",
+          "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+        }
+      ],
+      "id": "I8"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "2S86-XWG",
+      "person2": "LT9H-SK3",
+      "facts": [
+        {
+          "id": "c71fe9af-ffe1-4389-84f6-61a7b4457aea",
+          "type": "Marriage",
+          "date": "22 f\u00e9vrier 1773",
+          "standard_date": "22 Feb 1773",
+          "place": "Romenay, Sa\u00f4ne-et-Loire, Bourgogne, France",
+          "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+        },
+        {
+          "id": "04151d47-251c-4b56-8087-fcd0cfdb82ef",
+          "type": "Marriage",
+          "date": "22 Feb 1773",
+          "standard_date": "22 Feb 1773",
+          "place": "Romenay, Sa\u00f4ne-et-Loire, Bourgogne-Franche-Comt\u00e9, France",
+          "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+        },
+        {
+          "id": "d2a753af-29d9-4927-9c97-57ab20f03a93",
+          "type": "Marriage",
+          "date": "27 Jun 1780",
+          "standard_date": "27 Jun 1780",
+          "place": "Romenay, Sa\u00f4ne-et-Loire, Bourgogne-Franche-Comt\u00e9, France",
+          "standard_place": "Romenay, Sa\u00f4ne-et-Loire, France"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GGCT-6PZ",
+      "person2": "GGCT-VVW"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GGCT-6PZ",
+      "child": "LT9H-SK3"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GGCT-VVW",
+      "child": "LT9H-SK3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "2S86-XWG",
+      "id": "R5",
+      "sources": [
+        {
+          "ref": "S3",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "2S86-XWG",
+      "id": "R6",
+      "sources": [
+        {
+          "ref": "S3",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "id": "R7",
+      "sources": [
+        {
+          "ref": "S3",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2S86-XWG",
+      "child": "I3",
+      "id": "R8",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "LT9H-SK3",
+      "child": "I3",
+      "id": "R9",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "Couple",
+      "person1": "2S86-XWG",
+      "person2": "I5",
+      "id": "R10",
+      "sources": [
+        {
+          "ref": "S4",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2S86-XWG",
+      "child": "I4",
+      "id": "R11",
+      "sources": [
+        {
+          "ref": "S4",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I4",
+      "id": "R12",
+      "sources": [
+        {
+          "ref": "S4",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2S86-XWG",
+      "child": "I6",
+      "id": "R13",
+      "sources": [
+        {
+          "ref": "S5",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I6",
+      "id": "R14",
+      "sources": [
+        {
+          "ref": "S5",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "Couple",
+      "person1": "2S86-XWG",
+      "person2": "I7",
+      "id": "R15",
+      "sources": [
+        {
+          "ref": "S6",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2S86-XWG",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S4",
+          "quality": 2
+        },
+        {
+          "ref": "S5",
+          "quality": 2
+        }
+      ],
+      "id": "R16"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S4",
+          "quality": 2
+        },
+        {
+          "ref": "S5",
+          "quality": 2
+        }
+      ],
+      "id": "R17"
+    }
+  ],
+  "sources": [
+    {
+      "id": "QKYX-6XV",
+      "title": "Marie Claudine Bourgeois, \"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d\u2019\u00e9tat civil, 1530-1892\"",
+      "citation": "\"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d\u2019\u00e9tat civil, 1530-1892\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:W5XG-BTPZ : Sat Mar 09 10:22:30 UTC 2024), Entry for Philippe Thenot and Jean Thenot, 27 Jun 1780.",
+      "url": "https://familysearch.org/ark:/61903/1:1:W5XG-BY3Z"
+    },
+    {
+      "id": "QVMK-NBH",
+      "title": "Marie Badoux, \"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d\u2019\u00e9tat civil, 1530-1892\"",
+      "citation": "\"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d\u2019\u00e9tat civil, 1530-1892\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:W5XJ-F7T2 : Sat Mar 09 14:34:34 UTC 2024), Entry for Philippes Thenot and Jean Thenot, 22 Feb 1773.",
+      "url": "https://familysearch.org/ark:/61903/1:1:W5XJ-FW6Z"
+    },
+    {
+      "id": "S1",
+      "title": "Entr\u00e9e de Marie Badoux, \"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W5XV-6XPZ"
+    },
+    {
+      "id": "S2",
+      "title": "France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892 \u2014 Jean Thenot baptism, 22 Mar 1780, Romenay",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W5XP-QBN2"
+    },
+    {
+      "id": "S3",
+      "title": "France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892 \u2014 Marriage of Philippes Thenot and Marie Badoux, 22 Feb 1773, Romenay",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W5XJ-F7T2"
+    },
+    {
+      "id": "S4",
+      "title": "Baptism of Marie Fran\u00e7oise Thenot, 10 Apr 1783, Romenay \u2014 \"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W5XL-B7T2"
+    },
+    {
+      "id": "S5",
+      "title": "Baptism of Pierre Th\u00e9not, \"France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892\", FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W5XL-J23Z"
+    },
+    {
+      "id": "S6",
+      "title": "France, Sa\u00f4ne-et-Loire, registres paroissiaux et d'\u00e9tat civil, 1530-1892 \u2014 Marriage of Philippe Thenot and Marie Claudine Bourgeois, 27 Jun 1780, Romenay",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W5XG-BTPZ"
+    }
+  ]
+}

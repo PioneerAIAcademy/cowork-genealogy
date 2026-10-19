@@ -1,0 +1,10 @@
+{
+  "tool": "place_search",
+  "description": "Catch-all place_search fixture — no standard place resolves for a placeName no specific fixture covers. List it AFTER a test's specific place-search fixtures so they answer first.",
+  "args": {
+    "placeName": "~"
+  },
+  "response": {
+    "results": []
+  }
+}

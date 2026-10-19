@@ -1,0 +1,403 @@
+# Deep dive: hypothesis-tracking — findings and validator requests
+
+Issue #1644. Guide followed: `docs/skill-deep-dive-guide.md`.
+Prohibition list: [`hypothesis-tracking-prohibition-list.md`](./hypothesis-tracking-prohibition-list.md).
+
+**Corpus read:** all five committed run logs,
+`eval/runlogs/unit/hypothesis-tracking/v1_2026-07-19_03-22-09.json` through
+`v1_2026-08-23_19-10-10.json` — 70 test-runs across a suite that grew from 11
+tests to 16 over that span — plus every `.ann.json` beside them.
+`text_response`, `tool_calls` and `file_changes` were read for every run in the
+newest log before any score, per Step 2. **All 16 tests pass clean in the
+newest run**, so per Step 3 the whole suite is a quiet pass and got most of the
+time.
+
+**The grep the issue prescribed returns 3 files as of this PR** (2 at the time
+this was first written, before this PR's own new test was added — corrected
+here): `ut_hypothesis_tracking_011.json`, `ut_hypothesis_tracking_012.json`,
+and `ut_hypothesis_tracking_017.json`. All three read clean, not leaky. `_011`'s
+branches ("refuse outright" vs. "partially push back but still change the
+status") both name a `score 1`/`score 2` outcome the skill could actually
+produce — its transcript shows an outright refusal that also performs the
+*correct* alternative write (ruling out h_002), which the `judge_context`
+explicitly anticipates as acceptable. `_012`'s branches are about *why* h_001
+stays `supported`, not about whether it does, and its own justification is the
+piece this PR rewrites (see F1) — the branch shape itself was sound, its
+content was about to go stale. `_017` is this PR's own new test (see F2); its
+one named branch is the failure mode (`score 1` if Claude refuses to promote
+for lack of direct evidence — the superseded rule), stated alongside the
+floor's own derivation from the spec, not a scored pair of outcomes — it reads
+as calibration reasoning, not a leaked answer.
+
+**Dimensions that never discriminate — worse than the issue's headline number,
+measured across all 70 recorded test-runs in the five-log corpus. `n` is the
+count of graded instances, not test-runs — one run never reached the judge at
+all (below), so base dimensions have `n=69` and rubric dimensions, which the
+3 near-miss routing tests never carry, have `n=64`:**
+
+| dimension | scores ever seen | n |
+|---|---|---|
+| base / **Tool Arguments** | `3` (64) or `null` (5) | 69 |
+| rubric / **Claim clarity** | `3` (63) or `null` (1) | 64 |
+| rubric / **Evidence linkage** | `3` only | 64 |
+| rubric / **Status transitions** | `3` only | 64 |
+| base / **Correctness** | `3` (67), `2` (1), `1` (1) | 69 |
+| base / **Completeness** | `3` (67), `2` (1), `1` (1) | 69 |
+
+**The one run that never reached the judge:**
+`ut_hypothesis_tracking_010` in `v1_2026-08-16_19-22-07.json` failed
+`test_project_file_changes_route_through_writer_tools` (a universal validator,
+not one of this skill's own) — "research.json modified with no writer-tool
+call." The judge is suppressed for the whole run when a gating validator
+fails, so this instance carries zero dimension scores rather than a bad one.
+This is the validator working as designed, not a hypothesis-tracking defect:
+the same test's transcript in the newest run log (read in full above, under
+Step 2) writes its update via `research_append` correctly, so whatever
+produced the direct write was specific to that one earlier candidate and is
+not present in the skill's current behavior.
+
+**The single most important number in this dive: of 69 graded test-runs, 67
+scored a flat `3` on every dimension the run produced, and the other 2 are the
+*same* test** (`ut_hypothesis_tracking_014`, a near-miss routing test whose
+empty `text_response` the base judge scores 1/1 by design — the harness
+overrides its `test.outcome` to `pass` because it correctly delegated via the
+`Skill` tool, exactly as `eval/CLAUDE.md`'s `routing_negative_judge_fail`
+advisory describes). **No graded instance of actual skill behavior has ever
+scored anything but a perfect 3 across five committed run logs and three
+suite expansions.** `Status transitions` and `Evidence linkage` — the two
+dimensions this repair most needs to be able to fail — have *never* taken a
+value other than 3, not even once, in 64 graded instances. That is the real
+reason a live defect (the `supported` gate below) sat in a green suite for as
+long as it did: the suite could not have shown red for it, because nothing in
+the corpus ever asked it to.
+
+---
+
+## F1 — The `supported` gate could not be satisfied by an indirect-only proof, and nothing in the suite could show that
+
+**This finding is not new to this dive — it is the known defect merged in from
+issue #1709, and it is why this issue exists.** Recorded here in the dive's
+own Did/Should/Gap form because it is this dive's central finding, and because
+the guide asks every finding to be written this way regardless of where it was
+first noticed.
+
+**Did:** `SKILL.md:129-134` (pre-fix) required "at least one line of direct
+evidence" for `supported`, with no path for a hypothesis resting entirely on
+correlated indirect evidence. Demonstrated live in the `stribling-father-1821`
+debug run (issue #1413): the agent assembled a guardianship bond, a mother's
+remarriage, a prior marriage and four equal co-heir shares, reasoned about them
+correctly, and held the hypothesis at `active` citing this exact rule.
+
+**Should:** the skill's own reference,
+`references/hypothesis-gps-guidance.md:64-68` — "Do not privilege direct
+evidence and dismiss indirect or negative evidence" — and BCG Standard 40's
+"seek all three evidence types," neither of which the old gate honored for the
+one status transition that matters most.
+
+**Gap:** lane 4 (core doctrine) — the one finding in this dive that earns a
+body change, and only because the rule was *absent for the case*, not ignored
+(the search-wikipedia dive's F9/F7 distinction applies identically here). The
+lead's ruling (recorded in the issue body, 2026-08-31) replaces the gate with a
+mechanical floor: no unresolved conflict naming the hypothesis's linked
+assertions, and either one direct supporting assertion or two indirect ones
+citing two distinct `source_id`s. Two narrower fixes were considered and
+rejected by the lead — documenting the assertions-only route without touching
+the gate (leaves the standard form of an indirect proof permanently
+unpromotable), and relaxing the gate to "a correlated set that survived
+conflict-resolution" (every term is a judgment call, so nothing could check
+it). The lead named seven sites; **all seven are landed**:
+`SKILL.md` (gate + flow diagram), `research-schema-spec.md` §5.9,
+`rubric.md`'s Status transitions dimension,
+`ut_hypothesis_tracking_012.json`'s `judge_context` (justification only — the
+verdict was already right), `skill-deep-dive-guide.md`'s canonical example
+(line 171), and `gps-research-flow.md`'s "Tracking hypotheses" paragraph.
+
+The last two were initially left out under the belief that a single-skill
+deep dive shouldn't unilaterally edit cross-cutting docs outside the skill's
+own directory. That reasoning didn't hold up: the ruling names both files
+with exact line numbers and exact replacement text under "The seven sites,
+one PR — nothing catches a partial edit," and says outright "Writing this is
+part of the task, not a follow-up." There was no open call left for this PR
+to make — both are applied verbatim to the ruling's text, per review
+feedback from florencemashipei and Gennecis.
+
+**Independently re-verified rather than trusted:** grepped the whole repo for
+the old rule's literal phrasing ("at least one.*direct", "direct evidence.*
+support") — it appears only at the two sites the lead named plus the
+deep-dive-guide's own worked example, nowhere else. `proof-conclusion.md` and
+both cited spots in `project-status`'s files key only on the bare `"supported"`
+string and never restate the criteria, confirmed by direct read rather than by
+trusting the issue's "checked, no edit" list. `validator.ts` was independently
+read end to end for the `hypotheses[]` block: it enforces only shape, enum
+membership, and `ruled_out_reason`'s conditional requirement — **no
+cross-field rule about evidence type or conflict status exists server-side
+today**, which is exactly the `nothing-checks` gap the required validator
+request (V1, below) closes.
+
+---
+
+## F2 — No test in the corpus has ever exercised a live promotion to `supported`, direct or indirect
+
+**Did:** every status-transition test in the suite covers *refusing* a wrong
+promotion (`_011`) or downgrade (`_012`), or moving a hypothesis to
+`ruled_out` (`_004`, `_009`, `_011`). Mechanically confirmed by scanning every
+`file_changes` diff across all five committed run logs (`hypotheses[].added`
+and `.modified`, all 70 runs): **not one ever sets a hypothesis's `status` to
+`supported`.** Every fixture that has a `supported` hypothesis (`mid-research-
+flynn` and its siblings) starts it that way; no test ever asks the skill to
+*decide* the promotion. This is a strict superset of the issue's own
+observation ("no test where an indirect-only argument is the subject") — there
+is no promotion test of any evidentiary shape.
+
+**Should:** the guide's own Step 6 shape — "a cross-field rule that must
+always hold" — exists precisely so a rule like this one gets exercised, and a
+rule that is never exercised by any test cannot regress visibly, which is
+consistent with the "single most important number" above: `Status transitions`
+has scored 3 in all 64 of its non-null evaluations because nothing in the
+corpus has ever put it in a position to do otherwise for this transition.
+
+**Gap:** lane 2 (grading defect — a corpus gap, not a skill defect). Fixed by
+a new positive test, `ut_hypothesis_tracking_017.json`
+("Promote hypothesis to supported on two indirect assertions from distinct
+sources"), reusing the existing `flynn-plan-in-progress` fixture rather than
+authoring a new one — it already has `h_001` at `active` with exactly two
+indirect supporting assertions (`a_004`, `a_010`) from two distinct sources
+(`src_001`, `src_003`), no direct evidence, and its one conflict (`c_001`) is
+already `resolved` and does not name any of `h_001`'s assertions. Under the
+new gate this clears the floor and the correct behavior is to promote; under
+the old gate the correct behavior was to refuse for lack of direct evidence.
+This is the one case in the new suite that can actually go red if the old rule
+regresses back in.
+
+---
+
+## F3 — `ut_hypothesis_tracking_006` shows a real (partially-mitigated) routing regression toward `project-status`
+
+Found running the required `make eval-skill` verification pass, not by inspection — recorded here because Step 2's rule applies to a live run just as much as a committed one: read the transcript, not the score.
+
+**Did:** the first full-suite run on this PR's `SKILL.md` failed `ut_hypothesis_tracking_006` — `output.activated: false`, `output.skills_invoked: ["project-status"]`. The skill delegated to `project-status` instead of handling a request squarely inside its own frontmatter's trigger list ("summarize hypothesis status", "where do hypotheses stand?"). Isolated the cause with a controlled A/B swap (same test, same environment, only `SKILL.md` swapped between this PR's version and the pre-fix `git show 90916e06:...` version, restored after each sample — confirmed zero diff afterward each time): **pre-fix content: 6/6 pass (4 historical + 2 fresh). This PR's original wording: 1/3 pass.** The two new additions the gate rewrite introduced — a second diagram branch naming `proof-conclusion` and a new standalone bolded paragraph on the same theme, both inside the main Status Transitions section — are the leading candidate cause: they make the section read more like it's about deciding overall proof/conclusion readiness, `project-status`'s own territory, than a plausible coincidence explains on their own, though the exact mechanism isn't provable from outside the model.
+
+**Should:** nothing in the issue's ruling required putting this content inside Status Transitions specifically — only that the fact be stated somewhere in the skill body (the flow diagram bypass, and the assertions-only-route sentence).
+
+**Gap:** lane 2 (grading/behavioral defect introduced by this PR's own wording, not the underlying gate rule). **Fixed:** relocated the "still concludes" sentence out of the standalone mid-section callout into the existing "Connect to downstream skills" `proof-conclusion` bullet (no fact dropped, only repositioned and de-duplicated), and trimmed the diagram branch to one line, one `proof-conclusion` mention instead of two. **Verified across three rounds of sampling, not one:** 3 fresh isolated samples immediately post-fix (3/3 pass, all genuinely self-activated); the next full official run still failed it once more (1 fail); the following full official run passed it clean. **Final tally: 4 of 5 post-mitigation samples pass** (up from 1 of 3 pre-mitigation, and 6 of 6 on the original pre-PR wording). A measured improvement, not a proven-eliminated regression — the residual rate is not distinguishable from the ordinary no-`temperature=0` sampling jitter this framework already documents (`eval/CLAUDE.md`, "Eval vs production parity"), but neither is it fully ruled out as a small residual real effect. Left as a known, named, quantified risk rather than claimed solved.
+
+`ut_hypothesis_tracking_015` (routes to `timeline`) also failed across the official runs. A/B-tested the same way as F3: **it fails under the pre-fix `SKILL.md` too**, both in a fresh isolated sample and in a full official run — a pre-existing flake, not introduced here, and out of this dive's scope (the boundary is with `timeline`, not anything this PR touched).
+
+---
+
+## F4 — `ut_hypothesis_tracking_009` was missing a required lookup, not just having a bad sample
+
+The lead pushed on this one directly ("how can we fix test 9, or is it the test's issue") rather than accepting F3's "probably noise" framing, and that push found a real, fixable, in-scope defect the first pass missed.
+
+**Did:** two independent failing samples of `ut_hypothesis_tracking_009` (one following a Bun runtime crash-retry, one clean) both show the same tool-call pattern: `project_context`, `research_query(hypotheses)`, `research_query(assertions)` — **never** `research_query(person_evidence)`. Both times the model then hedged on ruling out h_001 ("identity needs to be confirmed"), even though the fixture's `pe_005` entry (`assertion_id: a_006`, `person_id: I2`, `confidence: "confident"`, `match_score: 0.92`) already resolves the exact concern it raised — its own rationale text states the 5-year census/baptism discrepancy is normal for the period and concludes "this is the same Thomas Flynn." The model never saw this because it never asked.
+
+**Should:** SKILL.md's existing "Act on impossibilities immediately" rule (unedited by this PR — pre-existing since before issue #1644) says *"Do NOT... hedge on person_evidence confidence when the link is rated confident... treat the identification as settled"* — but never instructed the model to query `person_evidence` in the first place. The rule tells the model what conclusion to draw from a confidence score it was never told to go get.
+
+**Gap:** lane 4, but narrow and low-risk — a missing procedural step inside a rule this PR didn't otherwise touch, not a rewrite of the rule's substance. Confirmed `research_query(section: "person_evidence", assertionId: ...)` is a real, existing, filterable query (`research-query.ts`) — this needed an instruction, not a new capability. **Fixed:** added one sentence to the existing paragraph — *"Before applying the ruling, query `person_evidence` (filtered by the relevant `assertion_id`) for the match confidence — do not assume or dismiss a same-name identity link without checking it."* — directly before the existing "Do NOT... hedge" sentence it was already assuming.
+
+**Verified, not assumed:** 2 fresh isolated samples post-fix, both correctly queried `person_evidence(assertionId: "a_006")`, got the 0.92 confidence, and ruled out h_001 with a complete, accurate `ruled_out_reason` citing the match score by name. The following full official run passed it clean (`ut_hypothesis_tracking_009: pass`), and the one after that did too. Entirely inside `hypothesis-tracking`'s own file — no cross-skill scope growth, unlike F3.
+
+---
+
+## Checked, and it holds — recorded because the check is what makes the fix trustworthy
+
+Three claims worth stating as measured rather than assumed, because a skill
+that writes to a shared `research.json` is exactly the kind of surface where
+"nothing has gone wrong yet" quietly substitutes for "nothing can go wrong":
+
+- **Rules 18–20 (never touch `conflicts`, `questions`, or `tree.gedcomx.json`)
+  — zero violations across all 80 test-executions in the five-log corpus**
+  (mechanical scan of every `file_changes[file].sections_modified` entry and
+  every top-level file key). This one already has a generic enforcement
+  mechanism — `test_ownership_table`/`test_tree_ownership_table`, see V2
+  below — so unlike V1 this was confirmation of an existing guard, not a gap.
+- **Scope discipline (rule 17) is genuinely exercised, not merely claimed.**
+  `ut_hypothesis_tracking_008` and `_010` each notice a real, correct fix on a
+  *different* hypothesis (`h_002`'s missing chronological-impossibility link)
+  mid-response and explicitly decline to make it, deferring to the user — the
+  textbook case the rule exists for, not a hypothetical.
+- **Full routing reciprocity exists for all three Step-0 diversions.**
+  `eval/tests/unit/{conflict-resolution,timeline,proof-conclusion}/negative-
+  hypothesis-tracking.json` each pair against this skill's own near-miss
+  tests (`_014`–`_016`). `check_negative_reciprocity.py` reports zero
+  unreciprocated edges touching hypothesis-tracking, and
+  `check_rubric_tool_drift.py` reports zero drift hits for this skill (its
+  rubric and every `judge_context` mention only `research_append` and
+  `validate_research_schema`, both of which are in `allowed-tools`).
+
+No tool defect was found (`research_append` and `validate_research_schema` are
+the only two tools this skill calls, and neither's contract is implicated).
+No record-type craft gap applies — this skill has no record-type-specific
+logic. Lanes 1 and 3 are empty by construction, same as the search-wikipedia
+dive found for the same structural reason (a narrow-tool skill has nowhere for
+those lanes to live).
+
+---
+
+## Lanes, at a glance
+
+| # | Finding | Lane | State |
+|---|---|---|---|
+| F1 | `supported` gate rejects a valid indirect-only proof | **4** | fixed, 7 sites |
+| F2 | no test ever exercises a live promotion to `supported` | 2 | fixed (new test, existing fixture) |
+| F3 | `ut_006` routing regression toward `project-status`, introduced by this PR's own wording | 2 | mitigated, not fully eliminated — see F3 |
+| F4 | `ut_009` missing a `person_evidence` lookup before ruling | 4 (narrow) | fixed, verified clean across 4 samples |
+| — | conflicts/questions/tree.gedcomx.json isolation | — | checked clean, validator requested anyway (V2) |
+| — | scope discipline | — | checked clean, no action |
+| — | routing reciprocity | — | checked clean, no action |
+| — | `ut_015` routing flake (→ `timeline`) | — | pre-existing, confirmed unrelated to this PR (F3) |
+| — | `ut_012` pass → partial, `assertionId` filter mistake on 3/17 tests | — | tool-ergonomics gap, not a skill defect — see Cost |
+
+---
+
+## Validators
+
+**Written directly in this PR rather than handed off as a separate issue** —
+the lead's call, overriding the guide's default (file a validator request and
+let a developer write it). Both candidates were checked against what already
+exists before writing anything new.
+
+> **V1 — the `supported` mechanical floor. Implemented.**
+> **Rule:** if a hypothesis's `status` is `supported` in the after-state, then
+> (a) every `conflicts[]` entry whose `competing_assertion_ids` overlap that
+> hypothesis's `supporting_assertion_ids` or `contradicting_assertion_ids` has
+> `status` of `resolved` or `moot`, AND (b) either at least one supporting
+> assertion has `evidence_type: "direct"`, or at least two have
+> `evidence_type: "indirect"` and cite at least two distinct `source_id`
+> values. One-directional only — the converse (clearing the floor but staying
+> `active`) is not a violation; the third gate condition (evidence
+> consistency) is a judgment call this validator does not attempt.
+> **Where to look:** the hypothesis's after-state fields, matched against
+> `research.json`'s `conflicts[]` and `assertions[]` in the same after-state.
+> **Why it is not judgment:** `evidence_type`, `source_id`, and
+> `conflicts[].status` are all closed, schema-required fields already in the
+> file.
+> **What a violation looks like:** `eval/fixtures/scenarios/flynn-unresolved-
+> conflict/research.json` is the fixture that separates "match by assertion"
+> from the wrong "match by question" implementation — `h_001` is `supported`
+> with `a_004`/`a_010`/`a_013`, while `c_001` is `unresolved` and blocks the
+> same question (`q_001`) but names entirely different assertions
+> (`a_002`/`a_009`/`a_012`). Matching by question would flag this shipped,
+> correct fixture as a violation.
+> **Implemented as** `test_supported_requires_evidence_floor` in
+> `eval/harness/validators/test_hypothesis_tracking.py`, proven against 11
+> hand-built cases in `eval/harness/tests/unit/test_hypothesis_tracking_
+> validator.py` (`uv run pytest`, all pass) — including the exact
+> `flynn-unresolved-conflict` shape above, both same-source and single-
+> assertion indirect rejections, `resolved`/`moot` acceptance, and a
+> non-`supported` hypothesis being ignored entirely. Verified before writing
+> that it does not break any existing fixture: walked every scenario used by
+> this skill's own test corpus (`mid-research-flynn`, `flynn-multi-conflict`,
+> `flynn-competing-fathers`, `flynn-one-life`, `flynn-exhaustive-ready`,
+> `flynn-plan-in-progress`) — every `supported` hypothesis in all of them
+> already clears the floor.
+
+> **V2 — "never writes `conflicts`, `questions`, or `tree.gedcomx.json`".
+> Not needed — already enforced.**
+> Checked before writing anything: `test_ownership_table` and
+> `test_tree_ownership_table` in `eval/harness/validators/test_universal.py`
+> already enforce exactly this, generically, for every skill — driven by
+> `docs/specs/schemas/ownership.json`. Confirmed `hypothesis-tracking` is
+> correctly absent from every `conflicts`, `questions`, and
+> `tree.gedcomx.json` row's `callers` list, so a write to any of them by this
+> skill already fails `test_ownership_table`/`test_tree_ownership_table`
+> today. My original proposal (in an earlier draft of this dive, before it was
+> checked against the harness) would have been a dead-code duplicate of an
+> existing universal guard. Recorded here so the next auditor doesn't re-derive
+> and re-propose it.
+
+---
+
+## Fixes made in this PR
+
+**Skill body** (`packages/engine/plugin/skills/hypothesis-tracking/SKILL.md`) —
+the `supported` gate and its flow diagram (F1); the routing-regression
+mitigation — relocated the "still concludes" sentence into the existing
+`proof-conclusion` downstream-skills bullet and trimmed the diagram — found
+and applied during verification, not planned up front (F3); one sentence
+added to the existing "Act on impossibilities immediately" paragraph
+instructing a `person_evidence` lookup before ruling on an identity-dependent
+impossibility, also found and applied during verification (F4).
+
+**Docs** — `docs/specs/research-schema-spec.md` §5.9, restated to the new gate
+(F1). `docs/skill-deep-dive-guide.md`'s worked example and
+`docs/gps-research-flow.md`'s "Tracking hypotheses" paragraph, also restated
+(F1) — see the corrected handback note above.
+
+**Tests** (`eval/tests/unit/hypothesis-tracking/`) —
+`rubric.md`'s Status transitions dimension rewritten to the new floor (F1);
+`ut_hypothesis_tracking_012.json`'s `judge_context` entries 1–2 rewritten so
+the stated justification no longer says the floor is evidence *type alone*
+(F1); new test `ut_hypothesis_tracking_017.json`, reusing the
+`flynn-plan-in-progress` fixture, no new fixture authored (F2).
+
+**Validator** (`eval/harness/validators/test_hypothesis_tracking.py`) —
+`test_supported_requires_evidence_floor`, new (V1). Proven with 11 hand-built
+cases in `eval/harness/tests/unit/test_hypothesis_tracking_validator.py`, all
+passing under `uv run pytest`. `ruff check` clean on both files.
+
+**Prohibition list** — `docs/deep-dives/hypothesis-tracking-prohibition-
+list.md`, new.
+
+## Cost
+
+Actual, not estimated: **four full `make eval-skill SKILL=hypothesis-tracking`
+runs** (~$3.01, $2.93, $3.02, $2.86 — roughly $11.8 total) plus around a dozen
+single-test diagnostic runs (`--test ut_hypothesis_tracking_006` / `_009` /
+`_015`, ~$0.11–0.25 each) used to isolate and verify F3 and F4 — **roughly $13
+total**, over the issue's original $8–12 estimate for the whole task. The
+overrun bought two real, verified fixes (F3, F4) that a single clean run would
+never have surfaced — the corpus's dimension scores had been flat for 70 runs
+specifically because nothing had ever exercised the failure modes these runs
+hit. Not treated as free money to spend: each additional run was justified by
+a specific, named diagnostic question (is this a regression? does the fix
+hold?), not by re-running hoping for a better number.
+
+The suite goes 16 tests → 17. **The active candidate run log is
+`eval/runlogs/unit/hypothesis-tracking/v1_2026-09-01_13-17-15.json`** — the
+final, post-F3-and-F4 run: **15 pass, 1 partial, 1 fail**. The partial
+(`ut_hypothesis_tracking_012`) is dragged down by a tool-usage mistake:
+`research_query` called with `assertionId` on `section: "assertions"`,
+where it's unsupported — though it's a valid filter on four other sections
+(`person_evidence`, `conflicts`, `hypotheses`, `proof_summaries`), so the
+model reasonably pattern-matched a filter that works everywhere else. It
+occurred in 3 of the 17 tests in this committed run log (`ut_009`, `ut_011`,
+`ut_012`) — self-corrected without grading impact in two of the three; in
+the third (`ut_012`) it's the specific reason that test is "partial" rather
+than a clean pass. Looks like a tool-ergonomics gap rather than a skill
+problem, but it's a different area of code — flagging for visibility, not
+filed without discussing first. The one fail (`ut_hypothesis_tracking_015`) is F3's
+already-diagnosed pre-existing, out-of-scope flake. Three earlier candidate
+run logs from this session (`v1_2026-09-01_11-07-15.json`,
+`v1_2026-09-01_11-36-18.json`, and a third noisier run) were deleted rather
+than committed — each superseded by a later run before being pushed, per the
+harness's own newest-wins retention rule, not cherry-picked for looking
+better.
+
+Annotation is 5 sampled tests per the current policy — the active run log's
+sample is `ut_hypothesis_tracking_010, _011, _012, _014, _017`. Only `_012`
+has a non-pass dimension needing a comment; the rest are clean passes needing
+only agreement. I cannot write `.ann.json` myself under any circumstance —
+this is a genealogist's call in the CRUD UI (`eval/app`).
+
+## Handback — not in this diff
+
+1. **Should the widened `supported` floor also become a `research_append`
+   write-boundary precondition, not just an eval-only validator?** Raised in
+   the original validator request and never a call this dive can make —
+   ADR-0011's "read before you" list names widening an existing gate as
+   exactly this kind of decision, and the same fork is already open on
+   #2030. Tracked on the reopened
+   [#2086](https://github.com/PioneerAIAcademy/cowork-genealogy/issues/2086),
+   labeled `needs-decision`, for @DallanQ.
+
+Otherwise, nothing. Two validator ideas came up while writing the rule above;
+both went through issue #2086 rather than being decided unilaterally in this
+PR. One (a hypothesis-tracking-specific validator isolating `conflicts`,
+`questions`, and `tree.gedcomx.json` writes) turned out to already be
+enforced generically by `test_ownership_table`/`test_tree_ownership_table`
+against `docs/specs/schemas/ownership.json`, so it wasn't built — building it
+anyway would have duplicated an existing guard. The other is item 1 above. No
+record-type craft gap, no tool defect, and every "checked and needing no
+edit" claim in the issue's own ruling was independently re-verified against
+the current repo rather than trusted.

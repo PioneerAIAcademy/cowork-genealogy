@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_jacobo_clotten_marriage",
+    "objective": "When did Joanni Jacobo Clotten marry the 'Mariae Magdalenae' the tree records as his wife, and what was her surname?",
+    "subject_person_ids": [
+      "MZ13-TN6"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
