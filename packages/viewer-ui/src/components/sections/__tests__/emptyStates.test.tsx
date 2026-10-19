@@ -55,20 +55,25 @@ describe('section empty states', () => {
 
 // The producer half of #2211, which the guard above deliberately cannot cover.
 // Derived from docs/specs/schemas/ownership.json rather than a hand-written
-// table, so a section added later with a `skill:` owner is checked here without
-// an edit — the copy has to name the slug that owns the section.
+// table, so a section added later with a `skill:` or `agent:` owner is checked
+// here without an edit — the copy has to name the slug that owns the section.
+// Agents count: once research-plan (issue #2116) and timeline (issue #2797)
+// converted, no rendered section had a `skill:` owner left.
 //
-// One prose exception. `proof_summaries` (the Findings page) is owned by
-// `skill:proof-conclusion`, but "proof" is kept out of what the researcher reads,
-// so its copy names the moment instead. Listing it explicitly keeps the default
-// strict: a NEW section with no alias must contain its own slug.
+// Three prose exceptions, whose copy names the moment instead of the slug.
+// `proof_summaries` (the Findings page) is owned by `agent:proof-conclusion`,
+// but "proof" is kept out of what the researcher reads; `known_holdings`
+// (`agent:init-project`) and `evaluations` (`agent:gps-mentor`) entered this set
+// only when agents did. Listing them explicitly keeps the default strict: a NEW
+// section with no alias must contain its own slug.
 const PROSE_ALIASES: Record<string, string> = {
   proof_summaries: 'as the evidence for a question comes together',
+  known_holdings: 'when the project is initialized',
+  evaluations: 'when the mentor',
 }
 
-// `log` (owner null, append-only and multi-writer) and `evaluations` (owner is
-// an agent, not a skill) are absent from the derived set by construction — the
-// filter below takes `skill:` owners only.
+// `log` (owner null, append-only and multi-writer) is absent from the derived
+// set by construction — the filter below takes `skill:` and `agent:` owners only.
 const OWNERSHIP = JSON.parse(
   fs.readFileSync(
     path.resolve(__dirname, '../../../../../../docs/specs/schemas/ownership.json'),
@@ -85,16 +90,16 @@ describe('empty-state copy names the section owner', () => {
     (r) =>
       r.artifact === 'research.json' &&
       typeof r.owner === 'string' &&
-      r.owner.startsWith('skill:') &&
+      /^(skill|agent):/.test(r.owner) &&
       r.section in sectionComponents
   )
 
-  it('covers every skill-owned section that the viewer renders', () => {
+  it('covers every owned section that the viewer renders', () => {
     expect(owned.length).toBeGreaterThan(0)
   })
 
   for (const row of owned) {
-    const slug = (row.owner as string).slice('skill:'.length)
+    const slug = (row.owner as string).replace(/^(skill|agent):/, '')
     // `${slug} step`, not the bare slug: `timeline` alone is a substring of the
     // Timelines section's own copy ("No timelines recorded"), so a bare-slug
     // assertion there passes whatever producer the copy names, or none.

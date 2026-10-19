@@ -926,6 +926,30 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     ],
     denies: [],
   },
+
+  // The folded research-plan skill (issue #2116): the eight tools its
+  // `allowed-tools` declared, plus `research_query` and `project_context`,
+  // which its committed runs call to read plans, the log and the localities
+  // entries though the skill never declared them. `Read` is for
+  // tree.gedcomx.json and the narration line. Its `research_append` is laned to
+  // `plans` and `plan_items` (guard_project_files.py). It hands searches back
+  // rather than spawning them, so no spawn tool.
+  "research-plan.md": {
+    tools: [
+      "Read",
+      "collections_search",
+      "external_links_search",
+      "person_read",
+      "place_search",
+      "place_search_all",
+      "project_context",
+      "research_append",
+      "research_query",
+      "volume_search",
+      "wiki_read",
+    ],
+    denies: [],
+  },
 };
 
 /** Bare name for an MCP entry; non-MCP built-ins (`Read`) pass through as-is. */
