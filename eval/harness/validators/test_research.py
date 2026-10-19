@@ -801,3 +801,53 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
         "the resolved question's own state was modified:\n  - "
         + "\n  - ".join(errors)
     )
+
+_DELEGATION_FOCUS_TAG = "asserts-delegation-focus"
+
+
+def _spawn_prompts(builtin_tool_calls, callee: str) -> list[str]:
+    """Recorded spawn prompts for ``callee``, read from the hook records.
+
+    Keyed on ``args.subagent_type`` rather than the tool name: the recorded
+    name is ``None`` for an Agent spawn in this harness, so a name-based
+    match finds nothing and the assertion below would pass vacuously.
+    """
+    prompts = []
+    for call in builtin_tool_calls or []:
+        args = call.get("args") or {}
+        if args.get("subagent_type") == callee:
+            prompts.append(args.get("prompt") or "")
+    return prompts
+
+
+def test_delegation_names_focus_and_target(test, builtin_tool_calls):
+    """The spawn the router actually sent names ``focus:`` and ``target_id:``.
+
+    research/SKILL.md's Second-opinion section requires both on the gps-mentor
+    delegation. Both sit verbatim in the recorded spawn args, so they are read
+    from the hook records rather than left to the judge, which cannot see them
+    and has scored a spawn 3/3 on prose alone.
+    """
+    if _DELEGATION_FOCUS_TAG not in (test.get("tags") or []):
+        pytest.skip("not a delegation-focus test")
+    expected = _expected_skill(test)
+    assert expected and expected != "stop", (
+        f"{_DELEGATION_FOCUS_TAG} needs a routes-to:<callee> tag naming the "
+        f"callee whose delegation is asserted; got {expected!r}"
+    )
+    prompts = _spawn_prompts(builtin_tool_calls, expected)
+    assert prompts, (
+        f"No recorded spawn of '{expected}' to assert a delegation on. "
+        f"Either the router never spawned it, or the spawn args stopped "
+        f"carrying subagent_type."
+    )
+    missing = [
+        field
+        for field in ("focus:", "target_id:")
+        if not any(field in p for p in prompts)
+    ]
+    assert not missing, (
+        f"The '{expected}' delegation omits {missing}. research/SKILL.md "
+        f"requires the delegation message to name the focus and the target_id. "
+        f"Prompts seen: {[p[:160] for p in prompts]}"
+    )
