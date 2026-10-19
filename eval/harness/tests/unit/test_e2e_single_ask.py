@@ -251,3 +251,199 @@ def test_stop_hook_returns_allow_first_in_single_ask_mode():
     ret = first.body[0]
     assert isinstance(ret, ast.Return) and isinstance(ret.value, ast.Dict)
     assert ret.value.keys == []
+
+
+def _orchestrator_source() -> str:
+    return (REPO_ROOT / "eval/harness/e2e/orchestrator.py").read_text(encoding="utf-8")
+
+
+def test_tree_block_is_lifted_only_in_single_ask_mode():
+    tree = ast.parse(_orchestrator_source())
+    guards = [
+        n for n in ast.walk(tree)
+        if isinstance(n, ast.BoolOp) and isinstance(n.op, ast.And)
+        and any(
+            isinstance(v, ast.Call) and getattr(v.func, "id", None) == "is_blocked_tree_tool"
+            for v in n.values
+        )
+    ]
+    assert len(guards) == 1, "the live-tree deny must be guarded exactly once"
+    first = guards[0].values[0]
+    assert isinstance(first, ast.UnaryOp) and isinstance(first.op, ast.Not)
+    assert getattr(first.operand, "id", None) == "single_ask"
+
+
+def test_run_agent_sends_the_override_message():
+    tree = ast.parse(_orchestrator_source())
+    run_agent = next(
+        n for n in ast.walk(tree)
+        if isinstance(n, ast.AsyncFunctionDef) and n.name == "_run_agent"
+    )
+    overrides = [
+        n for n in ast.walk(run_agent)
+        if isinstance(n, ast.If)
+        and isinstance(n.test, ast.Compare)
+        and getattr(n.test.left, "id", None) == "user_message"
+        and isinstance(n.test.ops[0], ast.Is)
+    ]
+    assert len(overrides) == 1, "_run_agent must fall back to the /research rendering only when no message is given"
+
+
+def test_message_thread_reads_parent_tool_use_id():
+    from types import SimpleNamespace
+
+    from e2e.orchestrator import message_thread
+
+    assert message_thread(SimpleNamespace(parent_tool_use_id=None)) == "main"
+    assert message_thread(SimpleNamespace()) == "main"
+    assert message_thread(SimpleNamespace(parent_tool_use_id="toolu_1")) == "sub"
+    assert _orchestrator_source().count('"thread": message_thread(message)') == 2
+
+
+def test_run_single_ask_turn_turns_the_mode_on(monkeypatch, tmp_path):
+    import asyncio
+
+    import e2e.orchestrator as orch
+
+    seen: dict = {}
+
+    async def fake_run_agent(**kwargs):
+        seen.update(kwargs)
+        return ([agent("source-evaluation")], [], {"usage": {}}, None, None, [], [], [], [])
+
+    monkeypatch.setattr(orch, "_run_agent", fake_run_agent)
+    monkeypatch.setattr(orch, "collect_subagents", lambda ws: ([], "ok"))
+    monkeypatch.setattr(orch, "backfill_background_tool_calls", lambda ws, tc: None)
+    monkeypatch.setattr(orch, "merge_whole_run_usage", lambda u, s: ({}, 0.42))
+    fixture, _ = load_single_ask_fixture(DEFAULT_SINGLE_ASK_FIXTURES / "review-sources-kenneth-quass")
+    record = asyncio.run(
+        orch.run_single_ask_turn(fixture=fixture, message="M", workspace=tmp_path)
+    )
+    assert seen["single_ask"] is True
+    assert seen["user_message"] == "M"
+    assert seen["resume_on_stall"] is False
+    assert record["message"] == "M"
+    assert record["usage"]["whole_run_cost_usd_estimated"] == 0.42
+
+
+# --- grader branches each tested on their own --------------------------------
+
+def test_research_plan_spawn_alone_fails_a_non_plan_ask():
+    _, line = run([agent("source-evaluation"), agent("research-plan")])
+    assert "failed=[no_research_job]" in line and "research-plan" in line
+
+
+def test_new_plan_alone_fails_a_non_plan_ask():
+    _, line = run(
+        [agent("source-evaluation")],
+        final_research=final(log=[{"id": "log_002", "tool": "source-evaluation"}], plans=[{"id": "p_1"}]),
+    )
+    assert "failed=[no_research_job]" in line and "new plans entry" in line
+
+
+SOURCES_SPEC = SingleAskSpec(**{**SPEC.__dict__, "expected_save": {"section": "sources"}})
+
+
+def test_sources_save_missing_fails_and_present_passes():
+    _, line = run([agent("source-evaluation")], final_research=final(), spec=SOURCES_SPEC)
+    assert "failed=[save]" in line and "missing new sources" in line
+    g, _ = run(
+        [agent("source-evaluation")], final_research=final(sources=[{"id": "src_1"}]), spec=SOURCES_SPEC
+    )
+    assert g.passed
+
+
+def test_missing_research_json_names_itself_in_the_save_detail():
+    g, _ = run([agent("source-evaluation")], final_research=None)
+    assert g.checks["save"] == (False, "no research.json")
+
+
+def test_task_spelling_counts_as_a_spawn():
+    g, _ = run([{"tool": "Task", "args": {"subagent_type": "source-evaluation"}, "thread": "main"}])
+    assert g.first_unit == "source-evaluation"
+
+
+def test_delivered_from_a_subagent_is_not_the_main_thread_delivering():
+    calls = [agent("source-evaluation"), {"tool": "mcp__genealogy__research_delivered", "args": {}, "thread": "sub"}]
+    g, line = run(calls)
+    assert not g.delivered and "delivered=no" in line
+
+
+# --- loader fields that feed the grade ---------------------------------------
+
+def test_loader_carries_plan_ask_and_setup_units(tmp_path):
+    _, spec = load_single_ask_fixture(
+        _write(tmp_path, is_plan_ask=True, setup_units=["init-project"])
+    )
+    assert spec.is_plan_ask is True
+    assert spec.setup_units == ("init-project",)
+
+
+def test_loader_carries_caps(tmp_path):
+    fixture, _ = load_single_ask_fixture(_write(tmp_path, caps={"max_cost_usd": 1.5}))
+    assert fixture.caps.max_cost_usd == 1.5
+
+
+def test_loader_refuses_a_fixture_without_its_starting_tree(tmp_path):
+    d = _write(tmp_path)
+    (d / "starting-tree.gedcomx.json").unlink()
+    with pytest.raises(FixtureError):
+        load_single_ask_fixture(d)
+
+
+def test_fixture_dirs_takes_one_slug(tmp_path):
+    for name in ("a", "b"):
+        (tmp_path / name).mkdir()
+        (tmp_path / name / "fixture.json").write_text("{}", encoding="utf-8")
+    assert fixture_dirs(tmp_path, "b") == [tmp_path / "b"]
+    assert fixture_dirs(tmp_path, None) == [tmp_path / "a", tmp_path / "b"]
+
+
+# --- main(): exit codes for runs that never happened or cannot be graded ----
+
+def _main_with(monkeypatch, tmp_path, capsys, aborted, final_research=SAVED):
+    import e2e.run_single_ask as rsa
+
+    async def fake_turn(**kwargs):
+        return {"tool_calls": [agent("source-evaluation")], "usage": {}, "aborted_reason": aborted, "error": "boom"}
+
+    def fake_workspace(fixture, target, *a, **k):
+        (Path(target) / "research.json").write_text(json.dumps(final_research), encoding="utf-8")
+        return Path(target)
+
+    monkeypatch.setattr(rsa, "run_single_ask_turn", fake_turn)
+    monkeypatch.setattr(rsa, "build_workspace", fake_workspace)
+    monkeypatch.setattr(rsa, "load_env_file", lambda: None)
+    monkeypatch.setattr(rsa, "stage_openrouter_key", lambda: None)
+    entry = tmp_path / "index.js"
+    entry.write_text("", encoding="utf-8")
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    _write(fixtures)
+    code = rsa.main([
+        "--fixtures-root", str(fixtures), "--runlog-root", str(tmp_path / "runs"),
+        "--mcp-server-entry", str(entry),
+    ])
+    return code, capsys.readouterr()
+
+
+def test_main_exits_2_and_writes_nothing_when_the_server_was_unavailable(monkeypatch, tmp_path, capsys):
+    code, out = _main_with(monkeypatch, tmp_path, capsys, "mcp_unavailable")
+    assert code == 2
+    assert "never happened" in out.err
+    assert not (tmp_path / "runs").exists()
+
+
+def test_main_prints_ungraded_and_exits_1_on_host_slept(monkeypatch, tmp_path, capsys):
+    code, out = _main_with(monkeypatch, tmp_path, capsys, "host_slept")
+    assert code == 1
+    assert "UNGRADED" in out.out and "stop=host_slept" in out.out
+
+
+def test_main_exits_0_on_a_pass_and_writes_the_run_log(monkeypatch, tmp_path, capsys):
+    code, out = _main_with(monkeypatch, tmp_path, capsys, None)
+    assert code == 0, out
+    assert out.out.startswith("PASS ")
+    logs = list((tmp_path / "runs").rglob("run-*.json"))
+    assert len(logs) == 1
+    assert json.loads(logs[0].read_text(encoding="utf-8"))["grade"]["passed"] is True

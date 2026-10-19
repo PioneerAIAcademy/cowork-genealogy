@@ -1267,6 +1267,12 @@ _RUNLOG_AGENT_STRING_MAX = 8000
 _RUNLOG_AGENT_MAX_CHARS = 12000
 
 
+def message_thread(message: Any) -> str:
+    """`"main"` or `"sub"`: the SDK sets `parent_tool_use_id` to None on the main
+    thread and to the spawning Task's id on a subagent (message_parser.py)."""
+    return "main" if getattr(message, "parent_tool_use_id", None) is None else "sub"
+
+
 def _is_agent_tool(tool_name: str | None) -> bool:
     """Suffix match, as `_exempt_keys_for` does, so every server spelling
     resolves (CLAUDE.md "Dual-spelled tool names"). The corpus spells it
@@ -2937,12 +2943,7 @@ async def _run_agent(
                                     # from the subagent's it is supposed to be
                                     # compared against (#3188). Same test the
                                     # usage tagger below already uses.
-                                    "thread": (
-                                        "main"
-                                        if getattr(message, "parent_tool_use_id", None)
-                                        is None
-                                        else "sub"
-                                    ),
+                                    "thread": message_thread(message),
                                 }
                             )
                             one_line = " ".join(block.text.split())
@@ -2956,13 +2957,8 @@ async def _run_agent(
                                 "response_summary": None,
                                 # Exact, unlike `agent_id`, which is joined only
                                 # when a result arrives — an entry cut off by a cap
-                                # never gets one. Same test as the narration tag above.
-                                "thread": (
-                                    "main"
-                                    if getattr(message, "parent_tool_use_id", None)
-                                    is None
-                                    else "sub"
-                                ),
+                                # never gets one.
+                                "thread": message_thread(message),
                             }
                             tool_calls.append(entry)
                             pending_tool_uses[block.id] = entry
@@ -2984,11 +2980,7 @@ async def _run_agent(
                     # needed here — `cache_window.row_threads` infers the thread
                     # from `task_progress` adjacency only because it reads
                     # COMMITTED logs, which have no message object to ask.
-                    msg_thread[_usage_key] = (
-                        "main"
-                        if getattr(message, "parent_tool_use_id", None) is None
-                        else "sub"
-                    )
+                    msg_thread[_usage_key] = message_thread(message)
                     timeline.append(
                         [
                             round(now - run_started, 1),
