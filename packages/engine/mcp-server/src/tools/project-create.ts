@@ -48,16 +48,27 @@ import {
   formatIssues,
 } from "../utils/project-io.js";
 import { validateParsed } from "../validation/validator.js";
-import { checkStagedResults, resolveStagedRef, stagedRefCorrectionWarning } from "../utils/results-staging.js";
+import {
+  checkStagedResults,
+  listStagedEnvelopes,
+  resolveStagedRef,
+  stagedRefCorrectionWarning,
+  type StagingEnvelope,
+} from "../utils/results-staging.js";
 import {
   TreeBuildError,
   buildFromStagedRead,
+  buildTreeEvidence,
   factsOf,
   normalizeHandBuilt,
   retryUnresolvedPlaces,
+  pidKey,
   type IdMap,
   type FilledPlace,
+  type StagedPersonRead,
+  type TreeEvidence,
 } from "../utils/person-read-tree.js";
+import { treePidOfArk } from "../utils/ark.js";
 import type { SimplifiedFact } from "../types/gedcomx.js";
 
 /** The sections a new project starts with, all empty. `researcher_profile` and
@@ -113,6 +124,15 @@ export type ProjectCreateResult =
   | { ok: false; errors: string[] };
 
 class ProjectCreateError extends Error {}
+
+/** A `personReadRef` refusal. `recoverable` is false only for a store fault
+ *  reading a file that is there: that must surface, never be papered over by
+ *  an older copy (`projectCreate`'s fallback). */
+class StagedRefError extends ProjectCreateError {
+  constructor(message: string, readonly recoverable: boolean) {
+    super(message);
+  }
+}
 
 /** Today as an ISO date (YYYY-MM-DD), matching every other tool's stamp. */
 function today(): string {
@@ -224,28 +244,69 @@ export async function projectCreate(
       retryUnresolvedPlaces(extra);
     let handFacts: Record<string, unknown>[];
     const refWarnings: string[] = [];
+    let treeCited = { facts: 0, relationships: 0 };
+    // The staged person_reads, listed once and only when something needs them:
+    // the PID fallback, or a hand-entered person carrying a FamilySearch ark,
+    // whose unsourced facts and relationships are cited by what the reads hold
+    // (issue #3384). With no such person nothing hand-entered can match a read
+    // except a new edge between two staged persons, and that stays the
+    // researcher's statement: an under-claim, never an over-claim.
+    let listed: Promise<StagedPersonReadFile[]> | undefined;
+    const stagedReads = () => (listed ??= listStagedPersonReads(projectPath));
+    const evidence = async (): Promise<TreeEvidence> =>
+      buildTreeEvidence((await stagedReads()).map((f) => f.read));
     try {
       if (input.personReadRef !== undefined) {
-        const staged = await loadStagedRead(projectPath, input.personReadRef, refWarnings);
+        let staged: StagedPersonRead;
+        try {
+          staged = await loadStagedRead(projectPath, input.personReadRef, refWarnings);
+        } catch (e) {
+          const found =
+            e instanceof StagedRefError && e.recoverable
+              ? newestReadOf(await stagedReads(), input.subjectPersonIds)
+              : undefined;
+          if (!found) throw e;
+          refWarnings.push(
+            `personReadRef '${String(input.personReadRef)}' is not a staged person_read; used ` +
+              `'${found.ref}', the newest staged person_read of ${found.pid}. Pass ` +
+              "staged.resultsRef exactly as person_read returned it.",
+          );
+          staged = found.read;
+        }
         const built = await buildFromStagedRead({
           staged,
           additions: given,
           subjectPersonIds: input.subjectPersonIds,
           now,
+          evidence: given.persons.some(hasTreeArk) ? await evidence() : undefined,
         });
         tree = built.tree;
         idMap = built.idMap;
         subjectPersonIds = built.subjectPersonIds;
         fillPlaces = built.fillPlaces;
         handFacts = built.additionFacts;
+        treeCited = built.treeCited;
       } else {
-        ({ tree, idMap } = normalizeHandBuilt(given, now, input.subjectPersonIds));
+        ({ tree, idMap, treeCited } = normalizeHandBuilt(
+          given,
+          now,
+          input.subjectPersonIds,
+          given.persons.some(hasTreeArk) ? await evidence() : undefined,
+        ));
         handFacts = factsOf(tree);
       }
     } catch (e) {
       if (e instanceof TreeBuildError) throw new ProjectCreateError(e.message);
       throw e;
     }
+    if (treeCited.facts + treeCited.relationships > 0) {
+      const id = idMap.additionsTreeSource ?? idMap.familySearchTreeSource;
+      refWarnings.push(
+        `${treeCited.facts} fact(s) and ${treeCited.relationships} relationship(s) with no source were ` +
+          `cited to ${id}, the FamilySearch Family Tree: a staged person_read holds each of them exactly.`,
+      );
+    }
+
     // A hand-entered place is standardized here, by the resolver person_read
     // and tree_edit use, never taken from the caller: a value no place
     // authority returned is a claim FamilySearch did not make, and a model
@@ -406,12 +467,12 @@ async function loadStagedRead(projectPath: string, rawRef: unknown, warnings: st
     "call person_read again with projectPath and pass the `staged.resultsRef` it returns as " +
     "personReadRef.";
   if (typeof rawRef !== "string" || rawRef.trim() === "") {
-    throw new ProjectCreateError(`personReadRef must be the staged.resultsRef person_read returned; ${redo}`);
+    throw new StagedRefError(`personReadRef must be the staged.resultsRef person_read returned; ${redo}`, true);
   }
+  // The near-copy correction is reported only once the file it names has
+  // loaded: a refusal below can be followed by a fallback to another file, and
+  // a warning naming one the create never used would misreport the build.
   const { ref, correctedFrom } = await resolveStagedRef(projectPath, rawRef);
-  if (correctedFrom !== undefined) {
-    warnings.push(stagedRefCorrectionWarning("personReadRef", correctedFrom, ref));
-  }
   let envelope;
   try {
     ({ envelope } = await checkStagedResults({
@@ -423,30 +484,86 @@ async function loadStagedRead(projectPath: string, rawRef: unknown, warnings: st
     // Classify on the message with the ref's own text removed, so a ref that
     // happens to contain "invalid JSON" cannot pick the reason.
     const why = (e instanceof Error ? e.message : String(e)).split(ref).join("<ref>");
+    const NOT_STAGED = "is not a staged read in results/.staging/ (pruned after 24h, or never staged)";
     const reason = /does not match log entry tool/.test(why)
       ? "was not staged by person_read"
       : /is not inside|escapes the project/.test(why)
         ? "is not under results/.staging/"
         : /could not be read/.test(why)
           ? `exists but could not be read (${why.replace(/^.*could not be read: /, "")})`
-          : /is not in results\/\.staging|invalid JSON|no 'results'/.test(why)
-            ? "is not a staged read in results/.staging/ (pruned after 24h, or never staged)"
-            : "could not be read";
-    throw new ProjectCreateError(`personReadRef '${ref}' ${reason}: ${redo}`);
+          : /invalid JSON/.test(why)
+            ? "exists but holds invalid JSON"
+            : /is not in results\/\.staging|no 'results'/.test(why)
+              ? NOT_STAGED
+              : "could not be read";
+    // Only a ref that names no staged person_read may fall back. Anything else
+    // is a fault in the file it names — unreadable, corrupt, or a store error
+    // the staging helper rethrows unwrapped when its own existence check fails
+    // — and must surface, not be papered over by an older copy.
+    const recoverable = ["was not staged by person_read", "is not under results/.staging/", NOT_STAGED].includes(reason);
+    throw new StagedRefError(`personReadRef '${ref}' ${reason}: ${redo}`, recoverable);
   }
+  const read = personReadOf(envelope);
+  if (!read) {
+    throw new StagedRefError(`personReadRef '${ref}' holds no person_read result: ${redo}`, true);
+  }
+  if (correctedFrom !== undefined) {
+    warnings.push(stagedRefCorrectionWarning("personReadRef", correctedFrom, ref));
+  }
+  return read;
+}
+
+/** The one person_read a staged envelope holds, or undefined when it holds none. */
+function personReadOf(envelope: StagingEnvelope): StagedPersonRead | undefined {
   const payload = envelope.payload as {
     query?: { personId?: unknown };
     results?: Array<{ personId?: unknown; gedcomx?: unknown }>;
   };
   const element = payload.results?.[0];
-  if (!element || typeof element.personId !== "string" || !element.gedcomx) {
-    throw new ProjectCreateError(`personReadRef '${ref}' holds no person_read result: ${redo}`);
-  }
+  if (!element || typeof element.personId !== "string" || !element.gedcomx) return undefined;
   return {
     personId: element.personId,
     requestedId: typeof payload.query?.personId === "string" ? payload.query.personId : element.personId,
     gedcomx: element.gedcomx as never,
   };
+}
+
+interface StagedPersonReadFile {
+  ref: string;
+  read: StagedPersonRead;
+}
+
+/** Every staged person_read in the project still inside the TTL, newest first. */
+async function listStagedPersonReads(projectPath: string): Promise<StagedPersonReadFile[]> {
+  const out: StagedPersonReadFile[] = [];
+  for (const { ref, envelope } of await listStagedEnvelopes(projectPath, "person_read")) {
+    const read = personReadOf(envelope);
+    if (read) out.push({ ref, read });
+  }
+  return out;
+}
+
+/**
+ * The newest staged read of the person the caller named first in
+ * `subjectPersonIds`, matched on the id it was read under or the id it
+ * resolved to (a merged person). Without a named person there is no fallback:
+ * which read seeds the project is an identity decision, and only the caller
+ * can make it.
+ */
+function newestReadOf(
+  files: StagedPersonReadFile[],
+  subjectPersonIds: unknown,
+): { ref: string; pid: string; read: StagedPersonRead } | undefined {
+  const first = Array.isArray(subjectPersonIds) ? subjectPersonIds[0] : undefined;
+  if (typeof first !== "string" || first.trim() === "") return undefined;
+  const want = pidKey(first);
+  const hit = files.find((f) => pidKey(f.read.personId) === want || pidKey(f.read.requestedId) === want);
+  return hit && { ref: hit.ref, pid: first.trim(), read: hit.read };
+}
+
+/** A person whose `ark` names a FamilySearch tree person. */
+function hasTreeArk(person: unknown): boolean {
+  return !!person && typeof person === "object" && !!treePidOfArk((person as { ark?: unknown }).ark);
 }
 
 export const projectCreateSchema = {
@@ -468,7 +585,9 @@ export const projectCreateSchema = {
     "\n" +
     "With no FamilySearch person, pass the whole starting tree in the SIMPLIFIED GedcomX " +
     "shape (local `I` ids for persons); missing name/fact/relationship ids are assigned, and " +
-    "anything without a source is cited to the researcher's statement. `subjectPersonIds` " +
+    "anything without a source is cited to the researcher's statement, or to the FamilySearch " +
+    "Family Tree when a person_read staged in this project holds that exact fact or relationship " +
+    "(persons matched by `ark`). `subjectPersonIds` " +
     "names persons in that tree.\n" +
     "\n" +
     "Places: enter every hand-entered place (the whole tree here, or an addition) as the " +
