@@ -13,8 +13,8 @@ description: >-
   init-project or tree-survey. Choose this over any sub-skill when the user states
   an objective rather than a specific action.
   Do NOT use when the user explicitly targets one step only (search-records,
-  research-plan, question-selection, etc.) or wants only a status summary
-  (project-status).
+  research-plan, question-selection, etc.) or only asks where the project stands
+  (answered from project_context, no skill).
 allowed-tools:
   - validate_research_schema
   - research_query
@@ -108,7 +108,7 @@ finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
-a status question such as "where are we?".
+where the project stands (answer from `project_context` in one paragraph).
 Two or more of them in one message is still bounded: deliver each, name each,
 and end the turn when the last one is met, the same way a single one ends it. A message that also asks for
 open-ended research is a job.

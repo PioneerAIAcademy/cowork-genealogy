@@ -246,6 +246,10 @@ AGENT_WRITABLE_SECTIONS = {
     # hypothesis-tracking states, links and rules out hypotheses, and writes
     # nothing else in research.json.
     "hypothesis-tracking": frozenset({"hypotheses"}),
+    # timeline regenerates one `timelines` entry wholesale and writes nothing
+    # else in research.json. Its coherence verdict and any geographic
+    # infeasibility have no persisted field at all -- they live in its reply.
+    "timeline": frozenset({"timelines"}),
     # conflict-resolution opens, analyses and settles conflicts, and writes
     # nothing else in research.json. A hypothesis or question change its finding
     # implies is handed back to the main thread, not made here.

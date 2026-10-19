@@ -527,6 +527,13 @@ export const CALL_PLAN: readonly SmokeStep[] = [
 
   // Public-network tools: no token, must succeed.
   { tool: "wikipedia_search", args: () => ({ query: "Genealogy" }), expect: noError },
+  // Not a title: the summary lookup 404s and the article is found through search.
+  {
+    tool: "wikipedia_search",
+    label: "wikipedia_search (descriptive query)",
+    args: () => ({ query: "Luo people Kenya ethnic group history" }),
+    expect: noError,
+  },
   { tool: "wiki_search", args: () => ({ query: "parish registers" }), expect: noError },
   {
     tool: "wiki_read",

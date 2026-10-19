@@ -378,6 +378,306 @@ function unorderableDateWarnings(entry: any, research: any): string[] {
   return out;
 }
 
+// The US 1890 federal census does not survive and can never fill a gap
+// (ADR-0012, issue #2261) -- `expected_events` naming it, bare or with a
+// destruction caveat attached, is a false claim prose alone let through 4
+// times across 3 unit tests (issue #2797, commit 8f1621b0b). This is a single
+// fact fixed in code, not a per-country survival table (issue #3255, lead
+// ruling 2026-10-08): it knows only that the US 1890 census is gone, nothing
+// about any other year or jurisdiction.
+//
+// Attribution differs from the harness's own backstop
+// (`test_us_1890_never_expected`), which reads `tool_calls` to see which
+// `{Country}_Census` wiki page was fetched -- a writer precondition sees only
+// the document being written, not the run's tool history. Three arms, checked
+// in order:
+//
+//   1. An entry naming the US outright fires regardless of the timeline's
+//      places.
+//   2. An entry naming some OTHER jurisdiction explicitly stays silent,
+//      regardless of the timeline's places -- "Denmark census 1890" must
+//      never be refused just because the same timeline also has a US-placed
+//      event (an emigrant's own timeline, the exact shape this guard exists
+//      for, routinely has both). Detected structurally: a capitalized word
+//      immediately before "census" -- not a per-country table, which
+//      ADR-0012 forbids, and not "any capitalized word anywhere in the
+//      entry", which a review round found caught ordinary sentence-initial
+//      or parenthetical capitals ("The 1890 census", "1890 census
+//      (Destroyed in 1921 fire)", "Household listing in 1890 census") and
+//      so silenced entries that name no jurisdiction at all and should fire
+//      via arm 3. Requiring direct adjacency to "census" is what a mere
+//      exclusion list cannot give: a word three tokens away from "census"
+//      says nothing about what the entry is naming. The adjacent word is
+//      then checked against the timeline's OWN recorded places (every
+//      alphabetic token in a US-placed event's `place`/`standard_place`) --
+//      if it matches, it names a US STATE OR COUNTY, not a foreign country
+//      ("Pennsylvania census 1890" / "Schuylkill census 1890" on the
+//      Schuylkill County timeline both fire, resolving a limitation the
+//      first cut of this arm had), and arm 2 does not apply. Otherwise the
+//      word names some other, non-US jurisdiction and arm 2 silences it.
+//      Knowingly lets through, in the direction that now costs a refusal
+//      rather than a false allow: a foreign-country reference NOT
+//      immediately adjacent to "census" ("the 1890 census in Denmark",
+//      "Denmark's 1890 census") is not recognized by arm 2 and falls to
+//      arm 3, which fires if the timeline has a US-placed event elsewhere --
+//      narrowing arm 2 for precision costs this shape, deliberately, since
+//      the alternative (any capitalized word) cost the four phrasings above.
+//      A SECOND, structural knowingly-lets-through: `usPlaceWords` only knows
+//      THIS timeline's own recorded places, not US geography in general, so
+//      a real US state or county the timeline has never mentioned ("New York
+//      census 1890", "Pottsville census 1890" on a timeline that has only
+//      ever recorded Schuylkill County) is indistinguishable from a foreign
+//      one and arm 2 silences it -- a false allow (the entry should fire,
+//      since the federal census is equally gone in New York). Deliberate,
+//      not an oversight: the only fix that closes it is a US-places
+//      reference wider than this one document, which is the per-jurisdiction
+//      table ADR-0012 forbids in different clothing, and ADR-0011 limit 1
+//      prefers exactly this direction of error (a false allow over a false
+//      refusal) when the two trade off. Found by an independent review,
+//      2026-10-11; not separately put to the lead, since it is a cost of the
+//      no-table design the ruling itself chose, not a deviation from it.
+//   3. An entry naming no jurisdiction at all falls back to the timeline's
+//      own events -- it fires when ANY non-null `standard_place` ends in
+//      "United States". Not "every": an immigrant's own timeline routinely
+//      carries a non-US birth or baptism event (born in Ireland, enumerated
+//      and died in Pennsylvania), and the 1860-1908 Schuylkill County gap
+//      that motivated this rule is exactly that shape -- an `every` check
+//      stayed silent on it because the birth event alone broke the
+//      unanimity, found by the --runs-per-test 3 stability check this
+//      precondition was built to pass (ut_timeline_005, run 3/3,
+//      2026-10-09). This particular choice -- "any" over "every" -- was
+//      made unilaterally against evidence the original ruling did not have;
+//      it is shipped here measured and tested, with the Schuylkill County
+//      case put to the lead on #3255 for a retroactive ruling, not decided
+//      silently. A timeline with zero US-placed events is still never
+//      refused on an ambiguous entry.
+//
+// Stays silent on the 1890 veterans schedule, which partly survives. Does
+// NOT match on bare "federal" as a US signal -- several federal states call
+// their own census a federal census, so a bare match risks reading an
+// unrelated jurisdiction's correct, surviving census as the US one. The
+// ordinary US phrasing ("1890 federal census" with no "United States"/"U.S."
+// in the string) is still caught, not by the explicit-naming regex but by
+// arm 3's fallback, whenever the timeline actually has a US-placed event --
+// which is the only context that makes a bare "federal census" mean the US
+// census in the first place. `\bUS\b`/`\bUSA\b` are matched case-SENSITIVELY
+// and separately from the case-insensitive spellings: a case-insensitive
+// `\bus\b` matches the ordinary pronoun "us" ("not available to us") in
+// running prose, which would wrongly fire on a non-US timeline naming no
+// jurisdiction at all. "USA" carries no such ordinary-word collision, but is
+// kept on the same case-sensitive regex for consistency.
+const TIMELINE_CENSUS_RE = /census/i;
+const TIMELINE_1890_RE = /(?<!\d)1890(?!\d)/;
+// Any 18xx/19xx year, not just 1890 -- round-7 review: `ut_timeline_001`
+// wrote `expected_events: ["census","census","census","census"]` for a gap
+// whose own `notes` call 1870/1880/1890/1900 "four surviving federal census
+// years" and then say the 1890 schedules did not survive. None of the four
+// entries names ANY year, so `TIMELINE_1890_RE` -- which only ever looks for
+// the literal digits "1890" -- cannot see that one of the four is the
+// non-surviving census this whole guard exists to catch; the entry reads as
+// "not about 1890" and passes, which is exactly backwards. The tool can
+// decide this from the entry alone: a census-type `expected_events` string
+// that names no year at all is too vague to verify against anything, 1890
+// included, so it is refused outright rather than silently let through.
+// This is a SEPARATE condition from the 1890-specific one below, not the
+// same check with a wider net -- a bare "census" entry on an all-1870s
+// timeline is refused here for being unverifiable, never because it is
+// mistaken for 1890.
+//
+// Matches any 4-digit year, not just 18xx/19xx -- round-8 review: the
+// earlier `1[89]\d\d` cut refused "1790 census", "census_1790", "1787
+// Denmark census" and "1769 census of Norway" for naming no year, when each
+// names a real, surviving year outside the 1800-1999 window this guard
+// happened to check. A census-type entry naming ANY year is verifiable
+// against something, so this arm has no business narrowing to two
+// centuries; the 1890-specific checks below are what actually decide
+// whether a given year is the non-surviving one.
+const TIMELINE_ANY_YEAR_RE = /(?<!\d)\d{4}(?!\d)/;
+// A year span/range that covers 1890 -- round-8 review: `ut_timeline_001`'s
+// bug (four surviving census years folded into one unverifiable entry) also
+// shows up written as a single range, "federal censuses 1870-1900" or
+// "censuses 1880 to 1900", which names two real years and never writes
+// "1890" literally, so `TIMELINE_1890_RE` cannot see that the range spans
+// the non-surviving year. Only a range connector ("-"/an en or em dash/"to"/
+// "through"/"thru") counts -- "1880 and 1900 census" names two specific,
+// surviving years with no claim about anything in between, and must stay
+// allowed; bare "and" is deliberately not a range connector here.
+const TIMELINE_YEAR_SPAN_RE =
+  /(?<!\d)(\d{4})\s*(?:-|–|—|\bto\b|\bthrough\b|\bthru\b)\s*(\d{4}|\d{2})(?!\d)(?![-/.]\d)/gi;
+// "between X and Y" -- round-9 review: this is the one shape where "and" DOES
+// act as a range connector. "1880 and 1900 census" names two specific years
+// with no claim about what lies between them (allowed, above), but "between
+// 1880 and 1900" is the range itself written out in English, so "and" here
+// carries the same meaning as "to"/"-" elsewhere. The leading "between" is
+// what distinguishes the two; this regex is checked in addition to, not
+// instead of, the connector list above.
+const TIMELINE_BETWEEN_SPAN_RE =
+  /\bbetween\b\s*(\d{4})\s*and\s*(\d{4}|\d{2})(?!\d)(?![-/.]\d)/gi;
+// The end year must not be followed by another separator and digit: in a date
+// ("1880-06-01") the month is not a two-digit end year.
+// Round-10 review: every range in the entry is read, not just the first
+// ("federal censuses 1850-1860 and 1880-1900" spans 1890 in its second), and
+// a two-digit end year is read in the century of the first, rolling over
+// when it would fall before it ("1880-90" is 1880-1890, "1895-05" 1895-1905).
+function timelineSpanCovers1890(text: string): boolean {
+  for (const re of [TIMELINE_YEAR_SPAN_RE, TIMELINE_BETWEEN_SPAN_RE]) {
+    for (const m of text.matchAll(re)) {
+      const a = parseInt(m[1], 10);
+      let b = parseInt(m[2], 10);
+      if (m[2].length === 2) {
+        b += Math.floor(a / 100) * 100;
+        if (b < a) b += 100;
+      }
+      if (Math.min(a, b) <= 1890 && 1890 <= Math.max(a, b)) return true;
+    }
+  }
+  return false;
+}
+const TIMELINE_VETERAN_RE = /veteran/i;
+const TIMELINE_NAMES_US_RE = /united states|u\.s\./i;
+const TIMELINE_NAMES_US_ABBREV_RE = /\bUS\b|\bUSA\b/;
+// A capitalized word before "census" -- not "Census"/"Federal" (part of the
+// phrase being classified, not a jurisdiction) or "United"/"States" (already
+// covered by TIMELINE_NAMES_US_RE, checked first -- reaching this regex at
+// all means the text did not match it case-insensitively in any form). Also
+// not "Population"/"Decennial"/"Eleventh"/"County" -- round-5 review found
+// all four allowed through on the Schuylkill timeline: "1890 Federal
+// Population Census" and "1890 Population Census" (the record's actual
+// bureau name), "1890 Decennial Census" (the common descriptive name),
+// "Eleventh Census, 1890" (the 1890 census's own formal ordinal name -- the
+// 11th US federal census), and "Schuylkill County census 1890" whenever the
+// timeline's events carry only `standard_place`, which never literally
+// contains the word "County". These describe the census itself or a
+// jurisdiction's administrative LEVEL, never a jurisdiction's NAME -- adding
+// them to the exclusion is a small, closed set of English census-descriptive
+// vocabulary, not a per-country table. "Eleventh" alone is excluded, not
+// every ordinal: this guard only ever fires on the literal year 1890
+// (TIMELINE_1890_RE), so no other ordinal can appear beside "Census" and
+// still pass that check.
+//
+// The jurisdiction word need not be adjacent to "census": a second,
+// independent review found the exclusion words above also work as FILLER
+// between a real foreign jurisdiction and "census" -- "Essex County
+// census", "Cork County census", "Danish Population Census", "Swedish
+// Decennial Census" each capture nothing (the adjacent word is excluded)
+// and fall through to arm 3, which fires on this timeline's own US event
+// regardless of the entry actually naming Essex, Cork, Denmark, or Sweden.
+// The trailing `(?:\s(?:Population|Decennial|Eleventh|County))*` lets the
+// same exclusion words sit as descriptors AFTER a real jurisdiction word
+// rather than only ruling out that word itself, so the jurisdiction is
+// found wherever it sits relative to the descriptive filler, not just when
+// nothing else sits between it and "census".
+//
+// "Federal" is excluded from the filler list, not just the capture-start
+// list: round-6 review found it let an ORDINARY capitalized word that
+// starts the entry get captured as a fake jurisdiction whenever "Federal"
+// sat between it and "Census" -- "The Federal Census 1890", "Missing
+// Federal Census 1890" each captured "The"/"Missing" as the jurisdiction,
+// which isn't in usPlaceWords, so both were wrongly silenced on the
+// Schuylkill timeline despite naming no country at all. No foreign census
+// this arm exists to allow is ever called a "federal census" in English
+// usage -- that phrasing names the US bureau specifically -- so "Federal"
+// never needs to bridge a real jurisdiction to "census" the way
+// "Population"/"Decennial"/"County" legitimately do, and dropping it from
+// the filler set (while keeping it in the capture-start exclusion, since
+// "1890 Federal Population Census" must still fall through entirely) costs
+// nothing on a real foreign-jurisdiction phrasing.
+//
+// That alone does not close every such phrasing: "The Population Census of
+// 1890" has the exact same shape as "Danish Population Census" (a
+// capitalized word, "Population", "Census", in that order) and
+// "Population" must stay in the filler set for the Danish/Swedish cases to
+// keep matching, so adjacency repair alone cannot tell "The" from
+// "Danish" here. The two are different grammatically, not just
+// semantically: "The"/"A"/"An"/"This"/"That"/"These"/"Those" are English
+// articles and demonstrative determiners -- a fixed, closed class of
+// function words, not a per-country table in different clothing -- and
+// none of them can themselves be a jurisdiction's name. Added to the same
+// capture-start exclusion as "Census"/"Federal"/etc., which makes "The
+// Population Census of 1890" fall through entirely (no other word in the
+// string is a valid capture start either), exactly like the bureau-name
+// phrasings above.
+//
+// What this still lets through: a jurisdiction name that happens to BE one
+// of the excluded determiners or census-descriptive words is not
+// constructible in English (there is no country or county named "The" or
+// "Population"), so no real phrasing is newly silenced by this exclusion.
+// A capitalized ordinary adjective that isn't an article or one of the
+// census-descriptive words ("Missing Population Census 1890") is not
+// addressed by this round's fix and is still wrongly treated as a foreign
+// jurisdiction (captures "Missing"); closing that fully would require
+// either enumerating ordinary English adjectives (unbounded, unlike the
+// closed article/descriptor sets above) or a real word list of
+// jurisdiction names, which ADR-0012 forbids. ADR-0011 limit 1 prefers
+// this direction of error (a false allow) over a false refusal.
+//
+// Captured so the caller can check it against the timeline's own recorded
+// US places. "[Cc]ensus" deliberately, not a trailing /i flag -- an /i flag
+// would also make the leading `[A-Z][a-z]+` match a lowercase word,
+// defeating the whole point of requiring a CAPITALIZED word. An independent
+// review found the first cut's bare lowercase "census" meant "Denmark
+// Census 1890" (capital C) never matched this regex at all and fell
+// through to arm 3's fallback -- the exact silencing this arm exists to
+// provide, lost on nothing but a capitalization choice.
+const TIMELINE_NAMES_OTHER_JURISDICTION_RE =
+  /\b(?!Census\b|Federal\b|United\b|States\b|Population\b|Decennial\b|Eleventh\b|County\b|The\b|A\b|An\b|This\b|That\b|These\b|Those\b)([A-Z][a-z]+)(?:\s(?:Population|Decennial|Eleventh|County))*\s[Cc]ensus\b/;
+
+export function timelineCensus1890Invariants(entry: any): string[] {
+  const gaps: any[] = Array.isArray(entry.gaps) ? entry.gaps : [];
+  if (gaps.length === 0) return [];
+
+  const events: any[] = Array.isArray(entry.events) ? entry.events : [];
+  const standardPlaces = events
+    .map((e: any) => e?.standard_place)
+    .filter((p: unknown): p is string => typeof p === "string" && p.length > 0);
+  const anyEventIsUS = standardPlaces.some((p: string) => p.endsWith("United States"));
+  // Every alphabetic word appearing in a US-placed event's own `place` or
+  // `standard_place` -- "Pennsylvania"/"Schuylkill" census 1890 on this
+  // timeline names a US state or county, not a foreign country, and arm 2
+  // must not silence it.
+  const usPlaceWords = new Set<string>();
+  for (const e of events) {
+    const sp = e?.standard_place;
+    if (typeof sp !== "string" || !sp.endsWith("United States")) continue;
+    for (const src of [sp, e?.place]) {
+      if (typeof src !== "string") continue;
+      for (const word of src.match(/[A-Za-z]+/g) ?? []) usPlaceWords.add(word);
+    }
+  }
+
+  const errs: string[] = [];
+  for (const gap of gaps) {
+    const expectedEvents: any[] = Array.isArray(gap?.expected_events) ? gap.expected_events : [];
+    for (const item of expectedEvents) {
+      const text = String(item ?? "");
+      if (!TIMELINE_CENSUS_RE.test(text)) continue;
+      if (TIMELINE_VETERAN_RE.test(text)) continue;
+      if (!TIMELINE_ANY_YEAR_RE.test(text)) {
+        errs.push(
+          `gaps[].expected_events entry '${text}' names a census but no year -- name the ` +
+            "specific surviving year this gap expects (e.g. '1870 census'), not a bare " +
+            "record-type placeholder, since there is no way to tell it apart from the " +
+            "non-surviving US 1890 federal census otherwise.",
+        );
+        continue;
+      }
+      if (!TIMELINE_1890_RE.test(text) && !timelineSpanCovers1890(text)) continue;
+      const namesUS = TIMELINE_NAMES_US_RE.test(text) || TIMELINE_NAMES_US_ABBREV_RE.test(text);
+      if (!namesUS) {
+        const otherJurisdiction = text.match(TIMELINE_NAMES_OTHER_JURISDICTION_RE);
+        if (otherJurisdiction && !usPlaceWords.has(otherJurisdiction[1])) continue;
+        if (!otherJurisdiction && !anyEventIsUS) continue;
+      }
+      errs.push(
+        `gaps[].expected_events entry '${text}' names the US 1890 federal census, which does ` +
+          "not survive and can never fill a gap -- move the mention to this gap's `notes` " +
+          "instead and drop it from `expected_events`.",
+      );
+    }
+  }
+  return errs;
+}
+
 function conflictInvariants(entry: any): string[] {
   // `moot` settles a conflict for every gate that reads `status` — the
   // completion gate included — and was the one settling write with no
@@ -4278,6 +4578,15 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(conflictFields, "status")
     ) {
       invariantErrors.push(...uncertainPreferenceInvariants(resultEntry, research));
+    }
+  }
+  // US 1890 census backstop: on append, or an update that (re)sets `gaps`.
+  // Scoped that way so an unrelated edit to a timeline written before this
+  // rule existed is not refused.
+  if (section === "timelines") {
+    const timelineFields = op.fields ?? {};
+    if (op.op === "append" || Object.prototype.hasOwnProperty.call(timelineFields, "gaps")) {
+      invariantErrors.push(...timelineCensus1890Invariants(resultEntry));
     }
   }
   // One active plan per question — enforced on append OR an update that

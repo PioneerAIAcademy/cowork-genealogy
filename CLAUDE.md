@@ -830,7 +830,8 @@ Where to look first:
   `fetch` directly (enforced by `tests/packaging/no-bare-fetch.test.ts`).
   Default timeout 30s; pass a longer one as the third argument (180s for
   `image_transcribe`'s OCR call, 90s for `fs-image-fetch.ts`'s multi-MB scan,
-  60s for `wiki_search`, `collections_search` and `wikipedia_search`). Size a
+  60s for `wiki_search` and `collections_search`; `wikipedia_search`'s three
+  requests share one 55s deadline, under the Cowork bridge's 60s abort). Size a
   raise from the measured e2e corpus, not by guessing — the worked method is in
   `docs/specs/image-transcribe-tool-spec.md`. The
   budget covers headers **and** body — size it for the whole transfer, not the

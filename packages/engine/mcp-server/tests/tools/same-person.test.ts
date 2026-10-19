@@ -176,6 +176,34 @@ describe("samePerson", () => {
       ]);
     });
 
+    it("puts the focus person first, because matchTwoExamples scores persons[0]", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => matchResponse,
+      });
+
+      const household = makeGedcomx("I1", "ark:/61903/1:1:QBCD-FGH");
+      household.persons!.push(
+        { ...makeGedcomx("I2", "ark:/61903/1:1:QBCD-FGJ").persons![0] },
+        { ...makeGedcomx("I3", "ark:/61903/1:1:QBCD-FGK").persons![0] },
+      );
+
+      await samePerson({
+        gedcomx1: household,
+        primaryId1: "I3",
+        gedcomx2: makeGedcomx("I7", CANDIDATE_ARK),
+        primaryId2: "I7",
+      }, LOCAL);
+
+      const body = JSON.parse((mockFetch.mock.calls[0][1] as { body: string }).body);
+      const entry1Gedcomx = body.entries[0].content.gedcomx;
+      expect(entry1Gedcomx.persons.map((p: { id: string }) => p.id)).toEqual(["I3", "I1", "I2"]);
+      expect(entry1Gedcomx.sourceDescriptions).toEqual([
+        { id: "match-anchor", about: "#I3" },
+      ]);
+      expect(household.persons!.map((p) => p.id)).toEqual(["I1", "I2", "I3"]);
+    });
+
     it("sends the Persistent identifier as a full canonical ARK (not a bare id)", async () => {
       // matchTwoExamples rejects a bare id ("KGS8-LY1") with 400 "Invalid Feed";
       // it requires the `ark:/61903/n:n:` prefix. The tool restores it from the
