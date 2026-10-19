@@ -2267,6 +2267,72 @@ describe("research_append (Phase 3)", () => {
     expect(t.generated).toMatch(/T.*:/); // ISO datetime, not a bare date
   });
 
+  // Issue #3572 (Half 1 of #3516): an event citing no record is unchecked, and
+  // the writer says how many. Warn only — lead ruling 2026-10-18.
+  describe("unsourced timeline event advisory (#3572)", () => {
+    const WARN = /cite no record/;
+    const event = (assertionIds: string[]) => ({
+      date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated",
+      place: "Pennsylvania", standard_place: "Schuylkill, Pennsylvania, United States",
+      assertion_ids: assertionIds, distance_from_previous_km: null,
+    });
+    const appendTimeline = (events: any[]) =>
+      researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "append",
+        entry: { label: "test timeline", person_ids: ["I1"], events, gaps: [] },
+      } as never);
+
+    it("warns on an append with an unsourced event, naming the count — and still writes", async () => {
+      await writeProject();
+      const r = await appendTimeline([event(["a_001"]), event([]), event([])]);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const w = r.validation.warnings.filter((x) => WARN.test(x));
+      expect(w).toEqual([
+        "2 of 3 events in t_001 cite no record (assertion_ids empty); they come from " +
+          "the tree or the user and are unchecked. Say so to the user.",
+      ]);
+      expect((await readResearch()).timelines).toHaveLength(1);
+    });
+
+    it("stays silent when every event cites an assertion", async () => {
+      await writeProject();
+      const r = await appendTimeline([event(["a_001"]), event(["a_001"])]);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+    });
+
+    it("stays silent on an empty events list", async () => {
+      await writeProject();
+      const r = await appendTimeline([]);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+    });
+
+    it("warns on an update that sets events, and not on one touching only label", async () => {
+      await writeProject();
+      await appendTimeline([event(["a_001"])]);
+      const update = (fields: Record<string, unknown>) =>
+        researchAppend({ projectPath: dir, section: "timelines", op: "update", entryId: "t_001", fields } as never);
+
+      const viaEvents = await update({ events: [event(["a_001"]), event([])] });
+      expect(viaEvents.ok).toBe(true);
+      if (!viaEvents.ok) return;
+      expect(viaEvents.validation.warnings.filter((x) => WARN.test(x))).toEqual([
+        expect.stringMatching(/^1 of 2 events in t_001 cite no record/),
+      ]);
+
+      const viaLabel = await update({ label: "renamed" });
+      expect(viaLabel.ok).toBe(true);
+      if (!viaLabel.ok) return;
+      expect(viaLabel.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+    });
+  });
+
   // The US 1890 federal census does not survive and can never fill a gap
   // (ADR-0012, issue #2261). Issue #3255: prose alone let an agent write it 4
   // times across 3 unit tests; this is the write-boundary backstop.
