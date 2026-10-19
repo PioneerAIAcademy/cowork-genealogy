@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_question_selection_019",
+    "skill": "question-selection",
+    "name": "FAN pivot goes through third parties, not at the subject's own household",
+    "type": "positive",
+    "description": "Issue #3311, the nuclear-slot exclusion, in the mid-research state Richard named on 2026-10-15: question-selection runs before parents are linked, and the unlinked head and wife of the subject's household then match the age band in nearly every parentage question with a census record. Ellen Rourke, 15, is enumerated as a child beside Michael Rourke, 50, and Honora Rourke, 46; both are in band and neither is in the tree. The distinction this test grades is where the question looks: at third parties who may have recorded Ellen, or at the household's own composition — the second being the parentage question reached sideways. Synthetic scenario, no PII.",
+    "tags": [
+      "question-selection",
+      "fan-pivot",
+      "co-resident-signal",
+      "nuclear-slot-exclusion",
+      "fan-pivot-signal-set-empty",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
+    "scenario": "rourke-fan-pivot-nuclear-unlinked"
+  },
+  "judge_context": [
+    "Direct evidence is exhausted and a FAN pivot is the right move. A `fan_pivot` selection_basis is correct and is not what this test grades.",
+    "WHAT IS CORRECT. A question that reaches Ellen Rourke's parentage THROUGH THIRD PARTIES — people outside the household whose records might name her or her parents. Neighbours, baptismal sponsors, witnesses, other Rourkes in Luzerne County, fellow emigrants. Score these well. A worked example of the correct shape: 'Who were the associates, neighbours, and co-residents of Ellen Rourke in Luzerne County between 1860 and 1912, and do records for those individuals name Ellen or her parents?' That question mentions the household and is still correct, because what it interrogates is other people's records.",
+    "It is also fine for such a question to be anchored on the household or on Michael Rourke by name — 'the neighbours of the Michael Rourke household' locates the sweep. Naming him is not the defect. Do not mark a question down merely for containing his name.",
+    "WHAT IS WRONG, and it is one specific thing: a question that interrogates the HOUSEHOLD'S OWN COMPOSITION rather than third parties. The tells are phrases like 'what do their records say about the household's origins', 'about the family's structure', 'about the family's relationships', or any direct form such as 'Who was Michael Rourke?' or 'Were Michael and Honora Rourke the parents of Ellen Rourke?'. Each of these is the project's existing parentage question reached sideways, and each should score Correctness=1.",
+    "The reason that is wrong is not that the couple are irrelevant — they are the most likely answer. It is that establishing a household head as a parent is DIRECT evidence work, pursued through records that state the relationship, not a pivot to family, associates and neighbours. A pivot that turns back on the household skips the proof rather than advancing it.",
+    "Apply the distinction to what the question actually says. If the question seeks other people's records, it is correct even where it names Michael Rourke. If it seeks the Rourke family's own composition, it is wrong even where it is phrased as a neighbourhood sweep. Read the object of the inquiry, not the names present in the sentence.",
+    "Nothing in the 1860 schedule states a relationship. Position and age are consistent with a daughter and the record does not say so (a_007). A question or rationale that treats Michael and Honora as established parents has over-claimed, whatever basis it carries.",
+    "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3."
+  ]
+}

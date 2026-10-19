@@ -171,7 +171,7 @@ priority level, prefer the one that unblocks the most downstream questions.
 | 3 | Timeline has high-severity gaps spanning census/vital years | `timeline_gap` |
 | 4 | Objective not yet decomposed into sub-questions | `objective_decomposition` |
 | 5 | Pedigree analysis reveals missing key data or inconsistencies **within the objective's scope** | `objective_decomposition` |
-| 6 | Direct evidence exhausted; pivot to Family/Associates/Neighbors | `fan_pivot` |
+| 6 | Direct evidence exhausted; pivot to Family/Associates/Neighbors, naming a co-resident adult where the record carries one | `fan_pivot` |
 | 7 | A recently extracted assertion opens a new line of inquiry | `new_evidence` |
 
 **Priority 3 detail:** Only fires when `severity == "high"`. Low-severity
@@ -209,9 +209,16 @@ must be evidence about the objective's subject, and it must target the people
 record type that could itself hold direct proof of the relationship. If a record
 type (a deed, a will) could still directly name the relationship, searching it
 is unexhausted direct evidence, not a FAN pivot, whatever `search_stop` says.
+When the subject's own census record names an adult 15–55 years older, make that
+person the question's subject instead of sweeping the neighbourhood. Exclude
+anyone already a parent in `tree.gedcomx.json`, and — where the subject is
+enumerated as a child — the household's declared parental slots (head, wife,
+husband, spouse, father, mother); ask third parties about the subject, never the
+household's own records about its composition.
 Examples:
 "Who witnessed Thomas Flynn's land transactions in Schuylkill County?" / "Who
-were Thomas Flynn's neighbors in Schuylkill County in 1850?"
+were Thomas Flynn's neighbors in Schuylkill County in 1850?" / "Who was Owen
+Gallagher, aged 58 in Thomas Flynn's 1860 household?"
 
 ## 3. Formulate the question
 

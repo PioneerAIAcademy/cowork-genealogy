@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_question_selection_018",
+    "skill": "question-selection",
+    "name": "FAN pivot does not target an adult the tree already answers",
+    "type": "positive",
+    "description": "Issue #3311, the tree-parent exclusion. Direct evidence is exhausted and a FAN pivot is due, but the only adult of plausible parental age in Patrick's 1860 household is Margaret Hanlon — already his mother in the tree. The household head, Michael Doyle, is 28 and falls below the fifteen-year floor. So the record carries nobody the co-resident signal may target, and a question asking who Margaret Hanlon was would be research the tree has already recorded. A generic FAN question is the correct move here.",
+    "tags": [
+      "question-selection",
+      "fan-pivot",
+      "co-resident-signal",
+      "fan-pivot-signal-set-empty",
+      "fan-pivot-no-excluded-target",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
+    "scenario": "flynn-fan-pivot-parent-linked"
+  },
+  "judge_context": [
+    "All planned direct searches are complete and unresolved, so pivoting to Family/Associates/Neighbors is the right move and a `fan_pivot` selection_basis is correct. This test does not grade whether the pivot fires.",
+    "What it grades is who the question is about. The 1860 household holds two adults besides Patrick: Michael Doyle, the head, aged 28 — only thirteen years older than Patrick and too close in age to be a parental-age co-resident; and Margaret Hanlon, aged 45, who is ALREADY Patrick's mother in tree.gedcomx.json. Neither is a legitimate target.",
+    "A question asking who Margaret Hanlon was, or what her relationship to Patrick was, is WRONG and should score Correctness=1. The tree already records her as his mother. Pivoting onto her spends a research cycle re-deriving something the project has, and it is the over-firing this exclusion exists to prevent.",
+    "A generic FAN question — neighbours of the Doyle household, witnesses, fellow parishioners, others from the same Irish emigrant community in Schuylkill County — is CORRECT here and should score well. With no unaccounted-for adult in the record, breadth is the right move.",
+    "Do not penalise the skill for naming Michael Doyle as the household whose neighbours are sought. Naming the household's head to locate a sweep is ordinary; it is targeting an excluded adult as the SUBJECT of the question that is wrong.",
+    "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3."
+  ]
+}

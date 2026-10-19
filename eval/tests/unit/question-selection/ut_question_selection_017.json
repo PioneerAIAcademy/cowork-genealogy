@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_question_selection_017",
+    "skill": "question-selection",
+    "name": "FAN pivot names the co-resident adult rather than sweeping the neighbourhood",
+    "type": "positive",
+    "description": "Issue #3311. Same exhausted-direct-evidence state as ut_question_selection_005, with one addition: the 1860 census household contains Owen Gallagher, aged 58, a boarder — 43 years older than Patrick and neither a tree parent nor a nuclear-family slot. With a named co-resident of plausible parental age in the subject's own census record, the FAN question must target that person by name. A generic associates or neighbours sweep is what this test exists to distinguish from, and is what the skill produces without the issue #3311 edit.",
+    "tags": [
+      "question-selection",
+      "fan-pivot",
+      "co-resident-signal",
+      "selection-basis-fan-pivot",
+      "fan-pivot-targets-coresident",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
+    "scenario": "flynn-fan-pivot-coresident"
+  },
+  "judge_context": [
+    "All planned direct searches are complete and unresolved (1850, 1860, 1870, 1880 and 1900 censuses, the death certificate, probate and church records), so a FAN pivot is the correct move and `selection_basis` must be `fan_pivot`. That much is not what this test grades.",
+    "What this test grades is WHO the question is about. The 1860 census household holds a named adult of plausible parental age who is not accounted for: Owen Gallagher, aged 58, a boarder (assertions a_007-a_009). The new question must target Owen Gallagher by name — for example 'Who was Owen Gallagher, aged 58 in Thomas Flynn's 1860 household?' or 'What was Owen Gallagher's relationship to the Flynn family?'",
+    "A generic FAN question that sweeps the neighbourhood instead of naming him — 'Who were Thomas Flynn's neighbors in 1860?', 'Who witnessed Thomas Flynn's land transactions?', 'Who else from the same Irish emigrant community appears in Schuylkill County records?' — is NOT correct here and should score Correctness=1. The record already names a specific person worth identifying; proposing a sweep discards evidence in hand.",
+    "The question must ask WHO Owen Gallagher was, not whether he was Patrick's parent. 'Is Owen Gallagher the father of Patrick Flynn?' is wrong on two counts: Thomas Flynn is already the linked father, and a FAN question targets the people around the subject rather than asserting a relationship to test. Score Correctness=1 for a question framed as direct parentage.",
+    "Owen must not be treated as an established relative. Nothing in the 1860 census states a relationship — household position is all that ties him to the family (a_009). A question or rationale that calls him a kinsman, uncle, or lodger-relative without qualification has over-claimed.",
+    "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3. The self-correction loop is the intended use of validate_research_schema — a single repair attempt is not a partial."
+  ]
+}

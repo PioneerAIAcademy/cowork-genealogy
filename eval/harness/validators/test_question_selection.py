@@ -241,6 +241,238 @@ def test_selection_basis_fan_pivot(before_state, after_state, test):
     )
 
 
+# --- The co-resident FAN signal (issue #3311) -------------------------
+#
+# The signal: an adult in the subject's own record, 15-55 years older, who is
+# NOT already the subject's parent in the tree, and — when the subject's role
+# is child-like — NOT in a declared parental slot.
+#
+# Encoded here independently of the agent's prose, which is the point: these
+# validators carry the ground truth, so a prose edit that widens or narrows
+# the trigger shows up as a test result rather than as agreement with itself.
+# The two WILL drift if the rule changes; the rule's home is
+# `agents/question-selection.md`, and this block is the thing to update beside
+# it.
+#
+# `record_role` is deliberately NOT the discriminator for membership — the
+# corpus carries 200+ spellings and a role match both misses co-residents and
+# catches family. Roles are used only for the parental-slot exclusion, which
+# is a closed, declared list.
+
+_BAND_MIN_YEARS, _BAND_MAX_YEARS = 15, 55
+
+_PARENTAL_SLOTS = {
+    "head", "head_of_household", "wife", "husband", "spouse", "father", "mother",
+}
+
+_CHILD_LIKE = ("child", "son", "daughter", "stepchild", "stepson", "stepdaughter")
+
+
+def _base_role(role) -> str:
+    """Strip the positional suffix the corpus uses when one record carries
+    several people in the same role (`child_1`, `boarder_2`). Without this a
+    `wife_1` would slip past the parental-slot list, which fails OPEN — the
+    pivot would target a presumptive parent and nothing would say so."""
+    return re.sub(r"_\d+$", "", str(role or "").strip().lower())
+
+
+def _subject_ids(research: dict) -> set:
+    return set((research.get("project") or {}).get("subject_person_ids") or [])
+
+
+def _subject_birth_year(tree: dict, subject_ids: set):
+    for p in (tree or {}).get("persons") or []:
+        if p.get("id") not in subject_ids:
+            continue
+        for f in p.get("facts") or []:
+            if str(f.get("type", "")).lower() == "birth":
+                m = re.search(r"\b(1[6-9]\d{2}|20[0-2]\d)\b", str(f.get("date") or ""))
+                if m:
+                    return int(m.group(1))
+    return None
+
+
+def _tree_parent_names(tree: dict, subject_ids: set) -> set:
+    """Simplified GedcomX renames ParentChild's person1/person2 to
+    parent/child (simplified-gedcomx-spec.md:72). Only `Couple` keeps
+    person1/person2 — reading those here returns nothing, silently."""
+    parents = {
+        str(r.get("parent") or "").lstrip("#")
+        for r in (tree or {}).get("relationships") or []
+        if str(r.get("type", "")).lower() in ("parentchild", "parent_child")
+        and str(r.get("child") or "").lstrip("#") in subject_ids
+    }
+    names = set()
+    for p in (tree or {}).get("persons") or []:
+        if p.get("id") in parents:
+            for n in p.get("names") or []:
+                full = " ".join(x for x in (n.get("given"), n.get("surname")) if x)
+                if full:
+                    names.add(full.strip())
+    return names
+
+
+def _household(research: dict, subject_ids: set) -> tuple:
+    """Return (candidates, excluded) as name sets for the subject's records.
+
+    A record is the subject's when `person_evidence` ties one of its
+    assertions to a subject person. Within it, each (record_id, record_role)
+    is one person: its `name` assertion gives the name, its `birth`
+    assertion's `structured_value.year` the year.
+    """
+    assertions = research.get("assertions") or []
+    by_id = {a.get("id"): a for a in assertions}
+
+    subject_records = {
+        by_id[e["assertion_id"]].get("record_id")
+        for e in research.get("person_evidence") or []
+        if e.get("person_id") in subject_ids and e.get("assertion_id") in by_id
+    }
+    subject_records.discard(None)
+
+    people, subject_roles = {}, set()
+    for a in assertions:
+        rid, role = a.get("record_id"), a.get("record_role")
+        if rid not in subject_records or not role:
+            continue
+        slot = people.setdefault((rid, role), {"name": None, "year": None})
+        if a.get("fact_type") == "name" and a.get("value"):
+            slot["name"] = str(a["value"]).strip()
+        if a.get("fact_type") == "birth":
+            year = (a.get("structured_value") or {}).get("year")
+            if isinstance(year, int):
+                slot["year"] = year
+    # Which slot is the subject? The one whose name the tree also carries.
+    return people, subject_roles
+
+
+def _signal(before_state: dict) -> tuple:
+    """(candidates, excluded) — the names the FAN pivot may and may not target."""
+    research = before_state.get("research_json") or {}
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
+    subject_ids = _subject_ids(research)
+    subject_year = _subject_birth_year(tree, subject_ids)
+    parent_names = _tree_parent_names(tree, subject_ids)
+
+    people, _ = _household(research, subject_ids)
+    subject_names = set()
+    for p in (tree or {}).get("persons") or []:
+        if p.get("id") in subject_ids:
+            for n in p.get("names") or []:
+                subject_names.add(
+                    " ".join(x for x in (n.get("given"), n.get("surname")) if x).strip()
+                )
+
+    child_like = any(
+        _base_role(role).startswith(_CHILD_LIKE)
+        for (_, role), v in people.items()
+        if v["name"] in subject_names
+    )
+
+    candidates, excluded = set(), set()
+    for (_, role), v in people.items():
+        name, year = v["name"], v["year"]
+        if not name or name in subject_names:
+            continue
+        if subject_year is None or year is None:
+            continue
+        gap = subject_year - year
+        if not (_BAND_MIN_YEARS <= gap <= _BAND_MAX_YEARS):
+            continue  # out of band: neither a candidate nor an exclusion
+        if name in parent_names:
+            excluded.add(name)
+        elif child_like and _base_role(role) in _PARENTAL_SLOTS:
+            excluded.add(name)
+        else:
+            candidates.add(name)
+    return candidates, excluded
+
+
+def test_fan_pivot_targets_the_coresident(before_state, after_state, test):
+    """Tag-gated: where the subject's own record carries an unexcluded adult
+    of plausible parental age, the new FAN question must name that person.
+
+    This is the half `test_selection_basis_fan_pivot` cannot reach. That one
+    checks only `selection_basis`, so a generic neighbourhood sweep satisfies
+    it — which is exactly what the agent writes without the issue #3311 edit.
+    Naming the co-resident is the behaviour under test; nobody mentions a
+    boarder in passing."""
+    if "fan-pivot-targets-coresident" not in test.get("tags", []):
+        pytest.skip("not a fan-pivot-targets-coresident scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    candidates, _ = _signal(before_state)
+    assert candidates, (
+        "fixture defect: this scenario carries no unexcluded in-band adult, so "
+        "there is nothing for the pivot to target and the test cannot pass"
+    )
+    new = _new_questions(before, after)
+    assert new, "expected a new question; none was added"
+    text = " ".join(
+        f"{q.get('question') or ''} {q.get('rationale') or ''}" for q in new
+    )
+    hit = sorted(n for n in candidates if n.lower() in text.lower())
+    assert hit, (
+        f"the FAN question names none of the co-resident adults the record "
+        f"carries ({sorted(candidates)}); it reads: {text.strip()[:200]!r}"
+    )
+
+
+def test_fan_pivot_signal_set_is_empty(before_state, test):
+    """Tag-gated FIXTURE self-check: every in-band adult in the subject's
+    record is excluded, so there is no legitimate co-resident to pivot onto.
+
+    This checks the scenario, not the agent — deliberately. A negative test
+    whose fixture quietly grew a valid candidate would pass while proving
+    nothing, and nothing else would notice."""
+    if "fan-pivot-signal-set-empty" not in test.get("tags", []):
+        pytest.skip("not a fan-pivot-signal-set-empty scenario")
+    candidates, excluded = _signal(before_state)
+    assert not candidates, (
+        f"fixture defect: {sorted(candidates)} are in-band and unexcluded, so "
+        f"this scenario is not the negative it claims to be"
+    )
+    assert excluded, (
+        "fixture defect: no in-band adult is excluded either, so the scenario "
+        "exercises no exclusion at all"
+    )
+
+
+def test_fan_pivot_does_not_target_an_excluded_adult(before_state, after_state, test):
+    """Tag-gated: the new FAN question must not name an adult the signal
+    excludes.
+
+    Only sound where the excluded adult is NOT the household anchor. A
+    legitimate generic sweep names the head whose neighbours are sought, so on
+    a scenario whose excluded people ARE the head and wife, a name match
+    cannot tell mention from targeting — there the judge grades it and this
+    tag is left off. See the two negative scenarios' READMEs."""
+    if "fan-pivot-no-excluded-target" not in test.get("tags", []):
+        pytest.skip("not a fan-pivot-no-excluded-target scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    _, excluded = _signal(before_state)
+    assert excluded, (
+        "fixture defect: no in-band adult is excluded, so this check would "
+        "pass whatever the agent wrote"
+    )
+    new = _new_questions(before, after)
+    assert new, "expected a new question; none was added"
+    text = " ".join(
+        f"{q.get('question') or ''} {q.get('rationale') or ''}" for q in new
+    )
+    named = sorted(n for n in excluded if n.lower() in text.lower())
+    assert not named, (
+        f"the FAN question targets {named}, who the signal excludes (already a "
+        f"tree parent, or in a declared parental slot); it reads: "
+        f"{text.strip()[:200]!r}"
+    )
+
+
 def test_selection_basis_timeline_gap(before_state, after_state, test):
     """Tag-gated: when a high-severity timeline gap is the highest-priority
     signal, the new question's selection_basis must be `timeline_gap`."""

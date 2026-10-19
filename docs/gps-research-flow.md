@@ -49,7 +49,9 @@ The plan is not a checklist to be drained. As soon as the evidence in hand
 test. If that test finds a gap, it returns to planning — the same question,
 with the plan extended to cover what is missing. It goes back to choosing a
 question only for a FAN pivot, when direct evidence on the current question
-is spent and the next move is a question about an associate.
+is spent and the next move is a question about an associate — a named
+co-resident of the subject's household where the records carry one, otherwise
+the wider neighbourhood.
 
 You can work through this two ways: step by step, with the system pausing
 for your judgment at each decision, or continuously, where it works the
@@ -95,6 +97,19 @@ Two rules govern the loop:
 A FAN pivot — moving to associates, neighbors, and witnesses — fires only
 after the planned direct searches are done, never after a single negative
 result.
+
+What it pivots *onto* is decided by the records already in hand. Where the
+subject's own census names an adult of plausible parental age who is not
+already a parent in the tree, that person is the question: the record has
+produced a lead, and sweeping the neighbourhood instead discards it. Two
+exclusions keep the pivot from eating the question it is meant to serve.
+Anyone the tree already records as a parent is not a lead — the project has
+that answer. And where the subject is enumerated as a child, the household's
+head and his wife are the presumptive parents; asking who they were is the
+parentage question restated, and parentage is settled by records that state
+the relationship, not by a pivot to the people around it. The working line is
+that a FAN question asks *third parties* about the subject, never the
+household's own records about its composition.
 
 ### Planning the search
 

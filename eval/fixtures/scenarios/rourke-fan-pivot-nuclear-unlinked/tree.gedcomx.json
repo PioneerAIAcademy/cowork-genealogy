@@ -1,0 +1,40 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Ellen",
+          "surname": "Rourke",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1845",
+          "place": "Ireland"
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "1912",
+          "place": "Luzerne County, Pennsylvania"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "1860 U.S. Federal Census",
+      "author": "U.S. Census Bureau"
+    }
+  ]
+}

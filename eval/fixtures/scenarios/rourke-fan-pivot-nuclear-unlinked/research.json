@@ -1,0 +1,495 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Ellen Rourke, born about 1845 in Ireland, died 1912 in Luzerne County, Pennsylvania",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-05-01",
+    "updated": "2026-05-10"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Ellen Rourke (b. ~1845, Ireland, d. 1912)?",
+      "rationale": "This is the primary research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": "record_exhausted",
+        "justification": "All planned direct record types searched: 1860 census (FamilySearch, Ancestry), 1870 and 1880 census (FamilySearch — negative), Luzerne County probate 1870-1915 (negative), Catholic parish registers for Luzerne County 1850-1875 (negative), and the 1912 death registration (no parents named). No further direct record type remains unsearched for this question.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Not met. No record names Ellen Rourke's parents.",
+          "repository_breadth": "Census and vital records (FamilySearch, Ancestry), probate and parish registers (FamilySearch).",
+          "original_substitution": "FamilySearch provides original images for the census and the death registration.",
+          "independent_verification": "FamilySearch and Ancestry both return the same 1860 household.",
+          "evidence_class": "One original census; no relationship is stated in any record found.",
+          "conflict_resolution": "No conflicts recorded.",
+          "overturn_risk": "Unknown — no candidate parents are established."
+        },
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-05-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Luzerne County, Pennsylvania",
+          "date_range": "1860",
+          "repository": "FamilySearch",
+          "rationale": "Earliest enumeration in which Ellen appears by name.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Luzerne County, Pennsylvania",
+          "date_range": "1870-1880",
+          "repository": "FamilySearch",
+          "rationale": "Later enumerations may place her in a household that names kin.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital",
+          "jurisdiction": "Luzerne County, Pennsylvania",
+          "date_range": "1912",
+          "repository": "FamilySearch",
+          "rationale": "A death registration may name the parents.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "probate",
+          "jurisdiction": "Luzerne County, Pennsylvania",
+          "date_range": "1870-1915",
+          "repository": "FamilySearch",
+          "rationale": "An estate file may name a surviving parent or sibling.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Luzerne County, Pennsylvania",
+          "date_range": "1850-1875",
+          "repository": "FamilySearch",
+          "rationale": "Catholic parish registers often name sponsors and parents.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-01T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Rourke",
+        "given": "Ellen",
+        "birth_year": 1845,
+        "collection": "1860 Census"
+      },
+      "outcome": "positive",
+      "results_examined": 6,
+      "notes": "Located Ellen Rourke, age 15, in a Luzerne County household. Five other Rourke results examined; ages do not match.",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-01T10:40:00Z",
+      "tool": "external_site",
+      "query": {
+        "surname": "Rourke",
+        "collection": "1860 Census",
+        "repository": "Ancestry"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "notes": "Ancestry's independent index returns the same household with the same ages.",
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/7667/?name=Ellen_Rourke&birth=1845",
+        "capture_received": true,
+        "capture_filename": "ancestry-1860-rourke-results.pdf"
+      }
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-01T11:10:00Z",
+      "tool": "record_read",
+      "query": {
+        "record_id": "ark:/61903/1:1:MRKE"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Read the household in full. The schedule states no relationships between its members.",
+      "external_site": null
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-05-03T09:20:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Rourke",
+        "given": "Ellen",
+        "collection": "1870-1880 Census"
+      },
+      "outcome": "negative",
+      "results_examined": 11,
+      "notes": "No match in either enumeration for Luzerne County or the adjoining counties.",
+      "external_site": null
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-05-04T14:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Rourke",
+        "given": "Ellen",
+        "death_year": 1912
+      },
+      "outcome": "partial",
+      "results_examined": 2,
+      "notes": "Death registration located. The parents' fields are blank.",
+      "external_site": null
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-05-06T11:30:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Rourke",
+        "collection": "Catholic parish registers",
+        "date_range": "1850-1875"
+      },
+      "outcome": "negative",
+      "results_examined": 7,
+      "notes": "No baptism, marriage or sponsor entry naming Ellen Rourke. Probate searched the same week, also negative.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1860 U.S. Census, Luzerne County, Pennsylvania, population schedule, dwelling 341, family 362, Michael Rourke household; NARA microfilm publication M653, roll 1134; digital image, FamilySearch.org, accessed 1 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1860 U.S. Federal Census, population schedule",
+        "when_created": "1860",
+        "when_accessed": "2026-05-01",
+        "where": "FamilySearch.org (NARA microfilm M653, roll 1134)",
+        "where_within": "Luzerne County, dwelling 341, family 362"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-01",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MRKE",
+      "url_archived": null,
+      "notes": null,
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1860 U.S. Census, Luzerne County, Pennsylvania, population schedule, dwelling 341, Michael Rourke household; digital image, Ancestry.com, accessed 1 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1860 U.S. Federal Census, population schedule",
+        "when_created": "1860",
+        "when_accessed": "2026-05-01",
+        "where": "Ancestry.com",
+        "where_within": "Luzerne County, dwelling 341"
+      },
+      "source_classification": "original",
+      "repository": "Ancestry",
+      "access_date": "2026-05-01",
+      "url": null,
+      "url_archived": null,
+      "notes": "Independent index of the same enumeration.",
+      "log_entry_id": "log_002"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MRKE",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Michael Rourke",
+      "structured_value": {
+        "given": "Michael",
+        "surname": "Rourke"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Unknown; recorded by the census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MRKE",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "age 50",
+      "structured_value": {
+        "year": 1810,
+        "place": "Ireland"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "Unknown; recorded by the census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Head of the household; thirty-five years older than Ellen.",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MRKE",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Honora Rourke",
+      "structured_value": {
+        "given": "Honora",
+        "surname": "Rourke"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Unknown; recorded by the census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MRKE",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "age 46",
+      "structured_value": {
+        "year": 1814,
+        "place": "Ireland"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "Unknown; recorded by the census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Thirty-one years older than Ellen.",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MRKE",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Ellen Rourke",
+      "structured_value": {
+        "given": "Ellen",
+        "surname": "Rourke"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Unknown; recorded by the census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MRKE",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "age 15",
+      "structured_value": {
+        "year": 1845,
+        "place": "Ireland"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "Unknown; recorded by the census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MRKE",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Enumerated in the Michael Rourke household, dwelling 341, family 362",
+      "structured_value": null,
+      "date": "1860",
+      "date_certainty": "exact",
+      "place": "Luzerne County, Pennsylvania",
+      "information_quality": "indeterminate",
+      "informant": "Unknown; recorded by the census enumerator",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The 1860 census states no relationships. Position and age are consistent with a daughter, but the schedule does not say so.",
+      "record_basis": "stated",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Ellen Rourke, age 15, named in the 1860 Luzerne County enumeration.",
+      "match_score": null,
+      "created": "2026-05-01",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Her enumeration in the Michael Rourke household places her in 1860.",
+      "match_score": null,
+      "created": "2026-05-01",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [
+    {
+      "id": "t_001",
+      "label": "Ellen Rourke — documented appearances",
+      "person_ids": [
+        "I1"
+      ],
+      "generated": "2026-05-06T12:00:00Z",
+      "events": [
+        {
+          "date": "~1845",
+          "date_certainty": "estimated",
+          "event_type": "birth",
+          "place": "Ireland",
+          "description": "Born in Ireland, estimated from the 1860 census age",
+          "assertion_ids": [
+            "a_006"
+          ]
+        },
+        {
+          "date": "1860",
+          "date_certainty": "exact",
+          "event_type": "census",
+          "place": "Luzerne County, Pennsylvania",
+          "description": "Enumerated age 15 in the Michael Rourke household, dwelling 341",
+          "assertion_ids": [
+            "a_005",
+            "a_007"
+          ]
+        },
+        {
+          "date": "1912",
+          "date_certainty": "exact",
+          "event_type": "death",
+          "place": "Luzerne County, Pennsylvania",
+          "description": "Died; the registration names no parents",
+          "assertion_ids": []
+        }
+      ],
+      "gaps": [
+        {
+          "start": "1860-01-01",
+          "end": "1912-12-31",
+          "expected_events": [],
+          "severity": "low",
+          "notes": "The 1870 and 1880 enumerations were searched and returned nothing; the 1890 schedule was destroyed. Probate and parish registers also searched, both negative."
+        }
+      ]
+    }
+  ],
+  "proof_summaries": [],
+  "evaluations": []
+}
