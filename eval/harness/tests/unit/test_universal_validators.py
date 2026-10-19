@@ -300,6 +300,34 @@ def test_extraction_may_write_tree_sources_but_not_tree_persons():
     assert "persons" in str(e.value)
 
 
+_I5 = {"id": "I5", "names": [{"id": "N5", "given": "Sarah", "surname": "Mullen"}]}
+_EXTRACT = [{"tool": "mcp__genealogy__extraction_append", "args": {"recordIds": ["WICN-1860-M01"]}}]
+
+
+def test_the_healer_dropping_an_empty_facts_array_is_not_a_persons_write():
+    """ut_search_records_015: extraction_append added the census source, and the
+    tree write's sanitizer deleted an untouched person's empty `facts` array.
+    That is the same tree, so only the `sources` write is graded."""
+    before = tree(persons=[{**_I5, "facts": []}])
+    after = tree(persons=[dict(_I5)], sources=entry("S2"))
+    check_tree(before, after, {"name": "search-records"}, POSITIVE, tool_calls=_EXTRACT)
+    # and the reverse spelling: absent before, empty after
+    check_tree(tree(persons=[dict(_I5)]), tree(persons=[{**_I5, "facts": []}], sources=entry("S2")),
+               {"name": "search-records"}, POSITIVE, tool_calls=_EXTRACT)
+
+
+def test_a_real_persons_change_beside_the_healer_still_fails():
+    fact = {"id": "F1", "type": "Residence", "place": "Wisconsin"}
+    for after_person, why in (
+        ({**_I5, "facts": [fact]}, "a fact added where the array was empty"),
+        ({**_I5, "names": [{"id": "N5", "given": "Sara", "surname": "Mullen"}]}, "a renamed person"),
+    ):
+        with pytest.raises(AssertionError) as e:
+            check_tree(tree(persons=[{**_I5, "facts": []}]), tree(persons=[after_person], sources=entry("S2")),
+                       {"name": "search-records"}, POSITIVE, tool_calls=_EXTRACT)
+        assert "persons" in str(e.value), why
+
+
 def _person_with_fact(**fact_over):
     fact = {"id": "F1", "type": "Immigration", "place": "Wellburn, Ontario, Canada",
             "assertion_id": "a_011", "sources": [{"ref": "S1"}]}

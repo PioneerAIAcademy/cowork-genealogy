@@ -575,3 +575,88 @@ def check_no_gate_stop(before_state: dict, after_state: dict) -> list[str]:
         if prev.get("status") != "exhaustive_declared" and q.get("status") == "exhaustive_declared":
             bad.append(f"{qid}: status set to exhaustive_declared when decline expected")
     return bad
+
+
+# --- Shared: plans a run added -------------------------------------------
+
+
+def new_plan_ids(before: dict, after: dict) -> list[str]:
+    """The `pl_` ids in research.json ``after`` that ``before`` lacked.
+
+    Shared between the ``research-plan`` and ``research`` validator suites
+    (issue #2116 moved ``ut_research_plan_003`` into ``research`` as
+    ``ut_research_rpn``). Each caller gates on its own tag and skips on a
+    missing research.json first, as ``check_no_gate_stop``'s callers do.
+    """
+    before_ids = {p.get("id") for p in (before.get("plans") or [])}
+    return [
+        p.get("id")
+        for p in (after.get("plans") or [])
+        if p.get("id") and p.get("id") not in before_ids
+    ]
+
+
+# --- Shared: changes to plans that already existed ---------------------------
+
+
+def existing_plan_changes(before: dict, after: dict) -> list[str]:
+    """Every change a run made to a plan that existed before it, one message each.
+
+    Appended, deleted or edited items, and any changed plan-level field. A
+    whole new plan is not reported here (``new_plan_ids`` reports it), so a
+    caller wanting "nothing written to plans" checks both. Moved out of
+    ``test_research.py::test_no_plan_writes_when_resolved`` (issue #2116) so the
+    research-plan suite's review-mode gate reads plans the same way.
+    """
+    before_plans = {
+        p.get("id"): p for p in (before.get("plans") or []) if p.get("id")
+    }
+    errors: list[str] = []
+    for plan in after.get("plans") or []:
+        prior = before_plans.get(plan.get("id"))
+        if prior is None:
+            # A whole new plan is new_plan_ids' finding; reporting it here
+            # too would double-count the same defect.
+            continue
+        if plan == prior:
+            continue
+
+        # Compare the WHOLE prior plan object, not just the items present in
+        # the after-state. Walking only `after`'s items cannot see a deletion —
+        # a removed item simply isn't there to check — and misses plan-level
+        # fields entirely. With `grade_on_invariant` on ut_003, that gap scored
+        # "wiped every item from pl_002" and "flipped pl_002 back to active" as
+        # a PASS, which is the opposite of what this validator exists for.
+        before_items = {
+            i.get("id"): i for i in (prior.get("items") or []) if i.get("id")
+        }
+        after_items = {
+            i.get("id"): i for i in (plan.get("items") or []) if i.get("id")
+        }
+        pid = plan.get("id")
+        # Accumulate PER PLAN. Checking the shared `errors` for emptiness would
+        # let a second damaged plan slip through unnamed once the first has
+        # reported — the assert still fires, but you fix pl_001, re-run, and
+        # only then learn pl_002 was wrong too.
+        plan_errors: list[str] = []
+        for gone in before_items.keys() - after_items.keys():
+            plan_errors.append(f"{pid}: item {gone} DELETED from an existing plan")
+        for added in after_items.keys() - before_items.keys():
+            plan_errors.append(f"{pid}: item {added} added to an existing plan")
+        for both in before_items.keys() & after_items.keys():
+            if before_items[both] != after_items[both]:
+                plan_errors.append(f"{pid}: item {both} modified in place")
+        for field in set(prior) | set(plan):
+            if field == "items":
+                continue
+            if prior.get(field) != plan.get(field):
+                plan_errors.append(
+                    f"{pid}: plan field '{field}' changed "
+                    f"{prior.get(field)!r} -> {plan.get(field)!r}"
+                )
+        if not plan_errors:  # differs, but no rule above named it — never silent
+            plan_errors.append(
+                f"{pid}: plan object changed in a way this check did not classify"
+            )
+        errors.extend(plan_errors)
+    return errors

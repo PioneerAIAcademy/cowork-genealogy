@@ -40,6 +40,13 @@ DORMANT: dict[str, str] = {
         "with that category in b68d2e9ec; the validator was kept and no positive "
         "test carries the tag yet"
     ),
+    "no-search-no-write": (
+        "its only search-records test, ut_search_records_005 (a description-routing "
+        "negative whose correct route was the research-plan skill), was deleted by "
+        "issue #2116 when that skill became an agent: description routing no longer "
+        "reached it and the run aborted on max_wall_clock_seconds; the validator was "
+        "kept, and search-external-sites still carries the tag"
+    ),
     "objective-target": (
         "its only test, ut_research_plan_r3d (an xfail), was deleted by PR #3124; "
         "the validator was kept and no test carries the tag yet"

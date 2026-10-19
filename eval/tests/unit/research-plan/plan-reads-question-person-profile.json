@@ -10,11 +10,12 @@
       "profile-reread",
       "research-plan-new-plan-for-q-001",
       "new-plan-items-planned-status",
-      "issue-2208"
+      "issue-2208",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Create the first research plan for q_001 -- who were the parents of Thomas Kerrigan?",
+    "delegation": "Create the first research plan for q_001 -- who were the parents of Thomas Kerrigan?\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "plan-reads-question-person-profile"
   },
   "mcp_fixtures": [
@@ -28,7 +29,14 @@
     "collections-search-pennsylvania",
     "external-links-search-schuylkill",
     "volume-search-schuylkill",
-    "collections-search-us-national"
+    "collections-search-us-national",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "GENERAL RULE UNDER TEST: the project tree is a snapshot taken at setup. A relative imported with the subject arrives without his own parents, so 'no parents documented in the tree' says nothing about FamilySearch. Before planning, the skill must read the question person's FamilySearch profile (Thomas Kerrigan, ZZKR-TH2) and plan from what it holds.",
