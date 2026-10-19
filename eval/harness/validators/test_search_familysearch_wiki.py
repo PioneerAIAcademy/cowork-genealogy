@@ -212,8 +212,8 @@ def test_census_era_boundaries_preserved(before_state, after_state, test):
 
 
 # `\b` excludes "FamilySearch"; the gap accepts "click Search, then Records"
-# and "Search → Records" (both ≤ 20 non-period, non-newline characters apart).
-_NAV_RE = re.compile(r"\bSearch\b[^.\n]{0,20}\bRecords\b")
+# and "Search → Records" (both ≤ 20 non-period, non-CR, non-newline chars apart).
+_NAV_RE = re.compile(r"\bSearch\b[^.\r\n]{0,20}\bRecords\b")
 
 
 def test_stated_navigation_preserved(before_state, after_state, test):
