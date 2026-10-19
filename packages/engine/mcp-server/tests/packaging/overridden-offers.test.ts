@@ -41,7 +41,9 @@ const KNOWN: Record<string, string> = {
   // research-plan corpus-wide, and it lands on the top-ranked tests by duration --
   // wzk (424s, rank 1 of 23), 005 (rank 2), 014 (rank 3), 002 (rank 5). Five runs
   // failed to produce a clean log for a one-line prose change. Fix the stall first.
-  "skills/research-plan/SKILL.md": "reverted — gate blocked by duration-linked stalls, not by the edit",
+  // Converted from a skill to an agent on `main` (PR #3479); the ledger keys on
+  // the path, so the entry moves with the file. The reason below is unchanged.
+  "agents/research-plan.md": "reverted — gate blocked by duration-linked stalls, not by the edit",
   "agents/search-full-text.md": "offer is a load-bearing stop — see note above; an agent since the main merge",
   "agents/conflict-resolution.md": "offer is a load-bearing stop — see note above; an agent since the main merge",
   "agents/person-evidence.md": "PR #2992 owns this file; batched behind it",
