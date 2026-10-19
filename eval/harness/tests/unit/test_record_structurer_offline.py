@@ -224,6 +224,11 @@ def test_v7_based_without_on_passes():
     _value_check("Based in Cincinnati")
 
 
+def test_v7_a_value_with_no_bias_notes_is_out_of_scope():
+    """The ruled gate (issue #2019): no notes, no claim to check."""
+    _value_check("Born 1844 (computed from age 63)", notes="")
+
+
 def test_v7_an_absent_assertion_passes():
     _value_check("No father is named (computed from the blank field)", basis="absent")
 
