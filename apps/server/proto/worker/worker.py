@@ -283,7 +283,6 @@ EXPECTED_AGENTS = frozenset({
     "gps-mentor",
     "historical-context",
     "hypothesis-tracking",
-    "image-reader",
     "init-project",
     "locality-guide",
     "person-evidence",

@@ -17,6 +17,7 @@ from harness.skill_invocation import (
     CONFLICT_ANALYSIS_FIELDS,
     CONFLICT_UNPERSISTED_KIND,
     DEDICATED_AGENT_NAMES,
+    RETIRED_DEDICATED_AGENT_NAMES,
     GUARDRAIL_SKILLS,
     WARNINGS_UNCHECKED_KIND,
     find_citation_nulling_in_conclusions,
@@ -2058,16 +2059,23 @@ def test_dedicated_agent_names_matches_the_shipped_agent_files():
 
     Deriving it from the directory also closes the reverse direction: a name
     left behind after an agent file is deleted silently exempts a caller that no
-    longer exists.
+    longer exists — unless it is named in `RETIRED_DEDICATED_AGENT_NAMES`, which
+    keeps committed runs replaying unchanged and must name no shipped agent.
     """
     repo_root = Path(__file__).resolve().parents[4]
     agents_dir = repo_root / "packages" / "engine" / "plugin" / "agents"
     shipped = {p.stem for p in agents_dir.glob("*.md")}
     assert shipped, f"no agent files found under {agents_dir}"
-    assert set(DEDICATED_AGENT_NAMES) == shipped, (
+    assert RETIRED_DEDICATED_AGENT_NAMES <= DEDICATED_AGENT_NAMES
+    assert not RETIRED_DEDICATED_AGENT_NAMES & shipped, (
+        "a retired agent ships again: "
+        f"{sorted(RETIRED_DEDICATED_AGENT_NAMES & shipped)}"
+    )
+    live = set(DEDICATED_AGENT_NAMES) - RETIRED_DEDICATED_AGENT_NAMES
+    assert live == shipped, (
         "DEDICATED_AGENT_NAMES is out of step with packages/engine/plugin/agents/. "
-        f"Only in the set: {sorted(set(DEDICATED_AGENT_NAMES) - shipped)}; "
-        f"only on disk: {sorted(shipped - set(DEDICATED_AGENT_NAMES))}. "
+        f"Only in the set: {sorted(live - shipped)}; "
+        f"only on disk: {sorted(shipped - live)}. "
         "An agent on disk but not in the set makes every protected write it "
         "makes read as an unnamed-delegate bypass — the detector fires hardest "
         "on exactly the runs that did the right thing."

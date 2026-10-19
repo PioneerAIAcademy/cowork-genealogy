@@ -642,7 +642,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 **Extraction is one call:** `extraction_append({ projectPath, recordIds, questionIds })`, with each promising result's `recordId` field (never `arkId`, `ark`, `id` or `url`). It reads each record live, logs it and extracts it in code, so do not `record_read` first. Relay its summary verbatim.
 
 1. If a record ID is available, put it in `recordIds`.
-2. If the full record is unavailable but an image exists, record the image URL in the log. Its page text goes through `@plugin:image-reader`, then `@plugin:record-structurer`.
+2. If the full record is unavailable but an image exists, record the image URL in the log. Transcribe it with `image_transcribe({ projectPath, ark })` and hand its `staged.resultsRef` to `@plugin:record-structurer`.
 3. If only the index entry is available, flag it in log notes as "derivative only — original not located." Never treat an index entry as equivalent to examining the original.
 
 **Passenger lists:** Starting 1820, US passenger manifests list every person aboard by name, including infants and young children — not just heads of household. (Canadian passenger lists are the exception, scarce before 1865.) When a result matches a parent, examine the full manifest for all family members — children's ages and birthplaces can resolve parentage questions.

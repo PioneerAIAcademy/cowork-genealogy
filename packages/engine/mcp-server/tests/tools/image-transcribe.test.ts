@@ -23,6 +23,8 @@ vi.mock("../../src/utils/fs-image-fetch.js", async (importOriginal) => {
 
 import {
   imageTranscribeTool,
+  imageTranscribeMcpTool,
+  imageTranscribeToolSchema,
   MAX_OCR_INPUT_BYTES,
   sniffContentType,
 } from "../../src/tools/image-transcribe.js";
@@ -1391,6 +1393,71 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
   });
 });
 
+describe("imageTranscribeMcpTool — returns a ref, not the page (#2490)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await makeProject();
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("requires projectPath on the MCP schema", () => {
+    expect((imageTranscribeToolSchema.inputSchema as { required?: string[] }).required).toEqual(["projectPath"]);
+  });
+
+  it("drops the inline transcription once staged; the staged file keeps it", async () => {
+    const page = "Johann Schreck\nFOUND";
+    mockOpenRouterOk(page);
+    const r = await imageTranscribeMcpTool(
+      { imageId: "004884748_02613", projectPath: dir, lookingFor: "Schreck" },
+      LOCAL,
+    );
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r).not.toHaveProperty("transcription");
+    expect(r.found).toBe("FOUND");
+    expect(r.digest).toMatchObject({ id: "004884748_02613", chars: page.length });
+    const envelope = JSON.parse(await readFile(join(dir, r.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].transcription).toBe(page);
+  });
+
+  it("keeps the text inline when staging failed, since it is then the only copy", async () => {
+    await writeFile(join(dir, "results"), "not a directory");
+    mockOpenRouterOk("still read");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r.staged).toBeNull();
+    expect(r.stagingError).toBeTruthy();
+    expect(r.transcription).toBe("still read");
+  });
+
+  it("refuses a call with no projectPath before any fetch or OCR", async () => {
+    await expect(imageTranscribeMcpTool({ imageId: "004884748_02613" }, LOCAL)).rejects.toThrow(
+      /projectPath is required/,
+    );
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("answers a folder that is not a project with the no-project result for an imageId, before any fetch", async () => {
+    const empty = await mkdtemp(join(tmpdir(), "imgt-noproj-"));
+    try {
+      const r = await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: empty }, LOCAL);
+      expect(r).toMatchObject({ ok: false });
+      expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+      expect(mockFetch).not.toHaveBeenCalled();
+    } finally {
+      await rm(empty, { recursive: true, force: true });
+    }
+  });
+
+  it("leaves the shared function's text alone, which person_read's memories leg reads", async () => {
+    mockOpenRouterOk("Memory text");
+    const r = await transcribe({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    expect(r.staged).not.toBeNull();
+    expect(r.transcription).toBe("Memory text");
+  });
+});
 
 describe("imageTranscribeTool — a Memories PAGE url (#2987)", () => {
   const PAGE = "https://www.familysearch.org/photos/artifacts/117201348";

@@ -484,9 +484,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   },
   tokenStep("image_read", { imageId: REAL_IMAGE_ID }),
   {
-    // getOpenRouterApiKey runs before the FamilySearch fetch.
+    // getOpenRouterApiKey runs before the FamilySearch fetch. projectPath is
+    // required (#2490): without it the call stops at the project check and
+    // never reaches the key or the token this row exists to smoke.
     tool: "image_transcribe",
-    args: () => ({ imageId: REAL_IMAGE_ID }),
+    args: (ctx) => ({ imageId: REAL_IMAGE_ID, projectPath: ctx.projectPath }),
     expect: (res, ctx) => {
       if (ctx.openRouterKeyConfigured === false) return keyMissing(res);
       if (ctx.openRouterKeyConfigured === null) {

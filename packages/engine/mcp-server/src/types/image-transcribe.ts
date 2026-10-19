@@ -18,19 +18,26 @@ export interface ImageTranscribeInput {
    * sets a FOUND / NOT FOUND pointer (`found`); the pointer is withheld on a
    * truncated read (a half-read page cannot support a clean NOT FOUND). It never
    * shortens or slants the full transcription, and any assertion in it is
-   * ignored. Mirrors the image-reader subagent's `looking_for`.
+   * ignored.
    */
   lookingFor?: string;
-  /** Absolute project-folder path. When given, the fetched JPEG is saved under
-   *  images/<key>.jpg and its project-relative path returned as `imageRef` (§8.5). */
+  /** Absolute project-folder path. Required on the MCP schema (the page is
+   *  staged under it); optional only for person_read's in-process call. When
+   *  given, the fetched JPEG is saved under images/<key>.jpg and its
+   *  project-relative path returned as `imageRef` (§8.5). */
   projectPath?: string;
 }
 
-export interface ImageTranscribeResult {
-  /** Faithful full-page OCR — the primary payload. Never doctored: a
-   *  truncation is signalled by the sibling `truncated`/`truncationNotice`
-   *  fields, not by splicing prose into this text. */
-  transcription: string;
+/**
+ * What `image_transcribe` returns across the MCP boundary (issue #2490): the
+ * page is staged and `transcription` is dropped, so it is present only when
+ * `staged` is null. person_read's in-process call gets `ImageTranscribeResult`.
+ */
+export interface ImageTranscribeToolResponse {
+  /** Faithful full-page OCR. Never doctored: a truncation is signalled by the
+   *  sibling `truncated`/`truncationNotice` fields, not by splicing prose into
+   *  this text. Across the MCP boundary, present only when staging failed. */
+  transcription?: string;
   /** FamilySearch viewer URL for the image that was transcribed. Present for
    *  imageId and ark inputs; absent for file and memoryArtifactUrl (issue #2854). */
   viewerUrl?: string;
@@ -93,6 +100,11 @@ export interface ImageTranscribeResult {
     /** Raw input size in bytes (sent to OCR as-is; no pre-processing). */
     sizeBytes: number;
   };
+}
+
+/** `imageTranscribeTool`'s own return, which always carries the text. */
+export interface ImageTranscribeResult extends ImageTranscribeToolResponse {
+  transcription: string;
 }
 
 /** The element `image_transcribe` stages (snake_case: persisted project state). */

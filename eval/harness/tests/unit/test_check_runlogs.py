@@ -2358,8 +2358,9 @@ def test_touched_agent_with_no_suite_is_untouched_by_the_identity_rule(
     monkeypatch, capsys, tmp_path
 ):
     """Keyed on directory existence, so an agent with no suite of its own
-    (image-reader, record-extractor today) stays ungated until one lands —
-    and arms itself when it does, with no constant to remember to edit."""
+    (image-reader and record-extractor, both retired with their suites) stays
+    ungated until one lands — and arms itself when it does, with no constant to
+    remember to edit."""
     skills = _make_skills_tree(tmp_path)
     tests_unit = tmp_path / "tests-unit"
     tests_unit.mkdir()

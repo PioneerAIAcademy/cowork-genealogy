@@ -109,7 +109,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────

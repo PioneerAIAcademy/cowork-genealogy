@@ -222,9 +222,9 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **3** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **29** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **28** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-nine agents are `gps-mentor`, `record-structurer`, `image-reader`,
+The twenty-eight agents are `gps-mentor`, `record-structurer`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
@@ -561,7 +561,7 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
 | **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching subagents on CLI 2.1.215 and 2.1.220 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12; the harnesses' CLI 2.1.139 is unprobed); never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted sets none, and the CLI default already sends `output_config.effort: high` on a `claude-sonnet-4-6` subagent's request |
@@ -1045,8 +1045,8 @@ zero-tools spawn check: the probe's arm B granted one tool under all three
 spellings plus `ToolSearch`, denied that same tool, and the runtime refused the
 agent outright — "would be spawned with zero tools — refusing. Its tools list
 resolved to nothing: unrecognized [ToolSearch]", naming only the built-in,
-because the deny had already removed the three MCP entries. `image-reader`
-grants exactly one tool, so it is one entry from that shape. Guarded by the
+because the deny had already removed the three MCP entries. An agent that
+grants exactly one tool is one entry from that shape. Guarded by the
 "never denies a tool it also grants" case in `agent-tool-names.test.ts`, which
 is pinned synthetically because no agent ships a deny for it to fire on.
 
@@ -2352,7 +2352,7 @@ questions that only look open.
 | The write boundary and the `extraction_append` lane | [`research-append-tool-spec.md`](specs/research-append-tool-spec.md) §11 |
 | The persisted schemas | [`research-schema-spec.md`](specs/research-schema-spec.md), [`simplified-gedcomx-spec.md`](specs/simplified-gedcomx-spec.md) |
 | The projection tools | [`project-context-tool-spec.md`](specs/project-context-tool-spec.md), [`research-query-tool-spec.md`](specs/research-query-tool-spec.md) |
-| Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`image-reader-agent-spec.md`](specs/image-reader-agent-spec.md) , [`record-structurer-agent-spec.md`](specs/record-structurer-agent-spec.md) |
+| Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`record-structurer-agent-spec.md`](specs/record-structurer-agent-spec.md) |
 | How do I write a skill? How does it get tuned, tested, and rebuilt? | [`skill-authoring-guide.md`](skill-authoring-guide.md), [`skill-lifecycle.md`](skill-lifecycle.md) |
 | The eval harness — formats, workflow, run logs, CI rules | [`unit-test-spec.md`](specs/unit-test-spec.md) (the live format — [`unit-test-spec-v2.md`](specs/unit-test-spec-v2.md) is a **plan** for deferred features, not the format), [`e2e-test-spec.md`](specs/e2e-test-spec.md), [`e2e-testing-guide.md`](e2e-testing-guide.md), `eval/README.md`, `eval/CLAUDE.md` |
 | Setup paths the harness can't reach | `docs/testing-guides/` — OAuth tokens, `.mcpb` install, gps-mentor |

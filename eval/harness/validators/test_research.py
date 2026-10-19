@@ -801,3 +801,49 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
         "the resolved question's own state was modified:\n  - "
         + "\n  - ".join(errors)
     )
+
+
+def test_bounded_transcription_is_delivered_in_place(
+    skills_invoked, builtin_tool_calls, tool_calls, test
+):
+    """Tag-gated (``transcribes-in-place``). Since #2490 retired the image-reader
+    agent, a bounded transcription is the router's own deliverable: it calls
+    ``image_transcribe`` with a ``projectPath``, and reads the staged page with
+    ``sidecar_read`` on the ``staged.resultsRef`` that call returned, before
+    showing it. No hand-off is a transcription hand-off, so on a single bounded
+    ask (no ``delivers:`` tag) there must be none at all."""
+    from harness.skill_runner import handoffs
+
+    if "transcribes-in-place" not in test.get("tags", []):
+        pytest.skip("not an in-place transcription test")
+    transcribes = [
+        c for c in (tool_calls or [])
+        if bare_tool_name(c.get("tool", "")) == "image_transcribe"
+    ]
+    assert transcribes, "the bounded transcription never called image_transcribe"
+    assert all((c.get("args") or {}).get("projectPath") for c in transcribes), (
+        "image_transcribe was called without a projectPath, so nothing was staged"
+    )
+    refs = {
+        ((c.get("response") or {}).get("staged") or {}).get("resultsRef")
+        for c in transcribes
+    } - {None}
+    assert refs, "no image_transcribe call staged its page (no staged.resultsRef came back)"
+    read = [
+        c for c in (tool_calls or [])
+        if bare_tool_name(c.get("tool", "")) == "sidecar_read"
+        and ((c.get("args") or {}).get("ref") in refs
+             or set((c.get("args") or {}).get("refs") or []) & refs)
+    ]
+    assert read, (
+        f"the staged page was never read: no sidecar_read on {sorted(refs)}, so "
+        "the reply cannot have shown the transcription"
+    )
+    if not any(t.startswith(_DELIVERS_PREFIX) for t in test.get("tags") or []):
+        skill_under_test = test.get("skill")
+        delegations = [
+            s for s in handoffs(skills_invoked, builtin_tool_calls) if s != skill_under_test
+        ]
+        assert not delegations, (
+            f"a single bounded transcription hands off to nothing; got {delegations}"
+        )

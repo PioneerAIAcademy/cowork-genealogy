@@ -24,9 +24,9 @@ import {
 describe('agentRefsInText', () => {
   it('dedupes and sorts @plugin: references', () => {
     const text =
-      'Delegate to `@plugin:image-reader`, the same way /research invokes\n' +
+      'Delegate to `@plugin:search-images`, the same way /research invokes\n' +
       '`@plugin:gps-mentor`. Then call @plugin:gps-mentor again.\n';
-    expect(agentRefsInText(text)).toEqual(['gps-mentor', 'image-reader']);
+    expect(agentRefsInText(text)).toEqual(['gps-mentor', 'search-images']);
   });
 
   it('returns empty when there are no references', () => {

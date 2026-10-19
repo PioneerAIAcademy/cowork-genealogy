@@ -30,7 +30,7 @@ MAIN_KEYS = {
     "tool_use_id": "t1",
 }
 # A subagent firing: agent_id + agent_type present.
-SUB_KEYS = {**MAIN_KEYS, "agent_id": "a0307acf2508a8c2d", "agent_type": "image-reader"}
+SUB_KEYS = {**MAIN_KEYS, "agent_id": "a0307acf2508a8c2d", "agent_type": "search-images"}
 
 
 def _main(tool_name, **tool_input):
@@ -123,9 +123,9 @@ def test_declaring_the_tool_exempts_the_skill():
     Regression guard for the declared-tools exemption: an unscoped policy would
     deny every such call and break the skill outright. The declaration is what
     separates a legitimate direct call from a boundary violation. No shipping
-    skill exercises this today — `search-images` moved to delegating via
-    `@plugin:image-reader` on 2026-07-17, so the exemption is currently
-    unreachable — hence the declared set here is synthetic.
+    skill exercises this today — `search-images` reads pages with
+    `image_transcribe`, so the exemption is currently unreachable — hence the
+    declared set here is synthetic.
     """
     assert (
         subagent_only_violation(
@@ -138,8 +138,8 @@ def test_declaring_the_tool_exempts_the_skill():
 def test_undeclared_tool_is_still_a_violation():
     """record-extraction declares record_read/volume_search/research_log_append.
 
-    It holds image_read only through the @plugin:image-reader union, so its
-    router must delegate.
+    It does not hold image_read, so its router must read the page with
+    image_transcribe.
     """
     assert (
         subagent_only_violation(
@@ -167,8 +167,8 @@ def test_delegation_itself_is_not_a_violation():
     The probe (plan §3.1) confirmed the delegation surfaces as `Agent` with no
     agent_id; denying it would break the very path we want the router to take.
     """
-    assert subagent_only_violation(_main("Agent", subagent_type="image-reader")) is None
-    assert subagent_only_violation(_main("Task", subagent_type="image-reader")) is None
+    assert subagent_only_violation(_main("Agent", subagent_type="search-images")) is None
+    assert subagent_only_violation(_main("Task", subagent_type="search-images")) is None
 
 
 def test_violation_matches_bare_name_without_prefix():
@@ -198,8 +198,11 @@ def test_denial_reason_names_the_fix():
         "permissionDecisionReason"
     ]
     # The reason text is the model's only feedback, so it must point at the
-    # subagent rather than merely refusing.
-    assert "image-reader" in reason
+    # replacement rather than merely refusing — and not at the retired
+    # image-reader agent (#2490).
+    assert "image_transcribe" in reason
+    assert "sidecar_read" in reason
+    assert "image-reader" not in reason
     assert "image_read" in reason
 
 
@@ -313,7 +316,7 @@ def test_real_search_images_does_not_declare_image_read():
     declared = declared_skill_tools("search-images", _skills_dir())
     assert "image_read" not in declared, (
         "search-images must NOT declare image_read — it browses volumes page-by-page "
-        "by delegating each page to @plugin:image-reader, so the base64 never enters "
+        "with image_transcribe, so the base64 never enters "
         "the skill's context. Declaring it here would exempt the browse loop from the "
         "guard and reopen the accumulation crash."
     )
@@ -328,8 +331,8 @@ def test_real_record_extraction_does_not_declare_image_read():
 
     declared = declared_skill_tools("record-extraction", _skills_dir())
     assert "image_read" not in declared, (
-        "record-extraction must NOT declare image_read — it delegates to "
-        "@plugin:image-reader so the base64 never enters the router's context. "
+        "record-extraction must NOT declare image_read — it reads pages with "
+        "image_transcribe so the base64 never enters the router's context. "
         "Declaring it here would exempt the router from the guard."
     )
     assert (

@@ -69,10 +69,10 @@ TTL-pruned. The eval mock
 stages a canned `person_read` through the tool's own compiled `stagePersonRead`, so the envelope
 has one definition.
 
-**The inline-strip rule below has one exemption:** `image_transcribe` keeps returning its
-`transcription` inline. The shipped `image-reader` agent and `person_read`'s memories leg read it
-today, and the consumer that reads the sidecar instead is the `document-capture` agent; the
-strip belongs to the PR that lands that consumer.
+`image_transcribe` follows the inline-strip rule below (since 2026-10-16): once staged it drops
+`transcription` and returns `staged`, `digest` and `found`, and its readers use `sidecar_read`.
+person_read's memories leg calls the function in-process, below the MCP boundary where the strip
+is applied, and keeps the text (`image-transcribe-tool-spec.md` §5.5).
 
 The change is **purely additive and back-compatible**: no `projectPath` → the tools
 behave exactly as today.

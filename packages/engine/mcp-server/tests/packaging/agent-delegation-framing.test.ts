@@ -147,21 +147,9 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "against cannot be induced through it. The agent-side pin states the rule.",
     },
   },
-  "search-records -> image-reader": {
-    pins: [
-      {
-        side: "agent",
-        excerpt: "Never tailor, trim, or slant the transcription toward an expected answer.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The caller asks only for a page's text, keyed by the result's id, and composes no " +
-        "expected answer. The agent-side pin forbids slanting the transcription toward one, " +
-        "which is the guarantee; this caller carries no rule of its own yet.",
-    },
-  },
+  // "search-records -> image-reader" and "research -> image-reader" were here
+  // until issue #2490 retired the agent: image_transcribe stages the page and
+  // returns its ref, and both callers call the tool themselves.
 
 
   // "search-images -> search-images" was here until the thin-skill deletion
@@ -172,35 +160,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
   // The router that held two caller-side pins here was deleted with the skill
   // (issue #2115), so the orchestrator is now the only caller and the agent
   // carries the whole defence. The history below is why that pin is agent-side.
-  // Added with the "Bounded request or job" section (#2813 item 1): a bounded
-  // transcription goes straight to the agent that owns it instead of walking the
-  // routing table. The caller side is exempt because the whole delegation is one
-  // clause naming a destination -- it forwards no expected answer for the agent
-  // to slant toward, which is the pressure the sibling record-extraction edge
-  // pins against. If the router ever gains a sentence telling this agent what to
-  // look for, that sentence is a caller pin and this exemption must go.
-  "research -> image-reader": {
-    pins: [
-      {
-        side: "agent",
-        excerpt:
-          "Never\ntailor, trim, or slant the transcription toward an expected answer.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The router states the destination and nothing about the content: it " +
-        "passes no looking_for, no expected answer, and no framing of what the " +
-        "page should say. Deciding whether the page holds what was wanted is " +
-        "the caller's job on return, which the agent-side pin already states.",
-      mitigation: {
-        side: "caller",
-        excerpt: "transcription to `@plugin:image-reader`",
-      },
-    },
-  },
-
   "research -> question-selection": {
     pins: [
       // Added after the first direct-arm run (issue #2115). The exemption this
@@ -598,8 +557,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 // common noun. All six are bare-name mentions, so all six take `""` and
 // none can suppress a real delegation.
 //
-// The arm still earns its place for `gps-mentor`, `image-reader` and
-// `record-extractor`, whose names no one writes by accident. It does not
+// The arm still earns its place for `gps-mentor` and `record-extractor`, whose names no one writes by accident. It does not
 // discriminate for `citation` — a single-word agent name whose bare form can
 // appear in ordinary prose.
 const PROSE_MENTIONS = new Map<string, string>([
@@ -881,7 +839,6 @@ describe("agent delegation framing", () => {
     "hypothesis-tracking",
     // ARRIVED when issue #2797 deleted skills/timeline/.
     "timeline",
-    "image-reader",
     // ARRIVED when issue #2122 deleted skills/init-project/.
     "init-project",
     // ARRIVED when issue #2822 deleted skills/proof-conclusion/. The name is

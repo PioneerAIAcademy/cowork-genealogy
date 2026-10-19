@@ -1084,14 +1084,15 @@ that needs the predicate widened by hand.
 Every member is enforced. The one member, `image_read`, is
 declared by no skill and by no agent at all since
 the `image-reader-opus` agent was retired, and
-since `search-images` moved to `@plugin:image-reader` (2026-07-17) — so `agent_id`
+since `search-images` moved to `image_transcribe` (via `@plugin:image-reader` from
+2026-07-17, directly since 2026-10-16) — so `agent_id`
 presence alone discriminates for it, and a second tool added to the set is
 covered here automatically.
 
 Semantics match the tree block — the denied call doesn't run, doesn't count
 toward the cap, and doesn't stop the run. Here, continuing is the **intended**
-response: the denial reason names a reachable recovery — delegate the read to
-`@plugin:image-reader`, which returns a text transcription — not an unreachable
+response: the denial reason names a reachable recovery — read the page with
+`image_transcribe`, which stages it and returns a ref `sidecar_read` reads — not an unreachable
 "stop" the Stop hook would override anyway. The router must never read the scan
 itself or retry another way (a deny that leaves the goal in place just relocates the substitution). Denied attempts are
 recorded in a separate `blocked_context_calls` array

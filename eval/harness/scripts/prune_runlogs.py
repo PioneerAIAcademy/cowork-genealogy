@@ -472,6 +472,8 @@ def strip_captures_one(path: Path, *, cutoff: date) -> tuple[bool, int, int]:
             call.pop("response_summary", None)
         else:
             call["response_summary"] = remnant
+        # The staged `image_transcribe` page (#2490) is a capture too.
+        call.pop("staged_transcription", None)
     log[CAPTURES_STRIPPED_KEY] = True
 
     path.write_text(json.dumps(log, indent=2), encoding="utf-8")

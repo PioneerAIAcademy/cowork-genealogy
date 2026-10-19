@@ -183,7 +183,12 @@ from typing import Any
 # a string, `is_error` stays a bool and `outcome` stays a string, and only what
 # each one means changes. `narration`'s new `thread` key is the other case and
 # does NOT drive this bump: it is key-presence-detectable, exactly like
-# `narration` itself.
+# `narration` itself. So is `tool_calls[].staged_transcription` (#2490): since
+# `image_transcribe` stages the page and returns only `staged.resultsRef` and a
+# `digest`, entry 5's `transcription` is inline only when staging failed, and
+# the orchestrator saves a staged page under this key. Read the key when
+# present, else `response_summary`'s `transcription` — the shape every earlier
+# log has.
 HARNESS_SCHEMA_VERSION = 8
 
 

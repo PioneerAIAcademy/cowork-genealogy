@@ -36,7 +36,7 @@ import {
   type ExtractResult,
 } from "../utils/record-extract.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
-import { readStagedResults } from "../utils/results-staging.js";
+import { readStagedResults, STAGING_SUBDIR } from "../utils/results-staging.js";
 import { arkToBareId } from "../utils/ark.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -623,24 +623,46 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
 
   const todo = outcomes.filter((o) => o.status === "extracted");
   if (todo.length > 0) {
-    const logged = await researchLogAppend({
-      projectPath: input.projectPath,
-      ops: todo.map((o) =>
-        o.d.transcriptionRef
-          ? { tool: "image_transcribe", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1, stagedResultsRef: o.d.transcriptionRef }
-          : { tool: "user_provided", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1 },
-      ),
-    });
-    if (!logged.ok || !("results" in logged)) {
+    const logs = new Map<(typeof outcomes)[number], { logId: string; resultsRef?: string | null }>();
+    // A transcription a caller already logged is a finalized results/<log_id>.json:
+    // cite that entry rather than log it again, because research_log_append
+    // takes only staged refs and the second log refused the whole batch (#2490).
+    for (const o of todo) {
+      const ref = o.d.transcriptionRef;
+      if (!ref || ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
+      const entry = (Array.isArray(research?.log) ? research.log : []).find(
+        (l: any) => l && l.results_ref === ref && typeof l.id === "string",
+      );
+      if (entry) {
+        logs.set(o, { logId: entry.id, resultsRef: ref });
+      } else {
+        o.status = "refused";
+        o.errors = [`transcriptionRef '${ref}' is neither a staged ${STAGING_SUBDIR}/ ref nor the results_ref of a log entry`];
+        o.summary = `${o.recordId}: not extracted: ${o.errors[0]}.`;
+      }
+    }
+    const toLog = todo.filter((o) => o.status === "extracted" && !logs.has(o));
+    const logged =
+      toLog.length === 0
+        ? null
+        : await researchLogAppend({
+            projectPath: input.projectPath,
+            ops: toLog.map((o) =>
+              o.d.transcriptionRef
+                ? { tool: "image_transcribe", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1, stagedResultsRef: o.d.transcriptionRef }
+                : { tool: "user_provided", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1 },
+            ),
+          });
+    if (logged && (!logged.ok || !("results" in logged))) {
       const errs = (logged as any).errors ?? ["research_log_append refused the batch"];
-      for (const o of todo) {
+      for (const o of toLog) {
         o.status = "refused";
         o.errors = errs;
         o.summary = `${o.recordId}: not extracted, because logging it was refused: ${errs.join("; ")}.`;
       }
     } else {
-      for (const [i, o] of todo.entries()) {
-        const lr = logged.results[i];
+      if (logged && "results" in logged) toLog.forEach((o, i) => logs.set(o, logged.results[i]));
+      for (const [o, lr] of logs) {
         o.logId = lr.logId;
         let transcription: string | undefined;
         if (o.d.transcriptionRef && lr.resultsRef) {

@@ -4,7 +4,7 @@
  * Every skill body opens with one, so the natural thing for an authoring PR to
  * do is "fix" the agent that doesn't. That would permanently disarm the only
  * validator watching this behaviour. (Not every *agent* carries the line --
- * `check-warnings`, `gps-mentor`, `image-reader`, `record-extractor`,
+ * `check-warnings`, `gps-mentor`, `record-extractor`,
  * `search-familysearch-wiki` and `validate-schema` do not. What makes
  * `search-wikipedia` different is that its absence is a RULE, pinned here.)
  *
@@ -96,8 +96,8 @@ describe("the search-wikipedia Narration exception", () => {
   });
 
   it("the agent-side scan is not vacuous", () => {
-    // NOT "every other agent carries one": six do not (check-warnings,
-    // gps-mentor, image-reader, record-extractor, search-familysearch-wiki,
+    // NOT "every other agent carries one": five do not (check-warnings,
+    // gps-mentor, record-extractor, search-familysearch-wiki,
     // validate-schema), and asserting otherwise would be a lint
     // that fails on the corpus it ships with. What this arm has to rule out is
     // the silent zero — an EXEMPT that matches nothing, or a NARRATION regex

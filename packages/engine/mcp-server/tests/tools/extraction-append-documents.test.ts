@@ -17,6 +17,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 import { runExtractionAppend, type ExtractionBatchResult } from "../../src/tools/extraction-append.js";
 import { validateStructuredDocument } from "../../src/utils/structured-document.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
+import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { LOCAL } from "../../src/auth/principal.js";
 
 const noReader = { readRecord: async () => { throw new Error("no reads on the document path"); } } as any;
@@ -283,6 +284,40 @@ describe("extraction_append: documents", () => {
     expect(after.log[0].results_ref).toMatch(/^results\/log_/);
     expect(after.sources[0].transcription).toMatch(/Harold Dean Whitaker/);
     expect(after.sources[0].image_filename).toBe("images/004022578_00190.jpg");
+  });
+
+  it("a transcription a caller already logged is cited through that log entry, not logged again (#2490)", async () => {
+    const staged = await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: {
+        query: { imageId: "004022578_00190" },
+        results: [{ id: "004022578_00190", source: { imageId: "004022578_00190" }, content_type: "image/jpeg", size_bytes: 1, model: "m", transcription: "Harold Dean Whitaker, 91, of Logan…" }],
+      },
+    });
+    const pre = await researchLogAppend({
+      projectPath: dir,
+      tool: "image_transcribe",
+      outcome: "positive",
+      resultsExamined: 1,
+      stagedResultsRef: staged!.resultsRef,
+    } as any);
+    if (!pre.ok || !("resultsRef" in pre)) throw new Error(`setup log refused: ${JSON.stringify(pre)}`);
+    const r = await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: pre.resultsRef! }]);
+    expect(r.ok).toBe(true);
+    expect(r.records[0].logId).toBe(pre.logId);
+    const after = await read();
+    expect(after.log).toHaveLength(1);
+    expect(after.sources[0].log_entry_id).toBe(pre.logId);
+    expect(after.sources[0].transcription).toMatch(/Harold Dean Whitaker/);
+  });
+
+  it("refuses a results/ ref that is neither staged nor any log entry's sidecar, and writes nothing", async () => {
+    const r = await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: "results/log_999.json" }]);
+    expect(r.ok).toBe(false);
+    expect(r.records[0].status).toBe("refused");
+    expect(r.records[0].errors?.[0]).toMatch(/neither a staged/);
+    expect((await read()).log ?? []).toHaveLength(0);
   });
 
   it("flags an Old Style date in the summary without changing it", async () => {

@@ -3,9 +3,8 @@
 search-images browses FamilySearch digitized image volumes page-by-page
 (volume_search → image_search → image_transcribe, one call per page) when a
 record set is digitized but not indexed and not full-text searchable, and logs
-every browse via research_log_append. Since the pair conversion (issue #2121)
-the agent reads pages itself rather than delegating to the image-reader
-subagent — agents cannot reach another agent. image_search does not stage
+every browse via research_log_append. The agent reads pages itself with
+image_transcribe — agents cannot reach another agent. image_search does not stage
 results, so no results/ sidecar is written — the log entry stands alone.
 
 Narrative-quality dimensions (volume selection, browse procedure,
@@ -19,6 +18,10 @@ block) — used to gate test-specific checks on `test["tags"]`.
 """
 
 from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
 
 import pytest
 
@@ -57,10 +60,12 @@ def test_positive_appends_browse_log_entry(before_state, after_state, test):
     new_entries = _new_log_entries(before_state, after_state)
     assert new_entries, "expected at least one new log entry recording the browse"
     tools = [e.get("tool") for e in new_entries]
-    assert any(
-        ("image_search" in (t or "")) or ("volume_search" in (t or ""))
-        for t in tools
-    ), (
+    # A cap refusal stops the browse at a page read, so its partial log may
+    # name image_transcribe.
+    browse_tools = ("image_search", "volume_search") + (
+        ("image_transcribe",) if "cap-refusal" in test.get("tags", []) else ()
+    )
+    assert any(any(b in (t or "") for b in browse_tools) for t in tools), (
         "expected a new log entry whose `tool` references image_search or "
         f"volume_search; got tools={tools}"
     )
@@ -115,3 +120,46 @@ def test_no_results_sidecar_written(before_state, after_state, test):
     )
 
 
+# --- The hard image cap's refusal is relayed, not worked around -------------
+
+CAP_FIXTURE = (
+    Path(__file__).resolve().parents[2]
+    / "fixtures" / "mcp" / "image-transcribe-cap-reached.json"
+)
+
+
+def test_cap_refusal_relayed_and_logged_partial(
+    tool_calls, text_response, test, before_state, after_state, agent_returns=None
+):
+    """Tag-gated: on the cap refusal (#3010) the agent makes one
+    `image_transcribe` call, logs the browse `partial`, and returns NOT READ,
+    the refusal, its link and its route advice, inventing no page.
+
+    The expected text is read from the fixture, which
+    `packages/engine/mcp-server/tests/packaging/image-cap-fixture.test.ts` pins
+    to the refusal `browse-budget.ts` throws. Moved from the retired
+    image-reader suite (#2490)."""
+    from harness.skill_runner import subject_reply_text
+
+    if "cap-refusal" not in test.get("tags", []):
+        pytest.skip("not an image-cap refusal test")
+    fixture = json.loads(CAP_FIXTURE.read_text(encoding="utf-8"))
+    image_id = fixture["args"]["imageId"]
+    error = fixture["response"]["error"]
+    link = re.search(r"https://\S+?(?=\))", error).group(0)
+
+    calls = [c for c in (tool_calls or []) if c.get("tool", "").endswith("image_transcribe")]
+    assert len(calls) == 1, f"expected exactly one image_transcribe call, got {len(calls)}"
+
+    new_entries = _new_log_entries(before_state, after_state)
+    assert any(e.get("outcome") == "partial" for e in new_entries), (
+        "the refusal says to log the browse as partial; outcomes logged: "
+        f"{[e.get('outcome') for e in new_entries]}"
+    )
+
+    reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
+    assert f"NOT READ: {image_id}" in reply, "the return lacks the NOT READ line for the refused image"
+    assert "Image cap reached" in reply, "the return does not quote the cap refusal"
+    assert link in reply, f"the return drops the refused image's link {link}"
+    for label in ("**Transcription:**", "**Extracted facts:**"):
+        assert label not in reply, f"the return presents a {label} section for an image that was never read"

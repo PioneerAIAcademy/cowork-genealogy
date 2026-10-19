@@ -74,9 +74,10 @@ Current live tools:
   without it, a skill that follows that instruction hits an uncovered tool
   call and grades badly for doing the right thing.
 - sidecar_read: a paged read of one sidecar text file under the workspace's
-  own `evaluations/` or `uploads/` — deterministic in workspace state like
-  research_query, so a fixture could only drift from what was actually
-  written. gps-mentor reads a prior verdict body through it.
+  own `evaluations/`, `uploads/` or `results/` — deterministic in workspace
+  state like research_query, so a fixture could only drift from what was
+  actually written. gps-mentor reads a prior verdict body through it, and an
+  `image_transcribe` caller the page staged under `results/.staging/`.
 """
 
 from __future__ import annotations
@@ -420,6 +421,13 @@ UNLOGGED_SEARCHES_NOTE = (
     "is filled in host-side and needs no reconstruction from memory. Log each as you "
     "go rather than batching them at the end. A search with no log entry is a search "
     "that did not happen, and the staged response is deleted 24h after it was made."
+)
+
+#: Verbatim copy of IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE in
+#: packages/engine/mcp-server/src/tools/image-transcribe.ts (#2490).
+IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE = (
+    "projectPath is required: image_transcribe stages the page under the project's "
+    "results/ and returns its ref, not the text."
 )
 
 #: Mirrors UNLOGGED_REFS_SHOWN / formatUnloggedRefs in results-staging.ts. A join is
@@ -828,6 +836,99 @@ def _stage_record_read(
     if staged is None:
         return {**inline, "staged": None, "stagingError": "mock: staging the canned record failed"}
     return {**inline, "staged": staged}
+
+
+#: The compiled function that drops `image_transcribe`'s inline text once the
+#: page is staged. Not in `_STAGED_COMPACTORS`: it takes the whole response,
+#: where those take the `{results}` payload `_stage_and_compact_search_results`
+#: hands them.
+_IMAGE_TRANSCRIBE_COMPACTOR = "compactStagedImageTranscribe"
+
+#: The `image_transcribe` arguments production stages as the element's `source`.
+_IMAGE_TRANSCRIBE_SOURCE_KEYS = ("imageId", "ark", "memoryArtifactUrl", "file")
+
+
+def _stage_image_transcribe(
+    workspace: Path, args: dict[str, Any], response: dict[str, Any]
+) -> dict[str, Any]:
+    """Stage a canned `image_transcribe` page the way `image-transcribe.ts` does
+    (#2490), and return the response production sends: `staged` and `digest`
+    beside it and the inline `transcription` dropped.
+
+    The payload is production's one-element `{ query, results }` under tool
+    `image_transcribe`; the element's `id` is the `capture:<basename>` of a
+    `file`, else the image the caller named. Staging, the digest excerpt and the
+    strip all run in ONE node process, through the compiled `stageSearchResults`
+    and `compactStagedImageTranscribe`, so the strip has one definition. A
+    staging throw keeps the text inline with `staged: null` and `stagingError`,
+    as production does; a node failure returns the same shape, with a warning.
+    """
+    stager_js = _MCP_BUILD / "utils" / "results-staging.js"
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    source = {k: args[k] for k in _IMAGE_TRANSCRIBE_SOURCE_KEYS if args.get(k) is not None}
+    if isinstance(args.get("file"), str):
+        element_id = "capture:" + re.sub(r"\.[A-Za-z0-9]+$", "", args["file"].split("/")[-1])
+    else:
+        element_id = next((str(v) for v in source.values()), "")
+    metadata = response.get("metadata") if isinstance(response.get("metadata"), dict) else {}
+    transcription = str(response.get("transcription") or "")
+    element: dict[str, Any] = {
+        "id": element_id,
+        "source": source,
+        "content_type": metadata.get("contentType", "image/jpeg"),
+        "size_bytes": metadata.get("sizeBytes", 0),
+        "model": metadata.get("model", ""),
+        "transcription": transcription,
+    }
+    if response.get("truncated"):
+        element["truncated"] = True
+    if response.get("found"):
+        element["found"] = response["found"]
+    query = {**source, **({"lookingFor": args["lookingFor"]} if args.get("lookingFor") else {})}
+
+    def _unstaged(why: str) -> dict[str, Any]:
+        warnings.warn(f"mock image_transcribe could not be staged ({why})", stacklevel=3)
+        return {**response, "staged": None, "stagingError": f"mock: staging the canned page failed ({why})"}
+
+    if not (stager_js.exists() and compactor_js.exists()):
+        return _unstaged(f"no engine build at {_MCP_BUILD}")
+
+    script = (
+        f"import {{ stageSearchResults }} from '{_node_module_url(stager_js)}';"
+        f" import {{ {_IMAGE_TRANSCRIBE_COMPACTOR} }} from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const el = input.element;"
+        " let staged; let stagingError;"
+        " try { staged = await stageSearchResults({ projectPath: input.projectPath,"
+        " tool: 'image_transcribe', response: { query: input.query, results: [el] } }); }"
+        " catch (e) { staged = null; stagingError = String(e?.message ?? e); }"
+        " const digest = { id: el.id, chars: el.transcription.length,"
+        " excerpt: el.transcription.slice(0, 300),"
+        " ...(el.found ? { found: el.found } : {}), ...(el.truncated ? { truncated: true } : {}) };"
+        " const { metadata, ...rest } = input.response;"
+        " const out = { ...rest, staged, ...(stagingError !== undefined ? { stagingError } : {}),"
+        " digest, ...(metadata !== undefined ? { metadata } : {}) };"
+        f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
+        " process.stdout.write(JSON.stringify(out));"
+    )
+    input_obj = {
+        "projectPath": str(workspace).replace("\\", "/"),
+        "element": element,
+        "query": query,
+        "response": response,
+    }
+    try:
+        proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            return _unstaged(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
+        parsed = json.loads(out)
+        if not isinstance(parsed, dict) or "staged" not in parsed:
+            return _unstaged("the node script returned no `staged` key")
+        return parsed
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        return _unstaged(f"{type(exc).__name__}: {exc}")
 
 
 def _unlogged_staged_handles(
@@ -1250,6 +1351,27 @@ def create_mock_server(
             ):
                 response = _stage_record_read(_workspace, args, response)
 
+            # Production's image_transcribe stages the page and returns its ref,
+            # not the text (#2490): `staged` + `digest`, `transcription` dropped.
+            # The fixture keeps the full page; this is what production sends.
+            # A call with no projectPath is refused before any OCR in production,
+            # so it must not come back with the fixture's page.
+            _refused_no_project = (
+                _name == "image_transcribe"
+                and "error" not in response
+                and not args.get("projectPath")
+            )
+            if _refused_no_project:
+                response = {"error": IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE}
+            elif (
+                _name == "image_transcribe"
+                and _workspace is not None
+                and "error" not in response
+                and args.get("projectPath")
+                and isinstance(response.get("transcription"), str)
+            ):
+                response = _stage_image_transcribe(_workspace, args, response)
+
             # Fold in the ranking the real record_search performs when the
             # caller names a subject. Matched against the test's own
             # rank_search_matches fixtures so each test keeps the ranking it was
@@ -1361,6 +1483,8 @@ def create_mock_server(
             # A fixture marked `is_error` stands for a THROWN tool error, which
             # production's catch arms return with `isError: true` beside `{error}`.
             if entry["matched"]["kind"] == "predicate" and _is_error[entry["matched"]["index"]]:
+                envelope["is_error"] = True
+            if _refused_no_project:
                 envelope["is_error"] = True
             return envelope
 

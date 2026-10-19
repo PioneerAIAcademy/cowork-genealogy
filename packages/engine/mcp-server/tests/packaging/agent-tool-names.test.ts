@@ -164,8 +164,8 @@ const manifestTools = new Set<string>(
  *   Its tools list resolved to nothing: unrecognized [ToolSearch].
  *
  * The three MCP entries are not named as unrecognized: the deny had already
- * removed them. `image-reader` grants exactly one tool, so it is one entry from
- * this shape.
+ * removed them. An agent that grants exactly one tool is one entry from this
+ * shape.
  *
  * No agent ships a deny today (see the header), so the per-agent arm below
  * cannot fail on the current corpus — which is why the rule is ALSO pinned
@@ -474,10 +474,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     ],
     denies: [],
   },
-  "image-reader.md": {
-    tools: ["image_transcribe"],
-    denies: [],
-  },
   // Reads text and writes it through extraction_append's `documents` input,
   // which classifies in code and refuses any classification field (spec §11.7).
   // No research_log_append: extraction_append writes the log entry itself.
@@ -551,12 +547,11 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // is weaker than a hook and is stated so a reviewer weighs it rather than
   // assuming a guard exists.
   //
-  // `image_transcribe` is the page reader the monolithic skill reached by
-  // delegating to `@plugin:image-reader` — a route an agent does not have. The
-  // base64 rationale for that delegation does not transfer: `image_transcribe`
-  // OCRs host-side and returns text, so nothing accumulates in this agent's
-  // context. `image_read` is deliberately NOT granted; it returns the page
-  // inline and a volume browse overflows the transport (PR #718).
+  // `image_transcribe` is the page reader: it OCRs host-side and returns a
+  // staged ref, a digest and `found`, not the text (#2490), and `sidecar_read`
+  // reads a page the agent needs by that ref. `image_read` is deliberately NOT
+  // granted; it returns the page inline and a volume browse overflows the
+  // transport (PR #718).
   // citation (issue #2799) holds exactly what the skill it replaced declared —
   // `research_append` and `validate_research_schema` — plus two additions with
   // a reason each. `wiki_read`: the probate-office lookup that replaced the
@@ -738,8 +733,8 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // search-hints (issue #2029) reviews FamilySearch hints. Triage reads:
   // `person_record_matches` for the pending matches, `research_query` to find a
   // hint the project already extracted, `record_read` per hint,
-  // `image_transcribe` to read the image before recommending against a hint (it
-  // calls the tool itself; an agent cannot spawn image-reader), `person_read`
+  // `image_transcribe` + `sidecar_read` to read the image before recommending
+  // against a hint (the tool stages the page and returns its ref, #2490), `person_read`
   // and `Read` for the tree person. Record mode writes one log entry per decided
   // hint through `research_log_append`. No `research_append`, so no hook lane.
   "search-hints.md": {
@@ -751,6 +746,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "record_read",
       "research_log_append",
       "research_query",
+      "sidecar_read",
     ],
     denies: [],
   },
@@ -762,6 +758,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "image_transcribe",
       "research_append",
       "research_log_append",
+      "sidecar_read",
       "volume_search",
     ],
     denies: [],
