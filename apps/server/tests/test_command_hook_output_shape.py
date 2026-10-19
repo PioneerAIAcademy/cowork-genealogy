@@ -25,8 +25,6 @@ uses it must keep it.
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -34,12 +32,11 @@ import pytest
 SERVER = Path(__file__).resolve().parents[1]
 REPO = SERVER.parent.parent
 PLUGIN_HOOKS = REPO / "packages" / "engine" / "plugin" / "hooks"
-PROBE = SERVER / "dev" / "step-probe"
 
 # Every command hook in the repo: a script a `hooks.json` shells, whose stdout
 # the CLI parses. Discovered from the hooks.json files rather than hardcoded, so
 # a new command hook is covered without editing this list.
-HOOK_MANIFESTS = (PLUGIN_HOOKS / "hooks.json", PROBE / "hooks.json")
+HOOK_MANIFESTS = (PLUGIN_HOOKS / "hooks.json",)
 
 
 def _command_hook_scripts() -> list[Path]:
@@ -81,34 +78,6 @@ def test_no_command_hook_emits_the_callback_spelling(script: Path):
         '"continue". The SDK-callback spelling is correct only in a callback '
         "(see proto/worker/options.py:442)."
     )
-
-
-def test_the_probe_halt_arm_emits_a_stop_the_cli_can_read():
-    """End to end: run the real script and read its stdout, not its source.
-
-    A source scan alone would pass if the key were built dynamically. This
-    executes the hook the way the CLI does.
-    """
-    script = PROBE / "probe_step_hooks.py"
-    if not script.exists():
-        pytest.skip("step-probe not present")
-    proc = subprocess.run(
-        [sys.executable, str(script)],
-        input=json.dumps({
-            "hook_event_name": "PreToolUse",
-            "tool_name": "Agent",
-            "tool_input": {"p": "STEP_PROBE_HALT"},
-        }),
-        capture_output=True, text=True, encoding="utf-8", timeout=30, check=False,
-        env={"STEP_PROBE_LOG": "/dev/null", "STEP_PROBE_STATE": "/dev/null",
-             "PATH": "/usr/bin:/bin"},
-    )
-    assert proc.returncode == 0, f"hook exited {proc.returncode}: {proc.stderr[:300]}"
-    out = json.loads(proc.stdout or "{}")
-    assert out.get("continue") is False, f"no CLI-readable stop in {out}"
-    assert "continue_" not in out, f"callback spelling leaked into stdout: {out}"
-    # The halt must ALSO deny, or the call it fires on still runs.
-    assert (out.get("hookSpecificOutput") or {}).get("permissionDecision") == "deny"
 
 
 def test_the_prototype_callback_keeps_the_callback_spelling():

@@ -1,8 +1,0 @@
-{
-  "name": "step-probe",
-  "version": "0.0.1",
-  "description": "Phase-0 measurement probe. Records what a hook can see in live Cowork and whether a command hook can end a turn. Not a product plugin; never ship it.",
-  "author": {
-    "name": "Genealogy Research Team"
-  }
-}
