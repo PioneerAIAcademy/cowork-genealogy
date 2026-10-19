@@ -1,6 +1,8 @@
 # Research one step at a time
 
-**Status:** Proposed, not started. For Praise to fold into the research-as-a-job work
+**Status:** **Phase 0 complete (2026-10-19); phases 1+ not started.** Its answers are in
+ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
+research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
 Phase 0 (a probe) comes first and changes no product code. This merges two drafts: a
 single-pass plan drawn from feedback issue #3475, and a one-step-per-turn draft. plan-critic
@@ -60,9 +62,61 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
 21. **`deferred` is a closed-enum value** of `not_reached`, not prose (section B).
 22. **`--autonomous` is retired** once e2e runs on the host's "Keep going." replies (section
     F). The e2e orchestrator then passes search-external-sites `userPresent: no` itself.
-23. **The `AskUserQuestion` decision carrier is dropped.** Every step ends at a boundary, so a
-    question for the researcher is a step's ending. `DecisionCard` becomes the home for the
-    reply buttons.
+23. ~~**The `AskUserQuestion` decision carrier is dropped.**~~ **REVERSED by the lead,
+    2026-10-19.** The carrier STAYS, and is the mechanism rather than something made
+    redundant by one. Its premise -- "every step ends at a boundary, so a question for the
+    researcher is a step's ending" -- was falsified by phase 0: a `PreToolUse` deny does not
+    end a turn (`probe_step_deny.py`, alpha), and `AskUserQuestion` itself waits in Cowork but
+    does not end the turn either (ADR-0005 item 10). `DecisionCard` still becomes the home for
+    the reply buttons, which is unchanged.
+
+## Decisions taken (lead, 2026-10-19)
+24. **The boundary is `AskUserQuestion`, and nothing else.** Option 1 of the four put to the
+    lead after phase 0. Asked because a `PreToolUse` deny was measured NOT to end a turn: the
+    model reports the refusal and carries on with whatever else the turn had queued
+    (`apps/server/dev/probe_step_deny.py`, alpha, 2026-10-19). The lead's words: *"Just go with
+    option 1 (AskUserQuestion is the main path). No need for anything else (no halt)."*
+
+    **One premise of that choice is since measured false, and the question is back with the
+    lead.** It was chosen on the understanding that `AskUserQuestion` ends the turn. It does
+    not: in Cowork it genuinely WAITS (93s, no call until answered) but the answer returns
+    inside the same turn, and the run carried on for ~5.5 minutes afterwards (ADR-0005 item
+    10). So the researcher is reliably asked, which is what decisions 1-3 are for, but a step
+    is bounded only by router prose, not by a turn boundary. That is the cost-and-latency half
+    of the motivation, and prose failing to bind is the failure this whole plan exists to fix.
+    Until the lead answers, treat "no halt" as the standing instruction and this as the open
+    risk against it.
+
+25. **ANSWERED, and 24 is superseded: build the halt, on the FS prototype only** (lead,
+    2026-10-19). The reasoning is that the real cost and latency exposure is the prototype,
+    not Cowork, where the researcher can always press stop.
+
+    - **Prototype.** `AskUserQuestion` is the normal path and the halt is the BACKSTOP, not
+      the first move. When the model starts a new step without having asked, **deny** it
+      first ("report the step and ask with `AskUserQuestion` first"); **halt** only if it
+      tries again. That keeps the report and the question as what the researcher normally
+      sees and makes a silent stop rare, which is the answer to the "a halt ends the turn
+      with no reply" finding (ADR-0005 item 10). The halt also DENIES the call it stops, as
+      `_halt` already does, so the next step never starts.
+    - **Cowork.** No hook. `AskUserQuestion` plus router prose. If the model forgets to ask
+      it runs on, which is what Cowork does today, and the researcher can stop it. Not worth
+      a stateful hook yet.
+    - **Alpha.** Nothing. It is retired within months.
+
+    Three riders the lead attached:
+
+    1. **The rule is "no new step until the researcher has answered since the last one",**
+       NOT "one step per turn". In Cowork the answer returns inside the same turn (ADR-0005
+       item 10), so a per-turn rule would be wrong there.
+    2. **Log every halt on the prototype.** The router prose is identical on both planes, so
+       the halt rate measures how often Cowork runs past a boundary. A high rate is what
+       would buy the Cowork hook, with numbers rather than a guess.
+    3. **The eval harnesses will enforce a boundary Cowork does not have,** so no eval can
+       catch a Cowork miss. Recorded on the `nothing-checks` register as an ARCHITECTURE gap rather than a
+       backlog issue, because it changes how a correct change is made: see
+       `docs/architecture.md` §9.4, gap 4.
+
+    Decision 23 stays reversed: the `AskUserQuestion` carrier is kept.
 
 ## Evidence
 **#3475.** Proxy-exact, after question selection: $49.84 over about 361 live minutes. Each
@@ -654,7 +708,7 @@ that apply:
   - **tests:** rewrite `ut_question_selection_003`, `_005`, `_006`, `_008` and `_d03`, and add
     a test with a two-fact objective (no questions → no write, and an ask).
 - **The router:** delete "New evidence may reveal new questions — return to question-selection"
-  (`skills/research/SKILL.md:361-362`). The objective row (`:229`), after the tree-encoding gate,
+  (`skills/research/SKILL.md:361-362`). The objective row (the row beginning *"All questions are `resolved` and `project.status` still `active`"*; `:230` on `main`), after the tree-encoding gate,
   names any uncovered part of the objective as a suggested next question, as a statement. The
   `compound-objective-*` router tests point at that statement.
 - **research-plan's FAN-pivot hand-off** (`agents/research-plan.md:751`) becomes a plan
@@ -846,7 +900,7 @@ file's own sections, top to bottom.
 | `research` as the only front door (PR #3262's frontmatter) | **Keep:** section H depends on it |
 | "Not every turn is a job"; the `research_delivered` finish line (PR #3187, PR #3286, PR #3235) | **Superseded:** every turn is one step. Keep the bounded routing list and "name what was saved"; delete `research_delivered` in phase 2 |
 | "Never ask a question you will not wait for" | **Keep, applied to every step.** Offers at the **end** of a step become its "Continue with X?". Offers **mid-step** become statements, because nothing stops mid-step: for example search-records' "Let the user confirm before extraction", now that extraction is inside the search step |
-| "Give 'I need you' an exit" (`AskUserQuestion` carrier, `pending_decision`, `DecisionCard`) | **Change.** The step boundary already ends every turn, so a question is just a step's ending. `DecisionCard` becomes the home for the reply buttons. The carrier is dropped (decision 23) |
+| "Give 'I need you' an exit" (`AskUserQuestion` carrier, `pending_decision`, `DecisionCard`) | **Keep** (decision 24, reversing 23). The carrier IS the boundary. The premise this row carried -- "the step boundary already ends every turn" -- was measured false in phase 0: a deny does not end a turn, and `AskUserQuestion` waits without ending one either. `DecisionCard` still becomes the home for the reply buttons |
 | The fourth stop's clauses: unreachable records end `completed`; a blocking conflict "is a decision" | **Unreachable records:** unchanged (the proof at the tier reached, `completed`). **A blocking conflict:** the conflict step names the record that could settle it and offers the planning step (section E), no `decision` exit needed |
 | "Capture a real feed before specifying phase 2" | **Keep:** it now shows the step reports |
 | *Before phase 2*'s acceptance list | **Replaced** by this plan's acceptance items 8–9 (a fresh session ends after one step) and item 7 (one-shot and plan-only asks end after their step) |
@@ -908,8 +962,8 @@ file's own sections, top to bottom.
 - **In live Cowork, check:**
   1. `PreToolUse` fires on `Agent|Task|Skill` main-thread calls;
   2. **`UserPromptSubmit` fires and carries the prompt text.** If it does, it is the clean
-     turn-and-mode signal, with no transcript parsing. `SessionStart` does not fire in Cowork
-     (ADR-0005), so this needs measuring.
+     turn-and-mode signal, with no transcript parsing. `SessionStart` is no help: it did not
+     fire in Cowork on 2026-07-30 and did on 2026-10-19 (ADR-0005), so nothing can rely on it.
   3. `prompt_id` presence and semantics;
   4. `transcript_path` readability;
   5. denies are honoured, after which the model reports and ends;
@@ -917,7 +971,11 @@ file's own sections, top to bottom.
   7. the hook can read the project's `research.json` from its working directory (for `ctx`);
   8. a file the hook writes is readable on its next call (for the turn's steps).
 - **On both hosted planes:** a host-side deny binds alongside `continue_policy.foreground_rewrite`.
-- **Record the results** in ADR-0005.
+- **Record the results** in ADR-0005. **Cowork half recorded 2026-10-19,** all items. Item 7
+  is a NO. A plugin `PreToolUse` hook returning `"continue": false` ends a Cowork turn.
+  `AskUserQuestion` waits for the researcher, but it pauses the turn rather than ending it:
+  the answer resumes the same turn. `UserPromptSubmit` also fires for agent hand-backs, so
+  the Cowork entry point keys turns on `prompt_id`.
 
 **Phase 1.** The prose ships as small PRs, so a failed eval holds up only the PR it is in. The
 prep PRs work under today's behaviour, so they land first. PR 1 is code only. PR 2 switches
@@ -1002,7 +1060,7 @@ in parallel with PR 2.
   - question-selection's two-fact ask would end a hosted turn the Stop veto still re-opens, and
     e2e's two-question fixtures are re-scoped only in PR 1; its gate text states PR 1's rule.
   - **the router:** A's deletions; the step report and only the replies that apply; the search
-    fan-out, external items included (D, I); the choice replacing the loop row (`:225`);
+    fan-out, external items included (D, I); the choice replacing the loop row (the row beginning *"`research-exhaustiveness` returned \"not yet exhaustive\""*; `:225` on `main`);
     wrap-up from any state (B2), with `userPresent` for person-evidence and `wrapUp` for
     proof-conclusion; the different-question reply and its wrap-up offer, and the conflict row
     following the ladder's `nextStep` with the no-next-step row above it (E); the upload turn
