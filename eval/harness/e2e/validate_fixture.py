@@ -434,6 +434,50 @@ def finding_shape_errors(expected_findings: dict[str, Any]) -> list[str]:
         if required is not None and not isinstance(required, bool):
             errors.append(f"{where} has non-boolean `required`: {required!r}")
 
+        # e2e-test-spec.md:313-323: `apply_avoid_guard` force-fails a target
+        # present in the agent's final tree HOWEVER it is annotated there,
+        # including as an explicitly rejected candidate -- that is the
+        # allowance the rule exists to permit. An `avoid` finding's
+        # description must not promise a pass route through the tree, so it
+        # must not conflate the two stores ("tree/research") and, if it
+        # discusses rejection at all, must say which store a rejected
+        # candidate may live in (research.json) and which must stay clear
+        # (tree.gedcomx.json). 17 committed findings shipped the conflated
+        # form before this check existed (issue #3465).
+        if polarity == "avoid" and "description" in finding and not isinstance(
+            finding["description"], str
+        ):
+            errors.append(
+                f"{where} (avoid) has a non-string `description`: "
+                f"{finding['description']!r} -- cannot be checked for the "
+                f"tree/research conflation this guard exists to catch "
+                f"(e2e-test-spec.md:313-323); the field must be a string."
+            )
+        elif polarity == "avoid" and isinstance(finding.get("description"), str):
+            description = finding["description"]
+            if "tree/research" in description:
+                errors.append(
+                    f"{where} (avoid) description contains \"tree/research\" -- "
+                    f"an avoid finding must not conflate the two stores. State the "
+                    f"pass condition against tree.gedcomx.json specifically; if the "
+                    f"description discusses a rejected candidate at all, say it may "
+                    f"live in research.json instead."
+                )
+            if "reject" in description.lower() and (
+                "tree.gedcomx.json" not in description
+                or "research.json" not in description
+            ):
+                errors.append(
+                    f"{where} (avoid) description mentions rejection but does not "
+                    f"name both tree.gedcomx.json and research.json -- a finding "
+                    f"whose pass condition can be satisfied by writing the rejected "
+                    f"candidate into the tree, even annotated as rejected, describes "
+                    f"a pass apply_avoid_guard cannot grant (it force-fails any match "
+                    f"in the final tree however annotated). Name tree.gedcomx.json as "
+                    f"what must stay clear and research.json as where a rejected "
+                    f"candidate may be documented."
+                )
+
     return errors
 
 

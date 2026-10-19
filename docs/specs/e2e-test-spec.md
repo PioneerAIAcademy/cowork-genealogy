@@ -325,7 +325,12 @@ be taken. Authoring gates treat
 `avoid` findings accordingly: the presence mirror skips them (the
 claim was never in the tree), while the stripping linter still warns
 when an avoided claim is already present in the *starting* tree — a
-fixture must not pre-assert the thing it forbids.
+fixture must not pre-assert the thing it forbids. `finding_shape_errors`
+(`eval/harness/e2e/validate_fixture.py`) now enforces the wording rule above
+at authoring time (`lint_fixture`) and in CI (`test_committed_fixture_passes_the_hard_gates`):
+no `avoid` description may conflate the two stores as `tree/research`, and
+any that mentions rejection must name both `tree.gedcomx.json` and
+`research.json`.
 
 An `avoid` finding may be `required: true`; it then gates the verdict
 exactly like a recover finding (`matched: "true"` = correctly
