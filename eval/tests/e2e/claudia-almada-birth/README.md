@@ -28,17 +28,74 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 34, `hint-samples.csv` row 16,
-flag `adds_birth`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Argentina, National Census, 1869", an entry for Claudia Almada, Argentine, born 1861 in Buenos Aires, enumerated at Ajó, Buenos Aires (register image filed under General Lavalle); the birth year is computed from her census age.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the birth about 1861, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-10-19 — true match (outcome 1), a borderline call made with a
+second genealogist's concurrence.** This fixture comes from a hint batch
+(`filtered-list-samples-3.csv` row 34, `hint-samples.csv` row 16, flag
+`adds_birth`, confidence 3). The hint is "Argentina, National Census, 1869"
+(`ark:/61903/1:1:M4WC-C2Z`): Claudia Almada, Argentine, age 8, born
+"Buenos Aires", enumerated at Ajó, the partido whose images are filed under
+General Lavalle. The finding "born about 1861, Buenos Aires, Argentina" stands.
+Retrieval was tool-assisted (`packages/engine/mcp-server/dev/try-*.ts`, spec
+§3.6); the identity judgement is the genealogists'. Every conclusion below rests
+on FamilySearch indexes; no page image was read.
 
-A plausible candidate on place and age. The census district is Ajó, the partido whose register images are filed under General Lavalle, the parish where the tree's Claudia married in 1879 and baptized her daughter in 1880; a girl of about eight in 1869 is a bride of about 18 in 1879. The tree's only record source for her is that 1880 baptism (`ark:/61903/1:1:XNDD-ZL1`), which gives no age; her marriage and her mother come from the Computer-Generated Tree, so none is a re-index of the census. A search of the parish collection finds her 1879 marriage investigation file in General Lavalle, which indexes her birth year as 1860 and her mother as Gregoria Almada — consistent with the census.
+**Baseline.** The tree's only record source for Claudia is her persona
+`ark:/61903/1:1:XNDD-ZL1` on her daughter Lujana Juana's 19 August 1880 baptism
+at General Lavalle, which gives her no age, birthplace or parents. Her marriage
+and her mother come from the Computer-Generated Tree. Nobody in the tree holds
+the census entry, so it is not a re-index of an attached source.
 
-What is thin is that the census names no parent: Claudia is indexed next to a Dolores Almada, single, born about 1845 in Córdoba, not Gregoria. The census also carries a second index entry for the same Claudia (and the same Dolores) at Ajó, which looks like a duplicate of one enumeration rather than a second girl. And the census may not be the best answer: the Dolores parish has a baptism for Claudia Jesus Almada, born 30 October 1860 and christened 8 June 1863, mother Gregoria Almada, about 65 km west of General Lavalle. The discriminating check is the birthplace stated in the 1879 marriage investigation file: Dolores would make that baptism hers, and the finding should then become the 30 October 1860 birth in Dolores rather than the census's "about 1861, Buenos Aires".
+**The marriage records.** Her 1879 marriage to Alejandro Sequeira is indexed
+three times in "Argentina, Buenos Aires, registros parroquiales, 1635-2017":
+
+- the marriage investigation file of 10 May 1879 (`ark:/61903/1:1:X47K-ZPDV`);
+- the marriage of 12 May 1879 at Nuestra Señora de la Merced
+  (`ark:/61903/1:1:CTHW-9YZM`, re-indexed as `ark:/61903/1:1:QGRK-DM48`).
+
+All three give her birth year as 1860 and her mother as Gregoria Almada, with no
+father named. None gives a birthplace. The issue made this birthplace the
+deciding check, and it is absent.
+
+**No image reading is licensed.** The calibration rule needs two other indexed
+entries on the same page:
+
+- The investigation file's image (`ark:/61903/3:1:939D-GZ93-56`, film 004571081)
+  carries no other indexed entry. All 1,593 index entries on that film were
+  paged.
+- The register page (`ark:/61903/3:1:939D-G89K-XC`, film 004571077, image 169)
+  carries one other entry, the Felix Ramirez × Victoriana Gonzalez marriage
+  (`QGRK-DM4S` / `CTH7-1HN2`).
+
+So nothing on either image can settle her birthplace.
+
+**The rival candidate.** A Dolores parish baptism of Claudia Jesus Almada
+(`ark:/61903/1:1:QJR9-D4P8`, re-indexed in "Argentina, Baptisms" as
+`ark:/61903/1:1:XJMX-LJ1`) gives a birth on 30 October 1860 in Dolores and a
+christening on 8 June 1863 at Nuestra Señora de los Dolores. Its sole parent is
+Gregoria Almada. Dolores is 67 km from General Lavalle.
+
+It agrees with the marriage records on the mother, on the absence of a father,
+and on 1860. Those agreements are the mother's name and the birth year, which
+the issue ruled insufficient on their own. Nothing independent places the bride
+in Dolores, so the baptism is probably hers but unproven.
+
+It also does not contradict the hint. Dolores lies in Buenos Aires province, and
+someone born in October 1860 is 8 at the 1869 census and 18 at the 1879
+marriage. "Born about 1861, Buenos Aires" is therefore true whichever record is
+hers. That robustness is what carried the call. An agent that answers
+"30 October 1860, Dolores" with the baptism cited, and states the identity as
+probable, is consistent with this finding.
+
+**The census itself.** It names no parent. Its two index entries,
+`ark:/61903/1:1:M4WC-C2Z` and `M4WC-C2G`, are on the same image (`3:1:S3HY-6X3S-7XW`)
+and are one enumeration, not corroboration. An earlier note placed her next to a
+Dolores Almada (single, born about 1845, Córdoba). That entry (`M4WC-C71` /
+`M4WC-CW8`) is indexed as male and sits on a different image (`3:1:S3HY-6X3S-CWN`).
+
+**What came up empty.** A sweep for other births or baptisms of a Claudia Almada,
+1857–1866, in Argentina found no third candidate. The search controls returned
+the attached baptism personas `XNDD-ZLB` and `XNDD-ZLY` before any nil result
+was trusted.
+
+**Second opinion.** A second genealogist reviewed the evidence and concurred
+with outcome 1, recording the Dolores baptism as a probable but unproven match.
