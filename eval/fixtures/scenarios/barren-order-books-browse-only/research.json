@@ -1,0 +1,130 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Determine the date and place of death of Nathaniel Coombs (b. c. 1810, Kentucky), last documented alive in the 1870 Barren County, Kentucky census",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-15",
+    "updated": "2026-10-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [
+      "none"
+    ],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Nathaniel Coombs (b. c. 1810, Barren County, Kentucky) die?",
+      "rationale": "The census trail goes cold after 1870. No Kentucky death certificate is expected (statewide registration began 1911); the county estate administration is the primary death evidence.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-10-15",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-15",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "probate",
+          "jurisdiction": "Barren County, Kentucky",
+          "date_range": "1870-1890",
+          "repository": "FamilySearch",
+          "rationale": "Kentucky Probate Records, 1727-1990 covers Barren County; an indexed name search is the cheapest first pass.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "probate",
+          "jurisdiction": "Barren County, Kentucky",
+          "date_range": "1870-1890",
+          "repository": "FamilySearch (full-text)",
+          "rationale": "The probate collection is about 1% record-indexed, so a nil on the name index is not absence. A full-text co-occurrence search of the county's probate volumes is the next pass.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "court",
+          "jurisdiction": "Barren County, Kentucky",
+          "date_range": "1870-1885",
+          "repository": "FamilySearch",
+          "rationale": "Administrator appointments and bonds are entered in the county court order books. On FamilySearch the Barren County order books for 1870-1885 are digitized as browse-only image groups (volume_search shows 0% record-searchable), so the remaining path is reading the order-book pages directly, starting from each volume's index.",
+          "fallback_for": "pli_002",
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-15T14:00:00.000Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Nathaniel",
+        "surname": "Coombs",
+        "deathYearFrom": 1870,
+        "deathYearTo": 1890,
+        "anyPlace": "Barren, Kentucky, United States",
+        "recordType": "Probate"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Kentucky Probate Records, 1727-1990: no Coombs entry for Barren County 1870-1890. The collection is about 1% record-indexed, so this nil means un-indexed, not absent.",
+      "external_site": null,
+      "results_ref": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-15T14:20:00.000Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "Coombs estate administrator",
+        "place": "Barren, Kentucky, United States",
+        "yearFrom": 1870,
+        "yearTo": 1890
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "No full-text hit for Coombs with estate or administrator wording in the Barren County probate volumes 1870-1890. The estate may be recorded only in the court order books, which are browse-only images.",
+      "external_site": null,
+      "results_ref": null
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

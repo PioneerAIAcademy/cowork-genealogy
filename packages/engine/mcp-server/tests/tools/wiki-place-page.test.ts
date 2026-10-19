@@ -12,8 +12,15 @@ vi.mock("../../src/tools/place-search.js", () => ({
 }));
 
 const mockStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
+const mockStandardPlaceToRepId = vi.hoisted(() => vi.fn());
 vi.mock("../../src/utils/place-resolver.js", () => ({
   standardPlaceToPlaceId: mockStandardPlaceToPlaceId,
+  standardPlaceToRepId: mockStandardPlaceToRepId,
+}));
+
+const mockGetPlaceById = vi.hoisted(() => vi.fn());
+vi.mock("../../src/utils/place-api.js", () => ({
+  getPlaceById: mockGetPlaceById,
 }));
 
 const mockFetch = vi.fn();
@@ -47,10 +54,38 @@ function pageResponse(slug: string, content: string) {
 
 const NOT_FOUND = { ok: false, status: 404, json: async () => ({ detail: "missing" }) };
 
+// A wiki-query-api /search response ranking these page titles.
+function searchResponse(titles: string[]) {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => ({
+      query: "q",
+      total_chunks_searched: 1,
+      query_time_ms: 1,
+      timing: { embed_ms: 0, search_ms: 0, rerank_ms: 0 },
+      results: titles.map((page_title, i) => ({
+        rank: i + 1,
+        relevance_score: 1,
+        chunk_text: "",
+        page_title,
+        section_heading: "",
+        source_url: "",
+      })),
+    }),
+  };
+}
+
+const placeOfType = (type: string) => ({ placeId: "1", placeRepId: "rep-1", name: "x", fullName: "x", type });
+
 beforeEach(() => {
   mockGetPlaceCandidateNames.mockReset();
   mockStandardPlaceToPlaceId.mockReset();
   mockStandardPlaceToPlaceId.mockResolvedValue(null); // default: rely on the leaf name
+  mockStandardPlaceToRepId.mockReset();
+  mockStandardPlaceToRepId.mockResolvedValue("rep-1");
+  mockGetPlaceById.mockReset();
+  mockGetPlaceById.mockResolvedValue(null);
   mockFetch.mockReset();
   mockGetWikiApiUrl.mockReset();
   mockGetWikiApiUrl.mockResolvedValue(API_BASE);
@@ -280,5 +315,186 @@ describe("wikiPlacePageTool — section is the locality_page_section enum (#1270
       wikiPlacePageTool({ standardPlace: "Portugal", section: "typo" } as any, LOCAL)
     ).rejects.toThrow(/section is required and must be one of/);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("wikiPlacePageTool — a sub-national home page (issue #2486 item B)", () => {
+  it("resolves a two-part sub-national place by its title once the leaf grammar misses", async () => {
+    mockGetPlaceById.mockResolvedValueOnce(placeOfType("County"));
+    mockFetch
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(searchResponse(["Malm%C3%B6hus County, Sweden Genealogy"]))
+      .mockResolvedValueOnce(pageResponse("Malmöhus_County,_Sweden_Genealogy", "# M"));
+    const result = await wikiPlacePageTool({ standardPlace: "Malmöhus, Sweden", section: "home" }, LOCAL);
+    expect(result.url).toBe("https://www.familysearch.org/en/wiki/Malmöhus_County,_Sweden_Genealogy");
+  });
+
+  it("resolves a province the wiki titles by its local name, never a sibling's page", async () => {
+    mockStandardPlaceToPlaceId.mockResolvedValue("1928477");
+    mockGetPlaceCandidateNames.mockResolvedValue(["South Holland", "Zuid-Holland"]);
+    mockFetch
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(searchResponse(["Noord-Holland, Netherlands Genealogy", "Zuid-Holland, Netherlands Genealogy"]))
+      .mockResolvedValueOnce(pageResponse("Zuid-Holland,_Netherlands_Genealogy", "# ZH"));
+    const result = await wikiPlacePageTool({ standardPlace: "South Holland, Netherlands", section: "home" }, LOCAL);
+    expect(result.url).toBe("https://www.familysearch.org/en/wiki/Zuid-Holland,_Netherlands_Genealogy");
+    expect(mockGetPlaceCandidateNames).toHaveBeenCalledWith("1928477", {}, { anyLanguage: true });
+    expect(mockFetch.mock.calls.map((c) => String(c[0]))).not.toContain(
+      `${API_BASE}/page/Noord-Holland,_Netherlands_Genealogy`,
+    );
+  });
+
+  it("reads a parenthetical that is the place's own local name as a name, not a type word", async () => {
+    mockGetPlaceById.mockResolvedValueOnce(placeOfType("State"));
+    mockStandardPlaceToPlaceId.mockResolvedValue("1927060");
+    mockGetPlaceCandidateNames.mockResolvedValue(["Bavaria", "Bayern"]);
+    mockFetch
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(searchResponse(["Bavaria (Bayern), German Empire Genealogy", "Bavaria (Bayern), Germany Genealogy"]))
+      .mockResolvedValueOnce(pageResponse("Bavaria_(Bayern),_Germany_Genealogy", "# BY"));
+    const result = await wikiPlacePageTool({ standardPlace: "Bavaria, Germany", section: "home" }, LOCAL);
+    expect(result.url).toBe("https://www.familysearch.org/en/wiki/Bavaria_(Bayern),_Germany_Genealogy");
+  });
+
+  it("still rejects a parenthetical type word that does not fit, even with names available", async () => {
+    mockGetPlaceById.mockResolvedValueOnce(placeOfType("County"));
+    mockStandardPlaceToPlaceId.mockResolvedValue("99");
+    mockGetPlaceCandidateNames.mockResolvedValue(["Baltimore"]);
+    mockFetch
+      .mockResolvedValueOnce(searchResponse(["Baltimore (Independent City), Maryland Genealogy"]));
+    await expect(
+      wikiPlacePageTool({ standardPlace: "Baltimore, Maryland, United States", section: "home" }, LOCAL),
+    ).rejects.toThrow(/No wiki page found/);
+  });
+
+  it("resolves a Northern Ireland county from its Ireland title", async () => {
+    mockFetch
+      .mockResolvedValueOnce(searchResponse([
+        "Antrim Civil Parish, County Antrim, Northern Ireland Genealogy",
+        "County Antrim, Ireland Genealogy",
+      ]))
+      .mockResolvedValueOnce(pageResponse("County_Antrim,_Ireland_Genealogy", "# CA"));
+    const result = await wikiPlacePageTool(
+      { standardPlace: "County Antrim, Northern Ireland, United Kingdom", section: "home" }, LOCAL);
+    expect(result.url).toBe("https://www.familysearch.org/en/wiki/County_Antrim,_Ireland_Genealogy");
+  });
+
+  const SCHUYLKILL = "Schuylkill, Pennsylvania, United States";
+
+  it("resolves a county's own page from its wiki title, never trying the leaf grammar", async () => {
+    mockGetPlaceById.mockResolvedValueOnce(placeOfType("County"));
+    mockFetch
+      .mockResolvedValueOnce(searchResponse(["Schuylkill County, Pennsylvania Genealogy"]))
+      .mockResolvedValueOnce(pageResponse("Schuylkill_County,_Pennsylvania_Genealogy", "# Schuylkill"));
+
+    const result = await wikiPlacePageTool({ standardPlace: SCHUYLKILL, section: "home" }, LOCAL);
+
+    expect(mockFetch).toHaveBeenNthCalledWith(1, `${API_BASE}/search`, expect.objectContaining({ method: "POST" }));
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({ query: "Schuylkill Pennsylvania genealogy" });
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
+      `${API_BASE}/page/Schuylkill_County,_Pennsylvania_Genealogy`,
+      expect.objectContaining({ method: "GET" })
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result.url).toBe("https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy");
+    expect(result.placeName).toBe("Schuylkill County, Pennsylvania");
+  });
+
+  it("picks the city, not the same-named county, for an independent city", async () => {
+    mockGetPlaceById.mockResolvedValue(placeOfType("Independent City"));
+    mockFetch
+      .mockResolvedValueOnce(searchResponse(["St. Louis County, Missouri Genealogy", "St. Louis City, Missouri Genealogy"]))
+      .mockResolvedValueOnce(pageResponse("St._Louis_City,_Missouri_Genealogy", "# City"));
+
+    const result = await wikiPlacePageTool({ standardPlace: "St. Louis, Missouri, United States", section: "home" }, LOCAL);
+
+    expect(result.url).toBe("https://www.familysearch.org/en/wiki/St._Louis_City,_Missouri_Genealogy");
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns no page rather than guess when the place type is unknown", async () => {
+    mockStandardPlaceToRepId.mockResolvedValueOnce(null);
+    mockFetch.mockResolvedValueOnce(
+      searchResponse(["St. Louis County, Missouri Genealogy", "St. Louis City, Missouri Genealogy"])
+    );
+
+    await expect(
+      wikiPlacePageTool({ standardPlace: "St. Louis, Missouri, United States", section: "home" }, LOCAL)
+    ).rejects.toThrow(/No wiki page found/);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats a failed type lookup as unknown, never as a match", async () => {
+    mockGetPlaceById.mockRejectedValueOnce(new Error("FamilySearch API error: 503"));
+    mockFetch.mockResolvedValueOnce(searchResponse(["Schuylkill County, Pennsylvania Genealogy"]));
+
+    await expect(wikiPlacePageTool({ standardPlace: SCHUYLKILL, section: "home" }, LOCAL)).rejects.toThrow(
+      /No wiki page found/
+    );
+  });
+
+  it("keeps diacritics in the slug", async () => {
+    mockGetPlaceById.mockResolvedValueOnce(placeOfType("Lutheran Parish"));
+    mockFetch
+      .mockResolvedValueOnce(searchResponse(["Barseb%C3%A4ck Parish, Malm%C3%B6hus, Sweden Genealogy"]))
+      .mockResolvedValueOnce(pageResponse("Barsebäck_Parish,_Malmöhus,_Sweden_Genealogy", "# B"));
+
+    const result = await wikiPlacePageTool({ standardPlace: "Barsebäck, Malmöhus, Sweden", section: "home" }, LOCAL);
+
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
+      `${API_BASE}/page/Barsebäck_Parish,_Malmöhus,_Sweden_Genealogy`,
+      expect.anything()
+    );
+    expect(result.url).toBe("https://www.familysearch.org/en/wiki/Barsebäck_Parish,_Malmöhus,_Sweden_Genealogy");
+  });
+
+  it("moves to the next ranked title when an accepted one 404s", async () => {
+    mockGetPlaceById.mockResolvedValue(placeOfType("County"));
+    mockFetch
+      .mockResolvedValueOnce(
+        searchResponse(["Schuylkill County, Pennsylvania Genealogy", "Schuylkill, Pennsylvania Genealogy"])
+      )
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(pageResponse("Schuylkill,_Pennsylvania_Genealogy", "# S"));
+
+    const result = await wikiPlacePageTool({ standardPlace: SCHUYLKILL, section: "home" }, LOCAL);
+    expect(result.url).toBe("https://www.familysearch.org/en/wiki/Schuylkill,_Pennsylvania_Genealogy");
+  });
+
+  it("surfaces a search outage as an error, never as no page", async () => {
+    // Sustained: fetchWithRetry retries a transient 5xx before giving it back.
+    mockFetch.mockResolvedValue({ ok: false, status: 503, statusText: "Service Unavailable", headers: new Headers() });
+
+    await expect(wikiPlacePageTool({ standardPlace: SCHUYLKILL, section: "home" }, LOCAL)).rejects.toThrow(
+      /wiki-query-api error: 503/
+    );
+  });
+
+  it("asks nothing for a sub-state place's section pages, which exist only at state level", async () => {
+    await expect(
+      wikiPlacePageTool({ standardPlace: SCHUYLKILL, section: "getting_started" }, LOCAL)
+    ).rejects.toThrow(/No wiki page found for "Schuylkill, Pennsylvania, United States"/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("still uses the leaf grammar first for a state", async () => {
+    mockFetch
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(pageResponse("Pennsylvania,_United_States_Genealogy", "# PA"));
+
+    const result = await wikiPlacePageTool({ standardPlace: "Pennsylvania, United States", section: "home" }, LOCAL);
+
+    expect(result.url).toBe("https://www.familysearch.org/en/wiki/Pennsylvania,_United_States_Genealogy");
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    expect(mockFetch.mock.calls.every((c) => c[1].method === "GET")).toBe(true);
   });
 });
