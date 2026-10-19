@@ -60,7 +60,7 @@ Two premises moved since the plan:
 | U18 | Scaling metric, packing, quota, load test | Metric, packing, compute proposed; quota rules measured (2026-10-09); CPU measured on a t3.xlarge (2026-10-10, n=1); load run open | go-live | F1, F5; quota increase |
 | U19 | Operational hardening | All six alarms tripped on the rehearsal (2026-10-13, n=1 each); built: alarm definitions (PR #3386), transcript delete (PR #3356), S3 orphan sweep (PR #3394); retention built, shipping off (PR #3369); pooling waits on #3262 | go-live | F14, F17 |
 | U20 | Product gaps against the alpha | Lost features; feedback built (stored to S3 under `feedback/`, sent nowhere; two lead questions); wiki agents log instead of `Write`; uploads, images, sidecars and continue-after-cap remain with #3262 | go-live | F9 |
-| U21 | Lead decisions: all seven decided 2026-09-29 | — | — | — |
+| U21 | Lead decisions: all seven decided 2026-09-29; item 3 reaffirmed 2026-10-18 | — | — | — |
 | U22 | Correct the ARB draft (SC-12457); scripts landed (PR #3304) | Wrong premises | go-live; before F17's request | — |
 | U23 | Live Stop, held release, $35 cap, Stop mid-delegation | Recorded on compose and on Beanstalk (12 of 13 cases, U13, 2026-10-08, n=1 per case) | integ | — |
 | U24 | Continuous-work behaviour | Turns overrun their deliverable; a lookup inside a project ends `no_progress` | go-live | — |
@@ -125,7 +125,7 @@ CI (`eb-bundles.yml`, Node 24) repeats the build, verify and amd64 smoke on ever
 **U21.** Decided 2026-09-29 (lead):
 1. **Image cap:** hard, for continuous single-turn research and cost (U25).
 2. **No `bedrock-exception-*` role** (F9); `MODEL_PROVIDER=bedrock` deleted with this handoff.
-3. **`TOOL_SERVER=stdio`, `src/hosted-stdio.ts`** deleted with this handoff; HTTP only.
+3. **`TOOL_SERVER=stdio`, `src/hosted-stdio.ts`** deleted with this handoff; HTTP only. Reaffirmed 2026-10-18 (lead): the tools tier stays a separate service, not the engine forked on each worker, so a FamilySearch-hosted remote MCP server for Cowork users stays a second environment from the same bundle ([`familysearch-handoff-later.md`](familysearch-handoff-later.md), not authorized). U4 and F8 are unchanged.
 4. **Forced foreground** is the design (PR #2852; U27).
 5. **No content-level dedup** before go-live; U16 counts duplicates.
 6. **Prototype grades** count in calibration (U16).

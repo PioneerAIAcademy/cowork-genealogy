@@ -79,6 +79,10 @@ MODEL_RATES = {
 
 _DATE_SUFFIX = re.compile(r"-\d{8}$")
 
+# A 5-minute cache write bills at 1.25x the model's input rate; `MODEL_RATES`
+# carries the 1-hour write. The hosted path writes 5-minute entries (`cache_window`).
+CACHE_WRITE_5M_INPUT_MULTIPLE = 1.25
+
 
 def canonical_model(model: str) -> str:
     """`claude-haiku-4-5-20251001` -> `claude-haiku-4-5`: transcripts carry the
@@ -105,6 +109,36 @@ def estimate_cost_for_model(usage_tokens: dict | None, model: str | None) -> flo
         (raw if isinstance((raw := usage_tokens.get(field)), int) else 0) * per_mtok / 1_000_000
         for field, per_mtok in rates.items()
     )
+
+
+def estimate_message_cost(usage: dict | None, model: str | None) -> float | None:
+    """One transcript message at `model`'s rate, its cache writes priced by TTL.
+
+    A message's `usage.cache_creation.ephemeral_1h_input_tokens` bill at the
+    1-hour write rate and the rest of `cache_creation_input_tokens` at the
+    5-minute rate, so a message with no split prices every write at 5 minutes.
+    None under `estimate_cost_for_model`'s rules: an unknown model, or no
+    positive token count.
+    """
+    if estimate_cost_for_model(usage, model) is None:
+        return None
+    rates = MODEL_RATES[canonical_model(model)]
+
+    def tokens(field: str) -> int:
+        raw = usage.get(field)
+        return raw if isinstance(raw, int) else 0
+
+    split = usage.get("cache_creation")
+    raw_1h = split.get("ephemeral_1h_input_tokens") if isinstance(split, dict) else None
+    writes = tokens("cache_creation_input_tokens")
+    one_hour = min(writes, raw_1h) if isinstance(raw_1h, int) and raw_1h > 0 else 0
+    return (
+        tokens("input_tokens") * rates["input_tokens"]
+        + tokens("output_tokens") * rates["output_tokens"]
+        + tokens("cache_read_input_tokens") * rates["cache_read_input_tokens"]
+        + one_hour * rates["cache_creation_input_tokens"]
+        + (writes - one_hour) * rates["input_tokens"] * CACHE_WRITE_5M_INPUT_MULTIPLE
+    ) / 1_000_000
 
 
 def estimate_cost_usd(usage_tokens: dict | None) -> float | None:
