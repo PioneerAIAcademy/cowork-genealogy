@@ -1,0 +1,12 @@
+{
+  "tool": "person_read",
+  "description": "Catch-all person_read fixture for a person id no specific fixture covers: an empty result in the tool's contract shape ({persons, relationships, sources}, per person-read-tool-spec.md and test_fixtures.py), the person_read counterpart of the empty place-search-any / volume-search-any catch-alls, so the agent gets no invented profile. (The live tool errors on an unknown id; a fixture must keep the contract shape.) List it AFTER a test's specific person-read fixtures so they answer first. Added for the research-plan suite (issue #2116), where an unanticipated read otherwise returns fixture_not_found and fails the run on Tool Arguments.",
+  "args": {
+    "personId": "~"
+  },
+  "response": {
+    "persons": [],
+    "relationships": [],
+    "sources": []
+  }
+}
