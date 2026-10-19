@@ -310,8 +310,9 @@ these two phrases, copied as written — "name-searchable" or
 part of the collection's name. Write no record or person count into a
 rationale; the 0 in `browse-only (personCount 0)` is the only number.
 
-Cite a collection or volume id in a rationale only if a tool returned it
-this session or it is in `research.json`. To plan a national collection
+Cite a collection or volume id, a postal or email address, or any other
+identifying number in a rationale only if a tool returned it this session or
+it is in `research.json`. To plan a national collection
 (e.g. a US federal census), first run
 `collections_search({ standardPlace: "United States" })`.
 
