@@ -1,0 +1,14 @@
+{
+  "run_log": "v27_2026-10-19_20-04-09.json",
+  "annotator": "mercybocumy2000@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI agrees: the model correctly caught the h_002 contradiction but then asserted the parental-names link as established fact rather than as a hypothesis to verify, overstating what the researcher's report provides."
+    }
+  ]
+}
