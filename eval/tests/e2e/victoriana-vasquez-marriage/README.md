@@ -28,17 +28,70 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 32, `hint-samples.csv` row 935,
-flag `adds_marriage`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Mexico, Marriages, 1570-1950", an index entry for the marriage of Jose Cleofas Gutierrez and Victoriana Vazquez on 9 January 1875 in Degollado, Jalisco; the entry names only the couple, with no parents, ages or residences, and has no linked image. The CSV's country column says "Unknown"; the record's jurisdiction is Jalisco, Mexico, so the fixture is tagged `MX`.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the January 1875 Degollado marriage, plus a `required` finding that the report documents
-the rejection.
+**Resolved: OUTCOME 2 (the answer is something else).** The hint is a true
+identity match to tree person Victoriana Vasquez (`GFG9-7H4`), but the 9 January
+1875 record is a **velación (nuptial blessing)**, not the couple's marriage. The
+research question asks when and where Victoriana married Jose Cleofas Gutierrez;
+the answer is **about 1859, at Huerta de San Juan, feligresía de San Pedro
+Piedragorda** — not 9 January 1875. Two required findings: **f1** that the 1875
+event is a velación, and **f2** the earlier (~1859) marriage.
 
-A plausible candidate that rests on names alone. Both partners match the tree: the bride's given name exactly, her surname as the common Vazquez/Vasquez variant, and the groom's compound given name Jose Cleofas with the surname Gutierrez — a pairing less likely to recur by chance than a plain Jose Gutierrez. Beyond the two names there is nothing to test, in either direction: the tree has no dates or places for anyone, so neither the 1875 date nor Jalisco can be checked against it, and the index names no parents, so the tree's Remigio Vasquez and Bernarda Sandoval are neither confirmed nor contradicted. The tree cites no records, so this cannot be a re-index of an existing source.
+**Indexed facts.** The hint `ark:/61903/1:1:JC8N-Y3P` ("Mexico, Marriages,
+1570-1950") and its parish counterpart `ark:/61903/1:1:684J-DSBM` (bride persona
+`684J-DSBS`, "Mexico, Jalisco, Catholic Church Records, 1590-2022") record the
+9 Jan 1875 event, but index it only as a marriage naming only the couple.
+Identity rests on the 1879 Degollado civil death registration
+`ark:/61903/1:1:QGWN-N5CM`, whose index fields name María Victoriana Vázquez
+Sandoval (d. 2 Sep 1879, Degollado) as **wife of Cleofas Gutiérrez** and
+**daughter of Remigio Vázquez + María Bernarda Sandoval** — tying the husband and
+parentage of `GFG9-7H4` to this couple. The marriage is corroborated by the
+couple's children: daughter María Gregoria's 1879 death
+(`ark:/61903/1:1:QGWJ-3HQ9`; parish burials `ark:/61903/1:1:684X-KYNG`,
+`ark:/61903/1:1:684J-1Y17`) and daughter Silveria's 1900 marriages
+(`ark:/61903/1:1:QG71-GYY1`, `ark:/61903/1:1:QGQT-KZY4`,
+`ark:/61903/1:1:XQZ8-RJT9`), all naming Cleofas Gutiérrez + Victoriana Vázquez as
+parents.
 
-Gutierrez and Vázquez are both common surnames in western Mexico, so two couples with these names in the same generation are possible. The discriminating check is the parish marriage entry itself (or its *información matrimonial*) in the Degollado registers for January 1875: a Mexican Catholic marriage entry normally names both sets of parents, and Remigio Vázquez and Bernarda Sandoval as the bride's parents would settle the match; different parents would make this another Victoriana. A baptism for a Silveria Gutiérrez in Degollado naming Cleofas Gutiérrez and Victoriana Vázquez as parents would also tie the couple to this place.
+**Calibrated image-read facts (`image_basis: true`).** The register page image
+`ark:/61903/3:1:9392-VB9H-51` shows the 9 Jan 1875 entry is a **velación**
+("velados … velé solamente … acto de su velacion") and states the couple **"fueron
+casados han dieziseis años, en la Huerta de San Juan, feligresía de San Pedro
+Piedragorda"** (had been married sixteen years, at Huerta de San Juan). This
+reading is licensed under the Step 1a two-entry check — two other indexed entries
+on the **same image** match the reading on couple, parents and date:
+
+- **Asencio × de León** (`ark:/61903/1:1:684J-LXF8`): index IntendedMarriage
+  12 Jan 1875; groom's parents Ignacio Navo + Dolores Asencio, bride's mother
+  Vicenta García — matches the right-page entry read.
+- **Timoteo Rico × Virginia García** (`ark:/61903/1:1:684J-8WXW` /
+  `ark:/61903/1:1:XQFP-JG15`): index marriage 8 Jan 1875; groom's parents
+  José Mª Rico + Mª Isabel Chavolla, bride's parents Juan García + Mª Soledad
+  Ruiz — matches the left-page entry read.
+
+(The image is filed in the index under Degollado, but reads San Ignacio de los
+Encinos, Parroquia de Ayo el Chico.)
+
+**Inferences and limits.** The marriage year **~1859 is derived** from the
+velación's "sixteen years" statement, not indexed; the **exact marriage date is
+unknown**. The **original ~1859 marriage register was not located** (San Pedro
+Piedragorda). **No baptism was found for either daughter**
+(Silveria 1876, Gregoria 1878) — the children are evidenced by Silveria's 1900
+marriages and Gregoria's 1879 death/burials, not by baptisms. The identity link
+(`GFG9-7H4` = the woman in the 1879 death registration = the velación bride) is a
+standard GPS correlation, strongly supported because her parents, her husband,
+and the place coincide.
+
+**Second opinion — pending senior-genealogist review.** Issue #3351 names two
+deciding checks (the parish marriage entry naming the bride's parents, and a
+Silveria Gutiérrez baptism); **neither was located** (the velación does not name
+her parents, and no baptism was found). Identity instead rests on the 1879 death
+registration, and the velación reclassification on the calibrated image read.
+This reinterpretation is well-evidenced but more involved than a simple hint
+adjudication, so the issue's second-opinion requirement **remains to be addressed
+through senior-genealogist review. Sign-off is pending; no approver is named and
+no agreement is claimed here until it actually occurs.**
+
+**Retrieval** was read-only via the MCP `person_read` / `record_read` /
+`record_search` / `image_transcribe` tools against live FamilySearch; the image
+reading was calibrated per Step 1a (above), and the identity and event
+judgements are the genealogist's.
