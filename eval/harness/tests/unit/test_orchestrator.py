@@ -2380,9 +2380,10 @@ def test_a_stop_at_stub_test_reaches_run_skill_with_the_stop(tmp_path, monkeypat
 # return from flag_routing_negative_judge_fail, an invariant negative is coerced
 # too, so neither kind makes the coercion test below pass for the wrong reason.
 # This one is picked because its scenario exists and OrchestratorPaths resolves
-# it, and it sits in research-plan's suite, which stays a skill.
+# it, and it sits in the research suite, which never converts to an agent. (It
+# was research-plan's `_008` until issue #2116 deleted that skill and the test.)
 NEGATIVE_TEST_PATH = (
-    REPO_ROOT / "eval/tests/unit/research-plan/negative-execute-search-request.json"
+    REPO_ROOT / "eval/tests/unit/research/negative-next-question.json"
 )
 
 

@@ -107,8 +107,7 @@ the tool and synthesize only from what it returns.
      types joined by "or" or "and", keep both in the order asked.
    - Summary: synthesize **only** from `chunk_text` — every sentence must trace
      to a specific chunk. Do NOT add facts (dates, repository names, URLs) the
-     chunks don't state, invent navigation paths (e.g. "Search → Records,
-     select Ireland"), add explanatory clauses ("important because…", what a
+     chunks don't state, add navigation steps no chunk states (keep a chunk's own navigation; never add a step such as "select Ireland" it does not name), add explanatory clauses ("important because…", what a
      record's contents "frequently imply" or "point to"), combine separate
      facts into one synthesized step, collapse a source's time-period
      distinctions into one blanket claim (when the wiki distinguishes what a
