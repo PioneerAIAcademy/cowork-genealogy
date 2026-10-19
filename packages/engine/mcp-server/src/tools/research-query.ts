@@ -31,6 +31,7 @@ import { readProjectJson, NoProjectError, noProjectResult } from "../utils/proje
 import { readExternalCollections } from "../utils/external-collections-store.js";
 import { placeSegments } from "../utils/place-resolver.js";
 import { unregisteredDisagreements, type UnregisteredDisagreement } from "../utils/question-state.js";
+import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
 
 const MAX_ITEMS = 50;
 
@@ -47,6 +48,9 @@ export const RESEARCH_QUERY_SECTIONS = [
   "proof_summaries",
   "evaluations",
   "localities",
+  // A researcher's rejections are project state worth reading: an agent that
+  // cannot see them cannot explain why a link is refused.
+  "rejected_links",
   "external_collections",
 ] as const;
 
@@ -73,6 +77,9 @@ export type ResearchQuerySection = (typeof RESEARCH_QUERY_SECTIONS)[number];
  *  needs saying. */
 export const RESEARCH_QUERY_OPTIONAL_SECTIONS: ReadonlySet<string> = new Set([
   "localities",
+  // A project that has rejected nothing has no array at all, which is the common
+  // case -- asking must give an empty result, not an error.
+  "rejected_links",
 ]);
 
 /** Array sections deliberately NOT served, and why.
@@ -96,6 +103,10 @@ export const RESEARCH_QUERY_EXCLUDED: Readonly<Record<string, string>> = {
 export interface ResearchQueryInput {
   projectPath: string;
   section: ResearchQuerySection;
+  /** `"review"` orders `person_evidence` by consequence rather than insertion, and
+   *  returns `reviewReasons`. Opt-in because the default order is what every
+   *  committed run replays against. Ignored for other sections. */
+  orderBy?: "review";
   /** PLURAL_KEYS: one id, or a list of ids (a JSON-array string is accepted as one). */
   recordId?: string | string[];
   recordRole?: string;
@@ -137,6 +148,11 @@ export type ResearchQueryResult =
        *  `count: 0` as "no conflicts present" skipped conflict-resolution while
        *  these sat unregistered (ut_research_h22). */
       unregisteredDisagreements?: UnregisteredDisagreement[];
+      /** Why a `person_evidence` link sits where it does in `items`, keyed by link id.
+       *  Present only for that section, and only for links carrying a reason — the
+       *  ordering is by consequence, and a rank with no reason is a number to
+       *  distrust. Absent where nothing stands out. */
+      reviewReasons?: Record<string, string[]>;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -282,6 +298,9 @@ export const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<Filter
   // field, and there is one entry per place-jurisdiction, so the whole section
   // fits inside a single 50-item page. The empty object routes to the
   // "(this section takes no filters)" branch below.
+  // No filters: a rejection is looked up by the pair, which the writer tool does
+  // for itself, and a researcher reading them wants all of them.
+  rejected_links: {},
   localities: {},
   external_collections: {
     place: { field: "place", mode: "place-or-enclosing" },
@@ -597,20 +616,46 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       ),
     );
 
+    // OPT-IN ordering by consequence. The captured run
+    // wrote 311 links and its own narration said they "should be reviewed for
+    // cleanup" -- a review nobody can do, because one page of 50 insertion-ordered
+    // links is not where the wrong ones are. Ranking decides which links a reviewer
+    // sees first, and with paging that is the whole difference between a usable
+    // review and a list.
+    //
+    // Opt-in, not the default, and that is not timidity: `research_query`'s order is
+    // what every committed run replays against, so reordering by default rewrote the
+    // recorded truth of 9 replay groups (`test_the_real_engine_collapses_plural_walks`
+    // caught it). A caller asking for a review asks for review order.
+    //
+    // Reasons ride alongside rather than on the items: the item shape is a schema
+    // contract, and a rank with no reason is a number to distrust.
+    let ordered = filtered;
+    let reviewReasons: Record<string, string[]> | undefined;
+    if (input.orderBy === "review" && section === "person_evidence" && filtered.length > 0) {
+      const ranked = rankForReview(filtered as ReviewLink[]);
+      ordered = ranked.map((r) => r.link);
+      reviewReasons = Object.fromEntries(
+        ranked.filter((r) => r.reasons.length > 0).map((r) => [r.id, r.reasons]),
+      );
+      if (Object.keys(reviewReasons).length === 0) reviewReasons = undefined;
+    }
+
     const start = input.offset ?? 0;
     const page: Extract<ResearchQueryResult, { ok: true }> = {
       ok: true as const,
       section,
-      count: filtered.length,
-      items: filtered.slice(start, start + MAX_ITEMS),
-      truncated: filtered.length > start + MAX_ITEMS,
+      count: ordered.length,
+      items: ordered.slice(start, start + MAX_ITEMS),
+      truncated: ordered.length > start + MAX_ITEMS,
     };
+    if (reviewReasons) page.reviewReasons = reviewReasons;
     // Per id over the whole match set, so a page answers "0 means none" for
     // every id it was asked about, not only for the ids its items carry.
     if (listFilter) {
       const { rule, values } = listFilter;
       page.countById = Object.fromEntries(
-        values.map((id) => [id, filtered.filter((item) => matches(item, rule, [id])).length]),
+        values.map((id) => [id, ordered.filter((item) => matches(item, rule, [id])).length]),
       );
     }
     if (section !== "conflicts" || (input.status !== undefined && input.status !== "unresolved")) {
@@ -646,7 +691,10 @@ export const researchQuerySchema = {
     "of that question's plans), `sources` (sourceId), `assertions` " +
     "(recordId, recordRole, sourceId, questionId — matches " +
     "extracted_for_question_ids, assertionId — matches the assertion's own id), " +
-    "`person_evidence` (personId, assertionId), `conflicts` (assertionId — matches " +
+    "`person_evidence` (personId, assertionId — pass `orderBy: \"review\"` to order by " +
+    "consequence and get `reviewReasons`), `rejected_links` (no filters; the pairs a " +
+    "researcher ruled out, so a later step does not re-propose them), " +
+    "`conflicts` (assertionId — matches " +
     "competing_assertion_ids, questionId — matches blocks_question_ids or a competing " +
     "assertion of that question, at any status; status), " +
     "`hypotheses` (questionId — matches " +

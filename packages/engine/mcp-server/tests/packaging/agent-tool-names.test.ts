@@ -920,7 +920,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     tools: [
       "Read",
       "person_read",
-      "person_search",
       "project_create",
       "research_append",
     ],

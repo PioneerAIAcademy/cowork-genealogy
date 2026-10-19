@@ -11,7 +11,18 @@ import type { SessionConnection, Listener, WsMessage } from '../../transport/Ses
 // what the user then sees.
 
 // The viewer is irrelevant here and heavy to mount.
-vi.mock('@genealogy/viewer-ui', () => ({ App: () => null, resolveFamilySearchTarget: () => null }))
+// Stubbed whole, so this file stays about the 410 and never mounts the viewer.
+// `ViewerBody`, `ResearchDataProvider` and `useResearchDataOptional` are here because
+// SessionView and ChatPane import them; a factory mock is all-or-nothing, so an export
+// the component imports but the factory omits throws at render rather than returning
+// undefined. `useResearchDataOptional` returns null by contract -- ChatPane guards on it.
+vi.mock('@genealogy/viewer-ui', () => ({
+  App: () => null,
+  ViewerBody: () => null,
+  ResearchDataProvider: ({ children }: { children?: unknown }) => children,
+  useResearchDataOptional: () => null,
+  resolveFamilySearchTarget: () => null
+}))
 
 vi.mock('../../auth', () => ({
   useAuth: () => ({ user: { email: 'dev@localhost' }, logout: vi.fn() })

@@ -58,7 +58,15 @@ export default function App(): React.JSX.Element {
     return <LoginScreen />
   }
   if (open) {
-    return <SessionView key={open.id} sessionId={open.id} isNew={open.isNew} onBack={back} />
+    return <SessionView
+        key={open.id}
+        sessionId={open.id}
+        isNew={open.isNew}
+        onBack={back}
+        // isNew FALSE: the continue session runs on a project that already exists,
+        // and a new one would be prefixed with OPENING_TURN and re-run init-project.
+        onOpenSession={(id) => openSession(id, false)}
+      />
   }
   return <SessionList onOpen={(id, isNew) => openSession(id, Boolean(isNew))} />
 }
