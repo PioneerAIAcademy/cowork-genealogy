@@ -25,8 +25,8 @@ export default function SessionView({
   isNew: boolean
   onBack: () => void
   /** Open another session. `isNew` is FALSE at the call site: a continue-on-project
-   *  session runs on a project that already exists, and a new one would be prefixed
-   *  with OPENING_TURN and re-run init-project on it. */
+   *  session runs on a project that already exists, so its composer must not ask
+   *  for a new person and objective. */
   onOpenSession?: (sessionId: string) => void
 }): React.JSX.Element {
   const [session, setSession] = useState<SessionSummary | null>(null)

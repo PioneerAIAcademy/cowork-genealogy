@@ -42,17 +42,18 @@ A project often starts with a question about a person who does not yet exist in 
   "timelines": [ ],
   "proof_summaries": [ ],
   "evaluations": [ ],
-  "localities": [ ]
+  "localities": [ ],
+  "rejected_links": [ ]
 }
 ```
 
 All arrays start empty. The file is created at project initialization.
 
-**Twelve of these fifteen keys must be present**, even when their array is
+**Twelve of these sixteen keys must be present**, even when their array is
 empty: `project`, `questions`, `plans`, `log`, `sources`, `assertions`,
 `person_evidence`, `conflicts`, `hypotheses`, `timelines`,
 `proof_summaries`, `evaluations`. Omitting one is a validation failure, not
-a shorthand for "empty". The other three are optional and may be absent
+a shorthand for "empty". The other four are optional and may be absent
 entirely:
 
 - `researcher_profile` — written by `init-project` as a fixed profile at
@@ -63,6 +64,8 @@ entirely:
   knowledge) before any new research begins (Section 5.1.2).
 - `localities` — written by `locality-guide`; absent on projects that predate
   it (Section 5.13).
+- `rejected_links` — written by the `person-evidence` agent; absent on projects
+  that predate it (Section 5.14).
 
 **No other top-level key is permitted.** Every object in this file is
 closed: the JSON Schema sets `additionalProperties: false` on the document
@@ -216,6 +219,7 @@ value is rejected at write time.
 | `ps_` | proof_summaries | `ps_001` |
 | `ev_` | evaluations | `ev_001` |
 | `loc_` | localities | `loc_001` |
+| `rj_` | rejected_links | `rj_001` |
 
 The digits after the prefix are a convention, not a constraint — `q_flynn-1850`
 is as valid as `q_002` — with one exception: an `ev_` id must be the prefix
@@ -1084,7 +1088,8 @@ rejecting "this record is not Mary" says nothing about her sister, nor about a
 different record for Mary.
 
 The section is exposed through `research_query` so an agent can **explain** a
-refusal, not so it can enforce one. No skill body names it.
+refusal, not so it can enforce one. The person-evidence agent body names it only to
+write a rejection; no body reads it to decide whether to link.
 
 **Its own section rather than a fourth `person_evidence.confidence` value.** That
 field says how sure we are a link **is** a match; a rejection is the opposite
@@ -1099,8 +1104,8 @@ disagreement gets erased rather than answered.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | yes | `rj_` prefix, `^rj_[0-9]{3}$` |
-| `assertion_id` | string | yes | `^a_[0-9]{3}$` — the assertion proposing the link |
+| `id` | string | yes | `rj_` prefix, `^rj_[0-9]+$` |
+| `assertion_id` | string | yes | `^a_[0-9]+$` — the assertion proposing the link |
 | `person_id` | string | yes | The tree person the assertion was proposed against |
 | `reason` | string or null | no | Why it was rejected. Optional on purpose: **a rejection is never a demand for the right answer.** Requiring a reason would push a researcher who simply knows it is wrong into inventing a justification, and a fabricated reason is worse than none |
 | `created` | string | yes | Tool-stamped ISO 8601 date |

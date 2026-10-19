@@ -102,7 +102,7 @@ research_append({
   section:
     | "sources" | "assertions" | "person_evidence"
     | "questions" | "plans" | "plan_items"
-    | "conflicts" | "hypotheses" | "known_holdings" | "timelines"
+    | "conflicts" | "hypotheses" | "known_holdings" | "timelines" | "rejected_links"
     | "proof_summaries" | "evaluations" | "localities" | "project",   // project: update-only singleton, §3.1
   op: "append" | "update",
 
