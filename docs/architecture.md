@@ -85,8 +85,8 @@ uses freely: *assertion*, *source*, *proof summary*, *tier*, *exhaustiveness*,
    nothing else needs running before a PR. See §9.1 for the per-suite targets.
 2. Read [`docs/gps-research-flow.md`](gps-research-flow.md) (the domain).
 3. Read §§1–3 here (the shape).
-4. Open one skill (`packages/engine/plugin/skills/record-extraction/SKILL.md`),
-   one agent (`packages/engine/plugin/agents/record-extractor.md`), and one tool
+4. Open one skill (`packages/engine/plugin/skills/research/SKILL.md`),
+   one agent (`packages/engine/plugin/agents/record-structurer.md`), and one tool
    spec (`docs/specs/record-search-tool-spec-v2.md`) side by side. That triangle
    is the whole system in miniature.
 5. Then §§4–9.
@@ -221,15 +221,15 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **6** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **4** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
 | **Plugin agents** — `packages/engine/plugin/agents/*.md` | **28** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-eight agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The twenty-eight agents are `gps-mentor`, `record-structurer`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
-`hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
-`search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
+`hypothesis-tracking`, `locality-guide`, `historical-context`,
+`timeline`, `search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
 `init-project` and `tree-survey`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
@@ -355,7 +355,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-4 of the 6 skills carry a `references/` folder, loaded on demand, in-session,
+2 of the 4 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -458,7 +458,7 @@ with no manifest block to sit in.
 
 **The first of those two is now measured, and it lands harder than the block
 does.** A `craftNotes` payload returned from `project_context` — a call
-`record-extractor` makes on every spawn — was adopted on **289 of 289** eligible
+`record-extractor` (since retired) made on every spawn — was adopted on **289 of 289** eligible
 assertions across 12 of 12 census tests, against a baseline of **0 of 1,638 over
 six runs**, while honouring every carve-out the note declared (zero leak onto the
 record types it excluded). It was adopted **even though it contradicted the census
@@ -561,7 +561,7 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `record-extractor`, `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
 | **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching subagents on CLI 2.1.215 and 2.1.220 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12; the harnesses' CLI 2.1.139 is unprobed); never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted sets none, and the CLI default already sends `output_config.effort: high` on a `claude-sonnet-4-6` subagent's request |
@@ -622,7 +622,7 @@ prose bug. Before editing any `SKILL.md` or agent body, classify it:
 |---|---|---|
 | 1 | a tooling defect | an MCP tool PR |
 | 2 | an eval defect (judge, rubric, or fixture is wrong) | an eval PR |
-| 3 | a **record-type craft gap** — this census/probate/deed handled wrong, other types fine | **Depends on whose gap it is.** An *agent* finding → the table for that type inside the agent body (e.g. the census informant table in `agents/record-extractor.md`); agents carry no sibling reference files, by decision (§3.4). A *skill* finding → that skill's own `references/` file — skills do have them (§3.3). Either way a table edit is scoped: it changes one type and nothing else. |
+| 3 | a **record-type craft gap** — this census/probate/deed handled wrong, other types fine | **Depends on whose gap it is.** An *agent* finding → the table for that type inside the agent body ; agents carry no sibling reference files, by decision (§3.4). Extraction is not an agent finding: roles and classifications are decided in code (`src/utils/record-extract.ts`, `src/utils/structured-document.ts`), so an extraction craft gap is lane 1. A *skill* finding → that skill's own `references/` file — skills do have them (§3.3). Either way a table edit is scoped: it changes one type and nothing else. |
 | 4 | **core doctrine** — a rule that applies across record types or skills | the stewarded prose edit, gated by the unit suite. **Often the same file as lane 3; the difference is blast radius, not location.** If your edit changes behavior on records you didn't look at, it's lane 4. |
 | 5 | a **triggering / routing miss** — the skill never ran | the `description` (§3.2) or the routing table (§4), **never the body**. See "Fix a skill that isn't triggering" at the end of §4. |
 
@@ -651,8 +651,9 @@ Architecturally:
   `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
   `LOCAL`) and `src/http.ts` (the search-agent prototype's Streamable HTTP
   tool server, binding each request's bearer and a `PgS3ProjectStore` from its
-  `X-Genealogy-Project-Id` header, fenced on the worker attempt's claim when
-  `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` are sent) are entrypoints that only connect
+  `X-Genealogy-Project-Id` header, fenced on the worker attempt's claim
+  (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`), and 403 unless the bearer is
+  the one stamped on that open turn of that project, U4) are entrypoints that only connect
   a transport, so a new arm goes in `server.ts` and both get it. A
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
@@ -685,8 +686,9 @@ Architecturally:
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
-  `tests/tools/<name>.test.ts`, `docs/catalog.md`'s tool table, and — if a skill will
-  call it — an `eval/fixtures/mcp/` fixture.
+  `tests/tools/<name>.test.ts`, `docs/catalog.md`'s tool table, `READ_ONLY` in
+  `src/tool-schemas.ts` if concurrent calls cannot corrupt project state (§5.2),
+  and — if a skill will call it — an `eval/fixtures/mcp/` fixture.
 - **Changing an existing tool's response type also breaks its fixtures**, in the
   other direction: add or rename a required field and every fixture for that tool
   is now a shape the tool cannot return.
@@ -730,7 +732,8 @@ Architecturally:
 
 > **On the User-Agent, the rule is conditional.** `genealogy-mcp-server/<version>`
 > is what the four non-FamilySearch tools send today (`wikipedia`, `wiki_search`,
-> `wiki_read`, `wiki_place_page`) and is correct for them. It is also exactly
+> `wiki_read`, `wiki_place_page`) and is correct for them; `wikipedia` adds the
+> repo's URL, because Wikimedia throttles agents without contact details. It is also exactly
 > what Imperva 403s on any FamilySearch endpoint. So: **FamilySearch →
 > `BROWSER_USER_AGENT`; anything else → the service's own convention.** The
 > deleted `mcp-tool-scaffolder` subagent stated it unconditionally — because its
@@ -860,8 +863,8 @@ There **is** an orchestrator, and it is a skill:
 
 **Two contracts the orchestrator enforces on itself**, both load-bearing for
 §§5–6: it never extracts records inline (every positive/partial log entry routes
-through `record-extraction`, which delegates one `record-extractor` agent per
-record), and it never writes identity links or eliminations inline
+through `extraction_append` — `recordIds` for FamilySearch records, one
+`record-structurer` spawn for any other source), and it never writes identity links or eliminations inline
 (`person-evidence`, `conflict-resolution`, `hypothesis-tracking` own those).
 
 > **Direction.** Only **6 of the 17 rows are mechanically
@@ -1023,8 +1026,8 @@ which says nothing about `bypassPermissions`, denies, or omissions. Probed
 2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
 probe-agent-binding`, reproduced twice): under `bypassPermissions` **both**
 bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
-denied one is. So the omission is what keeps `record-extractor` off the broad
-`research_append`, and its deny restates that rather than being the last line.
+denied one is. So the omission is what kept `record-extractor` (since retired) off the broad
+`research_append`, and its deny restated that rather than being the last line.
 
 **So all five deny blocks were deleted on 2026-08-30.** Every one named a tool
 already absent from its agent's `tools:`, which makes it a restatement, and 83
@@ -1138,14 +1141,28 @@ driver must wait.
 > and the SDK's `@tool` cannot emit that `_meta` key. So `make eval-skill`
 > diverges from production here. Nothing on the unit plane grades ToolSearch
 > counts.
+>
+> **Read-only tools run side by side: `READ_ONLY` (`src/tool-schemas.ts`).**
+> Those tools carry `annotations: {"readOnlyHint": true}` in `tools/list`, which
+> the Claude Code CLI reads as concurrency-safe (verified on 2.1.139, 2.1.220 and
+> 2.1.302), so several in one assistant message run at once. A tool belongs in the
+> set when concurrent calls cannot corrupt project state and their order does not
+> matter: a pure read, or a read that only stages its own result file, appends a
+> log line, writes `external-collections.json` under `withProjectLock`, or
+> rewrites its own retained scan under `images/`. Every other tool —
+> anything that writes `research.json` or the tree, or whose effect a later call
+> in the batch can depend on — stays serial: it runs alone, in order, after the
+> calls before it finish. `tests/packaging/read-only-tools.test.ts` pins the set
+> and refuses a writer in it. The unit harness stays serial, since `mock_mcp.py`
+> copies no annotations; whether Cowork's bridge passes them on is unverified.
 
 ### 5.3 Capability restriction by tool identity
 
 Where a boundary must hold against a **misdirected caller**, this system narrows
 the *tool*, not the prompt.
 
-`extraction_append` is `research_append` restricted to the two sections
-`record-extractor` owns (`sources`, `assertions`) — same implementation, gated
+`extraction_append` is `research_append` restricted to the two extraction
+sections (`sources`, `assertions`) — same implementation, gated
 by a **second function parameter** (`researchAppend(input, { allowedSections, toolName })`)
 that a tool caller structurally cannot reach, because dispatch builds only the
 first argument from tool input.
@@ -1294,11 +1311,10 @@ enforcing-vs-shadow status.
 
 - **A `tools:` entry grants a capability; it does not create a behavior.** The
   agent will not call a tool its body never tells it to call. `record-extractor`
-  has held `place_search` and `place_search_all` since 2026-07-12, under two
-  spellings since 07-18 and all three since 2026-08-05, while its body tells
-  it to *omit* `standard_place` (`record-extractor.md`, its `standard_place`
-  instruction) — dead grants that every lint
-  passes. **Every tool addition is two edits: the frontmatter, and the
+  (since retired) held `place_search` and `place_search_all` from 2026-07-12, under two
+  spellings from 07-18 and all three from 2026-08-05, while its body told
+  it to *omit* `standard_place` — dead grants that every lint
+  passed. **Every tool addition is two edits: the frontmatter, and the
   instruction in the body that makes the call happen.**
 - **A writer tool also needs the ownership manifest.** Name the agent in
   `agentCallers` (with the tool in its `tools`) on every row that tool reaches,
@@ -1512,8 +1528,9 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 6 skills carry a `**Narration:**` line as the first line of the body,
-instructing Claude to read
+All 4 skills carry a `**Narration:**` line near the top of the body —
+directly after the frontmatter for `forget-and-rederive`, right after the
+title heading for the other three — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. The `init-project` agent writes the profile at
 project creation as fixed values and asks only the research objective — it
@@ -1709,29 +1726,35 @@ it costs nothing at runtime, and **it is not a gap and no decision waits on it.*
 - **E2B Hobby caps *uninterrupted* runtime at 1 hour — not total session
   length.** `_RUNNING_TIMEOUT_S = 3600` is the maximum the tier permits, not a
   backstop we chose: create with 7200 fails 400 "Timeout cannot be greater than 1
-  hours" (measured 2026-08-09), while `set_timeout` past the ceiling returns 204
-  and silently no-ops — so an over-large value fails loudly at create and
+  hours" (measured 2026-08-09), while `set_timeout` with a value over 3600 returns
+  204 and silently no-ops — so an over-large value fails loudly at create and
   silently everywhere else. But **the window resets on pause/resume**: the
-  sandbox is created with `on_timeout: pause` + `auto_resume` and `resume()`
-  re-arms the full window on every `/connect`, so reaching the cap pauses rather
-  than kills and the next request resumes (~1s). A session therefore runs for as
-  many hours as it needs. **Do not read the cap as a session-length limit** —
+  sandbox is created with `on_timeout: pause` + `auto_resume`, so reaching the cap
+  pauses rather than kills, and the next request resumes it (~1s) with a fresh
+  hour. A session therefore runs for as many hours as it needs. **Do not read the
+  cap as a session-length limit** —
   both "there is a 1-hour cap" and "sessions run for hours" are true at once. The
-  control plane sets the outer limit: `/connect` refuses a session more than 24 h
+  control plane sets the outer limit: `/connect` refuses a session more than 72 h
   past `projects.created` with a 410 (`SESSION_MAX_AGE` in `app/sessions.py`),
   because its sandbox still runs the agent code it was created with. `/resume` and
   the read endpoints stay open, so an ended session's research can still be read.
-  Whether a pause landing mid-turn breaks that turn is **asserted, not
-  measured** — which is exactly why the 2026-09-21 continuous-work ruling
-  refused to accept the pause. Since continuous work shipped, `set_timeout` is no longer
-  called only from `resume()`: `app/sandbox_heartbeat.py` beats every recently
-  live sandbox on a 300 s loop from the control plane, so a turn cannot age out
-  while it works. That matters now because a turn is a whole research job —
-  median 53.9 minutes, p90 107.9 — so under continuous work one user message
-  would otherwise reach the cap mid-flight on about half of runs. The control
-  plane is deliberately out of the streaming path (`/connect` hands the browser
-  a WSS straight to the sandbox), so the loop beats on **liveness**, the
-  superset of "a turn is active" that it can actually see.
+  **A turn cannot run through the cap, though.** `set_timeout` cannot push a
+  running sandbox's end time past its hour: five minutes after create,
+  `set_timeout(3600)` returns success and leaves the end time at start + 3600,
+  while `set_timeout(1800)` does move it in (measured 2026-10-15 by
+  `apps/server/dev/probe_e2b_heartbeat.py`). So **a turn that runs past one hour
+  of continuous sandbox runtime is paused, and the call in flight can fail.** An
+  alpha session's feedback bundle (submitted 2026-10-12) froze four times
+  mid-turn, each about an hour after a `/connect` or `/resume`; three of the four
+  calls in flight failed on resume
+  (`image_transcribe` aborted after 15,061 s; `API Error: Failed to parse JSON`,
+  twice), and the fourth turn sat until the user came back. That matters because
+  a turn is a whole research job — median 53.9 minutes, p90 107.9 — so under
+  continuous work one user message reaches the cap mid-flight on about half of
+  runs. The heartbeat the 2026-09-21 continuous-work ruling chose, a control-plane
+  loop calling `set_timeout` every 300 s, could not prevent this and was removed
+  once the probe above measured the cap. Making a turn survive the pause (the Pro
+  tier, or pause-aware turns) is not built.
 
 - **The delete-janitor for abandoned sandboxes is unimplemented** — paused
   sandboxes are never reclaimed, by us or by E2B (never reaping them is what
@@ -1817,7 +1840,7 @@ bridge-free path has never been observed.
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** — the plugin half is the one arm of this column that is **measured**, by `make hook-smoke` (§9.1) | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — not the plugin's `hooks.json`, but it **imports the shipped predicates**, so the write lockdown and the ownership rules bind (§5.4) | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
-| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store, plus the `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` claim fence (U6) that makes a superseded attempt's writes roll back |
+| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store, plus the `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` claim fence (U6) that makes a superseded attempt's writes roll back; a project request is refused 403 unless its bearer's sha256 is the one the attempt stamped on that open turn (U4) |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
 unit tier disagree about raw writes for reasons that have nothing to do with the
@@ -1861,8 +1884,8 @@ Other environment differences that bite:
   budget this bites (though measured 2026-09-08, none of 59 live reads exceeded
   60s — p50 18.7s, max 50.1s; see the spec's Timeout budget section), but
   it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
-  budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
-  above the ceiling too. **No automated check reaches this** — neither harness
+  budgets in `wiki-search.ts`/`collections-search.ts` sit at or above the
+  ceiling too (`wikipedia.ts` shares one 55s deadline across its requests). **No automated check reaches this** — neither harness
   goes through the bridge — so it is only observable in a live Cowork session.
 
 ### If you're asked to…
@@ -1942,7 +1965,7 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 | **`make hook-smoke`** | that the **hosted SDK loader actually binds** the plugin's `PreToolUse` hook: reads `hooks/hooks.json`, matches a real `research_append`, shells `guard_project_files.py` and blocks — attributed by requiring the guard's own reason text, with the SDK-side hook cleared and a hooks-removed control arm. Hard-errors without a key | **Cowork's loader**, which is a different one and reachable only by a human in a live session; the guard script's *decisions* (that is `plugin-hooks.test.ts` and the parity test). The Cowork half stays on the `nothing-checks` register either way |
 | **`make probe-agent-nesting`** | that the **hosted SDK loader** lets a plugin agent spawn another at depth 2, and which `tools:` spelling binds the spawn tool (`Task` and `Agent` both do; the call is named `Agent`) — read off the driver's own `tool_use`, with a no-grant control arm, plus a driver spawning three real `record-extractor`s in parallel, verified by what lands in `research.json`. Hard-errors without a key; ~$5 | **Cowork**, depth 3, and anything the nested agent did — the SDK streams no depth-2 messages |
 | `make replay-sizes` | the **size** of the local-state read tools' answers (`research_query`, `project_context`, `person_warnings`, `merge_warnings`, `validate_research_schema`) — a base build vs the working build, re-asked every call the committed e2e runs recorded, over `research.json` rebuilt as of each call. Free, no model, no network, ~25 s; exact (an unchanged build reads Δ = 0) | the network tools — FamilySearch and wiki, ~57% of answer chars (T1.4c); writers; the tree's state mid-run (the final tree stands in); how many later turns re-read an answer, so no dollars; turn count; prose; anything about research quality |
-| `make replay-collapse` | that one `research_query {log, questionId}` call returns **exactly** the entries a recorded `log × planItemId` walk read, and how many calls that removes (N → M) — free, no model, ~5 s; refuses to pass on an empty or wrong notebook (each replayed walk count must match the recorded one) | **whether agents adopt the filter** — that is model behaviour, measured on a unit or e2e run; runs whose capture was stripped (their walks report `unverifiable`) |
+| `make replay-collapse` | rule `plan-log`: that one `research_query {log, questionId}` call returns **exactly** the entries a recorded `log × planItemId` walk read; rule `plural-id` (`RULE=plural-id`): that one call carrying a **list** of `personId`/`assertionId`/`sourceId`/`recordId` returns exactly the union of the recorded one-id walk's answers (the base build's own singular pages), with `count` and `countById` right on every page and no page past the 50,000-char spill. Both report how many calls that removes (N → M) — free, no model, ~15 s; refuses to pass on an empty or wrong notebook (each replayed walk count must match the recorded one; plural-id classifies a miss as `source-id-unstamped`, allowed, or `ledger-missing-writes`, allowed only for its pinned groups, and anything else is exit 3) | **whether agents adopt the filter** — that is model behaviour, measured on a unit or e2e run; runs whose capture was stripped (their walks report `unverifiable`); **turns**, except on runs whose timeline carries message ids; the `contains`-mode sections (`conflicts`, `hypotheses`, `timelines`, `proof_summaries`) — no recorded walk uses them, so only vitest covers their list path |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
 | `make eval-skill SKILL=<name> STORE=pg` + `make unit-pg-parity` | the same suite with every live tool call on `PgS3ProjectStore` (U15; non-releasable, logged to `eval/runlogs/unit-pg/`), and its parity with the newest file-store log: outcome flips and any live response that reads as a store fault | a fixture-backed tool's I/O (only live tools touch the store); the hosted worker's per-request binding and claim fence; anything after 2026-10-12 — no job re-runs it, so it is a dated measurement, not a check |
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
@@ -2328,7 +2351,7 @@ questions that only look open.
 | The write boundary and the `extraction_append` lane | [`research-append-tool-spec.md`](specs/research-append-tool-spec.md) §11 |
 | The persisted schemas | [`research-schema-spec.md`](specs/research-schema-spec.md), [`simplified-gedcomx-spec.md`](specs/simplified-gedcomx-spec.md) |
 | The projection tools | [`project-context-tool-spec.md`](specs/project-context-tool-spec.md), [`research-query-tool-spec.md`](specs/research-query-tool-spec.md) |
-| Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`image-reader-agent-spec.md`](specs/image-reader-agent-spec.md) (`record-extractor` has no standalone spec — its lane is `research-append-tool-spec.md` §11) |
+| Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`image-reader-agent-spec.md`](specs/image-reader-agent-spec.md) , [`record-structurer-agent-spec.md`](specs/record-structurer-agent-spec.md) |
 | How do I write a skill? How does it get tuned, tested, and rebuilt? | [`skill-authoring-guide.md`](skill-authoring-guide.md), [`skill-lifecycle.md`](skill-lifecycle.md) |
 | The eval harness — formats, workflow, run logs, CI rules | [`unit-test-spec.md`](specs/unit-test-spec.md) (the live format — [`unit-test-spec-v2.md`](specs/unit-test-spec-v2.md) is a **plan** for deferred features, not the format), [`e2e-test-spec.md`](specs/e2e-test-spec.md), [`e2e-testing-guide.md`](e2e-testing-guide.md), `eval/README.md`, `eval/CLAUDE.md` |
 | Setup paths the harness can't reach | `docs/testing-guides/` — OAuth tokens, `.mcpb` install, gps-mentor |

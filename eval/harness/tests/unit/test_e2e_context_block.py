@@ -1,16 +1,17 @@
-"""Unit tests for the e2e main-thread `extraction_append` block (#942).
+"""Unit tests for the e2e main-thread subagent-only block.
 
-`extraction_append` is the record-extractor subagent's private writer — no
-skill declares it. On the main thread it is the router substituting for a failed
-spawn and doing the extraction itself (observed in production). The e2e
-orchestrator denies it there, mirroring the tree-read block, while leaving the
-subagent's own call (which carries `agent_id`) untouched.
+`image_read` is the one guarded tool left (#1273): it returns a page scan as
+inline base64, which accumulates in the router's context and overflows the
+transport buffer. No skill and no agent declares it, so `agent_id` presence
+alone discriminates the legitimate delegated read from a router substitution.
+The e2e orchestrator denies it on the main thread, mirroring the tree-read
+block, while leaving a subagent's own call untouched.
 
-Both members of `context_policy.SUBAGENT_ONLY_TOOLS` are enforced in e2e:
-`extraction_append` (the #942 case) and `image_read` (#1273) — neither is
-declared by any skill (`image_read` since `search-images` moved to
-`@plugin:image-reader`, 2026-07-17), so `agent_id` presence alone discriminates.
-See `e2e-test-spec.md` §6.1.1.
+`extraction_append` was the other member (the #942 case) until issue #2937,
+which routes indexed-record extraction through code called from the main
+thread. Tests below pin that it is NOT blocked any more — that reversal is
+what a later "tidy-up" would undo, and undoing it would deny the shipped route
+on every e2e run. See `e2e-test-spec.md` §6.1.1.
 """
 
 from __future__ import annotations
@@ -43,17 +44,34 @@ def _sub(tool_name: str) -> dict:
     return {"tool_name": tool_name, "tool_input": {}, "agent_id": "agent-abc123"}
 
 
-def test_main_thread_extraction_append_is_blocked():
+def test_main_thread_image_read_is_blocked():
     assert (
-        is_main_thread_subagent_only_tool(_main("mcp__genealogy__extraction_append"))
-        is True
+        is_main_thread_subagent_only_tool(_main("mcp__genealogy__image_read")) is True
     )
 
 
-def test_subagent_extraction_append_is_not_blocked():
-    """The record-extractor's own call carries `agent_id` — the legitimate path."""
+def test_subagent_image_read_is_not_blocked():
+    """The image-reader's own call carries `agent_id` — the legitimate path."""
     assert (
-        is_main_thread_subagent_only_tool(_sub("mcp__genealogy__extraction_append"))
+        is_main_thread_subagent_only_tool(_sub("mcp__genealogy__image_read")) is False
+    )
+
+
+def test_main_thread_extraction_append_is_NOT_blocked():
+    """The reversal issue #2937 shipped, pinned.
+
+    Re-adding `extraction_append` to SUBAGENT_ONLY_TOOLS is a one-word edit that
+    would deny the record-extraction skill's shipped route on every e2e run — as
+    a denial at run time, not a test failure. This is the test that catches it.
+    """
+    assert (
+        is_main_thread_subagent_only_tool(_main("mcp__genealogy__extraction_append"))
+        is False
+    )
+    assert (
+        is_main_thread_subagent_only_tool(
+            _main("mcp__remote-devices__Genealogy_Research__extraction_append")
+        )
         is False
     )
 
@@ -62,39 +80,42 @@ def test_remote_devices_spelling_is_also_blocked_on_main():
     """Discriminate on the bare name, so the bridge spelling is caught too."""
     assert (
         is_main_thread_subagent_only_tool(
-            _main("mcp__remote-devices__Genealogy_Research__extraction_append")
+            _main("mcp__remote-devices__Genealogy_Research__image_read")
         )
         is True
     )
 
 
 def test_other_mcp_tools_on_main_are_not_blocked():
-    """Ordinary research tools must pass through untouched. image_read and
-    extraction_append are the guarded set — see the per-member test below."""
+    """Ordinary research tools must pass through untouched. `image_read` is the
+    whole guarded set — see the per-member test below. `extraction_append` is in
+    this list deliberately: since issue #2937 it is an ordinary main-thread
+    call."""
     for name in (
         "mcp__genealogy__record_read",
         "mcp__genealogy__research_append",
         "mcp__genealogy__record_search",
+        "mcp__genealogy__extraction_append",
     ):
         assert is_main_thread_subagent_only_tool(_main(name)) is False
 
 
 @pytest.mark.parametrize("tool", sorted(SUBAGENT_ONLY_TOOLS))
 def test_every_subagent_only_tool_is_blocked_on_main(tool):
-    """Every member of SUBAGENT_ONLY_TOOLS is enforced on the main thread, not just
-    extraction_append. This is Asimi's acceptance addition (#1295, folded into
-    #1273): a future third guarded tool cannot ship unenforced in e2e, because the
-    check keys on set membership and this exercises each member. Break-test:
-    hardcode the check to only "extraction_append" and the image_read param reddens."""
+    """Every member of SUBAGENT_ONLY_TOOLS is enforced on the main thread. This is
+    Asimi's acceptance addition (#1295, folded into #1273): a future second
+    guarded tool cannot ship unenforced in e2e, because the check keys on set
+    membership and this exercises each member. Break-test: hardcode the check to
+    a literal other than the member and this reddens."""
     assert is_main_thread_subagent_only_tool(_main(f"mcp__genealogy__{tool}")) is True
 
 
 def test_non_mcp_tools_are_never_blocked():
     """Baseline tools (Read, Skill, Task, …) are not candidates. The bare,
-    unqualified `extraction_append` is here on purpose: the `mcp__` prefix guard
-    means a name without a server prefix is never matched — only the genuine
-    `mcp__…__extraction_append` call the router would actually emit is blocked."""
-    for name in ("Read", "Skill", "Task", "extraction_append"):
+    unqualified `image_read` is here on purpose: the `mcp__` prefix guard means a
+    name without a server prefix is never matched — only the genuine
+    `mcp__…__image_read` call the router would actually emit is blocked."""
+    for name in ("Read", "Skill", "Task", "image_read"):
         assert is_main_thread_subagent_only_tool(_main(name)) is False
 
 
@@ -186,7 +207,7 @@ class _HookDrivingAgent:
         return None
 
 
-def test_main_thread_extraction_append_is_denied_and_recorded(tmp_path, monkeypatch):
+def test_main_thread_image_read_is_denied_and_recorded(tmp_path, monkeypatch):
     # This test drives the real _run_agent but does no real API call (query is
     # mocked below). _run_agent still evaluates env_for_sdk(resolve_auth()) when
     # building the query() args, which on keyless CI (eval-harness-tests.yml runs
@@ -209,16 +230,23 @@ def test_main_thread_extraction_append_is_denied_and_recorded(tmp_path, monkeypa
             (
                 "main",
                 {
-                    "tool_name": "mcp__genealogy__extraction_append",
-                    "tool_input": {"assertions": [], "sources": []},
+                    "tool_name": "mcp__genealogy__image_read",
+                    "tool_input": {"imageId": "3:1:abc", "projectPath": "/p"},
                 },
             ),
             (
                 "sub",
                 {
+                    "tool_name": "mcp__genealogy__image_read",
+                    "tool_input": {"imageId": "3:1:abc"},
+                    "agent_id": "agent-image-reader",
+                },
+            ),
+            (
+                "extraction",
+                {
                     "tool_name": "mcp__genealogy__extraction_append",
-                    "tool_input": {"assertions": []},
-                    "agent_id": "agent-record-extractor",
+                    "tool_input": {"logEntryId": "l_001", "recordId": "rec1"},
                 },
             ),
         ]
@@ -229,7 +257,7 @@ def test_main_thread_extraction_append_is_denied_and_recorded(tmp_path, monkeypa
             sink,
         )
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     result = asyncio.run(
         _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
     )
@@ -244,13 +272,22 @@ def test_main_thread_extraction_append_is_denied_and_recorded(tmp_path, monkeypa
     )
     # ...and RECORDED, threaded out of _run_agent at the right tuple position.
     assert len(blocked_context_calls) == 1
-    assert blocked_context_calls[0]["tool"] == "extraction_append"
+    assert blocked_context_calls[0]["tool"] == "image_read"
     assert blocked_context_calls[0]["blocked_by"] == "context"
-    assert blocked_context_calls[0]["args"] == {"assertions": [], "sources": []}
+    assert blocked_context_calls[0]["args"] == {
+        "imageId": "3:1:abc",
+        "projectPath": "/p",
+    }
 
     # The subagent's own call (carries agent_id) was NOT denied and NOT recorded
-    # — the legitimate record-extractor path stays open.
+    # — the legitimate image-reader path stays open.
     assert sink["sub"] == {}
+
+    # And the main-thread `extraction_append` was NOT denied: issue #2937's
+    # shipped route, exercised through the real hook rather than the predicate
+    # alone. It is also absent from blocked_context_calls, asserted by the
+    # length check above.
+    assert sink["extraction"] == {}
 
 
 def test_credential_read_is_denied_on_a_default_run(tmp_path, monkeypatch):
@@ -276,7 +313,7 @@ def test_credential_read_is_denied_on_a_default_run(tmp_path, monkeypatch):
             hook, inputs, [SystemMessage(subtype="init", data={"session_id": "S1"}), _result()], sink
         )
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     asyncio.run(_run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy")))
     assert sink["cred"]["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert "credentials directory" in sink["cred"]["hookSpecificOutput"]["permissionDecisionReason"]
@@ -314,7 +351,7 @@ def _run_with_mcp_calls(tmp_path, monkeypatch, n_calls: int, cap: int):
         )
         return stream["agent"]
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     result = asyncio.run(
         _run_agent(
             fixture=_fixture(tmp_path, caps={"tool_calls": cap}),
@@ -803,7 +840,7 @@ def test_project_status_narration_is_field_scoped_not_out_of_lane(tmp_path, monk
             sink,
         )
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     result = asyncio.run(
         _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
     )
@@ -841,7 +878,7 @@ def _usage_after(tmp_path, monkeypatch, result_message):
         messages = [SystemMessage(subtype="init", data={"session_id": "S1"}), result_message]
         return _HookDrivingAgent(hook, [], messages, {})
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     result = asyncio.run(
         _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
     )
@@ -875,9 +912,47 @@ def test_a_run_with_no_result_message_carries_no_ledger(tmp_path, monkeypatch):
         hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
         return _HookDrivingAgent(hook, [], [SystemMessage(subtype="init", data={"session_id": "S1"})], {})
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     usage = asyncio.run(
         _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
     )[2]
     assert usage is not None and usage.get("total_cost_usd") is None  # the fallback block
     assert "model_usage" not in usage
+
+
+def test_narration_thread_is_main_only_without_a_parent_tool_use_id(tmp_path, monkeypatch):
+    """Drives `_run_agent`'s assistant-narration branch. The AST pin in
+    test_e2e_orchestrator.py proves the `thread` key exists; only this proves its
+    polarity, which is the whole relay-fidelity selection (#3188)."""
+    from claude_agent_sdk import AssistantMessage, TextBlock
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    def fake_query(**kw):
+        return _HookDrivingAgent(
+            None,
+            [],
+            [
+                SystemMessage(subtype="init", data={"session_id": "S1"}),
+                AssistantMessage(content=[TextBlock(text="main says")], model="m"),
+                AssistantMessage(
+                    content=[TextBlock(text="sub says")],
+                    model="m",
+                    parent_tool_use_id="toolu_agent",
+                ),
+                _result(),
+            ],
+            {},
+        )
+
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
+    narration = asyncio.run(
+        _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
+    )[1]
+    threads = {n["text"]: n.get("thread") for n in narration if n.get("kind") == "assistant"}
+    assert threads == {"main says": "main", "sub says": "sub"}, narration

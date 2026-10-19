@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find any children of Ellen Brannon who are not yet in the family tree",
+    "subject_person_ids": [
+      "BRNN-MOM"
+    ],
+    "status": "active",
+    "created": "2026-10-14",
+    "updated": "2026-10-14"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

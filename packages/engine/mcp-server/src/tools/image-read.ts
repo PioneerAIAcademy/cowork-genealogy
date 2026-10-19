@@ -3,6 +3,7 @@ import {
   resolveFsImageInput,
   fetchFsImageBytes,
   extractImageContextQuery,
+  foldImageArkInput,
   type FsImageInput,
 } from "../utils/fs-image-fetch.js";
 import { imageViewerUrl } from "../utils/ark.js";
@@ -18,6 +19,9 @@ import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.j
 const MAX_INLINE_IMAGE_BYTES = 700_000;
 
 export interface ImageReadInput extends FsImageInput {
+  /** Another name for `ark`: record_read returns a page image under it.
+   *  Folded into `ark` before anything else reads the input. */
+  imageArk?: string;
   /** Absolute project-folder path. When given, the fetched JPEG is saved
    *  under images/<key>.jpg and its project-relative path returned as
    *  `imageRef`, mirroring image_transcribe's save behavior. */
@@ -40,6 +44,7 @@ export async function imageReadTool(input: ImageReadInput, principal: Principal)
   imageData: string;
   metadata: ImageReadResult;
 }> {
+  input = foldImageArkInput(input, "image_read");
   const { url, label, fallbackUrl, memoryShape } = resolveFsImageInput(
     input,
     "image_read",

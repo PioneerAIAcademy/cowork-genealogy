@@ -378,7 +378,8 @@ probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn ano
 	#
 	# Answered 2026-09-23 (Claude Code 2.1.220, SDK 0.2.128): yes, at depth 2, and
 	# the tool is Agent -- a Task grant resolves to it. The SDK streams no depth-2
-	# messages. A driver spawning three real record-extractors in parallel ran
+	# messages. A driver spawning three real record-extractors (since retired; the
+	# extractor arms now spawn record-structurer) in parallel ran
 	# them concurrently: 694 s wall against ~1,419 s back to back, every write
 	# landed. Re-run when the CLI or the SDK moves.
 	cd apps/server && \
@@ -502,7 +503,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -511,13 +512,14 @@ proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's de
 # worker writes, transcript append and tool-server commit (two `build/http.js` processes,
 # hence the build first) are no-ops, and its transcript append dedupes a retried batch by
 # uuid. U19's delete_session the same way: the SDK-keyed transcript, its busy refusal under
-# the queue lock. A fresh database per test or module, dropped at teardown.
+# the queue lock; its retention, keyed on session inactivity, against admit and delete. A
+# fresh database per test or module, dropped at teardown.
 # CI runs the same files against a postgres:16 container (server-tests.yml).
 .PHONY: proto-grants-test
 proto-grants-test: ## U3 + U6 + U9 + U23: the grant-lock interleavings, the claim fence, the migration runner and the held-message claim against the compose postgres (real advisory locks)
 	npm --prefix packages/engine/mcp-server run build
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
@@ -727,6 +729,8 @@ PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
 .PHONY: proto-web
 proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq (a migrated database: make proto-migrate)
 	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns DEV_LOGIN=true \
+	  GENEALOGY_S3_ENDPOINT=http://localhost:9000 GENEALOGY_S3_BUCKET=projects \
+	  GENEALOGY_S3_ACCESS_KEY=proto GENEALOGY_S3_SECRET_KEY=protoproto \
 	  $(PROTO_SQS_ENV) uv run python proto/web/app.py
 
 .PHONY: proto-drive
@@ -801,9 +805,12 @@ engine-smoke-stdio: $(ENGINE_BUILD) ## Drive the built engine over stdio and cal
 # the duration of the run, killed by the trap on every exit path, with the compose store's
 # GENEALOGY_* values; its base config is this host's config.json, hence
 # --host-config. BASE=http://127.0.0.1:8787 runs the same smoke against the compose `tools`
-# service instead (proto-drive's BASE= switch), whose config.json is {"hosted": true}. Both
-# arms print the per-table psql counts for the project id, even when the smoke fails; the
-# target's exit status is the smoke's.
+# service instead (proto-drive's BASE= switch), whose config.json is {"hosted": true}. The
+# tool server admits a project request only for the bearer stamped on an open turn of that
+# project (U4), so both arms pass --pg-dsn and the smoke seeds (then deletes) a stamped
+# turns row there: PROTO_PG_DSN, or NODE_PG_DSN (URL form, for node-postgres) on the BASE= arm. Both arms print the per-table
+# psql counts for the project id, even when the smoke fails; the target's exit status is
+# the smoke's.
 SMOKE_PROJECT_ID ?=
 # One fresh id per run unless SMOKE_PROJECT_ID names one. Shell, not $(shell): a make-time
 # uuid would be fixed for the whole invocation, including `make -n`.
@@ -812,7 +819,8 @@ smoke_http_pg_counts = docker exec proto-postgres psql -U postgres proto -c \
 	    "SELECT 'projects' AS tbl, count(*) FROM projects WHERE project_id = '$$id' \
 	     UNION ALL SELECT 'documents', count(*) FROM documents WHERE project_id = '$$id' \
 	     UNION ALL SELECT 'blobs', count(*) FROM blobs WHERE project_id = '$$id' \
-	     UNION ALL SELECT 'staging', count(*) FROM staging WHERE project_id = '$$id'"; \
+	     UNION ALL SELECT 'staging', count(*) FROM staging WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'turns (0: seeded row deleted)', count(*) FROM turns WHERE project_id = '$$id'"; \
 	  docker exec proto-postgres psql -U postgres proto -c \
 	    "SELECT name, version, updated_at FROM documents WHERE project_id = '$$id' ORDER BY name"
 
@@ -820,7 +828,7 @@ smoke_http_pg_counts = docker exec proto-postgres psql -U postgres proto -c \
 engine-smoke-http: $(ENGINE_BUILD) proto-up-store ## Drive the built engine over Streamable HTTP against the compose postgres + minio and call every tool but the three auth exclusions (BASE=http://127.0.0.1:8787 runs against the compose tools service; SMOKE_PROJECT_ID overrides the fresh id)
 ifdef BASE
 	@$(smoke_http_id); status=0; \
-	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project ) || status=$$?; \
+	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project --pg-dsn '$(or $(NODE_PG_DSN),$(PROTO_PG_DSN))' ) || status=$$?; \
 	  $(smoke_http_pg_counts); \
 	  exit $$status
 else
@@ -834,7 +842,7 @@ else
 	  trap 'kill $$pid 2>/dev/null; wait $$pid 2>/dev/null' EXIT; \
 	  for i in $$(seq 1 30); do kill -0 $$pid 2>/dev/null || break; curl -sf --max-time 0.5 "http://127.0.0.1:$$port/healthz" >/dev/null && break; sleep 0.5; done; \
 	  curl -sf --max-time 2 "http://127.0.0.1:$$port/healthz" >/dev/null || { echo "engine-smoke-http: build/http.js did not answer /healthz on :$$port within 30 s" >&2; exit 1; }; \
-	  npx tsx dev/smoke-http.ts --base "http://127.0.0.1:$$port" --project-id "$$id" --project-path /project --host-config || status=$$?; \
+	  npx tsx dev/smoke-http.ts --base "http://127.0.0.1:$$port" --project-id "$$id" --project-path /project --host-config --pg-dsn '$(PROTO_PG_DSN)' || status=$$?; \
 	  $(smoke_http_pg_counts); \
 	  exit $$status
 endif
@@ -881,6 +889,17 @@ unit-relay-fidelity: ## How much of an agent's return survives the main thread's
 	# production, so nothing here gates a build or reaches the judge (#3188).
 	cd eval/harness && uv run python scripts/relay_fidelity_report.py
 
+.PHONY: e2e-relay-fidelity
+e2e-relay-fidelity: ## How much of a subagent's return survives the relay on a REAL route — offline report over committed e2e run logs: make e2e-relay-fidelity [TEST=<slug>] [SINCE=14|all|YYYY-MM-DD]
+	# The production counterpart of unit-relay-fidelity above, which measures
+	# the harness dispatcher. Windowed to 14 days like every aggregating e2e
+	# reader; SINCE=all opts out. Reports its denominators: a log below
+	# harness_schema_version 8 records an Agent return cut at 500 chars and a
+	# narration with no `thread` tag, so it is unscorable rather than clean.
+	# Exits 2 when nothing was scored: a prose warning beside a success exit
+	# just relocates the silent zero to the exit code.
+	cd eval/harness && uv run python scripts/relay_fidelity_report.py --production $(if $(SINCE),--since $(SINCE),) $(if $(TEST),--test $(TEST),)
+
 .PHONY: replay-sizes
 replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [TRACKED_ONLY=1] [JSON=<path>]
 	# T1.4 of docs/plan/cost-latency-10x.md. Re-asks every recorded call to the
@@ -898,14 +917,19 @@ replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base 
 	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
 
 .PHONY: replay-collapse
-replay-collapse: $(ENGINE_BUILD) ## Replay each recorded research_query plan-log walk against the one log×questionId call that replaces it (T2.1) — zero model calls: make replay-collapse [BASE=<ref>] [TEST=<slug>] [TRACKED_ONLY=1] [JSON=<path>]
-	# Proves the replacement returns EXACTLY the walk's question's entries (an
-	# oracle computed from the rebuilt notes), and that the walk it is compared
-	# against is the real one: each replayed walk call's count must equal the
-	# count the run recorded, else exit 3. Reports N walk calls -> M replacement
-	# calls. Exit 1 = the candidate lacks the filter; exit 2 = nothing comparable
-	# (e.g. every group unverifiable after a capture strip); exit 3 = integrity.
-	cd eval/harness && uv run python -m e2e.replay_collapse $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
+replay-collapse: $(ENGINE_BUILD) ## Replay recorded research_query walks against the one call that replaces each — rule plan-log (log×planItemId walk -> log×questionId, T2.1) and rule plural-id (one-id walks -> one call with a list of ids, T2.3) — zero model calls: make replay-collapse [RULE=plan-log|plural-id] [BASE=<ref>] [TEST=<slug>] [TRACKED_ONLY=1] [JSON=<path>]
+	# Proves the replacement returns EXACTLY what the walk read (plan-log: an
+	# oracle computed from the rebuilt notes; plural-id: the base build's own
+	# singular pages, unioned in document order, with count and countById right
+	# on every page), and that the walk it is compared against is the real one:
+	# each replayed walk call's count must equal the count the run recorded,
+	# else exit 3 (plural-id classifies a miss: source-id-unstamped is allowed,
+	# ledger-missing-writes only for its pinned groups). Reports N walk calls ->
+	# M replacement calls. Exit 1 = the candidate lacks the filter (plan-log), or
+	# answered a list wrong or past the 50,000-char spill (plural-id: wrong /
+	# spill); exit 2 = nothing comparable (e.g. every group unverifiable after a
+	# capture strip); exit 3 = integrity.
+	cd eval/harness && uv run python -m e2e.replay_collapse $(if $(RULE),--rule $(RULE),) $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
 
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8] [STORE=pg]; SKILL="a b c" runs several in one pool
@@ -1023,14 +1047,28 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
 	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
 
-.PHONY: e2e-thinking-probe
-e2e-thinking-probe: ## Reproduce the record-extractor runaway-thinking freeze in ~1 min (needs ANTHROPIC_API_KEY)
-	# Replays the exact delegation message that froze the frederick-munson run
-	# against sonnet-5 under three thinking configs (32k / off / 4k) with a
-	# stubbed tool loop, and reports which RAN AWAY vs ACTED. A one-turn API
-	# probe instead of a 15-min e2e run — settles the thinking-vs-model question.
-	# No MCP/FamilySearch calls; the API key comes from the shell or eval/.env.
-	cd eval/harness && uv run python -m e2e.try_record_extractor_thinking $(if $(MODEL),--model $(MODEL),)
+# ── Source screen (issue #3408) ──
+# Every path is outside the repo: the truth set is restricted. Report counts only.
+.PHONY: source-screen-snapshot source-screen-baseline source-screen-plant source-screen-judge source-screen-score
+source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source screen: make source-screen-snapshot PIDS=<file> OUT=<dir> [SAMPLE=100] [SEED=1]
+	@test -n "$(PIDS)" -a -n "$(OUT)" || { echo "ERROR: set PIDS and OUT (both outside the repo)" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts snapshot --pids "$(abspath $(PIDS))" --out "$(abspath $(OUT))" $(if $(SAMPLE),--sample $(SAMPLE)) $(if $(SEED),--seed $(SEED))
+
+source-screen-baseline: $(ENGINE_DEPS) ## Score a snapshot with the existing checks, offline: make source-screen-baseline SNAPSHOT=<dir> [THRESHOLD=0.5]
+	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts baseline --snapshot "$(abspath $(SNAPSHOT))" $(if $(THRESHOLD),--threshold $(THRESHOLD))
+
+source-screen-plant: $(ENGINE_DEPS) ## Build the planted-error fixture copies: make source-screen-plant OUT=<dir>
+	@test -n "$(OUT)" || { echo "ERROR: set OUT (outside the repo)" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts plant --spec dev/source-screen-fixtures.json --out "$(abspath $(OUT))"
+
+source-screen-judge: $(ENGINE_BUILD) ## Run the source-evaluation agent over a snapshot, on your Claude subscription: make source-screen-judge SNAPSHOT=<dir>
+	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
+	cd eval/harness && uv run python source_screen_judge.py --snapshot "$(abspath $(SNAPSHOT))"
+
+source-screen-score: $(ENGINE_DEPS) ## Score findings against the fixture spec: make source-screen-score FINDINGS="<dir>/baseline.jsonl <dir>/judge.jsonl"
+	@test -n "$(FINDINGS)" || { echo "ERROR: set FINDINGS" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts score --spec dev/source-screen-fixtures.json $(foreach f,$(FINDINGS),--findings "$(abspath $(f))")
 
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
@@ -1563,6 +1601,13 @@ feedback-reset: ## Reset a feedback case dir to its imported state between attem
 	@test -n "$(CASE)" || { echo "ERROR: set CASE, e.g. make feedback-reset CASE=~/feedback/feedback-2026-07-21T09-14-22Z" >&2; exit 1; }
 	bash scripts/reset-feedback-case.sh $(CASE)
 
+.PHONY: feedback-profile
+feedback-profile: ## Time and cost of hosted feedback bundles per session, agent, skill and tool: make feedback-profile ZIP=~/Downloads/feedback-….zip [SINCE=2026-10-01] [JSON=profile.json] (ZIP may name a bundle dir or a folder of them)
+	# Pure analysis, no API calls. Each zip is unpacked into its own temporary
+	# directory and removed after; nothing in a bundle is imported or run.
+	@test -n "$(ZIP)" || { echo "ERROR: set ZIP, e.g. make feedback-profile ZIP=~/Downloads/feedback-2026-10-18T17-59-18-178086Z.zip" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.feedback_profile $(foreach z,$(ZIP),'$(abspath $(patsubst ~/%,$(HOME)/%,$(z)))') $(if $(SINCE),--since '$(SINCE)',) $(if $(JSON),--json '$(abspath $(patsubst ~/%,$(HOME)/%,$(JSON)))',)
+
 # ── Artifacts (desktop/Cowork deliverables and the Beanstalk bundles) ─────────
 # The build scripts are cross-platform Node (no bash / no `zip`, so the Windows
 # BuildMcpb.bat / BuildPlugin.bat call them too) and self-install + self-build
@@ -1694,7 +1739,7 @@ deploy-status: ## Health-check the deployed control plane (expect "db":"postgres
 	curl -s $(DEPLOY_URL)/api/health | jq
 
 # Runs on the Fly machine, which holds DATABASE_URL, so no database credential is needed
-# here. Reads turn_costs (apps/server/app/cost_report.py).
+# here. Reads api_calls and turn_costs (apps/server/app/cost_report.py).
 .PHONY: alpha-costs
-alpha-costs: ## Claude API cost of the hosted alpha: per day, per build, top sessions (DAYS=30)
+alpha-costs: ## Claude API cost of the hosted alpha: every call and every turn, per day and session (DAYS=30)
 	fly ssh console --app genealogy-workbench -C "sh -c 'cd /app/server && python -m app.cost_report --days $(or $(DAYS),30)'"

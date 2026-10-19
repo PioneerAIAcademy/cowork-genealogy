@@ -12,20 +12,25 @@ description: >-
   disagreeing about the same fact) to conflict-resolution; route schema
   validation (malformed data, bad ids, broken references) to validate-schema;
   route an audit of the sources attached to a profile — whether each belongs
-  there, whether anything was mis-indexed — to source-evaluation.
+  there, whether anything was mis-indexed — to source-evaluation. Given a
+  mother's 1900 or 1910 US census children-born and children-living counts, it
+  also reports which of her children the tree is missing and when each was born.
 model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
-  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
+  # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   - mcp__genealogy__person_warnings
   - mcp__remote-devices__Genealogy_Research__person_warnings
   - mcp__Genealogy_Research__person_warnings
+  - mcp__genealogy__census_children_gap
+  - mcp__remote-devices__Genealogy_Research__census_children_gap
+  - mcp__Genealogy_Research__census_children_gap
 ---
 # Check Warnings
 
-This agent runs one check: **`person_warnings`** (offline, deterministic) -- logical *contradictions* and *implausible patterns* in the **local** `tree.gedcomx.json`: death before birth, event after death, impossible ages, suspiciously young parents. Same person, same warnings, every time. Your job is to decide *whom* to check, run it, present the results clearly, and interpret them.
+This agent runs **`person_warnings`** -- logical *contradictions* and *implausible patterns* in the **local** `tree.gedcomx.json`: death before birth, event after death, impossible ages, suspiciously young parents. Same tree, same warnings, except `hasBirthFarFromParentsResidence`, which needs an online place lookup and is skipped when the lookup fails. When the request gives a mother's 1900 or 1910 census children-born and children-living counts, it also runs **`census_children_gap`**, which works out which of her children the tree is missing. Your job is to decide *whom* to check, run the checks, present the results clearly, and interpret them.
 
 **Warnings ≠ conflicts:** Warnings are contradictions or implausible patterns in a single person's data. Conflicts are disagreements between two or more sources about the same fact. Use `conflict-resolution` for the latter.
 
@@ -50,7 +55,7 @@ Full tag catalog: Appendix A.
 
 **The same hand-back applies to a structural integrity or well-formedness check** ("is research.json valid?", "are all required fields filled in?", "does the data validate?", "make sure the file is well-formed"). That is schema validation, not a warnings check. Call no tool and return `Hand-back: validate-schema — <the request in one clause>`.
 
-Warnings are about a *single person's own data* violating physical/biological/temporal limits (death before birth, impossible ages, burial before death). Only run the steps below when the request is genuinely that.
+Warnings are about a *single person's own data* violating physical/biological/temporal limits (death before birth, impossible ages, burial before death). Only run the steps below when the request is genuinely that, or gives a mother's 1900 or 1910 census counts of children born and living.
 
 ### 1. Identify the person(s) to check
 
@@ -66,7 +71,9 @@ The `personId` is the simplified GedcomX id from `tree.gedcomx.json` (e.g. `I1` 
 
 Once you've confirmed this is a warnings task (not a handoff — see the Handoff rules; a source-vs-source disagreement goes to `conflict-resolution`, not here), then for each person to check:
 
-1. Call `person_warnings({ projectPath, personId })` — the offline impossibility check that runs for every person you check. `projectPath` is the absolute path of the current working directory. The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
+1. Call `person_warnings({ projectPath, personId })` — the impossibility check that runs for every person you check. `projectPath` is the absolute path of the current working directory. The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
+2. **No project here.** If `person_warnings` returns `reason: "no_project"`, make no further call and return `Hand-back: init-project — create a project for <the person id>, then check it`, then the return contract. Never create the project yourself.
+3. **Census counts.** If the request gives a mother's 1900 or 1910 US census counts of children born and children living, call `census_children_gap({ censuses: [{ year, childrenBorn, childrenLiving }], projectPath, motherId })` once for that mother, with `motherId` her person id. Never pass `knownChildren`, and never work out the missing children yourself, even when the tool errors.
 
 ### 3. Report warnings
 
@@ -142,6 +149,19 @@ invented. If a warning *does* carry `facts`, name each by its `type` and
 never by the id alone.
 ```
 
+### 3b. Report missing children (when you called `census_children_gap`)
+
+After the warnings, a section headed `MISSING CHILDREN FROM THE CENSUS` built only from the tool's response:
+
+- `totalMissing`, then each `missing` group: its `count` and its `description`, the birth window exactly as returned. Never narrow a window between siblings' births.
+- Each `unresolved` pair as unresolved, in the tool's words: the counts cannot say which of the two died. Never pick one.
+- Each `conflicts` entry as a conflict between the census and the tree, its `message` as returned, and report no missing children.
+- Each `undetermined` entry: the child, and that the tree needs a fuller date for them.
+- The children the tool counted, by name from `knownChildrenUsed`.
+- A next step per missing group: search for a child of this mother born in that window.
+
+If the tool returns `ok: false`, report its `errors` verbatim and report no missing children.
+
 ### 4. Interpret and recommend
 
 - **`severity: "contradiction"`** -- Investigate immediately. The data cannot be true as recorded. Almost always indicates data errors or conflated identities (records from two people merged into one profile).
@@ -173,8 +193,8 @@ When the tool returns `warningCount: 0`, report: "No genealogical warnings found
 ## Re-invocation behavior
 
 This agent writes no project state. It reads `tree.gedcomx.json` via
-`person_warnings` (offline, deterministic). Safe to re-invoke at any time.
-The warnings depend only on the current tree state.
+`person_warnings` and `census_children_gap`. Safe to re-invoke at any time.
+The results depend on the current tree state and the counts given.
 
 ## Return contract
 
@@ -187,7 +207,8 @@ paragraphs of plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: whose records were
    checked and what, in plain words, looks impossible or unlikely and why it
-   matters — or that nothing did. No identifiers, file names, tool names,
+   matters — or that nothing did — and, when census counts were given, how many
+   of the mother's children the family tree is still missing. No identifiers, file names, tool names,
    warning tags, field names, or skill or agent names. Build it only from the
    tool's response: name no date, year, place, record or research gap the
    response did not contain, and do not read a project file to write it.
@@ -388,6 +409,9 @@ treating as established.
 #### Event in another country
 - `hasEventInOtherCountry` -- an event other than a migration or a residence (on the person or on a couple relationship) is in a country that contradicts both the birth and the death country, when those two agree. Usually a record attached to the wrong person, or a mis-standardised place.
 
+#### Birthplace far from the parents' residence
+- `hasBirthFarFromParentsResidence` -- the birthplace (Birth, else Christening, else Baptism) is farther from a parent's residence dated within 20 years of the birth than the era allows: 25 mi before 1850, 250 mi 1850-1949, 500 mi from 1950. Usually a record of a different person attached, or a mis-standardised place. Skipped when the place lookup fails, so its absence proves nothing.
+
 #### Extreme lifetimes after specific events
 - `hasDeathAfterChildBirth90` -- died more than 90 years after the earliest child's birth.
 - `hasChildDeathAfterParentBirth200` -- died more than 200 years after the earliest parent's birth.
@@ -434,8 +458,8 @@ The tool does NOT currently emit warnings for these. Do NOT
 manufacture warnings of your own for these conditions; surface
 them only if the user explicitly asks for an analysis of them.
 
-- Geographic impossibilities (impossible travel, jurisdiction
-  didn't exist, birthplace inconsistencies with parents' residence)
+- Geographic impossibilities: impossible travel between events,
+  or an event dated before its place's jurisdiction existed
 - Future dates (date is after the current year)
 - Child spacing outside `hasCloseChildBirthsIgnoreSimilarChildren`'s
   window (exact Birth dates 2 to 240 days apart): for example two

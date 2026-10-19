@@ -14,7 +14,7 @@ project_context({ projectPath }) -> compact projection (read-only)
 
 ## 1. Why this exists
 
-The record-extractor agent runs in a fresh context per delegation and used to
+The record-extractor agent (since retired) ran in a fresh context per delegation and used to
 open with a full read of `research.json` and `tree.gedcomx.json` — both of
 which grow monotonically over a session. On capped e2e runs (~10 extractor
 delegations per run) those fresh-context re-reads dominated cost: the
@@ -363,6 +363,59 @@ cache file must never fail the whole projection.
   fields (`gedcomx_source_description_id`, `record_id`) are renamed at the
   boundary like every other tool.
 
+### Status-answering clause
+
+The tool's `description` opens with an instruction that reaches the main
+thread on every plane (the tool is `ALWAYS_LOAD` in `src/tool-schemas.ts`, and
+the unit harness serves the compiled production description in
+`eval/harness/harness/mock_mcp.py`; in the 2026-10-12 harness runs the schema
+was still deferred and arrived through ToolSearch, description included):
+
+> When the user asks where the project stands ("where are we?", "summarize
+> progress", "what have we found?") or reopens a project, call this and answer
+> from it in exactly ONE plain-language paragraph and nothing else: the
+> objective, what is established, what is open or waiting on the researcher,
+> and the next step, stated rather than asked. No lead-in line ("Here's where
+> things stand:"), no line breaks, headings, tables, lists or bold, no closing
+> question, and no identifiers, file names, tool names or field names:
+> say "the proof summary" or "the parentage question", never q_001 or ps_001.
+> nextStep values name ids and agents; restate them in plain words. Do not
+> read the project files and do not delegate.
+
+It leads the description rather than closing it. Measured on `ut_research_025`
+(2026-10-12, scratch runs, not committed): appended after the field list, the clause was ignored — the reply
+was headings, a table and raw ids. Moved to the front it held in 2 of 3 runs,
+the third quoting `ps_001`. With the worked examples, 3 of 3 scratch runs and
+0 of 1 in the full suite; with the `nextStep` sentence added, 4 of 5. Every
+miss quoted `ps_001`, which `questionStatuses[].nextStep` hands over verbatim
+("gps-mentor (proof-critique) — ps_001").
+
+The shape half is checked too: the validator fails a reply with more than one
+paragraph, a heading, list or table line, bold, or a closing question. Before
+that check existed, both committed full-suite replies passed while breaking it
+(2026-10-15) — a "Here's where things stand:" lead-in, four and seven
+paragraphs, bold names and a closing offer — and the wording above was
+tightened to name each of those.
+
+**Decided (lead, 2026-10-06):** delete the `project-status` agent; a status
+request is answered by the main thread in one plain paragraph from
+`project_context`. Rests on four facts: a live Cowork session (2026-10-02)
+confirmed the main-thread read matched the agent's report and caught two
+defects the agent missed; the agent's detailed summary never reached the user
+through the relay (`ut_project_status_010`, a test deleted with the agent; its run logs remain in git history); `project_context` already returns
+objective, per-question state and next step, open conflicts, persons, sources
+and `awaitingUser`; and writer tools already refuse dangling ids
+(`validator.ts`), covering the broken-foreign-key half of the agent's job.
+Supersedes "PS return: A" (2026-09-24). Knowingly dropped: the agent's
+stale-plan detection — replaced only once phase 2 of
+`docs/plan/research-as-a-job-later.md` lands.
+
+**Decided (review-ready, 2026-10-06):** the clause goes in the tool's
+description, not in a router skill description. Making a router description
+claim status would start a full research run on "where are we?"; the tool
+description reaches the main thread on every plane and leaves routers
+untouched.
+
 ## 4. Errors / edge cases
 
 | Condition | Behavior |
@@ -405,7 +458,8 @@ Standard MCP tool: `src/tools/project-context.ts`, schema in
 `LIVE_TOOLS`) with a real input-schema mirror — it is a deterministic
 function of workspace state, so a fixture cannot honestly answer it.
 
-Consumer: the `record-extractor` agent (one call per invocation, replacing
-its up-front file reads — its `tools:` list holds `project_context` and no
-`Read`). Future extraction-adjacent agents should reuse this projection
-rather than re-reading project files.
+Consumers: built for the `record-extractor` agent (since retired), whose one
+call per invocation replaced its up-front file reads. It is now read by the
+`citation`, `gps-mentor`, `proof-conclusion`, `question-selection` and
+`research-exhaustiveness` agents and several skills. New agents should reuse
+this projection rather than re-reading project files.

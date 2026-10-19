@@ -281,7 +281,7 @@ and web (WebSocket transport).
 > 3. **The chat WS is not proxied.** The browser opens **one authenticated WSS
 >    straight to the sandbox** — `POST /api/sessions/{id}/connect` resumes it,
 >    exposes port 8080, mints a per-sandbox HMAC token, and returns
->    `{wssUrl, token, familysearch}` — except for a session more than 24 h past
+>    `{wssUrl, token, familysearch}` — except for a session more than 72 h past
 >    `projects.created`, which it refuses with 410 before resuming
 >    (`SESSION_MAX_AGE` in `app/sessions.py`; `/resume` and the read endpoints
 >    stay open, so an ended session's research can still be read); the control plane is then out of the
@@ -571,6 +571,15 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   protocol pings are not reliably counted as activity by the edge proxy, and a
 >   silent long turn was getting the socket dropped), and a capped replay buffer
 >   so a reconnect or a second tab rebuilds the chat history.
+> - **`seq` + `epoch` on recorded frames:** every frame that enters the replay
+>   buffer (`agent_event`, `user_msg`) is stamped with a per-session monotonic
+>   `seq` (from 1) and a per-server-process random `epoch` before it is sent.
+>   The client keeps a `lastSeq` cursor, drops any stamped frame at or below it
+>   — so the whole-history replay on a silent reconnect no longer re-folds the
+>   transcript — and resets the cursor when `epoch` changes, because a
+>   replacement server process counts from 1 again. Frames without a `seq`
+>   (`status`, the snapshot frames, `ping`, and everything from a pre-stamp
+>   server) are never deduped and pass through unchanged.
 > - `research_updated`/`gedcomx_updated` always carry the **full** document; the
 >   "or patch" option was never taken.
 > - **Lay mode: the server answers the hand-back itself (lead
@@ -636,8 +645,19 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   sandbox that outlives a deploy is billed to the code it runs; `continuations` counts
 >   the stops the Stop hook overrode that turn. `create_all` never alters a live table, so
 >   `init_db` adds any nullable column the model has and the table lacks
->   (`db.add_missing_columns`). `make alpha-costs` prints cost per day, per build and the
->   top sessions. No budget reads it yet.
+>   (`db.add_missing_columns`). Only sandboxes built from 2026-10-12 on report, so it
+>   misses every older session still in use.
+>   **`api_calls`** (project_id, user_id, model, the four token counts, cost_usd,
+>   session_age_s, created) covers them: one row per `POST /v1/messages` the credential
+>   proxy relays with a 200, its usage read off the response on the way back
+>   (`anthropic_proxy._UsageMeter`: `message_start` and the last `message_delta` when
+>   streamed, the body's `usage` when not) and priced at the calling model's own rates
+>   (`app/agent/spend.py` `rates_for`). Its daily total is the alpha's whole bill.
+>   `session_age_s` is the session's age at the call, which separates a reopened old
+>   session's spend from a new one's. `make alpha-costs` prints both tables, in whole UTC
+>   days: every call by day, by model, by token type and the most expensive sessions,
+>   then turns by day, by build and by session. Nothing enforces against either: the
+>   alpha has no spend limit (lead ruling 2026-09-25).
 
 ### 6.4 Durable project storage (object store)
 - One prefix per project (`projects/<project_id>/`) holding `research.json`,
@@ -1008,9 +1028,9 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
 > - **Cost controls — idle suspension shipped, budgets did not.** `SandboxSpec`
 >   defaults to `auto_suspend_seconds: 900` and `E2BProvider` creates with
 >   `lifecycle={"on_timeout":"pause","auto_resume":True}`. There are **no** token
->   or sandbox-second budgets, no rate limits, and no auto-archive. Per-turn cost is
->   recorded in `turn_costs` (§6.3), but nothing enforces against it. The allowlist
->   remains the only real cap.
+>   or sandbox-second budgets, no rate limits, and no auto-archive. Each API call's cost
+>   is recorded in `api_calls` and each turn's in `turn_costs` (§6.3), but nothing
+>   enforces against either. The allowlist remains the only real cap.
 
 ---
 

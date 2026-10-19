@@ -207,7 +207,7 @@ AGENT_WRITABLE_SECTIONS = {
     # through tree_edit/materialize_facts, which carry no `section` for this
     # check to read. Deliberately narrow for the same reason as the row above:
     # a blocker it meets -- an unclassified assertion, a genuinely competing
-    # candidate -- is cleared by record-extraction or conflict-resolution, not
+    # candidate -- is cleared by extraction or conflict-resolution, not
     # by this agent editing those sections itself.
     "person-evidence": frozenset({"person_evidence"}),
     # gps-mentor appends its verdict to `evaluations` and writes nothing else in
@@ -243,6 +243,10 @@ AGENT_WRITABLE_SECTIONS = {
     # hypothesis-tracking states, links and rules out hypotheses, and writes
     # nothing else in research.json.
     "hypothesis-tracking": frozenset({"hypotheses"}),
+    # timeline regenerates one `timelines` entry wholesale and writes nothing
+    # else in research.json. Its coherence verdict and any geographic
+    # infeasibility have no persisted field at all -- they live in its reply.
+    "timeline": frozenset({"timelines"}),
     # conflict-resolution opens, analyses and settles conflicts, and writes
     # nothing else in research.json. A hypothesis or question change its finding
     # implies is handed back to the main thread, not made here.

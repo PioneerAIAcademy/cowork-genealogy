@@ -12,7 +12,7 @@ import {
  * Cross-language drift lint for the relationship-direction rule (issue #2535).
  *
  * The rule exists twice and cannot be shared: the eval check is Python in
- * `eval/harness/validators/test_record_extraction.py`, the write-path deny is
+ * `eval/harness/validators/extraction_validators.py`, the write-path deny is
  * TypeScript in `src/tools/research-append.ts`, and this repo has no runtime
  * bridge between the harness and the engine (CLAUDE.md, "Don't try to share
  * code at runtime"). Duplication is therefore the only option; an UNPINNED

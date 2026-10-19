@@ -170,6 +170,22 @@ two people end up on the same bundle.
 The body carries the tester's own words and the zip link. Read the words first —
 you often do not need the bundle at all, and Step 2 tells you when you do.
 
+> **Prototype bundles open no issue.** The search-agent prototype's web tier
+> (`apps/server/proto/web/`, U20) stores its zip in its own S3 bucket instead of
+> posting it to Drive, and nothing opens a GitHub issue for it yet — where a
+> stored bundle goes next is an open question for the lead. Someone with access
+> to the bucket fetches it by hand and unpacks it with Step 2 as usual:
+>
+> ```bash
+> aws s3 cp s3://<bucket>/feedback/<owner>/<project>/<file> .
+> make feedback-case ZIP=<file>
+> ```
+>
+> `<owner>` is the patron's internal `usr_…` id, `<project>` the project id, and
+> `<file>` the `filename` the submit answered with. On the compose stack the
+> bucket is `projects` on the local MinIO. Bundles under `feedback/` expire after
+> 90 days.
+
 One task, one branch, always cut from an up-to-date `main` — you open a PR from
 it at the end. Name it with a few hyphenated words describing the fix — no
 slashes, no timestamps.
@@ -580,6 +596,7 @@ Drive folder as the immutable record, so re-importing later is always possible.
 | 0 Notice | research; spot it; write Did/Should | 🌐 Workbench |
 | 1 Claim + branch | assign the issue to yourself; read the tester's words in the body, download the zip only if Step 2 needs it; `git checkout -b <short-task-name>` | 🌐 GitHub → ⌨️ Terminal (repo) |
 | 2 Unpack | `make feedback-case ZIP=<zip>`; copy the prompt it prints, or recover it from the session log when the box was left blank (check for a `_truncation_note`) | ⌨️ Terminal (repo) |
+| *(side)* Measure | `make feedback-profile ZIP=<zip>` prints the session's time and cost per agent, skill and tool (Windows: in `eval\harness`, `uv run python -m e2e.feedback_profile <zip>`) | ⌨️ Terminal (repo) |
 | 3 Reproduce | paste the user's prompt; viewer open; `/compare-state --against=what-went-wrong` | 🤖 Claude Code (case dir) + Viewer |
 | 4 Classify | skill, tool, or grading fault? | 🤖 Claude Code (case dir) |
 | 5 Capture | `/mine-unit-test --project <case-dir>`; scrub PII | 🤖 Claude Code (case dir) |
@@ -595,13 +612,15 @@ fresh session. Both halves, every time.
 
 ### Windows equivalents
 
-Every `make` target above has a batch file. Double-click it, or run it from
-`eval\`; each prompts for what it needs instead of taking `SKILL=`-style
-arguments, and rebuilds the MCP server first where that matters.
+Every `make` target above has a batch file except `make feedback-profile`,
+whose row gives the command to type in `eval\harness`. Double-click a batch
+file, or run it from `eval\`; each prompts for what it needs instead of taking
+`SKILL=`-style arguments, and rebuilds the MCP server first where that matters.
 
-| Instead of | Double-click |
+| Instead of | Use |
 |---|---|
 | `make feedback-case ZIP=<zip>` | `scripts\setup-feedback-case.bat <zip>` (pass the zip path) |
+| `make feedback-profile ZIP=<zip>` | in `eval\harness`: `uv run python -m e2e.feedback_profile <zip>` |
 | `make eval-skill SKILL=<skill>` | `eval\RunTests.bat` |
 | `make eval-ui` | `eval\Start.bat` |
 | `make gate-skill SKILL=… TEST=…` | `eval\GateSkill.bat` |

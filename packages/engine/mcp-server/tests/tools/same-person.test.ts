@@ -176,6 +176,34 @@ describe("samePerson", () => {
       ]);
     });
 
+    it("puts the focus person first, because matchTwoExamples scores persons[0]", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => matchResponse,
+      });
+
+      const household = makeGedcomx("I1", "ark:/61903/1:1:QBCD-FGH");
+      household.persons!.push(
+        { ...makeGedcomx("I2", "ark:/61903/1:1:QBCD-FGJ").persons![0] },
+        { ...makeGedcomx("I3", "ark:/61903/1:1:QBCD-FGK").persons![0] },
+      );
+
+      await samePerson({
+        gedcomx1: household,
+        primaryId1: "I3",
+        gedcomx2: makeGedcomx("I7", CANDIDATE_ARK),
+        primaryId2: "I7",
+      }, LOCAL);
+
+      const body = JSON.parse((mockFetch.mock.calls[0][1] as { body: string }).body);
+      const entry1Gedcomx = body.entries[0].content.gedcomx;
+      expect(entry1Gedcomx.persons.map((p: { id: string }) => p.id)).toEqual(["I3", "I1", "I2"]);
+      expect(entry1Gedcomx.sourceDescriptions).toEqual([
+        { id: "match-anchor", about: "#I3" },
+      ]);
+      expect(household.persons!.map((p) => p.id)).toEqual(["I1", "I2", "I3"]);
+    });
+
     it("sends the Persistent identifier as a full canonical ARK (not a bare id)", async () => {
       // matchTwoExamples rejects a bare id ("KGS8-LY1") with 400 "Invalid Feed";
       // it requires the `ark:/61903/n:n:` prefix. The tool restores it from the
@@ -738,6 +766,18 @@ describe("samePerson — project-relative arm", () => {
     await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
     expect(recordReadMock).toHaveBeenCalledTimes(1);
     expect(recordReadMock.mock.calls[0][0].resultsRef).toBeUndefined();
+  });
+
+  it("passes a record_read sidecar ref to record_read — persona-bearing", async () => {
+    recordReadMock.mockResolvedValue({ persons: [{ id: "MP1" }] });
+    const r = research();
+    r.log.push({ id: "log_rr", tool: "record_read", results_ref: "results/log_rr.json" });
+    r.assertions[0].log_entry_id = "log_rr";
+    await project(r);
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+    expect(recordReadMock).toHaveBeenCalledTimes(1);
+    expect(recordReadMock.mock.calls[0][0].resultsRef).toBe("results/log_rr.json");
   });
 
   it("does not serve one project's resolved record to another", async () => {

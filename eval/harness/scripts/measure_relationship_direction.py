@@ -27,7 +27,7 @@ values routinely name a second party in passing ("child of Hannah Grice
 
 An unknown spelling (`stepfather`, `father_in_law`) yields no category and is
 SKIPPED, never refused -- the designed fail-open at
-`validators/test_record_extraction.py`.
+`validators/extraction_validators.py`.
 
 Usage:
     cd eval/harness && uv run python scripts/measure_relationship_direction.py
@@ -54,7 +54,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(_HERE))
 sys.path.insert(0, os.path.join(os.path.dirname(_HERE), "validators"))
 
-from validators.test_record_extraction import (  # noqa: E402
+from validators.extraction_validators import (  # noqa: E402
     _relationship_category,
     _subject_role_in_value,
 )
@@ -193,7 +193,7 @@ def _axes():
     relationship_type maps through the category table, AND its record_role
     does too -- a rule could only ever compare those.
     """
-    from validators.test_record_extraction import _RELATION_CATEGORY  # noqa: F401
+    from validators.extraction_validators import _RELATION_CATEGORY  # noqa: F401
 
     paths = sorted(glob.glob(os.path.join(
         REPO, "eval", "**", "*final-research.json"), recursive=True))
@@ -368,7 +368,7 @@ def _counterfactual():
     rate measured over a wider set and read as an error. The new rule is
     the arbiter: where it does not refuse, the old rule refused correct
     data."""
-    from validators.test_record_extraction import _RELATION_CATEGORY
+    from validators.extraction_validators import _RELATION_CATEGORY
 
     any_rel = re.compile(r"\b(" + "|".join(_RELATION_CATEGORY) + r")\b", re.I)
     pops = {

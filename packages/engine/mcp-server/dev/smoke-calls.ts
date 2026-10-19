@@ -47,8 +47,8 @@ export interface SmokeCtx {
   hostProjectDir: string | null;
   /** A path under projectPath that holds no project. */
   missingProjectPath: string;
-  /** Whether the server's base config carries `openRouterApiKey`. */
-  openRouterKeyConfigured: boolean;
+  /** Whether the server holds an OpenRouter key; null when this host cannot tell (a remote server). */
+  openRouterKeyConfigured: boolean | null;
   /** Values read back from earlier steps (e.g. the evaluations sidecar `file_path`). */
   values: Record<string, unknown>;
 }
@@ -227,41 +227,21 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     offline: true,
     args: (ctx) => ({
       projectPath: ctx.projectPath,
-      sourceDescription: { title: "Smoke source" },
-      resolveStandardPlace: false,
-      ops: [
+      documents: [
         {
-          section: "sources",
-          op: "append",
-          entry: {
-            citation: "Smoke source",
-            citation_detail: {
-              who: "Smoke",
-              what: "transport smoke",
-              when_created: "1850",
-              when_accessed: "2026-01-01",
-              where: "Nowhere",
-              where_within: "line 1",
-            },
-            source_classification: "original",
-            repository: "smoke",
-            access_date: "2026-01-01",
-          },
-        },
-        {
-          section: "assertions",
-          op: "append",
-          entry: {
-            record_id: "SMOKE-1",
-            record_role: "principal",
-            fact_type: "birth",
-            value: "1850",
-            date: "1850",
-            information_quality: "primary",
-            informant: "self",
-            informant_proximity: "self",
-            record_basis: "stated",
-            extracted_for_question_ids: [],
+          recordId: "capture:smoke-obituary",
+          document: {
+            recordType: "obituary",
+            documentForm: "verbatim_transcript",
+            source: { title: "Smoke obituary", repository: "smoke" },
+            persons: [
+              {
+                id: "p1",
+                principal: true,
+                names: [{ given: "Smoke", surname: "Test" }],
+                facts: [{ type: "death", date: "1 May 1990" }],
+              },
+            ],
           },
         },
       ],
@@ -271,11 +251,13 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   {
     tool: "materialize_facts",
     offline: true,
+    // A person not yet in the tree: onto an existing one it needs a probable
+    // person_evidence link, which needs a same_person score behind it.
     args: (ctx) => ({
       projectPath: ctx.projectPath,
-      personId: "P1",
-      recordId: "SMOKE-1",
-      recordRole: "principal",
+      personId: "P9",
+      recordId: "capture:smoke-obituary",
+      recordRole: "deceased",
     }),
     expect: okTrue,
   },
@@ -288,7 +270,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       section: "hypotheses",
       op: "append",
       entry: {
-        claim: "P1 is the SMOKE-1 principal",
+        claim: "P1 is the smoke obituary's deceased",
         status: "active",
         supporting_assertion_ids: [],
         contradicting_assertion_ids: [],
@@ -506,7 +488,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     tool: "image_transcribe",
     args: () => ({ imageId: REAL_IMAGE_ID }),
     expect: (res, ctx) => {
-      if (!ctx.openRouterKeyConfigured) return keyMissing(res);
+      if (ctx.openRouterKeyConfigured === false) return keyMissing(res);
+      if (ctx.openRouterKeyConfigured === null) {
+        const missing = keyMissing(res);
+        return missing.ok ? missing : reauth(res, ctx);
+      }
       return reauth(res, ctx);
     },
   },
@@ -541,6 +527,13 @@ export const CALL_PLAN: readonly SmokeStep[] = [
 
   // Public-network tools: no token, must succeed.
   { tool: "wikipedia_search", args: () => ({ query: "Genealogy" }), expect: noError },
+  // Not a title: the summary lookup 404s and the article is found through search.
+  {
+    tool: "wikipedia_search",
+    label: "wikipedia_search (descriptive query)",
+    args: () => ({ query: "Luo people Kenya ethnic group history" }),
+    expect: noError,
+  },
   { tool: "wiki_search", args: () => ({ query: "parish registers" }), expect: noError },
   {
     tool: "wiki_read",
@@ -728,12 +721,13 @@ export async function detectBearer(explicit?: string): Promise<string | null> {
 }
 
 /**
- * Whether the server's base config carries an OpenRouter key. `hostConfig` says
- * the server reads THIS host's ~/.familysearch-mcp/config.json; otherwise
- * (the compose service, whose config.json is `{"hosted": true}`) false.
+ * Whether the server holds an OpenRouter key. `hostConfig` says the server reads
+ * THIS host's ~/.familysearch-mcp/config.json; otherwise (the compose service)
+ * null: its config.json is `{"hosted": true}`, but compose passes
+ * OPENROUTER_API_KEY from env.sh when eval/.env has one, and this host cannot see it.
  */
-export async function hostOpenRouterKeyConfigured(hostConfig: boolean): Promise<boolean> {
-  if (!hostConfig) return false;
+export async function hostOpenRouterKeyConfigured(hostConfig: boolean): Promise<boolean | null> {
+  if (!hostConfig) return null;
   const config = await readHostJson("config.json");
   return typeof config?.openRouterApiKey === "string" && config.openRouterApiKey.length > 0;
 }

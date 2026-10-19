@@ -16,10 +16,11 @@ bundle both set it.
 | `POST /api/sessions/{id}/messages` `{text}` | Mints `turn_id` (UUID), writes the `turns` row and a `user_msg` event in one transaction, then `SendMessage` with `{turn_id, session_id, project_id, text, enqueued_at}`. 202 `{turn_id, seq, message_id}`; a failed send marks the turn `enqueue_failed` and answers 502. The `turn_id` is in the **body**, never the SQS `MessageId`. |
 | `GET /api/sessions/{id}/events?after=N` | One-shot poll: `{events, activity, turn_active, next_after}`. `Last-Event-ID` beats `after`. |
 | `GET /api/sessions/{id}/events/stream?after=N` | `text/event-stream`. `retry: 1000`; the catch-up rows after the cursor; the current documents once; then `status turn_active` if a turn is in flight; then a 1 s poll. `: ping` after 15 s idle. |
-| `GET/POST /api/sessions`, `GET/PATCH/DELETE /api/sessions/{id}`, `POST …/resume`, `GET …/state` | Session CRUD in the SPA's `SessionSummary` shape; `DELETE` answers 409 while a turn may still be running (its `turn:<id>` backend is connected, or it was claimed in the last 2 min, or queued unclaimed in the last 15) and removes the SDK transcript (S3 objects are left to the orphan sweep, U19); `/state` reads `documents` (`research.json`, `tree.gedcomx.json`). |
+| `GET/POST /api/sessions`, `GET/PATCH/DELETE /api/sessions/{id}`, `POST …/resume`, `POST …/continue`, `GET …/state` | Session CRUD in the SPA's `SessionSummary` shape; `DELETE` answers 409 while a turn may still be running (its `turn:<id>` backend is connected, or it was claimed in the last 2 min, or queued unclaimed in the last 15) and removes the SDK transcript (S3 objects are left to the orphan sweep, U19); a session the worker's retention retired (U19, idle past `RETENTION_SESSION_IDLE_S`) reads `status: retired`, answers 410 to a message, and `POST …/continue` opens a new session on its project; `/state` reads `documents` (`research.json`, `tree.gedcomx.json`). |
 | `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout`, `GET /auth/familysearch/login`, `GET /callback` | Patron sign-in (U2, below). Every `/api/sessions` route needs the session cookie and answers 404 for a session on a project the caller does not own. |
 | `GET …/sidecar/{log_id}` → 404; `GET …/image`, `GET …/logs`, `POST …/files` → 501 | Not in the prototype; each says why. |
 | `GET /`, each top-level file of the dist, `GET /assets/…` | The SPA, when `WEB_DIST_DIR` is set (below). `/docs`, `/redoc` and `/openapi.json` are off. |
+| `GET /api/feedback/context?sessionId=`, `POST /api/feedback` | The SPA's feedback dialog (U20, below): the files and transcript size a report would carry; then the zip, stored in S3 under `feedback/` and sent nowhere. 200 `{ok, filename}`. |
 | `POST …/interrupt` → 202 | Stop (PR #2870 item 1c). The worker owns the turn and no control channel reaches it, so this raises a flag on a control-plane row that the worker's `PreToolUse` hook reads before every tool call. |
 
 ## Sign-in and ownership (U2)
@@ -69,6 +70,36 @@ lands. A refusal from FamilySearch ends the patron's next turn `signin_required`
 sign-in clears it. Sign-in is safe while a turn runs: the callback takes only the grant's
 write lock, and a second sign-in does not revoke the first token (measured 2026-09-29). On
 compose, `make proto-grant` stores the dev-login patron's grant once per stack.
+
+## Feedback (U20)
+
+`web/feedback.py` is the alpha's feedback bundle (`apps/server/app/feedback.py`) over this
+tier's stores; `web/blobstore.py` is the S3 client, with the engine's `GENEALOGY_S3_*`
+semantics. Handoff: U20 in `docs/plan/familysearch-handoff.md`; bundle contract:
+`docs/specs/feedback-case-spec.md`.
+
+- **Owner first.** Both routes answer 404 for a session the caller does not own, a
+  missing `sessionId` included, before the body is validated: a foreign session is never
+  a 422. An owned session with a bad body is 422; a field over 10,000 characters, 400.
+- **What it bundles.** `documents` rows (as the engine's `readText` renders them) and
+  `blobs` bytes from S3, skipping dot segments (`results/.staging/`), stale copies (named)
+  and blobs over 25 MiB. The alpha's 35 MiB selection runs on `blobs.bytes` before any
+  `GetObject`; a blob that cannot be read is named and the report still lands. The
+  transcript comes from `session_entries`, streamed 500 rows at a time under one 20 MiB
+  budget. Living people, API keys, bearer tokens and the owner's current FamilySearch
+  tokens are redacted.
+- **Where it goes.** `feedback/<owner_id>/<project_id>/feedback-<ts>-<8 hex>.zip` in
+  `GENEALOGY_S3_BUCKET`, `ContentType: application/zip`, and nowhere else:
+  `forward_stored_feedback` is the seam for whatever the lead decides. The U19 orphan
+  sweep leaves the prefix alone; on the rehearsal a lifecycle rule expires it at 90 days.
+  No bucket: `POST` answers 503 and `/context` still works. A failed `PutObject` is 502.
+  One build at a time per process.
+- **Environment.** `GENEALOGY_S3_BUCKET` (required for `POST`), `GENEALOGY_S3_REGION`
+  (`us-east-1`), `GENEALOGY_S3_ENDPOINT` (unset on AWS; path style when set),
+  `GENEALOGY_S3_ACCESS_KEY` + `GENEALOGY_S3_SECRET_KEY` (both, or neither for the instance
+  role; one alone refuses to start). Compose and `make proto-web` point it at MinIO's
+  `projects` bucket. To read a bundle: `mc alias set proto http://localhost:9000 proto protoproto`,
+  `mc cp proto/projects/feedback/<owner>/<project>/<file> .` (or `aws s3 cp` on AWS), then `make feedback-case ZIP=<file>`.
 
 ## The row → wire contract (what the worker writes, what the SPA reads)
 
@@ -203,4 +234,6 @@ cannot be tested through the route), and the compose/schema shape. The grant cus
 (U3): `tests/test_proto_grants.py` (the pure decisions and the numbers the locks rest on,
 offline) and `tests/test_proto_grants_pg.py` (the lock interleavings against real Postgres;
 it skips in `make proto-test` without `PROTO_TEST_PG_DSN`, and `make proto-grants-test` and CI
-run it for real).
+run it for real). Feedback (U20): `tests/test_proto_feedback.py` (the routes over a fake store
+and bucket, and parity with the alpha's copy) and `tests/test_proto_feedback_pg.py` (the
+transcript reads against real Postgres, run like the grants suite).

@@ -140,6 +140,21 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     why: "a measurement write-up citing the file AT `3cccc28d`, where its §\"3. Relay\" is the counterexample the audit turns on; the skill was deleted when its agent became the direct entry point, and repointing the citation at the agent would attribute the measured 116 invocations to a body that did not produce them",
   },
   {
+    file: "docs/specs/tree-materialization-spec.md",
+    path: "packages/engine/plugin/agents/record-extractor.md",
+    why: "a change list written when the agent existed; the agent was deleted when extraction moved into code (issues #2937, #2939), and rewriting the list would falsify the record of what that change touched",
+  },
+  {
+    file: "docs/specs/image-reader-agent-spec.md",
+    path: "packages/engine/plugin/skills/record-extraction/SKILL.md",
+    why: "a change list naming the skill as it stood when image-reader was specced; the skill was deleted with the extraction rewrite (issues #2937, #2939)",
+  },
+  {
+    file: "docs/specs/image-transcribe-tool-spec.md",
+    path: "packages/engine/plugin/skills/record-extraction/SKILL.md",
+    why: "change lists naming the skill as it stood when `image_transcribe` shipped; the skill was deleted with the extraction rewrite (issues #2937, #2939)",
+  },
+  {
     file: "CLAUDE.md",
     path: "docs/TODOs.md",
     why: "named because it was retired on 2026-08-02 and must not come back",

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { LOCAL } from "../../src/auth/principal.js";
 import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
 import { join } from "path";
@@ -18,10 +19,34 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
         return "West Bromwich, Staffordshire, England, United Kingdom";
       return null;
     }),
+    // The birthplace cap's distance test (#3390). Unknown names resolve to null,
+    // so no test reaches the live Places API.
+    standardPlaceToCoords: vi.fn(async (name: string) => {
+      // Types as the Places API returns them (probed 2026-10-15).
+      const coords: Record<string, { latitude: number; longitude: number; type: string }> = {
+        "Nueva Italia, Parácuaro, Michoacán, Mexico": { latitude: 19.0167, longitude: -102.1, type: "City" },
+        "La Unión de Isidoro Montes de Oca, Guerrero, Mexico":
+          { latitude: 17.9833, longitude: -101.8167, type: "Municipality" },
+        "Pittsburgh, Allegheny, Pennsylvania, United States":
+          { latitude: 40.4406, longitude: -79.9959, type: "City" },
+        "Chicago, Cook, Illinois, United States": { latitude: 41.8781, longitude: -87.6298, type: "City" },
+        "New Jersey, United States": { latitude: 40.1907, longitude: -74.6728, type: "State" },
+        "Massachusetts, United States": { latitude: 42.3689, longitude: -71.9677, type: "State" },
+        "Boston, Suffolk, Massachusetts, United States":
+          { latitude: 42.3601, longitude: -71.0589, type: "City" },
+      };
+      return coords[name] ?? null;
+    }),
   };
 });
 
-import { researchAppend, countryConsistency, mintedFromThisRecord, personaReachable } from "../../src/tools/research-append.js";
+import {
+  researchAppend,
+  countryConsistency,
+  mintedFromThisRecord,
+  personaReachable,
+  coreIdentifierContradictionInvariants,
+} from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import {
@@ -31,7 +56,7 @@ import {
 } from "../../src/utils/image-store.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
-import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
+import { resolveStandardPlace, standardPlaceToCoords } from "../../src/utils/place-resolver.js";
 
 const citationDetail = {
   who: "Census enumerator",
@@ -336,7 +361,7 @@ describe("research_append (Phase 1)", () => {
       const f = await factF4();
       expect(f.place).toBe("West Bromwich, England");
       expect(f.standard_place).toBeUndefined();
-      expect(r.validation.warnings.join(" ")).toMatch(/cleared \(left unset\)/);
+      expect(r.validation.warnings.join(" ")).toMatch(/cleared standard_place/);
     });
 
     it("(5) `place: null` clears the fact's place rather than writing a null", async () => {
@@ -398,7 +423,7 @@ describe("research_append (Phase 1)", () => {
       expect(r.filesWritten).not.toContain("tree.gedcomx.json");
     });
 
-    it("(8) fires through extraction_append too, not just research_append", async () => {
+    it("(8) is research_append's alone: extraction_append refuses a correction", async () => {
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
 
       const r = await extractionAppend({
@@ -407,10 +432,10 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_011",
         fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
-      });
-      expect(r.ok).toBe(true);
-      if (!r.ok) return;
-      expect((await factF4()).standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      } as any, LOCAL);
+      expect(r.ok).toBe(false);
+      expect((r.errors ?? []).join(" ")).toMatch(/Correcting an existing assertion is not an extraction/);
+      expect((await factF4()).standard_place).not.toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
     });
 
     it("(9) rewrites every fact carrying the id, and no fact carrying another", async () => {
@@ -483,10 +508,31 @@ describe("research_append (Phase 1)", () => {
       expect(r.validation.warnings.join(" ")).toMatch(/non-string 'value'/);
     });
 
-    it("(12) warns when a place correction leaves an un-corrected standard_place", async () => {
-      // The card's own harm one level down: the display string reads corrected
-      // while the place-AUTHORITY value still names the old jurisdiction. Both
-      // the assertion and the fact carry it, so the agreement guard cannot see it.
+    it("(12) re-resolves standard_place when a place correction leaves it out", async () => {
+      // Kept, the old value would name the old jurisdiction while the display
+      // string reads corrected, and the birthplace cap would measure distance
+      // from it. Resolved, the new value lands on the assertion and the fact.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: "West Bromwich, Staffordshire, England" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("West Bromwich, Staffordshire, England");
+      expect(f.standard_place).toBe("West Bromwich, Staffordshire, England, United Kingdom");
+      const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      const a = research.assertions.find((x: any) => x.id === "a_011");
+      expect(a.standard_place).toBe("West Bromwich, Staffordshire, England, United Kingdom");
+    });
+
+    it("(12b) clears standard_place when the corrected place resolves to nothing", async () => {
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
 
       const r = await researchAppend({
@@ -501,8 +547,8 @@ describe("research_append (Phase 1)", () => {
 
       const f = await factF4();
       expect(f.place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
-      expect(f.standard_place).toBe("Thames Centre Township, Middlesex, Ontario, Canada");
-      expect(r.validation.warnings.join(" ")).toMatch(/place authority value was not part of this correction/);
+      expect(f.standard_place).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/cleared standard_place 'Thames Centre Township/);
     });
 
     it("(13) warns loudly when the rewritten fact is a concluded (primary) value", async () => {
@@ -1281,6 +1327,25 @@ describe("research_append (Phase 1)", () => {
     expect(updated.fact_type).toBe("name");
   });
 
+  // Pins the dropped `marriagelicense: "marriage"` alias. A licence is a
+  // distinct event from the marriage it licenses, and folding it away lost
+  // that. Without this test, putting the alias back leaves the whole engine
+  // suite and the harness suite green.
+  it("marriagelicense keeps its own fact_type", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { fact_type: "marriage_license" as any },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const updated = (await readResearch()).assertions.find((a: any) => a.id === "a_001");
+    expect(updated.fact_type).toBe("marriage_license");
+  });
+
   it("appends a person_evidence link, stamps created, references an existing assertion + tree person", async () => {
     await writeProject();
     await attestPairing(dir);
@@ -1791,9 +1856,11 @@ describe("research_append (Phase 2)", () => {
     // The only caller that can write a conflict's winner is the conflict-resolution
     // agent, and the hook holds it off `assertions`. A refusal telling it to update
     // the assertion sends it into a denied write (ut_conflict_resolution_016,
-    // 2026-10-05); the confirmed reading goes back to the section's owner.
+    // 2026-10-05). Extraction writes assertions and they are final, so a confirmed
+    // reading is weighed in the conflict, never written back.
     const uncertain = r.errors.find((e) => e.includes("uncertain reading")) ?? "";
-    expect(uncertain).toMatch(/back to record-extraction, which owns `assertions`/);
+    expect(uncertain).toMatch(/not a correction/);
+    expect(uncertain).not.toMatch(/record-extraction/);
     expect(uncertain).not.toMatch(/op: "update"/);
   });
 
@@ -2125,6 +2192,395 @@ describe("research_append (Phase 3)", () => {
     expect(r.ok && singleOk(r).entryId).toBe("t_001");
     const t = (await readResearch()).timelines[0];
     expect(t.generated).toMatch(/T.*:/); // ISO datetime, not a bare date
+  });
+
+  // The US 1890 federal census does not survive and can never fill a gap
+  // (ADR-0012, issue #2261). Issue #3255: prose alone let an agent write it 4
+  // times across 3 unit tests; this is the write-boundary backstop.
+  describe("US 1890 census backstop (#3255)", () => {
+    const usEvents = [
+      { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Pennsylvania", standard_place: "Schuylkill, Pennsylvania, United States", assertion_ids: ["a_001"], distance_from_previous_km: null },
+    ];
+    const denmarkEvents = [
+      { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Denmark", standard_place: "Copenhagen, Denmark", assertion_ids: ["a_001"], distance_from_previous_km: null },
+    ];
+    // An ordinary immigrant's own timeline: born outside the US, enumerated
+    // and died inside it. Found by the `--runs-per-test 3` stability check
+    // (ut_timeline_005, 2026-10-09): an `every` test over `standard_place`
+    // stayed silent here because the birth event alone broke unanimity.
+    const mixedEvents = [
+      { date: "~1845", date_certainty: "estimated", event_type: "birth", description: "born", place: "Ireland", standard_place: "Ireland", assertion_ids: ["a_000"], distance_from_previous_km: null },
+      { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Pennsylvania", standard_place: "Schuylkill, Pennsylvania, United States", assertion_ids: ["a_001"], distance_from_previous_km: null },
+    ];
+    const appendWithGap = (expectedEvents: string[], events: any[] = usEvents) =>
+      researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "append",
+        entry: {
+          label: "test timeline",
+          person_ids: ["I1"],
+          events,
+          gaps: [{ start: "1880", end: "1900", expected_events: expectedEvents, severity: "high" }],
+        },
+      } as never);
+
+    it.each([
+      ["bare 1890", "census 1890"],
+      ["with a destruction caveat", "census_1890 — largely destroyed, not surviving for most areas"],
+      ["underscore-joined fragments phrasing", "1890_census_fragments"],
+    ])("refuses an expected_events entry naming the US 1890 census: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toContain(entry);
+      expect(msg).toContain("notes");
+    });
+
+    // Round-7 review: `ut_timeline_001` wrote `expected_events: ["census",
+    // "census", "census", "census"]` for a gap whose own notes call
+    // 1870/1880/1890/1900 "four surviving federal census years" and then say
+    // the 1890 schedules did not survive -- so the run counted the
+    // non-surviving 1890 census as a census to go and search, the exact
+    // thing this guard exists to stop, and it got through only because no
+    // entry named its year at all. `TIMELINE_1890_RE` can only see the
+    // literal digits "1890"; a bare "census" is invisible to it by
+    // construction, not a bug in that regex -- the fix is a separate,
+    // earlier check that a census-type entry must name SOME year before the
+    // 1890-specific logic ever runs.
+    it.each([
+      ["the ut_timeline_001 shape, repeated with no year each time", "census"],
+      ["a vaguer phrasing, still no year", "census of some kind"],
+    ])("refuses a census entry naming no year at all: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toContain(entry);
+      expect(msg).toContain("no year");
+    });
+
+    it("still allows a census entry naming a real, non-1890 year with no jurisdiction trouble", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1870 census"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("the veteran exemption still applies to a census entry naming no year at all", async () => {
+      await writeProject();
+      const r = await appendWithGap(["veterans census schedule"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Round-8 review: the round-7 no-year check only recognized 18xx/19xx
+    // years, so a census-type entry naming a real, surviving year OUTSIDE
+    // that window -- the 1790 US federal census, Denmark's 1787, Norway's
+    // 1769 -- was wrongly refused for "naming no year", despite naming one.
+    it.each([
+      ["a real pre-1800 US year", "1790 census", usEvents],
+      ["the same year, underscore-joined", "census_1790", usEvents],
+      ["a foreign pre-1800 year", "1787 Denmark census", denmarkEvents],
+      ["a different foreign pre-1800 year", "1769 census of Norway", denmarkEvents],
+    ])("allows a census entry naming a real year outside 1800-1999: %s", async (_label, entry, events) => {
+      await writeProject();
+      const r = await appendWithGap([entry], events);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Round-8 review: a year RANGE that spans 1890 is the same ut_timeline_001
+    // bug (four surviving census years folded into one entry) written as a
+    // single string instead of a bare placeholder -- "federal censuses
+    // 1870-1900" names two real years and never writes "1890" literally, so
+    // TIMELINE_1890_RE cannot see that the range covers the non-surviving
+    // year. Only a range connector counts: "1880 and 1900 census" names two
+    // SPECIFIC years with no claim about what lies between them and must
+    // stay allowed.
+    it.each([
+      ["hyphen-joined range", "federal censuses 1870-1900"],
+      ["'to'-joined range", "censuses 1880 to 1900"],
+      ["range naming the US explicitly", "US census, every decade 1870-1900"],
+      ["'through'-joined range", "censuses 1880 through 1900"],
+      ["'between...and' range", "censuses between 1880 and 1900"],
+      // Round-10 review: every range in the entry is read, not just the first,
+      // and a two-digit end year is read in the century of the first.
+      ["second of two ranges", "federal censuses 1850-1860 and 1880-1900"],
+      ["'between' after a range that misses 1890", "censuses 1850-1860, between 1880 and 1900"],
+      ["abbreviated end year", "US census 1880-90"],
+    ])("refuses a census entry naming a year range that spans 1890: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok).toBe(false);
+    });
+
+    it("still allows two specific years joined by 'and', which is not a range", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1880 and 1900 census"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it.each([
+      ["abbreviated range after 1890", "censuses 1900-10"],
+      ["abbreviated range crossing a century", "censuses 1895-05"],
+    ])("allows an abbreviated year range that misses 1890: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it.each([
+      ["ISO enumeration date", "1880 census (enumerated 1880-06-01)"],
+      ["state census with its date", "1885 state census, taken 1885-03-01"],
+      ["slash date", "1880 census, 1880/06/01"],
+    ])("does not read a date's month as a two-digit end year: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows the same sentence when it is in `notes`, not `expected_events`", async () => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "append",
+        entry: {
+          label: "test timeline",
+          person_ids: ["I1"],
+          events: usEvents,
+          gaps: [{
+            start: "1880", end: "1900", expected_events: ["census_1900"], severity: "high",
+            notes: "The 1890 federal census would have covered this span but did not survive.",
+          }],
+        },
+      } as never);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows the 1890 veterans schedule, which partly survives", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1890 veterans schedule"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows an unattributed 1890 census entry when the timeline's events are not US-placed", async () => {
+      await writeProject();
+      const r = await appendWithGap(["census 1890"], denmarkEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("refuses an unattributed 1890 census entry on an immigrant's timeline (only SOME events are US-placed)", async () => {
+      await writeProject();
+      const r = await appendWithGap(["census 1890"], mixedEvents);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("census 1890");
+    });
+
+    it("allows a bare '1890 federal census' with no country named, on a non-US timeline (bare 'federal' is not a US signal)", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1890 federal census"], denmarkEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // The lead's #3255 ruling requires this arm, and round-3 review found it
+    // missing entirely: an entry naming some OTHER country must stay silent
+    // regardless of the timeline's own places -- an emigrant's timeline (the
+    // shape this guard exists for) routinely has both a US-placed event AND
+    // a gap entry naming the origin country's own, surviving census.
+    it.each([
+      ["Denmark census 1890", "Denmark census 1890"],
+      ["Sweden census 1890", "Sweden census 1890"],
+      ["Prussia census 1890", "Prussia census 1890"],
+    ])("allows an entry naming another country's 1890 census on the immigrant's mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does not read the ordinary pronoun \"us\" as naming the United States", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1890 census (not available to us)"], denmarkEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("still fires on an entry naming the US explicitly, on a non-US timeline", async () => {
+      await writeProject();
+      const r = await appendWithGap(["United States census 1890"], denmarkEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // An open-ended review found "USA" recognized by neither TIMELINE_NAMES_US_RE
+    // nor the bare-"US" abbreviation check, so it fell through every arm unflagged.
+    it("fires on the abbreviation \"USA\", on a non-US timeline", async () => {
+      await writeProject();
+      const r = await appendWithGap(["USA census 1890"], denmarkEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // Round-5 review: arm 2's exclusion list stopped at "Census"/"Federal",
+    // so every other word in the census's own FORMAL name -- its bureau
+    // name, its common descriptive name, its own ordinal -- was captured as
+    // a candidate jurisdiction word and silenced it, on the exact timeline
+    // this guard exists for.
+    it.each([
+      ["the bureau's own name", "1890 Federal Population Census"],
+      ["the common descriptive name", "1890 Population Census"],
+      ["another common descriptive name", "1890 Decennial Census"],
+      ["the census's own ordinal name", "Eleventh Census, 1890"],
+      ["a jurisdiction LEVEL word, not a name", "Schuylkill County census 1890"],
+    ])("still fires on the census's own formal name, on the mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // Two independent self-reviews found the round-5 exclusion words above
+    // also work as FILLER between a real foreign jurisdiction and "census",
+    // not just as the word adjacent to it: "Essex County census" and "Danish
+    // Population Census" each had their actual jurisdiction word captured by
+    // nothing (the word immediately before "census" is excluded), fell
+    // through to arm 3, and were wrongly refused on this mixed timeline even
+    // though neither names the US. Pins the opposite direction from the
+    // block above -- a real jurisdiction two words from "census", separated
+    // by one of the same exclusion words -- so a future narrowing of this
+    // regex cannot reopen it silently.
+    it.each([
+      ["a US-style county name on a foreign jurisdiction", "Essex County census 1890"],
+      ["an Irish county name", "Cork County census 1890"],
+      ["an English county name", "Yorkshire County census 1890"],
+      ["a nationality adjective before the bureau descriptor", "Danish Population Census 1890"],
+      ["a nationality adjective before the other descriptor", "Swedish Decennial Census 1890"],
+    ])("allows a foreign jurisdiction separated from 'census' by a descriptor word, on the mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Round-7 review: the SAME adjacency/filler mechanism that correctly
+    // finds a real jurisdiction two words from "census" cannot tell one from
+    // an ordinary capitalized word that is neither an article/determiner nor
+    // a census-descriptive word -- "Missing"/"Expected" are captured exactly
+    // like "Essex"/"Danish" above, read as a non-US jurisdiction, and
+    // wrongly ALLOWED on this mixed timeline. This is the documented
+    // false-allow from the code comment and both spec rows (ADR-0011 limit
+    // 1 prefers it over a false refusal) -- pinned here, beside the Denmark
+    // and Essex true-positive cases, so a future narrowing of this regex
+    // cannot silently close it without a test noticing either way.
+    it.each([
+      ["an ordinary adjective bridged by the Population filler", "Missing Population Census 1890"],
+      ["an ordinary adjective directly before the County filler", "Expected County census 1890"],
+      ["an ordinary adjective bridged by the Decennial filler", "Missing Decennial Census 1890"],
+      ["an ordinary adjective directly adjacent to Census, no filler at all", "Missing Census 1890"],
+    ])("still wrongly allows an ordinary capitalized word mistaken for a jurisdiction, on the mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Round-6 review: the filler mechanism above let an ORDINARY capitalized
+    // word that starts the entry -- not a jurisdiction at all -- get
+    // captured as the "foreign jurisdiction" whenever a filler word sat
+    // between it and "census". None of these name a country, so all three
+    // must still fire via arm 3 on the mixed timeline, exactly like the
+    // round-4 stray-capital block below, but reached through the filler
+    // path the round-5 fix added rather than direct adjacency.
+    it.each([
+      ["a determiner bridged to 'census' by the now-removed Federal filler", "The Federal Census 1890"],
+      ["an ordinary adjective bridged by the now-removed Federal filler", "Missing Federal Census 1890"],
+      ["a determiner bridged by the Population filler, same shape as the Danish case", "The Population Census of 1890"],
+    ])("still refuses on the mixed timeline despite a filler-bridged stray capital: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // Round-4 review: arm 2's first cut matched ANY capitalized word anywhere
+    // in the entry, which wrongly silenced every one of these on the exact
+    // immigrant timeline this guard exists for -- none names a jurisdiction
+    // at all, so each must still fire via arm 3.
+    it.each([
+      ["sentence-initial capital", "The 1890 census"],
+      ["a US place name after 'census of'", "1890 census of Schuylkill County"],
+      ["a capitalized word inside a parenthetical", "1890 census (Destroyed in 1921 fire)"],
+      ["a capitalized word far from 'census'", "Household listing in 1890 census"],
+    ])("still refuses on the mixed timeline despite a stray capital: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // Resolves the limitation the first cut of arm 2 knowingly accepted: a
+    // literal US state or county name immediately before "census" is
+    // recognized against the timeline's own US-placed events, not read as
+    // naming a foreign country.
+    it.each([
+      ["the state", "Pennsylvania census 1890"],
+      ["the county", "Schuylkill census 1890"],
+    ])("fires on a literal US place name immediately before 'census', matched against the timeline's own places: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // An independent review found arm 2's jurisdiction regex hard-coded a
+    // lowercase "census" with no /i, so capitalizing "Census" as a
+    // record-title convention skipped the regex match entirely and fell to
+    // arm 3's fallback, silently losing the "names another country" silence
+    // this arm exists to provide -- identical to the allowed lowercase form
+    // in every way except capitalization.
+    it.each([
+      ["Denmark, capitalized", "Denmark Census 1890"],
+      ["Sweden, capitalized", "Sweden Census 1890"],
+    ])("still allows a capitalized 'Census' naming another country, on the mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Documents, rather than hides, the structural cost of matching against
+    // only THIS timeline's own recorded places (no wider US-geography
+    // reference, which would be the per-jurisdiction table ADR-0012 forbids
+    // in different clothing): a real US state or county this specific
+    // timeline has never mentioned is indistinguishable from a foreign one,
+    // so arm 2 silences it -- a false allow, not a false refusal, which is
+    // the direction ADR-0011 limit 1 prefers. Pottsville is literally the
+    // Schuylkill County seat for this same fixture's subject; the guard has
+    // no way to know that from this one timeline entry alone.
+    it.each([
+      ["a different US state", "New York census 1890"],
+      ["the county seat, not yet on this timeline", "Pottsville census 1890"],
+    ])("knowingly allows an unrecorded US place name immediately before 'census': %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows a non-1890 census year", async () => {
+      await writeProject();
+      const r = await appendWithGap(["census 1900"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does not refuse an update that leaves `gaps` untouched", async () => {
+      await writeProject();
+      const appended = await appendWithGap(["census 1900"]);
+      expect(appended.ok).toBe(true);
+      if (!appended.ok) return;
+      const tId = singleOk(appended).entryId;
+      // A later update that writes 1890 into `gaps` would be refused (covered
+      // above); this update never touches `gaps` at all.
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "update",
+        entryId: tId,
+        fields: { label: "renamed timeline" },
+      } as never);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
   });
 
   // `shortfall` vs the tier is a single-object rule, so ADR-0011's first
@@ -5893,6 +6349,88 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before); // nothing written
   });
 
+  // ── D2: record_read persona-bearing producer ──
+  // record_read stages a one-element sidecar with GedcomX personas, keyed on
+  // `recordId` in ark:/61903/1:1: form. A matching record_persona_id is accepted.
+
+  const recordReadResearch = () => {
+    const r = baseResearch();
+    r.log = [{ ...searchLogEntry("results/log_001.json"), tool: "record_read" }] as any;
+    return r;
+  };
+  const writeRecordReadSidecar = (records: any[] = [sidecarRecord()]) =>
+    writeSidecar(records).then(() =>
+      writeFile(
+        join(dir, "results", "log_001.json"),
+        JSON.stringify(
+          {
+            log_id: "log_001",
+            tool: "record_read",
+            retrieved: "2026-01-01T00:00:00Z",
+            returned_count: records.length,
+            payload: { results: records },
+          },
+          null,
+          2,
+        ),
+      ),
+    );
+
+  it("accepts a record_persona_id on a record_read-sourced assertion and persists the ARK form record_id", async () => {
+    await writeProject(recordReadResearch());
+    await writeRecordReadSidecar();
+    const { source_id: _s, ...a } = noId(validAssertion("x"));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...a,
+            source_id: "src_001",
+            record_id: "ark:/61903/1:1:ABCD-123",
+            record_persona_id: "p_1",
+            log_entry_id: "log_001",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    const persisted = (await readResearch()).assertions[1];
+    expect(persisted.record_persona_id).toBe("p_1");
+    expect(persisted.record_id).toBe("ark:/61903/1:1:ABCD-123");
+  });
+
+  it("rejects a record_persona_id that does not match any persona in a record_read sidecar", async () => {
+    await writeProject(recordReadResearch());
+    await writeRecordReadSidecar();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const { source_id: _s, ...a } = noId(validAssertion("x"));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...a,
+            source_id: "src_001",
+            record_id: "ark:/61903/1:1:ABCD-123",
+            record_persona_id: "p_nonexistent",
+            log_entry_id: "log_001",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors).toHaveLength(1);
+    expect(r.errors[0]).toMatch(/does not resolve to a person/);
+    expect(r.errors[0]).not.toMatch(/no GedcomX personas/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
   it("auto-fills across a multi-assertion batch when all ops share one record_id and one record_role", async () => {
     await writeProject(sidecarResearch());
     await writeSidecar();
@@ -6178,7 +6716,7 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("does NOT fire for a non-producer sidecar-less entry (record_read) — still enforces persona-id-must-be-null", async () => {
+  it("enforces persona-id-must-be-null for a sidecar-less record_read entry (results_ref is null)", async () => {
     const research = baseResearch();
     research.log = [
       { ...searchLogEntry(null), tool: "record_read" },
@@ -6216,6 +6754,7 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(bad.ok).toBe(false);
     if (bad.ok) return;
     expect(bad.errors[0]).toMatch(/record_persona_id must be null/);
+    expect(bad.errors[0]).toMatch(/no persona document to point at/);
   });
 
   // ── Joint write: nothing written on failure ──
@@ -6322,6 +6861,39 @@ describe("research_append (composite persist + enforcement)", () => {
     expect((await readResearch()).assertions[1].standard_place).toBe(
       "Pottsville, Schuylkill, Pennsylvania, United States",
     );
+  });
+
+  it("leaves a non-place phrase unstandardized: no sidecar copy, no geocode, no warning (#1962)", async () => {
+    await writeProject(sidecarResearch());
+    const rec = sidecarRecord();
+    rec.gedcomx.persons[0]!.facts!.push({
+      id: "F2",
+      type: "Residence",
+      place: "Same House",
+      standard_place: "Same, Manufahi, Timor-Leste",
+    });
+    await writeSidecar([rec]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_id: "ark:/61903/1:1:ABCD-123",
+            log_entry_id: "log_001",
+            place: "Same House",
+          },
+        },
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.resolvedPlaces ?? []).toEqual([]);
+    expect(r.validation.warnings.join(" ")).not.toMatch(/Same House/);
+    expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    expect((await readResearch()).assertions[1].standard_place).toBeUndefined();
   });
 
   it("rejects a geocode whose country contradicts the place text (England → Cameroon), writes nothing", async () => {
@@ -7365,6 +7937,319 @@ describe("research_append — detected core-identifier contradiction", () => {
     );
     expect((await researchAppend(link("probable"))).ok).toBe(false);
   });
+
+  // ── distance (#3390) ──────────────────────────────────────────────────────
+  // cruz-corona-ancestry: the tree birth is the question's premise, the record
+  // is the answer, 85 mi apart in 1910 -- inside the 250 mi band for 1850-1949.
+  const NUEVA_ITALIA = "Nueva Italia, Parácuaro, Michoacán, Mexico";
+  const LA_UNION = "La Unión de Isidoro Montes de Oca, Guerrero, Mexico";
+  const cruzRecord = { place: LA_UNION, standard_place: LA_UNION };
+  const cruzTree = { date: "Abt 1910", place: NUEVA_ITALIA, standard_place: NUEVA_ITALIA };
+
+  beforeEach(() => {
+    vi.mocked(standardPlaceToCoords).mockClear();
+  });
+
+  it("does NOT cap two same-country places inside the era's distance band", async () => {
+    await write(cruzRecord, cruzTree);
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+    expect(vi.mocked(standardPlaceToCoords)).toHaveBeenCalled();
+  });
+
+  it("still caps the same pair under the pre-1850 band", async () => {
+    await write(cruzRecord, { ...cruzTree, date: "Abt 1830" });
+    const r = await researchAppend(link("confident"));
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/La Unión/);
+  });
+
+  it("caps two different countries with no coordinate lookup", async () => {
+    await write(
+      { standard_place: "Trier, Rheinland-Pfalz, Germany" },
+      { standard_place: "Ireland" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+    expect(vi.mocked(standardPlaceToCoords)).not.toHaveBeenCalled();
+  });
+
+  // Six miles apart, but a border between them: the country arm alone caps it,
+  // even with both coordinates in hand. Called directly, because the prefetch
+  // never looks up a pair whose countries already differ.
+  it("caps a border pair inside the band because the countries differ", () => {
+    const elPaso = "El Paso, El Paso, Texas, United States";
+    const juarez = "Ciudad Juárez, Chihuahua, Mexico";
+    const research = { assertions: [{
+      ...validAssertion("a_050"), record_id: "rec_bapt", place: juarez, standard_place: juarez,
+      information_quality: "indeterminate", informant_proximity: "official_duty",
+    }] };
+    const tree = { persons: [{ id: "I1", facts: [
+      { id: "F1", type: "Birth", date: "~1905", place: elPaso, standard_place: elPaso },
+    ] }] };
+    const coords = new Map([
+      [elPaso, { latitude: 31.7619, longitude: -106.485 }],
+      [juarez, { latitude: 31.6904, longitude: -106.4245 }],
+    ]);
+    const entry = { assertion_id: "a_050", person_id: "I1", confidence: "confident" };
+    expect(coreIdentifierContradictionInvariants(entry, research, tree, [], undefined, coords)).toHaveLength(1);
+    // The same coordinates on a Mexican place: inside the band, so no cap.
+    const nearby = "Samalayuca, Juárez, Chihuahua, Mexico";
+    coords.set(nearby, coords.get(elPaso)!);
+    const sameCountry = { persons: [{ id: "I1", facts: [
+      { id: "F1", type: "Birth", date: "~1905", place: nearby, standard_place: nearby },
+    ] }] };
+    expect(coreIdentifierContradictionInvariants(entry, research, sameCountry, [], undefined, coords)).toEqual([]);
+  });
+
+  // Ten miles apart across the border: Scotland against England is two
+  // countries, so it caps offline, coordinates or not.
+  it("caps Scotland against England however close", () => {
+    const gretna = "Gretna, Dumfriesshire, Scotland, United Kingdom";
+    const carlisle = "Carlisle, Cumberland, England, United Kingdom";
+    const research = { assertions: [{
+      ...validAssertion("a_050"), record_id: "rec_bapt", place: gretna, standard_place: gretna,
+      information_quality: "indeterminate", informant_proximity: "official_duty",
+    }] };
+    const tree = { persons: [{ id: "I1", facts: [
+      { id: "F1", type: "Birth", date: "1820", place: carlisle, standard_place: carlisle },
+    ] }] };
+    const coords = new Map([
+      [gretna, { latitude: 55.0, longitude: -3.0667 }],
+      [carlisle, { latitude: 54.8925, longitude: -2.9329 }],
+    ]);
+    const entry = { assertion_id: "a_050", person_id: "I1", confidence: "confident" };
+    expect(coreIdentifierContradictionInvariants(entry, research, tree, [], undefined, coords)).toHaveLength(1);
+  });
+
+  /** The gate called directly with both coordinates in hand, so only the
+   *  country reading decides. */
+  const direct = (
+    record: Record<string, unknown>,
+    treeBirth: Record<string, unknown>,
+    coords: [string, number, number, string?][],
+  ) =>
+    coreIdentifierContradictionInvariants(
+      { assertion_id: "a_050", person_id: "I1", confidence: "confident" },
+      { assertions: [{
+        ...validAssertion("a_050"), record_id: "rec_bapt",
+        information_quality: "indeterminate", informant_proximity: "official_duty", ...record,
+      }] },
+      { persons: [{ id: "I1", facts: [{ id: "F1", type: "Birth", ...treeBirth }] }] },
+      [],
+      undefined,
+      new Map(coords.map(([n, latitude, longitude, type]) => [n, { latitude, longitude, type: type ?? "City" }])),
+    );
+
+  // Two cities 78 mi apart: inside the 1850-1949 band, outside the pre-1850 one.
+  const kyoto = "Kyoto, Kyoto, Japan", nagoya = "Nagoya, Aichi, Japan";
+  const kyotoNagoya: [string, number, number, string?][] = [[kyoto, 35.0116, 135.7681], [nagoya, 35.1815, 136.9066]];
+
+  // Every year on either side spans the era: a tree birth of 1848 against a
+  // record dated 1851 touches 1850-1949, so the wider band applies.
+  it("takes the era band over the years of both sides", () => {
+    expect(direct({ place: kyoto, standard_place: kyoto }, { date: "1848", place: nagoya, standard_place: nagoya },
+      kyotoNagoya)).toHaveLength(1);
+    expect(direct({ place: kyoto, standard_place: kyoto, date: "1851" },
+      { date: "1848", place: nagoya, standard_place: nagoya }, kyotoNagoya)).toEqual([]);
+  });
+
+  // A prefecture, and a type the API qualifies ("State (Top level)"), are whole
+  // regions: their coordinates are a centre, so the pair caps.
+  it("reads region types the way Places writes them", () => {
+    for (const type of ["Prefecture", "State (Top level)", "Principality or Emirate"]) {
+      expect(direct({ place: kyoto, standard_place: kyoto, date: "1880" },
+        { date: "1880", place: nagoya, standard_place: nagoya },
+        [[kyoto, 35.0116, 135.7681, type], [nagoya, 35.1815, 136.9066]])).toHaveLength(1);
+    }
+  });
+
+  // Two counties named as a birthplace are two places, whatever their centres'
+  // distance; a county against a town inside the band still gets a distance.
+  it("caps two counties against each other inside the band", () => {
+    const perth = "Perthshire, Scotland, United Kingdom", angus = "Angus, Scotland, United Kingdom";
+    const kirriemuir = "Kirriemuir, Forfarshire, Scotland, United Kingdom";
+    const coords: [string, number, number, string?][] = [
+      [perth, 56.5, -3.75, "County (Top level)"], [angus, 56.7, -2.9, "County (Top level)"],
+      [kirriemuir, 56.6738, -3.0043, "Town"],
+    ];
+    expect(direct({ place: perth, standard_place: perth }, { date: "1865", place: angus, standard_place: angus },
+      coords)).toHaveLength(1);
+    expect(direct({ place: angus, standard_place: angus }, { date: "1832", place: kirriemuir, standard_place: kirriemuir },
+      coords)).toEqual([]);
+  });
+
+  // Ireland under a trailing United Kingdom is still Ireland, not England's
+  // country: 135 mi in 1880 is inside the band, and the countries differ.
+  it("reads a country named before a trailing United Kingdom", () => {
+    const dublin = "Dublin, Ireland, United Kingdom", liverpool = "Liverpool, Lancashire, England";
+    expect(direct({ place: dublin, standard_place: "Dublin, Dublin, Ireland" },
+      { date: "1880", place: liverpool, standard_place: liverpool },
+      [["Dublin, Dublin, Ireland", 53.3498, -6.2603], [liverpool, 53.4084, -2.9916]])).toHaveLength(1);
+  });
+
+  // "CA" is Canada as often as California: the standard place names the
+  // country, so Windsor, Ontario against Detroit caps.
+  it("does not read a trailing CA as California", () => {
+    const windsor = "Windsor, Essex, Ontario, Canada", detroit = "Detroit, Wayne, Michigan, United States";
+    expect(direct({ place: "Windsor, Essex, Ontario, CA", standard_place: windsor },
+      { date: "1880", place: "Detroit, Wayne, Michigan", standard_place: detroit },
+      [[windsor, 42.3149, -83.0364], [detroit, 42.3314, -83.0458]])).toHaveLength(1);
+  });
+
+  // Croatia is not in canonicalCountry's table, but a standard place always
+  // ends at its country: 185 mi apart in 1880, inside the band, and two
+  // countries, so it caps.
+  it("reads a standard place's last segment as its country even when unlisted", () => {
+    const zagreb = "Zagreb, Croatia", budapest = "Budapest, Hungary";
+    expect(direct(
+      { place: "Zagreb", standard_place: zagreb },
+      { date: "1880", place: "Budapest", standard_place: budapest },
+      [[zagreb, 45.815, 15.9819], [budapest, 47.4979, 19.0402]],
+    )).toHaveLength(1);
+  });
+
+  // "Delaware" is a US state, but here it is a town in Ontario: a state counts
+  // only as the place's last segment.
+  it("does not read a US state name inside a non-US place", () => {
+    const delaware = "Delaware, Middlesex, Ontario, Canada";
+    const detroit = "Detroit, Wayne, Michigan, United States";
+    expect(direct(
+      { place: "Delaware, Middlesex, Ontario", standard_place: delaware },
+      { date: "1890", place: "Detroit, Wayne, Michigan", standard_place: detroit },
+      [[delaware, 42.9131, -81.4167], [detroit, 42.3314, -83.0458]],
+    )).toHaveLength(1);
+  });
+
+  // A bare "UK" names no constituent, so it is not a different country from
+  // England: 12 mi apart, the distance decides.
+  it("does not read a bare United Kingdom as differing from England", () => {
+    const bathUk = "Bath, Somerset, UK", bristol = "Bristol, Gloucestershire, England";
+    expect(direct(
+      { place: bathUk, standard_place: bathUk },
+      { date: "1820", place: bristol, standard_place: bristol },
+      [[bathUk, 51.3811, -2.359], [bristol, 51.4545, -2.5879]],
+    )).toEqual([]);
+  });
+
+  // One side written with "England", the other with "England, United Kingdom":
+  // one country, so the distance decides, and 12 mi is inside even the 25 mi band.
+  it("reads England and England, United Kingdom as one country", () => {
+    const bath = "Bath, Somerset, England";
+    const bristol = "Bristol, Gloucestershire, England, United Kingdom";
+    const research = { assertions: [{
+      ...validAssertion("a_050"), record_id: "rec_bapt", place: bath, standard_place: bath,
+      information_quality: "indeterminate", informant_proximity: "official_duty",
+    }] };
+    const tree = { persons: [{ id: "I1", facts: [
+      { id: "F1", type: "Birth", date: "1820", place: bristol, standard_place: bristol },
+    ] }] };
+    const coords = new Map([
+      [bath, { latitude: 51.3811, longitude: -2.359 }],
+      [bristol, { latitude: 51.4545, longitude: -2.5879 }],
+    ]);
+    const entry = { assertion_id: "a_050", person_id: "I1", confidence: "confident" };
+    expect(coreIdentifierContradictionInvariants(entry, research, tree, [], undefined, coords)).toEqual([]);
+  });
+
+  it("caps a same-country pair beyond its band", async () => {
+    const pittsburgh = "Pittsburgh, Allegheny, Pennsylvania, United States";
+    const chicago = "Chicago, Cook, Illinois, United States";
+    await write(
+      { place: pittsburgh, standard_place: pittsburgh },
+      { date: "~1880", place: chicago, standard_place: chicago },
+    );
+    expect((await researchAppend(link("probable"))).ok).toBe(false);
+  });
+
+  // A state's coordinates are its centre, not a birthplace: New Jersey and
+  // Massachusetts centres are 212 mi apart, inside the band, but two births in
+  // them can be 400 mi apart. A region-level side caps.
+  it("caps a same-country pair when a side is a whole state", async () => {
+    await write(
+      { place: "New Jersey", standard_place: "New Jersey, United States" },
+      { date: "1875", place: "Massachusetts", standard_place: "Massachusetts, United States" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+    expect(vi.mocked(standardPlaceToCoords)).toHaveBeenCalled();
+    // The tree side alone at state level: Boston to New Jersey's centre is
+    // about 200 mi, inside the band, and still caps.
+    await write(
+      { place: "Boston", standard_place: "Boston, Suffolk, Massachusetts, United States" },
+      { date: "1875", place: "New Jersey", standard_place: "New Jersey, United States" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+    // And the record side alone.
+    await write(
+      { place: "New Jersey", standard_place: "New Jersey, United States" },
+      { date: "1875", place: "Boston", standard_place: "Boston, Suffolk, Massachusetts, United States" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  it("caps a same-country pair when the tree birth carries no standard_place", async () => {
+    await write(cruzRecord, { date: "Abt 1910", place: NUEVA_ITALIA });
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  it("caps a same-country pair whose coordinates cannot be found", async () => {
+    await write(
+      { place: "Zirándaro, Guerrero, Mexico", standard_place: "Zirándaro, Guerrero, Mexico" },
+      cruzTree,
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  it("caps a same-country pair with no year on either side", async () => {
+    await write(cruzRecord, { place: NUEVA_ITALIA, standard_place: NUEVA_ITALIA, date: undefined });
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  // A place-only update must not leave the old standard_place standing for the
+  // new place: Tijuana is about 1,300 mi from Nueva Italia.
+  it("caps when a place-only update leaves a stale standard_place near the tree birth", async () => {
+    await write(cruzRecord, cruzTree);
+    const upd = await researchAppend({ projectPath: dir, section: "assertions", op: "update" as const,
+      entryId: "a_050", fields: { place: "Tijuana, Baja California, Mexico" } } as any);
+    expect(upd.ok).toBe(true);
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  it("does NOT cap a birth place that is a non-place phrase", async () => {
+    await write({ place: "Same House" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  // An update's link is its post-merge one, so the prefetch must read the
+  // target entry's assertion and person, not only the op's fields.
+  it("reads the distance for an update that raises a link's tier", async () => {
+    const raise = async (treeBirth: Record<string, unknown>) => {
+      await write(cruzRecord, treeBirth);
+      const appended = await researchAppend(link("speculative"));
+      expect(appended.ok).toBe(true);
+      const id = singleOk(appended).entryId;
+      vi.mocked(standardPlaceToCoords).mockClear();
+      return researchAppend({
+        projectPath: dir, section: "person_evidence", op: "update" as const,
+        entryId: id, fields: { confidence: "confident" },
+      });
+    };
+    expect((await raise(cruzTree)).ok).toBe(true);
+    expect(vi.mocked(standardPlaceToCoords)).toHaveBeenCalled();
+    expect((await raise({ ...cruzTree, date: "Abt 1830" })).ok).toBe(false);
+  });
+
+  // The prefetch replays the call's own ops: an assertion whose place an
+  // earlier op in the call corrects is compared as corrected.
+  it("reads the distance for an assertion whose place this same call corrects", async () => {
+    await write({ place: "Trier, Rhine Province, Germany", standard_place: null }, cruzTree);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "update" as const, entryId: "a_050", fields: cruzRecord },
+        { section: "person_evidence", op: "append" as const, entry: link("confident").entry },
+      ],
+    } as any);
+    expect(r.ok ? [] : failure(r).errors).toEqual([]);
+  });
 });
 
 // ─── The two-party arm of the detected contradiction (#2272) ────────────────
@@ -8282,32 +9167,33 @@ describe("research_append — relationship direction and the sibling value (#253
     }
   });
 
-  it("binds extraction_append too, which is the path record-extractor uses", async () => {
-    // `extractionAppend` delegates to `researchAppend`, so one precondition
-    // covers both writers — but nothing tested the delegated path, and it is
-    // the one the agent this card edits actually calls.
+  it("binds extraction_append too: the sibling a document states passes it", async () => {
+    // `extractionAppend` writes through `researchAppend`, so the precondition
+    // binds it as well. It builds relationship assertions in code, so what is
+    // checked is that the assertion it builds for a stated sibling is one the
+    // precondition accepts.
     await writeProject();
     const r = await extractionAppend({
       projectPath: dir,
-      ops: [
-        {
-          section: "assertions",
-          op: "append",
-          entry: {
-            ...noId(validAssertion("x", "src_001")),
-            fact_type: "relationship",
-            value: "sibling of Grace (Whitaker) Tolman",
-            structured_value: {
-              relationship_type: "child",
-              related_person_role: "sibling_1",
-            },
-          },
+      documents: [{
+        recordId: "capture:tolman-obituary-1990",
+        document: {
+          recordType: "obituary",
+          documentForm: "verbatim_transcript",
+          source: { title: "Obituary of Grace (Whitaker) Tolman", repository: "Herald Journal" },
+          persons: [
+            { id: "p1", principal: true, gender: "female", names: [{ given: "Grace", surname: "Tolman" }], facts: [{ type: "death", date: "2 May 1990", place: "Logan, Cache, Utah" }] },
+            { id: "p2", gender: "male", statedRelation: "brother", names: [{ given: "Harold", surname: "Whitaker" }], facts: [] },
+          ],
+          relationships: [{ type: "sibling", person1: "p1", person2: "p2" }],
         },
-      ],
-    });
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(failure(r).errors?.join(" ")).toMatch(/states the subject is a sibling/);
+      }],
+    } as any, LOCAL);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    const rels = research.assertions.filter((a: any) => a.fact_type === "relationship");
+    expect(rels.map((a: any) => a.structured_value?.relationship_type)).toContain("sibling");
+    expect(rels.some((a: any) => a.structured_value?.relationship_type === "child")).toBe(false);
   });
 
   it("refuses a capitalised value — the case-insensitive flag is load-bearing", async () => {
@@ -8885,14 +9771,13 @@ describe("research_append — sources-without-assertions nudge (#1478)", () => {
     expect(warned(r.validation.warnings)).toBe(false);
   });
 
-  it("fires through extraction_append with a tool-neutral message", async () => {
+  it("names no tool, so it reads right to a caller that does not hold research_append", async () => {
     await write(researchWith(3, 0));
-    const r = await extractionAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const warn = r.validation.warnings.find((w) => WARN.test(w));
     expect(warn).toBeTruthy();
-    // record-extractor is denied research_append — the nudge must not name it
     expect(warn).not.toContain("research_append");
   });
 });
@@ -9449,6 +10334,193 @@ describe("research_append — person_evidence requires a recorded score", () => 
     };
     await writeProject(noRefs);
     expect((await researchAppend(link(null, "I9") as any)).ok).toBe(false);
+  });
+});
+
+
+describe("research_append — capture-pending plan item not terminal (#1226, #2484)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-capture-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const ANCESTRY_URL =
+    "https://www.ancestry.com/search/collections/1850usfedcen/?name=Patrick_Flynn";
+
+  /** A project whose single plan item's latest log entry is an external-site
+   *  handoff. `captureReceived` toggles whether that handoff's capture arrived;
+   *  `extraLog` appends later entries (a FamilySearch hit, or a capture arrival
+   *  under a null plan_item_id). */
+  function captureResearch(itemStatus: string, captureReceived: boolean, extraLog: any[] = []) {
+    const r = baseResearch();
+    r.questions = [validQuestion("q_001")];
+    r.plans = [
+      validPlan("pl_001", "q_001", "active", [{ ...seededPlanItem("pli_001"), status: itemStatus }]),
+    ];
+    r.log = [
+      {
+        id: "log_001",
+        plan_item_id: "pli_001",
+        performed: "2026-05-01T10:15:00Z",
+        tool: "external_site",
+        query: { surname: "Flynn" },
+        outcome: "negative",
+        results_examined: 0,
+        results_ref: null,
+        external_site: { site: "ancestry", url_generated: ANCESTRY_URL, capture_received: captureReceived },
+      },
+      ...extraLog,
+    ];
+    return r;
+  }
+  async function writeProject(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  // A new skip must carry skip_category (#1830, planItemSkipInvariants) — send it
+  // so these cases exercise the capture-pending guard in isolation, not that rule.
+  const setStatus = (status: string) => ({
+    projectPath: dir,
+    section: "plan_items" as const,
+    op: "update" as const,
+    planId: "pl_001",
+    entryId: "pli_001",
+    fields: status === "skipped" ? { status, skip_category: "answered" } : { status },
+  });
+
+  it("refuses 'skipped' while the latest external-site search awaits a capture", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    const errs = failure(await researchAppend(setStatus("skipped") as any)).errors.join(" ");
+    expect(errs).toMatch(/pli_001/);
+    expect(errs).toMatch(/awaiting a capture/);
+    expect(errs).toMatch(/#1226/);
+    // The message names the way through, so an autonomous skip is not steered
+    // back into the stall (EdmondOware review).
+    expect(errs).toMatch(/skip_category: "inaccessible"/);
+    expect(errs).toMatch(/user_declined/);
+  });
+
+  it("refuses 'completed' in the same state", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    expect((await researchAppend(setStatus("completed") as any)).ok).toBe(false);
+  });
+
+  it("allows 'in_progress' — the correct state while the capture is outstanding", async () => {
+    await writeProject(captureResearch("planned", false));
+    expect(singleOk(await researchAppend(setStatus("in_progress") as any))).toBeTruthy();
+  });
+
+  it("allows 'skipped' once the handoff's own capture has arrived", async () => {
+    await writeProject(captureResearch("in_progress", true));
+    expect(singleOk(await researchAppend(setStatus("skipped") as any))).toBeTruthy();
+  });
+
+  it("allows 'skipped' when a later arrival (same site+url, null plan_item_id) carries the capture", async () => {
+    await writeProject(
+      captureResearch("in_progress", false, [
+        {
+          id: "log_002",
+          plan_item_id: null,
+          performed: "2026-05-02T10:15:00Z",
+          tool: "external_site",
+          query: { surname: "Flynn" },
+          outcome: "positive",
+          results_examined: 1,
+          results_ref: null,
+          external_site: { site: "ancestry", url_generated: ANCESTRY_URL, capture_received: true },
+        },
+      ]),
+    );
+    expect(singleOk(await researchAppend(setStatus("skipped") as any))).toBeTruthy();
+  });
+
+  it("allows terminal when a later FamilySearch hit, not the handoff, is the item's latest entry", async () => {
+    await writeProject(
+      captureResearch("in_progress", false, [
+        {
+          id: "log_002",
+          plan_item_id: "pli_001",
+          performed: "2026-05-03T10:15:00Z",
+          tool: "record_search",
+          query: { surname: "Flynn" },
+          outcome: "positive",
+          results_examined: 1,
+          results_ref: null,
+          external_site: null,
+        },
+      ]),
+    );
+    expect(singleOk(await researchAppend(setStatus("completed") as any))).toBeTruthy();
+  });
+
+  it("does not fire on a no-op restatement of an already-terminal status (no status change this op)", async () => {
+    await writeProject(captureResearch("skipped", false));
+    const r: any = await researchAppend(setStatus("skipped") as any);
+    expect(JSON.stringify(r.errors ?? [])).not.toContain("awaiting a capture");
+  });
+
+  // The `plans` route reaches items[] directly (a `plans` update's `fields:
+  // { items }` is copied through), so the guard has to hold there too or it is
+  // one inline edit away from being bypassed — the gap EdmondOware's review
+  // flagged. `skip_category` is sent so only the capture-pending rule can fire.
+  const setItemStatusViaPlans = (status: string) => ({
+    projectPath: dir,
+    section: "plans" as const,
+    op: "update" as const,
+    entryId: "pl_001",
+    fields: {
+      items: [
+        {
+          ...seededPlanItem("pli_001"),
+          status,
+          ...(status === "skipped" ? { skip_category: "answered" } : {}),
+        },
+      ],
+    },
+  });
+
+  it("refuses 'skipped' set inline through a plans update while the capture is pending", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    const errs = failure(await researchAppend(setItemStatusViaPlans("skipped") as any)).errors.join(" ");
+    expect(errs).toMatch(/pli_001/);
+    expect(errs).toMatch(/awaiting a capture/);
+  });
+
+  it("allows 'skipped' inline through a plans update once the capture has arrived", async () => {
+    await writeProject(captureResearch("in_progress", true));
+    expect(singleOk(await researchAppend(setItemStatusViaPlans("skipped") as any))).toBeTruthy();
+  });
+
+  // The documented autonomous no-user / inaccessible-site skip: search-external-
+  // sites.md step 4 tells the agent to mark the item `skipped` with one of these
+  // categories when a capture cannot be obtained. Refusing it would deny the
+  // skill's own instruction and stall the run (EdmondOware review).
+  const setSkipWithCategory = (skip_category: string) => ({
+    projectPath: dir,
+    section: "plan_items" as const,
+    op: "update" as const,
+    planId: "pl_001",
+    entryId: "pli_001",
+    fields: { status: "skipped", skip_category, skip_reason: "no user available in autonomous run" },
+  });
+
+  it("allows a capture-pending 'skipped' with skip_category 'inaccessible' (no user to capture)", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    expect(singleOk(await researchAppend(setSkipWithCategory("inaccessible") as any))).toBeTruthy();
+  });
+
+  it("allows a capture-pending 'skipped' with skip_category 'user_declined'", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    expect(singleOk(await researchAppend(setSkipWithCategory("user_declined") as any))).toBeTruthy();
+  });
+
+  it("still refuses a capture-pending 'skipped' with a non-exempt skip_category (the _026 escalation shape)", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    const errs = failure(await researchAppend(setSkipWithCategory("answered") as any)).errors.join(" ");
+    expect(errs).toMatch(/awaiting a capture/);
   });
 });
 
@@ -10323,6 +11395,302 @@ describe("supported evidence floor (#2086)", () => {
     expect(promote.ok).toBe(true);
   });
 
+});
+
+// ─── Precondition 2: informant_proximity "unknown" ⟹ information_quality
+//     "indeterminate" (issue #2937) ────────────────────────────────────────
+//
+// Prose in `agents/record-extractor.md` from issue #2173's finding (now carried
+// by issue #2484). Prose did not hold: across the committed e2e corpus the model
+// broke the rule on 248 of 982 `unknown` assertions, which is what moved it into
+// code. The document tier mirrors this in `validator.test.ts`.
+
+describe("research_append — informant_proximity 'unknown' requires indeterminate quality", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-prox-floor-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const FLOOR = /informant_proximity "unknown" but information_quality/;
+  const appendAssertion = (overrides: Record<string, unknown>) =>
+    researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "append",
+      entry: noId({ ...validAssertion("ignored"), ...overrides }),
+    });
+
+  // ── APPEND, broken three ways.
+
+  it("refuses unknown + secondary on append", async () => {
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "secondary",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  it("refuses unknown + primary on append", async () => {
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "primary",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  it("writes NOTHING when it refuses", async () => {
+    // A refusal that half-persisted would be worse than no guard.
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "secondary",
+    });
+    expect(r.ok).toBe(false);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  // ── UPDATE. The arm the issue calls out separately, and the one that
+  //    actually produced the corpus violations: flipping proximity to
+  //    "unknown" and leaving a stale `secondary` behind.
+
+  it("refuses an update that flips proximity to unknown, leaving a stale secondary", async () => {
+    const seed = baseResearch();
+    seed.assertions = [
+      {
+        ...validAssertion("a_001"),
+        informant_proximity: "family_not_present",
+        information_quality: "secondary",
+      },
+    ];
+    await writeFile(join(dir, "research.json"), JSON.stringify(seed, null, 2));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { informant_proximity: "unknown" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  it("refuses an update that flips quality away from indeterminate under an unknown proximity", async () => {
+    const seed = baseResearch();
+    seed.assertions = [
+      {
+        ...validAssertion("a_001"),
+        informant: "unknown",
+        informant_proximity: "unknown",
+        information_quality: "indeterminate",
+      },
+    ];
+    await writeFile(join(dir, "research.json"), JSON.stringify(seed, null, 2));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { information_quality: "primary" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  // ── The other direction. A guard fails two ways; breaking it tests one.
+
+  it("accepts unknown + indeterminate", async () => {
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "indeterminate",
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts indeterminate at a KNOWN proximity — not a biconditional", async () => {
+    // The decision tree's "CANNOT TELL" branch, reachable only once question 1
+    // answered YES. The ordinary census shape; an `iff` reading refuses it.
+    const r = await appendAssertion({
+      informant: "unknown household member (likely self or spouse)",
+      informant_proximity: "household_member",
+      information_quality: "indeterminate",
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a stated 1880+ relationship", async () => {
+    // Named by the issue's Done-means as an explicit must-still-accept.
+    const r = await appendAssertion({
+      fact_type: "relationship",
+      value: "child of Thomas Doyle",
+      informant: "unknown household member",
+      informant_proximity: "household_member",
+      information_quality: "indeterminate",
+      record_basis: "stated",
+      structured_value: { relationship_type: "child", related_person_role: "head_of_household" },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a computed birth date at record_basis 'inferred'", async () => {
+    // The other Done-means must-still-accept: a birth YEAR derived from a
+    // stated age is `inferred`, and that is orthogonal to this rule.
+    const r = await appendAssertion({
+      fact_type: "birth",
+      value: "about 1818",
+      date: "~1818",
+      date_certainty: "approximate",
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "indeterminate",
+      record_basis: "inferred",
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("leaves an out-of-enum quality to the enum error alone", async () => {
+    // Mirrors the validator-tier guard: `mid-research-flynn-bad-enum` a_001 is
+    // unknown + "tertiary", and ut_validate_schema_004 pins ONE error for it.
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "tertiary",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(false);
+  });
+});
+
+// ─── Advisory: a transcription with no image_filename (issue #2256 → #2937) ──
+
+describe("research_append — transcription without image_filename is advisory", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-transcription-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const WARN = /records a transcription but no image_filename/;
+  const warned = (ws: string[]) => ws.some((w) => WARN.test(w));
+  const appendSource = (extra: Record<string, unknown>) =>
+    researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "append",
+      entry: noId({ ...validSource("x"), ...extra }),
+    });
+
+  it("warns — and never blocks — for a transcription with a null image_filename", async () => {
+    const r = await appendSource({
+      transcription: "Thomas Doyle, aged 32, born Ireland.",
+      image_filename: null,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(true);
+    // Advisory: the source still persisted.
+    expect(r.filesWritten).toContain("research.json");
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(research.sources).toHaveLength(2);
+  });
+
+  it("warns when image_filename is omitted entirely", async () => {
+    const r = await appendSource({ transcription: "Thomas Doyle, aged 32." });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(true);
+  });
+
+  it("names the offending source id, so a batch is actionable", async () => {
+    const r = await appendSource({ transcription: "text", image_filename: null });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.find((x) => WARN.test(x))!;
+    expect(w).toMatch(/source 'src_\d+'/);
+  });
+
+  // ── The other direction, both shapes the absorbed text names explicitly.
+
+  it("stays silent for a source with no transcription", async () => {
+    const r = await appendSource({ transcription: null, image_filename: null });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("stays silent for a source that cites a ref", async () => {
+    const r = await appendSource({
+      transcription: "Thomas Doyle, aged 32.",
+      image_filename: "004022578_00190.jpg",
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("stays silent for a whitespace-only transcription", async () => {
+    // Blank is not a transcription; warning here would nag a no-op field.
+    const r = await appendSource({ transcription: "   ", image_filename: null });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("does not nag a write that touches no source", async () => {
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "append",
+      entry: noId(validAssertion("ignored")),
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+});
+
+describe("mintedFromThisRecord counts person-level refs (#2696)", () => {
+  const research = {
+    sources: [
+      { id: "src_1", gedcomx_source_description_id: "S1" },
+      { id: "src_2", gedcomx_source_description_id: "S2" },
+    ],
+    assertions: [
+      { source_id: "src_1", record_id: "REC-A" },
+      { source_id: "src_2", record_id: "REC-B" },
+    ],
+  };
+  const tree = (sources: unknown) => ({
+    persons: [{ id: "I9", gender: "Male", names: [{ id: "N1", given: "A", surname: "B" }], sources }],
+    sources: [{ id: "S1", title: "A" }, { id: "S2", title: "B" }],
+  });
+
+  it("a person whose only refs are person-level, all to this record, was minted from it", () => {
+    expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }]))).toBe(true);
+  });
+
+  it("a person-level ref to another record means it was not minted from this one", () => {
+    expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }, { ref: "S2" }]))).toBe(false);
+  });
 });
 
 describe("research_append — a resolve names how it was settled (resolution_kind, #1852)", () => {

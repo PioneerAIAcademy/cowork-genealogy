@@ -15,7 +15,6 @@ Differs from `mid-research-flynn` in these ways:
 
 ## Used by
 
-- `project-status` tests where the skill must report on a completed project.
 - `proof-conclusion` tests for a project at `proved` tier (the highest-confidence outcome).
 - `question-selection` tests where all active questions are resolved — the skill should either propose a follow-on question (e.g., siblings, maternal line) or report "no open questions."
 - Boundary tests verifying that skills meant for active research don't volunteer work on completed projects.

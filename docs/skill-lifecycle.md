@@ -416,12 +416,13 @@ held. Place every finding first:
    own `references/` directory (e.g.
    `citation/references/gps-citation-standards.md`), which the skill loads on
    demand — keeping the main body short. A *plugin agent* finding goes **inline,
-   into the table for that record type inside the agent body** (e.g. the census
-   informant table in `packages/engine/plugin/agents/record-extractor.md`):
+   into the table for that record type inside the agent body**:
    agents carry no sibling reference files, by decision, because on-demand
    `Read` was measured to skip silently (`docs/architecture.md` §3.4). Sending an
    agent finding to a `references/` file creates a file the agent will never
-   read.
+   read. An extraction gap is neither: roles and classifications are decided in
+   code (`src/utils/record-extract.ts`, `src/utils/structured-document.ts`), so it
+   is a tooling defect (lane 1).
 4. **Core doctrine** (a genuine cross-record-type behavior change) → **first
    ask whether it can be a tool rule; only then a SKILL.md edit**, gated by the
    unit suite.
@@ -724,6 +725,7 @@ hand-catching the same class of issue ten rounds in, the loop isn't learning.
 |---|---|---|---|
 | 0 Branch | ⌨️ terminal | `git checkout -b <short-task-name>` | GitHub Desktop → New branch… |
 | 1 Start from a failure | 🤖 / ⌨️ / 🖥️ | `make feedback-case ZIP=…` · `/interpret-e2e-result` · `make e2e-project TEST=…` | `scripts\setup-feedback-case.bat` · `eval\SeedProject.bat` |
+| *(side)* measure a hosted run | ⌨️ terminal | `make feedback-profile ZIP=…` — time and cost per session, agent, skill and tool | in `eval\harness`: `uv run python -m e2e.feedback_profile <zip>` |
 | 2 Whose fault? | 🤖 Claude Code | read the project's `results/` files | same |
 | 3 Capture | 🤖 Claude Code | `/mine-unit-test [--project \| --e2e-run <dir>]` | same |
 | 4 Run + grade *(baseline)* | ⌨️ terminal → 🌐 browser | `make eval-skill SKILL=<name>`, `make eval-ui` | `eval\RunTests.bat`, `eval\Start.bat` |

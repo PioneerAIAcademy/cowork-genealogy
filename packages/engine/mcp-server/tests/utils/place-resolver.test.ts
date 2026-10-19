@@ -28,6 +28,7 @@ import {
   sharedJurisdiction,
   __clearPlaceResolverCachesForTests,
   __usePlaceTableForTests,
+  isNonPlacePhrase,
 } from "../../src/utils/place-resolver.js";
 
 const mockSearchPlace = vi.mocked(searchPlace);
@@ -431,6 +432,27 @@ describe("empty / whitespace input short-circuits without a network search", () 
   });
 });
 
+describe("non-place phrases are never standardized (#1962)", () => {
+  it("recognizes the whole-text phrase, ignoring case, spacing and periods", () => {
+    for (const p of ["Same House", "  same   PLACE ", "R.F.D.", "Do.", "Ditto", "N/A"]) {
+      expect(isNonPlacePhrase(p), p).toBe(true);
+    }
+  });
+
+  it("accepts a real place, including one that contains a phrase word", () => {
+    for (const p of ["Same Place, Wayne, Ohio", "Same, Manufahi, Timor-Leste", "Homer", "Rural Retreat", "Dover", "Home, Clermont, Ohio"]) {
+      expect(isNonPlacePhrase(p), p).toBe(false);
+    }
+  });
+
+  it("resolveStandardPlace returns null without searching, with or without record context", async () => {
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "1", fullName: "Same, Manufahi, Timor-Leste", type: "Town" })]);
+    expect(await resolveStandardPlace("Same House")).toBeNull();
+    expect(await resolveStandardPlace("Do", { contextPlaces: ["Wayne, Ohio, United States"] })).toBeNull();
+    expect(mockSearchPlace).not.toHaveBeenCalled();
+  });
+});
+
 describe("repIdToStandardPlace", () => {
   it("returns the fullName from the description endpoint", async () => {
     mockGetPlaceById.mockResolvedValue({
@@ -457,13 +479,14 @@ describe("standardPlaceToCoords", () => {
     expect(await standardPlaceToCoords("Rome, Italy")).toEqual({
       latitude: 41.9,
       longitude: 12.5,
+      type: "City",
     });
     expect(mockGetPlaceById).not.toHaveBeenCalled();
   });
 
   it("falls back to the description endpoint when the entry lacks coords", async () => {
     mockSearchPlace.mockResolvedValue([
-      entry({ placeRepId: "7", fullName: "Atlantis", score: 1 }),
+      entry({ placeRepId: "7", fullName: "Atlantis", type: "Town", score: 1 }),
     ]);
     mockGetPlaceById.mockResolvedValue({
       placeRepId: "7",
@@ -473,9 +496,11 @@ describe("standardPlaceToCoords", () => {
       latitude: 1.1,
       longitude: 2.2,
     } as Awaited<ReturnType<typeof getPlaceById>>);
+    // The type is the matched search entry's, not the description's.
     expect(await standardPlaceToCoords("Atlantis")).toEqual({
       latitude: 1.1,
       longitude: 2.2,
+      type: "Town",
     });
   });
 });

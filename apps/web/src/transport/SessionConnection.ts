@@ -114,6 +114,14 @@ export class WsSessionConnection implements SessionConnection {
   // than the one this card is about. Pinned by
   // "focus does not reset the credential-timeout budget".
   private credentialTimeouts = 0
+  // Replay-dedupe cursor (#3387). The server stamps every recorded frame with
+  // a seq before broadcasting it, then replays its whole history to each
+  // (re)connect. Instance fields, not per-socket: they survive the drop so the
+  // replay after a silent reconnect is dropped instead of folded again. A page
+  // reload constructs a new connection, so lastSeq=0 lets the full replay
+  // rebuild the chat.
+  private lastSeq = 0
+  private epoch: unknown = null
 
   private onVisibility = (): void => {
     if (typeof document === 'undefined') return
@@ -189,7 +197,7 @@ export class WsSessionConnection implements SessionConnection {
         // The control plane is unreachable or the session is gone. Same backoff
         // as a refused socket, so this can't spin and can't hang silently.
         this.connecting = false
-        // 410: the session is more than 24 h old and the server will never accept
+        // 410: the session is more than 72 h old and the server will never accept
         // it (#3406). Terminal and never retried, checked before the `hidden`
         // return so a tab that is hidden when it lands does not ask again on
         // focus. Not `fail()`, whose "Chat unavailable" is the wrong message, and
@@ -264,6 +272,22 @@ export class WsSessionConnection implements SessionConnection {
         msg = JSON.parse(ev.data)
       } catch {
         return
+      }
+      // Frames without a seq pass through untouched: status, snapshot and ping
+      // frames are never stamped, and a sandbox still running pre-#3387 server
+      // code stamps nothing — those sessions keep the replay bug, nothing breaks.
+      // isFinite, not just typeof: JSON.parse accepts 1e999 as Infinity, and one
+      // such frame would pin lastSeq at Infinity and drop every later frame.
+      if (typeof msg.seq === 'number' && Number.isFinite(msg.seq)) {
+        // A fresh sandbox_server (LocalProvider.ensure_server replaces a dead
+        // one) counts seq from 1 again under a new epoch; without this reset a
+        // client holding a high lastSeq would silently drop every new frame.
+        if (msg.epoch !== this.epoch) {
+          this.epoch = msg.epoch
+          this.lastSeq = 0
+        }
+        if (msg.seq <= this.lastSeq) return // the reconnect edge: never fold a frame twice
+        this.lastSeq = msg.seq
       }
       for (const l of [...this.listeners]) l(msg)
     }

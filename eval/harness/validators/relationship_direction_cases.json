@@ -3,7 +3,7 @@
     "Shared cases for the relationship-direction rule (issue #2535).",
     "",
     "The rule exists twice -- Python in eval/harness/validators/",
-    "test_record_extraction.py (the eval check) and TypeScript in",
+    "extraction_validators.py (the eval check) and TypeScript in",
     "packages/engine/mcp-server/src/tools/research-append.ts (the write-path",
     "deny) -- because this repo has no runtime sharing between the harness and",
     "the engine. Nothing else keeps the two in step, so both sides assert",

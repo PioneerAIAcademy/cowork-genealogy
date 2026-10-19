@@ -49,6 +49,11 @@ export function pluginSkillsDir(): string {
   return path.join(repoRoot(), 'packages', 'engine', 'plugin', 'skills');
 }
 
+/** Test-only skills (lead, 2026-09-30): staged for unit runs, never shipped. */
+export function testOnlySkillsDir(): string {
+  return path.join(evalDir(), 'skills');
+}
+
 export function pluginAgentsDir(): string {
   return path.join(repoRoot(), 'packages', 'engine', 'plugin', 'agents');
 }

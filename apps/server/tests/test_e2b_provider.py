@@ -232,6 +232,23 @@ async def test_resume_of_gone_sandbox_returns_missing_not_raises(provider):
         await gone.write_file("/x", b"y")
 
 
+async def test_a_failed_set_timeout_on_resume_is_logged_not_raised(provider, monkeypatch, caplog):
+    """resume() stays best-effort, but its set_timeout no longer fails silently. What
+    that call does to a paused sandbox through a cached handle is unmeasured (#3305),
+    so a failure there has to show up in the logs."""
+    sb = await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+
+    async def _refuses(self, timeout):
+        raise RuntimeError("sandbox is paused")
+
+    monkeypatch.setattr(_FakeHandle, "set_timeout", _refuses)
+    with caplog.at_level(logging.WARNING, logger="app.sandbox.e2b"):
+        resumed = await provider.resume(sb.id)
+    assert resumed.state is SandboxState.RUNNING
+    assert any(sb.id in r.getMessage() and "set_timeout" in r.getMessage()
+               for r in caplog.records), caplog.text
+
+
 # ── Baked image provenance (#1489) ────────────────────────────────────────────
 # The template is referenced by a stable name and carries no version, so the only
 # way to ask a running system which build a session is on is to read the file the
@@ -318,9 +335,9 @@ async def test_dirty_flag_only_when_literally_true(provider):
 async def test_unreadable_provenance_is_logged_at_warning(provider, caplog):
     """A silent failure here is indistinguishable from the healthy "no session
     created yet" state, because both surface as a null on /api/health. The level
-    matters: `obs.py` attaches its handler to the `workbench` logger, which this
-    module is not under, so a debug or info line here is dropped by the root
-    logger's default WARNING and never emitted at all."""
+    matters: `obs.setup_logging()` handles the `app` logger at INFO (#3305), but
+    wherever it has not run, only WARNING and above reach Python's last-resort
+    handler, so a debug or info line here would never be emitted."""
     _FakeAsyncSandbox.image_files = {}                      # an image predating this change
     with caplog.at_level(logging.WARNING, logger="app.sandbox.e2b"):
         await provider.create(SandboxSpec(template="t", labels={}, model="m"))

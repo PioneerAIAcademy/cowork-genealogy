@@ -38,7 +38,6 @@ from claude_agent_sdk import (
     ToolResultBlock,
     ToolUseBlock,
     UserMessage,
-    query,
 )
 
 from e2e.mcp_stderr import read_mcp_stderr_lines
@@ -57,6 +56,7 @@ from harness.context_policy import (
 )
 from harness.judge import _summarize_response
 from harness.redact import redact_secrets
+from harness.sdk_query import close_query, open_query
 import harness.workspace as _workspace
 from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
@@ -250,14 +250,21 @@ def is_blocked_tree_tool(
 def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
     """Whether this is a main-thread call to a `SUBAGENT_ONLY_TOOLS` member.
 
-    Both members are declared by NO skill's `allowed-tools`: `extraction_append`
-    lives only on `agents/record-extractor.md` (the #942 case), and `image_read`
-    is declared by no agent at all since `image-reader-opus` was retired (issue
-    #2013) — the deny is kept regardless, because it is what keeps inline base64
-    off the main thread. A call on the main thread (no `agent_id`) is the router
-    substituting for a failed spawn and doing the work itself.
+    The set has ONE member today: `image_read`, declared by no skill and by no
+    agent since `image-reader-opus` was retired (issue #2013) — the deny is kept
+    regardless, because it is what keeps inline base64 off the main thread. A
+    call on the main thread (no `agent_id`) is the router substituting for a
+    failed spawn and doing the work itself.
 
-    The policy binds in e2e for both because `agent_id` presence alone is a
+    `extraction_append` was the other member (the #942 case) and LEFT the set in
+    issue #2937, which routes indexed-record extraction through code called from
+    the main thread. See `harness.context_policy`'s set comment for what that
+    retires — in particular that this predicate is exactly the arm that cannot
+    express the declared-tools exemption, so the unindexed-path substitution #942
+    guarded is now unchecked in e2e, which is filed on the `nothing-checks`
+    register.
+
+    The policy binds in e2e because `agent_id` presence alone is a
     sufficient discriminator — which is all e2e can see, since its sub-skills run
     in the same session via the `Skill` tool with no `agent_id` to attribute them
     (see `harness.context_policy` docstring). We deny the bare tool directly
@@ -1237,6 +1244,34 @@ _RUNLOG_STRING_MAX = 500
 # acceptable at 0.7%, but that is the trade, not an absence of one.
 _RUNLOG_MAX_CHARS = 4000
 
+# An `Agent` result is the one payload whose VALUE is the thing being measured:
+# issue #3188 compares what a subagent returned against what the main thread
+# relayed, and a raw side cut at 500 chars reports "the relay dropped content"
+# for content the LOG dropped. Measured over the 203 committed e2e logs: 834
+# truncated strings inside `Agent` summaries, full lengths median 2,274 / p90
+# 5,684 / p95 7,092 / max 21,578, ~2.06 MB dropped corpus-wide. 8,000 covers
+# 97% of them and recovers ~1.97 MB of that; 25,000 would be needed for the
+# last 3%, which is the tail this bound deliberately keeps out of a committed
+# artifact. The whole-response companion is sized for two text blocks (the
+# return, then the `agentId:/<usage>` announcement) plus the JSON envelope.
+#
+# NOT done through `_RUNLOG_EXEMPT_KEYS`: that path saves ONE value per key,
+# last wins — safe for `image_transcribe` (always one text block) and wrong
+# here, where 807 of 845 corpus summaries carry two text blocks and the
+# announcement is last in all 845. Exempting `text` would save the
+# announcement and overwrite the return with it.
+_RUNLOG_AGENT_STRING_MAX = 8000
+_RUNLOG_AGENT_MAX_CHARS = 12000
+
+
+def _is_agent_tool(tool_name: str | None) -> bool:
+    """Suffix match, as `_exempt_keys_for` does, so every server spelling
+    resolves (CLAUDE.md "Dual-spelled tool names"). The corpus spells it
+    `Agent` in all 1,738 calls; `Task` is accepted for the same reason."""
+    return bool(tool_name) and (
+        tool_name.endswith("Agent") or tool_name.endswith("Task")
+    )
+
 # Per-key exemptions from the string and backstop caps above. Each entry is
 # (bare_tool_suffix, response_key): a tool matched by suffix (so every server
 # spelling resolves — CLAUDE.md § "Dual-spelled tool names") and a top-level
@@ -1373,7 +1408,11 @@ def _summarize_tool_response(
                     if key in doc:
                         saved[key] = doc[key]
 
-    summary = _summarize_response(unwrapped, string_max=_RUNLOG_STRING_MAX)
+    agentish = _is_agent_tool(tool_name)
+    summary = _summarize_response(
+        unwrapped,
+        string_max=_RUNLOG_AGENT_STRING_MAX if agentish else _RUNLOG_STRING_MAX,
+    )
 
     # Re-insert full values of exempt keys, replacing truncated copies.
     if saved:
@@ -1396,8 +1435,9 @@ def _summarize_tool_response(
     # is to preserve the full value (issue #2561 item 2: the largest
     # transcriptions run past the 4000-char backstop, so it would truncate them
     # without this bypass).
-    if not saved and len(text) > _RUNLOG_MAX_CHARS:
-        text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
+    max_chars = _RUNLOG_AGENT_MAX_CHARS if agentish else _RUNLOG_MAX_CHARS
+    if not saved and len(text) > max_chars:
+        text = text[: max_chars - 3] + "..."
 
     # Never emit a SHORTER capture than the old head-truncation would have. A
     # key-preserving summary can come out shorter on a long list of small items —
@@ -2029,8 +2069,8 @@ async def _run_agent(
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
     # Every call the per-context policy denied — BOTH arms, not just the one this
-    # comment used to name: a main-thread `extraction_append`/`image_read` (the
-    # router doing a subagent's job after a failed spawn, #942), and an
+    # comment used to name: a main-thread `image_read` (the
+    # router doing a subagent's job after a failed spawn, #942/#1273), and an
     # owned-section `research_append` (#1273), which fires for a named subagent
     # too. The attempt itself is in `tool_calls` (streamed from the ToolUseBlock
     # before the PreToolUse deny); this list is the record that it did not run.
@@ -2085,6 +2125,10 @@ async def _run_agent(
     # discrepancy can be checked against a version delta (the local CLI the SDK
     # spawns may differ from Cowork's bundled one).
     cli_version: dict[str, str | None] = {"v": None}
+    # The current session's stream, so the close after the wall-clock block
+    # reaches it however `_consume` ended (None once closed), and a close still
+    # running when the wall-clock cap cancelled the resume path.
+    live: dict[str, Any] = {"it": None, "closing": None}
     # Whether the FIRST init's `tools` list offered ToolSearch; None when that
     # init carried no list. Listed at init; blind to the per-model gate (see
     # env_for_sdk) — `False` proves tool search was off, `True` does not prove
@@ -2215,8 +2259,9 @@ async def _run_agent(
 
         # The per-context tool policy (harness/context_policy.py): a main-thread
         # call to any SUBAGENT_ONLY_TOOLS member is the router substituting for a
-        # failed subagent spawn. Both members are enforced here — `extraction_append`
-        # (#942) and `image_read` — since neither is declared by any skill and
+        # failed subagent spawn. Every member is enforced here — today just
+        # `image_read`, since `extraction_append` (#942) left the set in issue
+        # #2937 — because no remaining member is declared by any skill and
         # `agent_id` presence alone discriminates, which is all e2e can see (its
         # sub-skills run in this same session via the Skill tool with no `agent_id`).
         # We deny the bare tool directly rather than through `subagent_only_violation`,
@@ -2236,9 +2281,8 @@ async def _run_agent(
             # this line alone. For image_read the recovery is the transcription
             # plugin @plugin:image-reader, which is now also the only image reader
             # (image-reader-opus retired, issue #2013).
-            # The fallback covers a future third guarded tool.
+            # The fallback covers a future second guarded tool.
             recovery = {
-                "extraction_append": "@plugin:record-extractor",
                 "image_read": "@plugin:image-reader",
             }.get(bare, "the owning subagent")
             narration.append(
@@ -2256,7 +2300,7 @@ async def _run_agent(
 
         # An owned SECTION, not an owned tool — a separate arm on purpose. The
         # block above says the whole tool is reserved for a subagent, which is
-        # true of extraction_append and false of research_append: that one is
+        # true of image_read and false of research_append: that one is
         # the general writer, called from the main thread constantly for plans,
         # questions, conflicts and the log. Sharing the branch handed the agent
         # a deny telling it the tool was off-limits, and a narration naming the
@@ -2737,6 +2781,19 @@ async def _run_agent(
             and resumes["n"] < MAX_RESUME
         )
 
+    async def _shutdown(it) -> None:
+        """Close a session's stream and wait for its CLI subprocess to exit.
+
+        The close runs on its own task, shielded: the resume path calls this
+        inside `_consume`, under the wall-clock cap, and a cap cancel that cut
+        the SDK's teardown short would leave the CLI running and drop it from
+        the SDK's atexit kill. A cancelled caller leaves the task in
+        `live["closing"]` for the close after the wall-clock block to finish.
+        """
+        live["closing"] = asyncio.ensure_future(close_query(it))
+        await asyncio.shield(live["closing"])
+        live["closing"] = None
+
     async def _consume():
         nonlocal usage, error, aborted_reason
 
@@ -2793,27 +2850,12 @@ async def _run_agent(
             )
             _emit("[abort] genealogy MCP server unavailable — this run never happened")
 
-        async def _shutdown(it) -> None:
-            """Close the query stream so the CLI subprocess exits before we go.
-
-            This abort fires seconds into a run, while every other stop reason
-            takes minutes and then spends ~30s in the judge. That difference
-            matters on Windows: a live CLI child still holds handles inside the
-            workspace, so `TemporaryDirectory.__exit__` raises
-            `PermissionError [WinError 32]` — and because `__exit__` runs before
-            our exception propagates, that error *replaces* McpUnavailableError,
-            burying the operator message and returning the wrong exit code
-            (observed 2026-08-04). Mirrors the resume path's teardown below.
-            """
-            try:
-                await asyncio.wait_for(it.aclose(), timeout=15)
-            except Exception:  # noqa: BLE001 — teardown is best-effort
-                pass
-
         current_options = options
         current_prompt = user_message
         while True:  # session (re)start loop — re-entered only to resume a stall
-            iterator = query(prompt=current_prompt, options=current_options).__aiter__()
+            iterator = live["it"] = open_query(
+                prompt=current_prompt, options=current_options
+            ).__aiter__()
             _emit("agent started" if resumes["n"] == 0
                   else f"resumed session (attempt {resumes['n']}) after stall")
             restart = False
@@ -2869,6 +2911,22 @@ async def _run_agent(
                                     "tool_calls_before": len(tool_calls),
                                     "kind": "assistant",
                                     "text": block.text,
+                                    # Which thread said it. A subagent's own
+                                    # AssistantMessages stream through this same
+                                    # branch -- `usage.thread_windows.sub` is
+                                    # non-zero in 28 of the 28 committed logs
+                                    # carrying it, reaching 223 messages in one
+                                    # run -- so without this a relay-fidelity
+                                    # reader cannot tell the main thread's words
+                                    # from the subagent's it is supposed to be
+                                    # compared against (#3188). Same test the
+                                    # usage tagger below already uses.
+                                    "thread": (
+                                        "main"
+                                        if getattr(message, "parent_tool_use_id", None)
+                                        is None
+                                        else "sub"
+                                    ),
                                 }
                             )
                             one_line = " ".join(block.text.split())
@@ -2983,7 +3041,6 @@ async def _run_agent(
                                             backstop=True,
                                             queries=mcp_state["queries"],
                                         )
-                                        await _shutdown(iterator)
                                         return
                                 progressed = True
                     timeline.append(
@@ -3113,7 +3170,6 @@ async def _run_agent(
                         )
                         if abort_now:
                             _abort_mcp_unavailable(find_server_entry(servers))
-                            await _shutdown(iterator)
                             return
                 elif isinstance(message, ResultMessage):
                     timeline.append(
@@ -3174,7 +3230,6 @@ async def _run_agent(
                 ):
                     aborted_reason = "max_tool_calls"
                     error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
-                    await _shutdown(iterator)
                     return
 
                 # Progress watchdog: a stall is "stream alive, no progress". The
@@ -3219,10 +3274,10 @@ async def _run_agent(
             if not restart:
                 return
             resumes["n"] += 1
-            try:
-                await asyncio.wait_for(iterator.aclose(), timeout=15)
-            except Exception:  # noqa: BLE001 — best-effort teardown of a hung subprocess
-                pass
+            # Wait for the stalled CLI to exit before the resumed one starts on
+            # the same session, so the two never run at once.
+            await _shutdown(iterator)
+            live["it"] = None
             _emit(f"stall — resuming session {session_id['id']!r} (attempt {resumes['n']})")
             current_options = replace(options, resume=session_id["id"], fork_session=False)
             current_prompt = (
@@ -3248,6 +3303,20 @@ async def _run_agent(
         # way the ResultMessage branch does, so it isn't mislabeled `error`.
         aborted_reason = "max_turns" if is_turn_cap_error(detail) else "error"
         error = detail
+    finally:
+        consume_ended = time.monotonic()
+        # The one close for every way `_consume` ends: each early `return`, an
+        # exception, a cap, and a resume close the cap interrupted. Here rather
+        # than inside `_consume` so the wall-clock cap cannot interrupt it or
+        # relabel a reason `_consume` already decided. A live CLI child also
+        # holds handles inside the workspace, so on Windows the temp-dir
+        # cleanup would raise `PermissionError [WinError 32]` and replace the
+        # run's own error (observed 2026-08-04 on the MCP-unavailable abort).
+        if live["closing"] is not None:
+            await live["closing"]
+        elif live["it"] is not None:
+            await _shutdown(live["it"])
+        live["it"] = live["closing"] = None
 
     if aborted_reason is None and tool_call_count["n"] > fixture.caps.tool_calls:
         aborted_reason = "max_tool_calls"
@@ -3284,8 +3353,10 @@ async def _run_agent(
     # `total_cost_usd`.
     result_message_seen = "num_turns" in usage
     if not result_message_seen:
+        # To the start of the teardown, not to now: waiting for the CLI to
+        # exit (about 10s at most) is not time the run spent, as in skill_runner.
         usage = _fallback_usage(
-            streamed, int((time.monotonic() - run_started) * 1000)
+            streamed, int((consume_ended - run_started) * 1000)
         )
 
     # Both new fields are written HERE, after the fallback branch above, so they

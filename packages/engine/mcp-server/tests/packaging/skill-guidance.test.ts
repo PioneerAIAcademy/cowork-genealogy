@@ -16,11 +16,13 @@ const canonicalPath = join(repoRoot, "plugin", "references", "places-guidance.md
 
 // Skills that carry a byte-identical copy of the canonical places guidance. Add
 // a skill here (and copy the file) when it starts using place tools or writing
-// places.
-const SKILLS_WITH_PLACES_GUIDANCE = [
-  "timeline",
-  "record-extraction",
-];
+// places. `timeline` left when issue #2797 converted it to an agent (moved to
+// AGENTS_WITH_PLACES_GUIDANCE below); `conflict-resolution` left when issue
+// #3036 did the same, but its new agent body does not inline this guidance at
+// all, so it is not in either list. `record-extraction` left when issue #3312
+// deleted the skill entirely (its agent, `record-structurer`, does not inline
+// this guidance either) -- no skill carries this guidance any more.
+const SKILLS_WITH_PLACES_GUIDANCE: string[] = [];
 
 // Agents that inline the canonical places guidance verbatim in their body
 // (CLAUDE.md "No playbook/reference files for agents": an agent carries its own
@@ -29,8 +31,8 @@ const SKILLS_WITH_PLACES_GUIDANCE = [
 // skill-copy mechanism, which does not apply inside an agent, so the agent
 // inlines the canonical BODY (comment stripped) and this arm asserts that body
 // appears verbatim. historical-context moved here from the skills list when
-// issue #2800 converted it to an agent.
-const AGENTS_WITH_PLACES_GUIDANCE = ["historical-context"];
+// issue #2800 converted it to an agent, and timeline when issue #2797 did.
+const AGENTS_WITH_PLACES_GUIDANCE = ["historical-context", "timeline"];
 
 // Skills whose copy is deliberately specialized, so byte-identical is the wrong
 // contract for them. Each needs a reason — this list is not an escape hatch for

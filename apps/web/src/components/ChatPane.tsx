@@ -14,7 +14,7 @@ import {
 } from './chatEvents'
 
 export const SESSION_EXPIRED_TEXT =
-  "This session is more than 24 hours old and can't be continued. Start a new session."
+  "This session is more than 72 hours old and can't be continued. Start a new session."
 
 // How close to the bottom still counts as "at the bottom". Deliberately not an
 // equality check: fractional device pixel ratios and sub-pixel scrollHeight
@@ -168,7 +168,7 @@ export default function ChatPane({
   // event being folded, not as of the last render. See trackLiveTask.
   const liveTasksRef = useRef<ReadonlySet<string>>(new Set())
   const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
-  // Set when /connect refused the session as more than 24 h old (#3406). The
+  // Set when /connect refused the session as more than 72 h old (#3406). The
   // connection never opens, so the composer is replaced for good.
   const [expired, setExpired] = useState<string | null>(null)
   // 1c: the label for how the last turn ended, or null for an ordinary finish.
@@ -202,7 +202,7 @@ export default function ChatPane({
     // ends with no content: a Stop taken before the first token.
     if (kind === 'turn_start') return
     // Subagent lifecycle. Not chat content — this drives the status line, so a
-    // long delegation reads as "record-extractor · person_read · 12 tools"
+    // long delegation reads as "record-structurer · sidecar_read · 2 tools"
     // instead of an unattributed spinner.
     if (kind === 'task_started' || kind === 'task_progress') {
       liveTasksRef.current = trackLiveTask(liveTasksRef.current, kind, ev)

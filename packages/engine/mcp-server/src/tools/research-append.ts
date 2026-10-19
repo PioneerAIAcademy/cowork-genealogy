@@ -19,10 +19,12 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { getProjectStore } from "../store/project-store.js";
+import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
+  competingParentSets,
   conflictBlocksCompletion,
   questionTiedAssertionIds,
   whyConflictBlocksCompletion,
@@ -46,13 +48,24 @@ import {
 import { compatiblePlace } from "../utils/date-comparison.js";
 import { normalizeString } from "../utils/string-similarity.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
-import { placeSegments, canonicalCountry } from "../utils/place-resolver.js";
+import {
+  placeSegments,
+  canonicalCountry,
+  standardPlaceToCoords,
+  UK_CONSTITUENTS,
+  placeTypeKey,
+  resolveStandardPlace,
+  countryConsistency,
+  isNonPlacePhrase,
+  type PlaceCoords,
+} from "../utils/place-resolver.js";
+import { birthThresholdMiles, lookupPlaceCoords } from "../utils/place-coords.js";
+import { haversineDistance } from "./distance.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
-import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
@@ -70,6 +83,7 @@ import {
   factText,
   materializesToPersonFact,
   type AssertionFactAttr,
+  factTypeKey,
 } from "../utils/record-persona.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
@@ -362,6 +376,306 @@ function unorderableDateWarnings(entry: any, research: any): string[] {
   return out;
 }
 
+// The US 1890 federal census does not survive and can never fill a gap
+// (ADR-0012, issue #2261) -- `expected_events` naming it, bare or with a
+// destruction caveat attached, is a false claim prose alone let through 4
+// times across 3 unit tests (issue #2797, commit 8f1621b0b). This is a single
+// fact fixed in code, not a per-country survival table (issue #3255, lead
+// ruling 2026-10-08): it knows only that the US 1890 census is gone, nothing
+// about any other year or jurisdiction.
+//
+// Attribution differs from the harness's own backstop
+// (`test_us_1890_never_expected`), which reads `tool_calls` to see which
+// `{Country}_Census` wiki page was fetched -- a writer precondition sees only
+// the document being written, not the run's tool history. Three arms, checked
+// in order:
+//
+//   1. An entry naming the US outright fires regardless of the timeline's
+//      places.
+//   2. An entry naming some OTHER jurisdiction explicitly stays silent,
+//      regardless of the timeline's places -- "Denmark census 1890" must
+//      never be refused just because the same timeline also has a US-placed
+//      event (an emigrant's own timeline, the exact shape this guard exists
+//      for, routinely has both). Detected structurally: a capitalized word
+//      immediately before "census" -- not a per-country table, which
+//      ADR-0012 forbids, and not "any capitalized word anywhere in the
+//      entry", which a review round found caught ordinary sentence-initial
+//      or parenthetical capitals ("The 1890 census", "1890 census
+//      (Destroyed in 1921 fire)", "Household listing in 1890 census") and
+//      so silenced entries that name no jurisdiction at all and should fire
+//      via arm 3. Requiring direct adjacency to "census" is what a mere
+//      exclusion list cannot give: a word three tokens away from "census"
+//      says nothing about what the entry is naming. The adjacent word is
+//      then checked against the timeline's OWN recorded places (every
+//      alphabetic token in a US-placed event's `place`/`standard_place`) --
+//      if it matches, it names a US STATE OR COUNTY, not a foreign country
+//      ("Pennsylvania census 1890" / "Schuylkill census 1890" on the
+//      Schuylkill County timeline both fire, resolving a limitation the
+//      first cut of this arm had), and arm 2 does not apply. Otherwise the
+//      word names some other, non-US jurisdiction and arm 2 silences it.
+//      Knowingly lets through, in the direction that now costs a refusal
+//      rather than a false allow: a foreign-country reference NOT
+//      immediately adjacent to "census" ("the 1890 census in Denmark",
+//      "Denmark's 1890 census") is not recognized by arm 2 and falls to
+//      arm 3, which fires if the timeline has a US-placed event elsewhere --
+//      narrowing arm 2 for precision costs this shape, deliberately, since
+//      the alternative (any capitalized word) cost the four phrasings above.
+//      A SECOND, structural knowingly-lets-through: `usPlaceWords` only knows
+//      THIS timeline's own recorded places, not US geography in general, so
+//      a real US state or county the timeline has never mentioned ("New York
+//      census 1890", "Pottsville census 1890" on a timeline that has only
+//      ever recorded Schuylkill County) is indistinguishable from a foreign
+//      one and arm 2 silences it -- a false allow (the entry should fire,
+//      since the federal census is equally gone in New York). Deliberate,
+//      not an oversight: the only fix that closes it is a US-places
+//      reference wider than this one document, which is the per-jurisdiction
+//      table ADR-0012 forbids in different clothing, and ADR-0011 limit 1
+//      prefers exactly this direction of error (a false allow over a false
+//      refusal) when the two trade off. Found by an independent review,
+//      2026-10-11; not separately put to the lead, since it is a cost of the
+//      no-table design the ruling itself chose, not a deviation from it.
+//   3. An entry naming no jurisdiction at all falls back to the timeline's
+//      own events -- it fires when ANY non-null `standard_place` ends in
+//      "United States". Not "every": an immigrant's own timeline routinely
+//      carries a non-US birth or baptism event (born in Ireland, enumerated
+//      and died in Pennsylvania), and the 1860-1908 Schuylkill County gap
+//      that motivated this rule is exactly that shape -- an `every` check
+//      stayed silent on it because the birth event alone broke the
+//      unanimity, found by the --runs-per-test 3 stability check this
+//      precondition was built to pass (ut_timeline_005, run 3/3,
+//      2026-10-09). This particular choice -- "any" over "every" -- was
+//      made unilaterally against evidence the original ruling did not have;
+//      it is shipped here measured and tested, with the Schuylkill County
+//      case put to the lead on #3255 for a retroactive ruling, not decided
+//      silently. A timeline with zero US-placed events is still never
+//      refused on an ambiguous entry.
+//
+// Stays silent on the 1890 veterans schedule, which partly survives. Does
+// NOT match on bare "federal" as a US signal -- several federal states call
+// their own census a federal census, so a bare match risks reading an
+// unrelated jurisdiction's correct, surviving census as the US one. The
+// ordinary US phrasing ("1890 federal census" with no "United States"/"U.S."
+// in the string) is still caught, not by the explicit-naming regex but by
+// arm 3's fallback, whenever the timeline actually has a US-placed event --
+// which is the only context that makes a bare "federal census" mean the US
+// census in the first place. `\bUS\b`/`\bUSA\b` are matched case-SENSITIVELY
+// and separately from the case-insensitive spellings: a case-insensitive
+// `\bus\b` matches the ordinary pronoun "us" ("not available to us") in
+// running prose, which would wrongly fire on a non-US timeline naming no
+// jurisdiction at all. "USA" carries no such ordinary-word collision, but is
+// kept on the same case-sensitive regex for consistency.
+const TIMELINE_CENSUS_RE = /census/i;
+const TIMELINE_1890_RE = /(?<!\d)1890(?!\d)/;
+// Any 18xx/19xx year, not just 1890 -- round-7 review: `ut_timeline_001`
+// wrote `expected_events: ["census","census","census","census"]` for a gap
+// whose own `notes` call 1870/1880/1890/1900 "four surviving federal census
+// years" and then say the 1890 schedules did not survive. None of the four
+// entries names ANY year, so `TIMELINE_1890_RE` -- which only ever looks for
+// the literal digits "1890" -- cannot see that one of the four is the
+// non-surviving census this whole guard exists to catch; the entry reads as
+// "not about 1890" and passes, which is exactly backwards. The tool can
+// decide this from the entry alone: a census-type `expected_events` string
+// that names no year at all is too vague to verify against anything, 1890
+// included, so it is refused outright rather than silently let through.
+// This is a SEPARATE condition from the 1890-specific one below, not the
+// same check with a wider net -- a bare "census" entry on an all-1870s
+// timeline is refused here for being unverifiable, never because it is
+// mistaken for 1890.
+//
+// Matches any 4-digit year, not just 18xx/19xx -- round-8 review: the
+// earlier `1[89]\d\d` cut refused "1790 census", "census_1790", "1787
+// Denmark census" and "1769 census of Norway" for naming no year, when each
+// names a real, surviving year outside the 1800-1999 window this guard
+// happened to check. A census-type entry naming ANY year is verifiable
+// against something, so this arm has no business narrowing to two
+// centuries; the 1890-specific checks below are what actually decide
+// whether a given year is the non-surviving one.
+const TIMELINE_ANY_YEAR_RE = /(?<!\d)\d{4}(?!\d)/;
+// A year span/range that covers 1890 -- round-8 review: `ut_timeline_001`'s
+// bug (four surviving census years folded into one unverifiable entry) also
+// shows up written as a single range, "federal censuses 1870-1900" or
+// "censuses 1880 to 1900", which names two real years and never writes
+// "1890" literally, so `TIMELINE_1890_RE` cannot see that the range spans
+// the non-surviving year. Only a range connector ("-"/an en or em dash/"to"/
+// "through"/"thru") counts -- "1880 and 1900 census" names two specific,
+// surviving years with no claim about anything in between, and must stay
+// allowed; bare "and" is deliberately not a range connector here.
+const TIMELINE_YEAR_SPAN_RE =
+  /(?<!\d)(\d{4})\s*(?:-|–|—|\bto\b|\bthrough\b|\bthru\b)\s*(\d{4}|\d{2})(?!\d)(?![-/.]\d)/gi;
+// "between X and Y" -- round-9 review: this is the one shape where "and" DOES
+// act as a range connector. "1880 and 1900 census" names two specific years
+// with no claim about what lies between them (allowed, above), but "between
+// 1880 and 1900" is the range itself written out in English, so "and" here
+// carries the same meaning as "to"/"-" elsewhere. The leading "between" is
+// what distinguishes the two; this regex is checked in addition to, not
+// instead of, the connector list above.
+const TIMELINE_BETWEEN_SPAN_RE =
+  /\bbetween\b\s*(\d{4})\s*and\s*(\d{4}|\d{2})(?!\d)(?![-/.]\d)/gi;
+// The end year must not be followed by another separator and digit: in a date
+// ("1880-06-01") the month is not a two-digit end year.
+// Round-10 review: every range in the entry is read, not just the first
+// ("federal censuses 1850-1860 and 1880-1900" spans 1890 in its second), and
+// a two-digit end year is read in the century of the first, rolling over
+// when it would fall before it ("1880-90" is 1880-1890, "1895-05" 1895-1905).
+function timelineSpanCovers1890(text: string): boolean {
+  for (const re of [TIMELINE_YEAR_SPAN_RE, TIMELINE_BETWEEN_SPAN_RE]) {
+    for (const m of text.matchAll(re)) {
+      const a = parseInt(m[1], 10);
+      let b = parseInt(m[2], 10);
+      if (m[2].length === 2) {
+        b += Math.floor(a / 100) * 100;
+        if (b < a) b += 100;
+      }
+      if (Math.min(a, b) <= 1890 && 1890 <= Math.max(a, b)) return true;
+    }
+  }
+  return false;
+}
+const TIMELINE_VETERAN_RE = /veteran/i;
+const TIMELINE_NAMES_US_RE = /united states|u\.s\./i;
+const TIMELINE_NAMES_US_ABBREV_RE = /\bUS\b|\bUSA\b/;
+// A capitalized word before "census" -- not "Census"/"Federal" (part of the
+// phrase being classified, not a jurisdiction) or "United"/"States" (already
+// covered by TIMELINE_NAMES_US_RE, checked first -- reaching this regex at
+// all means the text did not match it case-insensitively in any form). Also
+// not "Population"/"Decennial"/"Eleventh"/"County" -- round-5 review found
+// all four allowed through on the Schuylkill timeline: "1890 Federal
+// Population Census" and "1890 Population Census" (the record's actual
+// bureau name), "1890 Decennial Census" (the common descriptive name),
+// "Eleventh Census, 1890" (the 1890 census's own formal ordinal name -- the
+// 11th US federal census), and "Schuylkill County census 1890" whenever the
+// timeline's events carry only `standard_place`, which never literally
+// contains the word "County". These describe the census itself or a
+// jurisdiction's administrative LEVEL, never a jurisdiction's NAME -- adding
+// them to the exclusion is a small, closed set of English census-descriptive
+// vocabulary, not a per-country table. "Eleventh" alone is excluded, not
+// every ordinal: this guard only ever fires on the literal year 1890
+// (TIMELINE_1890_RE), so no other ordinal can appear beside "Census" and
+// still pass that check.
+//
+// The jurisdiction word need not be adjacent to "census": a second,
+// independent review found the exclusion words above also work as FILLER
+// between a real foreign jurisdiction and "census" -- "Essex County
+// census", "Cork County census", "Danish Population Census", "Swedish
+// Decennial Census" each capture nothing (the adjacent word is excluded)
+// and fall through to arm 3, which fires on this timeline's own US event
+// regardless of the entry actually naming Essex, Cork, Denmark, or Sweden.
+// The trailing `(?:\s(?:Population|Decennial|Eleventh|County))*` lets the
+// same exclusion words sit as descriptors AFTER a real jurisdiction word
+// rather than only ruling out that word itself, so the jurisdiction is
+// found wherever it sits relative to the descriptive filler, not just when
+// nothing else sits between it and "census".
+//
+// "Federal" is excluded from the filler list, not just the capture-start
+// list: round-6 review found it let an ORDINARY capitalized word that
+// starts the entry get captured as a fake jurisdiction whenever "Federal"
+// sat between it and "Census" -- "The Federal Census 1890", "Missing
+// Federal Census 1890" each captured "The"/"Missing" as the jurisdiction,
+// which isn't in usPlaceWords, so both were wrongly silenced on the
+// Schuylkill timeline despite naming no country at all. No foreign census
+// this arm exists to allow is ever called a "federal census" in English
+// usage -- that phrasing names the US bureau specifically -- so "Federal"
+// never needs to bridge a real jurisdiction to "census" the way
+// "Population"/"Decennial"/"County" legitimately do, and dropping it from
+// the filler set (while keeping it in the capture-start exclusion, since
+// "1890 Federal Population Census" must still fall through entirely) costs
+// nothing on a real foreign-jurisdiction phrasing.
+//
+// That alone does not close every such phrasing: "The Population Census of
+// 1890" has the exact same shape as "Danish Population Census" (a
+// capitalized word, "Population", "Census", in that order) and
+// "Population" must stay in the filler set for the Danish/Swedish cases to
+// keep matching, so adjacency repair alone cannot tell "The" from
+// "Danish" here. The two are different grammatically, not just
+// semantically: "The"/"A"/"An"/"This"/"That"/"These"/"Those" are English
+// articles and demonstrative determiners -- a fixed, closed class of
+// function words, not a per-country table in different clothing -- and
+// none of them can themselves be a jurisdiction's name. Added to the same
+// capture-start exclusion as "Census"/"Federal"/etc., which makes "The
+// Population Census of 1890" fall through entirely (no other word in the
+// string is a valid capture start either), exactly like the bureau-name
+// phrasings above.
+//
+// What this still lets through: a jurisdiction name that happens to BE one
+// of the excluded determiners or census-descriptive words is not
+// constructible in English (there is no country or county named "The" or
+// "Population"), so no real phrasing is newly silenced by this exclusion.
+// A capitalized ordinary adjective that isn't an article or one of the
+// census-descriptive words ("Missing Population Census 1890") is not
+// addressed by this round's fix and is still wrongly treated as a foreign
+// jurisdiction (captures "Missing"); closing that fully would require
+// either enumerating ordinary English adjectives (unbounded, unlike the
+// closed article/descriptor sets above) or a real word list of
+// jurisdiction names, which ADR-0012 forbids. ADR-0011 limit 1 prefers
+// this direction of error (a false allow) over a false refusal.
+//
+// Captured so the caller can check it against the timeline's own recorded
+// US places. "[Cc]ensus" deliberately, not a trailing /i flag -- an /i flag
+// would also make the leading `[A-Z][a-z]+` match a lowercase word,
+// defeating the whole point of requiring a CAPITALIZED word. An independent
+// review found the first cut's bare lowercase "census" meant "Denmark
+// Census 1890" (capital C) never matched this regex at all and fell
+// through to arm 3's fallback -- the exact silencing this arm exists to
+// provide, lost on nothing but a capitalization choice.
+const TIMELINE_NAMES_OTHER_JURISDICTION_RE =
+  /\b(?!Census\b|Federal\b|United\b|States\b|Population\b|Decennial\b|Eleventh\b|County\b|The\b|A\b|An\b|This\b|That\b|These\b|Those\b)([A-Z][a-z]+)(?:\s(?:Population|Decennial|Eleventh|County))*\s[Cc]ensus\b/;
+
+export function timelineCensus1890Invariants(entry: any): string[] {
+  const gaps: any[] = Array.isArray(entry.gaps) ? entry.gaps : [];
+  if (gaps.length === 0) return [];
+
+  const events: any[] = Array.isArray(entry.events) ? entry.events : [];
+  const standardPlaces = events
+    .map((e: any) => e?.standard_place)
+    .filter((p: unknown): p is string => typeof p === "string" && p.length > 0);
+  const anyEventIsUS = standardPlaces.some((p: string) => p.endsWith("United States"));
+  // Every alphabetic word appearing in a US-placed event's own `place` or
+  // `standard_place` -- "Pennsylvania"/"Schuylkill" census 1890 on this
+  // timeline names a US state or county, not a foreign country, and arm 2
+  // must not silence it.
+  const usPlaceWords = new Set<string>();
+  for (const e of events) {
+    const sp = e?.standard_place;
+    if (typeof sp !== "string" || !sp.endsWith("United States")) continue;
+    for (const src of [sp, e?.place]) {
+      if (typeof src !== "string") continue;
+      for (const word of src.match(/[A-Za-z]+/g) ?? []) usPlaceWords.add(word);
+    }
+  }
+
+  const errs: string[] = [];
+  for (const gap of gaps) {
+    const expectedEvents: any[] = Array.isArray(gap?.expected_events) ? gap.expected_events : [];
+    for (const item of expectedEvents) {
+      const text = String(item ?? "");
+      if (!TIMELINE_CENSUS_RE.test(text)) continue;
+      if (TIMELINE_VETERAN_RE.test(text)) continue;
+      if (!TIMELINE_ANY_YEAR_RE.test(text)) {
+        errs.push(
+          `gaps[].expected_events entry '${text}' names a census but no year -- name the ` +
+            "specific surviving year this gap expects (e.g. '1870 census'), not a bare " +
+            "record-type placeholder, since there is no way to tell it apart from the " +
+            "non-surviving US 1890 federal census otherwise.",
+        );
+        continue;
+      }
+      if (!TIMELINE_1890_RE.test(text) && !timelineSpanCovers1890(text)) continue;
+      const namesUS = TIMELINE_NAMES_US_RE.test(text) || TIMELINE_NAMES_US_ABBREV_RE.test(text);
+      if (!namesUS) {
+        const otherJurisdiction = text.match(TIMELINE_NAMES_OTHER_JURISDICTION_RE);
+        if (otherJurisdiction && !usPlaceWords.has(otherJurisdiction[1])) continue;
+        if (!otherJurisdiction && !anyEventIsUS) continue;
+      }
+      errs.push(
+        `gaps[].expected_events entry '${text}' names the US 1890 federal census, which does ` +
+          "not survive and can never fill a gap -- move the mention to this gap's `notes` " +
+          "instead and drop it from `expected_events`.",
+      );
+    }
+  }
+  return errs;
+}
+
 function conflictInvariants(entry: any): string[] {
   // `moot` settles a conflict for every gate that reads `status` — the
   // completion gate included — and was the one settling write with no
@@ -550,9 +864,10 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
   return [
     `preferred_assertion_id '${entry.preferred_assertion_id}' carries an uncertain reading ` +
       `([?]) and no assertion from a different record corroborates it. To settle the conflict: ` +
-      `find a second record whose reading agrees, or — once the user confirms the reading — hand ` +
-      `the correction of assertion '${entry.preferred_assertion_id}' back to record-extraction, ` +
-      `which owns \`assertions\`; a conflict write cannot change an assertion. Leaving ` +
+      `find a second record whose reading agrees. A reading the user confirms is one more reading ` +
+      `to weigh in this conflict's rationale, not a correction: assertion ` +
+      `'${entry.preferred_assertion_id}' was written by extraction and is final, and a conflict ` +
+      `write cannot change an assertion. Leaving ` +
       `preferred_assertion_id null — a deferral is a finding, not an omission — stays legal: leave ` +
       `the conflict unresolved, or resolve it with resolution_kind 'tree' when the tree's existing ` +
       `conclusion stands.`,
@@ -613,11 +928,13 @@ function planActiveInvariants(entry: any, research: any): string[] {
  *  when the precondition must be satisfied by someone else. Read live when it is
  *  the same author's own prior step." Neither half is this author's own step —
  *  `ownership.json` gives `hypotheses.callers` as `["agent:hypothesis-tracking"]`
- *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` to
- *  `skill:record-extraction`. Both of those sections are `enforceableAt:
- *  ["unit"]` only (no hook arm, no tool arm), so under a live read nothing would
- *  stop a session from writing the satisfying conflict or assertion in the same
- *  batch as the promote and clearing this gate from inside the call it gates.
+ *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` is
+ *  written only by `extraction_append`. `conflicts` is `enforceableAt: ["unit"]`
+ *  only (no hook arm, no tool arm), so under a live read nothing would stop a
+ *  session from writing the satisfying conflict in the same batch as the promote
+ *  and clearing this gate from inside the call it gates. (`assertions` gained a
+ *  tool arm on 2026-10-05: a caller's assertions write is refused before this
+ *  runs, so only `extraction_append`'s own batches can carry one.)
  *
  *  Measured cost of the snapshot read: **0 refusals** across the calibration
  *  corpus — no batch appends an assertion ahead of the promote, and neither of
@@ -787,11 +1104,13 @@ const BIRTH_DATE_FACT_TYPES: ReadonlySet<string> = new Set([
  *  would read every `~1845` as a contradiction. */
 const MAX_BIRTH_YEAR_GAP = 5;
 
+const YEAR_PATTERN = /\b(1[0-9]{3}|20[0-9]{2})\b/;
+
 /** First 4-digit year in a date string, tolerating `~1845`, `11Jan1758`,
  *  `1858-03-12` and `about 1832`. Null when none is present -- an unparseable
  *  date states nothing to compare, which must not read as a contradiction. */
 function yearOf(value: unknown): number | null {
-  const m = /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(String(value ?? ""));
+  const m = YEAR_PATTERN.exec(String(value ?? ""));
   return m ? Number(m[1]) : null;
 }
 
@@ -809,7 +1128,16 @@ function yearOf(value: unknown): number | null {
  *
  *  Place uses `birthPlacesAgree`: equality and containment are both
  *  compatible, so only an outright disagreement counts. A place-less assertion
- *  states nothing and is skipped.
+ *  states nothing and is skipped, and so does a non-place phrase ("Same
+ *  House"). A disagreement then counts only when the two places are in
+ *  different countries or further apart than `birthThresholdMiles` allows for
+ *  the era (lead ruling 2026-10-13, issue #3390): a research question's premise
+ *  "near Nueva Italia, Michoacán" and a record's "La Unión, Guerrero", 85 mi
+ *  apart in 1910, are not a contradiction. When the distance cannot be computed
+ *  (no standard_place on a side, no coordinates, a side that is a whole region,
+ *  two counties, no year) the cap fires. A place-only assertions update
+ *  re-resolves its standard_place in `prepareOps`, so a stale one does not stand
+ *  for the corrected place.
  *
  *  Scope is deliberately narrow: only the record's own assertions, only against
  *  the tree person's BIRTH fact, and only where both sides actually state a
@@ -965,16 +1293,124 @@ function ownPartyLinkedTo(
   });
 }
 
-export function coreIdentifierContradictionInvariants(
+/** Coordinates of standard places, looked up in `prepareOps` because the gate
+ *  below is synchronous. A name that is absent or null was not resolved. */
+export type BirthPlaceCoords = ReadonlyMap<string, PlaceCoords | null>;
+
+/** Places types (as `placeTypeKey` reads them) that name a whole region rather
+ *  than somewhere a person is born. Their coordinates are the region's centre,
+ *  so a distance from one is not computable and the pair caps. A county,
+ *  department or municipality still gets a distance: the cruz-corona-ancestry
+ *  record is a Mexican municipality. Two counties against each other cap,
+ *  though: two different counties named as a birthplace are two different
+ *  places (Perthshire against Forfarshire), not one place measured twice. */
+const REGION_PLACE_TYPES: ReadonlySet<string> = new Set([
+  "continent", "country", "dependency or protectorate", "colony", "state", "province", "territory",
+  "region", "prefecture", "governorate", "principality or emirate",
+]);
+
+/** The write path's whole budget for those lookups. Over it, a pair has no
+ *  coordinates and the cap fires. */
+const BIRTH_PLACE_COORDS_BUDGET_MS = 10_000;
+
+/** The country a birth place names: the last segment, read from the end, that
+ *  `canonicalCountry` recognizes. A trailing United Kingdom gives way to a
+ *  country named before it, so "Bath, Somerset, England" and "Bath, Somerset,
+ *  England, United Kingdom" both read England, while England against Scotland,
+ *  or against "Dublin, Ireland, United Kingdom", still differs. Null when no
+ *  segment is recognized. A US state is not read as the United States: "CA" is
+ *  also Canada, and a US place's standard_place names its country anyway. Not
+ *  `placeCountry`: that groups countries whose borders moved, which suits a
+ *  residence move and would let a census's "born Ireland" against "born
+ *  England" through here. */
+function birthCountry(place: unknown): string | null {
+  if (typeof place !== "string") return null;
+  const segments = placeSegments(place);
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const country = canonicalCountry(segments[i]);
+    if (!country) continue;
+    if (country === "united kingdom") {
+      for (let k = i - 1; k >= 0; k--) {
+        const inner = canonicalCountry(segments[k]);
+        if (inner && inner !== "united kingdom") return inner;
+      }
+    }
+    return country;
+  }
+  return null;
+}
+
+/** The country a standard place names. A FamilySearch standard place always
+ *  ends at its country, so the last segment is read as one even when
+ *  `canonicalCountry` does not know it ("Zagreb, Croatia"). */
+function standardPlaceCountry(standardPlace: unknown): string | null {
+  const known = birthCountry(standardPlace);
+  if (known) return known;
+  if (typeof standardPlace !== "string") return null;
+  const segments = placeSegments(standardPlace);
+  return segments.length > 1 ? normalizeString(segments[segments.length - 1]) : null;
+}
+
+/** Both sides name a country and the two differ. Read from the place text, or
+ *  from the standard_place when the text names none. A bare United Kingdom
+ *  does not differ from a constituent: it names no constituent to differ from.
+ *  Offline. */
+function birthCountriesDiffer(assertion: any, birth: any): boolean {
+  const a = birthCountry(assertion?.place) ?? standardPlaceCountry(assertion?.standard_place);
+  const b = birthCountry(birth?.place) ?? standardPlaceCountry(birth?.standard_place);
+  if (a === null || b === null || a === b) return false;
+  const ukPair = (x: string, y: string) => x === "united kingdom" && UK_CONSTITUENTS.has(y);
+  return !ukPair(a, b) && !ukPair(b, a);
+}
+
+/** Every year `yearOf` would find in each value, not only the first. */
+function yearsIn(...values: unknown[]): number[] {
+  const out: number[] = [];
+  for (const v of values) {
+    for (const m of String(v ?? "").matchAll(new RegExp(YEAR_PATTERN, "g"))) out.push(Number(m[1]));
+  }
+  return out;
+}
+
+/** Whether two birth places that do not agree are far enough apart to be a
+ *  contradiction (lead ruling 2026-10-13, issue #3390): different countries, or
+ *  further apart than `birthThresholdMiles` allows for the era the dates span.
+ *  Fails closed: with no country difference, the pair counts as far apart unless
+ *  both sides carry a standard_place with coordinates finer than a region
+ *  (`REGION_PLACE_TYPES`), they are not two counties, and some year is known. */
+function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoords): boolean {
+  if (birthCountriesDiffer(assertion, birth)) return true;
+  const sa = assertion?.standard_place;
+  const sb = birth?.standard_place;
+  if (typeof sa !== "string" || typeof sb !== "string") return true;
+  const pa = coords?.get(sa);
+  const pb = coords?.get(sb);
+  if (!pa || !pb) return true;
+  if (REGION_PLACE_TYPES.has(placeTypeKey(pa.type)) || REGION_PLACE_TYPES.has(placeTypeKey(pb.type))) return true;
+  if (placeTypeKey(pa.type) === "county" && placeTypeKey(pb.type) === "county") return true;
+  const years = yearsIn(birth.date, birth.standard_date, assertion.date);
+  if (years.length === 0) return true;
+  const { miles } = haversineDistance(pa.latitude, pa.longitude, pb.latitude, pb.longitude);
+  return miles > birthThresholdMiles(Math.min(...years), Math.max(...years));
+}
+
+interface ContradictionScope {
+  twoParty: boolean;
+  birth: any;
+  sameRecord: any[];
+}
+
+/** What the gate compares for one link, or null when the link is out of scope:
+ *  not confident/probable, no resolvable record, a two-party assertion about the
+ *  other party, or a tree person with no Birth fact. */
+function contradictionScope(
   entry: any,
   research: any,
   tree: any,
-  // Optional so every existing caller compiles unchanged; absent, a two-party
-  // assertion stays out of scope exactly as before.
   personLinks?: ReadonlyArray<PersonLink>,
   batchAssertions?: Map<string, any>,
-): string[] {
-  if (entry.confidence !== "confident" && entry.confidence !== "probable") return [];
+): ContradictionScope | null {
+  if (entry.confidence !== "confident" && entry.confidence !== "probable") return null;
   // Every assertion this call can resolve: the document's, plus this batch's
   // predicted appends. Reading only `research.assertions` let a batch that puts
   // its assertion appends AFTER the person_evidence ops silence this gate, the
@@ -986,9 +1422,9 @@ export function coreIdentifierContradictionInvariants(
   if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
   const assertions: any[] = [...assertionById.values()];
   const linked = assertionById.get(entry.assertion_id);
-  if (!linked) return [];
+  if (!linked) return null;
   const recordId = linked.record_id ?? linked.source_id ?? null;
-  if (recordId == null) return [];
+  if (recordId == null) return null;
 
   // A relationship assertion bears on BOTH people it names, and its own party
   // is only one of them: `a_004` ("listed in household of Thomas Flynn,
@@ -1017,16 +1453,16 @@ export function coreIdentifierContradictionInvariants(
   const twoParty = RELATIONAL_FACT_TYPES.has(String(linked.fact_type ?? "").toLowerCase());
   if (twoParty) {
     if (!ownPartyLinkedTo(linked, entry, recordId, assertionById, personLinks)) {
-      return [];
+      return null;
     }
   }
 
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
-  if (!person) return [];
+  if (!person) return null;
   const birth = ((person.facts ?? []) as any[]).find(
     (f: any) => String(f?.type ?? "").toLowerCase() === "birth",
   );
-  if (!birth) return [];
+  if (!birth) return null;
 
   // Every assertion this record makes about THE SAME PARTY as the linked one.
   //
@@ -1044,27 +1480,74 @@ export function coreIdentifierContradictionInvariants(
       partyKey(a) === linkedParty &&
       linkedParty !== null,
   );
+  return { twoParty, birth, sameRecord };
+}
+
+/** The record's birth-place assertions that disagree with the tree's Birth
+ *  place, before the distance test. */
+function disagreeingBirthPlaces(scope: ContradictionScope): any[] {
+  const { twoParty, birth, sameRecord } = scope;
+  if (twoParty || typeof birth.place !== "string" || placeSegments(birth.place).length === 0) return [];
+  return sameRecord.filter((a: any) =>
+    // Like for like. An ANY-place comparison refuses 274 of 323 committed
+    // confident/probable entries (85%) because a marriage or census place is
+    // not a claim about birthplace: a man born in Ireland appears in a
+    // Pennsylvania census, and that is biography, not contradiction.
+    BIRTH_PLACE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase()) &&
+    contradictionIsCredible(a) &&
+    typeof a.place === "string" &&
+    placeSegments(a.place).length > 0 &&
+    // "Same House" names no place, so it states nothing, like a place-less one.
+    !isNonPlacePhrase(a.place) &&
+    !birthPlacesAgree(a, birth),
+  );
+}
+
+/** The standard places the distance test needs for one link: both sides of
+ *  every disagreeing pair whose countries are not already known to differ. */
+export function birthPlaceCoordNames(
+  entry: any,
+  research: any,
+  tree: any,
+  personLinks?: ReadonlyArray<PersonLink>,
+  batchAssertions?: Map<string, any>,
+): string[] {
+  const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
+  if (!scope) return [];
+  const names: string[] = [];
+  for (const a of disagreeingBirthPlaces(scope)) {
+    if (birthCountriesDiffer(a, scope.birth)) continue;
+    if (typeof a.standard_place !== "string" || typeof scope.birth.standard_place !== "string") continue;
+    names.push(a.standard_place, scope.birth.standard_place);
+  }
+  return names;
+}
+
+export function coreIdentifierContradictionInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  // Optional so every existing caller compiles unchanged; absent, a two-party
+  // assertion stays out of scope exactly as before.
+  personLinks?: ReadonlyArray<PersonLink>,
+  batchAssertions?: Map<string, any>,
+  // Prefetched in `prepareOps`. Absent, every same-country pair counts as far
+  // apart, which is the place arm before the distance test.
+  birthPlaceCoords?: BirthPlaceCoords,
+): string[] {
+  const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
+  if (!scope) return [];
+  const { birth, sameRecord } = scope;
 
   const findings: string[] = [];
 
   // ── place ────────────────────────────────────────────────────────────────
-  if (!twoParty && typeof birth.place === "string" && placeSegments(birth.place).length > 0) {
-    for (const a of sameRecord) {
-      // Like for like. An ANY-place comparison refuses 274 of 323 committed
-      // confident/probable entries (85%) because a marriage or census place is
-      // not a claim about birthplace: a man born in Ireland appears in a
-      // Pennsylvania census, and that is biography, not contradiction.
-      if (!BIRTH_PLACE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
-      if (!contradictionIsCredible(a)) continue;
-      if (typeof a.place !== "string" || placeSegments(a.place).length === 0) continue;
-      if (!birthPlacesAgree(a, birth)) {
-        findings.push(
-          `the record states '${a.place}' (assertion '${a.id}') where the tree person ` +
-            `attests '${birth.place}'`,
-        );
-        break;
-      }
-    }
+  const far = disagreeingBirthPlaces(scope).find((a) => birthPlacesFarApart(a, birth, birthPlaceCoords));
+  if (far) {
+    findings.push(
+      `the record states '${far.place}' (assertion '${far.id}') where the tree person ` +
+        `attests '${birth.place}'`,
+    );
   }
 
   // ── date ─────────────────────────────────────────────────────────────────
@@ -1619,6 +2102,46 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
   );
 }
 
+/** ADVISORY ONLY (issue #2256, folded into #2937): a `sources` entry that lands
+ *  a non-empty `transcription` with no `image_filename` is worth a line saying
+ *  where that text came from — a transcription is a claim about a page, and the
+ *  page it came from is normally nameable.
+ *
+ *  **Never a refusal, and the reason matters.** Two legitimate shapes reach here
+ *  with no filename: a PDF capture, and an `image_transcribe` run with no
+ *  `projectPath` (nothing was staged, so there is no file to name). Refusing
+ *  either would block correct work to catch a documentation gap, which is the
+ *  wrong trade for a provenance nudge — `guardrail-enforcement-spec.md` marks it
+ *  advisory in the instrument table for exactly that reason.
+ *
+ *  Returns one warning per offending entry, so a batch sourcing several records
+ *  names each rather than collapsing to a count the caller cannot act on. Fires
+ *  on `update` as well as `append`: a transcription added to an existing source
+ *  by a later op is the same gap. Reads the persisted entry rather than the op's
+ *  `fields`, so an update that sets only `transcription` is judged against the
+ *  `image_filename` already on disk instead of re-warning about one that is
+ *  there. */
+function transcriptionWithoutImageWarnings(research: any, applied: AppliedOp[]): string[] {
+  const sources = Array.isArray(research.sources) ? research.sources : [];
+  const out: string[] = [];
+  for (const a of applied) {
+    if (a.section !== "sources" || a.noop) continue;
+    const entry = sources.find((s: any) => s && s.id === a.entryId);
+    if (!entry) continue;
+    if (factText(entry.transcription) === undefined) continue;
+    if (factText(entry.image_filename) !== undefined) continue;
+    out.push(
+      `source '${a.entryId}' records a transcription but no image_filename — name the ` +
+        `page the text was read from, so a later reader can check it. The value is the ` +
+        `stored image's filename, which image_read/image_transcribe return as ` +
+        `\`imageRef\` when called with a projectPath. Leave it null only when there is ` +
+        `genuinely no stored page (a PDF capture, or a transcribe run without a ` +
+        `projectPath); this is advisory and nothing is blocked either way.`,
+    );
+  }
+  return out;
+}
+
 /** Tier/exhaustiveness cross-field guardrail (docs/specs/guardrail-enforcement-spec.md
  *  §4.2). `proved`/`disproved` claim the research is reasonably exhaustive by
  *  definition, so either tier requires the referenced question's
@@ -1988,6 +2511,55 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
   ];
 }
 
+/** A `proof_summaries` write when the persons this proof bears on — its
+ *  `claims[].relationship.child` entries (when `claims[]` is present; scalar
+ *  proofs with no `claims[]` are not in scope, as assertions carry no
+ *  `relationship` field) — have more than two distinct `ParentChild` parents in
+ *  the pre-call tree, while fewer than two hypotheses in `preCallResearch` list
+ *  the proof's `question_id` in `related_question_ids`.
+ *
+ *  Uses the pre-call tree and pre-call research snapshots so a same-batch
+ *  hypothesis write does not satisfy the precondition. */
+export function competingParentSetsInvariants(
+  entry: any,
+  preCallResearch: any,
+  tree: any,
+): string[] {
+  const tier = entry?.tier;
+  if (typeof tier === "string" && (tier === "not_proved" || tier === "disproved")) return [];
+
+  const qid = entry?.question_id;
+  if (typeof qid !== "string" || qid === "") return [];
+
+  // In-scope: only persons whose parentage this proof is actually concluding.
+  // Claims-based proofs: persons named as a child in a ParentChild claim.
+  // Scalar proofs (no claims[]) are not in scope — assertions have no
+  // `relationship` field, so there is no reliable way to derive the child
+  // person id from supporting_assertion_ids alone.
+  // Subject_person_ids alone is too broad — it includes parents and siblings,
+  // causing false refusals on children/marriage proofs where the subject happens
+  // to have a data-quality tree issue unrelated to the question.
+  const extraPersonIds = new Set<string>();
+  for (const c of Array.isArray(entry.claims) ? entry.claims : []) {
+    if (c?.relationship?.type === "ParentChild" && typeof c.relationship.child === "string") {
+      extraPersonIds.add(c.relationship.child);
+    }
+  }
+  if (extraPersonIds.size === 0) return [];
+
+  const competing = competingParentSets(preCallResearch, tree, qid, new Set(), extraPersonIds);
+  if (competing.length === 0) return [];
+
+  const details = competing
+    .map(({ personId, parentIds }) => `${personId} (${parentIds.join(", ")})`)
+    .join("; ");
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid} has persons with competing ` +
+      `parent sets — ${details} — but fewer than two hypotheses in hypotheses[] list "${qid}" in ` +
+      `related_question_ids. Decline to conclude; name hypothesis-tracking as the next step.`,
+  ];
+}
+
 /** A question's `status` may not claim an exhaustiveness that its stop decision
  *  does not carry.
  *
@@ -2302,6 +2874,85 @@ function planItemLogAttributionInvariants(
   ];
 }
 
+// A plan item whose external-site search is still awaiting a capture must not
+// be marked terminal (`completed`/`skipped`): search-external-sites cannot
+// search a paywalled site — it hands the user a URL and waits for a PDF — so a
+// terminal status claims a search that did not happen, and
+// research-exhaustiveness then declares the question exhaustively researched.
+// Decidable from research.json alone (ADR-0011's first question), so it is a
+// writer-tool precondition rather than the SKILL.md Step-6 prose that did not
+// bind it: with that prose in place the search-records run still drifted to
+// `skipped` on 1 of 3 samples (#1226; #2484).
+//
+// Mirrors the eval guard `assert_capture_pending_item_not_terminal`
+// (validators_lib.py): the LATEST log entry naming the item decides, across
+// every tool — a later FamilySearch hit or any positive non-link search closes
+// it, so an older external-site handoff further up the log is not how it ended.
+// A capture that arrived is a later entry, and step 6 does not carry
+// `planItemId` onto it, so an arrival is matched on `(site, url_generated)`
+// (which every external-site entry carries) under this item's id or a null one.
+//
+// Two documented `skipped` paths are exempt (`CAPTURE_PENDING_SKIP_EXEMPT`):
+// `search-external-sites.md` step 4 tells the agent to mark an external-site
+// item `skipped` when no user is present to make the capture or the site cannot
+// be reached (`inaccessible`), or when the user asked to skip it
+// (`user_declined`). Refusing those denies the skill's own instruction, and the
+// "leave it in_progress" remedy would stall an autonomous run — exhaustiveness
+// will not declare while an item is `in_progress` (EdmondOware review,
+// 2026-10-14). `completed` is never exempt (it claims the search happened), and
+// a `skipped` with any other category — the `ut_search_records_026` escalation
+// shape, where a real user capture is still outstanding — is still refused.
+const CAPTURE_PENDING_SKIP_EXEMPT = new Set(["inaccessible", "user_declined"]);
+
+export function planItemCapturePendingInvariants(entry: any, research: any): string[] {
+  if (entry?.status !== "completed" && entry?.status !== "skipped") return [];
+  if (entry?.status === "skipped" && CAPTURE_PENDING_SKIP_EXEMPT.has(entry?.skip_category)) {
+    return [];
+  }
+  const pid = entry?.id;
+  // Guarded for shape rather than assumed — fires before document validation,
+  // the same reason planItemLogAttributionInvariants guards its id.
+  if (typeof pid !== "string" || pid === "") return [];
+  const log = Array.isArray(research?.log) ? research.log : [];
+  let latest: any = null;
+  const captured = new Set<string>();
+  for (const e of log) {
+    if (!e) continue; // a legacy `log: [null]` must not take the writer down
+    const tool = e.tool;
+    if (
+      e.plan_item_id === pid &&
+      (tool === "external_site" ||
+        (e.outcome === "positive" && tool !== "external_links_search"))
+    ) {
+      latest = e;
+    }
+    if (tool === "external_site") {
+      const d = e.external_site || {};
+      if (d.capture_received === true && d.site && d.url_generated) {
+        captured.add(JSON.stringify([e.plan_item_id ?? null, d.site, d.url_generated]));
+      }
+    }
+  }
+  if (!latest || latest.tool !== "external_site") return [];
+  const site = latest.external_site || {};
+  if (site.capture_received === true) return [];
+  if (
+    captured.has(JSON.stringify([pid, site.site, site.url_generated])) ||
+    captured.has(JSON.stringify([null, site.site, site.url_generated]))
+  ) {
+    return [];
+  }
+  return [
+    `plan_items[${pid}]: its latest external-site search (${latest.id}) is still awaiting a ` +
+      `capture (capture_received=false), so marking it '${entry.status}' claims a paywalled ` +
+      `search that has not happened — research-exhaustiveness would then read the question as ` +
+      `exhaustively searched. The way through: if no user can make the capture or the site ` +
+      `cannot be reached, skip it with skip_category: "inaccessible"; if the user asked to skip ` +
+      `it, skip_category: "user_declined"; otherwise leave it 'in_progress' until the capture ` +
+      `arrives as a later log entry (or re-plan). See #1226.`,
+  ];
+}
+
 /** The seven `skip_category` values, for the refusal message. Kept as a literal
  *  rather than read from the schema: the validator already enforces membership,
  *  and what this list is for is telling the agent what to pick. */
@@ -2579,6 +3230,25 @@ interface BatchSuccess {
   resolvedPlaces?: ResolvedPlaceEcho[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
+  /** Set only by `extraction_append`'s EXTRACTOR MODE, which builds its own ops
+   *  from a record's sidecar. The caller never sees that record, so `results[]`
+   *  alone would tell it how many entries landed without saying what they say —
+   *  and reporting the extraction is the caller's job. `research_append` never
+   *  sets this. */
+  extraction?: ExtractionEcho;
+}
+
+/** What extractor mode extracted, for the caller to report. */
+export interface ExtractionEcho {
+  recordType: string;
+  /** Present only for a census: whether the schedule stated relationships,
+   *  decided by the hard-coded year table rather than by reading the field. */
+  censusStatesRelationships?: boolean;
+  assertionCount: number;
+  /** Distinct roles assigned, so a reader can see the household shape without
+   *  the assertions. */
+  roles: string[];
+  notes: string[];
 }
 export type ResearchAppendResult =
   | SingleSuccess
@@ -2608,20 +3278,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
     // the `reason` discriminator and ship it with isError.
     if (e instanceof NoProjectError) throw e;
     throw new ResearchAppendError(e instanceof Error ? e.message : String(e));
-  }
-}
-
-/** Read the write-once starting-tree.gedcomx.json baseline, or null when it is
- *  absent or unreadable. Fail-open by design: legacy projects created before the
- *  baseline shipped have no such file, and a tree-encoding WARNING must never
- *  block a completion for a project that simply predates it. */
-async function readStartingTree(projectPath: string): Promise<SimplifiedGedcomX | null> {
-  try {
-    const raw = await getProjectStore().readText(projectPath, "starting-tree.gedcomx.json");
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? (parsed as SimplifiedGedcomX) : null;
-  } catch {
-    return null;
   }
 }
 
@@ -2920,12 +3576,6 @@ function rewriteLinkedFacts(
           if (concluded) concludedTouched.add(fact);
         }
       }
-      // A `place` correction that leaves an un-corrected `standard_place` is the
-      // shape this card was filed about, one level down: the display string
-      // reads corrected while the place-AUTHORITY value still names the old
-      // jurisdiction. The update path cannot re-resolve it (the sidecar/geocode
-      // lever is append-only), and the assertion is equally stale, so the guard
-      // below cannot see it either. Say so rather than let it pass silently.
       if (
         touched.includes("date") &&
         typeof fact.standard_date === "string" &&
@@ -2940,17 +3590,6 @@ function rewriteLinkedFacts(
           `fact '${fact.id}' kept standard_date '${fact.standard_date}' while its date was ` +
             `corrected from assertion '${a.entryId}' — an assertion carries no standard_date, so ` +
             "the sidecar was not part of this correction. Re-check it with tree_correct.",
-        );
-      }
-      if (
-        placeRewritten &&
-        !touched.includes("standard_place") &&
-        typeof fact.standard_place === "string"
-      ) {
-        mutationWarnings.push(
-          `fact '${fact.id}' kept standard_place '${fact.standard_place}' while its place was ` +
-            `corrected from assertion '${a.entryId}' — the place authority value was not part of ` +
-            "this correction. Update the assertion's standard_place too if the reading moved.",
         );
       }
       // Country-contradiction guard on the pair this rewrite just produced.
@@ -3260,7 +3899,6 @@ const FACT_TYPE_ALIASES: Record<string, string> = {
   christeningplace: "christening",
   baptism: "christening",
   marriage: "marriage",
-  marriagelicense: "marriage",
 };
 
 /** Normalized keys of the place-of-event fact_type variants. When the model
@@ -3278,12 +3916,6 @@ const PLACE_VARIANT_KEYS = new Set([
   "christeningplace",
 ]);
 
-/** Reduce a label to its normalized comparison key: lowercase, then drop every
- *  non-alphanumeric character. */
-function labelKey(raw: string): string {
-  return raw.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
 function isBlank(v: unknown): boolean {
   return typeof v !== "string" || v.trim() === "";
 }
@@ -3297,7 +3929,7 @@ function isBlank(v: unknown): boolean {
 function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   const ft = entry.fact_type;
   if (typeof ft !== "string") return;
-  const key = labelKey(ft);
+  const key = factTypeKey(ft);
   // hasOwn, not a bare index — see the note on SECTIONS in applyOne. A bare
   // index on `constructor` yields `Object`, which is truthy, so the assignment
   // below would replace a string fact_type with a function.
@@ -3412,6 +4044,61 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
     );
   }
   if (errors.length) throw new ResearchAppendError(errors);
+}
+
+/** PRECONDITION 2 — `informant_proximity: "unknown"` implies
+ *  `information_quality: "indeterminate"`.
+ *
+ *  If you cannot identify the informant, you cannot have established that they
+ *  witnessed the fact, nor that they did not: the Layer-2 decision tree's
+ *  question 1 ("do we know the informant?") answers NO and terminates at
+ *  `indeterminate` without ever reaching question 2. So `unknown` paired with
+ *  `primary` or `secondary` is not a judgment call this tool is second-guessing
+ *  — it is a claim that contradicts its own premise.
+ *
+ *  **Why a writer precondition and not SKILL.md prose.** ADR-0011's first
+ *  question — can this be decided by reading the project documents alone? —
+ *  answers yes: both fields are on the entry in hand, so nothing needs a record
+ *  re-read. It lived as prose (the burial-index paragraph in
+ *  `agents/record-extractor.md`) from the finding in issue #2173, now carried by
+ *  issue #2484, and prose did not hold: across the committed e2e corpus the
+ *  model broke the rule on **248 of 982** `unknown` assertions. That is the
+ *  measurement behind moving it into code (issue #2937).
+ *
+ *  **FORWARD ONLY, and deliberately not a biconditional.** `indeterminate` does
+ *  NOT imply `unknown`: a NAMED informant whose relationship to the specific
+ *  fact cannot be established is `indeterminate` at a known proximity — the
+ *  decision tree's "CANNOT TELL" branch at question 2, which is reached only
+ *  when question 1 answered YES. Tightening this into "iff" would refuse that
+ *  whole branch, which is the ordinary shape of a census record read through
+ *  the table in `research-append-tool-spec.md`.
+ *
+ *  Fires ONLY for the two in-enum values that claim a determination was made.
+ *  A missing `information_quality` is already the schema's `required` error and
+ *  an out-of-enum one is its enum error; reporting this on top of either would
+ *  name the wrong fix. That is not hypothetical — `mid-research-flynn-bad-enum`
+ *  a_001 is `unknown` + `tertiary`, and `ut_validate_schema_004` pins the
+ *  validator at exactly ONE error for it. */
+function validateInformantQualityFloor(entry: Record<string, unknown>): void {
+  if (entry.informant_proximity !== "unknown") return;
+  if (
+    entry.information_quality !== "primary" &&
+    entry.information_quality !== "secondary"
+  ) {
+    return;
+  }
+  throw new ResearchAppendError(
+    `assertion has informant_proximity "unknown" but information_quality ` +
+      `'${entry.information_quality}' — an unidentified informant cannot be shown to ` +
+      `have witnessed the fact OR to have not witnessed it, so the classification ` +
+      `terminates at "indeterminate". Either set information_quality to ` +
+      `"indeterminate", or — if you can in fact name who supplied this fact — set ` +
+      `informant_proximity to what they were (self, witness, household_member, ` +
+      `family_not_present, official_duty) and keep the quality you chose. Do NOT ` +
+      `reach for "unknown" because the SOURCE is an index or a transcript: an index ` +
+      `of a marriage register still carries the register's informant, and indexing ` +
+      `changed who stated the fact not at all.`,
+  );
 }
 
 /** `structured_value.relationship_type` names the record subject's OWN role;
@@ -3529,6 +4216,7 @@ function applyOne(
   startingPersonIds?: ReadonlySet<string>,
   createdAssertions?: ReadonlySet<string>,
   personLinks?: ReadonlyArray<PersonLink>,
+  birthPlaceCoords?: BirthPlaceCoords,
   storedCollectionUrls?: StoredCollectionUrls,
 ): AppliedOp {
   const section = op.section;
@@ -3740,6 +4428,7 @@ function applyOne(
     normalizeAccessDate(newEntry);
     canonicalizeAssertionLabels(newEntry);
     validateNegativeEvidenceRole(newEntry);
+    validateInformantQualityFloor(newEntry);
     validateRelationshipDirection(newEntry);
     const stamp = config.stampTimestamp;
     if (stamp && newEntry[stamp.field] === undefined) {
@@ -3808,6 +4497,12 @@ function applyOne(
     normalizeAccessDate(existing);
     canonicalizeAssertionLabels(existing);
     validateNegativeEvidenceRole(existing);
+    // The update arm validates the MERGED entry, so an op that sets only one of
+    // the pair is checked against the value already on disk — which is the case
+    // the rule exists for: flipping `informant_proximity` to "unknown" while
+    // leaving a stale `secondary` behind is exactly how the 248 corpus
+    // violations were reached.
+    validateInformantQualityFloor(existing);
     // Scoped to ops that set one of the three inputs it compares.
     // `fact_type` is one of them because it decides whether the guard
     // applies at all, so a retype INTO `relationship` would otherwise move
@@ -3912,6 +4607,15 @@ function applyOne(
       invariantErrors.push(...uncertainPreferenceInvariants(resultEntry, research));
     }
   }
+  // US 1890 census backstop: on append, or an update that (re)sets `gaps`.
+  // Scoped that way so an unrelated edit to a timeline written before this
+  // rule existed is not refused.
+  if (section === "timelines") {
+    const timelineFields = op.fields ?? {};
+    if (op.op === "append" || Object.prototype.hasOwnProperty.call(timelineFields, "gaps")) {
+      invariantErrors.push(...timelineCensus1890Invariants(resultEntry));
+    }
+  }
   // One active plan per question — enforced on append OR an update that
   // (re)sets status to "active"; the helper no-ops for non-active entries.
   if (section === "plans") {
@@ -3957,6 +4661,11 @@ function applyOne(
           .filter((it: any) => it && it.status === "skipped")
           .map((it: any) => it.id),
       );
+      const storedStatusById = new Map<string, unknown>(
+        (Array.isArray(storedPlan?.items) ? storedPlan.items : [])
+          .filter((it: any) => it && typeof it.id === "string")
+          .map((it: any) => [it.id, it.status]),
+      );
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
@@ -3966,6 +4675,13 @@ function applyOne(
         // no prior rationale to overwrite, so only the category clause applies.
         if (item && !alreadySkipped.has(item.id)) {
           invariantErrors.push(...planItemSkipInvariants(item, {}, true));
+        }
+        // The capture-pending guard reaches the same field for the same reason:
+        // a `skipped`/`completed` item set inline on a `plans` op would bypass
+        // the `plan_items` arm below. Gated on a genuine status change, so an
+        // item re-sent at its stored status (an append has none) is untouched.
+        if (item && storedStatusById.get(item.id) !== item.status) {
+          invariantErrors.push(...planItemCapturePendingInvariants(item, research));
         }
         const storedItem = (Array.isArray(storedPlan?.items) ? storedPlan.items : []).find(
           (it: any) => it && item && it.id === item.id,
@@ -4005,6 +4721,19 @@ function applyOne(
       invariantErrors.push(
         ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
       );
+    }
+    // Capture-pending guard (#1226): refuse moving an item INTO a terminal
+    // status while its latest external-site search still awaits a capture.
+    // Gated on a genuine status CHANGE so re-stating fixture state is not
+    // refused — mirrors the eval validator's "items this run changed" scope.
+    const priorItemStatus =
+      op.op === "update"
+        ? (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : [])
+            .flatMap((pl: any) => (pl && Array.isArray(pl.items) ? pl.items : []))
+            .find((it: any) => it && it.id === resultEntry?.id)?.status
+        : undefined;
+    if (statusTouchedThisOp && priorItemStatus !== resultEntry?.status) {
+      invariantErrors.push(...planItemCapturePendingInvariants(resultEntry, research));
     }
     // A `skipped` item must carry a category. Gated the same way, and
     // additionally skipped when the item was ALREADY `skipped` before this
@@ -4108,7 +4837,7 @@ function applyOne(
     invariantErrors.push(
       ...(op.op === "update" && resultEntry.superseded_by
         ? []
-        : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions)),
+        : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions, birthPlaceCoords)),
     );
     // An update re-checks the move only when it sets the tier or the bridge, or
     // re-points the link (a new pairing, as the score gate below reads it), so a
@@ -4207,6 +4936,10 @@ function applyOne(
     // update walked past it. `oneSummaryPerQuestion` excludes the entry by id,
     // so an ordinary update of an existing summary still passes.
     invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
+    // Reads PRE-CALL tree and PRE-CALL research: a same-batch hypothesis write
+    // does not satisfy this precondition. Gated only on the entry's standing
+    // tier (not_proved/disproved pass), not on which fields this op touches.
+    invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);
@@ -4258,6 +4991,7 @@ interface PreparedOps {
    *  to, read once here because `applyOne` is synchronous and holds no
    *  `projectPath`. Empty when nothing in the batch links. */
   matchScores: Map<string, MatchScoreFile>;
+  birthPlaceCoords: BirthPlaceCoords;
   /** Existing assertions plus this batch's predicted appends, so the score gate
    *  resolves a link's assertion whatever order the ops arrive in. */
   batchAssertions: Map<string, any>;
@@ -4379,15 +5113,15 @@ export function reextractionKey(a: any): string | undefined {
         : undefined;
   if (who === undefined) return undefined;
   const log = typeof a.log_entry_id === "string" && a.log_entry_id !== "" ? a.log_entry_id : "";
-  const ftKey = labelKey(a.fact_type);
-  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? labelKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
+  const ftKey = factTypeKey(a.fact_type);
+  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? factTypeKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
   return [a.source_id, arkToBareId(a.record_id), log, who, fact].join("\u0000");
 }
 
 /** The canonical spelling of a fact_type for a message (the alias fold §3.7 applies). */
 function factLabel(ft: unknown): string {
   if (typeof ft !== "string") return String(ft);
-  const k = labelKey(ft);
+  const k = factTypeKey(ft);
   return Object.hasOwn(FACT_TYPE_ALIASES, k) ? FACT_TYPE_ALIASES[k] : ft;
 }
 
@@ -4505,6 +5239,43 @@ function createdAssertionIds(research: any, ops: ResearchAppendOp[]): Set<string
   return out;
 }
 
+/** Coordinates for every standard place the contradiction gate's distance test
+ *  will need on this batch's person_evidence ops, under one budget. The ops are
+ *  replayed in order, the way `applyOne` will apply them: an assertions update
+ *  changes the assertion later links compare, and an update's link is its
+ *  post-merge one. An update retiring a link is not checked. */
+async function prefetchBirthPlaceCoords(
+  research: any,
+  ops: ResearchAppendOp[],
+  tree: any,
+  personLinks: ReadonlyArray<PersonLink>,
+  batchAssertions: Map<string, any>,
+): Promise<BirthPlaceCoords> {
+  const assertions = new Map(batchAssertions);
+  const live: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
+  const names: string[] = [];
+  for (const op of ops) {
+    const fields = (op as any).fields ?? {};
+    if (op.section === "assertions" && op.op === "update" && typeof op.entryId === "string") {
+      const cur = assertions.get(op.entryId);
+      if (cur) assertions.set(op.entryId, { ...cur, ...fields });
+      continue;
+    }
+    if (op.section !== "person_evidence") continue;
+    let entry: any;
+    if (op.op === "update") {
+      if (fields.superseded_by) continue;
+      entry = { ...(live.find((e: any) => e?.id === op.entryId) ?? {}), ...fields };
+    } else {
+      entry = (op as any).entry;
+    }
+    if (!entry || typeof entry !== "object") continue;
+    names.push(...birthPlaceCoordNames(entry, research, tree, personLinks, assertions));
+  }
+  if (names.length === 0) return new Map();
+  return lookupPlaceCoords(names, (name) => standardPlaceToCoords(name), BIRTH_PLACE_COORDS_BUDGET_MS);
+}
+
 function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set<string> {
   const byId = batchAssertionsById(research, ops);
   const out = new Set<string>();
@@ -4557,17 +5328,7 @@ async function prepareOps(
   const personLinks = batchPersonLinks(research, ops);
   // Read once here: `applyOne` is synchronous. Fail-open (an absent baseline
   // yields an empty set) matches `readStartingTree`'s own contract.
-  const baseline = await readStartingTree(projectPath);
-  // Array.isArray, not `?? []`: `readStartingTree` is fail-open for a read or
-  // parse failure but returns any parsed object as-is, so a baseline whose
-  // `persons` is not an array reached `.map` and threw a raw TypeError out of
-  // `researchAppend` -- not a ResearchAppendError, and from `prepareOps`, so it
-  // killed every call including ones with no person_evidence op at all.
-  const startingPersonIds: ReadonlySet<string> = new Set(
-    ((Array.isArray(baseline?.persons) ? baseline.persons : []) as any[])
-      .map((p: any) => p?.id)
-      .filter((id: any): id is string => typeof id === "string" && id !== ""),
-  );
+  const startingPersonIds = startingPersonIdsOf(await readStartingTree(projectPath));
   for (const recordId of recordIdsForPersonEvidence(research, ops)) {
     const file = await readMatchScores(projectPath, recordId);
     if (file !== null) matchScores.set(recordId, file);
@@ -4635,17 +5396,7 @@ async function prepareOps(
       detectionEngaged = true;
       // Existing sources covering any of the batch's record ids, in
       // research.sources array order (deterministic "first match").
-      const sourceIdsForRecords = new Set<string>();
-      for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
-        if (
-          a &&
-          typeof a.record_id === "string" &&
-          typeof a.source_id === "string" &&
-          batchRecordKeys.has(arkToBareId(a.record_id))
-        ) {
-          sourceIdsForRecords.add(a.source_id);
-        }
-      }
+      const sourceIdsForRecords = sourceIdsForRecordIds(research, batchRecordKeys);
       const matched = (Array.isArray(research.sources) ? research.sources : []).filter(
         (s: any) => s && typeof s === "object" && sourceIdsForRecords.has(s.id),
       );
@@ -4846,6 +5597,86 @@ async function prepareOps(
     placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);
   }
 
+  /** Place levers (b) then (a) on one assertion's fields, in place. A
+   *  standard_place contradicting the place's country is an error, unless
+   *  `dropContradiction`, when it is left unset instead. */
+  const applyPlaceLevers = async (
+    entry: any,
+    i: number,
+    matchedRecord: any,
+    dropContradiction = false,
+  ): Promise<void> => {
+    // ── Place lever (b): never geocode what the source record already
+    // resolved — copy the sidecar's standard_place for the same place string.
+    // `standard_place: null` is an explicit opt-out (skip resolution + guard);
+    // only a fully omitted field triggers resolution. A non-place phrase
+    // ("Same House") is left unset, silently: it has no standard form.
+    let geocoded = false;
+    if (
+      factText(entry.place) !== undefined &&
+      entry.standard_place === undefined &&
+      !isNonPlacePhrase(factText(entry.place)!)
+    ) {
+      let sp: string | null = null;
+      let source: "sidecar" | "geocoded" | null = null;
+      if (matchedRecord) {
+        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry.place);
+        if (sp) source = "sidecar";
+      }
+      if (!sp && input.resolveStandardPlace !== false) {
+        // resolveStandardPlace swallows network failures and returns null, so
+        // a miss and a failure look the same here — both warrant the warning
+        // (a silently unresolved place is part of the wrong-geocode theme).
+        try {
+          const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
+            .filter((p) => p !== entry.place);
+          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
+        } catch {
+          sp = null;
+        }
+        if (sp) {
+          source = "geocoded";
+          geocoded = true;
+        } else {
+          warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)`);
+        }
+      }
+      if (sp && source) {
+        entry.standard_place = sp;
+        resolvedPlaces.push({ place: entry.place, standardPlace: sp, source });
+      }
+    }
+
+    // ── Place lever (a): country-contradiction guard on the final pair
+    // (supplied or resolved). Skipped when standard_place is null/absent.
+    if (typeof entry.place === "string" && typeof entry.standard_place === "string") {
+      const verdict = countryConsistency(entry.place, entry.standard_place);
+      if (verdict === "contradiction" && dropContradiction) {
+        entry.standard_place = undefined;
+        return;
+      }
+      if (verdict === "contradiction") {
+        errors.push(
+          fmt(
+            i,
+            `standard_place '${entry.standard_place}' contradicts place '${entry.place}' — the place text ` +
+              "names a different country. Re-resolve with place_search / place_search_all and supply the " +
+              "correct standard_place, or set standard_place: null if no standard form exists.",
+          ),
+        );
+        return;
+      }
+      if (verdict === "unverifiable" && geocoded) {
+        warnings.push(
+          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the country ` +
+            "could not be cross-checked (either the place text names no country, or the standard place " +
+            "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
+            "right place",
+        );
+      }
+    }
+  };
+
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i];
     if (op.section !== "assertions" || op.op !== "append") continue;
@@ -4889,7 +5720,7 @@ async function prepareOps(
           );
           continue;
         }
-        // No sidecar (record_read, PDF, image, pasted records, or a nil/negative
+        // No sidecar (an unstaged record_read, PDF, image, pasted records, or a nil/negative
         // search): the field must be absent or null — there is no persona
         // document to point at.
         if (entry.record_persona_id != null) {
@@ -4897,7 +5728,7 @@ async function prepareOps(
             fmt(
               i,
               `record_persona_id must be null — log entry '${logId}' has no results sidecar ` +
-                "(results_ref is null; record_read/PDF/image/pasted records carry no persona ids)",
+                "(results_ref is null; a record_read logged without stagedResultsRef, or a PDF/image/pasted record, has no persona document to point at)",
             ),
           );
           continue;
@@ -4905,7 +5736,7 @@ async function prepareOps(
       } else if (typeof ref === "string") {
         const results = await readSidecarResults(ref);
         if (results) {
-          // Only record_search stages GedcomX personas; its results key on
+          // record_search and record_read stage GedcomX personas; their results key on
           // `recordId`. fulltext_search stages transcript text (and a legacy
           // external_links_search sidecar holds links) keyed on `id`, with no
           // persona document — matching them on `recordId` (a field they never
@@ -5016,65 +5847,33 @@ async function prepareOps(
       }
     }
 
-    // ── Place lever (b): never geocode what the source record already
-    // resolved — copy the sidecar's standard_place for the same place string.
-    // `standard_place: null` is an explicit opt-out (skip resolution + guard);
-    // only a fully omitted field triggers resolution.
-    let geocoded = false;
-    if (factText(entry.place) !== undefined && entry.standard_place === undefined) {
-      let sp: string | null = null;
-      let source: "sidecar" | "geocoded" | null = null;
-      if (matchedRecord) {
-        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry.place);
-        if (sp) source = "sidecar";
-      }
-      if (!sp && input.resolveStandardPlace !== false) {
-        // resolveStandardPlace swallows network failures and returns null, so
-        // a miss and a failure look the same here — both warrant the warning
-        // (a silently unresolved place is part of the wrong-geocode theme).
-        try {
-          const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
-            .filter((p) => p !== entry.place);
-          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
-        } catch {
-          sp = null;
-        }
-        if (sp) {
-          source = "geocoded";
-          geocoded = true;
-        } else {
-          warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)`);
-        }
-      }
-      if (sp && source) {
-        entry.standard_place = sp;
-        resolvedPlaces.push({ place: entry.place, standardPlace: sp, source });
-      }
-    }
+    await applyPlaceLevers(entry, i, matchedRecord);
+  }
 
-    // ── Place lever (a): country-contradiction guard on the final pair
-    // (supplied or resolved). Skipped when standard_place is null/absent.
-    if (typeof entry.place === "string" && typeof entry.standard_place === "string") {
-      const verdict = countryConsistency(entry.place, entry.standard_place);
-      if (verdict === "contradiction") {
-        errors.push(
-          fmt(
-            i,
-            `standard_place '${entry.standard_place}' contradicts place '${entry.place}' — the place text ` +
-              "names a different country. Re-resolve with place_search / place_search_all and supply the " +
-              "correct standard_place, or set standard_place: null if no standard form exists.",
-          ),
-        );
-        continue;
-      }
-      if (verdict === "unverifiable" && geocoded) {
-        warnings.push(
-          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the country ` +
-            "could not be cross-checked (either the place text names no country, or the standard place " +
-            "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
-            "right place",
-        );
-      }
+  // An assertions update that corrects `place` to another place and says nothing of
+  // `standard_place` gets the same levers, with the existing assertion as the
+  // base: otherwise the old standard_place stands for the corrected place, and
+  // the contradiction gate measures its distance from the wrong point. When
+  // nothing resolves, the stale value is cleared rather than kept.
+  for (let i = 0; i < ops.length; i++) {
+    const op = ops[i];
+    if (op.section !== "assertions" || op.op !== "update" || typeof op.entryId !== "string") continue;
+    const fields = (op as any).fields;
+    if (!fields || typeof fields !== "object") continue;
+    if (!Object.prototype.hasOwnProperty.call(fields, "place") || Object.prototype.hasOwnProperty.call(fields, "standard_place")) continue;
+    const cur = ((research.assertions ?? []) as any[]).find((a: any) => a?.id === op.entryId);
+    const place = factText(fields.place);
+    if (!cur || place === undefined || place === factText(cur.place)) continue;
+    const view: any = { ...cur, ...fields, standard_place: undefined };
+    await applyPlaceLevers(view, i, null, true);
+    if (typeof view.standard_place === "string") {
+      fields.standard_place = view.standard_place;
+    } else if (typeof cur.standard_place === "string") {
+      fields.standard_place = null;
+      warnings.push(
+        `assertion '${op.entryId}': cleared standard_place '${cur.standard_place}' because its place ` +
+          `was corrected to '${place}' and no standard form was found for the new place`,
+      );
     }
   }
 
@@ -5194,7 +5993,9 @@ async function prepareOps(
   if (errors.length > 0) throw new ResearchAppendError(errors);
   const verdictFile = prepareVerdict(input, ops, fmt, errors);
   if (errors.length > 0) throw new ResearchAppendError(errors);
-  return { treeMutated, matchScores, batchAssertions, startingPersonIds, createdAssertions, personLinks, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile };
+  // Last, so this batch's assertions carry the standard_place resolved above.
+  const birthPlaceCoords = await prefetchBirthPlaceCoords(research, ops, tree, personLinks, batchAssertions);
+  return { treeMutated, matchScores, batchAssertions, startingPersonIds, createdAssertions, personLinks, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile, birthPlaceCoords };
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
@@ -5216,6 +6017,66 @@ export interface ResearchAppendOptions {
   allowedSections?: ReadonlySet<string>;
   /** Tool name used in lane-rejection text, so a narrow caller names itself. */
   toolName?: string;
+}
+
+/**
+ * The ids of the existing sources that already cover any of `bareRecordIds`,
+ * read off the assertions that cite them (§3.4.1). The one derivation of
+ * "is this record already extracted", shared by source-reuse detection here and
+ * by `extraction_append`'s resend skip, so the two cannot disagree.
+ */
+export function sourceIdsForRecordIds(research: any, bareRecordIds: ReadonlySet<string>): Set<string> {
+  const out = new Set<string>();
+  for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
+    if (
+      a &&
+      typeof a.record_id === "string" &&
+      typeof a.source_id === "string" &&
+      bareRecordIds.has(arkToBareId(a.record_id))
+    ) {
+      out.add(a.source_id);
+    }
+  }
+  return out;
+}
+
+/** The one field a direct `research_append` call may change on an assertion. */
+const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
+
+/** `research_append` as an MCP caller reaches it. Assertions are written only by
+ *  `extraction_append`, which calls `researchAppend` directly and so never meets
+ *  this check. A caller may update one existing assertion's
+ *  `informant_bias_notes`, to record a re-reading or a doubt; any other
+ *  `assertions` write is refused, whole call, before anything is read
+ *  (genealogist ruling 2026-10-05, option B). */
+export async function researchAppendFromCaller(
+  input: ResearchAppendInput,
+): Promise<ResearchAppendResult> {
+  input.ops = coerceJsonArg(input.ops) as ResearchAppendOp[] | undefined;
+  input.fields = coerceJsonArg(input.fields) as Record<string, unknown> | undefined;
+  const isBatch = input.ops !== undefined;
+  const ops = isBatch
+    ? (Array.isArray(input.ops) ? input.ops : [])
+    : [{ section: input.section, op: input.op, fields: input.fields } as ResearchAppendOp];
+  const errors: string[] = [];
+  ops.forEach((op, i) => {
+    if (!op || (op as { section?: unknown }).section !== "assertions") return;
+    const fields = (op as { fields?: unknown }).fields;
+    const keys = fields && typeof fields === "object" && !Array.isArray(fields) ? Object.keys(fields) : [];
+    const notesOnly =
+      (op as { op?: unknown }).op === "update" && keys.length > 0 && keys.every((k) => CALLER_ASSERTION_FIELDS.has(k));
+    if (notesOnly) return;
+    const msg =
+      "research_append does not write assertions: extraction_append writes them (a FamilySearch " +
+      "record by recordIds; any other source through the record-structurer agent). The one change " +
+      "allowed here is an update that sets only informant_bias_notes on an existing assertion, to " +
+      "record a re-reading or a doubt. A disputed reading belongs in a conflict, not in the assertion's value.";
+    errors.push(isBatch ? `ops[${i}]: ${msg}` : msg);
+  });
+  if (errors.length > 0) {
+    return isBatch ? { ok: false, errors, opsReceived: ops.length } : { ok: false, errors };
+  }
+  return researchAppend(input);
 }
 
 export async function researchAppend(
@@ -5360,6 +6221,7 @@ export async function researchAppend(
             prep.startingPersonIds,
             prep.createdAssertions,
             prep.personLinks,
+            prep.birthPlaceCoords,
             storedCollectionUrls,
           ),
         );
@@ -5521,9 +6383,14 @@ export async function researchAppend(
     // Persistence nudge (#1478): sources landing with no assertions drawn.
     // Non-blocking — rides validation.warnings, never touches `ok`.
     const persistenceWarning = anyMutation ? sourcesWithoutAssertionsWarning(research, applied) : null;
+    // Provenance nudge (#2256): a transcription with no page named. Advisory,
+    // like the one above — it rides validation.warnings and never touches `ok`.
+    const transcriptionWarnings = anyMutation
+      ? transcriptionWithoutImageWarnings(research, applied)
+      : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : [])],
+      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings],
     };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
@@ -5622,23 +6489,13 @@ export const researchAppendSchema = {
     "whole project, and writes atomically. Returns a compact summary; on any failure " +
     "nothing is written.\n" +
     "\n" +
-    "To persist a whole record in ONE call, pass an `ops` array (each op is " +
-    "`{ section, op, entry?/entryId?/fields?, planId? }`): one sources append plus one " +
-    "assertions append per fact, with the top-level `sourceDescription: { title, " +
-    "author?, url? }`. The tool then creates the tree.gedcomx.json source description " +
-    "(assigning the S id), stamps the source op's `gedcomx_source_description_id` and " +
-    "every assertion's `source_id`, auto-fills/verifies `record_persona_id` and " +
-    "canonicalizes `record_id` against the log entry's results sidecar, resolves " +
-    "`standard_place` for assertion places (copying the sidecar's resolution when " +
-    "present; resolved values are echoed in `resolvedPlaces`), validates ONCE, and " +
-    "writes tree.gedcomx.json + research.json together. Source reuse is " +
-    "auto-detected: when the batch's assertions cite a record_id an existing source " +
-    "already covers, the tool updates that source in place (same repository) or " +
-    "reuses its S entry (different repository) instead of duplicating — always " +
-    "supply `sourceDescription` and relay the echoed `sourceReuse` " +
-    "({ action: created | updated_existing | new_source_reused_s, srcId, sId }). " +
-    "To cite a specific known S entry explicitly, omit `sourceDescription` and set " +
-    "the sources op's `gedcomx_source_description_id` to that S id. Batches are " +
+    "Assertions are written by extraction_append, never here: the one assertions " +
+    "change accepted is an update that sets only `informant_bias_notes` on an existing " +
+    "assertion, to record a re-reading or a doubt. Any other assertions write is " +
+    "refused, and a disputed reading belongs in a conflict.\n" +
+    "\n" +
+    "To apply several mutations in one call, pass an `ops` array (each op is " +
+    "`{ section, op, entry?/entryId?/fields?, planId? }`). Batches are " +
     "all-or-nothing: on failure nothing is written and errors name the failing ops " +
     "(`ops[i]: <msg>`) plus `opsReceived` so you can confirm no op was dropped.",
   inputSchema: {
@@ -5660,9 +6517,7 @@ export const researchAppendSchema = {
         type: "string",
         enum: ["append", "update"],
         description:
-          "append a new entry (tool assigns the id) or update an existing one by id. " +
-          "Correcting an assertion's place/standard_place/date/value also updates the " +
-          "tree fact materialized from it — no separate tree_correct call.",
+          "append a new entry (tool assigns the id) or update an existing one by id.",
       },
       entry: {
         type: "object",
@@ -5698,8 +6553,7 @@ export const researchAppendSchema = {
               type: "string",
               enum: ["append", "update"],
               description:
-                "append (tool assigns id) or update by id. An assertions update also " +
-                "updates the tree fact materialized from that assertion.",
+                "append (tool assigns id) or update by id.",
             },
             entry: { type: "object", description: "append: the new entry in snake_case, WITHOUT an id." },
             entryId: { type: "string", description: "update: the id of the existing entry to modify." },

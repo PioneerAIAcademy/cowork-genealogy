@@ -18,12 +18,9 @@ import { fileURLToPath } from "node:url";
 // that agent's next body edit rather than flipping four run logs in one PR.
 // An entry here is checked in BOTH directions: an agent on the list that has
 // gained the heading fails ("stale entry — remove it"), and an agent off the
-// list that lacks it fails. Two agents are excluded outright rather than
-// pending: `image-reader`, which by spec returns a transcription and nothing
-// else, and `project-status`, whose two summaries and integrity warnings ARE
-// its whole output (lead ruling "PS return: A", 2026-09-24, issue #2793) —
-// conforming would drop the detailed summary and the id-bearing warnings below
-// the caller's print line.
+// list that lacks it fails. Three agents are excluded outright rather than
+// pending, each with its reason in `EXCLUDED` below: `image-reader`,
+// `record-structurer` and `source-evaluation`.
 //
 // NOTE for anyone converting an agent: exclusion silences this lint in both
 // directions, so a green run says nothing about whether the excluded body is
@@ -36,8 +33,8 @@ const HEADING = /^#{2,4}\s+`summary_for_user`\s*$/m;
 
 const EXCLUDED: Record<string, string> = {
   "image-reader.md": "returns a full transcription and nothing else, by spec",
-  "project-status.md":
-    "returns the user-friendly and detailed summaries, warnings first, as its whole output, by its own contract",
+  "record-structurer.md":
+    "returns extraction_append's code-written summary verbatim (lead, 2026-09-29)",
   // Issue #2796, applying issue #2793's "PS return: A" ruling (2026-09-24): the
   // agent writes nothing, so the per-source findings ARE the deliverable, and a
   // summary_for_user paragraph (no identifiers) printed in place of the return
@@ -77,7 +74,7 @@ const PENDING: Record<string, string> = {
   // docs/skill-authoring-guide.md and CONTRIBUTING.md all point at
   // agents/search-images.md instead.
   "search-wikipedia.md":
-    "measured conflict with its own suite's reply-brevity grading; premise of the 2026-09-18 ruling does not hold for a file-deliverable agent (#2795)",
+    "measured conflict with its own suite's reply-brevity grading; premise of the 2026-09-18 ruling does not hold for a log-entry deliverable agent (#2795)",
 };
 
 function stripFences(text: string): string {

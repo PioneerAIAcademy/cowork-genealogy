@@ -12,14 +12,14 @@ description: >-
   research.json, or when timeline impossibilities suggest an identity
   conflict. Do NOT use to add or track candidates when no decision is asked
   for (use hypothesis-tracking), to audit existing person_evidence links or
-  review their confidence (use person-evidence), to classify evidence (use
-  record-extraction, which owns classification), build a timeline (use
-  timeline), or write a conclusion (use proof-conclusion).
+  review their confidence (use person-evidence), to extract a record (use
+  extraction_append), build a timeline (use timeline), or write a conclusion (use
+  proof-conclusion).
 model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
-  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
+  # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   #
   # The tool set the skill declared, plus `Read` (the skill relied on the
@@ -115,10 +115,10 @@ when several are unresolved — and call `research_append` to persist it and its
 analysis; do not stop after presenting findings in text.
 **Trust the existing assertion classifications** (record_basis,
 directness, informant) as recorded — do NOT re-classify inline, and do
-NOT invoke the record-extraction or check-warnings skills from here.
-If a classification looks wrong and would change the weighing, note it
-and recommend running `record-extraction` (which owns classification
-refinement) as a next step, then proceed with what is recorded.
+NOT invoke check-warnings from here. Classifications come from the
+extraction table and are not refined per assertion. If a classification
+looks wrong because of evidence outside the record, weigh that evidence here,
+as part of this conflict's analysis, and say so in the rationale.
 
 Look for:
 
@@ -161,6 +161,18 @@ Look for:
   them from `conflicts_surfaced` — they are not conflicts. Do not
   manufacture a conflict entry for differing occupations, residences, or
   repeat crossings.
+- A tree writer (`tree_edit`, `tree_correct`, `merge_tree_persons`,
+  `materialize_facts`) returns a `conflicts_surfaced` entry with
+  `factType: "ParentChild"` when a write would give a child two
+  biological parents of one sex. Record it as an identity-level
+  conflict (§6): the two parents may be one person entered twice, or
+  rival candidates. Each value names a parent and the evidence behind it, as
+  assertion ids or, failing that, `source S…`; for a source ref, find its
+  assertions through the `research.json` source whose
+  `gedcomx_source_description_id` matches. Record the conflict with those
+  assertions in `competing_assertion_ids`. Never pass
+  `warningJustifications` to a writer to get the edge past the refusal,
+  and do not write the second parent edge until the conflict is resolved.
 
 **Already-identified conflicts:**
 - Check existing `conflicts[]` for `status: "unresolved"` — these
@@ -475,8 +487,9 @@ analyses are ALREADY persisted to the `conflicts` entry by
 generate (~16-20 ms/token, independent of model tier), so the single
 biggest latency lever is generating fewer tokens. Do NOT reproduce
 `independence_analysis`, `weighing_analysis`, or `resolution_rationale`
-in chat — that full prose lives in the persisted artifact. Present a
-terse summary ONLY, per conflict:
+in chat — that full prose lives in the persisted artifact. When other
+conflicts were left open, open with one sentence naming them and why this
+one came first. Then present a terse summary ONLY, per conflict:
 - The `c_` id written and its `status` (resolved / unresolved / moot)
 - 2-4 sentences: what the conflict was, the decisive finding, and — if
   resolved — the `preferred_assertion_id`
@@ -525,7 +538,9 @@ Suggest next steps:
 - **Write only the `conflicts` section.** Do not modify `assertions`,
   `person_evidence`, `sources`, or `tree.gedcomx.json`. If resolving
   a conflict reveals needed changes, report it and recommend the
-  owning skill.
+  owning skill. A reading the user reports or disputes goes in the
+  conflict's `description` and analysis, never onto the assertion
+  (not even `informant_bias_notes`).
 - **Independence analysis and weighing are separate steps.** Do not
   skip the independence analysis (Standard 46).
 - **A conflict transitions to `resolved` only when fully populated.**
@@ -599,7 +614,8 @@ a second `c_` covering the same assertion set.
 ## Return contract
 
 Step 7 above is the caller-facing half of the return, and its output economy
-governs it unchanged: the terse per-conflict lines, and nothing more above them.
+governs it unchanged: the opening sentence on any conflicts left open, the terse
+per-conflict lines, and nothing more above them.
 
 ### `summary_for_user`
 

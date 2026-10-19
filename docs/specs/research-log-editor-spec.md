@@ -18,7 +18,7 @@ schema-valid. The log is append-only by GPS rule, so the tool deliberately offer
 
 Every search produces a log entry (`research-log-protocol.md` Rule 1), so this is
 the highest-volume write in the system, performed today by hand across four skills
-(`search-records`, `search-external-sites`, `search-full-text`, `record-extraction`).
+(`search-records`, `search-external-sites`, `search-full-text`, `record-extraction` — the last since retired).
 The hand-write is the worst-case version of the problems the read/write direction
 exists to kill:
 
@@ -145,6 +145,26 @@ downstream. Rejecting is preferred over silently nulling, which would discard th
 caller's expressed intent. `validate_research_schema` now also enforces the
 `^pli_` prefix on a log entry's `plan_item_id`, matching the JSON Schema and the
 sibling reference fields.
+
+**A superseded plan's items are refused.** When the plan that owns `planItemId`
+has `status: "superseded"`, the op is rejected: research-plan replaced that plan,
+and a search counted toward one of its items counts toward a strategy nobody is
+running. The error names the superseded plan and, for the same question, the
+active plan and its next open item (`in_progress` before `planned`). When there
+is no active plan, or it has no open item, the error says so and points at
+`planItemId: null` or research-plan. In a batch, one such op refuses the whole
+call and writes nothing.
+
+An item on a `completed` plan is **not** refused, and neither is an id no plan
+owns (that is the validator's reference check). Over the committed e2e corpus,
+replayed against the state each call saw
+(`eval/harness/scripts/measure_superseded_log_items.py`, 2026-10-12 at
+`08e7ba018`), 696 successful calls were replayable and 1,490 were not, their
+responses stripped. Of the 1,283 replayable ops naming a plan item, 1,239 were
+on an active plan, 0 on a superseded one, and 44 on a completed one. All 44 are
+in two runs, and in both the question had no active plan, so a refusal there
+would leave the caller nowhere to log. Widening the rule to every non-active
+plan waits for a run that shows a completed-plan write is wrong.
 
 **`externalSite.urlGenerated` validation.** Must be an absolute `http(s)` URL —
 it is the string the skill presents as the clickable link and persists into
@@ -362,8 +382,9 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
 | `stagedResultsRef` names no staged file — already logged by an earlier successful call, pruned after 24h, or never staged | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search |
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
-| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows | input error; write nothing, and in a batch no op's staged file is consumed. The message names the missing column and quotes a compliant rewording, so the caller can re-send. See §8.2 |
+| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and up to eight of the phrases it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
+| `notes` (single-entry, or any op's) arrives JSON-escaped: no real newline once leading and trailing whitespace is ignored, at least two literal `\n`, and at least one literal `\n` that opens a table row (`\|`) or heading (`#`) | decoded, then handled as if sent decoded, with no warning. It decodes only `\n \r \t \" \\ \/ \uXXXX`; any other backslash (`\|`, `\*`, `\'`) is kept as sent. A second pass runs if the result still looks escaped, and no more than two. A trailing `"` is dropped first when it is the only unescaped quote in the note, since it is the escaped string's own closing quote. The decode runs before every precondition and before persistence, so the census check (§8.2) and validation judge the stored text. `unescapeJsonNotes` |
 
 ### 8.1 Non-blocking warnings (never fail the op)
 
@@ -389,7 +410,10 @@ are two that do block, and the distinction is what makes them legitimate.
   sources-without-assertions warning (which fires once ≥3 sources exist); it
   self-silences the instant any source or assertion lands, and fires on every
   qualifying `research_log_append` call while the two-empty state holds.
-  Tool-neutral message.
+  Tool-neutral message. Reference lookups (`REFERENCE_LOOKUP_TOOLS`: `wiki_search`,
+  `wiki_read`, `wikipedia_search`, `historical_context`) are not counted: their
+  `positive` entries carry a looked-up article or overview in `notes`, not a
+  record to persist. The pre-1880 census hedge is unaffected.
   It cannot reach a session that logs nothing at all (bundle 3) — that shape has
   no tool-boundary trigger.
 
@@ -434,6 +458,24 @@ Scope, and why it is this narrow:
   always carries birth years older than the census itself, so a whole-note year
   test refuses the documented censuses it is meant to allow. Only a year
   syntactically attached to the word "census" counts.
+- **A census word binds a year on one side only.** A word with a year before it
+  does not also take a single year after it: in "1900 census 1853/Maine", "the
+  1900 census, 1853 Maine" and "1900 census (1853, Maine)" the 1853 is a birth
+  year, and read as an 1853 census it refused "Mogom household, 1880 census: …
+  1900 census 1853/Maine", a note about the 1880 census. A run of two or more
+  years after it still binds ("Searched 1880 census, 1870 and 1860"), and a word
+  with no year before it still takes the one after ("US Census 1870"). A year
+  straight after a vital-event marker — `b.`, `born`, `bapt.`, `bp.`, `chr.`,
+  `d.`, `died`, `m.`, `married`, `bur.` — never binds, even before "census", so
+  "Patrick Flynn b. 1840 United States Census, 1850" is the 1850 census. The
+  one-letter markers count in lower case only, so an initial ("John B. 1850
+  census") is not one. What this gives up: a single year after a bound word is
+  never read as a census, even when it is one ("1880 census (1870, Pike
+  County)"), and losing it can put a note under the head-only rule below:
+  "1840 census, 1850: John Smith household" reads as 1840 alone and passes. In
+  the committed corpus (2026-10-18) two notes bind differently from `main` and
+  neither verdict moves: "1881 census, 1891 census" loses a duplicate 1891, and
+  "Milan Raney (b. 1891, 1910 census)" no longer reads the birth year as a census.
 - **The jurisdiction binds the same way.** The doctrine is US-federal, where
   1880 is the dividing line. England & Wales and Scotland gained the column in
   1851, so a post-1851 British census is documented and must pass. A named
@@ -441,6 +483,117 @@ Scope, and why it is this narrow:
   The jurisdiction must touch the census token: most non-US words in real notes
   are birthplaces on a US schedule ("1850 US Census, Schuylkill County ... born
   Ireland"), which stays refused.
+  **An unqualified mention takes its jurisdiction from the staged payload**
+  (decided at review-ready 2026-10-14). An unqualified census reads as US, so
+  "1851 census, Trowbridge: Job Purnell head of household, wife Ann." logged
+  against an English search was refused as a US census. When the entry's staged
+  payload (`record_search` rows' `collectionTitle`, or a `record_read` record's
+  `sd_c_` collection description) has at least one titled row and every titled
+  row starts with a British name (England, Wales, Scotland, Great Britain, United
+  Kingdom — so not "New England" or "British Columbia"), an unqualified mention
+  takes the 1851 threshold. A mention that names its own jurisdiction keeps it,
+  and "US", "U.S.", "USA", "United States", "federal", "census of the U.S." and
+  any `pre-<year>` or `before <year>` census all name the US — so "pre-1851
+  census" against English rows still reads as US, as it does on `main`. Anything else — a US row, a mixed payload,
+  another jurisdiction, no titles — changes nothing. This supplies the
+  jurisdiction; it does not skip the check, so an 1841 mention against English
+  rows stays refused ("still refuses an 1841 England census" in
+  `pre1880-census-hedge.test.ts`), now in British words. The rejected option
+  skipped the note-only path whenever no staged row was a US federal census: it
+  accepts "1841 England census … wife" and frees none of the church-records
+  notes, whose payload names no census.
+- **A 1790–1840 US census names only the head.** Those schedules name the head
+  of each household and count everyone else in age-and-sex tallies, so a head
+  named off one is what the census states. When every census that fired is a US
+  one of 1790, 1800, 1810, 1820, 1830 or 1840 — or, when the note binds none,
+  every year of the staged payload is — a claim that names only the head is
+  excused: `household of ⟨X⟩`, `⟨X⟩'s household`, `⟨X⟩ household`, `heads a
+  household`, `household headed by ⟨X⟩`, `Household head ⟨X⟩`, `head of
+  household`, `as head` and `(head)`, but not `as the head's …`. So a nil ("No
+  Geach household indexed in the 1830 U.S. census") passes too. Every other
+  claim still refuses: a kinship word before a name (`with wife Mary`), any
+  other `as` or bracketed role, `in … household`, `household includes`, a
+  roster, `living with` / `enumerated with`, named co-residents, and against a
+  staged payload the punctuated plural and the possessive.
+
+  A note whose head claim is excused is also read for anyone else, sentence by
+  sentence, skipping a sentence that names another record type or the tree. Any
+  of these refuses it:
+  - a relationship word, in any case, with no name after it and after
+    his/her/their too (`Wife Mary.`, `wife and 3 children in tallies`, `his wife
+    Mary`, `father of Patrick`, `grandson Amos`);
+  - a capitalised run after `with`, `includes`, `including`, `contains`,
+    `comprises`, `holds` or `enumerated in`/`with`, unless the run is a place
+    (`includes Amos Whitfield`, but not `enumerated in Fallsbury Township`);
+  - two or more names with ages (`John (40), Mary (38), Thomas (12)`);
+  - a name put on a tally (`Mary Flynn is the female 30-40`); the head's own
+    tally reads the same way and is refused too;
+  - `⟨Name⟩ enumerated in it`;
+  - two or more names in a bracket straight after the household name: `Thomas
+    Flynn household (Mary, Patrick, Bridget)`, `Household of Thomas Flynn
+    [Mary, Patrick]`, `Thomas Flynn's household (Mary; Patrick)`.
+
+  The bracket is split on commas, semicolons, `&` and `and`. A lower-case label
+  opening it (`members:`, `incl.`) comes off, and so does each item's aside in
+  brackets and one person's age or birth (`age 38`, `b. 1802`; a tally's `aged
+  30-40` stays). A name is one to three capitalised words with no digit and no
+  `Census`. The bracket is not read when any item is a place (a state or
+  country name, or a place word such as `County`, `Twp` or `PA`, not counting
+  the head's own name, so `Household of Thomas Ward (Mary Ward, Patrick Ward)`
+  still reads), when every name in it is the head's own (`Household of David
+  Bagley (Bagley, David)`, the head written surname-first), when it lists
+  spellings, or when it holds one item, which may be the head or a place. So
+  `(Cincinnati, Hamilton, Ohio)`, `(Dwelling 84, Family 91)`, `(Birmingham)`,
+  `(XHRB-V42, XHRB-V4V)` and a source citation pass. With no lexicon of names,
+  two capitalised words that are not people still read as names and refuse: a
+  place list with no state or place word (`(Cincinnati, Hamilton)`), a tally
+  with no counts (`(Free White Males, Free White Females)`), and variant
+  spellings with no `spellings` word (`(Flinn, Flynne)`). The refusal quotes
+  the bracket, so adding the state, the counts or the word clears it. On an
+  1850 schedule the household name already refuses the note, so the bracket is
+  not read there.
+
+  A relationship word is read whatever it qualifies, so "spouse field absent"
+  beside a head claim is refused too, and the refusal quotes the word. A note
+  that makes no head claim is not read this way, and keeps the verdict the
+  older arms give it: read regardless, these refused 8 committed notes and 1
+  paired payload op that `main` accepts, every one a search note that mentions
+  a relative ("check age columns for male child ~5", "if Nehemiah is
+  Elizabeth's father", "consistent with Peter Geach dying circa 1839-1840"). A
+  hedge clears any of them, as it clears the same note on an 1850 census. These
+  shapes still pass:
+  - "Thomas Flynn, Household head; his son Patrick is the male 5-10". It makes
+    no head claim, and `his son` is the older arms' tree-side carve-out, so the
+    1850 note passes the same way.
+  - names with bare numbers, `(Mary 38, Patrick 12)`. A schedule locator is
+    written the same way (`(Dwelling 84, Family 91)`), and nothing short of a
+    lexicon tells the two apart.
+  - a list after a comma or a dash (`Thomas Flynn household, Mary, Patrick and
+    Bridget`, `Thomas Flynn household — Mary, Patrick`). Only a bracket marks
+    where a list ends, and after a household name the committed run logs put
+    places and commentary there: 54 of their distinct notes have a comma there
+    and 10 a dash (2026-10-19), and none of them lists people.
+  - names joined by slashes, `(Mary/Patrick/Bridget)`: a slash joins variant
+    spellings as often as people.
+  - a single name, `(Mary Flynn)`.
+
+  `pre1880-census-hedge.test.ts` pins each of these, and each refusal above.
+
+  A note that also names an 1850–1870 census keeps the full rule for
+  it, and any other year ("1801 census", which the US did not take) or a British
+  mention is unchanged. The refusal says why in head-only words. This revises the
+  2026-10-14 ruling that this check does not change (lead, 2026-10-18): that
+  ruling was made for survey-surname tables (survey-surname-agent-spec.md, "The
+  hedge line") and did not consider these shapes. Measured with
+  `dev/measure-census-hedge-refusals.ts` against `main` at 0ae117dd2
+  (2026-10-19), together with the binding above, the reading for anyone else,
+  the bracket reading and the two roster fixes below: **0** notes and **0**
+  paired payload ops newly refused, **5** notes newly freed — four nil searches
+  for an 1830 or 1840 household and one 1840 hit that names only its head,
+  through the FamilySearch record title it quotes. That hit's one relationship
+  word, "the father named in the 1884 death records", sits in a sentence about
+  another record. The bracket reading alone changes no committed note's
+  verdict, in either direction, against this branch without it.
 - **Undecidable inputs skip** rather than guessing: when no year binds to a
   census at all, the note-only gate does not fire — the same behaviour as an
   undocumented jurisdiction. What this gives up: an unhedged pre-1880 US census
@@ -455,10 +608,13 @@ Scope, and why it is this narrow:
   shape, never by the note's census patterns, which read an unqualified census as
   US and would take "Ecuador, Census, 1737-1990" for one), the note is judged
   whatever word it uses, provided it binds no census year of its own. A bound
-  year keeps precedence, so no note-only verdict moves. A mixed search (1850 and
+  year keeps precedence, so no note-only verdict moves on the census years (a
+  British payload can still re-jurisdiction an unqualified bound year — see the
+  jurisdiction bullet above). A mixed search (1850 and
   1880 rows) does not decide, because the note may describe the other row; nor
   does "the top-ranked row", which is the best match only when ranking ran.
-  Other search tools carry no collection title and keep the note-only rule.
+  Other search tools carry no collection title and keep the note-only rule;
+  `record_read` feeds only the jurisdiction above, never the census years.
 - **The note does not have to repeat the census year** (2026-10-02). Until then
   the payload tie also required one of its years to appear in the note text,
   which hid real misses: `ut_search_records_001` ("…in household of Thomas
@@ -540,8 +696,12 @@ Scope, and why it is this narrow:
   cancel the deny silently. A list introduced as spellings, variants, surnames
   or forms (`Household spellings tried: Flynn, Flinn and Flynne`) is a list of
   names searched, not of people; `names` is not among those words, because
-  `Household names: George, Henry and Margaret` is a roster. A roster written in
-  lower case is missed.
+  `Household names: George, Henry and Margaret` is a roster. Two more lists are
+  not of people: one straight after `household in`, `at` or `near` (`household
+  in Norwalk, Fairfield, CT`), and a FamilySearch record title, which names the
+  head and then the collection (`Household of David Bagley, United States,
+  Census, 1840`: neither `United States` nor a run with `Census` in it is a
+  person). A roster written in lower case is missed.
 
   **Capitalisation is never the test.** The first version asked whether a
   capital sat within 24 characters of the noun, which is not a test for a name
@@ -558,11 +718,12 @@ Scope, and why it is this narrow:
 
   **Every clause and guard goes red when it alone is removed**, which is
   checked by `dev/mutate-census-hedge.ts` rather than asserted. Run it rather
-  than trusting this sentence: it takes each of the forty-one out in turn and
-  exits non-zero on any the suite does not notice. Two rounds of this card
-  shipped a mechanism no test exercised, each time because a note written for
-  one clause incidentally satisfied a neighbour, so reading the tests does not
-  substitute. A green row means the clause needs a test **or** is inert — one
+  than trusting this sentence: it takes each one out in turn, including which
+  arms count as naming only the head, and exits non-zero on any the suite does
+  not notice. Two rounds of this card shipped a mechanism no test exercised,
+  each time because a note written for one clause incidentally satisfied a
+  neighbour, so reading the tests does not substitute. A green row means the
+  clause needs a test **or** is inert — one
   was deleted on that finding rather than given a test it could not fail.
 
   **The sweep proves it ran before it reports.** Its first version launched
@@ -594,6 +755,14 @@ Scope, and why it is this narrow:
   and `Sarah A. Mullen` are not cut at their abbreviating periods.
 - **"Indexed" beside a role word is a hedge** ("Role indexed as 'Head'").
   Flagging a *name* as indexed is not.
+- **The refusal quotes what it fired on**: the census as the note wrote it
+  ("1850 census", "pre-1880 census"), or the staged census years when the
+  payload decided, and the phrases it read as structure, as written ("wife
+  Mary", "household of", "William Mullen household") but with the note's own
+  double quotes taken out, each once and none that sits inside a longer one,
+  up to eight. Without them
+  the caller had to guess which words to change, and a birth year read as a
+  census year ("census 1853") was invisible.
 - **The hedge is accepted however it is hyphenated.** The refusal message spells
   it "relationship-to-head column"; the hedge patterns accepted only spaces, so
   a caller who hedged in the exact words they were handed was refused a second
@@ -692,7 +861,8 @@ is 3.4% of notes, and non-US censuses that carry the column are excluded. The
 staged search answers most of the third for `record_search`: the census is read
 from FamilySearch's response, not from the caller. What still stands is the
 reach: a note logged by any other tool, or with no staged response, is judged on
-its own text alone and keeps every limit above — chiefly that an unbound census
+its own text alone (a staged `record_read` only supplies the jurisdiction of an
+unqualified mention, never the census year) and keeps every limit above — chiefly that an unbound census
 year skips the rule. This narrows a common failure rather than closing a hole.
 
 The trigger word was the same hole, and more broadly. On note text alone the
@@ -779,8 +949,8 @@ recorded for different arguments.
   staging search tool reports `resultsAvailable > 0` with no `stagedResultsRef`
   and stays silent for a nil search; the logging-without-persistence nudge fires
   once ≥3 positive searches are logged with zero sources and zero assertions,
-  stays silent below the threshold, and stays silent once any source or assertion
-  exists. Both keep `ok: true` and leave the log entry written.
+  stays silent below the threshold, stays silent once any source or assertion
+  exists, and does not count reference-lookup entries. Both keep `ok: true` and leave the log entry written.
 - **Nil escalation (§8.1)** — `escalationDue` appears on the third nil against a
   census plan item with an open question, single or batched; stays absent at two,
   for a probate plan item, once the plan item has a positive or partial entry or
@@ -806,6 +976,17 @@ recorded for different arguments.
   that echoes the call, an omitted `query` (filled, plumbing stripped), no staged
   handle, a staged payload with no `query`, and a legacy `external_links_search`
   handle.
+- **JSON-escaped notes (§8)** — decoded and stored with real newlines, single
+  and batched: `\n`, `\"`, `\t` and `\uXXXX` escapes, a whole household table, a
+  table escaped twice, one with a single real leading or trailing newline, an
+  escaped heading-only note, and a leaked closing quote (dropped). Partly
+  escaped tables decode around a raw quote or tab and keep `\|`, `\'`, `\*`,
+  `\_` and a lone trailing backslash. Left unchanged: a note with a real newline
+  inside, Windows paths and prose that name `\n`, escaped prose with no table or
+  heading, a single literal `\n|`, a plain note whose only quote mark ends it,
+  and the empty string. The census check judges the decoded text: a hedged
+  escaped table passes and an unhedged one is refused, with or without a
+  trailing real newline.
 
 ---
 
@@ -825,9 +1006,9 @@ recorded for different arguments.
   hand-written log + sidecar step with a `research_log_append` call. Their
   `research-log-protocol.md` references shrink to "call the tool" + the analytical
   rules (when to log negative, what to put in `query`/`notes`).
-- `record-extraction` — uses it for the `user_provided` log entry it writes when no
-  search skill logged the record (`research-log-protocol.md` §"When record-extraction
-  writes log entries").
+- `extraction_append` — calls it in code: a `record_read` entry for each
+  `recordIds` record it reads, and an `image_transcribe` or `user_provided` entry
+  for each `documents` source.
 - Downstream skills are unaffected: they still link to a log entry via
   `log_entry_id` on sources/assertions (the reverse-lookup provenance model is
   unchanged).

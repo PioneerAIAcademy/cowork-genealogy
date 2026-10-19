@@ -215,6 +215,21 @@ def parse_ebextensions(text: str) -> dict[str, dict[str, str]]:
     return out
 
 
+# U20: prototype feedback bundles (web/feedback.py) live under this prefix of the data bucket
+# and expire after FEEDBACK_RETENTION_DAYS. 90 is #3369's placeholder for the rows a bundle
+# copies, so a bundle never outlives its source -- a proposal for the lead to confirm or
+# replace (docs/plan/familysearch-handoff.md, U20).
+FEEDBACK_PREFIX = "feedback/"
+FEEDBACK_RETENTION_DAYS = 90
+
+
+def data_bucket_lifecycle() -> dict:
+    """The data bucket's whole lifecycle configuration: one rule, on feedback/ only. The
+    project objects under <projectId>/ are the U19 sweep's, never a lifecycle rule's."""
+    return {"Rules": [{"ID": "feedback-retention", "Status": "Enabled", "Filter": {"Prefix": FEEDBACK_PREFIX},
+                       "Expiration": {"Days": FEEDBACK_RETENTION_DAYS}}]}
+
+
 def sqsd_template() -> dict[str, dict[str, str]]:
     """Both namespaces of 01-sqsd.config, which `up --phase worker` sets at API level."""
     parsed = parse_ebextensions(SQSD_CONFIG.read_text(encoding="utf-8"))
@@ -798,8 +813,12 @@ class Rehearsal:
 
         bucket = f"arn:aws:s3:::{self.data_bucket}"
         return {
+            # U20: feedback reads blob bytes anywhere in the bucket and writes only under
+            # feedback/ -- nothing more (tests/test_proto_rehearsal.py holds the exact set).
             "web": doc(secrets("web", "shared"), {"Effect": "Allow", "Action": "sqs:SendMessage",
-                                                  "Resource": f"arn:aws:sqs:{REGION}:{self.account}:awseb-e-*"}),
+                                                  "Resource": f"arn:aws:sqs:{REGION}:{self.account}:awseb-e-*"},
+                       {"Effect": "Allow", "Action": "s3:GetObject", "Resource": f"{bucket}/*"},
+                       {"Effect": "Allow", "Action": "s3:PutObject", "Resource": f"{bucket}/{FEEDBACK_PREFIX}*"}),
             "worker": doc(secrets("worker", "shared")),
             "tools": doc(secrets("tools"),
                          {"Effect": "Allow", "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
@@ -936,6 +955,9 @@ class Rehearsal:
         self.aws("s3api", "put-bucket-encryption", "--bucket", bucket, "--server-side-encryption-configuration",
                  self.file("data-bucket-encryption.json", {"Rules": [
                      {"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]}))
+        # The WHOLE lifecycle document: put-bucket-lifecycle-configuration replaces it.
+        self.aws("s3api", "put-bucket-lifecycle-configuration", "--bucket", bucket, "--lifecycle-configuration",
+                 self.file("data-bucket-lifecycle.json", data_bucket_lifecycle()))
         self.record("s3", bucket)
 
     def secret_values(self) -> dict[str, Path]:
@@ -1156,6 +1178,8 @@ class Rehearsal:
     def web_options(self) -> list[dict]:
         out = self.common_options("web") + self.load_balanced("web", internal=False)
         out.append(opt(ENV_NS, "QUEUE_URL", self.state.get("queue_url") or "<queue-url>"))
+        # U20: the feedback bucket; no endpoint and no keys, so the instance role signs.
+        out += [opt(ENV_NS, "GENEALOGY_S3_BUCKET", self.data_bucket), opt(ENV_NS, "GENEALOGY_S3_REGION", REGION)]
         return out + self.signin_options() + self.extra_env("web")
 
     def signin_options(self) -> list[dict]:
