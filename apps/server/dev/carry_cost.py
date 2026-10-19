@@ -343,6 +343,11 @@ def _money(x: float) -> str:
     return f"${x:,.2f}"
 
 
+def _exact(x: float) -> str:
+    """To the millionth of a dollar, so a session worked by hand can be matched line by line."""
+    return f"${x:,.6f}"
+
+
 def _pct(part: float, whole: float) -> str:
     return f"{100 * part / whole:.1f}%" if whole else "-"
 
@@ -410,17 +415,17 @@ def explain(projects: list[Project], target: str, seed: int) -> int:
     fresh = p.baseline + seed
     print(f"{p.name}: bundles {', '.join(p.bundles)}; {len(p.sessions)} SDK sessions; "
           f"{'LEFT OUT: ' + p.excluded if p.excluded else 'kept'}")
-    print(f"cost {_money(p.cost())} (main thread {_money(p.cost(main_only=True))}, "
+    print(f"cost {_exact(p.cost())} (main thread {_exact(p.cost(main_only=True))}, "
           f"{len(p.other_calls)} sidechain and agent calls); baseline {p.baseline:,}; "
           f"fresh start with a {seed:,}-token seed = {fresh:,}; {p.compactions} compactions.")
     print("  #  sent                 first-call ctx   excess  carrying  after compaction  "
-          "Yes. folded   blended  positional")
+          "Yes. folded     blended   positional")
     for i, m in enumerate(p.messages[True], 1):
         print(f"  {i:<2} {m.when:<19}  {m.first_context or 0:>14,}  {m.excess(fresh):>7,}  "
               f"{len(m.carrying):>8}  {m.after_compaction:>16}  {m.folded:>11}  "
-              f"{_money(m.cost(fresh, False)):>8}  {_money(m.cost(fresh, True)):>10}")
-    print(f"  excess total: blended {_money(p.excess_cost(seed, False))}, "
-          f"positional {_money(p.excess_cost(seed, True))}")
+              f"{_exact(m.cost(fresh, False)):>10}  {_exact(m.cost(fresh, True)):>11}")
+    print(f"  excess total: blended {_exact(p.excess_cost(seed, False))}, "
+          f"positional {_exact(p.excess_cost(seed, True))}")
     return 0
 
 

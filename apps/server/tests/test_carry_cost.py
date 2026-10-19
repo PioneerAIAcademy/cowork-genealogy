@@ -122,6 +122,13 @@ def test_the_worked_session_by_hand(worked):
     assert worked.excess_cost(5_000, positional=True) == pytest.approx(0.081, abs=1e-9)
 
 
+def test_explain_prints_the_worked_session_to_the_millionth_of_a_dollar(worked, capsys):
+    """Fine enough to match a session worked by hand: a small session's carry is cents."""
+    carry_cost.explain([worked], "prj_worked", 5_000)
+    out = capsys.readouterr().out
+    assert "excess total: blended $0.082669, positional $0.081000" in out
+
+
 def test_the_cost_counts_every_call_once_at_its_last_entry(worked):
     """Main thread: m1 (40,000 written, 100 out), m1b (40,000 read, 50 out: its LAST entry),
     m3, m4, m5, m6, m7, m9, m10, and no `<synthetic>` placeholder. The agent run adds sub1 at
