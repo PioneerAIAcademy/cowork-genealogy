@@ -377,9 +377,10 @@ function unorderableDateWarnings(entry: any, research: any): string[] {
 
 // A timeline event with no assertion_ids came from the tree or the user, not
 // from a record, and a reply that presents it beside record-backed events
-// reads it as established (issue #3516). A warning, not a refusal: a timeline
-// built from tree facts is a legitimate first pass (lead, 2026-10-18), so the
-// defect is undisclosed provenance, and the remedy is to say so.
+// reads it as established (issue #3516). A warning, not a refusal: refusal was
+// rejected 2026-10-18 and the 2026-10-19 ruling kept this a warning, though it
+// withdrew the "tree-built first pass" premise for person-mode timelines.
+// research-append-tool-spec.md §5.5 has the detail.
 function unsourcedTimelineEventWarnings(entry: any): string[] {
   const events: any[] = Array.isArray(entry.events) ? entry.events : [];
   const unsourced = events.filter(

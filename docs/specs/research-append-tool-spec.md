@@ -241,7 +241,9 @@ camelCase convenience fields the same way `research_log_append` does.
 
 `validation.warnings` carries non-blocking advisories: `standard_place` that
 could not be resolved (§3.6), tree-heal notes, an already-`exhaustive_declared`
-no-op, and the sources-without-assertions persistence nudge (§5.1).
+no-op, and the write-boundary advisories of §5.1–§5.5 (sources without
+assertions, tree-encoding completion, a corrected assertion with no linked fact,
+a transcription without a page, unsourced timeline events).
 
 ### 3.3 Batch form (`ops`) — persist a whole record in one call
 
@@ -1210,9 +1212,14 @@ Implemented as `unsourcedTimelineEventWarnings` in `research-append.ts`.
   from the tree or the user, and a reply that presents them alike makes
   unchecked tree conclusions read as established fact (a 2026-10-18 feedback
   bundle: 5 of 6 events in its `t_001` had `assertion_ids: []`).
-- **Why warn and not refuse (lead ruling, 2026-10-18).** A timeline built from
-  tree facts is a legitimate first pass. The defect is undisclosed provenance,
-  not the empty list, so a refusal would block correct work.
+- **Why warn and not refuse (lead, 2026-10-18; kept 2026-10-19).** A refusal
+  was rejected on 2026-10-18, when a tree-built timeline was ruled a legitimate
+  first pass. That premise was withdrawn on 2026-10-19 for person-mode
+  timelines — an unsourced tree fact becomes a gap there, never an event — but
+  the same ruling kept this as a warning, and hypothesis-mode timelines are
+  unchanged. So an empty-`assertion_ids` event in person mode is now a defect
+  this surfaces rather than a first pass it discloses. Whether person mode
+  should refuse it instead is a decision for the lead, not settled here.
 - **What makes it fire.** An `append`, or an `update` whose `fields` carries
   `events` — the append-or-field-touched pattern of the 1890 census check
   beside it, keyed on `events` rather than `gaps` — so an edit touching only
@@ -1223,7 +1230,8 @@ Implemented as `unsourcedTimelineEventWarnings` in `research-append.ts`.
   real assertion must not reach it: the validator refuses an event whose
   `assertion_ids` is not an array, holds a non-string, or names an id absent
   from `assertions` — the same three checks a proof summary's
-  `supporting_assertion_ids` gets.
+  `supporting_assertion_ids` gets — and refuses a timeline whose `events` or
+  `gaps` is not an array, which the counting would otherwise read as empty.
 - **What nothing checks.** Whether the agent reads the count out to the user;
   CI checks only that the warning is emitted.
 

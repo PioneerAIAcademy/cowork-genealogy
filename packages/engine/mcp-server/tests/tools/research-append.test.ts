@@ -2268,7 +2268,8 @@ describe("research_append (Phase 3)", () => {
   });
 
   // Issue #3572 (Half 1 of #3516): an event citing no record is unchecked, and
-  // the writer says how many. Warn only — lead ruling 2026-10-18.
+  // the writer says how many. Warn only — refusal rejected 2026-10-18, kept a
+  // warning 2026-10-19 (spec §5.5).
   describe("unsourced timeline event advisory (#3572)", () => {
     const WARN = /cite no record/;
     const event = (assertionIds: string[]) => ({
@@ -2346,6 +2347,34 @@ describe("research_append (Phase 3)", () => {
     ])("refuses an event whose assertion_ids is %s", async (_label, ids, msg) => {
       await writeProject();
       const r = await appendTimeline([{ ...event([]), assertion_ids: ids }]);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(msg);
+      expect((await readResearch()).timelines ?? []).toHaveLength(0);
+    });
+
+    it("reports a null assertion_ids once, not twice", async () => {
+      await writeProject();
+      const r = await appendTimeline([{ ...event([]), assertion_ids: null }]);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.filter((e) => /events\[0\]/.test(e) && /assertion_ids/.test(e))).toHaveLength(1);
+    });
+
+    // The counting reads a non-array `events` as empty, so an object holding an
+    // unsourced event would otherwise persist with no warning and no error.
+    it.each([
+      ["events as an object", { events: { k: event([]) } }, /'events' must be an array/],
+      ["events as a string", { events: "[]" }, /'events' must be an array/],
+      ["gaps as a string", { events: [event(["a_001"])], gaps: "none" }, /'gaps' must be an array/],
+    ])("refuses a timeline with %s", async (_label, fields, msg) => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "append",
+        entry: { label: "test timeline", person_ids: ["I1"], events: [], gaps: [], ...fields },
+      } as never);
       expect(r.ok).toBe(false);
       if (r.ok) return;
       expect(r.errors.join(" ")).toMatch(msg);
