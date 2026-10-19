@@ -12,7 +12,7 @@ Mined from a Cowork project on 2026-10-08 (Family Tree LZJF-J13, William Honeyma
 
 The case folder is the post-run state, and it was not written through the current writer tools. It has no plan, nine log entries with no results sidecars, assertions with no `log_entry_id` or `record_basis`, and capitalized fact types. The carve keeps every source and assertion and changes only what today's validator requires:
 
-- Fact types are lower-cased (`ParentChild` becomes `relationship`, with a `structured_value`). Every assertion gets `record_basis` (`inferred` for a_008, the birth year computed from the burial age), and the field the case called `evidence_type` is dropped.
+- Fact types are lower-cased (`ParentChild` becomes `relationship`, with a `structured_value`). Every assertion gets `record_basis` (`inferred` for a_008, the birth year computed from the burial age), replacing the retired field the case still carried.
 - a_008's age note moves to `informant_bias_notes`. Its quality becomes `indeterminate`, because its informant is `unknown`.
 - **The plans and log_002 are RECONSTRUCTED.** They exist so that no "question with no plan" or "pending extraction" row fires above the one this test grades. log_001 and log_003 are the case's own entries. log_002 stands in for the case's Scottish searches, and the two Scottish records (src_004, src_008) are assigned to it. Every other source is assigned to log_001.
 - The questions are reset to `open`. The conflicts (c_001, c_002), hypotheses (h_001 to h_004) and both proof summaries are removed, because they came after the step this test grades.
