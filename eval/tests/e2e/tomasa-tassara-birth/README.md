@@ -49,33 +49,26 @@ or birthplace, and none is a re-index of the census, so the hint adds genuinely
 new information. The surname spelling variants (Passara/Pasara/Tassaro) are not
 evidence against the match.
 
-**Calibrated image-read facts (`image_basis: true`).** Identity rests on the
-census register image, not the index alone: the index does **not** group the
-household (each member has its own `1:2` record), so record-number adjacency in a
-search is not proof. The register image `ark:/61903/3:1:S3HY-674Q-DT3` settles it —
-lines 4–9 are one consecutive household: Juan Rossello (age 37, married, Italia) →
-**Tomasa Tassara (age 31, married, Argentina / Bs Aires, "4 children / 10 years
-married")** → Juan (9) → Catalina (7) → Angela (5) → Bartolomé (3). Age 31 → born
-~1864; the "10 years married" fits a first child christened in Mercedes in 1885.
-This reading is licensed under the Step 1a two-entry check — two other indexed
-entries on the **same image** matched the reading on name, sex, age and
-birthplace:
+**Image examined, but not relied upon (`image_basis` omitted).** The census
+register image `ark:/61903/3:1:S3HY-674Q-DT3` shows Tomasa Tassara enumerated as a
+married woman among a Rossello household (lines 4–9: Juan Rossello 37, Tomasa 31,
+Juan 9, Catalina 7, Angela 5, Bartolomé 3). A Step 1a two-entry check was
+attempted on the page, and a discrepancy surfaced: **Pedro Ratti the father**
+(`ark:/61903/1:1:MW49-L1W`) read age **40** by OCR against an indexed **60** — a
+mismatch on the age column, the same field a census birth year is derived from.
+Under Step 1a's rule ("either differs: discard everything that transcription read
+from the page"), the transcription is therefore **not** relied upon, and the
+fixture does **not** set `image_basis`. (Andrés Ballestrero
+`ark:/61903/1:1:MW49-L19` and Pedro Ratti the son `ark:/61903/1:1:MW49-L1Q` did
+match the index, but one same-page mismatch is enough to withhold the licence, and
+a higher-resolution re-read is not the fix per the guide.)
 
-- **Andrés Ballestrero** (`ark:/61903/1:1:MW49-L19`): index male, b.1830 (age 65),
-  Italy, married — matches image line 10 (Ballestrero, Andrés, 65, Italia).
-- **Pedro Ratti, the son** (`ark:/61903/1:1:MW49-L1Q`): index male, b.1884 (age
-  11), Buenos Aires — matches image line 13 (Ratti, Pedro, 11, Argentina Bs Aires).
-
-Both controls' `1:1` personas carry this same image ark, so the image is the
-correct sheet (not a wrong film waypoint).
-
-**Disclosed discrepancy.** A *third* entry on the sheet, **Pedro Ratti the
-father** (`ark:/61903/1:1:MW49-L1W`), is indexed b.1835 (age 60), but the OCR read
-his age as **40** — a probable handwritten 6-vs-4 digit misread. It is immaterial
-to this adjudication: it is a control, not the subject, and the identity
-conclusion rests on independently-indexed fields (the household's names, the
-cuartel, and the children's exactly-matching ages), not on any image-only digit.
-Tomasa's own age (31) is corroborated by the index's 1864.
+**Identity rests on the index alone, which is sufficient.** As the indexed facts
+above show, the 1895 census records the husband Juan Rossello and all four children
+— each as its own record in the same Cuartel 01 (Población rural), Mercedes, each
+child's year within one of the tree's, Maria (tree b.1898) correctly absent, born
+after the census. The husband's name, the four children's names, the matching years
+and the same specific rural cuartel make this a confident match without the image.
 
 **Limits / precision.** The birth is kept at **"about 1864"** — an age converted
 to a year, good to about a year, not an exact date. The birthplace is kept at
@@ -89,5 +82,6 @@ census gives.
 
 **Retrieval** was read-only via the MCP `person_read` / `record_read` /
 `record_search` / `image_transcribe` tools against live FamilySearch; the image
-reading was calibrated per Step 1a (above), and the identity judgement is the
-genealogist's. The call is a confident true match, not borderline.
+was examined but its transcription was not relied upon (Step 1a check above), so
+the identity judgement rests on the indexed household and is the genealogist's.
+The call is a confident true match, not borderline.
