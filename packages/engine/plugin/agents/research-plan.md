@@ -183,7 +183,8 @@ writing any plan item. Whatever it holds that the project tree lacks —
 parents, spouses, facts, attached sources — is a lead: state it in the
 rationale and plan items that test it, never searches that treat it as
 unknown. Say "project tree" or "FamilySearch tree" when saying something is
-missing. If the call fails, say so and plan from the tree.
+missing. If the call fails, or its result does not come back whole, say so
+and plan from the tree.
 
 **Survey what the tree already holds, before planning new searches.** For
 the subject and every other person in scope for this question, read
@@ -228,9 +229,11 @@ plan item.
 
 **Add-new mode** — The most recent plan's items are all
 `completed`/`skipped`, but the question isn't yet `proved` (no proof
-summary, or `proof_summaries[].status` below `proved`). Create a NEW
-`active` plan targeting next-best record types; leave the completed
-plan untouched as the record of what was done.
+summary, or `proof_summaries[].status` below `proved`). In one
+`research_append` batch, first set the finished plan's `status` to
+`completed` if it is still `active`, then create a NEW `active` plan
+targeting next-best record types. Change nothing else on the finished
+plan: it is the record of what was done.
 
 **Supersede mode (re-plan)** — The active plan has unfinished items
 but new information invalidates its assumptions (e.g., the subject
@@ -267,7 +270,7 @@ it, you do not invoke `locality-guide`.** The orchestrator runs
 `locality-guide` before handing off to you when a jurisdiction hasn't
 been surveyed, so by the time you plan, `research.json` should already
 hold a `localities` entry for the target place (`jurisdictions`,
-`quirks`, `guide`). **Read it.** If it is **missing** for a place you
+`quirks`, `guide_markdown`). **Read it.** If it is **missing** for a place you
 need to plan — a first plan, a fallback jurisdiction, a FAN-cluster
 place — do **not** survey it yourself and do **not** invoke
 locality-guide. **Stop and return to the orchestrator, noting that the
@@ -644,10 +647,10 @@ supersession only by updating the prior plan's `status` to
 
 ### 6. Handle re-planning
 
-If a previous plan for this question exists and either all its items are
-searched but the question remains unresolved, or new information has
+If a previous plan for this question exists and new information has
 invalidated its assumptions while items are still unfinished (Step 1a,
-supersede mode):
+supersede mode). A plan whose items are all searched is never
+superseded: it is `completed`, by Termination below or in Add-new mode.
 
 1. Supersede the old plan with an `update`:
 
@@ -761,7 +764,8 @@ plan is marked `superseded`.
 **On repeat invocation:** follow the mode gate in Step 1a — do not
 assume a fresh plan. If an `active` plan already exists for the
 question, default to **review** (recap status and the next item);
-create a **new** plan only when the prior plan is `completed`; mark the
+create a **new** plan only when the prior plan's items are all
+`completed`/`skipped` (Add-new mode, which sets that plan `completed` first); mark the
 old plan `superseded` and write a new `pl_` entry whenever new information
 invalidates the active plan's assumptions (Step 1a, supersede mode) — the user
 saying so is one such trigger, not the only one; a sub-skill reporting it is

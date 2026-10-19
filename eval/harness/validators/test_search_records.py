@@ -239,11 +239,11 @@ def test_no_search_or_writes_on_planning_request(
 
     search-records executes searches and logs them; a pure planning
     question ("what should I search for next?") must not cause a search to
-    be EXECUTED or its results to be persisted. This is the deterministic
-    gate for the grade_on_invariant negative ut_search_records_005: the
-    routing (research-plan vs a direct-answer detour) is a known-unstable
-    model prior, but the state-harm invariant always holds and is what we
-    assert. See docs/specs/unit-test-spec.md.
+    be EXECUTED or its results to be persisted. It was the deterministic
+    gate for the grade_on_invariant negative ut_search_records_005, deleted by
+    issue #2116 when research-plan became an agent, so in this suite it is
+    dormant (tests/unit/test_tag_gate_coverage.py DORMANT) until a test carries
+    the tag again. See docs/specs/unit-test-spec.md.
 
     Fails iff the run:
       - made a `record_search` MCP call (a search was executed), or
