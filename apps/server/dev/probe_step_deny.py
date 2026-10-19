@@ -60,19 +60,46 @@ VERDICTS
   RETRIES       A: denied, then another tool call. Names the route.
   VOID          the model never delegated, or B is indistinguishable from A.
 
-STATUS: NOT YET RUN -- no answer recorded here yet
+ANSWERED 2026-10-19, alpha plane. A DENY IS NOT A STEP BOUNDARY.
 
-Unlike `probe_hook_binding.py`, whose docstring carries its 2026-09-09 result,
-this one has measured nothing. It could not run on the machine it was written on:
-no `ANTHROPIC_API_KEY` in the environment and no `eval/.env`. That is not an
-oversight to route around -- `build_options` -> `_sdk_env` (`real_agent.py:588`)
-always hardwires `ANTHROPIC_API_KEY` into the SDK subprocess, so this path is
-API-key-billed by construction, with no subscription route through it.
+    run  prompt            arm A (denied)                       verdict
+    1    one task          no further tool call, clean end      ENDS*
+    2    two tasks         Write + research_delivered after     LEAKS
+                           the deny; second task DONE
 
-**When it is run, write the verdict into this docstring**, in the table form the
-sibling probe uses, so the answer lives with the instrument rather than in a
-chat log -- and record it in ADR-0005 beside the 2026-07-30 Cowork findings, as
-phase 0 asks. Until then, treat every question above as open.
+    * run 1 is not evidence. Its control ended after one delegation too, because
+      a single-task prompt leaves nothing to do either way -- "no retry" was
+      attributable, "it ended" was not. That is why run 2 queued a second task.
+
+**Run 2 is the result.** Denied at the boundary, the model reported the failure,
+then carried straight on: it did the queued `Write` AND called
+`research_delivered`. The control did the second task too, so arm A skipping it
+would have been meaningful -- it did not skip it. The boundary leaked.
+
+So the design premise in `research-step-mode.md` -- "the boundary is a deny on
+the delegation that would start the next step" -- is FALSIFIED for the only case
+that matters, a turn with more than one thing to do. A deny is a tool RESULT;
+the model treats it as one failed item on its list and continues. That is
+exactly what `options.py:363-367` already says about denies ("the model reads
+it, argues with it, and picks another tool"), now measured at the turn level.
+
+What this does NOT say: that `_halt` is the answer instead. Its own comment
+records that halt fields end the turn only AFTER the call runs, so the
+delegation would execute. Neither instrument is sufficient as it stands, and the
+alpha has no halt at all. PR 1 owes a mechanism, not a reordering.
+
+Two further observations from the transcripts, both costing nothing extra:
+
+  * The model read the deny as an ERROR, not an instruction, in both runs --
+    "the Agent call came back with an error rather than a result" -- despite the
+    reason saying the step was complete. At a real boundary a researcher would
+    see a broken tool call, not "step done, continue?".
+  * In run 2 arm A it called `research_delivered` of its own accord, i.e. the
+    existing finish line fired on a turn the boundary was supposed to own.
+
+Cost: $3.33 across four sessions. Prototype plane NOT measured -- it needs a
+live store and bearer to assemble its options, and the alpha's answer is
+negative, so the design needs rework before the second plane is worth buying.
 
 Costs two short sessions. Needs a compiled engine (`make engine-build`) and a key
 in $ANTHROPIC_API_KEY or eval/.env.
@@ -115,22 +142,81 @@ QUERY = (
     "1880 United States Federal Census."
 )
 
+# `--queued`: the same setup with WORK LEFT AFTER the delegation.
+#
+# Run 1 (2026-10-19) came back ENDS on the bare query, and the control could not
+# carry it: arm B ended after one delegation too, because a single-task prompt
+# leaves nothing to do either way. "No retry" was attributable; "it ended" was
+# not. With a second task queued, the two arms separate -- if the deny stops
+# work the model would otherwise have done, that is a step boundary holding, and
+# if the model carries on to the second task the boundary leaks.
+#
+# The second task is a `Write`, not prose, so it is read off the stream rather
+# than off the model's narration. Still no instruction about what to do after a
+# deny: the queued task is the setup, not a hint.
+QUERY_QUEUED = (
+    "Two things, in order.\n"
+    "1. Delegate to the `citation` agent: format a source citation for the "
+    "1880 United States Federal Census.\n"
+    "2. Use the Write tool to create notes.txt containing the single line: done"
+)
+
+# How the second task is recognised in the stream.
+SECOND_TASK_TOOL = "Write"
+
 DELEGATIONS = ("Agent", "Task")
+
+
+def _candidate_env_files() -> list[Path]:
+    """`eval/.env` in this checkout AND in the main one.
+
+    `eval/.env` is gitignored, so a WORKTREE never has it -- and `REPO` above
+    resolves to whichever checkout the probe is run from, which for this work is
+    a worktree. Looking only there reports "no key on this machine" when the key
+    is sitting in the main checkout, which is exactly what happened the first
+    time this ran. `--git-common-dir` is the main checkout's `.git` from inside
+    any worktree, so its parent is the main checkout.
+    """
+    out = [REPO / "eval" / ".env"]
+    try:
+        import subprocess
+
+        common = subprocess.run(
+            ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            cwd=str(REPO), capture_output=True, text=True, encoding="utf-8",
+            timeout=10, check=False,
+        ).stdout.strip()
+        if common:
+            out.append(Path(common).parent / "eval" / ".env")
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return out
 
 
 def api_key() -> str:
     key = os.environ.get("ANTHROPIC_API_KEY", "").strip().strip("\"'")
     if key:
         return key
-    env = REPO / "eval" / ".env"
-    if env.exists():
+    tried = []
+    for env in _candidate_env_files():
+        tried.append(str(env))
+        if not env.exists():
+            continue
         for line in env.read_text(encoding="utf-8").splitlines():
             if line.startswith("ANTHROPIC_API_KEY="):
-                return line.split("=", 1)[1].strip().strip("\"'")
-    sys.exit("no ANTHROPIC_API_KEY (env or eval/.env)")
+                # Quotes are NOT stripped by the harness's own reader, so a
+                # quoted key reads as a bad key rather than a bad quote
+                # (eval/.env says so itself). Strip here so both forms work.
+                found = line.split("=", 1)[1].strip().strip("\"'")
+                if found:
+                    return found
+    sys.exit(
+        "no ANTHROPIC_API_KEY. Checked $ANTHROPIC_API_KEY and:\n  "
+        + "\n  ".join(tried)
+    )
 
 
-async def run_arm(*, deny: bool, key: str) -> dict:
+async def run_arm(*, deny: bool, key: str, query: str) -> dict:
     from claude_agent_sdk import (
         AssistantMessage,
         ClaudeSDKClient,
@@ -188,7 +274,7 @@ async def run_arm(*, deny: bool, key: str) -> dict:
         client = ClaudeSDKClient(options=options)
         await client.connect()
         try:
-            await client.query(QUERY)
+            await client.query(query)
             async for msg in client.receive_response():
                 if isinstance(msg, (AssistantMessage, UserMessage)):
                     for b in msg.content if isinstance(msg.content, list) else []:
@@ -232,6 +318,13 @@ async def run_arm(*, deny: bool, key: str) -> dict:
     return {
         "arm": arm,
         "delegated": [e["name"] for e in delegated],
+        # Anywhere in the stream, not just after the deny: in the control there
+        # IS no deny, so an "after" window would be empty by construction and
+        # the control could not carry the comparison. That is exactly how run 1
+        # produced an unattributable "ends".
+        "second_task_done": any(
+            e["kind"] == "use" and e["name"] == SECOND_TASK_TOOL for e in stream
+        ),
         "denied": len(denied_ids),
         "tools_after_deny": [e["name"] for e in after],
         "result": result,
@@ -242,7 +335,7 @@ async def run_arm(*, deny: bool, key: str) -> dict:
     }
 
 
-def verdict(a: dict, b: dict) -> str:
+def verdict(a: dict, b: dict, queued: bool) -> str:
     if not a["delegated"]:
         return "VOID: the model never delegated in arm A, so nothing was denied"
     if not a["denied"]:
@@ -251,29 +344,50 @@ def verdict(a: dict, b: dict) -> str:
         return "VOID: the deny fired but its reason never reached the model"
     if b["denied"]:
         return "VOID: the control arm denied too -- attribution broken"
-    if a["tools_after_deny"]:
-        return f"RETRIES: called {a['tools_after_deny']} after the deny"
+    # A RETRY is another DELEGATION. Any OTHER tool after the deny is the model
+    # carrying on with different work, which is a leak, not a retry -- and run 2
+    # produced exactly that (Write + research_delivered). Reporting it as
+    # "RETRIES" named the wrong failure: nothing re-attempted the delegation.
+    retried = [t for t in a["tools_after_deny"] if t in DELEGATIONS]
+    if retried:
+        return f"RETRIES: re-attempted the delegation via {retried} after the deny"
     if a["result"].get("is_error"):
         return f"ENDS-IN-ERROR: result subtype={a['result'].get('subtype')!r}"
-    return "ENDS: denied, no further tool call, non-error result"
+    if not queued:
+        if a["tools_after_deny"]:
+            return f"CARRIED-ON: called {a['tools_after_deny']} after the deny"
+        # Run 1's shape. "No retry" is attributable; "ended" is not, because a
+        # single-task prompt leaves the control nothing to do either.
+        return "ENDS (no-retry attributable; 'ended' NOT attributable -- see --queued)"
+    if not b["second_task_done"]:
+        return ("VOID: the control never did the second task either, so arm A "
+                "skipping it says nothing about the deny")
+    if a["second_task_done"]:
+        return ("LEAKS: the deny did not stop queued work -- arm A went on to do "
+                "the second task the control also did")
+    return ("ENDS-AND-STOPS-QUEUED-WORK: arm A was denied and did NOT do the "
+            "second task; the control did. The boundary held.")
 
 
 async def main() -> int:
     if not ENGINE_BUILD.exists():
         sys.exit(f"no engine build at {ENGINE_BUILD} -- run `make engine-build`")
+    queued = "--queued" in sys.argv
+    query = QUERY_QUEUED if queued else QUERY
     key = api_key()
-    print(f"prompt: {QUERY}\n")
-    a = await run_arm(deny=True, key=key)
+    print(f"mode: {'queued (second task after the delegation)' if queued else 'bare'}")
+    print(f"prompt: {query}\n")
+    a = await run_arm(deny=True, key=key, query=query)
     print("ARM A:", json.dumps(a, indent=2)[:1500], "\n")
-    b = await run_arm(deny=False, key=key)
+    b = await run_arm(deny=False, key=key, query=query)
     print("ARM B:", json.dumps(b, indent=2)[:1500], "\n")
-    v = verdict(a, b)
+    v = verdict(a, b, queued)
     cost = sum(x["result"].get("cost_usd") or 0 for x in (a, b))
     print("=" * 66)
     print(f"VERDICT: {v}")
     print(f"cost: ${cost:.4f}")
     print("=" * 66)
-    return 0 if v.startswith(("ENDS", "RETRIES")) else 2
+    return 0 if v.startswith(("ENDS", "RETRIES", "LEAKS")) else 2
 
 
 sys.exit(asyncio.run(main()))
