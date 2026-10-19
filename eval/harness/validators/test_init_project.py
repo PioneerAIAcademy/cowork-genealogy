@@ -29,28 +29,6 @@ import pytest
 
 # --- Both files exist after init ---------------------------------------
 
-def _paused_to_ask(builtin_tool_calls) -> bool:
-    """Whether this run stopped to ask the researcher something it cannot answer.
-
-    Originally for the namesake flood: when `person_search` could not pick between
-    tens of thousands of tied candidates, the skill asked rather than choose. That
-    path is gone -- init-project no longer searches at all, and a project always
-    starts from a FamilySearch PID (lead, 2026-10-15).
-
-    Kept because the shape still occurs, but it is no longer the only way a positive
-    run legitimately produces no project: the no-PID ask is a RETURN to the router,
-    not an `AskUserQuestion` call, and init-project does not hold that tool. Tests
-    expecting that path carry the `asks-for-pid` tag, which the rule below reads.
-
-    Narrow on purpose. A run that merely produced no files still fails; only one that
-    asked AND produced none is excused, so "did nothing" cannot pass as "asked".
-    """
-    return any(
-        (c.get("tool") or c.get("name")) == "AskUserQuestion"
-        for c in (builtin_tool_calls or [])
-        if isinstance(c, dict)
-    )
-
 
 def test_both_project_files_created(before_state, after_state, test, builtin_tool_calls):
     """init-project positive tests must produce BOTH research.json and
@@ -60,17 +38,17 @@ def test_both_project_files_created(before_state, after_state, test, builtin_too
     silently if unanswered, so a positive test always completes in one
     pass -- there is no longer a premature-write exception to gate.
 
-    THAT PREMISE NO LONGER HOLDS IN ONE CASE, 2026-09-30. Phase 4 made the person
-    pick blocking when `person_search` reports it cannot choose, so a run that
-    correctly asks has no project yet, by design."""
+    THAT PREMISE NO LONGER HOLDS IN ONE CASE. A project always starts from a
+    FamilySearch PID (lead, 2026-10-15): a message carrying none gets a return
+    asking for one and no project, by design. Those tests carry `asks-for-pid`,
+    which the skip below reads. The blocking person pick this replaced is gone
+    -- init-project does not search, and does not hold `AskUserQuestion`."""
     if test.get("type") != "positive":
         pytest.skip("file-existence rules apply only to positive tests")
     if "asks-for-pid" in (test.get("tags") or []) and after_state.get("research_json") is None:
         # The no-PID path: init-project creates nothing and asks for the ID in its
         # return. There is no project BY DESIGN, so file-existence cannot apply.
         pytest.skip("test expects the no-PID ask; no project by design")
-    if _paused_to_ask(builtin_tool_calls) and after_state.get("research_json") is None:
-        pytest.skip("run paused to ask the researcher which person; no project yet, by design")
     if after_state.get("research_json") is None:
         assert False, "init-project did not create research.json"
     if after_state.get("tree_gedcomx_json") is None:
@@ -394,8 +372,6 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
         pytest.skip("write-path rules apply only to positive tests")
     if "asks-for-pid" in (test.get("tags") or []) and after_state.get("research_json") is None:
         pytest.skip("test expects the no-PID ask; project_create legitimately not reached")
-    if _paused_to_ask(builtin_tool_calls) and after_state.get("research_json") is None:
-        pytest.skip("run paused to ask which person; project_create legitimately not reached")
 
     called = {(call.get("tool") or "").rsplit("__", 1)[-1] for call in tool_calls or []}
 
@@ -430,9 +406,18 @@ def test_asks_for_pid_creates_no_project(tool_calls, after_state, test):
     if "asks-for-pid" not in (test.get("tags") or []):
         pytest.skip("not an asks-for-pid test")
     called = {_tool(c) for c in tool_calls or []}
-    assert "project_create" not in called and after_state.get("research_json") is None, (
+    # The tree file is checked too. Without it a tagged run that wrote
+    # tree.gedcomx.json and no research.json passed BOTH this rule and the
+    # file skips above, so "created nothing" was never actually asserted.
+    assert (
+        "project_create" not in called
+        and after_state.get("research_json") is None
+        and after_state.get("tree_gedcomx_json") is None
+    ), (
         "the message carries no FamilySearch person ID, so no project may be created; "
-        f"tools called: {sorted(called) or 'none'}"
+        f"tools called: {sorted(called) or 'none'}; "
+        f"research_json={after_state.get('research_json') is not None}, "
+        f"tree_gedcomx_json={after_state.get('tree_gedcomx_json') is not None}"
     )
 
 # --- Wrote-it vs. the-tool-returned-it (the deep dive's V1-V8) ----------

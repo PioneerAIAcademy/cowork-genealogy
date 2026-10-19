@@ -49,7 +49,7 @@ A project often starts with a question about a person who does not yet exist in 
 
 All arrays start empty. The file is created at project initialization.
 
-**Twelve of these sixteen keys must be present**, even when their array is
+**Twelve of these seventeen keys must be present**, even when their array is
 empty: `project`, `questions`, `plans`, `log`, `sources`, `assertions`,
 `person_evidence`, `conflicts`, `hypotheses`, `timelines`,
 `proof_summaries`, `evaluations`. Omitting one is a validation failure, not

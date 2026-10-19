@@ -53,12 +53,12 @@ WITH_PROFILE = {
 def must_fail(fn, *args):
     """Call a validator that is expected to REJECT this run, and return the error.
 
-    Not `pytest.raises(AssertionError)`. The validators now `pytest.skip` on one
-    shape (a run that stopped to ask), and a skip raised inside the validator
-    propagates out of the calling test -- so pytest would mark THIS test skipped
-    rather than failing it, and the guard would assert nothing. Mutation-verified:
-    forcing `_paused_to_ask` to always return True leaves the `pytest.raises`
-    form green (the test merely turns into a skip) and kills this form.
+    Not `pytest.raises(AssertionError)`. The validators `pytest.skip` on the
+    `asks-for-pid` shape, and a skip raised inside the validator propagates out
+    of the calling test -- so pytest would mark THIS test skipped rather than
+    failing it, and the guard would assert nothing. Mutation-verified: widening
+    that skip to fire on any run leaves the `pytest.raises` form green (the test
+    merely turns into a skip) and kills this form.
     """
     try:
         fn(*args)
@@ -151,18 +151,29 @@ def test_no_profile_means_the_arm_does_not_fire():
 
 # --- the ask exemption ------------------------------------------------------
 #
-# Phase 4 made one opening question blocking: when `person_search` reports it
-# cannot pick, init-project must ask rather than choose, and a run that asks
-# has no project yet. Both file rules therefore stand down for that shape --
-# and for no other, which is what the second half of each pair below pins.
+# A project always starts from a FamilySearch PID. When the message carries
+# none, init-project returns to the router asking for one and builds nothing;
+# those tests carry the `asks-for-pid` tag, and both file rules stand down for
+# that tag and for nothing else. The person-pick exemption this replaced keyed
+# on an `AskUserQuestion` call, a tool init-project does not hold.
 
 EMPTY: dict = {"research_json": None, "tree_gedcomx_json": None}
 
 
-def test_a_run_that_asked_and_built_nothing_is_excused():
-    """The legitimate new shape: asked which person, so there is no project."""
-    check([], EMPTY, POSITIVE, ASKED)
-    check_files({}, EMPTY, POSITIVE, ASKED)
+def test_a_run_that_asked_and_built_nothing_still_fails():
+    """Asking is no longer an excuse, because nothing legitimate can ask.
+
+    This was an exemption for the namesake person-pick: `person_search` could
+    not choose between tied candidates, so the skill asked and built nothing.
+    That path is gone. init-project does not hold `AskUserQuestion` at all, a
+    project always starts from a PID, and the no-PID ask is a RETURN to the
+    router rather than a tool call (it carries the `asks-for-pid` tag, which
+    the rule below reads). So the exemption excused nothing real while
+    loosening both file checks for all ten positive PID tests: a run that
+    asked and built nothing passed both.
+    """
+    must_fail(check, [], EMPTY, POSITIVE, ASKED)
+    must_fail(check_files, {}, EMPTY, POSITIVE, ASKED)
 
 
 def test_a_run_that_built_nothing_and_did_not_ask_still_fails():
@@ -195,9 +206,29 @@ ASKS_FOR_PID = {"type": "positive", "tags": ["asks-for-pid"]}
 
 
 def test_an_asks_for_pid_run_that_built_nothing_is_excused():
-    check([], EMPTY, ASKS_FOR_PID, NO_ASK)
-    check_files({}, EMPTY, ASKS_FOR_PID, NO_ASK)
+    """The two file rules must SKIP here, and the skip must be asserted.
+
+    Calling them bare let the skip propagate and mark this test skipped, so it
+    reported green while asserting nothing -- and would have kept reporting
+    green if the exemption were deleted outright. `check_no_project` is a plain
+    call because it is expected to PASS, not skip.
+    """
+    with pytest.raises(pytest.skip.Exception):
+        check([], EMPTY, ASKS_FOR_PID, NO_ASK)
+    with pytest.raises(pytest.skip.Exception):
+        check_files({}, EMPTY, ASKS_FOR_PID, NO_ASK)
     check_no_project([], EMPTY, ASKS_FOR_PID)
+
+
+def test_an_asks_for_pid_run_that_wrote_only_the_tree_fails():
+    """The third way to build something: files on disk without project_create,
+    and only the tree. Checking research.json alone let this through."""
+    must_fail(
+        check_no_project,
+        [],
+        {"research_json": None, "tree_gedcomx_json": {"persons": []}},
+        ASKS_FOR_PID,
+    )
 
 
 def test_an_asks_for_pid_run_that_called_project_create_fails():

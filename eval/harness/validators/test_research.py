@@ -87,12 +87,12 @@ def test_routes_to_expected_skill(skills_invoked, builtin_tool_calls, test):
 
 def test_creates_no_project_when_none_exists(before_state, after_state, test):
     """Tag-gated (``research-vs-init-project``) no-harm invariant for the
-    no-research-json-yet negative (ut_research_008).
+    no-research-json-yet case (ut_research_008, a positive routing test).
 
     The user asks to "set up a project and begin", but with no research.json
     the correct move is to route to init-project, not to scaffold a project
-    inline. This is why _008 is graded on the invariant (``grade_on_invariant``)
-    rather than on routing: with an empty folder the state-safe outcomes are
+    inline. The invariant is what this validator pins, whatever the test's own
+    grading says: with an empty folder the state-safe outcomes are
     several — auto-route to init-project, or load research and decline via
     AskUserQuestion — and the routing check fails the (correct) decline. The
     routing-independent gate is that NO project is created: research.json must
