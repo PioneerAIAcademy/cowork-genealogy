@@ -23,6 +23,7 @@ made about `device_commit_files` sessions, not about this, so it is measured.
 | 7 | The hook can read the project's `research.json` from its cwd |
 | 8 | A file the hook writes is readable on its next call |
 | **9** | **Can a plugin PreToolUse hook END a Cowork turn at all?** (the halt fields). Added 2026-10-19 and now the headline, see below |
+| **10** | **Does `AskUserQuestion` end a Cowork turn and wait for the researcher?** Added 2026-10-19 after the lead chose it as the sole mechanism |
 
 ## Run it
 
@@ -94,6 +95,26 @@ about the project folder, so an empty one answers a different question):
    skip it too. What separates them is whether the model replies at all. Step 3
    is the control: its deny also says to end the turn, and the model replies and
    `Stop` fires. A halt the runtime honours leaves no reply and no `Stop` line.
+
+5. **Provoke an `AskUserQuestion` and watch what the turn does.** This is item
+   10, and since the lead's 2026-10-19 decision it is the one that matters most:
+   `AskUserQuestion` is the step boundary, with **no halt behind it**, so if it
+   does not end the turn in Cowork then option 1 has no mechanism there at all.
+
+   Ask something the model cannot answer without choosing, e.g. "I want to
+   research one of my ancestors but I am not sure which. Ask me to pick."
+   Then watch three things:
+
+   - does a `PreToolUse` line appear with `tool_name` `AskUserQuestion`? (the
+     probe's `.*` matcher records every call, so the log answers this);
+   - does the turn STOP there and wait for you, rather than the model answering
+     its own question and carrying on?
+   - does a `Stop` line appear for that turn?
+
+   The second is the measurement. A model that asks and then proceeds anyway is
+   the same leak the alpha showed with a plain deny
+   (`apps/server/dev/probe_step_deny.py`, 2026-10-19), and it would mean the
+   boundary does not hold.
 
 **3. Read it:**
 

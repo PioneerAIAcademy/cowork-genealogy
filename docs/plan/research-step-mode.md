@@ -654,7 +654,7 @@ that apply:
   - **tests:** rewrite `ut_question_selection_003`, `_005`, `_006`, `_008` and `_d03`, and add
     a test with a two-fact objective (no questions → no write, and an ask).
 - **The router:** delete "New evidence may reveal new questions — return to question-selection"
-  (`skills/research/SKILL.md:361-362`). The objective row (`:229`), after the tree-encoding gate,
+  (`skills/research/SKILL.md:361-362`). The objective row (the row beginning *"All questions are `resolved` and `project.status` still `active`"*; `:230` on `main`), after the tree-encoding gate,
   names any uncovered part of the objective as a suggested next question, as a statement. The
   `compound-objective-*` router tests point at that statement.
 - **research-plan's FAN-pivot hand-off** (`skills/research-plan/SKILL.md:655`) becomes a plan
@@ -1005,7 +1005,7 @@ in parallel with PR 2.
   - question-selection's two-fact ask would end a hosted turn the Stop veto still re-opens, and
     e2e's two-question fixtures are re-scoped only in PR 1; its gate text states PR 1's rule.
   - **the router:** A's deletions; the step report and only the replies that apply; the search
-    fan-out, external items included (D, I); the choice replacing the loop row (`:225`);
+    fan-out, external items included (D, I); the choice replacing the loop row (the row beginning *"`research-exhaustiveness` returned \"not yet exhaustive\""*; `:225` on `main`);
     wrap-up from any state (B2), with `userPresent` for person-evidence and `wrapUp` for
     proof-conclusion; the different-question reply and its wrap-up offer, and the conflict row
     following the ladder's `nextStep` with the no-next-step row above it (E); the upload turn
