@@ -93,8 +93,9 @@ than an error.
    `record_id` is stored as a resolver **URL** on 561 of the corpus's 10,554
    assertions and as a bare `ark:` on 9,993, so a raw string compare misses.
    `resultsRef` is passed **only** when the log entry's tool is in
-   `PERSONA_BEARING_PRODUCERS` (i.e. `record_search`). A `fulltext_search` or
-   `external_links_search` entry carries a `results_ref` too, but its results
+   `PERSONA_BEARING_PRODUCERS` (`record_search` and `record_read`). A
+   `fulltext_search` entry, or a legacy `external_links_search` one from before
+   #2995, carries a `results_ref` too, but its results
    hold no `gedcomx` and key on `id` rather than `recordId` — 300 corpus
    assertions sit on exactly that shape, and handing the ref over would look up
    nothing.
