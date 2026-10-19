@@ -229,22 +229,32 @@ function fieldMatches(given: unknown, held: unknown, heldStandard?: unknown): bo
   return g === norm(held) || (heldStandard !== undefined && g === norm(heldStandard));
 }
 
-/** Does `held` contain this fact: same type, date, place and value? */
+/** Does `held` contain this fact: same type, date, place and value? A
+ *  `standard_date` the caller supplied must be the read's own: unlike a
+ *  hand-entered `standard_place`, `project_create` keeps it as given, so a
+ *  value the read does not hold would be written under FamilySearch's name. */
 function heldFact(fact: Obj, held: Obj[]): boolean {
   return held.some(
     (h) =>
       norm(fact.type) !== undefined &&
       norm(fact.type) === norm(h.type) &&
       fieldMatches(fact.date, h.date, h.standard_date) &&
+      (norm(fact.standard_date) === undefined || norm(fact.standard_date) === norm(h.standard_date)) &&
       fieldMatches(fact.place, h.place, h.standard_place) &&
       fieldMatches(fact.value, h.value),
   );
 }
 
-/** The held relationships matching `rel`, whose endpoints are canonical PIDs. */
+/** The held relationships matching `rel`, whose endpoints are canonical PIDs.
+ *  `relationshipMatches` lets an absent subtype on EITHER side match; only one
+ *  direction is evidence. An untyped `rel` is a less specific statement of a
+ *  typed held edge, but a typed `rel` against an untyped held one claims more
+ *  than FamilySearch said, so a subtype on `rel` must be the held edge's. */
 function heldRelationships(rel: Obj, evidence: TreeEvidence): Obj[] {
-  return evidence.relationships.filter((h) =>
-    relationshipMatches(h as SimplifiedRelationship, rel as SimplifiedRelationship),
+  return evidence.relationships.filter(
+    (h) =>
+      relationshipMatches(h as SimplifiedRelationship, rel as SimplifiedRelationship) &&
+      (rel.subtype === undefined || rel.subtype === h.subtype),
   );
 }
 

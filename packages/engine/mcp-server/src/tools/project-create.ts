@@ -246,8 +246,11 @@ export async function projectCreate(
     const refWarnings: string[] = [];
     let treeCited = { facts: 0, relationships: 0 };
     // The staged person_reads, listed once and only when something needs them:
-    // the PID fallback, or a hand-entered person or relationship whose citation
-    // depends on what FamilySearch was read to hold (issue #3384).
+    // the PID fallback, or a hand-entered person carrying a FamilySearch ark,
+    // whose unsourced facts and relationships are cited by what the reads hold
+    // (issue #3384). With no such person nothing hand-entered can match a read
+    // except a new edge between two staged persons, and that stays the
+    // researcher's statement: an under-claim, never an over-claim.
     let listed: Promise<StagedPersonReadFile[]> | undefined;
     const stagedReads = () => (listed ??= listStagedPersonReads(projectPath));
     const evidence = async (): Promise<TreeEvidence> =>
@@ -275,9 +278,7 @@ export async function projectCreate(
           additions: given,
           subjectPersonIds: input.subjectPersonIds,
           now,
-          evidence: (given.persons.some(hasTreeArk) || given.relationships.length > 0)
-            ? await evidence()
-            : undefined,
+          evidence: given.persons.some(hasTreeArk) ? await evidence() : undefined,
         });
         tree = built.tree;
         idMap = built.idMap;
@@ -468,10 +469,10 @@ async function loadStagedRead(projectPath: string, rawRef: unknown, warnings: st
   if (typeof rawRef !== "string" || rawRef.trim() === "") {
     throw new StagedRefError(`personReadRef must be the staged.resultsRef person_read returned; ${redo}`, true);
   }
+  // The near-copy correction is reported only once the file it names has
+  // loaded: a refusal below can be followed by a fallback to another file, and
+  // a warning naming one the create never used would misreport the build.
   const { ref, correctedFrom } = await resolveStagedRef(projectPath, rawRef);
-  if (correctedFrom !== undefined) {
-    warnings.push(stagedRefCorrectionWarning("personReadRef", correctedFrom, ref));
-  }
   let envelope;
   try {
     ({ envelope } = await checkStagedResults({
@@ -490,19 +491,24 @@ async function loadStagedRead(projectPath: string, rawRef: unknown, warnings: st
         ? "is not under results/.staging/"
         : /could not be read/.test(why)
           ? `exists but could not be read (${why.replace(/^.*could not be read: /, "")})`
-          : /is not in results\/\.staging|invalid JSON|no 'results'/.test(why)
-            ? NOT_STAGED
-            : "could not be read";
+          : /invalid JSON/.test(why)
+            ? "exists but holds invalid JSON"
+            : /is not in results\/\.staging|no 'results'/.test(why)
+              ? NOT_STAGED
+              : "could not be read";
     // Only a ref that names no staged person_read may fall back. Anything else
-    // is a store fault — including one the staging helper rethrows unwrapped
-    // when its own existence check fails — and must surface, not be papered
-    // over by an older copy.
+    // is a fault in the file it names — unreadable, corrupt, or a store error
+    // the staging helper rethrows unwrapped when its own existence check fails
+    // — and must surface, not be papered over by an older copy.
     const recoverable = ["was not staged by person_read", "is not under results/.staging/", NOT_STAGED].includes(reason);
     throw new StagedRefError(`personReadRef '${ref}' ${reason}: ${redo}`, recoverable);
   }
   const read = personReadOf(envelope);
   if (!read) {
     throw new StagedRefError(`personReadRef '${ref}' holds no person_read result: ${redo}`, true);
+  }
+  if (correctedFrom !== undefined) {
+    warnings.push(stagedRefCorrectionWarning("personReadRef", correctedFrom, ref));
   }
   return read;
 }

@@ -884,7 +884,7 @@ describe("project_create — personReadRef (#2944 Stage B)", () => {
     ["outside staging", "results/x.json", /is not under results\/\.staging/],
     ["a traversal", "../../etc/passwd", /is not under results\/\.staging/],
     ["blank", "  ", /must be the staged\.resultsRef/],
-    ["invalid-JSON", "results/.staging/bad.json", /not a staged read/],
+    ["invalid-JSON", "results/.staging/bad.json", /exists but holds invalid JSON/],
   ])("refuses a %s personReadRef in project_create terms, writing nothing", async (_l, ref, message) => {
     if (ref.endsWith("bad.json")) {
       await mkdir(join(dir, "results", ".staging"), { recursive: true });
@@ -1254,6 +1254,46 @@ describe("project_create — a personReadRef that is not a staged read falls bac
     expect(result.errors.join(" ")).toMatch(/is not a staged read/);
   });
 
+  it("reports only the read it used when a near-copy correction lands on a file it cannot use", async () => {
+    const { stageSearchResults } = await import("../../src/utils/results-staging.js");
+    const other = await stageSearchResults({ projectPath: dir, tool: "record_read", response: { results: [{ recordId: "X", gedcomx: {} }] } });
+    const used = await stage("LZNY-BRF", structuredClone(FAMILY));
+    const nearCopy = other!.resultsRef.replace(/(-[0-9a-f]{4})([0-9a-f])/, "$1");
+    expect(nearCopy).not.toBe(other!.resultsRef);
+    const result = await create(nearCopy, ["LZNY-BRF"]);
+    expect(result.ok).toBe(true);
+    const warnings = result.validation.warnings.join(" ");
+    expect(warnings).toContain(`used '${used}'`);
+    expect(warnings).not.toContain(other!.resultsRef);
+  });
+
+  it("does not fall back past a corrupt file the ref names", async () => {
+    await stage("LZNY-BRF", structuredClone(FAMILY));
+    await writeFile(join(dir, "results", ".staging", "bad.json"), "{ not json");
+    const result = await create("results/.staging/bad.json", ["LZNY-BRF"]);
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/holds invalid JSON/);
+  });
+
+  it("never opens a staged file already past the TTL by its write time", async () => {
+    fileStoreOnly("sets a file's mtime, which a Postgres row has no equivalent of");
+    const { utimes } = await import("fs/promises");
+    const old = await stage("LZNY-BRF", structuredClone(FAMILY));
+    await stage("LZNY-BRF", structuredClone(FAMILY));
+    // Aged after the second staging, whose prune would otherwise delete it.
+    const past = new Date(T.getTime() - 25 * 60 * 60 * 1000);
+    await utimes(join(dir, old), past, past);
+    const store = getProjectStore();
+    const readText = vi.spyOn(store, "readText");
+    try {
+      const result = await create("results/.staging/LZNY-BRF", ["LZNY-BRF"]);
+      expect(result.ok).toBe(true);
+      expect(readText.mock.calls.map((c) => c[1])).not.toContain(old);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
   it("does not paper over a store fault that also fails the existence check", async () => {
     await stage("LZNY-BRF", structuredClone(FAMILY));
     vi.setSystemTime(new Date(T.getTime() + 1000));
@@ -1390,6 +1430,52 @@ describe("project_create — a hand-entered fact or relationship cites the Famil
     expect(list.mock.calls.filter((c) => String(c[1]).includes(".staging"))).toEqual([]);
   });
 
+  it.each([
+    ["a Step edge where the read holds only an untyped one", "Step", undefined, "Researcher's statement"],
+    ["a Step edge where the read holds a Biological one", "Step", "Biological", "Researcher's statement"],
+    ["an untyped edge where the read holds a Biological one", undefined, "Biological", "FamilySearch Family Tree"],
+    ["a Biological edge where the read holds a Biological one", "Biological", "Biological", "FamilySearch Family Tree"],
+  ])("cites %s", async (_l, given, heldSubtype, title) => {
+    const read = structuredClone(FAMILY);
+    const edge = read.relationships.find((r: any) => r.parent === "LZNY-M3F" && r.child === "LZNY-BRF");
+    if (heldSubtype === undefined) delete edge.subtype;
+    else edge.subtype = heldSubtype;
+    await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: read });
+    const result: any = await projectCreate({
+      projectPath: dir, objective: "x", subjectPersonIds: ["I1"],
+      tree: {
+        persons: [
+          { id: "I1", ark: ark("LZNY-BRF"), gender: "Male", names: [{ given: "Patrick", surname: "Flynn" }] },
+          { id: "I2", ark: ark("LZNY-M3F"), gender: "Male", names: [{ given: "Michael", surname: "Flynn" }] },
+        ],
+        relationships: [{ type: "ParentChild", parent: "I2", child: "I1", ...(given ? { subtype: given } : {}) }],
+      } as any,
+    });
+    expect(result.ok).toBe(true);
+    const tree = await readTree();
+    expect(titleOf(tree, tree.relationships[0].sources)).toEqual([title]);
+  });
+
+  it.each([
+    ["the read's own standard_date", "Abt 1845", "FamilySearch Family Tree"],
+    ["no standard_date", undefined, "FamilySearch Family Tree"],
+    ["a standard_date the read does not hold", "1850", "Researcher's statement"],
+  ])("cites a copied fact carrying %s", async (_l, standardDate, title) => {
+    await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: structuredClone(FAMILY) });
+    const result: any = await projectCreate({
+      projectPath: dir, objective: "x", subjectPersonIds: ["I1"],
+      tree: {
+        persons: [{
+          id: "I1", ark: ark("LZNY-BRF"), gender: "Male", names: [{ given: "Patrick", surname: "Flynn" }],
+          facts: [{ type: "Birth", date: "~1845", place: "Ireland", ...(standardDate ? { standard_date: standardDate } : {}) }],
+        }],
+      } as any,
+    });
+    expect(result.ok).toBe(true);
+    const tree = await readTree();
+    expect(titleOf(tree, tree.persons[0].facts[0].sources)).toEqual([title]);
+  });
+
   describe("ref mode: an addition", () => {
     /** A second person_read: Owen, who the subject's read does not hold, with
      *  his edge to Mary (a relative in the subject's read). */
@@ -1437,6 +1523,20 @@ describe("project_create — a hand-entered fact or relationship cites the Famil
       expect(result.validation.warnings).toContain(
         `1 fact(s) and 1 relationship(s) with no source were cited to ${extra}, the FamilySearch Family Tree: a staged person_read holds each of them exactly.`,
       );
+    });
+
+    it("with only unarked stubs added, never lists staging", async () => {
+      const { staged } = await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: structuredClone(FAMILY) });
+      const list = vi.spyOn(getProjectStore(), "list");
+      const result = await projectCreate({
+        projectPath: dir, objective: "x", personReadRef: staged!.resultsRef,
+        tree: {
+          persons: [{ id: "A1", gender: "Unknown", names: [{ given: "", surname: "Kelly" }] }],
+          relationships: [{ type: "ParentChild", parent: "A1", child: "LZNY-K2M" }],
+        } as any,
+      }) as any;
+      expect(result.ok).toBe(true);
+      expect(list.mock.calls.filter((c) => String(c[1]).includes(".staging"))).toEqual([]);
     });
 
     it("without that second read, cites the addition to the researcher", async () => {
