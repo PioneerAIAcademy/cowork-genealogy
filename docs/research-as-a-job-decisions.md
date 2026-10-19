@@ -155,3 +155,39 @@ until someone unsets that secret**, and the repo's own default is still `True`,
 so anyone reading the code alone will conclude continuous work is on when it is
 not. Checking it needs `fly secrets list -a genealogy-workbench`; there is no
 in-repo answer.
+
+---
+
+## Phase 4's person pick, under step mode (asked 2026-10-19)
+
+**The contradiction.** `docs/plan/research-step-mode.md`'s integration table keeps
+phase 4's person pick, as "the setup step's report: candidate cards, then the
+researcher's reply". But the lead's 2026-10-15 one-front-door directive had already
+removed `person_search` from `init-project` and made a FamilySearch PID mandatory.
+With no name search there are no candidates, so there is nothing to put on the
+cards. The `person_search` TOOL still exists in the engine; what changed is that
+nothing in `init-project` sends a name to it.
+
+Two readings were put to the lead: (1) the pick is gone for good and the phase 4
+row should be dropped, with a PID-less ask answered by asking for the PID; or
+(2) the pick returns for the setup step, which would mean restoring a name-search
+path to `init-project`.
+
+**Answered 2026-10-19 (lead): option 1. The person pick is gone for good, the
+phase 4 row is dropped, and a PID is required.** Someone with no person ID is
+asked for one.
+
+**What it changes:** nothing in the code, which is the point of asking before
+building. `src/utils/person-search-decisiveness.ts`, the `pick` field on
+`person_search`'s response and `skills/init-project/` were all already deleted by
+the front-door commit (`f6d5fad6ea`), and
+`docs/plan/research-as-a-job-phase4-cold-start.md` was already marked
+**SUPERSEDED, not built** on that basis. This answer confirms that marking rather
+than reversing it. Had the answer been (2), that plan and three deleted sites
+would have had to come back.
+
+**Still open, and tracked separately:** the step-boundary mechanism. Phase 0
+measured that a `PreToolUse` deny does not end a turn (the model reports the
+refusal and carries on with its remaining work), and `_halt` ends a turn only
+after the denied call has run, so neither is a boundary as it stands. The options
+were put to the lead on 2026-10-19; this file gets the answer when it lands.
