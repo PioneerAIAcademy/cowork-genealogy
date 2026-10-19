@@ -181,10 +181,9 @@ its validator, and nobody could see it; 022 says so in its own description and h
 this whole section. Every e2e run enters as `/research --autonomous {question}`, so
 every run reads it, and 63 of the 136 committed e2e fixtures ask a question whose
 SHAPE is on the bounded list. Without the `--autonomous` carve-out the router would
-deliver one answer and stop on those. Its message deliberately omits the leading
-`/research`: `skills_invoked` is filled only by a `Skill` tool call, so a slash entry
-grades a positive test `fail` whatever the router does (issue #3116, fix PR #3146 open).
-Restore the prefix once that lands and this becomes the e2e entry form exactly.
+deliver one answer and stop on those. Its message carries the leading `/research`, restored
+once PR #3146 made `skills_invoked` record a slash-command entry at index 0, so this
+is the e2e entry form exactly.
 
 **What they do NOT cover, and cannot:** that a bounded turn ends with the
 `delivered` OUTCOME. `research_delivered` IS in this harness's `LIVE_TOOLS` now, so the
