@@ -34,7 +34,9 @@ describe("questionStatus — the state ladder", () => {
   });
 
   it("planned: a plan exists for this question", () => {
-    const d = doc({ plans: [{ id: "pl_1", question_id: Q, items: [{ id: "pli_1" }] }] });
+    const d = doc({
+      plans: [{ id: "pl_1", question_id: Q, items: [{ id: "pli_1", status: "planned", repository: "FamilySearch" }] }],
+    });
     expect(questionStatus(d, question()).state).toBe("planned");
     expect(questionStatus(d, question()).nextStep).toBe("search-records");
   });
@@ -45,6 +47,132 @@ describe("questionStatus — the state ladder", () => {
       log: [{ id: "log_1", plan_item_id: "pli_1" }],
     });
     expect(questionStatus(d, question()).state).toBe("searching");
+  });
+
+  describe("the search step is picked by the next item's repository (issue #1851)", () => {
+    const plan = (items: Record<string, unknown>[], status = "active") => ({
+      id: "pl_1",
+      question_id: Q,
+      status,
+      items,
+    });
+
+    it("a non-FamilySearch item routes to search-external-sites, naming the item", () => {
+      const d = doc({ plans: [plan([{ id: "pli_1", sequence: 1, status: "planned", repository: "MyHeritage" }])] });
+      expect(questionStatus(d, question()).nextStep).toBe("search-external-sites — pli_1 (MyHeritage)");
+    });
+
+    it("the lowest-sequence unexecuted item decides, skipping completed ones", () => {
+      const d = doc({
+        plans: [
+          plan([
+            { id: "pli_2", sequence: 2, status: "planned", repository: "Ancestry" },
+            { id: "pli_1", sequence: 1, status: "completed", repository: "Ancestry" },
+            { id: "pli_3", sequence: 3, status: "planned", repository: "FamilySearch" },
+          ]),
+        ],
+      });
+      expect(questionStatus(d, question()).nextStep).toBe("search-external-sites — pli_2 (Ancestry)");
+    });
+
+    it("any repository naming FamilySearch stays search-records", () => {
+      const d = doc({
+        plans: [plan([{ id: "pli_1", sequence: 1, status: "planned", repository: "FamilySearch (full-text)" }])],
+      });
+      expect(questionStatus(d, question()).nextStep).toBe("search-records");
+    });
+
+    it("an item on a superseded plan is never dispatched", () => {
+      const d = doc({
+        plans: [
+          plan([{ id: "pli_1", sequence: 1, status: "planned", repository: "MyHeritage" }], "superseded"),
+          { ...plan([{ id: "pli_2", sequence: 1, status: "planned", repository: "FamilySearch" }]), id: "pl_2" },
+        ],
+      });
+      expect(questionStatus(d, question()).nextStep).toBe("search-records");
+    });
+
+    it("searching with only negative entries is not an extraction step", () => {
+      const d = doc({
+        plans: [
+          plan([
+            { id: "pli_1", sequence: 1, status: "completed", repository: "FamilySearch" },
+            { id: "pli_2", sequence: 2, status: "planned", repository: "FamilySearch" },
+          ]),
+        ],
+        log: [{ id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "negative" }],
+      });
+      const s = questionStatus(d, question());
+      expect(s.state).toBe("searching");
+      expect(s.nextStep).toBe("search-records");
+    });
+
+    it("every item done and nothing found goes to research-exhaustiveness", () => {
+      const d = doc({
+        plans: [plan([{ id: "pli_1", sequence: 1, status: "completed", repository: "FamilySearch" }])],
+        log: [{ id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "negative" }],
+      });
+      expect(questionStatus(d, question()).nextStep).toMatch(/^research-exhaustiveness/);
+    });
+
+    it("an uncited positive entry is extraction, whatever is left on the plan", () => {
+      const d = doc({
+        plans: [
+          plan([
+            { id: "pli_1", sequence: 1, status: "completed", repository: "FamilySearch" },
+            { id: "pli_2", sequence: 2, status: "planned", repository: "MyHeritage" },
+          ]),
+        ],
+        log: [{ id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" }],
+      });
+      expect(questionStatus(d, question()).nextStep).toMatch(/^extraction/);
+    });
+
+    it("once evidence exists an uncited entry does not hold the question on extraction", () => {
+      const d = doc({
+        plans: [plan([{ id: "pli_1", sequence: 1, status: "completed", repository: "FamilySearch" }])],
+        log: [
+          { id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" },
+          { id: "log_2", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" },
+        ],
+        assertions: [{ id: "a_1", log_entry_id: "log_1", extracted_for_question_ids: [Q] }],
+      });
+      const s = questionStatus(d, question());
+      expect(s.state).toBe("evidence-gathered");
+      expect(s.nextStep).toMatch(/^research-exhaustiveness/);
+    });
+
+    it("an external-site hand-off whose capture has not come back is not extraction", () => {
+      const d = doc({
+        plans: [plan([{ id: "pli_1", sequence: 1, status: "in_progress", repository: "MyHeritage" }])],
+        log: [
+          {
+            id: "log_1",
+            plan_item_id: "pli_1",
+            tool: "external_site",
+            outcome: "partial",
+            external_site: { capture_received: false },
+          },
+        ],
+      });
+      expect(questionStatus(d, question()).nextStep).toBe("search-external-sites — pli_1 (MyHeritage)");
+    });
+
+    it("a returned external-site capture is extraction", () => {
+      const d = doc({
+        plans: [plan([{ id: "pli_1", sequence: 1, status: "completed", repository: "MyHeritage" }])],
+        log: [
+          {
+            id: "log_1",
+            plan_item_id: "pli_1",
+            tool: "external_site",
+            outcome: "positive",
+            external_site: { capture_received: true },
+          },
+        ],
+      });
+      expect(questionStatus(d, question()).nextStep).toMatch(/^extraction/);
+    });
   });
 
   it("a plan belonging to ANOTHER question does not count", () => {
