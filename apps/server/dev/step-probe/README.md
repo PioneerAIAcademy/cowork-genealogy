@@ -64,6 +64,18 @@ about the project folder, so an empty one answers a different question):
    no `Skill`/`Agent`/`Task` call at all, which leaves item 1 unexercised. A
    typed `/research` may not be enough either, since a slash command can expand
    into the message without the model ever calling `Skill`.
+1b. **For the `Agent`/`Task` half of item 1, ask for an AGENT by name and then
+   LET IT FINISH.** For example: "Use the convert-dates agent to convert 12
+   February 1750 from Julian to Gregorian." A skill call alone does not settle
+   this: on 2026-10-19 the `Skill` half was confirmed and the `Agent`/`Task`
+   half was left open because the operator interrupted nine seconds in, before
+   anything spawned. Do not interrupt this one. The spawn is the measurement,
+   so a turn that is cut before it cannot answer.
+
+   Pick an agent whose work is short and needs no network, so the turn ends on
+   its own: `convert-dates` is the cheapest. Check the log afterwards for a
+   `PreToolUse` line whose `tool_name` is `Agent` or `Task`.
+
 2. Send a **second** message. Item 3's semantics need two turns: one turn can
    show a `prompt_id` exists but not whether it changes between turns.
 3. Ask it to write a file named `STEP_PROBE_CANARY.txt`. That is item 5's
