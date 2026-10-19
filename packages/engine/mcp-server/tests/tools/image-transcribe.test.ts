@@ -36,7 +36,7 @@ import {
   runWithProjectStore,
   type ProjectStore,
 } from "../../src/store/project-store.js";
-import type { ImageTranscribeResult } from "../../src/types/image-transcribe.js";
+import type { ImageTranscribeInput, ImageTranscribeResult } from "../../src/types/image-transcribe.js";
 import { backingStore, fileStoreOnly } from "../helpers/store-backend.js";
 
 /** The tool's return is `ImageTranscribeResult | NoProjectResult` (#2048); every
@@ -656,6 +656,93 @@ describe("imageTranscribeTool — input validation", () => {
       }, LOCAL)
     ).rejects.toThrow(/exactly one of imageId, ark, memoryArtifactUrl, or file — not imageId and ark/);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("names the keys it received when none of them is an image input", async () => {
+    await expect(
+      transcribe(
+        { imageUrl: "https://x.example/a.jpg", lookingFor: "Schreck" } as unknown as ImageTranscribeInput,
+        LOCAL,
+      ),
+    ).rejects.toThrow(
+      /image_transcribe requires one of imageId, ark, memoryArtifactUrl, or file \(.*\)\. Received keys: imageUrl, lookingFor\./,
+    );
+    await expect(transcribe({ imageArk: "" }, LOCAL)).rejects.toThrow(/Received keys: imageArk \(empty\)\./);
+    await expect(transcribe(undefined as unknown as ImageTranscribeInput, LOCAL)).rejects.toThrow(
+      /Received no keys\./,
+    );
+    expect(getOpenRouterApiKeyMock).not.toHaveBeenCalled();
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("imageTranscribeTool — imageArk (record_read's field) and query strings", () => {
+  const ARK = "ark:/61903/3:1:3Q9M-CSNL-S98H-M";
+
+  it("transcribes imageArk as ark, and reports it back as ark", async () => {
+    mockOpenRouterOk("Johann Schreck");
+
+    const result = await transcribe({ imageArk: ARK }, LOCAL);
+
+    expect(fetchFsImageBytesMock).toHaveBeenCalledTimes(1);
+    expect(fetchFsImageBytesMock.mock.calls[0][0]).toBe(`https://www.familysearch.org/${ARK}`);
+    expect(result.transcription).toBe("Johann Schreck");
+    expect(result.metadata.ark).toBe(ARK);
+    expect(result.viewerUrl).toBe(`https://www.familysearch.org/${ARK}`);
+  });
+
+  it("reads record_read's ?cc= imageArk as it reads the same value under ark", async () => {
+    mockOpenRouterOk("page");
+    await transcribe({ imageArk: "ark:/61903/3:1:3Q9M-C9PT-V9Q2-2?cc=2363041" }, LOCAL);
+
+    const [url, fallbackUrl] = fetchFsImageBytesMock.mock.calls[0];
+    expect(url).toBe("https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9PT-V9Q2-2?cc=2363041");
+    expect(fallbackUrl).toBe("https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9PT-V9Q2-2");
+  });
+
+  it("refuses ark and imageArk that name different images, before the key lookup or any fetch", async () => {
+    await expect(
+      transcribe({ ark: ARK, imageArk: "ark:/61903/3:1:3Q9M-C9PT-V9Q2-2" }, LOCAL),
+    ).rejects.toThrow(/image_transcribe was given both ark .*, which do not name the same image/);
+    expect(getOpenRouterApiKeyMock).not.toHaveBeenCalled();
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+  });
+
+  it("reads the side carrying i= when ark and imageArk are one ARK, one of them bare", async () => {
+    mockOpenRouterOk("page");
+    await transcribe({ ark: ARK, imageArk: `${ARK}?i=4` }, LOCAL);
+
+    const [url, fallbackUrl] = fetchFsImageBytesMock.mock.calls[0];
+    expect(url).toBe(`https://www.familysearch.org/${ARK}?i=4`);
+    expect(fallbackUrl).toBe(`https://www.familysearch.org/${ARK}`);
+  });
+
+  it("refuses an ark that is not a string, before the key lookup or any fetch", async () => {
+    await expect(
+      transcribe({ ark: 123, imageArk: ARK } as unknown as ImageTranscribeInput, LOCAL),
+    ).rejects.toThrow(/image_transcribe was given an ark that is not a string \(a number\)/);
+    expect(getOpenRouterApiKeyMock).not.toHaveBeenCalled();
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+  });
+
+  it("counts imageArk as the ark form when checking for exactly one input", async () => {
+    await expect(
+      transcribe({ imageId: "004884748_02613", imageArk: ARK }, LOCAL),
+    ).rejects.toThrow(/not imageId and ark/);
+  });
+
+  it("strips the query string from a DGS distribution URL and links the film viewer", async () => {
+    mockOpenRouterOk("page");
+
+    const result = await transcribe(
+      { ark: "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg?cc=2363041" },
+      LOCAL,
+    );
+
+    expect(fetchFsImageBytesMock.mock.calls[0][0]).toBe(
+      "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg",
+    );
+    expect(result.viewerUrl).toBe("https://www.familysearch.org/search/film/004884748?i=2612");
   });
 });
 
