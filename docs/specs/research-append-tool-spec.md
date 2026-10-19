@@ -1214,12 +1214,20 @@ Implemented as `unsourcedTimelineEventWarnings` in `research-append.ts`.
   tree facts is a legitimate first pass. The defect is undisclosed provenance,
   not the empty list, so a refusal would block correct work.
 - **What makes it fire.** An `append`, or an `update` whose `fields` carries
-  `events` — the same scoping as the 1890 census check beside it, so an edit
-  touching only `label` or `gaps` does not re-warn about events written earlier.
+  `events` — the append-or-field-touched pattern of the 1890 census check
+  beside it, keyed on `events` rather than `gaps` — so an edit touching only
+  `label` or `gaps` does not re-warn about events written earlier.
   It counts over the resulting entry's events. No warning when none is empty or
   `events` is empty.
+- **What it can trust.** It counts empty lists only, so a list that names no
+  real assertion must not reach it: the validator refuses an event whose
+  `assertion_ids` is not an array, holds a non-string, or names an id absent
+  from `assertions` — the same three checks a proof summary's
+  `supporting_assertion_ids` gets.
 - **What nothing checks.** Whether the agent reads the count out to the user;
   CI checks only that the warning is emitted.
+
+Marked advisory in `guardrail-enforcement-spec.md`'s instrument table.
 
 ## 6. Decisions recorded
 
