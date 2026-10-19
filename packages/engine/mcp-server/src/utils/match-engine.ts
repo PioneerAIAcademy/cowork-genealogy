@@ -187,6 +187,17 @@ export function buildRawWithAnchor(
     }
   }
 
+  // matchTwoExamples scores persons[0] and ignores the sourceDescription
+  // anchor below, so the focus person goes first. On 85 genealogist-adjudicated
+  // record hints (issue #3553), 57 hint personas were not first and all 57
+  // scored below 0.01; moved first, the score separating true hints from false
+  // rose from AUC 0.49 (chance) to 0.68, and mari-nagy's 2.6e-7 became 0.656,
+  // FamilySearch's own hint score. Relationships reference persons by id, so
+  // reordering changes nothing else.
+  if (focus && raw.persons && raw.persons[0] !== focus) {
+    raw.persons = [focus, ...raw.persons.filter((p) => p !== focus)];
+  }
+
   // Append the sourceDescription anchor with a unique id to avoid colliding
   // with any caller-provided sourceDescription that might already use a
   // common id like "mainSrc".

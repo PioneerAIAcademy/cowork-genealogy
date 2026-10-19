@@ -14,6 +14,7 @@ what is / is not covered.
 
 from __future__ import annotations
 
+import re
 import pytest
 
 from validators_lib import bare_tool_name
@@ -209,8 +210,9 @@ def test_no_browse_or_writes_on_planning_request(
     deterministic gate for the grade_on_invariant negative
     ut_research_016: which skill wins the route is a known-unstable
     model prior (the router picks research-plan directly on some runs,
-    search-images on others, project-status on others), but the state-harm
-    invariant holds under every one of those routes and is what we assert.
+    search-images on others, answers directly from project_context on
+    others), but the state-harm invariant holds under every one of those
+    routes and is what we assert.
 
     Since the pair conversion (issue #2121) the redirect lives in
     agents/search-images.md's ROUTING section, not in SKILL.md: the routing
@@ -478,6 +480,118 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
         f"the first hand-off must be one of the deliverables {expected}, got "
         f"{delegations[0] if delegations else 'none'}. A hand-off off that list is the job "
         "path, which a bounded request must not enter."
+    )
+
+# ---------------------------------------------------------------------------
+# `negative-status-question` tag (issue #3112)
+# ---------------------------------------------------------------------------
+
+# Every research.json id prefix, as `ID_PREFIXES` in
+# packages/engine/mcp-server/src/validation/validator.ts declares it (validators
+# cannot import the TypeScript; tests/unit/test_status_question_validator.py pins
+# the two in step). Plus the tree ids `project_context` hands over (`I1`, `S3`...),
+# the kind every measured miss copied from the projection.
+_PROJECT_ID_PREFIXES = (
+    "rp_", "kh_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "c_", "h_",
+    "t_", "ps_", "ev_", "loc_",
+)
+_PROJECT_ID_RE = re.compile(
+    r"\b(?:(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+|[FINRS]\d+)\b"
+)
+_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+_SHAPED_LINE_RE = re.compile(r"^\s*(?:#|\||[-*+]\s|\d+[.)]\s)", re.MULTILINE)
+
+
+def test_status_question_answered_from_project_context_only(
+    tool_calls, builtin_tool_calls, before_state, after_state, text_response, test
+):
+    """Tag-gated (negative-status-question): a `"where are we?"` request is
+    answered by the main thread in one plain paragraph from `project_context`,
+    per the lead's 2026-10-06 ruling (issue #3112).
+
+    Deterministic assertions, each a hard assert:
+
+      1. `project_context` was called (a deferred schema loaded through
+         ToolSearch still records the call under its qualified name).
+      2. No `Read` or `Grep` of `research.json` or `tree.gedcomx.json`: the
+         projection is the read path.
+      3. No subagent spawn (`Agent` or `Task`): the status answer is the main
+         thread's own paragraph.
+      4. No `research_append` call: a status question writes nothing.
+      5. The main thread's text is one plain paragraph: no line break (so no
+         lead-in line and no second paragraph), no heading, list or table line,
+         no bold, and no closing question. `text_response` joins every
+         main-thread turn, so a narration line before the `project_context`
+         call fails this check exactly as a lead-in line does.
+      6. No identifier in the reply: no research.json id (`<prefix>_<digits>`
+         for any prefix the schema defines) and no tree id (`I1`, `S3`).
+
+    `project_context` is ALWAYS_LOAD, so assertion 1 can hold even with the
+    description clause removed; assertions 5 and 6 are the ones that track the
+    clause.
+    """
+    from harness.skill_runner import SPAWN_TOOL_NAMES
+
+    if "negative-status-question" not in test.get("tags", []):
+        pytest.skip("not a negative-status-question scenario")
+
+    pc_calls = [c for c in (tool_calls or []) if bare_tool_name(str(c.get("tool") or "")) == "project_context"]
+    assert pc_calls, (
+        "status question must call project_context — the tool's description "
+        "instructs the main thread to answer from it"
+    )
+
+    forbidden_reads = []
+    for c in (builtin_tool_calls or []):
+        if (c.get("tool") or "") not in ("Read", "Grep"):
+            continue
+        args = c.get("args") or {}
+        path = str(args.get("file_path") or args.get("path") or "")
+        # A Grep over a directory reaches the file through its `glob` filter.
+        glob = str(args.get("glob") or "")
+        if path.endswith(_PROJECT_FILES) or any(name in glob for name in _PROJECT_FILES):
+            forbidden_reads.append(f"{c.get('tool')} {path} {glob}".strip())
+    assert not forbidden_reads, (
+        "status question must not read the raw project files; got: "
+        f"{forbidden_reads}"
+    )
+
+    # Every main-thread spawn, named or not: `spawned_agents()` skips a
+    # general-purpose spawn (no `subagent_type`), which is still a delegation.
+    spawns = [
+        (c.get("args") or {}).get("subagent_type") or "general-purpose"
+        for c in (builtin_tool_calls or [])
+        if c.get("tool") in SPAWN_TOOL_NAMES and "agent_id" not in c
+    ]
+    assert not spawns, (
+        f"status question must be answered by the main thread, not delegated; got {spawns}"
+    )
+
+    appends = [c for c in (tool_calls or []) if bare_tool_name(str(c.get("tool") or "")) == "research_append"]
+    assert not appends, (
+        "status question must not write to research.json; got "
+        f"{len(appends)} research_append call(s)"
+    )
+
+    body = (text_response or "").strip()
+    shape = []
+    if "\n" in body:
+        shape.append(f"{len([ln for ln in body.splitlines() if ln.strip()])} lines")
+    if _SHAPED_LINE_RE.search(body):
+        shape.append("a heading, list or table line")
+    if "**" in body:
+        shape.append("bold")
+    if body.endswith("?"):
+        shape.append("a closing question")
+    assert body and not shape, (
+        "status answer must be ONE plain paragraph with no lead-in, headings, "
+        f"tables, lists, bold or closing question; got: {shape or ['an empty reply']}"
+    )
+
+    hits = _PROJECT_ID_RE.findall(text_response or "")
+    assert not hits, (
+        "status answer must contain no project identifiers; found: "
+        f"{sorted(set(hits))}"
     )
 
 

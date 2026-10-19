@@ -10,6 +10,7 @@
       "doctrine",
       "backend-metadata",
       "signal-vs-noise",
+      "census-variance-trap",
       "direct-arm"
     ]
   },

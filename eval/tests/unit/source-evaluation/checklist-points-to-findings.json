@@ -10,6 +10,7 @@
       "doctrine",
       "quality-detail",
       "checklist-overlap",
+      "census-variance-trap",
       "direct-arm"
     ]
   },
@@ -34,6 +35,8 @@
     "The pointer must add no action and no escalation. The checklist still carries no recommended action of its own.",
     "The other two issues, the marriage place missing a city and the marriage having no tagged sources, match no finding and must still be printed as returned, grouped under their scoreType. VERIFIABILITY must come before COMPLETENESS, and where the CONSISTENCY group appears it comes before both.",
     "The checklist must sit after the numbered findings and outside the stated count, and no numeric score, band or percentage may be stated.",
-    "Grade the reply against the four-fact profile person_read returned (Birth 1875, Marriage 1898, one Residence 1900, Death 1945, no burial) and this test's 4-issue checklist. The scenario README describes a 7-issue captured fixture used by a different suite; that is not what this test runs."
+    "Grade the reply against the four-fact profile person_read returned (Birth 1875, Marriage 1898, one Residence 1900, Death 1945, no burial) and this test's 4-issue checklist. The scenario README describes a 7-issue captured fixture used by a different suite; that is not what this test runs.",
+    "`source_attachments` shows HOLE-003 is also attached to KD96-WX7, and `person_read` on KD96-WX7 returns Christian Hole, born 1852, residence Aurdal, Otter Tail, Minnesota in 1885, died 1919. A reply that reads KD96-WX7 and then names him as the record's true subject, or says he fits the 1885 record on name, birth year and residence, is stating what the tool responses carry and is CORRECT; it is not a fabrication. Naming him WITHOUT having read him is the error.",
+    "Ground truth for the 1885 Minnesota State Census (HOLE-003): it is about a different Christian Hole — born 1852 against the profile's 1875, Otter Tail County rather than Polk, with a wife Bergit and children who appear nowhere in this family. A reply that recommends detaching it is CORRECT and must not be deducted under Correctness or Remediation doctrine."
   ]
 }
