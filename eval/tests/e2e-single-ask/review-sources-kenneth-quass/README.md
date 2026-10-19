@@ -23,8 +23,9 @@ FAIL review-sources-kenneth-quass  expected=source-evaluation  first=source-eval
 
 `owner` already passes. With no `/research` prefix the main thread matched the ask to
 `source-evaluation`'s own description and spawned it without the router, so this
-fixture cannot see the router gap issue #3526 fixes. It turns PASS when issue #3524
-(`source-evaluation` saves a log entry) lands.
+fixture cannot see the router gap issue #3526 fixes; #3526's own `routes-to:` unit
+tests cover that (Done-when amended on issue #3527, 2026-10-19). It turns PASS when
+issue #3524 (`source-evaluation` saves a log entry) lands.
 
 ## Starting state
 
