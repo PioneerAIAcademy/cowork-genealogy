@@ -26,9 +26,19 @@ same holds for `"."`. This walk rejects a falsy or dot-only name as a shape
 check on the input. That makes it stricter than the paid gate on exactly that
 shape; the corpus carries none, so both agree on every committed file.
 
-`execution.run_skills` is walked by the same loop but carries **0 entries
-corpus-wide**, so it gets no premise assert below and is not claimed as
-covered — an arm over an empty population asserts nothing.
+`execution.run_skills` is deliberately NOT walked. `runnability.py` validates
+no run_skills *name* — only its mutual exclusion with `stub_skills` (`:239-250`)
+— so there is no refusal here to mirror, the corpus carries 0 entries, and
+`compute_allowed_tools` resolves a run_skills callee by a different rule again
+(`skills_dir/<name>/SKILL.md`, no agent fallback). An arm over an empty
+population, mirroring nothing, asserts nothing.
+
+`test.skill` is not walked either, though `runnability.py:179-181` refuses a
+ROUTED test whose skill has no directory. That refusal has different semantics
+on purpose — no agent fallback, "falling through to an agent of the same name
+would run it by a route the test did not ask for" — and 363 of the 462 routed
+tests name a converted agent today, so mirroring it here would red most of the
+corpus. Why those 363 do not abort is its own question, and its own card.
 """
 
 from __future__ import annotations
@@ -84,14 +94,21 @@ def dead_callee_entries(
             continue
         if not isinstance(raw, dict):
             continue
-        test = raw.get("test") or {}
-        execution = raw.get("execution") or {}
+        test = raw.get("test")
+        execution = raw.get("execution")
+        # A non-object here is a schema defect, and test_unit_test_corpus.py's
+        # to report. Coercing rather than crashing keeps one defect from being
+        # surfaced as a broken guard in a second place.
+        test = test if isinstance(test, dict) else {}
+        execution = execution if isinstance(execution, dict) else {}
 
         # `correct_skill` — negatives only, and xfail is exempt: an xfail test
         # is explicitly known-failing, so a callee naming a not-yet-built skill
         # is the documented reason for the marker, not a typo (runnability.py).
         if test.get("type") == "negative" and test.get("expected_outcome") != "xfail":
-            for i, name in enumerate((raw.get("negative") or {}).get("correct_skill") or []):
+            negative = raw.get("negative")
+            negative = negative if isinstance(negative, dict) else {}
+            for i, name in enumerate(negative.get("correct_skill") or []):
                 if not isinstance(name, str) or not _resolves(name, skills_dir, agents_dir):
                     dead.append((path, "negative.correct_skill", i, str(name)))
 
@@ -101,10 +118,6 @@ def dead_callee_entries(
         for name in parse_stub_skills(execution):
             if not _resolves(name, skills_dir, agents_dir):
                 dead.append((path, "execution.stub_skills", None, name))
-
-        for name in execution.get("run_skills") or []:
-            if not isinstance(name, str) or not _resolves(name, skills_dir, agents_dir):
-                dead.append((path, "execution.run_skills", None, str(name)))
 
     return dead
 
