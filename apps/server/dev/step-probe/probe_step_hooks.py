@@ -73,6 +73,22 @@ STATE_PATH = os.environ.get(
 # only trigger that cannot be hit by accident.
 CANARY = "STEP_PROBE_CANARY"
 
+# The SECOND canary, and the one that now matters most. The lead's 2026-10-19
+# steer is that the alpha has 2-3 months left and the future is Cowork plus the
+# prototype, so the question moved: not "does a deny bind in Cowork" (ADR-0005
+# answered that on 2026-07-30) but "can a PLUGIN PreToolUse hook END A COWORK
+# TURN at all".
+#
+# That is unmeasured and it is the whole mechanism question for Cowork, because
+# Cowork has no other lever: `hooks=` is an SDK argument Cowork does not let us
+# set, so there is no Stop hook there, and the shipped matcher
+# (`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`) does not
+# match `research_delivered` or `AskUserQuestion` -- which is why
+# `research-delivered.ts` says its inert arm is what runs in Cowork.
+#
+# The matcher is ours to widen; whether the HALT FIELDS are honoured is not.
+CANARY_HALT = "STEP_PROBE_HALT"
+
 # Printed in the deny reason so the model's own report can be attributed to THIS
 # hook rather than to a tool's own refusal. probe_hook_binding.py's arm B is the
 # precedent: a deny that cannot be attributed proves nothing, because the tool
@@ -81,6 +97,11 @@ DENY_REASON = (
     f"{CANARY}_DENIED_BY_STEP_PROBE. This is a phase-0 measurement, not a real "
     "restriction. Report that this specific deny reached you, then end your turn "
     "without retrying and without using another tool to accomplish the same thing."
+)
+
+
+HALT_REASON = (
+    f"{CANARY_HALT}: this step is complete. Report what you did, then end your turn."
 )
 
 
@@ -149,6 +170,14 @@ def _project_visible(cwd):
     except Exception as exc:  # noqa: BLE001
         out["cwd_entries"] = f"listdir_failed:{type(exc).__name__}"
     return out
+
+
+def _canary_halt(payload):
+    """True when this call carries the halt sentinel. Same shape as `_canary_deny`."""
+    try:
+        return CANARY_HALT in json.dumps(payload.get("tool_input", {}))
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def _canary_deny(payload):
@@ -220,6 +249,28 @@ def main():
             fh.write(json.dumps(line) + "\n")
     except Exception:  # noqa: BLE001 - recording must never break the session
         pass
+
+    # Checked FIRST: the halt arm is the stronger claim, and a payload carrying
+    # both sentinels should exercise it rather than the deny.
+    if _canary_halt(payload):
+        # The prototype's `_halt` shape: the SDK's turn-ending pair PLUS a deny.
+        # `options.py:441` builds exactly this, and `:363-367` records that the
+        # pair ends the turn only AFTER the call runs. Both halves are printed
+        # here so Cowork is measured against the real shape, not a guess at it.
+        print(
+            json.dumps(
+                {
+                    "continue_": False,
+                    "stopReason": HALT_REASON,
+                    "hookSpecificOutput": {
+                        "hookEventName": "PreToolUse",
+                        "permissionDecision": "deny",
+                        "permissionDecisionReason": HALT_REASON,
+                    },
+                }
+            )
+        )
+        return
 
     if _canary_deny(payload):
         print(

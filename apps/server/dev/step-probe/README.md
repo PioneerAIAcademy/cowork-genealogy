@@ -4,7 +4,7 @@ Phase 0 of [`docs/plan/research-step-mode.md`](../../../../docs/plan/research-st
 No product code changes. Nothing here ships: it is a throwaway plugin that only
 records.
 
-PR 1's Cowork entry point is built on the eight answers below, so they are worth
+PR 1's Cowork entry point is built on the nine answers below, so they are worth
 measuring rather than assuming. One of them already has a partial answer pointing
 the wrong way: `guard_project_files.py` says `cwd` is the sandbox and the
 connected folder is not mounted, which would make item 7 a NO. That claim was
@@ -22,6 +22,7 @@ made about `device_commit_files` sessions, not about this, so it is measured.
 | 6 | Sibling calls in one turn are visible |
 | 7 | The hook can read the project's `research.json` from its cwd |
 | 8 | A file the hook writes is readable on its next call |
+| **9** | **Can a plugin PreToolUse hook END a Cowork turn at all?** (the halt fields). Added 2026-10-19 and now the headline, see below |
 
 ## Run it
 
@@ -51,6 +52,13 @@ about the project folder, so an empty one answers a different question):
    trigger, and the only thing the probe denies. Note what the model does next:
    whether it surfaced `STEP_PROBE_CANARY_DENIED_BY_STEP_PROBE`, and whether it
    then ended rather than retrying by another route.
+4. **Then give it TWO things to do, where the first mentions
+   `STEP_PROBE_HALT`.** For example: "read STEP_PROBE_HALT.txt, then write
+   notes.txt saying done." This is item 9, and it is now the headline question.
+   Watch whether the SECOND task happens. If it does, the halt did not end the
+   turn, exactly as a plain deny did not on the alpha
+   (`apps/server/dev/probe_step_deny.py`, 2026-10-19). Two tasks, not one: with
+   a single task the turn ends either way and the result proves nothing.
 
 **3. Read it:**
 
@@ -67,7 +75,7 @@ missing, empty, or has no `PreToolUse` lines. That is deliberate. Every answer
 takes the form "the log does not contain X", which is a finding only when the log
 contains something -- otherwise it describes a probe that was never installed.
 `PreToolUse` is the control because ADR-0005 measured it firing in live Cowork on
-2026-07-30. **An empty log formatted as eight negatives is eight wrong beliefs**,
+2026-07-30. **An empty log formatted as negatives is a set of wrong beliefs**,
 which is the failure this gate exists to prevent.
 
 Two answers are worth reading closely because each can look like its opposite:
@@ -89,6 +97,28 @@ Record the results in
 [`ADR-0005`](../../../../docs/adrs/ADR-0005-ship-the-write-lockdown-as-a-plugin-hook.md),
 as phase 0 asks. Delete this directory once they are recorded: the answers live
 in the ADR, and a probe left in the tree reads as something that runs.
+
+## Why item 9 is now the headline
+
+The lead's steer on 2026-10-19 is that the alpha has 2-3 months left and the
+future is Cowork plus the prototype. Cowork is the hard case, because it is the
+one plane with no second lever:
+
+- `hooks=` is an SDK argument Cowork does not let us set, so there is **no Stop
+  hook** there at all;
+- the shipped plugin matcher is
+  `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`, which does
+  **not** match `research_delivered` or `AskUserQuestion`. That is why
+  `research-delivered.ts` says its inert arm is what runs in Cowork.
+
+So in Cowork today nothing can end a turn. The matcher is ours to widen, which
+is cheap. Whether the **halt fields are honoured** by a plugin hook there is not
+ours to decide, is unmeasured, and decides whether step mode is buildable on the
+plane that will carry the product.
+
+Measured on the alpha, a plain deny does NOT end a turn: the model reports the
+refusal and carries on with its remaining work. If the halt fields behave the
+same way in Cowork, step mode needs a mechanism nobody has yet named.
 
 ## The hosted half
 
