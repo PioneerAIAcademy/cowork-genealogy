@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_research_plan_d04",
+    "skill": "research-plan",
+    "name": "Execute-search request is handed back to search-records, nothing written",
+    "type": "negative",
+    "description": "The agent's routing gate, reached by direct spawn. The delegation says 'go search the 1880 census for Patrick Flynn now', an execution request, not a planning request. The research-plan agent must hand it back naming search-records before any tool call (its ROUTING section, first row), and write nothing. Added in issue #2116 when the description-routing negative ut_research_plan_008 was deleted: that test graded which skill Cowork picked from a description and never reached this gate, as ut_search_external_sites_hbk records for issue #2802. A DIRECT negative graded on its invariant: test_hand_back_names_its_owner asserts zero MCP tool calls and a reply naming search-records.",
+    "tags": [
+      "negative",
+      "routing",
+      "search-records",
+      "execution-vs-planning",
+      "hand-back",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Go search the 1880 census for Patrick Flynn now.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": [
+      "search-records"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "The request is to run a FamilySearch search, which search-records executes. Planning what to search is the agent's job; running a search is not. On the direct arm the agent's ROUTING section requires a hand-back naming search-records before any tool call: test_hand_back_names_its_owner asserts zero MCP tool calls, so nothing can be written, and a reply naming search-records. That validator is the whole verdict."
+  },
+  "judge_context": [
+    "This is a hand-back test, graded on its invariant: the deterministic validator decides the outcome and these scores are diagnostic.",
+    "The correct action is a one-line hand-back naming search-records, with no plan item written and no search run. Writing a plan, adding an item for the 1880 census, or asking which census to plan is a fail.",
+    "The two researcher-facing paragraphs after the final `---` must name no skill, agent, tool or field."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

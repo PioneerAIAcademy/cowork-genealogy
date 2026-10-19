@@ -2,30 +2,32 @@
   "test": {
     "id": "ut_research_plan_009",
     "skill": "research-plan",
-    "name": "Record-extraction request should route to extraction, not research-plan",
+    "name": "Record-extraction request is handed back to extraction, nothing written",
     "type": "negative",
-    "description": "User says 'pull the key facts out of this death certificate I just found' — this is an extraction task, not a planning task. research-plan should NOT accept this. It should route the user to the extraction skill.",
+    "description": "The delegation says 'pull the key facts out of this death certificate I just found' — an extraction task, not a planning task. The research-plan agent must write nothing and hand the request back, naming extraction in its caller-facing lines (its ROUTING section). Converted to the direct-agent arm when the skill was deleted (issue #2116): an out-of-scope negative converts as a direct `grade_on_invariant` test (unit-test-spec.md §5.2.1). grade_on_invariant: true hands the verdict to test_hand_back_names_its_owner (no MCP tool call at all, and a `Hand-back:` line); the judge is diagnostic.",
     "tags": [
       "negative",
       "routing",
       "extraction",
-      "extraction-vs-planning"
+      "extraction-vs-planning",
+      "hand-back",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I just found Patrick Flynn's death certificate from 1908. Pull the key facts out of it and add them to the project.",
+    "delegation": "I just found Patrick Flynn's death certificate from 1908. Pull the key facts out of it and add them to the project.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "negative": {
     "correct_skill": [],
-    "explanation": "The user wants to extract facts from a found record. research-plan's description says not to use it for records already found. Extraction is extraction (`extraction_append` for a FamilySearch record, the record-structurer agent for any other source), not plan items. Since extraction became a tool call and an agent rather than a skill, no skill is the correct route, so this is an out-of-scope negative (`correct_skill: []`): the skill under test must stay out of extraction, and any correct extraction path passes (genealogist ruling 2026-09-30, option B)."
+    "grade_on_invariant": true,
+    "explanation": "The request is to extract facts from a found record. Extraction is `extraction_append` for a FamilySearch record and the record-structurer agent for any other source, not plan items. Since extraction became a tool call and an agent rather than a skill, no skill is the correct route, so this is an out-of-scope negative (`correct_skill: []`; genealogist ruling 2026-09-30, option B, landed in aa4ff9564). On the direct arm the agent's ROUTING section requires a hand-back before any tool call: test_hand_back_names_its_owner asserts zero MCP tool calls, so nothing can be written, and a `Hand-back:` line in the agent's return. That validator is the whole verdict."
   },
   "judge_context": [
-    "This is a NEGATIVE routing test. The user wants to EXTRACT facts from a found record, not create a research plan.",
-    "The correct action is to route to `extraction_append` or `@plugin:record-structurer`, not to write plan items.",
-    "If the skill writes any new plan items to research.json in response to this request, that is a routing error — score Correctness=1.",
-    "Acceptable responses: routing the user to extraction, or a one-line explanation that extracting facts from records is handled by extraction.",
-    "The message gives no death certificate text, file or record id, so nothing can be extracted yet. Asking for one, without planning, searching, extracting or writing, is a correct response: do not lower Correctness or Completeness because no facts were extracted."
+    "This is a hand-back test, graded on its invariant: the deterministic validator decides the outcome and these scores are diagnostic.",
+    "The correct action is a hand-back naming extraction (`extraction_append`, or the record-structurer agent), with no plan item written and no tool called.",
+    "The message gives no death certificate text, file or record id, so nothing can be extracted yet. Saying so while handing back is correct: do not lower Correctness or Completeness because no facts were extracted.",
+    "The two researcher-facing paragraphs after the final `---` must name no skill, agent, tool or field."
   ],
   "execution": {
     "max_wall_clock_seconds": 300
