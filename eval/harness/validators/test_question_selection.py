@@ -510,6 +510,37 @@ def test_timelines_queried_before_deciding(before_state, tool_calls, test):
         )
 
 
+def test_person_warnings_called_before_deciding(tool_calls, test):
+    """Tag-gated: on a scenario carrying a real person_warnings contradiction,
+    the skill must have actually called person_warnings before writing (or
+    declining to write) the question -- not merely at some point in the run.
+    Concluding 'no contradiction' without this call is fabrication, not
+    informed absence of evidence."""
+    if "person-warnings-contradiction" not in test.get("tags", []):
+        pytest.skip("not a person-warnings-contradiction scenario")
+    warning_idxs = [
+        i
+        for i, call in enumerate(tool_calls)
+        if call.get("tool", "").endswith("person_warnings")
+    ]
+    assert warning_idxs, (
+        "the skill decided without ever calling person_warnings; a "
+        "contradiction on the subject cannot have been seen"
+    )
+    append_idxs = [
+        i
+        for i, call in enumerate(tool_calls)
+        if call.get("tool", "").endswith("research_append")
+    ]
+    if append_idxs:
+        assert min(warning_idxs) < min(append_idxs), (
+            "the skill wrote its question before ever calling "
+            "person_warnings -- the call must inform the decision, not "
+            "just appear somewhere in the transcript after it was already "
+            "made"
+        )
+
+
 # --- Tag-gated: missing-info disputed assignment accepts either honest branch (V4) ---
 
 # A single-turn harness cannot exercise a real ask-and-wait: the skill either

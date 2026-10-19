@@ -382,6 +382,19 @@ function checkIdPrefix(
   }
 }
 
+// The schema gives these id arrays an item pattern (`^q_`); without this check
+// a writer persisted `extracted_for_question_ids: ["flynn-household-origins"]`,
+// which the JSON schema then rejected (ut_search_records_003, issue #2116).
+function checkIdPrefixArray(
+  values: unknown,
+  expectedPrefix: string,
+  path: string,
+  report: ValidationReport
+): void {
+  if (!Array.isArray(values)) return;
+  values.forEach((v, j) => checkIdPrefix(v, expectedPrefix, `${path}[${j}]`, report));
+}
+
 function checkEnum(
   value: any,
   enumName: string,
@@ -1168,6 +1181,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkIdPrefix(a.id, ID_PREFIXES.assertions, ap, report);
       ids.assertions.add(a.id);
     }
+    checkIdPrefixArray(a.extracted_for_question_ids, ID_PREFIXES.questions, `${ap}.extracted_for_question_ids`, report);
     if ("information_quality" in a) {
       checkEnum(a.information_quality, "information_quality", ap, report);
     }
@@ -1368,6 +1382,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkIdPrefix(c.id, ID_PREFIXES.conflicts, cp, report);
       ids.conflicts.add(c.id);
     }
+    checkIdPrefixArray(c.blocks_question_ids, ID_PREFIXES.questions, `${cp}.blocks_question_ids`, report);
     if ("conflict_type" in c) {
       checkEnum(c.conflict_type, "conflict_type", cp, report);
     }
@@ -1429,6 +1444,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkIdPrefix(h.id, ID_PREFIXES.hypotheses, hp, report);
       ids.hypotheses.add(h.id);
     }
+    checkIdPrefixArray(h.related_question_ids, ID_PREFIXES.questions, `${hp}.related_question_ids`, report);
     if ("status" in h) {
       checkEnum(h.status, "hypothesis_status", hp, report);
     }

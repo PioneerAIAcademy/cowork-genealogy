@@ -109,7 +109,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -1020,10 +1020,10 @@ def test_the_plugin_ships_twenty_nine_agents_and_four_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 4
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 3
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 4\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 3\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -1046,7 +1046,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "twenty-seven agents must not become the expectation"
+    assert agents is None, "twenty-eight agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.
@@ -1058,24 +1058,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Twenty-eight agents and 4 skills registered: clean. Twenty-seven, or 3: the miss, whatever loaded --
+    # Twenty-nine agents and 3 skills registered: clean. Twenty-eight, or 2: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 4)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 4, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 3)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 3, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 3)) == ["3 genealogy-research:* commands registered, expected 4"]
+    assert worker.registration_problems(_info(AGENTS, 2)) == ["2 genealogy-research:* commands registered, expected 3"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 3, and a count of that same copy would have expected 3.
+    # registers 2, and a count of that same copy would have expected 2.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 3
+    assert worker.count_skills(str(copy)) == 2
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "3 genealogy-research:* commands registered, expected 4"
+        "2 genealogy-research:* commands registered, expected 3"
     ]
 
 
