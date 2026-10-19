@@ -15,12 +15,16 @@ activity" but does not fix the string. Match it to what #3524 ships.
 
 ## Expected result today
 
-FAIL until both of these land on `main`:
+Measured 2026-10-19 on `main`: FAIL on `save` only.
 
-- issue #3526 — the router names `source-evaluation` as the owner of a source review;
-- issue #3524 — `source-evaluation` saves a log entry inside a project.
+```
+FAIL review-sources-kenneth-quass  expected=source-evaluation  first=source-evaluation  save=missing log tool=source-evaluation (new log tools: none)  delivered=no  stop=clean  failed=[save]
+```
 
-Either one alone still fails on the other half.
+`owner` already passes. With no `/research` prefix the main thread matched the ask to
+`source-evaluation`'s own description and spawned it without the router, so this
+fixture cannot see the router gap issue #3526 fixes. It turns PASS when issue #3524
+(`source-evaluation` saves a log entry) lands.
 
 ## Starting state
 
@@ -37,5 +41,5 @@ before it fails.
 
 ## Cost
 
-Unmeasured until the first run. Record `usage.whole_run_cost_usd_estimated` from the
-run log here, with the date.
+Measured 2026-10-19: $0.92 (`usage.whole_run_cost_usd_estimated`), 3 min 5 s, on
+`claude-sonnet-4-6` at effort `high`. One run, so read it as an order of magnitude.

@@ -238,7 +238,8 @@ def main(argv: list[str] | None = None) -> int:
         else:
             failures += 0 if g.passed else 1
             print(format_line(spec, g))
-        print(f"    cost~${cost if cost is not None else '?'}  runlog: {record['runlog']}")
+        shown = f"{cost:.2f}" if isinstance(cost, (int, float)) else "?"
+        print(f"    cost~${shown}  runlog: {record['runlog']}")
     return 1 if failures else 0
 
 
