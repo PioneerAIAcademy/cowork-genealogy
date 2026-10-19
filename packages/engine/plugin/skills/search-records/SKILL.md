@@ -263,7 +263,7 @@ For wildcard rules and fuzzy matching behavior, read `references/name-search-mec
 - Spelling variants (Patrick → Patric, Paddy, Pat)
 - Abbreviations (William → Wm, Thomas → Thos)
 - Initials (J. Smith)
-- Maiden names for married women
+- Each surname a woman carried, for the span she carried it — including one only the researcher names (`references/name-search-mechanics.md`)
 - **Nicknames unrelated to the given name itself** — a call name drawn from an interest, trait, or birth order rather than a diminutive of the recorded name, or one adopted specifically to distinguish same-named relatives (four Sarahs in one family, each known by a different nickname). These will not surface from spelling or phonetic variants; they come from family sources (a will, a letter, an obituary) or from the researcher's own knowledge of the family.
 
 For the historical reasoning behind why one person's name appears in several
@@ -405,6 +405,15 @@ highest. A row the ranker could not score keeps its search position, has no
 **The ranked list is a review surface, not an auto-accept.** Match score orders the
 candidates; you still confirm the top ones:
 
+- **`ranked.subjectTooThin: true` → every hit is `needs-review`.** Never hand one to
+  extraction on score; name the anchor that would settle identity (a precise date, a
+  named spouse, parent or child).
+- **Several candidates you cannot tell apart → search the household.** When the tree
+  names a co-resident (mother, step-parent), use the household lever in
+  `references/search-strategy-levers.md` before choosing one.
+- **A hit under a surname only the researcher names is a candidate.** Report it as
+  consistent with that marriage, never as a confident match, until an independent
+  record ties her to it.
 - **Logical cross-check every strong match.** Role in the record (a 5-year-old
   cannot be Head of Household), age/birth year vs. the expected range, place
   consistency. Flag any impossibility as `needs-review` regardless of score —
@@ -687,6 +696,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 **Accuracy rule — do not overclaim persistence.** This skill writes only `log[]` entries and plan-item `status` — nothing else. Never describe results as "logged with sources," "recorded," "saved to the research project," or any phrasing implying a `sources` or `assertions` entry exists, unless extraction actually ran in this turn and returned assigned `src_` ids. A search result that hasn't been through extraction is a candidate record sitting in a search log — say exactly that, even when the user's own phrasing ("go ahead," "find and list them") sounds like a go-ahead to do the full job.
 
 - Summarize what was searched and what was found
+- Name a collection by its title and its `https://www.familysearch.org/search/collection/{id}` link (`collections_search` returns both), never by a bare id
 - Show the log entries created
 - List records passed to extraction (or explain why none) — and if none, say plainly that no `sources` or `assertions` exist yet for these findings
 - Show plan progress: "3 of 5 plan items completed"
@@ -707,7 +717,7 @@ Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers
 
 - **Log every search.** Each retry gets its own `research_log_append` call. A search without a log entry is a search that didn't happen.
 - **Prior log entries are immutable.** Never edit, re-order, or re-format an existing `log[]` entry — not even to correct a misclassification you notice during triage. Append a new entry instead (see Step 5).
-- **Don't skip plan items silently.** Set status to `skipped` with an explanation.
+- **Don't skip plan items silently.** Set status to `skipped` with `skip_category` and `skip_reason`.
 - **Let the user confirm before extraction.** Show triage results first — don't silently extract every hit.
 - **Never fabricate results.** If the MCP tool returns nothing, report nothing.
 - **The write tools validate-before-persist.** `check-warnings` does not apply here — this skill writes only log entries and plan-item status, not assertions.

@@ -122,6 +122,13 @@ Use wildcards to compensate.
   `surname=López` separately
 - Female names: US records use married surname; Spanish/Italian
   preserve maiden; Quaker/Scandinavian use patronymics
+
+**A surname you search under asserts nothing.** Search a woman under every
+surname she may have carried — including one the researcher only remembers —
+each for the years it could have been hers. What the search writes is a log
+entry, not a claim; the caution belongs on what reaches the tree and the reply.
+A hit found that way is a candidate: report it as consistent with the recalled
+marriage, never as confirming it, until an independent record ties her to it.
 - "Willm" / "Will'm" may not standardize to William — search both
 
 **Watch the results for a misindexed value, not just the query.** Some

@@ -99,6 +99,8 @@ collection does not exempt a lever from this requirement.
 | Lever | How | When to try |
 |---|---|---|
 | Search by neighbor | Search the adjacent census household | Subject missed by indexer or indexed badly |
+| Search the household by a co-resident | Search the mother or step-parent as principal across census years, then confirm the subject inside that household | Several candidates for the subject cannot be told apart and the tree names a co-resident; not when one candidate is clear |
+| Search by address | Not available: record search takes no street, house-number or dwelling term | — |
 | Search collateral relatives | Use uncommon brother/cousin/in-law surname | Subject's surname too common |
 | Maiden vs married name | Run two parallel searches | Female ancestor across her lifetime |
 
