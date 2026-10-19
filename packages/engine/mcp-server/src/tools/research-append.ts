@@ -2780,11 +2780,16 @@ function activePlanItems(
  *  still takes (2)'s free pass even when it is actually about a conflict
  *  `conflicts[]` already documents -- in which case (1)'s stricter check (that
  *  conflict's `blocks_question_ids` must list the in-flight question) never
- *  gets a chance to run. Put to the lead rather than decided here, since
- *  tightening it further risks the same false-refusal direction ADR-0011
- *  limit 1 says to avoid: ruled to leave it. `person_warnings` output has no
- *  document to verify the claim against either way, so the same self-reported
- *  trust this whole exception already rests on covers this case too.
+ *  gets a chance to run. jud-sdev's review (2026-10-19) found "ruled to leave
+ *  it" here was never actually true -- that was an internal call in this
+ *  session's own conversation, not an on-the-record decision from the lead who
+ *  made the 2026-09-29 ruling this would narrow. Put to DallanQ on issue #3259
+ *  (2026-10-19) instead; PENDING as of this commit. Current behavior:
+ *  unscoped against `unblocks`, on the same self-reported trust the rest of
+ *  this exception already rests on (`person_warnings` output has no document
+ *  to verify the claim against either way), since tightening it further risks
+ *  the false-refusal direction ADR-0011 limit 1 says to avoid -- but that
+ *  tradeoff is exactly what is pending a ruling, not settled.
  *
  *  Same pre-call snapshot and active-plan discipline as
  *  `planCompleteInvariants`: a superseded plan's items are frozen and a resolved
