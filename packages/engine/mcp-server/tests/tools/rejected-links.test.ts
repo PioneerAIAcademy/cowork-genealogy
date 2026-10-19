@@ -84,7 +84,7 @@ function project(research: Record<string, unknown>): string {
     ...research
   }), "utf8");
   writeFileSync(join(dir, "tree.gedcomx.json"),
-    JSON.stringify({ persons: [{ id: "I1" }], relationships: [], sources: [] }), "utf8");
+    JSON.stringify({ persons: [{ id: "I1" }, { id: "I2" }], relationships: [], sources: [] }), "utf8");
   return dir;
 }
 
@@ -182,6 +182,66 @@ describe("research_append refuses a rejected pair", () => {
     expect(text).toMatch(/rejected as not a match/);
   });
 
+  it("lets a live link be restated as live while it is downgraded", async () => {
+    // `superseded_by: null` on a link that was never retired re-raises nothing.
+    expect(await update({ superseded_by: null, confidence: "speculative" }))
+      .not.toMatch(/rejected as not a match/);
+  });
+
+  it("does not tell the caller to remove the rejection", async () => {
+    // No research_append operation can remove or retire a rejected_links entry.
+    const dir = project({
+      rejected_links: [{ id: "rj_001", assertion_id: "a_001", person_id: "I1",
+                         created: "2026-09-30" }]
+    });
+    const out = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "append",
+      entry: { assertion_id: "a_001", person_id: "I1", confidence: "probable", rationale: "x" }
+    } as never, undefined as never).catch((e: Error) => e);
+    const text = out instanceof Error ? out.message : JSON.stringify(out);
+    expect(text).toMatch(/rejected as not a match/);
+    expect(text).not.toMatch(/remove the rejection/);
+  });
+
+  // ── An update that moves a live link onto the rejected pair ──────────────
+  // Gating on whether the op named `superseded_by` let these through: a pair move
+  // names neither, and `""` is falsy to the materializer but not `== null`.
+
+  const movable = (link: Record<string, unknown>) => project({
+    assertions: [{ id: "a_001" }, { id: "a_002" }],
+    person_evidence: [{ id: "pe_001", confidence: "probable", rationale: "x", ...link }],
+    rejected_links: [{ id: "rj_001", assertion_id: "a_001", person_id: "I1",
+                       created: "2026-09-30" }],
+  });
+  const tryUpdate = async (dir: string, fields: Record<string, unknown>) => {
+    const out = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields,
+    } as never, undefined as never).catch((e: Error) => e);
+    return out instanceof Error ? out.message : JSON.stringify(out);
+  };
+
+  it("refuses moving a live link's person onto the rejected pair", async () => {
+    const dir = movable({ assertion_id: "a_001", person_id: "I2" });
+    expect(await tryUpdate(dir, { person_id: "I1" })).toMatch(/rejected as not a match/);
+  });
+
+  it("refuses moving a live link's assertion onto the rejected pair", async () => {
+    const dir = movable({ assertion_id: "a_002", person_id: "I1" });
+    expect(await tryUpdate(dir, { assertion_id: "a_001" })).toMatch(/rejected as not a match/);
+  });
+
+  it("refuses reviving a retired link with an empty superseded_by", async () => {
+    const dir = movable({ assertion_id: "a_001", person_id: "I1", superseded_by: "pe_002" });
+    expect(await tryUpdate(dir, { superseded_by: "" })).toMatch(/rejected as not a match/);
+  });
+
+  it("allows moving a retired link onto the rejected pair while it stays retired", async () => {
+    const dir = movable({ assertion_id: "a_001", person_id: "I2", superseded_by: "pe_002" });
+    const text = await tryUpdate(dir, { person_id: "I1" });
+    expect(text).not.toMatch(/rejected as not a match/);
+    expect(text).toMatch(/"ok":true/);
+  });
+
   it("allows the same assertion against a different person", async () => {
     const dir = project({
       rejected_links: [{ id: "rj_001", assertion_id: "a_001", person_id: "I2",
@@ -193,6 +253,24 @@ describe("research_append refuses a rejected pair", () => {
     } as never, undefined as never).catch((e: Error) => e);
     const text = out instanceof Error ? out.message : JSON.stringify(out);
     expect(text).not.toMatch(/rejected as not a match/);
+  });
+});
+
+describe("a rejection must name an assertion that exists", () => {
+  const reject = async (assertion_id: string) => {
+    const out = await researchAppend({
+      projectPath: project({}), section: "rejected_links", op: "append",
+      entry: { assertion_id, person_id: "I1", reason: "different birth year" },
+    } as never, undefined as never).catch((e: Error) => e);
+    return out instanceof Error ? out.message : JSON.stringify(out);
+  };
+
+  it("refuses a mistyped assertion id, which would protect nothing", async () => {
+    expect(await reject("a_999")).toMatch(/assertion 'a_999' which does not exist/);
+  });
+
+  it("accepts one that exists", async () => {
+    expect(await reject("a_001")).toMatch(/"ok":true/);
   });
 });
 

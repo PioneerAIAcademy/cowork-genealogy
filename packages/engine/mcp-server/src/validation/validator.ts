@@ -1319,6 +1319,10 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         addError(report, rp, `${field} must be a string`);
       }
     }
+    // A mistyped id records a rejection that protects nothing.
+    if (typeof rj.assertion_id === "string") {
+      checkRefExists(rj.assertion_id, ids.assertions, "assertion", rp, report);
+    }
     // Optional, and "never a demand for the right answer" -- but an empty string is
     // not a reason, and downstream it reads as one that was given.
     if ("reason" in rj && rj.reason != null) {

@@ -1108,8 +1108,7 @@ function rejectedLinkInvariants(
     : "";
   return [
     `${assertionId} and ${personId} were rejected as not a match (${String(hit.id)}), ` +
-    `so this link is refused. Record new evidence, or remove the rejection if the ` +
-    `researcher has changed their mind.${because}`,
+    `so this link is refused. Record new evidence instead.${because}`,
   ];
 }
 
@@ -4439,6 +4438,9 @@ function applyOne(
   let entryId: string;
   let resultEntry: any;
   let arrayIndex: number | undefined;
+  // An update's link pair and retired state as they stood BEFORE its fields merge,
+  // so the rejected-link gate below can tell an edit from a re-link.
+  let priorPair: { assertion_id: unknown; person_id: unknown; superseded_by: unknown } | undefined;
 
   if (op.op === "append") {
     const entry = op.entry;
@@ -4497,6 +4499,11 @@ function applyOne(
     }
     const existing = array[existingIndex];
     if (!config.nested) arrayIndex = existingIndex;
+    priorPair = {
+      assertion_id: existing?.assertion_id,
+      person_id: existing?.person_id,
+      superseded_by: existing?.superseded_by,
+    };
 
     // Questions: re-declaring exhaustiveness on an already-declared question is
     // a no-op — never overwrite a settled GPS Component-1 record. Only when the
@@ -4834,24 +4841,26 @@ function applyOne(
     // a writer precondition. The reported failure is exactly this -- a researcher
     // challenged an assumption and the agent reverted to it, because nothing recorded
     // the rivals.
-    // ...on a CREATE, or on an update that brings a retired link back. NOT on every
+    // ...on a CREATE, or on an update that moves a link onto a new pair or brings a
+    // retired link back. NOT on every
     // edit to a link that already exists: the normal sequence is to reject a pair whose
     // link is already there, and firing on updates too meant that wrong link could never
     // afterwards be given a rationale, lowered to `speculative`, or superseded — so the
     // bad link and the facts it materialized stayed live for good. The refusal even told
     // the caller to "remove the rejection", which `research_append` cannot do (no delete,
     // and the spec says never delete). Found in the self-review of #3262.
-    const linkFields = op.fields ?? {};
-    // The two arms are deliberately DISJOINT (`op.op === "update"` on the second), so
-    // each is individually load-bearing and a mutation of either is caught. Written as
-    // an un-guarded `||` first, the append case passed through the second clause by
-    // accident — appends end up with `superseded_by` present and null — which left the
-    // create path resting on an incidental property instead of a stated rule.
+    // An update re-raises a link when it ends live AND either moves the pair (a new
+    // `assertion_id` or `person_id`) or revives a link that was retired. Judged on the
+    // stored state before the merge, not on which fields the op named: a pair move
+    // names no `superseded_by`, and a revival may write `""`, which is not a retirement.
+    const pairChanged =
+      !!priorPair &&
+      (priorPair.assertion_id !== resultEntry.assertion_id ||
+        priorPair.person_id !== resultEntry.person_id);
+    const wasRetired = !!priorPair?.superseded_by;
     const reRaising =
       op.op === "append" ||
-      (op.op === "update" &&
-        Object.prototype.hasOwnProperty.call(linkFields, "superseded_by") &&
-        resultEntry.superseded_by == null);
+      (op.op === "update" && !resultEntry.superseded_by && (pairChanged || wasRetired));
     if (reRaising) {
       invariantErrors.push(...rejectedLinkInvariants(resultEntry, research));
     }
