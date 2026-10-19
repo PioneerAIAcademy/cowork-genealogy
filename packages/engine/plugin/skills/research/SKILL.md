@@ -106,7 +106,7 @@ finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
-where the project stands (answer from `project_context` in one paragraph).
+where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
 Two or more of them in one message is still bounded: deliver each, name each,
 and end the turn when the last one is met, the same way a single one ends it. A message that also asks for
 open-ended research is a job.
