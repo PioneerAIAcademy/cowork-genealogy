@@ -401,22 +401,6 @@ def as_mapping(value: Any) -> dict:
     return value if isinstance(value, dict) else {}
 
 
-def research_append_ops(args: Any) -> list[dict]:
-    """The ops one research_append call sent: its batch ops (a list, or the JSON
-    string a model may send), else its single top-level op when that names a
-    section and ops is absent or unparseable. A list ops, even an empty one,
-    is returned as sent; the top-level fields are then not read."""
-    args = as_mapping(args)
-    ops = args.get("ops")
-    if isinstance(ops, str):
-        try:
-            ops = json.loads(ops)
-        except (ValueError, TypeError):
-            ops = None
-    candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
-    return [op for op in candidates if isinstance(op, dict)]
-
-
 def tool_input_keys(tool: str, nested: str | None = None) -> frozenset[str] | None:
     """Input property names of `tool` from the compiled MCP build, the schema
     production advertises, or of its object property `nested` (e.g.

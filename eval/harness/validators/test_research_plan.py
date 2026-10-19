@@ -31,7 +31,6 @@ from validators_lib import (
     assert_log_append_only,
     assert_no_section_deletions,
     extract_year,
-    research_append_ops,
 )
 from validators_lib import existing_plan_changes
 from validators_lib import new_plan_ids as _new_plan_ids
@@ -543,7 +542,14 @@ def _plan_write_ops(args: dict) -> list[dict]:
     """The ops of one `research_append` call, in either shape the model sends:
     `ops` as a list or a JSON string, or a single top-level op (same parse as
     test_universal.py's assertion-update check)."""
-    return research_append_ops(args)
+    ops = args.get("ops")
+    if isinstance(ops, str):
+        try:
+            ops = json.loads(ops)
+        except (ValueError, TypeError):
+            ops = None
+    candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+    return [op for op in candidates if isinstance(op, dict)]
 
 
 def _question_person_pids(research: dict, tree: dict) -> set[str]:

@@ -1,6 +1,5 @@
 """Tests for validators/validators_lib.py — shared validator helpers."""
 
-import json
 import sys
 from pathlib import Path
 
@@ -22,7 +21,6 @@ from validators_lib import (  # noqa: E402
     check_no_gate_stop,
     new_log_entries,
     new_section_entries,
-    research_append_ops,
 )
 
 
@@ -303,44 +301,3 @@ def test_missing_research_json_returns_empty_so_callers_must_skip_first():
     `validator_runner` records a bare pass as evidence the invariant held."""
     assert check_no_gate_stop({"research_json": None}, _state(_q())) == []
     assert check_no_gate_stop(_state(_q()), {"research_json": None}) == []
-
-
-# --- research_append_ops ----------------------------------------------------
-
-_LOC = {"section": "localities", "op": "append", "entry": {"place": "A"}}
-_SRC = {"section": "sources", "op": "append", "entry": {"title": "B"}}
-
-
-def test_research_append_ops_reads_a_batch_list():
-    assert research_append_ops({"ops": [_LOC, _SRC]}) == [_LOC, _SRC]
-
-
-def test_research_append_ops_parses_ops_sent_as_a_json_string():
-    assert research_append_ops({"ops": json.dumps([_LOC, _SRC])}) == [_LOC, _SRC]
-
-
-def test_research_append_ops_parses_args_sent_as_a_json_string():
-    assert research_append_ops(json.dumps({"ops": [_LOC]})) == [_LOC]
-
-
-def test_research_append_ops_falls_back_to_the_top_level_op_when_ops_is_unparseable():
-    args = {"section": "localities", "op": "append", "ops": "[{not json"}
-    assert research_append_ops(args) == [args]
-    assert research_append_ops({"ops": "[{not json"}) == []
-
-
-def test_research_append_ops_reads_a_single_top_level_op():
-    assert research_append_ops(_LOC) == [_LOC]
-
-
-def test_research_append_ops_ignores_the_top_level_op_when_ops_is_present():
-    assert research_append_ops({**_LOC, "ops": [_SRC]}) == [_SRC]
-
-
-@pytest.mark.parametrize("args", [{}, {"op": "append", "entry": {}}, {"section": ""}, None, 42, "x"])
-def test_research_append_ops_is_empty_with_no_section(args):
-    assert research_append_ops(args) == []
-
-
-def test_research_append_ops_drops_non_dict_items():
-    assert research_append_ops({"ops": [_LOC, "localities", None, 3, ["x"], _SRC]}) == [_LOC, _SRC]

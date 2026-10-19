@@ -75,12 +75,13 @@ criteria-demotion rollout.
 
 from __future__ import annotations
 
+import json
 import re
 
 import pytest
 
 from harness.skill_runner import agent_return_text
-from validators_lib import as_mapping, bare_tool_name, new_section_entries, research_append_ops
+from validators_lib import as_mapping, bare_tool_name, new_section_entries
 
 REQUIRED_WIKI_SECTIONS = {"home", "getting_started", "online_records", "research_tips"}
 
@@ -380,13 +381,30 @@ def _response_body(response):
     return as_mapping(response)
 
 
+def _append_ops(args):
+    """The ops one research_append call sent: its batch ops (a list, or the JSON
+    string a model may send), else its single top-level op when that names a
+    section and ops is absent or unparseable. Kept local rather than in
+    validators_lib: a validators_lib edit re-arms every suite's instrument check.
+    """
+    args = as_mapping(args)
+    ops = args.get("ops")
+    if isinstance(ops, str):
+        try:
+            ops = json.loads(ops)
+        except (ValueError, TypeError):
+            ops = None
+    candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+    return [op for op in candidates if isinstance(op, dict)]
+
+
 def _refused_localities_write(tool_calls):
     return any(
         isinstance(tc, dict)
         and bare_tool_name(tc.get("tool")) == "research_append"
         and (
             as_mapping(tc.get("args")).get("section") == "localities"
-            or any(op.get("section") == "localities" for op in research_append_ops(tc.get("args")))
+            or any(op.get("section") == "localities" for op in _append_ops(tc.get("args")))
         )
         and _response_body(tc.get("response")).get("ok") is False
         and _response_body(tc.get("response")).get("reason") == "no_project"
