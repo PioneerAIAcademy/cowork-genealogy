@@ -158,3 +158,9 @@ packages/engine/mcp-server/dev/probe-*.out.json
 apps/server/proto/.fs-token
 # A session's project documents exported out of the prototype store (make proto-export)
 apps/server/proto/exports/
+
+# Phase-0 step probe output (apps/server/dev/step-probe). The recorder writes
+# these beside itself when run without STEP_PROBE_LOG/STEP_PROBE_STATE; the
+# answers belong in ADR-0005, not in the tree.
+apps/server/dev/step-probe/step-probe.jsonl
+apps/server/dev/step-probe/step-probe-state.json
