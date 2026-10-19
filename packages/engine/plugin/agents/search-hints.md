@@ -122,7 +122,7 @@ Otherwise proceed.
      triage hands nothing back. Read it with `record_read` (step 3) and triage it like any other hint; the
      line reads, for example, `Hint <ark>: accept — extracted as <src id>, not
      linked; …`.
-3. **Read each hint that step 2 did not classify 'Already linked':** `record_read({ recordId: <ark> })`. This includes 'Extracted, not linked' hints — the step-2 classification does not substitute for the record read. Compare its persona to
+3. **Read each hint that step 2 did not classify 'Already linked':** `record_read({ recordId: <ark> })`. This includes 'Extracted, not linked' hints. Compare its persona to
    the tree person — the project's `tree.gedcomx.json` first, `person_read` when
    the project tree does not hold them: name, dates, places, parents, spouse,
    household.
