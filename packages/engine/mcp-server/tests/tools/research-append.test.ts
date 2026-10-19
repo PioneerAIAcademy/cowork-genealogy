@@ -1643,6 +1643,26 @@ describe("research_append (Phase 2)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
+  // research-plan's Add-new mode (issue #2116): a searched-out plan is set
+  // `completed` and its successor appended in ONE batch, since the second
+  // active plan is refused unless the first leaves `active` in the same write.
+  it("completes a searched-out plan and appends its successor in one batch", async () => {
+    const research = phase2Research();
+    research.plans = [validPlan("pl_001", "q_001", "active")];
+    await writeProject(research);
+    const { id: _o, ...next } = validPlan("x", "q_001", "active", [seededPlanItem("pli_002")]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "update", entryId: "pl_001", fields: { status: "completed" } },
+        { section: "plans", op: "append", entry: next },
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const plans = (await readResearch()).plans;
+    expect(plans.map((p: any) => [p.id, p.status])).toEqual([["pl_001", "completed"], ["pl_002", "active"]]);
+  });
+
   it("appends a plan_item into the named plan", async () => {
     const research = phase2Research();
     research.plans = [validPlan("pl_001", "q_001", "active")];
