@@ -2330,3 +2330,9 @@ no `same_person` gate. Checking the attachments is a separate request.
   rejectedSkipped?, summary }`, with `records` as §11.6 returns them and one
   code-written `summary` for the whole call, which says checking the
   attachments is a separate request.
+- **Tool time,** measured 2026-10-20 against live FamilySearch with
+  `dev/try-extraction-append-person.ts` on william-sloan-spouse's subject LHG6-L26,
+  the largest attached set in the committed e2e starting trees (20 indexed
+  records): **19.1 s cold** (20 extracted, 119 assertions linked), **0.14 s** on a
+  re-send (all 20 records left as already linked). Cowork aborts a call at 60 s.
+  46 of 186 e2e subjects have at least one attached indexed record.
