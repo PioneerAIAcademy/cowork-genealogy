@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 10, hint-samples.csv row 359, flag adds_birth, confidence 3). Resolved 2026-10-13 (#3333): true match. The 1851-1860 Iisalmi rural parish communion-book entry for Elsa Brita Heickinen, Kilpisaari, born May 1832 (ark:/61903/1:1:QLVK-ZPHR), is M76V-5PF, decided on the indexes alone; later Iisalmi communion books corroborate a 31 May 1832 birth, and no competing Elsa Brita was baptised in Iisalmi in 1831-1833. No image was read, so image_basis is off."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 10, hint-samples.csv row 359, flag adds_birth, confidence 3). Resolved 2026-10-13 (#3333): true match. The 1851-1860 Iisalmi rural parish communion-book entry for Elsa Brita Heickinen, Kilpisaari, born May 1832 (ark:/61903/1:1:QLVK-ZPHR), is M76V-5PF, decided on the indexes alone; later Iisalmi communion books corroborate a 31 May 1832 birth, and no competing Elsa Brita was baptised in Iisalmi in 1831-1833. No image was read, so image_basis is off.",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:QLVK-ZPHR",
+    "identity": "same"
+  }
 }
