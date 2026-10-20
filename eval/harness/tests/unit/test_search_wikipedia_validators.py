@@ -48,8 +48,10 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # test_search_familysearch_wiki_validators.py.
 from test_search_wikipedia import (  # noqa: E402
     test_log_notes_match_template as check_template,
+    test_lookup_failed_logs_nothing as check_lookup_failed,
     test_no_project_returns_template as check_no_project,
     test_no_wiki_no_write as check_no_wiki_no_write,
+    test_not_found_logs_negative as check_not_found,
     test_notes_title_is_returned_title as check_title,
     test_one_log_entry_appended as check_one_entry,
     test_only_lookup_and_log_called as check_allowlist,
@@ -575,4 +577,142 @@ def test_narration_check_falls_back_to_text_response(agent_returns):
         agent_returns=agent_returns,
         text_response=_NARRATING,
         test=logged_test(),
+    )
+
+
+# --- step 2: test_not_found_logs_negative / test_lookup_failed_logs_nothing ---
+# Issue #3574. Each check is pinned in both directions and on its tag gate, and
+# each refuses a run whose fixture served the other kind of error.
+
+_NOT_FOUND_LINE = "No Wikipedia article was found for that topic."
+_FAILED_LINE = "The Wikipedia lookup failed; nothing was logged."
+
+
+def _error_call(error):
+    return {
+        "tool": "mcp__genealogy__wikipedia_search",
+        "args": {"query": "Hollow Creek Settlement"},
+        "response": {"error": error},
+    }
+
+
+NOT_FOUND_CALL = _error_call("No Wikipedia article found for 'Hollow Creek Settlement'")
+API_ERROR_CALL = _error_call("Wikipedia API error: 503")
+
+
+def _negative_entry(**overrides):
+    entry = {
+        "id": "log_001", "plan_item_id": None, "tool": "wikipedia_search",
+        "query": {"query": "Hollow Creek Settlement"},
+        "outcome": "negative", "results_examined": 0,
+    }
+    entry.update(overrides)
+    return entry
+
+
+NEGATIVE_AFTER = _state([_negative_entry()])
+
+
+def not_found_test():
+    return {"id": "ut_search_wikipedia_011", "type": "positive", "tags": ["not-found", "direct-arm"]}
+
+
+def lookup_failed_test():
+    return {"id": "ut_search_wikipedia_012", "type": "positive", "tags": ["lookup-failed", "direct-arm"]}
+
+
+def _agent(text):
+    return [{"subagent_type": "search-wikipedia", "text": text}]
+
+
+def test_not_found_passes_the_correct_run():
+    assert _run(
+        check_not_found,
+        before_state=EMPTY, after_state=NEGATIVE_AFTER,
+        tool_calls=[NOT_FOUND_CALL, LOG_CALL],
+        agent_returns=_agent(_NOT_FOUND_LINE), text_response="relay",
+        test=not_found_test(),
+    ) == "passed"
+
+
+def test_not_found_is_inert_without_the_tag():
+    assert _run(
+        check_not_found,
+        before_state=EMPTY, after_state=GOOD_AFTER,
+        tool_calls=[WIKI_CALL, LOG_CALL],
+        agent_returns=_agent("Saved the Wikipedia summary to the research log."),
+        text_response="", test=logged_test(),
+    ) == "skipped"
+
+
+@pytest.mark.parametrize(
+    "calls, after, reply, match",
+    [
+        ([NOT_FOUND_CALL], EMPTY, _NOT_FOUND_LINE, "exactly one new log entry"),
+        ([NOT_FOUND_CALL, LOG_CALL], _state([_negative_entry(outcome="positive")]), _NOT_FOUND_LINE, "outcome"),
+        ([NOT_FOUND_CALL, LOG_CALL], _state([_negative_entry(results_examined=1)]), _NOT_FOUND_LINE, "results_examined"),
+        ([NOT_FOUND_CALL, LOG_CALL], _state([_negative_entry(notes="# Hollow Creek")]), _NOT_FOUND_LINE, "notes"),
+        ([NOT_FOUND_CALL, LOG_CALL], _state([_negative_entry()], files={"hollow-creek.md": "x"}), _NOT_FOUND_LINE, "writes no file"),
+        ([NOT_FOUND_CALL, LOG_CALL], NEGATIVE_AFTER, "Saved the Wikipedia summary to the research log.", "nothing was saved"),
+        ([NOT_FOUND_CALL, LOG_CALL], NEGATIVE_AFTER, _NOT_FOUND_LINE + " It was founded in 1820.", "exactly"),
+        ([API_ERROR_CALL, LOG_CALL], NEGATIVE_AFTER, _NOT_FOUND_LINE, "must serve a not-found error"),
+        ([], NEGATIVE_AFTER, _NOT_FOUND_LINE, "must serve a not-found error"),
+    ],
+    ids=["no-log", "outcome-positive", "examined-one", "notes-filled", "wrote-a-file",
+         "claims-a-save", "extra-sentence", "wrong-error-served", "no-lookup"],
+)
+def test_not_found_fails(calls, after, reply, match):
+    _expect_failure(
+        check_not_found, match,
+        before_state=EMPTY, after_state=after, tool_calls=calls,
+        agent_returns=_agent(reply), text_response="", test=not_found_test(),
+    )
+
+
+def test_lookup_failed_passes_the_correct_run():
+    assert _run(
+        check_lookup_failed,
+        before_state=EMPTY, after_state=EMPTY, tool_calls=[API_ERROR_CALL],
+        agent_returns=_agent(_FAILED_LINE), text_response="relay",
+        test=lookup_failed_test(),
+    ) == "passed"
+
+
+def test_lookup_failed_is_inert_without_the_tag():
+    assert _run(
+        check_lookup_failed,
+        before_state=EMPTY, after_state=NEGATIVE_AFTER, tool_calls=[NOT_FOUND_CALL, LOG_CALL],
+        agent_returns=_agent(_NOT_FOUND_LINE), text_response="", test=not_found_test(),
+    ) == "skipped"
+
+
+@pytest.mark.parametrize(
+    "calls, after, reply, match",
+    [
+        ([API_ERROR_CALL, LOG_CALL], NEGATIVE_AFTER, _FAILED_LINE, "logs nothing"),
+        ([API_ERROR_CALL, LOG_CALL], EMPTY, _FAILED_LINE, "logs nothing"),
+        ([API_ERROR_CALL], _state(files={"cornish.md": "x"}), _FAILED_LINE, "writes no file"),
+        ([API_ERROR_CALL], EMPTY, _NOT_FOUND_LINE, "exactly"),
+        ([API_ERROR_CALL], EMPTY, "", "exactly"),
+        ([NOT_FOUND_CALL], EMPTY, _FAILED_LINE, "other than not-found"),
+    ],
+    ids=["logged-negative", "called-log", "wrote-a-file", "not-found-line", "empty-reply", "not-found-served"],
+)
+def test_lookup_failed_fails(calls, after, reply, match):
+    _expect_failure(
+        check_lookup_failed, match,
+        before_state=EMPTY, after_state=after, tool_calls=calls,
+        agent_returns=_agent(reply), text_response="", test=lookup_failed_test(),
+    )
+
+
+def test_lookup_failed_retires_the_logged_run_checks():
+    """`lookup-failed` logs nothing, so the one-entry check skips it and the
+    allow-list caps its log calls at zero."""
+    assert _run(
+        check_one_entry, before_state=EMPTY, after_state=EMPTY, test=lookup_failed_test(),
+    ) == "skipped"
+    _expect_failure(
+        check_allowlist, "at most 0",
+        tool_calls=[API_ERROR_CALL, LOG_CALL], test=lookup_failed_test(),
     )
