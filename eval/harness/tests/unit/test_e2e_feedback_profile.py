@@ -435,3 +435,78 @@ def test_a_member_that_resolves_outside_the_directory_is_skipped(tmp_path):
     (dest / "_feedback").symlink_to(outside, target_is_directory=True)
     assert fp.member_target("_feedback/evil.txt", dest) is None
     assert fp.member_target("b/_feedback/ok.txt", dest) == dest / "b" / "_feedback" / "ok.txt"
+
+
+# ── CACHE TTL: what a 1-hour cache would have cost ───────────────────────────
+
+
+def _ttl_session(gap: float, one_hour: bool = False, agent_writes: int = 80_000) -> list:
+    """The plan's worked instance: call 1 writes 50,000 tokens on a 100,000-token context and
+    launches an agent; it returns `gap` seconds later and call 2 reads none of the 100,000."""
+    split = ({"cache_creation": {"ephemeral_1h_input_tokens": 50_000}} if one_hour else {})
+    return [
+        _user("m1", 0, "go"),
+        _assistant("m2", 10, "msg_1", [{"type": "tool_use", "id": "tu_agent", "name": "Agent",
+                                        "input": {"subagent_type": "x", "prompt": "go"}}],
+                   {"input_tokens": 0, "cache_read_input_tokens": 50_000,
+                    "cache_creation_input_tokens": 50_000, **split}),
+        _user("m3", gap, _result("tu_agent", "done")),
+        _assistant("m4", gap + 10, "msg_2", [{"type": "text", "text": "ok"}],
+                   {"input_tokens": 0, "cache_read_input_tokens": 0,
+                    "cache_creation_input_tokens": 100_000}),
+    ]
+
+
+def _ttl_agent(writes: int) -> list:
+    return [_user("a1", 11, "go"),
+            _assistant("a2", 20, "msg_a", [{"type": "text", "text": "done"}],
+                       {"input_tokens": 0, "cache_creation_input_tokens": writes})]
+
+
+def _ttl(tmp_path, rows, agent_writes=80_000) -> tuple[dict, str]:
+    meta = {**AGENT_META, "toolUseId": "tu_agent"}
+    profile = _profile(_write_bundle(tmp_path, "feedback-a", rows,
+                                     agents={"a1": (meta, _ttl_agent(agent_writes))}))
+    return profile["cache_ttl"], fp.format_report(profile)
+
+
+def test_cache_ttl_prices_the_worked_instance_and_prints_it(tmp_path):
+    """saving 100,000 x ($3.75 - $0.30) = $0.345; premium main 50,000 x $2.25 = $0.1125;
+    premium all adds the agent's 80,000 x $2.25. The re-written tokens are not ALSO in the
+    premium -- that would count them on both sides."""
+    ttl, text = _ttl(tmp_path, _ttl_session(gap=410))
+    row = ttl["total"]
+    assert row["saving_after_agent"] == pytest.approx(0.345)
+    assert row["saving_other"] == 0
+    assert row["premium_main"] == pytest.approx(0.1125)
+    assert row["net_main"] == pytest.approx(-0.2325)
+    assert row["premium_all"] == pytest.approx(0.2925)
+    assert row["net_all"] == pytest.approx(-0.0525)
+    assert row["share_1h_main"] == 0 and row["share_1h_agents"] == 0
+    section = text.split("CACHE TTL")[1].split("MAIN-THREAD SKILLS")[0]
+    total = next(line for line in section.splitlines() if line.strip().startswith("TOTAL"))
+    assert total.split() == ["TOTAL", "0%", "0%", "0.34", "0.00", "0.11", "-0.23", "0.29", "-0.05"]
+
+
+@pytest.mark.parametrize("gap, saved", [(299, False), (301, True), (3_600, True), (3_601, False),
+                                        (7_200, False)])
+def test_only_a_gap_a_1h_cache_survives_counts_as_saved(tmp_path, gap, saved):
+    """Under 5 minutes the 5-minute cache already holds; over an hour the 1-hour one would
+    have expired too. (The gap is request start to request start: 0 -> `gap`.)"""
+    ttl, _ = _ttl(tmp_path, _ttl_session(gap=gap))
+    assert (ttl["total"]["saving_after_agent"] > 0) is saved
+
+
+def test_a_session_with_no_long_gap_saves_nothing_and_pays_the_premium(tmp_path):
+    rows = [_user("m1", 0, "go"),
+            _assistant("m2", 10, "msg_1", [{"type": "text", "text": "ok"}],
+                       {"input_tokens": 0, "cache_creation_input_tokens": 40_000})]
+    ttl = _profile(_write_bundle(tmp_path, "feedback-a", rows))["cache_ttl"]["total"]
+    assert ttl["saving_after_agent"] == ttl["saving_other"] == 0
+    assert ttl["premium_main"] == pytest.approx(40_000 * 2.25 / 1_000_000)
+    assert ttl["net_main"] > 0 and ttl["share_1h_agents"] is None
+
+
+def test_a_bundle_already_on_1h_reports_its_share(tmp_path):
+    ttl, _ = _ttl(tmp_path, _ttl_session(gap=410, one_hour=True))
+    assert ttl["sessions"][0]["share_1h_main"] == pytest.approx(50_000 / 150_000)
