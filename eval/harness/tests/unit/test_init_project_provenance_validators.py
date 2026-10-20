@@ -31,14 +31,12 @@ from test_init_project import (  # noqa: E402
     test_person_level_sources_carried as check_person_sources,
     test_init_empty_sections as check_empty,
     test_returned_sources_reach_the_tree_without_notes as check_notes,
-    test_search_before_stubs as check_search,
     test_standard_date_survives_from_the_tool as check_std_date,
     test_standard_place_came_from_a_tool as check_std_place,
     test_tree_ark_is_canonical_and_traceable as check_ark,
 )
 
 POSITIVE = {"type": "positive", "tags": []}
-SEARCH_TAGGED = {"type": "positive", "tags": ["expects-person-search"]}
 
 
 # --- helpers: the shape person-read-flynn-family.json returns -------------
@@ -805,40 +803,6 @@ def test_v5_skips_when_no_profile_was_written():
         check_narration({"research_json": {}})
 
 
-# --- V7: search before stubs (tag-gated) --------------------------------
-
-def test_v7_skips_on_an_untagged_test():
-    """The narrowing. `ut_init_project_002` skipped the search, and the
-    2026-08-20 annotation confirmed it — because its message says the person is
-    not in the tree. Untagged means not this validator's business."""
-    after = _tree(persons=[{"id": "I1"}])
-    with pytest.raises(pytest.skip.Exception):
-        check_search([], after, POSITIVE)
-
-
-def test_v7_passes_when_the_search_ran():
-    after = _tree(persons=[{"id": "I1"}])
-    check_search(
-        [{"tool": "mcp__genealogy__person_search", "args": {"surname": "Flynn"}}],
-        after, SEARCH_TAGGED,
-    )
-
-
-def test_v7_fires_when_a_tagged_test_stubs_without_searching():
-    after = _tree(persons=[{"id": "I1"}])
-    message = _fails(
-        check_search,
-        [{"tool": "mcp__genealogy__place_search", "args": {"placeName": "Boston"}}],
-        after, SEARCH_TAGGED,
-    )
-    assert "without searching FamilySearch first" in message
-
-
-def test_v7_skips_when_no_tree_person_was_written():
-    with pytest.raises(pytest.skip.Exception):
-        check_search([], _tree(), SEARCH_TAGGED)
-
-
 # --- init-empty-sections: the memory-transcription exemption --------------
 
 _STORY = "Patrick came over from County Mayo in 1867, a boy of nineteen."
@@ -1048,7 +1012,10 @@ def test_not_reinit_passes_when_the_request_is_routed_without_init_work():
     check_not_reinit(before, after, calls, _REFUSE)
 
 
-@pytest.mark.parametrize("tool", ["person_read", "person_search", "project_create"])
+# `person_search` left this list when init-project stopped searching by name: a project
+# always starts from a FamilySearch PID (lead, 2026-10-15), so the tool is no longer
+# one of init-project's and a call to it is not evidence of re-initialisation.
+@pytest.mark.parametrize("tool", ["person_read", "project_create"])
 def test_not_reinit_fails_on_any_init_tool_call(tool):
     before, after = _states()
     with pytest.raises(AssertionError, match=f"called \\['{tool}'\\]"):
