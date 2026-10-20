@@ -1277,6 +1277,24 @@ def test_a_conditional_detach_is_caught():
         assert _VALIDATOR._conditional_detach(text), text
 
 
+def test_a_reader_addressed_evidence_condition_still_fires():
+    """Addressing the reader is not asking permission.
+
+    The consent carve keyed on a bare `if you` and swallowed every one of
+    these — the exact shape this guard exists to catch. The committed replies
+    carry real ones ("if you suspect the township is miskeyed", "If you can
+    obtain ... the death certificate"), so the carve must key on the consent
+    VERB. Revert it to bare `if you` and these three go green while nothing
+    else notices (review, 2026-10-20).
+    """
+    for text in (
+        "If you find the household does not fit, detach it.",
+        "If you suspect the township is miskeyed, detach the entry.",
+        "If you can obtain the death certificate and it disagrees, detach it.",
+    ):
+        assert _VALIDATOR._conditional_detach(text), text
+
+
 def test_an_unconditional_or_declined_detach_is_not_caught():
     for text in (
         "Detach the 1885 State Census; it is a different man.",
