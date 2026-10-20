@@ -177,7 +177,7 @@ part of `staged`.
 `results[]`:
 
 - `image_transcribe` — `payload: { query: { imageId | ark | memoryArtifactUrl | file, lookingFor? },
-  results: [ { id, source, content_type, size_bytes, model, transcription, truncated?, found? } ] }`,
+  results: [ { id, source, content_type, size_bytes, model, transcription, truncated?, found?, image_ref? } ] }`,
   where `id` is the FamilySearch identifier or `capture:<basename>` for an uploaded file (the
   extraction id convention, as `record-structurer` uses it). The tool also returns a `digest` beside the handle.
 - `record_read` — `payload: { query: { recordId }, results: [ { recordId, gedcomx, indexFields? } ] }`:
@@ -225,6 +225,11 @@ names, then runs its own checks on that canonical ref.
 
 A staged name is a random v4 UUID, so two staged files within 3 edits of each other
 do not occur in practice; the single-candidate rule still refuses that case.
+
+`project_create` alone has a second, later step: a `personReadRef` this resolution
+leaves unusable falls back to the newest staged `person_read` of the person named in
+`subjectPersonIds[0]` (`project-create-tool-spec.md` §4). That step matches on the
+stated person, never on the ref's name, so it does not widen the rule above.
 
 When the log editor is called with `stagedResultsRef`, it (host-side):
 

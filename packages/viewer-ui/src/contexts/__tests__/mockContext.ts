@@ -16,6 +16,7 @@ export function buildMockContext(
     setActiveSection?: ResearchDataState['setActiveSection']
     activeSection?: string
     getById?: ResearchDataState['getById']
+    hasId?: ResearchDataState['hasId']
     notice?: string | null
     clearNotice?: ResearchDataState['clearNotice']
     error?: string | null
@@ -34,6 +35,7 @@ export function buildMockContext(
     devMode: false,
     setDevMode: () => {},
     getById: overrides.getById ?? (() => null),
+    hasId: overrides.hasId ?? (() => false),
     selectFolder: async () => {},
     canSelectFolder: true,
     activeSection: overrides.activeSection ?? 'project_overview',

@@ -1,0 +1,19 @@
+{
+  "id": "owen-morris-parents",
+  "name": "Owen Morris — parents named as John and Dorothy Morris in the 1871 Cardiganshire census",
+  "genre": "record-hint",
+  "source_pid": "GWWN-XP9",
+  "captured": "2026-10-20",
+  "researcher_question": "Who were the parents of Owen Morris, born about 1859 (Newtown, Montgomeryshire, per the 1911 census), a roller leather finisher and later antique furniture collector in Cyfoeth-y-brenin (Borth), Cardiganshire, who married Ellen Elizabeth in 1882?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1870s",
+    "geography": "GB-WLS"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 28, hint-samples.csv row 978, flags adds_father/adds_mother, confidence 3). Draft transcribed from an 1871 Cardiganshire census household; unverified. The tree's own 1891 census source names a different father (Owen Morris Senr) and the 1911 census a different birthplace, so a false match is the likely outcome."
+}

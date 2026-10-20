@@ -54,7 +54,7 @@ The MCP server exposes 54 tools.
 |------|---------|------|
 | `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
 | `wiki_read` | Fetch a specific pre-crawled wiki markdown page | None |
-| `wiki_place_page` | A FamilySearch Research Wiki page for a place (country, US state, or Canadian province) — `section` is one of `home`, `getting_started`, `online_records`, `research_tips` | None |
+| `wiki_place_page` | A FamilySearch Research Wiki page for a place — `section` is one of `home`, `getting_started`, `online_records`, `research_tips`. `home` resolves the place's own page at any level the wiki has one (country, state or province, county, parish, independent city); the other three exist only for a country or a state/province | None |
 
 ### Project state (structured read/write)
 
@@ -195,7 +195,7 @@ don't load it explicitly.
 
 | Agent | What it does | Say this |
 |-------|-------------|----------|
-| **init-project** | Creates a new project from a FamilySearch person ID. If no ID is known, searches the Family Tree by name using `person_search` to find the right person first. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" / "Start a project for Patrick Flynn, born 1845 Ireland — I don't have his ID" |
+| **init-project** | Creates a new project from a FamilySearch person ID. Fetches the person and their relatives to seed the tree. **A PID is required**: with no ID it creates nothing and asks for one, and it never searches by name. Started by the `research` router, not invoked directly. | "Start a new project for person KWCJ-RN4" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
 | **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. It runs only when you ask for it — at any time, including after the research is finished; its verdict is advisory and never blocks or re-opens a resolved question. | "Second opinion" / "Review my work" / "Is this defensible?" |
 | **record-structurer** | Turns sources that are not FamilySearch indexed records — an image transcription, an uploaded PDF, pasted text — into structured documents (who is named, what each says about them) and hands them to `extraction_append` in one call. It sends no roles and no classifications: the code assigns those from the extraction table, so they are the same for every source of a type. | (not invoked directly — the search skills and `/research` delegate) |
