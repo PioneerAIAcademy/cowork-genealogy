@@ -92,6 +92,17 @@ def _calls(session: Session, cutoff: datetime, emails: dict[str, str],
         [[m or "(none)", f"${c:,.2f}", k, round(100 * c / (cost or 1))] for m, c, k, *_ in models],
     )
 
+    # The agent is the body's `# ` heading verbatim, not its file name: compare with
+    # `make e2e-agent-spend` through `grep -m1 '^# ' packages/engine/plugin/agents/*.md`.
+    agents = session.exec(select(
+        ApiCall.agent, spent, func.count(), func.sum(context), func.sum(ApiCall.output_tokens),
+    ).where(since).group_by(ApiCall.agent).order_by(spent.desc())).all()
+    out += ["", "Every call, by agent (main = the main thread)"] + _table(
+        ["agent", "cost", "calls", "% of cost", "context/call", "output/call"],
+        [[a or "(none)", f"${c:,.2f}", k, round(100 * c / (cost or 1)), round(ctx / k), round(o / k)]
+         for a, c, k, ctx, o in agents],
+    )
+
     priced = [0.0] * len(TOKEN_CLASSES)
     for m, _, _, *tokens in models:
         rates = rates_for(m)

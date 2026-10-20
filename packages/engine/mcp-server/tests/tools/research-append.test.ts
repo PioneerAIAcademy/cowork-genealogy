@@ -1625,6 +1625,59 @@ describe("research_append (Phase 2)", () => {
     expect(second.errors.join(" ")).toMatch(/already has an active plan/);
   });
 
+  it("says 'searched out' when the conflicting plan's items are all completed/skipped", async () => {
+    const research = phase2Research();
+    research.plans = [
+      validPlan("pl_001", "q_001", "active", [
+        { ...seededPlanItem("pli_001"), status: "completed" },
+        { ...seededPlanItem("pli_002"), status: "skipped" },
+      ]),
+    ];
+    await writeProject(research);
+    const { id: _o, ...plan2 } = validPlan("y", "q_001", "active", [seededPlanItem("pli_003")]);
+    const r = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan2 });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/already has an active plan/);
+    expect(msg).toMatch(/searched out/);
+    expect(msg).toMatch(/complete it first/);
+    expect(msg).toMatch(/entryId:'pl_001'/);
+  });
+
+  it("says 'supersede' when the conflicting plan has an unfinished item", async () => {
+    const research = phase2Research();
+    research.plans = [
+      validPlan("pl_001", "q_001", "active", [
+        { ...seededPlanItem("pli_001"), status: "completed" },
+        { ...seededPlanItem("pli_002"), status: "planned" },
+      ]),
+    ];
+    await writeProject(research);
+    const { id: _o, ...plan2 } = validPlan("y", "q_001", "active", [seededPlanItem("pli_003")]);
+    const r = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan2 });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/already has an active plan/);
+    expect(msg).toMatch(/supersede/);
+    expect(msg).not.toMatch(/searched out/);
+  });
+
+  it("says 'supersede' when the conflicting plan has empty items", async () => {
+    const research = phase2Research();
+    research.plans = [validPlan("pl_001", "q_001", "active", [])];
+    await writeProject(research);
+    const { id: _o, ...plan2 } = validPlan("y", "q_001", "active", [seededPlanItem("pli_001")]);
+    const r = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan2 });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/already has an active plan/);
+    expect(msg).toMatch(/supersede/);
+    expect(msg).not.toMatch(/searched out/);
+  });
+
   it("rejects an update that flips a superseded plan back to active when one is already active", async () => {
     const research = phase2Research();
     research.plans = [validPlan("pl_001", "q_001", "active"), validPlan("pl_002", "q_001", "superseded")];
@@ -2214,6 +2267,138 @@ describe("research_append (Phase 3)", () => {
     expect(t.generated).toMatch(/T.*:/); // ISO datetime, not a bare date
   });
 
+  // Issue #3572 (Half 1 of #3516): an event citing no record is unchecked, and
+  // the writer says how many. Warn only — refusal rejected 2026-10-18, kept a
+  // warning 2026-10-19 (spec §5.5).
+  describe("unsourced timeline event advisory (#3572)", () => {
+    const WARN = /cite no record/;
+    const event = (assertionIds: string[]) => ({
+      date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated",
+      place: "Pennsylvania", standard_place: "Schuylkill, Pennsylvania, United States",
+      assertion_ids: assertionIds, distance_from_previous_km: null,
+    });
+    const appendTimeline = (events: any[]) =>
+      researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "append",
+        entry: { label: "test timeline", person_ids: ["I1"], events, gaps: [] },
+      } as never);
+
+    it("warns on an append with an unsourced event, naming the count — and still writes", async () => {
+      await writeProject();
+      const r = await appendTimeline([event(["a_001"]), event([]), event([])]);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const w = r.validation.warnings.filter((x) => WARN.test(x));
+      expect(w).toEqual([
+        "2 of 3 events in t_001 cite no record (assertion_ids empty); they come from " +
+          "the tree or the user and are unchecked. Say so to the user.",
+      ]);
+      expect((await readResearch()).timelines).toHaveLength(1);
+    });
+
+    it("stays silent when every event cites an assertion", async () => {
+      await writeProject();
+      const r = await appendTimeline([event(["a_001"]), event(["a_001"])]);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+    });
+
+    it("stays silent on an empty events list", async () => {
+      await writeProject();
+      const r = await appendTimeline([]);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+    });
+
+    it("warns on an update that sets events, and not on one touching only label", async () => {
+      await writeProject();
+      await appendTimeline([event(["a_001"])]);
+      const update = (fields: Record<string, unknown>) =>
+        researchAppend({ projectPath: dir, section: "timelines", op: "update", entryId: "t_001", fields } as never);
+
+      const viaEvents = await update({ events: [event(["a_001"]), event([])] });
+      expect(viaEvents.ok).toBe(true);
+      if (!viaEvents.ok) return;
+      expect(viaEvents.validation.warnings.filter((x) => WARN.test(x))).toEqual([
+        expect.stringMatching(/^1 of 2 events in t_001 cite no record/),
+      ]);
+
+      const viaLabel = await update({ label: "renamed" });
+      expect(viaLabel.ok).toBe(true);
+      if (!viaLabel.ok) return;
+      expect(viaLabel.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+
+      const viaGaps = await update({ gaps: [] });
+      expect(viaGaps.ok).toBe(true);
+      if (!viaGaps.ok) return;
+      expect(viaGaps.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+    });
+
+    // An event must not read as sourced on an id that is no assertion: the
+    // advisory counts empty lists only, so these shapes would slip past it.
+    it.each([
+      ["a string", "a_001", /'assertion_ids' must be an array/],
+      ["a non-string entry", [42], /non-string entry \(42\)/],
+      ["a dangling id", ["a_999"], /a_999/],
+    ])("refuses an event whose assertion_ids is %s", async (_label, ids, msg) => {
+      await writeProject();
+      const r = await appendTimeline([{ ...event([]), assertion_ids: ids }]);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(msg);
+      expect((await readResearch()).timelines ?? []).toHaveLength(0);
+    });
+
+    it("reports a null assertion_ids once, not twice", async () => {
+      await writeProject();
+      const r = await appendTimeline([{ ...event([]), assertion_ids: null }]);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.filter((e) => /events\[0\]/.test(e) && /assertion_ids/.test(e))).toHaveLength(1);
+    });
+
+    // The counting reads a non-array `events` as empty, so an object holding an
+    // unsourced event would otherwise persist with no warning and no error.
+    it.each([
+      ["events as an object", { events: { k: event([]) } }, /'events' must be an array/],
+      ["events as a string", { events: "[]" }, /'events' must be an array/],
+      ["gaps as a string", { events: [event(["a_001"])], gaps: "none" }, /'gaps' must be an array/],
+    ])("refuses a timeline with %s", async (_label, fields, msg) => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "append",
+        entry: { label: "test timeline", person_ids: ["I1"], events: [], gaps: [], ...(fields as Record<string, unknown>) },
+      } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(msg);
+      expect((await readResearch()).timelines ?? []).toHaveLength(0);
+    });
+
+    it("names each entry's own id in a batch", async () => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "timelines", op: "append", entry: { label: "one", person_ids: ["I1"], events: [event([])], gaps: [] } },
+          { section: "timelines", op: "append", entry: { label: "two", person_ids: ["I1"], events: [event(["a_001"]), event([])], gaps: [] } },
+        ],
+      } as never);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.filter((x) => WARN.test(x))).toEqual([
+        expect.stringMatching(/^1 of 1 events in t_001 /),
+        expect.stringMatching(/^1 of 2 events in t_002 /),
+      ]);
+    });
+  });
+
   // The US 1890 federal census does not survive and can never fill a gap
   // (ADR-0012, issue #2261). Issue #3255: prose alone let an agent write it 4
   // times across 3 unit tests; this is the write-boundary backstop.
@@ -2229,7 +2414,7 @@ describe("research_append (Phase 3)", () => {
     // (ut_timeline_005, 2026-10-09): an `every` test over `standard_place`
     // stayed silent here because the birth event alone broke unanimity.
     const mixedEvents = [
-      { date: "~1845", date_certainty: "estimated", event_type: "birth", description: "born", place: "Ireland", standard_place: "Ireland", assertion_ids: ["a_000"], distance_from_previous_km: null },
+      { date: "~1845", date_certainty: "estimated", event_type: "birth", description: "born", place: "Ireland", standard_place: "Ireland", assertion_ids: ["a_001"], distance_from_previous_km: null },
       { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Pennsylvania", standard_place: "Schuylkill, Pennsylvania, United States", assertion_ids: ["a_001"], distance_from_previous_km: null },
     ];
     const appendWithGap = (expectedEvents: string[], events: any[] = usEvents) =>
@@ -5274,6 +5459,9 @@ describe("research_append (batch ops)", () => {
     await refusedFor(running([conflict("unresolved", ["q_001"])]), { unblocks: [] });
     await refusedFor(running([conflict("unresolved", ["q_009"])]), { unblocks: ["q_001"] });
   });
+  it("(in-flight) still refuses the d01 shape even when the delegation also claims selection_basis: unresolved_conflict", async () => {
+    await refusedFor(running(), { depends_on: ["q_001"], selection_basis: "unresolved_conflict" });
+  });
 
   it("(in-flight) allows the conflict exception: an unresolved conflict blocks it and unblocks names it (ut_003)", async () => {
     await writeProject(running([conflict("unresolved", ["q_001"])]));
@@ -5301,6 +5489,19 @@ describe("research_append (batch ops)", () => {
     await writeProject(research);
     const r = await researchAppend({ projectPath: dir, section: "questions", op: "update", entryId: "q_002", fields: { priority: "low" } } as any);
     expect(r.ok).toBe(true);
+  });
+
+  // ── issue #3259: the person_warnings-contradiction exception ──
+  // Unlike the conflict exception, not scoped to `unblocks` naming the
+  // in-flight question -- a contradiction found this call need not be about
+  // whatever is already in progress.
+  it("(in-flight) allows the person_warnings-contradiction exception: selection_basis unresolved_conflict, no unblocks, no conflicts[] entry at all", async () => {
+    await writeProject(running());
+    const r = await researchAppend(newQ({ selection_basis: "unresolved_conflict", depends_on: [], unblocks: [] }));
+    expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+  });
+  it("(in-flight) still refuses an ordinary objective_decomposition question while an item is in-flight", async () => {
+    await refusedFor(running(), { selection_basis: "objective_decomposition", depends_on: [], unblocks: [] });
   });
 
   // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry

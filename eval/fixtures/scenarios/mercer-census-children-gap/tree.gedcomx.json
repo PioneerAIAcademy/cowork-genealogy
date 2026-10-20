@@ -1,0 +1,100 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Margaret", "surname": "Mercer", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "primary": true, "date": "~1868", "place": "Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Thomas", "surname": "Mercer", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F2", "type": "Birth", "primary": true, "date": "~1865", "place": "Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        { "id": "N3", "preferred": true, "given": "Mary", "surname": "Mercer", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F3", "type": "Birth", "primary": true, "date": "1889", "place": "Columbus, Franklin County, Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        { "id": "N4", "preferred": true, "given": "John", "surname": "Mercer", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F4", "type": "Birth", "primary": true, "date": "1891", "place": "Columbus, Franklin County, Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+        { "id": "N5", "preferred": true, "given": "Anna", "surname": "Mercer", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F5", "type": "Birth", "primary": true, "date": "1893", "place": "Columbus, Franklin County, Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Male",
+      "names": [
+        { "id": "N6", "preferred": true, "given": "Edward", "surname": "Mercer", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F6", "type": "Birth", "primary": true, "date": "1896", "place": "Columbus, Franklin County, Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Female",
+      "names": [
+        { "id": "N7", "preferred": true, "given": "Grace", "surname": "Mercer", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F7", "type": "Birth", "primary": true, "date": "1898", "place": "Columbus, Franklin County, Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I8",
+      "gender": "Male",
+      "names": [
+        { "id": "N8", "preferred": true, "given": "William", "surname": "Mercer", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F8", "type": "Birth", "primary": true, "date": "1906", "place": "Columbus, Franklin County, Ohio, United States" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "R1", "type": "Couple", "person1": "I2", "person2": "I1" },
+    { "id": "R2", "type": "ParentChild", "parent": "I1", "child": "I3", "subtype": "Biological" },
+    { "id": "R3", "type": "ParentChild", "parent": "I2", "child": "I3", "subtype": "Biological" },
+    { "id": "R4", "type": "ParentChild", "parent": "I1", "child": "I4", "subtype": "Biological" },
+    { "id": "R5", "type": "ParentChild", "parent": "I2", "child": "I4", "subtype": "Biological" },
+    { "id": "R6", "type": "ParentChild", "parent": "I1", "child": "I5", "subtype": "Biological" },
+    { "id": "R7", "type": "ParentChild", "parent": "I2", "child": "I5", "subtype": "Biological" },
+    { "id": "R8", "type": "ParentChild", "parent": "I1", "child": "I6", "subtype": "Biological" },
+    { "id": "R9", "type": "ParentChild", "parent": "I2", "child": "I6", "subtype": "Biological" },
+    { "id": "R10", "type": "ParentChild", "parent": "I1", "child": "I7", "subtype": "Biological" },
+    { "id": "R11", "type": "ParentChild", "parent": "I2", "child": "I7", "subtype": "Biological" },
+    { "id": "R12", "type": "ParentChild", "parent": "I1", "child": "I8", "subtype": "Biological" },
+    { "id": "R13", "type": "ParentChild", "parent": "I2", "child": "I8", "subtype": "Biological" }
+  ],
+  "sources": []
+}
