@@ -1240,8 +1240,8 @@ is the only instrument that can.
 **Why it ships in the plugin:** `hooks=` is an SDK argument the hosted control
 plane can set and Cowork cannot be made to. A plugin-shipped `hooks/hooks.json`
 binds in **both** — verified live in Cowork 2026-07-30. Cowork runs
-`permission_mode: "default"`, the hosted path `bypassPermissions`; a hook binds
-under both.
+the hosted path `bypassPermissions`; a hook binds under both, under either
+Cowork `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005).
 
 Two behaviors of the script that are deliberate:
 
@@ -1972,6 +1972,7 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 | `make eval-skill SKILL=<name> STORE=pg` + `make unit-pg-parity` | the same suite with every live tool call on `PgS3ProjectStore` (U15; non-releasable, logged to `eval/runlogs/unit-pg/`), and its parity with the newest file-store log: outcome flips and any live response that reads as a store fault | a fixture-backed tool's I/O (only live tools touch the store); the hosted worker's per-request binding and claim fence; anything after 2026-10-12 — no job re-runs it, so it is a dated measurement, not a check |
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. |
+| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first, that no research job started, and that the expected source or log entry was saved — deterministic, no judge. Live and billed | the hosted alpha, which appends DELIVERY_GUIDANCE and nudges any stop not preceded by `research_delivered` (the `delivered` column shows that risk but does not gate); Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
 
 ### 9.2 The lint layer
 
@@ -2094,7 +2095,7 @@ Do not search for the phrase instead of the label: issue titles name the
 mechanism, not the shape, so a text search finds about half of them and returns
 confident near-misses for the rest.
 
-Three of these gaps are **architecture rather than backlog**, because each one
+Four of these gaps are **architecture rather than backlog**, because each one
 changes how a correct change is made:
 
 1. **Spelling is not binding.** No *CI job* proves a declared agent tool actually
@@ -2142,6 +2143,30 @@ changes how a correct change is made:
    the success gate can and cannot see"). `make e2e-corpus` deliberately reports
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
+4. **Step mode's boundary is enforced on one plane and graded on another.** Under
+   `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19), a step ends by
+   asking the researcher with `AskUserQuestion`, and what stops a model starting the
+   next step without asking differs by plane: the FS prototype gets a `PreToolUse`
+   deny and then a halt; **Cowork gets router prose and no hook at all**; the alpha
+   gets nothing. **None of it is built yet.** When it is, the gap will be that
+   the e2e harness tracks `real_agent` (`eval/harness/e2e/orchestrator.py`),
+   which is the alpha, and the alpha gets nothing -- so the suite will exercise
+   a plane with no enforcement while the one that HAS it goes ungraded. **A
+   green eval suite will therefore say nothing about whether the boundary
+   holds anywhere.**
+   Do not read a passing step-mode test as evidence the boundary holds in Cowork.
+
+   This is a deliberate choice, not a limitation: phase 0 measured that a Cowork hook
+   *could* do it (ADR-0005 item 9 — a plugin `PreToolUse` returning `"continue": false`
+   does end a Cowork turn), and the lead judged it not worth a stateful hook yet,
+   because the cost exposure is the prototype and a Cowork researcher can press stop.
+   Two things would close it, and the first is already instrumented: decision 25's
+   rider logs **every halt on the prototype**, and because the router prose is identical
+   on both planes that rate estimates how often Cowork runs past a boundary — a high
+   one buys the hook with numbers rather than a guess. The facts such a hook would
+   need are already recorded, so they need no re-measuring (ADR-0005, "PARKED for a
+   possible future Cowork hook"). Otherwise it needs an instrument that reaches Cowork,
+   which today is only a live session, for the same reason as gap 1.
 
 ### 9.5 An autonomous run must be able to reach what a production run can
 
