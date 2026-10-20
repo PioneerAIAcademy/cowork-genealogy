@@ -150,15 +150,19 @@
         "agent:search-images"
       ],
       "writerTools": [
-        "research_append"
+        "research_append",
+        "extraction_append"
       ],
       "enforceableAt": [
         "unit"
       ],
-      "requires": "The research-plan agent owns plan and item structure. The search skills, the search-images, search-external-sites and search-full-text agents may update only `items[].status` after executing an item.",
+      "requires": "The research-plan agent owns plan and item structure. The search skills, the search-images, search-external-sites and search-full-text agents may update only `items[].status` after executing an item. `extraction_append`, whoever calls it, moves an `in_progress` item on an active plan to `completed` once a record one of its positive or partial `record_search` searches found is extracted, and changes nothing else.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
       "remedy": "Update the item's status; route a change to the plan itself through the research-plan agent.",
-      "override": "none"
+      "override": "none",
+      "toolAuthorized": [
+        "extraction_append"
+      ]
     },
     {
       "artifact": "research.json",
@@ -192,14 +196,18 @@
         }
       ],
       "writerTools": [
-        "research_append"
+        "research_append",
+        "extraction_append"
       ],
       "enforceableAt": [],
       "notes": "A pseudo-section: it exists in `research_append`'s `section` enum, not as a top-level property of research.json — it addresses `plans[].items[]`. The unit check diffs top-level sections, so a plan-item write already shows up under `plans`; this row exists so a tool- or hook-plane check has something to key on and so the tool's vocabulary leaves no hole. Absent from the ownership table, it was the single largest source of false denials when the table was replayed as a tool-boundary deny.",
-      "requires": "Same writers as `plans`, with the same split: research-plan owns item structure, the executing skills update `status`.",
+      "requires": "Same writers as `plans`, with the same split: research-plan owns item structure, the executing skills update `status`, and `extraction_append` completes an `in_progress` item once a record its search found is extracted.",
       "failure": "A deny on this section refuses the status flip that the plans row explicitly blesses.",
       "remedy": "Same as `plans`.",
-      "override": "none"
+      "override": "none",
+      "toolAuthorized": [
+        "extraction_append"
+      ]
     },
     {
       "artifact": "research.json",
@@ -339,7 +347,7 @@
         "tool"
       ],
       "notes": "convert-dates held this section in the table this manifest replaced, and the grant was dead: its only tool is `convert_calendar`, it holds no writer tool, and its own body says it writes nothing. Dropped rather than recorded — a declared writer that cannot write reads as coverage in exactly the way an invented owner does. Free: none of the skill's 14 unit tests names `research_append` or `assertions`. Tool plane since 2026-10-05 (genealogist ruling, option B): research_append, as an MCP caller reaches it (researchAppendFromCaller), refuses every assertions write except an update that sets only informant_bias_notes; extraction_append calls researchAppend directly and is unaffected.",
-      "requires": "`extraction_append` writes the atomic assertions and their three-layer classifications, first and final, from the extraction table. No later pass refines them.",
+      "requires": "`extraction_append` writes the atomic assertions and their three-layer classifications, first and final, from the extraction table. No later pass refines them. The one later change it makes is to `extracted_for_question_ids`: when a question re-finds a record already extracted, that question's id is appended to the record's assertions, and ids are never removed.",
       "failure": "An assertion written outside extraction carries no source, no classification, and no persona link — and the GPS analysis layer treats it as evidence anyway.",
       "remedy": "Extract through `extraction_append`, or the record-structurer agent for a non-FamilySearch source. A disagreement with a classification, from evidence outside the record, is weighed in conflict-resolution.",
       "override": "none",

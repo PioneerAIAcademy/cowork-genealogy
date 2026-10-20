@@ -34,6 +34,7 @@ from harness.ownership import (
     load_manifest,
     rows,
     writer_sets,
+    writer_tool_sets,
 )
 
 
@@ -154,7 +155,9 @@ NARROWED: dict[str, set[str]] = {
 #: `extraction_append({ recordIds })` and any other source by the
 #: record-structurer agent's one `extraction_append({ documents })` call. The
 #: sections it wrote are authorized by tool identity (`toolAuthorized`), so no
-#: caller replaces it. `plans` loses it outright: extraction updates no plan item.
+#: caller replaces it. `plans` loses it as a caller too: the plan-item
+#: completion extraction now does (issue #3516) is `extraction_append`'s own,
+#: by tool identity, whoever calls it.
 RETIRED: dict[str, set[str]] = {
     "plans": {"record-extraction"},
     "log": {"record-extraction"},
@@ -265,6 +268,13 @@ def test_research_owners_match_the_frozen_tables():
 
 def test_tree_owners_match_the_frozen_table():
     assert _union_writer_sets(TREE_GEDCOMX_JSON) == expected_tree_owners()
+
+
+def test_extraction_append_completes_plan_items_by_tool_identity():
+    """`plans` is where a plan-item completion shows up on the unit plane
+    (`plan_items` is never enforced there), so it is the row that must
+    authorize `extraction_append` (issue #3516)."""
+    assert "extraction_append" in writer_tool_sets(RESEARCH_JSON)["plans"]
 
 
 def test_the_only_newly_enforced_section_is_localities():
