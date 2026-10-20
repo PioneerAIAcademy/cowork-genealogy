@@ -43,7 +43,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
-import { extractionAppend, EXTRACTION_SECTIONS } from "../../src/tools/extraction-append.js";
+import { extractionAppend, EXTRACTION_SECTIONS, PLAN_COMPLETION_SECTIONS } from "../../src/tools/extraction-append.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
@@ -143,8 +143,9 @@ describe("extraction_append: only the three call shapes", () => {
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
 
-  it("writes exactly {sources, assertions}", () => {
+  it("chooses its lane per call: {sources, assertions} to extract and tie, {plan_items} to complete", () => {
     expect([...EXTRACTION_SECTIONS].sort()).toEqual(["assertions", "sources"]);
+    expect([...PLAN_COMPLETION_SECTIONS]).toEqual(["plan_items"]);
   });
 
   // Every form a caller composed its own entries in, and the one-record mode.
@@ -848,5 +849,284 @@ describe("extraction_append: recordIds and absences", () => {
       expect(r.errors?.[0]).toMatch(/log_404 not found/);
       expect((await research()).assertions).toEqual([]);
     });
+  });
+});
+
+// ─── plan-item completion, the question tie and read reuse (issue #3516 PR B) ──
+
+describe("extraction_append: closes the plan item and claims re-found records", () => {
+  const FIX = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "record-extract");
+  const element = (n: string) => JSON.parse(readFileSync(join(FIX, `${n}.json`), "utf8")).element;
+  let dir: string;
+
+  const question = (id: string) => ({
+    id,
+    question: "Who were the parents of John Smith?",
+    rationale: "Timeline gap before 1850",
+    selection_basis: "objective_decomposition",
+    priority: "high",
+    status: "open",
+    depends_on: [],
+    unblocks: [],
+    created: "2026-01-01",
+    resolved: null,
+    resolution_assertion_ids: [],
+    search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
+  });
+  const item = (id: string, status: string, sequence = 1) => ({
+    id,
+    sequence,
+    record_type: "census",
+    jurisdiction: "Schuylkill, Pennsylvania, United States",
+    date_range: "1850-1860",
+    repository: "NARA",
+    rationale: "Census should list the household",
+    fallback_for: null,
+    status,
+  });
+  const plan = (id: string, status: string, items: any[], questionId = "q_001") => ({
+    id,
+    question_id: questionId,
+    status,
+    created: "2026-01-01",
+    items,
+  });
+  const entry = (id: string, tool: string, planItemId: string | null, outcome: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    plan_item_id: planItemId,
+    performed: "2026-01-01T00:00:00Z",
+    tool,
+    query: { surname: "Miller" },
+    outcome,
+    results_examined: 1,
+    external_site: null,
+    results_ref: null,
+    ...extra,
+  });
+  /** A finalized sidecar holding these rows, as a logged search leaves it. */
+  const sidecar = async (logId: string, tool: string, results: any[]) => {
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(
+      join(dir, "results", `${logId}.json`),
+      JSON.stringify({ tool, retrieved: "2026-01-01T00:00:00Z", returned_count: results.length, payload: { results } }),
+      "utf8",
+    );
+    return `results/${logId}.json`;
+  };
+  const search = async (logId: string, planItemId: string, outcome: string, recordIds: string[]) =>
+    entry(logId, "record_search", planItemId, outcome, {
+      results_ref: await sidecar(logId, "record_search", recordIds.map((recordId) => ({ recordId }))),
+    });
+  const seed = async (over: Record<string, unknown>) => {
+    const research = { ...baseResearch(), sources: [], assertions: [], questions: [question("q_001")], ...over };
+    await writeFile(join(dir, "research.json"), JSON.stringify(research), "utf8");
+  };
+  const research = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
+  const statusOf = (r: any, pid: string) =>
+    r.plans.flatMap((p: any) => p.items).find((i: any) => i.id === pid)?.status;
+  const readerFor = (els: any[], reads: string[] = []) => ({
+    readRecord: async ({ recordId, projectPath }: { recordId: string; projectPath?: string }) => {
+      reads.push(recordId);
+      const el = els.find((e) => arkToBareId(e.recordId) === arkToBareId(recordId));
+      if (!el) throw new Error(`404 for ${recordId}`);
+      const staged = await stageSearchResults({
+        projectPath: projectPath!,
+        tool: "record_read",
+        response: { query: { recordId }, results: [el] },
+      });
+      return { ...el.gedcomx, staged };
+    },
+  });
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "extraction-plan-test-"));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify({ persons: [], relationships: [], sources: [] }), "utf8");
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("completes an in_progress item when a record its record_search found is extracted", async () => {
+    const death = element("death");
+    await seed({
+      plans: [plan("pl_001", "active", [item("pli_001", "in_progress")])],
+      log: [await search("log_001", "pli_001", "positive", [death.recordId])],
+    });
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId], questionIds: ["q_001"] }, readerFor([death]) as any, LOCAL);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.planItems).toEqual({ completed: ["pli_001"] });
+    expect(statusOf(await research(), "pli_001")).toBe("completed");
+  });
+
+  it("completes an item with two positive searches when only one record is extracted", async () => {
+    const death = element("death");
+    await seed({
+      plans: [plan("pl_001", "active", [item("pli_001", "in_progress")])],
+      log: [
+        await search("log_001", "pli_001", "positive", [death.recordId]),
+        await search("log_002", "pli_001", "partial", ["ZZZZ-ZZZ"]),
+      ],
+    });
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId] }, readerFor([death]) as any, LOCAL);
+    expect(r.planItems?.completed).toEqual(["pli_001"]);
+  });
+
+  it("completes every item whose search found the record, and one refused item does not sink the other", async () => {
+    const death = element("death");
+    await seed({
+      plans: [plan("pl_001", "active", [item("pli_001", "in_progress"), item("pli_002", "in_progress", 2), item("pli_003", "in_progress", 3)])],
+      log: [
+        await search("log_001", "pli_001", "positive", [death.recordId]),
+        await search("log_002", "pli_002", "positive", [death.recordId]),
+        await search("log_003", "pli_003", "positive", [death.recordId]),
+        // pli_003's latest search is an external hand-off still awaiting its
+        // capture, so completing it is refused (capture-pending).
+        entry("log_004", "external_site", "pli_003", "negative", {
+          results_examined: 0,
+          external_site: { site: "ancestry", url_generated: "https://www.ancestry.com/search?x=1", capture_received: false },
+        }),
+      ],
+    });
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId] }, readerFor([death]) as any, LOCAL);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.planItems?.completed).toEqual(["pli_001", "pli_002"]);
+    expect(r.planItems?.errors?.[0]).toMatch(/^pli_003 was not completed/);
+    const after = await research();
+    expect(after.sources).toHaveLength(1);
+    expect(statusOf(after, "pli_003")).toBe("in_progress");
+  });
+
+  it("leaves nil-only, planned and superseded-plan items alone", async () => {
+    const death = element("death");
+    await seed({
+      questions: [question("q_001"), question("q_002")],
+      plans: [
+        plan("pl_001", "superseded", [item("pli_001", "in_progress")]),
+        plan("pl_002", "active", [item("pli_002", "in_progress"), item("pli_003", "planned", 2)], "q_002"),
+      ],
+      log: [
+        await search("log_001", "pli_001", "positive", [death.recordId]),
+        entry("log_002", "record_search", "pli_002", "negative"),
+        await search("log_003", "pli_003", "positive", [death.recordId]),
+      ],
+    });
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId] }, readerFor([death]) as any, LOCAL);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.planItems).toBeUndefined();
+    const after = await research();
+    expect(["pli_001", "pli_002", "pli_003"].map((p) => statusOf(after, p))).toEqual(["in_progress", "in_progress", "planned"]);
+  });
+
+  it("re-sending an extracted record with questionIds ties it and completes its item", async () => {
+    const death = element("death");
+    await seed({ questions: [question("q_001"), question("q_002")] });
+    await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId], questionIds: ["q_001"] }, readerFor([death]) as any, LOCAL);
+    const before = await research();
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify({
+        ...before,
+        plans: [plan("pl_001", "active", [item("pli_001", "in_progress")], "q_002")],
+        log: [...before.log, await search("log_002", "pli_001", "positive", [death.recordId])],
+      }),
+      "utf8",
+    );
+    const reads: string[] = [];
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId], questionIds: ["q_002"] }, readerFor([death], reads) as any, LOCAL);
+    expect(reads).toEqual([]);
+    expect(r.records[0].status).toBe("already_extracted");
+    expect(r.records[0].summary).toMatch(/tied to q_002/);
+    expect(r.planItems?.completed).toEqual(["pli_001"]);
+    const after = await research();
+    expect(after.assertions.length).toBe(before.assertions.length);
+    expect(after.assertions.every((a: any) => a.extracted_for_question_ids.join(",") === "q_001,q_002")).toBe(true);
+  });
+
+  it("a re-send without questionIds writes nothing to assertions", async () => {
+    const death = element("death");
+    await seed({});
+    await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId], questionIds: ["q_001"] }, readerFor([death]) as any, LOCAL);
+    const before = await research();
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId] }, readerFor([death]) as any, LOCAL);
+    expect(r.records[0].summary).toMatch(/nothing written/);
+    expect((await research()).assertions).toEqual(before.assertions);
+  });
+
+  it("ties the other assertions when one written before a later rule refuses the update", async () => {
+    const marriage = element("marriage");
+    await seed({ questions: [question("q_001"), question("q_002")] });
+    await runExtractionAppend({ projectPath: dir, recordIds: [marriage.recordId], questionIds: ["q_001"] }, readerFor([marriage]) as any, LOCAL);
+    const before = await research();
+    // A shape the update arm still refuses on every update: negative evidence
+    // whose role is not the literal "absent".
+    const legacy = before.assertions[0];
+    legacy.record_basis = "absent";
+    await writeFile(join(dir, "research.json"), JSON.stringify(before), "utf8");
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [marriage.recordId], questionIds: ["q_002"] }, readerFor([marriage]) as any, LOCAL);
+    expect(r.records[0].summary).toMatch(/tied to q_002/);
+    expect(r.records[0].warnings?.some((w) => w.startsWith(`${legacy.id} was not tied`))).toBe(true);
+    const after = await research();
+    const tied = after.assertions.filter((a: any) => a.extracted_for_question_ids.includes("q_002")).map((a: any) => a.id);
+    expect(tied).not.toContain(legacy.id);
+    expect(tied.length).toBe(after.assertions.length - 1);
+  });
+
+  it("ties a legacy unknown/primary assertion, which the informant floor no longer re-checks on a tie", async () => {
+    const marriage = element("marriage");
+    await seed({ questions: [question("q_001"), question("q_002")] });
+    await runExtractionAppend({ projectPath: dir, recordIds: [marriage.recordId], questionIds: ["q_001"] }, readerFor([marriage]) as any, LOCAL);
+    const before = await research();
+    for (const a of before.assertions) {
+      a.informant_proximity = "unknown";
+      a.information_quality = "primary";
+    }
+    await writeFile(join(dir, "research.json"), JSON.stringify(before), "utf8");
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [marriage.recordId], questionIds: ["q_002"] }, readerFor([marriage]) as any, LOCAL);
+    expect(r.records[0].summary).toMatch(/tied to q_002/);
+    expect(r.records[0].warnings ?? []).toEqual([]);
+    const after = await research();
+    expect(after.assertions.every((a: any) => a.extracted_for_question_ids.join(",") === "q_001,q_002")).toBe(true);
+  });
+
+  it("reuses an earlier record_read entry without a live read", async () => {
+    const death = element("death");
+    await seed({
+      log: [entry("log_001", "record_read", null, "positive", {
+        query: { recordId: `ark:/61903/1:1:${death.recordId}` },
+        results_ref: await sidecar("log_001", "record_read", [death]),
+      })],
+    });
+    const reads: string[] = [];
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId] }, readerFor([death], reads) as any, LOCAL);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
+    expect(reads).toEqual([]);
+    expect(r.records[0].logId).toBe("log_001");
+    const after = await research();
+    expect(after.log.map((e: any) => e.id)).toEqual(["log_001"]);
+    expect(after.assertions.every((a: any) => a.log_entry_id === "log_001")).toBe(true);
+    expect(after.assertions.some((a: any) => typeof a.record_persona_id === "string")).toBe(true);
+  });
+
+  it.each([
+    ["a census read with no indexFields", (el: any) => ({ ...el, indexFields: undefined }), "census-1850-no-relationship-column"],
+    ["a sidecar that no longer holds the record", () => ({ recordId: "ZZZZ-ZZZ", gedcomx: {} }), "death"],
+    ["a sidecar that cannot be read", null, "death"],
+  ])("reads live rather than reuse %s", async (_name, rowOf, fixture) => {
+    const el = element(fixture);
+    let results_ref = "results/log_001.json";
+    if (rowOf) {
+      results_ref = await sidecar("log_001", "record_read", [(rowOf as (e: any) => any)(el)]);
+    } else {
+      await mkdir(join(dir, "results"), { recursive: true });
+      await writeFile(join(dir, "results", "log_001.json"), "{ not json", "utf8");
+    }
+    await seed({
+      log: [entry("log_001", "record_read", null, "positive", { query: { recordId: el.recordId }, results_ref })],
+    });
+    const reads: string[] = [];
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [el.recordId] }, readerFor([el], reads) as any, LOCAL);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
+    expect(reads).toEqual([el.recordId]);
+    expect(r.records[0].logId).toBe("log_002");
   });
 });

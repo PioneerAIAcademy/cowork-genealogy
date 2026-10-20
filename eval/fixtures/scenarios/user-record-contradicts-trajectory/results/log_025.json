@@ -1,0 +1,3137 @@
+{
+  "log_id": "log_025",
+  "tool": "record_search",
+  "retrieved": "2026-10-05T19:21:41.497Z",
+  "returned_count": 20,
+  "payload": {
+    "query": {
+      "projectPath": "/project",
+      "surname": "Eastham",
+      "givenName": "Robert",
+      "birthYearFrom": 1818,
+      "birthYearTo": 1830,
+      "residenceYearFrom": 1880,
+      "residenceYearTo": 1880,
+      "residencePlace": "Kentucky, United States",
+      "recordCountry": "United States"
+    },
+    "totalMatches": 1888,
+    "paginationCappedAt": 4999,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MCCS-35F",
+        "events": [
+          {
+            "type": "Occupation",
+            "value": "Timber Merchant"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Catlettsburg, Boyd, Kentucky, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Robert Eastham",
+        "score": 6.9336,
+        "confidence": 3,
+        "sex": "Male",
+        "birthDate": "1824",
+        "birthPlace": "Kentucky, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Robert Eastham, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:M4W9-G9M",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_226047435",
+              "ark": "ark:/61903/1:1:MCCS-35F",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Robert"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Occupation",
+                  "value": "Timber Merchant"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1824",
+                  "standard_date": "1824",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Catlettsburg, Boyd, Kentucky, United States",
+                  "standard_place": "Catlettsburg, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_226047436",
+              "ark": "ark:/61903/1:1:MCCS-35N",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Margaret"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Catlettsburg, Boyd, Kentucky, United States",
+                  "standard_place": "Catlettsburg, Boyd, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1842",
+                  "standard_date": "1842",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_226047437",
+              "ark": "ark:/61903/1:1:MCCS-35J",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Rucker",
+                  "given": "Thursa A."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1841",
+                  "standard_date": "1841",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Catlettsburg, Boyd, Kentucky, United States",
+                  "standard_place": "Catlettsburg, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_226047435",
+              "person2": "p_226047436"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_175006830",
+              "resource_type": "Record",
+              "title": "Household of Robert Eastham, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCCS-35F : Wed Sep 09 09:34:09 UTC 2026), Entry for Robert Eastham and Margaret Eastham, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M4W9-G9M",
+              "coverage": {
+                "place_rep_id": "4128769",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYY-95BR",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_226047435",
+              "resource_type": "Person",
+              "url": "#p_226047435"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "4128769",
+              "name": "Catlettsburg, Boyd, Kentucky, United States",
+              "latitude": 38.4047,
+              "longitude": -82.6006
+            }
+          ]
+        },
+        "primaryId": "p_226047435",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MCCB-DKC",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Occupation",
+            "value": "Blacksmithing"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Robt. Easton",
+        "score": 6.20288,
+        "confidence": 3,
+        "sex": "Male",
+        "birthDate": "1821",
+        "birthPlace": "Indiana, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Robt. Easton, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:M4WW-QKB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_226757379",
+              "ark": "ark:/61903/1:1:MCCB-DKC",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Easton",
+                  "given": "Robt."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1821",
+                  "standard_date": "1821",
+                  "place": "Indiana, United States",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Widowed"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Blacksmithing"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_226757380",
+              "ark": "ark:/61903/1:1:MCCB-DKZ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Easton",
+                  "given": "John F."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1856",
+                  "standard_date": "1856",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_226757381",
+              "ark": "ark:/61903/1:1:MCCB-DK8",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Easton",
+                  "given": "Mary Catherine"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1868",
+                  "standard_date": "1868",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_226757382",
+              "ark": "ark:/61903/1:1:MCCB-DKD",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Easton",
+                  "given": "Sarah A."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1871",
+                  "standard_date": "1871",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_226757383",
+              "ark": "ark:/61903/1:1:MCCB-DK6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Easton",
+                  "given": "Robt. C."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1873",
+                  "standard_date": "1873",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_226757379",
+              "child": "p_226757380"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_226757379",
+              "child": "p_226757383"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_226757379",
+              "child": "p_226757382"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_226757379",
+              "child": "p_226757381"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_175126198",
+              "resource_type": "Record",
+              "title": "Household of Robt. Easton, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCCB-DKC : Wed Sep 09 09:36:35 UTC 2026), Entry for Robt. Easton and John F. Easton, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M4WW-QKB",
+              "coverage": {
+                "place_rep_id": "8047057",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YB3-9V4P",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_226757379",
+              "resource_type": "Person",
+              "url": "#p_226757379"
+            }
+          ],
+          "places": [
+            {
+              "id": "331",
+              "name": "Indiana, United States",
+              "latitude": 40.0003,
+              "longitude": -86.2503
+            },
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "8047057",
+              "name": "Woods Magisterial District, Jefferson, Kentucky, United States",
+              "latitude": 38.09581,
+              "longitude": -85.76896
+            }
+          ]
+        },
+        "primaryId": "p_226757379",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6842-MWQK",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Jefferson, Kentucky, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Robt Easton",
+        "score": 5.5528803,
+        "confidence": 3,
+        "collectionId": "4231101",
+        "collectionTitle": "United States, Kentucky, Agricultural Schedules, 1850-1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4231101",
+        "recordTitle": "Entry for Robt Easton, \"United States, Kentucky, Agricultural Schedules, 1850-1880\"",
+        "recordArk": "ark:/61903/1:2:4BFG-1HZ5",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292515305539",
+              "ark": "ark:/61903/1:1:6842-MWQK",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robt",
+                  "surname": "Easton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Jefferson, Kentucky, United States",
+                  "standard_place": "Jefferson, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173885110524",
+              "resource_type": "Record",
+              "title": "Entry for Robt Easton, \"United States, Kentucky, Agricultural Schedules, 1850-1880\"",
+              "citation": "\"United States, Kentucky, Agricultural Schedules, 1850-1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6842-MWQK : Thu Apr 24 05:11:45 UTC 2025), Entry for Robt Easton, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BFG-1HZ5",
+              "coverage": {
+                "place_rep_id": "394131",
+                "date_range": "1880",
+                "record_type": "Land"
+              }
+            },
+            {
+              "id": "sd_c_4231101",
+              "resource_type": "Collection",
+              "title": "United States, Kentucky, Agricultural Schedules, 1850-1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/4231101",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1850/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSXS-CSQ4",
+              "coverage": {
+                "place_rep_id": "52",
+                "date_range": "1880?/1880?",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_292515305539",
+              "resource_type": "Person",
+              "url": "#p_292515305539"
+            }
+          ],
+          "places": [
+            {
+              "id": "394131",
+              "name": "Jefferson, Kentucky, United States",
+              "latitude": 38.183329,
+              "longitude": -85.65
+            }
+          ]
+        },
+        "primaryId": "p_292515305539",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FW52-1MZ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Robt. W. Eastham",
+        "score": 5.0236,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1674849",
+        "collectionTitle": "Kentucky, Marriages, 1785-1979",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1674849",
+        "recordTitle": "Entry for Robt. W. Eastham, \"Kentucky, Marriages, 1785-1979\"",
+        "recordArk": "ark:/61903/1:2:M66V-PSG",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11100806110",
+              "ark": "ark:/61903/1:1:FW52-1MZ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robt. W.",
+                  "surname": "Eastham"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            },
+            {
+              "id": "p_11100806109",
+              "ark": "ark:/61903/1:1:FW52-1MC",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary Jane",
+                  "surname": "Davis"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11100806110",
+              "person2": "p_11100806109",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "16 Feb 1858",
+                  "standard_date": "16 Feb 1858",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674849",
+              "resource_type": "Collection",
+              "title": "Kentucky, Marriages, 1785-1979",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1674849",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1785/1979",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_326936782",
+              "resource_type": "Record",
+              "title": "Entry for Robt. W. Eastham, \"Kentucky, Marriages, 1785-1979\"",
+              "citation": "\"Kentucky, Marriages, 1785-1979\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M66V-PSG : 21 September 2026), Entry for Robt. W. Eastham, 1858.",
+              "url": "https://familysearch.org/ark:/61903/1:2:M66V-PSG",
+              "coverage": {
+                "place_rep_id": "394136",
+                "date_range": "16 Feb 1858",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://familysearch.org/ark:/61903/3:1:3QSQ-G9S7-3X3V?cc=1674849"
+            },
+            {
+              "id": "src_p_p_11100806110",
+              "resource_type": "Person",
+              "url": "#p_11100806110"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            }
+          ]
+        },
+        "primaryId": "p_11100806110",
+        "batchNumber": "M01123-6",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2DF-89RF",
+        "events": [
+          {
+            "type": "Unknown",
+            "place": "Lawrence"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "W Robert Eastham",
+        "score": 5.0166,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for W Robert Eastham and Julia Ann Roberts, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QLWD-7QQZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102364048665",
+              "ark": "ark:/61903/1:1:Q2DF-89RF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "W Robert",
+                  "surname": "Eastham"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Unknown",
+                  "primary": true,
+                  "place": "Lawrence",
+                  "standard_place": "Lawrence, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102364048670",
+              "ark": "ark:/61903/1:1:Q2DF-89R2",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Julia Ann",
+                  "surname": "Roberts"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102364048665",
+              "person2": "p_102364048670",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "5 Apr 1847",
+                  "standard_date": "5 Apr 1847",
+                  "place": "Lawrence, Kentucky, United States",
+                  "standard_place": "Lawrence, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102944658730",
+              "resource_type": "Record",
+              "title": "Entry for W Robert Eastham and Julia Ann Roberts, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DF-89RF : Sat Feb 24 07:42:23 UTC 2024), Entry for W Robert Eastham and Julia Ann Roberts, 5 Apr 1847.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWD-7QQZ",
+              "coverage": {
+                "place_rep_id": "394141",
+                "date_range": "5 Apr 1847",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91S-Y76D-3",
+              "coverage": {
+                "place_rep_id": "394141",
+                "date_range": "1822–1920",
+                "record_type": "MarriageLicense"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102364048665",
+              "resource_type": "Person",
+              "url": "#p_102364048665"
+            }
+          ],
+          "places": [
+            {
+              "id": "394141",
+              "name": "Lawrence, Kentucky, United States",
+              "latitude": 38.06667,
+              "longitude": -82.76667
+            }
+          ]
+        },
+        "primaryId": "p_102364048665",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2DF-8MYM",
+        "events": [
+          {
+            "type": "Unknown",
+            "place": "Lawrence"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Robert Eastham",
+        "score": 5.0166,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Robert Eastham and Julia Ann Roberts, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QLWD-73Y1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102364047810",
+              "ark": "ark:/61903/1:1:Q2DF-8MYM",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert",
+                  "surname": "Eastham"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Unknown",
+                  "primary": true,
+                  "place": "Lawrence",
+                  "standard_place": "Lawrence, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102364047830",
+              "ark": "ark:/61903/1:1:Q2DF-8MY2",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Julia Ann",
+                  "surname": "Roberts"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102364047810",
+              "person2": "p_102364047830",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "5 Apr 1847",
+                  "standard_date": "5 Apr 1847",
+                  "place": "Lawrence, Kentucky, United States",
+                  "standard_place": "Lawrence, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102944658539",
+              "resource_type": "Record",
+              "title": "Entry for Robert Eastham and Julia Ann Roberts, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DF-8MYM : Sat Feb 24 01:33:24 UTC 2024), Entry for Robert Eastham and Julia Ann Roberts, 5 Apr 1847.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWD-73Y1",
+              "coverage": {
+                "place_rep_id": "394141",
+                "date_range": "5 Apr 1847",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91S-Y72M-K",
+              "coverage": {
+                "place_rep_id": "394141",
+                "date_range": "1822–1920",
+                "record_type": "MarriageLicense"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102364047810",
+              "resource_type": "Person",
+              "url": "#p_102364047810"
+            }
+          ],
+          "places": [
+            {
+              "id": "394141",
+              "name": "Lawrence, Kentucky, United States",
+              "latitude": 38.06667,
+              "longitude": -82.76667
+            }
+          ]
+        },
+        "primaryId": "p_102364047810",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2DF-8SWK",
+        "events": [
+          {
+            "type": "Unknown",
+            "place": "Lawrence"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Robert Eastham",
+        "score": 5.0166,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Robert Eastham and Julia Ann Roberts, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QLWD-7QWT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102364048999",
+              "ark": "ark:/61903/1:1:Q2DF-8SWK",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Robert"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Unknown",
+                  "primary": true,
+                  "place": "Lawrence",
+                  "standard_place": "Lawrence, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102364049007",
+              "ark": "ark:/61903/1:1:Q2DF-8SWY",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Roberts",
+                  "given": "Julia Ann"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102364048999",
+              "person2": "p_102364049007",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "6 Apr 1847",
+                  "standard_date": "6 Apr 1847",
+                  "place": "Lawrence, Kentucky, United States",
+                  "standard_place": "Lawrence, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102944658806",
+              "resource_type": "Record",
+              "title": "Entry for Robert Eastham and Julia Ann Roberts, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DF-8SWK : Sat Feb 24 01:32:52 UTC 2024), Entry for Robert Eastham and Julia Ann Roberts, 6 Apr 1847.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWD-7QWT",
+              "coverage": {
+                "place_rep_id": "394141",
+                "date_range": "6 Apr 1847",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91S-Y7NQ-Y",
+              "coverage": {
+                "place_rep_id": "394141",
+                "date_range": "1822–1920",
+                "record_type": "MarriageLicense"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102364048999",
+              "resource_type": "Person",
+              "url": "#p_102364048999"
+            }
+          ],
+          "places": [
+            {
+              "id": "394141",
+              "name": "Lawrence, Kentucky, United States",
+              "latitude": 38.06667,
+              "longitude": -82.76667
+            }
+          ]
+        },
+        "primaryId": "p_102364048999",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NS86-JXX",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Robt. Eastham",
+        "score": 5.0066,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1417491",
+        "collectionTitle": "Kentucky, Deaths, 1911-1967",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417491",
+        "recordTitle": "Entry for Edward Evert Eastham, \"Kentucky, Deaths, 1911-1967\"",
+        "recordArk": "ark:/61903/1:2:M683-SDB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11721876734",
+              "ark": "ark:/61903/1:1:NS86-JXX",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robt.",
+                  "surname": "Eastham"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11721876733",
+              "ark": "ark:/61903/1:1:NS86-JX6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Edward Evert",
+                  "surname": "Eastham"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1940",
+                  "standard_date": "1940",
+                  "place": "Boyd, Kentucky, United States",
+                  "standard_place": "Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11721876735",
+              "ark": "ark:/61903/1:1:NS86-JXF",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Davis"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11721876736",
+              "ark": "ark:/61903/1:1:NS86-JXN",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mrs. Julia",
+                  "surname": "Eastham"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11721876734",
+              "person2": "p_11721876735"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11721876735",
+              "child": "p_11721876733"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11721876733",
+              "person2": "p_11721876736"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11721876734",
+              "child": "p_11721876733"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_324893188",
+              "resource_type": "Record",
+              "title": "Entry for Edward Evert Eastham, \"Kentucky, Deaths, 1911-1967\"",
+              "citation": "\"Kentucky, Deaths, 1911-1967\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NS86-JX6 : Sat Mar 09 20:51:27 UTC 2024), Entry for Edward Evert Eastham and Robt. Eastham, 1940.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M683-SDB",
+              "coverage": {
+                "place_rep_id": "394113",
+                "date_range": "1940",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_1417491",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths, 1911-1967",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417491",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1911/1967",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9YK-89XB-3",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1940",
+                "record_type": "DeathCertificate"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-9R5",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Deaths, from 1500 to 2026",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1500-01-01T00:00:00Z/+2026-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11721876734",
+              "resource_type": "Person",
+              "url": "#p_11721876734"
+            }
+          ],
+          "places": [
+            {
+              "id": "394113",
+              "name": "Boyd, Kentucky, United States",
+              "latitude": 38.36,
+              "longitude": -82.69
+            }
+          ]
+        },
+        "primaryId": "p_11721876734",
+        "batchNumber": "I08513-1",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2QD-7ZPV",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Robert Eastham",
+        "score": 5.0066,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Ephriam Boggs and Mary Ann Eastham, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QL9F-H2FF",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102167064708",
+              "ark": "ark:/61903/1:1:Q2QD-7ZPV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert",
+                  "surname": "Eastham"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102167064704",
+              "ark": "ark:/61903/1:1:Q2QD-7ZPX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary Ann",
+                  "surname": "Eastham"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102167064698",
+              "ark": "ark:/61903/1:1:Q2QD-7ZPH",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Ephriam",
+                  "surname": "Boggs"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102167064698",
+              "person2": "p_102167064704"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102167064708",
+              "child": "p_102167064704"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102825684465",
+              "resource_type": "Record",
+              "title": "Entry for Ephriam Boggs and Mary Ann Eastham, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2QD-7ZPH : Sat Feb 24 07:13:24 UTC 2024), Entry for Ephriam Boggs and Mary Ann Eastham, 30 Jan 1844.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL9F-H2FF",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89S9-B4P",
+              "coverage": {
+                "place_rep_id": "394147",
+                "date_range": "1851-1855",
+                "record_type": "MarriageBond"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102167064708",
+              "resource_type": "Person",
+              "url": "#p_102167064708"
+            }
+          ]
+        },
+        "primaryId": "p_102167064708",
+        "batchNumber": "M03672-0",
+        "role": "Father Of Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NS5G-Y8C",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Robert Eastham",
+        "score": 5.0066,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1417491",
+        "collectionTitle": "Kentucky, Deaths, 1911-1967",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417491",
+        "recordTitle": "Entry for Robert Lee Galloway, \"Kentucky, Deaths, 1911-1967\"",
+        "recordArk": "ark:/61903/1:2:M682-LGS",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11732658639",
+              "ark": "ark:/61903/1:1:NS5G-Y8C",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Robert"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11732658638",
+              "ark": "ark:/61903/1:1:NS5G-Y8H",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Galloway",
+                  "given": "Robert Lee"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1878",
+                  "standard_date": "1878"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "26 February 1947",
+                  "standard_date": "26 Feb 1947",
+                  "place": "Catlettsburg, Boyd, Kentucky, United States",
+                  "standard_place": "Catlettsburg, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11732658640",
+              "ark": "ark:/61903/1:1:NS5G-Y8Z",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Galloway",
+                  "given": "Enie"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11732658641",
+              "ark": "ark:/61903/1:1:NS5G-Y88",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Galloway",
+                  "given": "Dollie Smith"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11732658640",
+              "child": "p_11732658638"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11732658639",
+              "person2": "p_11732658640"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11732658639",
+              "child": "p_11732658638"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11732658638",
+              "person2": "p_11732658641"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_325369562",
+              "resource_type": "Record",
+              "title": "Entry for Robert Lee Galloway, \"Kentucky, Deaths, 1911-1967\"",
+              "citation": "\"Kentucky, Deaths, 1911-1967\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NS5G-Y8H : Fri Mar 08 07:21:01 UTC 2024), Entry for Robert Lee Galloway and Robert Eastham, 26 February 1947.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M682-LGS",
+              "coverage": {
+                "place_rep_id": "4128769",
+                "date_range": "26 February 1947",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_1417491",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths, 1911-1967",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417491",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1911/1967",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q93-C9YJ-RKB5",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1947",
+                "record_type": "DeathCertificate"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-9R5",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Deaths, from 1500 to 2026",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1500-01-01T00:00:00Z/+2026-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11732658639",
+              "resource_type": "Person",
+              "url": "#p_11732658639"
+            }
+          ],
+          "places": [
+            {
+              "id": "4128769",
+              "name": "Catlettsburg, Boyd, Kentucky, United States",
+              "latitude": 38.4047,
+              "longitude": -82.6006
+            }
+          ]
+        },
+        "primaryId": "p_11732658639",
+        "batchNumber": "I10282-2",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N91X-5XF",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Robert L. Eastham",
+        "score": 5.0066,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1417491",
+        "collectionTitle": "Kentucky, Deaths, 1911-1967",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417491",
+        "recordTitle": "Entry for Bess C. Eastham, \"Kentucky, Deaths, 1911-1967\"",
+        "recordArk": "ark:/61903/1:2:M688-GRT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11712190035",
+              "ark": "ark:/61903/1:1:N91X-5XF",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert L.",
+                  "surname": "Eastham"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11712190034",
+              "ark": "ark:/61903/1:1:N91X-5XX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Bess C.",
+                  "surname": "Eastham"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1914",
+                  "standard_date": "1914",
+                  "place": "Somerset, Pulaski, Kentucky, United States",
+                  "standard_place": "Somerset, Pulaski, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11712190036",
+              "ark": "ark:/61903/1:1:N91X-5XN",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Lola",
+                  "surname": "Swearinger"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102264118406",
+              "ark": "ark:/61903/1:1:Q2H8-1BWT",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "1914"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11712190034",
+              "person2": "p_102264118406"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11712190035",
+              "child": "p_11712190034"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11712190035",
+              "person2": "p_11712190036"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11712190036",
+              "child": "p_11712190034"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_325127576",
+              "resource_type": "Record",
+              "title": "Entry for Bess C. Eastham, \"Kentucky, Deaths, 1911-1967\"",
+              "citation": "\"Kentucky, Deaths, 1911-1967\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N91X-5XX : Sat Mar 09 23:52:41 UTC 2024), Entry for Bess C. Eastham and Robert L. Eastham, 1914.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M688-GRT",
+              "coverage": {
+                "place_rep_id": "4127374",
+                "date_range": "1914",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_1417491",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths, 1911-1967",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417491",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1911/1967",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9TF-T361-J",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1914",
+                "record_type": "DeathCertificate"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-9R5",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Deaths, from 1500 to 2026",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1500-01-01T00:00:00Z/+2026-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_11712190035",
+              "resource_type": "Person",
+              "url": "#p_11712190035"
+            }
+          ],
+          "places": [
+            {
+              "id": "4127374",
+              "name": "Somerset, Pulaski, Kentucky, United States",
+              "latitude": 37.0919,
+              "longitude": -84.6042
+            }
+          ]
+        },
+        "primaryId": "p_11712190035",
+        "batchNumber": "I08618-2",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWY2-JXH",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Robert Eastham",
+        "score": 5.0066,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Robert Lee Galloway, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M682-KN6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11103225728",
+              "ark": "ark:/61903/1:1:FWY2-JXH",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert",
+                  "surname": "Eastham"
+                }
+              ]
+            },
+            {
+              "id": "p_11103225727",
+              "ark": "ark:/61903/1:1:FWY2-JX4",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert Lee",
+                  "surname": "Galloway"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1947",
+                  "standard_date": "1947",
+                  "place": "Catlettsburg, Boyd, Kentucky, United States",
+                  "standard_place": "Catlettsburg, Boyd, Kentucky, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11103225729",
+              "ark": "ark:/61903/1:1:FWY2-JXC",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Enie",
+                  "surname": "Galloway"
+                }
+              ]
+            },
+            {
+              "id": "p_11103225730",
+              "ark": "ark:/61903/1:1:FWY2-JXZ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Dollie Smith",
+                  "surname": "Galloway"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11103225728",
+              "person2": "p_11103225729"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11103225728",
+              "child": "p_11103225727"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11103225729",
+              "child": "p_11103225727"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11103225727",
+              "person2": "p_11103225730"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_325367593",
+              "resource_type": "Record",
+              "title": "Entry for Robert Lee Galloway, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M682-KN6 : 19 February 2021), Entry for Robert Lee Galloway, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M682-KN6",
+              "coverage": {
+                "place_rep_id": "4128769",
+                "date_range": "1947",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11103225728",
+              "resource_type": "Person",
+              "url": "#p_11103225728"
+            }
+          ],
+          "places": [
+            {
+              "id": "4128769",
+              "name": "Catlettsburg, Boyd, Kentucky, United States",
+              "latitude": 38.4047,
+              "longitude": -82.6006
+            }
+          ]
+        },
+        "primaryId": "p_11103225728",
+        "batchNumber": "I09098-0",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2DC-68RM",
+        "events": [
+          {
+            "type": "Unknown",
+            "place": "Boyd"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Robert Easthan",
+        "score": 4.93588,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1822",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Robert Easthan and Margaret Rucker, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QLWZ-21FV",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102359251650",
+              "ark": "ark:/61903/1:1:Q2DC-68RM",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Easthan",
+                  "given": "Robert"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Unknown",
+                  "primary": true,
+                  "place": "Boyd",
+                  "standard_place": "Boyd, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1822",
+                  "standard_date": "1822"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102359251652",
+              "ark": "ark:/61903/1:1:Q2DC-68RS",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Rucker",
+                  "given": "Margaret"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1843",
+                  "standard_date": "1843"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102359251650",
+              "person2": "p_102359251652",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "25 Jan 1870",
+                  "standard_date": "25 Jan 1870",
+                  "place": "Boyd, Kentucky, United States",
+                  "standard_place": "Boyd, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102943466568",
+              "resource_type": "Record",
+              "title": "Entry for Robert Easthan and Margaret Rucker, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DC-68RM : Sat Feb 24 01:07:33 UTC 2024), Entry for Robert Easthan and Margaret Rucker, 25 Jan 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWZ-21FV",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91F-YQ6H-Q",
+              "coverage": {
+                "place_rep_id": "394113",
+                "date_range": "1867-1874",
+                "record_type": "MarriageBond"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102359251650",
+              "resource_type": "Person",
+              "url": "#p_102359251650"
+            }
+          ],
+          "places": [
+            {
+              "id": "394113",
+              "name": "Boyd, Kentucky, United States",
+              "latitude": 38.36,
+              "longitude": -82.69
+            }
+          ]
+        },
+        "primaryId": "p_102359251650",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QVVD-WG5D",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Fairdale, Jefferson, Kentucky, United States of America"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Robert Easton",
+        "score": 4.93588,
+        "confidence": 2,
+        "birthDate": "19 December 1819",
+        "deathDate": "29 January 1888",
+        "collectionId": "2221801",
+        "collectionTitle": "Find a Grave Index",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "recordTitle": "Entry for Robert Easton, \"Find a Grave Index\"",
+        "recordArk": "ark:/61903/1:2:Q2MV-WHXD",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_101049302532",
+              "ark": "ark:/61903/1:1:QVVD-WG5D",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert",
+                  "surname": "Easton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "date": "29 Jan 1888",
+                  "standard_date": "29 Jan 1888"
+                },
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "place": "Fairdale, Jefferson, Kentucky, United States of America",
+                  "standard_place": "Fairdale, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "19 Dec 1819",
+                  "standard_date": "19 Dec 1819"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102074749632",
+              "resource_type": "Record",
+              "title": "Entry for Robert Easton, \"Find a Grave Index\"",
+              "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVVD-WG5D : Mon Oct 05 00:05:20 UTC 2026), Entry for Robert Easton.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q2MV-WHXD",
+              "coverage": {
+                "place_rep_id": "4121166",
+                "date_range": "29 January 1888",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_2221801",
+              "resource_type": "Collection",
+              "title": "Find a Grave Index",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1500/2013",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=14167567"
+            },
+            {
+              "id": "src_p_p_101049302532",
+              "resource_type": "Person",
+              "url": "#p_101049302532"
+            }
+          ],
+          "places": [
+            {
+              "id": "4131369",
+              "name": "Fairdale, Jefferson, Kentucky, United States",
+              "latitude": 38.105,
+              "longitude": -85.7589
+            }
+          ]
+        },
+        "primaryId": "p_101049302532",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XZR8-NWG",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Robt E. Eastham",
+        "score": 4.9136,
+        "confidence": 2,
+        "sex": "Male",
+        "birthPlace": "Kentucky, United States",
+        "collectionId": "1307272",
+        "collectionTitle": "Ohio, Deaths, 1908-1953",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1307272",
+        "recordTitle": "Entry for Emma E Bagley, \"Ohio, Deaths, 1908-1953\"",
+        "recordArk": "ark:/61903/1:2:MSY8-C92",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10469561602",
+              "ark": "ark:/61903/1:1:XZR8-NWG",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Robt E."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Ky.",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10469561601",
+              "ark": "ark:/61903/1:1:XZR8-NWL",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Bagley",
+                  "given": "Emma E"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "06 Dec 1941",
+                  "standard_date": "6 Dec 1941",
+                  "place": "Portsmouth, Scioto, Ohio",
+                  "standard_place": "Portsmouth, Scioto, Ohio, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "01 Dec 1860",
+                  "standard_date": "1 Dec 1860",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Burial",
+                  "date": "09 Dec 1941",
+                  "standard_date": "9 Dec 1941",
+                  "place": "St Paul, Ky",
+                  "standard_place": "Saint Paul, Grayson, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10469561603",
+              "ark": "ark:/61903/1:1:XZR8-NWP",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Davis",
+                  "given": "Mary Jane"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Ky.",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10469561604",
+              "ark": "ark:/61903/1:1:XZR8-NW5",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Bagley",
+                  "given": "Walter"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10469561602",
+              "child": "p_10469561601"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10469561602",
+              "person2": "p_10469561603"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10469561604",
+              "person2": "p_10469561601"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10469561603",
+              "child": "p_10469561601"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_70775150",
+              "resource_type": "Record",
+              "title": "Entry for Emma E Bagley, \"Ohio, Deaths, 1908-1953\"",
+              "citation": "\"Ohio, Deaths, 1908-1953\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZR8-NWL : Thu Aug 01 17:42:13 UTC 2024), Entry for Emma E Bagley and Robt E. Eastham, 06 Dec 1941.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MSY8-C92",
+              "coverage": {
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_1307272",
+              "resource_type": "Collection",
+              "title": "Ohio, Deaths, 1908-1953",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1307272",
+              "coverage": {
+                "place_rep_id": "357",
+                "date_range": "1908/1953",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GPKP-SYYK",
+              "coverage": {
+                "place_rep_id": "394852",
+                "date_range": "1941",
+                "record_type": "DeathCertificate"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-9HK",
+              "resource_type": "auto",
+              "title": "United States, Ohio, Deaths, from 8 January 1271 to 2026",
+              "coverage": {
+                "place_rep_id": "357",
+                "date_range": "+1271-01-08T00:00:00Z/+2026-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_10469561602",
+              "resource_type": "Person",
+              "url": "#p_10469561602"
+            }
+          ],
+          "places": [
+            {
+              "id": "10553016",
+              "name": "Portsmouth, Scioto, Ohio, United States",
+              "latitude": 38.7411,
+              "longitude": -82.9731
+            },
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "4126088",
+              "name": "Saint Paul, Grayson, Kentucky, United States",
+              "latitude": 37.5508,
+              "longitude": -86.1936
+            }
+          ]
+        },
+        "primaryId": "p_10469561602",
+        "batchNumber": "B03157-4",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6K47-GSDS",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Robert Eastham",
+        "score": 4.9066,
+        "confidence": 2,
+        "collectionId": "5000016",
+        "collectionTitle": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/5000016",
+        "recordTitle": "Entry for Robert Eastham, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+        "recordArk": "ark:/61903/1:2:HS2Y-JWVV",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_298335746162",
+              "ark": "ark:/61903/1:1:6K47-GSDS",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Robert"
+                }
+              ]
+            },
+            {
+              "id": "p_298335746160",
+              "ark": "ark:/61903/1:1:6K47-GSDM",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Robert"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "12 Oct 1897",
+                  "standard_date": "12 Oct 1897",
+                  "place": "Somerset Pul*, Kentucky, United States",
+                  "standard_place": "Somerset, Pulaski, Kentucky, United States"
+                },
+                {
+                  "type": "SocialProgramCorrespondence",
+                  "primary": true,
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ]
+            },
+            {
+              "id": "p_298335746164",
+              "ark": "ark:/61903/1:1:6K47-GSDQ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Bodkins",
+                  "given": "Unknown"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_298335746162",
+              "person2": "p_298335746164"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_298335746162",
+              "child": "p_298335746160"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_298335746164",
+              "child": "p_298335746160"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_176926334958",
+              "resource_type": "Record",
+              "title": "Entry for Robert Eastham, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+              "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K47-GSDM : Fri Jul 03 05:07:07 UTC 2026), Entry for Robert Eastham and Robert Eastham.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HS2Y-JWVV",
+              "coverage": {
+                "place_rep_id": "1",
+                "record_type": "SocialProgramDocument"
+              }
+            },
+            {
+              "id": "sd_c_5000016",
+              "resource_type": "Collection",
+              "title": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/5000016",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1936/2007",
+                "record_type": "SocialProgramDocument"
+              }
+            },
+            {
+              "id": "src_p_p_298335746162",
+              "resource_type": "Person",
+              "url": "#p_298335746162"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "4127374",
+              "name": "Somerset, Pulaski, Kentucky, United States",
+              "latitude": 37.0919,
+              "longitude": -84.6042
+            }
+          ]
+        },
+        "primaryId": "p_298335746162",
+        "role": "Other"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XZ8X-W4Y",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "Logan"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Robert Charles Easton",
+        "score": 4.6828804,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1854302",
+        "collectionTitle": "United States, Western States Marriage Index",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1854302",
+        "recordTitle": "Entry for Robert Charles Easton and Jeannette Young Snell, \"United States, Western States Marriage Index\"",
+        "recordArk": "ark:/61903/1:2:1L2J-QDC",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10458293637",
+              "ark": "ark:/61903/1:1:XZ8X-W4Y",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Easton",
+                  "given": "Robert Charles"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "place": "Logan",
+                  "standard_place": "Logan, Ohio, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_10458293638",
+              "ark": "ark:/61903/1:1:XZ8X-W4B",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Jeannette Young",
+                  "surname": "Snell"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10458293637",
+              "person2": "p_10458293638",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "28 Apr 1896",
+                  "standard_date": "28 Apr 1896",
+                  "place": "Salt Lake City, Salt Lake, Utah, United States",
+                  "standard_place": "Salt Lake City, Salt Lake, Utah, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21667962969",
+              "resource_type": "Record",
+              "title": "Entry for Robert Charles Easton and Jeannette Young Snell, \"United States, Western States Marriage Index\"",
+              "citation": "\"United States, Western States Marriage Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZ8X-W4Y : Tue Feb 11 22:26:32 UTC 2025), Entry for Robert Charles Easton and Jeannette Young Snell, 28 Apr 1896.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1L2J-QDC",
+              "coverage": {
+                "place_rep_id": "5413607",
+                "date_range": "28 Apr 1896",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1854302",
+              "resource_type": "Collection",
+              "title": "United States, Western States Marriage Index",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1854302",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1846/2008",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_10458293637",
+              "resource_type": "Person",
+              "url": "#p_10458293637"
+            }
+          ],
+          "places": [
+            {
+              "id": "394886",
+              "name": "Logan, Ohio, United States",
+              "latitude": 40.366669,
+              "longitude": -83.76667
+            },
+            {
+              "id": "5413607",
+              "name": "Salt Lake City, Salt Lake, Utah, United States",
+              "latitude": 40.7608,
+              "longitude": -111.8903
+            }
+          ]
+        },
+        "primaryId": "p_10458293637",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QB-F2K8",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Russell, Kentucky, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Willis R Eastham",
+        "score": 4.6619797,
+        "confidence": 2,
+        "collectionId": "4231101",
+        "collectionTitle": "United States, Kentucky, Agricultural Schedules, 1850-1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4231101",
+        "recordTitle": "Entry for Willis R Eastham, \"United States, Kentucky, Agricultural Schedules, 1850-1880\"",
+        "recordArk": "ark:/61903/1:2:4BXY-NZ83",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292449303581",
+              "ark": "ark:/61903/1:1:68QB-F2K8",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Willis R"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Russell, Kentucky, United States",
+                  "standard_place": "Russell, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173864511333",
+              "resource_type": "Record",
+              "title": "Entry for Willis R Eastham, \"United States, Kentucky, Agricultural Schedules, 1850-1880\"",
+              "citation": "\"United States, Kentucky, Agricultural Schedules, 1850-1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68QB-F2K8 : Thu Apr 24 05:36:25 UTC 2025), Entry for Willis R Eastham, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BXY-NZ83",
+              "coverage": {
+                "place_rep_id": "394334",
+                "date_range": "1880",
+                "record_type": "Land"
+              }
+            },
+            {
+              "id": "sd_c_4231101",
+              "resource_type": "Collection",
+              "title": "United States, Kentucky, Agricultural Schedules, 1850-1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/4231101",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1850/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSXS-HS5V-T",
+              "coverage": {
+                "place_rep_id": "52",
+                "date_range": "1880?/1880?",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_292449303581",
+              "resource_type": "Person",
+              "url": "#p_292449303581"
+            }
+          ],
+          "places": [
+            {
+              "id": "394334",
+              "name": "Russell, Kentucky, United States",
+              "latitude": 36.99,
+              "longitude": -85.06
+            }
+          ]
+        },
+        "primaryId": "p_292449303581",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWVD-QJC",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Robert Eastin",
+        "score": 4.38588,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1674843",
+        "collectionTitle": "Kentucky, Births and Christenings, 1839-1960",
+        "collectionUrl": "https://familysearch.org/collections/1674843",
+        "recordTitle": "Entry for John Franklin Eastin, \"Kentucky, Births and Christenings, 1839-1960\"",
+        "recordArk": "ark:/61903/1:2:M6KD-DCM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11095708119",
+              "ark": "ark:/61903/1:1:FWVD-QJC",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert",
+                  "surname": "Eastin"
+                }
+              ]
+            },
+            {
+              "id": "p_11095708118",
+              "ark": "ark:/61903/1:1:FWVD-QJH",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John Franklin",
+                  "surname": "Eastin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "18 Apr 1852",
+                  "standard_date": "18 Apr 1852",
+                  "place": "Bath, Kentucky, United States",
+                  "standard_place": "Bath, Kentucky, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11095708120",
+              "ark": "ark:/61903/1:1:FWVD-QJZ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elezth",
+                  "surname": "Sanders"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11095708119",
+              "person2": "p_11095708120"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11095708119",
+              "child": "p_11095708118"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11095708120",
+              "child": "p_11095708118"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674843",
+              "resource_type": "Collection",
+              "title": "Kentucky, Births and Christenings, 1839-1960",
+              "url": "https://familysearch.org/collections/1674843",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1839/1960",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_331625070",
+              "resource_type": "Record",
+              "title": "Entry for John Franklin Eastin, \"Kentucky, Births and Christenings, 1839-1960\"",
+              "citation": "\"Kentucky, Births and Christenings, 1839-1960,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6KD-DCM : 4 March 2021), Entry for John Franklin Eastin, ; citing Bath, Kentucky, United States, reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6KD-DCM",
+              "coverage": {
+                "place_rep_id": "394225",
+                "date_range": "18 Apr 1852",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11095708119",
+              "resource_type": "Person",
+              "url": "#p_11095708119"
+            }
+          ],
+          "places": [
+            {
+              "id": "394225",
+              "name": "Bath, Kentucky, United States",
+              "latitude": 38.149999,
+              "longitude": -83.750558
+            }
+          ]
+        },
+        "primaryId": "p_11095708119",
+        "batchNumber": "I10375-4",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWJW-XYX",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Robert S. Eastin",
+        "score": 4.38588,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1674843",
+        "collectionTitle": "Kentucky, Births and Christenings, 1839-1960",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1674843",
+        "recordTitle": "Entry for Robert S. Eastin, \"Kentucky, Births and Christenings, 1839-1960\"",
+        "recordArk": "ark:/61903/1:2:M6KF-BDJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11094745424",
+              "ark": "ark:/61903/1:1:FWJW-XYX",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert S.",
+                  "surname": "Eastin"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            },
+            {
+              "id": "p_11094745423",
+              "ark": "ark:/61903/1:1:FWJW-XY6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert S.",
+                  "surname": "Eastin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "2 Aug 1852",
+                  "standard_date": "2 Aug 1852",
+                  "place": "Henderson, Kentucky, United States",
+                  "standard_place": "Henderson, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            },
+            {
+              "id": "p_11094745425",
+              "ark": "ark:/61903/1:1:FWJW-XYF",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary E.",
+                  "surname": "Stone"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11094745424",
+              "child": "p_11094745423"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11094745425",
+              "child": "p_11094745423"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11094745424",
+              "person2": "p_11094745425"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674843",
+              "resource_type": "Collection",
+              "title": "Kentucky, Births and Christenings, 1839-1960",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1674843",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1839/1960",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_331720577",
+              "resource_type": "Record",
+              "title": "Entry for Robert S. Eastin, \"Kentucky, Births and Christenings, 1839-1960\"",
+              "citation": "\"Kentucky, Births and Christenings, 1839-1960\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6KF-BDJ : 21 September 2026), Entry for Robert S. Eastin, 1852.",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6KF-BDJ",
+              "coverage": {
+                "place_rep_id": "394153",
+                "date_range": "2 Aug 1852",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://familysearch.org/ark:/61903/3:1:3QS7-992C-89M9-H?cc=1674843"
+            },
+            {
+              "id": "src_p_p_11094745424",
+              "resource_type": "Person",
+              "url": "#p_11094745424"
+            }
+          ],
+          "places": [
+            {
+              "id": "394153",
+              "name": "Henderson, Kentucky, United States",
+              "latitude": 37.783329,
+              "longitude": -87.56667
+            }
+          ]
+        },
+        "primaryId": "p_11094745424",
+        "batchNumber": "C51748-1",
+        "role": "Father"
+      }
+    ]
+  }
+}

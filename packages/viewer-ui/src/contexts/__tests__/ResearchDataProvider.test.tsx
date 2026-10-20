@@ -478,3 +478,45 @@ describe('ResearchDataProvider — outbound channel wiring', () => {
     expect(spy).toHaveBeenCalledWith('ark:/61903/1:1:QPRC-WPBZ')
   })
 })
+
+// ============================================================
+// hasId — the index membership check behind chat id links
+// ============================================================
+
+describe('ResearchDataProvider — hasId', () => {
+  // `hasId` exists so a chat id link renders as a button only for ids the
+  // project actually holds. It is deliberately NOT `getById`, which logs a
+  // console.warn on every miss and would fire on every render of a plain
+  // `a_001`-looking token in prose.
+  //
+  // Without this test, replacing the body with `() => true` left every viewer
+  // and web suite green: the ChatPane tests stub their own context.
+
+  function renderWithResearch(research: unknown): ReturnType<typeof makeHarness> {
+    const h = makeHarness()
+    h.render()
+    act(() => {
+      researchHandler?.(research)
+    })
+    return h
+  }
+
+  it('is true for an indexed id and false for an unknown one', async () => {
+    const h = renderWithResearch({
+      questions: [{ id: 'q_001', text: 'Who were the parents?', status: 'open' }]
+    })
+    await waitFor(() => expect(h.ctx().hasId('q_001')).toBe(true))
+    expect(h.ctx().hasId('q_999')).toBe(false)
+    expect(h.ctx().hasId('')).toBe(false)
+    expect(h.ctx().hasId('not-an-id-at-all')).toBe(false)
+  })
+
+  it('does not warn on a miss, because it runs on every render', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const h = renderWithResearch({ questions: [{ id: 'q_001', text: 'x', status: 'open' }] })
+    await waitFor(() => expect(h.ctx().hasId('q_001')).toBe(true))
+    h.ctx().hasId('q_404')
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+})

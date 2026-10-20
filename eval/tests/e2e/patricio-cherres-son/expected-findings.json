@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Hermenejildo Patricio Cherres and Nicolasa Gavilanes had a son, Julio César Cherres, born about 1906, who died on 17 May 1908 and was buried at San Pedro, Guanujo, Guaranda, Bolívar, Ecuador; the parish burial entry names his parents as Patricio Cherres and Nicolasa Gavianes.",
+      "details": {
+        "subject_person": "Hermenejildo Patricio Cherres (KZ39-T1R)",
+        "relation": "child",
+        "target_person": {
+          "name": "Julio César Cherres",
+          "birth": "about 1906",
+          "death": "17 May 1908, San Pedro, Guanujo, Guaranda, Bolívar, Ecuador"
+        },
+        "mother": "Nicolasa Gavilanes"
+      },
+      "supporting_sources": [
+        "Ecuador, Catholic Church Records, 1565-2023 — burial entry for Julio Cesar Cherres, died 17 May 1908, San Pedro de Guanujo parish death register 1894–1915, parents Patricio Cherres and Nicolasa Gavianes"
+      ],
+      "required": true
+    }
+  ]
+}

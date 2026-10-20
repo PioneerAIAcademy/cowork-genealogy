@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Fragment } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
@@ -6,6 +6,9 @@ import Linkify from '../shared/Linkify'
 import { openExternal } from '../../lib/external'
 import type { LogEntry, Source, Assertion } from '../../lib/schema'
 import { indexByLogEntry } from '../../lib/index-by-log-entry'
+import { splitOffPlan } from '../../lib/offPlan'
+import { entryIdentity } from '../../lib/entryIdentity'
+import { splitLogTimestamp } from '../../lib/logTimestamp'
 import styles from './ResearchLogSection.module.css'
 
 type SortKey = 'performed' | 'tool' | 'outcome' | 'results_examined'
@@ -56,6 +59,180 @@ export default function ResearchLogSection(): React.JSX.Element {
     [logEntries, sortKey, sortDir]
   )
 
+  // Work the plan never accounted for gets its own group. Without it the ticking plan
+  // reads as though it covered everything the run did, which is the quiet version of
+  // lying to the reader. `knownItemIds` also sends a DANGLING reference off-plan: an
+  // entry naming an item that no longer exists is not coverage.
+  const knownItemIds = useMemo(
+    () => new Set((research?.plans ?? []).flatMap((plan) => plan.items.map((item) => item.id))),
+    [research?.plans]
+  )
+  const { onPlan, offPlan } = useMemo(
+    () => splitOffPlan(sorted, knownItemIds),
+    [sorted, knownItemIds]
+  )
+
+  // Extracted so the on-plan and off-plan groups render identical rows: the only
+  // difference is which group they sit in, and duplicating the body would let
+  // the two drift.
+  const renderEntry = (entry: LogEntry): React.JSX.Element => {
+            const isExpanded = expandedId === entry.id
+            const when = splitLogTimestamp(entry.performed)
+            const capturedSources = sourcesByLogEntry.get(entry.id) ?? []
+            const producedAssertions = assertionsByLogEntry.get(entry.id) ?? []
+    // A FRAGMENT, not a wrapper row. Each entry used to be its own nested <table>
+    // inside a colSpan={6} cell, so its columns were sized independently of the
+    // header's: they drifted by up to 71px and could only line up by luck. Siblings
+    // in the one table let the browser size the columns across the header and every
+    // row together, which is the whole point of using a table.
+    return (
+      <Fragment key={entry.id}>
+                <tr
+                  id={entry.id}
+                  className={styles.clickableRow}
+                  onClick={() => setExpandedId(isExpanded ? null : entry.id)}
+                >
+                  <td className={styles.whenCell}>
+                    {/* Date over time, not a raw `2026-05-01T10:15:00Z`. The date is what a
+                        reader scans; the time of day is kept because it is sometimes all that
+                        separates two searches on one day. */}
+                    <span className={styles.whenDate}>{when.date}</span>
+                    {when.time && <span className={styles.whenTime}>{when.time}</span>}
+                  </td>
+                  <td>
+                    {entry.tool}
+                    {/* The identity the collapsed row lacked: two searches of the
+                        same tool on the same day were identical on screen, so the
+                        reader had to open each to tell them apart. */}
+                    {entryIdentity(entry.query) && (
+                      <span className={styles.entryIdentity}>
+                        {entryIdentity(entry.query)}
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    <StatusBadge value={entry.outcome} />
+                  </td>
+                  <td>
+                    {entry.results_ref ? (
+                      <button
+                        type="button"
+                        className={styles.viewResultsInline}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openSidecar(entry.id)
+                        }}
+                      >
+                        {viewResultsLabel(entry)}
+                      </button>
+                    ) : (
+                      entry.results_examined
+                    )}
+                  </td>
+                  <td>
+                    <div className={styles.linkList}>
+                      <span className={styles.count}>{capturedSources.length}</span>
+                      {capturedSources.map((source) => (
+                        <CrossLink key={source.id} id={source.id} />
+                      ))}
+                    </div>
+                  </td>
+                  <td>
+                    <div className={styles.linkList}>
+                      <span className={styles.count}>{producedAssertions.length}</span>
+                      {producedAssertions.map((assertion) => (
+                        <CrossLink key={assertion.id} id={assertion.id} />
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+                {isExpanded && (
+                  <tr className={styles.expandedRow}>
+                    <td colSpan={6}>
+                      <div className={styles.expandedContent}>
+                        <div className={styles.field}>
+                          <div className={styles.fieldLabel}>Query</div>
+                          <pre className={styles.queryBlock}>
+                            {JSON.stringify(entry.query, null, 2)}
+                          </pre>
+                        </div>
+
+                        {entry.notes && (
+                          <div className={styles.field}>
+                            <div className={styles.fieldLabel}>Notes</div>
+                            <div className={styles.fieldValue}>
+                              <Linkify text={entry.notes} />
+                            </div>
+                          </div>
+                        )}
+
+                        {entry.results_ref && (
+                          <div className={styles.field}>
+                            <div className={styles.fieldLabel}>Results</div>
+                            <button
+                              type="button"
+                              className={styles.viewResultsButton}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openSidecar(entry.id)
+                              }}
+                            >
+                              {viewResultsLabel(entry)}
+                            </button>
+                          </div>
+                        )}
+
+                        {entry.external_site && (
+                          <div className={styles.field}>
+                            <div className={styles.fieldLabel}>External Site</div>
+                            <div className={styles.fieldValue}>
+                              {entry.external_site.site} &middot;{' '}
+                              {entry.external_site.capture_received
+                                ? 'Captured'
+                                : 'Not captured'}
+                              {entry.external_site.capture_filename && (
+                                <> &middot; {entry.external_site.capture_filename}</>
+                              )}
+                            </div>
+                            {/* The search URL the researcher was handed. Required by
+                                schema and written by search-external-sites, but three
+                                of its four siblings rendered and this one did not —
+                                the gap the field-render lint now guards (#1166). It
+                                is the one part of an external-site entry a reader
+                                needs to reproduce the search. */}
+                            {entry.external_site.url_generated && (
+                              <div className={styles.fieldValue}>
+                                <button
+                                  type="button"
+                                  className={styles.externalUrl}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    openExternal(entry.external_site!.url_generated)
+                                  }}
+                                >
+                                  {entry.external_site.url_generated}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {devMode && (
+                          <div className={styles.field}>
+                            <div className={styles.fieldLabel}>Raw JSON</div>
+                            <pre className={styles.queryBlock}>
+                              {JSON.stringify(entry, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+            </Fragment>
+            )
+  }
+
   const sourcesByLogEntry = useMemo(() => indexByLogEntry(sources), [sources])
   const assertionsByLogEntry = useMemo(() => indexByLogEntry(assertions), [assertions])
 
@@ -88,7 +265,11 @@ export default function ResearchLogSection(): React.JSX.Element {
   return (
     <div className={styles.section}>
       <h2 className={styles.sectionTitle}>Research Log</h2>
-      <table className={styles.table}>
+      {/* Scrolls sideways INSIDE its own box rather than dragging the whole pane,
+          and only once the pane is narrower than the table can usefully compress --
+          which on a desktop means zoomed in, not at rest. */}
+      <div className={styles.tableScroll}>
+        <table className={styles.table}>
         <thead>
           <tr>
             <th onClick={() => handleSort('performed')}>Date{renderSortIndicator('performed')}</th>
@@ -102,148 +283,19 @@ export default function ResearchLogSection(): React.JSX.Element {
           </tr>
         </thead>
         <tbody>
-          {sorted.map((entry) => {
-            const isExpanded = expandedId === entry.id
-            const capturedSources = sourcesByLogEntry.get(entry.id) ?? []
-            const producedAssertions = assertionsByLogEntry.get(entry.id) ?? []
-            return (
-              <tr key={entry.id} id={entry.id}>
-                <td colSpan={6} style={{ padding: 0 }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <tbody>
-                      <tr
-                        className={styles.clickableRow}
-                        onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                      >
-                        <td>{entry.performed}</td>
-                        <td>{entry.tool}</td>
-                        <td>
-                          <StatusBadge value={entry.outcome} />
-                        </td>
-                        <td>
-                          {entry.results_ref ? (
-                            <button
-                              type="button"
-                              className={styles.viewResultsInline}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                openSidecar(entry.id)
-                              }}
-                            >
-                              {viewResultsLabel(entry)}
-                            </button>
-                          ) : (
-                            entry.results_examined
-                          )}
-                        </td>
-                        <td>
-                          <div className={styles.linkList}>
-                            <span className={styles.count}>{capturedSources.length}</span>
-                            {capturedSources.map((source) => (
-                              <CrossLink key={source.id} id={source.id} />
-                            ))}
-                          </div>
-                        </td>
-                        <td>
-                          <div className={styles.linkList}>
-                            <span className={styles.count}>{producedAssertions.length}</span>
-                            {producedAssertions.map((assertion) => (
-                              <CrossLink key={assertion.id} id={assertion.id} />
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                      {isExpanded && (
-                        <tr className={styles.expandedRow}>
-                          <td colSpan={6}>
-                            <div className={styles.expandedContent}>
-                              <div className={styles.field}>
-                                <div className={styles.fieldLabel}>Query</div>
-                                <pre className={styles.queryBlock}>
-                                  {JSON.stringify(entry.query, null, 2)}
-                                </pre>
-                              </div>
-
-                              {entry.notes && (
-                                <div className={styles.field}>
-                                  <div className={styles.fieldLabel}>Notes</div>
-                                  <div className={styles.fieldValue}>
-                                    <Linkify text={entry.notes} />
-                                  </div>
-                                </div>
-                              )}
-
-                              {entry.results_ref && (
-                                <div className={styles.field}>
-                                  <div className={styles.fieldLabel}>Results</div>
-                                  <button
-                                    type="button"
-                                    className={styles.viewResultsButton}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      openSidecar(entry.id)
-                                    }}
-                                  >
-                                    {viewResultsLabel(entry)}
-                                  </button>
-                                </div>
-                              )}
-
-                              {entry.external_site && (
-                                <div className={styles.field}>
-                                  <div className={styles.fieldLabel}>External Site</div>
-                                  <div className={styles.fieldValue}>
-                                    {entry.external_site.site} &middot;{' '}
-                                    {entry.external_site.capture_received
-                                      ? 'Captured'
-                                      : 'Not captured'}
-                                    {entry.external_site.capture_filename && (
-                                      <> &middot; {entry.external_site.capture_filename}</>
-                                    )}
-                                  </div>
-                                  {/* The search URL the researcher was handed. Required by
-                                      schema and written by search-external-sites, but three
-                                      of its four siblings rendered and this one did not —
-                                      the gap the field-render lint now guards (#1166). It
-                                      is the one part of an external-site entry a reader
-                                      needs to reproduce the search. */}
-                                  {entry.external_site.url_generated && (
-                                    <div className={styles.fieldValue}>
-                                      <button
-                                        type="button"
-                                        className={styles.externalUrl}
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          openExternal(entry.external_site!.url_generated)
-                                        }}
-                                      >
-                                        {entry.external_site.url_generated}
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              {devMode && (
-                                <div className={styles.field}>
-                                  <div className={styles.fieldLabel}>Raw JSON</div>
-                                  <pre className={styles.queryBlock}>
-                                    {JSON.stringify(entry, null, 2)}
-                                  </pre>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </td>
-              </tr>
-            )
-          })}
+          {onPlan.map(renderEntry)}
+          {offPlan.length > 0 && (
+            <tr data-testid="off-plan-group">
+              <td colSpan={6} className={styles.offPlanHeader}>
+                Off-plan work — {offPlan.length} entr{offPlan.length === 1 ? 'y' : 'ies'}
+                {' '}the plan did not account for
+              </td>
+            </tr>
+          )}
+          {offPlan.map(renderEntry)}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   )
 }

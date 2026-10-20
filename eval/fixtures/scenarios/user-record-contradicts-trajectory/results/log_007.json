@@ -1,0 +1,446 @@
+{
+  "log_id": "log_007",
+  "tool": "record_read",
+  "retrieved": "2026-10-05T17:59:11.517Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:MZBZ-6GQ"
+    },
+    "results": [
+      {
+        "recordId": "MZBZ-6GQ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_265962364",
+              "ark": "ark:/61903/1:1:MZBZ-6GQ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "73b066b3-80ea-42e9-a4c0-abb2f3dcb994",
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "John"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "3e5914bd-d0e9-424b-ab86-e5a0d316bce7",
+                  "type": "Birth",
+                  "date": "1818",
+                  "standard_date": "1818",
+                  "place": "Ky"
+                },
+                {
+                  "id": "b702a84e-edbb-4607-b69e-16c694340858",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "District 1, Pulaski, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_265962365",
+              "ark": "ark:/61903/1:1:MZBZ-6G7",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "ff2231df-6905-42da-9f5e-e9a73b504661",
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Mary A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "8d6e7d5b-bb64-4fc4-b255-acd759871629",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "District 1, Pulaski, Kentucky, United States"
+                },
+                {
+                  "id": "a6ac04e2-eea5-4b13-806f-94a87a5b5ff5",
+                  "type": "Birth",
+                  "date": "1825",
+                  "standard_date": "1825",
+                  "place": "Ky"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_265963466",
+              "ark": "ark:/61903/1:1:MZBZ-XBT",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "30989862-4098-4e75-a75a-d193935c4499",
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Louisa"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "87eb6dfd-947f-4512-b43d-4300e4ced019",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "District 1, Pulaski, Kentucky, United States"
+                },
+                {
+                  "id": "427f0d6b-0bbd-44ed-92cb-060f0d834d3c",
+                  "type": "Birth",
+                  "date": "1845",
+                  "standard_date": "1845",
+                  "place": "Kentucky"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_265963467",
+              "ark": "ark:/61903/1:1:MZBZ-XBY",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "aa5f5a3f-6e62-4e89-baec-bb8880eb504f",
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Mary C"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "0a544264-f92d-4716-a246-8d7309545f0a",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "District 1, Pulaski, Kentucky, United States"
+                },
+                {
+                  "id": "bcd8b490-968c-429b-b755-266878bd8f23",
+                  "type": "Birth",
+                  "date": "1849",
+                  "standard_date": "1849",
+                  "place": "Kentucky"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_265963468",
+              "ark": "ark:/61903/1:1:MZBZ-XBB",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "64dd16a8-2446-469c-8d99-007b53a1dd54",
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Thomas H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "ea297294-29cb-421d-b42e-751531879e6a",
+                  "type": "Birth",
+                  "date": "1852",
+                  "standard_date": "1852",
+                  "place": "Kentucky"
+                },
+                {
+                  "id": "fab671c0-9d7e-4002-9402-dceec3574cc4",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "District 1, Pulaski, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_265963469",
+              "ark": "ark:/61903/1:1:MZBZ-XB1",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "8c76281c-7d1d-4e75-af4d-02ea30007d29",
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Elisabeth J"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "980a2e67-7868-4797-a526-fee659d5c973",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "District 1, Pulaski, Kentucky, United States"
+                },
+                {
+                  "id": "5f9d0ae3-1184-4694-8b52-387a0cb64d4e",
+                  "type": "Birth",
+                  "date": "1854",
+                  "standard_date": "1854",
+                  "place": "Kentucky"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_265963470",
+              "ark": "ark:/61903/1:1:MZBZ-X1M",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "3cacc061-2bf6-42d6-aade-9d73554540cc",
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Amanda"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "1697a2e0-f85f-4cfe-a1e8-9aa07d177f2e",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "District 1, Pulaski, Kentucky, United States"
+                },
+                {
+                  "id": "eafab6f1-3f59-47e6-b5f5-a4223898ef0d",
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858",
+                  "place": "Kentucky"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_265963471",
+              "ark": "ark:/61903/1:1:MZBZ-X19",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "af7eb07f-98b9-4fc0-87b7-b7e004d9f73e",
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Robert"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "86750e22-14ae-479d-9f4b-d763698e1176",
+                  "type": "Birth",
+                  "date": "1823",
+                  "standard_date": "1823",
+                  "place": "Kentucky"
+                },
+                {
+                  "id": "d16af92b-db38-42e2-9d07-7cdb12230657",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "District 1, Pulaski, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_187532764",
+              "resource_type": "Record",
+              "title": "Household of John Burton, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZBZ-6GQ : Mon Jul 08 08:09:02 UTC 2024), Entry for John Burton and Mary A Burton, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M4LF-KGQ",
+              "coverage": {
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1473181",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1860",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1860/1860",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9B9V-P21",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1860",
+                "record_type": "Census",
+                "standard_place": "Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_da2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GB9V-RJ9"
+            },
+            {
+              "id": "sd_p_265963466",
+              "resource_type": "Person",
+              "title": "Louisa Burton, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZBZ-6GQ : Mon Jul 08 08:09:02 UTC 2024), Entry for John Burton and Mary A Burton, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MZBZ-XBT"
+            },
+            {
+              "id": "sd_p_265963467",
+              "resource_type": "Person",
+              "title": "Mary C Burton, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZBZ-6GQ : Mon Jul 08 08:09:02 UTC 2024), Entry for John Burton and Mary A Burton, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MZBZ-XBY"
+            },
+            {
+              "id": "sd_p_265963469",
+              "resource_type": "Person",
+              "title": "Elisabeth J Burton, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZBZ-6GQ : Mon Jul 08 08:09:02 UTC 2024), Entry for John Burton and Mary A Burton, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MZBZ-XB1"
+            },
+            {
+              "id": "sd_p_265963471",
+              "resource_type": "Person",
+              "title": "Robert Eastham, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZBZ-6GQ : Mon Jul 08 08:09:02 UTC 2024), Entry for John Burton and Mary A Burton, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MZBZ-X19"
+            },
+            {
+              "id": "sd_p_265962364",
+              "resource_type": "Person",
+              "title": "John Burton, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZBZ-6GQ : Mon Jul 08 08:09:02 UTC 2024), Entry for John Burton and Mary A Burton, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MZBZ-6GQ"
+            },
+            {
+              "id": "sd_p_265963470",
+              "resource_type": "Person",
+              "title": "Amanda Burton, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZBZ-6GQ : Mon Jul 08 08:09:02 UTC 2024), Entry for John Burton and Mary A Burton, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MZBZ-X1M"
+            },
+            {
+              "id": "sd_p_265963468",
+              "resource_type": "Person",
+              "title": "Thomas H Burton, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZBZ-6GQ : Mon Jul 08 08:09:02 UTC 2024), Entry for John Burton and Mary A Burton, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MZBZ-XBB"
+            },
+            {
+              "id": "sd_p_265962365",
+              "resource_type": "Person",
+              "title": "Mary A Burton, \"United States, Census, 1860\"",
+              "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZBZ-6GQ : Mon Jul 08 08:09:02 UTC 2024), Entry for John Burton and Mary A Burton, 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MZBZ-6G7"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

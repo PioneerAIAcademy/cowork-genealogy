@@ -121,7 +121,9 @@
 
 .footerToggle.active {
   background: var(--accent-gold-soft);
-  color: var(--accent-gold);
+  /* `--accent-gold` on its own soft tint composited 2.72 in light. The strong variant is
+     the readable one and is what every other gold TEXT in the app uses. */
+  color: var(--accent-gold-strong);
   border-color: var(--accent-gold);
 }
 

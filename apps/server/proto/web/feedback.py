@@ -115,6 +115,7 @@ def _is_stale_copy(name: str) -> bool:
 
 TREE_FILENAME = "tree.gedcomx.json"
 STARTING_TREE_FILENAME = "starting-tree.gedcomx.json"
+_PROTECTED_ROOT_FILES = frozenset({"research.json", TREE_FILENAME, STARTING_TREE_FILENAME})
 # These two are named only in the FEEDBACK.md note now. Which files get redacted
 # is decided by shape, not by name — see _redact_living. starting-tree.gedcomx.json
 # is the write-once completion-gate baseline; it carries the same living persons
@@ -362,10 +363,10 @@ def _select_files(
 ) -> tuple[list[tuple[str, bytes]], list[str]]:
     """Apply the media toggle and the total-size cap.
 
-    Returns (kept, dropped_relpaths). Over the cap we drop largest-first, which
-    preserves the small structured JSON that triage actually reads and sheds the
-    big binaries. Whatever gets dropped is named in FEEDBACK.md rather than
-    vanishing silently.
+    Returns (kept, dropped_relpaths). Over the cap we evict in tiers — media
+    first, then results/ sidecars, then everything else — each largest-first
+    within the tier. research.json, tree.gedcomx.json and
+    starting-tree.gedcomx.json are never evicted.
     """
     def wanted(rel: str) -> bool:
         return include_media or _ext(rel) not in _MEDIA_EXTS
@@ -374,13 +375,35 @@ def _select_files(
     dropped = [rel for rel, _ in files if not wanted(rel)]
 
     total = sum(len(d) for _, d in kept)
-    if total > _ZIP_CAP_BYTES:
-        for rel, data in sorted(kept, key=lambda kv: len(kv[1]), reverse=True):
-            if total <= _ZIP_CAP_BYTES:
-                break
-            kept = [kv for kv in kept if kv[0] != rel]
-            dropped.append(rel)
-            total -= len(data)
+    if total <= _ZIP_CAP_BYTES:
+        return kept, dropped
+
+    def _is_protected(rel: str) -> bool:
+        return "/" not in rel and rel in _PROTECTED_ROOT_FILES
+
+    def _tier(rel: str) -> int:
+        """0 = media (evict first), 1 = results/, 2 = other, 3 = protected (never)."""
+        if _is_protected(rel):
+            return 3
+        if _ext(rel) in _MEDIA_EXTS:
+            return 0
+        if rel.startswith("results/"):
+            return 1
+        return 2
+
+    eviction_order = sorted(kept, key=lambda kv: (_tier(kv[0]), -len(kv[1])))
+    surviving = {rel for rel, _ in kept}
+
+    for rel, data in eviction_order:
+        if total <= _ZIP_CAP_BYTES:
+            break
+        if _is_protected(rel):
+            break
+        surviving.discard(rel)
+        dropped.append(rel)
+        total -= len(data)
+
+    kept = [(rel, data) for rel, data in kept if rel in surviving]
     return kept, dropped
 
 
@@ -751,8 +774,9 @@ class _Size:
 
 
 def select_project_files(files: list[ProjectFile], include_media: bool) -> tuple[list[ProjectFile], list[str]]:
-    """``_select_files`` over sizes: the media toggle and the 35 MiB cap, largest dropped
-    first. Redaction only shrinks a document, so selecting on pre-redaction sizes is
+    """``_select_files`` over sizes: the media toggle, the 35 MiB cap, and tiered
+    eviction (media, then results/, then other — protected files never evicted).
+    Redaction only shrinks a document, so selecting on pre-redaction sizes is
     conservative."""
     by_rel = {f.rel: f for f in files}
     kept, dropped = _select_files([(f.rel, _Size(f.size)) for f in files], include_media)

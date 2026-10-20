@@ -1,0 +1,1243 @@
+{
+  "persons": [
+    {
+      "id": "9DQM-45L",
+      "ark": "ark:/61903/4:1:9DQM-45L",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Maria Dorothea",
+          "surname": "Stockburger",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QJF2-PLG"
+        },
+        {
+          "ref": "QJXF-HNY"
+        },
+        {
+          "ref": "3X9L-B2S"
+        },
+        {
+          "ref": "3X9L-YCS"
+        },
+        {
+          "ref": "M7FZ-LH3"
+        }
+      ]
+    },
+    {
+      "id": "9DQM-4PX",
+      "ark": "ark:/61903/4:1:9DQM-4PX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c60e6900-39c4-4acf-babb-36da82093b30",
+          "preferred": true,
+          "given": "Anna Maria",
+          "surname": "Maier",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "9 Nov 1821",
+          "standard_date": "9 Nov 1821",
+          "place": "Oberkirnach, Amt Villingen, Baden",
+          "standard_place": "Oberkirnach, Villingen, Baden"
+        },
+        {
+          "id": "453dddf0-cce9-4ea8-bf89-7f0161420bc3",
+          "type": "Christening",
+          "date": "9 Nov 1821",
+          "standard_date": "9 Nov 1821",
+          "place": "Oberkirnach, Amt Villingen, Baden",
+          "standard_place": "Oberkirnach, Villingen, Baden"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "2 Sep 1900",
+          "standard_date": "2 Sep 1900"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7DC7-Q8K"
+        },
+        {
+          "ref": "QB3D-GM6"
+        },
+        {
+          "ref": "QB3D-LL5"
+        },
+        {
+          "ref": "QB3D-LXQ"
+        },
+        {
+          "ref": "QB3D-KGJ"
+        },
+        {
+          "ref": "QB3D-KJK"
+        },
+        {
+          "ref": "QB3D-K6Q"
+        },
+        {
+          "ref": "QB3D-JRZ"
+        },
+        {
+          "ref": "QB3D-J2T"
+        },
+        {
+          "ref": "QB3D-JF9"
+        },
+        {
+          "ref": "QB3D-N36"
+        },
+        {
+          "ref": "QB3D-FF5"
+        },
+        {
+          "ref": "QB3D-FZR"
+        },
+        {
+          "ref": "QB3D-6TS"
+        },
+        {
+          "ref": "QB3D-6L3"
+        },
+        {
+          "ref": "QB3D-6SX"
+        },
+        {
+          "ref": "QB3D-86R"
+        },
+        {
+          "ref": "QB3D-8CZ"
+        },
+        {
+          "ref": "QB3D-83G"
+        },
+        {
+          "ref": "QQ45-S78"
+        },
+        {
+          "ref": "9KLK-LZK"
+        },
+        {
+          "ref": "9KD5-SRT"
+        },
+        {
+          "ref": "9KD5-93N"
+        },
+        {
+          "ref": "9KDP-RPZ"
+        },
+        {
+          "ref": "9KDP-65L"
+        },
+        {
+          "ref": "9KDP-DHH"
+        },
+        {
+          "ref": "9KDP-8CQ"
+        },
+        {
+          "ref": "9KDP-76H"
+        },
+        {
+          "ref": "9KDP-QWX"
+        },
+        {
+          "ref": "9KDG-B6W"
+        },
+        {
+          "ref": "9KDG-TYV"
+        },
+        {
+          "ref": "9K4F-QQ3"
+        },
+        {
+          "ref": "9K46-YKL"
+        },
+        {
+          "ref": "QBJF-9VV"
+        },
+        {
+          "ref": "QJJY-B5W"
+        },
+        {
+          "ref": "QJFL-81S"
+        },
+        {
+          "ref": "QJF2-YX7"
+        },
+        {
+          "ref": "QJF2-TTF"
+        },
+        {
+          "ref": "QJF2-RCK"
+        },
+        {
+          "ref": "QJF2-55K"
+        },
+        {
+          "ref": "QJF2-PNQ"
+        },
+        {
+          "ref": "QJF2-C5M"
+        },
+        {
+          "ref": "QJF2-HBH"
+        },
+        {
+          "ref": "QJF2-HKF"
+        },
+        {
+          "ref": "QJF2-QH4"
+        },
+        {
+          "ref": "QJF2-S2G"
+        },
+        {
+          "ref": "QJFD-SC3"
+        },
+        {
+          "ref": "QJFD-SQJ"
+        },
+        {
+          "ref": "QJFD-9TL"
+        },
+        {
+          "ref": "QJFD-9V8"
+        },
+        {
+          "ref": "QJFD-96L"
+        },
+        {
+          "ref": "QJFD-MFS"
+        },
+        {
+          "ref": "QJF8-15T"
+        },
+        {
+          "ref": "QJF8-1DS"
+        },
+        {
+          "ref": "QJF8-BQ8"
+        },
+        {
+          "ref": "QJF8-YH9"
+        },
+        {
+          "ref": "QJF8-TKY"
+        },
+        {
+          "ref": "QJF8-TVG"
+        },
+        {
+          "ref": "QJF8-TCC"
+        },
+        {
+          "ref": "QJF8-T7K"
+        },
+        {
+          "ref": "QJF8-GLR"
+        },
+        {
+          "ref": "QJF8-GCG"
+        },
+        {
+          "ref": "QJF8-LYB"
+        },
+        {
+          "ref": "QJF8-LVN"
+        },
+        {
+          "ref": "QJF8-L41"
+        },
+        {
+          "ref": "QJF8-L3L"
+        },
+        {
+          "ref": "QJF8-2B5"
+        },
+        {
+          "ref": "QJF8-2LP"
+        },
+        {
+          "ref": "QJF8-2NN"
+        },
+        {
+          "ref": "QJF8-K1B"
+        },
+        {
+          "ref": "QJXF-HZZ"
+        },
+        {
+          "ref": "M7FZ-L4K"
+        }
+      ]
+    },
+    {
+      "id": "9D31-B4G",
+      "ark": "ark:/61903/4:1:9D31-B4G",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Johann Georg",
+          "surname": "Meyer",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3XSX-QLZ"
+        },
+        {
+          "ref": "3X9L-BN5"
+        },
+        {
+          "ref": "3X9L-TYH"
+        },
+        {
+          "ref": "MLMM-GL1"
+        }
+      ]
+    },
+    {
+      "id": "KCH8-DGS",
+      "ark": "ark:/61903/4:1:KCH8-DGS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Magdalena",
+          "surname": "Mueller",
+          "type": "BirthName"
+        },
+        {
+          "id": "f367c706-f942-43c0-a134-006f031f1e19",
+          "given": "Magdalena",
+          "surname": "Maier",
+          "type": "AlsoKnownAs"
+        },
+        {
+          "id": "84780f84-bd4b-4875-8180-a8619bf1ed1c",
+          "given": "Magdalena",
+          "surname": "Meyer",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5bdebd68-5e63-478a-b66a-6634ac709802",
+          "type": "Birth",
+          "date": "5 March 1817",
+          "standard_date": "5 Mar 1817"
+        },
+        {
+          "id": "aa4e628b-ae96-4d0f-9f78-a9cf442d4b7f",
+          "type": "Christening",
+          "date": "7 March 1817",
+          "standard_date": "7 Mar 1817",
+          "place": "Sankt Georgen im Schwarzwald, Villingen, Baden, Germany",
+          "standard_place": "Sankt Georgen im Schwarzwald, Villingen, Baden"
+        },
+        {
+          "id": "0fd29cf1-2250-4f16-a4f3-4bfea6c8a2d1",
+          "type": "Baptism",
+          "date": "7 March 1817",
+          "standard_date": "7 Mar 1817",
+          "place": "Oberkirnach, Villingen, Baden, Germany",
+          "standard_place": "Oberkirnach, Villingen, Baden"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3XSX-79J"
+        },
+        {
+          "ref": "3XSX-3PL"
+        },
+        {
+          "ref": "3XS6-B22"
+        },
+        {
+          "ref": "3XS6-BWJ"
+        },
+        {
+          "ref": "3XS6-Y2B"
+        },
+        {
+          "ref": "3XS6-T59"
+        },
+        {
+          "ref": "9JFG-756"
+        },
+        {
+          "ref": "MW5D-XRH"
+        },
+        {
+          "ref": "M5VW-V4W"
+        },
+        {
+          "ref": "MLMM-GLP"
+        },
+        {
+          "ref": "364P-GG7"
+        },
+        {
+          "ref": "MX3K-LFK"
+        },
+        {
+          "ref": "M5LX-8W2"
+        },
+        {
+          "ref": "3X9G-DLD"
+        },
+        {
+          "ref": "3X9G-8GX"
+        },
+        {
+          "ref": "3X9G-CZH"
+        },
+        {
+          "ref": "3X9G-3RY"
+        },
+        {
+          "ref": "3X9G-S1H"
+        },
+        {
+          "ref": "3X9G-9Y4"
+        },
+        {
+          "ref": "3X9L-1LW"
+        },
+        {
+          "ref": "3X9L-B7V"
+        },
+        {
+          "ref": "3X9L-T64"
+        },
+        {
+          "ref": "MJSC-4NC"
+        },
+        {
+          "ref": "M5LX-9FN"
+        },
+        {
+          "ref": "3X92-M3C"
+        },
+        {
+          "ref": "3X9K-B6S"
+        }
+      ]
+    },
+    {
+      "id": "9DQM-45F",
+      "ark": "ark:/61903/4:1:9DQM-45F",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Joh. Georg",
+          "surname": "Meyer",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QJF2-PKJ"
+        },
+        {
+          "ref": "QJXF-HFM"
+        },
+        {
+          "ref": "M7FZ-L4Y"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "9D31-B4G",
+      "person2": "9DQM-45L"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "9DQM-45F",
+      "person2": "9DQM-45L"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "9D31-B4G",
+      "child": "KCH8-DGS"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "9DQM-45L",
+      "child": "KCH8-DGS"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "9DQM-45F",
+      "child": "9DQM-4PX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "9DQM-45L",
+      "child": "9DQM-4PX",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_9DQM-45L",
+      "title": "Maria Dorothea Stockburger",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Dorothea Stockburger (PID 9DQM-45L); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:9DQM-45L"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_9DQM-4PX",
+      "title": "Anna Maria Maier",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Anna Maria Maier (PID 9DQM-4PX); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:9DQM-4PX"
+    },
+    {
+      "id": "sd_person_9D31-B4G",
+      "title": "Johann Georg Meyer",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Johann Georg Meyer (PID 9D31-B4G); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:9D31-B4G"
+    },
+    {
+      "id": "sd_person_KCH8-DGS",
+      "title": "Magdalena Mueller",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Magdalena Mueller (PID KCH8-DGS); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KCH8-DGS"
+    },
+    {
+      "id": "sd_person_9DQM-45F",
+      "title": "Joh. Georg Meyer",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Joh. Georg Meyer (PID 9DQM-45F); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:9DQM-45F"
+    },
+    {
+      "id": "QJF2-PLG",
+      "title": "Maria Dorothea, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD6-WLG9 : Sun Jul 27 00:12:00 UTC 2025), Maria Dorothea in entry for Anna Maria Meyer, 9. November 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD6-WLG9"
+    },
+    {
+      "id": "M7FZ-LH3",
+      "title": "Maria Dorothea Stockburger in entry for Anna Maria Meyer, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NGTR-6V3 : 26 October 2021), Maria Dorothea Stockburger in entry for Anna Maria Meyer, 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NGTR-6V3"
+    },
+    {
+      "id": "3X9L-YCS",
+      "title": "Stockburger, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-3317 : Sat Jul 26 23:06:41 UTC 2025), Stockburger in entry for Christian Bäuerle, 8. Juni 1837.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-3317"
+    },
+    {
+      "id": "QJXF-HNY",
+      "title": "Stockburger, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-46T6 : Sun Oct 12 16:13:57 UTC 2025), Stockburger in entry for Jakob Weisser, 19 Aug 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-46T6"
+    },
+    {
+      "id": "3X9L-B2S",
+      "title": "Maria Dorothea Stockburger in entry for Christian Baeuerle, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N85W-W2L : 24 October 2021), Maria Dorothea Stockburger in entry for Christian Baeuerle, 1837.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N85W-W2L"
+    },
+    {
+      "id": "7DC7-Q8K",
+      "title": "Anna Maria, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-WX97 : Sat Jul 26 18:44:52 UTC 2025), Anna Maria in entry for Gottlieb Wintermantel, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-WX97"
+    },
+    {
+      "id": "QB3D-GM6",
+      "title": "Anna Maria Mayer in entry for Ursula Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NGTR-NY9 : 3 December 2025), Anna Maria Mayer in entry for Ursula Weisser, 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NGTR-NY9"
+    },
+    {
+      "id": "QB3D-LL5",
+      "title": "Anna Maria Maier in entry for Anna Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NV6K-S81 : 3 December 2025), Anna Maria Maier in entry for Anna Weisser, 1855.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NV6K-S81"
+    },
+    {
+      "id": "QB3D-LXQ",
+      "title": "Anna Maria Mayer in entry for Salomea Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N87L-CFD : 3 December 2025), Anna Maria Mayer in entry for Salomea Weisser, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N87L-CFD"
+    },
+    {
+      "id": "QB3D-KGJ",
+      "title": "Anna Maria Maier in entry for Matthias Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4L8-BSK : 3 December 2025), Anna Maria Maier in entry for Matthias Weisser, 1856.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4L8-BSK"
+    },
+    {
+      "id": "QB3D-KJK",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-SYFF : Wed Oct 15 11:56:44 UTC 2025), Maier in entry for Jakob Weißer, 19 Apr 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-SYFF"
+    },
+    {
+      "id": "QB3D-K6Q",
+      "title": "Anna Maria Mayer in entry for Anna Maria Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N87L-HDW : 3 December 2025), Anna Maria Mayer in entry for Anna Maria Weisser, 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N87L-HDW"
+    },
+    {
+      "id": "QB3D-JRZ",
+      "title": "Anna Maria Maier in entry for Barbara Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N87L-C7F : 3 December 2025), Anna Maria Maier in entry for Barbara Weisser, 1854.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N87L-C7F"
+    },
+    {
+      "id": "QB3D-J2T",
+      "title": "Anna Maria Maier in entry for Salome Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N87L-C7D : 3 December 2025), Anna Maria Maier in entry for Salome Weisser, 1854.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N87L-C7D"
+    },
+    {
+      "id": "QB3D-JF9",
+      "title": "Anna Maria Maier in entry for Christina Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N87L-CR3 : 3 December 2025), Anna Maria Maier in entry for Christina Weisser, 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N87L-CR3"
+    },
+    {
+      "id": "QB3D-N36",
+      "title": "Anna Maria, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-9GPF : Sat Jul 26 23:43:29 UTC 2025), Anna Maria in entry for Salome Weisser, 21. Februar 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-9GPF"
+    },
+    {
+      "id": "QB3D-FF5",
+      "title": "Anna Maria Maier in entry for Salome Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NGTR-JBJ : 3 December 2025), Anna Maria Maier in entry for Salome Weisser, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NGTR-JBJ"
+    },
+    {
+      "id": "QB3D-FZR",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPDK-PLKF : Sat Jul 26 20:46:55 UTC 2025), Maier in entry for Johann Georg Weisser, 31. Januar 1846.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPDK-PLKF"
+    },
+    {
+      "id": "QB3D-6TS",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-4X7L : Sat Jul 26 23:44:02 UTC 2025), Maier in entry for Jakob Weisser, 20. September 1848.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-4X7L"
+    },
+    {
+      "id": "QB3D-6L3",
+      "title": "Anna Maria Maier in entry for Johann Georg Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4L8-YSR : 3 December 2025), Anna Maria Maier in entry for Johann Georg Weisser, 1846.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4L8-YSR"
+    },
+    {
+      "id": "QB3D-6SX",
+      "title": "Anna Maria Maier in entry for Maria Dorothea Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NGTR-FBH : 3 December 2025), Anna Maria Maier in entry for Maria Dorothea Weisser, 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NGTR-FBH"
+    },
+    {
+      "id": "QB3D-86R",
+      "title": "Anna Maria Maier in entry for Jakob Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4L8-BBB : 3 December 2025), Anna Maria Maier in entry for Jakob Weisser, 1848.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4L8-BBB"
+    },
+    {
+      "id": "QB3D-8CZ",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPDK-YL3N : Sun Oct 19 01:09:37 UTC 2025), Maier in entry for Maria Dorothea Weisser, 17 Nov 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPDK-YL3N"
+    },
+    {
+      "id": "QB3D-83G",
+      "title": "Anna Maria, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-S63G : Sat Jul 26 20:40:52 UTC 2025), Anna Maria in entry for Anna Maria Weisser, 6. Juli 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-S63G"
+    },
+    {
+      "id": "QQ45-S78",
+      "title": "Weiser, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-WMTY : Sat Jul 26 20:39:46 UTC 2025), Weiser in entry for Johann Georg Weifser, 25. April 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-WMTY"
+    },
+    {
+      "id": "9KLK-LZK",
+      "title": "Anna Maria Mayer in entry for Anna Maria Weisser, \"Germany Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4LD-9YX : 3 December 2025), Anna Maria Mayer in entry for Anna Maria Weisser, 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4LD-9YX"
+    },
+    {
+      "id": "9KD5-SRT",
+      "title": "Anna Maria Mayer in entry for Ursula Weisser, \"Germany Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4L8-BYH : 3 December 2025), Anna Maria Mayer in entry for Ursula Weisser, 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4L8-BYH"
+    },
+    {
+      "id": "9KD5-93N",
+      "title": "Anna Maria Mayer in entry for Salomea Weisser, \"Germany Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4LD-9PN : 3 December 2025), Anna Maria Mayer in entry for Salomea Weisser, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4LD-9PN"
+    },
+    {
+      "id": "9KDP-RPZ",
+      "title": "Anna Maria Maier in entry for Johann Georg Weisser and Marie Dorothe Weisser, \"Deutschland Heiraten, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VCBM-741 : 3 December 2025), Anna Maria Maier in entry for Johann Georg Weisser, 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VCBM-741"
+    },
+    {
+      "id": "9KDP-65L",
+      "title": "Anna Maria Maier in entry for Johann Georg Weisser and Barbara Kieninger, \"Germany Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VCBM-7C8 : 3 December 2025), Anna Maria Maier in entry for Johann Georg Weisser, 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VCBM-7C8"
+    },
+    {
+      "id": "9KDP-DHH",
+      "title": "Anna Maria Maier in entry for Barbara Weisser, \"Germany Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4LD-3LW : 3 December 2025), Anna Maria Maier in entry for Barbara Weisser, 1854.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4LD-3LW"
+    },
+    {
+      "id": "9KDP-8CQ",
+      "title": "Anna Maria Maier in entry for Salome Weisser, \"Germany Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4L8-BMR : 3 December 2025), Anna Maria Maier in entry for Salome Weisser, 1854.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4L8-BMR"
+    },
+    {
+      "id": "9KDP-76H",
+      "title": "Anna Maria Maier in entry for Salome Weisser, \"Germany Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4LD-MDS : 3 December 2025), Anna Maria Maier in entry for Salome Weisser, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4LD-MDS"
+    },
+    {
+      "id": "9KDP-QWX",
+      "title": "Anna Maria Maier in entry for Anna Weisser, \"Germany Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4L8-B9F : 3 December 2025), Anna Maria Maier in entry for Anna Weisser, 1855.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4L8-B9F"
+    },
+    {
+      "id": "9KDG-B6W",
+      "title": "Anna Maria Maier in entry for Maria Dorothea Weisser, \"Germany Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4LD-7V4 : 3 December 2025), Anna Maria Maier in entry for Maria Dorothea Weisser, 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4LD-7V4"
+    },
+    {
+      "id": "9KDG-TYV",
+      "title": "Anna Maria Maier in entry for Christina Weisser, \"Germany Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4L8-R3N : 3 December 2025), Anna Maria Maier in entry for Christina Weisser, 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4L8-R3N"
+    },
+    {
+      "id": "9K4F-QQ3",
+      "title": "Anna Maier in entry for Christian Weisser and Christine Weisser, \"Germany Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VCBM-7H5 : 3 December 2025), Anna Maier in entry for Christian Weisser, 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VCBM-7H5"
+    },
+    {
+      "id": "9K46-YKL",
+      "title": "Anna Maria Maier in entry for Christian Weisser and Christina Kopp, \"Germany Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VCBM-NQ3 : 3 December 2025), Anna Maria Maier in entry for Christian Weisser, 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VCBM-NQ3"
+    },
+    {
+      "id": "QBJF-9VV",
+      "title": "Anna Maria Maier in entry for Anna Maria Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:CQ9D-VRZM : 3 December 2025), Anna Maria Maier in entry for Anna Maria Weisser, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:CQ9D-VRZM"
+    },
+    {
+      "id": "QJJY-B5W",
+      "title": "Wayer, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPDK-YLMC : Sat Jul 26 20:38:21 UTC 2025), Wayer in entry for Ursula Weiß, 18. Juni 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPDK-YLMC"
+    },
+    {
+      "id": "QJFL-81S",
+      "title": "Anna Maria, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-M44F : Sat Jul 26 18:32:26 UTC 2025), Anna Maria in entry for Andreas Lehmann, 14. Juni 1888.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-M44F"
+    },
+    {
+      "id": "QJF2-YX7",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-WMB4 : Sat Jul 26 20:39:44 UTC 2025), Maier in entry for Christian Weißer, 4. Juli 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-WMB4"
+    },
+    {
+      "id": "QJF2-TTF",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPDK-1V3B : Sat Jul 26 20:41:31 UTC 2025), Maier in entry for Marie Dorothea Weisser, Dezember 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPDK-1V3B"
+    },
+    {
+      "id": "QJF2-RCK",
+      "title": "Maria Maier, „Deutschland, Baden, Erzbistum Freiburg, katholische Kirchenbücher, 1463-1931“",
+      "citation": "\"Deutschland, Baden, Erzbistum Freiburg, katholische Kirchenbücher, 1463-1931\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7MZJ-ZF3Z : Tue Sep 29 16:07:44 UTC 2026), Maria Maier in entry for Philipp Weisser and Maria Ganter, 2. April 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7MZJ-ZF3Z"
+    },
+    {
+      "id": "QJF2-55K",
+      "title": "A. Maria Maier in entry for Philipp Weisser, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:J4YW-VN1 : 23 November 2020), A. Maria Maier in entry for Philipp Weisser, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:J4YW-VN1"
+    },
+    {
+      "id": "QJF2-PNQ",
+      "title": "Anna Maria Meyer, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD6-WLLB : Sun Jul 27 00:12:00 UTC 2025), Anna Maria Meyer, 9. November 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD6-WLLB"
+    },
+    {
+      "id": "QJF2-C5M",
+      "title": "Anna Maria Moser, „Deutschland Tote und Beerdigungen, 1582-1958“",
+      "citation": "\"Deutschland Tote und Beerdigungen, 1582-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:J4WX-4QG : Fri Oct 09 20:55:24 UTC 2026), Anna Maria Moser in entry for Matthias Weisser, 13 January 1855.",
+      "url": "https://familysearch.org/ark:/61903/1:1:J4WX-4QG"
+    },
+    {
+      "id": "QJF2-HBH",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPDK-YL4J : Sat Jul 26 20:41:11 UTC 2025), Maier in entry for Friedrich Weißer, 9. Juli 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPDK-YL4J"
+    },
+    {
+      "id": "QJF2-HKF",
+      "title": "Anna Maria Maier in entry for Anna Maria Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:CQ9D-Z8T2 : 3 December 2025), Anna Maria Maier in entry for Anna Maria Weisser, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:CQ9D-Z8T2"
+    },
+    {
+      "id": "QJF2-QH4",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPDK-1J5Z : Sat Oct 18 08:51:17 UTC 2025), Maier in entry for John, 22 Sep 1862.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPDK-1J5Z"
+    },
+    {
+      "id": "QJF2-S2G",
+      "title": "Anna Maria Maier in entry for Johannes Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4L8-RN6 : 3 December 2025), Anna Maria Maier in entry for Johannes Weisser, 1862.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4L8-RN6"
+    },
+    {
+      "id": "QJFD-SC3",
+      "title": "Anna Maria Maier in entry for Gottlieb Wintermantel, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N8P1-4FH : 24 October 2021), Anna Maria Maier in entry for Gottlieb Wintermantel, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N8P1-4FH"
+    },
+    {
+      "id": "QJFD-SQJ",
+      "title": "Anna Maria Maier in entry for Andreas Lehmann, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N8PB-1JZ : 24 October 2021), Anna Maria Maier in entry for Andreas Lehmann, 1888.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N8PB-1JZ"
+    },
+    {
+      "id": "QJFD-9TL",
+      "title": "Anna Maria, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-WPHP : Sat Jul 26 20:48:16 UTC 2025), Anna Maria in entry for Anna Weißer, 16. Oktober 1855.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-WPHP"
+    },
+    {
+      "id": "QJFD-9V8",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPDK-1JLH : Sat Jul 26 23:43:17 UTC 2025), Maier in entry for Friedrich Weisser, 21. November 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPDK-1JLH"
+    },
+    {
+      "id": "QJFD-96L",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-4Q1D : Sat Jul 26 18:49:07 UTC 2025), Maier in entry for Christian Storz, 25. April 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-4Q1D"
+    },
+    {
+      "id": "QJFD-MFS",
+      "title": "Anna Maria Maier in entry for Friedrich Weisser, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VCBM-T7K : 3 December 2025), Anna Maria Maier in entry for Friedrich Weisser, 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VCBM-T7K"
+    },
+    {
+      "id": "QJF8-15T",
+      "title": "Anna Maria Maier in entry for Christian Storz, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N859-G36 : 24 October 2021), Anna Maria Maier in entry for Christian Storz, 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N859-G36"
+    },
+    {
+      "id": "QJF8-1DS",
+      "title": "Mayer, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-W9MK : Sat Jul 26 20:46:00 UTC 2025), Mayer in entry for Anna Maria Weißer, 13. März 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-W9MK"
+    },
+    {
+      "id": "QJF8-BQ8",
+      "title": "Anna Maria Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPDK-1H7N : Sat Jul 26 20:39:11 UTC 2025), Anna Maria Maier in entry for Barbara Weißer, 12. Oktober 1854.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPDK-1H7N"
+    },
+    {
+      "id": "QJF8-YH9",
+      "title": "Anna Maria, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPDK-B7KZ : Sat Jul 26 20:37:29 UTC 2025), Anna Maria in entry for Christina Weißer, 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPDK-B7KZ"
+    },
+    {
+      "id": "QJF8-TKY",
+      "title": "Meyer, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-3NBL : Sat Jul 26 20:39:49 UTC 2025), Meyer in entry for Philipp Weißer, 4. Juni 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-3NBL"
+    },
+    {
+      "id": "QJF8-TVG",
+      "title": "Anna Maria, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-43PD : Sat Jul 26 19:22:36 UTC 2025), Anna Maria in entry for Matthias Weißer, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-43PD"
+    },
+    {
+      "id": "QJF8-TCC",
+      "title": "Anna Maria Maier in entry for Matthias Weisser, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N85H-VXQ : 26 October 2021), Anna Maria Maier in entry for Matthias Weisser, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N85H-VXQ"
+    },
+    {
+      "id": "QJF8-T7K",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPDK-B7J5 : Sat Jul 26 20:50:15 UTC 2025), Maier in entry for Johann Georg Weißer, 18. April 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPDK-B7J5"
+    },
+    {
+      "id": "QJF8-GLR",
+      "title": "Anna Maria Mayer in entry for Philipp Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4L8-RX4 : 3 December 2025), Anna Maria Mayer in entry for Philipp Weisser, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4L8-RX4"
+    },
+    {
+      "id": "QJF8-GCG",
+      "title": "Anna Maria Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-3S6T : Sat Jul 26 20:47:48 UTC 2025), Anna Maria Maier in entry for Matthias Weißer, 28. November 1856.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-3S6T"
+    },
+    {
+      "id": "QJF8-LYB",
+      "title": "Anna Maria Maier in entry for Jakob Weisser, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:J4RR-6J1 : 3 December 2025), Anna Maria Maier in entry for Jakob Weisser, 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:J4RR-6J1"
+    },
+    {
+      "id": "QJF8-LVN",
+      "title": "Anna Maria, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-H7G6 : Sat Jul 26 23:44:35 UTC 2025), Anna Maria in entry for Christian Weisser, 24. Oktober 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-H7G6"
+    },
+    {
+      "id": "QJF8-L41",
+      "title": "Anna Maria Maier in entry for Christian Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4LD-7C3 : 3 December 2025), Anna Maria Maier in entry for Christian Weisser, 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4LD-7C3"
+    },
+    {
+      "id": "QJF8-L3L",
+      "title": "Anna Maria Maier in entry for Jakob Weisser, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N8PY-R29 : 24 October 2021), Anna Maria Maier in entry for Jakob Weisser, 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N8PY-R29"
+    },
+    {
+      "id": "QJF8-2B5",
+      "title": "Anna Maria, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPDK-BYRB : Sat Jul 26 23:43:35 UTC 2025), Anna Maria in entry for Philipp Weisser, 21. Juli 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPDK-BYRB"
+    },
+    {
+      "id": "QJF8-2LP",
+      "title": "Meier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD6-XJ8K : Wed Oct 15 07:13:15 UTC 2025), Meier in entry for Jakob Weisser, 1 Mar 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD6-XJ8K"
+    },
+    {
+      "id": "QJF8-2NN",
+      "title": "Anna Maria Maier in entry for Philipp Weisser, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V4LD-MZW : 3 December 2025), Anna Maria Maier in entry for Philipp Weisser, 1847.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4LD-MZW"
+    },
+    {
+      "id": "QJF8-K1B",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-9DCJ : Sat Jul 26 20:39:27 UTC 2025), Maier in entry for Philipp Weisser, 28. März 1847.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-9DCJ"
+    },
+    {
+      "id": "QJXF-HZZ",
+      "title": "Anna Maria Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-46TC : Sun Oct 12 16:13:57 UTC 2025), Anna Maria Maier in entry for Jakob Weisser, 19 Aug 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-46TC"
+    },
+    {
+      "id": "M7FZ-L4K",
+      "title": "Anna Maria Meyer, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NGTR-6V9 : 26 October 2021), Anna Maria Meyer, 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NGTR-6V9"
+    },
+    {
+      "id": "3XSX-QLZ",
+      "title": "Johann Georg Meÿer, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD6-95WN : Thu Oct 16 00:26:37 UTC 2025), Johann Georg Meÿer in entry for Magdalena Meyer, 7 Mar 1817.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD6-95WN"
+    },
+    {
+      "id": "3X9L-BN5",
+      "title": "Johann Georg Maier in entry for Christian Baeuerle, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N85W-W22 : 24 October 2021), Johann Georg Maier in entry for Christian Baeuerle, 1837.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N85W-W22"
+    },
+    {
+      "id": "3X9L-TYH",
+      "title": "Joh. Georg Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-33B1 : Sat Jul 26 23:06:41 UTC 2025), Joh. Georg Maier in entry for Christian Bäuerle, 8. Juni 1837.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-33B1"
+    },
+    {
+      "id": "MLMM-GL1",
+      "title": "Johann Georg Meyer in entry for Magdalena Meyer, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N87L-WZP : 26 October 2021), Johann Georg Meyer in entry for Magdalena Meyer, 1817.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N87L-WZP"
+    },
+    {
+      "id": "3XSX-79J",
+      "title": "Magdalena Meyer, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD6-95WX : Thu Oct 16 00:26:37 UTC 2025), Magdalena Meyer, 7 Mar 1817.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD6-95WX"
+    },
+    {
+      "id": "3XSX-3PL",
+      "title": "Magdalena Maier in entry for Anna Dorothea Müller, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:CQ96-Q1PZ : 26 October 2021), Magdalena Maier in entry for Anna Dorothea Müller, 1862.",
+      "url": "https://familysearch.org/ark:/61903/1:1:CQ96-Q1PZ"
+    },
+    {
+      "id": "3XS6-B22",
+      "title": "Magdalena, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-QZT7 : Sat Jul 26 23:10:44 UTC 2025), Magdalena in entry for Anna Marie Magdalena Bäuerle, 22. Juni 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-QZT7"
+    },
+    {
+      "id": "3XS6-BWJ",
+      "title": "Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD6-43WH : Sun Jul 27 00:07:27 UTC 2025), Maier in entry for Anna Maria Magdalena Bäuerle, 20. November 1857.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD6-43WH"
+    },
+    {
+      "id": "3XS6-Y2B",
+      "title": "Magdalena, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-33WC : Sat Jul 26 18:49:24 UTC 2025), Magdalena in entry for Andreas Müller, 29. Juli 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-33WC"
+    },
+    {
+      "id": "3XS6-T59",
+      "title": "Magdalena, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD6-4X8Y : Sat Jul 26 22:46:45 UTC 2025), Magdalena in entry for Anna Maria Bäunrle, 29. September 1839.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD6-4X8Y"
+    },
+    {
+      "id": "9JFG-756",
+      "title": "Magdalena Maier in entry for Anna Maria Magdalena Bäuerle, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NCC4-9FC : 26 October 2021), Magdalena Maier in entry for Anna Maria Magdalena Bäuerle, 1857.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NCC4-9FC"
+    },
+    {
+      "id": "MW5D-XRH",
+      "title": "Magdalena Maier in entry for Anna Maria Magdalena Bäuerle, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N872-179 : 26 October 2021), Magdalena Maier in entry for Anna Maria Magdalena Bäuerle, 1857.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N872-179"
+    },
+    {
+      "id": "M5VW-V4W",
+      "title": "Magdalena Maier in entry for Anna Maria Magdalena Bäuerle, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X1JN-FS9 : 26 October 2021), Magdalena Maier in entry for Anna Maria Magdalena Bäuerle, 1857.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X1JN-FS9"
+    },
+    {
+      "id": "MLMM-GLP",
+      "title": "Magdalena Meyer, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N87L-WZG : 26 October 2021), Magdalena Meyer, 1817.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N87L-WZG"
+    },
+    {
+      "id": "364P-GG7",
+      "title": "Magdalena Mayer in entry for Andreas Mueller, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N8PT-VZ1 : 24 October 2021), Magdalena Mayer in entry for Andreas Mueller, 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N8PT-VZ1"
+    },
+    {
+      "id": "MX3K-LFK",
+      "title": "Magdalena Maier in entry for Anna Maria Bäuerle, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N872-1D4 : 26 October 2021), Magdalena Maier in entry for Anna Maria Bäuerle, 1839.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N872-1D4"
+    },
+    {
+      "id": "M5LX-8W2",
+      "title": "Magdalena Maier in entry for Anna Maria Bäuerle, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X1JN-6BB : 26 October 2021), Magdalena Maier in entry for Anna Maria Bäuerle, 1839.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X1JN-6BB"
+    },
+    {
+      "id": "3X9G-DLD",
+      "title": "Meier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD6-MGFD : Fri Oct 17 17:08:33 UTC 2025), Meier in entry for Anna Dorothea Bauerle, 30 Jan 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD6-MGFD"
+    },
+    {
+      "id": "3X9G-8GX",
+      "title": "Meier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD6-72HT : Sat Oct 18 16:29:19 UTC 2025), Meier in entry for Anna Dorothea Bauerle, 30 Jan 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD6-72HT"
+    },
+    {
+      "id": "3X9G-CZH",
+      "title": "Meier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD6-CYYN : Sun Oct 12 19:25:52 UTC 2025), Meier in entry for Anna Dorothea Müller, 31 Dec 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD6-CYYN"
+    },
+    {
+      "id": "3X9G-3RY",
+      "title": "Magdalene, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-SYR4 : Sat Jul 26 18:32:08 UTC 2025), Magdalene in entry for Johann Georg Müller, 29. August 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-SYR4"
+    },
+    {
+      "id": "3X9G-S1H",
+      "title": "Magdalena Maier in entry for Anna Dorothea Bäuerle, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NCC4-X4Z : 26 October 2021), Magdalena Maier in entry for Anna Dorothea Bäuerle, 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NCC4-X4Z"
+    },
+    {
+      "id": "3X9G-9Y4",
+      "title": "Magdalena Maier in entry for Anna Maria Bäuerle, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NCC4-N65 : 26 October 2021), Magdalena Maier in entry for Anna Maria Bäuerle, 1839.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NCC4-N65"
+    },
+    {
+      "id": "3X9L-1LW",
+      "title": "Magdalena Maier in entry for Johann Georg Mueller, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N8PY-5Y9 : 24 October 2021), Magdalena Maier in entry for Johann Georg Mueller, 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N8PY-5Y9"
+    },
+    {
+      "id": "3X9L-B7V",
+      "title": "Magdalena Maier in entry for Christian Baeuerle, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N85W-W2K : 24 October 2021), Magdalena Maier in entry for Christian Baeuerle, 1837.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N85W-W2K"
+    },
+    {
+      "id": "3X9L-T64",
+      "title": "Magdalena Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-33BY : Sat Jul 26 23:06:41 UTC 2025), Magdalena Maier in entry for Christian Bäuerle, 8. Juni 1837.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-33BY"
+    },
+    {
+      "id": "MJSC-4NC",
+      "title": "Magdalena Maier in entry for Anna Dorothea Bäuerle, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NV6V-YMJ : 26 October 2021), Magdalena Maier in entry for Anna Dorothea Bäuerle, 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NV6V-YMJ"
+    },
+    {
+      "id": "M5LX-9FN",
+      "title": "Magdalena Maier in entry for Anna Dorothea Bäuerle, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X1JN-6TP : 26 October 2021), Magdalena Maier in entry for Anna Dorothea Bäuerle, 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X1JN-6TP"
+    },
+    {
+      "id": "3X92-M3C",
+      "title": "Magdalena Mueller in entry for Gottlieb Lehmann, \"Germany, Marriages, 1558-1929\"",
+      "citation": "\"Deutschland Heiraten, 1558-1929\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N8PT-8H1 : 24 October 2021), Magdalena Mueller in entry for Gottlieb Lehmann, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N8PT-8H1"
+    },
+    {
+      "id": "3X9K-B6S",
+      "title": "Magdalena, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-MW75 : Sat Jul 26 18:30:39 UTC 2025), Magdalena in entry for Gottlieb Lehmann, 31. Mai 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-MW75"
+    },
+    {
+      "id": "QJF2-PKJ",
+      "title": "Joh. Georg Meÿer, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD6-WLL1 : Sun Jul 27 00:12:00 UTC 2025), Joh. Georg Meÿer in entry for Anna Maria Meyer, 9. November 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD6-WLL1"
+    },
+    {
+      "id": "QJXF-HFM",
+      "title": "Johann Georg Maier, „Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971“",
+      "citation": "\"Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPD2-46TZ : Sun Oct 12 16:13:57 UTC 2025), Johann Georg Maier in entry for Jakob Weisser, 19 Aug 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPD2-46TZ"
+    },
+    {
+      "id": "M7FZ-L4Y",
+      "title": "Joh. Georg Meyer in entry for Anna Maria Meyer, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NGTR-6VS : 26 October 2021), Joh. Georg Meyer in entry for Anna Maria Meyer, 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NGTR-6VS"
+    }
+  ]
+}

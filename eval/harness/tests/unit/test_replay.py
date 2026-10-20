@@ -347,3 +347,68 @@ def test_a_builder_call_whose_ledger_lost_the_logid_is_not_invented():
     r = replay([_call("build_external_search_url", args, OK_NO_LOG)])
     assert r.research.get("log", []) == []
     assert r.synthesised_ids == 0
+
+
+# The record-id form of extraction_append (#3312), as the e2e ledger records it:
+# one string, the tool's records list, a logId and srcId per record.
+STAGED_ARGS = {"projectPath": "/p", "recordIds": ["ark:/61903/1:1:AAA", "ark:/61903/1:1:BBB"], "questionIds": ["q_001"]}
+STAGED_RESP = (
+    '[{"ok": true, "records": [{"recordId": "ark:/61903/1:1:AAA", "status": "extracted", '
+    '"summary": "x", "logId": "log_004", "srcId": "src_001", "warnings": []}, '
+    '{"recordId": "ark:/61903/1:1:BBB", "status": "extracted", "summary": "y", '
+    '"logId": "log_005", "srcId": "src_002", "warnings": []}]}]'
+)
+STAGED_FINAL = {
+    "log": [{"id": "log_004", "tool": "record_read"}, {"id": "log_005", "tool": "record_read"},
+            {"id": "log_009", "tool": "record_search"}],
+    "sources": [{"id": "src_001", "log_entry_id": "log_004"}, {"id": "src_002", "log_entry_id": "log_005"},
+                {"id": "src_003", "log_entry_id": "log_009"}],
+    "assertions": [{"id": "a_001", "log_entry_id": "log_004"}, {"id": "a_002", "log_entry_id": "log_004"},
+                   {"id": "a_003", "log_entry_id": "log_005"}, {"id": "a_004", "log_entry_id": "log_009"}],
+}
+
+
+def test_a_record_id_extraction_is_read_back_from_the_final_notes():
+    """The arguments carry no assertions, so the generic path wrote one empty
+    log entry and none of them: every later assertions query replayed short."""
+    r = replay([_call("extraction_append", STAGED_ARGS, STAGED_RESP)], final_research=STAGED_FINAL)
+    assert [e["id"] for e in r.research["log"]] == ["log_004", "log_005"]
+    assert [e["id"] for e in r.research["sources"]] == ["src_001", "src_002"]
+    assert [e["id"] for e in r.research["assertions"]] == ["a_001", "a_002", "a_003"]
+    assert r.research["log"][0] == {"id": "log_004", "tool": "record_read"}
+    assert r.applied == 7 and not r.unmodelled
+
+
+def test_a_record_id_extraction_without_final_notes_is_reported_not_guessed():
+    r = replay([_call("extraction_append", STAGED_ARGS, STAGED_RESP)])
+    assert r.research.get("log", []) == [] and r.research.get("assertions", []) == []
+    assert r.unmodelled == {"tool:extraction_append:record-ids": 1}
+
+
+def test_a_record_id_extraction_does_not_duplicate_what_is_already_there():
+    start = {"log": [{"id": "log_004", "tool": "record_read"}], "sources": [], "assertions": [{"id": "a_001", "log_entry_id": "log_004"}]}
+    r = replay([_call("extraction_append", STAGED_ARGS, STAGED_RESP)], start, final_research=STAGED_FINAL)
+    assert [e["id"] for e in r.research["log"]] == ["log_004", "log_005"]
+    assert [e["id"] for e in r.research["assertions"]] == ["a_001", "a_002", "a_003"]
+
+
+def test_a_record_id_extraction_the_final_notes_lack_is_reported():
+    resp = STAGED_RESP.replace("log_005", "log_099")
+    r = replay([_call("extraction_append", STAGED_ARGS, resp)], final_research=STAGED_FINAL)
+    assert [e["id"] for e in r.research["assertions"]] == ["a_001", "a_002"]
+    assert r.unmodelled == {"extraction_append:not-in-final": 1}
+
+
+def test_a_rejected_record_id_extraction_changes_nothing():
+    bad = '[{"ok": false, "errors": ["no staged record"]}]'
+    r = replay([_call("extraction_append", STAGED_ARGS, bad)], final_research=STAGED_FINAL)
+    assert r.research.get("assertions", []) == []
+    assert r.rejected == 1
+
+
+def test_an_ops_shaped_extraction_ignores_the_final_notes():
+    """The op form still replays its own arguments; final notes are not a shortcut."""
+    resp = '[{"type": "text", "text": "{\\"ok\\": true, \\"results\\": [{\\"entryId\\": \\"a_009\\"}]}"}]'
+    args = {"ops": [{"section": "assertions", "op": "append", "entry": {"value": "v"}}]}
+    r = replay([_call("extraction_append", args, resp)], final_research=STAGED_FINAL)
+    assert r.research["assertions"] == [{"value": "v", "id": "a_009"}]
