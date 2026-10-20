@@ -1024,7 +1024,8 @@ bodies all said "a deny binds even under `bypassPermissions`; an omission alone
 is not." Seven of them cited the birkeland lane breach for it,
 which says nothing about `bypassPermissions`, denies, or omissions. Probed
 2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
-probe-agent-binding`, reproduced twice): under `bypassPermissions` **both**
+probe-agent-binding`, reproduced twice; re-run 2026-10-20 on 2.1.294 / SDK 0.2.165,
+same result): under `bypassPermissions` **both**
 bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
 denied one is. So the omission is what kept `record-extractor` (since retired) off the broad
 `research_append`, and its deny restated that rather than being the last line.
@@ -1107,7 +1108,9 @@ driver must wait.
 
 > **Correction to three comments in the code (verified 2026-08-02).**
 > `ENABLE_TOOL_SEARCH=true` **enables** deferred/tool-search mode. It does *not*
-> eager-load schemas. Confirmed against the installed CLI (v2.1.220): a truthy
+> eager-load schemas. Confirmed against the installed CLI (v2.1.220; on 2.1.294 a
+> hosted session's first request still offers `ToolSearch` and only the `ALWAYS_LOAD`
+> schemas, `apps/server/dev/probe_session_start_cache.py`, 2026-10-20): a truthy
 > value (`true|1|yes|on`) turns tool search **on**; `auto` / `auto:N` is adaptive;
 > a **falsy** value (`false|0|no|off`) is what turns it **off**. Critically,
 > **unset also means on** — deleting the variable does not eager-load anything.
@@ -1130,7 +1133,7 @@ driver must wait.
 >
 > **Exception: `ALWAYS_LOAD` (`src/tool-schemas.ts`).** Those tools carry
 > `_meta: {"anthropic/alwaysLoad": true}` in `tools/list`, which the Claude Code
-> CLI honors under any server name (verified on 2.1.139 and 2.1.220; unverified in
+> CLI honors under any server name (verified on 2.1.139, 2.1.220 and 2.1.294; unverified in
 > Cowork). The set is sized from the September e2e corpus. 76 of 82
 > `research_append` re-loads follow a `compact_boundary`, which is consistent with
 > compaction dropping a ToolSearch-loaded schema. An always-loaded one is not

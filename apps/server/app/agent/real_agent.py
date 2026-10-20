@@ -113,8 +113,8 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
     its skills; the namespaced agent names remain registered too and resolve to
     these same definitions, so either spelling is now correct.
 
-    Verified live against CLI 2.1.220 and guarded by
-    ``tests/test_plugin_agents.py``. Issue #939.
+    Verified live against CLI 2.1.220 and again on 2.1.294 (``make agent-smoke``,
+    2026-10-20), and guarded by ``tests/test_plugin_agents.py``. Issue #939.
     """
     src = Path(_PLUGIN_DIR) / "agents"
     if not src.is_dir():
@@ -210,9 +210,10 @@ _CREDENTIAL_READ_GUARD_TOOLS = tuple(_CREDENTIAL_READ_TOOLS)
 # callback took down `ToolSearch` — a purely local call with nothing to deny
 # (issue #1915). Narrowing it means a starved callback can only ever fail the
 # calls this hook could actually refuse — and THAT CLAIM NEEDED THE ANCHORS
-# BELOW to be true. Raised in review: the bundled CLI (2.1.220) applies a matcher
-# that does not fit its own charset as `new RegExp(t).test(e)`, an unanchored
-# SEARCH. Read out of the binary:
+# BELOW to be true. Raised in review: the bundled CLI applies a matcher that does
+# not fit its own charset as `new RegExp(t).test(e)`, an unanchored SEARCH. Read out
+# of the 2.1.220 binary (2.1.294 keeps the same two charsets and the same fallthrough,
+# renamed `Nrn`/`t9`; re-read 2026-10-20):
 #
 #     function IF_(e,t,r,n){ if(!t||t==="*")return!0;
 #       if((r?/^[a-zA-Z0-9_|, -]+$/:/^[a-zA-Z0-9_|]+$/).test(t))
@@ -273,9 +274,10 @@ _PRETOOL_MATCHER = "|".join(
 #
 # Unset, the effective value is the CLI's own default, and that default IS
 # findable — an earlier version of this comment said it was not, named the wrong
-# CLI (2.1.258; the SDK pinned in uv.lock bundles 2.1.220, as lines 102 and 492
-# already say) and cited two literals that are not hook timeouts. Corrected in
-# review by reading the PreToolUse executor itself out of the binary:
+# CLI (2.1.258, when the SDK pinned in uv.lock bundled 2.1.220) and cited two literals
+# that are not hook timeouts. Corrected in review by reading the PreToolUse executor
+# itself out of the 2.1.220 binary (2.1.294 carries the same pair, `var rd=600000,
+# bVe=30000`):
 #
 #     var Hm=600000, frd=30000;
 #     async function*VOt(e,t,r,n,o,i,s=Hm,a){ ...
@@ -486,8 +488,9 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
     # than refusing it. Without it the Stop hook nudges a turn that is waiting on
     # its own background subagent, and the model answers the nudge by spawning a
     # duplicate (see DELEGATION_TOOLS). Every call not explicitly False is
-    # rewritten, because CLI 2.1.220 backgrounds an agent when the flag is absent
-    # and the measured incidents carried no flag at all.
+    # rewritten, because the CLI backgrounds an agent when the flag is absent (2.1.220,
+    # and 2.1.294: "Agents run in the background by default") and the measured
+    # incidents carried no flag at all.
     # Shared with the prototype: one predicate, one rewrite, so a mutation in either
     # fails tests on both planes. Logged because the stated acceptance is a LIVE hosted
     # turn, and this file's own doctrine is that an inert arm looks identical to a
@@ -834,7 +837,9 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         include_partial_messages=True,
         # ENABLE_TOOL_SEARCH turns tool search ON, not off — the polarity is the
         # opposite of what this comment claimed until issue #1110. Read off the
-        # installed CLI (v2.1.220): a truthy value (`true|1|yes|on`) selects
+        # installed CLI (v2.1.220; on 2.1.294 a hosted session's first request still
+        # offers ToolSearch and only the ALWAYS_LOAD schemas,
+        # dev/probe_session_start_cache.py, 2026-10-20): a truthy value (`true|1|yes|on`) selects
         # deferred/tool-search mode, `auto`/`auto:N` is the adaptive variant, and
         # only a FALSY value (`false|0|no|off`) selects "standard" mode, where
         # every schema is loaded up front. Unset also lands on tool-search mode,

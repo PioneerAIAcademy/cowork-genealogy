@@ -115,7 +115,7 @@ def test_the_rewrite_declines_a_call_that_is_already_in_the_foreground():
         assert foreground_rewrite(tool, {"run_in_background": False}) is None
         assert foreground_rewrite(tool, {}) is not None
         # Only an explicit False declines. None/absent/True are all rewritten,
-        # because CLI 2.1.220 backgrounds an agent when the key is absent.
+        # because the CLI backgrounds an agent when the key is absent (2.1.220, 2.1.294).
         assert foreground_rewrite(tool, {"run_in_background": True}) is not None
         assert foreground_rewrite(tool, {"run_in_background": None}) is not None
 

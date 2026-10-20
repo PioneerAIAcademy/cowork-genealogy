@@ -1838,7 +1838,7 @@ bounded (no I/O, no awaits), so the cost is callback dispatch latency per call.
 A starved callback now fails reads too — the same starved-callback failure class.
 
 **The bare names are anchored, and that is load-bearing.** The bundled CLI
-(2.1.220) applies a matcher that fits neither of its two charsets as
+(2.1.220, and 2.1.294 by a 2026-10-20 re-read) applies a matcher that fits neither of its two charsets as
 `new RegExp(t).test(e)` — an unanchored **search**. Read out of the binary:
 
     function IF_(e,t,r,n){ if(!t||t==="*")return!0;
@@ -1873,8 +1873,9 @@ buffer is ruled out.
 
 `_pretool_hook` also carries an explicit `timeout`. Unset, the bound is the
 CLI's own default, and **that default is findable** — an earlier version of this
-paragraph said it was not, named the wrong CLI (2.1.258; the SDK pinned in
-`uv.lock` bundles **2.1.220**) and cited two literals that are not hook timeouts
+paragraph said it was not, named the wrong CLI (2.1.258, when the SDK pinned in
+`uv.lock` bundled **2.1.220**; it now bundles 2.1.294, which carries the same
+`600000`/`30000` pair) and cited two literals that are not hook timeouts
 at all. Corrected by reading the PreToolUse executor out of the binary:
 
     var Hm=600000, frd=30000;

@@ -206,8 +206,9 @@ corpus basis, and about +$1.11 to +$1.15 on the production basis**. **2.2× does
 full run.** The raw totals of this one pair went the other way (on $9.78 / 67.8 min, off
 $8.27 / 53.6 min) because the off run happened to launch fewer helpers (18 → 15); catharina's
 on-vs-on runs already range from 7 to 16 launches, so one pair's totals measure that spread, not
-the switch. n = 1 pair; the figure is the projection, not the totals. The hosted path runs CLI
-2.1.220, whose deferral code may differ.
+the switch. n = 1 pair; the figure is the projection, not the totals. The hosted path ran CLI
+2.1.220 until the 2026-10 upgrade to 2.1.294, where a hosted session's first request offers
+`ToolSearch` and only the six `ALWAYS_LOAD` schemas (`apps/server/dev/probe_session_start_cache.py`).
 
 Two pieces of work, in order:
 
@@ -480,7 +481,7 @@ variance is process waste with no quality attached.
     the two to be kept in sync. Treat it as an unreviewed gap.
 17. **"The 167,000 ceiling is a Claude Code constant."** It is a constant of
     **2.1.139**, the CLI bundled with the harness's SDK 0.1.81. The hosted plane
-    bundles 2.1.193/2.1.220, where that identifier does not exist.
+    bundled 2.1.193/2.1.220 at the time, where that identifier does not exist.
 18. **"The corpus is 192 runs, not 188."** **188 is correct at the pin**; HEAD is
     larger. And `usage.cli_version` is null on every run, so an SDK regression inside
     the Jul→Sep window cannot be excluded.

@@ -356,7 +356,7 @@ agent-smoke: $(ENGINE_BUILD) ## Live agent-registration check (issue #939) + dea
 	  echo "Dead-stub arm: PASS"
 
 .PHONY: probe-agent-binding
-probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallowedTools: actually bind under bypassPermissions? (6 short sessions, ~13k tokens)
+probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallowedTools: actually bind under bypassPermissions? (12 short sessions, hosted + prototype, ~$3.60)
 	# agent-smoke above reads what the runtime RESOLVED; this reads what it
 	# BOUND, which is the gap issue #1084 names. Six arms — granted, granted
 	# AND denied, omitted — each with tool search off and on, spawn a probe
@@ -366,6 +366,8 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	# Answered 2026-08-30 (Claude Code 2.1.220, SDK 0.2.128): BOTH bind, so a
 	# deny is redundant with omitting the tool. Re-run when the CLI or the SDK
 	# moves, or before adding a deny on the strength of it binding.
+	# Re-run 2026-10-20 (Claude Code 2.1.294, SDK 0.2.165): BOTH bind, all 12 arms.
+	# Bills ~$3.60 (hosted and prototype option sets, 6 arms each).
 	cd apps/server && \
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
@@ -404,6 +406,7 @@ hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook act
 	# Answered 2026-09-09 (Claude Code 2.1.258, SDK 0.2.128): the hosted
 	# loader DOES bind it -- arm A denied with the guard's own reason text,
 	# arm B (hooks/ removed) did not. Re-run when the CLI or the SDK moves.
+	# Re-run 2026-10-20 (Claude Code 2.1.294, SDK 0.2.165): BOUND, same verdict.
 	#
 	# A pass proves the HOSTED loader binds. Cowork is a different loader,
 	# reachable only by a human in a live session, so issue #1160 stays on the

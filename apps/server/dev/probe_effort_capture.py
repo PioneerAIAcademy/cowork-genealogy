@@ -97,6 +97,8 @@ AGENT_MD = PLUGIN_DIR / "agents" / "person-evidence.md"
 sys.path.insert(0, str(SERVER_DIR))
 
 UPSTREAM = "api.anthropic.com"
+# Enough of a streamed reply to hold its `message_start` event, which carries `usage`.
+RESPONSE_HEAD_BYTES = 16384
 
 SCRUBBED_PREFIXES = ("CLAUDE_CODE_", "ANTHROPIC_DEFAULT_")
 SCRUBBED_NAMES = (
@@ -185,7 +187,11 @@ class Capture:
 
 
 def make_handler(cap: Capture):
+    """A capture with ``wants_exchange = True`` instead gets ``record(path, raw, headers)``,
+    which returns a key, and ``record_response(key, head)`` with the first
+    ``RESPONSE_HEAD_BYTES`` of the streamed reply (``probe_session_start_cache.py``)."""
     ctx = ssl.create_default_context()
+    exchange = getattr(cap, "wants_exchange", False)
 
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -198,8 +204,13 @@ def make_handler(cap: Capture):
             raw = self.rfile.read(length) if length else b""
             messages_call = self.command == "POST" and self.path.startswith("/v1/messages") \
                 and not self.path.startswith("/v1/messages/count_tokens")
+            key = None
             if messages_call:
-                cap.record(self.path, raw)
+                if exchange:
+                    key = cap.record(self.path, raw, {k.lower(): v for k, v in self.headers.items()})
+                else:
+                    cap.record(self.path, raw)
+            head = bytearray()
             headers = {k: v for k, v in self.headers.items()
                        if k.lower() not in ("host", "content-length", "connection",
                                             "accept-encoding")}
@@ -225,10 +236,14 @@ def make_handler(cap: Capture):
                     chunk = resp.read1(65536) if hasattr(resp, "read1") else resp.read(65536)
                     if not chunk:
                         break
+                    if key is not None and len(head) < RESPONSE_HEAD_BYTES:
+                        head += chunk[:RESPONSE_HEAD_BYTES - len(head)]
                     self.wfile.write(b"%x\r\n%s\r\n" % (len(chunk), chunk))
                     self.wfile.flush()
                 self.wfile.write(b"0\r\n\r\n")
                 self.wfile.flush()
+                if key is not None:
+                    cap.record_response(key, bytes(head))
             except (BrokenPipeError, ConnectionResetError):
                 pass
             except Exception as exc:
