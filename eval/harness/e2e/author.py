@@ -1399,10 +1399,12 @@ def cmd_validate(args: argparse.Namespace) -> int:
         else:
             errors += presence_mirror(findings, unstripped)
     elif genre == "record-hint":
-        warnings.append(
-            f"no {UNSTRIPPED_TREE} — record-hint fixtures should commit the "
-            f"snapshot (identical to {STARTING_TREE}) so `snapshot --check` "
-            f"can audit upstream drift."
+        # An error, as in `validate_fixture.record_hint_tree_errors`, so this
+        # gate and the corpus gate cannot disagree.
+        errors.append(
+            f"no {UNSTRIPPED_TREE} — record-hint fixtures commit the snapshot "
+            f"(identical to {STARTING_TREE}) so `snapshot --check` can audit "
+            f"upstream drift; run `strip --slug {args.slug} --none`."
         )
     else:
         warnings.append(
