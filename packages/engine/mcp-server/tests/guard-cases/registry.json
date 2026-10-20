@@ -22,6 +22,15 @@
       }
     },
     {
+      "name": "plan-item-completion-record-type",
+      "status": "enforcing",
+      "case_file": "plan-item-completion-record-type.json",
+      "writer_guard": {
+        "file": "packages/engine/mcp-server/src/tools/research-append.ts",
+        "function": "planItemCompletionRecordTypeInvariants"
+      }
+    },
+    {
       "name": "filtered-nil-no-unfiltered-retry",
       "status": "enforcing",
       "case_file": "filtered-nil-no-unfiltered-retry.json",

@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import {
   unpersistedConflictResolutionInvariants,
   competingParentSetsInvariants,
+  planItemCompletionRecordTypeInvariants,
 } from "../../src/tools/research-append.js";
 
 const casesDir = join(dirname(fileURLToPath(import.meta.url)), "..", "guard-cases");
@@ -23,7 +24,19 @@ const registry = JSON.parse(readFileSync(join(casesDir, "registry.json"), "utf-8
 const WRITER_GUARDS: Record<string, (entry: any, research: any, tree?: any) => string[]> = {
   unpersistedConflictResolutionInvariants,
   competingParentSetsInvariants,
+  planItemCompletionRecordTypeInvariants,
 };
+
+/** The entry a case is written for, found by `write` id. A proof-summary guard
+ *  judges a `proof_summaries[]` entry; a plan-item guard judges a
+ *  `plans[].items[]` entry. The id prefixes don't collide (`ps_` vs `pli_`), so
+ *  the fallback picks the right one without the case naming its section. */
+function findEntry(research: any, write: string): any {
+  return (
+    (research.proof_summaries ?? []).find((ps: any) => ps?.id === write) ??
+    (research.plans ?? []).flatMap((p: any) => p?.items ?? []).find((it: any) => it?.id === write)
+  );
+}
 
 interface GuardCase {
   id: string;
@@ -55,8 +68,8 @@ describe("guard case files: writer-tool replay", () => {
     const guard = WRITER_GUARDS[g.writer_guard.function];
     describe(g.name, () => {
       it.each((file.cases as GuardCase[]).map((c) => [c.id, c] as const))("%s", (_id, c) => {
-        const entry = (c.research.proof_summaries ?? []).find((ps: any) => ps?.id === c.write);
-        expect(entry, `case ${c.id}: no summary ${c.write} in its research`).toBeDefined();
+        const entry = findEntry(c.research, c.write);
+        expect(entry, `case ${c.id}: no entry ${c.write} in its research`).toBeDefined();
         const errors = guard(entry, c.research, c.tree);
         if (c.expect === "fire") expect(errors, `case ${c.id} should fire`).toHaveLength(1);
         else expect(errors, `case ${c.id} should be silent`).toEqual([]);
