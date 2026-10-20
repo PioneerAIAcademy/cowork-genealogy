@@ -850,6 +850,39 @@ def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def record_hint_tree_errors(fixture_dir: Path) -> list[str]:
+    """Hard-error check: a record-hint fixture strips nothing.
+
+    Its answer is a record, never part of the tree, so its starting tree is the
+    snapshot as-is and its unstripped tree is committed identical to it
+    (spec §3.6). Compared as parsed JSON, so key order and indentation are not
+    a difference. A record-hint fixture with no unstripped tree fails too: it is
+    what `snapshot --check` audits for upstream drift. `e2e.author validate`
+    makes the same two checks. Drafts are checked as well; stripping is never
+    part of adjudicating one.
+    """
+    fixture_dir = Path(fixture_dir)
+    if suspect_genre(fixture_dir) != "record-hint":
+        return []
+    slug = fixture_dir.name
+    unstripped_path = fixture_dir / "unstripped-tree.gedcomx.json"
+    if not unstripped_path.exists():
+        return [
+            f"genre 'record-hint' commits unstripped-tree.gedcomx.json identical to its starting "
+            f"tree, and this fixture has none — run `strip --slug {slug} --none`"
+        ]
+    try:
+        same = _load_json(unstripped_path) == _load_json(fixture_dir / "starting-tree.gedcomx.json")
+    except (json.JSONDecodeError, OSError):
+        return []  # a parse failure is reported by the caller's own checks
+    if same:
+        return []
+    return [
+        f"genre 'record-hint' declares nothing stripped, but unstripped-tree.gedcomx.json and "
+        f"starting-tree.gedcomx.json differ — re-run `strip --slug {slug} --none`, or fix the genre"
+    ]
+
+
 def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
     """Lint one fixture dir. Returns (suspects, hard_errors).
 
@@ -857,7 +890,9 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
     JSON-Schema violation, a `tree_integrity_errors` failure (dangling refs,
     duplicate ids, living persons), or a `finding_shape_errors` failure (an
     unrecognized finding field, an out-of-enum `type`/`polarity`, a duplicate
-    finding id) — that should fail the run with exit 2; suspects are
+    finding id), or a record-hint fixture whose two trees differ or whose
+    unstripped tree is missing (`record_hint_tree_errors`) — that should fail
+    the run with exit 2; suspects are
     warn-only. `e2e.author validate` reaches the same schema check through
     the same `harness.schema_validator` module, so a fixture cannot pass one
     gate and fail the other.
@@ -903,6 +938,7 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
                 for e in validate_tree_gedcomx_json(unstripped)
             ]
             errors += tree_integrity_errors(unstripped, "unstripped-tree.gedcomx.json")
+    errors += record_hint_tree_errors(fixture_dir)
 
     # Optional: a PID-less fixture under construction may not have one yet.
     research_path = fixture_dir / "starting-research.json"
