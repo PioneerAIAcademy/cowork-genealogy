@@ -1177,7 +1177,7 @@ def test_census_trap_skips_on_negative_test():
 # `_GO_TO_SOURCE_PATTERN` counted any mention of "the original <word>", so a
 # reply saying the original is WRONG satisfied the guard asking whether it
 # recommended going back to it. Both strings below are the ones issue #2382
-# records; both satisfied until the copula exclusion landed.
+# records; both satisfied until the remedy-verb rule landed.
 
 
 def test_a_statement_about_the_original_is_not_a_direction_to_it():
@@ -1190,7 +1190,7 @@ def test_a_statement_about_the_original_is_not_a_direction_to_it():
         "Findings: the underlying record is not this man. Recommend detaching.",
         "Detach the Minnesota Death Index; the underlying attachment was a mistake.",
         # The two-word noun. A copula-exclusion attempt let every one of these
-        # past, which is why the lead ruled for the remedy-verb rule instead
+        # past, which is why the reviewer ruled for the remedy-verb rule instead
         # (2026-10-20). Keep these: they are what distinguishes the two designs.
         "Findings: the original death record is not this man. Recommend detaching.",
         "Findings: the original census entry is not this man.",
@@ -1237,8 +1237,7 @@ def test_the_remedy_verb_must_govern_the_noun_not_merely_precede_it():
 
 
 def test_the_narrowed_branches_still_accept_every_remedy_phrasing():
-    """The false-deny edge. A verb whitelist is what this branch was widened
-    away from, so an unseen verb must still pass."""
+    """The false-deny edge: every listed remedy verb must still pass."""
     for text in (
         "Locate the original certificate held by the state archive.",
         "Obtain the original register entry from the parish.",
@@ -1252,7 +1251,7 @@ def test_the_narrowed_branches_still_accept_every_remedy_phrasing():
 
 
 def test_naming_where_the_original_lives_is_not_recommending_it():
-    """Lead ruling, 2026-10-20: a sentence that says where the record is and
+    """Reviewer ruling, 2026-10-20: a sentence that says where the record is and
     asks the reader to do nothing does NOT satisfy doctrine point 1, which
     requires *recommending* going back to it. Rejecting these is the rule
     working, not a regression — an earlier draft counted them and was wrong."""

@@ -1202,25 +1202,33 @@ reader back to the document the index was made from. It is the only mechanical
 check that the first-line remedy was offered; everything else about the remedy
 is judged inside a paid run.
 
+**A mention of the original is not a direction to it.** The `original` /
+`underlying` alternative counts only where a **remedy verb governs the noun** —
+`locate`, `obtain`, `consult`, `check`, `read`, `view`, `examine`, `order`,
+`request`, `pull`, `find`, `see`, `compare against`, `look at`, `go back to`.
+So `the original record is not this man` fails where `locate the original
+certificate` passes.
+
+The window between verb and noun is bounded and forbids sentence-enders, so the
+two must govern each other rather than merely co-occur: a remedy verb in one
+sentence does not reach a bare mention in the next.
+
+A copula-exclusion design was tried first and **rejected on measurement**: it
+counted the noun unless the next token was a linking verb, which any two-word
+noun walked past — `the original death record is not this man` satisfied it.
+Being defeated by a one-word reword is the lexical-pattern-for-semantic-property
+shape this guard exists to refuse.
+
 It reads `_GO_TO_SOURCE_PATTERN` through `_goes_to_source()`, which strips
-markdown emphasis first. The strip is not cosmetic: a copula in bold sits
-exactly where the lookahead expects a letter, so `the original record **is**
-not this man` walks past an unstripped pattern. Both consumers of the pattern
-go through that accessor so neither can keep the bypass while the other loses
-it.
+markdown emphasis first. The strip is not cosmetic: emphasis can close
+**between** the noun and the word after it, so `**Locate the original** death
+certificate` leaves the pattern's noun tail looking at `original**` and
+failing — a correct remedy sentence silently not counting. Both consumers go
+through that accessor, so neither can keep the gap while the other loses it.
 
-**A mention of the original is not a direction to it.** The `the original …`
-and `underlying …` branches count only where the noun is *not* followed
-immediately by a copula, so a statement that the original is wrong no longer
-satisfies a guard asking whether the reply recommended consulting it. A verb
-whitelist was rejected: fixing the verb is what these branches were widened
-away from, and it is the lexical-pattern-for-semantic-property shape this guard exists to refuse.
-
-What the exclusion deliberately does **not** reach, because it inspects the
-next token position only: an intervening adverb (`the original record simply is
-not…`), a non-copula predicate (`does not describe`, `belongs to`), and a
-comma (`the original record, is not…`). A hyphenated noun is reached, because
-the noun is `[\w'-]+`.
+Known limit, stated rather than claimed shut: a remedy phrasing whose verb is
+not on the list does not count. When a paid run reds a correct report on one,
+widen the list — visible and cheap, where a silent miss is not.
 
 ### 5.12.2 The conditional-detach guard
 

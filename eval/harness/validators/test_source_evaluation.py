@@ -170,7 +170,7 @@ def _recommends_detach(block: str) -> bool:
 # underlying document under any verb, or use the index's own correction route.
 # A reply that recommends only detaching still matches nothing here.
 # A mention of the original is not a direction to it. The branch counts only
-# where a REMEDY VERB governs it — issue #2481's own checklist, and the lead's
+# where a REMEDY VERB governs it — issue #2481's own checklist, and a reviewer's
 # ruling of 2026-10-20 after a copula-exclusion attempt was shown to let any
 # two-word noun past ("the original DEATH record is not this man").
 #
@@ -459,14 +459,15 @@ def test_index_discrepancy_recommends_reread(text_response, test, agent_returns=
 def _goes_to_source(text: str) -> bool:
     """Does the text direct the reader to the underlying document?
 
-    Read with emphasis stripped. A copula in bold sits exactly where the
-    lookahead expects a letter, so `the original record **is** not this man`
-    walks straight past an unstripped pattern — the same bypass PR #3461 closed
-    in the three detach matchers, in the one matcher its test did not cover.
-    251 bold spans across the 53 committed graded replies.
+    Read with emphasis stripped. Emphasis can close BETWEEN the noun and the
+    word after it, so `**Locate the original** death certificate` leaves the
+    pattern's `(?:original|underlying)\\s+\\w+` tail looking at `original**`
+    and failing — a correct remedy sentence silently not counting. The same
+    class PR #3461 closed in the three detach matchers, in the one matcher its
+    test did not cover. 251 bold spans across the 53 committed graded replies.
 
-    Both consumers go through here (`:435` and the checklist-pointer guard), so
-    neither can keep the bypass while the other loses it.
+    Both consumers go through here, so neither can keep the gap while the
+    other loses it.
     """
     return bool(_GO_TO_SOURCE_PATTERN.search(_unemphasised(text)))
 
@@ -490,11 +491,19 @@ _UNMET_CONDITION_RE = re.compile(
     r"\b(if|unless|were\s+it|should\s+it|turns?\s+out)\b", re.IGNORECASE
 )
 
-# ...but a condition on the READER is not a condition on evidence. The card
-# names "if you agree, detach the 1885 census" as a must-not-fire: asking
-# permission is not deferring to a record.
+# ...but asking PERMISSION is not deferring to a record. "if you agree, detach
+# the 1885 census" is a must-not-fire.
+#
+# Keyed on the consent VERB, never on "if you" alone: the agent addresses the
+# reader while naming real evidence often — "if you suspect the township is
+# miskeyed", "if you can obtain the death certificate", "if you find the
+# household does not fit". A bare "if you" carve swallows every one of those,
+# which is the shape this guard exists to catch (review, 2026-10-20).
 _CONSENT_CONDITION_RE = re.compile(
-    r"\b(if|unless)\s+(you|the\s+user|the\s+researcher)\b", re.IGNORECASE
+    r"\b(?:if|unless)\s+(?:you|the\s+user|the\s+researcher)\s+"
+    r"(?:would\s+)?(?:agree|prefer|wish|like|want|consent|approve|are\s+happy|"
+    r"would\s+rather)\b",
+    re.IGNORECASE,
 )
 
 # `_recommends_detach` already subtracts negation, and correctly: it returns
