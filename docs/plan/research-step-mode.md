@@ -227,8 +227,9 @@ that apply:
 
     Apart from that `ctx` check, the predicate checks membership and order only. Router
     prose says when a member is skipped:
-    - person-evidence runs only for unlinked assertions: those with no live link, or only an
-      attachment link (`ATTACHMENT_LINK_RATIONALE`, `docs/plan/attached-records-baseline.md`);
+    - person-evidence runs only for an assertion with no live link, or for a question whose
+      `project_context` `nextStep` names person-evidence, as one resting on attachment links
+      does (`docs/plan/attached-records-baseline.md`);
     - conflict-resolution runs only when an unresolved conflict blocks the question.
   - **The worker and the alpha load `step_boundary.py` from the plugin directory** with
     `importlib.util.spec_from_file_location`, as `eval/harness/harness/context_policy.py`
@@ -1344,8 +1345,14 @@ in parallel with PR 2.
 - **Issue #3516 (`docs/plan/attached-records-baseline.md`):** its PR B is a prerequisite
   (Phases). Its setup baseline is tool calls, so it adds no step boundary. It writes the
   subject's timeline that E's priority-3 rewrite and research-plan read.
-- **PR #3583:** adds a "none linked → person-evidence" rung to the ladder. B's choice arm sits
-  below it, so a declined question with unlinked evidence is linked first.
+  - Its PR D edits `agents/timeline.md`, `person-evidence.md`, `question-selection.md` and
+    `research/SKILL.md`, bodies the prep PRs and PR 2 also edit, so whichever lands second
+    re-runs those four suites.
+  - Land its PR D before PR 2. PR D gates Priority 3 on an objective-scope question. E's
+    rewrite, which moves Priority 3 to research-plan, replaces that gate and keeps PR D's
+    first-question test passing.
+- **PR #3583** (merged): added a "none linked → person-evidence" rung to the ladder. B's choice
+  arm sits below it, so a declined question with unlinked evidence is linked first.
 - **Issue #3153:** the hints plan item, an errand in the search step (D). It creates the hints
   item, its marker and its router row. Whichever of issue #3153 and PR 2 lands second adds the
   errand form: the router row dispatching the hints item after the step's first search-group
