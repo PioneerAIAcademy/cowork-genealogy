@@ -306,6 +306,16 @@ def test_remnant_keeps_the_no_project_marker() -> None:
     assert did_not_land({"response_summary": remnant}) is True
 
 
+def test_remnant_keeps_the_plan_items_marker() -> None:
+    """replay.py reports an extraction's plan-item completion by finding
+    `planItems` in this field (issue #3516); the strip must keep it, and must
+    not invent it on a call that completed nothing."""
+    full = json.dumps({"ok": True, "records": [{"logId": "log_004"}], "planItems": {"completed": ["pli_001"]}})
+    assert '"planItems"' in replay_remnant(full)
+    plain = replay_remnant(json.dumps({"ok": True, "records": [{"logId": "log_004"}]}))
+    assert "planItems" not in (plain or "")
+
+
 def test_remnant_does_not_invent_a_no_project_marker() -> None:
     """The other direction: an ordinary landed write must not come back reading
     as a call that changed nothing."""
