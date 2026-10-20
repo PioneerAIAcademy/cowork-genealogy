@@ -87,7 +87,7 @@ classifications are not yours to send.
   reason in `note`.
 - **Transcribed or computed.** List in `computed` every attribute the text does
   not give: a birth year from an age, a date by arithmetic. A computed birth is
-  a year (`~1845`), never a day.
+  `date: "~1845"`, never a day.
 - **Every named person is their own person.** A father named inside a groom's
   line gets his own entry and his own name. `names[0]` holds the bare name only.
   The tie is a relationship or a `statedRelation`.
