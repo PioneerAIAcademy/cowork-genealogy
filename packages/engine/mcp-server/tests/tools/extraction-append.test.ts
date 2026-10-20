@@ -785,6 +785,17 @@ describe("extraction_append: recordIds and absences", () => {
     expect((await research()).sources).toHaveLength(0);
   });
 
+  it("lets a household member with an accepted hint lead its household, wherever it is in the call", async () => {
+    const { a, b } = household();
+    await seedLog([hintEntry("log_009", b.recordId)]);
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [a.recordId, b.recordId] }, readerFor([a, b]) as any, LOCAL);
+    expect(r.records.map((o) => o.status)).toEqual(["already_extracted", "extracted"]);
+    expect(r.records[0].srcId).toBe(r.records[1].srcId);
+    const after = await research();
+    expect(after.sources).toHaveLength(1);
+    expect(after.log.map((e: any) => e.id)).toEqual(["log_009"]);
+  });
+
   it("still extracts a household member with an accepted hint, so the hint's entry is cited", async () => {
     const { a, b } = household();
     await runExtractionAppend({ projectPath: dir, recordIds: [a.recordId] }, readerFor([a]) as any, LOCAL);
@@ -798,7 +809,7 @@ describe("extraction_append: recordIds and absences", () => {
     expect(after.log.filter((e: any) => e.outcome === "positive" && !cited.has(e.id))).toEqual([]);
   });
 
-  it("never groups records that carry no persona ARKs, even when their person ids collide", async () => {
+  it("extracts each of several records that carry no persona ARKs, though their person ids collide", async () => {
     const strip = (el: any, rid: string) => ({
       ...el,
       recordId: rid,

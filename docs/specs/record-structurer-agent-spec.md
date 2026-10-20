@@ -115,8 +115,9 @@ is §11.7's code.
   text's word. A principal has none. Where there are two principals, a parent
   is `father` or `mother`, tied to the child by `parent_child`, and code names
   the side (§11.7). Everyone named gets an entry, the officiant included.
-  On a christening, birth, death or burial with one principal, a `father` or
-  `mother` sent with no `parent_child` edge is that principal's parent:
+  On a christening, birth, death or burial with exactly one person flagged
+  `principal`, a `father` or `mother` sent with no `parent_child` edge is that
+  principal's parent:
   `extraction_append` adds the edge, so the parent is not written as an
   unattached `father_1` and the child's relationship assertion is kept.
 - **Residence (genealogist, 2026-10-04).** A person described as "of
@@ -126,7 +127,8 @@ is §11.7's code.
 - **Gender for every person whose sex the text states**, not only the
   principal. A kin word states it: when a person is sent with no `gender` and
   a `statedRelation` of `father`, `son`, `husband`, `brother`, `mother`,
-  `daughter`, `wife` or `sister`, `extraction_append` sets the gender from it.
+  `daughter`, `wife` or `sister`, `extraction_append` sets the gender from it,
+  and the person's `sex` assertion is written as for a stated gender.
   Roles split mother from father on gender alone, so without this a mother sent
   without a gender is written as a father.
 - **Probate (2026-10-04).** The will's execution is a `will` fact; the

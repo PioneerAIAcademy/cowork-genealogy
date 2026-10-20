@@ -345,14 +345,16 @@ export function documentToExtract(
       ? { type: "http://gedcomx.org/ParentChild", parent: r.person1, child: r.person2 }
       : { type: r.type === "couple" ? "http://gedcomx.org/Couple" : "http://gedcomx.org/Sibling", person1: r.person1, person2: r.person2 },
   ) as { type: string; parent?: string; child?: string; person1?: string; person2?: string }[];
-  // `statedRelation` is the relation to the principal, so on a one-principal
-  // vital record a stated father or mother with no edge is the principal's
-  // parent: the edge is added rather than the parent left tied to no one.
-  if (PARENT_EDGE_RECORDS.has(doc.recordType) && doc.persons.filter((p) => p.principal).length <= 1) {
-    const principalId = (doc.persons.find((p) => p.principal) ?? doc.persons[0])?.id;
+  // `statedRelation` is the relation to the principal, so on a vital record
+  // with exactly one flagged principal a stated father or mother with no edge
+  // is that principal's parent: the edge is added rather than the parent left
+  // tied to no one. With no flag there is no principal to tie them to.
+  const flagged = doc.persons.filter((p) => p.principal);
+  if (PARENT_EDGE_RECORDS.has(doc.recordType) && flagged.length === 1) {
+    const principalId = flagged[0].id;
     for (const p of doc.persons) {
       const rel = p.statedRelation?.trim().toLowerCase();
-      if (!principalId || p.id === principalId || (rel !== "father" && rel !== "mother")) continue;
+      if (p.id === principalId || (rel !== "father" && rel !== "mother")) continue;
       if (relationships.some((r) => r.type === "http://gedcomx.org/ParentChild" && r.parent === p.id)) continue;
       relationships.push({ type: "http://gedcomx.org/ParentChild", parent: p.id, child: principalId });
     }

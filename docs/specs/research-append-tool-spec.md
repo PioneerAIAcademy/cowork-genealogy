@@ -1724,7 +1724,8 @@ In order:
    is not logged, and takes the earlier record's result — `already_extracted`
    with its source, or `refused` when that one was not written. A record with
    no persona ARKs is never grouped. A record with an accepted hint (step 3) is
-   never skipped, so its hint entry is cited. A skipped record's staged file is
+   never skipped, so its hint entry is cited, and it leads its household within
+   the call wherever it is listed. A skipped record's staged file is
    not logged and ages out.
 3. **One `research_log_append` batch** logs every read (`tool: "record_read"`),
    finalizing each staged file into its sidecar. A record an accepted

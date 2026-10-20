@@ -463,6 +463,8 @@ describe("extraction_append: documents", () => {
       "Inger Larsdatter": "mother",
     });
     expect(r.records[0].summary).toContain("- Inger Larsdatter (mother).");
+    const rels = (await assertionsFor("capture:birkeland-1817")).filter((a: any) => a.fact_type === "relationship");
+    expect(rels.map((a: any) => a.value).sort()).toEqual(["child of Inger Larsdatter", "child of Tollev Nadnesen"]);
   });
 
   it("ties a stated parent with no edge to the one principal of a baptism (#3543)", async () => {
@@ -485,6 +487,60 @@ describe("extraction_append: documents", () => {
       "child of Inger Larsdatter",
       "child of Tollev Nadnesen",
     ]);
+  });
+
+  it.each([
+    [
+      "a marriage, which has two principals",
+      {
+        recordType: "marriage",
+        persons: [
+          { id: "p1", principal: true, gender: "male", names: [{ given: "Thomas", surname: "Flynn" }], facts: [{ type: "marriage", date: "11 February 1845" }] },
+          { id: "p2", principal: true, gender: "female", names: [{ given: "Mary", surname: "Cook" }], facts: [{ type: "marriage", date: "11 February 1845" }] },
+          { id: "p3", gender: "male", statedRelation: "father", names: [{ given: "John", surname: "Cook" }] },
+        ],
+      },
+    ],
+    [
+      "an obituary, which is not a vital record",
+      {
+        recordType: "obituary",
+        persons: [
+          { id: "p1", principal: true, gender: "male", names: [{ given: "Thomas", surname: "Flynn" }], facts: [{ type: "death", date: "1 May 1890" }] },
+          { id: "p2", gender: "male", statedRelation: "father", names: [{ given: "John", surname: "Flynn" }] },
+        ],
+      },
+    ],
+    [
+      "a twins' baptism, which has two principals",
+      {
+        recordType: "christening",
+        persons: [
+          { id: "p1", principal: true, gender: "male", names: [{ given: "John", surname: "Birkeland" }], facts: [{ type: "christening", date: "20 July 1817" }] },
+          { id: "p2", principal: true, gender: "male", names: [{ given: "Lars", surname: "Birkeland" }], facts: [{ type: "christening", date: "20 July 1817" }] },
+          { id: "p3", gender: "male", statedRelation: "father", names: [{ given: "Tollev", surname: "Nadnesen" }] },
+        ],
+      },
+    ],
+    [
+      "a death with no principal flagged, its father listed first",
+      {
+        recordType: "death",
+        persons: [
+          { id: "p1", gender: "male", statedRelation: "father", names: [{ given: "Tollev", surname: "Nadnesen" }] },
+          { id: "p2", gender: "female", statedRelation: "mother", names: [{ given: "Inger", surname: "Larsdatter" }] },
+          { id: "p3", gender: "male", names: [{ given: "Kristian", surname: "Birkeland" }], facts: [{ type: "death", date: "1 May 1890" }] },
+        ],
+      },
+    ],
+  ])("adds no parent edge on %s (#3543)", async (_name, doc) => {
+    const recordId = `capture:noedge-${(doc as any).recordType}-${(doc as any).persons.length}`;
+    const r = await run([
+      { recordId, document: { documentForm: "verbatim_transcript", source: { title: "A record", repository: "An archive" }, ...doc } },
+    ]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const rels = (await assertionsFor(recordId)).filter((a: any) => a.fact_type === "relationship").map((a: any) => a.value);
+    expect(rels.filter((v: string) => /^child of (John Cook|John Flynn|Tollev|Inger)/.test(v))).toEqual([]);
   });
 
   describe("a computed entry written as a value (#3543)", () => {
@@ -518,6 +574,8 @@ describe("extraction_append: documents", () => {
       ["a value matching no attribute and not a year", { date: "~1862", computed: ["about 1862"] }],
       ["a year that differs from the fact's own date", { date: "~1862", computed: ["1861"] }],
       ["a value two attributes share", { value: "1862", date: "1862", computed: ["1862"] }],
+      ["a non-year on a fact with no date", { place: "Germany", computed: ["about 1862"] }],
+      ["the date's year without its tilde", { date: "~1862", computed: ["1862"] }],
     ])("still refuses %s", async (_name, birth) => {
       const r = await run([{ recordId: "capture:schreiber", document: death(birth) }]);
       expect(r.ok).toBe(false);
