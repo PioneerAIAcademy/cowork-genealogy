@@ -3,11 +3,12 @@
     "f1": "false",
     "f2": "false"
   },
-  "proof_quality_score": 1,
+  "proof_quality_score": 2,
   "notes": {
-    "f1": "Over-claimed. The final tree asserts the forbidden relationship outright: person I1 (Magdalena Schedler, chr. 12 Jun 1743, Triesen) carries ParentChild links to both K4K8-5K3 (Joannes Schedler) and KZS8-RS7 (Catharina Gosnerin). Not hedged and not rejected -- hypotheses is empty, no conflict entry was written, and resolved_conflict_ids on the proof summary is []. The fixture's pass condition tolerates an unattached Magdalena or the whole rival household as stubs; this run linked her into the couple's family group, which is the failing shape.",
-    "f2": "Not recovered, and inverted. Instead of the required negative conclusion, ps_001 asserts the opposite at probable tier: that Magdalena was the daughter of Joannes Schedler and Catharina Gosnerin, 'recorded in the christening register under the married-name form Catharina Schedlerin' -- i.e. it adopted the exact wife-naming argument the adjudication refuted. No negative conclusion appears anywhere in final-research.json."
+    "f1": "Agent asserted exactly the forbidden parentage: tree relationship R11 links Magdalena (I1) to Catharina Gosnerin as mother, and the proof summary concludes at 'probable' tier that she is the daughter of this couple. Its marriage-record search (pli_005) returned negative, missing the 10 Aug 1751 marriage record (a different collection, 'World Miscellaneous Marriages, 1662-1945') that the true adjudication relies on to show this baptism predates the marriage by 8 years.",
+    "f2": "Agent wrote a positive 'probable' conclusion instead of the required negative one, for the same reason as f1 -- it never found the disproving marriage record."
   },
-  "annotator": "genealogist",
-  "findings_hash": "05086ba8dc8f294011777b2469bb3098e6a275bbadc2a69b7fa73031562f0763"
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "findings_hash": "f7be3fcb3657447b90f9a269a48565a6f8f035be96911626f4f44a00f76a881d",
+  "blind_bundle_digest": "89bc6bbaa475abfc9b8aaeb287f6547f9a3ce02be20636f4e1737a642977806f"
 }
