@@ -647,15 +647,20 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   `init_db` adds any nullable column the model has and the table lacks
 >   (`db.add_missing_columns`). Only sandboxes built from 2026-10-12 on report, so it
 >   misses every older session still in use.
->   **`api_calls`** (project_id, user_id, model, the four token counts, cost_usd,
+>   **`api_calls`** (project_id, user_id, model, agent, the four token counts, cost_usd,
 >   session_age_s, created) covers them: one row per `POST /v1/messages` the credential
 >   proxy relays with a 200, its usage read off the response on the way back
 >   (`anthropic_proxy._UsageMeter`: `message_start` and the last `message_delta` when
 >   streamed, the body's `usage` when not) and priced at the calling model's own rates
 >   (`app/agent/spend.py` `rates_for`). Its daily total is the alpha's whole bill.
 >   `session_age_s` is the session's age at the call, which separates a reopened old
->   session's spend from a new one's. `make alpha-costs` prints both tables, in whole UTC
->   days: every call by day, by model, by token type and the most expensive sessions,
+>   session's spend from a new one's. `agent` is the agent that made the call, read off
+>   the request's `system` field in the writer thread (`anthropic_proxy._agent_name`):
+>   `main` for the hosted main thread (the opening of its appended prompt), otherwise the
+>   agent body's first `# ` heading verbatim, otherwise null. Claude Code's own prompts
+>   (built-in subagents, compaction's fallback) have no heading and read null, as do rows
+>   from before the column. `make alpha-costs` prints both tables, in whole UTC
+>   days: every call by day, by model, by agent, by token type and the most expensive sessions,
 >   then turns by day, by build and by session. Nothing enforces against either: the
 >   alpha has no spend limit (lead ruling 2026-09-25).
 

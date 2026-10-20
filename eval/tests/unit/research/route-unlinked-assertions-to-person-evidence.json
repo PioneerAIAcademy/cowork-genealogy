@@ -1,25 +1,22 @@
 {
   "test": {
-    "id": "ut_research_szk",
+    "id": "ut_research_pe7",
     "skill": "research",
-    "name": "Routes to person-evidence when every question's extracted assertions are unlinked and the patron asks for the conclusion",
+    "name": "Routes to person-evidence when extracted assertions are not yet linked to persons",
     "type": "positive",
-    "description": "Mined from a Cowork project (Family Tree LZJF-J13, a 1716 Edinburgh vs 1719 Hutton Rudby baptism). Fifteen assertions were extracted across both questions and none was linked to a person. Yet in Cowork the router went on to exhaustiveness and proof-conclusion, and the proof concluded Probable on 'correlation across several independent entries'. The routing table's 'Assertions not yet linked to persons' row requires @plugin:person-evidence first. In fresh context the router reaches it from that row even when project_context names exhaustiveness: 1 of 1 run against the unfixed engine, 2026-10-19. So this test pins the table row. The project_context rung and the proof gate are pinned by vitest.",
+    "description": "Routing table row 'Assertions not yet linked to persons'. flynn-household-skeleton has one in_progress question whose only plan item is completed and whose one positive log entry (the 1850 census) is extracted into seven assertions, six of them with no person_evidence link. Nothing is pending extraction, and there are no conflicts or hypotheses. The router must spawn the person-evidence agent, never write person_evidence links inline. project_context's advisory nextStep reads 'research-exhaustiveness, then proof-conclusion' on this state, because it does not count unlinked assertions; the table, not the advisory, decides.",
     "tags": [
       "routing",
-      "grade:trigger",
-      "routes-to:person-evidence",
-      "from-cowork",
-      "research-unlinked-baptism-evidence"
+      "routes-to:person-evidence"
     ]
   },
   "input": {
-    "user_message": "/research Keep going on William Honeyman (LZJF-J13). We've found the 1719 Hutton Rudby baptism and the 1716 Edinburgh one, so let's settle which is his and write the conclusion.",
-    "scenario": "research-unlinked-baptism-evidence"
+    "user_message": "Research the next open question on this project — drive the workflow forward.",
+    "scenario": "flynn-household-skeleton"
   },
   "execution": {
-    "max_turns": 20,
-    "max_wall_clock_seconds": 600,
+    "max_turns": 30,
+    "max_wall_clock_seconds": 1200,
     "stub_skills": [
       {
         "skill": "question-selection",
@@ -38,7 +35,19 @@
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       },
       {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
         "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "image-reader",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       },
       {
@@ -72,11 +81,11 @@
     ]
   },
   "judge_context": [
-    "This is a ROUTING test. The first hand-off is asserted deterministically by test_routes_to_expected_skill from the PreToolUse hook records; do not grade which callee was reached, or in what order, from the transcript.",
-    "The project state: both questions are open with completed plans; every positive log entry is extracted; person_evidence, conflicts, hypotheses and proof_summaries are empty. Extracted assertions that no person_evidence entry links to anyone have had no identity decision, so no record has yet been shown to be about the subject. That is the router's to hand off, before weighing the competing records, registering a conflict, declaring exhaustiveness or concluding.",
-    "The patron asks to settle the question and write the conclusion. That names a destination, not a shortcut. Fail the router's own work if it treats the request as permission to skip identity linking, or narrates that the records 'obviously' belong to the subject because the name, parish or family matches.",
-    "Fail the router's own work if it decides identity itself: says which record is the subject's, which candidate is a different person, or which baptism the evidence favours. Deciding whether a record is about a tree person is person-evidence's analysis, and weighing competing records is conflict-resolution's.",
-    "Every callee is stubbed and returns a denial telling the router to stop. Do not penalize it for not completing the research cycle. Grade only the router's state derivation, its honesty about what it delegated and did not do, and whether it kept its narration free of an identity or baptism verdict."
+    "This is a ROUTING test. The only assertion that matters is whether the router's first hand-off is an Agent spawn of person-evidence (`@plugin:person-evidence`). A deterministic validator (test_routes_to_expected_skill) owns that check — do not grade the routing decision yourself.",
+    "The project state: q_001 is in_progress; its one plan item is completed; its one positive log entry is extracted into seven assertions, and six of them have no person_evidence link. The routing table says: 'Assertions not yet linked to persons -> @plugin:person-evidence — always the agent, never inline.'",
+    "Fail the router's own work if it writes person_evidence entries, adds record-derived facts or relationships to tree persons, or decides in its own narration which household member is which tree person. That identity decision is person-evidence's.",
+    "ROUTING TEST, graded on the hand-off and nothing downstream. The tag is routes-to:person-evidence; what is under test is that the router reaches person-evidence. Every callee, person-evidence included, is in stub_skills, which means the harness DENIES it execution, so no person_evidence link, tree fact or relationship can be persisted in this run by construction. Do not mark Correctness or Completeness down for '(no research.json changes)': the agent that would write was deliberately prevented from running. Do not penalize the router for not completing the research cycle. Grade only whether its narration is honest about what it delegated.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records -- ground truth the harness calls out precisely because a transcript can be misread. You cannot see those records. Do NOT score Correctness or Completeness on whether the router reached the right callee, on the order of skills_invoked, or on which entry is 'first': the skill under test appears in that list under its own name, so the first DELEGATED skill is the second entry, and reading it as the first has already failed a run whose routing the validator confirmed correct. Grade only the router's own work: whether its narration is honest about what it delegated and did not do, and whether its state derivation and gap explanation are sound."
   ],
   "judge_reads_files": true
 }

@@ -142,7 +142,10 @@ else is refused: an `I2` the caller wrote would
 otherwise land on whichever staged person got `I2`, and no validator can tell
 because that person exists. An addition's fact or relationship with no source of
 its own is cited `{ref, quality: 1}` to one "Researcher's statement" source,
-created only when needed. Additions are merged **before** validation and the
+created only when needed — unless a staged read holds it (see "Citing what a
+staged read holds" below), when it is cited to a generic FamilySearch-tree source
+recorded as `idMap.additionsTreeSource`. Never to `S1`: `S1` names the page of
+the read's subject, and an addition is by construction not on that read. Additions are merged **before** validation and the
 single atomic write, so a stub is in `starting-tree.gedcomx.json` from the
 start: a person added afterwards with `tree_edit` would be absent from that
 baseline, and `research_append`'s starting-tree gates would treat it as minted
@@ -154,7 +157,52 @@ them. Only an absent id is minted (any other value is left for validation),
 skipping every id the tree defines **or references** (relationship endpoints,
 source refs, `subjectPersonIds`), so a minted id never turns a dangling
 reference into a valid one. Anything with no source is cited to the
-researcher's statement as above. A `tree` that is not an object is refused.
+researcher's statement as above, unless a staged read holds it, when it is cited
+to a generic FamilySearch-tree source recorded as `idMap.familySearchTreeSource`.
+A `tree` that is not an object is refused.
+
+**Citing what a staged read holds.** A hand-built tree is often a
+retyping of a `person_read` (the stub path, when the agent could not pass the
+ref), and citing every unsourced fact on it to the researcher's statement credits
+the researcher with FamilySearch's claims. So a hand-entered fact or relationship
+with no source of its own — the whole tree without a ref, or an addition with one —
+is checked against every `person_read` staged in this project and inside the 24h
+TTL (`listStagedEnvelopes`):
+
+- **A fact** on a person whose `ark` names a FamilySearch person
+  (`treePidOfArk`) is cited to the Family Tree only if a staged read holds that
+  person **and** a fact on them with the same `type`, `date` (the read's `date`
+  or `standard_date`), `place` (`place` or `standard_place`) and `value`, each
+  compared trimmed, case-folded and with spaces collapsed; an absent field
+  matches only an absent one. A `standard_date` the caller supplied must equal
+  the read's own `standard_date`: this tool keeps a hand-entered one as given,
+  so a value the read does not hold would otherwise be written under
+  FamilySearch's name. The fact's own `standard_place`, which this tool clears
+  and re-resolves, never takes part.
+- **A relationship** whose two endpoints both carry such an `ark` is cited to the
+  Family Tree only if a staged read holds one that `relationshipMatches` it (same
+  type and endpoints, a Couple in either order) **and**, when the hand-entered
+  edge carries a subtype, the read's edge carries the same one. An untyped
+  hand-entered edge is a less specific statement of a typed one in the read and
+  matches it; a `Step` edge against an untyped one in the read claims more than
+  FamilySearch said and does not. Its own unsourced facts are then checked, as
+  above, against that relationship's facts in the read.
+- **Everything else** is the researcher's statement. A retyped fact whose date
+  was reworded fails to match and gets the statement: an under-claim, never an
+  over-claim. A person matching the read by a merged person's requested id is the
+  same person (the read's `query.personId` is an alias of its subject).
+
+The generic source is `{title: "FamilySearch Family Tree", citation:
+"FamilySearch Family Tree (https://www.familysearch.org/tree : accessed <date>).",
+url}`; it names no page, since each person's `ark` is the page. When anything was
+cited to it, `validation.warnings` says how many facts and relationships, so the
+caller can see the inference. The staging folder is listed only when something
+needs it: the fallback below, or a hand-entered person carrying a FamilySearch
+`ark`. A hand-built tree with none (the objective-only build), or ref-mode
+additions that are all unarked stubs, never touch it, so a new edge between two
+staged persons with no arked addition stays the researcher's statement — an
+under-claim. A staged file already past the TTL by its write time is never
+opened.
 
 **Hand-entered places** — every fact on the objective-only build, and every fact
 an addition brings in ref mode — are the tool's to standardize, never the
@@ -171,13 +219,15 @@ the budget running out — is left unset, never kept.
 
 **The result** carries `idMap`: `persons` (FamilySearch PID → `I` id),
 `sources` (FamilySearch source id → `S` id), `additions` (label → `I` id),
-`familySearchTreeSource`, and `statementSource` when one was created. It also
+`familySearchTreeSource` (`S1` with a ref; without one, the generic source when
+something was cited to it), `additionsTreeSource` (ref mode, the same),
+and `statementSource` when one was created. It also
 carries `placesFilled`, `[{place, standardPlace}]`, for each place this create
 standardized — one the read had left unresolved, or one entered by hand (absent
 when none). One resolution is listed once, in the spelling first met, however
 else the same place was written (trimmed, case-folded, spaces collapsed), so the caller can tell the
 researcher which places it standardized without being asked.
-`personReadRef` is trimmed before it is resolved, and a near-copy of a staged ref is mapped onto the one staged file it names, reported in `validation.warnings` (`search-result-staging-spec.md` §6.0). In ref mode a refusal raised
+`personReadRef` is trimmed before it is resolved, and a near-copy of a staged ref is mapped onto the one staged file it names, reported in `validation.warnings` (`search-result-staging-spec.md` §6.0). A ref that still names no staged `person_read` — a guessed path such as `results/.staging/<PID>`, a ref another tool staged, a file holding no result — falls back to the **newest** staged `person_read` (by its envelope's `retrieved`, inside the 24h TTL) whose requested or resolved id is `subjectPersonIds[0]`, matched trimmed and case-insensitively, and the substitution is named in `validation.warnings`. An agent that lost the ref to a truncated response passed the subject's PID and guessed the path, and every such create was refused. There is no fallback without a stated `subjectPersonIds[0]`, never to another person's read (which read seeds the project is an identity decision), and none past a fault in the file the ref names: unreadable, holding invalid JSON, or a store error of any kind the refusal does not recognise. Only the refusals that mean "this ref names no staged `person_read`" fall back. A near-copy correction is reported only when the file it names is the one used. In ref mode a refusal raised
 after the build (a forged `assertion_id`, a validation error) names which minted
 id and `persons[i]` index each addition label became, since no `idMap` comes
 back with a refusal. A relationship is described by its type, endpoints and subtype. A later
@@ -206,7 +256,7 @@ from a real one, while an absent one has a working fallback in every skill.
 | `objective` absent, empty, or whitespace | A project is the pursuit of a stated question, and every later step plans against it |
 | The pair fails validation | Including a `subjectPersonIds` entry the tree does not contain |
 | `projectPath` absent | — |
-| `personReadRef` blank, missing, outside `results/.staging/`, or not staged by `person_read` | Checked after the exists and nesting refusals. Worded for this tool (the staging helper's own messages speak of `research_log_append`), and every one says to call `person_read` again with `projectPath` |
+| `personReadRef` blank, missing, outside `results/.staging/`, or not staged by `person_read`, and no staged read of `subjectPersonIds[0]` to fall back to (§4 "The result"); or a fault in the file it names (unreadable, or holding invalid JSON) | Checked after the exists and nesting refusals. Worded for this tool (the staging helper's own messages speak of `research_log_append`), and every one says to call `person_read` again with `projectPath` |
 | An addition endpoint or `subjectPersonIds` entry that is neither a staged PID nor an addition label | See "Additions, and the PID rule" above |
 | An addition person whose id is a staged PID, or whose `ark` names someone in the read | Additions are new people; a staged person is linked to, not re-added. No validator rejects two persons with one ark, so a copied read would otherwise double silently. An ark for someone the read does not hold (a second `person_read`) is kept |
 | The same addition person or source label used twice | The references would bind to only one of them |
@@ -274,7 +324,16 @@ the write ahead of the validation and watching two cases go red.
 > literal; additions by PID landing in the starting baseline; the label, ref,
 > source-id and repeated-relationship refusals, including lower-case PIDs, an ark
 > URL with a query string, and `Object` prototype keys as labels; each
-> `personReadRef` refusal; and the objective-only build's sourcing.
+> `personReadRef` refusal; the objective-only build's sourcing; the fallback to
+> the stated PID's newest staged read (a guessed ref, another tool's ref, a merged
+> or lower-case id, the newer of two, none past the TTL, none to another person,
+> none past a store fault or a corrupt file, a near-copy correction reported only
+> when used, an expired file never opened); and the Family Tree citations on
+> evidence, on both paths (a copied fact, a researcher fact, a held and an unheld
+> relationship, a subtype only in the direction the read supports, a supplied
+> `standard_date` the read does not hold, a reworded marriage date, a merged
+> person's ark, nothing staged, an addition never cited to `S1`, and that a build
+> with no ark never lists staging).
 
 > `packages/engine/mcp-server/tests/utils/person-read-tree.test.ts` — the place
 > retry, its no-op when nothing needs it, that a refusal never waits on it, that

@@ -207,6 +207,27 @@ across 132 scenarios and 209 e2e final states), it fires on 1 e2e question-run a
 scenario questions. The only `research` routing test among those scenarios is
 `research-unlinked-baptism-evidence`, the one mined to need it.
 
+**Before any evidence exists, the next search is named by its repository.** A
+`planned` or `searching` question whose log holds a positive or partial entry no
+assertion cites by `log_entry_id` reports extraction. An external-site entry whose
+capture has not come back does not count, because it is an open hand-off. Otherwise
+the lowest-sequence `planned` or `in_progress` item on a plan that is still active
+decides. A repository naming FamilySearch, or none at all, reports `search-records`.
+Any other repository reports `search-external-sites — <item id> (<repository>)`,
+the routing table's own split for that row. With no such item left, the question
+reports `research-exhaustiveness`.
+
+A question at `evidence-gathered` reports `research-exhaustiveness` whatever its
+log holds. An uncited entry does not move it back to extraction: agents log an
+inconclusive search as `partial` and a link list as `positive`, and those entries
+stay uncited. Over the corpus on 2026-10-16 (every scenario plus every e2e final
+state, 421 question entries), holding the question on extraction would have moved
+21 e2e final states there; the four read were all inconclusive `partial` searches
+or link lists. The rule as shipped changes 7 entries: `search-records` to
+`search-external-sites` (2, the Archion and MyHeritage plan items), extraction to
+`search-records` (3), extraction to `search-external-sites` (1, an open MyHeritage
+hand-off) and extraction to `research-exhaustiveness` (1).
+
 **A conflict the evidence shows counts even when nobody registered it.** A
 `conflicts` entry is what `conflict-resolution` *produces*, so an empty
 `conflicts[]` cannot be the signal that routes there. `unregisteredDisagreements`

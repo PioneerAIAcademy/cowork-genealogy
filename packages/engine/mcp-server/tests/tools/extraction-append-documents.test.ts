@@ -285,6 +285,44 @@ describe("extraction_append: documents", () => {
     expect(after.sources[0].image_filename).toBe("images/004022578_00190.jpg");
   });
 
+  async function stageScan(imageRef?: string) {
+    const staged = await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: {
+        query: { imageId: "004022578_00190" },
+        results: [{
+          id: "004022578_00190", source: { imageId: "004022578_00190" }, content_type: "image/jpeg", size_bytes: 1, model: "m",
+          transcription: "Harold Dean Whitaker, 91, of Logan…", ...(imageRef ? { image_ref: imageRef } : {}),
+        }],
+      },
+    });
+    return staged!.resultsRef;
+  }
+
+  it("a transcribed source cites its scan from the staged result when the agent relays no imageFilename", async () => {
+    const ref = await stageScan("images/004022578_00190.jpg");
+    const r = await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref }]);
+    expect(r.ok).toBe(true);
+    const source = (await read()).sources[0];
+    expect(source.transcription).toMatch(/Harold Dean Whitaker/);
+    expect(source.image_filename).toBe("images/004022578_00190.jpg");
+  });
+
+  it("the staged scan wins over a different imageFilename the agent relayed", async () => {
+    const ref = await stageScan("images/004022578_00190.jpg");
+    await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref, imageFilename: "images/someone-else.jpg" }]);
+    expect((await read()).sources[0].image_filename).toBe("images/004022578_00190.jpg");
+  });
+
+  it("a staged result with no image_ref and no relayed imageFilename writes no image_filename", async () => {
+    const ref = await stageScan();
+    await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref }]);
+    const source = (await read()).sources[0];
+    expect(source.transcription).toMatch(/Harold Dean Whitaker/);
+    expect(source).not.toHaveProperty("image_filename");
+  });
+
   it("flags an Old Style date in the summary without changing it", async () => {
     const baptism = {
       recordType: "christening",
