@@ -178,14 +178,20 @@ correspondingly-numbered general sections below. The general spec remains the
   knob**; alpha will A/B **Sonnet vs Opus** for cost/performance (Opus ≈ 5× Sonnet
   token cost — fine for comparison, watch the bill).
 - **New-session onboarding = conversational.** "New session" creates a fresh
-  sandbox with an empty `/project`, starts `agent_runner`, and the client
-  **prefixes the canned opener** ("Let's start a new genealogy research
-  project.") onto the user's first message on the wire, so the existing
-  **`init-project`** agent runs and reads the person and objective from that one
-  turn — FamilySearch-person seeding in chat, reusing the skill as-is (no new
-  onboarding UI; the researcher profile is fixed and nothing about the
-  researcher is asked). The bubble shows only what the user typed. The session is
-  titled provisionally and renamed once the objective is set.
+  sandbox with an empty `/project`, starts `agent_runner`, and sends **exactly what
+  the user typed** — nothing is prefixed. The **`research`** router is the only front
+  door: its routing table sends a first message with no project to **`init-project`**
+  (when it names a person or objective) or **`tree-survey`** (when it names neither),
+  so the person and objective are read from that one turn. No new onboarding UI; the
+  researcher profile is fixed and nothing about the researcher is asked. The session
+  is titled provisionally and renamed once the objective is set.
+
+  Until 2026-10-15 the client **prefixed a canned opener** ("Let's start a new
+  genealogy research project.") so `init-project` ran directly. That was a
+  server-side patch over the plugin having two front doors, and it never reached
+  Cowork — so the two surfaces behaved differently. Removing the second door removed
+  the need for it. The client still STRIPS the prefix off replayed history, because
+  sessions created before the change carry it on the wire.
 
 ---
 
@@ -862,7 +868,7 @@ every healthy session.
 > The `#/s/:id` hash route means a refresh or a shared link reopens the session.
 >
 > Two notes: the "researcher-profile onboarding" is conversational, not UI — a
-> new session auto-sends an opening turn that triggers `init-project` (§0.5) —
+> new session's first message goes to the `research` router, which starts `init-project` (§0.5) —
 > and the §7.4 this section twice points at **does not exist**; the spec has no
 > §7.4. It means §0.5's onboarding bullet.
 

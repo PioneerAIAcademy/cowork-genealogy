@@ -199,13 +199,14 @@ once, then `make electron`; on Windows, double-click `eval\Setup.bat` once, then
 
 ## Using it
 
-In Cowork, open a folder for the project and say who you want to research and
-what you want to find out:
+In Cowork, open a folder for the project and give the person's FamilySearch ID
+and what you want to find out:
 
-> Start a project for Patrick Flynn, born about 1845 in Ireland. I want to
-> find his parents.
+> Start a project for KWCJ-RN4, Patrick Flynn, born about 1845 in Ireland. I
+> want to find his parents.
 
-If you know the person's FamilySearch ID, give that instead. Then:
+A project always starts from a FamilySearch person ID; without one, it asks for
+the ID and creates nothing. Then:
 
 - **`/research`** works the whole question: "/research find Patrick's parents".
 - **Ask for one thing** and it does just that: "Make a research plan, but leave

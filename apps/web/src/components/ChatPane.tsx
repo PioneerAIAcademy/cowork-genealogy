@@ -1,16 +1,27 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import React from 'react'
+import { useResearchDataOptional } from '@genealogy/viewer-ui'
+import { SchemaIdText } from './SchemaIdText'
+import { DecisionCard } from './DecisionCard'
+import { toolLabel, humanizeToolNames } from './toolLabel'
+import { chipTarget } from './chipTarget'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
 import { api, ApiError } from '../api'
 import {
   foldChatEvent,
   trackLiveTask,
-  withOpeningTurn,
   stripOpeningTurn,
+  KEEPS_RUNNING_NOTE,
   type ChatMessage,
+  type ChatBlock,
+  type ToolChip,
   clearQueued,
-  turnOutcomeLabel
+  turnOutcomeLabel,
+  COMPACTING_LABEL,
+  CONNECT_SLOW_MS,
+  CONNECT_LOST_NOTE
 } from './chatEvents'
 
 export const SESSION_EXPIRED_TEXT =
@@ -136,19 +147,160 @@ export interface UsageDelta {
   estimated: boolean
 }
 
+/**
+ * One chip: humanized in both slots, and clickable when it names a card.
+ *
+ * 544 of the captured session's 1,009 chips name a schema id in their summary, so
+ * more than half become navigation. A chip that names nothing, or that has no
+ * resolver above it, renders exactly as before -- the same additive rule the prose
+ * linker follows, so the failure mode is "not clickable", never a dead control.
+ */
+function ToolChipView({
+  chip,
+  onOpen
+}: {
+  chip: ToolChip
+  onOpen?: (id: string, section: string) => void
+}): React.JSX.Element {
+  const body = (
+    <>
+      {chip.done ? '✓' : '⟳'} {chip.agent ? `${chip.agent} · ` : ''}
+      {toolLabel(chip.tool)}: {humanizeToolNames(chip.summary)}
+    </>
+  )
+  const target = onOpen ? chipTarget(chip.summary) : null
+  const cls = `toolChip ${chip.done ? 'toolDone' : 'toolRunning'}`
+  if (!target) return <span className={cls}>{body}</span>
+  return (
+    <button
+      type="button"
+      className={`${cls} toolChipLink`}
+      title={`Open ${target.id}`}
+      onClick={() => onOpen?.(target.id, target.section)}
+    >
+      {body}
+    </button>
+  )
+}
+
+/**
+ * Chips grouped into the runs they arrived in, so each run sits with its prose.
+ *
+ * The text itself is rendered by the markdown block below; this places only the
+ * chips. A block with no chips contributes nothing, so the markup is unchanged for
+ * a paragraph that had none.
+ */
+function renderChipRuns(
+  blocks: ChatBlock[],
+  tools: ToolChip[],
+  onOpen?: (id: string, section: string) => void
+): React.JSX.Element[] {
+  const out: React.JSX.Element[] = []
+  let run: ToolChip[] = []
+  let key = 0
+  const flush = (): void => {
+    if (run.length === 0) return
+    const chips = run
+    out.push(
+      <div className="toolChips" key={`run-${key++}`}>
+        {chips.map((c, i) => (
+          <ToolChipView key={i} chip={c} onOpen={onOpen} />
+        ))}
+      </div>
+    )
+    run = []
+  }
+  for (const b of blocks) {
+    if (b.kind === 'chip') {
+      const chip = b.toolIndex !== undefined ? tools[b.toolIndex] : undefined
+      if (chip) run.push(chip)
+    } else {
+      flush()
+    }
+  }
+  flush()
+  return out
+}
+
 export default function ChatPane({
   conn,
   sessionId,
   isNew,
-  onUsage
+  onUsage,
+  projectId,
+  onContinueOnProject
 }: {
   conn: SessionConnection
   sessionId: string
   isNew: boolean
   onUsage?: (delta: UsageDelta) => void
+  /** The project this session runs on, so a spend-bound stop can open a new session
+   *  on the SAME project rather than a fresh one. */
+  projectId?: string
+  onContinueOnProject?: (newSessionId: string) => void
 }): React.JSX.Element {
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  // The spend bound is only knowable HERE. The session list folds `budget`, a user
+  // stop and `no_progress` all into `stopped`, so it cannot tell this case apart.
+  const [spendStopped, setSpendStopped] = useState(false)
+  // The agent is compacting its context. Cleared by the next thing that happens,
+  // because the CLI announces the START of a compaction and never its end.
+  const [compacting, setCompacting] = useState(false)
+  const [continuing, setContinuing] = useState(false)
   const [input, setInput] = useState('')
+  // Phase 2 item 1: schema ids in chat prose become links into the viewer.
+  //
+  // OPTIONAL by design. The provider is hoisted above both panes in SessionView, but
+  // only when a transport exists -- and this pane renders on the socket, which is a
+  // different condition. With no provider, `research` is null, no handler is passed
+  // down, and every id renders as the plain text it is today. The failure mode is
+  // "no link", never a broken bubble.
+  const research = useResearchDataOptional()
+  const openSchemaId = useMemo(
+    () =>
+      research
+        ? (id: string, section: string): void => {
+            research.setActiveSection(section)
+            // Let the section render, then bring the entry itself into view, as the
+            // viewer's CrossLink does.
+            requestAnimationFrame(() => {
+              document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            })
+          }
+        : undefined,
+    [research]
+  )
+  const hasSchemaId = research?.hasId
+  // react-markdown hands a paragraph's children through; only the STRING children are
+  // prose. Non-string children are already-parsed nodes (emphasis, code, links) and
+  // are passed through untouched, so markdown keeps working exactly as before.
+  const mdComponents = useMemo(
+    () => ({
+      p: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
+        <p>
+          {React.Children.map(children, (child) =>
+            typeof child === 'string' ? (
+              <SchemaIdText text={child} onOpen={openSchemaId} hasId={hasSchemaId} />
+            ) : (
+              child
+            )
+          )}
+        </p>
+      ),
+      li: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
+        <li>
+          {React.Children.map(children, (child) =>
+            typeof child === 'string' ? (
+              <SchemaIdText text={child} onOpen={openSchemaId} hasId={hasSchemaId} />
+            ) : (
+              child
+            )
+          )}
+        </li>
+      )
+    }),
+    [openSchemaId, hasSchemaId]
+  )
   // Reasoning blocks are hidden by default: the lay user never asked for the
   // model's private reasoning, and two alpha testers read the collapsed block's
   // label as a cryptic message. The toggle is for whoever wants to look.
@@ -158,8 +310,14 @@ export default function ChatPane({
   const [uploadError, setUploadError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [ready, setReady] = useState(false)
+  // Whether we have waited long enough to say the connection may be gone. `ready` alone
+  // cannot tell "still connecting" from "the thing I was connected to no longer exists",
+  // and both rendered as the connecting line forever, with no timeout and nothing for the
+  // reader to do. There IS an error path, but it needs the server to SEND `chat_error`; a
+  // sandbox that vanished under a restart sends nothing at all, which is exactly what a
+  // tester hits after the dev server reloads.
+  const [connectSlow, setConnectSlow] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const startedRef = useRef(false)
   const [elapsed, setElapsed] = useState(0)
   const turnStartRef = useRef(0)
   const [activity, setActivity] = useState<AgentActivity | null>(null)
@@ -173,8 +331,50 @@ export default function ChatPane({
   // until chat_ready, which the server sends after the replay.
   const [expired, setExpired] = useState<string | null>(null)
   const [replaying, setReplaying] = useState(false)
+
+  // Re-armed whenever `ready` changes, so a connection that arrives late clears the notice
+  // and one that drops later re-arms it.
+  //
+  // The `setConnectSlow(false)` reset is deliberate but NOT separately observable: the
+  // render checks `ready` first, so a stale `true` here can never reach the screen.
+  // Deleting it passes every test. It stays because leaving a timer armed and a flag
+  // wrong is how the next person's change to that render order becomes a bug, but do not
+  // read it as covered.
+  useEffect(() => {
+    if (ready) {
+      setConnectSlow(false)
+      return
+    }
+    const timer = setTimeout(() => setConnectSlow(true), CONNECT_SLOW_MS)
+    return () => clearTimeout(timer)
+  }, [ready])
+  const [connAttempt, setConnAttempt] = useState<{ attempt: number; max: number } | null>(null)
   // 1c: the label for how the last turn ended, or null for an ordinary finish.
   const [outcome, setOutcome] = useState<string | null>(null)
+  // The raw `ev.outcome` string behind that label, kept only to tell a `decision`
+  // turn apart from every other kind -- the label text is for display, not for
+  // branching on. Reset in lockstep with `outcome` everywhere that resets it.
+  const [outcomeKind, setOutcomeKind] = useState<string | null>(null)
+  // The card replaces the one-line outcome label only for a turn that actually ended
+  // waiting on the researcher AND carried its options. A `decision` turn whose payload
+  // did not arrive falls through to the label, which is the honest degradation: a
+  // question the reader can still see, rather than an empty card.
+  //
+  // Reads ONLY the last message, not a reverse search over the whole transcript.
+  // A search would find a PRIOR turn's decision long after it was answered: once
+  // that turn's own last message carries no `.decision` of its own (the ordinary
+  // case), scanning backward keeps going and surfaces the stale card again under
+  // a later, unrelated outcome.
+  const m0Decision = useMemo(() => {
+    if (outcomeKind !== 'decision') return null
+    const last = messages[messages.length - 1]
+    return last?.decision && last.decision.length > 0 ? last.decision : null
+  }, [outcomeKind, messages])
+  // "Something else" dismisses the card locally without answering it -- the
+  // composer is always on screen, so there is nothing else for it to reveal.
+  // Reset at every turn_done: by the time a NEW decision can show, a new turn has
+  // already ended, so a dismissal of the previous one can never leak onto it.
+  const [decisionDismissed, setDecisionDismissed] = useState(false)
   // 1b: the server is holding a message for this session. Distinct from the per-bubble
   // `queued` flag, which only the tab that sent it knows about.
   const [queuedOnServer, setQueuedOnServer] = useState(false)
@@ -191,7 +391,11 @@ export default function ChatPane({
       setMessages(clearQueued)
       // 1c: say WHY the run ended. Without this a budget-capped or stalled run is
       // indistinguishable from a finished one.
+      setCompacting(false)
       setOutcome(turnOutcomeLabel(ev.outcome, ev.limit))
+      setOutcomeKind(typeof ev.outcome === 'string' ? ev.outcome : null)
+      setDecisionDismissed(false)
+      setSpendStopped(ev.outcome === 'budget' && ev.limit === 'spend')
       // A task killed via TaskUpdated emits no task_done on the wire, so the
       // set is reset at turn end rather than trusted to drain itself.
       liveTasksRef.current = new Set()
@@ -202,6 +406,18 @@ export default function ChatPane({
     // through to foldChatEvent, which appends an empty assistant bubble. That
     // is invisible whenever the reply fills it, and stays on screen when a turn
     // ends with no content: a Stop taken before the first token.
+    if (kind === 'compaction') {
+      setCompacting(true)
+      return
+    }
+    // Anything else arriving means the agent is working again. The CLI announces the
+    // START of a compaction and never its end, so the notice has to be cleared by
+    // evidence of progress rather than by an event that never comes.
+    //
+    // UNCONDITIONAL, not `if (compacting)`: this handler closes over the value as of
+    // its own render, so the guarded form read a stale `false` and never cleared.
+    // Setting the same value is a no-op in React, so the guard bought nothing anyway.
+    setCompacting(false)
     if (kind === 'turn_start') return
     // Subagent lifecycle. Not chat content — this drives the status line, so a
     // long delegation reads as "record-structurer · sidecar_read · 2 tools"
@@ -260,7 +476,18 @@ export default function ChatPane({
       // but a reload or a second tab learns it only from here.
       else if (msg.type === 'status' && msg.state === 'turn_queued') setQueuedOnServer(true)
       else if (msg.type === 'status' && msg.state === 'turn_unqueued') setQueuedOnServer(false)
-      else if (msg.type === 'conn_state') setConnState(msg.state as 'open' | 'reconnecting')
+      else if (msg.type === 'conn_state') {
+        setConnState(msg.state as 'open' | 'reconnecting')
+        // Which retry this is. A bare "Reconnecting…" cannot tell attempt 2 of
+        // 20 from attempt 19 — one is worth waiting through, the other is about
+        // to give up. Absent on 'open' and on the SSE transport, which emits no
+        // count, so the render falls back to the bare label rather than "NaN".
+        setConnAttempt(
+          typeof msg.attempt === 'number' && typeof msg.maxAttempts === 'number'
+            ? { attempt: msg.attempt, max: msg.maxAttempts }
+            : null
+        )
+      }
       else if (msg.type === 'status' && msg.state === 'session_expired') {
         // A turn may have been running when the old socket dropped; nothing will
         // ever end it, so clear every indicator that would keep ticking.
@@ -269,6 +496,7 @@ export default function ChatPane({
         setBusy(false)
         setQueuedOnServer(false)
         setOutcome(null)
+        setOutcomeKind(null)
         setReplaying(msg.readOnly === true)
         setExpired(String(msg.message ?? SESSION_EXPIRED_TEXT))
       }
@@ -313,14 +541,12 @@ export default function ChatPane({
     // The server holds a message sent mid-turn and enqueues it when the turn
     // ends; the bubble says so.
     if (!trimmed) return
-    // A new session's first message is the opening turn: the canned opener goes
-    // on the wire ahead of it so init-project runs and consumes the objective in
-    // one turn (PR #2649), instead of a canned turn that asks "who?" first.
-    const opening = isNew && !startedRef.current
-    startedRef.current = true
     setMessages((prev) => [...prev, { role: 'user', text: trimmed, tools: [], queued: busy }])
-    conn.send({ type: 'user_msg', text: opening ? withOpeningTurn(trimmed) : trimmed })
+    // The first message is exactly what the user typed. The router sends a no-project
+    // message to init-project or tree-survey on its own, so the client prefixes nothing.
+    conn.send({ type: 'user_msg', text: trimmed })
     setOutcome(null) // 1c: a new message supersedes how the last turn ended
+    setOutcomeKind(null)
     setBusy(true)
     setInput('')
     // Sending is an unambiguous "I'm back at the live edge" — re-attach even if
@@ -370,22 +596,28 @@ export default function ChatPane({
                     : "This session's chat can't be shown."
                   : ready
                     ? 'Say who you want to research and what you want to find out.'
+                    : connectSlow
+                      ? CONNECT_LOST_NOTE
                     : 'Connecting to the agent…'}
               </p>
             </div>
           )}
           {messages.map((m, i) => (
             <div key={i} className={m.role === 'user' ? 'msgUser' : 'msgAssistant'}>
-              {m.tools.length > 0 && (
-                <div className="toolChips">
-                  {m.tools.map((t, j) => (
-                    <span key={j} className={`toolChip ${t.done ? 'toolDone' : 'toolRunning'}`}>
-                      {t.done ? '✓' : '⟳'} {t.agent ? `${t.agent} · ` : ''}
-                      {t.tool}: {t.summary}
-                    </span>
-                  ))}
-                </div>
-              )}
+              {/* Chips render WHERE THEY ARRIVED, not all above the prose. `blocks`
+                  carries arrival order; without it a turn stacks every chip above
+                  every paragraph -- 36 in one stretch of the captured session. Older
+                  messages have no `blocks`, so they fall back to the flat list and
+                  render exactly as before. */}
+              {m.blocks
+                ? renderChipRuns(m.blocks, m.tools, openSchemaId)
+                : m.tools.length > 0 && (
+                    <div className="toolChips">
+                      {m.tools.map((t, j) => (
+                        <ToolChipView key={j} chip={t} onOpen={openSchemaId} />
+                      ))}
+                    </div>
+                  )}
               {showThinking && (m.thinking || m.streamThinking) && (
                 <details className="thinkingBlock">
                   <summary>💭 Model&rsquo;s private reasoning — not its answer</summary>
@@ -397,7 +629,9 @@ export default function ChatPane({
               )}
               {m.text && (
                 <div className={`msgText ${m.error ? 'msgError' : ''}`}>
-                  <Markdown remarkPlugins={[remarkGfm]}>{m.text}</Markdown>
+                  <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                    {m.text}
+                  </Markdown>
                 </div>
               )}
               {/* 1b: the agent is mid-turn, so this one waits for the next step
@@ -425,9 +659,53 @@ export default function ChatPane({
               about; it takes priority over "working" so a stall never masquerades
               as progress (the failure mode that hid the 2026-07-20 disconnect). */}
           {connState === 'reconnecting' ? (
-            <div className="typing">●●● Reconnecting…</div>
-          ) : outcome && !busy ? (
-            <div className="turnOutcome">{outcome}</div>
+            <div className="typing">
+              ●●● Reconnecting
+              {connAttempt ? ` (attempt ${connAttempt.attempt} of ${connAttempt.max})` : ''}…
+            </div>
+          ) : compacting ? (
+            // Ranked BELOW reconnecting and above everything else, for the same reason
+            // the comment above gives: a lost connection outranks a working pause, and
+            // a working pause outranks "working", which is what six minutes of silence
+            // used to render as.
+            <div className="typing">●●● {COMPACTING_LABEL}</div>
+          ) : m0Decision && !busy && !decisionDismissed && !expired ? (
+            // Phase 3 item 1: a turn that ended `decision` gets the CARD, not the
+            // one-line "Waiting on you" label. Answering sends the reader's choice
+            // as the next message, which is what resumes the run -- the same path a
+            // typed reply takes, so nothing new has to be taught to the worker.
+            //
+            // `send`, not a bare conn.send + setMessages: it also clears `outcome` /
+            // `outcomeKind` and sets `busy`, so the card itself disappears the instant
+            // it is answered rather than sitting on screen (already answered, no
+            // longer meaningful) until the next turn's outcome happens to overwrite it.
+            <DecisionCard
+              questions={m0Decision}
+              onAnswer={send}
+              onSomethingElse={() => setDecisionDismissed(true)}
+            />
+          ) : outcome && !busy && !decisionDismissed && !expired ? (
+            // `!decisionDismissed` so dismissing the card for "something else" does not
+            // fall through to the very label the card replaced -- the researcher already
+            // acted, there is nothing more to wait on them for until they type.
+            <div className="turnOutcome">
+              {outcome}
+              {spendStopped && projectId && onContinueOnProject && (
+                <button
+                  className="chatContinue"
+                  disabled={continuing}
+                  onClick={() => {
+                    setContinuing(true)
+                    void api
+                      .createSession({ project_id: projectId })
+                      .then((s) => onContinueOnProject(s.id))
+                      .finally(() => setContinuing(false))
+                  }}
+                >
+                  {continuing ? 'Continuing…' : 'Continue on this project'}
+                </button>
+              )}
+            </div>
           ) : queuedOnServer && !messages.some((m) => m.queued) ? (
             // The server is holding a message this tab did not send — another tab, or
             // this one before a reload. Without this the feed looks idle while a message
@@ -443,6 +721,10 @@ export default function ChatPane({
                     }`
                   : 'working…'}{' '}
                 {elapsed}s
+                {/* Item 4: the job already survives a disconnect; testers who locked
+                    their screen thought it had quit (#2921, #2922). Shown only while
+                    a turn is RUNNING -- telling an idle reader this is noise. */}
+                <div className="keepsRunning">{KEEPS_RUNNING_NOTE}</div>
               </div>
             )
           )}
@@ -495,24 +777,11 @@ export default function ChatPane({
               if (f) void handleFile(f)
             }}
           />
-          <label className="chatAdvanced" title="Show the model's reasoning blocks">
-            <input
-              type="checkbox"
-              checked={showThinking}
-              onChange={(e) => setShowThinking(e.target.checked)}
-            />
-            Reasoning
-          </label>
-          <button
-            type="button"
-            className="chatAttach"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={busy || uploading || !ready}
-            title="Attach a document or image for the agent to read"
-            aria-label="Attach a document or image"
-          >
-            {uploading ? '…' : '📎'}
-          </button>
+          {/* The box spans its own row; the controls sit beneath it.
+              All four used to share one flex row, so dragging the splitter to widen the
+              viewer squeezed the textarea between a checkbox, an icon button and Send --
+              and those three, being fixed-width, gave up none of the space. The thing you
+              type into was the only part that shrank. */}
           <textarea
             className="chatTextarea"
             placeholder={
@@ -532,22 +801,42 @@ export default function ChatPane({
               }
             }}
           />
-          {/* 1b: Send sits BESIDE Stop while a turn runs, it does not replace it.
-              Under continuous work a turn is the whole job, so a composer that
-              only offers Stop for 53 minutes is a composer you cannot use. */}
-          {busy && (
-            <button className="chatStop" type="button" onClick={stop} title="Stop the current turn">
-              Stop
+          <div className="chatControls">
+            <label className="chatAdvanced" title="Show the model's reasoning blocks">
+              <input
+                type="checkbox"
+                checked={showThinking}
+                onChange={(e) => setShowThinking(e.target.checked)}
+              />
+              Reasoning
+            </label>
+            <button
+              type="button"
+              className="chatAttach"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={busy || uploading || !ready}
+              title="Attach a document or image for the agent to read"
+              aria-label="Attach a document or image"
+            >
+              {uploading ? '…' : '📎'}
             </button>
-          )}
-          <button
-            className="chatSend"
-            type="submit"
-            disabled={!input.trim()}
-            title={busy ? 'The agent is working — this is queued, not dropped' : 'Send'}
-          >
-            Send
-          </button>
+            {/* 1b: Send sits BESIDE Stop while a turn runs, it does not replace it.
+                Under continuous work a turn is the whole job, so a composer that
+                only offers Stop for 53 minutes is a composer you cannot use. */}
+            {busy && (
+              <button className="chatStop" type="button" onClick={stop} title="Stop the current turn">
+                Stop
+              </button>
+            )}
+            <button
+              className="chatSend"
+              type="submit"
+              disabled={!input.trim()}
+              title={busy ? 'The agent is working — this is queued, not dropped' : 'Send'}
+            >
+              Send
+            </button>
+          </div>
         </form>
       )}
     </div>

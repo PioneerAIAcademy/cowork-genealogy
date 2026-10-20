@@ -186,6 +186,8 @@ export function ResearchDataProvider({
     [index]
   )
 
+  const hasId = useCallback((id: string): boolean => index.has(id), [index])
+
   const clearError = useCallback(() => setError(null), [])
   const clearNotice = useCallback(() => setNotice(null), [])
 
@@ -269,6 +271,7 @@ export function ResearchDataProvider({
       devMode,
       setDevMode,
       getById,
+      hasId,
       selectFolder,
       canSelectFolder: typeof transport.selectFolder === 'function',
       activeSection,
@@ -292,6 +295,7 @@ export function ResearchDataProvider({
       folderPath,
       devMode,
       getById,
+      hasId,
       selectFolder,
       transport,
       activeSection,

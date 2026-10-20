@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_research_r2",
+    "skill": "research",
+    "name": "R2: a first message naming a PID triggers research, with no project and no slash command",
+    "type": "positive",
+    "description": "A first message naming a person AND carrying a FamilySearch PID must enter `research`, the only front door, and be routed on to init-project rather than going straight to a sub-skill. The run ENDS at that hand-off: `stop_at_stub` stops it at the router's first hand-off to a stubbed name, so nothing downstream runs. That is deliberate. Before it was added, `stub_skills` denied the launch and CONTINUED, and research's own contract says to invoke the next sub-skill immediately, so the router walked the table against a project that the stub never created. question-selection then attempted a `project`/`project.status` write it does not own, the plugin hook denied it, and `test_no_out_of_lane_section_writes` failed the run -- a state the fixture manufactured, not one a correct router produces. Validators gate even a `grade:trigger` test, so every turn after the hand-off was pure downside with nothing to gain: the judge is diagnostic here. The misroute candidates this test names are stubbed too, so a wrong first hand-off stops the run and fails the routing validator cheaply instead of running a real agent against a half-built project.",
+    "tags": [
+      "grade:trigger",
+      "routing",
+      "routes-to:init-project",
+      "r2",
+      "activation"
+    ]
+  },
+  "input": {
+    "user_message": "Find the parents of Patrick Flynn, FamilySearch ID LZNY-BRF.",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "research must be the skill invoked — it is the only front door, and the message names a person and an objective",
+    "It must be triggered by the description alone: the message carries no slash command and no canned opening-turn prefix",
+    "init-project is stubbed and the run ends at the router's first hand-off by design (execution.stop_at_stub). No project is created, and no closing summary or log entry follows the spawn — do not mark any of them as missing.",
+    "ROUTING IS NOT YOURS TO GRADE: the hand-off is asserted deterministically by test_routes_to_expected_skill from the PreToolUse hook records. Grade only the router's own pre-hand-off work: state derivation and narration. The delegation should carry the FamilySearch ID LZNY-BRF."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "stop_at_stub": true,
+    "stub_skills": [
+      "init-project",
+      "tree-survey",
+      "question-selection",
+      "research-plan",
+      "search-records"
+    ]
+  }
+}

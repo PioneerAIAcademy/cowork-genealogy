@@ -1,0 +1,2905 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "ark": "ark:/61903/4:1:G13G-P68",
+      "facts": [
+        {
+          "id": "F1",
+          "date": "12 July 1848",
+          "type": "Birth",
+          "place": "New Brunswick, Canada",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            },
+            {
+              "ref": "S27",
+              "quality": 3
+            }
+          ],
+          "standard_date": "12 Jul 1848",
+          "standard_place": "New Brunswick, Canada"
+        },
+        {
+          "id": "F2",
+          "date": "31 March 1925",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "31 Mar 1925",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F3",
+          "date": "1850",
+          "type": "Residence",
+          "place": "Bangor, Penobscot, Maine, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1850",
+          "standard_place": "Bangor, Penobscot, Maine, United States"
+        },
+        {
+          "id": "F4",
+          "date": "1870",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1870",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F5",
+          "date": "1900",
+          "type": "Residence",
+          "place": "Detroit city Ward 8, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            },
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "standard_date": "1900",
+          "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F6",
+          "type": "Marital Status",
+          "value": "Widowed",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Burial",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F8",
+          "type": "Ethnicity",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F111",
+          "type": "Birth",
+          "place": "Michigan",
+          "sources": [
+            {
+              "ref": "S26",
+              "quality": 3
+            },
+            {
+              "ref": "S28",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_011",
+          "standard_place": "Michigan, United States"
+        },
+        {
+          "id": "F119",
+          "date": "July 1853",
+          "type": "Birth",
+          "place": "Maine",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_058",
+          "standard_place": "Maine, United States"
+        },
+        {
+          "id": "F120",
+          "type": "Ancestry",
+          "value": "Father's birthplace: Ireland",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_059"
+        },
+        {
+          "id": "F121",
+          "type": "Ancestry",
+          "value": "Mother's birthplace: Ireland",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_060"
+        },
+        {
+          "id": "F122",
+          "date": "4 June 1900",
+          "type": "MaritalStatus",
+          "value": "Married, 25 years as of June 1900",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_061"
+        },
+        {
+          "id": "F123",
+          "date": "4 June 1900",
+          "type": "ChildrenBorn",
+          "value": "6 children ever born",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_062"
+        },
+        {
+          "id": "F124",
+          "date": "4 June 1900",
+          "type": "ChildrenLiving",
+          "value": "6 of 6 children living as of 4 June 1900",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_063"
+        }
+      ],
+      "names": [
+        {
+          "id": "N1",
+          "type": "BirthName",
+          "given": "Mary E",
+          "surname": "McAndrew",
+          "preferred": true
+        },
+        {
+          "id": "N2",
+          "type": "BirthName",
+          "given": "Mary",
+          "surname": "E."
+        },
+        {
+          "id": "N31",
+          "type": "BirthName",
+          "given": "Mary",
+          "sources": [
+            {
+              "ref": "S27",
+              "quality": 3
+            }
+          ],
+          "surname": "Mogan"
+        },
+        {
+          "id": "N36",
+          "type": "BirthName",
+          "given": "Mary",
+          "sources": [
+            {
+              "ref": "S26",
+              "quality": 3
+            },
+            {
+              "ref": "S28",
+              "quality": 3
+            }
+          ],
+          "surname": "Magan"
+        },
+        {
+          "id": "N37",
+          "type": "BirthName",
+          "given": "Mary E",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "surname": "Magan"
+        }
+      ],
+      "gender": "Female",
+      "living": false
+    },
+    {
+      "id": "I2",
+      "ark": "ark:/61903/4:1:GQWY-3JF",
+      "facts": [
+        {
+          "id": "F9",
+          "date": "March 1840",
+          "type": "Birth",
+          "place": "Ireland",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            },
+            {
+              "ref": "S27",
+              "quality": 3
+            },
+            {
+              "ref": "S26",
+              "quality": 3
+            },
+            {
+              "ref": "S28",
+              "quality": 3
+            }
+          ],
+          "standard_date": "Mar 1840",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "F10",
+          "date": "1845",
+          "type": "Immigration",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1845"
+        },
+        {
+          "id": "F11",
+          "date": "1900",
+          "type": "Residence",
+          "place": "Detroit city Ward 8, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            },
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "standard_date": "1900",
+          "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F12",
+          "date": "3 May 1905",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "3 May 1905",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F112",
+          "date": "January 1840",
+          "type": "Birth",
+          "place": "Ireland",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_048",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "F113",
+          "type": "Ancestry",
+          "value": "Father's birthplace: Ireland",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_049"
+        },
+        {
+          "id": "F114",
+          "type": "Ancestry",
+          "value": "Mother's birthplace: Ireland",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_050"
+        },
+        {
+          "id": "F115",
+          "date": "1855",
+          "type": "Immigration",
+          "place": "United States",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_051",
+          "standard_place": "United States"
+        },
+        {
+          "id": "F116",
+          "type": "Naturalization",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_052"
+        },
+        {
+          "id": "F117",
+          "date": "4 June 1900",
+          "type": "MaritalStatus",
+          "value": "Married, 25 years as of June 1900",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_053"
+        },
+        {
+          "id": "F118",
+          "date": "4 June 1900",
+          "type": "Occupation",
+          "value": "Engineer Marine",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_054"
+        }
+      ],
+      "names": [
+        {
+          "id": "N3",
+          "type": "BirthName",
+          "given": "John",
+          "sources": [
+            {
+              "ref": "S27",
+              "quality": 3
+            }
+          ],
+          "surname": "Mogan",
+          "preferred": true
+        },
+        {
+          "id": "N35",
+          "type": "BirthName",
+          "given": "John",
+          "sources": [
+            {
+              "ref": "S26",
+              "quality": 3
+            },
+            {
+              "ref": "S28",
+              "quality": 3
+            },
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "surname": "Magan"
+        }
+      ],
+      "gender": "Male",
+      "living": false
+    },
+    {
+      "id": "I3",
+      "ark": "ark:/61903/4:1:96QY-KKR",
+      "facts": [
+        {
+          "id": "F13",
+          "date": "19 October 1876",
+          "type": "Birth",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "19 Oct 1876",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F14",
+          "date": "1910",
+          "type": "Residence",
+          "place": "Detroit Ward 4, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1910",
+          "standard_place": "Detroit Ward 4, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F15",
+          "date": "from 1917 to 1918",
+          "type": "Military Draft Registration",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "Bet 1917 and 1918",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F16",
+          "date": "2 May 1924",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "2 May 1924",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F17",
+          "type": "Citizenship",
+          "place": "United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_place": "United States"
+        },
+        {
+          "id": "F18",
+          "type": "Burial",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        }
+      ],
+      "names": [
+        {
+          "id": "N4",
+          "type": "BirthName",
+          "given": "Thomas Frank",
+          "surname": "Mogan",
+          "preferred": true
+        }
+      ],
+      "gender": "Male",
+      "living": false
+    },
+    {
+      "id": "I4",
+      "ark": "ark:/61903/4:1:9XPJ-TRP",
+      "facts": [
+        {
+          "id": "F19",
+          "date": "12May1879",
+          "type": "Birth",
+          "place": "Detroit, Wayne, Michigan",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "12 May 1879",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F20",
+          "date": "22 Sep 1950",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "22 Sep 1950",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F107",
+          "date": "12 May 1877",
+          "type": "Birth",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S27",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_014",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        }
+      ],
+      "names": [
+        {
+          "id": "N5",
+          "type": "BirthName",
+          "given": "John Vincent",
+          "surname": "Mogan",
+          "preferred": true
+        },
+        {
+          "id": "N30",
+          "type": "BirthName",
+          "given": "John V",
+          "sources": [
+            {
+              "ref": "S27",
+              "quality": 3
+            }
+          ],
+          "surname": "Mogan"
+        }
+      ],
+      "gender": "Male",
+      "living": false
+    },
+    {
+      "id": "I5",
+      "ark": "ark:/61903/4:1:LT8W-JPR",
+      "facts": [
+        {
+          "id": "F21",
+          "date": "18 November 1884",
+          "type": "Birth",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "18 Nov 1884",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F22",
+          "date": "27 May 1885",
+          "type": "Christening",
+          "place": "Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "27 May 1885",
+          "standard_place": "Wayne, Michigan, United States"
+        },
+        {
+          "id": "F23",
+          "date": "1900",
+          "type": "Residence",
+          "place": "Detroit city Ward 8, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            },
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "standard_date": "1900",
+          "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F24",
+          "date": "1920",
+          "type": "Residence",
+          "place": "Detroit Ward 10, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1920",
+          "standard_place": "Detroit Ward 10, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F25",
+          "date": "1930",
+          "type": "Residence",
+          "place": "Detroit (Districts 0501-0750), Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1930",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F26",
+          "date": "1940",
+          "type": "Residence",
+          "place": "Ward 16, Detroit, Detroit City, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1940",
+          "standard_place": "Detroit Ward 16, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F27",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F125",
+          "date": "November 1883",
+          "type": "Birth",
+          "place": "Michigan",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_068",
+          "standard_place": "Michigan, United States"
+        },
+        {
+          "id": "F126",
+          "type": "Ancestry",
+          "value": "Father's birthplace: Ireland",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_069"
+        },
+        {
+          "id": "F127",
+          "type": "Ancestry",
+          "value": "Mother's birthplace: Maine",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_070"
+        },
+        {
+          "id": "F128",
+          "date": "4 June 1900",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_071"
+        }
+      ],
+      "names": [
+        {
+          "id": "N6",
+          "type": "BirthName",
+          "given": "Anna Irene",
+          "surname": "Mogan",
+          "preferred": true
+        },
+        {
+          "id": "N7",
+          "type": "BirthName",
+          "given": "Annie I.",
+          "surname": "Mogan"
+        },
+        {
+          "id": "N38",
+          "type": "BirthName",
+          "given": "Anna E",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "surname": "Magan"
+        }
+      ],
+      "gender": "Female",
+      "living": false
+    },
+    {
+      "id": "I6",
+      "ark": "ark:/61903/4:1:LWR7-RD8",
+      "facts": [
+        {
+          "id": "F28",
+          "date": "31 Dec 1885",
+          "type": "Birth",
+          "place": "Detroit, Michigan",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "31 Dec 1885",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F29",
+          "date": "1900",
+          "type": "Residence",
+          "place": "Detroit city Ward 8, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            },
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "standard_date": "1900",
+          "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F30",
+          "date": "1920",
+          "type": "Residence",
+          "place": "Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1920",
+          "standard_place": "Wayne, Michigan, United States"
+        },
+        {
+          "id": "F31",
+          "date": "1930",
+          "type": "Residence",
+          "place": "Dearborn, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1930",
+          "standard_place": "Dearborn, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F32",
+          "date": "16 Nov 1934",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "16 Nov 1934",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F33",
+          "type": "Burial",
+          "place": "Southfield, Oakland, Michigan, United States of America",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_place": "Southfield, Oakland, Michigan, United States"
+        },
+        {
+          "id": "F129",
+          "date": "January 1886",
+          "type": "Birth",
+          "place": "Michigan",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_076",
+          "standard_place": "Michigan, United States"
+        },
+        {
+          "id": "F130",
+          "type": "Ancestry",
+          "value": "Father's birthplace: Ireland",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_077"
+        },
+        {
+          "id": "F131",
+          "type": "Ancestry",
+          "value": "Mother's birthplace: Maine",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_078"
+        },
+        {
+          "id": "F132",
+          "date": "4 June 1900",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_079"
+        }
+      ],
+      "names": [
+        {
+          "id": "N8",
+          "type": "BirthName",
+          "given": "Edward Lawrence",
+          "surname": "Mogan",
+          "preferred": true
+        },
+        {
+          "id": "N9",
+          "type": "BirthName",
+          "given": "Edward lawrence",
+          "surname": "Mogan"
+        },
+        {
+          "id": "N39",
+          "type": "BirthName",
+          "given": "Edward L",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "surname": "Magan"
+        }
+      ],
+      "gender": "Male",
+      "living": false
+    },
+    {
+      "id": "I7",
+      "ark": "ark:/61903/4:1:LZ18-RZM",
+      "facts": [
+        {
+          "id": "F34",
+          "date": "aug 1888",
+          "type": "Birth",
+          "place": "Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            },
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "standard_date": "Aug 1888",
+          "standard_place": "Michigan, United States"
+        },
+        {
+          "id": "F35",
+          "date": "1900",
+          "type": "Residence",
+          "place": "Detroit city Ward 8, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            },
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "standard_date": "1900",
+          "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F36",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F133",
+          "type": "Ancestry",
+          "value": "Father's birthplace: Ireland",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_085"
+        },
+        {
+          "id": "F134",
+          "type": "Ancestry",
+          "value": "Mother's birthplace: Maine",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_086"
+        },
+        {
+          "id": "F135",
+          "date": "4 June 1900",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_087"
+        }
+      ],
+      "names": [
+        {
+          "id": "N10",
+          "type": "BirthName",
+          "given": "Mary L.",
+          "surname": "Mogan",
+          "preferred": true
+        },
+        {
+          "id": "N40",
+          "type": "BirthName",
+          "given": "Mary E",
+          "sources": [
+            {
+              "ref": "S29",
+              "quality": 3
+            }
+          ],
+          "surname": "Magan"
+        }
+      ],
+      "gender": "Female",
+      "living": false
+    },
+    {
+      "id": "I8",
+      "ark": "ark:/61903/4:1:9XJ8-8FN",
+      "facts": [
+        {
+          "id": "F37",
+          "date": "1816",
+          "type": "Birth",
+          "place": "Ireland",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1816",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "F38",
+          "date": "1850",
+          "type": "Residence",
+          "place": "Bangor, Penobscot, Maine, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1850",
+          "standard_place": "Bangor, Penobscot, Maine, United States"
+        },
+        {
+          "id": "F39",
+          "date": "1870",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1870",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F40",
+          "date": "1880",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1880",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F41",
+          "date": "12 October 1888",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "12 Oct 1888",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F42",
+          "type": "Ethnicity",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F43",
+          "type": "Burial",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F44",
+          "type": "Ethnicity",
+          "value": "American",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F45",
+          "type": "Marital Status",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F46",
+          "type": "Occupation",
+          "value": "Blacksmith",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F106",
+          "date": "1887-09-24",
+          "type": "Birth",
+          "place": "Detroit, Wayne, Michigan",
+          "sources": [
+            {
+              "ref": "S26",
+              "quality": 3
+            },
+            {
+              "ref": "S28",
+              "quality": 3
+            }
+          ],
+          "assertion_id": "a_003",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        }
+      ],
+      "names": [
+        {
+          "id": "N11",
+          "type": "BirthName",
+          "given": "Byron Bernard",
+          "surname": "McAndrews",
+          "preferred": true
+        },
+        {
+          "id": "N12",
+          "type": "AlsoKnownAs",
+          "given": "Bernard",
+          "surname": "McAndrews"
+        },
+        {
+          "id": "N29",
+          "type": "BirthName",
+          "given": "Martin",
+          "sources": [
+            {
+              "ref": "S26",
+              "quality": 3
+            },
+            {
+              "ref": "S28",
+              "quality": 3
+            }
+          ],
+          "surname": "Magin"
+        }
+      ],
+      "gender": "Male",
+      "living": false
+    },
+    {
+      "id": "I9",
+      "ark": "ark:/61903/4:1:9FQJ-CCD",
+      "facts": [
+        {
+          "id": "F47",
+          "date": "1822",
+          "type": "Birth",
+          "place": "Ireland",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1822",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "F48",
+          "date": "1850",
+          "type": "Residence",
+          "place": "Bangor, Penobscot, Maine, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1850",
+          "standard_place": "Bangor, Penobscot, Maine, United States"
+        },
+        {
+          "id": "F49",
+          "date": "1870",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1870",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F50",
+          "date": "1880",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1880",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F51",
+          "date": "19 August 1894",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "19 Aug 1894"
+        },
+        {
+          "id": "F52",
+          "date": "20 August 1894",
+          "type": "Obituary",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "20 Aug 1894",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F53",
+          "date": "21 August 1894",
+          "type": "Obituary",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "21 Aug 1894",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F54",
+          "type": "Ethnicity",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "names": [
+        {
+          "id": "N13",
+          "type": "BirthName",
+          "given": "Abby",
+          "surname": "",
+          "preferred": true
+        },
+        {
+          "id": "N14",
+          "type": "AlsoKnownAs",
+          "given": "Abigail",
+          "surname": ""
+        }
+      ],
+      "gender": "Female",
+      "living": false
+    },
+    {
+      "id": "I10",
+      "ark": "ark:/61903/4:1:G13G-3Q2",
+      "facts": [
+        {
+          "id": "F55",
+          "date": "1850",
+          "type": "Birth",
+          "place": "Maine, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1850",
+          "standard_place": "Maine, United States"
+        },
+        {
+          "id": "F56",
+          "date": "1850",
+          "type": "Residence",
+          "place": "Bangor, Penobscot, Maine, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1850",
+          "standard_place": "Bangor, Penobscot, Maine, United States"
+        },
+        {
+          "id": "F57",
+          "date": "1870",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1870",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F58",
+          "date": "January 1880",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "Jan 1880",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F59",
+          "type": "Ethnicity",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F60",
+          "type": "Burial",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F61",
+          "type": "Ethnicity",
+          "value": "W",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "names": [
+        {
+          "id": "N15",
+          "type": "BirthName",
+          "given": "Margaret",
+          "surname": "McAndrews",
+          "preferred": true
+        },
+        {
+          "id": "N16",
+          "type": "AlsoKnownAs",
+          "given": "Madge",
+          "surname": "McAndrews"
+        }
+      ],
+      "gender": "Female",
+      "living": false
+    },
+    {
+      "id": "I11",
+      "ark": "ark:/61903/4:1:G13G-32L",
+      "facts": [
+        {
+          "id": "F62",
+          "date": "1852",
+          "type": "Birth",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1852",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F63",
+          "date": "1870",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1870",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F64",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F65",
+          "type": "Ethnicity",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "names": [
+        {
+          "id": "N17",
+          "type": "BirthName",
+          "given": "Bernard",
+          "surname": "McAndrews",
+          "preferred": true
+        }
+      ],
+      "gender": "Male",
+      "living": false
+    },
+    {
+      "id": "I12",
+      "ark": "ark:/61903/4:1:G13G-X5Y",
+      "facts": [
+        {
+          "id": "F66",
+          "date": "1855",
+          "type": "Birth",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1855",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F67",
+          "date": "October 1876",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "Oct 1876",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F68",
+          "type": "Burial",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        }
+      ],
+      "names": [
+        {
+          "id": "N18",
+          "type": "BirthName",
+          "given": "Patrick",
+          "surname": "McAndrew",
+          "preferred": true
+        }
+      ],
+      "gender": "Male",
+      "living": false
+    },
+    {
+      "id": "I13",
+      "ark": "ark:/61903/4:1:G13G-222",
+      "facts": [
+        {
+          "id": "F69",
+          "date": "1855",
+          "type": "Birth",
+          "place": "Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1855",
+          "standard_place": "Michigan, United States"
+        },
+        {
+          "id": "F70",
+          "date": "1870",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1870",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F71",
+          "date": "18 October 1876",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "18 Oct 1876",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F72",
+          "type": "Ethnicity",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F73",
+          "type": "Ethnicity",
+          "value": "American",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F74",
+          "type": "Marital Status",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F75",
+          "type": "Occupation",
+          "value": "Printer",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "names": [
+        {
+          "id": "N19",
+          "type": "BirthName",
+          "given": "Francis",
+          "surname": "McAndrews",
+          "preferred": true
+        }
+      ],
+      "gender": "Male",
+      "living": false
+    },
+    {
+      "id": "I14",
+      "ark": "ark:/61903/4:1:G13L-BGW",
+      "facts": [
+        {
+          "id": "F76",
+          "date": "1857",
+          "type": "Birth",
+          "place": "Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1857",
+          "standard_place": "Michigan, United States"
+        },
+        {
+          "id": "F77",
+          "date": "1870",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1870",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F78",
+          "date": "12 October 1875",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "12 Oct 1875",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F79",
+          "date": "15 October 1875",
+          "type": "Obituary",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "15 Oct 1875",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F80",
+          "type": "Ethnicity",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F81",
+          "type": "Ethnicity",
+          "value": "American",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F82",
+          "type": "Marital Status",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F83",
+          "type": "Occupation",
+          "value": "Plumber",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "names": [
+        {
+          "id": "N20",
+          "type": "BirthName",
+          "given": "James M.",
+          "surname": "McAndrews",
+          "preferred": true
+        }
+      ],
+      "gender": "Male",
+      "living": false
+    },
+    {
+      "id": "I15",
+      "ark": "ark:/61903/4:1:G13G-LGK",
+      "facts": [
+        {
+          "id": "F84",
+          "date": "1857",
+          "type": "Birth",
+          "place": "Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1857",
+          "standard_place": "Michigan, United States"
+        },
+        {
+          "id": "F85",
+          "date": "1870",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1870",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F86",
+          "date": "May 1880",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "May 1880",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F87",
+          "type": "Ethnicity",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F88",
+          "type": "Burial",
+          "place": "Mount Elliott Cemetery, Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_place": "Mount Elliott Cemetery, Detroit, Wayne, Michigan, United States"
+        }
+      ],
+      "names": [
+        {
+          "id": "N21",
+          "type": "BirthName",
+          "given": "Henry",
+          "surname": "McAndrews",
+          "preferred": true
+        }
+      ],
+      "gender": "Male",
+      "living": false
+    },
+    {
+      "id": "I16",
+      "ark": "ark:/61903/4:1:G13G-FH4",
+      "facts": [
+        {
+          "id": "F89",
+          "date": "1859",
+          "type": "Birth",
+          "place": "Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1859",
+          "standard_place": "Michigan, United States"
+        },
+        {
+          "id": "F90",
+          "date": "1870",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1870",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F91",
+          "date": "24 February 1887",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "24 Feb 1887",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F92",
+          "type": "Ethnicity",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F93",
+          "type": "Marital Status",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F94",
+          "type": "Ethnicity",
+          "value": "American",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F95",
+          "type": "Marital Status",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F96",
+          "type": "Occupation",
+          "value": "Domestic",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "names": [
+        {
+          "id": "N22",
+          "type": "BirthName",
+          "given": "Ann Jane",
+          "surname": "McAndrews",
+          "preferred": true
+        }
+      ],
+      "gender": "Female",
+      "living": false
+    },
+    {
+      "id": "I17",
+      "ark": "ark:/61903/4:1:GK33-B8K",
+      "facts": [
+        {
+          "id": "F97",
+          "date": "1862",
+          "type": "Birth",
+          "place": "Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1862",
+          "standard_place": "Michigan, United States"
+        },
+        {
+          "id": "F98",
+          "date": "1880",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1880",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F99",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "names": [
+        {
+          "id": "N23",
+          "type": "BirthName",
+          "given": "Genivieve",
+          "surname": "Mc Andrew",
+          "preferred": true
+        }
+      ],
+      "gender": "Female",
+      "living": false
+    },
+    {
+      "id": "I18",
+      "ark": "ark:/61903/4:1:9XJ8-8XY",
+      "facts": [
+        {
+          "id": "F100",
+          "date": "1864",
+          "type": "Birth",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1864",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F101",
+          "date": "1870",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1870",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F102",
+          "date": "1880",
+          "type": "Residence",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "1880",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F103",
+          "date": "9 November 1896",
+          "type": "Burial",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "9 Nov 1896",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F104",
+          "date": "9 November 1896",
+          "type": "Death",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ],
+          "standard_date": "9 Nov 1896",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "F105",
+          "type": "Ethnicity",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "names": [
+        {
+          "id": "N24",
+          "type": "BirthName",
+          "given": "Sarah K.",
+          "surname": "McAndrews",
+          "preferred": true
+        },
+        {
+          "id": "N25",
+          "type": "MarriedName",
+          "given": "Sara",
+          "surname": "McFarland"
+        },
+        {
+          "id": "N26",
+          "type": "MarriedName",
+          "given": "Sara",
+          "surname": "Christian"
+        },
+        {
+          "id": "N27",
+          "type": "AlsoKnownAs",
+          "given": "Sarah K.",
+          "surname": "Christian"
+        }
+      ],
+      "gender": "Female",
+      "living": false
+    },
+    {
+      "id": "I19",
+      "ark": "ark:/61903/4:1:9DWP-H1L",
+      "facts": [
+        {
+          "id": "F108",
+          "date": "1887-09-24",
+          "type": "Birth",
+          "place": "Detroit, Wayne, Michigan",
+          "primary": true,
+          "sources": [
+            {
+              "ref": "S26",
+              "quality": 3
+            },
+            {
+              "ref": "S28",
+              "quality": 3
+            }
+          ],
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        }
+      ],
+      "names": [
+        {
+          "id": "N28",
+          "given": "Martin",
+          "sources": [
+            {
+              "ref": "S26",
+              "quality": 3
+            },
+            {
+              "ref": "S28",
+              "quality": 3
+            }
+          ],
+          "surname": "Magin",
+          "preferred": true
+        }
+      ],
+      "gender": "Male"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "url": "https://www.familysearch.org/tree/person/details/G13G-P68",
+      "title": "FamilySearch Family Tree",
+      "citation": "\"FamilySearch Family Tree,\" database, FamilySearch (https://www.familysearch.org/tree : accessed 29 September 2026), entry for Mary E. McAndrew Mogan (G13G-P68)."
+    },
+    {
+      "id": "S2",
+      "url": "https://familysearch.org/ark:/61903/1:1:KFW1-YZR",
+      "title": "Mary E Morgan, \"Michigan, Death Certificates, 1921-1952\"",
+      "citation": "\"Michigan, Death Certificates, 1921-1952\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KFW1-YZR : accessed 29 September 2026), entry for Mary E Morgan and Bryan Mcandrew, 31 Mar 1925."
+    },
+    {
+      "id": "S3",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZWQ-HTHW",
+      "title": "Mary E. Morgan, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6ZWQ-HTHW : accessed 29 September 2026), entry for Mary E. Morgan."
+    },
+    {
+      "id": "S4",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZJN-L3N2",
+      "title": "Mary McAndrews, \"Canada, Ontario Roman Catholic Church Records, 1760-1923\"",
+      "citation": "\"Canada, Ontario Roman Catholic Church Records, 1760-1923\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6ZJN-L3ND : accessed 29 September 2026), entry for Francis Gratting Walsh and Richard Walsh, 20 Aug 1902."
+    },
+    {
+      "id": "S5",
+      "url": "https://www.ancestry.com/discoveryui-content/view/45439464:7667?indiv=try&h&db",
+      "title": "Bryan McAndrew in the 1860 United States Federal Census",
+      "citation": "\"Bryan McAndrew in the 1860 United States Federal Census.\" Ancestry (https://www.ancestry.com/discoveryui-content/view/45439464:7667 : accessed 29 September 2026)."
+    },
+    {
+      "id": "S6",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4BW-XR6",
+      "title": "Mary Morgan in entry for Thos F. Morgan, \"Michigan, Births and Christenings, 1775-1995\"",
+      "citation": "\"Michigan, Births and Christenings, 1775-1995\", database, FamilySearch (https://familysearch.org/ark:/61903/1:1:F4BW-XR6 : 16 January 2020), Mary Morgan in entry for Thos F. Morgan, 1876."
+    },
+    {
+      "id": "S7",
+      "url": "https://familysearch.org/ark:/61903/1:1:XDZ3-97N",
+      "title": "Mary E. McAndrews in entry for Frank Mogan, \"Ohio, Marriages, 1800-1958\"",
+      "citation": "\"Ohio, Marriages, 1800-1958\", database, FamilySearch (https://familysearch.org/ark:/61903/1:1:XDZ3-97N : 25 March 2020), Mary E. McAndrews in entry for Frank Mogan, 1906."
+    },
+    {
+      "id": "S8",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQKW-MZY",
+      "title": "Mary, \"Michigan, Births, 1867-1902\"",
+      "citation": "\"Michigan, Births, 1867-1902\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NQKW-MZR : accessed 29 September 2026), entry for Thos F Morgan and John Morgan, 19 October 1876."
+    },
+    {
+      "id": "S9",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQCC-HLC",
+      "title": "Mary Morgan, \"Michigan, Births, 1867-1902\"",
+      "citation": "\"Michigan, Births, 1867-1902\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NQCC-HL4 : accessed 29 September 2026), entry for John V. Morgan and John Morgan, 12 May 1879."
+    },
+    {
+      "id": "S10",
+      "url": "https://familysearch.org/ark:/61903/1:1:X8Q7-YN4",
+      "title": "Mary E. McAndrews, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Z845-P1T2 : accessed 29 September 2026), entry for Frank Mogan and Margaret Murray, 21 Feb 1906."
+    },
+    {
+      "id": "S11",
+      "url": "https://familysearch.org/ark:/61903/1:1:M6VS-5ZZ",
+      "title": "Mary A McAndrews, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M6VS-5ZH : accessed 29 September 2026), entry for Bernard McAndrews and Abba McAndrews, 1850."
+    },
+    {
+      "id": "S12",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZBJ-TZC",
+      "title": "Mary Mcandrews, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KZBJ-TZQ : accessed 29 September 2026), entry for Francis G Walsh and Richard Walsh, 20 Aug 1902."
+    },
+    {
+      "id": "S13",
+      "url": "https://familysearch.org/ark:/61903/1:1:7N1D-9BT2",
+      "title": "Mary E McAndrews Mogan, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:7N1D-9BT2 : accessed 29 September 2026), entry for Mary E McAndrews Mogan."
+    },
+    {
+      "id": "S14",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHCY-CT5",
+      "title": "Mary McAndrews, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MHCY-CTG : accessed 29 September 2026), entry for James Dean and Martha Dean, 1870."
+    },
+    {
+      "id": "S15",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHM3-9QG",
+      "title": "Mary Morgan in entry for Anna Morgan, \"Michigan, Births and Christenings, 1775-1995\"",
+      "citation": "\"Michigan, Births and Christenings, 1775-1995\", database, FamilySearch (https://familysearch.org/ark:/61903/1:1:FHM3-9QG : 16 January 2020), Mary Morgan in entry for Anna Morgan, 1885."
+    },
+    {
+      "id": "S16",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPWJ-XX2G",
+      "title": "Mary Morgan, \"Michigan, County Births, 1867-1917\"",
+      "citation": "\"Michigan, County Births, 1867-1917\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPWJ-XX22 : accessed 29 September 2026), entry for Thos F Morgan and John Morgan, 19 October 1876."
+    },
+    {
+      "id": "S17",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGYQ-QXMD",
+      "title": "Mary Mogan, \"Michigan, County Births, 1867-1917\"",
+      "citation": "\"Michigan, County Births, 1867-1917\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGYQ-QXMZ : accessed 29 September 2026), entry for John V Mogan and John Mogan, 12 May 1877."
+    },
+    {
+      "id": "S18",
+      "url": "https://familysearch.org/ark:/61903/1:1:KFWB-NN1",
+      "title": "Mary E Mc Andrews, \"Michigan, Death Certificates, 1921-1952\"",
+      "citation": "\"Michigan, Death Certificates, 1921-1952\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KFWB-NNY : accessed 29 September 2026), entry for Frank Mogan and John Mogan, 02 May 1924."
+    },
+    {
+      "id": "S19",
+      "url": "https://familysearch.org/ark:/61903/1:1:Z845-5MW2",
+      "title": "Mary E. McAndrews, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Z845-P1T2 : accessed 29 September 2026), entry for Frank Mogan and Margaret Murray, 21 Feb 1906."
+    },
+    {
+      "id": "S20",
+      "url": "https://familysearch.org/ark:/61903/1:1:N3TS-P25",
+      "title": "Michigan, Marriages, 1868-1925",
+      "citation": "\"Michigan, Marriages, 1868-1925\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:N3TS-P2G : accessed 29 September 2026), entry, 3 July 1916."
+    },
+    {
+      "id": "S21",
+      "title": "Legacy NFS Source: Mary E. - Government record: birth-name: Mary E."
+    },
+    {
+      "id": "S22",
+      "url": "https://familysearch.org/ark:/61903/1:1:KF71-4FG",
+      "title": "Mary Mcandrew, \"Michigan, Death Certificates, 1921-1952\"",
+      "citation": "\"Michigan, Death Certificates, 1921-1952\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KF71-4F2 : accessed 29 September 2026), entry for Ed Mogan and John Mogan, 16 Nov 1934."
+    },
+    {
+      "id": "S23",
+      "url": "https://familysearch.org/ark:/61903/1:1:CS4N-DB2M",
+      "title": "Mary Morgan, \"Michigan, County Births, 1867-1917\"",
+      "citation": "\"Michigan, County Births, 1867-1917\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:CS4N-DB6Z : accessed 29 September 2026), entry for Anna Morgan and John Morgan, 18 Nov 1884."
+    },
+    {
+      "id": "S24",
+      "url": "https://familysearch.org/ark:/61903/1:1:KFWP-FLD",
+      "title": "Mary E McAndrews, \"Michigan, Death Certificates, 1921-1952\"",
+      "citation": "\"Michigan, Death Certificates, 1921-1952\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KFWP-FLZ : accessed 29 September 2026), entry for John Vincent Mogan and John Mogan, 22 Sep 1950."
+    },
+    {
+      "id": "S25",
+      "url": "https://familysearch.org/ark:/61903/1:1:M91M-LK1",
+      "title": "Mary E Magan, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M91M-LKB : accessed 29 September 2026), entry for John Magan and Mary E Magan, 1900."
+    },
+    {
+      "id": "S26",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:NQ8J-TVV",
+      "title": "Michigan, Births, 1867-1902"
+    },
+    {
+      "id": "S27",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QGYQ-QXMZ",
+      "title": "Michigan, County Births, 1867-1917, entry for John V Mogan"
+    },
+    {
+      "id": "S28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QLT2-G99Q",
+      "title": "Entry for Martin Magin, \"Michigan, County Births, 1867-1917\""
+    },
+    {
+      "id": "S29",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M91M-LK1",
+      "title": "1900 United States Federal Census, Wayne County, Michigan, Detroit Ward 8, Dwelling 32, Family 35 — John Magan household"
+    },
+    {
+      "id": "S30",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M91M-LKB",
+      "title": "United States Census, 1900"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "I8",
+      "person2": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "child": "I1",
+      "parent": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "child": "I1",
+      "parent": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "child": "I3",
+      "parent": "I2",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ],
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "child": "I3",
+      "parent": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ],
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "child": "I4",
+      "parent": "I2",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "child": "I4",
+      "parent": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "child": "I5",
+      "parent": "I2",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "child": "I5",
+      "parent": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "child": "I6",
+      "parent": "I2",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ],
+      "subtype": "Biological"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "child": "I6",
+      "parent": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ],
+      "subtype": "Biological"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "child": "I7",
+      "parent": "I2",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ],
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "child": "I7",
+      "parent": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ],
+      "subtype": "Biological"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "child": "I17",
+      "parent": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "child": "I17",
+      "parent": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "child": "I12",
+      "parent": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "child": "I12",
+      "parent": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "child": "I18",
+      "parent": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "child": "I18",
+      "parent": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "child": "I14",
+      "parent": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "child": "I14",
+      "parent": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "child": "I11",
+      "parent": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "child": "I11",
+      "parent": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "child": "I15",
+      "parent": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "child": "I15",
+      "parent": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R27",
+      "type": "ParentChild",
+      "child": "I13",
+      "parent": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R28",
+      "type": "ParentChild",
+      "child": "I13",
+      "parent": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R29",
+      "type": "ParentChild",
+      "child": "I16",
+      "parent": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R30",
+      "type": "ParentChild",
+      "child": "I16",
+      "parent": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R31",
+      "type": "ParentChild",
+      "child": "I10",
+      "parent": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R32",
+      "type": "ParentChild",
+      "child": "I10",
+      "parent": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R33",
+      "type": "ParentChild",
+      "child": "I19",
+      "parent": "I2",
+      "sources": [
+        {
+          "ref": "S26",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "id": "R34",
+      "type": "ParentChild",
+      "child": "I19",
+      "parent": "I1",
+      "sources": [
+        {
+          "ref": "S26",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "id": "R35",
+      "type": "ParentChild",
+      "child": "I19",
+      "parent": "I2",
+      "sources": [
+        {
+          "ref": "S26",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "id": "R36",
+      "type": "ParentChild",
+      "child": "I19",
+      "parent": "I1",
+      "sources": [
+        {
+          "ref": "S26",
+          "quality": 3
+        }
+      ]
+    }
+  ]
+}
