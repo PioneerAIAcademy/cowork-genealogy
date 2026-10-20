@@ -216,7 +216,7 @@ the absorbed person's id in every section that holds person ids.
 | | `researcher_profile` | `init-project` | any caller, to correct a field | `research_append` | **nothing** |
 | | `known_holdings` | `init-project` | — | `research_append`, `merge_tree_persons` | **nothing** |
 | | `questions` | `question-selection` | `research-exhaustiveness`, `proof-conclusion` | `research_append` | unit + hook + tool — the hook routes any non-null `search_stop.stopped_because` to `research-exhaustiveness`; the tool refuses a `resolved` with no proof summary, a declaration while the active plan has `in_progress` or `planned` items, and a new question while another's search is in flight |
-| | `plans` / `plan_items` | `research-plan` | `search-records`, `search-external-sites`, `search-full-text`, `search-images`, for `items[].status` only | `research_append` | unit on `plans` (whole-section only — it cannot tell a status flip from a rewritten plan); **nothing** on `plan_items`. The hook keeps the three search agents to `plan_items` |
+| | `plans` / `plan_items` | `research-plan` | `search-records`, `search-external-sites`, `search-full-text`, `search-images`, for `items[].status` only; `extraction_append`, by tool identity, for `items[].status` `in_progress` → `completed` only | `research_append`, `extraction_append` | unit on `plans` (whole-section only — it cannot tell a status flip from a rewritten plan); **nothing** on `plan_items`. The hook keeps the three search agents to `plan_items` |
 | | `log` | none by design — append-only, multi-writer | `search-records`, `search-external-sites`, `search-full-text`, `search-images`, `search-hints`, `survey-surname`, `search-wikipedia`, `search-familysearch-wiki`, `historical-context`; `extraction_append` for its own `record_read` entries | `research_log_append`, `build_external_search_url`, `extraction_append` | unit + tool |
 | | `sources` | none — written in code by `extraction_append`, whoever calls it | `citation` (refine only, never create); `init-project` (one entry per transcribed memory, at creation) | `research_append`, `extraction_append` | unit; create-vs-refine held by tool identity |
 | | `assertions` | none — written in code by `extraction_append`, whoever calls it | — | `extraction_append`; `research_append` only for an update setting `informant_bias_notes` alone | unit + tool |
@@ -264,12 +264,16 @@ pick one at random and build on it.
 
 1. **Who moves a FamilySearch plan item out of `in_progress`.** `search-records` sets
    `in_progress` and refuses `completed`: "that is set once extraction has created the
-   assertions". `search-full-text` says the same ("extraction will complete it").
-   `research-plan` says the executing skills make the transition. `extraction_append`
-   never touches `plan_items`. So the item stays `in_progress` until
-   `research-exhaustiveness` refuses its declaration — and the routing row that follows a
-   refusal sends only `planned` items to `research-plan`'s Dispose mode.
-   `search-external-sites` and `search-images` set `completed` themselves.
+   assertions". That is now true in code: `extraction_append` completes an `in_progress`
+   item once a record one of its positive or partial `record_search` searches found is
+   extracted. Two gaps remain. An item whose searches all found nothing is never
+   completed by extraction, so it stays `in_progress` until `research-exhaustiveness`
+   refuses its declaration, and the routing row that follows a refusal sends only
+   `planned` items to `research-plan`'s Dispose mode. And `search-full-text` says the same
+   ("extraction will complete it"), which stays untrue: completion reads only
+   `record_search` sidecars, and a full-text result names an image, never a record.
+   `research-plan` says the executing skills make the transition. `search-external-sites`
+   and `search-images` set `completed` themselves.
 2. **How `search-images` is invoked.** Its routing row reads `search-images` with no
    `@plugin:` prefix, and the table says an entry without the prefix is a `Skill` call —
    but the skill was deleted and only the agent exists. The same row describes the browse

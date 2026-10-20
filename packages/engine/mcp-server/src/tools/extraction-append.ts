@@ -1124,8 +1124,9 @@ export const extractionAppendSchema = {
     "extracts.\n" +
     "\n" +
     "Send EXACTLY ONE of:\n" +
-    "- `recordIds` — FamilySearch records, any ARK form. Each is read live, " +
-    "logged and extracted from the index; an earlier read of it is reused. A " +
+    "- `recordIds` — FamilySearch records, any ARK form. Each is extracted from " +
+    "the index: read live and logged, or, when an earlier read of it is on file, " +
+    "that read is reused. A " +
     "record already extracted is skipped and named, and tied to `questionIds`.\n" +
     "- `documents` — any other source (a transcription, an upload, pasted text), " +
     "as structured by the record-structurer agent. Every document is validated " +

@@ -235,10 +235,11 @@ def _plans(*statuses, **plan_fields):
 
 
 def test_plan_completion_by_extraction_append_is_in_lane():
-    """search-hints extracts in recordIds mode and is no caller of `plans`."""
+    """The research router calls extraction_append and is no caller of `plans`. Run as
+    research, not search-hints, which issue #3153 makes a `plans` caller."""
     before = research(plans=_plans("in_progress", "planned"))
     after = research(plans=_plans("completed", "planned"))
-    check_research(before, after, {"name": "search-hints"}, POSITIVE, tool_calls=_EXTRACT)
+    check_research(before, after, {"name": "research"}, POSITIVE, tool_calls=_EXTRACT)
 
 
 @pytest.mark.parametrize(
@@ -256,7 +257,7 @@ def test_any_other_plans_change_with_extraction_append_still_fails(before_status
     before = research(plans=_plans(*before_statuses))
     after = research(plans=_plans(*after_statuses, **plan_fields))
     with pytest.raises(AssertionError) as e:
-        check_research(before, after, {"name": "search-hints"}, POSITIVE, tool_calls=_EXTRACT)
+        check_research(before, after, {"name": "research"}, POSITIVE, tool_calls=_EXTRACT)
     assert "plans" in str(e.value)
 
 
@@ -264,7 +265,7 @@ def test_the_same_completion_without_an_extraction_append_call_fails():
     with pytest.raises(AssertionError) as e:
         check_research(
             research(plans=_plans("in_progress")), research(plans=_plans("completed")),
-            {"name": "search-hints"}, POSITIVE, tool_calls=[],
+            {"name": "research"}, POSITIVE, tool_calls=[],
         )
     assert "plans" in str(e.value)
 
