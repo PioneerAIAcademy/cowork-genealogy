@@ -273,6 +273,14 @@ and one structural judge-vs-human disagreement per annotated run
 against `calibrate_judge`'s `PER_FINDING_TARGET`. Worked example:
 `eval/tests/e2e/hinrich-burmeister-spouse/README.md`.
 
+Third, for a non-answer finding that a record attached to the subject
+answers on its own. A project extracts every attached record before its
+first question (§6.1), so such a finding measures setup, not research.
+`maria-bracero-marriage`'s f2, her parents, is the worked example: her
+attached 1973 death registration names her father, while f1, the
+marriage itself, still needs the hint record (lead, 2026-10-20). The
+README says so, and the record is listed as starting evidence (§6.1).
+
 #### 3.4.1 Negative findings (`polarity: "avoid"`)
 
 A normal finding asks "did the agent recover this?" A **negative**
@@ -486,16 +494,9 @@ stripped:
   **identical** to it, so `snapshot --check` can still audit upstream
   drift. `e2e.author validate` enforces the equality and skips the
   presence mirror (expected findings are extra-tree by definition).
-  The harness's corpus test enforces it too, on every push
-  (`test_e2e_fixture_corpus.py`), and fails a record-hint fixture with
-  no unstripped tree.
-- A record an expected finding cites by its `1:1:` ark must not be
-  attached to a subject person in the starting tree (person, name or
-  fact level), because a project extracts every attached record before
-  its first question. Starting evidence that a finding cites is listed,
-  with a reason, in `eval/tests/e2e/attached-evidence-allowlist.json`;
-  `test_e2e_attached_evidence.py` fails an unlisted one, and a stale
-  entry. A record-hint fixture is never stripped to fix it.
+  `make e2e-validate` and the harness's corpus test enforce it too, on
+  every push, through `lint_fixture`, and both fail a record-hint
+  fixture with no unstripped tree.
 - Findings drafted from an unverified hint record are a **draft
   pending adjudication**: a genealogist must confirm the hint record
   concerns the tree person before the fixture's grades are trusted.
@@ -992,6 +993,21 @@ mode; lead ruling 2026-09-27).
 > concluded/attached** on the live person, so the recall really measures
 > research. The proof-quality axis (§7) is the backstop that distinguishes
 > "found the pre-attached record" from "did sound research."
+>
+> A project also extracts every indexed record attached to its subject
+> before its first question, with no search at all. So a record that an
+> expected finding cites by its `1:1:` ark, and that is attached to a
+> subject person in the starting tree (at person, name or fact level),
+> is a leak unless `eval/tests/e2e/attached-evidence-allowlist.json`
+> lists it for that fixture. The leak check,
+> `test_e2e_attached_evidence.py`, fails on an unlisted one, on a stale
+> entry and on a malformed one. An entry means the record is evidence
+> the research legitimately starts from, such as the subject's own
+> baptism, and its reason says which finding still needs the research.
+> A record that would answer a required finding on its own is not an
+> entry: changing that finding, or the fixture's genre, is the lead's
+> call. A strip fixture may instead strip the source; a record-hint
+> fixture never strips (§3.6).
 
 **Why blocking is safe for `/research`.** First, the block lives **only
 in the e2e harness** (`eval/harness/e2e/orchestrator.py`, a `PreToolUse`
