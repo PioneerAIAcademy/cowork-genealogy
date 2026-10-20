@@ -1446,17 +1446,19 @@ def test_select_files_keeps_research_json_when_it_is_the_largest():
 
 def test_select_files_evicts_media_before_results_before_other():
     """Eviction tiers: media first, then results/, then other."""
+    # Sizes are deliberately unequal so the old largest-first rule would drop
+    # notes.json (16 MiB) first — making the test fail on main.
     files = [
-        ("images/photo.tif", b"\0" * (15 * MiB)),
-        ("results/log_1.json", b"\0" * (15 * MiB)),
-        ("notes.json", b"\0" * (15 * MiB)),
+        ("images/photo.tif", b"\0" * (12 * MiB)),
+        ("results/log_1.json", b"\0" * (14 * MiB)),
+        ("notes.json", b"\0" * (16 * MiB)),
     ]
     kept, dropped = fb._select_files(files, include_media=True)
     kept_rels = [r for r, _ in kept]
     # media (tier 0) should be evicted first, then results (tier 1) if needed
     assert "images/photo.tif" in dropped
-    # notes.json (tier 2) should survive — media + results eviction brings us
-    # to 15 MiB, under the 35 MiB cap
+    # notes.json (tier 2) should survive — media eviction brings us
+    # to 30 MiB, under the 35 MiB cap
     assert "notes.json" in kept_rels
 
 
