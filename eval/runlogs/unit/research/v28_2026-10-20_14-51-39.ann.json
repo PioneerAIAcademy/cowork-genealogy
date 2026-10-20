@@ -1,6 +1,6 @@
 {
-  "run_log": "v25_2026-10-18_08-56-54.json",
-  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "run_log": "v28_2026-10-20_14-51-39.json",
+  "annotator": "florencemashipei4@gmail.com",
   "corrections": [
     {
       "test_id": "ut_research_021",
@@ -27,23 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_utf",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_utf",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_utf",
+      "test_id": "ut_research_023",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -51,15 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_zfp",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_zfp",
+      "test_id": "ut_research_023",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -67,15 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_zfp",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_tsv",
+      "test_id": "ut_research_023",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -83,15 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_tsv",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_tsv",
+      "test_id": "ut_research_020",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -99,15 +59,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_025",
+      "test_id": "ut_research_020",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Judge is wrong: question-state.ts:406 defines state=concluded as summaries.length>0 (a proof summary exists), so q_001 state=concluded does mean a proof summary was written, exactly as Claude described (concluded with a proof summary, but storedStatus stale at in_progress, needing question-selection to mark it resolved). The judge inverted this and conflated it with q_002 (evidence-gathered, resolved, no proof summary). Verified against the raw project_context tool response."
+      "comment": null
     },
     {
-      "test_id": "ut_research_025",
+      "test_id": "ut_research_020",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -115,9 +75,73 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_025",
+      "test_id": "ut_research_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "asking for the unnamed person is a reasonable response to a real blocker and nothing invalid was done, but the agent should have handed off to init-project, which owns collecting those details."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "the init-project hand-off is missing, but the reply gathers the details setup needs and acknowledges the project-setup request, so it’s partial rather than a failure."
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
