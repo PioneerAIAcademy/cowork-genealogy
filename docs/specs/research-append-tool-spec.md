@@ -2146,7 +2146,11 @@ submitting family knows them firsthand, as with a surviving spouse's name.
   when the file holds a will and `decedent` when it is intestate. On a
   newspaper announcement, the event's subject: `child` for a birth, `bride` /
   `groom` for an engagement or wedding, `husband` / `wife` for an
-  anniversary, and `principal` otherwise.
+  anniversary, and `principal` otherwise. With several principals the event
+  is the type they all carry, else their pair event (marriage, engagement,
+  anniversary) over a birth, so a wedding notice that gives the groom's
+  birthplace is still a wedding; the order the facts were sent in never
+  decides it.
 - **Other parties' roles** come from `statedRelation` through
   `roleFromRelationship` (son → `child_N`, daughter-in-law →
   `daughter_in_law_N`, executor, `heir_N`, `witness_N`). A party the text

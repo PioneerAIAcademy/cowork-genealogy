@@ -390,6 +390,56 @@ describe("extraction_append: documents", () => {
     expect(await roleOf("James Gallagher")).toBe("father_of_bride");
   });
 
+  it("a wedding notice that lists the groom's birth before the marriage still names the pair", async () => {
+    // Seen in ut_record_structurer_006: the agent gave Patrick's birthplace
+    // first, and the notice was read as a birth announcement (groom -> child).
+    const roles = async (brideFacts: any[]) => {
+      const id = `capture:wedding-birth-first-${brideFacts.length}`;
+      const doc = {
+        recordType: "newspaper_announcement",
+        recordLabel: "wedding notice",
+        documentForm: "verbatim_transcript",
+        source: { title: "Flynn-Gallagher wedding notice, Shenandoah Herald, 1870", repository: "Shenandoah Herald" },
+        persons: [
+          { id: "p1", principal: true, gender: "male", names: [{ given: "Patrick", surname: "Flynn" }], facts: [{ type: "birth", place: "County Mayo, Ireland" }, { type: "marriage", date: "15 October 1870" }] },
+          { id: "p2", principal: true, gender: "female", names: [{ given: "Catherine", surname: "Gallagher" }], facts: brideFacts },
+          { id: "p3", gender: "male", names: [{ given: "Thomas", surname: "Flynn" }], facts: [] },
+          { id: "p4", gender: "male", names: [{ given: "James", surname: "Gallagher" }], facts: [] },
+        ],
+        relationships: [
+          { type: "couple", person1: "p1", person2: "p2" },
+          { type: "parent_child", person1: "p3", person2: "p1" },
+          { type: "parent_child", person1: "p4", person2: "p2" },
+        ],
+      };
+      const r = await run([{ recordId: id, document: doc }]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      const as = await assertionsFor(id);
+      const of = (v: string) => as.find((a: any) => a.fact_type === "name" && a.value === v)?.record_role;
+      return [of("Patrick Flynn"), of("Catherine Gallagher"), of("Thomas Flynn"), of("James Gallagher")];
+    };
+    const expected = ["groom", "bride", "father_of_groom", "father_of_bride"];
+    expect(await roles([{ type: "marriage", date: "15 October 1870" }])).toEqual(expected);
+    expect(await roles([])).toEqual(expected);
+  });
+
+  it("a birth announcement for twins, both principals, stays a birth", async () => {
+    const doc = {
+      recordType: "newspaper_announcement",
+      recordLabel: "birth notice",
+      documentForm: "verbatim_transcript",
+      source: { title: "Twins born, Shenandoah Herald, 1872", repository: "Shenandoah Herald" },
+      persons: [
+        { id: "p1", principal: true, gender: "male", names: [{ given: "John", surname: "Flynn" }], facts: [{ type: "birth", date: "2 March 1872" }] },
+        { id: "p2", principal: true, gender: "female", names: [{ given: "Mary", surname: "Flynn" }], facts: [{ type: "birth", date: "2 March 1872" }] },
+      ],
+    };
+    const r = await run([{ recordId: "capture:twins-1872", document: doc }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const as = await assertionsFor("capture:twins-1872");
+    expect(as.find((a: any) => a.fact_type === "name" && a.value === "John Flynn")?.record_role).toBe("child");
+  });
+
   it("marriage: a party's birth facts, christening, and a parent named without an edge are self/secondary (#3410)", async () => {
     const doc = {
       recordType: "marriage",

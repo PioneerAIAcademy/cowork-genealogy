@@ -29,12 +29,17 @@ from validators_lib import new_log_entries as _new_log_entries
 
 
 def _new_result_sidecars(before_state, after_state) -> list[str]:
-    """results/*.json paths present in after_state but not before."""
+    """Finalized results/*.json paths present in after_state but not before.
+
+    `results/.staging/` is excluded: every image_transcribe call stages its page
+    there (#2490), so a staged page is the expected product of a read, not a
+    sidecar the browse wrote."""
     before_files = (before_state or {}).get("files", {}) or {}
     after_files = (after_state or {}).get("files", {}) or {}
     return sorted(
         path for path in after_files
         if path.startswith("results/")
+        and not path.startswith("results/.staging/")
         and path.endswith(".json")
         and path not in before_files
     )
@@ -107,10 +112,10 @@ def test_negative_result_log_shape(before_state, after_state, test):
 # --- No sidecar for an image browse ----------------------------------
 
 def test_no_results_sidecar_written(before_state, after_state, test):
-    """image_search does not stage results, so a browse never writes a
+    """image_search does not stage results, so logging a browse never writes a
     results/<log_id>.json sidecar (unlike record/full-text search). A new
     sidecar would mean the skill mis-modeled the browse on the staging
-    search tools."""
+    search tools. Pages image_transcribe stages are not sidecars."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests perform a browse")
     new_sidecars = _new_result_sidecars(before_state, after_state)
@@ -158,7 +163,9 @@ def test_cap_refusal_relayed_and_logged_partial(
     )
 
     reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
-    assert f"NOT READ: {image_id}" in reply, "the return lacks the NOT READ line for the refused image"
+    assert any("NOT READ" in line and image_id in line for line in reply.splitlines()), (
+        "the return lacks a line naming the refused image as NOT READ"
+    )
     assert "Image cap reached" in reply, "the return does not quote the cap refusal"
     assert link in reply, f"the return drops the refused image's link {link}"
     for label in ("**Transcription:**", "**Extracted facts:**"):

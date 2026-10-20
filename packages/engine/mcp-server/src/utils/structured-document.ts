@@ -340,9 +340,18 @@ export function documentToExtract(
     relationships,
   } as unknown as SimplifiedGedcomX;
 
-  const principal = doc.persons.find((p) => p.principal) ?? doc.persons[0];
+  const principals = doc.persons.filter((p) => p.principal);
+  const principal = principals[0] ?? doc.persons[0];
   const eventRe = PRINCIPAL_EVENT[doc.recordType];
-  const eventFact = eventRe ? principal?.facts.find((f) => eventRe.test(f.type.toLowerCase())) : undefined;
+  const events = eventRe ? principal?.facts.filter((f) => eventRe.test(f.type.toLowerCase())) ?? [] : [];
+  // With several principals the record's event is the one they all carry, else
+  // a pair event: a wedding notice that also gives the groom's birthplace is
+  // not a birth announcement. Fact order is the agent's, so it must not decide.
+  const shared = events.find((f) =>
+    principals.slice(1).every((o) => o.facts.some((g) => g.type.toLowerCase() === f.type.toLowerCase())),
+  );
+  const pair = events.find((f) => f.type.toLowerCase() !== "birth");
+  const eventFact = principals.length > 1 ? shared ?? pair ?? events[0] : events[0];
   const eventYear = yearOf(eventFact?.date);
 
   const hasWill =
