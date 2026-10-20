@@ -1,0 +1,19 @@
+{
+  "id": "pietro-marchetti-daughter",
+  "name": "Pietro Marchetti — a daughter, Giuseppa, born 1884 at Maglianello, who died in 1913 at Rieti, Italy",
+  "genre": "record-hint",
+  "source_pid": "G9WN-C79",
+  "captured": "2026-10-20",
+  "researcher_question": "What children did Pietro Marchetti (born 1848) and Maria Aquilini of Rieti, Lazio, Italy, married in 1876, have besides their daughter Domenica (born 1878)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1880s",
+    "geography": "IT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 18, hint-samples.csv row 525, flags adds_daughter, confidence 3). Draft transcribed from a 1913 Rieti civil death registration; unverified."
+}

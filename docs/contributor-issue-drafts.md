@@ -143,7 +143,7 @@ list.
 **Touches:** `packages/viewer-ui/src/components/**/__tests__/`
 
 HypothesesSection, PlansSection, `layout/Header`,
-`layout/ProgressPipeline`, `shared/CrossLink`, DetailPanel.
+`shared/CrossLink`, DetailPanel.
 
 #### V16. Print stylesheet for the viewer
 

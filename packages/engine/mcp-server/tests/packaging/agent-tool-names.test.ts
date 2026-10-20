@@ -603,17 +603,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
-  // Read-only by contract: it reports project state and never writes. It calls
-  // no MCP tool at all — `eval/harness/validators/test_project_status.py`
-  // enforces that — so `Read` is the whole grant (issue #2793). `translation.md`
-  // was the first agent to hold only built-in tools and holds the same shape, so
-  // both are skipped by `noMcpByDesign` below; neither can be covered by the
-  // "parses at least one MCP entry" arm, because there is no MCP entry to parse.
-  "project-status.md": {
-    tools: ["Read"],
-    denies: [],
-  },
-
   // convert-dates (issue #2790) holds the one tool the skill it replaced
   // declared, `convert_calendar`, plus `Read` for the Narration line's read of
   // research.json. It persists nothing, so it holds no writer tool and no hook
@@ -656,6 +645,35 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // restriction. `log` is its only ownership row (`agent:search-familysearch-wiki`).
   "search-familysearch-wiki.md": {
     tools: ["research_log_append", "wiki_search"],
+    denies: [],
+  },
+
+  // timeline (issue #2797) holds the five tools the skill it replaced declared,
+  // plus `Read` -- and plus `project_context` / `research_query`, which the
+  // skill USED on every run without declaring. A skill's `allowed-tools` is a
+  // grant, not a restriction (CLAUDE.md), so the skill held every registered
+  // tool; an agent's `tools:` is an exact-match restriction, so copying one
+  // into the other silently removed two. Measured: the skill called
+  // `project_context` once and `research_query` two-to-five times per run to
+  // read person_evidence and assertions; without them the agent read the raw
+  // JSON with `Read` and mis-reported which assertions were linked
+  // (ut_timeline_001, run v1_2026-10-05_11-57-10). `place_search` /
+  // `place_search_all` resolve event places, `place_distance` feeds the
+  // geographic-feasibility check that is this agent's own (check-warnings
+  // does not do geography), `wiki_read` fetches each residence country's
+  // census schedule, and `research_append` persists the one `timelines`
+  // entry the hook lane allows it.
+  "timeline.md": {
+    tools: [
+      "Read",
+      "place_distance",
+      "project_context",
+      "place_search",
+      "place_search_all",
+      "research_append",
+      "research_query",
+      "wiki_read",
+    ],
     denies: [],
   },
 
@@ -708,14 +726,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // New agent (issue #3273), not a conversion, no hook route. It surveys before a
   // project exists, so it holds no `Read`, no `project_context` and no writer:
   // there is no research.json to read or write. `tree_gaps` finds the holes;
-  // the other five check what FamilySearch has for them.
+  // The pending hints and the collection coverage arrive on each hole as
+  // `pendingHints` and `coverage`; the agent calls nothing else.
   "tree-survey.md": {
     tools: [
-      "collections_search",
-      "person_quality",
-      "person_record_matches",
-      "place_search",
-      "record_search",
       "tree_gaps",
     ],
     denies: [],
@@ -782,7 +796,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // `Read` is required for tree.gedcomx.json (persons' dates, places and
   // sources); the body forbids reading research.json with it.
   "question-selection.md": {
-    tools: ["Read", "project_context", "research_append", "research_query"],
+    tools: [
+      "Read",
+      "census_children_gap",
+      "person_warnings",
+      "project_context",
+      "research_append",
+      "research_query",
+    ],
     denies: [],
   },
 
@@ -805,14 +826,18 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
-  // survey-surname (issue #2065) holds three MCP tools and Write. place_search
+  // survey-surname (issue #2065) holds three MCP tools. place_search
   // resolves the state/county. record_search with projectPath stages results.
-  // research_log_append logs each search page. Write saves the markdown table.
+  // research_log_append logs each search page, and the household table as one
+  // more `log` entry (`tool: "survey_surname"`, the table in `notes`; #3244
+  // option L, issue #3414), written through the tool so it reaches the hosted
+  // ProjectStore. It once held the built-in `Write` to save a loose
+  // `surname-survey-*.md`, which the hosted worker's read-only `/project`
+  // refused (EACCES) and no store ever saw; that grant is dropped.
   // No research_append: the log section is written via research_log_append,
   // which takes no section argument. No Read: builds from inline stubs.
   "survey-surname.md": {
     tools: [
-      "Write",
       "place_search",
       "record_search",
       "research_log_append",
@@ -902,9 +927,32 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     tools: [
       "Read",
       "person_read",
-      "person_search",
       "project_create",
       "research_append",
+    ],
+    denies: [],
+  },
+
+  // The folded research-plan skill (issue #2116): the eight tools its
+  // `allowed-tools` declared, plus `research_query` and `project_context`,
+  // which its committed runs call to read plans, the log and the localities
+  // entries though the skill never declared them. `Read` is for
+  // tree.gedcomx.json and the narration line. Its `research_append` is laned to
+  // `plans` and `plan_items` (guard_project_files.py). It hands searches back
+  // rather than spawning them, so no spawn tool.
+  "research-plan.md": {
+    tools: [
+      "Read",
+      "collections_search",
+      "external_links_search",
+      "person_read",
+      "place_search",
+      "place_search_all",
+      "project_context",
+      "research_append",
+      "research_query",
+      "volume_search",
+      "wiki_read",
     ],
     denies: [],
   },

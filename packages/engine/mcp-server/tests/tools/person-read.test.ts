@@ -1681,6 +1681,24 @@ describe("personReadTool — staging the read (#2944)", () => {
     expect(existsSync(missing)).toBe(false);
   });
 
+  // Issue #3384: an over-limit result reaches the model as a preview of the head
+  // of `JSON.stringify(result)` (server.ts), so the ref must be the first key.
+  it("serializes `staged` first, so the ref survives a truncated preview", async () => {
+    mockOk(WITH_RELATIVES);
+    const out = await personReadTool({ personId: "KNDX-MKG", projectPath: dir }, LOCAL);
+    expect(Object.keys(out)[0]).toBe("staged");
+    expect(JSON.stringify(out)).toMatch(/^\{"staged":\{"resultsRef":"results\/\.staging\/[0-9a-f-]+\.json"/);
+  });
+
+  it("serializes a staging failure first too: staged: null, then the reason", async () => {
+    const { writeFile } = await import("fs/promises");
+    const { join } = await import("path");
+    await writeFile(join(dir, "results"), "not a directory");
+    mockOk(PERSON_ONLY);
+    const out = await personReadTool({ personId: "KNDX-MKG", projectPath: dir }, LOCAL);
+    expect(JSON.stringify(out)).toMatch(/^\{"staged":null,"stagingError":"/);
+  });
+
   it("keys the staged element by the post-redirect id for a merged person", async () => {
     mockStatus(301, "https://api.familysearch.org/platform/tree/persons/GDZW-NZZ");
     mockOk({

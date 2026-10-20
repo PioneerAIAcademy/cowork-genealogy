@@ -246,6 +246,36 @@ def test_startup_adds_the_new_columns_to_a_table_created_before_them(tmp_path, m
     assert [(r.cost_usd, r.build, r.continuations) for r in rows] == [(0.5, None, None), (0.25, "abc123", 4)]
 
 
+_API_CALLS_AS_FIRST_DEPLOYED = """CREATE TABLE api_calls (
+    id INTEGER NOT NULL PRIMARY KEY, project_id VARCHAR NOT NULL, user_id VARCHAR NOT NULL,
+    model VARCHAR, input_tokens INTEGER NOT NULL, cache_creation_input_tokens INTEGER NOT NULL,
+    cache_read_input_tokens INTEGER NOT NULL, output_tokens INTEGER NOT NULL,
+    cost_usd FLOAT NOT NULL, session_age_s INTEGER NOT NULL, created DATETIME NOT NULL)"""
+
+
+def test_startup_adds_the_agent_column_to_an_api_calls_table_created_before_it(tmp_path, monkeypatch):
+    from sqlalchemy import create_engine, inspect, text
+
+    from app import db as db_module
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'live.db'}")
+    with engine.begin() as conn:
+        conn.execute(text(_API_CALLS_AS_FIRST_DEPLOYED))
+        conn.execute(text("INSERT INTO api_calls VALUES "
+                          "(1, 'p', 'u', 'm', 1, 2, 3, 4, 0.5, 60, '2026-10-12 00:00:00')"))
+    monkeypatch.setattr(db_module, "_engine", engine)
+
+    db_module.init_db()
+    db_module.init_db()
+
+    assert "agent" in {c["name"] for c in inspect(engine).get_columns("api_calls")}
+    with Session(engine) as s:
+        s.add(ApiCall(project_id="p", user_id="u", cost_usd=0.25, session_age_s=1, agent="main"))
+        s.commit()
+        rows = s.exec(select(ApiCall).order_by(ApiCall.id)).all()
+    assert [(r.cost_usd, r.agent) for r in rows] == [(0.5, None), (0.25, "main")]
+
+
 def test_a_table_that_already_has_every_column_is_left_alone():
     from app.db import add_missing_columns
 
@@ -299,7 +329,7 @@ def test_the_report_groups_by_day_build_and_session(seeded, capsys):
 def calls(db):
     """Two days of calls: a new session and a reopened 30-hour-old one on the first, a third
     session (one of its calls on Sonnet 5) on the second, and one call older than the
-    window."""
+    window. Two agents made them, and one call names none."""
     from datetime import timedelta
 
     from app.models import User, utcnow
@@ -308,18 +338,20 @@ def calls(db):
     first, second = noon - timedelta(days=3), noon - timedelta(days=2)
     db.add(db.get(User, "u-call") or User(id="u-call", email="calls@example.com"))
     sonnet = "claude-sonnet-4-6"
-    for project, created, cost, age_h, tokens, model in [
-        ("prj_new", first, 1.00, 1, (10_000, 20_000, 100_000, 2_000), sonnet),
-        ("prj_new", first, 0.50, 1, (10_000, 20_000, 100_000, 4_000), sonnet),
-        ("prj_reopened", first, 3.00, 96, (10_000, 40_000, 200_000, 3_000), sonnet),
-        ("prj_third", second, 2.00, 2, (20_000, 0, 80_000, 5_000), sonnet),
-        ("prj_third", second, 0.40, 2, (20_000, 0, 80_000, 5_000), "claude-sonnet-5"),
-        ("prj_gone", noon - timedelta(days=40), 50.0, 1, (1, 1, 1, 1), sonnet),
+    for project, created, cost, age_h, tokens, model, agent in [
+        ("prj_new", first, 1.00, 1, (10_000, 20_000, 100_000, 2_000), sonnet, "main"),
+        ("prj_new", first, 0.50, 1, (10_000, 20_000, 100_000, 4_000), sonnet, "Record Structurer"),
+        ("prj_reopened", first, 3.00, 96, (10_000, 40_000, 200_000, 3_000), sonnet, "main"),
+        ("prj_third", second, 2.00, 2, (20_000, 0, 80_000, 5_000), sonnet, None),
+        ("prj_third", second, 0.40, 2, (20_000, 0, 80_000, 5_000), "claude-sonnet-5",
+         "Record Structurer"),
+        ("prj_gone", noon - timedelta(days=40), 50.0, 1, (1, 1, 1, 1), sonnet, "main"),
     ]:
         db.add(ApiCall(project_id=project, user_id="u-call", model=model,
                        input_tokens=tokens[0], cache_creation_input_tokens=tokens[1],
                        cache_read_input_tokens=tokens[2], output_tokens=tokens[3],
-                       cost_usd=cost, session_age_s=age_h * 3600, created=created))
+                       cost_usd=cost, session_age_s=age_h * 3600, created=created,
+                       agent=agent))
     db.commit()
     yield first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d")
     db.delete(db.get(User, "u-call"))
@@ -357,6 +389,21 @@ def test_the_report_prices_every_call_by_model_and_token_type(calls, capsys):
     got = {line.rsplit(None, 2)[0].strip(): line.rsplit(None, 2)[1] for line in lines}
     assert got == {"input": "$0.19", "cache write": "$0.30", "cache read": "$0.16",
                    "output": "$0.26"}
+
+
+def test_the_report_splits_every_call_by_agent(calls, capsys):
+    """Grouped in the database like the by-model table, a call with no agent named
+    showing as (none), and the 40-day-old call outside the window left out."""
+    from app import cost_report
+
+    cost_report.main(["--days", "30"])
+    out = capsys.readouterr().out
+    rows = out.split("Every call, by agent")[1].splitlines()[2:5]
+    assert [line.rsplit(None, 5) for line in rows] == [
+        ["main", "$4.00", "2", "58", "190000", "2500"],
+        ["(none)", "$2.00", "1", "29", "100000", "5000"],
+        ["Record Structurer", "$0.90", "2", "13", "115000", "4500"],
+    ]
 
 
 def test_an_empty_window_says_so(db, capsys):

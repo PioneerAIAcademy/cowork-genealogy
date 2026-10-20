@@ -183,18 +183,24 @@ describe("write serialization under concurrency (issue #1715)", () => {
   it("locks per project, not globally — two projects do not serialize", async () => {
     const other = await mkdtemp(join(tmpdir(), "ws-other-"));
     try {
-      let bDone = false;
-      const a = withProjectLock(dir, async () => {
-        await new Promise((r) => setTimeout(r, 40));
-        return bDone;
-      });
-      await withProjectLock(other, async () => { bDone = true; });
-      // B finished while A still held its own project's lock.
+      let markBDone!: () => void;
+      const bDone = new Promise<void>((resolve) => { markBDone = resolve; });
+      // A holds its own project's lock until B, in the other project, has finished.
+      // Waiting on B rather than on a timer keeps this from racing a slow lock
+      // acquisition (the Postgres store's takes a database round trip). If the lock
+      // were global, B would queue behind A and A would give up after 5 s.
+      const a = withProjectLock(dir, () =>
+        Promise.race([
+          bDone.then(() => true),
+          new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 5000)),
+        ]),
+      );
+      await withProjectLock(other, async () => { markBDone(); });
       expect(await a).toBe(true);
     } finally {
       await rm(other, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 
   it("one project reached by two names shares one lock", async () => {
     const link = join(await mkdtemp(join(tmpdir(), "ws-link-")), "alias");

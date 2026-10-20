@@ -5,6 +5,8 @@ import {
   resolveFsImageInput,
   fetchFsImageBytes,
   extractImageContextQuery,
+  foldImageArkInput,
+  receivedKeys,
 } from "../utils/fs-image-fetch.js";
 import { imageViewerUrl } from "../utils/ark.js";
 import {
@@ -119,6 +121,7 @@ export async function imageTranscribeTool(
    */
   opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
 ): Promise<ImageTranscribeResult | NoProjectResult> {
+  input = foldImageArkInput(input, "image_transcribe");
   // Exactly one input form, checked HERE: `resolveFsImageInput` is shared with
   // image_read and knows only the three FamilySearch shapes.
   const forms = (["imageId", "ark", "memoryArtifactUrl", "file"] as const).filter(
@@ -127,7 +130,7 @@ export async function imageTranscribeTool(
   if (forms.length === 0) {
     throw new Error(
       "image_transcribe requires one of imageId, ark, memoryArtifactUrl, or file " +
-        "(a project-relative path to an uploaded image or PDF, with projectPath).",
+        `(a project-relative path to an uploaded image or PDF, with projectPath). ${receivedKeys(input)}`,
     );
   }
   if (forms.length > 1) {
@@ -335,6 +338,7 @@ export async function imageTranscribeTool(
       transcription,
       ...(truncated ? { truncated: true as const } : {}),
       ...(found ? { found } : {}),
+      ...(imageRef ? { image_ref: imageRef } : {}),
     };
     try {
       staged = await stageSearchResults({

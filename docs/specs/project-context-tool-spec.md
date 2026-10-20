@@ -184,10 +184,49 @@ exists and gates nothing. A superseded verdict does not count — a
 replacement is itself present and satisfies the join; if nothing replaced it, the
 critique no longer stands.
 
-`nextStep` orders by what blocks what: an unresolved conflict outranks an
-unregistered disagreement, which outranks competing parent sets, which outrank a
-missing resolve, which outranks a missing summary. A missing critique is never a
-next step.
+`nextStep` orders by what blocks what: an unresolved conflict outranks a question
+with no linked assertion, which outranks an unregistered disagreement, which
+outranks competing parent sets, which outrank a missing resolve, which outranks a
+missing summary. A missing critique is never a next step.
+
+**Evidence nobody has linked to a person routes to person-evidence.** When a
+question has assertions extracted for it, none of them carries a live
+(`superseded_by` null) `person_evidence` row, and no proof summary exists yet, its
+`nextStep` reads `person-evidence — none of this question's N assertions is linked
+to a person`. It is zero links, not some: once a household's subject is linked, its
+children and wife routinely stay unlinked (some assertions unlinked on 53 of 230
+concluded e2e questions), and that is not a skipped identity step. It sits above the
+disagreement rung because that rung pairs only *linked* assertions and cannot see a
+disagreement among unlinked ones. Left out, the ladder would send the router past
+person-evidence and hide the conflict too. It stops once a summary exists, because
+the proof write is where an unlinked conclusion is refused
+(`research-append-tool-spec.md` §5). Mined from a Cowork run on Family Tree
+LZJF-J13: 15 assertions, 0 links, and the router went on to exhaustiveness and a
+`probable` proof. Counted the same way as the figures below (2026-10-19, 419 question entries
+across 132 scenarios and 209 e2e final states), it fires on 1 e2e question-run and 21
+scenario questions. The only `research` routing test among those scenarios is
+`research-unlinked-baptism-evidence`, the one mined to need it.
+
+**Before any evidence exists, the next search is named by its repository.** A
+`planned` or `searching` question whose log holds a positive or partial entry no
+assertion cites by `log_entry_id` reports extraction. An external-site entry whose
+capture has not come back does not count, because it is an open hand-off. Otherwise
+the lowest-sequence `planned` or `in_progress` item on a plan that is still active
+decides. A repository naming FamilySearch, or none at all, reports `search-records`.
+Any other repository reports `search-external-sites — <item id> (<repository>)`,
+the routing table's own split for that row. With no such item left, the question
+reports `research-exhaustiveness`.
+
+A question at `evidence-gathered` reports `research-exhaustiveness` whatever its
+log holds. An uncited entry does not move it back to extraction: agents log an
+inconclusive search as `partial` and a link list as `positive`, and those entries
+stay uncited. Over the corpus on 2026-10-16 (every scenario plus every e2e final
+state, 421 question entries), holding the question on extraction would have moved
+21 e2e final states there; the four read were all inconclusive `partial` searches
+or link lists. The rule as shipped changes 7 entries: `search-records` to
+`search-external-sites` (2, the Archion and MyHeritage plan items), extraction to
+`search-records` (3), extraction to `search-external-sites` (1, an open MyHeritage
+hand-off) and extraction to `research-exhaustiveness` (1).
 
 **A conflict the evidence shows counts even when nobody registered it.** A
 `conflicts` entry is what `conflict-resolution` *produces*, so an empty
@@ -362,6 +401,59 @@ cache file must never fail the whole projection.
 - **camelCase output.** This is an MCP wire surface. The snake_case source
   fields (`gedcomx_source_description_id`, `record_id`) are renamed at the
   boundary like every other tool.
+
+### Status-answering clause
+
+The tool's `description` opens with an instruction that reaches the main
+thread on every plane (the tool is `ALWAYS_LOAD` in `src/tool-schemas.ts`, and
+the unit harness serves the compiled production description in
+`eval/harness/harness/mock_mcp.py`; in the 2026-10-12 harness runs the schema
+was still deferred and arrived through ToolSearch, description included):
+
+> When the user asks where the project stands ("where are we?", "summarize
+> progress", "what have we found?") or reopens a project, call this and answer
+> from it in exactly ONE plain-language paragraph and nothing else: the
+> objective, what is established, what is open or waiting on the researcher,
+> and the next step, stated rather than asked. No lead-in line ("Here's where
+> things stand:"), no line breaks, headings, tables, lists or bold, no closing
+> question, and no identifiers, file names, tool names or field names:
+> say "the proof summary" or "the parentage question", never q_001 or ps_001.
+> nextStep values name ids and agents; restate them in plain words. Do not
+> read the project files and do not delegate.
+
+It leads the description rather than closing it. Measured on `ut_research_025`
+(2026-10-12, scratch runs, not committed): appended after the field list, the clause was ignored — the reply
+was headings, a table and raw ids. Moved to the front it held in 2 of 3 runs,
+the third quoting `ps_001`. With the worked examples, 3 of 3 scratch runs and
+0 of 1 in the full suite; with the `nextStep` sentence added, 4 of 5. Every
+miss quoted `ps_001`, which `questionStatuses[].nextStep` hands over verbatim
+("gps-mentor (proof-critique) — ps_001").
+
+The shape half is checked too: the validator fails a reply with more than one
+paragraph, a heading, list or table line, bold, or a closing question. Before
+that check existed, both committed full-suite replies passed while breaking it
+(2026-10-15) — a "Here's where things stand:" lead-in, four and seven
+paragraphs, bold names and a closing offer — and the wording above was
+tightened to name each of those.
+
+**Decided (lead, 2026-10-06):** delete the `project-status` agent; a status
+request is answered by the main thread in one plain paragraph from
+`project_context`. Rests on four facts: a live Cowork session (2026-10-02)
+confirmed the main-thread read matched the agent's report and caught two
+defects the agent missed; the agent's detailed summary never reached the user
+through the relay (`ut_project_status_010`, a test deleted with the agent; its run logs remain in git history); `project_context` already returns
+objective, per-question state and next step, open conflicts, persons, sources
+and `awaitingUser`; and writer tools already refuse dangling ids
+(`validator.ts`), covering the broken-foreign-key half of the agent's job.
+Supersedes "PS return: A" (2026-09-24). Knowingly dropped: the agent's
+stale-plan detection — replaced only once phase 2 of
+`docs/plan/research-as-a-job-later.md` lands.
+
+**Decided (review-ready, 2026-10-06):** the clause goes in the tool's
+description, not in a router skill description. Making a router description
+claim status would start a full research run on "where are we?"; the tool
+description reaches the main thread on every plane and leaves routers
+untouched.
 
 ## 4. Errors / edge cases
 

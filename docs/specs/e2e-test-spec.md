@@ -273,6 +273,14 @@ and one structural judge-vs-human disagreement per annotated run
 against `calibrate_judge`'s `PER_FINDING_TARGET`. Worked example:
 `eval/tests/e2e/hinrich-burmeister-spouse/README.md`.
 
+Third, for a non-answer finding that a record attached to the subject
+answers on its own. A project extracts every attached record before its
+first question (§6.1), so such a finding measures setup, not research.
+`maria-bracero-marriage`'s f2, her parents, is the worked example: her
+attached 1973 death registration names her father, while f1, the
+marriage itself, still needs the hint record (lead, 2026-10-20). The
+README says so, and the record is listed as starting evidence (§6.1).
+
 #### 3.4.1 Negative findings (`polarity: "avoid"`)
 
 A normal finding asks "did the agent recover this?" A **negative**
@@ -486,6 +494,9 @@ stripped:
   **identical** to it, so `snapshot --check` can still audit upstream
   drift. `e2e.author validate` enforces the equality and skips the
   presence mirror (expected findings are extra-tree by definition).
+  `make e2e-validate` and the harness's corpus test enforce it too, on
+  every push, through `lint_fixture`, and both fail a record-hint
+  fixture with no unstripped tree.
 - Findings drafted from an unverified hint record are a **draft
   pending adjudication**: a genealogist must confirm the hint record
   concerns the tree person before the fixture's grades are trusted.
@@ -588,9 +599,10 @@ roll-up does not display them (§7.4 blind-grading constraint).
 
 ## 5. Entry Point: The `/research` Skill
 
-E2E tests invoke the agent via the same entry point a production
+Autonomous e2e tests invoke the agent via the same entry point a production
 user would type: the `/research` skill. The harness sends a single
-user message of the form:
+user message of the form (single-ask fixtures do not — they send the patron's
+message verbatim; see §16):
 
 ```
 /research --autonomous <researcher_question>
@@ -948,7 +960,8 @@ benchmark measure tree-reading, not GPS research.
 surfaces the answer; allow tools keyed off a record the agent had to find
 first, and tools that read the local stripped tree.
 
-The harness **denies these tools for the entire run**:
+In an autonomous run the harness **denies these tools for the entire run**
+(a single-ask run does not; §16):
 
 - `person_read` — reads the subject's facts/relationships off the live tree
 - `person_ancestors` — reads the subject's parent chain off the live tree
@@ -980,6 +993,21 @@ mode; lead ruling 2026-09-27).
 > concluded/attached** on the live person, so the recall really measures
 > research. The proof-quality axis (§7) is the backstop that distinguishes
 > "found the pre-attached record" from "did sound research."
+>
+> A project also extracts every indexed record attached to its subject
+> before its first question, with no search at all. So a record that an
+> expected finding cites by its `1:1:` ark, and that is attached to a
+> subject person in the starting tree (at person, name or fact level),
+> is a leak unless `eval/tests/e2e/attached-evidence-allowlist.json`
+> lists it for that fixture. The leak check,
+> `test_e2e_attached_evidence.py`, fails on an unlisted one, on a stale
+> entry and on a malformed one. An entry means the record is evidence
+> the research legitimately starts from, such as the subject's own
+> baptism, and its reason says which finding still needs the research.
+> A record that would answer a required finding on its own is not an
+> entry: changing that finding, or the fixture's genre, is the lead's
+> call. A strip fixture may instead strip the source; a record-hint
+> fixture never strips (§3.6).
 
 **Why blocking is safe for `/research`.** First, the block lives **only
 in the e2e harness** (`eval/harness/e2e/orchestrator.py`, a `PreToolUse`
@@ -1936,7 +1964,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `harness_schema_version` | Which shape this log is. Branch on it; see §7.2.1. |
 | `stop_reason` | Why the run ended. §6.5. |
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
-| `tool_calls[]` | Every tool call attempted — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, result_chars, is_error, agent_id, agent_type }`. Main-stream entries are in chronological order; a **background** subagent's calls are appended after them from its transcript, so the array is **not** chronological across agents. See 8.1.1. |
+| `tool_calls[]` | Every tool call attempted — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, thread, result_chars, is_error, agent_id, agent_type }`. Main-stream entries are in chronological order; a **background** subagent's calls are appended after them from its transcript, so the array is **not** chronological across agents. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }` with `blocked_by` ∈ `tree` / `fixture` / `shell` / `path`; the `shell` and `path` entries (the §6.1 opt-in filesystem denials) also carry `reason`, and `path` entries the resolved `path`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
 | `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`image_read` — §6.1.1; `extraction_append` was the other, until indexed-record extraction moved to a main-thread call), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }` — plus `thread` (`main` / `sub`) on `assistant` entries from `harness_schema_version` 8, since a subagent's own messages stream through the same branch. The nine `harness` / `blocked` append sites have no message in scope and carry no `thread`, so select on `kind == "assistant"` **and** `thread == "main"`, never on the absence of the key. `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
@@ -1987,6 +2015,11 @@ rather than absent. At `harness_schema_version` 5 and above, the tool name
 exemptions (`_RUNLOG_EXEMPT_KEYS`) can bypass the per-string and backstop caps
 for specific (tool, response_key) pairs — `image_transcribe`'s `transcription`
 is the first exemption.
+
+`thread` (`"main"` or `"sub"`, on runs from 2026-10-19 on) is set when the call
+is streamed, from the SDK message's `parent_tool_use_id`, so unlike `agent_id` it
+is present on an entry whose result never arrived. Backfilled entries (below) do
+not carry it; read their `agent_id`.
 
 **Background subagents are the one exception to that join.** A subagent spawned
 in the background ("Async agent launched") runs in its own sub-session, so its
@@ -2594,3 +2627,110 @@ When a fixture's behavior changes meaningfully, add a dated line to the
 fixture's `README.md` saying what shifted. The committed run logs are the
 audit trail; the README is the human-readable summary, and it is what the
 next person reads before re-running.
+
+---
+
+## 16. Single-ask mode
+
+About 70 of the 135 alpha feedback bundles reviewed on 2026-10-04 were one bounded ask — find a record, review
+the sources on a person, are these the same person, transcribe this — not a
+research job. Single-ask mode covers that use: it sends one
+message as one ordinary turn and checks which unit answered and what was saved.
+
+`make e2e-single-ask [TEST=<slug>]` runs `e2e.run_single_ask`. Omit `TEST` to run
+the whole panel. It prints a short block per fixture (a PASS/FAIL line, then the
+units in order and any reason), exits 0 when all pass, 1 when
+any fails, and 2 when a run never happened (bad fixture, no build, the genealogy
+MCP server unavailable — §6).
+
+### 16.1 Directories
+
+- Fixtures: `eval/tests/e2e-single-ask/<slug>/`.
+- Run logs: `eval/runlogs/e2e-single-ask/<slug>/run-<timestamp>.json`. They are not
+  committed; a PR that changes a fixture's result pastes the printed block instead.
+
+Both are **siblings** of `eval/tests/e2e/` and `eval/runlogs/e2e/`, never inside
+them. About 20 readers walk those two trees with no exclusion (`corpus_report`,
+`panel_report`, `latency_report`, `guardrail_shadow_report`, `runlog_selection`,
+`validate_fixture`, …), and `check_e2e_fixtures.py`'s BLOCKING grading gate
+demands a `.ann.json` for every run with a tree. A flag on ordinary fixtures
+would need an exclusion in every reader and breaks the first time one is missed.
+
+### 16.2 Fixture format
+
+`fixture.json`:
+
+| Field | Required | Meaning |
+|---|---|---|
+| `id` | yes | the directory name (the loader refuses a mismatch) |
+| `message` | yes | sent verbatim |
+| `expected_owner` | yes | the agent or skill name that should answer |
+| `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` or `{"section": "sources"}` |
+| `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
+| `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
+| `must_not` | no | free text; printed, not graded |
+| `caps` | no | the keys of `FixtureCaps` (§6). Set `wall_clock_seconds` and `tool_calls` low and give the reason in the README; they are what end a runaway turn (`max_cost_usd` only labels one) |
+| `model.agent`, `blocked_tools` | no | as for autonomous fixtures (§3.1, §6.1) |
+
+Plus `starting-research.json` and `starting-tree.gedcomx.json`, named as for
+autonomous fixtures. Every fixture starts from an existing project: with no
+project and no PID, `init-project` creates nothing and asks for an ID, so the turn
+would grade as "no unit ran" for a reason that has nothing to do with routing.
+There is no `expected-findings.json` and no judge.
+
+### 16.3 How the turn runs
+
+- The message is sent **verbatim**: no `/research` prefix, no `--autonomous`, no
+  provided-documents suffix. The system prompt is the autonomous mode's (no
+  DELIVERY_GUIDANCE).
+- **No continue nudges.** The Stop hook returns `{}` at once, and there is no
+  stall resume (it sends a second message). This matches Cowork today and step
+  mode's cap 0 (`docs/plan/research-step-mode.md`, decision 1).
+- **No live-tree block.** §6.1 exists to hide an answer key; a single-ask fixture
+  has none, and asks like "review the sources attached to <PID>" need
+  `person_read`. The fixture's own `blocked_tools` still applies.
+- The other harness denies stay. One of them does not exist in production: the
+  main-thread `image_read` deny (§6.1.1). A "transcribe this" fixture must expect
+  the transcription in a subagent.
+- `run_single_ask_turn` (orchestrator.py) takes one message and returns the turn's
+  record, so under step mode a single ask is one step turn.
+
+### 16.4 Grade
+
+Deterministic, in `e2e/single_ask_grade.py`. PASS only if all four hold (`expected_owner` and `setup_units` may carry a plugin
+namespace; it is stripped, as it is from spawned names):
+
+1. **`owner`** — the first **main-thread** `Agent`/`Task`/`Skill` spawn, skipping the
+   `research` router and any `setup_units`, is `expected_owner`. A spawn inside a
+   subagent is recorded but never the owner. The thread comes from the SDK's
+   `parent_tool_use_id` (the `thread` field on each `tool_calls` entry).
+2. **`no_research_job`** — no `question-selection` spawn and, unless `is_plan_ask`,
+   no `research-plan` spawn, on any thread; and no new `questions` entry, nor,
+   unless `is_plan_ask`, a new `plans` entry.
+3. **`save`** — a new `sources` entry, or a new `log` entry whose `tool` is the
+   expected value. "New" means its id is in the final `research.json` and not in
+   `starting-research.json`.
+4. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
+   here even if it saved: the patron never got the answer. `cost_cap` is not a
+   cut-off (§6: it only labels a finished run), so it does not fail this check.
+
+Printed, not graded: whether the main thread called `research_delivered`, every
+unit in order (nested ones in parentheses), the `extraction_append` count, how the
+turn stopped (`stop=clean` or the abort reason), the whole-run cost estimate, and
+any background spawn ("Async agent launched"), whose save can land after the grade
+reads `research.json`.
+A turn that ended on `host_slept` is printed `UNGRADED` and counts as a failure.
+
+### 16.5 What a pass does not show
+
+A pass here is **not** a pass on today's hosted alpha. That plane appends
+DELIVERY_GUIDANCE (`apps/server/app/agent/real_agent.py`) and nudges any stop not
+preceded by `research_delivered`; a single ask that ends without it would be
+pushed on into more work. The `delivered` column is what shows that risk.
+
+### 16.6 Cost
+
+Every run is live and billed (FamilySearch and the model) and is not cached.
+Each fixture's README records the measured figure from the run log's
+`usage.whole_run_cost_usd_estimated`, with the date measured.
+

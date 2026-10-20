@@ -1,0 +1,19 @@
+{
+  "id": "rozalia-gorog-daughter",
+  "name": "Rozália Görög — a daughter Veronika baptised 1871 at Kiskunfélegyháza",
+  "genre": "record-hint",
+  "source_pid": "L7KC-KQT",
+  "captured": "2026-10-20",
+  "researcher_question": "Who were the children of Rozália Görög (born about 1860, died 30 October 1916 at Kecskemét) and her husband János Tarjányi of Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary?",
+  "tags": {
+    "question_type": "children",
+    "era": "1870s",
+    "geography": "HU"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 16, hint-samples.csv row 471, flags adds_daughter, confidence 3). Draft transcribed from an 1871 Kiskunfélegyháza Catholic baptism of Veronika Tarjanyi, daughter of Janos Tarjanyi and Rozalia Bona; unverified. The mother's surname differs and the subject was about eleven in 1871, so a false match is the likely outcome."
+}

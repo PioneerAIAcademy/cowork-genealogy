@@ -4,22 +4,29 @@
     "skill": "research-plan",
     "name": "Plan sequences free/indexed sources before paid for multi-year census search",
     "type": "positive",
-    "description": "The flynn-census-exhausted scenario has two completed plans: pl_001 (1850 census) and pl_002 (1860 census, plus an 1908 vital record and an 1870-1900 probate search), so the 1850 and 1860 censuses are already searched and logged as completed. The user asks for a plan covering the 1870, 1880, and 1900 censuses. For each census year, FamilySearch (free, indexed) must sequence before Ancestry (paid). Fallbacks must be identified for years where the primary index might be incomplete. Tests BCG Standard 15 (efficient sequence: free before paid, fallbacks explicit via fallback_for).",
-    "tags": ["planning", "sequencing", "free-before-paid", "census", "fallback-for", "multi-year"]
+    "description": "The flynn-census-exhausted-surveyed scenario has two completed plans: pl_001 (1850 census) and pl_002 (1860 census and an 1908 vital record; it carries no probate item), so the 1850 and 1860 censuses are already searched and logged as completed. Its `localities` entry loc_001 (Schuylkill County) is what makes a new plan legitimate: the agent stops on a jurisdiction with no entry. The scenario is flynn-census-exhausted plus that entry (moved here in issue #2116, whose fixture audit found every logged run planning past a missing entry). The user asks for a plan covering the 1870, 1880, and 1900 censuses. For each census year, FamilySearch (free, indexed) must sequence before Ancestry (paid). Fallbacks must be identified for years where the primary index might be incomplete. Tests BCG Standard 15 (efficient sequence: free before paid, fallbacks explicit via fallback_for).",
+    "tags": ["planning", "sequencing", "free-before-paid", "census", "fallback-for", "multi-year", "direct-arm"]
   },
   "input": {
-    "user_message": "Create a plan for searching the post-1860 federal censuses — 1870, 1880, and 1900 — to track Patrick Flynn as an adult and look for Thomas Flynn in the same household.",
-    "scenario": "flynn-census-exhausted"
+    "delegation": "Create a plan for searching the post-1860 federal censuses — 1870, 1880, and 1900 — to track Patrick Flynn as an adult and look for Thomas Flynn in the same household.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-census-exhausted-surveyed"
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",
     "collections-search-schuylkill",
     "collections-search-pennsylvania",
     "collections-search-us-national",
+    "place-search-united-states",
     "external-links-search-pa-census",
     "validate-research-schema",
     "external-links-search-any",
-    "wiki-read-ireland-military-records"
+    "wiki-read-ireland-military-records",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "For each census year (1870, 1880, 1900), the FamilySearch item must appear at a lower sequence number than any Ancestry item for the same year — free before paid",

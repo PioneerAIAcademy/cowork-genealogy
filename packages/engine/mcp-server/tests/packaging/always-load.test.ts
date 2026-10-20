@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { createServer } from "../../src/server.js";
-import { LOCAL } from "../../src/auth/principal.js";
 import { ALWAYS_LOAD } from "../../src/tool-schemas.js";
+import { listTools } from "../helpers/list-tools.js";
 
 // Pins the tools exempt from ToolSearch deferral. Changing the set is a
 // cost decision: re-measure against the e2e corpus and update this list with it.
@@ -22,20 +19,6 @@ const PINNED = [
 ];
 
 const KEY = "anthropic/alwaysLoad";
-
-async function listTools() {
-  const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
-  // stdio and HTTP send JSON.stringify(message); the in-memory pair passes objects by reference.
-  const send = serverSide.send.bind(serverSide);
-  serverSide.send = (message, options) => send(JSON.parse(JSON.stringify(message)), options);
-  const server = createServer(LOCAL);
-  await server.connect(serverSide);
-  const client = new Client({ name: "always-load-test", version: "0" });
-  await client.connect(clientSide);
-  const { tools } = await client.listTools();
-  await client.close();
-  return tools;
-}
 
 describe("ALWAYS_LOAD", () => {
   it("is exactly the pinned set", () => {

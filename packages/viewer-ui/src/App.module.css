@@ -14,7 +14,12 @@
 .content {
   flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-xl) var(--spacing-3xl);
+  /* Horizontal padding SCALES with the window. It was a flat 48px, which is right on a
+     wide screen and ruinous on a narrow one: with the section's own 24px that is 144px
+     of a pane the user can already drag narrow, and the research-log table then has to
+     scroll sideways to show six columns it would otherwise fit. Vertical stays fixed --
+     only width is scarce here. */
+  padding: var(--spacing-xl) clamp(var(--spacing-md), 2.5vw, var(--spacing-3xl));
 }
 
 /* ── Welcome Screen ────────────────────────────────── */

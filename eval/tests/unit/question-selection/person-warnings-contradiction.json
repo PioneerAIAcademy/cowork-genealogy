@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_question_selection_c7f",
+    "skill": "question-selection",
+    "name": "Select a question driven by a person_warnings contradiction",
+    "type": "positive",
+    "description": "The subject carries a real `hasEventAfterDeath1` contradiction (a posthumous residence event). The skill must call `person_warnings` before deciding and select a Priority 1 question with `selection_basis: unresolved_conflict`, not ignore the contradiction and decompose the objective instead.",
+    "tags": [
+      "question-selection",
+      "person-warnings-contradiction",
+      "selection-basis-unresolved-conflict",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
+    "scenario": "flynn-posthumous-residence"
+  },
+  "judge_context": [
+    "Should call person_warnings on the subject (I1) before writing a question",
+    "Should recognize the hasEventAfterDeath1 contradiction (a Residence event dated after the subject's death) as a Priority 1 trigger",
+    "The proposed question should pursue verifying or resolving the contradictory residence event, not an unrelated objective-decomposition question"
+  ]
+}

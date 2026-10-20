@@ -216,7 +216,7 @@ def test_allows_a_negative_correct_skill_naming_a_converted_agent(tmp_path):
     d = _runnable_test_dict()
     d["test"]["type"] = "negative"
     d["negative"] = {
-        "correct_skill": ["project-status"],  # an agent file, no skill directory
+        "correct_skill": ["citation"],  # an agent file, no skill directory
         "explanation": "x",
     }
     spec = load_test_from_dict(d)

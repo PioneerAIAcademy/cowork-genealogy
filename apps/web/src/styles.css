@@ -787,15 +787,85 @@ button {
   0%, 100% { opacity: 0.35; }
   50% { opacity: 1; }
 }
+/* Two rows: what you type into, then what you do with it.
+   One row meant the textarea was the only flexible item among three fixed-width
+   controls, so every pixel the composer lost -- dragging the splitter to widen the
+   viewer, or just a narrow window -- came out of the typing box and none out of the
+   checkbox, the attach icon or Send. */
 .chatInputBar {
   display: flex;
+  flex-direction: column;
   gap: 8px;
   padding: 10px;
   border-top: 1px solid var(--line);
   background: var(--bg-elev);
 }
+
+/* "Continue on this project", offered after a spend stop. It used `btnGhost`, which is
+   `background: transparent` with a transparent border -- so the one action available on a
+   stopped session rendered as a line of bold text and read as a heading, not something to
+   click. Reported from the screen.
+
+   Outlined rather than filled: it is the way forward, but it starts a new session that
+   spends money, so it should look deliberate rather than inviting a reflex click. Sized
+   and spaced like the composer's own buttons so it belongs to the same family. */
+.chatContinue {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.chatContinue:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.chatContinue:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.chatControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Send (and Stop beside it) go hard right, so the destructive-ish and the primary
+   action are never where the cursor rests after ticking Reasoning.
+
+   The auto margin has to sit on whichever is FIRST of the right-hand pair, not on
+   Send. Stop renders only while a turn runs and precedes Send in the DOM, so with
+   the margin on Send alone the free space collapsed in front of Send and left Stop
+   packed against the attach icon -- measured at a 634px gap between the two buttons
+   on a 900px composer, for the whole duration of every turn. */
+.chatControls .chatSend {
+  margin-left: auto;
+}
+.chatControls .chatStop {
+  margin-left: auto;
+}
+/* ...and once Stop has taken it, Send must not push away from Stop again; the row's
+   8px `gap` is the whole separation they need. */
+.chatControls .chatStop ~ .chatSend {
+  margin-left: 0;
+}
 .chatTextarea {
-  flex: 1;
+  /* `flex: 1` here meant "take the leftover WIDTH" while the bar was a row. The bar is a
+     column now, so the same declaration means "take the leftover HEIGHT" and the box grew
+     to 370px tall whenever the composer had room. Explicitly neither: natural height from
+     `rows`, full width of its own row. */
+  flex: none;
+  width: 100%;
+  box-sizing: border-box;
   resize: none;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -810,7 +880,11 @@ button {
   border-color: var(--accent-soft);
 }
 .chatSend {
-  align-self: stretch;
+  /* A rectangle now, not a square: it no longer stretches to the textarea's height
+     because it no longer sits beside it. */
+  padding-top: 7px;
+  padding-bottom: 7px;
+  cursor: pointer;
   background: var(--accent);
   color: var(--bg-primary);
   border: none;
@@ -828,7 +902,8 @@ button {
    rather than accented so it still reads as a secondary "abort", not the primary
    action. */
 .chatStop {
-  align-self: stretch;
+  padding-top: 7px;
+  padding-bottom: 7px;
   background: var(--bg-card);
   color: var(--ink);
   border: 1px solid var(--line);
@@ -844,7 +919,8 @@ button {
 }
 /* Attach a document/image for the agent to read (uploads/ in the project). */
 .chatAttach {
-  align-self: stretch;
+  padding-top: 5px;
+  padding-bottom: 5px;
   background: var(--bg-card);
   color: var(--ink);
   border: 1px solid var(--line);
@@ -871,4 +947,70 @@ button {
   padding: 0 10px 8px;
   font-size: 12px;
   color: var(--danger, #c0392b);
+}
+
+/* Phase 2 item 4: the run survives a closed tab; testers who locked their screen
+   thought it had quit (#2921, #2922). Sits under the typing indicator, quieter than
+   the activity line above it so it reassures without competing. */
+.keepsRunning {
+  margin-top: 4px;
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+/* Phase 2, "one view of job state": the session list's four states. Two want the
+   reader's attention (working, needs you) and two are resting states. */
+.jobState {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 0.78em;
+  font-weight: 600;
+  margin-right: 6px;
+}
+.jobStateLive { background: var(--accent-soft, #1f6feb22); color: var(--accent, #1f6feb); }
+.jobStateRest { background: var(--bg-muted, #8884); color: var(--text-secondary, #666); }
+
+/* A chip that opens the card it names. Looks like its non-clickable siblings -- the
+   affordance is the cursor and the hover, not a second visual language in a strip
+   where half the chips navigate and half do not. */
+.toolChipLink {
+  cursor: pointer;
+  border: none;
+  font: inherit;
+  text-align: left;
+}
+.toolChipLink:hover { text-decoration: underline; }
+
+/* Phase 3 item 1: the decision card. A turn that ends waiting on the researcher used
+   to render one line; this shows the candidates side by side with what each would do.
+   The recommended one is marked, because *not sure* continues on it (R9). */
+.decisionCard {
+  border: 1px solid var(--accent, #1f6feb);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  background: var(--bg-card, transparent);
+}
+/* A card with one question (the common case) is a single block; a card with
+   several -- AskUserQuestion allows up to four -- stacks one per question. */
+.decisionQuestionBlock + .decisionQuestionBlock { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border, #8883); }
+.decisionQuestion { font-weight: 600; margin-bottom: 8px; }
+.decisionAnswered { font-size: 0.9em; opacity: 0.8; }
+.decisionOptions { display: flex; flex-direction: column; gap: 6px; }
+.decisionOption {
+  display: flex; flex-direction: column; gap: 2px;
+  text-align: left; padding: 8px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--border, #8883); background: transparent; font: inherit;
+  color: inherit;
+}
+.decisionOption:hover { border-color: var(--accent, #1f6feb); }
+.decisionRecommended { border-color: var(--accent, #1f6feb); }
+.decisionLabel { font-weight: 600; }
+.decisionBadge { font-size: 0.75em; color: var(--accent, #1f6feb); }
+.decisionWhy { font-size: 0.85em; opacity: 0.8; }
+.decisionEscapes { display: flex; gap: 12px; margin-top: 10px; }
+.decisionEscape {
+  background: none; border: none; padding: 0; font: inherit; font-size: 0.85em;
+  color: var(--text-secondary, #666); text-decoration: underline; cursor: pointer;
 }

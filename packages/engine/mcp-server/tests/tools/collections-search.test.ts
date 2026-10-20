@@ -11,6 +11,7 @@ import {
   standardPlaceToCollectionsQuery,
   fetchAllCollections,
   clearCollectionsCache,
+  type CollectionsSearchInput,
 } from "../../src/tools/collections-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
@@ -322,6 +323,26 @@ describe("collectionsSearchTool error handling", () => {
       /collections_search requires a standardPlace/
     );
   });
+
+  it.each(["recordType", "record_type", "recordTypes", "recordTypeGroup", "recordTypeGroups"])(
+    "refuses %s rather than returning the place's whole list unfiltered",
+    async (alias) => {
+      const input = {
+        standardPlace: "New York, United States",
+        [alias]: alias.endsWith("s") ? ["Probate"] : "probate",
+      } as unknown as CollectionsSearchInput;
+
+      await expect(collectionsSearchTool(input, LOCAL)).rejects.toThrow(
+        new RegExp(
+          `no record-type filter: it lists every collection for the place, so ${alias} ` +
+            "cannot narrow it.*volume_search's recordTypeGroups.*Valid groups: Genealogies, .*Probate",
+          "s"
+        )
+      );
+      expect(mockedGetValidToken).not.toHaveBeenCalled();
+      expect(mockFetch).not.toHaveBeenCalled();
+    }
+  );
 });
 
 describe("collectionsSearchTool field mapping", () => {
