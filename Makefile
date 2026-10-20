@@ -503,7 +503,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py tests/test_proto_writer_record_pg.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -1401,6 +1401,15 @@ e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed 
 	# defined pre-fix replica and the real, current implementation over every
 	# applicable committed run, and reports every run where the two disagree.
 	cd eval/harness && uv run python -m e2e.detector_before_after_report --detector $(DETECTOR) $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-narration-figures
+e2e-narration-figures: ## Derive the plan's narration figures (R7): make e2e-narration-figures
+	# Pure analysis over committed run JSONs — no live run, no API. Derives the
+	# three load-bearing narration figures in docs/plan/research-as-a-job-later.md
+	# so they cannot drift unnoticed as the corpus grows, which is how PR #2870's
+	# corpus figures drifted. Exits 2 on a zero-paragraph scan rather than
+	# reporting a cheerful 0%.
+	cd eval/harness && uv run python -m e2e.narration_figures_report ../runlogs/e2e
 
 .PHONY: e2e-latency
 e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD

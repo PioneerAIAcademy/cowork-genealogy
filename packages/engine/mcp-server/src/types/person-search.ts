@@ -123,5 +123,7 @@ export interface PersonSearchToolResponse {
   returned: number;
   offset: number;
   hasMore: boolean;
+  /** Whether these results pick one person, or need a human to. Derived from a
+   *  live probe: decisive iff exactly one candidate holds the top score. */
   results: PersonSearchResult[];
 }
