@@ -1,5 +1,6 @@
 /**
- * How often do `unregisteredDisagreements` and `competingParentSets` fire on the
+ * How often do `unregisteredDisagreements`, `competingParentSets` and the
+ * no-linked-assertion rung (`nextStep` starting `person-evidence`) fire on the
  * committed corpus?
  *
  * The project-context spec quotes these rates, and a rate whose method is not
@@ -63,8 +64,8 @@ for (const slug of existsSync(E2E) ? readdirSync(E2E) : []) {
 }
 
 const tally = {
-  scenario: { files: 0, questions: 0, disagreements: 0, parentSets: 0 },
-  e2e: { files: 0, questions: 0, disagreements: 0, parentSets: 0 },
+  scenario: { files: 0, questions: 0, disagreements: 0, parentSets: 0, noneLinked: 0 },
+  e2e: { files: 0, questions: 0, disagreements: 0, parentSets: 0, noneLinked: 0 },
 };
 const hits: string[] = [];
 for (const d of docs) {
@@ -84,6 +85,10 @@ for (const d of docs) {
         hits.push(`parent-set    ${d.label} ${s.id}: ${p.personId} <- ${p.parentIds.join(", ")}`);
       }
     }
+    if (s.nextStep?.startsWith("person-evidence")) {
+      t.noneLinked++;
+      hits.push(`none-linked   ${d.label} ${s.id}`);
+    }
   }
 }
 
@@ -91,5 +96,6 @@ const total = tally.scenario.questions + tally.e2e.questions;
 console.log(`question entries: ${total} (${tally.scenario.questions} in ${tally.scenario.files} scenarios, ${tally.e2e.questions} in ${tally.e2e.files} e2e final states)`);
 console.log(`unregistered disagreements: ${tally.e2e.disagreements} e2e question-runs, ${tally.scenario.disagreements} scenario questions`);
 console.log(`competing parent sets:      ${tally.e2e.parentSets} e2e question-runs, ${tally.scenario.parentSets} scenario questions`);
+console.log(`no linked assertion:         ${tally.e2e.noneLinked} e2e question-runs, ${tally.scenario.noneLinked} scenario questions`);
 console.log(`unreadable files dropped: ${unreadable}`);
 if (LIST) for (const h of hits.sort()) console.log(h);

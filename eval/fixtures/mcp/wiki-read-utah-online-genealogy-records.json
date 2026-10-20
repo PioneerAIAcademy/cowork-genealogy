@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_read",
+  "description": "Hand-built for the recent-birth-wiki-untouched scenario (issue #2539): agrees with that scenario's localities[0].guide_markdown, so a wiki_read of the page cannot contradict the guide the agent already holds. Not a live probe.",
+  "args": {
+    "url": "~Utah_Online_Genealogy_Records"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Utah_Online_Genealogy_Records",
+    "content": "# Utah research guide (Weber County, 1930s)\n\n## Online records\n- **U.S. federal censuses, 1940 and 1950** — indexed on FamilySearch; list each household member with relationship to the head.\n- **Utah land and property records** — county recorder deeds; index online for some counties. Name grantors and grantees only.\n\n## Offline records\n- **Utah school census records, 1890s-1940s** — each school-age child listed with parent or guardian, by school district. Held by the county school districts and the Utah State Archives; not digitized or indexed online.\n"
+  }
+}
