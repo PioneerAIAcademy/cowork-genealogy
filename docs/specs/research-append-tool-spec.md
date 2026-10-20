@@ -241,7 +241,9 @@ camelCase convenience fields the same way `research_log_append` does.
 
 `validation.warnings` carries non-blocking advisories: `standard_place` that
 could not be resolved (§3.6), tree-heal notes, an already-`exhaustive_declared`
-no-op, and the sources-without-assertions persistence nudge (§5.1).
+no-op, and the write-boundary advisories of §5.1–§5.5 (sources without
+assertions, tree-encoding completion, a corrected assertion with no linked fact,
+a transcription without a page, unsourced timeline events).
 
 ### 3.3 Batch form (`ops`) — persist a whole record in one call
 
@@ -1194,6 +1196,44 @@ gap — and reads the PERSISTED entry rather than the op's `fields`, so an updat
 setting only `transcription` is judged against the `image_filename` already on
 disk instead of re-warning about one that is there. One line per offending
 entry, so a batch sourcing several records names each.
+
+Marked advisory in `guardrail-enforcement-spec.md`'s instrument table.
+
+### 5.5 Unsourced timeline event advisory (warning, not a precondition)
+
+A **warning** — never a rejection — emitted when a `timelines` op leaves the
+entry with one or more `events[]` whose `assertion_ids` is an empty array. One
+line per entry, naming the count: `"<n> of <m> events in <t_id> cite no record
+(assertion_ids empty); they come from the tree or the user and are unchecked.
+Say so to the user."` It rides `validation.warnings` and never touches `ok`.
+Implemented as `unsourcedTimelineEventWarnings` in `research-append.ts`.
+
+- **Why it exists.** A timeline mixes record-backed events with events taken
+  from the tree or the user, and a reply that presents them alike makes
+  unchecked tree conclusions read as established fact (a 2026-10-18 feedback
+  bundle: 5 of 6 events in its `t_001` had `assertion_ids: []`).
+- **Why warn and not refuse (lead, 2026-10-18; kept 2026-10-19).** A refusal
+  was rejected on 2026-10-18, when a tree-built timeline was ruled a legitimate
+  first pass. That premise was withdrawn on 2026-10-19 for person-mode
+  timelines — an unsourced tree fact becomes a gap there, never an event — but
+  the same ruling kept this as a warning, and hypothesis-mode timelines are
+  unchanged. So an empty-`assertion_ids` event in person mode is now a defect
+  this surfaces rather than a first pass it discloses. Whether person mode
+  should refuse it instead is a decision for the lead, not settled here.
+- **What makes it fire.** An `append`, or an `update` whose `fields` carries
+  `events` — the append-or-field-touched pattern of the 1890 census check
+  beside it, keyed on `events` rather than `gaps` — so an edit touching only
+  `label` or `gaps` does not re-warn about events written earlier.
+  It counts over the resulting entry's events. No warning when none is empty or
+  `events` is empty.
+- **What it can trust.** It counts empty lists only, so a list that names no
+  real assertion must not reach it: the validator refuses an event whose
+  `assertion_ids` is not an array, holds a non-string, or names an id absent
+  from `assertions` — the same three checks a proof summary's
+  `supporting_assertion_ids` gets — and refuses a timeline whose `events` or
+  `gaps` is not an array, which the counting would otherwise read as empty.
+- **What nothing checks.** Whether the agent reads the count out to the user;
+  CI checks only that the warning is emitted.
 
 Marked advisory in `guardrail-enforcement-spec.md`'s instrument table.
 
