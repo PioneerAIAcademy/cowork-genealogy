@@ -136,6 +136,7 @@ describe("questionStatus — the state ladder", () => {
           { id: "log_2", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" },
         ],
         assertions: [{ id: "a_1", log_entry_id: "log_1", extracted_for_question_ids: [Q] }],
+        person_evidence: [{ assertion_id: "a_1", person_id: "I1" }],
       });
       const s = questionStatus(d, question());
       expect(s.state).toBe("evidence-gathered");
