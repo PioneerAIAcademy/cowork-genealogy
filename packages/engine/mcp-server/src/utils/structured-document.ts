@@ -192,6 +192,9 @@ export function validateStructuredDocument(doc: unknown, path = "document"): str
       if (p.gender !== undefined && p.gender !== "male" && p.gender !== "female") {
         errs.push(`${at}.gender: must be male or female, or omitted`);
       }
+      if (p.statedRelation !== undefined && p.statedRelation !== null && typeof p.statedRelation !== "string") {
+        errs.push(`${at}.statedRelation: must be a string, or omitted`);
+      }
       if (p.principal !== undefined && p.principal !== true) errs.push(`${at}.principal: true, or omitted`);
       if (!Array.isArray(p.names) || p.names.length === 0) {
         errs.push(`${at}.names: every person needs at least one name`);

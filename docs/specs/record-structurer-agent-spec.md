@@ -101,8 +101,8 @@ is §11.7's code.
   `extraction_append` fixes up one slip before validating: a
   `computed` entry written as a value rather than an attribute name. If the
   entry equals exactly one of the fact's own `value`, `date` or `place`, it
-  becomes that attribute's name. A year (`~1862`) on a fact with no `date`
-  becomes the fact's date, marked computed. Any other stray entry still
+  becomes that attribute's name. A year (`~1862`) on a birth or christening
+  with no `date` becomes the fact's date, marked computed. Any other stray entry still
   refuses the batch.
 - **Every named person is their own person.** A father named inside a groom's
   block gets his own entry and his own name. `names[0]` is the bare name. The

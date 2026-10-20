@@ -7,6 +7,7 @@
     "description": "A transcribed 1860 census page carries two dwellings. The agent must write one document with each person's `household`, so code assigns a head per household; merging them makes Michael Gallagher a member of the Flynn household. 1860 has no relationship column, so no relationship is stated. Every age gives a computed birth year.",
     "tags": [
       "census",
+      "1860",
       "multi-household"
     ]
   },

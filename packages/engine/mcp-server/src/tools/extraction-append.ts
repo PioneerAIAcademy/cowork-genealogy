@@ -322,7 +322,8 @@ async function recordIdsMode(
       docs.set(o.recordId, doc);
       const arks = new Set<string>();
       for (const p of Array.isArray(doc.gedcomx?.persons) ? doc.gedcomx.persons : []) {
-        if (typeof (p as { ark?: unknown })?.ark === "string") arks.add(arkToBareId((p as { ark: string }).ark));
+        const ark = (p as { ark?: unknown })?.ark;
+        if (typeof ark === "string" && ark.trim() !== "") arks.add(arkToBareId(ark));
       }
       if (arks.size > 0) households.set(o.recordId, arks);
     } catch {
@@ -650,12 +651,14 @@ function buildDocumentSource(
 
 const COMPUTED_ATTRS = ["value", "date", "place"] as const;
 const YEAR_LIKE = /^~?\d{3,4}$/;
+/** Facts whose missing date a stray year can be: a birth worked out from an age. */
+const YEAR_FILL_FACTS: ReadonlySet<string> = new Set(["birth", "christening", "baptism"]);
 
 /**
  * A `computed` entry written as a value instead of an attribute name, fixed up
  * before validation: one that equals exactly one of the fact's own `value`,
  * `date` or `place` becomes that attribute's name, and a year (`~1862`) on a
- * fact with no `date` becomes the date, marked computed. Anything else is left
+ * birth or christening with no `date` becomes the date, marked computed. Anything else is left
  * for the validator to refuse.
  */
 function coerceComputed(f: unknown): void {
@@ -671,7 +674,13 @@ function coerceComputed(f: unknown): void {
     const t = c.trim();
     const same = COMPUTED_ATTRS.filter((k) => typeof fact[k] === "string" && (fact[k] as string).trim() === t);
     if (same.length === 1) out.push(same[0]);
-    else if (same.length === 0 && fact.date === undefined && YEAR_LIKE.test(t)) {
+    else if (
+      same.length === 0 &&
+      fact.date === undefined &&
+      YEAR_LIKE.test(t) &&
+      typeof fact.type === "string" &&
+      YEAR_FILL_FACTS.has(fact.type.trim().toLowerCase())
+    ) {
       fact.date = t;
       out.push("date");
     } else out.push(c);

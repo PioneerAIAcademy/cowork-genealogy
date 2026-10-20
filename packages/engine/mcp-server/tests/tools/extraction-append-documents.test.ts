@@ -543,6 +543,15 @@ describe("extraction_append: documents", () => {
     expect(rels.filter((v: string) => /^child of (John Cook|John Flynn|Tollev|Inger)/.test(v))).toEqual([]);
   });
 
+  it("refuses a statedRelation that is not a string, before anything is logged (#3543)", async () => {
+    const bad = structuredClone(obituary) as any;
+    bad.persons[1].statedRelation = 5;
+    const r = await run([{ recordId: "capture:bad-relation", document: bad }]);
+    expect(r.ok).toBe(false);
+    expect((r.errors ?? []).join(" ")).toMatch(/persons\[1\]\.statedRelation: must be a string/);
+    expect((await read()).log).toHaveLength(0);
+  });
+
   describe("a computed entry written as a value (#3543)", () => {
     const death = (birth: Record<string, unknown>) => ({
       recordType: "death",
@@ -576,6 +585,7 @@ describe("extraction_append: documents", () => {
       ["a value two attributes share", { value: "1862", date: "1862", computed: ["1862"] }],
       ["a non-year on a fact with no date", { place: "Germany", computed: ["about 1862"] }],
       ["the date's year without its tilde", { date: "~1862", computed: ["1862"] }],
+      ["a year on a fact that is not a birth", { type: "age", value: "58", computed: ["~1862"] }],
     ])("still refuses %s", async (_name, birth) => {
       const r = await run([{ recordId: "capture:schreiber", document: death(birth) }]);
       expect(r.ok).toBe(false);
