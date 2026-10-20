@@ -1508,7 +1508,16 @@ a grounding rubric marks a correct citation of result 4+ as fabricated when the
 judge can only see results 1-3. Prompt size is bounded by the total-size
 guard (`_TOOL_CALLS_MAX_CHARS`), which drops whole oldest calls with a stated
 marker; per-string and depth caps still apply inside each result. A larger array
-cap was rejected — it only moves the cliff.
+cap was rejected — it only moves the cliff. The drop budget is measured with
+the args of every live call (`matched.kind == "live"`, which is how every writer
+runs) replaced by a short omission marker, because the agent's own write is
+output, not evidence: a locality guide persisted through `research_append`
+carries the whole guide in its args, and counting it dropped the earliest
+survey calls, so the judge called their correctly cited values fabricated.
+The kept calls are then rendered with their real args, held under
+`_TOOL_CALLS_HARD_MAX_CHARS` (twice the budget) by cutting live args, first their
+strings to the per-string cap and then the args whole to that marker, never by
+dropping more evidence.
 
 `{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran. The slot names each agent the skill spawned as well, because `skills_invoked` holds `Skill` calls only: a test's `judge_context` can ask whether the skill delegated to an agent (`ut_init_project_q7b` does), and without the spawns the judge answered that blind. The slot is filled as a value, not edited in the template, so adding the spawns did not move `judge_prompt_hash`.
 
