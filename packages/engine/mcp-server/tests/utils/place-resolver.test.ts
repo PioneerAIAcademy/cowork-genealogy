@@ -90,6 +90,19 @@ describe("resolveStandardPlace", () => {
     expect(mockSearchPlace).toHaveBeenCalledTimes(1);
   });
 
+  it("never opts into the fuzzy query, even on zero results", async () => {
+    // place_search's fuzzy fallback is flagged to the model as a sounds-alike
+    // correction to confirm; the resolver persists standard_place silently, so
+    // it must never start accepting fuzzy matches (a misspelling resolving to
+    // a sounds-alike place with nothing flagging it).
+    mockSearchPlace.mockResolvedValue([]);
+    expect(await resolveStandardPlace("Sierkopas")).toBeNull();
+    expect(mockSearchPlace.mock.calls.length).toBeGreaterThan(0);
+    for (const [, opts] of mockSearchPlace.mock.calls) {
+      expect(opts?.fuzzy).toBeUndefined();
+    }
+  });
+
   // ── Same-name disambiguation via a context derived from the input text ──
   // Regression guard for the silent same-name corruption bug: an 1870 marriage
   // at "Church of the Annunciation, Shenandoah, Schuylkill County, Pennsylvania"
