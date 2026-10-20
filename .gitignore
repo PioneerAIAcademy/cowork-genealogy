@@ -146,6 +146,9 @@ eval/tests/e2e/*/results/
 # The probe's committed header carries the RESULTS summary; the blob itself never
 # lands in git. Same reasoning as dev/ocr-spike-out/ above.
 packages/engine/mcp-server/dev/probe-*.out.json
+# `make matcher-accuracy`'s record-document cache: live FamilySearch record
+# payloads (PII), one per hinted persona. Never committed.
+packages/engine/mcp-server/dev/.matcher-cache/
 # The prototype's old operator FamilySearch token file: kept so stale copies from before U3
 # (which replaced it with the patron's grant) never land in git
 apps/server/proto/.fs-token
