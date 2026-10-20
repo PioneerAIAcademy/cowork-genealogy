@@ -1422,3 +1422,70 @@ def test_parity_year_regex_matches_the_electron_copy():
     match = re.search(r"const EMBEDDED_YEAR_RE = /(.+?)/\n", src)
     assert match, "EMBEDDED_YEAR_RE not found in feedback.ts"
     assert match.group(1) == fb._EMBEDDED_YEAR_RE.pattern
+
+
+# ---------------------------------------------------------------------------
+# _select_files — tiered eviction
+# ---------------------------------------------------------------------------
+
+MiB = 1024 * 1024
+
+
+def test_select_files_keeps_research_json_when_it_is_the_largest():
+    """Over the cap, research.json must survive even when it is the largest file."""
+    files = [
+        ("research.json", b"\0" * (20 * MiB)),
+        ("results/log_1.json", b"\0" * (15 * MiB)),
+        ("results/log_2.json", b"\0" * (10 * MiB)),
+    ]
+    kept, dropped = fb._select_files(files, include_media=True)
+    kept_rels = [r for r, _ in kept]
+    assert "research.json" in kept_rels
+    assert any(r.startswith("results/") for r in dropped)
+
+
+def test_select_files_evicts_media_before_results_before_other():
+    """Eviction tiers: media first, then results/, then other."""
+    # Sizes are deliberately unequal so the old largest-first rule would drop
+    # notes.json (16 MiB) first — making the test fail on main.
+    files = [
+        ("images/photo.tif", b"\0" * (12 * MiB)),
+        ("results/log_1.json", b"\0" * (14 * MiB)),
+        ("notes.json", b"\0" * (16 * MiB)),
+    ]
+    kept, dropped = fb._select_files(files, include_media=True)
+    kept_rels = [r for r, _ in kept]
+    # media (tier 0) should be evicted first, then results (tier 1) if needed
+    assert "images/photo.tif" in dropped
+    # notes.json (tier 2) should survive — media eviction brings us
+    # to 30 MiB, under the 35 MiB cap
+    assert "notes.json" in kept_rels
+
+
+def test_select_files_keeps_all_protected_when_over_cap():
+    """When protected files alone exceed the cap, keep them all."""
+    files = [
+        ("research.json", b"\0" * (15 * MiB)),
+        ("tree.gedcomx.json", b"\0" * (15 * MiB)),
+        ("starting-tree.gedcomx.json", b"\0" * (15 * MiB)),
+        ("results/log_1.json", b"\0" * (5 * MiB)),
+    ]
+    kept, dropped = fb._select_files(files, include_media=True)
+    kept_rels = [r for r, _ in kept]
+    assert "research.json" in kept_rels
+    assert "tree.gedcomx.json" in kept_rels
+    assert "starting-tree.gedcomx.json" in kept_rels
+    assert "results/log_1.json" in dropped
+
+
+def test_select_files_under_cap_unchanged():
+    """Under the cap, everything is kept."""
+    files = [
+        ("research.json", b"\0" * 100),
+        ("tree.gedcomx.json", b"\0" * 200),
+        ("results/log_1.json", b"\0" * 300),
+    ]
+    kept, dropped = fb._select_files(files, include_media=True)
+    kept_rels = [r for r, _ in kept]
+    assert len(kept_rels) == 3
+    assert dropped == []
