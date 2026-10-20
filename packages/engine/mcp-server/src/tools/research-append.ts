@@ -3029,6 +3029,50 @@ export function planItemCapturePendingInvariants(entry: any, research: any): str
   ];
 }
 
+/** The search tools whose log entry, tied to a plan item, means the item's
+ *  search ran. An image browse logs `image_search`; a volume lookup or one page
+ *  read is not the item's search. */
+const SEARCH_THAT_RAN = new Set(["record_search", "fulltext_search", "image_search"]);
+
+/** A search that ran is never marked skipped (lead, 2026-10-20, issue #3516).
+ *  `skipped` says nothing was searched, and research-exhaustiveness reads a
+ *  disposed item as settled, so a skip after a search misstates the record. A
+ *  searched item is `completed` instead, which passes attribution because the
+ *  search's entry names the item. An `error` entry is not a search that ran,
+ *  and an external hand-off counts only once its capture arrived.
+ *
+ *  **One exemption: the deferred external hand-off.** search-records runs
+ *  three nil searches, then hands the item to search-external-sites, which,
+ *  with no user present to capture, logs a deferred entry and skips the item
+ *  `inaccessible`. `completed` is refused there by capture-pending, so refusing
+ *  the skip too would leave the item `in_progress` for good and the question
+ *  undeclarable. The skip stands when its category is one capture-pending
+ *  exempts and capture-pending would refuse `completed`; capture-pending itself
+ *  decides which entry is latest, so the two rules cannot disagree. */
+export function planItemSearchedSkipInvariants(entry: any, research: any): string[] {
+  if (entry?.status !== "skipped") return [];
+  const pid = entry?.id;
+  if (typeof pid !== "string" || pid === "") return [];
+  const log = Array.isArray(research?.log) ? research.log : [];
+  const ran = log.find(
+    (e: any) =>
+      e &&
+      e.plan_item_id === pid &&
+      ((SEARCH_THAT_RAN.has(e.tool) && e.outcome !== "error") ||
+        (e.tool === "external_site" && e.external_site?.capture_received === true)),
+  );
+  if (!ran) return [];
+  const completable = planItemCapturePendingInvariants({ ...entry, status: "completed" }, research).length === 0;
+  if (!completable && CAPTURE_PENDING_SKIP_EXEMPT.has(entry?.skip_category)) return [];
+  const remedy = completable
+    ? `Set it to 'completed' instead: ${ran.id} names this item, so the completion is attributed.`
+    : `Leave it 'in_progress' until its external capture arrives as a later log entry.`;
+  return [
+    `plan_items[${pid}]: ${ran.id} (${ran.tool}, ${ran.outcome}) shows this item's search ran, ` +
+      `so it cannot be marked 'skipped', which says nothing was searched. ${remedy}`,
+  ];
+}
+
 /** The seven `skip_category` values, for the refusal message. Kept as a literal
  *  rather than read from the schema: the validator already enforces membership,
  *  and what this list is for is telling the agent what to pick. */
@@ -4714,6 +4758,7 @@ function applyOne(
         // no prior rationale to overwrite, so only the category clause applies.
         if (item && !alreadySkipped.has(item.id)) {
           invariantErrors.push(...planItemSkipInvariants(item, {}, true));
+          invariantErrors.push(...planItemSearchedSkipInvariants(item, research));
         }
         // The capture-pending guard reaches the same field for the same reason:
         // a `skipped`/`completed` item set inline on a `plans` op would bypass
@@ -4786,6 +4831,7 @@ function applyOne(
           storedItem?.rationale,
         ),
       );
+      invariantErrors.push(...planItemSearchedSkipInvariants(resultEntry, research));
     }
   }
   // The `supported` evidence floor (#2086, lead ruling 2026-09-07). Gated on

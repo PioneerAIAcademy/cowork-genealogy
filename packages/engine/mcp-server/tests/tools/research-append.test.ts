@@ -10634,9 +10634,15 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
     expect(singleOk(await researchAppend(setStatus("in_progress") as any))).toBeTruthy();
   });
 
-  it("allows 'skipped' once the handoff's own capture has arrived", async () => {
+  it("lets the item through once the handoff's own capture has arrived", async () => {
+    // A captured hand-off is a search that ran, so the item completes; a skip
+    // is refused by the searched-skip rule, not by this guard (#3516).
     await writeProject(captureResearch("in_progress", true));
-    expect(singleOk(await researchAppend(setStatus("skipped") as any))).toBeTruthy();
+    expect(singleOk(await researchAppend(setStatus("completed") as any))).toBeTruthy();
+    await writeProject(captureResearch("in_progress", true));
+    const errs = failure(await researchAppend(setStatus("skipped") as any)).errors.join(" ");
+    expect(errs).not.toMatch(/awaiting a capture/);
+    expect(errs).toMatch(/search ran/);
   });
 
   it("allows 'skipped' when a later arrival (same site+url, null plan_item_id) carries the capture", async () => {
@@ -10710,9 +10716,13 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
     expect(errs).toMatch(/awaiting a capture/);
   });
 
-  it("allows 'skipped' inline through a plans update once the capture has arrived", async () => {
+  it("lets the item through inline through a plans update once the capture has arrived", async () => {
     await writeProject(captureResearch("in_progress", true));
-    expect(singleOk(await researchAppend(setItemStatusViaPlans("skipped") as any))).toBeTruthy();
+    expect(singleOk(await researchAppend(setItemStatusViaPlans("completed") as any))).toBeTruthy();
+    await writeProject(captureResearch("in_progress", true));
+    const errs = failure(await researchAppend(setItemStatusViaPlans("skipped") as any)).errors.join(" ");
+    expect(errs).not.toMatch(/awaiting a capture/);
+    expect(errs).toMatch(/search ran/);
   });
 
   // The documented autonomous no-user / inaccessible-site skip: search-external-
@@ -10840,10 +10850,11 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       projectPath: dir,
       ops: [
         { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
-        // `skip_category` is required on a new skip (#1830). Without it that
-        // refusal pre-empts the G2 one and this test stops exercising the
-        // snapshot-read vector it exists for.
-        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "skipped", skip_category: "answered" } },
+        // `completed`, not `skipped`: every item here has a logged search, and a
+        // search that ran is never skipped (#3516). That refusal would pre-empt
+        // the G2 one and this test would stop exercising the snapshot-read
+        // vector it exists for.
+        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "completed" } },
         { section: "questions", op: "update", entryId: "q_001", fields: { search_stop: STOP_DECISION } },
       ],
     } as any);
@@ -12502,5 +12513,89 @@ describe("research_append — a completed plan item stays completed (#3516)", ()
     await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
     expect((await update({ status: "planned" })).ok).toBe(true);
     expect((await stored()).status).toBe("planned");
+  });
+});
+
+describe("research_append — a search that ran is never marked skipped (#3516)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-searched-skip-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const URL = "https://www.ancestry.com/search/collections/1850usfedcen/?name=Patrick_Flynn";
+  const logEntry = (id: string, tool: string, outcome: string, extra: Record<string, unknown> = {}) => ({
+    id, plan_item_id: "pli_001", performed: "2026-05-01T10:15:00Z", tool, query: { surname: "Flynn" },
+    outcome, results_examined: 1, results_ref: null, external_site: null, ...extra,
+  });
+  const deferred = (id: string) =>
+    logEntry(id, "external_site", "negative", {
+      results_examined: 0,
+      external_site: { site: "ancestry", url_generated: URL, capture_received: false },
+    });
+  async function project(log: any[], status = "in_progress") {
+    const r = baseResearch();
+    r.questions = [validQuestion("q_001")];
+    r.plans = [validPlan("pl_001", "q_001", "active", [{ ...seededPlanItem("pli_001"), status }])];
+    r.log = log;
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const skip = (skip_category = "no_coverage") =>
+    researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { status: "skipped", skip_category },
+    } as any);
+
+  it.each([
+    ["record_search", "negative"],
+    ["record_search", "partial"],
+    ["fulltext_search", "negative"],
+    ["image_search", "negative"],
+  ])("refuses skipped after a %s that came back %s, and names completed", async (tool, outcome) => {
+    await project([logEntry("log_001", tool, outcome)]);
+    const errs = failure(await skip()).errors.join(" ");
+    expect(errs).toMatch(/plan_items\[pli_001\]: log_001 .* search ran/);
+    expect(errs).toMatch(/Set it to 'completed' instead/);
+  });
+
+  it("refuses the same skip set inline through a plans update", async () => {
+    await project([logEntry("log_001", "record_search", "negative")]);
+    const r = await researchAppend({
+      projectPath: dir, section: "plans", op: "update", entryId: "pl_001",
+      fields: { items: [{ ...seededPlanItem("pli_001"), status: "skipped", skip_category: "no_coverage" }] },
+    } as any);
+    expect(failure(r).errors.join(" ")).toMatch(/search ran/);
+  });
+
+  it.each([
+    ["an item never searched", [] as any[]],
+    ["an item whose only search errored", [logEntry("log_001", "record_search", "error")]],
+    ["an item searched only by a volume lookup", [logEntry("log_001", "volume_search", "negative")]],
+  ])("accepts skipped on %s", async (_name, log) => {
+    await project(log);
+    expect(singleOk(await skip())).toBeTruthy();
+  });
+
+  it.each([
+    ["nil searches, then a deferred hand-off", () => [logEntry("log_001", "record_search", "negative"), deferred("log_002")]],
+    ["a deferred hand-off, then a later nil search", () => [deferred("log_001"), logEntry("log_002", "record_search", "negative")]],
+  ])("accepts the escalation's inaccessible skip after %s", async (_name, log) => {
+    await project(log());
+    expect(singleOk(await skip("inaccessible"))).toBeTruthy();
+  });
+
+  it("does not name completed when capture-pending would refuse it", async () => {
+    await project([logEntry("log_001", "record_search", "negative"), deferred("log_002")]);
+    const errs = failure(await skip("answered")).errors.join(" ");
+    expect(errs).toMatch(/search ran/);
+    expect(errs).not.toMatch(/Set it to 'completed'/);
+    expect(errs).toMatch(/Leave it 'in_progress'/);
+  });
+
+  it("does not fire on re-stating an item already skipped", async () => {
+    await project([logEntry("log_001", "record_search", "negative")], "skipped");
+    expect(singleOk(await skip())).toBeTruthy();
   });
 });
