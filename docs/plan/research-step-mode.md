@@ -326,8 +326,11 @@ that apply:
   - **A host reply** shows in the chat as an automatic "Keep going.", and the buttons stay
     hidden while "Keep going" runs.
   - Plus `hosted-web-workbench-spec.md`.
-- **Fallback:** if phase 0 shows Cowork's hook cannot find turns or keep state between calls,
-  Cowork runs on router prose alone.
+- **Cowork runs on router prose alone** (decision 25). This was written as a fallback for
+  "if phase 0 shows Cowork's hook cannot find turns or keep state". Phase 0 showed it CAN
+  (ADR-0005), and the lead chose prose anyway: the cost exposure is the prototype, and a
+  Cowork researcher can press stop. Rider 2's halt rate on the prototype is what would buy
+  the hook later, with numbers rather than a guess.
 
 ### A2. "Keep going": the host replies for the researcher
 - **"Keep going" is a run of ordinary step turns.** After each one, the host sends the next
@@ -949,7 +952,7 @@ file's own sections, top to bottom.
 | No proof export; nothing writes to the FamilySearch tree; no numeric confidence meter | **Unaffected** |
 | No leaf-skill changes beyond the listed ones | **Plus** this plan's research-exhaustiveness, proof-conclusion, question-selection, research-plan, conflict-resolution, hypothesis-tracking, person-evidence and timeline changes |
 | No further cost bounding | **Step mode bounds every turn to one step.** "Keep going" is bounded by its reply cap, and on the prototype by the $35 spend bound |
-| Nothing Cowork-specific | **Except** the plugin hook's Cowork entry point and Cowork's one-turn "Keep going" (sections A and A2) |
+| Nothing Cowork-specific | **Except** Cowork's one-turn "Keep going" (section A2). The plugin hook's Cowork entry point was removed by decision 25: Cowork ships no hook |
 
 **Suggested order:**
 1. Split PR #3262. Land what survives (the front door, `rejected_links`, phase 2's reading
@@ -977,8 +980,11 @@ file's own sections, top to bottom.
 - **Record the results** in ADR-0005. **Cowork half recorded 2026-10-19,** all items. Item 7
   is a NO. A plugin `PreToolUse` hook returning `"continue": false` ends a Cowork turn.
   `AskUserQuestion` waits for the researcher, but it pauses the turn rather than ending it:
-  the answer resumes the same turn. `UserPromptSubmit` also fires for agent hand-backs, so
-  the Cowork entry point keys turns on `prompt_id`.
+  the answer resumes the same turn — which is why rider 1 makes the rule "no new step until
+  the researcher has answered since the last one", not "one step per turn". `UserPromptSubmit`
+  also fires for agent hand-backs, which would have made the Cowork entry point key turns on
+  `prompt_id`; decision 25 removed that entry point, so the finding is recorded in ADR-0005
+  rather than owed as work.
 
 **Phase 1.** The prose ships as small PRs, so a failed eval holds up only the PR it is in. The
 prep PRs work under today's behaviour, so they land first. PR 1 is code only. PR 2 switches
@@ -1004,20 +1010,35 @@ in parallel with PR 2.
      passes the fields. A zero-assertion wrap-up test.
 - **PR 1 — code and CI tests:**
   - `step_boundary.py` (the predicate with mode `wrapup`, `step_ctx`, `current_question`,
-    `next_auto_reply`, `reply_options`, `STEP_LABELS` with `wrap-up`, and the Cowork entry
-    point with its state file), its `hooks.json` entry after the guard, `plugin-hooks.test.ts`
-    cases, a matcher-coverage test, the step-table coverage test, the guardrail-spec row, and
-    `make hook-smoke` with the step arm;
+    `next_auto_reply`, `reply_options`, and `STEP_LABELS` with `wrap-up`), its `hooks.json`
+    entry after the guard, `plugin-hooks.test.ts` cases, a matcher-coverage test, the
+    step-table coverage test, and the guardrail-spec row.
+    **Decision 25 removed the Cowork entry point and its state file from this PR:** Cowork
+    ships no hook, so there is no per-turn state to keep and nothing for `prompt_id` to key.
+    Phase 0's `prompt_id`, `Agent`-vs-`Task` and prefixed-name findings were for that entry
+    point; they are recorded in ADR-0005 and are not work this PR owes.
+    **`make hook-smoke`'s step arm needs confirming before it is counted as scope:** it
+    covers the hosted (alpha) loader, and the alpha gets nothing under decision 25.
   - **"waiting only on an upload"** (section I): `awaitingUserHandOffs` and its closing-entry
     match moved into `src/utils`, used by `project-context.ts`, `question-state.ts` and
     `research-append.ts`; its `step_ctx` mirror; and the shared fixture;
-  - **the host integrations:**
-    - the worker's `PreToolUse`, with `turns.step`, `turns.mode` and the redelivery seed;
-    - the alpha's hooks, with the `Skill` coverage;
+  - **the host integrations** (decision 25: the FS prototype is the only plane that
+    enforces the boundary, so this list is the prototype plus the harnesses):
+    - the worker's `PreToolUse`, with `turns.step`, `turns.mode` and the redelivery seed.
+      **Deny first, halt only on a second attempt** — the halt is the BACKSTOP, not the first
+      move, and it denies the call it stops (decision 25). Rider 2: log every halt, because
+      the router prose is identical on both planes, so the rate measures how often Cowork
+      runs past a boundary;
+    - ~~the alpha's hooks, with the `Skill` coverage~~ — **removed by decision 25: the alpha
+      gets nothing, it is retired within months;**
     - the unit harness, with the check before the stubs and the mode mapping set per test;
-    - the e2e orchestrator;
+    - the e2e orchestrator. Rider 3: it tracks `real_agent`, which is the alpha, so the
+      harnesses enforce a boundary Cowork does not have and no eval can catch a Cowork miss
+      (`docs/architecture.md` §9.4, gap 4);
     - `GENEALOGY_STEP_HOST` in `build_worker_options` and `_sdk_env()`;
-    - each host's `ctx` read;
+    - the `ctx` read for the prototype and both harnesses. **Not Cowork:** ADR-0005 item 7
+      measured that a hook cannot read `research.json` from its working directory, and under
+      decision 25 Cowork has no hook to read it from;
   - **no Stop veto:** `turn_max_nudges` returning 0, the alpha arming no turn, and the recipe,
     docstring and test sites (A);
   - **"Keep going":** `next_auto_reply` and its unit tests; the worker's held-row reply inside
