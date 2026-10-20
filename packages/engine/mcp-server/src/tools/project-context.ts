@@ -109,6 +109,9 @@ export type ProjectContextResult =
       projectStatus: string | null;
       /** research.project.objective verbatim; null when absent. No other tool returns it (#3026). */
       objective: string | null;
+      /** research.project.subject_person_ids verbatim (strings only); [] when absent. The
+       *  router has no other way to see who the research is about. */
+      subjectPersonIds: string[];
       openQuestions: ProjectContextQuestion[];
       /** Advisory per-question state and next step. Nothing gates on it. */
       questionStatuses: QuestionStatus[];
@@ -317,6 +320,9 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     buildId,
     projectStatus,
     objective,
+    subjectPersonIds: (Array.isArray(research?.project?.subject_person_ids) ? research.project.subject_person_ids : []).filter(
+      (id: unknown): id is string => typeof id === "string",
+    ),
     openQuestions,
     questionStatuses,
     persons,
@@ -419,7 +425,8 @@ export const projectContextSchema = {
     "planItemId, performed}] lists external-site URLs already handed to the user that " +
     "nothing has answered yet — do not raise them again; when the user brings back a " +
     "capture, or says they cannot access the site, log that as the row's closing " +
-    "entry with the same urlGenerated. externalCollections counts stored curated " +
+    "entry with the same urlGenerated. subjectPersonIds are the project's subject " +
+    "persons (research.project.subject_person_ids). externalCollections counts stored curated " +
     "collections per place by record type (rows: research_query external_collections). " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
