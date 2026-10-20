@@ -32,8 +32,12 @@ Includes an item that reaches the pension file — dated to the file's own perio
 
 The failure shape, observed once before the issue #1830 edit: a military item that names the pension collection in its rationale and is then dated `1862-1865`.
 
-Several items legitimately stop inside the window. The 1850 and 1860 censuses do, and so does a compiled-service-record item dated to the service years. Their presence is not the defect; the absence of any item reaching past 1865 is.
+Several items legitimately stop inside the window. The 1850 and 1860 censuses do, and so does a compiled-service-record item dated to the service years. Their presence is not the defect; the absence of any military/pension item reaching the pension file is.
 
 ## Note on grading
 
-There is no deterministic validator for this scenario, and that is deliberate rather than an omission. Five mechanisms were built and measured against real runs; each either passed a plan carrying the defect or failed a correct one. The distinguishing property — whether a record was created after the events it describes — is a genealogical judgement that no field in a plan item carries. The reasoning and the five failure modes are recorded on issue #1830.
+`test_pension_item_reaches_past_window` (`eval/harness/validators/test_research_plan.py`) gates this scenario: at least one plan item whose `record_type` is military or pension must have a `date_range` reaching **1879**.
+
+**1879 is a fixture choice.** The fixture never dates the pension file. The locality quirk names a widow's pension, which cannot predate Josiah Rowe's 1879 death, so 1879 is the earliest the file can be. It is stricter than "past 1865".
+
+The validator scores only military/pension items, by `record_type` and not by rationale. A late probate or cemetery item cannot carry a plan whose pension search stops at 1865. One real run wrote a cemetery item dated 1848-1880 whose rationale mentions the pension, so a rationale match would pass that shape. The general rule stays in the agent's principle 10; the validator certifies this one fixture. Measurement and the earlier mechanisms are on issue #1830.

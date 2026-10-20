@@ -435,6 +435,83 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
             f"item — the requested record must not be gated behind an "
             f"indirect source"
         )
+
+
+# --- Tag-gated: a pension item reaches past the question's window -----------
+
+# Issue #1830 item A, scenario `rowe-window-is-not-a-ceiling`. The question asks
+# about 1850-1865; the record that answers it is a widow's pension file, which
+# cannot predate Josiah Rowe's 1879 death. The fixture never dates the file, so
+# 1879 is a fixture choice, stated in its README. The general rule stays in
+# principle 10; this certifies the one fixture.
+_PENSION_REACH_BY_TEST_ID = {
+    "ut_research_plan_wnc": 1879,
+}
+# `record_type` only, not the rationale. Over the 12 scratch plans a rationale
+# match adds no pension item a `record_type` match misses, and admits a
+# cemetery item dated 1848-1880 whose rationale mentions the pension -- so a
+# plan whose every military item stopped at 1865 would pass on it, the same
+# hole as any-item-reaches-past (mechanism 3 on the issue).
+_PENSION_RECORD_TYPE_RE = re.compile(r"military|pension", re.IGNORECASE)
+_DATE_RANGE_YEAR_RE = re.compile(r"\b(1\d{3}|20\d{2})\b")
+_OPEN_ENDED_RE = re.compile(
+    r"[-–—]\s*$|\b(?:present|onwards?|later|after|forward)\b|\+\s*$", re.IGNORECASE
+)
+
+
+def _date_range_reaches(date_range: object, threshold: int) -> bool:
+    text = str(date_range or "").strip()
+    years = [int(y) for y in _DATE_RANGE_YEAR_RE.findall(text)]
+    if not years:
+        return False
+    if max(years) >= threshold:
+        return True
+    return bool(_OPEN_ENDED_RE.search(text))
+
+
+def test_pension_item_reaches_past_window(before_state, after_state, test):
+    """Tag-gated: at least one new military/pension plan item has a
+    `date_range` reaching the fixture's pension-file year.
+
+    At least one, not every: a compiled-service-record item dated to the
+    service years is legitimate alongside a pension item. Only military and
+    pension items are scoped, so a late probate or cemetery item cannot carry
+    a plan whose pension search stops at the window."""
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _PENSION_REACH_BY_TEST_ID or "pension-reaches-past-window" in tags, (
+        f"{test_id} has a _PENSION_REACH_BY_TEST_ID entry but no "
+        "'pension-reaches-past-window' tag - restore the tag or delete the entry"
+    )
+    if "pension-reaches-past-window" not in tags:
+        pytest.skip("not a pension-reaches-past-window test")
+    threshold = _PENSION_REACH_BY_TEST_ID.get(test_id)
+    assert threshold, (
+        f"{test_id} carries 'pension-reaches-past-window' but has no entry in "
+        "_PENSION_REACH_BY_TEST_ID"
+    )
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or [])]
+    assert items, "no new plan items were written"
+
+    pension_items = [
+        i for i in items if _PENSION_RECORD_TYPE_RE.search(str(i.get("record_type") or ""))
+    ]
+    assert any(_date_range_reaches(i.get("date_range"), threshold) for i in pension_items), (
+        f"no military/pension item's date_range reaches {threshold}, the "
+        f"pension file's earliest date; the window bounds the question, not "
+        f"the records that answer it. Military/pension items: "
+        + (
+            "; ".join(
+                f"{i.get('id')} {i.get('record_type')} {i.get('date_range')!r}"
+                for i in pension_items
+            )
+            or "none"
+        )
+    )
 # ===========================================================================
 # Deterministic checks over newly written plans (issue #1866, research-plan
 # deep dive #1650). Unlike the tag-gated validators above these run on EVERY
