@@ -12620,6 +12620,24 @@ describe("research_append — a completed plan item stays completed (#3516)", ()
     expect((await update({ status: "planned" })).ok).toBe(true);
     expect((await stored()).status).toBe("planned");
   });
+
+  // The same rule for items sent inline on a `plans` update.
+  const updatePlan = (items: any[], extra: Record<string, unknown> = {}) =>
+    researchAppend({ projectPath: dir, section: "plans", op: "update", entryId: "pl_001", fields: { items, ...extra } } as any);
+
+  it("an inline in_progress on a completed item is a no-op with a warning", async () => {
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r: any = await updatePlan([{ ...seededPlanItem("pli_001"), status: "in_progress" }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.validation.warnings.join(" ")).toMatch(/pli_001.*already completed; left completed/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("keeps the rest of an inline plans update and leaves the completed item completed", async () => {
+    const r: any = await updatePlan([{ ...seededPlanItem("pli_001"), status: "in_progress", rationale: "Widened" }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await stored()).toMatchObject({ status: "completed", rationale: "Widened" });
+  });
 });
 
 describe("research_append — a search that ran is never marked skipped (#3516)", () => {
@@ -12692,12 +12710,15 @@ describe("research_append — a search that ran is never marked skipped (#3516)"
     expect(singleOk(await skip("inaccessible"))).toBeTruthy();
   });
 
-  it("does not name completed when capture-pending would refuse it", async () => {
+  it("does not name completed when capture-pending would refuse it: capture-pending's error is the only one", async () => {
     await project([logEntry("log_001", "record_search", "negative"), deferred("log_002")]);
-    const errs = failure(await skip("answered")).errors.join(" ");
-    expect(errs).toMatch(/search ran/);
-    expect(errs).not.toMatch(/Set it to 'completed'/);
-    expect(errs).toMatch(/Leave it 'in_progress'/);
+    // Every refusal carries a trailing worked example; count the refusals.
+    const errors = failure(await skip("answered")).errors.filter((e) => !e.startsWith("worked example"));
+    expect(errors, JSON.stringify(errors)).toHaveLength(1);
+    expect(errors[0]).toMatch(/awaiting a capture/);
+    expect(errors[0]).toMatch(/inaccessible/);
+    expect(errors[0]).toMatch(/user_declined/);
+    expect(errors[0]).not.toMatch(/search ran|Set it to 'completed'/);
   });
 
   it("does not fire on re-stating an item already skipped", async () => {

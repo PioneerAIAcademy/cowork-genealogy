@@ -3122,9 +3122,11 @@ const SEARCH_THAT_RAN = new Set(["record_search", "fulltext_search", "image_sear
  *  with no user present to capture, logs a deferred entry and skips the item
  *  `inaccessible`. `completed` is refused there by capture-pending, so refusing
  *  the skip too would leave the item `in_progress` for good and the question
- *  undeclarable. The skip stands when its category is one capture-pending
- *  exempts and capture-pending would refuse `completed`; capture-pending itself
- *  decides which entry is latest, so the two rules cannot disagree. */
+ *  undeclarable (lead, 2026-10-20). So wherever capture-pending would refuse
+ *  `completed`, this rule stays silent and capture-pending answers alone: it
+ *  lets an `inaccessible` or `user_declined` skip stand, and refuses any other
+ *  category with a message naming those two. Capture-pending itself decides
+ *  which entry is latest, so the two rules cannot disagree. */
 export function planItemSearchedSkipInvariants(entry: any, research: any): string[] {
   if (entry?.status !== "skipped") return [];
   const pid = entry?.id;
@@ -3138,14 +3140,11 @@ export function planItemSearchedSkipInvariants(entry: any, research: any): strin
         (e.tool === "external_site" && e.external_site?.capture_received === true)),
   );
   if (!ran) return [];
-  const completable = planItemCapturePendingInvariants({ ...entry, status: "completed" }, research).length === 0;
-  if (!completable && CAPTURE_PENDING_SKIP_EXEMPT.has(entry?.skip_category)) return [];
-  const remedy = completable
-    ? `Set it to 'completed' instead: ${ran.id} names this item, so the completion is attributed.`
-    : `Leave it 'in_progress' until its external capture arrives as a later log entry.`;
+  if (planItemCapturePendingInvariants({ ...entry, status: "completed" }, research).length > 0) return [];
   return [
     `plan_items[${pid}]: ${ran.id} (${ran.tool}, ${ran.outcome}) shows this item's search ran, ` +
-      `so it cannot be marked 'skipped', which says nothing was searched. ${remedy}`,
+      `so it cannot be marked 'skipped', which says nothing was searched. Set it to 'completed' ` +
+      `instead: ${ran.id} names this item, so the completion is attributed.`,
   ];
 }
 
@@ -4650,6 +4649,34 @@ function applyOne(
         return { section, op: op.op, entryId: op.entryId, noop: true, warnings: [keptCompletedWarning] };
       }
     }
+    // The same rule for items re-sent inline on a `plans` update, which reach
+    // `items[]` directly: an item stored `completed` and sent `in_progress` is
+    // kept `completed`. When that leaves the op changing nothing, it is a no-op.
+    if (section === "plans" && Array.isArray(op.fields.items)) {
+      const storedStatus = new Map<unknown, unknown>(
+        (Array.isArray(existing.items) ? existing.items : [])
+          .filter((it: any) => it && typeof it.id === "string")
+          .map((it: any) => [it.id, it.status]),
+      );
+      const kept: string[] = [];
+      const items = op.fields.items.map((it: any) => {
+        if (it && storedStatus.get(it.id) === "completed" && it.status === "in_progress") {
+          kept.push(it.id);
+          return { ...it, status: "completed" };
+        }
+        return it;
+      });
+      if (kept.length > 0) {
+        op.fields = { ...op.fields, items };
+        keptCompletedWarning = kept.map((id) => `plan item '${id}' is already completed; left completed`).join("; ");
+        const changesNothing = Object.entries(op.fields).every(
+          ([k, v]) => k === "id" || JSON.stringify(existing[k]) === JSON.stringify(v),
+        );
+        if (changesNothing) {
+          return { section, op: op.op, entryId: op.entryId, noop: true, warnings: [keptCompletedWarning] };
+        }
+      }
+    }
 
     for (const [k, v] of Object.entries(op.fields)) {
       if (k === "id") continue;
@@ -4663,8 +4690,17 @@ function applyOne(
     // the pair is checked against the value already on disk — which is the case
     // the rule exists for: flipping `informant_proximity` to "unknown" while
     // leaving a stale `secondary` behind is exactly how the 248 corpus
-    // violations were reached.
-    validateInformantQualityFloor(existing);
+    // violations were reached. Scoped to ops that set one of the pair, like the
+    // relationship-direction check below: an update that touches neither (a
+    // question tie, a notes edit) says nothing about the pair, and re-checking
+    // a legacy pair there would refuse the tie and leave the question with no
+    // assertions, sent back to extraction on every pass.
+    if (
+      Object.prototype.hasOwnProperty.call(op.fields, "informant_proximity") ||
+      Object.prototype.hasOwnProperty.call(op.fields, "information_quality")
+    ) {
+      validateInformantQualityFloor(existing);
+    }
     // Scoped to ops that set one of the three inputs it compares.
     // `fact_type` is one of them because it decides whether the guard
     // applies at all, so a retype INTO `relationship` would otherwise move

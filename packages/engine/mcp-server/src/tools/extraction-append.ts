@@ -221,16 +221,27 @@ function srcIdOf(result: ResearchAppendResult): string | undefined {
 }
 
 /**
- * The log entry an accepted FamilySearch hint left for this record: the LATEST
- * `person_record_matches` verdict naming the record's ark, when it is positive
- * and no assertion cites it yet. A later negative verdict rejects the hint, so
- * an earlier positive one is not reused. `search-hints` logs it with no
- * sidecar, because the hint stages nothing;
- * extraction cites it instead of logging a second `record_read` for the same
- * record, which would leave the hint's own entry unreferenced and send the
- * router back to extract the record again on every pass.
+ * The log entry this record already has, which extraction cites instead of
+ * logging a second one. Two kinds, the first found wins:
+ *
+ * - `hint`: the entry an accepted FamilySearch hint left. That is the LATEST
+ *   `person_record_matches` verdict naming the record's ark, when it is
+ *   positive and no assertion cites it yet; a later negative verdict rejects
+ *   the hint. `search-hints` logs it with no sidecar, because the hint stages
+ *   nothing, so the record is still read live and only the entry is reused.
+ *   Without that the hint's own entry stays unreferenced and the router sends
+ *   the record back to extraction on every pass.
+ * - `read`: the latest uncited `record_read` of this record whose sidecar still
+ *   holds it. The read is reused rather than repeated. A census row is reused
+ *   only when it carries `indexFields`, the per-persona index data an older
+ *   read did not stage. Any doubt about the sidecar falls back to a live read.
  */
-function acceptedHintLogId(research: any, bareId: string, citedLogIds: ReadonlySet<unknown>): string | undefined {
+async function reusableLogEntry(
+  projectPath: string,
+  research: any,
+  bareId: string,
+  citedLogIds: ReadonlySet<unknown>,
+): Promise<{ logId: string; resultsRef: string | null; kind: "hint" | "read" } | undefined> {
   const log: any[] = Array.isArray(research.log) ? research.log : [];
   const verdicts = log.filter(
     (e) =>
@@ -239,25 +250,9 @@ function acceptedHintLogId(research: any, bareId: string, citedLogIds: ReadonlyS
       arkToBareId(e.query.recordId) === bareId,
   );
   const latest = verdicts[verdicts.length - 1];
-  if (latest?.outcome !== "positive" || citedLogIds.has(latest.id)) return undefined;
-  return typeof latest.id === "string" ? latest.id : undefined;
-}
-
-/**
- * An earlier `record_read` of this record that nothing cites yet, with its
- * sidecar still holding the record: the read is reused rather than repeated,
- * and its entry cited rather than a second one logged. The latest such entry
- * wins. A census sidecar is reused only when it carries `indexFields`, the
- * per-persona index data an older read did not stage. Any doubt about the
- * sidecar falls back to a live read.
- */
-async function reusableRecordRead(
-  projectPath: string,
-  research: any,
-  bareId: string,
-  citedLogIds: ReadonlySet<unknown>,
-): Promise<{ logId: string; resultsRef: string } | undefined> {
-  const log: any[] = Array.isArray(research.log) ? research.log : [];
+  if (latest?.outcome === "positive" && !citedLogIds.has(latest.id) && typeof latest.id === "string") {
+    return { logId: latest.id, resultsRef: null, kind: "hint" };
+  }
   const reads = log.filter(
     (e) =>
       e?.tool === "record_read" &&
@@ -273,7 +268,7 @@ async function reusableRecordRead(
       const row: any = rows.find((r: any) => typeof r?.recordId === "string" && arkToBareId(r.recordId) === bareId);
       if (!row?.gedcomx) continue;
       if (detectRecordType(row.gedcomx) === "census" && !row.indexFields) continue;
-      return { logId: e.id, resultsRef: e.results_ref };
+      return { logId: e.id, resultsRef: e.results_ref, kind: "read" };
     } catch {
       continue;
     }
@@ -425,7 +420,7 @@ async function recordIdsMode(
 
   // One outcome per DISTINCT record: a repeated id in the call is one record.
   const seen = new Set<string>();
-  const outcomes: (RecordOutcome & { stagedRef?: string })[] = [];
+  const outcomes: (RecordOutcome & { stagedRef?: string; hintLogId?: string })[] = [];
   for (const raw of ids) {
     const bare = arkToBareId(raw.trim());
     if (seen.has(bare)) continue;
@@ -446,20 +441,20 @@ async function recordIdsMode(
     }
   }
 
-  // 2. Reuse an earlier read of a record nothing has extracted yet, so it is
-  //    neither read nor logged twice. An accepted hint keeps precedence: its
-  //    own entry is cited below, as before.
+  // 2. The entry a record nothing has extracted yet already has. A reused read
+  //    is neither read nor logged again. An accepted hint keeps precedence; it
+  //    has no sidecar, so the record is still read and only its entry is cited.
   const assertionLogIds = new Set(
     (Array.isArray(research.assertions) ? research.assertions : []).map((a: any) => a?.log_entry_id),
   );
   for (const o of outcomes) {
     if (o.status !== "extracted") continue;
-    const bare = arkToBareId(o.recordId);
-    if (acceptedHintLogId(research, bare, assertionLogIds)) continue;
-    const reused = await reusableRecordRead(input.projectPath, research, bare, assertionLogIds);
-    if (reused) {
+    const reused = await reusableLogEntry(input.projectPath, research, arkToBareId(o.recordId), assertionLogIds);
+    if (reused?.kind === "hint") {
+      o.hintLogId = reused.logId;
+    } else if (reused) {
       o.logId = reused.logId;
-      o.stagedRef = reused.resultsRef;
+      o.stagedRef = reused.resultsRef!;
     }
   }
 
@@ -487,9 +482,9 @@ async function recordIdsMode(
     //    second. A reused read (step 2) already carries its entry.
     const reusedHint = new Set<string>();
     for (const o of staged) {
-      if (o.logId) continue;
-      o.logId = acceptedHintLogId(research, arkToBareId(o.recordId), assertionLogIds);
-      if (o.logId) reusedHint.add(o.recordId);
+      if (o.logId || !o.hintLogId) continue;
+      o.logId = o.hintLogId;
+      reusedHint.add(o.recordId);
     }
     const fresh = staged.filter((o) => !o.logId);
     const logged = fresh.length === 0
@@ -572,7 +567,7 @@ async function recordIdsMode(
   const planItems = await completePlanItems(input.projectPath, landedBareIds(outcomes));
   return {
     ok: outcomes.some((o) => o.status === "extracted" || o.status === "already_extracted"),
-    records: outcomes.map(({ stagedRef: _s, ...rest }) => rest),
+    records: outcomes.map(({ stagedRef: _s, hintLogId: _h, ...rest }) => rest),
     ...(planItems ? { planItems } : {}),
   };
 }

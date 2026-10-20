@@ -43,7 +43,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
-import { extractionAppend, EXTRACTION_SECTIONS } from "../../src/tools/extraction-append.js";
+import { extractionAppend, EXTRACTION_SECTIONS, PLAN_COMPLETION_SECTIONS } from "../../src/tools/extraction-append.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
@@ -143,8 +143,9 @@ describe("extraction_append: only the three call shapes", () => {
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
 
-  it("writes exactly {sources, assertions}", () => {
+  it("chooses its lane per call: {sources, assertions} to extract and tie, {plan_items} to complete", () => {
     expect([...EXTRACTION_SECTIONS].sort()).toEqual(["assertions", "sources"]);
+    expect([...PLAN_COMPLETION_SECTIONS]).toEqual(["plan_items"]);
   });
 
   // Every form a caller composed its own entries in, and the one-record mode.
@@ -1056,9 +1057,10 @@ describe("extraction_append: closes the plan item and claims re-found records", 
     await seed({ questions: [question("q_001"), question("q_002")] });
     await runExtractionAppend({ projectPath: dir, recordIds: [marriage.recordId], questionIds: ["q_001"] }, readerFor([marriage]) as any, LOCAL);
     const before = await research();
+    // A shape the update arm still refuses on every update: negative evidence
+    // whose role is not the literal "absent".
     const legacy = before.assertions[0];
-    legacy.informant_proximity = "unknown";
-    legacy.information_quality = "primary";
+    legacy.record_basis = "absent";
     await writeFile(join(dir, "research.json"), JSON.stringify(before), "utf8");
     const r = await runExtractionAppend({ projectPath: dir, recordIds: [marriage.recordId], questionIds: ["q_002"] }, readerFor([marriage]) as any, LOCAL);
     expect(r.records[0].summary).toMatch(/tied to q_002/);
@@ -1067,6 +1069,23 @@ describe("extraction_append: closes the plan item and claims re-found records", 
     const tied = after.assertions.filter((a: any) => a.extracted_for_question_ids.includes("q_002")).map((a: any) => a.id);
     expect(tied).not.toContain(legacy.id);
     expect(tied.length).toBe(after.assertions.length - 1);
+  });
+
+  it("ties a legacy unknown/primary assertion, which the informant floor no longer re-checks on a tie", async () => {
+    const marriage = element("marriage");
+    await seed({ questions: [question("q_001"), question("q_002")] });
+    await runExtractionAppend({ projectPath: dir, recordIds: [marriage.recordId], questionIds: ["q_001"] }, readerFor([marriage]) as any, LOCAL);
+    const before = await research();
+    for (const a of before.assertions) {
+      a.informant_proximity = "unknown";
+      a.information_quality = "primary";
+    }
+    await writeFile(join(dir, "research.json"), JSON.stringify(before), "utf8");
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [marriage.recordId], questionIds: ["q_002"] }, readerFor([marriage]) as any, LOCAL);
+    expect(r.records[0].summary).toMatch(/tied to q_002/);
+    expect(r.records[0].warnings ?? []).toEqual([]);
+    const after = await research();
+    expect(after.assertions.every((a: any) => a.extracted_for_question_ids.join(",") === "q_001,q_002")).toBe(true);
   });
 
   it("reuses an earlier record_read entry without a live read", async () => {
@@ -1091,13 +1110,18 @@ describe("extraction_append: closes the plan item and claims re-found records", 
   it.each([
     ["a census read with no indexFields", (el: any) => ({ ...el, indexFields: undefined }), "census-1850-no-relationship-column"],
     ["a sidecar that no longer holds the record", () => ({ recordId: "ZZZZ-ZZZ", gedcomx: {} }), "death"],
+    ["a sidecar that cannot be read", null, "death"],
   ])("reads live rather than reuse %s", async (_name, rowOf, fixture) => {
     const el = element(fixture);
+    let results_ref = "results/log_001.json";
+    if (rowOf) {
+      results_ref = await sidecar("log_001", "record_read", [(rowOf as (e: any) => any)(el)]);
+    } else {
+      await mkdir(join(dir, "results"), { recursive: true });
+      await writeFile(join(dir, "results", "log_001.json"), "{ not json", "utf8");
+    }
     await seed({
-      log: [entry("log_001", "record_read", null, "positive", {
-        query: { recordId: el.recordId },
-        results_ref: await sidecar("log_001", "record_read", [rowOf(el)]),
-      })],
+      log: [entry("log_001", "record_read", null, "positive", { query: { recordId: el.recordId }, results_ref })],
     });
     const reads: string[] = [];
     const r = await runExtractionAppend({ projectPath: dir, recordIds: [el.recordId] }, readerFor([el], reads) as any, LOCAL);
