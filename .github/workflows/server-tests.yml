@@ -114,7 +114,12 @@ jobs:
           # `^packages/engine/mcp-server/(src/|package\.json$|...)` (U6):
           # tests/test_proto_fencing_pg.py spawns build/http.js, so a diff to the
           # store or http-server alone must run it.
-          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^packages/engine/plugin/skills/|^docs/specs/schemas/|^\.gitignore$|^deploy/|^scripts/eb_bundles/|^scripts/build-stamp\.mjs$|^Makefile$|^\.github/workflows/server-tests\.yml$|^docs/architecture\.md$|^docs/plan/familysearch-handoff\.md$|^docs/search-agent-prototype-report\.md$|^packages/engine/mcp-server/(src/|package\.json$|package-lock\.json$|tsconfig[^/]*\.json$)'
+          # `^packages/engine/plugin/hooks/`: test_command_hook_output_shape.py
+          # reads hooks.json and every script it names, so a hook-only diff has
+          # to run this job. Without it the one guard that exists for the
+          # `continue_` trap never ran on the change it exists for.
+          #
+          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^packages/engine/plugin/hooks/|^packages/engine/plugin/skills/|^docs/specs/schemas/|^\.gitignore$|^deploy/|^scripts/eb_bundles/|^scripts/build-stamp\.mjs$|^Makefile$|^\.github/workflows/server-tests\.yml$|^docs/architecture\.md$|^docs/plan/familysearch-handoff\.md$|^docs/search-agent-prototype-report\.md$|^packages/engine/mcp-server/(src/|package\.json$|package-lock\.json$|tsconfig[^/]*\.json$)'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
