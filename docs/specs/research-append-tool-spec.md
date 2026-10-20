@@ -2064,7 +2064,7 @@ document: {
       type: string,                    // "birth", "death", "residence", "occupation", "age", "marital_status", …
       value?: string, date?: string, place?: string,
       computed?: ("value" | "date" | "place")[],   // which attributes the text does NOT give
-      uncertain?: true,                // the reading is doubted: [?] stays in the value; no layer changes
+      uncertain?: true,                // the reading is doubted: [?] stays in the value (added when absent); no layer changes
       note?: string,
     }],
   }],
@@ -2079,6 +2079,13 @@ document: {
 has no stated/computed field. The adapter builds an `ExtractDocument` and
 passes these fields to `extractRecord` **alongside** it, as a document-mode
 options argument. The shape is never widened to fit them.
+
+**`uncertain` reaches the value.** The adapter carries the flag into the stored
+assertion as a `[?]` the agent may have left out: appended to the surname (the
+given name when there is none) for a name, and to the value, else the place,
+for a fact. A field that already carries `[?]` gets no second one. The
+`person_evidence` `confident` precondition above reads that marker, so a doubt
+the flag alone recorded would otherwise never reach it.
 
 **What the document cannot say** is the reason it exists. It has no key for
 `record_role`, `record_basis`, `informant_proximity`, `information_quality`,

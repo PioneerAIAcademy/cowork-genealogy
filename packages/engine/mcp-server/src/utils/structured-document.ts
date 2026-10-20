@@ -274,6 +274,10 @@ const PRINCIPAL_EVENT: Partial<Record<RecordType, RegExp>> = {
   probate: /^death$/,
 };
 
+/** `uncertain: true` means the reading keeps its `[?]`; an agent that sets the
+ *  flag and drops the marker still gets one, so the doubt reaches the value. */
+const markDoubted = (s: string) => `${s} [?]`;
+
 const yearOf = (v: string | undefined) => {
   const m = String(v ?? "").match(/\d{4}/);
   return m ? Number(m[0]) : undefined;
@@ -318,13 +322,24 @@ export function documentToExtract(
       id: p.id,
       ...(p.principal ? { principal: true } : {}),
       ...(p.gender ? { gender: p.gender === "male" ? "Male" : "Female" } : {}),
-      names: p.names.map((n) => ({ ...(n.given ? { given: n.given } : {}), ...(n.surname ? { surname: n.surname } : {}) })),
-      facts: p.facts.map((f) => ({
-        type: f.type,
-        ...(f.value !== undefined ? { value: f.value } : {}),
-        ...(f.date !== undefined ? { date: f.date } : {}),
-        ...(f.place !== undefined ? { place: f.place } : {}),
-      })),
+      names: p.names.map((n) => {
+        const doubted = n.uncertain && ![n.given, n.surname].some((s) => s?.includes("[?]"));
+        return {
+          ...(n.given ? { given: doubted && !n.surname ? markDoubted(n.given) : n.given } : {}),
+          ...(n.surname ? { surname: doubted ? markDoubted(n.surname) : n.surname } : {}),
+        };
+      }),
+      facts: p.facts.map((f) => {
+        const doubted = f.uncertain && ![f.value, f.date, f.place].some((s) => s?.includes("[?]"));
+        const onValue = doubted && f.value !== undefined;
+        const onPlace = doubted && !onValue && f.place !== undefined;
+        return {
+          type: f.type,
+          ...(f.value !== undefined ? { value: onValue ? markDoubted(f.value) : f.value } : {}),
+          ...(f.date !== undefined ? { date: f.date } : {}),
+          ...(f.place !== undefined ? { place: onPlace ? markDoubted(f.place) : f.place } : {}),
+        };
+      }),
     } as SimplifiedPerson;
   });
 

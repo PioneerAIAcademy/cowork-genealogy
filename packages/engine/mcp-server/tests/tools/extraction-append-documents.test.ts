@@ -423,6 +423,33 @@ describe("extraction_append: documents", () => {
     expect(await roles([])).toEqual(expected);
   });
 
+  it("an uncertain reading keeps a [?] in the stored value, added once when the agent dropped it", async () => {
+    // Seen in ut_record_structurer_003: `uncertain: true` with no marker lost the doubt.
+    const doc = (name: any, fact: any) => ({
+      recordType: "christening",
+      documentForm: "verbatim_transcript",
+      source: { title: "Stavanger Domkirke, baptisms 1817", repository: "Digitalarkivet" },
+      persons: [
+        { id: "c", principal: true, names: [{ given: "Kristian Fredrik" }], facts: [{ type: "christening", date: "20 July 1817" }] },
+        { id: "f", gender: "male", names: [name], facts: [fact] },
+      ],
+      relationships: [{ type: "parent_child", person1: "f", person2: "c" }],
+    });
+    const values = async (id: string, name: any, fact: any) => {
+      expect((await run([{ recordId: id, document: doc(name, fact) }])).ok).toBe(true);
+      const as = await assertionsFor(id);
+      return as.filter((a: any) => a.record_role === "father").map((a: any) => [a.fact_type, a.value, a.place]);
+    };
+    const flagged = await values("capture:b1", { given: "Tollev", surname: "Nadnesen", uncertain: true }, { type: "occupation", value: "skipper", uncertain: true });
+    expect(flagged).toContainEqual(["name", "Tollev Nadnesen [?]", undefined]);
+    expect(flagged.find((v: any[]) => v[0] === "occupation")?.[1]).toBe("skipper [?]");
+    const marked = await values("capture:b2", { given: "Tollev", surname: "Nadnesen [?]", uncertain: true }, { type: "residence", place: "Hetland", uncertain: true });
+    expect(marked).toContainEqual(["name", "Tollev Nadnesen [?]", undefined]);
+    expect(marked.find((v: any[]) => v[0] === "residence")?.[2]).toBe("Hetland [?]");
+    const plain = await values("capture:b3", { given: "Tollev", surname: "Nadnesen" }, { type: "occupation", value: "skipper" });
+    expect(plain).toContainEqual(["name", "Tollev Nadnesen", undefined]);
+  });
+
   it("a birth announcement for twins, both principals, stays a birth", async () => {
     const doc = {
       recordType: "newspaper_announcement",
