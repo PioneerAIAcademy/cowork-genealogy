@@ -1,0 +1,1140 @@
+{
+  "persons": [
+    {
+      "id": "GJVV-FHW",
+      "ark": "ark:/61903/4:1:GJVV-FHW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "b847dcbe-e144-4f05-a765-dfe01297d5fd",
+          "preferred": true,
+          "given": "CLARA",
+          "surname": "GONZÁLEZ PIMIENTO",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "334405b4-1332-4ebd-b437-3e5083e7e216",
+          "type": "Birth",
+          "date": "31 de julio de 1867",
+          "standard_date": "31 Jul 1867",
+          "place": "Pumanque, Colchagua, Chile",
+          "standard_place": "Pumanque, Colchagua, Chile"
+        },
+        {
+          "id": "ed40b332-8a73-4613-874c-55729fd96bb5",
+          "type": "Death"
+        },
+        {
+          "id": "90a54136-6e9b-464a-8521-6c1e33d4af7a",
+          "type": "Christening",
+          "date": "2 de agosto de 1867",
+          "standard_date": "2 Aug 1867",
+          "place": "Pumanque, Colchagua, Chile",
+          "standard_place": "Pumanque, Colchagua, Chile"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8Y4-X3F"
+        },
+        {
+          "ref": "W8Y4-ZKW"
+        },
+        {
+          "ref": "Q97T-WRV"
+        },
+        {
+          "ref": "Q97F-QBQ"
+        }
+      ]
+    },
+    {
+      "id": "PXC2-31L",
+      "ark": "ark:/61903/4:1:PXC2-31L",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "5784f7ba-f97d-40e8-9276-c41de5b24211",
+          "preferred": true,
+          "given": "Manuel Jesús",
+          "surname": "Silva González",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "10f456b6-6795-4d5c-b6d0-775c3ed4b0f2",
+          "type": "Birth",
+          "date": "27 de diciembre de 1895",
+          "standard_date": "27 Dec 1895"
+        },
+        {
+          "id": "e23f8775-bd8f-4279-9776-2354532c4056",
+          "type": "Death",
+          "place": "Chile",
+          "standard_place": "Chile"
+        },
+        {
+          "id": "b4e468c4-d4c2-4b50-828d-28e1a0a2191c",
+          "type": "Birth Registration",
+          "place": "Colchagua, O'Higgins, Chile",
+          "standard_place": "Colchagua, O'Higgins, Chile"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8Y4-XJW"
+        }
+      ]
+    },
+    {
+      "id": "PXCK-C4F",
+      "ark": "ark:/61903/4:1:PXCK-C4F",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "7db04ade-492d-4790-9b5f-70b74acf5b4b",
+          "preferred": true,
+          "given": "Saul Antonio",
+          "surname": "Silva Gonzalez",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "df3f6181-6a84-4e26-8fd5-3713775dffff",
+          "type": "Birth",
+          "date": "18 de septiembre de 1894",
+          "standard_date": "18 Sep 1894"
+        },
+        {
+          "id": "60d358ab-4433-456f-9009-8a6776ad7a77",
+          "type": "Death",
+          "place": "Chile",
+          "standard_place": "Chile"
+        },
+        {
+          "id": "04b42351-04dc-4ddf-837e-3ce72a1c5ccd",
+          "type": "Birth Registration",
+          "place": "Colchagua, O'Higgins, Chile",
+          "standard_place": "Colchagua, O'Higgins, Chile"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8Y4-DQR"
+        }
+      ]
+    },
+    {
+      "id": "GJVJ-15K",
+      "ark": "ark:/61903/4:1:GJVJ-15K",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c4304ed0-e10d-40a9-a838-67c134671c2e",
+          "preferred": true,
+          "given": "CAYETANO",
+          "surname": "GONZÁLEZ PADILLA",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9b0c62a3-1508-4b38-83df-d92cc4814783",
+          "type": "Birth",
+          "date": "aproximadamente 1820",
+          "place": "Chile",
+          "standard_place": "Chile"
+        },
+        {
+          "id": "db301961-8671-4418-b376-8853635b869d",
+          "type": "Death",
+          "place": "Chile",
+          "standard_place": "Chile"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7BHJ-63J"
+        },
+        {
+          "ref": "7B4Y-LXR"
+        },
+        {
+          "ref": "Q97T-5J7"
+        },
+        {
+          "ref": "Q97T-W2B"
+        },
+        {
+          "ref": "Q97T-95W"
+        },
+        {
+          "ref": "Q97R-Y5P"
+        },
+        {
+          "ref": "Q97F-64W"
+        },
+        {
+          "ref": "Q97F-HTK"
+        },
+        {
+          "ref": "Q97F-QH9"
+        },
+        {
+          "ref": "Q976-DJT"
+        },
+        {
+          "ref": "Q976-ZL9"
+        },
+        {
+          "ref": "Q976-CG5"
+        }
+      ]
+    },
+    {
+      "id": "P7FR-J1N",
+      "ark": "ark:/61903/4:1:P7FR-J1N",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ffea613a-8f54-4d66-9aa6-aedae22f6e2b",
+          "preferred": true,
+          "given": "Benjamin",
+          "surname": "Silva",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9f749d9f-696b-458a-a46d-843d3b54ad0a",
+          "type": "Birth",
+          "date": "aproximadamente 1865",
+          "place": "Chile",
+          "standard_place": "Chile"
+        },
+        {
+          "id": "4f6aadf5-8a9c-49c4-857b-d19acd90375d",
+          "type": "Marriage Registration",
+          "place": "Nancagua, Colchagua, O'Higgins, Chile",
+          "standard_place": "Nancagua, Colchagua, O'Higgins, Chile"
+        },
+        {
+          "id": "b02dfb09-53b2-4ce4-95c8-f2e9e4aa1fbb",
+          "type": "Death",
+          "place": "Chile",
+          "standard_place": "Chile"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8Y4-XWW"
+        },
+        {
+          "ref": "W8Y4-ZGJ"
+        },
+        {
+          "ref": "7THR-25Q"
+        }
+      ]
+    },
+    {
+      "id": "GJVV-3SG",
+      "ark": "ark:/61903/4:1:GJVV-3SG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "7343fabc-a1a2-490f-9790-c5362f6aee80",
+          "preferred": true,
+          "given": "Antonia",
+          "surname": "Pimienta Valenzuela",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5500065c-2533-43c4-9430-f749a05e6053",
+          "type": "Birth",
+          "date": "aproximadamente 1842",
+          "place": "Chile",
+          "standard_place": "Chile"
+        },
+        {
+          "id": "06320bf5-c463-466e-a7f5-179467ff97fe",
+          "type": "Death",
+          "place": "Chile",
+          "standard_place": "Chile"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7BHJ-6W8"
+        },
+        {
+          "ref": "7B4Y-2D9"
+        },
+        {
+          "ref": "Q97T-5ZK"
+        },
+        {
+          "ref": "Q97T-467"
+        },
+        {
+          "ref": "Q97T-S8M"
+        },
+        {
+          "ref": "Q97R-BSJ"
+        },
+        {
+          "ref": "Q97F-6V5"
+        },
+        {
+          "ref": "Q97F-CMC"
+        },
+        {
+          "ref": "Q97F-7MM"
+        },
+        {
+          "ref": "Q976-D2Y"
+        },
+        {
+          "ref": "Q976-8WF"
+        },
+        {
+          "ref": "Q976-CLG"
+        }
+      ]
+    },
+    {
+      "id": "GJVV-GB4",
+      "ark": "ark:/61903/4:1:GJVV-GB4",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "9088444e-a48f-4ed7-be52-ca7c0ad41aa7",
+          "preferred": true,
+          "given": "MARÍA DEL ROSARIO",
+          "surname": "GONZÁLEZ PIMIENTO",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2177cac1-13dc-4832-b90a-2d264714cf95",
+          "type": "Birth",
+          "date": "1862",
+          "standard_date": "1862"
+        },
+        {
+          "id": "c17199bf-936f-42b2-bf1e-c9fca2f42d42",
+          "type": "Death",
+          "date": "13 Abril 1892",
+          "standard_date": "13 Apr 1892",
+          "place": "Nancagua, Colchagua, Chile",
+          "standard_place": "Nancagua, Colchagua, Chile"
+        },
+        {
+          "id": "817d19ee-f2d2-4a0a-bf49-961b6d22d113",
+          "type": "Death Registration",
+          "place": "Nancagua, Colchagua, O'Higgins, Chile",
+          "standard_place": "Nancagua, Colchagua, Chile"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q97T-37R"
+        },
+        {
+          "ref": "Q97F-6FL"
+        }
+      ]
+    },
+    {
+      "id": "GJVL-5CP",
+      "ark": "ark:/61903/4:1:GJVL-5CP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "2c94b84e-db64-4c7a-93ce-23e6103264af",
+          "preferred": true,
+          "given": "ROSALINO",
+          "surname": "GONZÁLEZ PIMIENTO",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "900a9073-bf20-4c9d-b556-d616c40ad9a0",
+          "type": "Christening",
+          "date": "1863",
+          "standard_date": "1863",
+          "place": "Pumanque, Colchagua, Chile",
+          "standard_place": "Pumanque, Colchagua, Chile"
+        },
+        {
+          "id": "2b40f900-b593-43f8-bb9d-4e8cfd24304d",
+          "type": "Birth",
+          "date": "1863",
+          "standard_date": "1863",
+          "place": "Chile",
+          "standard_place": "Chile"
+        },
+        {
+          "id": "0d80c21f-206b-433f-b93b-752dc91f9b86",
+          "type": "Death",
+          "place": "Chile",
+          "standard_place": "Chile"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q97T-R9W"
+        }
+      ]
+    },
+    {
+      "id": "GD5N-VTY",
+      "ark": "ark:/61903/4:1:GD5N-VTY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "667e8c55-8fcb-48fc-baec-8d80551a6750",
+          "preferred": true,
+          "given": "SILVERIA DE LAS MERCEDES",
+          "surname": "GONZÁLEZ PIMIENTO",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b4ad65a8-8473-488e-9147-c0638a9d4dbd",
+          "type": "Birth",
+          "date": "27 de noviembre de 1870",
+          "standard_date": "27 Nov 1870"
+        },
+        {
+          "id": "01b0119e-c843-4c7c-8494-d25fb05bb529",
+          "type": "Death"
+        },
+        {
+          "id": "7970b6d7-50a4-49ca-9f1e-1793fde1969c",
+          "type": "Marriage Registration",
+          "place": "Nancagua, Colchagua, O'Higgins, Chile",
+          "standard_place": "Nancagua, Colchagua, Chile"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q976-CK3"
+        },
+        {
+          "ref": "3NFJ-KWT"
+        },
+        {
+          "ref": "3NFJ-K3M"
+        },
+        {
+          "ref": "3NFJ-FLW"
+        },
+        {
+          "ref": "3NFJ-X6Y"
+        },
+        {
+          "ref": "3NFJ-XW8"
+        },
+        {
+          "ref": "3NFJ-X37"
+        },
+        {
+          "ref": "3NFJ-611"
+        },
+        {
+          "ref": "3NFJ-6TB"
+        },
+        {
+          "ref": "3NFJ-659"
+        },
+        {
+          "ref": "3NFJ-62V"
+        },
+        {
+          "ref": "3NFJ-6CP"
+        },
+        {
+          "ref": "3NFJ-6WJ"
+        },
+        {
+          "ref": "3NFJ-DXL"
+        },
+        {
+          "ref": "3NFJ-8Z5"
+        }
+      ]
+    },
+    {
+      "id": "GJVV-L4Y",
+      "ark": "ark:/61903/4:1:GJVV-L4Y",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "75e431e7-bf3b-47de-8bdf-11bd80e37c44",
+          "preferred": true,
+          "given": "AMADOR",
+          "surname": "GONZÁLEZ PIMIENTO",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "85e1a29c-c3ed-4484-b7e8-a152fecd5836",
+          "type": "Birth",
+          "date": "08 Enero 1874",
+          "standard_date": "8 Jan 1874",
+          "place": "Pumanque, Colchagua, Chile",
+          "standard_place": "Pumanque, Colchagua, Chile"
+        },
+        {
+          "id": "b4b5b8c9-2af6-4d90-a8c1-c58c789cdc3c",
+          "type": "Christening",
+          "date": "08 Enero 1874",
+          "standard_date": "8 Jan 1874",
+          "place": "Pumanque, Colchagua, Chile",
+          "standard_place": "Pumanque, Colchagua, Chile"
+        },
+        {
+          "id": "93d8cdb1-c165-4c91-863c-ba658de19fc7",
+          "type": "Death",
+          "place": "Chile",
+          "standard_place": "Chile"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q97R-1QK"
+        },
+        {
+          "ref": "Q97F-Z3B"
+        }
+      ]
+    },
+    {
+      "id": "GJVV-QP9",
+      "ark": "ark:/61903/4:1:GJVV-QP9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "0b415407-1543-46c9-8e2e-41f35d3cf27f",
+          "preferred": true,
+          "given": "JOSÉ MIGUEL",
+          "surname": "GONZÁLEZ PIMIENTO",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "af7cc561-ba57-4029-b7a8-db78fcf0745f",
+          "type": "Birth",
+          "date": "aproximadamente 1880",
+          "place": "Chile",
+          "standard_place": "Chile"
+        },
+        {
+          "id": "9f4179cc-cb78-4727-a50c-5330db1eb7e1",
+          "type": "Death",
+          "place": "Chile",
+          "standard_place": "Chile"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q972-MG5"
+        },
+        {
+          "ref": "Q97K-T94"
+        },
+        {
+          "ref": "Q97K-2M8"
+        },
+        {
+          "ref": "Q976-837"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "P7FR-J1N",
+      "person2": "GJVV-FHW",
+      "facts": [
+        {
+          "id": "2f3eaeaf-6cf1-47f9-97b5-a9208b3d456b",
+          "type": "Marriage",
+          "date": "1894",
+          "standard_date": "1894"
+        },
+        {
+          "id": "1661d753-d438-4fbc-8fad-d4e693d8d317",
+          "type": "Marriage",
+          "date": "1894",
+          "standard_date": "1894",
+          "place": "Chile",
+          "standard_place": "Chile"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7THR-25Q"
+        },
+        {
+          "ref": "7THR-2K6"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GJVJ-15K",
+      "person2": "GJVV-3SG"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GJVJ-15K",
+      "child": "GJVV-FHW"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GJVV-3SG",
+      "child": "GJVV-FHW"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "P7FR-J1N",
+      "child": "PXCK-C4F",
+      "sources": [
+        {
+          "ref": "W8Y4-81Z"
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GJVV-FHW",
+      "child": "PXCK-C4F",
+      "sources": [
+        {
+          "ref": "W8Y4-81Z"
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "P7FR-J1N",
+      "child": "PXC2-31L",
+      "sources": [
+        {
+          "ref": "W8Y4-X6R"
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "GJVV-FHW",
+      "child": "PXC2-31L",
+      "sources": [
+        {
+          "ref": "W8Y4-X6R"
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GJVJ-15K",
+      "child": "GJVV-L4Y"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "GJVV-3SG",
+      "child": "GJVV-L4Y"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "GJVJ-15K",
+      "child": "GJVV-GB4"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "GJVV-3SG",
+      "child": "GJVV-GB4"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "GJVJ-15K",
+      "child": "GJVV-QP9"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "GJVV-3SG",
+      "child": "GJVV-QP9"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "GJVJ-15K",
+      "child": "GD5N-VTY"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "GJVV-3SG",
+      "child": "GD5N-VTY"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "GJVJ-15K",
+      "child": "GJVL-5CP"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "GJVV-3SG",
+      "child": "GJVL-5CP"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GJVV-FHW",
+      "title": "CLARA GONZÁLEZ PIMIENTO",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for CLARA GONZÁLEZ PIMIENTO (PID GJVV-FHW); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GJVV-FHW"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_PXC2-31L",
+      "title": "Manuel Jesús Silva González",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Manuel Jesús Silva González (PID PXC2-31L); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PXC2-31L"
+    },
+    {
+      "id": "sd_person_PXCK-C4F",
+      "title": "Saul Antonio Silva Gonzalez",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Saul Antonio Silva Gonzalez (PID PXCK-C4F); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PXCK-C4F"
+    },
+    {
+      "id": "sd_person_GJVJ-15K",
+      "title": "CAYETANO GONZÁLEZ PADILLA",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for CAYETANO GONZÁLEZ PADILLA (PID GJVJ-15K); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GJVJ-15K"
+    },
+    {
+      "id": "sd_person_P7FR-J1N",
+      "title": "Benjamin Silva",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Benjamin Silva (PID P7FR-J1N); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:P7FR-J1N"
+    },
+    {
+      "id": "sd_person_GJVV-3SG",
+      "title": "Antonia Pimienta Valenzuela",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Antonia Pimienta Valenzuela (PID GJVV-3SG); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GJVV-3SG"
+    },
+    {
+      "id": "W8Y4-ZKW",
+      "title": "Clara González y Pimienta, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q245-NNNJ : Tue Oct 28 21:41:17 UTC 2025), Clara González y Pimienta in entry for Saul Antonio Silva y Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q245-NNNJ"
+    },
+    {
+      "id": "Q97T-WRV",
+      "title": "Clara Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q241-GN1J : Thu Nov 20 08:09:56 UTC 2025), Benjamin Silva and Clara Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q241-GN1J"
+    },
+    {
+      "id": "W8Y4-X3F",
+      "title": "Clarisa González Pimienta de Silva, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q245-NVLT : Tue Oct 28 21:44:40 UTC 2025), Clarisa González Pimienta de Silva in entry for Manuel Jesús Silva González.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q245-NVLT"
+    },
+    {
+      "id": "Q97F-QBQ",
+      "title": "Clara, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHD-XKR5 : Sun Oct 12 10:08:51 UTC 2025), Clara, 2 de agosto de 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHD-XKR5"
+    },
+    {
+      "id": "W8Y4-XJW",
+      "title": "Manuel Jesús Silva González, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q245-NVLL : Tue Oct 28 21:44:40 UTC 2025), Manuel Jesús Silva González.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q245-NVLL"
+    },
+    {
+      "id": "W8Y4-DQR",
+      "title": "Saul Antonio Silva y Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q245-NNNZ : Tue Oct 28 21:41:17 UTC 2025), Saul Antonio Silva y Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q245-NNNZ"
+    },
+    {
+      "id": "7BHJ-63J",
+      "title": "Cayetano González, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS68-663S : Tue Dec 30 23:36:27 UTC 2025), Cayetano González in entry for Joaquin Rodríguez and Juana de Dios González, 10 de noviembre de 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS68-663S"
+    },
+    {
+      "id": "7B4Y-LXR",
+      "title": "Cayetano Gonzales, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS6H-DTZB : Thu Feb 06 16:27:44 UTC 2025), Cayetano Gonzales and Antonia Pimenta, 12 de julio de 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS6H-DTZB"
+    },
+    {
+      "id": "Q97T-5J7",
+      "title": "Cayetano González, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHH-KTY2 : Sat Oct 11 14:33:52 UTC 2025), Cayetano González in entry for Rosalino Mon na, 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHH-KTY2"
+    },
+    {
+      "id": "Q97T-W2B",
+      "title": "Cayetano Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q241-GN1V : Thu Nov 20 08:09:56 UTC 2025), Cayetano Gonzalez in entry for Benjamin Silva and Clara Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q241-GN1V"
+    },
+    {
+      "id": "Q97T-95W",
+      "title": "Cayetano Gonzales, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DH6-9TLS : Thu Apr 18 00:20:52 UTC 2024), Cayetano Gonzales in entry for María del Rosario, 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DH6-9TLS"
+    },
+    {
+      "id": "Q97R-Y5P",
+      "title": "Cayetano Gonzalez, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHH-KTBS : Wed May 27 13:30:15 UTC 2026), Cayetano Gonzalez in entry for Amador, 2 de noviembre de 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHH-KTBS"
+    },
+    {
+      "id": "Q97F-64W",
+      "title": "Cayetano Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q241-GF7T : Thu Nov 20 09:09:37 UTC 2025), Cayetano Gonzalez in entry for Rosario Gonzalez Pimienta.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q241-GF7T"
+    },
+    {
+      "id": "Q97F-HTK",
+      "title": "Cayetano Gonzalez, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHZ-V7Q9 : Wed Apr 17 14:18:20 UTC 2024), Cayetano Gonzalez in entry for Amador, 8 de enero de 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHZ-V7Q9"
+    },
+    {
+      "id": "Q97F-QH9",
+      "title": "Cayetano González, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHD-XKRR : Sun Oct 12 10:08:51 UTC 2025), Cayetano González in entry for Clara, 2 de agosto de 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHD-XKRR"
+    },
+    {
+      "id": "Q976-DJT",
+      "title": "Cayetano Gonsalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2TK-56Y2 : Fri Oct 24 18:52:28 UTC 2025), Cayetano Gonsalez in entry for Bruno Galaz and Silveria Gonsalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2TK-56Y2"
+    },
+    {
+      "id": "Q976-ZL9",
+      "title": "Cayetano Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2TK-9JRQ : Fri Oct 24 18:52:28 UTC 2025), Cayetano Gonzalez in entry for José Miguel Gonzalez Pimiento and Josefa Azua Tapia.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2TK-9JRQ"
+    },
+    {
+      "id": "Q976-CG5",
+      "title": "Cayetano González, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHX-72P2 : Sat Oct 11 17:37:48 UTC 2025), Cayetano González in entry for Silveria de las Mercedes, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHX-72P2"
+    },
+    {
+      "id": "W8Y4-XWW",
+      "title": "Benjamin Silva Diaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q245-NVL5 : Tue Oct 28 21:44:40 UTC 2025), Benjamin Silva Diaz in entry for Manuel Jesús Silva González.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q245-NVL5"
+    },
+    {
+      "id": "W8Y4-ZGJ",
+      "title": "Benjamin Silva y Diaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q245-NNN6 : Tue Oct 28 21:41:17 UTC 2025), Benjamin Silva y Diaz in entry for Saul Antonio Silva y Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q245-NNN6"
+    },
+    {
+      "id": "7THR-25Q",
+      "title": "Benjamin Silva, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q241-GN1X : Thu Nov 20 08:09:56 UTC 2025), Benjamin Silva and Clara Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q241-GN1X"
+    },
+    {
+      "id": "7BHJ-6W8",
+      "title": "Antonio Pimiento, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS68-6633 : Tue Dec 30 23:36:27 UTC 2025), Antonio Pimiento in entry for Joaquin Rodríguez and Juana de Dios González, 10 de noviembre de 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS68-6633"
+    },
+    {
+      "id": "7B4Y-2D9",
+      "title": "Antonia Pimenta, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS6H-DT83 : Thu Feb 06 16:27:44 UTC 2025), Cayetano Gonzales and Antonia Pimenta, 12 de julio de 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS6H-DT83"
+    },
+    {
+      "id": "Q97T-5ZK",
+      "title": "Talcina Pimienta, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHH-KTYL : Sat Oct 11 14:33:52 UTC 2025), Talcina Pimienta in entry for Rosalino Mon na, 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHH-KTYL"
+    },
+    {
+      "id": "Q97T-467",
+      "title": "Antonia Pimienta, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q241-GN1K : Thu Nov 20 08:09:56 UTC 2025), Antonia Pimienta in entry for Benjamin Silva and Clara Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q241-GN1K"
+    },
+    {
+      "id": "Q97T-S8M",
+      "title": "Antonia Pimienta, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DH6-9TL3 : Thu Apr 18 00:20:52 UTC 2024), Antonia Pimienta in entry for María del Rosario, 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DH6-9TL3"
+    },
+    {
+      "id": "Q97R-BSJ",
+      "title": "Antonia Pimienta, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHH-KTB3 : Wed May 27 13:30:15 UTC 2026), Antonia Pimienta in entry for Amador, 2 de noviembre de 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHH-KTB3"
+    },
+    {
+      "id": "Q97F-6V5",
+      "title": "Antonia Pimienta, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q241-GF7Y : Thu Nov 20 09:09:37 UTC 2025), Antonia Pimienta in entry for Rosario Gonzalez Pimienta.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q241-GF7Y"
+    },
+    {
+      "id": "Q97F-CMC",
+      "title": "Anto- Nia Pimienta, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHZ-V7QS : Wed Apr 17 14:18:20 UTC 2024), Anto- Nia Pimienta in entry for Amador, 8 de enero de 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHZ-V7QS"
+    },
+    {
+      "id": "Q97F-7MM",
+      "title": "Antonia Pimienta, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHD-XKRT : Sun Oct 12 10:08:51 UTC 2025), Antonia Pimienta in entry for Clara, 2 de agosto de 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHD-XKRT"
+    },
+    {
+      "id": "Q976-D2Y",
+      "title": "Antonia Pimiento de Gonsalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2TK-56B6 : Fri Oct 24 18:52:28 UTC 2025), Antonia Pimiento de Gonsalez in entry for Bruno Galaz and Silveria Gonsalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2TK-56B6"
+    },
+    {
+      "id": "Q976-8WF",
+      "title": "Antonia Pimiento de Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2TK-9JRJ : Fri Oct 24 18:52:28 UTC 2025), Antonia Pimiento de Gonzalez in entry for José Miguel Gonzalez Pimiento and Josefa Azua Tapia.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2TK-9JRJ"
+    },
+    {
+      "id": "Q976-CLG",
+      "title": "Antonia Pimienta, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHX-72PL : Sat Oct 11 17:37:48 UTC 2025), Antonia Pimienta in entry for Silveria de las Mercedes, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHX-72PL"
+    },
+    {
+      "id": "Q97T-37R",
+      "title": "María del Rosario, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DH6-9TL9 : Thu Apr 18 00:20:52 UTC 2024), María del Rosario, 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DH6-9TL9"
+    },
+    {
+      "id": "Q97F-6FL",
+      "title": "Rosario Gonzalez Pimienta, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q241-GF7P : Thu Nov 20 09:09:37 UTC 2025), Rosario Gonzalez Pimienta.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q241-GF7P"
+    },
+    {
+      "id": "Q97T-R9W",
+      "title": "Rosalino Mon na, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHH-KTYP : Sat Oct 11 14:33:52 UTC 2025), Rosalino Mon na, 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHH-KTYP"
+    },
+    {
+      "id": "Q976-CK3",
+      "title": "Silveria de las Mercedes, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHX-72PK : Sat Oct 11 17:37:48 UTC 2025), Silveria de las Mercedes, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHX-72PK"
+    },
+    {
+      "id": "3NFJ-KWT",
+      "title": "Silveria González, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZTN-M65H : Tue Sep 22 14:19:39 UTC 2026), Silveria González in entry for Alamiro del Carmen, 16 October 1898.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZTN-M65H"
+    },
+    {
+      "id": "3NFJ-K3M",
+      "title": "Silveria González, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZH2-TBLH : Thu Jan 01 07:30:32 UTC 2026), Silveria González in entry for Pedro Antonio, 21 de noviembre de 1895.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZH2-TBLH"
+    },
+    {
+      "id": "3NFJ-FLW",
+      "title": "Silveria Gonsalez de Galaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q241-NT9F : Wed Oct 22 20:29:52 UTC 2025), Silveria Gonsalez de Galaz in entry for Juan de Dios Galaz Gonsalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q241-NT9F"
+    },
+    {
+      "id": "3NFJ-X6Y",
+      "title": "Silveria Gonsalez de Galaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q241-NT9F : Wed Oct 22 20:29:52 UTC 2025), Silveria Gonsalez de Galaz in entry for Juan de Dios Galaz Gonsalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q241-NT9F"
+    },
+    {
+      "id": "3NFJ-XW8",
+      "title": "Silveria Gonsalez de Galaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2S2-TQYQ : Tue Oct 28 21:19:41 UTC 2025), Silveria Gonsalez de Galaz in entry for Juan de Dios Galaz Gonsalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2S2-TQYQ"
+    },
+    {
+      "id": "3NFJ-X37",
+      "title": "Silveria Gonzalez de Galaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2SL-4N6Y : Thu Oct 30 18:50:34 UTC 2025), Silveria Gonzalez de Galaz in entry for Juan de Dios Galaz Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2SL-4N6Y"
+    },
+    {
+      "id": "3NFJ-611",
+      "title": "Silveria Gonsalez de Galaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q245-LH41 : Tue Nov 04 15:04:41 UTC 2025), Silveria Gonsalez de Galaz in entry for Juan de Dios Galaz Gonsalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q245-LH41"
+    },
+    {
+      "id": "3NFJ-6TB",
+      "title": "Silveria Gonzalez de Galaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q241-NYQH : Wed Oct 22 20:22:48 UTC 2025), Silveria Gonzalez de Galaz in entry for Juan de Dios Galaz Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q241-NYQH"
+    },
+    {
+      "id": "3NFJ-659",
+      "title": "Silvana Gonsalez de Galaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2S2-TC54 : Tue Oct 28 21:19:54 UTC 2025), Silvana Gonsalez de Galaz in entry for Juan de Dios Galaz Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2S2-TC54"
+    },
+    {
+      "id": "3NFJ-62V",
+      "title": "Silveria Gonsalez de Galaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q24R-9986 : Thu Oct 30 20:57:16 UTC 2025), Silveria Gonsalez de Galaz in entry for Juan de Dios Galaz Gonsalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q24R-9986"
+    },
+    {
+      "id": "3NFJ-6CP",
+      "title": "Silveria Gonzalez de Galaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q245-L8YD : Tue Nov 04 15:07:37 UTC 2025), Silveria Gonzalez de Galaz in entry for José Alamiro Galaz Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q245-L8YD"
+    },
+    {
+      "id": "3NFJ-6WJ",
+      "title": "Silveria Gonzalez de Galaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2S2-T4N3 : Tue Oct 28 21:05:28 UTC 2025), Silveria Gonzalez de Galaz in entry for Jose Alamiro Galaz Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2S2-T4N3"
+    },
+    {
+      "id": "3NFJ-DXL",
+      "title": "Silveria Gonsalez de Galaz, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2SL-4D55 : Thu Oct 30 18:49:49 UTC 2025), Silveria Gonsalez de Galaz in entry for Juan de Dios Galaz Gonsalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2SL-4D55"
+    },
+    {
+      "id": "3NFJ-8Z5",
+      "title": "Silveria Gonsalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2TK-56YW : Fri Oct 24 18:52:28 UTC 2025), Bruno Galaz and Silveria Gonsalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2TK-56YW"
+    },
+    {
+      "id": "Q97R-1QK",
+      "title": "Amador, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHH-KTB9 : Wed May 27 13:30:15 UTC 2026), Amador, 2 de noviembre de 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHH-KTB9"
+    },
+    {
+      "id": "Q97F-Z3B",
+      "title": "Amador, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DHZ-V7QM : Wed Apr 17 14:18:20 UTC 2024), Amador, 8 de enero de 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DHZ-V7QM"
+    },
+    {
+      "id": "Q972-MG5",
+      "title": "José Míguel Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2S2-PWN4 : Tue Oct 28 21:25:32 UTC 2025), José Míguel Gonzalez in entry for Clodomiro Gonzalez Azua.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2S2-PWN4"
+    },
+    {
+      "id": "Q97K-T94",
+      "title": "José Míguel Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2S2-PW22 : Tue Oct 28 21:25:32 UTC 2025), José Míguel Gonzalez in entry for Filaderfo de Maria Gonzalez Azua.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2S2-PW22"
+    },
+    {
+      "id": "Q97K-2M8",
+      "title": "José Miguel Gonsalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q245-LHQ3 : Tue Nov 04 15:06:26 UTC 2025), José Miguel Gonsalez in entry for Margarita Gonsalez Azúa.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q245-LHQ3"
+    },
+    {
+      "id": "Q976-837",
+      "title": "José Miguel Gonzalez Pimiento, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2TK-9J5V : Fri Oct 24 18:52:28 UTC 2025), José Miguel Gonzalez Pimiento and Josefa Azua Tapia.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2TK-9J5V"
+    },
+    {
+      "id": "7THR-2K6",
+      "title": "Benjamin Silva, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q241-GN1X : Thu Nov 20 08:09:56 UTC 2025), Benjamin Silva and Clara Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q241-GN1X"
+    },
+    {
+      "id": "W8Y4-81Z",
+      "title": "Saul Antonio Silva y Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q245-NNNZ : Tue Oct 28 21:41:17 UTC 2025), Saul Antonio Silva y Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q245-NNNZ"
+    },
+    {
+      "id": "W8Y4-X6R",
+      "title": "Manuel Jesús Silva González, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q245-NVLL : Tue Oct 28 21:44:40 UTC 2025), Manuel Jesús Silva González.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q245-NVLL"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "James F. Gleason was married to a woman named Norah (surname not indexed) by 1893.",
+      "details": {
+        "subject_person": "James F. Gleason (L4ZG-21Q)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Norah"
+        }
+      },
+      "supporting_sources": [
+        "Massachusetts, Town Clerk, Vital and Town Records, 1626-2001 — Boston birth register entry for Robert F. Gleason, 20 May 1893, naming his parents as James F. Gleason and Norah"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "James F. Gleason and Norah had a son, Robert F. Gleason, born 20 May 1893 in Boston.",
+      "details": {
+        "subject_person": "James F. Gleason (L4ZG-21Q)",
+        "relation": "child",
+        "target_person": {
+          "name": "Robert F. Gleason",
+          "birth": "20 May 1893, Boston, Suffolk, Massachusetts, United States"
+        },
+        "mother": "Norah"
+      },
+      "supporting_sources": [
+        "Massachusetts, Town Clerk, Vital and Town Records, 1626-2001 — Boston birth register entry for Robert F. Gleason, 20 May 1893, naming his parents as James F. Gleason and Norah"
+      ],
+      "required": true
+    }
+  ]
+}
