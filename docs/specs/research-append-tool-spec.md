@@ -531,7 +531,8 @@ persona, so its key cannot tell two absent people apart.
   append it in a call that does not re-send the source; never `update` over a
   different value.
 - A re-extraction logged under a **new** log entry is not caught (the key includes the
-  log). `extraction_append` logs its own `record_read` entry for every record it reads, so a later
+  log). `extraction_append` logs its own `record_read` entry for every record it reads live
+  (an earlier, uncited read is reused instead, §11.6), so a later
   session's re-extraction takes this path. Measured miss (same replay): 27 of the 145 folding calls — 19 because one side carries no
   `log_entry_id`, 8 a retry logged under a new `record_read` entry; none persisted a
   duplicate in its run's final file. A retry that names an explicit
@@ -1301,6 +1302,7 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
 | `section: plan_items`, `op: append`, whose parent plan is **terminal** (`completed` or `superseded`) (§5) | op-indexed hard error on that `plan_items` op; write nothing. Opens `plans entry '<planId>' is '<status>' (question '<qid>') — a <status> plan is a settled audit trail and takes no new items.` and then prescribes: when the same call created exactly one plan, `This call created plan '<newId>' — re-issue these items with planId '<newId>'.`; otherwise `Append to that question's active plan, or create one first; if these items belong to a different question, re-issue with that question's plan id.` Both the status and the question id are guarded for shape, because this fires **before** document validation and a hand-edited `research.json` can reach it with either absent. An `op: update` is never refused — it targets an item already inside the plan, and denying it would strand an `in_progress` item there. **This error preempts the misrouted-items error below** whenever the misrouted-to plan is terminal: it throws in `applyOne`, which returns the batch before the post-pass that produces the other message, which is why the prescription is repeated here |
 | A `plan_items` op leaving the item at `status: "completed"` while no `log[]` entry carries its id, or a `plans` op whose `items` do the same (§5) | op-indexed hard error on that op; write nothing. Opens `plan_items[<pli_id>]: no log[] entry names <pli_id>, so completing it would claim a search nothing in the document records.` and then prescribes: `Log the search that satisfies this item with research_log_append({ planItemId: "<pli_id>", ... }) before completing it — planItemId: null is only for an ad-hoc search that matches no plan item. If that search was already logged with planItemId: null, leave this item 'in_progress' rather than logging the same search twice.` A refused **append** gets its own prescription instead, because its id is assigned inside the call and `in_progress` is one of the two statuses that block the question's exhaustive declaration (`planned` is the other): `plan_items[<pli_id>]: an appended item cannot arrive 'completed' — its id is assigned in this call, so no log[] entry can name it. Don't add a plan item for a search that was already done: cite that search's log id in the question's search_stop.log_entry_ids when you declare. If the search has not been done yet, append the item as 'planned', then complete it after logging the search …` The prescription names an **append**, never a fix to the existing entry, because `research_log_append` has no update op — every op allocates the next log id — so an entry already written with `planItemId: null` cannot be re-attributed and telling the agent to correct it would be an instruction it cannot follow. The `in_progress` fallback is the settled remedy for that case: re-logging writes a durable duplicate that every reader of `log[]` counts twice, and `skipped` states the search was not done, which is false. The id is guarded for shape, because this fires **before** document validation and a hand-edited `research.json` can reach it with the id absent; a legacy `log: [null]` element is stepped over rather than dereferenced. An `op: update` on an item already sitting at `completed` before the call is never refused, whether or not it re-sends `status` |
 | A `plan_items` op, or a `plans` op's inline `items`, newly setting `status: "skipped"` with no `skip_category`; or a `plan_items` update setting `skipped` while changing `rationale` (§5) | op-indexed hard error on that op; write nothing. Names all seven `skip_category` values and points the detail at `skip_reason` |
+| A `plan_items` update setting `status: "in_progress"` on an item already `completed` (issue #3516) | **not an error.** The status is dropped from the op and the warning `plan item '<pli_id>' is already completed; left completed` is returned. With no other field left, the op is a no-op and nothing is written; any other fields in the same op still apply. search-records writes `in_progress` after every search it logs, and `extraction_append` completes the item once a record it found is extracted, so without this a later search would reopen it |
 | A §5 invariant violated | input error with the specific rule; write nothing |
 | A resolve with no `resolution_kind`, or a kind missing what it requires (§5) | op-indexed hard error naming the three kinds and what each requires — `competitor` a winner among `competing_assertion_ids`, `tree` nothing more, `synthesis` a `resolved_value` and a rationale citing two `src_`/`a_` ids — plus one worked resolve per kind; write nothing |
 | A `proof_summaries` write whose question's stop-criterion claims a resolved conflict that `conflicts[]` holds no record of (§5) | op-indexed hard error naming the summary and question, quoting the stop-criterion and saying whether `conflicts[]` is empty or which named `c_` id it lacks; write nothing. Not tier-gated, and an update to such a summary is refused too until the conflict is recorded |
@@ -1394,7 +1396,15 @@ this tool's landing.
 `assertions`**. Same writer underneath (`researchAppend` with a section gate) and
 same validate-once/write-once semantics, but not the same input surface: it takes
 no hand-built ops, only `recordIds`, `documents` or `absences` (§11.6–§11.7), and
-code builds the ops. The other eleven sections are simply not reachable through it.
+code builds the ops. Beyond those two sections it makes exactly two writes, each
+composed whole in code with no input field reaching it (ADR-0006, amended
+2026-10-20; issue #3516):
+- it completes the plan item behind a record it extracts, through a separate
+  `researchAppend` call whose lane is `plan_items` alone;
+- it appends a question's id to a re-found record's
+  `extracted_for_question_ids`.
+
+Both are described in §11.6. The other sections are not reachable through it.
 
 **"Same implementation" includes the tree writes.** Two behaviours reach
 `tree.gedcomx.json` through this tool, and both are `research_append`'s,
@@ -1711,10 +1721,26 @@ In order:
 1. **Resend skip, first.** Before any read or log write, each id is looked up
    by `sourceIdsForRecordIds`, the one derivation of "already extracted" that
    §3.4.1's reuse detection also uses. An id with a source is skipped and named.
-2. **Reads,** in parallel, through `record_read`'s own live code with
+   **A question claims a record extracted before it existed** (lead,
+   2026-10-20). When the call carries `questionIds`, every assertion of the
+   skipped record gains the ids it lacks in `extracted_for_question_ids`:
+   - the new ids are appended to the stored ones, and none is ever removed;
+   - the summary reads "already extracted as <src>; tied to <q…>";
+   - all the record's assertions go in one `research_append`.
+
+   The update arm validates the merged entry, so an assertion written before a
+   later rule can refuse that write. Each assertion is then tried alone, and the
+   ones still refused are named in `warnings`.
+2. **Reuse an earlier read.** A record nothing has extracted yet, whose latest
+   uncited `record_read` entry still has a sidecar holding it, is not read
+   again: its sidecar is extracted and its entry cited, and no second entry is
+   logged. A census row is reused only when it carries `indexFields`, which an
+   older read did not stage. Any doubt about the sidecar falls back to a live
+   read. An accepted hint (step 4) keeps precedence.
+3. **Reads,** in parallel, through `record_read`'s own live code with
    `projectPath`, so staging is identical. A read that errors, or returns
    `staged: null`, is reported and skipped; the others proceed.
-3. **One `research_log_append` batch** logs every read (`tool: "record_read"`),
+4. **One `research_log_append` batch** logs every fresh read (`tool: "record_read"`),
    finalizing each staged file into its sidecar. A record an accepted
    FamilySearch hint already logged is the exception: the
    positive `person_record_matches` entry naming its ark, which no assertion
@@ -1727,10 +1753,29 @@ In order:
    entry would never be referenced by an assertion, and the router's
    "log entry with no assertion referencing it" row would send the record back
    to extraction on every pass.
-4. **One `research_append` call per record.** `research_append` accepts exactly
+5. **One `research_append` call per record.** `research_append` accepts exactly
    one sources append per call, so there is no batch-wide write. A refusal on
    record *k* leaves the records before it written; the resend skip makes a
    corrected resend of the whole batch safe.
+6. **Complete the plan item** (issue #3516; decided by the lead 2026-10-19
+   and 2026-10-20). For every record the call extracted or found already
+   extracted, an `in_progress` item on an active plan becomes `completed` once
+   **any** of its plan-tied positive or partial `record_search` entries lists
+   that record in its sidecar (`results[].recordId`).
+   - **Why ANY.** "Every entry" left 124 of 617 previously-completed
+     FamilySearch items stuck on the 2026-10-19 corpus probe, and one
+     extraction already puts "the plan item's evidence in hand" (lead,
+     2026-08-23).
+   - **Why it is read off the saved results.** That covers a fresh read, a
+     reused read, a re-send, and a record two items both found.
+   - **Only `record_search` sidecars**, because a full-text result names an
+     image, never a record.
+   - **Each item is its own write**, because one refused item fails a whole
+     batch. A refusal (for example, capture-pending on an item whose latest
+     entry is an uncaptured external hand-off) is reported in
+     `planItems.errors` and never fails the extraction.
+   - Items that are nil-only, `planned`, already terminal, or on a plan that is
+     not active are untouched.
 
 `absentPersons` entries carry a `recordId`, naming the record the person was
 expected on.
@@ -1758,7 +1803,8 @@ assertion per person with the fixed classification a negative always takes:
 at `researcher`, `indeterminate`.
 
 **Return:** `{ ok, records: [{ recordId, status, srcId?, logId?, summary,
-errors?, warnings? }] }`. `status` is one of `extracted`, `already_extracted`,
+errors?, warnings? }], planItems?: { completed, errors? } }`. `planItems` is
+present only when step 6 completed or tried to complete an item. `status` is one of `extracted`, `already_extracted`,
 `read_failed` or `refused`. `summary` is written by code (`summarizeExtraction`)
 for the caller to relay verbatim. It covers what the record is; its event date
 and place; each person by role, with the facts written about them; computed
@@ -2017,7 +2063,7 @@ document travels as a tool parameter.
 | `documents` | yes | A non-empty list, one entry per source: `{ recordId, document, transcriptionRef?, imageFilename? }`. |
 | `documents[].recordId` | yes | The `capture:<descriptive>`, `ancestry:<collection>:<id>` or ARK that identifies the source. |
 | `documents[].document` | yes | The document below. |
-| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. The tool finalizes it into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`), and copies its `transcription` into the source entry, so no model re-emits the page text. |
+| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. A staged ref (`results/.staging/…`) is finalized into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`). A ref already finalized as `results/<log_id>.json` is cited under the log entry that names it, and nothing new is logged; a finalized ref no entry names refuses that document. Either way its `transcription` is copied into the source entry, so no model re-emits the page text. |
 | `documents[].imageFilename` | no | `image_transcribe`'s `imageRef`, relayed. The source's `image_filename` comes from the staged transcription's `image_ref` when `transcriptionRef` is set and that row has one, which wins over this value; otherwise this is written. §5.4's warning still fires when a transcription lands without one. |
 | `questionIds` | no | Stamped on every assertion in the batch, as in §11.6. |
 | `absentPersons` | no | Expected-but-absent persons, keyed by `recordId`, as in §11.6. |
@@ -2031,7 +2077,8 @@ path, and writes nothing. After validation, the writes are §11.6's. There is on
 log batch, then one `research_append` per source, so a refusal on document *k*
 leaves the earlier ones written. The resend skip (a `recordId` that already has
 a source is skipped and named) makes a corrected resend of the whole batch
-safe.
+safe. It ties a re-sent document to the call's `questionIds`, and plan-item
+completion runs afterwards, both as in §11.6.
 
 #### The document
 

@@ -21,6 +21,10 @@
 // The section restriction is passed as a second function argument to
 // `researchAppend`, NOT as a field on the tool input — see
 // `ResearchAppendOptions` for why that distinction is what makes it unforgeable.
+// It is chosen per call (ADR-0006, amended 2026-10-20). Beyond the extraction
+// write, code composes two more: a re-found record's assertions gain the
+// caller's question ids, and the plan item behind an extracted record moves
+// from `in_progress` to `completed` in a `plan_items`-only call.
 
 import {
   researchAppend,
@@ -1120,13 +1124,14 @@ export const extractionAppendSchema = {
     "Extract records into research.json IN CODE: each record's source entry plus " +
     "one assertion per fact, with roles and the three classification layers " +
     "decided from the extraction table. You compose none of them, and the input " +
-    "has no field for them. Writes the `sources` and `assertions` sections and " +
-    "no others.\n" +
+    "has no field for them. Writes the `sources` and `assertions` sections, and " +
+    "completes the in-progress plan item whose search found a record it " +
+    "extracts.\n" +
     "\n" +
     "Send EXACTLY ONE of:\n" +
     "- `recordIds` — FamilySearch records, any ARK form. Each is read live, " +
-    "logged and extracted from the index. A record already extracted is skipped " +
-    "and named.\n" +
+    "logged and extracted from the index; an earlier read of it is reused. A " +
+    "record already extracted is skipped and named, and tied to `questionIds`.\n" +
     "- `documents` — any other source (a transcription, an upload, pasted text), " +
     "as structured by the record-structurer agent. Every document is validated " +
     "before anything is written; an unknown key is refused.\n" +
