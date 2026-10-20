@@ -1,0 +1,390 @@
+{
+  "run_log": "v3.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked against the served fixtures. The judge's two main objections are wrong: the agent qualified \"36 hits\" with \"in the four hydrated results\", and Matricula, the archive address and email, and the 1770/1784/1835 dates all come from the Slovenia Church Records wiki page it read. The real problem: the return claims to be \"grounded entirely in the results returned\" but adds things no tool supplied: the Illyrian/French civil-register note, the Archive of the Republic of Slovenia and its address, and Latin as the register language. It also calls Ljubljana an archdiocese, which it was not in 1812."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Covers record type, why civil records don't exist, jurisdiction, a ranked search order, the language, and the Napoleonic complication. Reports the catalog gap accurately (36 total, 4 returned)."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed: no call hit a missing fixture, and the widening from Javorje to Škofja Loka to Slovenia was sensible. One slip: recordTypeGroups was sent once as a JSON string instead of a list. The mock accepted it, so it isn't worth a lower score here."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Habsburg Carniola, the Škofja Loka district (Bischoflack, Krain, per the catalog) and the Illyrian Provinces 1809–1813 are all correct for 1812. It honestly says the exact parish is unknown. One minor anachronism: Ljubljana was a diocese in 1812, not an archdiocese."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Right record type with start dates and current repositories, all traceable to the wiki page. It separates online images (Matricula) from onsite originals (the archive). The French-era civil-register fallback is the model's own knowledge, but it is historically sound."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Matricula first, then the archive, then the catalog is the right order for an 1812 Slovenian marriage, and it names the first concrete step. The Pola/Trieste item is weak, but the agent itself flags it as unlikely."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The judge's objections don't hold. The guide gives each date its level: \"Town-level recording was ordered… as early as 1639\" and \"Statewide recording began in 1841\". And \"no courthouse fires returned by the tools\" is accurate; the only tool mention of fires was a generic line. The real errors: \"County seat: Pittsfield\" is wrong for 1820–1850, when Lenox was the county seat until 1868. And the Vermont 1779/1857 and New York 1880 registration dates appear in no fixture, which this test's context says to grade as fabrication."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Covers births, marriages and deaths at town and state level, plus the church, census, probate and land substitutes, repositories beyond FamilySearch, and the cross-border problem."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No call hit a missing fixture. The constructed Massachusetts_Vital_Records URL hit its dedicated fixture. The Berkshire County wiki page was read twice, which is redundant but harmless."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The 1761 formation from Hampshire is backed by the place fixture, and the state borders are right. But a guide for 1820–1850 lists Pittsfield as county seat, when Lenox held the seat until 1868. The judge's \"without anachronism\" misses this. Practical harm is low, since the repositories named in Pittsfield are correct today."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Record classes come with start dates and repositories. It separates the indexed collections (fixture IDs 2061550, 1678901 and others) from the browse-only volumes (004500891 and 004500892, 0% indexed)."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The judge graded the short summary. The research tips give the full cross-border instruction: search town clerks and church records on both the New York and Vermont sides. They say why (church, marriage or deeds across the line), what to expect (Vermont recorded at town level; New York relied on church records before 1880), and how to find the border towns (a period map). That meets the test's town- and county-level requirement, and the wiki claims carry their URLs."
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked against the served fixtures. The 1814 census claim, RG 93/RG 15, the Virginia Military District and \"more soldiers than any other colony\" all come from the Virginia wiki-search fixture, which carries its URLs. The Kentucky County 1776/1780 split, West Virginia 1863 and Richmond as capital from 1780 are the model's own knowledge, but accurate. Two notes: historians dispute the 1814 explanation, but the agent faithfully relayed its source. And \"ratified the Constitution in 1788 and became a state\" sits awkwardly beside \"independent Commonwealth from 1776\"."
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Covers Continental and militia service, pensions, bounty land, church records and tax lists as vital substitutes, and county court, land and probate records, each with its repository."
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No call hit a missing fixture. The United States collections search that failed the earlier run didn't come up this time, so the new catch-all wasn't needed."
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Colony until 1776, county-level records from the 1630s (the Wikipedia fixture), Kentucky County and West Virginia handled correctly for the period. The 1788 wording is the only blemish."
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Collections are named from the fixture with their IDs. Volumes are classified by how searchable they are: Augusta County order books 61% indexed, bounty warrants browse-only, tax lists full-text but not name-indexed."
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Pension files first, 1782+ tax lists as the 1790 substitute, Continental and militia searched separately, county identification as the next step."
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The core facts trace to the two yellow-fever fixtures: the 50,000 population, about 5,000 dead, August to November, the Mathew Carey list, the Committee of Health, Bush Hill, the church burial grounds, the 1906 statewide start, and collection IDs 1999196, 1571957 and 1502909. One slip from the model's own knowledge: \"African Episcopal (Mother Bethel, founded 1794)\". Mother Bethel is African Methodist Episcopal (Richard Allen); the African Episcopal church was St. Thomas (Absalom Jones). Both were founded in 1794, so neither existed during the 1793 epidemic."
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Covers burials, the published name list, Committee of Health and hospital records, Orphans' Court, probate, newspapers, the missing civil registration, and where refugee families may have fled."
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No call hit a missing fixture, and every place and URL is correct. Pennsylvania_Vital_Records was read twice, which is redundant but harmless."
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "County formed 1682, city chartered 1701 and consolidation in 1854 are right. But the guide says \"Philadelphia County boundaries were stable throughout the 1780–1810 period\". Montgomery County was split off from Philadelphia County in 1784, inside the guide's own window, and the guide even names Montgomery as an adjoining county. The judge credited exactly that false claim. Low impact for 1793 itself, since the boundaries had settled by then."
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Collections are named from the fixture with IDs. It separates indexed collections (marriages) from browse-only images (probate, Yearly Meeting minutes), and says the Committee of Health records, Bush Hill registers and Orphans' Court files need onsite research."
+    },
+    {
+      "test_id": "ut_locality_guide_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The Carey list first, probate clustering in 1793–94, the 1790 and 1800 censuses compared, refugee counties, and Genealogical Society of Pennsylvania indexes (the last from the fixture). The Free African Society pointer is a good catch, since its members nursed and buried the epidemic dead."
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The fire dates, courthouse loss, Burnt Record Act, insurance records, Newberry, Chicago History Museum, Illinois statewide registration from 1916, and the 1870 census surviving in Washington all trace to the Chicago and Illinois fixtures. The model's own additions are accurate: Cook County formed 1831, Chicago incorporated 1837, and the 1890 census lost in the 1921 Commerce Building fire."
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Covers the fire's record loss, the substitutes the test requires (church registers, insurance claims, reconstructed deeds), newspapers, and repositories beyond FamilySearch. It never suggests uninterrupted civil records: it says civil registration effectively starts in 1871."
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No call hit a missing fixture. The collections and volume searches were each repeated once, which is redundant but harmless."
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Cook County and Chicago are correct for the period. \"Boundaries stable 1860–1890\" is true here, since Cook's daughter counties had all split off by 1839."
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The vital-record collections are cited with fixture IDs and date ranges (1803978, 2024189, 1913456, 1756321). It flags the two small volumes (38 and 112 images) as thin coverage caused by the fire, which the test asks for. IRAD-NEIU for Cook County court records is cited to the wiki page URL."
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The 1870 census first, then church records, Burnt Record Act deeds, directories, insurance records and post-fire newspapers, with the pitfalls named: the registration gap, scattered naturalizations, and checking adjacent counties."
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Almost everything traces to the Louisiana fixtures: 1682, 1762, 1800 and 1803, Fontainebleau, the Code Noir, the Catholic Church as the only legal church, collections 1612905 and 2078341, volumes 004330991 and 004330992, the Superior Council from 1699, ANOM and the Louisiana Historical Center. The model added San Ildefonso 1800, the Cabildo 1769–1803, the Archivo General de Indias and the Acadian arrivals in the 1760s, and all of those are accurate."
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It meets everything the test requires: French rule, parish registers, land grants, colonial courts (Superior Council and Cabildo), and no US state vital records suggested for the 1700s."
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No call hit a missing fixture."
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The timeline is right: ceded to Spain 1762, effective 1769, retroceded 1800, Purchase 1803. One slip: the parent jurisdiction is given as \"Captaincy General of Louisiana (Spanish, 1762–1800)\". Spanish Louisiana was a province under the Captaincy General of Cuba, and Spanish administration ran to 1803, as the guide's own Cabildo dates show. If you want strict consistency with the 2s I suggested for 026 and 015, this is a 2. I lean 3 because the guide's own timeline corrects the slip and it doesn't send the researcher anywhere wrong."
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Indexed collections are separated from the browse-only volumes (0% indexed), each with dates and repositories."
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The search order runs from the indexed church records, to the browse-only volumes, the Notarial Archives, the Historical Center, then France and Spain. It covers language by period, the Code Noir and the Acadian societies. One small thing: the judge credits a \"parishes don't follow county boundaries\" pitfall that isn't in the guide, which never mentions counties. That's harmless to the score."
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The collection and volume IDs match the fixtures exactly, but four claims are wrong or misattributed. (1) \"Statewide birth and marriage registration also began at the state level around 1906\" is wrong for marriages: Pennsylvania marriages stayed with the county Orphans' Court, licensed from 1885. The guide even lists \"County Marriages, 1885–1950\" itself. (2) Civil War service and pension files are put at the National Personnel Records Center, but they're at NARA in Washington. (3) Mine Inspector reports are \"not yet online per the FamilySearch Wiki\", but the wiki text says nothing about that, and the published annual reports are widely digitized. (4) The UMWA rolls are said to be held by the Schuylkill historical society and the Anthracite Heritage Museum, from merging two separate wiki sentences. The main-thread reply also invents details: \"next of kin\" on the employment cards, and \"state censuses\" to bridge 1890, when Pennsylvania took none."
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide covers coal-mining context, employment cards and payrolls, union rolls, census and church records, and the three counties' volumes by access level. The reply to the user leaves out the union rolls and the browse-only Luzerne and Lackawanna volumes, but the persisted guide has them."
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No call hit a missing fixture. The agent made only one wiki search, so it never received the Pennsylvania vital-records excerpt that would have corrected the marriage claim. That's a coverage gap, not wrong arguments."
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Schuylkill formed in 1811 from Berks and Northampton (backed by the place fixture), and Lackawanna formed from Luzerne in 1878. The one nit is minor: \"County seat: Pottsville\" is right only from 1851, and the seat was Orwigsburg for 1840–1851. That's a much smaller share of the window than 026's Pittsfield."
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It separates indexed from browse-only collections and volumes, with exact fixture figures, and names the repositories. The marriage-date and Mine Inspector errors touch this dimension too; I counted them once, under Correctness."
+    },
+    {
+      "test_id": "ut_locality_guide_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It starts with the 95%-indexed employment cards, then the Miners' Journal, the mining patch's ethnic parish, inspector reports, county naturalizations and adjoining counties, with the right pitfalls named (1906 deaths, the 1890 census, county-filed naturalizations)."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The judge's main objection is wrong. All four wiki-page calls returned the Vermont-specific page (the 1771 Grant Survey Schedule, 1857 statewide registration, town-history reprints, the Vermont_Genealogy URL). So the attributions to that page are grounded, as the judge itself admits mid-rationale. The real errors:\n\nThe 1790 census was \"taken shortly before and after formal statehood\". Vermont's count began in April 1791, entirely after statehood.\n\"85,341 inhabitants\" has no source, since the population tool returned nothing, and it isn't the standard figure (85,425).\n\"No civil vital registration at any level\" contradicts the fixture's town clerk records going back to the 1770s.\nIt skipped the collections and volume searches \"due to the place resolution issues\", but place search did resolve Vermont."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Covers the overlapping jurisdictions, the 1771 schedule, every record class with repositories, research tips and record losses."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No call hit a missing fixture. There are redundant calls: eight guessed wiki URLs all returned generic text, and the place-population and external-links searches were each repeated."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The New Hampshire grants, New York, and Vermont Republic sequence is right. But it leaves out New York's counties over the territory (Cumberland, Gloucester, Charlotte), whose court and land records exist, and says there was \"no county structure yet in place\" before 1778. Its cross-border list also uses counties that didn't exist yet: Sullivan NH (1827), Franklin MA (1811) and Rensselaer NY (1791). It misses the period's Grafton NH and Berkshire MA."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The vagueness the judge penalizes is what this test requires: no collection or digitization level without a tool result. The real misses: it breaks that rule once (\"FamilySearch | 1790 federal census (indexed)\"), says \"no Vermont colonial census is known\" when New York's 1771 census of Cumberland and Gloucester counties survives and is published, and lists NARA passenger lists for 1750–1791, though federal lists begin in 1820."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It starts with the 1771 schedule, works back from the 1790 census, then town histories and proprietors' records, with the right pitfalls: town-level research, 1857 registration, a state-land state, and checking origin communities. The bad county names are counted once, under Jurisdiction."
+    }
+  ]
+}
