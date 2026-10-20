@@ -77,26 +77,10 @@
     {
       "test_id": "ut_locality_guide_026",
       "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "The 1761 formation from Hampshire is backed by the place fixture, and the state borders are right. But a guide for 1820–1850 lists Pittsfield as county seat, when Lenox held the seat until 1868. The judge's \"without anachronism\" misses this. Practical harm is low, since the repositories named in Pittsfield are correct today."
-    },
-    {
-      "test_id": "ut_locality_guide_026",
-      "dimension_source": "rubric",
       "dimension_name": "Record availability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "Record classes come with start dates and repositories. It separates the indexed collections (fixture IDs 2061550, 1678901 and others) from the browse-only volumes (004500891 and 004500892, 0% indexed)."
-    },
-    {
-      "test_id": "ut_locality_guide_026",
-      "dimension_source": "rubric",
-      "dimension_name": "Research strategy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The judge graded the short summary. The research tips give the full cross-border instruction: search town clerks and church records on both the New York and Vermont sides. They say why (church, marriage or deeds across the line), what to expect (Vermont recorded at town level; New York relied on church records before 1880), and how to find the border towns (a period map). That meets the test's town- and county-level requirement, and the wiki claims carry their URLs."
     },
     {
       "test_id": "ut_locality_guide_009",
@@ -385,6 +369,22 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "It starts with the 1771 schedule, works back from the 1790 census, then town histories and proprietors' records, with the right pitfalls: town-level research, 1857 registration, a state-land state, and checking origin communities. The bad county names are counted once, under Jurisdiction."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The 1761 formation from Hampshire is backed by the place fixture, and the state borders are right. But a guide for 1820–1850 lists Pittsfield as county seat, when Lenox held the seat until 1868. The judge's \"without anachronism\" misses this. Practical harm is low, since the repositories named in Pittsfield are correct today."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge graded the short summary. The research tips give the full cross-border instruction: search town clerks and church records on both the New York and Vermont sides. They say why (church, marriage or deeds across the line), what to expect (Vermont recorded at town level; New York relied on church records before 1880), and how to find the border towns (a period map). That meets the test's town- and county-level requirement, and the wiki claims carry their URLs."
     }
   ]
 }
