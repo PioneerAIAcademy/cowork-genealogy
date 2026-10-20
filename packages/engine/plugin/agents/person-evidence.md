@@ -556,13 +556,12 @@ it into a hard rejection when a user can adjudicate. In an autonomous
 run, by contrast, the two pause rows resolve **downward, never upward**:
 a **Weak** match — or any match whose correlation caps confidence at
 `speculative` — becomes a **no-link**. Do
-not create the pe_ entry. State the rejection explicitly in your
-returned summary — the candidate, the score, and exactly what
-conflicted — and recommend `hypothesis-tracking` as the follow-up if
-the rejected identity is worth persisting as a hypothesis (this skill
-writes only the `person_evidence` section; the rejection note itself
-belongs in your summary, never in `hypotheses` or `log`, which other
-skills own). A **Moderate** match may link at `probable` only when the
+not create the pe_ entry, and do not record a rejection: only the
+researcher creates one. State it in your returned summary: the candidate,
+the score, and exactly what conflicted. Then recommend
+`hypothesis-tracking` as the follow-up if the unlinked identity is worth
+persisting as a hypothesis (you write `person_evidence`; never
+`hypotheses` or `log`, which other skills own). A **Moderate** match may link at `probable` only when the
 correlation genuinely meets the Moderate bar, evidenced in the
 rationale. The absence of a user NEVER upgrades confidence or converts
 a pause-for-confirmation into a link — an unconfirmable weak identity

@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Owen Morris's parents were John Morris, a farmer born about 1818 at Llanilar, and Dorothy Morris, born about 1825 at Llanfihangel; the 1871 census lists him, aged about 12 and born at Llanbadarn-Fawr, as a farmer's son in their household at Lower Llanbadarn-y-Croyddin, Cardiganshire.",
+      "details": {
+        "subject_person": "Owen Morris (GWWN-XP9)",
+        "relation": "parents",
+        "target_person": {
+          "name": "John Morris and Dorothy Morris",
+          "father": "John Morris, farmer, born about 1818, Llanilar, Cardiganshire",
+          "mother": "Dorothy Morris, born about 1825, Llanfihangel, Cardiganshire"
+        }
+      },
+      "supporting_sources": [
+        "England and Wales, Census, 1871 — household of John Morris, Lower Llanbadarn-y-Croyddin, Cardiganshire: John (farmer, b. ~1818 Llanilar), wife Dorothy (b. ~1825 Llanfihangel), sons Owen (b. ~1859 Llanbadarn-Fawr), Evan (b. ~1868) and James (b. ~1871)"
+      ],
+      "required": true
+    }
+  ]
+}
