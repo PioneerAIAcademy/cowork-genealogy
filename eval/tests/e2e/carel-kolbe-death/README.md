@@ -33,36 +33,55 @@ match strength.
 Retrieval was tool-assisted (record search and read, and `image_transcribe` for
 the page); the identity call is the genealogist's.
 
-**What the record is.** The hint's page image (`ark:/61903/3:1:3Q9M-CSK6-Y315-G`)
-is page 744 of the Cape Town Nederduitsche Gereformeerde Kerk's *Naamlijst van
-Leden ... Overleden* (deceased members), 1 October 1875 to 30 September 1877.
-The entry reads only "February 21 Carel Fredrik Kolbe", the surname ending in a
-flourish that the index renders as "Kolbey". The list has **no age column**, and
-gives no spouse or parents, so the age check this hint was expected to turn on
-cannot be made. The genealogist viewed the original page. The small pencil
+**What the record is, and why that decides it.** The hint's page image
+(`ark:/61903/3:1:3Q9M-CSK6-Y315-G`) is page 744 of the Cape Town Nederduitsche
+Gereformeerde Kerk's *Naamlyst van Leden ... Overleden*: deceased **members**
+(*leden*, confirmed communicants), 1 October 1875 to 30 September 1877. In this
+church a baptised child is not a *lidmaat*; membership follows catechism and
+profession of faith. All twenty entries on the page are adults, and nine are
+marked as such: *Senior* (Johannes Petrus de Villiers, Melt Jacobus Brink), wife
+or widow (*Echtgenoote*, *Huisvrouw*, *Weduwe van*), and Johan Fredrik Luijt
+"C: K zoon". So neither an infant grandson nor the nine-year-old boy below could
+appear in this list at all. That, not the two empty searches, is what separates
+the subject from both alternatives. The index cannot show it (it calls the entry
+a burial and says nothing about membership), so the call rests on the page and
+`image_basis` is true.
+
+The entry reads only "Februarij 21 Carel Fredrik Kolbe", the surname ending in a
+flourish that the index renders as "Kolbey". The register marks same-named men
+(*Senior*, *C: K zoon*), and this entry carries no qualifier. That fits there
+being one Carel Fredrik Kolbe on the Cape Town roll: the son was confirmed at
+Wynberg in April 1867. It is consistent, not decisive: a Carel Frederik Kolbe was
+also received into the Cape Town congregation on 4 January 1869
+(`ark:/61903/1:1:VRLQ-BRT`, no age or relatives), possibly the son, but the son
+died in 1898 and is not the 1876 decedent either way.
+
+The list has no age column and gives no spouse or parents. The small pencil
 numbers in its left margin (8, 14, 18, 20) are a running count of entries, not
-ages: the "18" beside this line marks it as the 18th entry. `image_basis` stays false: the call rests on the index
-plus other indexed records, not on a field read from the page.
+ages: the "18" beside this line marks it as the 18th entry. The heading, the
+qualifiers and the entry were read on the original page by the genealogist and
+by two reviewers on PR #3517 (benter-070, EdmondOware).
 
 **Read-check of the page transcription.** Two other indexed entries on the same
 image match the transcription on date and given names: Michiel Johan Zeeman
 (indexed Zoeman, `ark:/61903/1:1:6P1Y-82HX`, died 21 January 1876) and Adam
 Gabriel Justinus Haarlingh (indexed Hurlingh, `ark:/61903/1:1:6P1Y-82HD`, died
-6 January 1876). Only the surnames differ in spelling. Nothing beyond the entry
-text was taken from the page.
+6 January 1876). Only the surnames differ in spelling.
 
-**Why it is the subject (b. 1801), not another Carel Fredrik Kolbe.**
+**The alternatives, and the supporting evidence against each.**
 - *A grandson via the son.* The son Carel Fredrik (b. 23 January 1839) married
-  Theodora Jullietta Borstlap on 9 November 1863. No baptism of a Kolbe child to
-  a Borstlap mother, or to a father Carel Fredrik, was found 1863-1877 in
+  Theodora Jullietta Borstlap on 9 November 1863. A grandson would have been at
+  most 12, so not a member. Supporting: no baptism of a Kolbe child to a
+  Borstlap mother, or to a father Carel Fredrik, was found 1863-1877 in
   "South Africa, Dutch Reformed Church Registers (Cape Town Archives)"
   (collection 1478678).
 - *A boy of the Hartog connection.* A Carel Fredrik Kolbee, born 22 October 1866,
   was baptised in Cape Town on 10 August 1873, mother Magdalena Hartogh
-  (`ark:/61903/1:1:XKH7-XHS`). He would have been 9 in 1876, but he very probably
-  survived: Charles Frederic Dorns Kolbe, 23, bachelor, labourer, married in Cape
-  Town on 12 August 1889 and signed "C F D Kolbee", the baptism's own spelling
-  (`ark:/61903/1:1:6ZHB-HTYQ`). The identification is probable, not proven.
+  (`ark:/61903/1:1:XKH7-XHS`). At nine he could not be on a members' list.
+  Supporting: he very probably survived; Charles Frederic Dorns Kolbe, 23,
+  bachelor, labourer, married in Cape Town on 12 August 1889 and signed
+  "C F D Kolbee", the baptism's own spelling (`ark:/61903/1:1:6ZHB-HTYQ`). That
+  identification is probable, not proven, and the call does not rest on it.
 - *The son himself* died 24 January 1898 (civil death record and 1898 estate file).
 
 The subject, aged 74, married in Cape Town in 1857 and his wife joined the Cape

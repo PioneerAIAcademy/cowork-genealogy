@@ -15,9 +15,10 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 25, hint-samples.csv row 816, flags adds_death/adds_burial, confidence 3). Resolved 2026-10-16 (issue #3345): true match. The hint is the Cape Town Dutch Reformed congregation's 1876 deceased-members list; the known alternative Carel Fredriks are unattested or survived 1876. See README, Notes for reviewers.",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 25, hint-samples.csv row 816, flags adds_death/adds_burial, confidence 3). Resolved 2026-10-16 (issue #3345): true match. The hint is the Cape Town Dutch Reformed congregation's 1875-1877 list of deceased confirmed members (read on the page image ark:/61903/3:1:3Q9M-CSK6-Y315-G), which no child could appear in, so neither a grandson nor the 1866-born Carel Fredrik Kolbee can be the entry; image_basis is true. See README, Notes for reviewers.",
   "hint": {
     "persona_ark": "ark:/61903/1:1:6P1Y-82HK",
     "identity": "same"
-  }
+  },
+  "image_basis": true
 }
