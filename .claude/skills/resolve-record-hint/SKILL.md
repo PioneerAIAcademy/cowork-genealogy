@@ -1,7 +1,7 @@
 ---
 name: resolve-record-hint
 model: claude-sonnet-4-6
-description: Resolves a draft `genre: "record-hint"` e2e fixture that was assigned via a GitHub issue titled "test <slug>". The fixture's expected-findings.json currently just transcribes an unverified FamilySearch hint record; this skill walks the genealogist through confirming or refuting the hint (retrieval may be tool-assisted, but the identity judgement is the genealogist's — this skill never fetches anything itself), then writes the correct expected-findings.json, updates the README's "Notes for reviewers" and fixture.json's notes, and validates the result. Use when the user says "resolve this fixture", "adjudicate this fixture", "I was assigned test <slug>", "review this record hint", pastes a "test <slug>" GitHub issue, or asks to encode the outcome in expected-findings.json for a record-hint fixture. Do NOT use to author a brand-new fixture from a FamilySearch PID or research document (use author-e2e-fixture), to interpret or grade a completed e2e run (use interpret-e2e-result / grade-e2e-run), or to mine a unit test from a miss (use mine-unit-test).
+description: Resolves a draft `genre: "record-hint"` e2e fixture that was assigned via a GitHub issue titled "test <slug>". The fixture's expected-findings.json currently just transcribes an unverified FamilySearch hint record; this skill walks the genealogist through confirming or refuting the hint (retrieval may be tool-assisted, but the identity judgement is the genealogist's — this skill never fetches anything itself), then writes the correct expected-findings.json, updates the README's "Notes for reviewers" and fixture.json's notes and hint, and validates the result. Use when the user says "resolve this fixture", "adjudicate this fixture", "I was assigned test <slug>", "review this record hint", pastes a "test <slug>" GitHub issue, or asks to encode the outcome in expected-findings.json for a record-hint fixture. Do NOT use to author a brand-new fixture from a FamilySearch PID or research document (use author-e2e-fixture), to interpret or grade a completed e2e run (use interpret-e2e-result / grade-e2e-run), or to mine a unit test from a miss (use mine-unit-test).
 allowed-tools:
   - Read
   - Write
@@ -29,11 +29,12 @@ neither.
 - Given an issue: `gh issue view <n> --json title,body`. Pull the slug (from
   the title, `test <slug>`) and **both** links in the body: the tree person
   (`familysearch.org/tree/person/details/<PID>`) and the hint record
-  (`familysearch.org/ark:/...`). The record URL lives **only** in the issue
-  body, never in the fixture folder. If either link is missing from the issue,
-  say so and stop — the genealogist can't do the research without them, and
-  `fixture.json`'s `source_pid` is the tree person's PID if you need to
-  reconstruct that half.
+  (`familysearch.org/ark:/...`). For a draft the issue body is the only place
+  the hint record's link lives; a resolved fixture also carries the hint
+  persona's ark in `fixture.json`'s `hint.persona_ark` (Step 4). If either link
+  is missing from both, say so and stop — the genealogist can't do the research
+  without them, and `fixture.json`'s `source_pid` is the tree person's PID if
+  you need to reconstruct that half.
 - Read `eval/tests/e2e/<slug>/README.md`'s "Notes for reviewers" — what the
   original author already found (the tree's existing sources, the
   match-strength argument for and against).
@@ -96,6 +97,15 @@ Ask which of the three applies, and collect only what that outcome needs:
 
 In all three cases, also ask for their reasoning in plain language — this
 becomes the README's new "Notes for reviewers."
+
+Then ask the **identity verdict** as its own question — is the hint persona
+the tree person: **same**, **different** or **unresolved**? Never infer it from
+the outcome number: the outcome says what the findings become, the verdict
+whether the persona is the person, and outcome 2 can be any of the three
+(`victoriana-vasquez-marriage` is outcome 2 and same; `grigory-kokosha-death`
+is outcome 2 and unresolved). Take the hint persona's `ark:/61903/1:1:...` from
+the issue's hint link; if that link is a `1:2:` record ark or an image ark, ask
+for the persona's `1:1:` ark. A fixture with no hint persona gets no verdict.
 
 Every outcome needs an ark: a resolved record-hint fixture whose
 `expected-findings.json` carries no literal `ark:/61903/...` in any finding's
@@ -162,6 +172,12 @@ fixture will declare `"image_basis": true` and that image ark must land in
   `expected-findings.json` `supporting_sources` entry — `make e2e-validate`
   hard-fails an `image_basis: true` fixture that cites only index arks
   (issue #2877). Leave the flag off when the indexes alone settled it.
+  Set `"hint": {"persona_ark": "ark:/61903/1:1:...", "identity": "same"}` from
+  Step 3 — exactly those two keys, the full `1:1:` persona ark, and `identity`
+  one of `"same"`, `"different"`, `"unresolved"` in lowercase — or
+  `"hint": null` when the fixture has no hint persona. `make e2e-validate`
+  hard-fails a resolved record-hint fixture with no `hint` key (spec §3.6.2,
+  issue #3553).
 
 **Never touch** `starting-tree.gedcomx.json`, `unstripped-tree.gedcomx.json`,
 or `starting-research.json` — this task only edits the three files above;
@@ -199,7 +215,8 @@ validated it.
 ## Re-invocation behavior
 
 **Writes:** `expected-findings.json`, `README.md`'s "Notes for reviewers",
-and `fixture.json`'s `notes`, all under `eval/tests/e2e/<slug>/`.
+and `fixture.json`'s `notes`, `hint` and (when images settled it)
+`image_basis`, all under `eval/tests/e2e/<slug>/`.
 
 **On repeat invocation:** re-running re-resolves from the fixture's
 current state — safe, since the current state (not history) is always the

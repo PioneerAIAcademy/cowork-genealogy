@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 26, hint-samples.csv row 782, flags adds_father/adds_mother/adds_birth/adds_marriage, confidence 3). RESOLVED 2026-09-24 as a TRUE MATCH against the record itself (ark:/61903/1:1:X9T4-M2N2): parents and marriage date confirmed verbatim, bride's age 23 confirming a birth about 1844. One drafted value was corrected — the index carries no registration district, parish or county, so the marriage place drops from the drafted \"Edinburgh, Midlothian\" to \"Scotland\". Identity rests on the Scottish naming pattern: the entry names grandmothers Jane Borthwick Inglis and Agnes Inglis, and the tree's daughters Jane (1868) and Agnes (1870) were entered from their own baptism records, independently of this entry."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 26, hint-samples.csv row 782, flags adds_father/adds_mother/adds_birth/adds_marriage, confidence 3). RESOLVED 2026-09-24 as a TRUE MATCH against the record itself (ark:/61903/1:1:X9T4-M2N2): parents and marriage date confirmed verbatim, bride's age 23 confirming a birth about 1844. One drafted value was corrected — the index carries no registration district, parish or county, so the marriage place drops from the drafted \"Edinburgh, Midlothian\" to \"Scotland\". Identity rests on the Scottish naming pattern: the entry names grandmothers Jane Borthwick Inglis and Agnes Inglis, and the tree's daughters Jane (1868) and Agnes (1870) were entered from their own baptism records, independently of this entry.",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:X9T4-M2N2",
+    "identity": "same"
+  }
 }

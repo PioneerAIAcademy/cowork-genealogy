@@ -17,7 +17,7 @@ import re
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import anthropic
 
@@ -379,40 +379,79 @@ def render_prompt_parts(
 _SLOT_RE = re.compile(r"\{([a-z_]+)\}")
 
 
-# Total-prompt-size guard for the tool_calls slot. Even with per-response
-# summarization, many calls × moderate sizes can blow past Haiku's context.
-# Once the rendered tool_calls block exceeds this many characters, the
-# harness drops oldest tool calls and appends a "_dropped_for_size" marker
-# so reviewers can see truncation happened. ~50K chars ≈ ~12K tokens, well
+# Size guard for the tool_calls slot. Even with per-response summarization,
+# many calls × moderate sizes can blow past Haiku's context. The budget is
+# spent on evidence: once the block exceeds _TOOL_CALLS_MAX_CHARS the harness
+# drops the oldest tool calls and prepends a "_dropped_for_size" marker so
+# reviewers can see truncation happened. That budget is measured with the args
+# of every live call (matched.kind == "live": the mock answered it from the
+# real implementation, which is how every writer runs) stood in by a short
+# omission marker, because those args are the agent's own output, not
+# evidence. A locality guide persisted through research_append carries the
+# whole ~20K-char guide in its args, and counting it pushed the earliest
+# survey calls out, so the judge called their correctly cited values
+# fabricated (#3442). The real calls are then rendered, held under
+# _TOOL_CALLS_HARD_MAX_CHARS by cutting live args (first their strings to the
+# per-string cap, then the args whole to the marker), never by dropping more
+# evidence. ~50K chars ≈ ~12K tokens and the 100K ceiling ≈ ~25K, both well
 # under Haiku's window even with the rest of the prompt.
 _TOOL_CALLS_MAX_CHARS = 50_000
+_TOOL_CALLS_HARD_MAX_CHARS = 2 * _TOOL_CALLS_MAX_CHARS
+
+
+def _is_live_call(call: dict[str, Any]) -> bool:
+    return (call.get("matched") or {}).get("kind") == "live"
+
+
+def _live_args_as_is(args: Any) -> Any:
+    return args
+
+
+def _live_args_string_capped(args: Any) -> Any:
+    return _summarize_response(args, array_sample=None)
+
+
+def _live_args_omitted(args: Any) -> Any:
+    full_len = len(json.dumps(args))
+    marker = (
+        f"[args omitted by harness for prompt size; full length {full_len} chars]"
+    )
+    return marker if full_len > len(marker) else args
 
 
 def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
     """Render the tool_calls slot with a total-size cap.
 
-    If the JSON rendering exceeds _TOOL_CALLS_MAX_CHARS, repeatedly drop
-    the oldest call until under the cap, prepending a marker that records
-    how many were dropped. Worst case (single call still too large), keep
-    the most recent one and accept the overage.
+    The drop budget is measured on a view in which each live call's args are
+    replaced by `_live_args_omitted`: while that view exceeds
+    _TOOL_CALLS_MAX_CHARS, drop the oldest call, and prepend a marker that
+    records how many were dropped. The kept calls are then rendered with their
+    real args. If that render exceeds _TOOL_CALLS_HARD_MAX_CHARS, live args
+    are rendered with their strings cut to the per-string cap, and if it still
+    does, as in the measured view. Worst case (single call still too large),
+    keep the most recent one and accept the overage.
     """
     if not tool_calls:
         return "(none)"
 
-    def _render(calls: list[dict[str, Any]], dropped: int) -> str:
+    def _render(
+        calls: list[dict[str, Any]],
+        dropped: int,
+        live_args: Callable[[Any], Any],
+    ) -> str:
         body = json.dumps(
             [
                 {
                     "tool": c["tool"],
-                    "args": c["args"],
+                    "args": live_args(c["args"]) if _is_live_call(c) else c["args"],
                     "expected_args": c.get("expected_args"),
                     "matched": c["matched"],
                     # array_sample=None: render EVERY result, not the first 3.
                     # The default (3) suits argument-quality grading, but a
                     # grounding rubric marks a correct citation of result 4+ as
                     # fabricated when the judge can only see results 1-3 (#1902).
-                    # The prompt-size bound is _TOOL_CALLS_MAX_CHARS below, which
-                    # drops whole oldest calls with a stated marker.
+                    # The prompt-size bound is the guard below, which drops
+                    # whole oldest calls with a stated marker.
                     "response_summary": _summarize_response(
                         c.get("response"), array_sample=None
                     ),
@@ -424,22 +463,25 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
         if dropped:
             return (
                 f"(_dropped_for_size: {dropped} earliest tool calls "
-                f"dropped to keep prompt under {_TOOL_CALLS_MAX_CHARS} chars)\n"
+                f"dropped to keep tool calls under {_TOOL_CALLS_MAX_CHARS} chars, "
+                f"not counting live calls' args)\n"
                 + body
             )
         return body
 
-    rendered = _render(tool_calls, 0)
-    if len(rendered) <= _TOOL_CALLS_MAX_CHARS:
-        return rendered
-
     calls = list(tool_calls)
     dropped = 0
-    while len(calls) > 1 and len(rendered) > _TOOL_CALLS_MAX_CHARS:
+    view = _render(calls, dropped, _live_args_omitted)
+    while len(calls) > 1 and len(view) > _TOOL_CALLS_MAX_CHARS:
         calls.pop(0)
         dropped += 1
-        rendered = _render(calls, dropped)
-    return rendered
+        view = _render(calls, dropped, _live_args_omitted)
+
+    for live_args in (_live_args_as_is, _live_args_string_capped):
+        rendered = _render(calls, dropped, live_args)
+        if len(rendered) <= _TOOL_CALLS_HARD_MAX_CHARS:
+            return rendered
+    return view
 
 
 def _grading_tool_for_rubric(rubric: Rubric) -> dict[str, Any]:
