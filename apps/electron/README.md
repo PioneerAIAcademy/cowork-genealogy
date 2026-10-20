@@ -132,7 +132,7 @@ src/
       contexts/
         ResearchDataContext.tsx # Shared state, cross-reference index
       components/
-        layout/                # Header, Sidebar, ProgressPipeline
+        layout/                # Header, Sidebar
         shared/                # Card, StatusBadge, DetailPanel, PersonCard, CrossLink
         sections/              # 11 section components (one per research.json section)
       styles/

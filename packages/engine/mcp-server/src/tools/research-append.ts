@@ -18,6 +18,8 @@
 // all three phases (sources/assertions/person_evidence, the status-transition
 // sections, the phase-3 sections, and the `project` singleton).
 
+import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
+import { planItemFlags } from "../utils/plan-item-plausibility.js";
 import { getProjectStore } from "../store/project-store.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -132,6 +134,7 @@ const SECTIONS: Record<string, SectionConfig> = {
   sources: { prefix: "src_" },
   assertions: { prefix: "a_" },
   person_evidence: { prefix: "pe_", stampTimestamp: CREATED_DATE },
+  rejected_links: { prefix: "rj_", stampTimestamp: CREATED_DATE },
   // Phase 2
   questions: { prefix: "q_", stampTimestamp: CREATED_DATE },
   plans: { prefix: "pl_", stampTimestamp: CREATED_DATE },
@@ -1097,6 +1100,37 @@ function corroboratingRecordCount(entry: any, research: any, byId: Map<string, a
  *  ordinary case (a death certificate that plainly names its subject), and
  *  gating on record-count alone would reject it. Doubt only becomes
  *  disqualifying when nothing independent backs it up. */
+/**
+ * Refuse a link the researcher has already rejected.
+ *
+ * Exact pair only: rejecting "this record is not Mary" says nothing about her sister,
+ * and nothing about a different record for Mary. A broader rule would silently block
+ * work nobody objected to.
+ *
+ * The message quotes the researcher's own reason when they gave one, because a refusal
+ * a person cannot trace back to their own decision reads as the tool being broken.
+ */
+function rejectedLinkInvariants(
+  entry: Record<string, unknown>,
+  research: Record<string, unknown>,
+): string[] {
+  const assertionId = typeof entry?.assertion_id === "string" ? entry.assertion_id : "";
+  const personId = typeof entry?.person_id === "string" ? entry.person_id : "";
+  if (!assertionId || !personId) return [];
+  const rejected = Array.isArray(research?.rejected_links)
+    ? (research.rejected_links as RejectedLink[])
+    : [];
+  const hit = rejectionFor(assertionId, personId, rejected);
+  if (!hit) return [];
+  const because = typeof hit.reason === "string" && hit.reason.trim()
+    ? ` The researcher's reason: ${hit.reason}`
+    : "";
+  return [
+    `${assertionId} and ${personId} were rejected as not a match (${String(hit.id)}), ` +
+    `so this link is refused. Record new evidence instead.${because}`,
+  ];
+}
+
 function personEvidenceInvariants(entry: any, research: any): string[] {
   if (entry.confidence !== "confident") return [];
   const assertions: any[] = research.assertions ?? [];
@@ -2585,6 +2619,48 @@ export function competingParentSetsInvariants(
     `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid} has persons with competing ` +
       `parent sets — ${details} — but fewer than two hypotheses in hypotheses[] list "${qid}" in ` +
       `related_question_ids. Decline to conclude; name hypothesis-tracking as the next step.`,
+  ];
+}
+
+/** A conclusion above `not_proved` may not rest on evidence no identity decision
+ *  has touched: refused when none of the summary's supporting assertions carries
+ *  a live `person_evidence` link in the pre-call document.
+ *
+ *  None, not all. A household record leaves its children and wife unlinked once
+ *  the subject is linked, so an all-linked rule would refuse 27 of 211 committed
+ *  e2e proofs; none-linked refuses 3, and every one of the 3 comes from a run
+ *  with no `person_evidence` row at all (chresten-nielsen-daughter 2026-08-09,
+ *  victoriano-macatangay-parents 2026-08-13 ×2). That is the identity step never
+ *  run, which is the case worth refusing: LZJF-J13 (issue #3177) concluded
+ *  `probable` on "correlation across several independent entries" with 0 of 15
+ *  assertions linked.
+ *
+ *  Pre-call snapshot, as the conflict gates: a batch may not supply the link and
+ *  spend it on a tier in the same call — and `person_evidence` is written only by
+ *  person-evidence, never by the agent writing the proof. */
+export function unlinkedProofInvariants(entry: any, preCallResearch: any): string[] {
+  const tier = entry?.tier;
+  if (typeof tier !== "string" || tier === "not_proved") return [];
+  const known = new Set(
+    (Array.isArray(preCallResearch?.assertions) ? preCallResearch.assertions : []).map((a: any) => a?.id),
+  );
+  const supporting = (Array.isArray(entry?.supporting_assertion_ids) ? entry.supporting_assertion_ids : []).filter(
+    (id: unknown) => typeof id === "string" && known.has(id),
+  );
+  if (supporting.length === 0) return [];
+  const linked = new Set(
+    (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : [])
+      .filter((pe: any) => pe?.superseded_by == null)
+      .map((pe: any) => pe?.assertion_id),
+  );
+  if (supporting.some((id: string) => linked.has(id))) return [];
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: tier '${tier}' rests on ${supporting.length} ` +
+      `supporting assertion(s), and none is linked to a person in person_evidence. A conclusion ` +
+      `correlates records about the same person, and no identity decision says these records ` +
+      `are about anyone. Run person-evidence on those assertions first (from an agent, hand back ` +
+      `to the main thread and name it), then send this write again. Recording the attempt at ` +
+      `'not_proved' is allowed now.`,
   ];
 }
 
@@ -4423,6 +4499,9 @@ function applyOne(
   let entryId: string;
   let resultEntry: any;
   let arrayIndex: number | undefined;
+  // An update's link pair and retired state as they stood BEFORE its fields merge,
+  // so the rejected-link gate below can tell an edit from a re-link.
+  let priorPair: { assertion_id: unknown; person_id: unknown; superseded_by: unknown } | undefined;
 
   if (op.op === "append") {
     const entry = op.entry;
@@ -4481,6 +4560,11 @@ function applyOne(
     }
     const existing = array[existingIndex];
     if (!config.nested) arrayIndex = existingIndex;
+    priorPair = {
+      assertion_id: existing?.assertion_id,
+      person_id: existing?.person_id,
+      superseded_by: existing?.superseded_by,
+    };
 
     // Questions: re-declaring exhaustiveness on an already-declared question is
     // a no-op — never overwrite a settled GPS Component-1 record. Only when the
@@ -4817,6 +4901,35 @@ function applyOne(
   // Identity over-reach: runs on append AND on an update that raises confidence
   // to "confident"; the helper no-ops for every other confidence value.
   if (section === "person_evidence") {
+    // A pair the researcher has REJECTED is not re-linked without new evidence.
+    // Ruled 2026-09-30 and enforced here rather than in a skill body: whether a pair
+    // was rejected is decidable from research.json alone, which per ADR-0011 makes it
+    // a writer precondition. The reported failure is exactly this -- a researcher
+    // challenged an assumption and the agent reverted to it, because nothing recorded
+    // the rivals.
+    // ...on a CREATE, or on an update that moves a link onto a new pair or brings a
+    // retired link back. NOT on every
+    // edit to a link that already exists: the normal sequence is to reject a pair whose
+    // link is already there, and firing on updates too meant that wrong link could never
+    // afterwards be given a rationale, lowered to `speculative`, or superseded — so the
+    // bad link and the facts it materialized stayed live for good. The refusal even told
+    // the caller to "remove the rejection", which `research_append` cannot do (no delete,
+    // and the spec says never delete). Found in the self-review of #3262.
+    // An update re-raises a link when it ends live AND either moves the pair (a new
+    // `assertion_id` or `person_id`) or revives a link that was retired. Judged on the
+    // stored state before the merge, not on which fields the op named: a pair move
+    // names no `superseded_by`, and a revival may write `""`, which is not a retirement.
+    const pairChanged =
+      !!priorPair &&
+      (priorPair.assertion_id !== resultEntry.assertion_id ||
+        priorPair.person_id !== resultEntry.person_id);
+    const wasRetired = !!priorPair?.superseded_by;
+    const reRaising =
+      op.op === "append" ||
+      (op.op === "update" && !resultEntry.superseded_by && (pairChanged || wasRetired));
+    if (reRaising) {
+      invariantErrors.push(...rejectedLinkInvariants(resultEntry, research));
+    }
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
     invariantErrors.push(...coreIdentifierConflictInvariants(resultEntry));
     // A REFUSAL, not a warning. The lead's standing ruling on issue #2272 is
@@ -4910,6 +5023,9 @@ function applyOne(
       op.op === "append" || Object.prototype.hasOwnProperty.call(op.fields ?? {}, "tier");
     if (tierTouchedThisOp) {
       invariantErrors.push(...proofSummaryInvariants(resultEntry, preCallExhaustiveDeclared));
+      // Tier-gated like the line above, so a narrative edit to a summary that
+      // predates the rule is not refused.
+      invariantErrors.push(...unlinkedProofInvariants(resultEntry, preCallResearch));
     }
     // NOT gated on `tierTouchedThisOp`, unlike the exhaustiveness check above.
     // That gate asks "is this op setting the tier"; this rule asks "does the
@@ -6284,6 +6400,26 @@ export async function researchAppend(
       treeEncodingWarnings = treeEncodingCompletionWarnings(research, tree, startingTree);
     }
 
+    // A planned next action unlikely to be usable: a jurisdiction outside every
+    // recorded locality, or a date range that cannot contain the event. "Dead ends
+    // become next actions" fails when the next actions are not usable -- in the
+    // reported case 2 of 8, then 1 of 3 suggestions were viable, including COUNTY
+    // records for a death in an independent city the locality guide had flagged.
+    //
+    // FLAGS, NEVER GATES, so it rides the warnings channel and refuses nothing:
+    // searching a neighbouring jurisdiction can be deliberate and a year outside the
+    // obvious window can be a fallback. Decided from the project documents alone, so
+    // it needs no network call and works while the run is offline.
+    const localitiesForPlan = Array.isArray(research?.localities) ? research.localities : [];
+    const planItemWarnings: string[] = [];
+    for (const planOp of ops) {
+      if (planOp.section !== "plan_items") continue;
+      const entry = ((planOp.op === "append" ? (planOp as any).entry : (planOp as any).fields) ?? {});
+      for (const flag of planItemFlags(entry, localitiesForPlan)) {
+        planItemWarnings.push(flag.message);
+      }
+    }
+
     // ─── Validate once, write once (both files when the tree changed) ────────
     let validationWarnings: string[] = [];
     let filesWritten: string[] = [];
@@ -6388,7 +6524,7 @@ export async function researchAppend(
       : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings],
+      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings],
     };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
@@ -6459,6 +6595,7 @@ export const RESEARCH_APPEND_SECTIONS = [
   "sources",
   "assertions",
   "person_evidence",
+  "rejected_links",
   "questions",
   "plans",
   "plan_items",
