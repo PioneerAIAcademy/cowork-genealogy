@@ -465,6 +465,28 @@ describe("extraction_append: documents", () => {
     expect(r.records[0].summary).toContain("- Inger Larsdatter (mother).");
   });
 
+  it("ties a stated parent with no edge to the one principal of a baptism (#3543)", async () => {
+    const baptism = {
+      recordType: "christening",
+      documentForm: "page_image",
+      source: { title: "Stavanger Domkirke, baptisms 1817", repository: "Digitalarkivet" },
+      persons: [
+        { id: "p1", principal: true, names: [{ given: "Kristian Fredrik" }], facts: [{ type: "christening", date: "20 July 1817" }] },
+        { id: "p2", gender: "male", statedRelation: "father", names: [{ given: "Tollev", surname: "Nadnesen" }] },
+        { id: "p3", gender: "female", statedRelation: "mother", names: [{ given: "Inger", surname: "Larsdatter" }] },
+      ],
+    };
+    const r = await run([{ recordId: "capture:birkeland-noedge", document: baptism }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const as = await assertionsFor("capture:birkeland-noedge");
+    const roles = Object.fromEntries(as.filter((a: any) => a.fact_type === "name").map((a: any) => [a.value, a.record_role]));
+    expect(roles).toMatchObject({ "Tollev Nadnesen": "father", "Inger Larsdatter": "mother" });
+    expect(as.filter((a: any) => a.fact_type === "relationship").map((a: any) => a.value).sort()).toEqual([
+      "child of Inger Larsdatter",
+      "child of Tollev Nadnesen",
+    ]);
+  });
+
   describe("a computed entry written as a value (#3543)", () => {
     const death = (birth: Record<string, unknown>) => ({
       recordType: "death",

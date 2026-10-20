@@ -115,6 +115,9 @@ const SEX_OF_RELATION: Record<string, "male" | "female"> = {
   mother: "female", daughter: "female", wife: "female", sister: "female",
 };
 
+/** Record types with one principal whose stated parents are that principal's. */
+const PARENT_EDGE_RECORDS: ReadonlySet<string> = new Set(["christening", "birth", "death", "burial"]);
+
 const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 const isStr = (v: unknown) => typeof v === "string" && v.trim() !== "";
@@ -341,7 +344,19 @@ export function documentToExtract(
     r.type === "parent_child"
       ? { type: "http://gedcomx.org/ParentChild", parent: r.person1, child: r.person2 }
       : { type: r.type === "couple" ? "http://gedcomx.org/Couple" : "http://gedcomx.org/Sibling", person1: r.person1, person2: r.person2 },
-  );
+  ) as { type: string; parent?: string; child?: string; person1?: string; person2?: string }[];
+  // `statedRelation` is the relation to the principal, so on a one-principal
+  // vital record a stated father or mother with no edge is the principal's
+  // parent: the edge is added rather than the parent left tied to no one.
+  if (PARENT_EDGE_RECORDS.has(doc.recordType) && doc.persons.filter((p) => p.principal).length <= 1) {
+    const principalId = (doc.persons.find((p) => p.principal) ?? doc.persons[0])?.id;
+    for (const p of doc.persons) {
+      const rel = p.statedRelation?.trim().toLowerCase();
+      if (!principalId || p.id === principalId || (rel !== "father" && rel !== "mother")) continue;
+      if (relationships.some((r) => r.type === "http://gedcomx.org/ParentChild" && r.parent === p.id)) continue;
+      relationships.push({ type: "http://gedcomx.org/ParentChild", parent: p.id, child: principalId });
+    }
+  }
 
   const gedcomx = {
     sources: [{ resource_type: "http://gedcomx.org/Collection", title: doc.source.title }],

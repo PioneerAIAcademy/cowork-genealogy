@@ -115,6 +115,10 @@ is §11.7's code.
   text's word. A principal has none. Where there are two principals, a parent
   is `father` or `mother`, tied to the child by `parent_child`, and code names
   the side (§11.7). Everyone named gets an entry, the officiant included.
+  On a christening, birth, death or burial with one principal, a `father` or
+  `mother` sent with no `parent_child` edge is that principal's parent:
+  `extraction_append` adds the edge, so the parent is not written as an
+  unattached `father_1` and the child's relationship assertion is kept.
 - **Residence (genealogist, 2026-10-04).** A person described as "of
   <place>" has a `residence` fact there. Trials missed it on a testator ("of
   the Borough of Shenandoah", 2 of 3 runs) and a bride's father ("of Mahanoy
