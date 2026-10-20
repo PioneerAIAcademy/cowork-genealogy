@@ -193,6 +193,19 @@ function noId<T extends Record<string, unknown>>(e: T): Omit<T, "id"> {
 }
 const addAssertion = (entry: Record<string, unknown>) => ({ section: "assertions", op: "append", entry: noId(entry) });
 
+const M = "KWCB-666"; // Ann Smith, his mother (in treeWithMother only)
+
+/** The tree with P's mother, married to his father. */
+function treeWithMother(): Record<string, any> {
+  const t = tree();
+  t.persons.push(person(M, "Ann", "Smith", "Female"));
+  t.relationships.push({ id: "R5", type: "Couple", person1: F, person2: M }, { id: "R6", type: "ParentChild", parent: M, child: P });
+  return t;
+}
+
+const relationshipStatement = (id: string, sourceId: string, recordId: string, role: string, type: string, related: string, value: string) =>
+  assertion(id, sourceId, recordId, role, "relationship", value, { structured_value: { relationship_type: type, related_person_role: related } });
+
 /** A pre-call voucher tied by family: P is the son on his father's census,
  *  whose head is linked to his father, and the son's `factType` there is
  *  `value`; the census head of src_001 carries the same value. */
@@ -232,6 +245,23 @@ describe("namesake cap", () => {
         record_id: recordId ?? (a.record_id as string | undefined) ?? REC.census,
         record_persona_id: null,
         record_role: a.record_role as string,
+        tree_person_id: personId,
+        score: 0.9,
+        matched: true,
+        assertion_id: assertionId,
+        record_source: "record_read",
+        computed: "2026-10-17T00:00:00Z",
+      });
+    }
+  }
+  /** A score for assertions outside the base list, keyed on their own role and record. */
+  async function scoreAll(research: Record<string, any>, ...pairs: Array<[string, string]>) {
+    for (const [assertionId, personId] of pairs) {
+      const a = (research.assertions as any[]).find((x) => x.id === assertionId);
+      await recordMatchScore(dir, {
+        record_id: a.record_id,
+        record_persona_id: null,
+        record_role: a.record_role,
         tree_person_id: personId,
         score: 0.9,
         matched: true,
@@ -386,7 +416,7 @@ describe("namesake cap", () => {
       expect(r.ok).toBe(false);
       expect(errs(r)).toContain(
         `The occupation 'clerk' on this source matches no record linked to '${P}' at 'probable' or better ` +
-          "before this call (a link cannot vouch in the call that writes it).",
+          "before this call that is itself tied (a link cannot vouch in the call that writes it).",
       );
     });
 
@@ -436,14 +466,16 @@ describe("namesake cap", () => {
     });
 
     // Tie (b) reads a street address, never a date, a town or a place.
-    const residencePair = (value: string, censusPlace: string, voterPlace: string) =>
+    // The voucher is P's entry on his father's census, tied by his father, so
+    // only the clause each case names can refuse it.
+    const residencePair = (value: string, censusPlace: string, voucherPlace: string) =>
       research({
         assertions: [
-          ...baseAssertions().filter((a) => a.id !== "a_005" && a.id !== "a_012"),
+          ...baseAssertions().filter((a) => a.id !== "a_005"),
           assertion("a_005", "src_001", REC.census, "head", "residence", value, { place: censusPlace }),
-          assertion("a_012", "src_002", REC.voter, "principal", "residence", value, { place: voterPlace }),
+          assertion("a_032", "src_004", REC.fatherCensus, "son", "residence", value, { place: voucherPlace }),
         ],
-        person_evidence: [standing("pe_001", "a_012", P)],
+        person_evidence: [standing("pe_001", "a_032", P), standing("pe_002", "a_030", F)],
       });
 
     it.each([
@@ -467,11 +499,25 @@ describe("namesake cap", () => {
     });
 
     it("refuses a voucher on the link's own source", async () => {
-      await setup(research({ person_evidence: [standing("pe_001", "a_011", P)] }));
-      await attest(["a_010", P]);
-      const r = await call(link("a_010", P));
+      // A second persona of the census, a boarder, is linked to P through its
+      // occupation, and is itself tied through its address; the head's
+      // occupation matches only it.
+      await setup(
+        research({
+          assertions: [
+            ...baseAssertions().filter((a) => a.id !== "a_005"),
+            assertion("a_005", "src_001", REC.census, "head", "residence", "12 Elm St, Niles, Ohio", { place: NILES }),
+            assertion("a_111", "src_001", REC.census, "boarder", "occupation", "Clerk"),
+            assertion("a_112", "src_001", REC.census, "boarder", "residence", ADDRESS, { place: NILES }),
+            assertion("a_032", "src_004", REC.fatherCensus, "son", "residence", ADDRESS, { place: NILES }),
+          ],
+          person_evidence: [standing("pe_001", "a_111", P), standing("pe_002", "a_032", P), standing("pe_003", "a_030", F)],
+        }),
+      );
+      await attest(["a_001", P]);
+      const r = await call(link("a_001", P));
       expect(r.ok).toBe(false);
-      expect(errs(r)).toContain("nothing in source 'src_002' ties assertion 'a_010'");
+      expect(errs(r)).toContain("nothing in source 'src_001' ties assertion 'a_001'");
     });
 
     it("refuses a link whose only other party is linked through an absent-basis assertion", async () => {
@@ -495,9 +541,9 @@ describe("namesake cap", () => {
           assertions: [
             ...baseAssertions(),
             assertion("a_094", "src_001", REC.census, "head", "occupation", "None", { record_basis: "absent" }),
-            assertion("a_095", "src_002", REC.voter, "principal", "occupation", "None"),
+            assertion("a_032", "src_004", REC.fatherCensus, "son", "occupation", "None"),
           ],
-          person_evidence: [standing("pe_001", "a_095", P)],
+          person_evidence: [standing("pe_001", "a_032", P), standing("pe_002", "a_030", F)],
         }),
       );
       await attest(["a_001", P]);
@@ -567,8 +613,78 @@ describe("namesake cap", () => {
       expect(errs(r)).toContain(`but '${M}' has no given name of their own, only their spouse's.`);
     });
 
+    it("C10 refuses an address tie when the voucher's record, or the link's own, lists a second John Smith", async () => {
+      const there = tiedVoucher("residence", ADDRESS);
+      there.assertions.push(assertion("a_034", "src_004", REC.fatherCensus, "lodger", "name", "John Smith"));
+      await setup(there);
+      await attest(["a_001", P]);
+      let r = await call(link("a_001", P));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toContain("(its record lists another 'John Smith', so the match cannot tell them apart)");
+      const here = tiedVoucher("residence", ADDRESS);
+      here.assertions.push(assertion("a_036", "src_001", REC.census, "son", "name", "John Smith"));
+      await setup(here);
+      r = await call(link("a_001", P));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toContain("(its record lists another 'John Smith', so the match cannot tell them apart)");
+    });
+
+    it("C11 refuses a link tied through his mother where the record states she is his spouse", async () => {
+      const r0 = research({
+        assertions: [
+          ...baseAssertions(),
+          assertion("a_023", "src_003", REC.death, "spouse", "name", "Mary Smith"),
+          relationshipStatement("a_024", "src_003", REC.death, "spouse", "wife", "deceased", "wife of John Smith"),
+        ],
+      });
+      await setup(r0, treeWithMother());
+      await attest(["a_020", P]);
+      await scoreAll(r0, ["a_023", M]);
+      const r = await call(link("a_023", M), link("a_020", P));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toContain(`'pe_001' links another party ('spouse') to '${M}', '${P}''s parent, but the record states that party is 'spouse' of '${P}''s party.`);
+    });
+
+    it("C11b refuses it too when the spouse's own two-party statement is linked to his mother", async () => {
+      const r0 = research({
+        assertions: [
+          ...baseAssertions(),
+          assertion("a_023", "src_003", REC.death, "spouse", "name", "Mary Smith"),
+          relationshipStatement("a_024", "src_003", REC.death, "spouse", "wife", "deceased", "wife of John Smith"),
+        ],
+      });
+      await setup(r0, treeWithMother());
+      await attest(["a_020", P]);
+      await scoreAll(r0, ["a_023", M], ["a_024", M]);
+      const r = await call(link("a_023", M), link("a_024", M), link("a_020", P));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toContain("but the record states that party is 'spouse' of");
+      expect(errs(r)).not.toContain("'pe_002' links another party ('spouse') to 'KWCB-666', 'KWCB-111''s parent.");
+    });
+
+    it("C11c refuses a link tied through his mother where he heads the household and she is listed as its wife", async () => {
+      await setup(research(), treeWithMother());
+      await attest(["a_001", P]);
+      await scoreAll(research(), ["a_003", M]);
+      const r = await call(link("a_003", M), link("a_001", P));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toContain(`but '${P}''s party heads the household and the record lists that party as its 'wife'.`);
+    });
+
+    it("C13 refuses raising a link whose only voucher is another untied link that vouches for it in turn", async () => {
+      await setup(research({ person_evidence: [standing("pe_010", "a_012", P), standing("pe_011", "a_005", P)] }));
+      const r = await call(update("pe_011", { confidence: "confident" }));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toContain("(its voucher 'pe_010' is not tied)");
+    });
+
     it("refuses an occupation tie read from an unlinked assertion of the voucher's persona", async () => {
-      await setup(research({ person_evidence: [standing("pe_001", "a_010", P)] }));
+      await setup(
+        research({
+          assertions: [...baseAssertions(), assertion("a_032", "src_004", REC.fatherCensus, "son", "occupation", "Clerk")],
+          person_evidence: [standing("pe_001", "a_031", P), standing("pe_002", "a_030", F)],
+        }),
+      );
       await attest(["a_001", P]);
       const r = await call(link("a_001", P));
       expect(r.ok).toBe(false);
@@ -603,7 +719,13 @@ describe("namesake cap", () => {
   describe("allows a link something in its record ties", () => {
     const ok = async (r: any) => expect(r.ok, errs(r)).toBe(true);
 
-    it("through his wife on the same census", async () => {
+    it("a tied link asserted beside an untied link written before the row", async () => {
+      await setup(research({ person_evidence: [standing("pe_001", "a_020", P)] }));
+      await attest(["a_003", W], ["a_001", P]);
+      await ok(await call(link("a_001", P), link("a_003", W)));
+    });
+
+    it("S12 through his wife on the census he heads", async () => {
       await setup();
       await attest(["a_003", W], ["a_001", P]);
       await ok(await call(link("a_001", P), link("a_003", W)));
@@ -633,6 +755,50 @@ describe("namesake cap", () => {
       await setup();
       await attest(["a_040", C], ["a_041", P], ["a_042", P], ["a_042", C]);
       await ok(await call(link("a_041", P), link("a_042", P), link("a_040", C), link("a_042", C)));
+    });
+
+    it("S6 through the child's mother assertion linked to his wife, which names her and is not role checked", async () => {
+      const r0 = research({
+        assertions: [
+          ...baseAssertions(),
+          assertion("a_045", "src_005", REC.baptism, "child", "mother", "Mary Smith"),
+          relationshipStatement("a_046", "src_005", REC.baptism, "child", "son", "father", "son of John Smith"),
+        ],
+      });
+      await setup(r0);
+      await attest(["a_041", P]);
+      await scoreAll(r0, ["a_045", W]);
+      await ok(await call(link("a_041", P), link("a_045", W)));
+    });
+
+    it("S7 through his wife, though a statement on her is typed parent while its value says child", async () => {
+      const r0 = research({
+        assertions: [...baseAssertions(), relationshipStatement("a_047", "src_001", REC.census, "wife", "parent", "head", "child of John Smith")],
+      });
+      await setup(r0);
+      await attest(["a_003", W], ["a_001", P]);
+      await ok(await call(link("a_001", P), link("a_003", W)));
+    });
+
+    it("S13 through his mother on his father's census, where he is the son and the head is unlinked", async () => {
+      const r0 = research({ assertions: [...baseAssertions(), assertion("a_035", "src_004", REC.fatherCensus, "wife", "name", "Ann Smith")] });
+      await setup(r0, treeWithMother());
+      await attest(["a_031", P]);
+      await scoreAll(r0, ["a_035", M]);
+      await ok(await call(link("a_031", P), link("a_035", M)));
+    });
+
+    it("S14 through his mother on a page of two households, where he heads the second", async () => {
+      const r0 = research({
+        assertions: [
+          ...baseAssertions(),
+          assertion("a_101", "src_001", REC.census, "head_of_household_2", "name", "John Smith"),
+          assertion("a_102", "src_001", REC.census, "wife", "name", "Ann Smith"),
+        ],
+      });
+      await setup(r0, treeWithMother());
+      await scoreAll(r0, ["a_101", P], ["a_102", M]);
+      await ok(await call(link("a_101", P), link("a_102", M)));
     });
 
     it("S4 through the child's persona alone, its father assertion on him and its name on his son", async () => {
@@ -712,26 +878,17 @@ describe("namesake cap", () => {
     });
 
     it("through a father's name linked only at 'speculative', whose occupation a standing link carries", async () => {
-      await setup(
-        research({
-          assertions: [...baseAssertions(), assertion("a_043", "src_005", REC.baptism, "father", "occupation", "Clerk")],
-          person_evidence: [standing("pe_001", "a_011", P)],
-        }),
-      );
+      const r = tiedVoucher("occupation", "Clerk");
+      r.assertions.push(assertion("a_043", "src_005", REC.baptism, "father", "occupation", "Clerk"));
+      await setup(r);
       await attest(["a_041", P], ["a_042", P]);
       await ok(await call(link("a_041", P, "speculative"), link("a_042", P)));
     });
 
     it("through the child's own address, when nothing one-party of the baptism is linked to him", async () => {
-      await setup(
-        research({
-          assertions: [
-            ...baseAssertions(),
-            assertion("a_044", "src_005", REC.baptism, "child", "residence", ADDRESS, { place: NILES }),
-          ],
-          person_evidence: [standing("pe_001", "a_012", P)],
-        }),
-      );
+      const r = tiedVoucher("residence", ADDRESS);
+      r.assertions.push(assertion("a_044", "src_005", REC.baptism, "child", "residence", ADDRESS, { place: NILES }));
+      await setup(r);
       await attest(["a_042", P]);
       await ok(await call(link("a_042", P)));
     });

@@ -2301,6 +2301,33 @@ function givenNameProblem(person: any, tree: any): string | null {
   return own ? null : "has no given name of their own, only their spouse's";
 }
 
+/** A household head's role, whose co-residents' roles state their relation. */
+const HOUSEHOLD_HEADS: ReadonlySet<string> = new Set(["head", "head_of_household", "self"]);
+/** The relation a co-resident's role states, read from the head. */
+const HOUSEHOLD_RELATION: ReadonlyMap<string, NamesakeRelation> = new Map([
+  ["wife", "spouse"], ["husband", "spouse"], ["spouse", "spouse"],
+  ["son", "child"], ["daughter", "child"], ["child", "child"],
+  ["father", "parent"], ["mother", "parent"], ["parent", "parent"],
+]);
+const INVERSE_RELATION: ReadonlyMap<string, string> = new Map([
+  ["parent", "child"], ["child", "parent"], ["spouse", "spouse"], ["sibling", "sibling"],
+]);
+const NAME_SUFFIXES: ReadonlySet<string> = new Set(["jr", "sr", "ii", "iii", "iv", "junior", "senior"]);
+
+/** A name as the co-resident exclusion compares it: the first given name and
+ *  the surname, lower case, a generational suffix dropped. */
+function nameKey(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  let v = value.toLowerCase();
+  if (v.includes(",")) {
+    const [surname, given] = v.split(",", 2);
+    v = `${given} ${surname}`;
+  }
+  const words = v.replace(/[^\p{L}\s'-]/gu, " ").split(/\s+/).filter((w) => w && !NAME_SUFFIXES.has(w));
+  if (words.length === 0) return null;
+  return words.length === 1 ? words[0] : `${words[0]} ${words[words.length - 1]}`;
+}
+
 function capNorm(v: unknown): string {
   return String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -2386,7 +2413,12 @@ export interface NamesakeVerdict {
   source: string;
   /** Why nothing ties the link, one clause each; empty when it is allowed. */
   reasons: string[];
+  /** The rules that voided a tie the link would otherwise have had: the role
+   *  check, the co-resident exclusion, or grounding. Empty when allowed. */
+  blockedBy: NamesakeBlock[];
 }
+
+export type NamesakeBlock = "role" | "co-resident" | "grounding";
 
 export interface NamesakeVerdicts {
   /** The person's namesake rows. */
@@ -2449,8 +2481,66 @@ export function namesakeVerdicts(
     judged.map((m) => [m.id, fieldKeys(assertionById.get(m.assertion_id))]),
   );
 
-  const verdicts = new Map<string, NamesakeVerdict>();
-  for (const e of opts.only ? judged.filter((m) => opts.only!.has(m.id)) : judged) {
+  // Each record party's role and name, for the role check and the co-resident
+  // exclusion.
+  const partyRole = new Map<string, string>();
+  const partyName = new Map<string, { key: string; shown: string }>();
+  for (const x of assertionById.values()) {
+    const party = capParty(x);
+    if (typeof x.record_role === "string" && !partyRole.has(party)) partyRole.set(party, x.record_role.toLowerCase());
+    if (String(x.fact_type ?? "").toLowerCase() === "name" && !partyName.has(party)) {
+      const key = nameKey(x.value);
+      if (key) partyName.set(party, { key, shown: String(x.value) });
+    }
+  }
+  /** The name of another party of `source` that `party` shares, or null. */
+  const sameNamed = (source: unknown, party: string): string | null => {
+    const own = partyName.get(party);
+    if (!own) return null;
+    for (const b of bySource.get(source) ?? []) {
+      const other = partyName.get(capParty(b));
+      if (capParty(b) !== party && other?.key === own.key) return other.shown;
+    }
+    return null;
+  };
+  /** Why the record says the co-party is not Q's `relation` to P, or null. A
+   *  two-party assertion linked to the party it names is not checked. */
+  const roleProblem = (al: any, l: any, source: unknown, speaking: ReadonlySet<string>, relation: NamesakeRelation): string | null => {
+    if (isTwoParty(al.fact_type) && !ownPartyLinkedTo(al, l, source, assertionById, liveLinks, CAP_PARTY_KEYS)) return null;
+    const party = capParty(al);
+    const listed = HOUSEHOLD_RELATION.get(String(al.record_role ?? "").toLowerCase().replace(/_\d+$/, ""));
+    for (const sp of speaking) {
+      if (HOUSEHOLD_HEADS.has(partyRole.get(sp) ?? "") && listed && listed !== relation) {
+        return `'${personId}''s party heads the household and the record lists that party as its '${al.record_role}'`;
+      }
+    }
+    const stated = new Set<string>();
+    for (const st of bySource.get(source) ?? []) {
+      if (String(st.fact_type ?? "").toLowerCase() !== "relationship") continue;
+      const type = relationshipCategory(st.structured_value?.relationship_type);
+      if (!type || type !== subjectRoleInValue(String(st.value ?? ""))) continue;
+      const related = String(st.structured_value?.related_person_role ?? "").toLowerCase();
+      for (const sp of speaking) {
+        if (capParty(st) === party && related === partyRole.get(sp)) stated.add(type);
+        else if (capParty(st) === sp && related === partyRole.get(party)) stated.add(INVERSE_RELATION.get(type) ?? type);
+      }
+    }
+    if (stated.size > 0 && !stated.has(relation)) {
+      return `the record states that party is '${[...stated].sort()[0]}' of '${personId}''s party`;
+    }
+    return null;
+  };
+
+  interface Pending {
+    e: any;
+    source: unknown;
+    tieA: NamesakeTie[];
+    reasons: string[];
+    fields: Array<{ field: CapField; value: string; vouchers: string[]; excluded: string[]; sameCall: boolean; sameNamed: string | null }>;
+    blocked: Set<NamesakeBlock>;
+  }
+  const pending: Pending[] = [];
+  for (const e of judged) {
     const a = assertionById.get(e.assertion_id);
     const source = capSource(a);
     // The record parties this link speaks for: its own, unless its assertion
@@ -2465,10 +2555,12 @@ export function namesakeVerdicts(
         if (x && !isTwoParty(x.fact_type) && capSource(x) === source) speakers.add(capParty(x));
       }
     }
+    const speaking = speakers.size > 0 ? speakers : new Set([capParty(a)]);
 
     // Tie (a).
     const ties: NamesakeTie[] = [];
     const reasons: string[] = [];
+    const blocked = new Set<NamesakeBlock>();
     let strongCoParty = false;
     for (const l of live) {
       if (l.person_id === personId) continue;
@@ -2486,9 +2578,13 @@ export function namesakeVerdicts(
       } else if (mintedFromThisSource(l.person_id, String(source), research, tree, opts.startingPersonIds)) {
         reasons.push(`${who}, '${personId}''s ${rel.relation}, but '${l.person_id}' was created from this source alone.`);
       } else {
-        const problem = givenNameProblem(rel.person, tree);
-        if (problem) {
-          reasons.push(`${who}, '${personId}''s ${rel.relation}, but '${l.person_id}' ${problem}.`);
+        const named = givenNameProblem(rel.person, tree);
+        const role = named ? null : roleProblem(al, l, source, speaking, rel.relation);
+        if (named) {
+          reasons.push(`${who}, '${personId}''s ${rel.relation}, but '${l.person_id}' ${named}.`);
+        } else if (role) {
+          reasons.push(`${who}, '${personId}''s ${rel.relation}, but ${role}.`);
+          blocked.add("role");
         } else {
           const crossRecord = arkToBareId(String(al.record_id ?? "")) !== arkToBareId(String(a.record_id ?? ""));
           ties.push({ kind: "a", link: String(l.id), relative: l.person_id, relation: rel.relation, crossRecord });
@@ -2499,37 +2595,86 @@ export function namesakeVerdicts(
       reasons.unshift("No other party of this source is linked at 'probable' or better to anyone else in the tree.");
     }
 
-    // Tie (b): this party's occupation or street address on the source, the
-    // same on another source's link to this person that was already standing.
-    {
-      const keys = new Map<string, { field: CapField; value: string }>();
-      const speaking = speakers.size > 0 ? speakers : new Set([capParty(a)]);
-      for (const b of bySource.get(source) ?? []) {
-        if (!speaking.has(capParty(b)) || absent(b)) continue;
-        for (const k of capFields(b)) keys.set(`${k.field}\u0000${k.value}`, k);
+    // Tie (b) candidates: a party the link speaks for has an occupation or
+    // street address on the source equal to one on another source's link to
+    // this person that was already standing. Neither record may list a second
+    // party of the same name, which the match could not tell apart.
+    const keys = new Map<string, { field: CapField; value: string; party: string }>();
+    for (const b of bySource.get(source) ?? []) {
+      if (!speaking.has(capParty(b)) || absent(b)) continue;
+      for (const k of capFields(b)) keys.set(`${k.field}\u0000${k.value}`, { ...k, party: capParty(b) });
+    }
+    const fields: Pending["fields"] = [];
+    for (const [key, k] of keys) {
+      const here = sameNamed(source, k.party);
+      const vouchers: string[] = [];
+      const excluded: string[] = [];
+      let shown: string | null = null;
+      let sameCall = false;
+      for (const m of judged) {
+        if (m.id === e.id || !linkFields.get(m.id)!.has(key)) continue;
+        const am = assertionById.get(m.assertion_id);
+        if (capSource(am) === source) continue;
+        if (!voucherPairs.has(pairingKey(m))) {
+          sameCall = true;
+          continue;
+        }
+        const theirs = here ?? sameNamed(capSource(am), capParty(am));
+        if (theirs) {
+          excluded.push(String(m.id));
+          shown ??= theirs;
+        } else {
+          vouchers.push(String(m.id));
+        }
       }
-      for (const [key, k] of keys) {
-        let sameCall = false;
-        for (const m of judged) {
-          if (m.id === e.id || !linkFields.get(m.id)!.has(key)) continue;
-          if (capSource(assertionById.get(m.assertion_id)) === source) continue;
-          if (voucherPairs.has(pairingKey(m))) {
-            ties.push({ kind: "b", voucher: String(m.id), field: k.field, value: k.value });
-          } else {
-            sameCall = true;
-          }
-        }
-        if (!ties.some((t) => t.kind === "b" && t.field === k.field && t.value === k.value)) {
-          reasons.push(
-            `The ${k.field} '${k.value}' on this source matches no record linked to '${personId}' at ` +
-              `'probable' or better before this call` +
-              (sameCall ? " (a link cannot vouch in the call that writes it)." : "."),
-          );
-        }
+      fields.push({ field: k.field, value: k.value, vouchers, excluded, sameCall, sameNamed: shown });
+    }
+    pending.push({ e, source, tieA: ties, reasons, fields, blocked });
+  }
+
+  // Grounding: a voucher counts only when it is itself allowed, so the allowed
+  // set grows from the links tie (a) holds, through grounded vouchers, until
+  // nothing changes.
+  const allowedIds = new Set(pending.filter((j) => j.tieA.length > 0).map((j) => String(j.e.id)));
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const j of pending) {
+      if (allowedIds.has(String(j.e.id)) || !j.fields.some((f) => f.vouchers.some((v) => allowedIds.has(v)))) continue;
+      allowedIds.add(String(j.e.id));
+      grew = true;
+    }
+  }
+
+  const verdicts = new Map<string, NamesakeVerdict>();
+  for (const j of pending) {
+    if (opts.only && !opts.only.has(j.e.id)) continue;
+    const ties: NamesakeTie[] = [...j.tieA];
+    const reasons = [...j.reasons];
+    for (const f of j.fields) {
+      const grounded = f.vouchers.filter((v) => allowedIds.has(v));
+      for (const v of grounded) ties.push({ kind: "b", voucher: v, field: f.field, value: f.value });
+      if (grounded.length > 0) continue;
+      const head =
+        `The ${f.field} '${f.value}' on this source matches no record linked to '${personId}' at ` +
+        `'probable' or better before this call that is itself tied`;
+      if (f.excluded.length > 0) {
+        reasons.push(`${head} (its record lists another '${f.sameNamed}', so the match cannot tell them apart).`);
+        if (f.excluded.some((v) => allowedIds.has(v))) j.blocked.add("co-resident");
+      } else if (f.vouchers.length > 0) {
+        reasons.push(`${head} (its voucher '${f.vouchers[0]}' is not tied).`);
+        j.blocked.add("grounding");
+      } else {
+        reasons.push(head + (f.sameCall ? " (a link cannot vouch in the call that writes it)." : "."));
       }
     }
-
-    verdicts.set(e.id, { allowed: ties.length > 0, ties, source: String(source), reasons: ties.length > 0 ? [] : reasons });
+    const allowed = ties.length > 0;
+    verdicts.set(j.e.id, {
+      allowed,
+      ties,
+      source: String(j.source),
+      reasons: allowed ? [] : reasons,
+      blockedBy: allowed ? [] : [...j.blocked].sort(),
+    });
   }
   return { rows, verdicts };
 }
@@ -2562,8 +2707,8 @@ function namesakeRefusal(
     `A recorded namesake caps this link at 'speculative' whatever the match score. Write it as ` +
     `'speculative' naming the namesake in the rationale; or, if the record belongs to '${p}', first link ` +
     `what ties it: another party of this source to a spouse, parent or child of '${p}' (in this call or ` +
-    `earlier), or a record with the same street address or occupation linked to '${p}' at 'probable' or ` +
-    `better before this call.`
+    `earlier), or, in an earlier call, a record with the same street address or occupation that is itself ` +
+    `tied to '${p}'.`
   );
 }
 

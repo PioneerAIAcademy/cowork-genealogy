@@ -238,6 +238,7 @@ function section1(states: FinalState[]): void {
       mustFire: 0, mustFireRefused: 0,
       tieBOnly: 0, occupationOnly: 0, crossRecordOnly: 0, crossRecordAny: 0, twoDocOnly: 0, twoDocAny: 0,
       clears14b: 0, adds14b: 0, clearsR: 0, addsR: 0, selfTieOnly: 0,
+      voided: { grounding: 0, "co-resident": 0, role: 0 } as Record<string, number>,
     };
     const crossRecordOnly: string[] = [];
     const crossByLabel: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
@@ -268,6 +269,7 @@ function section1(states: FinalState[]): void {
           if (isSubject && MUST_FIRE.has(s.slug)) c.mustFire += 1;
           if (!verdict.allowed) {
             c.refused += 1;
+            for (const b of verdict.blockedBy) c.voided[b] += 1;
             if (isSubject) {
               c.subjectRefused += 1;
               c.byLabel[labelOf(s.slug)] += 1;
@@ -319,6 +321,10 @@ function section1(states: FinalState[]): void {
       `      item 14b (the two-party set) clears ${c.clears14b} and adds ${c.adds14b} refusals; ` +
         `R = source rather than one source per record clears ${c.clearsR} and adds ${c.addsR}; ` +
         `allowed only through the link's own assertion linked to a relative ${c.selfTieOnly}`,
+    );
+    console.log(
+      `      refused links where a rule voided a tie they would otherwise have had: grounding ${c.voided.grounding}, ` +
+        `the co-resident exclusion ${c.voided["co-resident"]}, the role check ${c.voided.role}`,
     );
     if (VERBOSE) for (const l of crossRecordOnly) console.log(`      cross-record only: ${l}`);
     floor(c.judged > 0 && c.refused > 0, `§1 ${bracket} judged ${c.judged} and refused ${c.refused}`);

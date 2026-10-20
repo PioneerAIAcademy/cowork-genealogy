@@ -1,6 +1,6 @@
 {
   "guard": "namesake-tie",
-  "description": "A probable or confident person_evidence link to a person with a recorded namesake (namesakes[]) stands only when something in its source ties it to that person: (a) another party of the same source linked at probable or better to the person's spouse, parent or child, who has a given name of their own (not a placeholder, nor only their spouse's given name) and was not made from that source alone; or (b) an occupation or street address of the person's party on that source equal to the same field on another source's link to the person. A link whose assertion is absent basis is never judged and never ties. Replayed through namesakeTieInvariants, a static twin of research_append's write-time check namesakeCallCheck, with every probable or confident link to the person as a possible voucher. Which links a call asserts, and that a voucher must stand before the call, are pinned by tests/tools/research-append-namesake.test.ts.",
+  "description": "A probable or confident person_evidence link to a person with a recorded namesake (namesakes[]) stands only when something in its source ties it to that person: (a) another party of the same source linked at probable or better to the person's spouse, parent or child, who has a given name of their own (not a placeholder, nor only their spouse's given name) and was not made from that source alone; or (b) an occupation or street address of the person's party on that source equal to the same field on another source's link to the person, a link itself allowed (grounding), when neither record lists a second party of that name. A family co-party does not tie when the record's household role or a statement whose type and value agree gives a different relation than the tree. A link whose assertion is absent basis is never judged and never ties. Replayed through namesakeTieInvariants, a static twin of research_append's write-time check namesakeCallCheck, with every probable or confident link to the person as a possible voucher. Which links a call asserts, and that a voucher must stand before the call, are pinned by tests/tools/research-append-namesake.test.ts.",
   "format": "expect: fire | silent, judged for the person_evidence entry named by `write` in `research` (the document as it stands after the write). `tree` holds the tree. The tree's people are FamilySearch-shaped ids, since the replay passes no starting tree. A case with `known_let_through: true` is silent although the link is the namesake's: a let-through the guard accepts, labelled so it is never read as a correct allow.",
   "section": "person_evidence",
   "cases": [
@@ -588,7 +588,7 @@
       "id": "residence-on-a-village-name",
       "expect": "fire",
       "shape": "residence-not-a-street-address",
-      "why": "Both records give the residence as a village name, with no street address: every family in the village shares it (georg 'Lidečko').",
+      "why": "Both records give the residence as a village name, with no street address: every family in the village shares it (georg 'Lidečko'); the voucher is P's entry on his father's census, tied by his father.",
       "write": "pe_001",
       "research": {
         "namesakes": [
@@ -627,11 +627,20 @@
             "id": "a_002",
             "source_id": "src_006",
             "record_id": "ark:/61903/1:1:REC6-006",
-            "record_role": "principal",
+            "record_role": "son",
             "fact_type": "residence",
             "value": "Lidečko",
             "record_basis": "stated",
             "place": "Vsetín, Zlín, Czech Republic"
+          },
+          {
+            "id": "a_090",
+            "source_id": "src_006",
+            "record_id": "ark:/61903/1:1:REC6-006",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "Thomas Smith",
+            "record_basis": "stated"
           }
         ],
         "person_evidence": [
@@ -646,6 +655,13 @@
             "id": "pe_002",
             "assertion_id": "a_002",
             "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_090",
+            "assertion_id": "a_090",
+            "person_id": "KWCB-333",
             "confidence": "probable",
             "superseded_by": null
           }
@@ -736,7 +752,7 @@
       "id": "residence-on-a-date",
       "expect": "fire",
       "shape": "residence-is-a-date",
-      "why": "The residence value both records carry is a census date, '15 Mai 1880', not a place: its day is no house number.",
+      "why": "The residence value both records carry is a census date, '15 Mai 1880', not a place: its day is no house number; the voucher is P's entry on his father's census, tied by his father.",
       "write": "pe_001",
       "research": {
         "namesakes": [
@@ -774,9 +790,18 @@
             "id": "a_002",
             "source_id": "src_006",
             "record_id": "ark:/61903/1:1:REC6-006",
-            "record_role": "principal",
+            "record_role": "son",
             "fact_type": "residence",
             "value": "15 Mai 1880",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_090",
+            "source_id": "src_006",
+            "record_id": "ark:/61903/1:1:REC6-006",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "Thomas Smith",
             "record_basis": "stated"
           }
         ],
@@ -792,6 +817,13 @@
             "id": "pe_002",
             "assertion_id": "a_002",
             "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_090",
+            "assertion_id": "a_090",
+            "person_id": "KWCB-333",
             "confidence": "probable",
             "superseded_by": null
           }
@@ -882,7 +914,7 @@
       "id": "residence-on-a-militia-district-number",
       "expect": "fire",
       "shape": "residence-is-a-division-number",
-      "why": "Both records give the residence as 'Militia District No. 588, Hall, Georgia': the number is the division's, which every household in it shares, not a house's.",
+      "why": "Both records give the residence as 'Militia District No. 588, Hall, Georgia': the number is the division's, which every household in it shares, not a house's; the voucher is P's entry on his father's census, tied by his father.",
       "write": "pe_001",
       "research": {
         "namesakes": [
@@ -930,11 +962,20 @@
             "id": "a_003",
             "source_id": "src_001",
             "record_id": "ark:/61903/1:1:REC1-001",
-            "record_role": "principal",
+            "record_role": "son",
             "fact_type": "residence",
             "value": "Militia District No. 588, Hall, Georgia",
             "record_basis": "stated",
             "place": "Niles, Trumbull, Ohio, United States"
+          },
+          {
+            "id": "a_090",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:REC1-001",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "Thomas Smith",
+            "record_basis": "stated"
           }
         ],
         "person_evidence": [
@@ -949,6 +990,13 @@
             "id": "pe_002",
             "assertion_id": "a_003",
             "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_090",
+            "assertion_id": "a_090",
+            "person_id": "KWCB-333",
             "confidence": "probable",
             "superseded_by": null
           }
@@ -1039,7 +1087,7 @@
       "id": "residence-on-a-ward-and-enumeration-district",
       "expect": "fire",
       "shape": "residence-is-a-division-number",
-      "why": "Both records give the residence as 'Rochester Ward 12 ED 83, Monroe County, New York, 1900': the number is the division's, which every household in it shares, not a house's.",
+      "why": "Both records give the residence as 'Rochester Ward 12 ED 83, Monroe County, New York, 1900': the number is the division's, which every household in it shares, not a house's; the voucher is P's entry on his father's census, tied by his father.",
       "write": "pe_001",
       "research": {
         "namesakes": [
@@ -1087,11 +1135,20 @@
             "id": "a_003",
             "source_id": "src_001",
             "record_id": "ark:/61903/1:1:REC1-001",
-            "record_role": "principal",
+            "record_role": "son",
             "fact_type": "residence",
             "value": "Rochester Ward 12 ED 83, Monroe County, New York, 1900",
             "record_basis": "stated",
             "place": "Niles, Trumbull, Ohio, United States"
+          },
+          {
+            "id": "a_090",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:REC1-001",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "Thomas Smith",
+            "record_basis": "stated"
           }
         ],
         "person_evidence": [
@@ -1106,6 +1163,13 @@
             "id": "pe_002",
             "assertion_id": "a_003",
             "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_090",
+            "assertion_id": "a_090",
+            "person_id": "KWCB-333",
             "confidence": "probable",
             "superseded_by": null
           }
@@ -1196,7 +1260,7 @@
       "id": "voucher-on-the-same-source",
       "expect": "fire",
       "shape": "voucher-on-the-same-source",
-      "why": "The voter register's own occupation, linked to P, cannot vouch for the register's name: a voucher must be another source's link.",
+      "why": "A boarder persona of the census is linked to P through its occupation, and is itself tied through its address; the head's occupation matches only that same-source link, which cannot vouch for its own record.",
       "write": "pe_001",
       "research": {
         "namesakes": [
@@ -1214,6 +1278,10 @@
           {
             "id": "src_001",
             "gedcomx_source_description_id": "S1"
+          },
+          {
+            "id": "src_004",
+            "gedcomx_source_description_id": "S4"
           }
         ],
         "assertions": [
@@ -1221,7 +1289,7 @@
             "id": "a_001",
             "source_id": "src_001",
             "record_id": "ark:/61903/1:1:REC1-001",
-            "record_role": "principal",
+            "record_role": "head",
             "fact_type": "name",
             "value": "John Smith",
             "record_basis": "stated"
@@ -1230,9 +1298,47 @@
             "id": "a_002",
             "source_id": "src_001",
             "record_id": "ark:/61903/1:1:REC1-001",
-            "record_role": "principal",
+            "record_role": "head",
             "fact_type": "occupation",
             "value": "Clerk",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:REC1-001",
+            "record_role": "boarder",
+            "fact_type": "occupation",
+            "value": "Clerk",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_004",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:REC1-001",
+            "record_role": "boarder",
+            "fact_type": "residence",
+            "value": "530 Baldwin, Niles, Ohio",
+            "record_basis": "stated",
+            "place": "Niles, Trumbull, Ohio, United States"
+          },
+          {
+            "id": "a_005",
+            "source_id": "src_004",
+            "record_id": "ark:/61903/1:1:REC4-004",
+            "record_role": "son",
+            "fact_type": "residence",
+            "value": "530 Baldwin, Niles, Ohio",
+            "record_basis": "stated",
+            "place": "Niles, Trumbull, Ohio, United States"
+          },
+          {
+            "id": "a_006",
+            "source_id": "src_004",
+            "record_id": "ark:/61903/1:1:REC4-004",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "Thomas Smith",
             "record_basis": "stated"
           }
         ],
@@ -1246,8 +1352,22 @@
           },
           {
             "id": "pe_002",
-            "assertion_id": "a_002",
+            "assertion_id": "a_003",
             "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_003",
+            "assertion_id": "a_005",
+            "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_004",
+            "assertion_id": "a_006",
+            "person_id": "KWCB-333",
             "confidence": "probable",
             "superseded_by": null
           }
@@ -1763,6 +1883,339 @@
             "type": "Couple",
             "person1": "KWCB-333",
             "person2": "KWCB-334"
+          }
+        ]
+      }
+    },
+    {
+      "id": "co-resident-street-address",
+      "expect": "fire",
+      "shape": "co-resident-street-address",
+      "why": "The census gives the same street address as P's entry on his father's census, tied there by his father, but that record also lists a lodger named John Smith, so the address cannot tell the two apart.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [
+          {
+            "id": "ns_001",
+            "person_id": "KWCB-111",
+            "name": "John Smith",
+            "place": "San Francisco, California, United States",
+            "time_period": "born about 1873",
+            "record_ids": [],
+            "created": "2026-10-01"
+          }
+        ],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          },
+          {
+            "id": "src_004",
+            "gedcomx_source_description_id": "S4"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_004",
+            "record_id": "ark:/61903/1:1:REC4-004",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "John Smith",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_004",
+            "record_id": "ark:/61903/1:1:REC4-004",
+            "record_role": "head",
+            "fact_type": "residence",
+            "value": "530 Baldwin, Niles, Ohio",
+            "record_basis": "stated",
+            "place": "Niles, Trumbull, Ohio, United States"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:REC1-001",
+            "record_role": "son",
+            "fact_type": "residence",
+            "value": "530 Baldwin, Niles, Ohio",
+            "record_basis": "stated",
+            "place": "Niles, Trumbull, Ohio, United States"
+          },
+          {
+            "id": "a_006",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:REC1-001",
+            "record_role": "son",
+            "fact_type": "name",
+            "value": "John Smith",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_004",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:REC1-001",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "Thomas Smith",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_005",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:REC1-001",
+            "record_role": "lodger",
+            "fact_type": "name",
+            "value": "John Smith",
+            "record_basis": "stated"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_003",
+            "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_003",
+            "assertion_id": "a_004",
+            "person_id": "KWCB-333",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWCB-111",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-222",
+            "names": [
+              {
+                "given": "Mary",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-333",
+            "names": [
+              {
+                "given": "Thomas",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-334",
+            "names": [
+              {
+                "given": "Ann",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-444",
+            "names": [
+              {
+                "given": "William",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-555",
+            "names": [
+              {
+                "given": "Peter",
+                "surname": "Jones"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "Couple",
+            "person1": "KWCB-111",
+            "person2": "KWCB-222"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-333",
+            "child": "KWCB-111"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-334",
+            "child": "KWCB-111"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-111",
+            "child": "KWCB-444"
+          }
+        ]
+      }
+    },
+    {
+      "id": "role-inconsistent-co-party",
+      "expect": "fire",
+      "shape": "role-inconsistent-co-party",
+      "why": "P heads the census household and its wife is linked to P's mother: the record lists her as his wife, which disagrees with the tree, as on a census of P's father linked to P.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [
+          {
+            "id": "ns_001",
+            "person_id": "KWCB-111",
+            "name": "John Smith",
+            "place": "San Francisco, California, United States",
+            "time_period": "born about 1873",
+            "record_ids": [],
+            "created": "2026-10-01"
+          }
+        ],
+        "sources": [
+          {
+            "id": "src_004",
+            "gedcomx_source_description_id": "S4"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_004",
+            "record_id": "ark:/61903/1:1:REC4-004",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "John Smith",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_004",
+            "record_id": "ark:/61903/1:1:REC4-004",
+            "record_role": "wife",
+            "fact_type": "name",
+            "value": "Ann Smith",
+            "record_basis": "stated"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "KWCB-334",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWCB-111",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-222",
+            "names": [
+              {
+                "given": "Mary",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-333",
+            "names": [
+              {
+                "given": "Thomas",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-334",
+            "names": [
+              {
+                "given": "Ann",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-444",
+            "names": [
+              {
+                "given": "William",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-555",
+            "names": [
+              {
+                "given": "Peter",
+                "surname": "Jones"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "Couple",
+            "person1": "KWCB-111",
+            "person2": "KWCB-222"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-333",
+            "child": "KWCB-111"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-334",
+            "child": "KWCB-111"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-111",
+            "child": "KWCB-444"
           }
         ]
       }
@@ -4676,6 +5129,314 @@
           {
             "id": "pe_002",
             "assertion_id": "a_001",
+            "person_id": "KWCB-222",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWCB-111",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-222",
+            "names": [
+              {
+                "given": "Mary",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-333",
+            "names": [
+              {
+                "given": "Thomas",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-334",
+            "names": [
+              {
+                "given": "Ann",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-444",
+            "names": [
+              {
+                "given": "William",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-555",
+            "names": [
+              {
+                "given": "Peter",
+                "surname": "Jones"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "Couple",
+            "person1": "KWCB-111",
+            "person2": "KWCB-222"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-333",
+            "child": "KWCB-111"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-334",
+            "child": "KWCB-111"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-111",
+            "child": "KWCB-444"
+          }
+        ]
+      }
+    },
+    {
+      "id": "two-party-co-party",
+      "expect": "silent",
+      "why": "A baptism: the child's mother assertion names the mother and is linked to P's wife, so it is not role checked, though the child's statement makes the child P's son.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [
+          {
+            "id": "ns_001",
+            "person_id": "KWCB-111",
+            "name": "John Smith",
+            "place": "San Francisco, California, United States",
+            "time_period": "born about 1873",
+            "record_ids": [],
+            "created": "2026-10-01"
+          }
+        ],
+        "sources": [
+          {
+            "id": "src_005",
+            "gedcomx_source_description_id": "S5"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_005",
+            "record_id": "ark:/61903/1:1:REC5-005",
+            "record_role": "father",
+            "fact_type": "name",
+            "value": "John Smith",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_005",
+            "record_id": "ark:/61903/1:1:REC5-005",
+            "record_role": "child",
+            "fact_type": "mother",
+            "value": "Mary Smith",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_005",
+            "record_id": "ark:/61903/1:1:REC5-005",
+            "record_role": "child",
+            "fact_type": "relationship",
+            "value": "son of John Smith",
+            "record_basis": "stated",
+            "structured_value": {
+              "relationship_type": "son",
+              "related_person_role": "father"
+            }
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "KWCB-222",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWCB-111",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-222",
+            "names": [
+              {
+                "given": "Mary",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-333",
+            "names": [
+              {
+                "given": "Thomas",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-334",
+            "names": [
+              {
+                "given": "Ann",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-444",
+            "names": [
+              {
+                "given": "William",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-555",
+            "names": [
+              {
+                "given": "Peter",
+                "surname": "Jones"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "Couple",
+            "person1": "KWCB-111",
+            "person2": "KWCB-222"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-333",
+            "child": "KWCB-111"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-334",
+            "child": "KWCB-111"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-111",
+            "child": "KWCB-444"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mis-typed-statement",
+      "expect": "silent",
+      "why": "P heads the census and its wife is linked to P's wife. A statement on her is typed parent while its value says child, so it is not read.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [
+          {
+            "id": "ns_001",
+            "person_id": "KWCB-111",
+            "name": "John Smith",
+            "place": "San Francisco, California, United States",
+            "time_period": "born about 1873",
+            "record_ids": [],
+            "created": "2026-10-01"
+          }
+        ],
+        "sources": [
+          {
+            "id": "src_004",
+            "gedcomx_source_description_id": "S4"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_004",
+            "record_id": "ark:/61903/1:1:REC4-004",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "John Smith",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_004",
+            "record_id": "ark:/61903/1:1:REC4-004",
+            "record_role": "wife",
+            "fact_type": "name",
+            "value": "Mary Smith",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_004",
+            "record_id": "ark:/61903/1:1:REC4-004",
+            "record_role": "wife",
+            "fact_type": "relationship",
+            "value": "child of John Smith",
+            "record_basis": "stated",
+            "structured_value": {
+              "relationship_type": "parent",
+              "related_person_role": "head"
+            }
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
             "person_id": "KWCB-222",
             "confidence": "probable",
             "superseded_by": null
