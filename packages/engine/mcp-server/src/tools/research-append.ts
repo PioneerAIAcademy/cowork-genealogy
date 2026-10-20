@@ -2714,8 +2714,10 @@ function declarationStatusInvariants(entry: any): string[] {
  *  ADR-0011 retired the overridable-doctrine tier on 2026-08-24 and NO gate
  *  carries an override. What still bites is the route: measured 2026-08-23, no
  *  skill can move a plan item out of `in_progress` on the FamilySearch path, so
- *  a researcher who believes the search is done has no way to say so. Issue
- *  #1821 owns that fix.
+ *  a researcher who believes the search is done had no way to say so. Since
+ *  issue #3516, `extraction_append` completes an item once a record its
+ *  `record_search` found is extracted; an item whose searches all found
+ *  nothing still waits on research-plan's Dispose.
  *
  *  **`planned` BLOCKS, decided 2026-10-05 on issue #1830.** It did not until
  *  then. Dallan's `c78efb0b7` (#1847, 23 August) put "`planned` does NOT block"
@@ -2811,12 +2813,12 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
  *  (issue #1830): an undisposed item leaves the record unable to say whether it
  *  was answered by what is already held or simply never run. The two gates ask
  *  different questions of the same plan, so the status set is the caller's. */
-function activePlanItems(
+export function activePlanItems(
   research: any,
   includePlan: (plan: any) => boolean,
   statuses: readonly string[] = ["in_progress"],
-): { itemId: string; questionId: unknown; status: string }[] {
-  const found: { itemId: string; questionId: unknown; status: string }[] = [];
+): { itemId: string; planId: string; questionId: unknown; status: string }[] {
+  const found: { itemId: string; planId: string; questionId: unknown; status: string }[] = [];
   for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
     if (!plan || !includePlan(plan)) continue;
     // ONLY the active plan blocks, and this is what keeps the gate escapable.
@@ -2834,7 +2836,7 @@ function activePlanItems(
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
       if (typeof item?.id !== "string" || typeof item?.status !== "string") continue;
       if (statuses.includes(item.status)) {
-        found.push({ itemId: item.id, questionId: plan.question_id, status: item.status });
+        found.push({ itemId: item.id, planId: plan.id, questionId: plan.question_id, status: item.status });
       }
     }
   }
@@ -3100,6 +3102,49 @@ export function planItemCapturePendingInvariants(entry: any, research: any): str
       `cannot be reached, skip it with skip_category: "inaccessible"; if the user asked to skip ` +
       `it, skip_category: "user_declined"; otherwise leave it 'in_progress' until the capture ` +
       `arrives as a later log entry (or re-plan). See #1226.`,
+  ];
+}
+
+/** The search tools whose log entry, tied to a plan item, means the item's
+ *  search ran. An image browse logs `image_search`; a volume lookup or one page
+ *  read is not the item's search. */
+const SEARCH_THAT_RAN = new Set(["record_search", "fulltext_search", "image_search"]);
+
+/** A search that ran is never marked skipped (lead, 2026-10-20, issue #3516).
+ *  `skipped` says nothing was searched, and research-exhaustiveness reads a
+ *  disposed item as settled, so a skip after a search misstates the record. A
+ *  searched item is `completed` instead, which passes attribution because the
+ *  search's entry names the item. An `error` entry is not a search that ran,
+ *  and an external hand-off counts only once its capture arrived.
+ *
+ *  **One exemption: the deferred external hand-off.** search-records runs
+ *  three nil searches, then hands the item to search-external-sites, which,
+ *  with no user present to capture, logs a deferred entry and skips the item
+ *  `inaccessible`. `completed` is refused there by capture-pending, so refusing
+ *  the skip too would leave the item `in_progress` for good and the question
+ *  undeclarable (lead, 2026-10-20). So wherever capture-pending would refuse
+ *  `completed`, this rule stays silent and capture-pending answers alone: it
+ *  lets an `inaccessible` or `user_declined` skip stand, and refuses any other
+ *  category with a message naming those two. Capture-pending itself decides
+ *  which entry is latest, so the two rules cannot disagree. */
+export function planItemSearchedSkipInvariants(entry: any, research: any): string[] {
+  if (entry?.status !== "skipped") return [];
+  const pid = entry?.id;
+  if (typeof pid !== "string" || pid === "") return [];
+  const log = Array.isArray(research?.log) ? research.log : [];
+  const ran = log.find(
+    (e: any) =>
+      e &&
+      e.plan_item_id === pid &&
+      ((SEARCH_THAT_RAN.has(e.tool) && e.outcome !== "error") ||
+        (e.tool === "external_site" && e.external_site?.capture_received === true)),
+  );
+  if (!ran) return [];
+  if (planItemCapturePendingInvariants({ ...entry, status: "completed" }, research).length > 0) return [];
+  return [
+    `plan_items[${pid}]: ${ran.id} (${ran.tool}, ${ran.outcome}) shows this item's search ran, ` +
+      `so it cannot be marked 'skipped', which says nothing was searched. Set it to 'completed' ` +
+      `instead: ${ran.id} names this item, so the completion is attributed.`,
   ];
 }
 
@@ -4502,6 +4547,7 @@ function applyOne(
   // An update's link pair and retired state as they stood BEFORE its fields merge,
   // so the rejected-link gate below can tell an edit from a re-link.
   let priorPair: { assertion_id: unknown; person_id: unknown; superseded_by: unknown } | undefined;
+  let keptCompletedWarning: string | undefined;
 
   if (op.op === "append") {
     const entry = op.entry;
@@ -4586,6 +4632,52 @@ function applyOne(
       }
     }
 
+    // A completed plan item stays completed. search-records writes
+    // `in_progress` after every search it logs, and extraction_append completes
+    // the item once a record it found is extracted, so a later search on the
+    // same item would otherwise reopen it. The status is dropped from the op,
+    // which also keeps every status-gated arm below from reading it as touched.
+    if (
+      section === "plan_items" &&
+      existing.status === "completed" &&
+      op.fields.status === "in_progress"
+    ) {
+      const { status: _dropped, ...rest } = op.fields;
+      op.fields = rest;
+      keptCompletedWarning = `plan item '${op.entryId}' is already completed; left completed`;
+      if (Object.keys(rest).filter((k) => k !== "id").length === 0) {
+        return { section, op: op.op, entryId: op.entryId, noop: true, warnings: [keptCompletedWarning] };
+      }
+    }
+    // The same rule for items re-sent inline on a `plans` update, which reach
+    // `items[]` directly: an item stored `completed` and sent `in_progress` is
+    // kept `completed`. When that leaves the op changing nothing, it is a no-op.
+    if (section === "plans" && Array.isArray(op.fields.items)) {
+      const storedStatus = new Map<unknown, unknown>(
+        (Array.isArray(existing.items) ? existing.items : [])
+          .filter((it: any) => it && typeof it.id === "string")
+          .map((it: any) => [it.id, it.status]),
+      );
+      const kept: string[] = [];
+      const items = op.fields.items.map((it: any) => {
+        if (it && storedStatus.get(it.id) === "completed" && it.status === "in_progress") {
+          kept.push(it.id);
+          return { ...it, status: "completed" };
+        }
+        return it;
+      });
+      if (kept.length > 0) {
+        op.fields = { ...op.fields, items };
+        keptCompletedWarning = kept.map((id) => `plan item '${id}' is already completed; left completed`).join("; ");
+        const changesNothing = Object.entries(op.fields).every(
+          ([k, v]) => k === "id" || JSON.stringify(existing[k]) === JSON.stringify(v),
+        );
+        if (changesNothing) {
+          return { section, op: op.op, entryId: op.entryId, noop: true, warnings: [keptCompletedWarning] };
+        }
+      }
+    }
+
     for (const [k, v] of Object.entries(op.fields)) {
       if (k === "id") continue;
       existing[k] = v;
@@ -4598,8 +4690,17 @@ function applyOne(
     // the pair is checked against the value already on disk — which is the case
     // the rule exists for: flipping `informant_proximity` to "unknown" while
     // leaving a stale `secondary` behind is exactly how the 248 corpus
-    // violations were reached.
-    validateInformantQualityFloor(existing);
+    // violations were reached. Scoped to ops that set one of the pair, like the
+    // relationship-direction check below: an update that touches neither (a
+    // question tie, a notes edit) says nothing about the pair, and re-checking
+    // a legacy pair there would refuse the tie and leave the question with no
+    // assertions, sent back to extraction on every pass.
+    if (
+      Object.prototype.hasOwnProperty.call(op.fields, "informant_proximity") ||
+      Object.prototype.hasOwnProperty.call(op.fields, "information_quality")
+    ) {
+      validateInformantQualityFloor(existing);
+    }
     // Scoped to ops that set one of the three inputs it compares.
     // `fact_type` is one of them because it decides whether the guard
     // applies at all, so a retype INTO `relationship` would otherwise move
@@ -4632,7 +4733,7 @@ function applyOne(
   // Warn-only advisories: collected here, surfaced on the successful response's
   // validation.warnings (via the caller's flatMap over AppliedOp.warnings), never
   // thrown. Distinct from invariantErrors, which reject the write (#1006).
-  const opWarnings: string[] = [];
+  const opWarnings: string[] = keptCompletedWarning ? [keptCompletedWarning] : [];
   // A question may only reach `resolved` once a proof summary for it exists.
   // Same "only when THIS op sets it" discipline as the proof_summaries block
   // below — an unrelated update to an already-resolved question must not
@@ -4777,6 +4878,7 @@ function applyOne(
         // no prior rationale to overwrite, so only the category clause applies.
         if (item && !alreadySkipped.has(item.id)) {
           invariantErrors.push(...planItemSkipInvariants(item, {}, true));
+          invariantErrors.push(...planItemSearchedSkipInvariants(item, research));
         }
         // The capture-pending guard reaches the same field for the same reason:
         // a `skipped`/`completed` item set inline on a `plans` op would bypass
@@ -4849,6 +4951,7 @@ function applyOne(
           storedItem?.rationale,
         ),
       );
+      invariantErrors.push(...planItemSearchedSkipInvariants(resultEntry, research));
     }
   }
   // The `supported` evidence floor (#2086, lead ruling 2026-09-07). Gated on

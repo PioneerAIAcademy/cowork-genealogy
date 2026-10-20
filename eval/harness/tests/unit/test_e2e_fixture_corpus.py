@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from e2e.validate_fixture import DEFAULT_FIXTURES_ROOT, lint_fixture
+from e2e.validate_fixture import DEFAULT_FIXTURES_ROOT, lint_fixture, record_hint_tree_errors
 
 
 FIXTURE_DIRS = (
@@ -64,6 +64,57 @@ def test_starting_tree_is_a_subset_of_its_unstripped_tree(fixture_dir: Path):
         for p in _load(fixture_dir, "starting-tree.gedcomx.json").get("persons") or []
     }
     assert starting_pids <= unstripped_pids
+
+
+# --- a record-hint fixture strips nothing ------------------------------
+#
+# The check itself is `record_hint_tree_errors`, a hard error inside
+# `lint_fixture`, so `test_committed_fixture_passes_the_hard_gates` and
+# `make e2e-validate` both run it on every committed fixture. These cases prove
+# it both ways on scratch fixtures.
+
+
+def _record_hint_copy(tmp_path: Path, tree: dict, unstripped_text: str | None, genre: str = "record-hint") -> Path:
+    d = tmp_path / "fx"
+    d.mkdir()
+    (d / "fixture.json").write_text(json.dumps({"genre": genre}), encoding="utf-8")
+    (d / "starting-tree.gedcomx.json").write_text(json.dumps(tree), encoding="utf-8")
+    if unstripped_text is not None:
+        (d / "unstripped-tree.gedcomx.json").write_text(unstripped_text, encoding="utf-8")
+    return d
+
+
+_TREE = {
+    "persons": [{"id": "P1", "names": [{"given": "Ann"}], "sources": [{"ref": "S1"}, {"ref": "S2"}]}],
+    "relationships": [],
+    "sources": [{"id": "S1", "title": "a"}, {"id": "S2", "title": "b"}],
+}
+
+
+def _stripped() -> dict:
+    stripped = json.loads(json.dumps(_TREE))
+    stripped["persons"][0]["sources"] = [{"ref": "S1"}]
+    stripped["sources"] = [{"id": "S1", "title": "a"}]
+    return stripped
+
+
+def test_a_stripped_source_fails_the_record_hint_check(tmp_path):
+    errors = record_hint_tree_errors(_record_hint_copy(tmp_path, _stripped(), json.dumps(_TREE)))
+    assert len(errors) == 1 and "differ" in errors[0]
+
+
+def test_a_missing_unstripped_tree_fails_the_record_hint_check(tmp_path):
+    errors = record_hint_tree_errors(_record_hint_copy(tmp_path, _TREE, None))
+    assert len(errors) == 1 and "--none" in errors[0]
+
+
+def test_a_reformatted_identical_tree_passes_the_record_hint_check(tmp_path):
+    reordered = {k: _TREE[k] for k in reversed(list(_TREE))}
+    assert record_hint_tree_errors(_record_hint_copy(tmp_path, _TREE, json.dumps(reordered, indent=4))) == []
+
+
+def test_a_strip_fixture_is_not_held_to_record_hint_equality(tmp_path):
+    assert record_hint_tree_errors(_record_hint_copy(tmp_path, _stripped(), json.dumps(_TREE), genre="strip")) == []
 
 
 # --- avoid-guard: which fixtures stay structurally unpassable ------------

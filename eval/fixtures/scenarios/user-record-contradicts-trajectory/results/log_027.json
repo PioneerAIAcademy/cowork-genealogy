@@ -1,0 +1,242 @@
+{
+  "log_id": "log_027",
+  "tool": "record_read",
+  "retrieved": "2026-10-05T19:22:41.673Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:MCCS-35F"
+    },
+    "results": [
+      {
+        "recordId": "MCCS-35F",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_226047435",
+              "ark": "ark:/61903/1:1:MCCS-35F",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "74216d43-6774-463b-b93b-d57d53a30c4e",
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Robert"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Occupation",
+                  "value": "Timber Merchant"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "id": "7ea2af6a-65a7-4e5a-be63-09d076198f98",
+                  "type": "Birth",
+                  "date": "1824",
+                  "standard_date": "1824",
+                  "place": "Kentucky, United States"
+                },
+                {
+                  "id": "8c56d978-84e8-4be9-943d-93d5abccb35b",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Catlettsburg, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_226047436",
+              "ark": "ark:/61903/1:1:MCCS-35N",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "e5a558ad-1436-40f6-9122-a8f08dfe23e9",
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Margaret"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Keeping House"
+                },
+                {
+                  "id": "e3d36f42-8280-49b6-a1fd-741ae7261c05",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Catlettsburg, Boyd, Kentucky, United States"
+                },
+                {
+                  "id": "425be723-c2bb-4527-953f-2c6d0f9c1261",
+                  "type": "Birth",
+                  "date": "1842",
+                  "standard_date": "1842",
+                  "place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_226047437",
+              "ark": "ark:/61903/1:1:MCCS-35J",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "c0251fad-1118-4f14-862f-19925237fa77",
+                  "type": "BirthName",
+                  "surname": "Rucker",
+                  "given": "Thursa A."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "id": "49763a1e-4bab-42d1-aa69-e3fc29a21d3a",
+                  "type": "Birth",
+                  "date": "1841",
+                  "standard_date": "1841",
+                  "place": "Kentucky, United States"
+                },
+                {
+                  "id": "f078ed37-39f0-458e-b503-fcd49f10b4e4",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Catlettsburg, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "478b839d-44a5-4ab8-b440-23e37583a909",
+              "type": "Couple",
+              "person1": "p_226047435",
+              "person2": "p_226047436"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_175006830",
+              "resource_type": "Record",
+              "title": "Household of Robert Eastham, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCCS-35F : Wed Sep 09 09:34:09 UTC 2026), Entry for Robert Eastham and Margaret Eastham, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M4W9-G9M",
+              "coverage": {
+                "place_rep_id": "4128769",
+                "date_range": "1880",
+                "record_type": "Census",
+                "standard_place": "Catlettsburg, Boyd, Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYYY-95BR",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1880",
+                "record_type": "Census",
+                "standard_place": "Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_p_226047436",
+              "resource_type": "Person",
+              "title": "Margaret Eastham, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCCS-35F : Wed Sep 09 09:34:09 UTC 2026), Entry for Robert Eastham and Margaret Eastham, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MCCS-35N"
+            },
+            {
+              "id": "sd_p_226047437",
+              "resource_type": "Person",
+              "title": "Thursa A. Rucker, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCCS-35F : Wed Sep 09 09:34:09 UTC 2026), Entry for Robert Eastham and Margaret Eastham, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MCCS-35J"
+            },
+            {
+              "id": "sd_p_226047435",
+              "resource_type": "Person",
+              "title": "Robert Eastham, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCCS-35F : Wed Sep 09 09:34:09 UTC 2026), Entry for Robert Eastham and Margaret Eastham, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MCCS-35F"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            }
+          ],
+          "places": [
+            {
+              "id": "place_4128769"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
