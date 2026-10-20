@@ -751,9 +751,9 @@ that apply:
   - **given more than one fact to research,** it writes no question and asks the researcher
     to pick one;
   - **tests:** rewrite `ut_question_selection_003`, `_005`, `_006`, `_008` and `_d03`, and add
-    a test with a two-fact objective (no questions → no write, and an ask). Keep the
-    attached-records plan's test passing: on a project with no questions and a `high` gap,
-    the first question still restates the objective.
+    a test with a two-fact objective (no questions → no write, and an ask). Once the
+    attached-records plan's PR D has landed, keep its test passing: on a project with no
+    questions and a `high` gap, the first question still restates the objective.
 - **The router:** delete "New evidence may reveal new questions — return to question-selection"
   (`skills/research/SKILL.md:364-365`). The objective row (the row beginning *"All questions are `resolved` and `project.status` still `active`"*; `:230` on `main`), after the tree-encoding gate,
   names any uncovered part of the objective as a suggested next question, as a statement. The
@@ -1348,9 +1348,11 @@ in parallel with PR 2.
   - Its PR D edits `agents/timeline.md`, `person-evidence.md`, `question-selection.md` and
     `research/SKILL.md`, bodies the prep PRs and PR 2 also edit, so whichever lands second
     re-runs those four suites.
-  - Land its PR D before PR 2. PR D gates Priority 3 on an objective-scope question. E's
-    rewrite, which moves Priority 3 to research-plan, replaces that gate and keeps PR D's
-    first-question test passing.
+  - Its PR D and PR 2 land in either order. If PR D is first, E's rewrite, which moves
+    Priority 3 to research-plan, also deletes PR D's Priority 3 gate and the timeline
+    sentence PR D adds to the "Fresh project" edge case, and keeps PR D's first-question
+    test passing. If PR 2 is first, PR D drops its question-selection.md edit, keeps the
+    test, and adds the setup report's attached-records line.
 - **PR #3583** (merged): added a "none linked → person-evidence" rung to the ladder. B's choice
   arm sits below it, so a declined question with unlinked evidence is linked first.
 - **Issue #3153:** the hints plan item, an errand in the search step (D). It creates the hints

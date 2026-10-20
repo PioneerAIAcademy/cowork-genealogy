@@ -7,7 +7,7 @@
 ## What this builds
 
 - **A baseline step, all code.** `extraction_append({ projectPath, personId })` extracts every indexed record FamilySearch has attached to a person and links each one to that person as `speculative`. `timeline_build({ projectPath, personId })` then builds the person's timeline from those links. No agent runs.
-- **Where it runs.** In a /research job, once per subject after init-project and before the first question-selection. "Create a timeline for <PID>" is a bounded ask that runs both and stops.
+- **Where it runs.** In a /research job, once per subject after init-project and before the first question-selection. "Create a timeline for <PID>" is a bounded ask that runs both and stops. The timeline agent runs `extraction_append` once itself when nothing is linked (decision 16).
 - **Plan items close in code.** `extraction_append` completes the plan item behind the records it extracts, and a question that finds a record already extracted claims it.
 - **The benchmark stays honest.** A leak check fails when a record an expected finding cites is attached to the fixture's subject, unless an allow-list names it as starting evidence.
 
@@ -39,6 +39,7 @@ Added (lead, 2026-10-20):
 14. **Census years come from FamilySearch's catalog, for any country.** A year counts when a single-year census collection covers the person's place at that time or an enclosing jurisdiction. A year whose collections are tiny next to the full years filed under the same catalog place is a fragment and is dropped, so no list names destroyed years. ADR-0012 is amended to match. A census FamilySearch does not hold produces no gap, and the timeline's summary says its census years come from FamilySearch's collections.
 15. **ferber-marriage's f2 stays required.** Its notes keep the attached 1900 census as an anchor the research starts from, so extracting it at setup is the intended path, not a leak.
 16. **With nothing linked, the timeline agent extracts once.** When `timeline_build` returns `no_linked_evidence`, the agent calls `extraction_append({ projectPath, personId })` once, then `timeline_build` again. If still nothing is linked, it says that no record yet places the person. It never hands back.
+17. **Attached records are checked only on request.** A /research job runs person-evidence on attachment-linked assertions only when a question rests on them alone, which the unlinked-proof gate needs. A question with any other live link leaves its attachment-only assertions speculative, and its proof may cite them. Checking them otherwise is a separate request (decision 3).
 
 **One narrowing of the 2026-10-19 ruling, confirmed by the lead on 2026-10-20.** project_context's "none linked → person-evidence" rung ignores only links that carry `ATTACHMENT_LINK_RATIONALE`, not every speculative link. person-evidence itself writes a speculative link when the researcher confirms a weak match, and ignoring those would send the question back to person-evidence to ask again. The unlinked-proof gate still ignores every speculative link.
 
@@ -48,7 +49,7 @@ Free tier. On hold on PR #3616 until this plan merges. A genealogist reviews the
 
 **Still owed on PR #3616:**
 - Move the record-hint equality from `test_e2e_fixture_corpus.py` into `validate_fixture.lint_fixture`, which `test_committed_fixture_passes_the_hard_gates` already calls, and keep PR #3616's `tmp_path` cases. One of them makes a record-hint fixture with no unstripped tree a hard error, so make `author.py validate`'s warning for that case an error too.
-- Add the two `e2e-test-spec.md` edits below that it does not have yet.
+- Add the two `e2e-test-spec.md` edits below that it does not have yet. Fold PR #3616's §3.6 leak-check bullet into the §6.1 callout edit, so the rule is stated once, and make its corpus-test sentence name `make e2e-validate` too.
 - Take the maria-bracero reason line from the table below. The table's thomas-hanrahan lines are PR #3616's own.
 
 The full checklist:
@@ -108,15 +109,16 @@ Free tier. On hold on PR #3613 until this plan merges.
    - Delete the "Leave it 'in_progress' until its external capture arrives" remedy from the code and the spec row.
    - Make the "does not name completed…" test assert a single error, capture-pending's.
 3. **Add the kept-completed no-op to the `plans` arm's inline items,** as every other plan-item rule is. No committed run writes items through a `plans` update today.
-4. **Six texts:**
+4. **Seven texts:**
    - the last sentence of `research-append-tool-spec.md`'s `questions` stop-gate row ("which no skill can do on the FamilySearch path today");
+   - `skill-dataflow.md`'s "Who may write what" `plans` / `plan_items` row: `extraction_append` joins its writer tools and its writers of `items[].status`, `in_progress` → `completed` only, by tool identity;
    - `skill-dataflow.md`'s "Stated twice, differently" item 1. Rewrite it, don't delete it: FamilySearch items now complete in code, nil-only items still wait for Dispose, and search-full-text's "extraction will complete it" stays untrue because completion reads only `record_search` sidecars;
    - for item 1, `research-append-tool-spec.md`'s §5 informant-floor row and `research-schema-spec.md`'s `informant_proximity` row ("Refused by `research_append` on append and update"). Make both say the update arm checks the merged entry only when the op sets `informant_proximity` or `information_quality`. That still catches a flip to `unknown` over a stale `secondary`, but a question tie on a legacy pair is not re-checked;
    - the comment above the floor call in `research-append.ts`'s update arm, to match;
    - `extraction_append`'s description, whose "Each is read live" an earlier read's reuse now makes untrue.
 5. **One read for the PR body.** research-exhaustiveness's "if any is still `planned` or `in_progress`, refuse" and its decline rules still hold under decisions 8 and 9. If PR #3564 lands first, read its text.
 6. **Run the `plans` free cases as the research suite,** not search-hints. Issue #3153 adds search-hints to the `plans` row's callers, which turns those cases red or makes them vacuous.
-7. **The PR body.** Replace its "Needs the lead" section with the decided exemption (lead, 2026-10-20), as item 2 leaves it, and name research, not search-hints, as the suite whose skill is not on the `plans` row.
+7. **The PR body.** Replace its "Needs the lead" section with the decided exemption (lead, 2026-10-20), as item 2 leaves it. Replace its "What nothing checks" bullet on search-hints with: no unit run reaches the `plans` completion predicate. Every positive research test is stubbed, so `test_ownership_table` skips it, and no search-hints scenario has a plan-tied `record_search` with a sidecar. The free cases, run as research (item 6), are its only check.
 
 Also noted for PR #3613:
 - research-plan's Termination skips `in_progress` items that cannot run. It is fixed in the step-mode plan's research-plan prep PR.
@@ -173,11 +175,12 @@ Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. 
   - the return.
 
   Rewrite the extraction section's opening again, and add the fourth call shape to `docs/catalog.md`'s extraction_append row.
-- [ ] **Sites that say extraction never writes `person_evidence`:**
+- [ ] **Sites that say extraction never writes `person_evidence`,** and two that say the timeline agent writes only `timelines`:
   - `extraction-append.ts`'s header and description;
+  - the error-contract example in `research-append-tool-spec.md`'s extraction section, which names `person_evidence` as a section `extraction_append` cannot write. Use a section no mode writes (`conflicts`), and say its parenthetical lists that call's own lane;
   - `docs/architecture.md` and `docs/skill-dataflow.md`;
-  - two comments in `hooks/guard_project_files.py`. A `hooks/` edit owes `make hook-smoke`;
-  - `eval/harness/harness/skill_invocation.py`: the "SOLE tool that creates person_evidence" comment, and `find_effects_without_invocation`, which must not count a link carrying the constant as person-evidence's work;
+  - three comments in `hooks/guard_project_files.py`. The third is the `timeline` lane's "writes nothing else in research.json". Say instead that timeline's `research_append` writes stay in `timelines`, and that its `timeline_build` and `extraction_append` writes are authorized by tool identity, which holds before and after PR D. A `hooks/` edit owes `make hook-smoke`;
+  - `eval/harness/harness/skill_invocation.py`: the "SOLE tool that creates person_evidence" comment, its `timeline` comment "It writes one `timelines` entry", reworded the same way, and `find_effects_without_invocation`, which must not count a link carrying the constant as person-evidence's work;
   - `eval/harness/harness/ownership.py`.
 - [ ] **Mock** (`_make_extraction_append_handler` in `eval/harness/harness/mock_mcp.py`): with `personId`, stage every loaded `record_read` fixture, and match bare ids.
 - [ ] **`project_context`:** add `subjectPersonIds` from `research.project.subject_person_ids`, with its spec and a test.
@@ -216,20 +219,23 @@ Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. 
 - [ ] **Events come from live `person_evidence` links only** (`superseded_by` null). Never use a tree fact or `diedByYear`.
   - Merge the assertions one record makes about one event into a single event, listing every id in `assertion_ids`.
   - Every linked assertion with a date makes or joins an event, whatever its `fact_type`. One whose `fact_type` has no event type in timeline.md Step 3, such as `relationship`, joins its record's event with the same date, or else makes an `other` event. mid-research-flynn's a_010 is its record's only 1860 assertion.
+  - An undated linked assertion joins the event its record and party (`record_persona_id`, else `record_role`) make for the same `fact_type`. Code extraction splits a derived birth into a place half and a date half (`record-extract.ts`), and this joins them. One that joins no event makes none.
   - Event types, the date-certainty subset, the before/after conversion and the sort key follow timeline.md Step 3.
-  - Copy `standard_place` from the assertion. When it is absent, resolve the assertion's `place` text once per distinct place.
+  - **Dates are written year-first:** `YYYY`, `YYYY-MM` or `YYYY-MM-DD`, prefixed `~` when approximate, read from the assertion's `date` with `stdDate` (`src/utils/date-standardize.ts`) and `getDayRange` (`src/utils/date-helpers.ts`). Events sort by that string with a leading `~` ignored, which is how `test_events_chronologically_ordered` compares them. The record's own wording ("12 March 1908") sorts before "1850" as text, so it stays in `description`. Say so in `timeline-build-tool-spec.md`, and in `research-schema-spec.md`'s note that event dates are as encountered in records.
+  - Copy `standard_place` from the event's assertions. When none carries one, resolve an assertion's `place` text once per distinct place.
   - Set `distance_from_previous_km` with `haversineDistance` (`src/tools/distance.ts`). Look up coordinates with `lookupPlaceCoords` (`src/utils/place-coords.ts`), passing the time left to the deadline as its budget. It looks each distinct place up once and takes an injectable `PlaceCoordsResolver` the mock handler can serve. Compute each unordered pair once. A place that does not resolve leaves the distance null.
   - If every link behind an event is `speculative`, start its `description` with "Unverified attachment:" when every rationale is `ATTACHMENT_LINK_RATIONALE`, and with "Unverified:" otherwise.
   - **A resolved conflict with a winner** (`resolution_kind: "competitor"`, or no kind and a non-null `preferred_assertion_id`, the shape of a conflict resolved before the kind existed): keep the preferred assertion, drop the conflict's other competing assertions from the events, and set `conflict_ids`, as timeline.md Step 7 says.
   - **Any other resolved conflict** (a deferral with no preferred assertion, or `tree` or `synthesis`): drop nothing, and treat its events as for an unresolved conflict, with a `conflict_note` quoting `resolved_value` when set, else `resolution_rationale`. 12 of the 69 resolved conflicts in the committed e2e final states name no preferred assertion. **A `moot` conflict** marks nothing.
   - **An unresolved conflict:** put its id in `conflict_ids` on every event that cites one of its `competing_assertion_ids`. When a competing assertion is on no event, for example a name-only identity conflict like flynn-multi-conflict's c_002 on a_001, put it on each event built from that assertion's `record_id` and `record_role`. Write a code-built `conflict_note`. For an identity conflict (`isIdentityConflict`, `question-state.ts`) it quotes the `identity_question`; otherwise it names the other competing assertions and their values.
 - [ ] **Gaps.** Copy `start` and `end` from the bounding events, and never pad them. The tool writes four kinds:
-  - **Census, `high`.** A census year in which any event falls is in hand, whatever the event's type. Each other year the rules below expect is one `expected_events` entry. It names the year and the country of the interval's earlier place, with the country word just before "census" ("1870 United States census", "1890 Denmark census"), so that `timelineCensus1890Invariants` keeps a non-US 1890 census.
+  - **Census, `high`.** A census year in which any event falls is in hand, whatever the event's type. Each other year the rules below expect is one `expected_events` entry. It names the year and the jurisdiction whose catalog collection supplied that year, with that name just before "census" ("1870 United States census", "1855 New York census", "1890 Denmark census"), so that `timelineCensus1890Invariants` keeps a non-US 1890 census. The jurisdiction is the first segment of the most specific comma suffix of the earlier place whose place id that year's collection is filed under. When a collection filed under the country's own id also covers the year, use the country's name.
     - **Which years:** judge them per interval, strictly between consecutive events that carry a `standard_place`. A year inside an interval counts only when both events are in the same country (the last comma segment), and it is checked against the earlier event's place and that place's comma suffixes. A year between events in two countries expects no census; the 20-year rule covers a long gap there. The span ends at the last record-backed event, or at a linked death.
     - **Where the years come from:** the collections catalog, through `collectionCoverage` (`src/tools/collections-search.ts`). Make three fixes in the function itself; each was measured against the live catalog on 2026-10-20.
     - **Fix 1, match on place ids, not titles.** Ohio, Hamilton County and Cincinnati each return `[]` today, because the federal censuses are filed under the United States only.
       - `collectionCoverage` stays pure and takes resolved place ids as a parameter. The caller resolves each place and its comma suffixes once, with `standardPlaceToPlaceId` (cached), which returns the Primary place id.
-      - First confirm on the live catalog that those ids match `searchMetadata.placeIds` for Alabama, Ohio and England, and record the check in `timeline-build-tool-spec.md`. If they do not match, put it to the lead before building Fix 1.
+      - `collectionCoverage` also returns, for each census year, the catalog place ids it is filed under. `tree_gaps` drops that field before spreading the result into `coverage`, so its output and its coverage test's `toEqual` stand.
+      - First confirm on the live catalog that those ids match `searchMetadata.placeIds` for Alabama, Ohio and England, and record the check in `timeline-build-tool-spec.md`, with the level the England and Wales censuses are filed under, which sets their label. If the ids do not match, put it to the lead before building Fix 1.
       - Then correct both places in `collections-search-tool-spec.md` that say the ids differ: the "Place ID mismatch (design note)" and the Key API details bullet. Say that `searchMetadata.placeIds` are Places API Primary ids, the ids `standardPlaceToPlaceId` returns, and give the measured ids as evidence. 351 was Alabama's rep id. The `collections_search` tool still matches by title; `collectionCoverage` matches on place ids.
       - Do not walk the title match up to "United States", which matches every "United States, <state>, …" collection.
     - **Fix 2, count censuses under any facet.** US 1790, 1830 and 1870, and England and Wales 1841 and 1881, are filed as `MISCELLANEOUS`. Take every single-year collection whose title names a census.
@@ -242,7 +248,7 @@ Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. 
   - **Twenty or more years between consecutive events, `high`.**
   - **Death without burial, or burial without death, `medium`.**
 
-  Every gap names what fills it, and none has an empty `expected_events`. When the census rule and the 20-year rule fire on the same two events, write one `high` gap listing the missing census years, then "residence". A 20-year gap with no census year names "residence" alone. The marriage gap names "marriage", and the death/burial gap names the missing one, as timeline.md Step 4 says.
+  Every gap names what fills it, and none has an empty `expected_events`. When a 20-year gap overlaps a census gap, write one `high` gap from the earlier start to the later end, listing the missing census years, then "residence". The two rules walk different events, since only the census rule skips an unplaced one. A 20-year gap with no census year names "residence" alone. The marriage gap names "marriage", and the death/burial gap names the missing one, as timeline.md Step 4 says.
 
   Question-selection reads only `high` gaps.
 - [ ] **`tree_gaps` gets the fixes too**, since it shares `collectionCoverage`.
@@ -255,12 +261,12 @@ Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. 
 - [ ] **Write** through `researchAppend`. With no person timeline yet, append one. Otherwise update this person's timeline (the one with no `hypothesis_id`) in place, and restamp `generated`. Never touch a hypothesis timeline. Every event cites assertions, so PR #3573's warning for events that cite no record never fires on these.
 - [ ] **Ownership.**
   - In `ownership.json`'s `timelines` row, add `timeline_build` to `writerTools` and `toolAuthorized`, and name it in `requires` and `remedy`.
-  - In `research-schema-spec.md`'s ownership table, the `timelines` row gains `timeline_build` (person timelines, by tool identity).
+  - In `research-schema-spec.md`'s ownership table, the `timelines` row gains `timeline_build` (person timelines, by tool identity), and so does `skill-dataflow.md`'s "Who may write what" `timelines` row.
   - `test_universal.py`'s tool-identity arms are written for merge_tree_persons and extraction_append only, so add a `timeline_build` arm. Appending a person timeline and updating the person's own timeline pass, and editing a hypothesis timeline fails. No committed unit run reaches the arm: `test_ownership_table` skips every stubbed run, every research test is stubbed, and the timeline suite's subject owns `timelines`. Its free cases are its check.
   - Add `timeline_build` to `PROJECT_WRITER_TOOLS` in `test_universal.py`, with a free case beside `test_hand_edit_detector_passes_when_writer_tool_called` (`eval/harness/tests/unit/test_validator_runner.py`). After PR D, a Mode A timeline run's only writer is `timeline_build`.
-  - Add it to `UNMODELLED_WRITERS` in `eval/harness/harness/replay.py`. Report an `extraction_append` call carrying `personId` as unmodelled too: the replay reads a call with no `ops` as one log entry.
-- [ ] **Nothing linked:** write nothing and return `status: "no_linked_evidence"` with `ok: true`.
-- [ ] **Return** `{ ok, status, timelineId, events, unverifiedEvents, gaps: { high, medium, low }, summary }`. `summary` is one code-written sentence the main thread relays. It gives how many events there are, how many come from unchecked attachments and how many `high` gaps, and says that checking the attachments is a separate request.
+  - Add it to `UNMODELLED_WRITERS` in `eval/harness/harness/replay.py`. Also report as unmodelled every `extraction_append` call the replay cannot apply whole: a `personId` call, and any call whose response carries `planItems` or a tie. Neither main's generic path, which reads a call with no `ops` as one log entry, nor PR #3564's log-id read-back applies PR B's completions and question ids.
+- [ ] **Nothing linked:** write nothing, and return `status: "no_linked_evidence"`, `ok: true` and the `summary` "No record yet places this person; no timeline was written." The bounded ask and the timeline agent both relay it.
+- [ ] **Return** `{ ok, status, timelineId, events, unverifiedEvents, gaps: { high, medium, low }, summary }`. `summary` is one code-written sentence the main thread relays. It gives how many events there are, how many come from unchecked attachments and how many `high` gaps, and says that checking the attachments is a separate request. Whenever the census check ran, it also says the census years come from FamilySearch's collections, so a census FamilySearch does not hold is never expected (decision 14), with or without a census gap.
 - [ ] **Unit harness.** `timeline_build` is a live tool, served like `extraction_append`.
   - Add it to `LIVE_TOOLS` and to `LIVE_MODULES` in `eval/harness/harness/instrument.py`; `test_instrument.py` asserts the two match. Also add it to `OK_FALSE_IS_FAILURE_LIVE` in `mock_mcp.py`, and to its docstring's live-tool list.
   - Add a `_make_timeline_build_handler` in `mock_mcp.py`, dispatched from `_make_live_handler`. It runs the compiled tool against the workspace with injected deps:
@@ -277,11 +283,15 @@ Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. 
   - both unverified prefixes;
   - an unresolved conflict puts `conflict_ids` and a note on each competing event, a name-only identity conflict marks the events of its persona's record, and an identity conflict's note quotes its `identity_question`;
   - a resolved conflict with no preferred assertion keeps its competing events, each carrying its id;
-  - a census gap names its year and country, and a year with no catalog collection is not expected;
+  - a census gap names its year and the jurisdiction its collection is filed under, and a year with no catalog collection is not expected;
+  - a New York interval spanning 1855 expects "1855 New York census", never "1855 United States census";
   - on england-census-timeline's links, 1841, 1861 and 1871 are expected and 1851 is not; on the links PR D's flynn copy carries, a_010 makes the 1860 event, and the 1860–1908 interval expects 1870, 1880 and 1900 only;
+  - `extractRecord` on `tests/fixtures/record-extract/census-1870-no-relationship-column.json` (p_260900945: Birth 1845 Pennsylvania, Census 1870 Carbon, Pennsylvania) gives one birth event placed in Pennsylvania, and with the 1870 census as the next placed event, 1850 and 1860 are expected;
   - Ohio events in 1850 and 1880 expect the 1860 and 1870 censuses; an 1852 Madeira event and an 1890 São Paulo event expect neither country's census between them;
   - Danish events in 1885 and 1893 and a later US event keep "1890 Denmark census";
-  - a 20-year gap holding census years is one gap listing them, then "residence", and no gap has an empty `expected_events`;
+  - a placed 1850 event, an unplaced 1852 event and a placed 1880 event give one `high` 1850–1880 gap naming the 1860 and 1870 censuses, then "residence", and no gap has an empty `expected_events`;
+  - assertions dated "abt 1845", "1850" and "12 March 1908" give event dates "~1845", "1850" and "1908-03-12", in order once a leading `~` is ignored;
+  - with the catalog answering, a timeline with a census gap and one with none (two events in a country with no census collection) both have a summary naming FamilySearch's collections as the source of their census years;
   - a Places lookup that never answers leaves its census years and distances out, and the call still returns before the deadline;
   - on a captured catalog excerpt carrying real ids and record counts:
     - US 1790, 1870 and England 1881 are census years;
@@ -292,7 +302,7 @@ Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. 
   - a raw `place` with no `standard_place` is resolved;
   - a late catalog gives a timeline with no census gaps and a summary that says so;
   - no padded boundary;
-  - nothing linked writes nothing;
+  - nothing linked writes nothing and returns that summary;
   - a rerun updates in place and leaves a hypothesis timeline alone.
 - Done when:
   - `make engine-test`, `make engine-test-pg`, `make typecheck`, `make harness-test` and `make server-test` are green;
@@ -309,11 +319,12 @@ Paid: the timeline, research, question-selection and person-evidence suites, eac
 
 - [ ] **Mode A:** replace Steps 2–4 and 7 with one `timeline_build({ projectPath, personId })` call. Keep Step 5 (travel feasibility, chronology anomalies) and Step 8, working from the timeline the tool wrote. Step 5 loses its sentence about referencing conflicts, because `timeline_build` writes `conflict_ids` and `conflict_note`. Add `timeline_build` and `extraction_append` to `tools:` under all three spellings, which changes the permission snapshot in `agent-tool-names.test.ts`. Keep the inlined places guidance verbatim; `tests/packaging/skill-guidance.test.ts` pins it.
 - [ ] **Mode C** (refresh by `timelineId`). On a person timeline (no `hypothesis_id`) it calls `timeline_build`, which updates the timeline in place. On a hypothesis timeline it keeps the agent's steps.
-- [ ] **Nothing linked, in Modes A and C (decision 16).** When `timeline_build` returns `no_linked_evidence`, call `extraction_append({ projectPath, personId })` once, then `timeline_build` again. If it still returns `no_linked_evidence`, make no claim about the person's life, and say that no record yet places the person. The body names only the `personId` call to `extraction_append`.
+- [ ] **Nothing linked, in Modes A and C (decision 16).** When `timeline_build` returns `no_linked_evidence`, call `extraction_append({ projectPath, personId })` once, then `timeline_build` again. If it still returns `no_linked_evidence`, make no claim about the person's life, and relay the tool's `summary`. The body names only the `personId` call to `extraction_append`.
 - [ ] **Mode B (hypothesis)** never calls `extraction_append`, and keeps all of Step 4, the military and immigration rules included.
   - Rewrite its Step 2, whose "no `assertionId` filter" predates that filter. It reads only the hypothesis persons' linked assertions (`research_query` by `assertionId`, at most 50 per call), never the unfiltered assertions section, which whole-record extraction makes much larger.
   - With no linked assertion for the hypothesis, Mode B writes nothing and says that no linked record bears on it yet.
-- [ ] `summary_for_user` gives the tool's `unverifiedEvents` count, and says that checking the attached sources is a separate request.
+- [ ] `summary_for_user` gives the tool's `unverifiedEvents` count, and says that checking the attached sources is a separate request and, when the tool's summary says so, that the census years come from FamilySearch's collections.
+- [ ] **Re-invocation behavior:** replace "Writes only `timelines[]`". In Mode A, and Mode C on a person timeline, `timeline_build` writes the person timeline and updates it in place; on `no_linked_evidence`, the one `extraction_append({ personId })` call writes the person's attached records and their attachment links. Mode B, and Mode C on a hypothesis timeline, write `timelines[]` through `research_append`.
 
 ### `agents/person-evidence.md`
 
@@ -321,7 +332,7 @@ Paid: the timeline, research, question-selection and person-evidence suites, eac
   - The router names the assertion ids: a question's assertions, or a refused proof's supporting ones. A named assertion whose only live link carries the attachment rationale (quote the constant's text) counts as unlinked.
   - Score it with `same_person`, append the new link (Step 4), then set `superseded_by` on the attachment link (Step 6).
   - An attachment-linked assertion the delegation does not name is left alone, so a job never re-verifies every attachment (decisions 2 and 3).
-  - Extend PR C's drift test to the quoted text and to every `person_evidence[].rationale` under `eval/fixtures/scenarios/` that begins "Linked because FamilySearch", and show it fails on a reworded quote.
+  - Extend PR C's drift test to the quoted text and to every `person_evidence[].rationale` in state (i) and its person-evidence copy, which hold only attachment links. Show it fails on a reworded quote, and on a fixture row reworded at its first word.
 - [ ] **Step 0 says the same:** a delegation naming assertion ids whose only live link is an attachment link is linking mode, whatever verb it uses. Otherwise "confirm these attachments" reads as review-only mode, which writes nothing, under Step 0's "an audit verb beats a linking object".
 - [ ] **The same exception in two more places.** "Important rules" (one `pe_` per pair) and "Re-invocation behavior": an attachment link is superseded, never refined in place.
 
@@ -336,10 +347,10 @@ Paid: the timeline, research, question-selection and person-evidence suites, eac
   - Add `["research -> timeline", ""]` to `PROSE_MENTIONS` in `tests/packaging/agent-delegation-framing.test.ts`. Its tokenizer reads `timeline_build` and "a timeline for a person" as naming the agent.
   - Keep "**always the agent, never inline.**" in the person-evidence row verbatim; that test pins it.
 - [ ] **The "Assertions not yet linked to persons" row:**
-  - when `project_context`'s `nextStep` for a question names person-evidence, spawn `@plugin:person-evidence` with that question's assertion ids in a linking request. person-evidence, which carries the quote, tells the attachment links apart, so no router text quotes the constant;
+  - keep its trigger, and widen it with "or `project_context`'s `nextStep` for a question names person-evidence". In that case spawn `@plugin:person-evidence` with that question's assertion ids in a linking request. person-evidence, which carries the quote, tells the attachment links apart, so no router text quotes the constant;
   - add one exception to its "You never write `person_evidence` entries… Extraction never links": the speculative attachment links `extraction_append({ personId })` writes.
 
-  A question whose assertions include a live link that is not an attachment link gets no rung, and its attachment-only assertions stay speculative (decision 3).
+  A question whose assertions include a live link that is not an attachment link gets no rung, and its attachment-only assertions stay speculative (decision 17).
 - [ ] **Two more statements PR C and PR D make false.**
   - The Exhaustiveness/proof-conclusion contract header: add "or the attachment links `extraction_append({ personId })` writes" after `@plugin:person-evidence`.
   - "Re-invocation behavior": "**Writes:** nothing directly except the `extraction_append` batch" gains `timeline_build`. "**Do not duplicate:**" says those two skip a record already extracted and update the timeline in place, instead of "the orchestrator creates no entries of its own".
@@ -348,13 +359,21 @@ Paid: the timeline, research, question-selection and person-evidence suites, eac
   - on `driscoll-source-audit`: `attached-before-searching`.
 
   Neither subject cites an indexed source, so the calls write nothing. Rewrite the judge_context line naming the first row in `route-no-questions` and `route-shortcut-guard`: the row now runs the two calls first, which write nothing there, then question-selection.
+- [ ] **Re-check the row's two routing tests** too: `route-unlinked-assertions-to-person-evidence` (ut_research_pe7) and `route-cowork-unlinked-baptisms-to-person-evidence` (ut_research_szk). In pe7's flynn-household-skeleton one of seven assertions is linked, so its `nextStep` reads "research-exhaustiveness, then proof-conclusion", and only the kept trigger routes it.
 - [ ] Name the new step, with its measured cost, in `docs/architecture.md`'s orchestration description.
+- [ ] **`docs/skill-dataflow.md`:**
+  - the `research` row's Writes ("The `extraction_append({ recordIds })` batch … Nothing else") gains the job row's and the bounded ask's `extraction_append({ personId })` and `timeline_build` calls;
+  - the flow diagram: init-project leads to those two calls, then question-selection;
+  - the `timeline` row's Reads and Writes gain `timeline_build`, and `extraction_append` with `personId` on `no_linked_evidence`;
+  - rewrite "`timelines` stays empty unless the main thread delegates to it on a hand-back": a job now writes each subject's person timeline before its first question-selection.
+
+  Also rewrite the first sentence of `ownership.json`'s `timelines` notes, which counts zero e2e writes and says no e2e run has ever routed to it.
 
 ### `agents/question-selection.md`
 
 - [ ] **Priority 3 fires only once a question at the objective's scope exists,** in both its table row and its detail paragraph. Otherwise the job row's timeline, written before the first question-selection, sends the first question to a census year: the ladder ranks Priority 3 above Priority 4, and the fresh-project default applies only with "no clear gaps".
   - Rename the "Fresh project, no clear gaps" edge case to "Fresh project", and add that a timeline's gaps never displace Priority 4 there. Keep its decomposition and premise-verification rules.
-  - `ut_question_selection_006` still holds, because flynn-census-exhausted's q_001 is at the objective's scope. No open PR edits this file; step mode's PR 2 rewrites Priority 3 after PR D (Collisions).
+  - `ut_question_selection_006` still holds, because flynn-census-exhausted's q_001 is at the objective's scope. No open PR edits this file; step mode's PR 2 also rewrites Priority 3, in either order (Collisions).
   - This stays prose: which question restates the objective is a judgement the decomposition and premise rules make.
 
 ### Tests and fixtures
@@ -371,6 +390,9 @@ Paid: the timeline, research, question-selection and person-evidence suites, eac
     - Do not edit the originals: mid-research-flynn backs 21 suites, and `ut_person_evidence_027` needs a_011 and a_012 unlinked.
     - Serve the copies a US catalog and a place-id table for Schuylkill, Pennsylvania, United States.
     - Rewrite build-patrick-timeline's gap line to what `timeline_build` writes there: one `high` 1860–1908 gap naming the 1870, 1880 and 1900 United States censuses, then residence. Drop "marriage": no linked assertion names a child of I1, so no marriage gap is written. timeline-with-multi-conflict's "same as the seed test" then follows it.
+  - **`geographic-infeasibility`** has the same gap. In `flynn-distant-events`, I1's only live links are a_001, a_004, a_010, a_013 and a_014, so `timeline_build` writes three events ending in 1860, with no 1908 death and no gap.
+    - The scenario backs only that test, so edit it in place. Link I1 to a_002, a_003, a_008, a_009, a_011 and a_012, and say so in its README, which the judge reads since there is no judge-brief.md.
+    - Serve it the same US catalog and Schuylkill place-id table. Its 25 May / 1 June 1850 pair stays consecutive, and it regains the ~1845 birth, the 1908 death and the 1860–1908 gap.
   - **`england-census-timeline`:**
     - drop the `census-from-wiki` tag and its wiki-read fixtures;
     - serve `timeline_build` an England catalog and a place-id table for Canterbury, Kent, England and its enclosing levels;
@@ -378,9 +400,11 @@ Paid: the timeline, research, question-selection and person-evidence suites, eac
     - rewrite its judge_context.
   - **`impossibility-after-death`:** its judge_context's Mode-C line no longer holds. The delegation is Mode A, so `timeline_build` appends a person timeline beside `t_001`, which is h_001's hypothesis timeline and stays unchanged. Grade the new timeline.
   - **`eval/harness/validators/test_timeline.py`:**
-    - delete `test_census_years_read_from_wiki`, or keep it only beside a non-US Mode B test tagged `census-from-wiki`;
+    - delete `test_census_years_read_from_wiki`, or keep it only beside a non-US Mode B test tagged `census-from-wiki`. If it goes, delete `eval/harness/tests/unit/test_timeline_census_wiki_validator.py`'s `check_census_from_wiki` and `_census_year_of_entry` cases with it, and keep that module's two 1890-backstop cases;
+    - rewrite `test_us_1890_never_expected`'s attribution, which reads only fetched census pages: with no page read, flag an 1890 census entry only when it names the United States, a US place, or no jurisdiction. Prove it passes "1890 Denmark census" and fails "1890 United States census" on a run with no wiki read;
     - add two tags. `no-project-write` skips `test_positive_produces_timeline` and asserts `research.json` is unchanged. `extraction-calls-<n>` asserts exactly `n` `extraction_append` calls, each carrying `personId`; with `n` = 1, the call falls between two `timeline_build` calls in `tool_calls`.
     - Prove each fails: `no-project-write` on a run that writes a timeline, `extraction-calls-1` on a run with no extraction call and on one with two, and `extraction-calls-0` on a run with one.
+    - Put every fail-proof in this plan, these and the research and person-evidence validators', under `eval/harness/tests/unit/`: nothing under `validators/` is collected.
   - **`eval/tests/unit/timeline/rubric.md`:** rewrite "Tool usage — place resolution and distance", "Gap detection" and "Geographic feasibility", so that a Mode A place, distance or census year written by `timeline_build` passes. The ledger rule applies to Mode B only. The opening rule becomes "scored on the value actually written by `timeline_build` or `research_append`".
   - Rewrite the ledger and `place_distance` lines in the judge_context of `build-patrick-timeline`, `geographic-infeasibility`, `impossibility-after-death` and `timeline-with-multi-conflict`.
 - [ ] **`eval/tests/unit/timeline/`:**
@@ -426,7 +450,7 @@ Before PR D merges, comment each item below on the open `nothing-checks` issue t
 
 - **PR #3616 and PR #3613** (Emruthwill): PR A and PR B, on hold until this plan merges.
 - **PR #3583** merged 2026-10-20 (2630a8578). PR C edits its gate, its rung and its two spec texts, which are on main as cited.
-- **PR #3564** (open). It edits `replay.py`, where PR C reports `timeline_build` and the `personId` call as unmodelled, and `research-exhaustiveness.md`, which PR B's item 5 reads. Whichever lands second rebases.
+- **PR #3564** (open). It edits `replay.py`, where PR C reports `timeline_build`, the `personId` call and PR B's completions and ties as unmodelled, `research-exhaustiveness.md`, which PR B's item 5 reads, and `research-schema-spec.md`. Whichever lands second rebases.
 - **PR #3476** (open). It edits `research-append.ts`, `research-append-tool-spec.md`, `research-schema-spec.md` and `research-append.test.ts`, as PR #3613 does. Whichever lands second rebases.
 - **Issue #3552:** same score gate, reused-hint code, ADR-0009 constraint and guardrail row. Its step 1 turns PR C's "extracted, not linked" case into a link.
 - **PR #3567** (open). It edits the `plans` and `plan_items` callers in `ownership.json`. It also edits `hooks/guard_project_files.py`, `eval/harness/harness/skill_invocation.py`, `docs/skill-dataflow.md` and `docs/architecture.md`, all of them PR C sites. Whichever lands second rebases.
@@ -453,7 +477,7 @@ Before PR D merges, comment each item below on the open `nothing-checks` issue t
 - **Issue #3549:** it edits `agents/search-images.md`, whose "or skipped" now meets PR B's refusal (noted on that issue).
 - **Step mode** (`docs/plan/research-step-mode.md`): PR B is a prerequisite. Completing items whose searches all found nothing, routing a refused declaration's `in_progress` items to Dispose, and research-plan's Termination are in its research-plan prep PR and PR 2.
   - One of step mode's prep PRs edits `agents/timeline.md`, and its PR 2 edits `person-evidence.md`, `question-selection.md` and `research/SKILL.md`. So all four of PR D's suites overlap, and whichever lands second re-runs them.
-  - Land PR D before PR 2. Step mode moves question-selection's Priority 3 to research-plan, which gains a read of the timeline PR D's job row writes. That rewrite replaces PR D's Priority 3 gate and keeps PR D's first-question test passing.
+  - PR D and step mode's PR 2 land in either order; of this plan's PRs, only PR B gates PR 2. If PR D lands first, PR 2's Priority 3 rewrite deletes PR D's gate and the "Fresh project" timeline sentence PR D adds, and keeps PR D's first-question test passing. If PR 2 lands first, PR D drops its `agents/question-selection.md` edit, because Priority 3 is already gone, and keeps the test. It also adds to the router's setup-step report what the attached records show (events, how many are unverified, the high gaps), which step mode's "What the researcher sees" names and PR 2 had nothing to report from.
 - **Issue #3584** (parked): this plan's source reuse does not unblock it.
 
 ## Costs
