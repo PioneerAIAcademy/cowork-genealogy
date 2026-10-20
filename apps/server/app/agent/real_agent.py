@@ -1104,6 +1104,11 @@ class RealAgent:
         # Liveness, keyed on the REQUIRED task_id rather than the optional
         # tool_use_id above. This is what gates the drainer; see map_message.
         self._live_tasks: set[str] = set()
+        # Task tool_use_id -> the SDK's own task_id, so every sub-agent event can
+        # carry it. `map_message` took this parameter from the start but no caller
+        # passed one, so `task_id` never reached a live event and attribution fell
+        # back to the description string -- the thing it was added to replace.
+        self._task_ids: dict[str, str] = {}
         # The background stream drainer, when one is running. At most one, ever
         # — see _stop_drain for why that is not merely tidy.
         self._drain_task: asyncio.Task | None = None
@@ -1293,7 +1298,8 @@ class RealAgent:
                 # about to read the stream calls, and which is what the handoff
                 # test pins.
                 try:
-                    map_message(message, self._tool_names, self._tasks, self._live_tasks)
+                    map_message(message, self._tool_names, self._tasks, self._live_tasks,
+                                task_ids=self._task_ids)
                 except Exception as exc:
                     # One unmappable message must not end draining. This arm used
                     # to sit outside the loop, so a single failure stopped the
@@ -1538,7 +1544,8 @@ class RealAgent:
             error_emitted = False
             async for message in client.receive_response():
                 for ev in map_message(
-                    message, self._tool_names, self._tasks, self._live_tasks
+                    message, self._tool_names, self._tasks, self._live_tasks,
+                    task_ids=self._task_ids,
                 ):
                     if ev.get("kind") == "tool_use" and str(
                         ev.get("tool") or ""

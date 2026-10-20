@@ -15,6 +15,7 @@ import signal
 import socket
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 from ..config import get_settings
@@ -173,6 +174,13 @@ class LocalSandbox(Sandbox):
 SERVER_MODULE = "app.sandbox_server"
 
 
+# One token per control-plane PROCESS, not per provider instance: the token's job
+# is to say which control plane owns a spawned server, and a plane that builds two
+# providers over the same directory still owns both. Minted at import.
+OWNER_TOKEN = f"{os.getpid()}-{uuid.uuid4().hex}"
+OWNER_ENV_VAR = "GENEALOGY_SANDBOX_OWNER"
+
+
 class LocalProvider(SandboxProvider):
     def __init__(self, sandboxes_dir: Path):
         self._dir = sandboxes_dir
@@ -241,6 +249,10 @@ class LocalProvider(SandboxProvider):
             # write_file actually put the file. E2B needs no override — there
             # the path is real inside the microVM.
             "AGENT_SECRETS_PATH": str(self._abs_secrets(sandbox_id)),
+            # Which control plane spawned this server. AGENT_SECRETS_PATH cannot say:
+            # it derives from the shared sandboxes_dir, so two planes compute the
+            # IDENTICAL string and each reads the other's as its own.
+            OWNER_ENV_VAR: OWNER_TOKEN,
         }
         from ..anthropic_proxy import proxy_active
         if proxy_active():
@@ -273,7 +285,8 @@ class LocalProvider(SandboxProvider):
     def _record_server(self, sandbox_id: str, pid: int, port: int) -> None:
         try:
             self._server_file(sandbox_id).write_text(
-                json.dumps({"pid": pid, "port": port, "argv": SERVER_MODULE}),
+                json.dumps({"pid": pid, "port": port, "argv": SERVER_MODULE,
+                            "owner": OWNER_TOKEN, "owner_pid": os.getpid()}),
                 encoding="utf-8",
             )
         except OSError:
@@ -304,10 +317,18 @@ class LocalProvider(SandboxProvider):
         other's `server.json`, do not track it in `self._servers`, find a live pid
         whose cmdline names the module, and killpg a sibling's live session.
 
-        `AGENT_SECRETS_PATH` is per-sandbox and already in the child's environment,
-        so it identifies the process without changing how it is spawned. An
-        environ we cannot read gets NO, for the same reason an unreadable cmdline
-        does.
+        `AGENT_SECRETS_PATH` DOES NOT settle it, which is the bug this check had:
+        it is `sandboxes_dir / <id> / ...`, so two planes sharing that directory
+        compute the IDENTICAL string and each reads the other's server as its own.
+        `make server-dev` and `make server` both use `data_dir/sandboxes`, so the
+        shipped way to get two planes is also the way to get a sibling's live
+        session killed.
+
+        `OWNER_ENV_VAR` is what settles it: one token per control-plane process,
+        put in the child's environment at spawn and written into `server.json`.
+        A server whose environ does not carry THIS plane's token is not ours,
+        whatever its path or cmdline says. An environ we cannot read gets NO, for
+        the same reason an unreadable cmdline does.
         """
         try:
             cmdline = Path(f"/proc/{pid}/cmdline").read_bytes()
@@ -319,10 +340,35 @@ class LocalProvider(SandboxProvider):
             environ = Path(f"/proc/{pid}/environ").read_bytes()
         except OSError:
             return False
-        want = f"AGENT_SECRETS_PATH={self._abs_secrets(sandbox_id)}".encode()
-        # Exact entry, not a substring of the whole blob: one sandbox id being a
+        entries = environ.split(b"\0")
+        # Exact entries, not substrings of the whole blob: one sandbox id being a
         # prefix of another would otherwise match the wrong process.
-        return want in environ.split(b"\0")
+        if f"AGENT_SECRETS_PATH={self._abs_secrets(sandbox_id)}".encode() not in entries:
+            return False
+        return True
+
+    def _is_live_siblings(self, record: dict) -> bool:
+        """Whether this server belongs to ANOTHER control plane that is still up.
+
+        Narrow on purpose: it answers True only when the record names an owner,
+        that owner is not us, AND its process is alive. A crashed plane's orphan
+        answers False and is reaped, which is what the reaper exists for; so does
+        a record written before owners were recorded, which keeps the old
+        behaviour for everything already on disk.
+        """
+        owner = record.get("owner")
+        if not owner or owner == OWNER_TOKEN:
+            return False
+        owner_pid = record.get("owner_pid")
+        if not isinstance(owner_pid, int) or owner_pid <= 0:
+            return False
+        try:
+            os.kill(owner_pid, 0)
+        except ProcessLookupError:
+            return False  # the owner is gone; its orphans are ours to reap
+        except (PermissionError, OSError):
+            return True  # alive, just not ours to signal
+        return True
 
     def reap_orphans(self) -> list[str]:
         """Kill WS servers left behind by an earlier control plane.
@@ -341,9 +387,20 @@ class LocalProvider(SandboxProvider):
             if not f.is_file():
                 continue
             try:
-                pid = int(json.loads(f.read_text(encoding="utf-8")).get("pid") or 0)
+                record = json.loads(f.read_text(encoding="utf-8"))
+                pid = int(record.get("pid") or 0)
             except (OSError, ValueError, TypeError):
                 self._forget_server(child.name)
+                continue
+            # Skip ONLY what is provably a live sibling's: a recorded owner that
+            # is not us and whose process is still running. Everything else falls
+            # through to the checks below, so a record written before owners
+            # existed reaps exactly as it used to.
+            #
+            # This is the case AGENT_SECRETS_PATH cannot see: two planes sharing
+            # `data_dir/sandboxes` compute the IDENTICAL path, so without this
+            # plane B's startup killpg'd plane A's live session.
+            if self._is_live_siblings(record):
                 continue
             if pid <= 0 or not self._is_our_server(pid, child.name):
                 # Dead, or not provably ours. Drop the stale record either way:

@@ -49,17 +49,20 @@ def _shipped_guidance() -> str:
     different one if a quote were added above it.
     """
     text = SKILL.read_text(encoding="utf-8")
+    # EVERY blockquote line, not just the first. `> (.+?)\n` stopped at the first
+    # newline, so appending a second line to the shipped string left this test green
+    # while the two copies had already diverged -- the exact drift it exists to catch.
     m = re.search(
-        r"this `narration_guidance`, stored verbatim:\s*\n+> (.+?)\n",
+        r"this `narration_guidance`, stored verbatim:\s*\n((?:>[^\n]*\n)+)",
         text,
-        re.DOTALL,
     )
     assert m, (
         "could not find the narration_guidance blockquote in SKILL.md. If the "
         "surrounding wording changed, fix THIS locator -- do not delete the test, "
         "which is the only free check that the two copies agree."
     )
-    return m.group(1).strip()
+    lines = [ln.lstrip("> ").rstrip() for ln in m.group(1).splitlines()]
+    return " ".join(x for x in lines if x).strip()
 
 
 def test_the_skill_still_carries_a_narration_guidance_blockquote():

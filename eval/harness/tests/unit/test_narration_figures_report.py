@@ -156,3 +156,25 @@ def test_totals_still_sum_after_the_split(tmp_path):
     assert r["openers"] == 3
     assert r["openers_main"] + r["openers_sub"] + r["openers_untagged"] == r["openers"]
     assert r["paras_main"] + r["paras_sub"] + r["paras_untagged"] == r["paragraphs"]
+
+
+def test_a_zero_paragraph_scan_exits_2_rather_than_reporting_a_cheerful_0(tmp_path, capsys):
+    """The guard the module's own docstring promises, and nothing exercised.
+
+    Every test above calls `derive`, so `main`'s exit codes were uncovered:
+    changing the zero-paragraph `return 2` to `return 0` left the suite green,
+    which is precisely the "reports a cheerful 0%" failure the guard exists to
+    prevent. A scan that proves nothing must not exit 0.
+    """
+    from e2e.narration_figures_report import main
+
+    (tmp_path / "empty-fixture").mkdir()
+    assert main(["prog", str(tmp_path)]) == 2
+    assert "proves nothing" in capsys.readouterr().err
+
+
+def test_a_missing_directory_exits_2(tmp_path):
+    """The other `return 2`, for the same reason: absent input is not success."""
+    from e2e.narration_figures_report import main
+
+    assert main(["prog", str(tmp_path / "nope")]) == 2

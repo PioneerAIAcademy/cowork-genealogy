@@ -26,7 +26,7 @@ from pathlib import Path
 
 import pytest
 
-from app.sandbox.local import SERVER_MODULE, LocalProvider
+from app.sandbox.local import OWNER_ENV_VAR, OWNER_TOKEN, SERVER_MODULE, LocalProvider
 
 
 def _sandbox(root: Path, name: str, payload: dict | str | None) -> Path:
@@ -39,6 +39,49 @@ def _sandbox(root: Path, name: str, payload: dict | str | None) -> Path:
 
 
 # --- it reaps what it can prove is ours -------------------------------------
+
+def test_a_live_sibling_planes_session_is_not_reaped(tmp_path, monkeypatch):
+    """The case the old sibling test could not see, and the bug it let through.
+
+    It faked the sibling under `/some/other/plane/`, a DIFFERENT directory, so the
+    secrets-path check separated them trivially. The real configuration SHARES one:
+    `make server-dev` and `make server` both use `data_dir/sandboxes`, so both planes
+    compute the IDENTICAL `AGENT_SECRETS_PATH` and each reads the other's server as
+    its own. Plane B starting up then killpg'd plane A's LIVE session -- exactly what
+    the reaper's docstring claims it prevents.
+
+    `_is_our_server` is stubbed True here BECAUSE it would be true: same directory,
+    same module, same path. Only the recorded owner separates them.
+    """
+    p = LocalProvider(tmp_path)
+    _sandbox(tmp_path, "sbx_live", {"pid": 4242, "port": 1, "argv": SERVER_MODULE,
+                                    "owner": "99999-deadbeef", "owner_pid": os.getpid()})
+    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id: True)
+    killed: list[int] = []
+    monkeypatch.setattr(os, "killpg", lambda pgid, sig: killed.append(pgid))
+    monkeypatch.setattr(os, "getpgid", lambda pid: pid)
+
+    assert p.reap_orphans() == [], "a live sibling plane's session was reaped"
+    assert killed == []
+    assert (tmp_path / "sbx_live" / "server.json").exists(), "its record must survive too"
+
+
+def test_a_dead_planes_orphan_is_still_reaped(tmp_path, monkeypatch):
+    """The other direction, or the fix would just be "never reap anything". A crashed
+    plane's orphan is exactly what the reaper exists for, so a recorded owner that is
+    NOT running must not protect it."""
+    p = LocalProvider(tmp_path)
+    _sandbox(tmp_path, "sbx_orphan", {"pid": 4242, "port": 1, "argv": SERVER_MODULE,
+                                      "owner": "99999-deadbeef", "owner_pid": 2})
+    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id: True)
+    monkeypatch.setattr(os, "kill", lambda pid, sig: (_ for _ in ()).throw(ProcessLookupError()))
+    killed: list[int] = []
+    monkeypatch.setattr(os, "killpg", lambda pgid, sig: killed.append(pgid))
+    monkeypatch.setattr(os, "getpgid", lambda pid: pid)
+
+    assert p.reap_orphans() == ["sbx_orphan"]
+    assert killed == [4242]
+
 
 def test_a_recorded_live_server_is_reaped(tmp_path, monkeypatch):
     p = LocalProvider(tmp_path)
@@ -192,27 +235,19 @@ def _fake_proc(monkeypatch, *, cmdline: bytes, environ: bytes):
     monkeypatch.setattr(Path, "read_bytes", fake)
 
 
-def test_a_sibling_control_planes_server_is_not_ours(tmp_path, monkeypatch):
-    """The case the module-name check cannot see: a REAL WS server, correct cmdline,
-    belonging to another control plane. Its environ names that plane's sandbox path,
-    not ours."""
-    provider = LocalProvider(tmp_path)
-    _fake_proc(
-        monkeypatch,
-        cmdline=f"python\0-m\0{SERVER_MODULE}\0".encode(),
-        environ=b"AGENT_SECRETS_PATH=/some/other/plane/sbx_9/secrets.json\0",
-    )
-    assert provider._is_our_server(1234, "sbx_1") is False
+
+
 
 
 def test_our_own_server_is_recognised_by_its_secrets_path(tmp_path, monkeypatch):
     """The other direction, or the fix would just be "never reap anything"."""
     provider = LocalProvider(tmp_path)
     want = f"AGENT_SECRETS_PATH={provider._abs_secrets('sbx_1')}".encode()
+    mine = f"{OWNER_ENV_VAR}={OWNER_TOKEN}".encode()
     _fake_proc(
         monkeypatch,
         cmdline=f"python\0-m\0{SERVER_MODULE}\0".encode(),
-        environ=want + b"\0PATH=/usr/bin\0",
+        environ=want + b"\0" + mine + b"\0PATH=/usr/bin\0",
     )
     assert provider._is_our_server(1234, "sbx_1") is True
 
