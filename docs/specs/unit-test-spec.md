@@ -1195,6 +1195,73 @@ A field declared in the schema and read by a validator but absent from that
 literal arrives as `None` on every run.
 `test_orchestrator_threads_index_error_source_into_validators` pins it.
 
+### 5.12.1 The re-read guard
+
+`test_index_discrepancy_recommends_reread` asks whether the reply directed the
+reader back to the document the index was made from. It is the only mechanical
+check that the first-line remedy was offered; everything else about the remedy
+is judged inside a paid run.
+
+**A mention of the original is not a direction to it.** The `original` /
+`underlying` alternative counts only where a **remedy verb governs the noun** —
+`locate`, `obtain`, `consult`, `check`, `read`, `view`, `examine`, `order`,
+`request`, `pull`, `find`, `see`, `compare against`, `look at`, `go back to`.
+So `the original record is not this man` fails where `locate the original
+certificate` passes.
+
+The window between verb and noun is bounded and forbids sentence-enders, so the
+two must govern each other rather than merely co-occur: a remedy verb in one
+sentence does not reach a bare mention in the next.
+
+A copula-exclusion design was tried first and **rejected on measurement**: it
+counted the noun unless the next token was a linking verb, which any two-word
+noun walked past — `the original death record is not this man` satisfied it.
+Being defeated by a one-word reword is the lexical-pattern-for-semantic-property
+shape this guard exists to refuse.
+
+It reads `_GO_TO_SOURCE_PATTERN` through `_goes_to_source()`, which strips
+markdown emphasis first. The strip is not cosmetic: emphasis can close
+**between** the noun and the word after it, so `**Locate the original** death
+certificate` leaves the pattern's noun tail looking at `original**` and
+failing — a correct remedy sentence silently not counting. Both consumers go
+through that accessor, so neither can keep the gap while the other loses it.
+
+Known limit, stated rather than claimed shut: a remedy phrasing whose verb is
+not on the list does not count. When a paid run reds a correct report on one,
+widen the list — visible and cheap, where a silent miss is not.
+
+### 5.12.2 The conditional-detach guard
+
+`test_index_discrepancy_detach_is_not_conditional` fails any
+`index-discrepancy`-tagged test whose reply recommends detaching **contingent
+on evidence it has not obtained**. A decided misattribution is detached
+unconditionally; an undecided one is not detached at all, so "if X turns out Y,
+detach it" is never the right answer. It is reply-wide and
+**source-independent** — it names no source, which is what lets it reach a
+conditional detach on a source the test declares nowhere.
+
+The unit is a clause split **inside** each `_passages` block, not `_passages`
+alone. A recap whose lead `_SUMMARY_LEAD_RE` does not recognise stays one whole
+block, and a block that wide carries an unrelated condition and an unrelated
+detach together: measured, `_passages` alone fires 7 times across 4 tests where
+the clause split fires 3 times across the 2 the suite names. Splitting finer
+inside existing passages rather than adding a new top-level splitter is what
+keeps this clear of the bar that forbids a sixth splitter.
+
+Three subtractions, each pinned by a case:
+
+| subtraction | why |
+|---|---|
+| bare `no detach` | `_recommends_detach("No detach is warranted")` is `True` — bare `no` is absent from `_NEGATORS`. Attached to the verb, never a proximity window: a window swallows `if the household does not fit, detach it`, whose `not` belongs to the condition. |
+| consent, not evidence | `if you agree, detach it` defers to the reader, not to a record. |
+| unconditional detaches | correct, and must stay silent. |
+
+**Rejected alternative:** declaring the ambiguous source in the test JSON, as
+`index_error_source` does. `_COSMETIC_TEST_FIELDS` is `("name", "description")`,
+so every other test field **and `tags`** are in the run-log snapshot — adding
+one would buy a paid `source-evaluation` run. This rule needs no declared
+source.
+
 ---
 
 ## 6. Negative Tests

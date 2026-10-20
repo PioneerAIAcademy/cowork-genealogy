@@ -500,6 +500,13 @@ def test_lint_fixture_rejects_an_unrecognized_finding_field(tmp_path):
 _UNSET = object()  # distinguishes "omit image_basis" from writing `null`
 
 
+def _commit_snapshot(fixture_dir) -> None:
+    """A record-hint fixture commits its unstripped tree identical to its
+    starting tree, and `lint_fixture` fails one that does not."""
+    start = fixture_dir / "starting-tree.gedcomx.json"
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(start.read_text(encoding="utf-8"), encoding="utf-8")
+
+
 def _write_record_hint_meta(
     fixture_dir, *, resolved: bool, genre: str = "record-hint", image_basis=_UNSET
 ):
@@ -607,6 +614,7 @@ def test_lint_fixture_passes_a_resolved_record_hint_fixture_with_an_ark(tmp_path
         {"f1": ["disproving record (ark:/61903/1:1:6PFD-Q43C)"]}
     )
     _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "John", "Smith")), findings=findings)
+    _commit_snapshot(tmp_path)
     _, errors = lint_fixture(tmp_path)
     assert errors == []
 
@@ -708,6 +716,7 @@ def test_lint_fixture_passes_image_basis_true_with_an_image_ark(tmp_path):
         _valid_tree(_valid_person("I1", "John", "Smith")),
         findings=_avoid_pair_findings(_WITH_IMAGE),
     )
+    _commit_snapshot(tmp_path)
     _, errors = lint_fixture(tmp_path)
     assert errors == []
 
@@ -806,6 +815,8 @@ def _genre_fixture(path: Path, genre: str) -> None:
     (path / "fixture.json").write_text(
         json.dumps({"id": path.name, "genre": genre}), encoding="utf-8"
     )
+    if genre == "record-hint":
+        _commit_snapshot(path)
 
 
 def test_cli_wires_the_fixture_genre_into_the_advice_it_prints(tmp_path, capsys):
