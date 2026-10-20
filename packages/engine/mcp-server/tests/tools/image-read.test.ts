@@ -8,7 +8,7 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
 }));
 
-import { imageReadTool } from "../../src/tools/image-read.js";
+import { imageReadTool, type ImageReadInput } from "../../src/tools/image-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import {
@@ -318,9 +318,114 @@ describe("imageReadTool — input validation", () => {
 
   it("rejects when neither imageId nor ark is provided", async () => {
     await expect(imageReadTool({}, LOCAL)).rejects.toThrow(
-      /requires one of imageId, ark, or memoryArtifactUrl/i
+      /requires one of imageId, ark, or memoryArtifactUrl\. Received no keys\./i
     );
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("names the keys it received when none of them is an image input", async () => {
+    await expect(
+      imageReadTool({ imageUrl: "https://x.example/a.jpg", projectPath: "/p" } as unknown as ImageReadInput, LOCAL)
+    ).rejects.toThrow(/requires one of imageId, ark, or memoryArtifactUrl\. Received keys: imageUrl, projectPath\./);
+    // A call with no arguments at all arrives as undefined.
+    await expect(imageReadTool(undefined as unknown as ImageReadInput, LOCAL)).rejects.toThrow(
+      /Received no keys\./
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("imageReadTool — imageArk and query strings", () => {
+  const ARK = "ark:/61903/3:1:3Q9M-CSNL-S98H-M";
+
+  it("reads imageArk (record_read's field) as ark", async () => {
+    mockImageResponse();
+
+    const result = await imageReadTool({ imageArk: ARK }, LOCAL);
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0]).toBe(`https://www.familysearch.org/${ARK}`);
+    expect(result.metadata.viewerUrl).toBe(`https://www.familysearch.org/${ARK}`);
+  });
+
+  it("reads record_read's imageArk with its ?cc= exactly as the same value under ark", async () => {
+    mockImageResponse();
+    await imageReadTool({ imageArk: "ark:/61903/3:1:3Q9M-C9PT-V9Q2-2?cc=2363041" }, LOCAL);
+    mockImageResponse();
+    await imageReadTool({ ark: "ark:/61903/3:1:3Q9M-C9PT-V9Q2-2?cc=2363041" }, LOCAL);
+
+    expect(mockFetch.mock.calls[0][0]).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9PT-V9Q2-2?cc=2363041"
+    );
+    expect(mockFetch.mock.calls[1][0]).toBe(mockFetch.mock.calls[0][0]);
+  });
+
+  it("keeps an explicit ark when imageArk names the same image", async () => {
+    mockImageResponse();
+    const dir = await mkdtemp(join(tmpdir(), "imgr-alias-"));
+    try {
+      const result = await imageReadTool({
+        ark: ARK,
+        imageArk: `https://www.familysearch.org/${ARK}`,
+        projectPath: dir,
+      }, LOCAL);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      // The saved scan is keyed on the ark spelling, not the imageArk one.
+      expect(result.metadata.imageRef).toBe("images/ark_61903_3_1_3Q9M-CSNL-S98H-M.jpg");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("reads the page imageArk's i= selects when ark is the same ARK bare", async () => {
+    mockImageResponse();
+    await imageReadTool({ ark: ARK, imageArk: `${ARK}?i=4` }, LOCAL);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0]).toBe(`https://www.familysearch.org/${ARK}?i=4`);
+  });
+
+  it("refuses an ark that is not a string rather than reading imageArk in its place", async () => {
+    await expect(
+      imageReadTool({ ark: 123, imageArk: ARK } as unknown as ImageReadInput, LOCAL)
+    ).rejects.toThrow(/image_read was given an ark that is not a string \(a number\)/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("refuses ark and imageArk that name different images, without fetching", async () => {
+    await expect(
+      imageReadTool({ ark: ARK, imageArk: "ark:/61903/3:1:3Q9M-C9PT-V9Q2-2" }, LOCAL)
+    ).rejects.toThrow(/both ark .* and imageArk .*, which do not name the same image/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      "a DGS distribution URL",
+      "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg?cc=2363041",
+      "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg",
+    ],
+    [
+      "a DeepZoomCloud distribution URL",
+      "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:3Q9M-CSNL-S98H-M/$dist?cc=2363041",
+      "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:3Q9M-CSNL-S98H-M/$dist",
+    ],
+  ])("strips the query string from %s", async (_label, ark, fetched) => {
+    mockImageResponse();
+    await imageReadTool({ ark }, LOCAL);
+    expect(mockFetch.mock.calls[0][0]).toBe(fetched);
+  });
+
+  it.each([
+    ["a bare 3:1: id", "3:1:3Q9M-CSNL-S98H-M?cc=2363041", `https://www.familysearch.org/${ARK}?cc=2363041`],
+    [
+      "an unprefixed id",
+      "3QS7-89Q6-89S6-Y?cc=2363041",
+      "https://www.familysearch.org/ark:/61903/3:1:3QS7-89Q6-89S6-Y?cc=2363041",
+    ],
+  ])("reads %s carrying a query string", async (_label, ark, fetched) => {
+    mockImageResponse();
+    await imageReadTool({ ark }, LOCAL);
+    expect(mockFetch.mock.calls[0][0]).toBe(fetched);
   });
 });
 
@@ -408,6 +513,18 @@ describe("imageReadTool — hard image cap (#3010, image-transcribe spec §5.8)"
     mockFetch.mockClear();
     await expect(
       imageReadTool({ ark: `https://familysearch.org/das/v2/dgs:${img(21)}/dist.jpg`, projectPath: project }, LOCAL),
+    ).rejects.toThrow(/Image cap reached/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("counts a DGS distribution URL carrying a query string, passed as imageArk", async () => {
+    await readTwenty();
+    mockFetch.mockClear();
+    await expect(
+      imageReadTool(
+        { imageArk: `https://familysearch.org/das/v2/dgs:${img(21)}/dist.jpg?cc=2363041`, projectPath: project },
+        LOCAL,
+      ),
     ).rejects.toThrow(/Image cap reached/);
     expect(mockFetch).not.toHaveBeenCalled();
   });

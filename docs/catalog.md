@@ -54,7 +54,7 @@ The MCP server exposes 54 tools.
 |------|---------|------|
 | `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
 | `wiki_read` | Fetch a specific pre-crawled wiki markdown page | None |
-| `wiki_place_page` | A FamilySearch Research Wiki page for a place (country, US state, or Canadian province) — `section` is one of `home`, `getting_started`, `online_records`, `research_tips` | None |
+| `wiki_place_page` | A FamilySearch Research Wiki page for a place — `section` is one of `home`, `getting_started`, `online_records`, `research_tips`. `home` resolves the place's own page at any level the wiki has one (country, state or province, county, parish, independent city); the other three exist only for a country or a state/province | None |
 
 ### Project state (structured read/write)
 
@@ -134,7 +134,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 4 skills covering the full GPS research cycle. Skills
+The plugin ships 3 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -149,9 +149,8 @@ session — see [gps-research-flow.md](gps-research-flow.md).
 
 ### Planning the research
 
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-| **research-plan** | Creates a sequenced plan of record sets to search, with repositories, rationale, and fallbacks. | "Plan research for this question" |
+Planning is an agent rather than a skill — see `research-plan` in the agent
+table below.
 
 ### Executing searches
 
@@ -189,7 +188,7 @@ specified in [specs/e2e-test-spec.md](specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships twenty-eight Cowork agents. Unlike skills, an agent runs in
+The plugin ships twenty-nine Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 when you ask for a second opinion, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -210,6 +209,7 @@ don't load it explicitly.
 | **search-hints** | Reviews the FamilySearch hints (pending record matches) on one tree person. A first pass recommends accept, reject or not enough information for each hint, discloses FamilySearch's own confidence, and reads the record image before recommending against a hint; it writes nothing. Once you decide, a second pass logs your verdict on each hint, so an accepted hint flows on to extraction like any search result. | "Are these hints valid?" / "Accept hint 1, reject hint 2" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to extraction (`extraction_append`, or the `record-structurer` agent for a source that is not a FamilySearch record). | "Fix citations" / "Cite this source" |
 | **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
+| **research-plan** | Creates, reviews and revises the sequenced plan for **one** question — which record sets to search, in what order, from which repositories, with fallbacks. | "Plan research for this question" |
 | **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Given a mother's 1900 or 1910 US census counts of children born and living, it also reports which of her children the tree is missing and when each was born. With no project yet, it hands you to project creation first. Writes nothing. The tree writers refuse a write that introduces an unjustified warning, so it is no longer a step after every edit. | "Check for warnings" / "Any problems with his dates?" / "The 1900 census says she had 6 children, 5 living — who is missing?" |
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held — and, inside a project, saves it so the research plan can use it. `/research` calls it when a question's place has not been surveyed yet. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. Returns narrative context and, inside a project, logs it to the research log: one entry per wiki/Wikipedia lookup and one `historical_context` entry carrying the full overview, plus a Search implications block handed back to hypothesis-tracking and research-plan. Asked for a locality records survey, a record search, a translation, a date conversion, or a formal conflict resolution, it hands the request back by name. | "Why does the birthplace differ?" |
@@ -230,7 +230,7 @@ don't load it explicitly.
 ```
 1. init-project              Start with a FamilySearch person ID
 2. question-selection (agent) "What should I research next?"
-3. research-plan             "How do I answer this question?"
+3. research-plan (agent)     "How do I answer this question?"
 4. search-records            Execute indexed searches on FamilySearch
    search-full-text          ...or full-text search for witnesses/FAN mentions
    search-external-sites (agent) ...or on Ancestry/MyHeritage/FindMyPast

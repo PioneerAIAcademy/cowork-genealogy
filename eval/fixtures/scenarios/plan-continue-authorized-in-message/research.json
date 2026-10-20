@@ -115,11 +115,11 @@
       "quirks": [
         "Schuylkill County was formed in 1811 from Berks and Northampton counties; pre-1811 records are filed under the parent counties.",
         "Probate records (wills, administrations) are held by the county Register of Wills, available from 1811 - a primary parentage source naming heirs.",
-        "Roman Catholic parishes fell under the Diocese of Philadelphia until the Diocese of Scranton was erected in 1868; sacramental registers are held at the parish/diocese, not the county.",
+        "Roman Catholic parishes stayed under the Diocese of Philadelphia (an archdiocese from 1875) until the Diocese of Allentown was erected in 1961; the Diocese of Scranton, erected in 1868, took the northern counties, not Schuylkill. Sacramental registers are held at the parish/diocese, not the county.",
         "Pennsylvania statewide civil birth/death registration did not begin until 1906; pre-1906 events rely on church, cemetery, and probate records.",
         "Some naturalization and church films for the anthracite coal region are browse-only image groups (volume_search shows ~0% record-searchable) - browse image-by-image."
       ],
-      "guide_markdown": "## Schuylkill County, Pennsylvania - 1838-1900\n\nSchuylkill County (formed 1811 from Berks and Northampton) lies in Pennsylvania's anthracite coal region. Probate is held by the county Register of Wills from 1811. Catholic parishes moved from the Diocese of Philadelphia to the Diocese of Scranton in 1868. Statewide civil vital registration began only in 1906, so pre-1906 vital events depend on church, cemetery, and probate records. Some coal-region naturalization and church films are browse-only.",
+      "guide_markdown": "## Schuylkill County, Pennsylvania - 1838-1900\n\nSchuylkill County (formed 1811 from Berks and Northampton) lies in Pennsylvania's anthracite coal region. Probate is held by the county Register of Wills from 1811. Catholic parishes stayed with the Diocese (from 1875 the Archdiocese) of Philadelphia until the Diocese of Allentown was erected in 1961. Statewide civil vital registration began only in 1906, so pre-1906 vital events depend on church, cemetery, and probate records. Some coal-region naturalization and church films are browse-only.",
       "pages_read": [
         {
           "section": "home",

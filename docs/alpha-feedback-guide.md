@@ -579,10 +579,11 @@ reporting, and the reports are the entire point of the alpha.
 
 ## Step 10 — Clean up
 
-When the PR is merged, delete both case directories:
+When the PR is merged, delete both case directories and the zip:
 
 - `~/feedback/<slug>/` — your iteration workspace
 - `~/feedback/<slug>-cowork-check/` — the fresh unzip from Step 8
+- `~/Downloads/feedback-<timestamp>.zip` — the zip you downloaded
 
 Use your OS's file manager or any delete method you trust. The zip stays in the
 Drive folder as the immutable record, so re-importing later is always possible.
@@ -596,6 +597,7 @@ Drive folder as the immutable record, so re-importing later is always possible.
 | 0 Notice | research; spot it; write Did/Should | 🌐 Workbench |
 | 1 Claim + branch | assign the issue to yourself; read the tester's words in the body, download the zip only if Step 2 needs it; `git checkout -b <short-task-name>` | 🌐 GitHub → ⌨️ Terminal (repo) |
 | 2 Unpack | `make feedback-case ZIP=<zip>`; copy the prompt it prints, or recover it from the session log when the box was left blank (check for a `_truncation_note`) | ⌨️ Terminal (repo) |
+| *(side)* Measure | `make feedback-profile ZIP=<zip>` prints the session's time and cost per agent, skill and tool (Windows: in `eval\harness`, `uv run python -m e2e.feedback_profile <zip>`) | ⌨️ Terminal (repo) |
 | 3 Reproduce | paste the user's prompt; viewer open; `/compare-state --against=what-went-wrong` | 🤖 Claude Code (case dir) + Viewer |
 | 4 Classify | skill, tool, or grading fault? | 🤖 Claude Code (case dir) |
 | 5 Capture | `/mine-unit-test --project <case-dir>`; scrub PII | 🤖 Claude Code (case dir) |
@@ -603,7 +605,7 @@ Drive folder as the immutable record, so re-importing later is always possible.
 | 7 Verify the case | reset + `/clear` + re-paste; `/compare-state --against=desired` | 🤖 Claude Code (case dir) + Viewer |
 | 8 Confirm in Cowork | build + install; fresh unzip; re-issue the prompt | 🖥️ Cowork |
 | 9 Final run + PR | `make eval-skill`, grade **every** dimension, commit, PR, reply | ⌨️ Terminal → 🌐 browser → GitHub |
-| 10 Clean up | delete both case directories | ⌨️ Terminal / file manager |
+| 10 Clean up | delete both case directories and the downloaded zip | ⌨️ Terminal / file manager |
 
 **Between any two attempts** (Step 3 retries, Step 7):
 `make feedback-reset CASE=~/feedback/<slug>` for the data, plus `/clear` for a
@@ -611,13 +613,15 @@ fresh session. Both halves, every time.
 
 ### Windows equivalents
 
-Every `make` target above has a batch file. Double-click it, or run it from
-`eval\`; each prompts for what it needs instead of taking `SKILL=`-style
-arguments, and rebuilds the MCP server first where that matters.
+Every `make` target above has a batch file except `make feedback-profile`,
+whose row gives the command to type in `eval\harness`. Double-click a batch
+file, or run it from `eval\`; each prompts for what it needs instead of taking
+`SKILL=`-style arguments, and rebuilds the MCP server first where that matters.
 
-| Instead of | Double-click |
+| Instead of | Use |
 |---|---|
 | `make feedback-case ZIP=<zip>` | `scripts\setup-feedback-case.bat <zip>` (pass the zip path) |
+| `make feedback-profile ZIP=<zip>` | in `eval\harness`: `uv run python -m e2e.feedback_profile <zip>` |
 | `make eval-skill SKILL=<skill>` | `eval\RunTests.bat` |
 | `make eval-ui` | `eval\Start.bat` |
 | `make gate-skill SKILL=… TEST=…` | `eval\GateSkill.bat` |

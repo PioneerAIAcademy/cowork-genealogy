@@ -402,17 +402,20 @@ async function fetchPrimaryIdResponse(
 export async function getPlaceCandidateNames(
   primaryId: string,
   opts: PlaceFetchOptions = {},
+  { anyLanguage = false }: { anyLanguage?: boolean } = {},
 ): Promise<string[]> {
   const data = await fetchPrimaryIdResponse(primaryId, opts);
   if (!data.places?.length) return [];
 
   const allNames = data.places[0].names ?? [];
 
-  // Keep proper-case English names: starts uppercase, not all-caps (filters abbreviations like PRT, MN)
+  // Keep proper-case names: starts uppercase, not all-caps (filters abbreviations
+  // like PRT, MN, NL-ZH). English only unless `anyLanguage`: the wiki titles some
+  // provinces by their local name (`Zuid-Holland, Netherlands Genealogy`).
   const properEnglish = allNames
     .filter(
       (n) =>
-        n.lang === "en" &&
+        (anyLanguage || n.lang === "en") &&
         n.value.length > 0 &&
         n.value[0] === n.value[0].toUpperCase() &&
         n.value !== n.value.toUpperCase()

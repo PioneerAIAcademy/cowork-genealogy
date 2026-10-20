@@ -59,6 +59,11 @@ in the `v1_2026-10-05_*` unit run logs, and 0 of 8 with the sentence appended.
 Exempting `survey_surname` entries from the gate was rejected: a carve-out in a
 deny guard keyed on a tool name the caller writes itself fails open.
 
+Since 2026-10-18 (lead; research-log-editor-spec.md §8.2) a table of only
+1790–1840 US census years, which names only heads, passes the gate without the
+sentence. The sentence stays required in every table, as decided above; a table
+that reaches 1850 is still refused without it.
+
 **Append-only.** The log is append-only (research-log-editor-spec.md), so the
 `Ruled out` column is final once logged. A later rule-out is a new entry; there
 is no update path.

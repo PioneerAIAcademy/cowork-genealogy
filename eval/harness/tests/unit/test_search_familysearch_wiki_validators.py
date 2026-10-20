@@ -51,6 +51,7 @@ from test_search_familysearch_wiki import (  # noqa: E402
     test_no_project_returns_template as check_no_project,
     test_one_log_entry_appended as check_one_entry,
     test_sources_section_matches_wiki_results as check_sources,
+    test_stated_navigation_preserved as check_nav,
 )
 
 
@@ -299,6 +300,94 @@ def test_census_eras_skip_when_nothing_was_logged():
     """
     with pytest.raises(pytest.skip.Exception):
         check_census_eras(EMPTY, EMPTY, _tags(*_CENSUS_TAGS))
+
+
+# --- test_stated_navigation_preserved ----------------------------------
+
+# Tags that activate the navigation validator (marriage-records.json's tags).
+_NAV_TAGS = ("fs-wiki", "how-to", "marriage", "direct-arm", "navigation")
+
+
+def test_navigation_passes_on_click_search_then_records():
+    """The exact phrasing from the fixture chunk: 'click Search, then Records'.
+
+    Proves the other direction per CLAUDE.md: the guard must not fire on a
+    faithful summary, or it will red every correct run.
+    """
+    body = (
+        "# FamilySearch Wiki: Marriage Records\n\n"
+        "Marriage records in the United States were kept by county clerks, "
+        "churches, or state vital records offices. To search, go to "
+        "FamilySearch.org, click Search, then Records, and enter the person's "
+        "name and estimated marriage year.\n\n## Sources\n\n"
+        "- [United States Marriage Records — Finding Marriage Records]"
+        "(https://www.familysearch.org/en/wiki/United_States_Marriage_Records"
+        "#Finding_Marriage_Records)\n"
+    )
+    check_nav(EMPTY, _logged(body), _tags(*_NAV_TAGS))
+
+
+def test_navigation_passes_on_arrow_notation():
+    """'FamilySearch.org → Search → Records' is a formatting variant that the
+    fixture's judge_context already scores as faithful. The guard must accept it.
+    """
+    body = (
+        "# FamilySearch Wiki: Marriage Records\n\n"
+        "To find records: FamilySearch.org → Search → Records, then enter the "
+        "person's name and estimated marriage year.\n\n## Sources\n\n"
+        "- [United States Marriage Records — Finding Marriage Records]"
+        "(https://www.familysearch.org/en/wiki/United_States_Marriage_Records"
+        "#Finding_Marriage_Records)\n"
+    )
+    check_nav(EMPTY, _logged(body), _tags(*_NAV_TAGS))
+
+
+def test_navigation_fires_when_step_is_dropped():
+    """The observed defect: the navigation step is absent while the chunk's
+    other facts are faithfully reported. \\b excludes 'FamilySearch'."""
+    body = (
+        "# FamilySearch Wiki: Marriage Records\n\n"
+        "FamilySearch has digitized millions of marriage records from county "
+        "courthouse records, church registers, and state archives.\n\n## Sources\n\n"
+        "- [United States Marriage Records — Finding Marriage Records]"
+        "(https://www.familysearch.org/en/wiki/United_States_Marriage_Records"
+        "#Finding_Marriage_Records)\n"
+    )
+    with pytest.raises(AssertionError, match="navigation step the chunk states"):
+        check_nav(EMPTY, _logged(body), _tags(*_NAV_TAGS))
+
+
+def test_navigation_fires_when_familysearch_and_records_present_but_no_nav():
+    """Proves \\b excludes 'FamilySearch' as a standalone 'Search' match.
+
+    The regex finds no match, so the assertion fails — the validator fires
+    and flags the missing navigation step. 'Marriage Records' contains
+    'Records' but 'FamilySearch' does not supply a word-boundary 'Search'.
+    """
+    body = (
+        "# FamilySearch Wiki: Marriage Records\n\n"
+        "FamilySearch has digitized millions of Marriage Records from county "
+        "courthouse records, church registers, and state archives.\n\n## Sources\n\n"
+        "- [United States Marriage Records — Finding Marriage Records]"
+        "(https://www.familysearch.org/en/wiki/United_States_Marriage_Records"
+        "#Finding_Marriage_Records)\n"
+    )
+    with pytest.raises(AssertionError, match="navigation step the chunk states"):
+        check_nav(EMPTY, _logged(body), _tags(*_NAV_TAGS))
+
+
+def test_navigation_skips_without_the_tag():
+    """Tag-gated: every other positive in the suite has no reason to include the
+    navigation step, so an ungated version would fail all of them."""
+    with pytest.raises(pytest.skip.Exception):
+        check_nav(EMPTY, _logged("No navigation here."), _tags("fs-wiki", "how-to"))
+
+
+def test_navigation_skips_when_nothing_was_logged():
+    """A run that logged nothing is `test_one_log_entry_appended`'s failure to
+    report; firing here too would charge one defect twice."""
+    with pytest.raises(pytest.skip.Exception):
+        check_nav(EMPTY, EMPTY, _tags(*_NAV_TAGS))
 
 
 # --- test_empty_results_logs_one_negative -----------------------------

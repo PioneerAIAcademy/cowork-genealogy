@@ -169,6 +169,7 @@ depends on another shipping first.
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a `relationship` assertion whose `relationship_type` contradicts what its own `value` says about the record subject, including a sibling typed as a child. Refuses **21 of 2586 (0.8%)**, measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py` | **enforcing** |
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | an assertion whose `informant_proximity` is `unknown` while its `information_quality` claims a determination (`primary`/`secondary`). Forward only — `indeterminate` at a KNOWN proximity is the ordinary census shape and stays legal. Was prose; the model broke it on **248 of 982** `unknown` assertions across the committed e2e corpus | **enforcing** |
 | §5.4 | Provenance nudge | engine (MCP tool) — so Cowork, hosted, both harnesses | a `sources` op landing a non-empty `transcription` with no `image_filename` — a claim about a page that does not say which page | **advisory only — warns, refuses nothing.** Two legitimate shapes have no filename to give: a PDF capture, and an `image_transcribe` run with no `projectPath`, which stages nothing. Refusing either would block correct work to catch a documentation gap |
+| §5.5 | Provenance nudge | engine (MCP tool) — so Cowork, hosted, both harnesses | a `timelines` append, or an update setting `events`, that leaves events with empty `assertion_ids` — tree or user facts presented beside record-backed ones | **advisory only — warns, refuses nothing.** Refusal rejected 2026-10-18 and kept a warning on 2026-10-19, though that ruling withdrew the "tree-built first pass" premise for person-mode timelines (there an unsourced tree fact becomes a gap). Whether person mode should refuse instead is open with the lead |
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing a protected project file (`research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json`, `external-collections.json`) without going through its writing tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **reported (compliance axis); does not gate the run** |
@@ -1629,8 +1630,8 @@ are not ours to set, so a host-side hook can never reach Cowork. A
 plugin-shipped `hooks/hooks.json` does. Verified live in Cowork 2026-07-30: the
 hook loads, fires for `Write` and for `Bash`, both matcher forms bind, and a
 `deny` is honored with the script's own reason text surfacing to the agent.
-Cowork runs `permission_mode: "default"`; the hosted path runs
-`bypassPermissions`; a hook binds under both. See `CLAUDE.md` § "Plugin hooks"
+The hosted path runs `bypassPermissions`; a hook binds under both, under
+either Cowork `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005). See `CLAUDE.md` § "Plugin hooks"
 for the packaging constraints (`scripts/package-plugin.mjs`'s `INCLUDE` must
 carry `"hooks"`) and the two upstream reports that do **not** reproduce.
 
@@ -1678,7 +1679,7 @@ some of them fails `make harness-test`.
   writes** to a protected file — but the earlier reading, that the shell route
   is never *attempted*, does not survive the measurement. The agent reaches for
   it; only the harness's permission mode stopped it, and that is not one of the
-  three guard copies. Cowork runs `permission_mode: "default"` and the hosted
+  three guard copies. Cowork runs `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005) and the hosted
   path runs `bypassPermissions`, so neither environment has the thing that
   refused these two.
 

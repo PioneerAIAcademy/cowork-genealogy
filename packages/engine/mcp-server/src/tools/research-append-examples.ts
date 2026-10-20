@@ -265,7 +265,7 @@ const PROJECT_EXAMPLE = `research_append({
 })`;
 
 /**
- * The `plans` append, as the batched call `research-plan/SKILL.md` prescribes:
+ * The `plans` append, as the batched call `agents/research-plan.md` prescribes:
  * the shell, then one `plan_items` op per item carrying the id the tool will
  * assign the shell. Built from `EXAMPLES.plans` + `EXAMPLES.plan_items` rather
  * than a third literal, so a schema drift in either is caught once.
@@ -364,7 +364,7 @@ export function exampleFor(
   const entry = Object.hasOwn(EXAMPLES, section) ? EXAMPLES[section] : undefined;
   if (!entry) return null;
   // `pl_001` was hard-coded here, which is the one literal
-  // `research-plan/SKILL.md` says never to hard-code: in an ongoing project it
+  // `agents/research-plan.md` says never to hard-code: in an ongoing project it
   // attaches the items to another question's plan. The append form teaches the
   // prediction rule; the update form needs an id that already exists.
   const planId =

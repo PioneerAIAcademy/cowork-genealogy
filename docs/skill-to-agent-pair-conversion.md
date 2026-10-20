@@ -426,7 +426,7 @@ the table above:
 | register | what it wants | paid? |
 |---|---|---|
 | `research/SKILL.md` routing table | any bare cell naming the skill flipped to `@plugin:<agent>` — see the exception in §0 | `research` run |
-| other suites' negatives with `correct_skill` naming the skill | a routed negative counts `Skill` calls only, so an `Agent` spawn never satisfies it and the test aborts `not_runnable` (`runnability.py`). Delete a test whose right answer *is* the agent; trim the name from a multi-target list only when the test is graded on an invariant | one run per suite touched |
+| other suites' negatives with `correct_skill` naming the skill | nothing mechanical since 2026-10-08: `runnability.py` accepts an agent name in `correct_skill` (#3092), the routing short-circuit stops on an `Agent` spawn of it (#3077), and `_compute_outcome` reads `handoffs`, which count spawns (#3131). Before #3092 (2026-10-03) the test aborted `not_runnable`; between #3092 and #3131 it loaded and a correctly routed run graded `fail`. What remains is the test's own merit: a description-routing negative is deleted under the 2026-09-22 ruling, while a `grade_on_invariant` near-miss or hand-back test keeps grading its invariant (#2116 kept five) | only for a suite whose test you edit |
 | `execution.stub_skills` naming the skill | nothing — an entry naming an agent stubs its spawn (`stub_agents`) | no |
 | the suite's own routed tests | every `input.user_message` becomes an `input.delegation`, tagged `direct-arm`; a routed original with a same-phrasing twin is deleted | the suite's run |
 | the agent's `description` | the deleted skill's user trigger phrases, now that it is the only thing a user's words match; within 1024 characters (`skill-description-length.test.ts`) | no |

@@ -28,11 +28,17 @@ from test_search_records import (  # noqa: E402
 TAGGED = {"tags": ["search", "census", "pre-1880-census-household"]}
 UNTAGGED = {"tags": ["search", "census"]}
 
+# What the tool sends for REAL_REFUSED below, logged against its staged 1860 search.
 REFUSAL = {
     "ok": False,
     "errors": [
-        "This note describes a pre-1880 US census household but states the family structure "
-        "as fact. 1850/1860/1870 censuses have NO relationship-to-head column, ..."
+        "This note describes a pre-1880 US census household (the staged search's 1860 US "
+        "census rows) but states the family structure as fact (\"household contains Henry "
+        "and Margaret Ackerman\"). 1850/1860/1870 censuses have NO relationship-to-head "
+        "column, so the structure is an inference from surname, ages and listing order -- "
+        "as are any ParentChild/Couple edges on the record, which the indexer inferred the "
+        "same way. Say so in the note, e.g. \"...in one dwelling; family structure inferred "
+        "from surname, ages and order, not stated.\" Then re-send."
     ],
 }
 OK = {"ok": True, "logId": "log_002"}
