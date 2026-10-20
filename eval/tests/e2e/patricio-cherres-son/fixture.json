@@ -1,0 +1,19 @@
+{
+  "id": "patricio-cherres-son",
+  "name": "Hermenejildo Patricio Cherres — a son, Julio César, who died in 1908 at San Pedro, Guanujo, Ecuador",
+  "genre": "record-hint",
+  "source_pid": "KZ39-T1R",
+  "captured": "2026-10-20",
+  "researcher_question": "What children did Hermenejildo Patricio Cherres and his wife Nicolasa Gavilanes, of San Pedro, Guanujo, Bolívar, Ecuador, have besides their daughters Manuela (born 1889), Zoila Rosa (born 1901) and Rosario?",
+  "tags": {
+    "question_type": "children",
+    "era": "1900s",
+    "geography": "EC"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 11, hint-samples.csv row 303, flags adds_son, confidence 3). Draft transcribed from a 1908 Catholic burial entry at San Pedro, Guanujo, Bolívar, Ecuador; unverified."
+}

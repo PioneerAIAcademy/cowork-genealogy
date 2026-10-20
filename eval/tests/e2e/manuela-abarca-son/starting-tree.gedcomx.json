@@ -1,0 +1,3559 @@
+{
+  "persons": [
+    {
+      "id": "G7XQ-GMG",
+      "ark": "ark:/61903/4:1:G7XQ-GMG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ef58101f-2873-46c8-b945-5287d2796f2c",
+          "preferred": true,
+          "given": "Josefa Manuela",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0cbbd408-d522-419e-8b11-87ae5090cf29",
+          "type": "Birth",
+          "date": "12 de junio de 1873",
+          "standard_date": "12 Jun 1873",
+          "place": "Aserrí, San José, Costa Rica",
+          "standard_place": "Aserrí, San José, Costa Rica"
+        },
+        {
+          "id": "9c9bd790-3c2a-47b1-85e8-8048a0981556",
+          "type": "Death"
+        },
+        {
+          "id": "e41ca660-9b13-49eb-820b-07191938f25a",
+          "type": "Christening",
+          "date": "12 de junio de 1873",
+          "standard_date": "12 Jun 1873",
+          "place": "San Luis de Tolosa, Aserrí, Aserrí, San José, Costa Rica",
+          "standard_place": "San Luis de Tolosa, Aserrí, Aserrí, San José, Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WCM9-N6P"
+        },
+        {
+          "ref": "WHH5-SSV"
+        },
+        {
+          "ref": "WW1F-SK8"
+        }
+      ]
+    },
+    {
+      "id": "LQRP-316",
+      "ark": "ark:/61903/4:1:LQRP-316",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Francisca de Jesús",
+          "surname": "Fallas Alfaro",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Francisca",
+          "surname": "Fallas",
+          "type": "BirthName"
+        },
+        {
+          "id": "970ee2de-e481-4fa0-a7c8-bf4b3b3e24b7",
+          "given": "Franca.",
+          "surname": "Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "aproximadamente 1831",
+          "place": "Acosta, San José, Costa Rica",
+          "standard_place": "Acosta, San José, Costa Rica"
+        },
+        {
+          "id": "fdce2763-f254-47d2-9bac-f17dd2d3e1dd",
+          "type": "Burial",
+          "date": "1900",
+          "standard_date": "1900"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "14 de noviembre de 1900",
+          "standard_date": "14 Nov 1900",
+          "place": "San José, San José, Costa Rica",
+          "standard_place": "San José, San José, Costa Rica"
+        },
+        {
+          "id": "45e3f721-d6f7-492d-ba93-4d2a4fba7d38",
+          "type": "Death Registration",
+          "place": "San José, Costa Rica",
+          "standard_place": "San José, Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WC1B-S4F"
+        },
+        {
+          "ref": "WC1B-9K3"
+        },
+        {
+          "ref": "WCM9-N8Z"
+        },
+        {
+          "ref": "WHH5-92Y"
+        },
+        {
+          "ref": "7MKP-RY7"
+        },
+        {
+          "ref": "QDMH-VPH"
+        },
+        {
+          "ref": "9MQF-FH3"
+        },
+        {
+          "ref": "QDMZ-9T8"
+        },
+        {
+          "ref": "QDMH-GDK"
+        },
+        {
+          "ref": "QDMH-2GX"
+        },
+        {
+          "ref": "QDMH-NBB"
+        },
+        {
+          "ref": "SYG1-F81"
+        },
+        {
+          "ref": "SLQC-BXC"
+        },
+        {
+          "ref": "S2TP-HT1"
+        },
+        {
+          "ref": "S2T4-WPK"
+        },
+        {
+          "ref": "SX8F-WWV"
+        },
+        {
+          "ref": "SX8F-7N7"
+        },
+        {
+          "ref": "SX8F-QYC"
+        },
+        {
+          "ref": "SX8F-Q8R"
+        },
+        {
+          "ref": "SX8F-31J"
+        },
+        {
+          "ref": "S8MG-SRP"
+        },
+        {
+          "ref": "S8MG-SH1"
+        },
+        {
+          "ref": "S8MG-M6W"
+        },
+        {
+          "ref": "S8ML-B3Z"
+        },
+        {
+          "ref": "S8ML-XVY"
+        },
+        {
+          "ref": "S8ML-DQK"
+        },
+        {
+          "ref": "S8ML-ZG2"
+        },
+        {
+          "ref": "SZ1T-Q4Y"
+        },
+        {
+          "ref": "SZ1T-91S"
+        },
+        {
+          "ref": "SZ1T-M45"
+        },
+        {
+          "ref": "SZ1R-YG8"
+        },
+        {
+          "ref": "SZ1R-T4P"
+        },
+        {
+          "ref": "SZ1R-RVR"
+        },
+        {
+          "ref": "SZ1R-4JF"
+        },
+        {
+          "ref": "SZ1R-WRS"
+        },
+        {
+          "ref": "S9PG-TYX"
+        },
+        {
+          "ref": "9M9Y-8BL"
+        },
+        {
+          "ref": "9F3N-8PT"
+        },
+        {
+          "ref": "9P7N-7LD"
+        },
+        {
+          "ref": "9P7N-3V4"
+        }
+      ]
+    },
+    {
+      "id": "PDC2-5PM",
+      "ark": "ark:/61903/4:1:PDC2-5PM",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "aac14119-b66b-4365-a596-4e35939dc34f",
+          "preferred": true,
+          "given": "Juan",
+          "surname": "Garcia Calderon",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "374e2e8e-53d6-404c-bb97-51244368cb61",
+          "type": "Birth",
+          "date": "aproximadamente 1862",
+          "place": "Costa Rica",
+          "standard_place": "Costa Rica"
+        },
+        {
+          "id": "55cca533-450a-4686-a56d-e153a5a7ed75",
+          "type": "Información matrimonial",
+          "date": "aproximadamente enero de 1891",
+          "place": "Catedral Metropolitana de San José, Catedral, San José, San José, Costa Rica",
+          "standard_place": "Catedral Metropolitana de San José, Catedral, San José, San José, Costa Rica",
+          "value": "información Matrimonial "
+        },
+        {
+          "id": "fa76a7d1-34bf-4f3a-9d5c-a2d4229381ce",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WCM9-NJC"
+        },
+        {
+          "ref": "WHH5-CXC"
+        }
+      ]
+    },
+    {
+      "id": "LRN1-QBJ",
+      "ark": "ark:/61903/4:1:LRN1-QBJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "7e559eab-190b-409f-8728-d2b0a356adcb",
+          "preferred": true,
+          "given": "Rafael de Jesús",
+          "surname": "Abarca Monge",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1c53d490-c637-4018-8738-b9c42fb8ee1b",
+          "type": "Birth",
+          "date": "aproximadamente 1828",
+          "place": "San José, San José, Costa Rica",
+          "standard_place": "San José, San José, Costa Rica"
+        },
+        {
+          "id": "353922e6-1f98-40ea-a8ce-b6da3607f729",
+          "type": "Death",
+          "date": "2 de noviembre de 1891",
+          "standard_date": "2 Nov 1891",
+          "place": "San José, San José, Costa Rica",
+          "standard_place": "San José, San José, Costa Rica"
+        },
+        {
+          "id": "052d361e-cde4-4fc4-96a5-912b47a789de",
+          "type": "Death Registration",
+          "place": "Costa Rica",
+          "standard_place": "Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WCM9-NCY"
+        },
+        {
+          "ref": "WHH5-9D9"
+        },
+        {
+          "ref": "7MKP-RRV"
+        },
+        {
+          "ref": "QDMZ-9YT"
+        },
+        {
+          "ref": "QDMH-GXQ"
+        },
+        {
+          "ref": "QDMH-JMX"
+        },
+        {
+          "ref": "SYG1-FZL"
+        },
+        {
+          "ref": "SLQC-B8T"
+        },
+        {
+          "ref": "S2TP-HRM"
+        },
+        {
+          "ref": "SX8F-WH3"
+        },
+        {
+          "ref": "SX8F-7VW"
+        },
+        {
+          "ref": "SX8F-QBN"
+        },
+        {
+          "ref": "SX8F-QXF"
+        },
+        {
+          "ref": "SX8F-QMK"
+        },
+        {
+          "ref": "S8MG-SB7"
+        },
+        {
+          "ref": "S8MG-S8B"
+        },
+        {
+          "ref": "S8MG-M81"
+        },
+        {
+          "ref": "S8ML-B72"
+        },
+        {
+          "ref": "S8ML-XJS"
+        },
+        {
+          "ref": "S8ML-DSF"
+        },
+        {
+          "ref": "S8ML-ZR7"
+        },
+        {
+          "ref": "SZ1T-QZT"
+        },
+        {
+          "ref": "SZ1T-SSH"
+        },
+        {
+          "ref": "SZ1T-MZP"
+        },
+        {
+          "ref": "SZ1R-YYF"
+        },
+        {
+          "ref": "SZ1R-TZL"
+        },
+        {
+          "ref": "SZ1R-RLL"
+        },
+        {
+          "ref": "SZ1R-4FN"
+        },
+        {
+          "ref": "SZ1R-WGB"
+        },
+        {
+          "ref": "S9PG-TRR"
+        },
+        {
+          "ref": "9M9Y-8BK"
+        },
+        {
+          "ref": "92YD-VC5"
+        },
+        {
+          "ref": "9P7N-72R"
+        },
+        {
+          "ref": "9P7N-3J6"
+        }
+      ]
+    },
+    {
+      "id": "L8DF-239",
+      "ark": "ark:/61903/4:1:L8DF-239",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "3e9a4ce4-f0b3-467f-97f2-471d0dfc701c",
+          "preferred": true,
+          "given": "Victor",
+          "surname": "Abarca  Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d0cfe2c8-e170-43d0-976e-63cc52211636",
+          "type": "Birth",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Acosta, San José, Costa Rica",
+          "standard_place": "Acosta, San José, Costa Rica"
+        },
+        {
+          "id": "a89d7846-be4b-4348-8b93-3d016a6574ad",
+          "type": "Death",
+          "date": "10 marzo 1906",
+          "standard_date": "10 Mar 1906",
+          "place": "Acosta, San José, Costa Rica",
+          "standard_place": "Acosta, San José, Costa Rica"
+        },
+        {
+          "id": "5d40d2c8-26e3-4948-b36a-40d3abd71154",
+          "type": "Burial",
+          "date": "10 March 1906",
+          "standard_date": "10 Mar 1906",
+          "place": "San Ignacio de Loyola, San Ignacio, Acosta, San José, Costa Rica",
+          "standard_place": "San Ignacio de Loyola, San Ignacio, Acosta, San José, Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7CSK-8V1"
+        },
+        {
+          "ref": "7HP7-GD2"
+        },
+        {
+          "ref": "7HGY-GMF"
+        },
+        {
+          "ref": "7HGY-LK1"
+        },
+        {
+          "ref": "7HGY-LNC"
+        },
+        {
+          "ref": "7HGY-LQG"
+        },
+        {
+          "ref": "7HXB-RT3"
+        },
+        {
+          "ref": "QBV3-227"
+        },
+        {
+          "ref": "Q5ZY-6KD"
+        },
+        {
+          "ref": "3R82-7JL"
+        },
+        {
+          "ref": "3R82-7SL"
+        },
+        {
+          "ref": "3R82-QNV"
+        },
+        {
+          "ref": "3R82-3HB"
+        },
+        {
+          "ref": "3R82-SW5"
+        },
+        {
+          "ref": "S82K-6HQ"
+        },
+        {
+          "ref": "S82K-WM7"
+        },
+        {
+          "ref": "S82K-77Y"
+        },
+        {
+          "ref": "S82K-QG3"
+        },
+        {
+          "ref": "S82K-QWS"
+        },
+        {
+          "ref": "S82K-3QJ"
+        },
+        {
+          "ref": "S82K-SQX"
+        },
+        {
+          "ref": "S82K-MT4"
+        },
+        {
+          "ref": "S82K-MZB"
+        },
+        {
+          "ref": "S82J-74X"
+        },
+        {
+          "ref": "S82J-QKK"
+        },
+        {
+          "ref": "9KSM-9XX"
+        },
+        {
+          "ref": "9KSM-9LG"
+        },
+        {
+          "ref": "9KSM-S6N"
+        },
+        {
+          "ref": "9KSM-3F2"
+        },
+        {
+          "ref": "9KSM-369"
+        },
+        {
+          "ref": "QLPM-XJX"
+        }
+      ]
+    },
+    {
+      "id": "GSJW-YVL",
+      "ark": "ark:/61903/4:1:GSJW-YVL",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "9e8cac8d-b4fe-4c89-bc93-f0fe98618cd2",
+          "preferred": true,
+          "given": "Victor",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        },
+        {
+          "id": "b0d60b37-1ee6-43b8-97dc-c2eb930b2b70",
+          "given": "Victor",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "20c3e174-d63f-42a1-adba-cd7556fd1d8c",
+          "type": "Birth",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Acosta, San José, Costa Rica",
+          "standard_place": "Acosta, San José, Costa Rica"
+        },
+        {
+          "id": "99f29616-4a96-41b8-8e55-c938d4a7bb1a",
+          "type": "Baptism",
+          "date": "10 Feb 1853",
+          "standard_date": "10 Feb 1853",
+          "place": "Nuestra Señora de los Desamparados, Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "787f20f8-07bf-4e1c-b9d1-02ae35d7c7cc",
+          "type": "Death",
+          "date": "10 marzo 1906",
+          "standard_date": "10 Mar 1906",
+          "place": "Acosta, San José, Costa Rica",
+          "standard_place": "Acosta, San José, Costa Rica"
+        },
+        {
+          "id": "0fad710f-da88-49d0-b452-ebac65037cfa",
+          "type": "Death Registration",
+          "place": "San Ignacio, San José, Costa Rica",
+          "standard_place": "San Ignacio, Acosta, San José, Costa Rica"
+        },
+        {
+          "id": "87e8ddc8-e08e-49a3-8949-7174b0f67a5f",
+          "type": "Death Registration",
+          "place": "San José, Costa Rica",
+          "standard_place": "San José, Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QTJ7-LM4"
+        },
+        {
+          "ref": "QTJ7-JB9"
+        },
+        {
+          "ref": "QTJ7-F2W"
+        },
+        {
+          "ref": "QTJ7-636"
+        },
+        {
+          "ref": "QTJ7-CRW"
+        },
+        {
+          "ref": "QTJ7-HWR"
+        },
+        {
+          "ref": "QG8D-LZP"
+        },
+        {
+          "ref": "QGM5-H59"
+        },
+        {
+          "ref": "QLPB-LY2"
+        },
+        {
+          "ref": "QLNK-MTJ"
+        },
+        {
+          "ref": "QLQ4-ZKJ"
+        },
+        {
+          "ref": "S8MG-3M3"
+        },
+        {
+          "ref": "SZ1R-G8F"
+        },
+        {
+          "ref": "SZ1R-HX2"
+        },
+        {
+          "ref": "SZ1R-4L2"
+        },
+        {
+          "ref": "SZ1R-W14"
+        },
+        {
+          "ref": "SZ1R-SRV"
+        },
+        {
+          "ref": "SZ15-HCP"
+        },
+        {
+          "ref": "SZ15-MYF"
+        },
+        {
+          "ref": "SZ1P-1PB"
+        },
+        {
+          "ref": "SZ1P-XY4"
+        },
+        {
+          "ref": "SZ1P-X36"
+        },
+        {
+          "ref": "SZ1P-C92"
+        },
+        {
+          "ref": "SZ1P-WCN"
+        },
+        {
+          "ref": "SZ1P-QXR"
+        },
+        {
+          "ref": "SZ1P-9TN"
+        },
+        {
+          "ref": "SZ1P-99Y"
+        },
+        {
+          "ref": "SZ1G-16V"
+        },
+        {
+          "ref": "SZ1G-RCZ"
+        },
+        {
+          "ref": "SZ1G-5LF"
+        },
+        {
+          "ref": "SZ1G-L33"
+        },
+        {
+          "ref": "SZ1G-2JZ"
+        },
+        {
+          "ref": "SZ1G-DK5"
+        },
+        {
+          "ref": "SZ1G-ZZG"
+        },
+        {
+          "ref": "SZ1G-4B7"
+        },
+        {
+          "ref": "SZ1G-WVR"
+        },
+        {
+          "ref": "SZ1L-G68"
+        },
+        {
+          "ref": "SZ1L-LDR"
+        },
+        {
+          "ref": "SZ1L-VJK"
+        },
+        {
+          "ref": "SZ1L-J3R"
+        },
+        {
+          "ref": "SZ1L-NN1"
+        },
+        {
+          "ref": "SZ1L-X45"
+        },
+        {
+          "ref": "SZ1L-6HH"
+        },
+        {
+          "ref": "SZ1L-DLR"
+        },
+        {
+          "ref": "SZ1L-D7H"
+        }
+      ]
+    },
+    {
+      "id": "LYCL-PGS",
+      "ark": "ark:/61903/4:1:LYCL-PGS",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "dca20f6a-37cb-4500-b450-cecea35f07b7",
+          "preferred": true,
+          "given": "Luis Primo",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "620f95d6-112a-4754-b724-3e843eb7268d",
+          "type": "Birth",
+          "date": "08 JUN 1854",
+          "standard_date": "8 Jun 1854",
+          "place": "Costa Rica",
+          "standard_place": "Costa Rica"
+        },
+        {
+          "id": "5f0d6a06-fc4e-47d2-9554-6e4e941863ab",
+          "type": "Christening",
+          "date": "10 JUN 1854",
+          "standard_date": "10 Jun 1854",
+          "place": "Nuestra Señora de los Desamparados, Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "e2643890-cdb3-4568-bb67-e513388c4bdf",
+          "type": "Death",
+          "date": "1924",
+          "standard_date": "1924",
+          "place": "Costa Rica",
+          "standard_place": "Costa Rica"
+        },
+        {
+          "id": "65bf8603-5026-4d90-9415-a3e13022c3ad",
+          "type": "Death Registration",
+          "place": "San José, Costa Rica",
+          "standard_place": "San José, Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W83N-JF1"
+        },
+        {
+          "ref": "W8SY-34L"
+        },
+        {
+          "ref": "W8SR-H3V"
+        },
+        {
+          "ref": "7T85-71Q"
+        },
+        {
+          "ref": "74YP-88B"
+        },
+        {
+          "ref": "QLNZ-CGN"
+        },
+        {
+          "ref": "QMQG-TGQ"
+        },
+        {
+          "ref": "SK9C-QYZ"
+        },
+        {
+          "ref": "S8ML-ZYZ"
+        },
+        {
+          "ref": "9P7N-HD5"
+        },
+        {
+          "ref": "9P7N-WCK"
+        },
+        {
+          "ref": "9TKN-N9P"
+        },
+        {
+          "ref": "9TKN-XQ3"
+        },
+        {
+          "ref": "9TKN-4RW"
+        },
+        {
+          "ref": "9TKN-925"
+        },
+        {
+          "ref": "9TKN-KF9"
+        },
+        {
+          "ref": "9P7N-MG4"
+        },
+        {
+          "ref": "9P7N-7GK"
+        }
+      ]
+    },
+    {
+      "id": "GSJN-9CZ",
+      "ark": "ark:/61903/4:1:GSJN-9CZ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "344c2fe5-cf79-4533-96e0-efd0a4250559",
+          "preferred": true,
+          "given": "Maria Cecilia",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "74ae69b4-2476-4a7f-aa88-59ba98483c45",
+          "type": "Baptism",
+          "date": "01 Feb 1856",
+          "standard_date": "1 Feb 1856",
+          "place": "Nuestra Señora de los Desamparados, Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "37442c1a-afbd-4af2-8e23-a208e302c9e9",
+          "type": "Burial",
+          "date": "03 Feb 1856",
+          "standard_date": "3 Feb 1856",
+          "place": "Nuestra Señora de los Desamparados, Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "ea1ff0c8-a7e4-4e81-9c71-a349707007aa",
+          "type": "Birth",
+          "date": "1856",
+          "standard_date": "1856",
+          "place": "Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "4dbf2bfe-c870-44f0-9e9d-d661b683becc",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "SX8F-73S"
+        },
+        {
+          "ref": "S8ML-B8L"
+        }
+      ]
+    },
+    {
+      "id": "GSJ4-G7C",
+      "ark": "ark:/61903/4:1:GSJ4-G7C",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "19402851-1278-4b7a-8c49-b8e668cec98c",
+          "preferred": true,
+          "given": "Maria de Jesus",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "18f56506-610b-4927-bfa9-d86c6f65e295",
+          "type": "Baptism",
+          "date": "27 Mar 1857",
+          "standard_date": "27 Mar 1857",
+          "place": "Nuestra Señora de los Desamparados, Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "6f5ebbc7-617b-45d2-a48c-3872f7ddd666",
+          "type": "Birth",
+          "date": "1857",
+          "standard_date": "1857",
+          "place": "Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "392312bf-baa4-4525-bb0f-90dd7a47e5d1",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "SZ1T-MJL"
+        }
+      ]
+    },
+    {
+      "id": "GSJH-MYC",
+      "ark": "ark:/61903/4:1:GSJH-MYC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "b31d3950-ddc3-4664-8886-4f92a90c962a",
+          "preferred": true,
+          "given": "Andrea Petronila",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "95bc8dda-e32a-42ca-921b-6532f9e893ba",
+          "type": "Birth",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "a7114b69-5f36-4e63-bcc9-95606d263abe",
+          "type": "Baptism",
+          "date": "15 Nov 1861",
+          "standard_date": "15 Nov 1861",
+          "place": "Nuestra Señora de los Desamparados, Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "916e0d22-8669-43c7-bf28-5207330a771a",
+          "type": "Death",
+          "date": "29 Jul 1929",
+          "standard_date": "29 Jul 1929"
+        },
+        {
+          "id": "64f66801-780a-421e-90a6-6a78d666a609",
+          "type": "Death Registration",
+          "place": "Costa Rica",
+          "standard_place": "Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S8ML-DHM"
+        },
+        {
+          "ref": "SZ1T-Q61"
+        }
+      ]
+    },
+    {
+      "id": "GQVM-5TV",
+      "ark": "ark:/61903/4:1:GQVM-5TV",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "e52b3e05-013b-4c49-84d3-5a910fa126e3",
+          "preferred": true,
+          "given": "Juana",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3f3589e6-2306-4341-b3d6-95c13062fb17",
+          "type": "Birth",
+          "date": "1862",
+          "standard_date": "1862",
+          "place": "San José, San José, San José, Costa Rica",
+          "standard_place": "Catedral, San José, San José, Costa Rica"
+        },
+        {
+          "id": "f756fd7f-e64b-4431-9c83-1cad5262a11f",
+          "type": "Death",
+          "date": "28 Feb 1902",
+          "standard_date": "28 Feb 1902",
+          "place": "San José, San José, San José, Costa Rica",
+          "standard_place": "Catedral, San José, San José, Costa Rica"
+        },
+        {
+          "id": "24aa2d64-9597-4092-a6c3-467764fc9c52",
+          "type": "Burial",
+          "date": "01 Mar 1902",
+          "standard_date": "1 Mar 1902",
+          "place": "San Luis de Asserrí, Aserrí, San José, Costa Rica",
+          "standard_place": "Aserrí, San José, Costa Rica"
+        },
+        {
+          "id": "5f0c84db-0119-4d78-ae61-2bfdbb042393",
+          "type": "Death Registration",
+          "place": "San José, Costa Rica",
+          "standard_place": "San José, Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "SYG1-NQ1"
+        },
+        {
+          "ref": "SYG1-FKL"
+        }
+      ]
+    },
+    {
+      "id": "L2CC-2QP",
+      "ark": "ark:/61903/4:1:L2CC-2QP",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Maria Pascuala",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        },
+        {
+          "id": "7c1921b4-c923-43fd-864c-560deb6a31fd",
+          "given": "María",
+          "surname": "Abarca",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "06728bb9-45e5-4b62-81d7-fd72a1419f18",
+          "type": "Baptism",
+          "date": "17 May 1859",
+          "standard_date": "17 May 1859",
+          "place": "Nuestra Señora de los Desamparados, Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "79622560-b979-4204-98bf-34e4f965d5b7",
+          "type": "Birth",
+          "date": "aproximadamente 1862",
+          "place": "Aserrí, San José, Costa Rica",
+          "standard_place": "Aserrí, San José, Costa Rica"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "28 de marzo de 1942",
+          "standard_date": "28 Mar 1942",
+          "place": "Alajuela, Alajuela, Costa Rica",
+          "standard_place": "Alajuela, Alajuela, Costa Rica"
+        },
+        {
+          "id": "3ff31c27-fe57-430a-baed-49d1c048f101",
+          "type": "Death Registration",
+          "place": "Alajuela, Costa Rica",
+          "standard_place": "Alajuela, Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WDXL-284"
+        },
+        {
+          "ref": "WHRJ-3TB"
+        },
+        {
+          "ref": "7GCF-7N1"
+        },
+        {
+          "ref": "7GCF-7SV"
+        },
+        {
+          "ref": "7GCF-Q53"
+        },
+        {
+          "ref": "7GCF-QDG"
+        },
+        {
+          "ref": "7GCF-3Q9"
+        },
+        {
+          "ref": "7GCX-6Y2"
+        },
+        {
+          "ref": "7GCX-6XL"
+        },
+        {
+          "ref": "7LHF-1KB"
+        },
+        {
+          "ref": "7LHX-FBG"
+        },
+        {
+          "ref": "7LHX-3SV"
+        },
+        {
+          "ref": "7LHC-3RT"
+        },
+        {
+          "ref": "7LHC-9BX"
+        },
+        {
+          "ref": "721T-JJL"
+        },
+        {
+          "ref": "7VY9-JCJ"
+        },
+        {
+          "ref": "7F9X-2Z1"
+        },
+        {
+          "ref": "7DNN-PP8"
+        },
+        {
+          "ref": "7WPQ-CCL"
+        },
+        {
+          "ref": "QTDD-YMV"
+        },
+        {
+          "ref": "Q5L8-9QW"
+        },
+        {
+          "ref": "QGWG-QVY"
+        },
+        {
+          "ref": "Q25V-9JN"
+        },
+        {
+          "ref": "QV4C-YKB"
+        },
+        {
+          "ref": "QV4C-YZK"
+        },
+        {
+          "ref": "QX58-51Z"
+        },
+        {
+          "ref": "QDMH-JQT"
+        },
+        {
+          "ref": "3B7T-PG9"
+        },
+        {
+          "ref": "3YXR-MK4"
+        },
+        {
+          "ref": "3N9M-C5M"
+        },
+        {
+          "ref": "SPT9-KFT"
+        },
+        {
+          "ref": "SPT9-V77"
+        },
+        {
+          "ref": "SPT9-SC1"
+        },
+        {
+          "ref": "SPTM-PDM"
+        },
+        {
+          "ref": "SPTM-XKP"
+        },
+        {
+          "ref": "SPTM-DSZ"
+        },
+        {
+          "ref": "SPTM-ZLG"
+        },
+        {
+          "ref": "SPR1-1VM"
+        },
+        {
+          "ref": "SPR1-P3L"
+        },
+        {
+          "ref": "SP9Z-MRB"
+        },
+        {
+          "ref": "SP9C-N7B"
+        },
+        {
+          "ref": "SJCW-VYD"
+        },
+        {
+          "ref": "S8ML-KKQ"
+        },
+        {
+          "ref": "S8ML-N2W"
+        },
+        {
+          "ref": "SZ1K-6N5"
+        },
+        {
+          "ref": "S9PG-YPM"
+        },
+        {
+          "ref": "S9PG-T1R"
+        },
+        {
+          "ref": "S9PG-TSZ"
+        },
+        {
+          "ref": "92YD-KNW"
+        },
+        {
+          "ref": "92YD-V6Q"
+        },
+        {
+          "ref": "9V5N-Q37"
+        },
+        {
+          "ref": "9V5N-31R"
+        }
+      ]
+    },
+    {
+      "id": "G4DK-QDN",
+      "ark": "ark:/61903/4:1:G4DK-QDN",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "9cd0b21b-dd9b-4d1b-a011-6b5c507e7ff0",
+          "preferred": true,
+          "given": "Fidel Custodio",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        },
+        {
+          "id": "f7cb3b3d-9c1d-41fc-8d2b-3c733e9d2a0f",
+          "given": "Fidel Custodio",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "775368e2-d9ae-4bc7-bee2-7342147ff13b",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "San José, San José, Costa Rica",
+          "standard_place": "San José, San José, Costa Rica"
+        },
+        {
+          "id": "8e9084b7-3af6-4d4b-aed1-af1767a2f7e6",
+          "type": "Birth",
+          "date": "19 Aug 1865",
+          "standard_date": "19 Aug 1865",
+          "place": "El Carmen, San José, San José, Costa Rica",
+          "standard_place": "San José, San José, Costa Rica"
+        },
+        {
+          "id": "44ac4ac6-5f74-4cc3-bf17-2a84f593b5d9",
+          "type": "Baptism",
+          "date": "21 Aug 1865",
+          "standard_date": "21 Aug 1865",
+          "place": "El Carmen, San José, San José, Costa Rica",
+          "standard_place": "San José, San José, Costa Rica"
+        },
+        {
+          "id": "7ca094d6-0395-40a1-8d85-691034c87525",
+          "type": "Christening",
+          "date": "21 Aug 1865",
+          "standard_date": "21 Aug 1865",
+          "place": "San Jose/Costa Rica",
+          "standard_place": "San José, San José, Costa Rica"
+        },
+        {
+          "id": "6d7536ab-53a7-42fa-bf0a-d4fd6a36aa8a",
+          "type": "Death",
+          "date": "3 Aug 1926",
+          "standard_date": "3 Aug 1926"
+        },
+        {
+          "id": "e546cc07-4c5b-4018-bc9b-721024bca5d1",
+          "type": "Death Registration",
+          "place": "San José, Costa Rica",
+          "standard_place": "San José, Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WS8K-1YH"
+        },
+        {
+          "ref": "7J71-5VW"
+        },
+        {
+          "ref": "QG49-5CC"
+        },
+        {
+          "ref": "QLRN-6LB"
+        },
+        {
+          "ref": "QKZ9-KBW"
+        },
+        {
+          "ref": "QKZ9-J91"
+        },
+        {
+          "ref": "QKZ9-NZY"
+        },
+        {
+          "ref": "QDMZ-SMF"
+        },
+        {
+          "ref": "QDMH-2VD"
+        },
+        {
+          "ref": "SYGP-TWR"
+        },
+        {
+          "ref": "SYGP-V55"
+        },
+        {
+          "ref": "SYGP-V6G"
+        },
+        {
+          "ref": "SYGP-VSL"
+        },
+        {
+          "ref": "SYGP-JSD"
+        },
+        {
+          "ref": "SYGP-NP2"
+        },
+        {
+          "ref": "SYGP-FY6"
+        },
+        {
+          "ref": "SYGP-XB5"
+        },
+        {
+          "ref": "SYGG-L6H"
+        },
+        {
+          "ref": "SYGL-YL1"
+        },
+        {
+          "ref": "SYGL-YH9"
+        },
+        {
+          "ref": "SYGL-RCJ"
+        },
+        {
+          "ref": "SYGL-5V5"
+        },
+        {
+          "ref": "SYGL-PLV"
+        },
+        {
+          "ref": "SYGL-G8W"
+        },
+        {
+          "ref": "SYGL-GMW"
+        },
+        {
+          "ref": "SYGL-C47"
+        },
+        {
+          "ref": "SYGL-HR4"
+        },
+        {
+          "ref": "SX8F-QJB"
+        },
+        {
+          "ref": "SZ1R-TFC"
+        },
+        {
+          "ref": "SZ1R-RTZ"
+        },
+        {
+          "ref": "9M9Y-8BF"
+        },
+        {
+          "ref": "SYGL-W6K"
+        }
+      ]
+    },
+    {
+      "id": "GSJH-685",
+      "ark": "ark:/61903/4:1:GSJH-685",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "2fb309f2-c4c8-46e2-8a24-5c8c3689d381",
+          "preferred": true,
+          "given": "Ramon Maria",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "22536d24-61f1-4738-ab0d-548ccdca1142",
+          "type": "Baptism",
+          "date": "24 Jun 1867",
+          "standard_date": "24 Jun 1867",
+          "place": "Nuestra Señora de los Desamparados, Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "4a40ebd1-2ded-4482-af20-d4aed514b3cd",
+          "type": "Birth",
+          "date": "1867",
+          "standard_date": "1867",
+          "place": "Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "b2eaa38c-3afd-4d3d-b12f-3fb9245d41f1",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "SZ1T-S7D"
+        }
+      ]
+    },
+    {
+      "id": "GSJN-683",
+      "ark": "ark:/61903/4:1:GSJN-683",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "520a2fdb-f25a-482b-82d2-2cdbbfd8c1fd",
+          "preferred": true,
+          "given": "Jose Jeronimo",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8a4ea1c3-1c54-4b3f-b8e2-ccee4ab0e032",
+          "type": "Birth",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "2988192e-1a79-4916-9169-03a07474149e",
+          "type": "Baptism",
+          "date": "30 Sep 1870",
+          "standard_date": "30 Sep 1870",
+          "place": "Nuestra Señora de los Desamparados, Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "36af4d48-26aa-412c-b63b-7f39c386a08b",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S2TP-CMF"
+        },
+        {
+          "ref": "S8ML-XPJ"
+        }
+      ]
+    },
+    {
+      "id": "GSJN-6X7",
+      "ark": "ark:/61903/4:1:GSJN-6X7",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "a47e459b-3d3f-45cd-bc38-b13b4bf377cf",
+          "preferred": true,
+          "given": "Maria Manuela",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e3e864f1-4c2c-423d-a7ef-07a4b90e3151",
+          "type": "Birth",
+          "date": "1873",
+          "standard_date": "1873",
+          "place": "Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "0c669621-f46c-48dc-801d-9f80b4a18f45",
+          "type": "Death",
+          "date": "13 de diciembre de 1924",
+          "standard_date": "13 Dec 1924",
+          "place": "Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "3a3315fb-ab5f-4a80-a161-43caa23752fc",
+          "type": "Death Registration",
+          "place": "Costa Rica",
+          "standard_place": "Costa Rica"
+        },
+        {
+          "id": "5c43ddde-d172-451f-a677-223001947764",
+          "type": "Marriage Registration",
+          "place": "San José, Costa Rica",
+          "standard_place": "San José, Costa Rica"
+        },
+        {
+          "id": "2ca12cb0-7175-4374-96bc-a7b44a888c3e",
+          "type": "Death Registration",
+          "place": "San José, Costa Rica",
+          "standard_place": "San José, Costa Rica"
+        }
+      ]
+    },
+    {
+      "id": "GSJN-M59",
+      "ark": "ark:/61903/4:1:GSJN-M59",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "fb78a1e6-848a-4194-a24f-b34529ec02cb",
+          "preferred": true,
+          "given": "Maria Lina",
+          "surname": "Abarca Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b7e83362-6f46-4863-9a64-48cdfb05b4ff",
+          "type": "Birth",
+          "date": "1874",
+          "standard_date": "1874"
+        },
+        {
+          "id": "1142fe9c-3304-4376-8b6e-c3bc07f6d4d0",
+          "type": "Death",
+          "date": "13 Jun 1894",
+          "standard_date": "13 Jun 1894",
+          "place": "Costa Rica",
+          "standard_place": "San José, Costa Rica"
+        },
+        {
+          "id": "be4168b3-7d7a-48ef-b4b6-6197c0188877",
+          "type": "Death Registration",
+          "place": "San José, Costa Rica",
+          "standard_place": "San José, Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S8MG-SNG"
+        }
+      ]
+    },
+    {
+      "id": "GPGC-KMX",
+      "ark": "ark:/61903/4:1:GPGC-KMX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c1444e9f-df6a-4e79-bc22-c467717e3781",
+          "preferred": true,
+          "given": "Petronila",
+          "surname": "Abarca",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "09de32ca-db5e-45ef-9c56-cbbcadacdec1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P6ZZ-FVV",
+      "ark": "ark:/61903/4:1:P6ZZ-FVV",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "45d20255-458b-4c0e-b850-d610c6940b75",
+          "preferred": true,
+          "given": "Maria Cecilia",
+          "surname": "Fallas",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c02b6535-9ce1-46f7-a5e5-d310475125ae",
+          "type": "Birth",
+          "date": "2 February 1866",
+          "standard_date": "2 Feb 1866",
+          "place": "Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "3b77c5b6-607b-401a-85d5-188d46771e77",
+          "type": "Christening",
+          "date": "2 February 1866",
+          "standard_date": "2 Feb 1866",
+          "place": "Nuestra Señora de los Desamparados, Desamparados, Desamparados, San José, Costa Rica",
+          "standard_place": "Nuestra Señora de los Desamparados, Desamparados, Desamparados, San José, Costa Rica"
+        },
+        {
+          "id": "3d90b9e2-3caf-4ba5-85a7-1ce8819110d6",
+          "type": "Death"
+        },
+        {
+          "id": "451b90ef-d8ca-4f02-9578-b04568aaf46e",
+          "type": "Marriage Registration",
+          "place": "San José, Costa Rica",
+          "standard_place": "San José, Costa Rica"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "PDC2-5PM",
+      "person2": "G7XQ-GMG",
+      "facts": [
+        {
+          "id": "62e38bc6-977b-4c0c-bf2d-e8e9392cd1a7",
+          "type": "Marriage",
+          "date": "14 de enero de 1892",
+          "standard_date": "14 Jan 1892",
+          "place": "Aserrí, San José, Costa Rica",
+          "standard_place": "Aserrí, San José, Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WHH5-C32"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "LRN1-QBJ",
+      "person2": "LQRP-316",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "24 FEB 1852",
+          "standard_date": "24 Feb 1852",
+          "place": "Nuestra Señora de los Desamparados, Desamparados, San José, Costa Rica",
+          "standard_place": "Desamparados, Desamparados, San José, Costa Rica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9P7N-3VN"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "G7XQ-GMG"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "G7XQ-GMG"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "GSJN-M59"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "GSJN-M59"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "GSJN-9CZ"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "GSJN-9CZ"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "GSJN-6X7"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "GSJN-6X7"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "GSJN-683"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "GSJN-683"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "GSJH-MYC"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "GSJH-MYC"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "GSJ4-G7C"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "GSJ4-G7C"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "GSJH-685"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "GSJH-685"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "GSJW-YVL"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "GSJW-YVL"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "G4DK-QDN"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "G4DK-QDN"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "GQVM-5TV"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "GQVM-5TV"
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "LYCL-PGS"
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "LYCL-PGS"
+    },
+    {
+      "id": "R27",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "L2CC-2QP"
+    },
+    {
+      "id": "R28",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "L2CC-2QP"
+    },
+    {
+      "id": "R29",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "L8DF-239"
+    },
+    {
+      "id": "R30",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "L8DF-239"
+    },
+    {
+      "id": "R31",
+      "type": "ParentChild",
+      "parent": "LRN1-QBJ",
+      "child": "GPGC-KMX"
+    },
+    {
+      "id": "R32",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "GPGC-KMX"
+    },
+    {
+      "id": "R33",
+      "type": "ParentChild",
+      "parent": "LQRP-316",
+      "child": "P6ZZ-FVV"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_G7XQ-GMG",
+      "title": "Josefa Manuela Abarca Fallas",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Josefa Manuela Abarca Fallas (PID G7XQ-GMG); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G7XQ-GMG"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_LQRP-316",
+      "title": "Francisca Fallas",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Francisca Fallas (PID LQRP-316); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LQRP-316"
+    },
+    {
+      "id": "sd_person_PDC2-5PM",
+      "title": "Juan Garcia Calderon",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Juan Garcia Calderon (PID PDC2-5PM); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PDC2-5PM"
+    },
+    {
+      "id": "sd_person_LRN1-QBJ",
+      "title": "Rafael de Jesús Abarca Monge",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Rafael de Jesús Abarca Monge (PID LRN1-QBJ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LRN1-QBJ"
+    },
+    {
+      "id": "WW1F-SK8",
+      "title": "Josefa Manuela Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-Z7Z : Sat Oct 11 05:36:13 UTC 2025), Josefa Manuela Abarca, 12 Jun 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-Z7Z"
+    },
+    {
+      "id": "WCM9-N6P",
+      "title": "Manuela Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X3MJ-J2BW : Sat Oct 11 06:04:19 UTC 2025), Manuela Abarca in entry for Juan Garcial, 30 Dec 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X3MJ-J2BW"
+    },
+    {
+      "id": "WHH5-SSV",
+      "title": "Manuela Abarca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KJJ-CFF4 : Wed Apr 16 23:24:37 UTC 2025), Manuela Abarca Fallas in entry for Juan Garcia Calderon, 15 Jan 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KJJ-CFF4"
+    },
+    {
+      "id": "WC1B-S4F",
+      "title": "Francisca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X3MK-T19R : Thu Dec 18 07:45:07 UTC 2025), Francisca Fallas in entry for Livoria Quesada, 15 Jun 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X3MK-T19R"
+    },
+    {
+      "id": "WC1B-9K3",
+      "title": "Francisca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K5D-NQMZ : Mon Apr 14 02:31:30 UTC 2025), Francisca Fallas in entry for Hilario Quesada Rodríguez, 21 Aug 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K5D-NQMZ"
+    },
+    {
+      "id": "WCM9-N8Z",
+      "title": "Francisca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X3MJ-J2BH : Sat Oct 11 06:04:19 UTC 2025), Francisca Fallas in entry for Juan Garcial, 30 Dec 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X3MJ-J2BH"
+    },
+    {
+      "id": "WHH5-92Y",
+      "title": "Francisca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KJJ-CFFS : Wed Apr 16 23:24:37 UTC 2025), Francisca Fallas in entry for Juan Garcia Calderon, 15 Jan 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KJJ-CFFS"
+    },
+    {
+      "id": "7MKP-RY7",
+      "title": "Franca de Jesus Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PZ2-M7L1 : Thu Jan 22 06:42:47 UTC 2026), Franca de Jesus Fallas in entry for Rafael de Jesus Abarca, 24 Feb 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6PZ2-M7L1"
+    },
+    {
+      "id": "QDMH-VPH",
+      "title": "Francisca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP34-RGLN : Mon Apr 14 02:31:31 UTC 2025), Francisca Fallas in entry for Liborio Quesada Rodriguez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP34-RGLN"
+    },
+    {
+      "id": "9MQF-FH3",
+      "title": "Francisca Fallas, \"Costa Rica matrimonios, 1750-1920\"",
+      "citation": "\"Costa Rica matrimonios, 1750-1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLQQ-VCB : Wed Oct 14 17:50:20 UTC 2026), Francisca Fallas in entry for Livorio Quesada Rodriguez, 2 July 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLQQ-VCB"
+    },
+    {
+      "id": "QDMZ-9T8",
+      "title": "Francisca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66DW-KXVP : Thu Jan 22 06:53:05 UTC 2026), Francisca Fallas in entry for Fidel Abarca, 4 May 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66DW-KXVP"
+    },
+    {
+      "id": "QDMH-GDK",
+      "title": "Francisca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66DM-DGKW : Thu Jan 22 06:50:42 UTC 2026), Francisca Fallas in entry for Juan García Calderón, 14 Jan 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66DM-DGKW"
+    },
+    {
+      "id": "QDMH-2GX",
+      "title": "Franca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZPR-3H7B : Wed Dec 31 08:37:04 UTC 2025), Franca Fallas in entry for Fidel Custodio, 21 de agosto de 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZPR-3H7B"
+    },
+    {
+      "id": "QDMH-NBB",
+      "title": "Franca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66DW-KXVX : Thu Jan 22 06:52:35 UTC 2026), Franca Fallas in entry for Franco Cascante, 27 Apr 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66DW-KXVX"
+    },
+    {
+      "id": "SYG1-F81",
+      "title": "Francisca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7FZG-TX3Z : Sat Oct 11 21:46:29 UTC 2025), Francisca in entry for Juana.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7FZG-TX3Z"
+    },
+    {
+      "id": "SLQC-BXC",
+      "title": "Francisca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-Z7D : Sat Oct 11 05:36:13 UTC 2025), Francisca Fallas in entry for Josefa Manuela Abarca, 12 Jun 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-Z7D"
+    },
+    {
+      "id": "S2TP-HT1",
+      "title": "Franca. Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2W-9GS : Sat Oct 11 05:31:10 UTC 2025), Franca. Fallas in entry for José Geronimo Abarca, 25 Apr 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2W-9GS"
+    },
+    {
+      "id": "S2T4-WPK",
+      "title": "Francisca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ29-3XR : Sat Oct 11 03:31:43 UTC 2025), Francisca Fallas in entry for Maria Cecilia Fallas, 02 Feb 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ29-3XR"
+    },
+    {
+      "id": "SX8F-WWV",
+      "title": "Francisca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:718Z-N43Z : Wed Apr 16 09:23:52 UTC 2025), Francisca.",
+      "url": "https://familysearch.org/ark:/61903/1:1:718Z-N43Z"
+    },
+    {
+      "id": "SX8F-7N7",
+      "title": "Francisca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP7R-YNJW : Thu Apr 17 06:06:59 UTC 2025), Francisca Fallas in entry for Juan Garcia Calderón.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP7R-YNJW"
+    },
+    {
+      "id": "SX8F-QYC",
+      "title": "Francisca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ27-VHT : Sat Oct 11 08:25:24 UTC 2025), Francisca Fallas in entry for Maria Secilia Abarca, 03 Feb 1856.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ27-VHT"
+    },
+    {
+      "id": "SX8F-Q8R",
+      "title": "Francisca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7QQT-2J6Z : Sun Oct 19 22:46:25 UTC 2025), Francisca in entry for Fidel.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7QQT-2J6Z"
+    },
+    {
+      "id": "SX8F-31J",
+      "title": "Francisca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7HMJ-NNMM : Fri Oct 17 06:50:26 UTC 2025), Francisca in entry for Pascuala.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7HMJ-NNMM"
+    },
+    {
+      "id": "S8MG-SRP",
+      "title": "Franca. Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-X7F : Sat Oct 11 00:42:54 UTC 2025), Franca. Fallas in entry for Bictor Escolastica, 10 Feb 1853.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-X7F"
+    },
+    {
+      "id": "S8MG-SH1",
+      "title": "Francisca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPTW-4KQB : Mon Apr 14 20:18:29 UTC 2025), Francisca Fallas in entry for Maria Lina Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPTW-4KQB"
+    },
+    {
+      "id": "S8MG-M6W",
+      "title": "Francisca Fallas Alfaro, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q5W9-6XSC : Thu Apr 17 09:37:28 UTC 2025), Francisca Fallas Alfaro in entry for Maria Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q5W9-6XSC"
+    },
+    {
+      "id": "S8ML-B3Z",
+      "title": "Francisca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-VTP : Sat Oct 11 05:17:38 UTC 2025), Francisca Fallas in entry for Maria Secilia Avarca, 01 Feb 1856.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-VTP"
+    },
+    {
+      "id": "S8ML-XVY",
+      "title": "Franca. Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ29-8LR : Sat Oct 11 03:26:16 UTC 2025), Franca. Fallas in entry for Jose Jeronimo Abarca, 30 Sep 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ29-8LR"
+    },
+    {
+      "id": "S8ML-DQK",
+      "title": "Francisca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPTJ-XQLS : Thu Apr 17 02:52:07 UTC 2025), Francisca Fallas in entry for Petronila Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPTJ-XQLS"
+    },
+    {
+      "id": "S8ML-ZG2",
+      "title": "Francisca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPS3-T8WW : Thu Apr 17 06:34:11 UTC 2025), Francisca Fallas in entry for Luis Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPS3-T8WW"
+    },
+    {
+      "id": "SZ1T-Q4Y",
+      "title": "Francisca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-TJ7 : Sat Oct 11 03:54:29 UTC 2025), Francisca Fallas in entry for Andrea Petronila Abarca, 15 Nov 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-TJ7"
+    },
+    {
+      "id": "SZ1T-91S",
+      "title": "Franca. Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ29-7LW : Sat Oct 11 05:37:42 UTC 2025), Franca. Fallas in entry for Ramon Maria Abarca, 24 Jun 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ29-7LW"
+    },
+    {
+      "id": "SZ1T-M45",
+      "title": "Francisca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-2DM : Sat Oct 11 05:44:03 UTC 2025), Francisca Fallas in entry for Maria de Jesus Avarca, 27 Mar 1857.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-2DM"
+    },
+    {
+      "id": "SZ1R-YG8",
+      "title": "Francisca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q539-PVG3 : Tue Apr 08 02:42:56 UTC 2025), Francisca Fallas in entry for Rafael Abarca Monge.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q539-PVG3"
+    },
+    {
+      "id": "SZ1R-T4P",
+      "title": "Franca. Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQCL-7BQ : Sat Oct 11 05:44:35 UTC 2025), Franca. Fallas in entry for Fidel Custodio Abarca, 21 Aug 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQCL-7BQ"
+    },
+    {
+      "id": "SZ1R-RVR",
+      "title": "Francisca Fallas in entry for Fidel Custodio Abarca Fallas, \"Costa Rica, Baptisms, 1700-1915\"",
+      "citation": "\"Costa Rica bautismos, 1700-1915\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLQV-7YM : 19 September 2026), Francisca Fallas in entry for Fidel Custodio Abarca Fallas, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLQV-7YM"
+    },
+    {
+      "id": "SZ1R-4JF",
+      "title": "Francisca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQLZ-9RD : Sat Oct 11 08:08:14 UTC 2025), Francisca Fallas in entry for Victor Abarca, 10 Mar 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQLZ-9RD"
+    },
+    {
+      "id": "SZ1R-WRS",
+      "title": "Francisca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPKB-6C2H : Tue Apr 08 02:15:32 UTC 2025), Francisca Fallas in entry for Victor Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPKB-6C2H"
+    },
+    {
+      "id": "S9PG-TYX",
+      "title": "Francisca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSQ-QQVF : Tue Apr 08 01:30:11 UTC 2025), Francisca Fallas in entry for Maria Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSQ-QQVF"
+    },
+    {
+      "id": "9M9Y-8BL",
+      "title": "Francisca Fallas, \"Costa Rica bautismos, 1700-1915\"",
+      "citation": "\"Costa Rica bautismos, 1700-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FL7S-FV6 : Wed Oct 14 17:37:10 UTC 2026), Francisca Fallas in entry for Fidel Custodio Abarca Fallas, 21 Aug 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FL7S-FV6"
+    },
+    {
+      "id": "9F3N-8PT",
+      "title": "Francisca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-PSM : Sat Oct 11 05:41:29 UTC 2025), Francisca Fallas in entry for Maria Pascuala Abarca, 17 May 1859.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-PSM"
+    },
+    {
+      "id": "9P7N-7LD",
+      "title": "Francisca Fallas in entry for Luiz Primo Abarca, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-N8R : Sat Oct 11 05:43:24 UTC 2025), Francisca Fallas in entry for Luiz Primo Abarca, 10 Jun 1854.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-N8R"
+    },
+    {
+      "id": "9P7N-3V4",
+      "title": "Francisca de Jesus Fallas, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2Q-LP2 : Sat Oct 11 09:58:34 UTC 2025), Rafael de Jesus Abarca and Francisca de Jesus Fallas, 24 Feb 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2Q-LP2"
+    },
+    {
+      "id": "WCM9-NJC",
+      "title": "Juan Garcial, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X3MJ-J2B3 : Sat Oct 11 06:04:19 UTC 2025), Juan Garcial, 30 Dec 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X3MJ-J2B3"
+    },
+    {
+      "id": "WHH5-CXC",
+      "title": "Juan Garcia Calderon, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KJJ-CFF3 : Wed Apr 16 23:24:37 UTC 2025), Juan Garcia Calderon, 15 Jan 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KJJ-CFF3"
+    },
+    {
+      "id": "WCM9-NCY",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X3MJ-J2B4 : Sat Oct 11 06:04:19 UTC 2025), Rafael Abarca in entry for Juan Garcial, 30 Dec 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X3MJ-J2B4"
+    },
+    {
+      "id": "WHH5-9D9",
+      "title": "Rafael Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KJJ-CFFW : Wed Apr 16 23:24:37 UTC 2025), Rafael Abarca in entry for Juan Garcia Calderon, 15 Jan 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KJJ-CFFW"
+    },
+    {
+      "id": "7MKP-RRV",
+      "title": "Rafael de Jesus Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PZ2-M7LB : Thu Jan 22 06:42:47 UTC 2026), Rafael de Jesus Abarca, 24 Feb 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6PZ2-M7LB"
+    },
+    {
+      "id": "QDMZ-9YT",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66DW-KXVG : Thu Jan 22 06:53:05 UTC 2026), Rafael Abarca in entry for Fidel Abarca, 4 May 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66DW-KXVG"
+    },
+    {
+      "id": "QDMH-GXQ",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66DM-DGKZ : Thu Jan 22 06:50:42 UTC 2026), Rafael Abarca in entry for Juan García Calderón, 14 Jan 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66DM-DGKZ"
+    },
+    {
+      "id": "QDMH-JMX",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66DW-KXVV : Thu Jan 22 06:52:35 UTC 2026), Rafael Abarca in entry for Franco Cascante, 27 Apr 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66DW-KXVV"
+    },
+    {
+      "id": "SYG1-FZL",
+      "title": "Rafael, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7FZG-TXMM : Sat Oct 11 21:46:29 UTC 2025), Rafael in entry for Juana.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7FZG-TXMM"
+    },
+    {
+      "id": "SLQC-B8T",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-Z78 : Sat Oct 11 05:36:13 UTC 2025), Rafael Abarca in entry for Josefa Manuela Abarca, 12 Jun 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-Z78"
+    },
+    {
+      "id": "S2TP-HRM",
+      "title": "Rafl. Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2W-9G9 : Sat Oct 11 05:31:10 UTC 2025), Rafl. Abarca in entry for José Geronimo Abarca, 25 Apr 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2W-9G9"
+    },
+    {
+      "id": "SX8F-WH3",
+      "title": "Rafael, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:718Z-N46Z : Wed Apr 16 09:23:52 UTC 2025), Rafael in entry for Francisca.",
+      "url": "https://familysearch.org/ark:/61903/1:1:718Z-N46Z"
+    },
+    {
+      "id": "SX8F-7VW",
+      "title": "Rafael Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP7R-YNJZ : Thu Apr 17 06:06:59 UTC 2025), Rafael Abarca in entry for Juan Garcia Calderón.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP7R-YNJZ"
+    },
+    {
+      "id": "SX8F-QBN",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ27-VHR : Sat Oct 11 08:25:24 UTC 2025), Rafael Abarca in entry for Maria Secilia Abarca, 03 Feb 1856.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ27-VHR"
+    },
+    {
+      "id": "SX8F-QXF",
+      "title": "Rafael, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7QQT-2JZM : Sun Oct 19 22:46:25 UTC 2025), Rafael in entry for Fidel.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7QQT-2JZM"
+    },
+    {
+      "id": "SX8F-QMK",
+      "title": "Rafael, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7HMJ-NFT2 : Fri Oct 17 06:50:26 UTC 2025), Rafael in entry for Pascuala.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7HMJ-NFT2"
+    },
+    {
+      "id": "S8MG-SB7",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-X7X : Sat Oct 11 00:42:54 UTC 2025), Rafael Abarca in entry for Bictor Escolastica, 10 Feb 1853.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-X7X"
+    },
+    {
+      "id": "S8MG-S8B",
+      "title": "Rafael Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPTW-4KQY : Mon Apr 14 20:18:29 UTC 2025), Rafael Abarca in entry for Maria Lina Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPTW-4KQY"
+    },
+    {
+      "id": "S8MG-M81",
+      "title": "Rafael Abarca Monge, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q5W9-6XSH : Thu Apr 17 09:37:28 UTC 2025), Rafael Abarca Monge in entry for Maria Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q5W9-6XSH"
+    },
+    {
+      "id": "S8ML-B72",
+      "title": "Rafael Avarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-VTG : Sat Oct 11 05:17:38 UTC 2025), Rafael Avarca in entry for Maria Secilia Avarca, 01 Feb 1856.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-VTG"
+    },
+    {
+      "id": "S8ML-XJS",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ29-8L5 : Sat Oct 11 03:26:16 UTC 2025), Rafael Abarca in entry for Jose Jeronimo Abarca, 30 Sep 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ29-8L5"
+    },
+    {
+      "id": "S8ML-DSF",
+      "title": "Rafael Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPTJ-XQL9 : Thu Apr 17 02:52:07 UTC 2025), Rafael Abarca in entry for Petronila Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPTJ-XQL9"
+    },
+    {
+      "id": "S8ML-ZR7",
+      "title": "Rafael Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPS3-T8W3 : Thu Apr 17 06:34:11 UTC 2025), Rafael Abarca in entry for Luis Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPS3-T8W3"
+    },
+    {
+      "id": "SZ1T-QZT",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-TJQ : Sat Oct 11 03:54:29 UTC 2025), Rafael Abarca in entry for Andrea Petronila Abarca, 15 Nov 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-TJQ"
+    },
+    {
+      "id": "SZ1T-SSH",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ29-7L7 : Sat Oct 11 05:37:42 UTC 2025), Rafael Abarca in entry for Ramon Maria Abarca, 24 Jun 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ29-7L7"
+    },
+    {
+      "id": "SZ1T-MZP",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-281 : Sat Oct 11 05:44:03 UTC 2025), Rafael Abarca in entry for Maria de Jesus Avarca, 27 Mar 1857.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-281"
+    },
+    {
+      "id": "SZ1R-YYF",
+      "title": "Rafael Abarca Monge, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q539-PVGM : Tue Apr 08 02:42:56 UTC 2025), Rafael Abarca Monge.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q539-PVGM"
+    },
+    {
+      "id": "SZ1R-TZL",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQCL-7B3 : Sat Oct 11 05:44:35 UTC 2025), Rafael Abarca in entry for Fidel Custodio Abarca, 21 Aug 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQCL-7B3"
+    },
+    {
+      "id": "SZ1R-RLL",
+      "title": "Rafael Abarca in entry for Fidel Custodio Abarca Fallas, \"Costa Rica, Baptisms, 1700-1915\"",
+      "citation": "\"Costa Rica bautismos, 1700-1915\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLQV-7T1 : 19 September 2026), Rafael Abarca in entry for Fidel Custodio Abarca Fallas, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLQV-7T1"
+    },
+    {
+      "id": "SZ1R-4FN",
+      "title": "Rafael Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQLZ-9R8 : Sat Oct 11 08:08:14 UTC 2025), Rafael Abarca in entry for Victor Abarca, 10 Mar 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQLZ-9R8"
+    },
+    {
+      "id": "SZ1R-WGB",
+      "title": "Rafael Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPKB-6C24 : Tue Apr 08 02:15:32 UTC 2025), Rafael Abarca in entry for Victor Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPKB-6C24"
+    },
+    {
+      "id": "S9PG-TRR",
+      "title": "Rafael Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSQ-QQV8 : Tue Apr 08 01:30:11 UTC 2025), Rafael Abarca in entry for Maria Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSQ-QQV8"
+    },
+    {
+      "id": "9M9Y-8BK",
+      "title": "Rafael Abarca, \"Costa Rica bautismos, 1700-1915\"",
+      "citation": "\"Costa Rica bautismos, 1700-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FL7S-FVD : Wed Oct 14 17:37:10 UTC 2026), Rafael Abarca in entry for Fidel Custodio Abarca Fallas, 21 Aug 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FL7S-FVD"
+    },
+    {
+      "id": "92YD-VC5",
+      "title": "Rafael Abarca en el registro de Maria Pascuala Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-P91 : Sat Oct 11 05:41:29 UTC 2025), Rafael Abarca in entry for Maria Pascuala Abarca, 17 May 1859.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-P91"
+    },
+    {
+      "id": "9P7N-72R",
+      "title": "Rafael Abarca in entry for Luiz Primo Abarca, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-N85 : Sat Oct 11 05:43:24 UTC 2025), Rafael Abarca in entry for Luiz Primo Abarca, 10 Jun 1854.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-N85"
+    },
+    {
+      "id": "9P7N-3J6",
+      "title": "Rafael de Jesus Abarca, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2Q-LPK : Sat Oct 11 09:58:34 UTC 2025), Rafael de Jesus Abarca and Francisca de Jesus Fallas, 24 Feb 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2Q-LPK"
+    },
+    {
+      "id": "7CSK-8V1",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62V1-TXXT : Sat Oct 11 08:28:21 UTC 2025), Victor Abarca in entry for Birginia Abarca Fallas, 14 May 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62V1-TXXT"
+    },
+    {
+      "id": "7HP7-GD2",
+      "title": "Victor Abarca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62QF-T5T7 : Sun Oct 19 06:32:56 UTC 2025), Victor Abarca Fallas, 10 Mar 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62QF-T5T7"
+    },
+    {
+      "id": "7HGY-GMF",
+      "title": "Juan Ma. Quíros, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1V-76G8 : Fri Sep 04 01:38:49 UTC 2026), Juan Ma. Quíros in entry for María Angelina Agelina, 21 August 1882.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z1V-76G8"
+    },
+    {
+      "id": "7HGY-LK1",
+      "title": "Manuel Monge, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1V-76GC : Fri Sep 04 01:38:49 UTC 2026), Manuel Monge in entry for María Angelina Agelina, 21 August 1882.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z1V-76GC"
+    },
+    {
+      "id": "7HGY-LNC",
+      "title": "Juan Quíros, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1V-76G7 : Fri Sep 04 01:38:49 UTC 2026), Juan Quíros in entry for María Angelina Agelina, 21 August 1882.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z1V-76G7"
+    },
+    {
+      "id": "7HGY-LQG",
+      "title": "Víctor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1V-76G4 : Fri Sep 04 01:38:49 UTC 2026), Víctor Abarca in entry for María Angelina Agelina, 21 August 1882.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z1V-76G4"
+    },
+    {
+      "id": "7HXB-RT3",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PD8-MYPJ : Thu Jan 22 06:42:38 UTC 2026), Victor Abarca, 21 Aug 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6PD8-MYPJ"
+    },
+    {
+      "id": "QBV3-227",
+      "title": "Victor Abarca, \"Uruguay, registro civil, 1879-2020\"",
+      "citation": "\"Uruguay, registro civil, 1879-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VR4B-7KB : Tue Jan 21 02:05:53 UTC 2025), Victor Abarca in entry for Manuela Abarca, 12 May 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VR4B-7KB"
+    },
+    {
+      "id": "Q5ZY-6KD",
+      "title": "Víctor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:689G-GG8W : Sat Aug 29 15:35:58 UTC 2026), Víctor Abarca in entry for María Josefa, 4 September 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:689G-GG8W"
+    },
+    {
+      "id": "3R82-7JL",
+      "title": "Víctor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1V-3CDB : Wed Dec 31 11:32:51 UTC 2025), Víctor Abarca in entry for Isolina de Jesús, 5 de octubre de 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z1V-3CDB"
+    },
+    {
+      "id": "3R82-7SL",
+      "title": "Víctor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1J-T6TT : Wed Dec 31 11:28:20 UTC 2025), Víctor Abarca in entry for Florentina, 16 de marzo de 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z1J-T6TT"
+    },
+    {
+      "id": "3R82-QNV",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6688-G4G7 : Thu Jan 22 06:52:32 UTC 2026), Victor Abarca in entry for Jose Amador, 21 Aug 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6688-G4G7"
+    },
+    {
+      "id": "3R82-3HB",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZH7-5FCG : Fri Jul 17 20:28:33 UTC 2026), Victor Abarca in entry for Virgina Abarca Fallas, 15 Jul 1960.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZH7-5FCG"
+    },
+    {
+      "id": "3R82-SW5",
+      "title": "Víctor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1J-NKHS : Sun Jun 07 21:23:13 UTC 2026), Víctor Abarca in entry for Sotera María Marceliana Abarca Fallas, 22 April 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z1J-NKHS"
+    },
+    {
+      "id": "S82K-6HQ",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQB-MNL5 : Wed Apr 16 10:22:46 UTC 2025), Victor Abarca in entry for Nemesio Barboza Prado.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQB-MNL5"
+    },
+    {
+      "id": "S82K-WM7",
+      "title": "Victor, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2P-RXL : Thu Jan 22 19:41:02 UTC 2026), Victor in entry for Anjelina Abarca, 12 Mar 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2P-RXL"
+    },
+    {
+      "id": "S82K-77Y",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2P-PM6 : Thu Jan 22 19:41:19 UTC 2026), Victor Abarca in entry for Maria Solera Marcemiliana, 17 May 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2P-PM6"
+    },
+    {
+      "id": "S82K-QG3",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2P-PPY : Thu Jan 22 19:41:02 UTC 2026), Victor Abarca in entry for Maria Sotera Marcimilia, 17 May 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2P-PPY"
+    },
+    {
+      "id": "S82K-QWS",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-KZ8 : Sat Oct 11 05:40:58 UTC 2025), Victor Abarca in entry for Ysolina de Jesus Abarca, 05 Oct 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-KZ8"
+    },
+    {
+      "id": "S82K-3QJ",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-GQV : Fri Sep 04 01:28:23 UTC 2026), Victor Abarca in entry for Maria Angelina Abarca, 21 Aug 1882.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-GQV"
+    },
+    {
+      "id": "S82K-SQX",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-835 : Sun Jun 07 21:25:37 UTC 2026), Victor Abarca in entry for Sotera Maria Marceliana Abarca Fallas, 22 de abril de 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-835"
+    },
+    {
+      "id": "S82K-MT4",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP71-TFNG : Sat Mar 29 03:35:15 UTC 2025), Victor Abarca in entry for Rafael Portuguez Mena.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP71-TFNG"
+    },
+    {
+      "id": "S82K-MZB",
+      "title": "Victor, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGNH-BH8Z : Fri Mar 28 23:30:21 UTC 2025), Victor in entry for Leandra Virginia.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGNH-BH8Z"
+    },
+    {
+      "id": "S82J-74X",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-G8F : Fri Apr 24 02:52:01 UTC 2026), Victor Abarca in entry for Florentina Matilde Abarca Fallas, 16 de marzo de 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-G8F"
+    },
+    {
+      "id": "S82J-QKK",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-XBM : Sat Oct 11 03:44:16 UTC 2025), Victor Abarca in entry for Florentina Matilde de Jesus Abarca, 16 Mar 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-XBM"
+    },
+    {
+      "id": "9KSM-9XX",
+      "title": "Victor Abarca in entry for Manuela Fallas, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2P-RJT : Fri Apr 24 03:57:40 UTC 2026), Victor Abarca Fallas in entry for Manuela Joaquina Fallas Fallas, 7 de diciembre de 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2P-RJT"
+    },
+    {
+      "id": "9KSM-9LG",
+      "title": "Victor Abarca in entry for Virginia Abarca Fallas, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ5Q-PZP : Sat Oct 11 09:38:02 UTC 2025), Victor Abarca in entry for Virginia Abarca Fallas, 20 May 1960.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ5Q-PZP"
+    },
+    {
+      "id": "9KSM-S6N",
+      "title": "Victor Abarca in entry for Leandra Virginia Abarca, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ29-BHW : Sat Oct 11 05:19:44 UTC 2025), Victor Abarca in entry for Leandra Virginia Abarca, 13 Mar 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ29-BHW"
+    },
+    {
+      "id": "9KSM-3F2",
+      "title": "Victor Abarca in entry for Birginia Abarca, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2W-WBF : Sat Oct 11 08:28:21 UTC 2025), Victor Abarca in entry for Birginia Abarca, 14 May 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2W-WBF"
+    },
+    {
+      "id": "9KSM-369",
+      "title": "Victor Abarca in entry for Virginia Yndalesio de Jesus Abarca, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ29-XRV : Sat Oct 11 05:37:46 UTC 2025), Victor Abarca in entry for Virginia Yndalesio de Jesus Abarca, 22 Jun 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ29-XRV"
+    },
+    {
+      "id": "QLPM-XJX",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62XQ-LHD4 : Wed Apr 16 10:22:46 UTC 2025), Victor Abarca in entry for Nemesio Barboza Prado, 22 May 1895.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62XQ-LHD4"
+    },
+    {
+      "id": "QTJ7-LM4",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62Q4-6C6X : Thu Jan 22 06:34:21 UTC 2026), Victor Abarca in entry for Jeremias Abarca Navarro, 12 May 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62Q4-6C6X"
+    },
+    {
+      "id": "QTJ7-JB9",
+      "title": "Víctor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6CTH-N4YM : Sat Jun 08 05:55:44 UTC 2024), Víctor Abarca in entry for Jeremías Abarca Navarro, 14 Aug 1961.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6CTH-N4YM"
+    },
+    {
+      "id": "QTJ7-F2W",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62QT-3YDC : Thu Jan 22 06:34:15 UTC 2026), Victor Abarca in entry for Juan Naranjo Chinchilla Chinchilla, 1 Jul 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62QT-3YDC"
+    },
+    {
+      "id": "QTJ7-636",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6N7G-HCK8 : Tue Apr 15 15:46:49 UTC 2025), Victor Abarca in entry for Francisco Monge Mora, 7 May 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6N7G-HCK8"
+    },
+    {
+      "id": "QTJ7-CRW",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K5D-N3YH : Tue Apr 08 01:30:42 UTC 2025), Victor Abarca in entry for Juan Naranjo Chinchilla, 16 Dec 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K5D-N3YH"
+    },
+    {
+      "id": "QTJ7-HWR",
+      "title": "Víctor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6CBY-X8M4 : Thu Jun 13 23:43:53 UTC 2024), Víctor Abarca in entry for Rafael Abarca Navarro, 4 Mar 1987.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6CBY-X8M4"
+    },
+    {
+      "id": "QG8D-LZP",
+      "title": "Victor Abarca en Blanco, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62W2-FDJG : Mon Apr 14 01:17:47 UTC 2025), Victor Abarca en Blanco in entry for Rafael Abarca Navarro, 29 Dec 1926.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62W2-FDJG"
+    },
+    {
+      "id": "QGM5-H59",
+      "title": "Victor Obarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62Q5-M4MD : Thu Jan 22 06:34:14 UTC 2026), Victor Obarca in entry for Manuel Obarca Navarro, 15 Sep 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62Q5-M4MD"
+    },
+    {
+      "id": "QLPB-LY2",
+      "title": "Víctor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VPR-92S7 : Tue Apr 08 02:04:47 UTC 2025), Víctor Abarca in entry for Manuel Abarca Navarro, 22 Oct 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6VPR-92S7"
+    },
+    {
+      "id": "QLNK-MTJ",
+      "title": "Víctor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6N7P-653F : Tue Oct 21 12:04:24 UTC 2025), Víctor Abarca in entry for Ignacio Durán Campo, 29 Apr 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6N7P-653F"
+    },
+    {
+      "id": "QLQ4-ZKJ",
+      "title": "Víctor Abrasca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:627Q-2J81 : Thu Jan 22 06:34:09 UTC 2026), Víctor Abrasca in entry for Victor Abrasca Navarro Navarro, 9 Jul 1917.",
+      "url": "https://familysearch.org/ark:/61903/1:1:627Q-2J81"
+    },
+    {
+      "id": "S8MG-3M3",
+      "title": "Bictor Escolastica, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-X76 : Sat Oct 11 00:42:54 UTC 2025), Bictor Escolastica, 10 Feb 1853.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-X76"
+    },
+    {
+      "id": "SZ1R-G8F",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMH-4F52 : Thu Mar 27 15:51:14 UTC 2025), Victor Abarca.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMH-4F52"
+    },
+    {
+      "id": "SZ1R-HX2",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQLZ-S9L : Sat Oct 11 08:07:12 UTC 2025), Victor Abarca in entry for Juana Navarro, 22 Nov 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQLZ-S9L"
+    },
+    {
+      "id": "SZ1R-4L2",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQLZ-9RZ : Sat Oct 11 08:08:14 UTC 2025), Victor Abarca, 10 Mar 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQLZ-9RZ"
+    },
+    {
+      "id": "SZ1R-W14",
+      "title": "Victor Abarca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPKB-6C2W : Tue Apr 08 02:15:32 UTC 2025), Victor Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPKB-6C2W"
+    },
+    {
+      "id": "SZ1R-SRV",
+      "title": "Victor, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP7W-TD37 : Tue Apr 15 15:46:49 UTC 2025), Victor in entry for Francisco.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP7W-TD37"
+    },
+    {
+      "id": "SZ15-HCP",
+      "title": "Victor, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGGS-FD1G : Tue Apr 08 02:28:47 UTC 2025), Victor in entry for Victor.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGGS-FD1G"
+    },
+    {
+      "id": "SZ15-MYF",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPTS-5RMH : Mon Apr 14 22:50:00 UTC 2025), Victor Abarca in entry for Laura Abarca Navarro.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPTS-5RMH"
+    },
+    {
+      "id": "SZ1P-1PB",
+      "title": "Victor Abarcá, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-23T : Sat Oct 11 06:12:49 UTC 2025), Victor Abarcá in entry for Jeremias Abarca, 13 Nov 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-23T"
+    },
+    {
+      "id": "SZ1P-XY4",
+      "title": "Victor, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGDV-GLCC : Tue Oct 21 12:04:25 UTC 2025), Victor in entry for Ignacio.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGDV-GLCC"
+    },
+    {
+      "id": "SZ1P-X36",
+      "title": "Victor Abarca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPTN-XMWS : Thu Apr 17 02:29:51 UTC 2025), Victor Abarca Fallas in entry for Rafaela Abarca Navarro.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPTN-XMWS"
+    },
+    {
+      "id": "SZ1P-C92",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-TJZ : Wed Jun 17 17:38:00 UTC 2026), Victor Abarca in entry for Maria Laura Abarca, 02 Apr 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-TJZ"
+    },
+    {
+      "id": "SZ1P-WCN",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2S-HY6 : Tue Jun 09 22:28:00 UTC 2026), Victor Abarca in entry for Maria Filomena Abarca, 11 July 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2S-HY6"
+    },
+    {
+      "id": "SZ1P-QXR",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPTS-9TL2 : Thu Apr 17 10:26:36 UTC 2025), Victor Abarca in entry for Celina Amalia Abarca Navarro.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPTS-9TL2"
+    },
+    {
+      "id": "SZ1P-9TN",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-XL6 : Tue Jun 30 17:05:01 UTC 2026), Victor Abarca in entry for María Florinda Abarca, 03 Mar 1895.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-XL6"
+    },
+    {
+      "id": "SZ1P-99Y",
+      "title": "Víctor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLSK-RDCX : Wed Oct 08 20:53:22 UTC 2025), Víctor Abarca in entry for María Florinda Abarca Navarro.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLSK-RDCX"
+    },
+    {
+      "id": "SZ1G-16V",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLS2-M94J : Sun Oct 12 15:47:17 UTC 2025), Victor Abarca in entry for Jeremias Abarca Navarro.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLS2-M94J"
+    },
+    {
+      "id": "SZ1G-RCZ",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-JJF : Tue Jun 30 13:31:25 UTC 2026), Victor Abarca in entry for Victor Manuel Abarca, 21 Aug 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-JJF"
+    },
+    {
+      "id": "SZ1G-5LF",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLSK-T7L6 : Thu Apr 03 22:36:48 UTC 2025), Victor Abarca in entry for Victor Manuel.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLSK-T7L6"
+    },
+    {
+      "id": "SZ1G-L33",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP7T-RNBM : Tue Apr 08 01:30:42 UTC 2025), Victor Abarca in entry for Juan Naranjo Chinchilla.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP7T-RNBM"
+    },
+    {
+      "id": "SZ1G-2JZ",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQLH-N2X : Sat Oct 11 04:41:03 UTC 2025), Victor Abarca in entry for Teotista Herminia Abarca Navarro, 28 Jun 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQLH-N2X"
+    },
+    {
+      "id": "SZ1G-DK5",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP71-PSMG : Tue Oct 07 09:43:14 UTC 2025), Victor Abarca in entry for Manuel Abarca Navarro.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP71-PSMG"
+    },
+    {
+      "id": "SZ1G-ZZG",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2S-K6V : Tue Jun 09 22:28:12 UTC 2026), Victor Abarca in entry for Juana Angelina de los Angeles Abarca, 28 October 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2S-K6V"
+    },
+    {
+      "id": "SZ1G-4B7",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2S-DGW : Tue Jun 09 22:29:58 UTC 2026), Victor Abarca in entry for Bernarda Aniceta Rafaela Abarca, 22 August 1888.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2S-DGW"
+    },
+    {
+      "id": "SZ1G-WVR",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLS2-9WBP : Thu Oct 09 22:41:35 UTC 2025), Victor Abarca in entry for Bernarda Aniceta Rafaela Abarca Navarro.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLS2-9WBP"
+    },
+    {
+      "id": "SZ1L-G68",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPKL-CSZ7 : Tue Apr 08 01:30:08 UTC 2025), Victor Abarca in entry for Juana Abarca Navarro.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPKL-CSZ7"
+    },
+    {
+      "id": "SZ1L-LDR",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2S-LLH : Tue Jun 09 22:25:34 UTC 2026), Victor Abarca in entry for Manuel Braulio Cirilo Abarca, 22 March 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2S-LLH"
+    },
+    {
+      "id": "SZ1L-VJK",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL6V-6N34 : Thu Apr 17 06:46:49 UTC 2025), Victor Abarca in entry for Manuel Braulio Cirilo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL6V-6N34"
+    },
+    {
+      "id": "SZ1L-J3R",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL6V-YVVL : Fri Apr 04 15:01:50 UTC 2025), Victor Abarca in entry for Juana Bautista Irene.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL6V-YVVL"
+    },
+    {
+      "id": "SZ1L-NN1",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ5Q-8NG : Sat Oct 11 09:30:14 UTC 2025), Victor Abarca in entry for Juana Bautista Yrene Abarca, 09 Aug 1904.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ5Q-8NG"
+    },
+    {
+      "id": "SZ1L-X45",
+      "title": "Victor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2Q-BXY : Sat Oct 11 09:58:45 UTC 2025), Victor Abarca and Juana Navarro, 25 Feb 1884.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2Q-BXY"
+    },
+    {
+      "id": "SZ1L-6HH",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQZ-5M2K : Mon Apr 14 01:17:47 UTC 2025), Victor Abarca in entry for Rafael Abarca Navarro.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQZ-5M2K"
+    },
+    {
+      "id": "SZ1L-DLR",
+      "title": "Víctor Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ5Q-CQJ : Sat Oct 11 09:28:30 UTC 2025), Víctor Abarca in entry for Rafael de Jesús Abarca Navarro, 16 Nov 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ5Q-CQJ"
+    },
+    {
+      "id": "SZ1L-D7H",
+      "title": "Victor Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL6V-G6FX : Thu Apr 17 04:36:01 UTC 2025), Victor Abarca in entry for Rafael de Jesús.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL6V-G6FX"
+    },
+    {
+      "id": "W83N-JF1",
+      "title": "Luis Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z33-486Z : Tue Jun 11 19:39:54 UTC 2024), Luis Abarca in entry for Maclovia Abarca Valverde, 6 Aug 1948.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z33-486Z"
+    },
+    {
+      "id": "W8SY-34L",
+      "title": "Luis Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X3MP-B91C : Wed Oct 15 13:13:07 UTC 2025), Luis Abarca in entry for Leondas Mora Campos, 30 Jul 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X3MP-B91C"
+    },
+    {
+      "id": "W8SR-H3V",
+      "title": "Luis Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KP2-M4ZN : Tue Apr 15 21:49:36 UTC 2025), Luis Abarca in entry for Leonidas Morales Campo, 17 Dec 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KP2-M4ZN"
+    },
+    {
+      "id": "7T85-71Q",
+      "title": "Luis Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X3MP-5886 : Sat Oct 11 06:06:44 UTC 2025), Luis Abarca in entry for Gamaliel Antonio Abarca, 22 Jan 1904.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X3MP-5886"
+    },
+    {
+      "id": "74YP-88B",
+      "title": "Luis, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP72-PXBK : Wed Apr 16 12:42:39 UTC 2025), Luis in entry for Antonio Gamaliel.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP72-PXBK"
+    },
+    {
+      "id": "QLNZ-CGN",
+      "title": "Luis Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6N82-HD9L : Wed Apr 16 12:42:39 UTC 2025), Luis Abarca in entry for Antonio Gamaliel Abarca Valverde, 3 Aug 1904.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6N82-HD9L"
+    },
+    {
+      "id": "QMQG-TGQ",
+      "title": "Luis Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66D4-2VF5 : Thu Jan 22 06:52:10 UTC 2026), Luis Abarca in entry for Antonio Gamaliel Abarca Valverde, 8 Feb 1904.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66D4-2VF5"
+    },
+    {
+      "id": "SK9C-QYZ",
+      "title": "Luis, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7BCV-WRMM : Thu Apr 17 00:57:35 UTC 2025), Luis in entry for Marceliana.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7BCV-WRMM"
+    },
+    {
+      "id": "S8ML-ZYZ",
+      "title": "Luis Abarca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPS3-T87B : Thu Apr 17 06:34:11 UTC 2025), Luis Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPS3-T87B"
+    },
+    {
+      "id": "9P7N-HD5",
+      "title": "Luis Abarca Fallas, \"Costa Rica, Civil Registration, 1823-1975\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMH-QFRM : Sat Mar 29 07:56:12 UTC 2025), Luis Abarca.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMH-QFRM"
+    },
+    {
+      "id": "9P7N-WCK",
+      "title": "Luis Abarca in entry for Marceliana Valverde, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2P-BMW : Thu Jan 22 18:28:24 UTC 2026), Luis Abarca in entry for Marceliana Valverde, 06 Sep 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2P-BMW"
+    },
+    {
+      "id": "9TKN-N9P",
+      "title": "Luis Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-DYF : Wed Aug 26 01:51:51 UTC 2026), Luis Abarca in entry for José Antonio Teodorico Abarca, 22 Apr 1894.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-DYF"
+    },
+    {
+      "id": "9TKN-XQ3",
+      "title": "Luis Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLS2-Q5NQ : Thu Oct 09 10:35:29 UTC 2025), Luis Abarca in entry for José Antonio Federico Abarca Valverde.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLS2-Q5NQ"
+    },
+    {
+      "id": "9TKN-4RW",
+      "title": "Luis Abarca F., \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-QXM : Wed Jul 01 05:56:09 UTC 2026), Luis Abarca F. in entry for Antonia Maclovia Abarca, 12 Jan 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-QXM"
+    },
+    {
+      "id": "9TKN-925",
+      "title": "Luis Abarca Fallas, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-MZV : Tue May 19 20:02:28 UTC 2026), Luis Abarca Fallas in entry for Antonia Eliza Gertrudis Abarca I Valverde, 01 Dec 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-MZV"
+    },
+    {
+      "id": "9TKN-KF9",
+      "title": "Lucas Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-19B : Sat Oct 11 05:22:37 UTC 2025), Lucas Abarca in entry for Mercedes Antonia Abarca, 25 Sep 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-19B"
+    },
+    {
+      "id": "9P7N-MG4",
+      "title": "Luis Abarca, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2P-ZQ1 : Sat Oct 11 05:25:47 UTC 2025), Luis Abarca and Martiniana Valverde, 08 Mar 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2P-ZQ1"
+    },
+    {
+      "id": "9P7N-7GK",
+      "title": "Luiz Primo Abarca, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-N8P : Sat Oct 11 05:43:24 UTC 2025), Luiz Primo Abarca, 10 Jun 1854.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-N8P"
+    },
+    {
+      "id": "SX8F-73S",
+      "title": "Maria Secilia Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ27-VH5 : Sat Oct 11 08:25:24 UTC 2025), Maria Secilia Abarca, 03 Feb 1856.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ27-VH5"
+    },
+    {
+      "id": "S8ML-B8L",
+      "title": "Maria Secilia Avarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-VTL : Sat Oct 11 05:17:38 UTC 2025), Maria Secilia Avarca, 01 Feb 1856.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-VTL"
+    },
+    {
+      "id": "SZ1T-MJL",
+      "title": "Maria de Jesus Avarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-28B : Sat Oct 11 05:44:03 UTC 2025), Maria de Jesus Avarca, 27 Mar 1857.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-28B"
+    },
+    {
+      "id": "S8ML-DHM",
+      "title": "Petronila Abarca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPTJ-XQLM : Thu Apr 17 02:52:07 UTC 2025), Petronila Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPTJ-XQLM"
+    },
+    {
+      "id": "SZ1T-Q61",
+      "title": "Andrea Petronila Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-TJ3 : Sat Oct 11 03:54:29 UTC 2025), Andrea Petronila Abarca, 15 Nov 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-TJ3"
+    },
+    {
+      "id": "SYG1-NQ1",
+      "title": "Juana Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2P-TY8 : Thu Jan 22 19:41:03 UTC 2026), Juana Abarca, 01 Mar 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2P-TY8"
+    },
+    {
+      "id": "SYG1-FKL",
+      "title": "Juana, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7FZG-T6T2 : Sat Oct 11 21:46:29 UTC 2025), Juana.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7FZG-T6T2"
+    },
+    {
+      "id": "WDXL-284",
+      "title": "Maria Abarca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DSB5-RKW2 : Fri Jul 17 21:13:37 UTC 2026), Maria Abarca Fallas in entry for Edelmira Morales Abarca, 18 Feb 1960.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DSB5-RKW2"
+    },
+    {
+      "id": "WHRJ-3TB",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1K-RMB9 : Tue May 12 18:08:43 UTC 2026), María Abarca in entry for María, 26 January 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z1K-RMB9"
+    },
+    {
+      "id": "7GCF-7N1",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1J-GTJG : Wed Dec 31 11:36:55 UTC 2025), María Abarca in entry for D Elisco María, 17 de septiembre de 1884.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z1J-GTJG"
+    },
+    {
+      "id": "7GCF-7SV",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1N-3QDF : Wed Dec 31 11:30:46 UTC 2025), María Abarca in entry for Agripina Isabel de Jesús, 6 de septiembre de 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z1N-3QDF"
+    },
+    {
+      "id": "7GCF-Q53",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1F-2MSM : Wed Dec 31 11:22:04 UTC 2025), María Abarca in entry for Carlos Roque de Jesús, de.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z1F-2MSM"
+    },
+    {
+      "id": "7GCF-QDG",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X3M2-MZ89 : Wed Dec 17 21:48:13 UTC 2025), María Abarca in entry for Ezquiel Morales Abarca, 31 Aug 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X3M2-MZ89"
+    },
+    {
+      "id": "7GCF-3Q9",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-681 : Sun Jun 07 22:07:52 UTC 2026), Maria Abarca in entry for Yldefonso Belfor José Morales, 25 Jan 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-681"
+    },
+    {
+      "id": "7GCX-6Y2",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-536 : Sat Oct 11 06:08:25 UTC 2025), María Abarca in entry for Carlos Roque de Jesús Morales, 06 Nov 1899.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-536"
+    },
+    {
+      "id": "7GCX-6XL",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-KX9 : Sat Oct 11 05:55:13 UTC 2025), María Abarca in entry for María Clementina de los Angeles Morales, 04 Aug 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-KX9"
+    },
+    {
+      "id": "7LHF-1KB",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-326 : Sat Oct 11 08:36:00 UTC 2025), María Abarca in entry for Nazario Ygnacio Malaquias Moralez, 01 Aug 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-326"
+    },
+    {
+      "id": "7LHX-FBG",
+      "title": "Maria Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K5H-DQV6 : Mon Apr 14 02:44:01 UTC 2025), Maria Abarca in entry for Ezequiel Morales Abarca, 25 Sep 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K5H-DQV6"
+    },
+    {
+      "id": "7LHX-3SV",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-7JR : Sat Oct 11 05:30:23 UTC 2025), María Abarca in entry for Agripina Ysabel de Jesus Moralez, 06 Sep 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-7JR"
+    },
+    {
+      "id": "7LHC-3RT",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-RLZ : Sat Oct 11 06:09:49 UTC 2025), Maria Abarca in entry for Eliseo Maria Morales, 17 Sep 1884.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-RLZ"
+    },
+    {
+      "id": "7LHC-9BX",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-N2Z : Sat Oct 11 06:15:03 UTC 2025), Maria Abarca in entry for Nicolasa Maria Aurelia Morales, 06 Dec 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-N2Z"
+    },
+    {
+      "id": "721T-JJL",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQVS-2SF : Sat Oct 11 07:55:48 UTC 2025), Maria Abarca in entry for José Belfort Morales, 15 Mar 1926.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQVS-2SF"
+    },
+    {
+      "id": "7VY9-JCJ",
+      "title": "María Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NQD-3XRM : Mon Jun 10 21:52:10 UTC 2024), María Abarca in entry for Carlos Morales Abarca, 15 Nov 1932.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NQD-3XRM"
+    },
+    {
+      "id": "7F9X-2Z1",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1J-7WWF : Wed Dec 31 11:17:11 UTC 2025), María Abarca in entry for Ignacio Nazario Mala, 1 de agosto de 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z1J-7WWF"
+    },
+    {
+      "id": "7DNN-PP8",
+      "title": "María Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPRZ-T287 : Mon Apr 14 15:10:35 UTC 2025), María Abarca in entry for Nazario Ignacio Morales Abarca.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPRZ-T287"
+    },
+    {
+      "id": "7WPQ-CCL",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66DM-MBRP : Thu Jan 22 06:52:24 UTC 2026), Maria Abarca in entry for Telésforo Nazario Morales, 26 Jan 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66DM-MBRP"
+    },
+    {
+      "id": "QTDD-YMV",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VTM-4V7P : Sat Oct 11 07:55:48 UTC 2025), María Abarca in entry for José Belfort Morales Abarca, 15 Mar 1926.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6VTM-4V7P"
+    },
+    {
+      "id": "Q5L8-9QW",
+      "title": "Maria Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6N7G-7TK2 : Tue Apr 15 15:40:27 UTC 2025), Maria Abarca in entry for José Morales Abarca, 12 Aug 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6N7G-7TK2"
+    },
+    {
+      "id": "QGWG-QVY",
+      "title": "Maria Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62WL-23G6 : Thu Apr 17 13:44:54 UTC 2025), Maria Abarca in entry for Jose Cerdas Morales, 31 May 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62WL-23G6"
+    },
+    {
+      "id": "Q25V-9JN",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FWX-V2YB : Thu Jan 22 06:22:07 UTC 2026), María Abarca in entry for Ezequiel Morales Abarca, 16 Sep 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FWX-V2YB"
+    },
+    {
+      "id": "QV4C-YKB",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQVY-K36 : Sat Oct 11 05:08:22 UTC 2025), María Abarca in entry for María Jesus del Rosario Morales y Abarca, 16 Aug 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQVY-K36"
+    },
+    {
+      "id": "QV4C-YZK",
+      "title": "Maria Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZD5-67S4 : Wed Jun 12 15:31:56 UTC 2024), Maria Abarca in entry for Rosario Morales Abarca, 2 Dec 1992.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZD5-67S4"
+    },
+    {
+      "id": "QX58-51Z",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6F21-8CBB : Thu Jan 22 06:22:24 UTC 2026), María Abarca in entry for José Cerdas Fallas, 7 May 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6F21-8CBB"
+    },
+    {
+      "id": "QDMH-JQT",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66DW-KXVK : Thu Jan 22 06:52:35 UTC 2026), Maria Abarca in entry for Franco Cascante, 27 Apr 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66DW-KXVK"
+    },
+    {
+      "id": "3B7T-PG9",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68PD-WK5G : Sat Oct 11 03:28:54 UTC 2025), Maria Abarca in entry for Jose  Belford Morales, 15 Mar 1926.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68PD-WK5G"
+    },
+    {
+      "id": "3YXR-MK4",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DSG-RDPB : Thu Jan 22 06:48:43 UTC 2026), Maria Abarca in entry for Jose B Morales Abarca, 13 May 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DSG-RDPB"
+    },
+    {
+      "id": "3N9M-C5M",
+      "title": "Maria Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP3B-GZNM : Tue Apr 15 15:40:27 UTC 2025), Maria Abarca in entry for José Morales Abarca.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP3B-GZNM"
+    },
+    {
+      "id": "SPT9-KFT",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-N26 : Sat Oct 11 06:15:03 UTC 2025), Maria Abarca in entry for Nicolasa Maria Dódila de Jesus Morales, 06 Dec 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-N26"
+    },
+    {
+      "id": "SPT9-V77",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2P-5XH : Thu Jan 22 19:40:49 UTC 2026), Maria Abarca in entry for Nicolasa Maria Aurelia Morales, 08 Dec 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2P-5XH"
+    },
+    {
+      "id": "SPT9-SC1",
+      "title": "Maria Abarca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQZ-L1DX : Sat Oct 18 15:19:43 UTC 2025), Maria Abarca Fallas in entry for Luido Lanzalo Nazariz de Jesus Morales Abarca.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQZ-L1DX"
+    },
+    {
+      "id": "SPTM-PDM",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-18C : Mon Aug 24 13:09:24 UTC 2026), Maria Abarca in entry for Maria Almira Morales, 03 Nov 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-18C"
+    },
+    {
+      "id": "SPTM-XKP",
+      "title": "Maria, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7PSS-JPN2 : Mon Oct 20 22:16:17 UTC 2025), Maria in entry for Nazario.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7PSS-JPN2"
+    },
+    {
+      "id": "SPTM-DSZ",
+      "title": "María Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q5W9-Z3X1 : Thu Apr 17 15:44:05 UTC 2025), María Abarca in entry for Agripina Morales Abarca.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q5W9-Z3X1"
+    },
+    {
+      "id": "SPTM-ZLG",
+      "title": "Maria, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7T8C-68W2 : Thu Apr 17 08:14:48 UTC 2025), Maria in entry for Belfort.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7T8C-68W2"
+    },
+    {
+      "id": "SPR1-1VM",
+      "title": "María Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLS2-3R2X : Sun Oct 12 00:26:21 UTC 2025), María Abarca in entry for María Jesús del Rosario Morales Abarca.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLS2-3R2X"
+    },
+    {
+      "id": "SPR1-P3L",
+      "title": "María Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL6V-GF7B : Tue Oct 07 03:25:00 UTC 2025), María Abarca in entry for Carlos Roque de Jesús Morales Abarca.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL6V-GF7B"
+    },
+    {
+      "id": "SP9Z-MRB",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ22-29K : Sun Mar 22 22:46:22 UTC 2026), Maria Abarca in entry for Ezequiel de Jesus Morales, 01 May 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ22-29K"
+    },
+    {
+      "id": "SP9C-N7B",
+      "title": "María Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:C9QF-C4MM : Mon Apr 14 02:44:01 UTC 2025), María Abarca in entry for Ezequiel Morales Abarca.",
+      "url": "https://familysearch.org/ark:/61903/1:1:C9QF-C4MM"
+    },
+    {
+      "id": "SJCW-VYD",
+      "title": "Maria Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7M5W-H93Z : Fri Mar 28 17:07:40 UTC 2025), Maria Abarca in entry for Ezequiel Morales Abarca.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7M5W-H93Z"
+    },
+    {
+      "id": "S8ML-KKQ",
+      "title": "María Abarca-, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG2S-KXZ2 : Tue Apr 08 01:30:30 UTC 2025), María Abarca- in entry for Guido Morales- Abarca and Lastenia Segura- Ramirez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QG2S-KXZ2"
+    },
+    {
+      "id": "S8ML-N2W",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-FQD : Wed Aug 26 04:25:19 UTC 2026), María Abarca in entry for Guido Gonzalo Nazario de Jesus Moralez, 09 Jun 1895.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-FQD"
+    },
+    {
+      "id": "SZ1K-6N5",
+      "title": "María Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-ZHZ : Fri Aug 14 04:34:42 UTC 2026), María Abarca in entry for Nazaria Ema Hidelina de Jesus Morales, 04 Jan 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-ZHZ"
+    },
+    {
+      "id": "S9PG-YPM",
+      "title": "María, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGKR-RGW6 : Thu Apr 17 13:44:55 UTC 2025), María in entry for Jose.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGKR-RGW6"
+    },
+    {
+      "id": "S9PG-T1R",
+      "title": "Maria Abarca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSQ-QQVH : Tue Apr 08 01:30:11 UTC 2025), Maria Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSQ-QQVH"
+    },
+    {
+      "id": "S9PG-TSZ",
+      "title": "Maria Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL6V-DP5J : Thu Apr 17 05:40:35 UTC 2025), Maria Abarca in entry for Nasaria Ema Fidelina de Jesús.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL6V-DP5J"
+    },
+    {
+      "id": "92YD-KNW",
+      "title": "Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2P-WLZ : Sat Oct 11 03:20:03 UTC 2025), Telésforo Nazario Morales and Maria Abarca, 26 Jan 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2P-WLZ"
+    },
+    {
+      "id": "92YD-V6Q",
+      "title": "Maria Pascuala Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2M-P9B : Sat Oct 11 05:41:29 UTC 2025), Maria Pascuala Abarca, 17 May 1859.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2M-P9B"
+    },
+    {
+      "id": "9V5N-Q37",
+      "title": "María Abarca in entry for Nasaria Ema Fedelina de Jesús Morales Abarca, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ57-L9N : Fri Jan 23 11:05:16 UTC 2026), María Abarca in entry for Nasaria Ema Fedelina de Jesús Morales Abarca, 02 Jan 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ57-L9N"
+    },
+    {
+      "id": "9V5N-31R",
+      "title": "María Abarca in entry for Nazaria Ema Fidelina de Jesús Morales Abarca, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2Q-7M1 : Sat Oct 11 09:50:14 UTC 2025), María Abarca in entry for Nazaria Ema Fidelina de Jesús Morales Abarca, 15 Apr 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2Q-7M1"
+    },
+    {
+      "id": "WS8K-1YH",
+      "title": "Fidel Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JLH-5FYY : Fri Jul 17 21:57:32 UTC 2026), Fidel Abarca in entry for Victor Castro Morales, 2 Jun 1943.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JLH-5FYY"
+    },
+    {
+      "id": "7J71-5VW",
+      "title": "Fidel Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DDQN-6J6Z : Fri Jul 17 21:44:32 UTC 2026), Fidel Abarca in entry for Angélica Abarca Fallas, 21 Apr 1970.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DDQN-6J6Z"
+    },
+    {
+      "id": "QG49-5CC",
+      "title": "Fidel Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6D3S-J91V : Thu Jan 22 06:48:36 UTC 2026), Fidel Abarca in entry for Aniceto Abarca Fallas, 23 Aug 1922.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6D3S-J91V"
+    },
+    {
+      "id": "QLRN-6LB",
+      "title": "Pidel Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62FB-4DCP : Tue Apr 08 02:41:28 UTC 2025), Pidel Abarca in entry for Aniceto Abarca Pallas, 10 Nov 1922.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62FB-4DCP"
+    },
+    {
+      "id": "QKZ9-KBW",
+      "title": "Fidel Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZPR-19Y6 : Wed Dec 31 12:56:17 UTC 2025), Fidel Abarca in entry for Eloy Ysmael de Jesús, Obtubre quince de mil ochocientos ochenta y nueve.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZPR-19Y6"
+    },
+    {
+      "id": "QKZ9-J91",
+      "title": "Fidel Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DH14-FDMM : Sun Oct 12 06:28:55 UTC 2025), Fidel Abarca in entry for German Abarca Fallas, 18 Aug 1976.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DH14-FDMM"
+    },
+    {
+      "id": "QKZ9-NZY",
+      "title": "Fidel Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62XN-QD2X : Thu Apr 17 16:01:29 UTC 2025), Fidel Abarca in entry for German Abarca Fallas, 24 Jan 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62XN-QD2X"
+    },
+    {
+      "id": "QDMZ-SMF",
+      "title": "Fidel Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66DW-KXVL : Thu Jan 22 06:53:05 UTC 2026), Fidel Abarca, 4 May 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66DW-KXVL"
+    },
+    {
+      "id": "QDMH-2VD",
+      "title": "Fidel Custodio, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZPR-3H7T : Wed Dec 31 08:37:04 UTC 2025), Fidel Custodio, 21 de agosto de 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZPR-3H7T"
+    },
+    {
+      "id": "SYGP-TWR",
+      "title": "Fidel Abarca Fallos, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2G-35K : Sun Aug 09 01:53:30 UTC 2026), Fidel Abarca Fallos in entry for Angelica Abarca Fallos, 10 Jul 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2G-35K"
+    },
+    {
+      "id": "SYGP-V55",
+      "title": "Fidel Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-55D : Sat Oct 11 03:09:34 UTC 2025), Fidel Abarca in entry for Amalia Angélica Fallas, 11 Jul 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-55D"
+    },
+    {
+      "id": "SYGP-V6G",
+      "title": "Fidel Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-NMX : Sat Oct 11 04:17:10 UTC 2025), Fidel Abarca in entry for Honario Marceal Abarca, 12 Dec 1895.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-NMX"
+    },
+    {
+      "id": "SYGP-VSL",
+      "title": "Fidel Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-232 : Sat Oct 11 06:12:49 UTC 2025), Fidel Abarca in entry for Gustavo de Jesús Abarca, 08 Nov 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-232"
+    },
+    {
+      "id": "SYGP-JSD",
+      "title": "Fidel Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLS2-4VMP : Thu Apr 03 22:41:09 UTC 2025), Fidel Abarca in entry for Gustavo de Jesús.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLS2-4VMP"
+    },
+    {
+      "id": "SYGP-NP2",
+      "title": "Fidel Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2L-85H : Wed Aug 05 23:07:26 UTC 2026), Fidel Abarca in entry for Adelaida Belarmina Abarca, 24 Sep 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2L-85H"
+    },
+    {
+      "id": "SYGP-FY6",
+      "title": "Fidel Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLS2-3XMC : Wed Apr 16 18:59:51 UTC 2025), Fidel Abarca in entry for Adelaida Belarmina.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLS2-3XMC"
+    },
+    {
+      "id": "SYGP-XB5",
+      "title": "Fidel Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPRZ-T28B : Tue Apr 15 16:27:46 UTC 2025), Fidel Abarca in entry for Agueda Julia Abarca y Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPRZ-T28B"
+    },
+    {
+      "id": "SYGG-L6H",
+      "title": "Fidel, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7FMQ-ZQN2 : Mon Apr 14 13:24:03 UTC 2025), Fidel in entry for Gustavo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7FMQ-ZQN2"
+    },
+    {
+      "id": "SYGL-YL1",
+      "title": "Fidel, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7JV6-ZFPZ : Tue Apr 08 02:42:30 UTC 2025), Fidel in entry for Honorio Marcial.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7JV6-ZFPZ"
+    },
+    {
+      "id": "SYGL-YH9",
+      "title": "Fidel Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2S-8J4 : Tue Jun 09 22:26:43 UTC 2026), Fidel Abarca in entry for German Leonardo Eliseo de los Santos Abarca, 6 November 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2S-8J4"
+    },
+    {
+      "id": "SYGL-RCJ",
+      "title": "Fidel, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGKR-P3P8 : Thu Apr 17 06:27:38 UTC 2025), Fidel in entry for German Leonardo Eliseo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGKR-P3P8"
+    },
+    {
+      "id": "SYGL-5V5",
+      "title": "Fidel Abarca, \"Costa Rica bautismos, 1700-1915\"",
+      "citation": "\"Costa Rica bautismos, 1700-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLSZ-Y8G : Wed Oct 14 17:36:33 UTC 2026), Fidel Abarca in entry for Eloy Ismael de Jesus Abarca, 15 Oct 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLSZ-Y8G"
+    },
+    {
+      "id": "SYGL-PLV",
+      "title": "Fidel Abarca-, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPS3-7P4P : Thu Apr 17 16:01:28 UTC 2025), Fidel Abarca- in entry for German Abarca- Fallas and Sebastiana Ramírez- Monge.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPS3-7P4P"
+    },
+    {
+      "id": "SYGL-G8W",
+      "title": "Fidel Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL6V-F8BW : Fri Oct 10 22:33:13 UTC 2025), Fidel Abarca in entry for Eloy Ismael de Jesus Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL6V-F8BW"
+    },
+    {
+      "id": "SYGL-GMW",
+      "title": "Fidel Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQKR-XH5 : Wed Aug 19 00:12:34 UTC 2026), Fidel Abarca in entry for Lino Aniceto Abarca, 23 Sep 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQKR-XH5"
+    },
+    {
+      "id": "SYGL-C47",
+      "title": "Fidel Abarca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLS2-WNDT : Thu Oct 16 08:03:21 UTC 2025), Fidel Abarca Fallas in entry for Lino Aniceto Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLS2-WNDT"
+    },
+    {
+      "id": "SYGL-HR4",
+      "title": "Fidel Abarca, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP7B-M8ZX : Tue Apr 08 02:41:28 UTC 2025), Fidel Abarca in entry for Aniceto Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP7B-M8ZX"
+    },
+    {
+      "id": "SX8F-QJB",
+      "title": "Fidel, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7QQT-2JW2 : Sun Oct 19 22:46:25 UTC 2025), Fidel.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7QQT-2JW2"
+    },
+    {
+      "id": "SZ1R-TFC",
+      "title": "Fidel Custodio Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQCL-7BS : Sat Oct 11 05:44:35 UTC 2025), Fidel Custodio Abarca, 21 Aug 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQCL-7BS"
+    },
+    {
+      "id": "SZ1R-RTZ",
+      "title": "Fidel Custodio Abarca Fallas, \"Costa Rica, Baptisms, 1700-1915\"",
+      "citation": "\"Costa Rica bautismos, 1700-1915\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLQV-7TB : 19 September 2026), Fidel Custodio Abarca Fallas, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLQV-7TB"
+    },
+    {
+      "id": "9M9Y-8BF",
+      "title": "Fidel Custodio Abarca Fallas, \"Costa Rica bautismos, 1700-1915\"",
+      "citation": "\"Costa Rica bautismos, 1700-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FL7S-FV8 : Wed Oct 14 17:37:10 UTC 2026), Fidel Custodio Abarca Fallas, 21 Aug 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FL7S-FV8"
+    },
+    {
+      "id": "SYGL-W6K",
+      "title": "Fidel Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2P-CY4 : Sat Oct 11 03:17:52 UTC 2025), Fidel Abarca and Leonarda Fallas, 04 May 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2P-CY4"
+    },
+    {
+      "id": "SZ1T-S7D",
+      "title": "Ramon Maria Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ29-7LQ : Sat Oct 11 05:37:42 UTC 2025), Ramon Maria Abarca, 24 Jun 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ29-7LQ"
+    },
+    {
+      "id": "S2TP-CMF",
+      "title": "José Geronimo Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2W-9GM : Sat Oct 11 05:31:10 UTC 2025), José Geronimo Abarca, 25 Apr 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2W-9GM"
+    },
+    {
+      "id": "S8ML-XPJ",
+      "title": "Jose Jeronimo Abarca, \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ29-8LP : Sat Oct 11 03:26:16 UTC 2025), Jose Jeronimo Abarca, 30 Sep 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ29-8LP"
+    },
+    {
+      "id": "S8MG-SNG",
+      "title": "Maria Lina Abarca Fallas, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPTW-4KQT : Mon Apr 14 20:18:29 UTC 2025), Maria Lina Abarca Fallas.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPTW-4KQT"
+    },
+    {
+      "id": "WHH5-C32",
+      "title": "Juan Garcia Calderon, \"Costa Rica, Registro Civil, 1823-2023\"",
+      "citation": "\"Costa Rica, Registro Civil, 1823-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KJJ-CFF3 : Wed Apr 16 23:24:37 UTC 2025), Juan Garcia Calderon, 15 Jan 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KJJ-CFF3"
+    },
+    {
+      "id": "9P7N-3VN",
+      "title": "Entry for Rafael de Jesus Abarca and Francisca de Jesus Fallas, \"Costa Rica, Catholic Church Records, 1595-1992\"",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQ2Q-LP2 : Sat Oct 11 09:58:34 UTC 2025), Rafael de Jesus Abarca and Francisca de Jesus Fallas, 24 Feb 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQ2Q-LP2"
+    }
+  ]
+}

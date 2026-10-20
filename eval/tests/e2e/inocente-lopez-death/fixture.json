@@ -17,6 +17,9 @@
   "difficulty": "medium",
   "notes": "Record-hint fixture (filtered-list-samples-3.csv row 8, hint-samples.csv row 331, flags adds_mother/adds_death, confidence 3). Resolved 2026-10-14 (#3331): answerable, but differently. The hinted 13 Jan 1906 Suchitoto death (ark:/61903/1:1:QP7Z-BTQK) is an eighteen-day-old infant, son of Santos López; L8GW-R6Y died 22 Sep 1916 at Suchitoto (ark:/61903/1:1:QPHJ-JVY1, spouse Virginia Mendoza, parents Matías López and Mauricia Carpio). The rejection rests partly on the genealogist's reading of the 1906 register image, so image_basis is on.",
   "image_basis": true,
+  "caps": {
+    "wall_clock_seconds": 9000
+  },
   "hint": {
     "persona_ark": "ark:/61903/1:1:QP7Z-BTQK",
     "identity": "different"
