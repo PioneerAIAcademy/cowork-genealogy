@@ -66,39 +66,39 @@ def test_starting_tree_is_a_subset_of_its_unstripped_tree(fixture_dir: Path):
     assert starting_pids <= unstripped_pids
 
 
-# --- avoid-guard collisions: stop the defect propagating ---------------
+# --- avoid-guard: which fixtures stay structurally unpassable ------------
 #
-# `apply_avoid_guard` (e2e/judge.py) runs `check_stripping` against the
-# agent's FINAL tree and forces `matched: "false"` on any `avoid` finding
-# whose given+surname tokens hit a person outside the exempt set
-# (subject_person_ids u source_pid). `derive_verdict` needs every REQUIRED
-# finding `true` for a `pass`. So an `avoid` finding that is both colliding
-# and `required: true` makes the fixture unpassable: its ceiling is
-# `partial`, on every run, including a perfect one.
+# The avoid guard (`apply_avoid_guard`, e2e/judge.py): RELATIONSHIP avoid
+# findings are subject-anchored (Dallan ruling, 2026-10-20) — forced only on a
+# relationship the agent NEWLY attached to the subject (final vs starting) whose
+# other end matches the target name, so a pre-existing namesake relative is not
+# force-failed. FACT / PERSON / SOURCE avoid findings stay on the legacy
+# whole-tree matcher (a subject-anchored fact branch was prototyped and withdrawn
+# after review — it force-failed correct runs; Option 3, 2026-10-20).
 #
-# Three committed fixtures are in that state today. This test does NOT
-# endorse them and does NOT fix them — which of four possible remedies to
-# take is a doctrine call (relax the guard, drop `required`, re-author the
-# findings, or exclude guard-forced findings from calibrate_judge's
-# denominator). It pins the set so the defect cannot spread quietly, which
-# matters because `thomas-seaver-other-wife` is the shape donor that
-# `.claude/skills/resolve-record-hint/SKILL.md` tells the next author to
-# copy — PR #2634 nearly inherited it that way.
+# Consequence: the old guard force-failed a `required` avoid finding whose name
+# collided with a legitimate starting-tree person on EVERY run (ceiling
+# `partial`), which pinned antonio-lucas-spouse, heinrich-zinsmeister-death and
+# thomas-seaver-other-wife. Making RELATIONSHIP avoids subject-anchored fixed the
+# first and third. heinrich's avoid is a FACT finding, so it stays on the legacy
+# path and remains force-failed on a no-op — the Death/Burial blind spot this PR
+# leaves unresolved (spec §3.4.1).
 #
-# Fails in BOTH directions by construction: adding a fourth unpassable
-# fixture fails it, and fixing one of the three fails it too. Either way a
-# human has to look. If you fixed one, delete it from the set below and say
-# so in your PR.
-
-_KNOWN_UNPASSABLE_AVOID_FIXTURES = {
-    "antonio-lucas-spouse",
-    "heinrich-zinsmeister-death",
-    "thomas-seaver-other-wife",
-}
+# This test feeds the starting tree as the final tree (a perfect no-op run)
+# through the REAL `apply_avoid_guard` (so the retained fact/person/source path
+# stays exercised) and asserts the set of force-failed fixtures is EXACTLY the
+# known blind spot. Fails both directions: a NEW unpassable fixture fails it, and
+# fixing heinrich fails it too (then remove it from the set below and say so).
+# `nothing-checks`: an avoid finding that can never score `true` looks exactly
+# like an agent that over-claimed.
+_KNOWN_UNPASSABLE_AVOID_FIXTURES = {"heinrich-zinsmeister-death"}
 
 
 def _exempt_person_ids(fixture_dir: Path) -> set[str]:
-    """Mirrors orchestrator.py's exempt set: subject_person_ids u source_pid."""
+    """Mirrors orchestrator.py's subject set: subject_person_ids u source_pid.
+
+    This is the fixture's subject — the anchor the subject-anchored relationship
+    guard needs (and the exempt id for the legacy fact/person/source path)."""
     exempt: set[str] = set()
     try:
         research = _load(fixture_dir, "starting-research.json")
@@ -115,40 +115,91 @@ def _exempt_person_ids(fixture_dir: Path) -> set[str]:
     return exempt
 
 
-def test_no_new_fixture_becomes_unpassable_via_the_avoid_guard():
-    from e2e.validate_fixture import check_stripping
+def test_unpassable_avoid_fixtures_are_exactly_the_known_legacy_fact_blind_spot():
+    from e2e.judge import apply_avoid_guard
 
     unpassable = set()
     for fixture_dir in FIXTURE_DIRS:
         tree_path = fixture_dir / "starting-tree.gedcomx.json"
         if not tree_path.exists():
             continue
-        findings = _load(fixture_dir, "expected-findings.json").get("findings") or []
-        avoid_required = [
-            f
-            for f in findings
-            if str(f.get("polarity", "recover")) == "avoid" and f.get("required")
-        ]
-        if not avoid_required:
+        expected = _load(fixture_dir, "expected-findings.json")
+        findings = expected.get("findings") or []
+        if not any(str(f.get("polarity", "recover")) == "avoid" for f in findings):
             continue
-        exempt = _exempt_person_ids(fixture_dir)
-        tree = json.loads(tree_path.read_text(encoding="utf-8"))
-        suspects = [
-            s
-            for s in check_stripping({"findings": avoid_required}, tree)
-            if s.person_id not in exempt
-        ]
-        if suspects:
+        starting_tree = json.loads(tree_path.read_text(encoding="utf-8"))
+        subject_ids = _exempt_person_ids(fixture_dir)
+        # A judge output that passed every finding; the guard can only downgrade.
+        per_finding = [{"finding_id": str(f.get("id")), "matched": "true"} for f in findings]
+        graded = apply_avoid_guard(
+            {"per_finding": per_finding, "verdict": "pass"},
+            expected_findings=expected,
+            final_tree=starting_tree,  # perfect no-op run: final == starting
+            starting_tree=starting_tree,
+            subject_person_ids=subject_ids,
+        )
+        if (graded.get("avoid_guard") or {}).get("forced_false"):
             unpassable.add(fixture_dir.name)
 
     assert unpassable == _KNOWN_UNPASSABLE_AVOID_FIXTURES, (
-        "the set of fixtures made unpassable by the avoid guard changed.\n"
+        "the set of fixtures force-failed on a perfect no-op run changed.\n"
         f"  now:      {sorted(unpassable)}\n"
         f"  expected: {sorted(_KNOWN_UNPASSABLE_AVOID_FIXTURES)}\n"
-        "A NEW entry means a required `avoid` finding's name tokens collide "
-        "with a non-exempt person in its own starting tree, so that fixture "
-        "can never score `pass`. Either re-word the finding's `details` "
-        "target name, or set `required: false` and document the cost in the "
-        "fixture README (see hinrich-burmeister-spouse). A REMOVED entry "
-        "means someone fixed one — delete it from the set and say so."
+        "A NEW entry means a required avoid finding is structurally unpassable "
+        "(relationship avoids should be subject-anchored; a fact/person/source "
+        "avoid may collide on the legacy path). A REMOVED entry means someone "
+        "resolved the blind spot — delete it from the set and say so in the PR."
+    )
+
+
+# Regression: the subject-anchored FACT branch (withdrawn, Option 3) force-failed
+# a correct run that recovered a sibling finding's fact of the same type. On the
+# legacy path the subject's own facts are exempt, so a legitimate recovery must
+# NOT force the paired avoid finding. These three were the confirmed cases.
+_FACT_AVOID_SIBLING_REGRESSION = [
+    ("wasyl-kapach-birth", "f3"),
+    ("inocente-lopez-death", "f3"),
+    ("creszentia-haas-birth", "f3"),
+]
+
+
+@pytest.mark.parametrize("slug,avoid_id", _FACT_AVOID_SIBLING_REGRESSION)
+def test_legacy_fact_avoid_does_not_force_a_legitimate_sibling_recovery(slug, avoid_id):
+    from e2e.judge import apply_avoid_guard
+
+    fixture_dir = DEFAULT_FIXTURES_ROOT / slug
+    expected = _load(fixture_dir, "expected-findings.json")
+    findings = expected.get("findings") or []
+    avoid = next(f for f in findings if str(f.get("id")) == avoid_id)
+    fact_type = (avoid.get("details") or {}).get("fact_type")
+    assert fact_type, f"{slug}:{avoid_id} has no details.fact_type to exercise"
+    subject_ids = _exempt_person_ids(fixture_dir)
+    # Simulate a correct run: the subject legitimately gains a fact of that type
+    # (a sibling recover finding asks for it). Fresh parse so starting is untouched.
+    starting_tree = _load(fixture_dir, "starting-tree.gedcomx.json")
+    final_tree = _load(fixture_dir, "starting-tree.gedcomx.json")
+    added = False
+    for p in final_tree.get("persons") or []:
+        if str(p.get("id")) in subject_ids:
+            p.setdefault("facts", []).append(
+                {"id": "FREG", "type": fact_type, "date": "1 Jan 1900",
+                 "standard_date": "+1900-01-01"})
+            added = True
+            break
+    assert added, f"{slug}: no subject person found to attach a recovered fact"
+    per_finding = [{"finding_id": str(f.get("id")), "matched": "true"} for f in findings]
+    graded = apply_avoid_guard(
+        {"per_finding": per_finding, "verdict": "pass"},
+        expected_findings=expected,
+        final_tree=final_tree,
+        starting_tree=starting_tree,
+        subject_person_ids=subject_ids,
+    )
+    forced_ids = {
+        e["finding_id"] for e in (graded.get("avoid_guard") or {}).get("forced_false") or []
+    }
+    assert avoid_id not in forced_ids, (
+        f"{slug}: a legitimate sibling recovery of a {fact_type} fact on the "
+        f"subject wrongly force-failed the avoid finding {avoid_id}. The "
+        f"withdrawn subject-anchored fact branch did this; the legacy path must not."
     )

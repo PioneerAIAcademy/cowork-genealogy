@@ -149,6 +149,7 @@ def grade_case(
             judge_output,
             expected_findings=case["expected_findings"],
             final_tree=case["final_tree"],
+            starting_tree=case.get("starting_tree"),
             subject_person_ids=case.get("subject_person_ids"),
         )
     except Exception as e:  # noqa: BLE001 — record, don't abort the sweep
@@ -342,6 +343,14 @@ def load_annotated_runs(
         except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
             err(f"{tree_path.name} unreadable ({e})")
             continue
+        # Committed starting tree: the baseline the subject-anchored avoid guard
+        # diffs against. Missing/unreadable => None (guard forces nothing).
+        starting_tree: dict[str, Any] | None = None
+        try:
+            starting_tree = json.loads(
+                (fixture_dir / "starting-tree.gedcomx.json").read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            starting_tree = None
         research_path = ann_path.parent / f"{stem}.final-research.json"
         final_research = None
         if research_path.exists():
@@ -435,6 +444,7 @@ def load_annotated_runs(
             "research_question": fixture.get("researcher_question", ""),
             "expected_findings": expected,
             "final_tree": final_tree,
+            "starting_tree": starting_tree,
             "final_research": final_research,
             "subject_person_ids": sorted(subject_ids),
             "human": human,

@@ -261,17 +261,20 @@ stripped starting tree, then reviewed and pruned by the author.
 
 Most findings should be `required: true` for v1. The `false` lever
 exists for cases where the author is unsure whether a finding is
-truly part of the answer — and, second, for an `avoid` finding whose
-guard is *structurally dead*: one whose name tokens unavoidably collide
-with a person the starting tree legitimately contains, which
-`apply_avoid_guard` force-fails on every run including a perfect one
-(§3.4.1). At `required: true` that makes `pass` unreachable and the
-fixture ungradable. A fixture using the lever this way must say so in
-its README and name what the dead guard costs: the `recall_total`
-ceiling, a permanent `avoid_guard.forced_false` entry in every run log,
-and one structural judge-vs-human disagreement per annotated run
-against `calibrate_judge`'s `PER_FINDING_TARGET`. Worked example:
-`eval/tests/e2e/hinrich-burmeister-spouse/README.md`.
+truly part of the answer. It is also the remedy for an avoid finding whose
+guard is *structurally dead*. A **relationship** avoid no longer dies this
+way — it is subject-anchored, so a name collision with a legitimate
+starting-tree relative no longer force-fails (§3.4.1). But a **fact**,
+**person** or **source** avoid stays on the legacy whole-tree matcher and
+can still collide with a non-exempt starting-tree person, which
+`apply_avoid_guard` force-fails on every run including a perfect one; at
+`required: true` that makes `pass` unreachable. `heinrich-zinsmeister-death`
+is in that state today (a fact avoid — the Death/Burial blind spot §3.4.1
+leaves unresolved). A fixture using the lever this way must say so in its
+README and name the cost — the `recall_total` ceiling, a permanent
+`avoid_guard.forced_false` entry in every run log, and one structural
+judge-vs-human disagreement per annotated run against `calibrate_judge`'s
+`PER_FINDING_TARGET`.
 
 #### 3.4.1 Negative findings (`polarity: "avoid"`)
 
@@ -302,30 +305,62 @@ fixture should exist in the suite so over-claiming is sampled (§1).
 
 The judge's grade on an `avoid` finding is backstopped by a
 deterministic harness check (`apply_avoid_guard` in `e2e/judge.py`,
-applied by the orchestrator and by judge calibration): if the avoided
-claim's target is present in the agent's final tree — the stripping
-linter's own matcher, given+surname token overlap plus fact type for
-`fact` findings — the finding is forced to `matched: "false"`, the
-recall fractions are recomputed, and the verdict is recomputed
-**downgrade-only**. What was forced is recorded under the result's
-`judge_output.avoid_guard.forced_false` and in the finding's `notes`.
-The guard is **unconditional on presence**: it overrides the
-rejected-hypothesis allowance rather than preserving it. A target that
-appears in the agent's final tree is forced to `matched: "false"`
-however the agent annotated it — including as an explicitly rejected
-candidate, which is the outcome the allowance exists to permit.
-Measured against the shipped guard with every judge label set to `true`:
-a clean final tree scores the avoid finding `true`, and the same tree
-plus the avoided person written in as a rejected candidate scores it
-`false`. So an `avoid` finding must not promise a pass route through the
-tree. Word its pass condition to put a rejected candidate in the
-research log (`research.json`) and keep it out of `tree.gedcomx.json`;
-a finding whose text offers the tree route describes a pass that cannot
-be taken. Authoring gates treat
-`avoid` findings accordingly: the presence mirror skips them (the
-claim was never in the tree), while the stripping linter still warns
-when an avoided claim is already present in the *starting* tree — a
-fixture must not pre-assert the thing it forbids.
+applied by the orchestrator and by judge calibration). What it does
+depends on the finding's `type`:
+
+- A **relationship** avoid is **subject-anchored** (Dallan ruling,
+  2026-10-20): it forces `matched: "false"` only on a relationship the
+  agent **newly attached to the subject** — one in the final tree that the
+  committed starting tree lacks, touching a subject person, whose *other*
+  endpoint's name (given + surname token overlap) matches the finding's
+  wrong candidate. A pre-existing relative who shares the avoided name is
+  never "new", so it is not force-failed; a genuinely new wrong link (a
+  different person id) still is.
+- A **fact**, **person** or **source** avoid keeps the **legacy
+  whole-tree matcher** (given+surname token overlap, plus fact type for
+  `fact`), with the fixture's `subject_person_ids` exempt.
+
+When the check fires, the recall fractions are recomputed and the verdict
+is recomputed **downgrade-only**; what was forced is recorded under the
+result's `judge_output.avoid_guard.forced_false` and in the finding's
+`notes`. A missing starting tree forces nothing.
+
+**Why `fact` stays on the legacy path.** A subject-anchored fact branch —
+forcing on a new subject fact of the forbidden type — was prototyped and
+**withdrawn** (code review, 2026-10-20). Keyed on fact *type* it
+force-failed *correct* runs that recovered a sibling `recover` finding's
+fact (confirmed on `wasyl-kapach-birth`, `inocente-lopez-death`,
+`creszentia-haas-birth`), and inferring the forbidden type(s) from prose
+over-matched (a Death-only finding's narrative `note` leaked Birth /
+Marriage / Census). A sound value-matched version needs a uniform
+structured forbidden value the corpus does not carry, so it was deferred.
+Consequence (unresolved): the **Heinrich Death/Burial blind spot** — a
+wrong death/burial on a subject that already holds an undated death — is
+not caught, and a `fact`/`person`/`source` avoid whose name collides with
+a non-exempt starting-tree person is still force-failed on every run (as
+`heinrich-zinsmeister-death` is; use the `required: false` lever above and
+document it).
+
+What this changes from the retired whole-tree guard, for **relationship**
+avoids: a relative who merely appears in the final tree is no longer
+force-failed. A pre-existing namesake relative, or the wrong person
+recorded only as an unattached/rejected candidate, is not an over-claim
+and is left `true`; only a genuinely new link to the subject is forced.
+Measured against the shipped guard with every judge label set to `true`
+(`tests/unit/test_e2e_judge.py`): a final tree that attaches no new
+relationship to the subject scores a relationship avoid `true` — including
+when the avoided person appears only unattached — and the same tree with
+the wrong person newly linked to the subject scores it `false`. So word a
+relationship avoid's pass condition around the subject: the wrong person
+must not be linked to the subject in `tree.gedcomx.json` (recording a
+rejected candidate in `research.json` is the clean way). Authoring gates:
+the presence mirror skips avoid findings (the claim was never in the tree);
+the pinning invariant
+`test_unpassable_avoid_fixtures_are_exactly_the_known_legacy_fact_blind_spot`
+(`tests/unit/test_e2e_fixture_corpus.py`) asserts the set of fixtures
+force-failed on a perfect no-op run is exactly the known blind spot
+(`heinrich-zinsmeister-death`), failing if a new one appears or the blind
+spot is resolved.
 
 An `avoid` finding may be `required: true`; it then gates the verdict
 exactly like a recover finding (`matched: "true"` = correctly
@@ -343,25 +378,31 @@ conclusion **rest on a named conflicting record** — the disproving
 record of §3.6.1 — and say in the finding that a conclusion resting
 only on failure to confirm does not satisfy it.
 
-**Open doctrine call: guards that can never go green (as of 2026-09-18).**
-Three committed fixtures — `antonio-lucas-spouse`,
-`thomas-seaver-other-wife` and `heinrich-zinsmeister-death` — carry a
-`required: true` avoid finding whose name tokens collide with a
-non-exempt person in their own starting tree, so `apply_avoid_guard`
-force-fails it on every run and their ceiling is `partial`, a perfect run
-included. Four remedies have been named and none adopted: relax the guard
-so it matches on more than name tokens, drop `required` on the colliding
-findings, re-author those findings so their target names no longer
-collide, or exclude guard-forced findings from `calibrate_judge`'s
-denominator. Which one to take is the lead's call, not the fixture
-author's. Until it is made the set is pinned by
-`test_no_new_fixture_becomes_unpassable_via_the_avoid_guard`
-(`eval/harness/tests/unit/test_e2e_fixture_corpus.py`), which fails in
-**both** directions — a fourth fixture entering the state fails it, and
-fixing one of the three fails it too — so the defect can neither spread
-nor be silently repaired while the call is open. The mirror-image defect —
-a guard that can never go *red* — is a different thing and is tracked
-separately.
+**Doctrine call resolved (Dallan, 2026-10-20): relationship avoids are
+subject-anchored; fact avoids stay on the legacy path.** The guards that
+could never go green — a `required: true` avoid finding whose name collided
+with a non-exempt person in its own starting tree (`antonio-lucas-spouse`,
+`thomas-seaver-other-wife`, `heinrich-zinsmeister-death`) — were a symptom
+of the guard matching the whole final tree by name. The adopted remedy
+anchors **relationship** avoids on the subject, diffing the final tree
+against the starting tree (§3.4.1), so a pre-existing namesake is never an
+over-claim. That fixes the two relationship cases: `antonio-lucas-spouse`
+(its human-`true` run is no longer force-failed) and `thomas-seaver-other-wife`
+(whose f1 wrong candidate is unnamed — "an unidentified second wife…" — so
+name-matching now never forces it; accepted as a consequence of the ruling).
+`heinrich-zinsmeister-death` is a **fact** avoid: the subject-anchored fact
+branch was prototyped and **withdrawn** (it force-failed correct sibling
+recoveries, and prose-based type inference over-matched — code review
+2026-10-20), so fact avoids stay on the legacy path and **heinrich's
+Death/Burial blind spot remains unresolved**. All fixtures'
+`expected-findings.json` are unchanged. The remaining state is pinned by
+`test_unpassable_avoid_fixtures_are_exactly_the_known_legacy_fact_blind_spot`
+(`eval/harness/tests/unit/test_e2e_fixture_corpus.py`): the set of fixtures
+force-failed on a perfect no-op run must be exactly
+`{heinrich-zinsmeister-death}` — it fails if a new unpassable fixture
+appears or if the blind spot is later resolved (remove it from the set
+then). The mirror-image defect — a guard that can never go *red* — is a
+different thing and is tracked separately.
 
 #### 3.4.2 Relationship findings: `matched` is derived, not trusted
 

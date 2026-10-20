@@ -83,10 +83,19 @@ def grade(
         final_research=final_research,
         model=model or fixture.judge_model,
     )
+    # The committed starting tree is the baseline the subject-anchored avoid
+    # guard diffs against; a missing/unreadable one forces nothing.
+    try:
+        starting_tree: dict[str, Any] | None = load_json(
+            fixture.starting_tree_path, what="starting tree"
+        )
+    except InputError:
+        starting_tree = None
     return apply_avoid_guard(
         judge_output,
         expected_findings=fixture.expected_findings,
         final_tree=final_tree,
+        starting_tree=starting_tree,
         subject_person_ids=fixture.subject_person_ids,
     )
 

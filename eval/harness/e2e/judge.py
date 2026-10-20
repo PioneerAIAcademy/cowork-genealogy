@@ -36,7 +36,7 @@ from typing import Any
 
 import anthropic
 
-from e2e.validate_fixture import check_stripping
+from e2e.validate_fixture import check_stripping, _tokens
 
 
 DEFAULT_JUDGE_MODEL = "claude-opus-4-8"
@@ -463,52 +463,148 @@ def apply_component_derivation(
     return out
 
 
+# --- subject-anchored avoid-guard helpers (Dallan ruling, 2026-10-20) --------
+# Name particles, place words and month abbreviations that are not
+# discriminating as person-name tokens. Layered on top of
+# validate_fixture._STOPWORDS, which the imported `_tokens` already strips.
+_AVOID_NAME_STOPWORDS = frozenset(
+    {
+        "de", "da", "do", "dos", "das", "del", "la", "le", "las", "los",
+        "von", "van", "der", "den", "di", "du",
+        "santo", "santa", "sao", "san", "santos", "saint", "st",
+        "jan", "feb", "mar", "apr", "may", "jun",
+        "jul", "aug", "sep", "sept", "oct", "nov", "dec",
+    }
+)
+
+def _avoid_target_tokens(finding: dict[str, Any]) -> set[str]:
+    """Name tokens for an avoid finding's wrong candidate, from its structured
+    ``details`` name ONLY (never the free-text ``description``, whose prose
+    injects non-name junk). Name particles, place words and month abbreviations
+    are dropped so a relationship endpoint matches on distinguishing tokens."""
+    det = finding.get("details") or {}
+    names: list[str] = []
+    for key in ("wrong_candidate", "target_person", "person"):
+        v = det.get(key)
+        if isinstance(v, dict) and isinstance(v.get("name"), str):
+            names.append(v["name"])
+        elif isinstance(v, str):
+            names.append(v)
+    return {t for t in _tokens(" ".join(names)) if t not in _AVOID_NAME_STOPWORDS}
+
+
+def _subject_rel_keys(
+    tree: dict[str, Any] | None, subject_ids: set[str]
+) -> set[tuple[str, str, str]]:
+    """``(rel_type, subject_role, other_endpoint_id)`` for every relationship in
+    ``tree`` that touches a subject. ParentChild keeps the subject's role
+    (``parent``/``child``); Couple is symmetric (role ``couple``). Keyed on the
+    endpoint pair, never on a synthesized relationship id."""
+    keys: set[tuple[str, str, str]] = set()
+    for rel in (tree or {}).get("relationships") or []:
+        rtype = str(rel.get("type") or "")
+        if rtype == "ParentChild":
+            parent, child = rel.get("parent"), rel.get("child")
+            if parent is not None and str(parent) in subject_ids and child is not None:
+                keys.add(("ParentChild", "parent", str(child)))
+            if child is not None and str(child) in subject_ids and parent is not None:
+                keys.add(("ParentChild", "child", str(parent)))
+        else:
+            ends = [rel.get("person1"), rel.get("person2")]
+            for i, end in enumerate(ends):
+                other = ends[1 - i]
+                if end is not None and str(end) in subject_ids and other is not None:
+                    keys.add((rtype or "Couple", "couple", str(other)))
+    return keys
+
+
 def apply_avoid_guard(
     judge_output: dict[str, Any],
     *,
     expected_findings: dict[str, Any],
     final_tree: dict[str, Any] | None,
+    starting_tree: dict[str, Any] | None = None,
     subject_person_ids: "set[str] | frozenset[str] | list[str] | None" = None,
 ) -> dict[str, Any]:
     """Deterministic backstop for ``polarity: "avoid"`` findings (spec §3.4.1).
 
     The judge grades an ``avoid`` finding ``matched: "true"`` when the agent
-    correctly declined to assert it. The judge is a model, and the failure
-    mode this genre exists to catch — a confidently over-claimed wrong
-    person — is exactly the one a model grader is most likely to excuse. So
-    the objective half is re-checked mechanically: when an avoided claim's
-    target is present in the agent's final tree (``check_stripping``'s
-    matcher — given+surname token overlap, plus fact type for ``fact``
-    findings), that finding is forced to ``matched: "false"``, the recall
-    fractions are recomputed, and the verdict is recomputed downgrade-only.
-    Non-``avoid`` findings are untouched, and the guard never upgrades
-    anything. What it forced is recorded under ``judge_output["avoid_guard"]``
-    and in the affected findings' ``notes``. Returns the input unchanged
-    (same object) when there is nothing to do — including when the judge was
-    skipped or errored (no ``per_finding``).
+    correctly declined to assert it. The failure mode this genre exists to
+    catch — a confidently over-claimed wrong person — is exactly the one a model
+    grader is most likely to excuse, so the objective half is re-checked
+    mechanically and forced to ``matched: "false"`` (recall fractions and the
+    verdict recomputed downgrade-only). Non-``avoid`` findings are untouched,
+    the guard never upgrades, and the input is returned unchanged (same object)
+    when there is nothing to do — including when the judge was skipped or
+    errored (no ``per_finding``).
 
-    ``subject_person_ids`` (the fixture's own subject) are exempt from the
-    match. The subject legitimately stays in the tree, and in a same-name
-    ("look-alike") fixture the avoided namesake shares the subject's name by
-    construction — so a name-token hit on the subject is a false positive, not
-    an over-claim. A real over-claim attaches a *different* person id, which is
-    still caught.
+    **relationship** avoid findings are **subject-anchored** (Dallan ruling,
+    2026-10-20): the guard looks at what the agent NEWLY attached to the subject,
+    comparing ``final_tree`` against ``starting_tree``, not at who merely appears
+    in the tree. It forces when the final tree holds a relationship the starting
+    tree lacks, touching a ``subject_person_ids`` person, whose OTHER endpoint's
+    name (given AND surname token overlap) matches the finding's wrong-candidate
+    name. A pre-existing namesake relative is never "new", so it is not forced; a
+    genuinely new wrong person (a different id) still is. A missing
+    ``starting_tree`` forces nothing (defensive; production always supplies it).
+
+    **fact**, **person** and **source** avoid findings keep the legacy
+    whole-tree ``check_stripping`` matcher (given+surname token overlap, plus
+    fact type for ``fact``), with ``subject_person_ids`` exempt. A
+    subject-anchored fact branch was prototyped and withdrawn: keyed on fact
+    type it force-failed correct runs that recovered a sibling finding's fact,
+    and inferring the forbidden type(s) from prose over-matched (code review,
+    2026-10-20). So the Heinrich-style blind spot — a wrong Death/Burial on a
+    subject that already carries an undated death — stays on the legacy path and
+    is **unresolved** (spec §3.4.1).
     """
     findings = expected_findings.get("findings") or []
     avoid = [f for f in findings if str(f.get("polarity", "recover")) == "avoid"]
     if not avoid or "per_finding" not in judge_output:
         return judge_output
 
-    suspects = check_stripping({"findings": avoid}, final_tree or {})
-    exempt = {str(pid) for pid in (subject_person_ids or ())}
-    if exempt:
-        suspects = [s for s in suspects if s.person_id not in exempt]
-    if not suspects:
-        return judge_output
-
+    subject_ids = {str(pid) for pid in (subject_person_ids or ())}
     hits: dict[str, list[str]] = {}
-    for s in suspects:
-        hits.setdefault(s.finding_id, []).append(s.person_id)
+
+    # fact/person/source avoid findings keep the legacy whole-tree name matcher
+    # (subject-exempt). Only relationship findings are subject-anchored (below).
+    legacy = [f for f in avoid if str(f.get("type")) in ("fact", "person", "source")]
+    if legacy:
+        for s in check_stripping({"findings": legacy}, final_tree or {}):
+            if s.person_id not in subject_ids:
+                hits.setdefault(s.finding_id, []).append(s.person_id)
+
+    # Relationship avoid findings: force only on a relationship the agent NEWLY
+    # attached to the subject (final vs starting). Missing starting tree or
+    # subject => force nothing.
+    if starting_tree is not None and subject_ids:
+        new_rel_keys = _subject_rel_keys(final_tree or {}, subject_ids) - _subject_rel_keys(
+            starting_tree, subject_ids
+        )
+        persons = {str(p.get("id")): p for p in (final_tree or {}).get("persons") or []}
+        for f in avoid:
+            if str(f.get("type")) != "relationship":
+                continue
+            fid = str(f.get("id", "?"))
+            bag = _avoid_target_tokens(f)
+            if not bag:
+                continue
+            for _rtype, _role, other_id in new_rel_keys:
+                other = persons.get(other_id)
+                if other is None:
+                    continue
+                given: set[str] = set()
+                surname: set[str] = set()
+                for n in other.get("names") or []:
+                    given |= _tokens(n.get("given", ""))
+                    surname |= _tokens(n.get("surname", ""))
+                if (given & bag) and (surname & bag):
+                    hits.setdefault(fid, []).append(other_id)
+
+    # De-duplicate (and order deterministically) each finding's hit list.
+    hits = {fid: sorted(dict.fromkeys(pids)) for fid, pids in hits.items()}
+    if not hits:
+        return judge_output
 
     out = copy.deepcopy(judge_output)
     graded = {str(e.get("finding_id")): e for e in out["per_finding"]}

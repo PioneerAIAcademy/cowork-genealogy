@@ -179,6 +179,13 @@ def test_schema_has_no_enum_on_union_type():
 # --- the avoid-guard (deterministic §3.4.1 backstop) -------------------------
 
 
+# The avoid guard is subject-anchored (Dallan ruling, 2026-10-20): it forces an
+# avoid finding false only on what the agent NEWLY attached to the subject,
+# diffing the final tree against the starting tree. These helpers build a
+# starting tree with a subject + an existing spouse, and final trees that add
+# (or don't) a new attachment to the subject.
+
+
 def _avoid_findings(required=True):
     return {
         "findings": [
@@ -187,87 +194,292 @@ def _avoid_findings(required=True):
                 "type": "relationship",
                 "required": required,
                 "polarity": "avoid",
-                "description": "The agent should NOT conclude Robert Smith is the father.",
-                "details": {"target_person": {"name": "Robert Smith"}},
+                "description": "The agent should NOT conclude Robert Smith is a spouse.",
+                "details": {
+                    "subject_person": {"name": "Subject Person"},
+                    "relation": "spouse",
+                    "wrong_candidate": {"name": "Robert Smith"},
+                },
             }
         ]
+    }
+
+
+def _fact_avoid_findings(required=True):
+    return {
+        "findings": [
+            {
+                "id": "f1",
+                "type": "fact",
+                "required": required,
+                "polarity": "avoid",
+                "description": (
+                    "The agent must NOT assert that the subject died 15 December "
+                    "1854 or was buried 17 December 1854."
+                ),
+                "details": {
+                    "subject_person": {"name": "Subject Person"},
+                    "fact_type": "Death",
+                    "wrong_candidate": {"date": "15 December 1854"},
+                },
+            }
+        ]
+    }
+
+
+def _person_avoid_findings(required=True):
+    return {
+        "findings": [
+            {
+                "id": "f1",
+                "type": "person",
+                "required": required,
+                "polarity": "avoid",
+                "description": "The agent must NOT assert that Robert Smith exists.",
+                "details": {"person": {"name": "Robert Smith"}},
+            }
+        ]
+    }
+
+
+def _starting_tree():
+    return {
+        "persons": [
+            {"id": "SUBJECT", "living": False,
+             "names": [{"id": "N0", "given": "Subject", "surname": "Person"}], "facts": []},
+            {"id": "W1", "living": False,
+             "names": [{"id": "N1", "given": "Existing", "surname": "Wife"}]},
+        ],
+        "relationships": [{"id": "R1", "type": "Couple", "person1": "SUBJECT", "person2": "W1"}],
+        "sources": [],
+    }
+
+
+def _subject_tree_with_new_spouse():
+    t = _starting_tree()
+    t["persons"].append(
+        {"id": "P9", "living": False,
+         "names": [{"id": "N9", "given": "Robert", "surname": "Smith"}]})
+    t["relationships"].append({"id": "R9", "type": "Couple", "person1": "SUBJECT", "person2": "P9"})
+    return t
+
+
+def _starting_tree_with_undated_death():
+    return {
+        "persons": [
+            {"id": "SUBJECT", "living": False,
+             "names": [{"id": "N0", "given": "Subject", "surname": "Person"}],
+             "facts": [{"id": "F0", "type": "Death"}]},
+        ],
+        "relationships": [],
+        "sources": [],
     }
 
 
 def _tree_with_robert_smith():
     return {
         "persons": [
-            {
-                "id": "P1",
-                "living": False,
-                "names": [{"id": "N1", "given": "Robert", "surname": "Smith"}],
-            }
-        ],
-        "relationships": [],
-        "sources": [],
-    }
-
-
-def test_avoid_guard_forces_false_when_the_avoided_claim_is_in_the_final_tree():
-    # The judge said "correctly avoided" (matched true, verdict pass), but the
-    # final tree still contains the avoided person — the guard overrides.
-    output = _valid_output()
-    out = apply_avoid_guard(
-        output,
-        expected_findings=_avoid_findings(),
-        final_tree=_tree_with_robert_smith(),
-    )
-    assert out["per_finding"][0]["matched"] == "false"
-    assert "[avoid-guard]" in out["per_finding"][0]["notes"]
-    assert "P1" in out["per_finding"][0]["notes"]
-    assert out["verdict"] == "fail"
-    assert out["recall_required"] == 0.0
-    assert out["avoid_guard"]["forced_false"] == [
-        {"finding_id": "f1", "person_ids": ["P1"]}
-    ]
-    # Downgrade happens on a copy; the judge's own output is untouched.
-    assert output["per_finding"][0]["matched"] == "true"
-    assert output["verdict"] == "pass"
-
-
-def test_avoid_guard_exempts_the_fixture_subject_from_the_match():
-    # Look-alike fixture: the avoided namesake shares the SUBJECT's name by
-    # construction (Robert Smith), and the subject legitimately stays in the
-    # tree. Passing the subject's id exempts it, so the guard does NOT force the
-    # finding to false — the judge's "correctly avoided" grade stands.
-    output = _valid_output()
-    tree = _tree_with_robert_smith()  # P1 = Robert Smith
-    out = apply_avoid_guard(
-        output,
-        expected_findings=_avoid_findings(),
-        final_tree=tree,
-        subject_person_ids={"P1"},
-    )
-    assert out is output  # nothing forced → same object returned
-    assert out["per_finding"][0]["matched"] == "true"
-    assert out["verdict"] == "pass"
-
-
-def test_avoid_guard_still_catches_a_non_subject_over_claim():
-    # A genuine over-claim attaches a DIFFERENT person than the subject. The
-    # exemption must not shield that: a same-named person under another id is
-    # still forced to false.
-    output = _valid_output()
-    tree = {
-        "persons": [
-            {"id": "SUBJECT", "living": False,
-             "names": [{"id": "N0", "given": "Someone", "surname": "Else"}]},
             {"id": "P1", "living": False,
              "names": [{"id": "N1", "given": "Robert", "surname": "Smith"}]},
         ],
         "relationships": [],
         "sources": [],
     }
+
+
+def test_avoid_guard_forces_false_on_a_new_spouse_attached_to_the_subject():
+    # The judge said "correctly avoided" (matched true, verdict pass), but the
+    # agent newly attached the avoided person to the subject — the guard overrides.
+    output = _valid_output()
     out = apply_avoid_guard(
         output,
         expected_findings=_avoid_findings(),
-        final_tree=tree,
+        final_tree=_subject_tree_with_new_spouse(),
+        starting_tree=_starting_tree(),
         subject_person_ids={"SUBJECT"},
+    )
+    assert out["per_finding"][0]["matched"] == "false"
+    assert "[avoid-guard]" in out["per_finding"][0]["notes"]
+    assert "P9" in out["per_finding"][0]["notes"]
+    assert out["verdict"] == "fail"
+    assert out["recall_required"] == 0.0
+    assert out["avoid_guard"]["forced_false"] == [
+        {"finding_id": "f1", "person_ids": ["P9"]}
+    ]
+    # Downgrade happens on a copy; the judge's own output is untouched.
+    assert output["per_finding"][0]["matched"] == "true"
+    assert output["verdict"] == "pass"
+
+
+def test_avoid_guard_catches_a_new_parent_attached_to_the_subject():
+    # subject-as-child: a new ParentChild whose parent matches the target.
+    output = _valid_output()
+    final = _starting_tree()
+    final["persons"].append(
+        {"id": "P9", "living": False,
+         "names": [{"id": "N9", "given": "Robert", "surname": "Smith"}]})
+    final["relationships"].append(
+        {"id": "R9", "type": "ParentChild", "parent": "P9", "child": "SUBJECT"})
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_avoid_findings(),
+        final_tree=final,
+        starting_tree=_starting_tree(),
+        subject_person_ids={"SUBJECT"},
+    )
+    assert out["per_finding"][0]["matched"] == "false"
+    assert out["avoid_guard"]["forced_false"] == [
+        {"finding_id": "f1", "person_ids": ["P9"]}
+    ]
+
+
+def test_avoid_guard_does_not_force_when_the_avoided_person_is_unattached():
+    # antonio shape: the avoided person exists in the final tree but is NOT
+    # linked to the subject — the correct research outcome, not an over-claim.
+    output = _valid_output()
+    final = _starting_tree()
+    final["persons"].append(
+        {"id": "P9", "living": False,
+         "names": [{"id": "N9", "given": "Robert", "surname": "Smith"}]})
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_avoid_findings(),
+        final_tree=final,
+        starting_tree=_starting_tree(),
+        subject_person_ids={"SUBJECT"},
+    )
+    assert out is output  # nothing new attached to the subject → nothing forced
+    assert out["per_finding"][0]["matched"] == "true"
+
+
+def test_avoid_guard_ignores_a_preexisting_namesake_relationship():
+    # The avoided name matches a person ALREADY linked to the subject in the
+    # starting tree (a legitimate look-alike relative). Not new → not forced.
+    # The retired whole-tree matcher wrongly force-failed exactly this case.
+    output = _valid_output()
+    start = {
+        "persons": [
+            {"id": "SUBJECT", "living": False,
+             "names": [{"id": "N0", "given": "Subject", "surname": "Person"}]},
+            {"id": "X", "living": False,
+             "names": [{"id": "N1", "given": "Robert", "surname": "Smith"}]},
+        ],
+        "relationships": [{"id": "R1", "type": "Couple", "person1": "SUBJECT", "person2": "X"}],
+        "sources": [],
+    }
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_avoid_findings(),
+        final_tree=start,
+        starting_tree=start,
+        subject_person_ids={"SUBJECT"},
+    )
+    assert out is output
+
+
+def test_avoid_guard_keys_on_endpoints_not_relationship_id():
+    # The same subject relationship re-minted with a different id in the final
+    # tree is NOT new — keying on the endpoint pair, not the synthesized id.
+    output = _valid_output()
+    start = {
+        "persons": [
+            {"id": "SUBJECT", "living": False,
+             "names": [{"id": "N0", "given": "Subject", "surname": "Person"}]},
+            {"id": "X", "living": False,
+             "names": [{"id": "N1", "given": "Robert", "surname": "Smith"}]},
+        ],
+        "relationships": [{"id": "R1", "type": "Couple", "person1": "SUBJECT", "person2": "X"}],
+        "sources": [],
+    }
+    final = {
+        "persons": start["persons"],
+        "relationships": [
+            {"id": "R999", "type": "Couple", "person1": "SUBJECT", "person2": "X"}
+        ],  # re-minted, same endpoints
+        "sources": [],
+    }
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_avoid_findings(),
+        final_tree=final,
+        starting_tree=start,
+        subject_person_ids={"SUBJECT"},
+    )
+    assert out is output
+
+
+def test_avoid_guard_fact_avoid_does_not_force_the_subjects_own_death():
+    # Option 3 (2026-10-20): the subject-anchored fact branch was WITHDRAWN after
+    # review found it force-failed correct runs (a sibling recover finding of the
+    # same type). Fact-avoid findings stay on the legacy whole-tree matcher, which
+    # exempts the subject — so a new dated Death on the SUBJECT is NOT forced. This
+    # is the Heinrich Death/Burial blind spot, left unresolved on purpose (spec
+    # §3.4.1); it is also what stops a fact-avoid from force-failing a legitimate
+    # sibling recovery of the same fact type.
+    output = _valid_output()
+    final = {
+        "persons": [
+            {"id": "SUBJECT", "living": False,
+             "names": [{"id": "N0", "given": "Subject", "surname": "Person"}],
+             "facts": [{"id": "F0", "type": "Death", "date": "15 December 1854",
+                        "standard_date": "+1854-12-15"}]},
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_fact_avoid_findings(),
+        final_tree=final,
+        starting_tree=_starting_tree_with_undated_death(),
+        subject_person_ids={"SUBJECT"},
+    )
+    assert out is output  # nothing forced — the subject's own facts are exempt
+
+
+def test_avoid_guard_fact_avoid_catches_a_non_subject_on_the_legacy_path():
+    # The legacy fact path is retained: a NON-subject person matching the avoid
+    # finding's name and carrying the forbidden fact type is still forced.
+    output = _valid_output()
+    findings = {
+        "findings": [
+            {"id": "f1", "type": "fact", "required": True, "polarity": "avoid",
+             "description": "The agent must NOT assert that Wrong Person died.",
+             "details": {"target_person": {"name": "Wrong Person"}, "fact_type": "Death"}},
+        ]
+    }
+    final = {
+        "persons": [
+            {"id": "SUBJECT", "living": False,
+             "names": [{"id": "N0", "given": "Subject", "surname": "Person"}]},
+            {"id": "P1", "living": False,
+             "names": [{"id": "N1", "given": "Wrong", "surname": "Person"}],
+             "facts": [{"id": "D1", "type": "Death", "date": "1854"}]},
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    out = apply_avoid_guard(
+        output,
+        expected_findings=findings,
+        final_tree=final,
+        starting_tree=final,
+        subject_person_ids={"SUBJECT"},
+    )
+    assert out["per_finding"][0]["matched"] == "false"
+    assert out["avoid_guard"]["forced_false"] == [{"finding_id": "f1", "person_ids": ["P1"]}]
+
+
+def test_avoid_guard_person_type_uses_the_legacy_whole_tree_path():
+    # person/source avoid findings are NOT subject-anchored; a matching person
+    # present in the final tree (and not the subject) is forced.
+    output = _valid_output()
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_person_avoid_findings(),
+        final_tree=_tree_with_robert_smith(),
+        starting_tree={"persons": [], "relationships": [], "sources": []},
+        subject_person_ids=set(),
     )
     assert out["per_finding"][0]["matched"] == "false"
     assert out["avoid_guard"]["forced_false"] == [
@@ -275,23 +487,60 @@ def test_avoid_guard_still_catches_a_non_subject_over_claim():
     ]
 
 
+def test_avoid_guard_person_type_exempts_the_subject():
+    # The legacy path still exempts the fixture subject by id.
+    output = _valid_output()
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_person_avoid_findings(),
+        final_tree=_tree_with_robert_smith(),  # P1 = Robert Smith
+        starting_tree=_tree_with_robert_smith(),
+        subject_person_ids={"P1"},
+    )
+    assert out is output
+
+
+def test_avoid_guard_forces_nothing_without_a_starting_tree():
+    # Defensive: a missing starting tree means no baseline to diff, so the
+    # subject-anchored path forces nothing rather than treating all as new.
+    output = _valid_output()
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_avoid_findings(),
+        final_tree=_subject_tree_with_new_spouse(),
+        starting_tree=None,
+        subject_person_ids={"SUBJECT"},
+    )
+    assert out is output
+
+
 def test_avoid_guard_is_a_no_op_when_the_avoided_claim_is_absent():
     output = _valid_output()
-    tree = {"persons": [{"id": "P1", "living": False,
-                         "names": [{"id": "N1", "given": "Jane", "surname": "Doe"}]}]}
+    final = _starting_tree()
+    final["persons"].append(
+        {"id": "P9", "living": False,
+         "names": [{"id": "N9", "given": "Jane", "surname": "Doe"}]})
+    final["relationships"].append({"id": "R9", "type": "Couple", "person1": "SUBJECT", "person2": "P9"})
     assert apply_avoid_guard(
-        output, expected_findings=_avoid_findings(), final_tree=tree
+        output,
+        expected_findings=_avoid_findings(),
+        final_tree=final,
+        starting_tree=_starting_tree(),
+        subject_person_ids={"SUBJECT"},
     ) is output
 
 
 def test_avoid_guard_ignores_recover_findings():
-    # A recover finding SHOULD be in the final tree — its presence must not
-    # trip the guard even though the matcher would find it.
+    # A recover finding is not an avoid finding — the guard returns early.
     findings = _avoid_findings()
     del findings["findings"][0]["polarity"]
     output = _valid_output()
     assert apply_avoid_guard(
-        output, expected_findings=findings, final_tree=_tree_with_robert_smith()
+        output,
+        expected_findings=findings,
+        final_tree=_subject_tree_with_new_spouse(),
+        starting_tree=_starting_tree(),
+        subject_person_ids={"SUBJECT"},
     ) is output
 
 
@@ -303,7 +552,9 @@ def test_avoid_guard_never_upgrades_the_verdict():
     out = apply_avoid_guard(
         output,
         expected_findings=_avoid_findings(),
-        final_tree=_tree_with_robert_smith(),
+        final_tree=_subject_tree_with_new_spouse(),
+        starting_tree=_starting_tree(),
+        subject_person_ids={"SUBJECT"},
     )
     assert out is output
 
@@ -312,7 +563,11 @@ def test_avoid_guard_handles_a_skipped_judge():
     # verdict "skipped" produces judge_output == {} — the guard must pass it
     # through rather than inventing a grade.
     assert apply_avoid_guard(
-        {}, expected_findings=_avoid_findings(), final_tree=_tree_with_robert_smith()
+        {},
+        expected_findings=_avoid_findings(),
+        final_tree=_subject_tree_with_new_spouse(),
+        starting_tree=_starting_tree(),
+        subject_person_ids={"SUBJECT"},
     ) == {}
 
 
@@ -323,7 +578,9 @@ def test_avoid_guard_grades_a_finding_the_judge_never_graded():
     out = apply_avoid_guard(
         output,
         expected_findings=_avoid_findings(),
-        final_tree=_tree_with_robert_smith(),
+        final_tree=_subject_tree_with_new_spouse(),
+        starting_tree=_starting_tree(),
+        subject_person_ids={"SUBJECT"},
     )
     assert out["per_finding"][0]["finding_id"] == "f1"
     assert out["per_finding"][0]["matched"] == "false"
