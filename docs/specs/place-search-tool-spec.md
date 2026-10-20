@@ -110,6 +110,14 @@ Steps:
    place), it can exclude the intended result. Filtering happens on the search
    entries, before any description call, and applies to fuzzy-fallback entries
    unchanged — same filter, same keep-unfiltered-if-nothing-matches fallback.
+   A **fuzzy** outcome is then capped to the top `MAX_FUZZY_ENTRIES` (10)
+   ranked entries — after the context filter, so an in-context match is never
+   cut, and before the per-entry fetches of steps 3–4. A fuzzy set is
+   unbounded and each entry costs two fetches: live, a bare `"Brixtol"`
+   returns 319 entries and the uncapped expansion drove `place_search_all`
+   past the 60s bridge abort at ~1,500 requests; capped, the correction still
+   surfaces because entries arrive ranked (Bristol is rank 2 for `"Brixtol"`,
+   Sierokopaß rank 3 for `"Sierkopas"`). Exact results are never capped.
 3. **Describe** — for each surviving rep ID, `GET /platform/places/description/{repId}`
    (Place_Description_resource). If a description 404s, fall back to the
    search-entry data so the place is not dropped.
@@ -409,6 +417,8 @@ npx tsx dev/try-place-search.ts Paris Idaho     # Paris in Idaho — no matchTyp
 npx tsx dev/try-place-search.ts Paris France    # Paris in France
 npx tsx dev/try-place-search.ts Paris           # all Paris matches, unfiltered
 npx tsx dev/try-place-search.ts Sierkopas Germany  # fuzzy fallback: Sierokopaß, Neidenburg present, matchType "fuzzy"
+npx tsx dev/try-place-search.ts Helvesieck Germany # fuzzy fallback: Helvesiek, Rotenburg, Lower Saxony, matchType "fuzzy" (one-edit misspelling)
+npx tsx dev/try-place-search.ts Brixtol            # fuzzy + no context: capped at 10 results, returns in seconds
 ```
 
 Confirm no result object contains `placeId`, `placeRepId`, `score`, `name`, or

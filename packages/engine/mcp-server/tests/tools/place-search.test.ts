@@ -789,6 +789,47 @@ describe("fuzzy fallback", () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
+  it("caps a fuzzy result set before the per-entry fetches", async () => {
+    // Live, a bare "Brixtol" returns 319 fuzzy entries; uncapped, each costs a
+    // description + Wikipedia fetch and place_search_all exceeds the 60s
+    // bridge abort. Exact results are never capped.
+    const manyFuzzy: FSPlaceSearchResponse = {
+      entries: Array.from({ length: 12 }, (_, i) => ({
+        id: `7${String(i).padStart(2, "0")}`,
+        score: 100 - i,
+        content: {
+          gedcomx: {
+            places: [
+              {
+                id: `7${String(i).padStart(2, "0")}`,
+                display: {
+                  name: `Brixtol${i}`,
+                  fullName: `Brixtol${i}, Nowhere`,
+                  type: "City",
+                },
+              },
+            ],
+          },
+        },
+      })),
+    };
+    routeByUrl([
+      { match: "search?q=name:%22Brixtol%22", json: { entries: [] } },
+      { match: "search?q=name:Brixtol~", json: manyFuzzy },
+      { match: "description/", ok: false, status: 404 },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearchTool({ placeName: "Brixtol" });
+
+    expect(result.matchType).toBe("fuzzy");
+    expect(result.results).toHaveLength(10);
+    const descriptionFetches = mockFetch.mock.calls.filter(([url]) =>
+      (url as string).includes("description/")
+    ).length;
+    expect(descriptionFetches).toBe(10);
+  });
+
   it("carries the flag through place_search_all", async () => {
     routeByUrl([
       ...sierkopasRoutes(),

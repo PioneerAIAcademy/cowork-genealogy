@@ -103,6 +103,12 @@ export interface PlaceSearchOutcome {
   matchType?: "fuzzy";
 }
 
+// A fuzzy result set is unbounded — live, a bare "Brixtol" returns 319
+// entries, and each entry costs a description + Wikipedia fetch (uncapped,
+// place_search_all exceeded the 60s bridge abort at ~1,500 requests). Exact
+// results are never capped.
+const MAX_FUZZY_ENTRIES = 10;
+
 // In-memory cache of internal place-search results, keyed by the normalized
 // (placeName, contextName) pair. Lives for the life of the MCP server process;
 // no TTL. There is no cross-session host storage (see CLAUDE.md), so this only
@@ -195,7 +201,13 @@ export async function placeSearch(
     }
   }
 
-  const results = await mapWithConcurrency(entries, 8, (e) =>
+  // Cap AFTER the context filter, so an in-context match is never cut, and
+  // before the per-entry fetches. Entries arrive ranked and the intended
+  // correction sits in the top few (live: Bristol is rank 2 for "Brixtol",
+  // Sierokopaß rank 3 for "Sierkopas").
+  const toFetch =
+    matchType === "fuzzy" ? entries.slice(0, MAX_FUZZY_ENTRIES) : entries;
+  const results = await mapWithConcurrency(toFetch, 8, (e) =>
     buildPlaceResult(e.placeRepId, e)
   );
 
