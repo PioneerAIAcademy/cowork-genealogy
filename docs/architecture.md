@@ -564,7 +564,8 @@ agents.**
 | **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
-| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching subagents on CLI 2.1.215 and 2.1.220 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12; the harnesses' CLI 2.1.139 is unprobed); never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted sets none, and the CLI default already sends `output_config.effort: high` on a `claude-sonnet-4-6` subagent's request |
+| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220 and 2.1.294 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12 and 2026-10-20; the harnesses' CLI 2.1.139 is unprobed). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
+| **Per-spawn effort** (hosted, CLI 2.1.294+) | the `Agent` call's own `effort` field, written by `real_agent._pretool_hook` from `SUBAGENT_EFFORT` / `SUBAGENT_EFFORT_BY_AGENT`; outranks the agent definition's `effort:`; matches bare and `genealogy-research:` names. `ORCHESTRATOR_EFFORT` alone pins every helper to `HELPER_DEFAULT_EFFORT` (`high`) so only the main thread moves — measured 2026-10-20: main `medium`, `person-evidence` `high` | unset — the hook adds nothing. `api_calls.effort` records each request's `output_config.effort`; `make alpha-costs` splits the by-agent table on it |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
 > unit harness (`harness/orchestrator.py` honours the field, falling back to
@@ -574,8 +575,15 @@ agents.**
 > model, delegate it to a plugin agent.
 >
 > **Agent `effort:` takes `low|medium|high|xhigh|max` or an integer**, and is a
-> property of the agent *definition* — the `Agent` tool's call site accepts only
-> `model`. It binds wherever `.claude/agents/*.md` is parsed, which is the hosted
+> property of the agent *definition*. From CLI 2.1.294 the `Agent` tool's call also
+> takes an `effort`, which overrides the definition's (the field is withdrawn from the
+> schema when `CLAUDE_CODE_EFFORT_LEVEL` is set, which is why the hosted settings never
+> use that variable). The model is told to set it only when asked; the hosted hook sets
+> it from the operator's settings. 2.1.294 also carries two flag-driven mechanisms —
+> lowering an *unpinned* subagent's effort, and a per-subagent `<total_tokens>` budget
+> keyed on the session's effort — neither seen on the hosted path's API key on
+> 2026-10-20 (helper at `high` unpinned; no `<total_tokens>` reminder through the
+> subagent's second request, at orchestrator `high` or `medium`). The definition's field binds wherever `.claude/agents/*.md` is parsed, which is the hosted
 > control plane (`stage_plugin_agents` + `setting_sources=["project"]`), both
 > harnesses, **and Cowork — verified live on 2026-08-25**, the way the `model:` pins
 > were. A probe plugin pinned `record-extractor` to `effort: low` and a `PreToolUse`

@@ -48,6 +48,14 @@ if str(PROTO) not in sys.path:
 from worker.options import is_blocked_call, make_pretool_hook  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def _effort_settings_unset(monkeypatch):
+    """The premises below are the DEFAULT: with a T4.1 effort setting on, the alpha's hook
+    has a second rewriting arm (see the last test in premise 2)."""
+    for name in real_agent.EFFORT_ENV:
+        monkeypatch.delenv(name, raising=False)
+
+
 def _proto_hook(**kw):
     """The prototype's real hook, with the plumbing a unit test does not care about."""
     kw.setdefault("record", lambda row: None)
@@ -123,10 +131,23 @@ def test_the_rewrite_declines_a_call_that_is_already_in_the_foreground():
 @pytest.mark.parametrize("tool", sorted(DELEGATION_TOOLS))
 async def test_an_already_foreground_delegation_falls_through_on_both_planes(tool):
     """The other half of the shape-dependence, at the hook level: with the key
-    explicitly False both planes reach their no-opinion fallthrough, because the
-    rewrite is the last arm before it."""
+    explicitly False both planes reach their no-opinion fallthrough, because with every
+    effort setting unset the rewrite is the last arm before it."""
     alpha, proto = await _both_planes(tool, {"prompt": "go", "run_in_background": False})
     assert alpha == {}
+    assert proto == {}
+
+
+@pytest.mark.parametrize("tool", sorted(DELEGATION_TOOLS))
+async def test_with_an_effort_setting_the_alpha_rewrites_the_foreground_shape_too(tool, monkeypatch):
+    """T4.1: with SUBAGENT_EFFORT set, the alpha's effort arm builds its own allow on the
+    explicit-False shape, so the planes differ there by design (the prototype has no such
+    setting). A deny placed after the rewrites is then unreachable on the alpha for BOTH
+    shapes -- the ordering question above changes answer when an operator sets one."""
+    monkeypatch.setenv("SUBAGENT_EFFORT", "low")
+    alpha, proto = await _both_planes(tool, {"prompt": "go", "run_in_background": False})
+    assert alpha["hookSpecificOutput"]["updatedInput"] == {
+        "prompt": "go", "run_in_background": False, "effort": "low"}
     assert proto == {}
 
 

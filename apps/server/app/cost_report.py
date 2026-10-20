@@ -94,13 +94,17 @@ def _calls(session: Session, cutoff: datetime, emails: dict[str, str],
 
     # The agent is the body's `# ` heading verbatim, not its file name: compare with
     # `make e2e-agent-spend` through `grep -m1 '^# ' packages/engine/plugin/agents/*.md`.
+    # Split by the effort each request asked for, so sessions born under different T4.1
+    # settings are not averaged together (null = no `output_config.effort` on the call).
     agents = session.exec(select(
-        ApiCall.agent, spent, func.count(), func.sum(context), func.sum(ApiCall.output_tokens),
-    ).where(since).group_by(ApiCall.agent).order_by(spent.desc())).all()
-    out += ["", "Every call, by agent (main = the main thread)"] + _table(
-        ["agent", "cost", "calls", "% of cost", "context/call", "output/call"],
-        [[a or "(none)", f"${c:,.2f}", k, round(100 * c / (cost or 1)), round(ctx / k), round(o / k)]
-         for a, c, k, ctx, o in agents],
+        ApiCall.agent, ApiCall.effort, spent, func.count(), func.sum(context),
+        func.sum(ApiCall.output_tokens),
+    ).where(since).group_by(ApiCall.agent, ApiCall.effort).order_by(spent.desc())).all()
+    out += ["", "Every call, by agent and effort (main = the main thread)"] + _table(
+        ["agent", "effort", "cost", "calls", "% of cost", "context/call", "output/call"],
+        [[a or "(none)", e or "-", f"${c:,.2f}", k, round(100 * c / (cost or 1)), round(ctx / k),
+          round(o / k)]
+         for a, e, c, k, ctx, o in agents],
     )
 
     priced = [0.0] * len(TOKEN_CLASSES)

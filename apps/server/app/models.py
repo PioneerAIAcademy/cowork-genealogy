@@ -112,3 +112,8 @@ class ApiCall(SQLModel, table=True):
     # for the hosted main thread, otherwise the agent body's first `# ` heading verbatim
     # (`Record Structurer`), otherwise null. Nullable so `add_missing_columns` can add it.
     agent: str | None = None
+    # The reasoning effort the request asked for (`output_config.effort`), so a cost read
+    # can tell a sandbox born under one T4.1 setting from one born under another -- old
+    # sessions resume at their creation-time level. Null when the request carried none,
+    # and on rows written before the column existed.
+    effort: str | None = None

@@ -500,6 +500,34 @@ def test_a_body_that_is_not_json_is_relayed_untouched_and_recorded_with_no_agent
     assert row.agent is None and row.output_tokens == _FINAL[3]
 
 
+@pytest.mark.parametrize("extra, effort", [
+    ({"output_config": {"effort": "medium"}}, "medium"),
+    ({"output_config": {"effort": "high", "format": None}}, "high"),
+    ({"effort": "medium"}, None),
+    ({"output_config": "medium"}, None),
+    ({"output_config": {"effort": 3}}, None),
+    ({}, None),
+], ids=["medium", "high", "top-level-only", "not-a-dict", "not-a-string", "absent"])
+def test_each_call_records_the_effort_it_asked_for(send, extra, effort):
+    """T4.1: read from `output_config.effort`, where the CLI puts it; anything else is null
+    and the call is still relayed and recorded."""
+    resp = send(_streamed(_STREAM), request_json={"model": "claude-sonnet-4-6", "messages": [],
+                                                  **extra})
+    assert resp.status_code == 200 and resp.content == _STREAM
+    [row] = _recorded()
+    assert row.effort == effort
+
+
+def test_a_body_that_is_not_json_records_no_effort(send):
+    raw = b'{"model": "claude-sonnet-4-6", "output_config": {"effort": "medium"'  # cut off
+    resp = send(lambda req: httpx.Response(200, content=_STREAM,
+                                           headers={"content-type": "text/event-stream"}),
+                request_json=raw)
+    assert resp.status_code == 200 and resp.content == _STREAM
+    [row] = _recorded()
+    assert row.effort is None
+
+
 def test_the_agent_is_named_in_the_writer_thread_not_in_the_route(send, monkeypatch):
     """Parsed in the route, a 100–500 KB body would hold up the relay and a bad one would
     raise into it; in the writer thread the parse waits for the stream to end, and a

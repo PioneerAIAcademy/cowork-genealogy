@@ -416,6 +416,145 @@ def credential_read_denied(tool_name: str, tool_input) -> str | None:
     return None
 
 
+# ── Reasoning effort (T4.1) ─────────────────────────────────────────────────
+# Three operator settings, all unset by default, reach a sandbox at create() only
+# (`sandbox.base.agent_effort_env`): ORCHESTRATOR_EFFORT is the session's `--effort`;
+# SUBAGENT_EFFORT and SUBAGENT_EFFORT_BY_AGENT (JSON {agent: level}) are written into
+# each Agent/Task call's `effort` by `_pretool_hook`. The per-spawn field exists from
+# CLI 2.1.294; it outranks the agent definition's `effort:` and stops the CLI's
+# flag-driven lowering of an unpinned subagent, so setting the orchestrator alone
+# also pins every helper to HELPER_DEFAULT_EFFORT and only the main thread moves.
+# Read on every call, never cached, so a probe or test that sets the variable after
+# import is honoured. `CLAUDE_CODE_EFFORT_LEVEL` is deliberately not the channel: it
+# outranks every pin and removes `effort` from the Agent tool's schema.
+EFFORT_ENV = ("ORCHESTRATOR_EFFORT", "SUBAGENT_EFFORT", "SUBAGENT_EFFORT_BY_AGENT")
+try:
+    from typing import get_args as _get_args
+
+    from claude_agent_sdk import EffortLevel as _EffortLevel
+    EFFORT_LEVELS: tuple[str, ...] = tuple(_get_args(_EffortLevel))
+except Exception:  # noqa: BLE001 - mock mode runs without the SDK installed
+    EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
+#: What a helper ran at on 2.1.294 with nothing set (`dev/probe_effort_capture.py`, arm
+#: `a-none`, 2026-10-20: `high`). Pinning to it keeps an orchestrator-only arm changing one
+#: thing. Re-measure when the CLI moves: 2.1.294 can lower an unpinned helper by remote flag.
+HELPER_DEFAULT_EFFORT = "high"
+
+
+def _plugin_name() -> str:
+    """The plugin's `name`, which prefixes its namespaced agents
+    (`genealogy-research:person-evidence`). Read from the shipped manifest so a rename
+    cannot silently stop every namespaced spawn matching its pin."""
+    try:
+        doc = json.loads((Path(_PLUGIN_DIR) / ".claude-plugin" / "plugin.json")
+                         .read_text(encoding="utf-8"))
+        name = doc.get("name") if isinstance(doc, dict) else None
+        if isinstance(name, str) and name:
+            return name
+    except (OSError, ValueError):
+        pass
+    return "genealogy-research"
+
+
+PLUGIN_NAME = _plugin_name()
+_effort_warned: set[str] = set()
+
+
+def _warn_once(msg: str) -> None:
+    if msg not in _effort_warned:
+        _effort_warned.add(msg)
+        _log(msg)
+
+
+def _effort_settings(env=None) -> tuple[str | None, str | None, dict[str, str]]:
+    """(orchestrator, every-subagent, per-agent) levels from the environment. An invalid
+    level is dropped with one log line rather than raised: a raising runner kills the
+    session, and the control plane's `Settings` already refuses a bad value at start-up."""
+    env = os.environ if env is None else env
+
+    def level(name: str, raw) -> str | None:
+        if raw in (None, ""):
+            return None
+        if raw in EFFORT_LEVELS:
+            return raw
+        _warn_once(f"[agent] {name}={raw!r} is not one of {list(EFFORT_LEVELS)}; ignoring it")
+        return None
+
+    orchestrator = level("ORCHESTRATOR_EFFORT", env.get("ORCHESTRATOR_EFFORT"))
+    subagent = level("SUBAGENT_EFFORT", env.get("SUBAGENT_EFFORT"))
+    by_agent: dict[str, str] = {}
+    raw_map = env.get("SUBAGENT_EFFORT_BY_AGENT")
+    if raw_map:
+        try:
+            parsed = json.loads(raw_map)
+        except ValueError:
+            parsed = None
+        if not isinstance(parsed, dict):
+            _warn_once("[agent] SUBAGENT_EFFORT_BY_AGENT is not a JSON object; ignoring it")
+            parsed = {}
+        for agent_name, lvl in parsed.items():
+            ok = level(f"SUBAGENT_EFFORT_BY_AGENT[{agent_name}]", lvl)
+            if ok is not None:
+                by_agent[str(agent_name)] = ok
+    return orchestrator, subagent, by_agent
+
+
+def spawn_effort(tool_name: str, tool_input, env=None) -> str | None:
+    """The `effort` the hook writes into this delegation, or None to leave it alone."""
+    if tool_name not in DELEGATION_TOOLS:
+        return None
+    orchestrator, subagent, by_agent = _effort_settings(env)
+    agent = (tool_input or {}).get("subagent_type") if isinstance(tool_input, dict) else None
+    agent = agent if isinstance(agent, str) else ""
+    bare = agent.removeprefix(f"{PLUGIN_NAME}:")
+    if bare in by_agent:
+        return by_agent[bare]
+    if subagent is not None:
+        return subagent
+    if orchestrator is not None:
+        return HELPER_DEFAULT_EFFORT
+    return None
+
+
+def note_effort(counter: dict, data) -> None:
+    """Record, for this turn, the effort level each thread ran a tool call at, and
+    whether a delegation's `effort` was injected by the operator setting or chosen by
+    the model. The level is the CLI's own, from the hook input (2.1.294: "after any
+    silent downgrade for the selected model"), so this is what ran, not what was asked."""
+    if not isinstance(data, dict):
+        return
+    effort = data.get("effort")
+    lvl = effort.get("level") if isinstance(effort, dict) else effort
+    if isinstance(lvl, str) and lvl:
+        label = "main" if "agent_id" not in data else str(data.get("agent_type") or "subagent")
+        seen = counter.setdefault("effort_seen", {})
+        if lvl not in seen.setdefault(label, []):
+            seen[label].append(lvl)
+    tool = data.get("tool_name")
+    if tool in DELEGATION_TOOLS:
+        tool_input = data.get("tool_input")
+        if spawn_effort(tool, tool_input) is not None:
+            counter["effort_injected"] = counter.get("effort_injected", 0) + 1
+        elif isinstance(tool_input, dict) and tool_input.get("effort") is not None:
+            counter["effort_model_chosen"] = counter.get("effort_model_chosen", 0) + 1
+
+
+def effort_turn_summary(counter: dict | None) -> str | None:
+    """One log line per turn, written at its end so it sits inside the 20,000-char log
+    tail `GET /api/sessions/{id}/logs` returns. None when the turn saw no effort at all."""
+    if not counter:
+        return None
+    seen = counter.get("effort_seen") or {}
+    injected = counter.get("effort_injected", 0)
+    chosen = counter.get("effort_model_chosen", 0)
+    if not seen and not injected and not chosen:
+        return None
+    labels = sorted(seen, key=lambda k: (k != "main", k))
+    levels = " ".join(f"{k}={'/'.join(seen[k])}" for k in labels)
+    return (f"[agent] effort this turn: {levels or '(none seen)'} "
+            f"(spawns with effort: {injected} injected, {chosen} model-chosen)")
+
+
 async def _pretool_hook(input_data, _tool_use_id, _ctx):
     """PreToolUse: deny raw writes to the two project files, deny reads of the
     credentials directory, and block Bash commands that combine credential access
@@ -484,8 +623,8 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
         }
 
     # Run every delegation in the FOREGROUND. Not a deny: the call is allowed and
-    # its input rewritten, so this is the one arm here that changes a call rather
-    # than refusing it. Without it the Stop hook nudges a turn that is waiting on
+    # its input rewritten -- with the effort arm below, one of the two arms here that
+    # change a call rather than refusing it. Without it the Stop hook nudges a turn that is waiting on
     # its own background subagent, and the model answers the nudge by spawning a
     # duplicate (see DELEGATION_TOOLS). Every call not explicitly False is
     # rewritten, because the CLI backgrounds an agent when the flag is absent (2.1.220,
@@ -495,8 +634,29 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
     # fails tests on both planes. Logged because the stated acceptance is a LIVE hosted
     # turn, and this file's own doctrine is that an inert arm looks identical to a
     # working one.
-    if (rewritten := foreground_rewrite(tool_name, tool_input)) is not None:
+    rewritten = foreground_rewrite(tool_name, tool_input)
+    if rewritten is not None:
         _log(f"[agent] foregrounded {tool_name} delegation")
+
+    # T4.1: the operator's effort for this delegation, composed onto the foreground
+    # rewrite (which stays the prototype's shared one, unedited). An explicit
+    # `run_in_background: False` gets no foreground rewrite, so this arm builds its own
+    # allow there -- the one shape where alpha and prototype differ, by design. Unset
+    # settings leave the call exactly as above, including an `effort` the model chose.
+    level = spawn_effort(tool_name, tool_input)
+    if level is not None:
+        base = rewritten["hookSpecificOutput"]["updatedInput"] if rewritten else dict(tool_input)
+        chosen = base.get("effort")
+        _log(f"[agent] effort {level} on {tool_name} {base.get('subagent_type')!s}"
+             + (f" (model chose {chosen!r})" if chosen is not None else ""))
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "allow",
+                "updatedInput": {**base, "effort": level},
+            },
+        }
+    if rewritten is not None:
         return rewritten
 
     return {}
@@ -709,6 +869,10 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         counter["tool_calls"] += 1
         counter["turn_tool_calls"] += 1
         data = _input_data or {}
+        try:
+            note_effort(counter, data)
+        except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
+            _log(f"[agent] effort note failed: {type(exc).__name__}: {exc}")
         # Both arms below are gated on the MAIN thread -- membership, not truthiness: the
         # key is absent on the main thread, and a subagent whose `agent_id` is None or ""
         # is still a subagent. Delivered: a subagent calling it means only its own leg is
@@ -856,6 +1020,23 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # orchestrator either way.
         env=_sdk_env(api_key),
     )
+    # T4.1: the session effort, only when the operator set one; unset passes no
+    # `--effort` and the CLI keeps its own default, as before this setting existed.
+    orchestrator, subagent, by_agent = _effort_settings()
+    if orchestrator is not None:
+        kwargs["effort"] = orchestrator
+    _log(f"[agent] effort requested: orchestrator={orchestrator or 'cli-default'} "
+         f"subagents={subagent or ('pinned ' + HELPER_DEFAULT_EFFORT if orchestrator else 'unset')} "
+         f"by_agent={json.dumps(by_agent, sort_keys=True)}")
+    if by_agent:
+        known = {p.stem for p in (Path(project_dir) / ".claude" / "agents").glob("*.md")}
+        unknown = sorted(set(by_agent) - known)
+        if unknown:
+            _log(f"[agent] SUBAGENT_EFFORT_BY_AGENT names no agent: {', '.join(unknown)}")
+    if os.environ.get("CLAUDE_CODE_EFFORT_LEVEL"):
+        _log("[agent] CLAUDE_CODE_EFFORT_LEVEL is set in this environment: it outranks every "
+             "effort setting and removes `effort` from the Agent tool, so per-agent levels "
+             "cannot apply")
     if resume:
         kwargs["resume"] = resume  # reload the prior conversation transcript
     return ClaudeAgentOptions(**kwargs)
@@ -1354,6 +1535,9 @@ class RealAgent:
             counter["turn_tool_calls"] = 0
             counter["delivered"] = False
             counter["continuations"] = 0
+            counter["effort_seen"] = {}
+            counter["effort_injected"] = 0
+            counter["effort_model_chosen"] = 0
 
     def _usage_delta(self, cost, in_tok, out_tok):
         """Convert the SDK's cumulative session totals into per-turn increments.
@@ -1583,6 +1767,9 @@ class RealAgent:
             classification = classify(exc)
             log_operator("receive_loop", classification, exc=exc)
             yield _event("error", text=classification)
+
+        if (summary := effort_turn_summary(getattr(self, "_hook_counter", None))):
+            _log(summary)
 
         # Subagents outlive the turn. Hand the stream to a background drainer so
         # the SDK's 100-slot buffer cannot fill and stall the transport read loop

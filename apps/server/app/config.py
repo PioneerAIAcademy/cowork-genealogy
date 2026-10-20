@@ -8,9 +8,14 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+#: The levels the agent SDK's `EffortLevel` accepts (a test keeps the two equal). Kept
+#: here rather than imported, so the control plane's settings never need the SDK.
+EffortSetting = Literal["low", "medium", "high", "xhigh", "max"]
 
 # Repo root = .../cowork-genealogy (apps/server/app/config.py -> parents[3])
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -79,6 +84,25 @@ class Settings(BaseSettings):
     # (`docs/plan/familysearch-handoff.md`). Lowering it there would contradict the
     # measurements, not just change a default.
     autonomous_max_nudges: int = 30
+    # T4.1: reasoning effort for hosted sessions. ALL UNSET BY DEFAULT, which passes no
+    # `--effort` and leaves every call at the CLI's own default -- exactly what ran before
+    # these existed. Like MODEL and AUTONOMOUS_MAX_NUDGES they reach a sandbox once, at
+    # create(), so a session keeps the levels it was born with and an existing project
+    # never changes mid-life (read an old session's effort as its creation-time setting).
+    #   ORCHESTRATOR_EFFORT       the main thread's level (`ClaudeAgentOptions.effort`).
+    #                             Alone, it also pins every helper to the level a helper
+    #                             runs at with nothing set (real_agent.HELPER_DEFAULT_EFFORT),
+    #                             so only the orchestrator moves.
+    #   SUBAGENT_EFFORT           one level for every delegation.
+    #   SUBAGENT_EFFORT_BY_AGENT  JSON {"agent-name": level}, overriding SUBAGENT_EFFORT.
+    # The helper levels are written onto each Agent call by the PreToolUse hook (the call's
+    # own `effort`, CLI 2.1.294+), not into the agent files. A bad level fails start-up
+    # here; inside the sandbox the CLI would only warn and ignore it. Turning the alpha down
+    # for real users is the lead's call (cost-latency plan T4.1, Q4); the settings exist so
+    # an arm can be run, not to change the default.
+    orchestrator_effort: EffortSetting | None = None
+    subagent_effort: EffortSetting | None = None
+    subagent_effort_by_agent: dict[str, EffortSetting] = {}
     # OpenRouter key for the engine's image_transcribe OCR tool. The in-sandbox
     # MCP server reads it config-only (never from env), so — unlike
     # ANTHROPIC_API_KEY, which is written into the sandbox by

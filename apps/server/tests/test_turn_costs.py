@@ -399,11 +399,40 @@ def test_the_report_splits_every_call_by_agent(calls, capsys):
     cost_report.main(["--days", "30"])
     out = capsys.readouterr().out
     rows = out.split("Every call, by agent")[1].splitlines()[2:5]
-    assert [line.rsplit(None, 5) for line in rows] == [
-        ["main", "$4.00", "2", "58", "190000", "2500"],
-        ["(none)", "$2.00", "1", "29", "100000", "5000"],
-        ["Record Structurer", "$0.90", "2", "13", "115000", "4500"],
+    assert [line.rsplit(None, 6) for line in rows] == [
+        ["main", "-", "$4.00", "2", "58", "190000", "2500"],
+        ["(none)", "-", "$2.00", "1", "29", "100000", "5000"],
+        ["Record Structurer", "-", "$0.90", "2", "13", "115000", "4500"],
     ]
+
+
+def test_the_by_agent_table_splits_by_effort(calls, db, capsys):
+    """T4.1: sessions born under different effort settings are not averaged together --
+    the same agent at two levels is two rows, and a call with no effort reads `-`."""
+    from datetime import timedelta
+
+    from app import cost_report
+    from app.models import utcnow
+
+    when = utcnow() - timedelta(days=1)
+    added = [ApiCall(project_id="prj_effort", user_id="u-call", model="claude-sonnet-4-6",
+                     input_tokens=1_000, output_tokens=100, cost_usd=cost, session_age_s=60,
+                     created=when, agent="main", effort=effort)
+             for effort, cost in (("medium", 0.30), ("high", 0.70))]
+    db.add_all(added)
+    db.commit()
+    try:
+        cost_report.main(["--days", "30"])
+        out = capsys.readouterr().out
+        rows = [line.rsplit(None, 6) for line in
+                out.split("Every call, by agent")[1].splitlines()[2:7]]
+        mains = {(r[0], r[1]): r[2] for r in rows if r[0] == "main"}
+        assert mains == {("main", "-"): "$4.00", ("main", "high"): "$0.70",
+                         ("main", "medium"): "$0.30"}
+    finally:
+        for row in added:
+            db.delete(row)
+        db.commit()
 
 
 def test_an_empty_window_says_so(db, capsys):

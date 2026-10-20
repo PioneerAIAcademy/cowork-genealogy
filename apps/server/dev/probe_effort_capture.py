@@ -24,6 +24,21 @@ Every request, subagent and main thread (on production's `MODEL`), ran
 sends the same body hosted already sends, so it cannot change the runaway. Both levers
 reach the subagent: the `medium` controls change its body.
 
+Re-answered 2026-10-20 under agent SDK 0.2.165 / CLI 2.1.294, with T4.1's three env arms
+(the hosted settings, through the real `_pretool_hook`):
+
+    arm                         main    person-evidence   <total_tokens>, sub req 1 / 2
+    a-none                      high    high              none / none
+    b-option-medium             medium  medium            none
+    d-env-orchestrator-medium   medium  high (pinned)     none / none
+    d-env-subagent-map          high    low               none
+    d-env-namespaced            high    low               none   (genealogy-research:...)
+
+So on 2.1.294 an unpinned helper still runs at `high` (the flag that can lower one did not
+fire for this key), the orchestrator setting moves only the main thread, a per-agent level
+reaches the helper under both spellings, and no per-subagent token budget appeared by the
+subagent's second request -- searched in `system` and `messages`, number or `Infinite`.
+
 HOW
 
 A local proxy on 127.0.0.1 logs every `/v1/messages` request body (`model`,
@@ -44,13 +59,17 @@ to delegate one trivial task to `person-evidence`; a request whose system prompt
 carries that agent's body is the subagent's, and the arm ends as soon as one is
 logged.
 
-ARMS
+ARMS (the `d-` arms set T4.1's env; `a-none` and `d-env-orchestrator-medium` read the
+subagent through its SECOND request, where a per-turn `<total_tokens>` budget would appear)
 
     a-none              nothing set (what hosted runs today)
     b-option-high       options.effort = "high"
     b-option-medium     options.effort = "medium"      (positive control)
     c-settings-high     <project>/.claude/settings.json {"effortLevel": "high"}
     c-settings-medium   <project>/.claude/settings.json {"effortLevel": "medium"}
+    d-env-orchestrator-medium   ORCHESTRATOR_EFFORT=medium
+    d-env-subagent-map          SUBAGENT_EFFORT_BY_AGENT={"person-evidence": "low"}
+    d-env-namespaced            the same, delegating to genealogy-research:person-evidence
 
 The `medium` arms are what make a `high` arm readable. If the default is already
 `high`, an arm setting `high` sends the same body whether or not the lever reached
@@ -66,7 +85,8 @@ with `--cli <path>`; the report says which ran.
 A localhost base URL is not first-party, which is also true of production's proxy
 (`.../api/anthropic-proxy`), so the two match on that axis.
 
-Costs a few cents: five short sessions, each cut at the subagent's first request.
+Costs about $0.40 a session (the main thread's first request writes ~50k tokens), so ~$2
+for five arms; each is cut at the subagent's first (or second) request.
 Needs a compiled engine (`make engine-build`) and a key in $ANTHROPIC_API_KEY or
 eval/.env. Run from apps/server:
 `uv run python dev/probe_effort_capture.py [--cli PATH] [--only ARM,ARM]`.
@@ -78,6 +98,7 @@ import asyncio
 import http.client
 import json
 import os
+import re
 import ssl
 import subprocess
 import sys
@@ -108,6 +129,10 @@ SCRUBBED_NAMES = (
     "ANTHROPIC_MODEL",
     "ANTHROPIC_SMALL_FAST_MODEL",
     "MODEL",
+    # T4.1's settings: an operator's shell value would otherwise silently set every arm.
+    "ORCHESTRATOR_EFFORT",
+    "SUBAGENT_EFFORT",
+    "SUBAGENT_EFFORT_BY_AGENT",
 )
 
 QUERY = (
@@ -115,14 +140,33 @@ QUERY = (
     "The task text is: 'Reply with the single word OK. Do not call any tools.' "
     "Do nothing else."
 )
+# For the arms read to the subagent's SECOND request: one tool call gives it one.
+QUERY_TWO_REQUESTS = (
+    "Use the Agent tool to delegate exactly one task to the person-evidence agent. "
+    "The task text is: 'Call the project_context tool once with projectPath {project}, "
+    "then reply with the single word OK.' Do nothing else."
+)
+QUERY_NAMESPACED = QUERY.replace("the person-evidence agent",
+                                 "the agent whose subagent_type is exactly "
+                                 "genealogy-research:person-evidence")
+BY_AGENT_LOW = '{"person-evidence": "low"}'
 
+# (name, options.effort, settings.json effortLevel, env, query, subagent requests to wait for)
 ARMS = [
-    ("a-none", None, None),
-    ("b-option-high", "high", None),
-    ("b-option-medium", "medium", None),
-    ("c-settings-high", None, "high"),
-    ("c-settings-medium", None, "medium"),
+    ("a-none", None, None, {}, QUERY_TWO_REQUESTS, 2),
+    ("b-option-high", "high", None, {}, QUERY, 1),
+    ("b-option-medium", "medium", None, {}, QUERY, 1),
+    ("c-settings-high", None, "high", {}, QUERY, 1),
+    ("c-settings-medium", None, "medium", {}, QUERY, 1),
+    ("d-env-orchestrator-medium", None, None, {"ORCHESTRATOR_EFFORT": "medium"},
+     QUERY_TWO_REQUESTS, 2),
+    ("d-env-subagent-map", None, None, {"SUBAGENT_EFFORT_BY_AGENT": BY_AGENT_LOW}, QUERY, 1),
+    ("d-env-namespaced", None, None, {"SUBAGENT_EFFORT_BY_AGENT": BY_AGENT_LOW},
+     QUERY_NAMESPACED, 1),
 ]
+# The CLI writes the budget as a number or as `Infinite`, in the system prompt or after a
+# tool result -- so the whole body is searched and the text kept as found.
+TOTAL_TOKENS = re.compile(r"<total_tokens>\s*([^<]*?)\s*tokens left\s*</total_tokens>")
 
 
 def api_key() -> str:
@@ -163,6 +207,7 @@ class Capture:
         self.statuses: list[int | str] = []
         self.subagent_seen = threading.Event()
         self.lock = threading.Lock()
+        self.wanted = 1
 
     def record(self, path: str, raw: bytes) -> None:
         try:
@@ -179,11 +224,24 @@ class Capture:
             "output_config": body.get("output_config"),
             "delegates": any(isinstance(t, dict) and t.get("name") in ("Agent", "Task")
                              for t in body.get("tools") or []),
+            "total_tokens": total_tokens(body),
         }
         with self.lock:
             self.rows.append(row)
-        if row["who"] == "subagent":
+            subs = sum(1 for r in self.rows if r["who"] == "subagent")
+        if subs >= self.wanted:
             self.subagent_seen.set()
+
+
+def total_tokens(body: dict) -> dict | None:
+    """Every `<total_tokens>N tokens left</total_tokens>` reminder in one request (the CLI's
+    per-subagent token budget, 2.1.294), by where it sits, or None when there is none.
+    N is kept as text: the CLI writes `Infinite` as well as a number."""
+    found = {where: TOTAL_TOKENS.findall(json.dumps(part))
+             for where, part in (("system", body.get("system")),
+                                 ("messages", body.get("messages")))}
+    found = {k: v for k, v in found.items() if v}
+    return found or None
 
 
 def make_handler(cap: Capture):
@@ -272,12 +330,25 @@ def cli_version(path: str | None) -> str:
 
 
 async def run_arm(name: str, option_effort: str | None, settings_effort: str | None,
-                  key: str, cli: str | None, marker: str) -> dict:
+                  key: str, cli: str | None, marker: str, env: dict | None = None,
+                  query: str = QUERY, wanted: int = 1) -> dict:
     from claude_agent_sdk import ClaudeSDKClient
     from app.agent import real_agent
 
     cap = Capture(marker)
+    cap.wanted = wanted
     drain_error = None
+    logs: list[str] = []
+    real_log = real_agent._log
+
+    def capture_log(msg: str) -> None:
+        if "effort" in msg:
+            logs.append(msg)
+        real_log(msg)
+
+    real_agent._log = capture_log
+    saved_env = {k: os.environ.get(k) for k in (env or {})}
+    os.environ.update(env or {})
     server = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(cap))
     threading.Thread(target=server.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{server.server_address[1]}"
@@ -306,7 +377,7 @@ async def run_arm(name: str, option_effort: str | None, settings_effort: str | N
             client = ClaudeSDKClient(options=options)
             await client.connect()
             try:
-                await client.query(QUERY)
+                await client.query(query.format(project=project))
 
                 async def drain():
                     async for _ in client.receive_response():
@@ -328,6 +399,12 @@ async def run_arm(name: str, option_effort: str | None, settings_effort: str | N
     finally:
         server.shutdown()
         server.server_close()
+        real_agent._log = real_log
+        for k, v in saved_env.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
         if old_base is None:
             os.environ.pop("ANTHROPIC_BASE_URL", None)
         else:
@@ -337,13 +414,18 @@ async def run_arm(name: str, option_effort: str | None, settings_effort: str | N
     main = [r for r in cap.rows if r["who"] != "subagent" and r["delegates"]]
     return {
         "arm": name,
-        "set": {"options.effort": option_effort, "settings.effortLevel": settings_effort},
+        "set": {"options.effort": option_effort, "settings.effortLevel": settings_effort,
+                "env": env or {}},
         "subagent_first_request": sub[0] if sub else None,
+        "subagent_second_request": sub[1] if len(sub) > 1 else None,
+        "subagent_requests_wanted": wanted,
+        "effort_log": logs,
         "main_first_request": main[0] if main else None,
         "requests_logged": len(cap.rows),
         "drain_error": drain_error,
         "upstream_statuses": cap.statuses,
-        "verdict": "CAPTURED" if sub else (
+        "verdict": "CAPTURED" if len(sub) >= wanted else (
+            f"VOID ({len(sub)} of {wanted} subagent requests seen)" if sub else
             f"VOID (no subagent request seen; /v1/messages statuses {cap.statuses}"
             + (f"; {drain_error}" if drain_error else "") + ")"
         ),
@@ -385,13 +467,19 @@ async def main() -> None:
         "arms": [],
     }
     marker = agent_marker()
-    for name, opt, setting in arms:
-        res = await run_arm(name, opt, setting, key, args.cli, marker)
+    for name, opt, setting, env, query, wanted in arms:
+        res = await run_arm(name, opt, setting, key, args.cli, marker, env, query, wanted)
         report["arms"].append(res)
         sub = res["subagent_first_request"] or {}
-        print(f"{name:20} {res['verdict']:10} model={sub.get('model')} "
+        main_req = res["main_first_request"] or {}
+        second = res["subagent_second_request"] or {}
+        print(f"{name:26} {res['verdict']:10} main={(main_req.get('output_config') or {}).get('effort')} "
+              f"sub={(sub.get('output_config') or {}).get('effort')} model={sub.get('model')} "
               f"max_tokens={sub.get('max_tokens')} thinking={json.dumps(sub.get('thinking'))} "
-              f"output_config={json.dumps(sub.get('output_config'))}", flush=True)
+              f"total_tokens@1={sub.get('total_tokens')} "
+              f"total_tokens@2={second.get('total_tokens') if second else '-'}", flush=True)
+        for line in res["effort_log"]:
+            print(f"    {line}", flush=True)
     print(f"sdk={report['sdk']} cli={report['cli']} scrubbed_env={scrubbed}")
     if args.out:
         Path(args.out).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

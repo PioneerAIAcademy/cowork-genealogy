@@ -85,6 +85,17 @@ def _agent_name(request_body: bytes) -> str | None:
         return None
 
 
+def _request_effort(request_body: bytes) -> str | None:
+    """``output_config.effort`` from one request, or None. Never raises, like
+    ``_agent_name``: it runs in the writer thread."""
+    try:
+        config = json.loads(request_body).get("output_config")
+        effort = config.get("effort") if isinstance(config, dict) else None
+        return effort if isinstance(effort, str) and effort else None
+    except Exception:  # noqa: BLE001 — a malformed body records no effort
+        return None
+
+
 def proxy_active() -> bool:
     """Whether the credential proxy is active (production only).
 
@@ -134,6 +145,7 @@ def _save(row: ApiCall, request_body: bytes = b"") -> None:
     # Named here, in the writer thread, rather than in the route: the parse waits until
     # the stream has ended, and its errors cannot reach the relay.
     row.agent = _agent_name(request_body)
+    row.effort = _request_effort(request_body)
     try:
         with Session(get_engine()) as session:
             session.add(row)
