@@ -787,8 +787,10 @@ that apply:
 A free-text reply after the plan step is a plan edit. Today research-plan's review mode forbids
 modifying items, and it defaults to review whenever an active plan has open items
 (`agents/research-plan.md:219-227`, `:253-256`). So research-plan gains an **edit mode**:
-- a struck item → `skipped` with `user_declined` when no search has run for it; one whose search
-  ran → `completed` (B, "Searched items close before a decline");
+- a struck item → `skipped` with `user_declined` when no search has run for it, or when its latest
+  entry is an upload hand-off still waiting (the exemption to decision 9 of
+  `docs/plan/attached-records-baseline.md`); otherwise, one whose search ran → `completed` (B,
+  "Searched items close before a decline");
 - an added item → a new plan item.
 
 The turn then ends with "Continue with running the searches?". The edit mode and B2's dispose
@@ -1130,7 +1132,8 @@ in parallel with PR 2.
     (I); questions between
     steps (J); Cowork's one-turn "Keep going" sentence (A2); the objective row (E) and the
     deleted "return to question-selection" line; the refused-declaration dispose row naming
-    `in_progress` items too (B); the hints item sent to search-hints as an errand (D);
+    `in_progress` items too (B); the hints item sent to search-hints as an errand (D), when issue
+    #3153 has landed (otherwise issue #3153 carries this row and its test);
   - **research-exhaustiveness:** B, B2 and its `wrapUp` exemptions (with a zero-assertion,
     no-plan test), and waiting items (I);
   - **person-evidence:** B2's reworded autonomy rule;
@@ -1152,7 +1155,7 @@ in parallel with PR 2.
     - the new tests for B2's wrap-up before evidence, E's different-question reply, I and J in
       acceptance item 7, and the unsettled-conflict "continue runs no step" case;
     - a search step with a hints item reports triage's recommendations as statements and still
-      ends "Continue with linking the records?" (D).
+      ends "Continue with linking the records?" (D), when issue #3153 has landed.
 - **Prerequisites, staffed separately:**
   - issue #2243 for the fan-out, and its handed-state follow-up for D's handed state;
   - prototype uploads (research-as-a-job's "let documents in") for external-site searches on
@@ -1160,11 +1163,7 @@ in parallel with PR 2.
   - **issue #3516's PR B** (`docs/plan/attached-records-baseline.md`): FamilySearch plan items
     close in code, and a searched item cannot be skipped. B's choice, B2's dispose, E's rule
     and `step_ctx`'s `open_items` all count those items as open until they do. It lands before
-    PR 2's paid research run;
-  - issue #3153 creates the hints item, its marker and its router row. Whichever of issue #3153
-    and PR 2 lands second adds the errand form (D): the router row dispatching the hints item
-    after the step's first search-group spawn, and the waiting arm for the hints marker in the
-    shared helper and its `step_ctx` mirror.
+    PR 2's paid research run.
 
 **Phase 2 — cleanup, once step mode is live.**
 - **Delete `research_delivered` everywhere.** About 24 files, including:
@@ -1347,7 +1346,11 @@ in parallel with PR 2.
   subject's timeline that E's priority-3 rewrite and research-plan read.
 - **PR #3583:** adds a "none linked → person-evidence" rung to the ladder. B's choice arm sits
   below it, so a declined question with unlinked evidence is linked first.
-- **Issue #3153:** the hints plan item, an errand in the search step (D).
+- **Issue #3153:** the hints plan item, an errand in the search step (D). It creates the hints
+  item, its marker and its router row. Whichever of issue #3153 and PR 2 lands second adds the
+  errand form: the router row dispatching the hints item after the step's first search-group
+  spawn, and the waiting arm for the hints marker in the shared helper and its `step_ctx`
+  mirror.
 - **Issue #3568 (option D, adopted 2026-10-20):** once built, a callee no research test runs
   live stops staling the research suite, which removes most of the extra research runs in
   Costs.
