@@ -38,6 +38,6 @@ export async function makeSessionConnection(
   return new WsSessionConnection(async () => {
     const r = await api.connectSession(sessionId)
     onFsState?.(r.familysearch)
-    return { wssUrl: r.wssUrl, token: r.token }
+    return { wssUrl: r.wssUrl, token: r.token, readOnly: r.readOnly, message: r.message }
   })
 }

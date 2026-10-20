@@ -63,6 +63,34 @@ describe('ChatPane on session_expired', () => {
   })
 })
 
+describe('ChatPane on a read-only session_expired', () => {
+  it('shows the replayed chat with the notice in place of the composer', () => {
+    const conn = new FakeConn()
+    render(<ChatPane conn={conn} sessionId="sess_old" isNew={false} />)
+    conn.emit({ type: 'status', state: 'session_expired', message: SESSION_EXPIRED_TEXT, readOnly: true })
+    expect(screen.getByText("Loading this session's chat…")).toBeTruthy()
+
+    conn.emit({ type: 'user_msg', text: 'Who were the parents of John Smith?' })
+    conn.emit({ type: 'agent_event', event: { kind: 'text', text: 'His father was Adam Smith.' } })
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done' } })
+    conn.emit({ type: 'status', state: 'chat_ready' })
+
+    expect(screen.getByText('Who were the parents of John Smith?')).toBeTruthy()
+    expect(screen.getByText('His father was Adam Smith.')).toBeTruthy()
+    expect(screen.getByText(SESSION_EXPIRED_TEXT)).toBeTruthy()
+    expect(screen.queryByRole('textbox')).toBeNull()
+    expect(screen.queryByLabelText('Attach a document or image')).toBeNull()
+  })
+
+  it('an empty chat says so once the replay is over, instead of loading forever', () => {
+    const conn = new FakeConn()
+    render(<ChatPane conn={conn} sessionId="sess_old" isNew={false} />)
+    conn.emit({ type: 'status', state: 'session_expired', message: SESSION_EXPIRED_TEXT, readOnly: true })
+    conn.emit({ type: 'status', state: 'chat_ready' })
+    expect(screen.getByText("This session's chat can't be shown.")).toBeTruthy()
+  })
+})
+
 const row = (continuable: boolean | undefined): SessionSummary =>
   ({
     id: `sess_${String(continuable)}`,

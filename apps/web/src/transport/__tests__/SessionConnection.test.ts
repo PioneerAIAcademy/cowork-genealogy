@@ -392,6 +392,54 @@ describe('a 410 that lands before anyone subscribes', () => {
   })
 })
 
+describe('read-only credentials (session more than 72 h old, #3406)', () => {
+  const readOnly = async (): Promise<SessionCredentials> => ({
+    wssUrl: 'ws://x',
+    token: 't',
+    readOnly: true,
+    message: 'Too old (from the server).'
+  })
+
+  it('opens the socket for the replay, says session_expired once, and sends nothing', async () => {
+    const conn = new WsSessionConnection(readOnly)
+    const seen = listen(conn)
+
+    conn.send({ type: 'user_msg', text: 'queued before the credentials' })
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    const expired = seen.filter((m) => m.state === 'session_expired')
+    expect(expired).toEqual([
+      { type: 'status', state: 'session_expired', message: 'Too old (from the server).', readOnly: true }
+    ])
+
+    const sock = FakeSocket.instances[0]
+    sock.onopen?.()
+    sock.onmessage?.({ data: JSON.stringify({ type: 'user_msg', text: 'an old question', seq: 1, epoch: 'e' }) })
+    expect(seen.some((m) => m.type === 'user_msg' && m.text === 'an old question')).toBe(true)
+
+    conn.send({ type: 'user_msg', text: 'after open' })
+    conn.send({ type: 'interrupt' })
+    expect(sock.sent).toEqual([])
+
+    // A dropped socket reconnects for the replay, without a second notice.
+    sock.close()
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(FakeSocket.instances.length).toBeGreaterThan(1)
+    expect(seen.filter((m) => m.state === 'session_expired')).toHaveLength(1)
+  })
+
+  it('ordinary credentials are untouched: no notice, and sends go out', async () => {
+    const conn = new WsSessionConnection(async () => ({ wssUrl: 'ws://x', token: 't', readOnly: false }))
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    FakeSocket.instances[0].onopen?.()
+    conn.send({ type: 'user_msg', text: 'hi' })
+    expect(FakeSocket.instances[0].sent).toHaveLength(1)
+    expect(seen.filter((m) => m.state === 'session_expired')).toHaveLength(0)
+  })
+})
+
 describe('replay dedupe across reconnect (#3387)', () => {
   // The server replays its whole history to every (re)connect, stamping each
   // recorded frame with seq+epoch. The connection keeps a lastSeq cursor that
