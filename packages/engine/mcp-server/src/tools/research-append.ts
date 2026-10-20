@@ -88,6 +88,7 @@ import {
 } from "../utils/record-persona.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
+import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -1778,6 +1779,10 @@ export function unexplainedMoveInvariants(
     // The entry under write is already in the array; it must not vouch for itself.
     if (!pe || pe === entry || (entry.id && pe.id === entry.id)) continue;
     if (pe.person_id !== entry.person_id || pe.superseded_by) continue;
+    // An attachment link reuses the import's S, which an imported residence
+    // fact cites. Counting it here would stop that fact vouching, and so turn
+    // this gate off for exactly the subjects the baseline step links.
+    if (isAttachmentLink(pe)) continue;
     const a = assertionById.get(pe.assertion_id);
     if (!a || typeof a.source_id !== "string") continue;
     (pe.confidence === "confident" ? linkedConfident : linkedBelowConfident).add(a.source_id);
@@ -2624,20 +2629,24 @@ export function competingParentSetsInvariants(
 
 /** A conclusion above `not_proved` may not rest on evidence no identity decision
  *  has touched: refused when none of the summary's supporting assertions carries
- *  a live `person_evidence` link in the pre-call document.
+ *  a live `person_evidence` link that is not speculative (`countsForProofGate`)
+ *  in the pre-call document. A speculative link is a candidate, not an identity,
+ *  and an unchecked FamilySearch attachment is always speculative.
  *
  *  None, not all. A household record leaves its children and wife unlinked once
  *  the subject is linked, so an all-linked rule would refuse 27 of 211 committed
- *  e2e proofs; none-linked refuses 3, and every one of the 3 comes from a run
- *  with no `person_evidence` row at all (chresten-nielsen-daughter 2026-08-09,
- *  victoriano-macatangay-parents 2026-08-13 ×2). That is the identity step never
- *  run, which is the case worth refusing: LZJF-J13 (issue #3177) concluded
- *  `probable` on "correlation across several independent entries" with 0 of 15
- *  assertions linked.
+ *  e2e proofs. This rule refuses 5 of 206 (re-counted 2026-10-20). 3 come from
+ *  runs with no live link at all (chresten-nielsen-daughter 2026-08-09,
+ *  victoriano-macatangay-parents 2026-08-13 ×2): the identity step never run,
+ *  the case worth refusing. LZJF-J13 (issue #3177) concluded `probable` on
+ *  "correlation across several independent entries" with 0 of 15 assertions
+ *  linked. The other 2 rest on speculative links only (cruz-corona-ancestry
+ *  ps_001 proved, robert-lord-children ps_001 disproved).
  *
  *  Pre-call snapshot, as the conflict gates: a batch may not supply the link and
- *  spend it on a tier in the same call — and `person_evidence` is written only by
- *  person-evidence, never by the agent writing the proof. */
+ *  spend it on a tier in the same call. `person_evidence` is written by
+ *  person-evidence and, for unchecked attachments only, by extraction_append —
+ *  never by the agent writing the proof. */
 export function unlinkedProofInvariants(entry: any, preCallResearch: any): string[] {
   const tier = entry?.tier;
   if (typeof tier !== "string" || tier === "not_proved") return [];
@@ -2650,13 +2659,14 @@ export function unlinkedProofInvariants(entry: any, preCallResearch: any): strin
   if (supporting.length === 0) return [];
   const linked = new Set(
     (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : [])
-      .filter((pe: any) => pe?.superseded_by == null)
+      .filter(countsForProofGate)
       .map((pe: any) => pe?.assertion_id),
   );
   if (supporting.some((id: string) => linked.has(id))) return [];
   return [
     `proof_summaries ${entry.id ?? "(new entry)"}: tier '${tier}' rests on ${supporting.length} ` +
-      `supporting assertion(s), and none is linked to a person in person_evidence. A conclusion ` +
+      `supporting assertion(s), and none is linked to a person in person_evidence by a link that ` +
+      `is not speculative (a speculative link is a candidate, not an identity). A conclusion ` +
       `correlates records about the same person, and no identity decision says these records ` +
       `are about anyone. Run person-evidence on those assertions first (from an agent, hand back ` +
       `to the main thread and name it), then send this write again. Recording the attempt at ` +
@@ -4352,6 +4362,9 @@ function applyOne(
   createdAssertions?: ReadonlySet<string>,
   personLinks?: ReadonlyArray<PersonLink>,
   birthPlaceCoords?: BirthPlaceCoords,
+  // `ResearchAppendOptions.attachmentLink`: only extraction_append's personId
+  // mode sets it, as a function argument no tool input reaches.
+  attachmentLink = false,
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -5033,6 +5046,29 @@ function applyOne(
     if (reRaising) {
       invariantErrors.push(...rejectedLinkInvariants(resultEntry, research));
     }
+    // An attachment link is only ever superseded. Raising it in place would skip
+    // same_person: the score gate checks an update only when it writes
+    // `match_score`, `assertion_id` or `person_id`, so a confidence edit alone
+    // would turn an unchecked attachment into an identity.
+    if (op.op === "update") {
+      const stored = (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : []).find(
+        (pe: any) => pe && pe.id === op.entryId,
+      );
+      const fieldKeys = Object.keys(op.fields ?? {}).filter((k) => k !== "id");
+      if (
+        stored &&
+        stored.superseded_by == null &&
+        isAttachmentLink(stored) &&
+        !(fieldKeys.length === 1 && fieldKeys[0] === "superseded_by")
+      ) {
+        invariantErrors.push(
+          `person_evidence ${op.entryId} is an unverified FamilySearch attachment link, which is only ` +
+            `ever superseded. To raise it, score the pair with same_person({ projectPath, assertionId: ` +
+            `'${stored.assertion_id}', treePersonId: '${stored.person_id}' }), append a new link at the ` +
+            `confidence the score supports, then update this one with only { superseded_by: "<new pe_ id>" }.`,
+        );
+      }
+    }
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
     invariantErrors.push(...coreIdentifierConflictInvariants(resultEntry));
     // A REFUSAL, not a warning. The lead's standing ruling on issue #2272 is
@@ -5098,7 +5134,12 @@ function applyOne(
         scoreFields.some((f) =>
           Object.prototype.hasOwnProperty.call((op as any).fields ?? {}, f),
         ));
-    if (writesScore) {
+    // An attachment link carries no score by design (lead, 2026-10-19: the
+    // baseline step assumes every attachment is correct, with no same_person
+    // gate). Exempt only on extraction_append's internal flag AND the entry's
+    // full attachment shape, so neither half alone reaches the exemption.
+    const exemptAttachment = attachmentLink && op.op === "append" && isAttachmentLink(resultEntry);
+    if (writesScore && !exemptAttachment) {
       invariantErrors.push(
         ...personEvidenceScoreInvariants(
           resultEntry,
@@ -6237,6 +6278,10 @@ async function prepareOps(
 export interface ResearchAppendOptions {
   /** Sections this caller may write. Omitted = every section (`research_append`). */
   allowedSections?: ReadonlySet<string>;
+  /** extraction_append's personId mode: its `person_evidence` appends of the
+   *  attachment shape (`isAttachmentLink`) skip the score gate. Never set by a
+   *  tool caller. */
+  attachmentLink?: boolean;
   /** Tool name used in lane-rejection text, so a narrow caller names itself. */
   toolName?: string;
 }
@@ -6440,6 +6485,7 @@ export async function researchAppend(
             prep.createdAssertions,
             prep.personLinks,
             prep.birthPlaceCoords,
+            options.attachmentLink === true,
           ),
         );
       } catch (e) {

@@ -15,6 +15,7 @@ import { readBuildInfo } from "../utils/build-info.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
+import { collectSourceRefs } from "../utils/tree-person.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -141,23 +142,6 @@ function preferredDisplayName(person: any): string | null {
     (p: unknown): p is string => typeof p === "string" && p.trim() !== "",
   );
   return parts.length > 0 ? parts.join(" ") : null;
-}
-
-/** Distinct S ids cited anywhere on the person — person-level `sources`,
- *  each fact's `sources`, each name's `sources` — in first-seen order. */
-function collectSourceRefs(person: any): string[] {
-  const refs: string[] = [];
-  const take = (sources: unknown): void => {
-    if (!Array.isArray(sources)) return;
-    for (const s of sources) {
-      const ref = s && typeof s === "object" ? (s as any).ref : undefined;
-      if (typeof ref === "string" && ref !== "" && !refs.includes(ref)) refs.push(ref);
-    }
-  };
-  take(person?.sources);
-  for (const f of Array.isArray(person?.facts) ? person.facts : []) take(f?.sources);
-  for (const n of Array.isArray(person?.names) ? person.names : []) take(n?.sources);
-  return refs;
 }
 
 function externalSiteOf(entry: any): any | null {
