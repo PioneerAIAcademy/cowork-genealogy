@@ -1,0 +1,19 @@
+{
+  "id": "clara-gonzalez-daughter",
+  "name": "Clara González Pimienta — a daughter Zulema de Jesús born November 1897, Pichilemu, Colchagua, Chile",
+  "genre": "record-hint",
+  "source_pid": "GJVV-FHW",
+  "captured": "2026-10-20",
+  "researcher_question": "Clara González Pimienta, born 31 July 1867 at Pumanque, Colchagua, married Benjamín Silva Díaz about 1894, and two sons are known: Saúl Antonio (born 18 September 1894) and Manuel Jesús (born 27 December 1895), both registered in Colchagua. What other children did Clara and Benjamín have?",
+  "tags": {
+    "question_type": "children",
+    "era": "1890s",
+    "geography": "CL"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 5, hint-samples.csv row 170, flag adds_daughter, confidence 3). Draft transcribed from an 1897 Chilean civil birth registration of Zulema de Jesus Silva Gonzalez at Pichilemu naming Benjamín Silva Díaz and Clara Gonzalez Pimienta as parents; unverified."
+}

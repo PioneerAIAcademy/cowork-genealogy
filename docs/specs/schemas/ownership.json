@@ -715,6 +715,32 @@
         "extraction_append"
       ],
       "reason": "Each `S` entry is minted in code, by tool identity, as the mirror of a `src_` `extraction_append` writes, so no extraction caller owns it. The other writers are listed in `callers`."
+    },
+    {
+      "artifact": "research.json",
+      "section": "rejected_links",
+      "owner": "agent:person-evidence",
+      "callers": [],
+      "writerTools": [
+        "research_append",
+        "merge_tree_persons"
+      ],
+      "toolAuthorized": [
+        "merge_tree_persons"
+      ],
+      "enforceableAt": [
+        "unit",
+        "hook",
+        "tool"
+      ],
+      "notes": "A researcher's rejection of a person-link, ruled 2026-09-30 to be its own record rather than a fourth `person_evidence.confidence` value -- that field says how sure we are a link IS a match, and rejected is the opposite claim, so every reader of it would otherwise have to learn a value meaning 'ignore this row'. Owned by the same lane as the links themselves, so a rejection cannot be written by something that could not have made the link. Also enforceable at the TOOL plane, which the link section is not: whether a pair was rejected is decidable from research.json alone, so the writer tool refuses the re-link rather than a skill body asking the model to remember. merge_tree_persons writes it too: a rejection names a tree person, so a merge must repoint it to the survivor. Without that the rejection keeps pointing at a collapsed id, isRejectedPair stops matching, and the pair becomes linkable again -- silently voiding the record the section exists to keep. The remap is minted in code by TOOL identity, exactly as on person_evidence: a merge repoints every person-id reference to the survivor, and which agent happened to call merge_tree_persons says nothing about whether a rejection should follow its person. Listing the holders as callers would name agents that have no opinion about this section.",
+      "requires": "Only the person-evidence lane creates or rejects an identity link.",
+      "failure": "A rejection recorded by deletion is forgotten, and a later step re-links the same pair -- the reported failure, where a researcher challenged an assumption and the agent reverted to it because nothing recorded the rivals.",
+      "remedy": "Record the rejection; never delete the link to mean 'no'.",
+      "override": "none",
+      "hookCallers": [
+        "agent:person-evidence"
+      ]
     }
   ]
 }

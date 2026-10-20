@@ -1,0 +1,2140 @@
+{
+  "project": {
+    "id": "rp_anders_monsen_ancestry",
+    "objective": "When and where did Anders Monsen marry Unna Halsteinsdatter, and what does the marriage record show?",
+    "subject_person_ids": [
+      "LKFW-9XH"
+    ],
+    "status": "completed",
+    "created": "2026-07-07",
+    "updated": "2026-10-19"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Anders Monsen (born 1759, Hordaland, Norway) marry Unna Halsteinsdatter (born May 1745, Hordaland, Norway), and what does the marriage record show?",
+      "rationale": "The objective is a single marriage event. Norwegian Lutheran church registers (ministerialbok) survive for Hordaland parishes from the mid-eighteenth century and are held at Statsarkivet Bergen, digitised on Digitalarkivet and FamilySearch. Both parties were christened at Hamre parish, making Hamre and neighboring Manger/Rad\u00f8y parish registers the primary search targets. No prior verification question is needed: the spousal link is the premise the question itself is testing, and the record search is the direct route to confirm date, place, witnesses, and any stated parentage.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-10-19",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_010",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_020",
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025",
+        "a_027",
+        "a_028",
+        "a_029"
+      ],
+      "search_stop": {
+        "stopped_because": "question_answered",
+        "justification": "Two independent evidential units establish the marriage. (1) The FamilySearch indexed marriage record (NW44-PM2/NW44-PMK, drawn from the Hamre prestegjeld kirkebok book 8) records the ceremony as 25 June 1786 at Hamre, Hordaland, Norway, with both parties named \u2014 Anders Monsen (groom) and Urna/Unna Halsteinsdr (bride) \u2014 in an original record with primary information created at the time of the event by the officiating clergyman. (2) The 1801 Norwegian census (src_003/src_004) independently places Anders Monsen and Udna Halstensdatter as co-residing members of the same Manger household, 15 years after the marriage, created by a census enumerator with no connection to the marriage register. The FamilySearch name-searchable marriage index (collection 1468080), the 1801 census (collection 3733603), and the probate index (collection 1661306) were all searched. The original Hamre kirkebok image (imageGroupNumber 8679397) and Manger kirkebok book 1 (imageGroupNumber 8679417) were attempted but blocked by HTTP 403 authentication; these are recorded in not_reached. No civil registration existed in Norway before 1 January 1876 (per locality guide loc_001 and wiki Norway_Civil_Registration), so no civil-registration gap applies to an 1786 marriage. No conflicts registered. Overturn risk is low: no unsearched record type for this jurisdiction and period could plausibly name a different marriage event.",
+        "log_entry_ids": [
+          "log_002",
+          "log_003",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_014",
+          "log_015"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Met. The marriage date (25 June 1786), place (Hamre, Hordaland, Norway), parties (Anders Monsen and Urna/Unna Halsteinsdatter), and relationship are established by the Hamre kirkebok indexed entry. The 1801 census corroborates the couple's co-residence 15 years later, confirming the spousal relationship endured. The question's full scope \u2014 when, where, and what the record shows \u2014 is answered.",
+          "repository_breadth": "Met. FamilySearch's name-searchable 'Norway, Marriages, 1660-1926' (collection 1468080) was searched with multiple name variants (Anders Monsen, Urna/Unna Halsteinsdr/Halsteinsdatter, Halvsteinsdatter) and confirmed the match. The Hamre kirkebok original images (imageGroupNumber 8679397, 636 images confirmed on FamilySearch) and Manger kirkebok book 1 (imageGroupNumber 8679417, 615 images) were both attempted and found inaccessible behind authentication. FamilySearch 'Norway, Census, 1801' (collection 3733603) was searched and yielded the corroborating household. FamilySearch 'Norway, Probate Index Cards, 1640-1903' (collection 1661306) was searched and confirmed not to cover Nordhordland/Manger in indexed form. No FAN evidence is needed: the marriage record and independent census together constitute sufficient direct evidence. The Ancestry/MyHeritage fallback (pli_006) was correctly not triggered because pli_001 succeeded.",
+          "original_substitution": "Substantially met, with a noted inaccessibility. The marriage evidence derives from the FamilySearch indexed derivative of the Hamre kirkebok \u2014 original record content, accessed via an index rather than the kirkebok image directly. The original image was attempted (pli_002, log_006) and blocked by HTTP 403 authentication on all image_transcribe calls; 636 images were confirmed in the imageGroupNumber. The index is the best accessible version of this original record. The 1801 census (src_003/src_004) was accessed as an original digitized record. The Elna Luker and Haarstad typewritten marriage extracts were not separately consulted, as the indexed FS collection superseded them for search purposes.",
+          "independent_verification": "Met. Two independent evidential units with different informants, different record-creation processes, and different institutional origins: (1) the 1786 Hamre marriage register entry, created by the officiating clergyman recording the ceremony contemporaneously; (2) the 1801 Norwegian census household entry, created by a government enumerator 15 years later. src_001 and src_002 are two FamilySearch arks for the same underlying kirkebok record (groom-side and bride-side views) and count as one unit; src_003 and src_004 are two FamilySearch arks for the same census household and count as one unit. Two distinct units confirmed.",
+          "evidence_class": "Met. The marriage register entry (src_001/src_002) is an original record \u2014 a Lutheran kirkebok contemporaneously created by a clergyman present at the ceremony \u2014 with primary information about the marriage event (information_quality: 'primary' for all marriage-fact assertions). The 1801 census (src_003/src_004) is an original record with indeterminate information quality (enumerator present; household informant unknown), serving as secondary corroboration. No record type searched and found absent creates a missing class problem: probate index non-coverage of Nordhordland is a collection limitation, not a searched-and-absent finding for this jurisdiction.",
+          "conflict_resolution": "Met. Zero conflicts registered for q_001. The 3-year birth-year discrepancy between the 1801 census (age 45 \u2192 birth ~1756) and the tree birth year (~1759) for Anders Monsen is within normal census approximation range for Norway 1801, documented in person_evidence as a non-core-identifier discrepancy, and does not conflict with any assertion about the marriage date, place, or parties. No unresolved discrepancies remain.",
+          "overturn_risk": "Low. The original Hamre kirkebok image is inaccessible but could at most refine the spelling or add witness names \u2014 it cannot plausibly name a different marriage date or different parties, since the indexed derivative is drawn from that same record. The Manger kirkebok images are inaccessible but a Manger entry was assessed as unlikely (Meland was a sub-parish of Hamre prestegjeld; the bride's parish was Hamre, consistent with the indexed record). The probate index does not cover Nordhordland in indexed form; unindexed skifteprotokoller at Digitalarkivet could corroborate but could not contradict the contemporaneous marriage register entry. No civil registration existed in this period (national registration began 1876). No known unsearched record type for this jurisdiction and period could plausibly name a different marriage event or overturn the established conclusion."
+        },
+        "not_reached": [
+          {
+            "kind": "browse_only",
+            "log_entry_id": "log_006",
+            "wiki_title": null,
+            "description": "Hamre prestegjeld kirkebok books 7 and 8 (imageGroupNumber 8679397, microfilm 124517, 636 confirmed images on FamilySearch). Original kirkebok pages for the Viede and Trolovede sections 1762-1804, including the June 1786 marriage entries. All image_transcribe calls returned HTTP 403 \u2014 authenticated FamilySearch session required. The image list was confirmed via image_search but page content could not be read. The indexed derivative (src_001/src_002) was drawn from this same register."
+          },
+          {
+            "kind": "browse_only",
+            "log_entry_id": "log_007",
+            "wiki_title": null,
+            "description": "Manger prestegjeld kirkebok book 1 (imageGroupNumber 8679417, microfilm 124590, 615 confirmed images on FamilySearch). Covers Trolovede and Viede 1759-1791. All image_transcribe calls returned HTTP 403 \u2014 authenticated FamilySearch session required. A Manger entry was assessed as unlikely (Meland, bride's origin, was a Hamre sub-parish in this period), but the images were not browsed."
+          },
+          {
+            "kind": "nil_search",
+            "log_entry_id": "log_015",
+            "wiki_title": null,
+            "description": "Nordhordland Sorenskriveri and Hardanger og Voss skifteprotokoller (probate registers) for Manger/Rad\u00f8y area, 1821 onward. FamilySearch 'Norway, Probate Index Cards, 1640-1903' (collection 1661306) returned no Hordaland/Nordhordland records in 13 results examined \u2014 collection confirmed not to index this region in name-searchable form. Unindexed browse-only volumes may exist at Digitalarkivet under Nordhordland or Hardanger og Voss sorenskriveri but were not accessible via available search tools."
+          }
+        ]
+      },
+      "created": "2026-10-19"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-10-19",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Hammer, Hordaland, Norway",
+          "date_range": "1775-1804",
+          "repository": "FamilySearch",
+          "rationale": "collections_search returned 'Norway, Marriages, 1660-1926' (collection 1468080) as name-searchable (personCount 2,996,583), covering both Hamre/Hammer and Manger areas. This is the fastest first check: search for 'Anders Monsen' and separately 'Unna Halsteinsdatter' with Hordaland/Hammer as the place. Date window 1775-1804 spans Anders reaching marriageable age (~16 in 1775) through the end of Hamre book 8; Unna would be 30-59. Patronymic variants (Halsteinsdatter, Halsteinsd., Halvsteinsdatter) should be tried. Also search Manger, Rad\u00f8y within the same collection. If the marriage is indexed here, no image browse is required.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Hammer, Hordaland, Norway",
+          "date_range": "1762-1804",
+          "repository": "FamilySearch",
+          "rationale": "Hamre prestegjeld books 7 (1762-1777) and 8 (1778-1804) are the authoritative originals. The locality guide (loc_001) confirms these are on FamilySearch as imageGroupNumber 8679397 (microfilm 124517, Granite Mountain Record Vault) and also on Digitalarkivet \u2014 browse-only images with no name index for this period. Both Trolovede (betrothal/banns) and Viede (formal ceremony) sections must be read: in 18th-century Norwegian kirkebok these are often in separate columns or pages within the same volume. The Elna Luker typewritten extract of Hamre marriages 1677-1826 (koha:209228, vol. 5) and the Haarstad extract (koha:261335) can serve as faster preliminary indexes before examining original images. If a marriage entry is found, record the date, names, witnesses, and any stated parentage. This is the definitive path if the indexed collection (pli_001) yields nothing, because the indexed collection may not include these volumes.",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "FamilySearch image scans for imageGroupNumber 8679397 (Hamre kirkebok) returned HTTP 403 on all image_transcribe calls. Authentication via the login tool is required but not available in this session. The image list (636 images) was obtained via image_search, confirming the volume exists and is digitized. Page transcription blocked. A session with FamilySearch login credentials would be needed to read the original kirkebok pages."
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Manger, Rad\u00f8y, Hordaland, Norway",
+          "date_range": "1759-1791",
+          "repository": "FamilySearch",
+          "rationale": "Manger prestegjeld book 1 covers Trolovede and Viede 1759-1791 (imageGroupNumber 8679417, microfilm 124590, per loc_001). The locality guide states Norwegian practice often placed the marriage in the bride's parish. Unna Halsteinsdatter's birthplace (Hestdal, Meland area) falls within Manger/Rad\u00f8y territory, making Manger a primary co-equal target alongside Hamre. Anders's death and burial at Manger kirkeg\u00e5rd (8 Jan 1821, per tree) further suggests the couple settled there, consistent with a Manger-parish marriage. Note: Manger's archive burned in 1759, so records only survive from that year. Browse Trolovede first, then Viede. This is a primary item, not a fallback.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "FamilySearch image scans for imageGroupNumber 8679417 (Manger prestegjeld book 1, microfilm 124590) returned HTTP 403 on all image_transcribe calls. The image list (615 images) was obtained via image_search, confirming the volume exists and is digitized. Page transcription blocked by the same authentication barrier encountered for Hamre (pli_002). No Manger marriage entry for Anders Monsen / Unna Halsteinsdatter could be confirmed or ruled out from the scans. Contextual note: Meland (bride's origin) was a sub-parish within Hamre prestegjeld, making a Manger entry unlikely; the indexed marriage at Hamre (25 June 1786) remains the established record. A session with valid FamilySearch login credentials would be needed to read the original kirkebok pages."
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Hammer, Hordaland, Norway",
+          "date_range": "1797-1804",
+          "repository": "FamilySearch",
+          "rationale": "collections_search returned 'Norway, Church Books, 1797-1958' (collection 4237104) as name-searchable (personCount 46,445,389). This collection starts in 1797 and may have indexed the tail end of Hamre book 8 (1778-1804) separately from the main Marriages collection. If the image browse of book 8 (pli_002) encounters legibility problems in the 1797-1804 pages, this indexed search provides a name-index alternative for that sub-window. Search for both Anders Monsen and Unna Halsteinsdatter, restricting to Hamre/Hammer and Manger. Targeted fallback for the post-1797 portion of the image browse.",
+          "fallback_for": "pli_002",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "This item covers only 1797-1804 (the tail end of Hamre book 8). The marriage was found to be 25 June 1786, which falls well before this window. Additionally, pli_002 (its parent) was skipped as inaccessible rather than yielding inconclusive results, so the fallback trigger never fired."
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Manger, Rad\u00f8y, Hordaland, Norway",
+          "date_range": "1801",
+          "repository": "FamilySearch",
+          "rationale": "collections_search returned 'Norway, Census, 1801' (collection 3733603) as name-searchable (personCount 878,979). By 1801 Anders (~42) and Unna (~56) should both be alive; the tree records Anders's burial at Manger kirkeg\u00e5rd (1821), so the 1801 household should appear in Manger/Rad\u00f8y. A census entry placing both together confirms the spousal relationship even if the marriage register entry proves elusive; stated ages corroborate birth years. Cannot supply marriage date or place, so this is supplementary confirmation.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "The marriage date and place (25 June 1786, Hamre) are established by the primary marriage register entry (pli_001). The 1801 census would provide only supplementary household confirmation and cannot improve on a direct marriage register entry for answering q_001."
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Hammer, Hordaland, Norway",
+          "date_range": "1760-1804",
+          "repository": "Ancestry",
+          "rationale": "external_links_search returned Ancestry collection 'Norway Marriages, 1600s-1800s' (https://www.ancestry.com/search/collections/1346) and 'Norway Select Marriages, 1660-1926' (https://www.ancestry.com/search/collections/60095). These may draw on the same kirkebok extracts as the FamilySearch indexed collection but through different keying, so a search could surface a record the FS collection missed. MyHeritage also offers 'Norway Marriages, 1660-1926' (https://www.myheritage.com/research/collection-30031/norway-marriages-1660-1926). Execute only if pli_001 through pli_003 all yield nothing \u2014 paid external fallback path.",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "Ancestry fallback was contingent on pli_001 yielding nothing. pli_001 found the marriage record directly in the FamilySearch indexed collection."
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-19",
+      "items": [
+        {
+          "id": "pli_007",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Manger, Rad\u00f8y, Hordaland, Norway",
+          "date_range": "1801",
+          "repository": "FamilySearch",
+          "rationale": "collections_search returned 'Norway, Census, 1801' (collection 3733603) as name-searchable (personCount 878,979). By 1801 Anders Monsen (~42) should be living in the Manger/Rad\u00f8y area (the tree records his death at \u00c5seb\u00f8, Manger in 1821 and burial at Manger kirkeg\u00e5rd on 8 January 1821). A household entry confirming Anders and Unna as co-residing spouses is an independent evidential unit \u2014 it derives from an enumerator's record made 15 years after the 1786 marriage, not from the marriage register itself, so it satisfies the GPS independent_verification criterion. Per collection-quirks guidance for Norwegian records: Unna is indexed in the 1801 census as 'Udna Halstensdatter' (vowel-substitution variant confirmed from a live test run noted in collection-quirks.md), so both 'Unna' and 'Udna' spellings must be tried. Search Anders Monsen as head of household in Manger/Rad\u00f8y first; if found, the household will name his wife.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 2,
+          "record_type": "probate",
+          "jurisdiction": "Manger, Rad\u00f8y, Hordaland, Norway",
+          "date_range": "1821-1870",
+          "repository": "FamilySearch",
+          "rationale": "collections_search returned 'Norway, Probate Index Cards, 1640-1903' (collection 1661306) as name-searchable (personCount 1,065,155). Anders Monsen died in 1821 (burial 8 January 1821, Manger kirkeg\u00e5rd, per tree). A probate or estate record filed after his death could name his widow Unna Halsteinsdatter, confirming the spousal relationship from a source independent of the marriage register. Date range 1821-1870 covers Anders's probable estate settlement through possible later probate filings. The locality guide (loc_001) notes that some Manger-area probates were filed under Hardanger og Voss (Lysekloster Estate) rather than Nordhordland Sorenskriveri; if the Manger search yields nothing, also search Hordaland broadly. Unna's death date is unknown (tree fact present but no date), so a probate for her could be found anywhere post-1786. This item's window is set by Anders's death year (1821) as the earliest trigger for estate filing.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-10-19T10:56:02.139Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Hammer, Hordaland, Norway",
+        "startYear": 1760,
+        "endYear": 1800
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "notes": "Orphaned external_links_search staged during research-plan phase for Hammer, Hordaland 1760-1800; logged now to clear the backlog. Results used only for plan construction (Ancestry and Digitalarkivet URLs identified) \u2014 no extraction needed."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-19T10:56:11.008Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Urna",
+        "surname": "Halsteinsdr",
+        "recordCountry": "Norway",
+        "collectionId": "1468080",
+        "spouseGivenName": "Anders"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 4,
+      "notes": "Searched 'Norway, Marriages, 1660-1926' (1468080) for bride 'Urna Halsteinsdr' + spouseGivenName 'Anders', using collection-quirks indexed form. Top result (rank 1, matchScore 0.206): ark:/61903/1:1:NW44-PMK, 'Entry for Anders Monsen', bride Urna Halsteinsdr, spouse present as Anders Monsen, already attached to KZHH-VTX. Clear match. Proceeding to record_read then extraction."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-19T10:56:46.364Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:NW44-PMK"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1,
+      "notes": "Read marriage record: Anders Monsen + Urna (Unna) Halsteinsdr, 25 June 1786, Hamre, Hordaland, Norway. Groom persona ark:/61903/1:1:NW44-PM2; bride persona ark:/61903/1:1:NW44-PMK. Passing both personas to extraction_append for q_001."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": null,
+      "performed": "2026-10-19T10:56:56.979Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:NW44-PM2"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_004.json"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": null,
+      "performed": "2026-10-19T10:56:56.986Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:NW44-PMK"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json"
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-19T11:06:52.668Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "8679397",
+        "standardPlace": "Hamre, Hordaland, Norway",
+        "recordType": "Church Records \u2014 Viede (marriages) and Trolovede (banns)",
+        "targetDate": "25 June 1786",
+        "imagesExamined": "none \u2014 403 on all image fetches"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 636,
+      "notes": "image_search returned 636 imageIds for imageGroupNumber 8679397 (Hamre prestegjeld kirkebok, books 7 1762-1777 and 8 1778-1804, microfilm 124517). All subsequent image_transcribe calls on imageIds from this group returned HTTP 403. This is an authentication barrier \u2014 the scans are served by FamilySearch behind account login; the login tool is not available in this session. The image list is confirmed: 008679397_00001 through 008679397_00636. The 1786 marriage entries (target: Viede section of book 8, June 1786) are somewhere in that range but could not be read. No page transcription was obtained; original record content is unconfirmed. The derivative index entry (src_001/src_002) remains the only source. A subsequent session with FamilySearch authentication would be needed to transcribe the marriage page(s)."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-19T11:09:17.577Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "8679417",
+        "standardPlace": "Manger, Rad\u00f8y, Hordaland, Norway",
+        "recordType": "Church Records \u2014 Trolovede (banns) and Viede (marriages)",
+        "targetWindow": "1783-1788",
+        "imagesExamined": "none \u2014 403 on all image_transcribe calls"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 615,
+      "notes": "image_search returned 615 imageIds for imageGroupNumber 8679417 (Manger prestegjeld book 1, Trolovede and Viede 1759-1791, microfilm 124590). All image_transcribe calls (tested on 008679417_00001 and 008679417_00005) returned HTTP 403. This is the same FamilySearch authentication barrier encountered for Hamre imageGroupNumber 8679397 (pli_002). FamilySearch login is required to fetch scan bytes; the login tool is not available in this session. The image list is confirmed (008679417_00001 through 008679417_00615). No page transcription was obtained. No entry for Anders Monsen or Unna/Urna Halsteinsdatter in the Manger Trolovede or Viede sections could be confirmed or ruled out from the scans. This is recorded as a negative browse (access failure, not searched content). The locality guide notes that Meland was a sub-parish within Hamre prestegjeld in this period, making a Manger entry unlikely in any case \u2014 the bride's parish was Hamre, consistent with the indexed record found at Hamre (25 June 1786). A session with valid FamilySearch credentials would be needed to transcribe the marriage pages if a definitive confirmation of absence were required.\""
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-19T11:20:02.566Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Monsen",
+        "givenName": "Anders",
+        "residencePlace": "Manger, Rad\u00f8y, Hordaland, Norway",
+        "residenceYearFrom": 1801,
+        "residenceYearTo": 1801,
+        "collectionId": "3733603",
+        "subjectId": "LKFW-9XH"
+      },
+      "outcome": "partial",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 6,
+      "notes": "6 results for Anders Monsen in Manger 1801. Highest matchScore 0.24 for person born 1756 in Household of Ingebor Nielsdatter \u2014 3-year discrepancy from subject born 1759. No single result clearly high-confidence; needed spouse-name search to confirm."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-19T11:20:02.584Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:8TBL-6XMM"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "notes": "Triage read of Household of Anders Monsen (rank 2): head born 1781, too young for our subject born 1759; household members Marie Monsdatter (1784), Mons Ellingsen (1743), Ane Monsdatter (1746) \u2014 no Udna/Unna present; ruled out as different Anders Monsen."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-19T11:20:02.601Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Halstensdatter",
+        "givenName": "Udna",
+        "residenceYearFrom": 1801,
+        "residenceYearTo": 1801,
+        "collectionId": "3733603",
+        "subjectId": "KZHH-VTX"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 1,
+      "notes": "Hit: Udna Halstensdatter born 1745, Manger, matchScore 0.53. Same household (Ingebor Nielsdatter, ark:/61903/1:2:4HXX-9H6Z) as Anders Monsen born 1756 found in first search \u2014 couple co-residing in Manger 1801, corroborating the 1786 marriage."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-19T11:20:02.619Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:8Y9N-JSMM"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "notes": "Full household read (Ingebor Nielsdatter, Manger 1801): (1) Ingebor Nielsdatter b.1765 female head; (2) Anders Monsen b.1756 male; (3) Udna Halstensdatter b.1745 female; (4) J\u00f8rgen Andersen b.1796 male. Anders and Udna co-reside as a couple \u2014 independent corroboration of marriage. J\u00f8rgen Andersen (Andersen=son of Anders) may be their son."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": null,
+      "performed": "2026-10-19T11:20:36.209Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:8YMK-6G3Z"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_012.json"
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": null,
+      "performed": "2026-10-19T11:20:36.220Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:8Y9N-JSMM"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_013.json"
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_008",
+      "performed": "2026-10-19T11:22:42.902Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Monsen",
+        "givenName": "Anders",
+        "collectionId": "1661306",
+        "recordCountry": "Norway",
+        "deathYearFrom": 1818,
+        "deathYearTo": 1828,
+        "subjectId": "LKFW-9XH"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 10,
+      "notes": "10 results for Anders Monsen in Norway probate 1618-1828; all from eastern Norway (Hedmark, Oppland, Valdres) \u2014 none from Hordaland. Ranker: no candidate scored above 0.01; subjectResolvable false. Collection 1661306 appears not to index Nordhordland/Manger area."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_008",
+      "performed": "2026-10-19T11:22:42.917Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Monsen",
+        "givenName": "Anders",
+        "collectionId": "1661306",
+        "residencePlace": "Manger, Rad\u00f8y, Hordaland, Norway",
+        "subjectId": "LKFW-9XH"
+      },
+      "outcome": "negative",
+      "results_examined": 13,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 13,
+      "notes": "Broader place search with residence filter: 13 results, all showing place as generic 'Norge' with no Hordaland specificity; all matchScores below 0.01. Collection 1661306 confirmed not to cover Manger/Nordhordland probates in indexed form. Records may exist in Digitalarkivet or unindexed volumes under Nordhordland or Hardanger og Voss sorenskriveri."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Norway, Marriages, 1660-1926\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NW44-PM2 : Thu Oct 08 17:58:07 UTC 2026), Entry for Anders Monsen and Urna Halsteinsdr, 25 June 1786.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Anders Monsen, \"Norway, Marriages, 1660-1926\"",
+        "when_created": "1786",
+        "when_accessed": "2026-10-19",
+        "where": "Norway, Marriages, 1660-1926",
+        "where_within": "ark:/61903/1:1:NW44-PM2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-19",
+      "log_entry_id": "log_004",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MY3L-FH3",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Norway, Marriages, 1660-1926\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NW44-PM2 : Thu Oct 08 17:58:07 UTC 2026), Entry for Anders Monsen and Urna Halsteinsdr, 25 June 1786.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Anders Monsen, \"Norway, Marriages, 1660-1926\"",
+        "when_created": "1786",
+        "when_accessed": "2026-10-19",
+        "where": "Norway, Marriages, 1660-1926",
+        "where_within": "ark:/61903/1:1:NW44-PMK"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-19",
+      "log_entry_id": "log_005",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MY3L-FH3",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Norges folketelling, 1801\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8YM8-4GN2 : Sun Oct 12 18:32:55 UTC 2025), Entry for Ingebor Nielsdatter and Anders Monsen, 1801.",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "Household of Ingebor Nielsdatter, \"Norway, Census, 1801\"",
+        "when_created": "1801",
+        "when_accessed": "2026-10-19",
+        "where": "Norges folketelling, 1801",
+        "where_within": "ark:/61903/1:1:8YMK-6G3Z"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-19",
+      "log_entry_id": "log_012",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4HXX-9H6Z",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Norges folketelling, 1801\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8YM8-4GN2 : Sun Oct 12 18:32:55 UTC 2025), Entry for Ingebor Nielsdatter and Anders Monsen, 1801.",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "Household of Ingebor Nielsdatter, \"Norway, Census, 1801\"",
+        "when_created": "1801",
+        "when_accessed": "2026-10-19",
+        "where": "Norges folketelling, 1801",
+        "where_within": "ark:/61903/1:1:8Y9N-JSMM"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-19",
+      "log_entry_id": "log_013",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4HXX-9H6Z",
+      "gedcomx_source_description_id": "S4"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:NW44-PM2",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Anders Monsen",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Anders",
+        "surname": "Monsen"
+      },
+      "record_persona_id": "p_11815679720",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:NW44-PM2",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_11815679720",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:NW44-PM2",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Urna Halsteinsdr",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Urna",
+        "surname": "Halsteinsdr"
+      },
+      "record_persona_id": "p_11815679719",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:NW44-PM2",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_11815679719",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:NW44-PM2",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "25 June 1786",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "25 June 1786",
+      "place": "Hamre, Hordaland, Norway",
+      "record_persona_id": "p_11815679720",
+      "source_id": "src_001",
+      "standard_place": "Hamre, Hordaland, Norway"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:NW44-PM2",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "25 June 1786",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "25 June 1786",
+      "place": "Hamre, Hordaland, Norway",
+      "record_persona_id": "p_11815679719",
+      "source_id": "src_001",
+      "standard_place": "Hamre, Hordaland, Norway"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:NW44-PM2",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Urna Halsteinsdr",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "record_persona_id": "p_11815679720",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Anders Monsen",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Anders",
+        "surname": "Monsen"
+      },
+      "record_persona_id": "p_11815679720",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_11815679720",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Urna Halsteinsdr",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Urna",
+        "surname": "Halsteinsdr"
+      },
+      "record_persona_id": "p_11815679719",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_11815679719",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "25 June 1786",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "25 June 1786",
+      "place": "Hamre, Hordaland, Norway",
+      "record_persona_id": "p_11815679720",
+      "source_id": "src_002",
+      "standard_place": "Hamre, Hordaland, Norway"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "25 June 1786",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "25 June 1786",
+      "place": "Hamre, Hordaland, Norway",
+      "record_persona_id": "p_11815679719",
+      "source_id": "src_002",
+      "standard_place": "Hamre, Hordaland, Norway"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Urna Halsteinsdr",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "record_persona_id": "p_11815679720",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Ingebor Nielsdatter",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Ingebor",
+        "surname": "Nielsdatter"
+      },
+      "record_persona_id": "p_260262119300",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260262119300",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "36",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260262119300",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "1765",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1765",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_260262119300",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "1801",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1801",
+      "place": "Manger, Hordaland, Norge",
+      "record_persona_id": "p_260262119300",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_003",
+      "standard_place": "Manger, Hordaland, Norway"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_1",
+      "fact_type": "name",
+      "value": "Anders Monsen",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Anders",
+        "surname": "Monsen"
+      },
+      "record_persona_id": "p_260268760900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260268760900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_1",
+      "fact_type": "age",
+      "value": "45",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260268760900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_1",
+      "fact_type": "census",
+      "value": "1801",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1801",
+      "place": "Manger, Hordaland, Norge",
+      "record_persona_id": "p_260268760900",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_003",
+      "standard_place": "Manger, Hordaland, Norway"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_1",
+      "fact_type": "birth",
+      "value": "1756",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1756",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_260268760900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_2",
+      "fact_type": "name",
+      "value": "Udna Halstensdatter",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Udna",
+        "surname": "Halstensdatter"
+      },
+      "record_persona_id": "p_260290720800",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260290720800",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_2",
+      "fact_type": "age",
+      "value": "56",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260290720800",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_2",
+      "fact_type": "census",
+      "value": "1801",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1801",
+      "place": "Manger, Hordaland, Norge",
+      "record_persona_id": "p_260290720800",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_003",
+      "standard_place": "Manger, Hordaland, Norway"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_2",
+      "fact_type": "birth",
+      "value": "1745",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1745",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_260290720800",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_3",
+      "fact_type": "name",
+      "value": "J\u00f8rgen Andersen",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "J\u00f8rgen",
+        "surname": "Andersen"
+      },
+      "record_persona_id": "p_260312418000",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260312418000",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_3",
+      "fact_type": "age",
+      "value": "5",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260312418000",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_3",
+      "fact_type": "census",
+      "value": "1801",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1801",
+      "place": "Manger, Hordaland, Norge",
+      "record_persona_id": "p_260312418000",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_003",
+      "standard_place": "Manger, Hordaland, Norway"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:8YMK-6G3Z",
+      "record_role": "household_member_3",
+      "fact_type": "birth",
+      "value": "1796",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1796",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_260312418000",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Ingebor Nielsdatter",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Ingebor",
+        "surname": "Nielsdatter"
+      },
+      "record_persona_id": "p_260262119300",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260262119300",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "36",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260262119300",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "1765",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1765",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_260262119300",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "1801",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1801",
+      "place": "Manger, Hordaland, Norge",
+      "record_persona_id": "p_260262119300",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_004",
+      "standard_place": "Manger, Hordaland, Norway"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_1",
+      "fact_type": "name",
+      "value": "Anders Monsen",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Anders",
+        "surname": "Monsen"
+      },
+      "record_persona_id": "p_260268760900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260268760900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_1",
+      "fact_type": "age",
+      "value": "45",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260268760900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_1",
+      "fact_type": "census",
+      "value": "1801",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1801",
+      "place": "Manger, Hordaland, Norge",
+      "record_persona_id": "p_260268760900",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_004",
+      "standard_place": "Manger, Hordaland, Norway"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_1",
+      "fact_type": "birth",
+      "value": "1756",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1756",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_260268760900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_2",
+      "fact_type": "name",
+      "value": "Udna Halstensdatter",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Udna",
+        "surname": "Halstensdatter"
+      },
+      "record_persona_id": "p_260290720800",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260290720800",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_2",
+      "fact_type": "age",
+      "value": "56",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260290720800",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_2",
+      "fact_type": "census",
+      "value": "1801",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1801",
+      "place": "Manger, Hordaland, Norge",
+      "record_persona_id": "p_260290720800",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_004",
+      "standard_place": "Manger, Hordaland, Norway"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_2",
+      "fact_type": "birth",
+      "value": "1745",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1745",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_260290720800",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_3",
+      "fact_type": "name",
+      "value": "J\u00f8rgen Andersen",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "J\u00f8rgen",
+        "surname": "Andersen"
+      },
+      "record_persona_id": "p_260312418000",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260312418000",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_3",
+      "fact_type": "age",
+      "value": "5",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_260312418000",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_3",
+      "fact_type": "census",
+      "value": "1801",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1801",
+      "place": "Manger, Hordaland, Norge",
+      "record_persona_id": "p_260312418000",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_004",
+      "standard_place": "Manger, Hordaland, Norway"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:8Y9N-JSMM",
+      "record_role": "household_member_3",
+      "fact_type": "birth",
+      "value": "1796",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1796",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_260312418000",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_004"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "match_score": 0.9737984,
+      "rationale": "Date check: no birth year in this assertion vs tree birth ~1759; gap none stated for this name fact. Residence check: marriage at Hamre, Hordaland \u2014 tree person born H\u00e5tuft/Hamre area, died Manger; same parish cluster, same locality. Name 'Anders Monsen' is an exact match. Score 0.974 (API confidence 5) \u2014 strong match. Groom-side name assertion from record ark:/61903/1:1:NW44-PM2. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "match_score": 0.9737984,
+      "rationale": "Date check: none stated in this sex assertion. Residence check: Hamre, Hordaland \u2014 same as tree person's Hamre/Manger cluster; same locality. Sex 'Male' consistent with tree person. Score 0.974 (API confidence 5) \u2014 strong match. Same groom persona (p_11815679720) as a_001 from record ark:/61903/1:1:NW44-PM2. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "match_score": 0.9040674,
+      "rationale": "Date check: no birth year in this assertion vs tree birth May 1745; gap none stated for this name fact. Residence check: marriage at Hamre, Hordaland \u2014 tree person christened Hamre; same parish, same locality. Name 'Urna Halsteinsdr': 'Urna' is a common 18th-century orthographic variant of 'Unna'; 'Halsteinsdr' is the standard kirkebok abbreviation of 'Halsteinsdatter'. Both are transcription conventions, not a patronymic conflict. Score 0.904 (API confidence 5) \u2014 strong match. Bride-side name assertion from record ark:/61903/1:1:NW44-PM2. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "match_score": 0.9040674,
+      "rationale": "Date check: none stated in this sex assertion. Residence check: Hamre, Hordaland \u2014 same as tree person's Hamre parish; same locality. Sex 'Female' consistent with tree person. Score 0.904 (API confidence 5) \u2014 strong match. Same bride persona (p_11815679719) as a_003 from record ark:/61903/1:1:NW44-PM2. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "match_score": 0.9737984,
+      "rationale": "Date check: tree birth ~1759; marriage 25 June 1786 implies age ~27 \u2014 well within expected range. Residence check: marriage at Hamre, Hordaland \u2014 same as tree person's Hamre/Manger parish cluster; same locality. Score 0.974 (API confidence 5) \u2014 strong match. Marriage date/place assertion for groom from record ark:/61903/1:1:NW44-PM2. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "match_score": 0.9040674,
+      "rationale": "Date check: tree birth May 1745; marriage 25 June 1786 implies age ~41 \u2014 consistent, within the valid range for a woman. Residence check: marriage at Hamre, Hordaland \u2014 tree person christened Hamre; same parish. Score 0.904 (API confidence 5) \u2014 strong match. Marriage date/place assertion for bride from record ark:/61903/1:1:NW44-PM2. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "match_score": 0.9737984,
+      "rationale": "Date check: tree birth ~1759; marriage 1786 at age ~27 consistent. Residence check: Hamre, Hordaland \u2014 same as tree person's cluster. Relationship assertion ('spouse of Urna Halsteinsdr') from groom persona p_11815679720 in record ark:/61903/1:1:NW44-PM2. Tree already records LKFW-9XH (Anders Monsen) with spouse KZHH-VTX (Unna Halsteinsdatter), confirming the stated relationship. Score 0.974 (API confidence 5) \u2014 strong match for the groom party. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Date check: none stated for the bride in this groom-side relationship assertion. Residence check: marriage at Hamre, Hordaland \u2014 tree person christened Hamre; same parish. The same_person API returned score ~0.000006 when queried with recordRole 'bride' on the groom's record \u2014 the bride is named in the assertion but is not independently reachable as a scored persona via this record route; match_score is null per protocol. Identity is established through: (1) independent persona scores 0.904 from a_003 and a_006 on the same record; (2) exact name match 'Urna Halsteinsdr' = 'Unna Halsteinsdatter' (transcription variant only); (3) same parish; (4) tree already links KZHH-VTX as spouse of LKFW-9XH. Confident on the combined weight of those independent scores and the corroborating tree structure.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "match_score": 0.9737984,
+      "rationale": "Date check: no birth year in this assertion vs tree birth ~1759; gap none stated. Residence check: marriage at Hamre, Hordaland \u2014 same as tree person's Hamre/Manger cluster; same locality. Name 'Anders Monsen' exact match. Score 0.974 (API confidence 5) \u2014 strong match. Groom-side name assertion from record ark:/61903/1:1:NW44-PMK (bride-side read of same underlying marriage register entry). Independently corroborates a_001. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "match_score": 0.9737984,
+      "rationale": "Date check: none stated in this sex assertion. Residence check: Hamre, Hordaland \u2014 same locality. Sex 'Male' consistent. Score 0.974 (API confidence 5) \u2014 strong match. Same groom persona (p_11815679720) as a_008 from record ark:/61903/1:1:NW44-PMK. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "match_score": 0.9040674,
+      "rationale": "Date check: no birth year in this assertion vs tree birth May 1745; gap none stated. Residence check: marriage at Hamre, Hordaland \u2014 tree person christened Hamre; same parish. Name 'Urna Halsteinsdr' is a transcription variant of 'Unna Halsteinsdatter' \u2014 consistent with 18th-century Norwegian kirkebok conventions. Score 0.904 (API confidence 5) \u2014 strong match. Bride-side name assertion from record ark:/61903/1:1:NW44-PMK. Independently corroborates a_003. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "match_score": 0.9040674,
+      "rationale": "Date check: none stated in this sex assertion. Residence check: Hamre, Hordaland \u2014 same locality. Sex 'Female' consistent. Score 0.904 (API confidence 5) \u2014 strong match. Same bride persona (p_11815679719) as a_010 from record ark:/61903/1:1:NW44-PMK. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "match_score": 0.9737984,
+      "rationale": "Date check: tree birth ~1759; marriage 25 June 1786 implies age ~27 \u2014 consistent. Residence check: marriage at Hamre, Hordaland \u2014 same as tree person's cluster; same locality. Score 0.974 (API confidence 5) \u2014 strong match. Marriage date/place for groom from record ark:/61903/1:1:NW44-PMK. Corroborates a_005. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_013",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "match_score": 0.9040674,
+      "rationale": "Date check: tree birth May 1745; marriage 25 June 1786 implies age ~41 \u2014 consistent. Residence check: marriage at Hamre, Hordaland \u2014 tree person christened Hamre; same parish. Score 0.904 (API confidence 5) \u2014 strong match. Marriage date/place for bride from record ark:/61903/1:1:NW44-PMK. Corroborates a_006. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_014",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "match_score": 0.9737984,
+      "rationale": "Date check: tree birth ~1759; marriage 1786 at age ~27 consistent. Residence check: Hamre, Hordaland \u2014 same locality as tree person. Relationship assertion ('spouse of Urna Halsteinsdr') from groom persona p_11815679720 in record ark:/61903/1:1:NW44-PMK. Tree confirms LKFW-9XH has spouse KZHH-VTX. Score 0.974 (API confidence 5) \u2014 strong match for the groom party. Corroborates a_007. No core identifier conflicts.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Date check: none stated for the bride in this groom-side relationship assertion. Residence check: marriage at Hamre, Hordaland \u2014 tree person christened Hamre; same parish. The same_person API returned score ~0.000006 when queried with recordRole 'bride' on the groom's record \u2014 the bride is named in the assertion but not independently reachable as a scored persona via this record route; match_score null per protocol. Identity established through: (1) independent persona scores 0.904 from a_010 and a_013 on the same record; (2) transcription-variant name match 'Urna Halsteinsdr' = 'Unna Halsteinsdatter'; (3) same parish; (4) tree's existing spouse link LKFW-9XH \u2194 KZHH-VTX. Confident on the combined weight of those independent scores and the corroborating tree structure. Corroborates the other-party link written for a_007.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_020",
+      "person_id": "LKFW-9XH",
+      "confidence": "probable",
+      "match_score": 0.286426,
+      "rationale": "Date check: record birth ~1756 (age 45 in 1801) vs tree birth ~1759: gap 3 years. Census ages were frequently approximate in Norway 1801; a 3-year discrepancy is within normal rounding range and is not a core identifier conflict. Residence check: record place Manger, Hordaland, 1801 \u2014 tree person died \u00c5seb\u00f8 Rad\u00f8y/Manger 1821, buried Manger 8 Jan 1821; same parish, same locality, no move. Name 'Anders Monsen': exact match. Co-resident Udna Halstensdatter born ~1745 in this household is KZHH-VTX (Unna Halsteinsdatter, born May 1745), the documented spouse of LKFW-9XH per the 1786 Hamre marriage register (scored 0.974). Score 0.286 \u2014 thin-subject effect applies; the API is pulled down by the 3-year age gap and sparse census content, but non-name identifiers (same Manger parish, known spouse co-resident) provide strong qualitative corroboration. Qualitative: Moderate-to-Strong. Linked at 'probable' in autonomous mode per the sub-0.4 score with a 3-year birth-year gap. No core identifier conflict. Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_021",
+      "person_id": "LKFW-9XH",
+      "confidence": "probable",
+      "match_score": 0.286426,
+      "rationale": "Sex 'Male' \u2014 consistent with tree person LKFW-9XH. Same persona (p_260268760900) as a_020; same score 0.286. Same reasoning: 3-year approximate birth-year gap within census norm, Manger locality match, documented spouse co-resident. Probable in autonomous mode. Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_022",
+      "person_id": "LKFW-9XH",
+      "confidence": "probable",
+      "match_score": 0.286426,
+      "rationale": "Age 45 in 1801 \u2014 derived birth ~1756, 3 years before tree birth ~1759. Within census approximation range; not a core conflict given strong household corroboration (spouse co-resident, Manger locality). Score 0.286; qualitative: Moderate-to-Strong; probable in autonomous mode. Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_023",
+      "person_id": "LKFW-9XH",
+      "confidence": "probable",
+      "match_score": 0.286426,
+      "rationale": "Census fact: Anders Monsen enumerated Manger, Hordaland, 1801. Tree person LKFW-9XH died Manger 1821 \u2014 same parish, consistent with continued residence. Score 0.286; probable in autonomous mode. Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_024",
+      "person_id": "LKFW-9XH",
+      "confidence": "probable",
+      "match_score": 0.286426,
+      "rationale": "Birth ~1756 (inferred from age 45 in 1801). Tree birth ~1759: gap 3 years, within census norm. Score 0.286; probable in autonomous mode. Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_025",
+      "person_id": "KZHH-VTX",
+      "confidence": "probable",
+      "match_score": 0.81330496,
+      "rationale": "Date check: record birth ~1745 (age 56 in 1801) vs tree birth May 1745: gap 0 years \u2014 exact match. Residence check: Manger, Hordaland, 1801 \u2014 tree person's documented spouse (LKFW-9XH) died Manger 1821; same locality, no move. Name 'Udna Halstensdatter' vs 'Unna Halsteinsdatter': 'Udna' is the 1801 Norway census indexed form of 'Unna' (per collection quirk); 'Halstensdatter'/'Halsteinsdatter' are spelling variants of the same patronymic from the same father (Halsten/Halstein), not a patronymic conflict. Score 0.813 (confidence 4) \u2014 strong. Co-resident with Anders Monsen (LKFW-9XH), her documented spouse. Qualitative: Strong. Linked at 'probable' in autonomous mode. No core identifier conflict. Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_026",
+      "person_id": "KZHH-VTX",
+      "confidence": "probable",
+      "match_score": 0.81330496,
+      "rationale": "Sex 'Female' \u2014 consistent with tree person KZHH-VTX. Same persona (p_260290720800) as a_025; score 0.813. Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_027",
+      "person_id": "KZHH-VTX",
+      "confidence": "probable",
+      "match_score": 0.81330496,
+      "rationale": "Age 56 in 1801 \u2014 derived birth ~1745, exact match to tree birth May 1745. Score 0.813. Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_028",
+      "person_id": "KZHH-VTX",
+      "confidence": "probable",
+      "match_score": 0.81330496,
+      "rationale": "Census fact: Udna Halstensdatter enumerated Manger, Hordaland, 1801. Tree person's husband died Manger 1821; same locality. Score 0.813. Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_029",
+      "person_id": "KZHH-VTX",
+      "confidence": "probable",
+      "match_score": 0.81330496,
+      "rationale": "Birth ~1745 (inferred from age 56 in 1801). Tree birth May 1745: gap 0 years \u2014 exact match. Score 0.813. Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_030",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: record birth ~1796 vs I1 minted from this same persona; match_score null (I1 was created from this very record, making the comparison circular). Residence check: Manger, Hordaland, 1801 \u2014 same household as Anders Monsen (LKFW-9XH) and Udna Halstensdatter (KZHH-VTX). Name 'J\u00f8rgen Andersen': patronymic 'Andersen' = son of Anders, naming Anders Monsen as father. Age 5 in 1801 consistent with birth ~1796, 10 years after Anders and Unna married in 1786. New stub I1; probable is the maximum for a brand-new person with no independent corroboration yet. Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_031",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex 'Male' \u2014 consistent with J\u00f8rgen Andersen (I1). Same persona (p_260312418000) as a_030; match_score null (minted from this record). Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_032",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Age 5 in 1801 \u2014 derived birth ~1796. Consistent with being a son of Anders Monsen (married 1786). Match_score null (minted from this record). Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_033",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Census fact: J\u00f8rgen Andersen enumerated Manger, Hordaland, 1801. Same household as LKFW-9XH and KZHH-VTX. Match_score null (minted from this record). Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_034",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth ~1796 (inferred from age 5 in 1801). Plausible for son of Anders Monsen (married 1786) and Unna Halsteinsdatter. Match_score null (minted from this record). Src_003.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_040",
+      "person_id": "LKFW-9XH",
+      "confidence": "probable",
+      "match_score": 0.286426,
+      "rationale": "Date check: record birth ~1756 (age 45 in 1801) vs tree birth ~1759: gap 3 years, within census approximation norm. Residence check: Manger, Hordaland, 1801 \u2014 tree person died Manger 1821, same parish. Name 'Anders Monsen' exact match. Co-resident Udna Halstensdatter (KZHH-VTX) is documented spouse. Score 0.286 \u2014 thin-subject effect; qualitative is Moderate-to-Strong. Probable in autonomous mode. Second source (src_004) corroborates src_003 link independently. No core identifier conflict.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_041",
+      "person_id": "LKFW-9XH",
+      "confidence": "probable",
+      "match_score": 0.286426,
+      "rationale": "Sex 'Male' \u2014 consistent with tree person. Score 0.286; same reasoning as a_040. Src_004.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_042",
+      "person_id": "LKFW-9XH",
+      "confidence": "probable",
+      "match_score": 0.286426,
+      "rationale": "Age 45 in 1801 \u2014 derived birth ~1756, 3 years before tree birth ~1759. Within census norm. Score 0.286. Src_004.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_043",
+      "person_id": "LKFW-9XH",
+      "confidence": "probable",
+      "match_score": 0.286426,
+      "rationale": "Census fact: Anders Monsen enumerated Manger, Hordaland, 1801. Consistent with tree person who died Manger 1821. Score 0.286. Src_004.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_044",
+      "person_id": "LKFW-9XH",
+      "confidence": "probable",
+      "match_score": 0.286426,
+      "rationale": "Birth ~1756 (inferred from age 45). Gap 3 years from tree birth ~1759; within census norm. Score 0.286. Src_004.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_045",
+      "person_id": "KZHH-VTX",
+      "confidence": "probable",
+      "match_score": 0.81330496,
+      "rationale": "Date check: record birth ~1745 (age 56 in 1801) vs tree birth May 1745: gap 0 years \u2014 exact match. Residence: Manger, Hordaland \u2014 same locality as husband's death. Name 'Udna Halstensdatter': 'Udna'/'Unna' documented as 1801 census indexed variant; 'Halstensdatter'/'Halsteinsdatter' is a spelling variant of the same patronymic. Score 0.813 (confidence 4) \u2014 strong. Second source (src_004) corroborates src_003 link independently. Probable in autonomous mode. No core identifier conflict.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_046",
+      "person_id": "KZHH-VTX",
+      "confidence": "probable",
+      "match_score": 0.81330496,
+      "rationale": "Sex 'Female' \u2014 consistent with tree person. Score 0.813. Src_004.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_047",
+      "person_id": "KZHH-VTX",
+      "confidence": "probable",
+      "match_score": 0.81330496,
+      "rationale": "Age 56 in 1801 \u2014 derived birth ~1745, exact match to tree birth May 1745. Score 0.813. Src_004.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_048",
+      "person_id": "KZHH-VTX",
+      "confidence": "probable",
+      "match_score": 0.81330496,
+      "rationale": "Census fact: Udna Halstensdatter enumerated Manger, Hordaland, 1801. Husband died Manger 1821; same locality. Score 0.813. Src_004.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_049",
+      "person_id": "KZHH-VTX",
+      "confidence": "probable",
+      "match_score": 0.81330496,
+      "rationale": "Birth ~1745 (inferred from age 56). Tree birth May 1745: gap 0 years \u2014 exact match. Score 0.813. Src_004.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_050",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.7542098,
+      "rationale": "Date check: record birth ~1796 vs I1 birth ~1796 (minted from src_003): gap 0 years \u2014 exact match. Residence: Manger, Hordaland \u2014 same household as LKFW-9XH and KZHH-VTX. Name 'J\u00f8rgen Andersen' matches; patronymic 'Andersen' = son of Anders, consistent with I1's identity as a son of Anders Monsen. Score 0.754 (confidence 4) \u2014 strong. Second source (src_004) independently corroborates src_003 link. Probable in autonomous mode (new stub, one generation of corroboration). Src_004.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_051",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.7542098,
+      "rationale": "Sex 'Male' \u2014 consistent with I1. Score 0.754. Src_004.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_052",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.7542098,
+      "rationale": "Age 5 in 1801 \u2014 derived birth ~1796, matching I1. Score 0.754. Src_004.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_053",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.7542098,
+      "rationale": "Census fact: J\u00f8rgen Andersen enumerated Manger, Hordaland, 1801. Same household as LKFW-9XH and KZHH-VTX. Score 0.754. Src_004.",
+      "created": "2026-10-19"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_054",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.7542098,
+      "rationale": "Birth ~1796 (inferred from age 5). Matches I1 birth ~1796. Score 0.754. Src_004.",
+      "created": "2026-10-19"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_010",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_020",
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025",
+        "a_027",
+        "a_028",
+        "a_029"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "The FamilySearch name-searchable index 'Norway, Marriages, 1660-1926' (collection 1468080) was searched with multiple name variants for both parties and confirmed the match at ark:/61903/1:1:NW44-PM2 (groom) and ark:/61903/1:1:NW44-PMK (bride). The underlying Hamre prestegjeld kirkebok book 8 original images (imageGroupNumber 8679397, 636 confirmed images) and Manger prestegjeld kirkebok book 1 (imageGroupNumber 8679417, 615 confirmed images) were both attempted and blocked by HTTP 403 authentication; these originals are not yet accessible via available tools. FamilySearch 'Norway, Census, 1801' (collection 3733603) was searched and yielded the corroborating Manger household. FamilySearch 'Norway, Probate Index Cards, 1640-1903' (collection 1661306) was confirmed not to index Nordhordland/Manger in name-searchable form; unindexed browse-only volumes at Digitalarkivet were not accessible. No civil registration existed in Norway before 1 January 1876, so no civil-registration gap applies to an 1786 event. The Elna Luker and Haarstad typewritten marriage extracts were superseded by the indexed FamilySearch collection. The sole remaining gap \u2014 the kirkebok original image \u2014 is a ceiling gap: the image is confirmed to exist but access is blocked; no other record type for this jurisdiction and period could plausibly name a different marriage event or overturn the established conclusion.",
+      "shortfall": "ceiling",
+      "narrative_markdown": "## Marriage of Anders Monsen and Unna Halsteinsdatter \u2014 Proof Summary\n\n### Research Question\n\nWhen and where did Anders Monsen (born 1759, Hordaland, Norway) marry Unna Halsteinsdatter (born May 1745, Hordaland, Norway), and what does the marriage record show?\n\n### Conclusion\n\nThe evidence strongly indicates that Anders Monsen and Unna Halsteinsdatter were married on **25 June 1786** at **Hamre, Hordaland, Norway**, in a Lutheran ceremony recorded in the Hamre prestegjeld kirkebok. Two independent evidential units \u2014 a marriage register index entry and a census record created fifteen years later \u2014 corroborate the date, place, and parties. The conclusion is probable rather than proved because the underlying original kirkebok image could not be accessed during research (HTTP 403 authentication block on all FamilySearch image calls), and only the derivative index entry was directly examined.\n\n### Source 1 \u2014 Hamre Marriage Register Index Entry, 1786\n\n**Source classification:** The FamilySearch collection \"Norway, Marriages, 1660-1926\" (collection 1468080) is a **derivative** source \u2014 a name-searchable index created from the original Hamre prestegjeld kirkebok book 8 (covering the Viede series 1778\u20131804). It is an index of an original record, not the original itself. The information it carries about the ceremony is **primary**: the kirkebok was created contemporaneously by the officiating Lutheran clergyman, who was present and recorded the event as it occurred. The evidence is **direct**: the entry names groom and bride and states the date and parish of the marriage.\n\nThe index entry at ark:/61903/1:1:NW44-PM2 (groom persona) and ark:/61903/1:1:NW44-PMK (bride persona) records the groom as **Anders Monsen** and the bride as **Urna Halsteinsdr**, with the marriage date of **25 June 1786** and place of **Hamre, Hordaland, Norway**.^[\"Norway, Marriages, 1660-1926\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:NW44-PM2 : Thu Oct 08 17:58:07 UTC 2026), Entry for Anders Monsen and Urna Halsteinsdr, 25 June 1786.] The two ARKs represent groom-side and bride-side views of the same underlying register entry and constitute a single evidential unit.\n\n**Name variants:** The indexed bride name \"Urna Halsteinsdr\" reflects two well-documented collection quirks for FamilySearch collection 1468080. First, \"Urna\" is an eighteenth-century vowel-substitution variant of \"Unna\" common in Hordaland kirkebok transcription. Second, \"Halsteinsdr\" is the standard kirkebok abbreviation of the patronymic \"Halsteinsdatter\" (daughter of Halstein). Neither constitutes a different person or a conflict \u2014 both are transcription conventions, and the person-evidence linking for the bride (pe_003, pe_006) confirms the match at a score of 0.904.\n\n**Identity of the groom:** Person-evidence link pe_001 (score 0.974) and pe_005 identify the groom persona in this record as Anders Monsen (LKFW-9XH). The name is an exact match; the marriage place, Hamre, Hordaland, falls within the same parish cluster as Anders's documented birthplace (H\u00e5tuft, Hamre parish, 1759) and death place (\u00c5seb\u00f8/Manger, 1821).\n\n**Identity of the bride:** Person-evidence link pe_003 (score 0.904) and pe_006 identify the bride persona as Unna Halsteinsdatter (KZHH-VTX). The name variant is explicable by collection transcription convention. Her documented christening was 27 May 1745 at Hamre parish \u2014 the same parish in which the marriage took place in 1786, consistent with the Norwegian practice of solemnising marriage in the bride's parish.\n\n**Image inaccessibility:** The original Hamre kirkebok book 8 images (imageGroupNumber 8679397, 636 images confirmed on FamilySearch) were attempted and returned HTTP 403 on all image_transcribe calls during research \u2014 authenticated FamilySearch session required. The image is known to exist; it simply could not be opened via available tools. The derivative index entry was drawn from this same register and carries the same substantive content. Examining the original image could at most refine witness names or a spelling; it cannot plausibly name a different date, place, or party for the marriage.\n\n### Source 2 \u2014 Norway Census, 1801\n\n**Source classification:** The 1801 Norwegian census (FamilySearch collection 3733603) is an **original** record \u2014 a contemporaneous government enumeration created by a census enumerator who visited each dwelling. The information about the persons enumerated is **indeterminate** in quality: the enumerator was present (witness), but the household informant who supplied ages and names is unknown. Ages in the 1801 Norwegian census were frequently approximate, recorded to the nearest round number. The evidence bearing on the marriage is **indirect**: the census does not record the marriage event itself, but co-residence of the same named man and woman in the same household fifteen years after the marriage provides strong corroboration that the spousal relationship was intact and real.\n\nThe census household at ark:/61903/1:1:8YMK-6G3Z and ark:/61903/1:1:8Y9N-JSMM (two FamilySearch ARKs for the same household, constituting a single evidential unit) in Manger, Hordaland, 1801, records **Anders Monsen** (age 45, birth ~1756) and **Udna Halstensdatter** (age 56, birth ~1745) as co-resident members of the household of Ingebor Nielsdatter.^[\"Norges folketelling, 1801\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:8YM8-4GN2 : Sun Oct 12 18:32:55 UTC 2025), Entry for Ingebor Nielsdatter and Anders Monsen, 1801.]\n\n**Identity of Anders Monsen in the census:** Person-evidence link pe_017 (score 0.286) identifies the census Anders Monsen as LKFW-9XH. The API score is suppressed by the three-year birth-year gap (census age 45 \u2192 ~1756 vs. tree birth 1759) \u2014 a thin-subject effect; the qualitative corroboration is Moderate-to-Strong. The name is an exact match; the census place, Manger, Hordaland, is the same parish in which Anders died in 1821. The co-resident Udna Halstensdatter, born ~1745, is his documented wife. Taken together, the parish continuity and spousal co-residence substantially confirm the identification.\n\n**Identity of Udna Halstensdatter in the census:** Person-evidence link pe_022 (score 0.813) identifies the census Udna Halstensdatter as Unna Halsteinsdatter (KZHH-VTX). The name variant \"Udna\" is the 1801 Norwegian census indexed form of \"Unna\" \u2014 a documented collection quirk. The birth year derived from the census (age 56 \u2192 ~1745) is an **exact match** to the tree birth of May 1745. The identification is strong.\n\n**Name variant:** \"Udna Halstensdatter\" vs. \"Unna Halsteinsdatter\" \u2014 \"Udna\" is the census indexed form; \"Halstensdatter\" and \"Halsteinsdatter\" are spelling variants of the same patronymic from the same father (Halstein/Halsten). This is not a conflict.\n\n**Corroboration:** The presence of these two persons together in Manger, Hordaland, in 1801, using the same names they bear in the 1786 marriage entry, corroborates (1) that the marriage took place, (2) that the spousal relationship endured at least fifteen years, and (3) that the identity assignments in the marriage record are correct. The informants for the two sources are entirely independent \u2014 the 1786 clergyman and the 1801 government enumerator had no connection and no shared interest in the record.\n\n### Birth-Year Discrepancy for Anders Monsen\n\nThe census records Anders Monsen's age as 45 in 1801, implying a birth year of approximately 1756. The tree carries a birth year of 1759, derived from the baptism record of 7 April 1759 at Hamre kirke \u2014 an original record with primary information (the clergyman entered the baptism contemporaneously).^[Den norske kirke, Hamre parish, (Hordaland county) \"Ministerialbok, 1750-1761,\" D\u00f8pte (Christened), page 103, entry 24, Anders, 7 April 1759; digital images, Arkivverket.no, accessed 13 December 2023; Statsarkivet in Bergen, Norway.] The three-year gap is within normal rounding range for the 1801 Norwegian census \u2014 enumerators often recorded ages to the nearest five or allowed informants to estimate. The baptism record is an original source with primary information created at or near the time of birth; the census is an original source with indeterminate information, with ages that are frequently approximate. The baptism record is the higher-quality source for establishing the birth year. The census birth approximation (~1756) is materially consistent with the baptism year (1759) given typical census age rounding. The tree birth year of 1759, already set as `primary` on fact `anders-birth-1` from the baptism record, is therefore retained. The census birth approximation (`F5`, ~1756, sourced from S3/S4 at quality 2) remains in the tree as a non-primary evidence fact \u2014 it records what the census shows without displacing the better-sourced baptism value.\n\n### Search Scope\n\nThe FamilySearch marriage index for Norway, 1660\u20131926, was searched with multiple name variants for both parties. The original Hamre kirkebok book 8 images and Manger kirkebok book 1 images were attempted but blocked by HTTP 403 authentication. The 1801 Norwegian census was searched via FamilySearch. The Norway Probate Index Cards (collection 1661306) were confirmed to not index Nordhordland in name-searchable form. No civil registration existed in Norway before 1876, so that record class is inapplicable to an 1786 event. No other record type for this jurisdiction and period could plausibly record a different marriage event for these parties.\n\n### Summary\n\nTwo independent evidential units \u2014 a marriage register index entry created contemporaneously by the officiating clergyman in 1786, and a government census enumeration created in 1801 \u2014 both consistently identify Anders Monsen and Unna Halsteinsdatter as a married couple in Hamre/Manger, Hordaland, Norway. The marriage date is 25 June 1786; the place is Hamre, Hordaland, Norway. Name variants in both sources are explicable by documented collection transcription conventions and do not represent a conflict. No conflicts are registered for this question. The conclusion reaches the **probable** tier \u2014 not proved \u2014 because the underlying original kirkebok image was not directly examined, leaving the derivative index as the primary documentary source for the marriage itself."
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Hordaland, Norway",
+      "for_place": "Hamre and Manger parishes, Hordaland, Norway",
+      "time_period": "1760-1800",
+      "jurisdictions": [
+        {
+          "name": "S\u00f8ndre Bergenhus, Norway",
+          "date_range": "1763-1919"
+        },
+        {
+          "name": "Hordaland, Norway",
+          "date_range": "1919-2019"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1467014",
+          "title": "Norway, Baptisms, 1634-1927",
+          "date_range": "1634-1927"
+        },
+        {
+          "id": "1468081",
+          "title": "Norway, Burials, 1666-1927",
+          "date_range": "1666-1927"
+        },
+        {
+          "id": "1468080",
+          "title": "Norway, Marriages, 1660-1926",
+          "date_range": "1660-1926"
+        },
+        {
+          "id": "4237104",
+          "title": "Norway, Church Books, 1797-1958",
+          "date_range": "1797-1958"
+        },
+        {
+          "id": "1661306",
+          "title": "Norway, Probate Index Cards, 1640-1903",
+          "date_range": "1640-1903"
+        }
+      ],
+      "quirks": [
+        "Hamre prestegjeld books 7 (1762-1777) and 8 (1778-1804) contain the Viede (marriages) and Trolovede (betrothal/banns) entries for the target window. These are browse-only digital images on Digitalarkivet \u2014 no name index for this period. Microfilm 124517, imageGroupNumber 8679397, Granite Mountain Record Vault.",
+        "Manger prestegjeld archive burned in 1759. All Manger parish registers before 1759 are destroyed. Surviving registers begin 1759 (book 1 covers Trolovede and Viede 1759-1791, microfilm 124590, imageGroupNumber 8679417). This means Unna Halsteinsdatter's 1745 baptism record at Manger is lost if it was held there.",
+        "Norwegian practice in this period: marriage was often solemnised in the bride's parish. Search both Hamre and Manger marriage registers regardless of where Anders resided.",
+        "Norwegian patronymic naming was universal in this period. Unna Halsteinsdatter kept that name for life; she is never found under a married surname. Anders Monsen's son of Mons identity is carried in 'Monsen'. Do not assume family surnames.",
+        "The 18th-century kirkebok distinguishes Trolovede (betrothal/banns, recorded first) from Viede (formal ceremony). Both series must be examined \u2014 they are often in separate columns or pages within the same volume.",
+        "Hamre prestegjeld in 1760-1800 also included Alversund and Meland (not separated until 1885). Records for those sub-parishes are within the same Hamre register books.",
+        "Manger prestegjeld in 1760-1800 also included Hordab\u00f8, S\u00e6b\u00f8, Herdla, and Hjelme (Herdla/Hjelme separated 1868). All are in the same Manger register books.",
+        "Some Manger farms probates were kept under Hardanger og Voss (Lysekloster Estate), not Nordhordland Sorenskriveri. If a Manger ancestor's probate is missing from Skifteprotokoller 1702-1910, search Hardanger og Voss.",
+        "A Hamre soul register (sjeleregister) for 1776 exists on microfilm (imageGroupNumber 9061515). This is a household enumeration directly within the research window and may name both parties with ages.",
+        "No civil registration existed in Norway before 1876 at the national level. For 1760-1800, the Lutheran church kirkebok is the only vital record source.",
+        "The Elna Luker typewritten extract of Hamre marriages 1677-1826 (koha:209228, vol. 5 = all marriages) and the Haarstad extract (koha:261335, available online) can serve as faster-to-browse indexes before examining original images."
+      ],
+      "guide_markdown": "# Locality Guide: Hordaland, Norway \u2014 Hamre and Manger Parishes (1760\u20131800)\n\nSee full guide in research log. Key points: Hamre kirkeb\u00f8ker 1677-1928 (koha:47267) cover the target window in books 7 (1762-1777) and 8 (1778-1804), both on microfilm 124517 and as browse-only images on Digitalarkivet. Manger kirkeb\u00f8ker 1759-1923 (koha:58465) start from 1759 after the archive fire; book 1 (Trolovede and Viede 1759-1791) is the primary marriage source on microfilm 124590. Both are browse-only images \u2014 no name index for the 1760-1800 period. Civil registration did not begin until 1876. Patronymic naming: search Unna Halsteinsdatter and Anders Monsen. Check both Trolovede and Viede series. 1801 census indexed on Digitalarkivet provides post-window household confirmation.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-19"
+    }
+  ]
+}

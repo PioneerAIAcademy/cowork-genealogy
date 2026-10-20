@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Pietro Marchetti and Maria Aquilini had a daughter, Giuseppa Marchetti, born in 1884 at Maglianello, Rieti, who died at Rieti on 15 June 1913; the civil death registration names her parents as Pietro and Maria Aquilini.",
+      "details": {
+        "subject_person": "Pietro Marchetti (G9WN-C79)",
+        "relation": "child",
+        "target_person": {
+          "name": "Giuseppa Marchetti",
+          "birth": "1884, Maglianello, Rieti, Lazio, Italy",
+          "death": "15 June 1913, Rieti, Lazio, Italy"
+        },
+        "mother": "Maria Aquilini"
+      },
+      "supporting_sources": [
+        "Italy, Rieti, Civil Registration (State Archive), 1840-1945 — death registration of Giuseppa Marchetti, Rieti, 15 Jun 1913, born 1884 at Maglianello, parents Pietro and Maria Aquilini"
+      ],
+      "required": true
+    }
+  ]
+}
