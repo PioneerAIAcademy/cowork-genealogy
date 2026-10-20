@@ -82,6 +82,7 @@ describe("merge_tree_persons", () => {
     expect(result.researchRefsUpdated).toEqual({
       subject_person_ids: 0,
       person_evidence: 0,
+      rejected_links: 0,
       timelines: 1,
       known_holdings: 0,
       proof_summaries: 0,

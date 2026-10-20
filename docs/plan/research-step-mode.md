@@ -53,7 +53,8 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
     the researcher can carry on without waiting for the upload (section I).
 17. **A question about the findings gets an answer, not a step** (section J).
 18. **New top-level tasks are agents,** entered through the router, each with a step group
-    (section K).
+    (section K). An all-code task is the exception: a bounded-list line naming its tool calls,
+    with no step group (section K).
 19. **The prose ships as small PRs.** The parts that work under today's behaviour land first,
     one eval slot each. The router, research-exhaustiveness, person-evidence and
     question-selection land in PR 2, right after PR 1 (Phases).
@@ -137,7 +138,7 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
 
 | Step | Runs | Ends with |
 |---|---|---|
-| Setup: init-project (new project), question selection, locality guide (if the place is unsurveyed) | always | "Here's the question I'll research … Continue with planning the searches?" |
+| Setup: init-project (new project), the attached-records baseline for each subject (`extraction_append` with `personId`, then `timeline_build`: tool calls, not steps; `docs/plan/attached-records-baseline.md`), question selection, locality guide (if the place is unsurveyed) | always | what the attached records show (events, how many are unverified, the high gaps), then "Here's the question I'll research … Continue with planning the searches?" |
 | Plan: research-plan | always | the plan, then "Continue with running the searches?" |
 | Search: every plan item in parallel, then extraction | always | what was found, any searches only the researcher can run (section I), then "Continue with linking the records?" |
 | Link: person-evidence | always | what attaches to whom |
@@ -194,6 +195,9 @@ that apply:
     - **research-plan after research-exhaustiveness, only while the active plan has open
       items.** That is dispose's precondition (`skills/research/SKILL.md:226`). So a decline
       turn cannot start a new plan.
+    - **`search-hints` after a search-group step,** because a hints plan item runs in the
+      search step (section D, issue #3153). Its home group stays its own, so a turn it opens,
+      such as a verdict on a hint, admits no search.
   - **`ctx` carries what the turn's steps cannot show,** computed from `research.json` by
     `step_ctx(research)` in `step_boundary.py` when a research-plan call is checked.
     - **The current question** is the last unresolved entry in `questions[]`, from one
@@ -223,7 +227,9 @@ that apply:
 
     Apart from that `ctx` check, the predicate checks membership and order only. Router
     prose says when a member is skipped:
-    - person-evidence runs only for unlinked assertions;
+    - person-evidence runs only for a question's assertions with no live link, or for a
+      question whose `project_context` `nextStep` names person-evidence, as one resting on
+      attachment links does (`docs/plan/attached-records-baseline.md`, decision 17);
     - conflict-resolution runs only when an unresolved conflict blocks the question.
   - **The worker and the alpha load `step_boundary.py` from the plugin directory** with
     `importlib.util.spec_from_file_location`, as `eval/harness/harness/context_policy.py`
@@ -434,6 +440,17 @@ that apply:
     unsearched, with "search more" named;
   - **high:** "Continue with planning the searches?", after a sentence naming the sources that
     could change the answer and why, with "wrap it up" named.
+- **Searched items close before a decline.** An item whose search ran is `completed`, even
+  when every search found nothing. It is never `skipped`: `research_append` refuses that
+  (`docs/plan/attached-records-baseline.md`, decision 9).
+  - FamilySearch items with an extracted record complete in code (that plan's PR B, a
+    prerequisite below).
+  - The rest go through Dispose. After a refused declaration, the router's dispose row names
+    the `in_progress` items too, and Dispose completes each FamilySearch, full-text or image
+    item whose search ran. An external-site item stays with the researcher (section I). Today
+    both act on `planned` items only (`agents/research-plan.md:95-101`,
+    `skills/research/SKILL.md:226`).
+  - research-plan's change is in its prep PR, and the router's is in PR 2.
 - **Conclude:** proof-conclusion writes at the tier reached, with `shortfall: "gap"`.
   **Search more:** research-plan's add-new mode (`agents/research-plan.md:229-233`) plans
   from the `deferred` entries.
@@ -477,10 +494,14 @@ that apply:
 ### B2. Wrap it up
 - **Offered at any boundary,** before any evidence exists too (decision 15).
 - **In one turn** (mode `wrapup`):
-  1. research-plan's dispose mode skips every open item with `skip_category: "user_declined"`,
-     except one waiting only on an upload (section I). The tool already allows that category
-     on an open item (`research-append.ts`, `CAPTURE_PENDING_SKIP_EXEMPT`).
-  2. person-evidence links the question's unlinked assertions, when there are any.
+  1. research-plan's dispose mode completes every open item whose search ran, and skips the
+     rest with `skip_category: "user_declined"`. It leaves alone an item whose latest entry is
+     an upload hand-off still waiting, whether or not a FamilySearch search also ran under it
+     (section I). A searched item cannot be skipped (B, "Searched items close before a
+     decline"). The tool already allows `user_declined` on an open item (`research-append.ts`,
+     `CAPTURE_PENDING_SKIP_EXEMPT`).
+  2. person-evidence links the question's unlinked assertions (as defined in A), when there
+     are any.
      - **Why it must run:** both research-exhaustiveness (`agents/research-exhaustiveness.md:116-122`)
        and proof-conclusion (`agents/proof-conclusion.md:101-113`) refuse while a person the
        question depends on is unidentified.
@@ -522,11 +543,12 @@ that apply:
        on that conflict, as the completion gate already requires.
      - **When the router says a new question is waiting** (`newQuestion: yes`), §8 does not
        write `completed`, even if every question is now resolved.
-- **Before any evidence exists,** the same turn runs: dispose skips the open items, person-
+- **Before any search has run,** the same turn runs: dispose skips the open items, person-
   evidence and conflict-resolution have nothing to do, research-exhaustiveness records the
   stop, and proof-conclusion writes `not_proved` with `shortfall: "gap"`, naming the searches
   not run. That is the way out for a researcher who wants a different question before any
-  search has run.
+  search has run. When searches ran and found nothing, dispose completes those items instead
+  (step 1), and proof-conclusion's `not_proved` names them as searched with nothing found.
 - **Coming back to a wrapped-up question** is a new question on the same fact. question-
   selection's step 1b (`agents/question-selection.md:103`) stops new questions once the
   objective is answered, so it gains one exception: a question the researcher asked for is
@@ -555,7 +577,9 @@ that apply:
   - **Items with `fallback_for`** run only after their primary finds nothing; otherwise they
     are skipped as `fallback_not_triggered`.
   - **Then** one `extraction_append({ recordIds })` call covers the FamilySearch hits, and one
-    record-structurer spawn covers other sources.
+    record-structurer spawn covers other sources. That call completes every item whose search
+    lists an extracted record, including a record two items both found
+    (`docs/plan/attached-records-baseline.md`, PR B).
 - **Handing each agent its state comes later.** That means the item, the person's attached
   records and the locality facts, as the 10x plan advises. Issue #2243 is "ids only" by lead
   ruling (2026-10-06), and it files the handed-state follow-up. That follow-up also has to
@@ -576,6 +600,20 @@ that apply:
   searches as parallel tool calls.
 - **External-site items join the same fan-out,** one `search-external-sites` spawn per item,
   with `userPresent: yes` (section I).
+- **A hints plan item joins it too** (issue #3153), through `search-hints`. It is an errand
+  like an external-site search (section I):
+  - triage's recommendations go in the step report as statements;
+  - the step still ends "Continue with linking the records?";
+  - the researcher's verdicts come back as a later reply, which runs search-hints' record mode;
+  - when hints cannot be read (every e2e run blocks `person_record_matches`), the item is
+    `skipped` with `skip_category: "inaccessible"`;
+  - a hints item that is `in_progress` with no log entry naming it is waiting on the
+    researcher's verdicts. Section I's waiting rules apply to it: it is not open for the
+    ladder, E's rule or `step_ctx` (the shared waiting helper gains this arm, keyed on issue
+    #3153's marker). research-exhaustiveness lists it as `handed_to_user`, and Dispose and
+    wrap-up leave it `in_progress`;
+  - the router dispatches it after the step's first search-group spawn, because a turn that
+    search-hints opens admits no search.
 
 ### E. One question per run
 - **One writer rule replaces the existing in-flight gate.** `newQuestionWhileSearchInFlightInvariants`
@@ -703,13 +741,19 @@ that apply:
   (`research-append.ts`, the `project.status = "completed"` gate), `docs/specs/research-append-tool-spec.md:908` and
   `:911`, and `docs/specs/guardrail-enforcement-spec.md:1298-1310`.
 - **question-selection changes** (`agents/question-selection.md`):
-  - delete or rewrite priorities 1, 3, 6 and 7 (`:169-175`, `:201-206`);
+  - delete or rewrite priorities 1, 3, 6 and 7 (the priority table and its detail paragraphs).
+    Priority 3 (`timeline_gap`) becomes plan work: a `high` gap in the current question's
+    subject's timeline is a search for research-plan to add. `timeline_build` writes that
+    timeline at setup (`docs/plan/attached-records-baseline.md`), and research-plan, which
+    reads no timeline today, gains that read in its prep PR;
   - delete or rewrite the conflict-unblocking question (`:95-101`) and the sub-question
     paragraph (`:155-160`);
   - **given more than one fact to research,** it writes no question and asks the researcher
     to pick one;
   - **tests:** rewrite `ut_question_selection_003`, `_005`, `_006`, `_008` and `_d03`, and add
-    a test with a two-fact objective (no questions → no write, and an ask).
+    a test with a two-fact objective (no questions → no write, and an ask). Once the
+    attached-records plan's PR D has landed, keep its test passing: on a project with no
+    questions and a `high` gap, the first question still restates the objective.
 - **The router:** delete "New evidence may reveal new questions — return to question-selection"
   (`skills/research/SKILL.md:364-365`). The objective row (the row beginning *"All questions are `resolved` and `project.status` still `active`"*; `:230` on `main`), after the tree-encoding gate,
   names any uncovered part of the objective as a suggested next question, as a statement. The
@@ -731,7 +775,8 @@ that apply:
   - per-turn step and wall time are recorded, and `make e2e-latency` reports per-step
     p50/p90;
   - `e2e-test-spec.md` is updated;
-  - two-question fixtures are re-scoped (genealogist work).
+  - two-question fixtures are re-scoped (genealogist work). maria-bracero-marriage's parents
+    finding is already non-required (`docs/plan/attached-records-baseline.md`, decision 13).
 - **A separate e2e arm** answers "Wrap it up." right after the search step, which exercises
   B2's link-then-conclude path.
 - **Interim, if the persistent session slips:** the harness runs each fixture as one turn in
@@ -743,7 +788,10 @@ that apply:
 A free-text reply after the plan step is a plan edit. Today research-plan's review mode forbids
 modifying items, and it defaults to review whenever an active plan has open items
 (`agents/research-plan.md:219-227`, `:253-256`). So research-plan gains an **edit mode**:
-- a struck item → `skipped` with `user_declined`;
+- a struck item → `skipped` with `user_declined` when no search has run for it, or when its latest
+  entry is an upload hand-off still waiting (the exemption to decision 9 of
+  `docs/plan/attached-records-baseline.md`); otherwise, one whose search ran → `completed` (B,
+  "Searched items close before a decline");
 - an added item → a new plan item.
 
 The turn then ends with "Continue with running the searches?". The edit mode and B2's dispose
@@ -796,8 +844,10 @@ new spawn. That already fits step mode: the wait is a step boundary.
   - `step_ctx`'s `open_items`.
 - **Other `in_progress` external items stay open,** as today: a capture that arrived unusable,
   a nil the researcher reported without a capture, and an inaccessible site with no decision
-  (`agents/search-external-sites.md`, step 7's table). research-exhaustiveness refuses on them
-  and the router's dispose row asks the researcher, unchanged.
+  (`agents/search-external-sites.md`, step 7's table). research-exhaustiveness refuses on them,
+  and the dispose row leaves them to the researcher rather than to Dispose (B).
+  search-external-sites keeps them open, and a received capture cannot be skipped
+  (`docs/plan/attached-records-baseline.md`, decision 9).
 - **research-exhaustiveness** never declares exhaustive while an item waits. It declines, lists
   each waiting search under the existing `handed_to_user` kind with its URL, and says so: "2 searches are still waiting on
   your upload. Upload them, or conclude without them." Its refusal on `in_progress` items
@@ -810,7 +860,8 @@ new spawn. That already fits step mode: the wait is a step boundary.
   branch no longer fires. The ladder routes through link and assess again, and
   proof-conclusion refreshes the summary in place.
 - **Wrap it up** leaves a waiting item `in_progress`, because a capture can still come, and
-  lists it as `handed_to_user`. Dispose skips only the other open items (section B2).
+  lists it as `handed_to_user`. Dispose closes only the other open items, completing those whose
+  search ran (section B2).
 - **Under "Keep going",** the links are handed out and the run continues. The waiting items
   end as `handed_to_user` in the stop, and a later upload reopens the question as above.
   `search-external-sites` still gets `userPresent: yes`, so it hands the link over rather than
@@ -850,6 +901,12 @@ Before building one, check whether an existing step already does it and only nee
 phrase in the bounded list. For example, "Where else should I search?" overlaps three things
 that already exist: research-plan's add-new mode, research-exhaustiveness's `deferred` list,
 and the bounded item "where the records are for a place and period".
+
+**An all-code task is a line in the bounded list naming the tool calls,** with no agent and no
+step group. "Create a timeline for <PID>" (`extraction_append`, then `timeline_build`) is one.
+On an existing project its turn runs no step (section J) and ends like any bounded ask. On a new
+folder `init-project` runs first, which is a setup step, so until issue #3384 the timeline comes
+on the next turn (section H).
 
 ## Measuring "respond sooner"
 With one step per turn, **a turn's duration is its step's duration**, so production already
@@ -891,7 +948,7 @@ file's own sections, top to bottom.
 | Ruling: the spend bound continues in a new session | **Unaffected;** it matters most under "Keep going" |
 | Ruling: an errand pauses the job and waits (2026-09-27) | **Kept, loosened** (decision 16): an errand is a step that ends naming what to fetch, and the researcher may carry on without waiting (section I) |
 | "The Stop hook binds on every browser turn"; nudge cap 60; the alpha's `auto_continue` | **Superseded:** no turn arms the veto, and phase 2 deletes it. "Keep going" is the host's replies (section A2), which the alpha's `auto_continue` chain carries |
-| `turns.outcome` values | **Mostly unchanged.** A step turn ends `ok` (no label); the worker sets `completed` at turn close when the step finished the project; `delivered` goes in phase 2 |
+| `turns.outcome` values | **Mostly unchanged.** A step turn ends `ok` (no label); the worker sets `completed` at turn close when the step finished the project; `delivered` goes in phase 2 (pending the "Open, for Praise" question there) |
 | "`decision` and `mcp_unavailable` cannot fire" | **Unaffected;** step mode needs no `decision` exit |
 | person-evidence's weak-match pause and its autonomous-only resolve-downward rule | **The pause becomes the link step's closing question,** asked with the researcher present. Resolve-downward applies in "Keep going." and "Wrap it up." turns, from the router's `userPresent: no` (section B2) |
 
@@ -901,7 +958,7 @@ file's own sections, top to bottom.
 |---|---|
 | "The default web path never enters the router"; re-entry through the nudge text (PR #3262) | **Router entry comes from the front door below** on every message, the host's replies included. No nudge text remains |
 | `research` as the only front door (PR #3262's frontmatter) | **Keep:** section H depends on it |
-| "Not every turn is a job"; the `research_delivered` finish line (PR #3187, PR #3286, PR #3235) | **Superseded:** every turn is one step. Keep the bounded routing list and "name what was saved"; delete `research_delivered` in phase 2 |  **SUPERSEDED by decision 25**: rider 1 keeps one step per boundary, not one per turn.
+| "Not every turn is a job"; the `research_delivered` finish line (PR #3187, PR #3286, PR #3235) | **Superseded:** every turn is one step. Keep the bounded routing list and "name what was saved"; delete `research_delivered` in phase 2 (pending the "Open, for Praise" question there) |  **SUPERSEDED by decision 25**: rider 1 keeps one step per boundary, not one per turn.
 | "Never ask a question you will not wait for" | **Keep, applied to every step.** Offers at the **end** of a step become its "Continue with X?". Offers **mid-step** become statements, because nothing stops mid-step: for example search-records' "Let the user confirm before extraction", now that extraction is inside the search step |
 | "Give 'I need you' an exit" (`AskUserQuestion` carrier, `pending_decision`, `DecisionCard`) | **Keep** (decision 24, reversing 23). The carrier IS the boundary. The premise this row carried -- "the step boundary already ends every turn" -- was measured false in phase 0: a deny does not end a turn, and `AskUserQuestion` waits without ending one either. `DecisionCard` still becomes the home for the reply buttons |
 | The fourth stop's clauses: unreachable records end `completed`; a blocking conflict "is a decision" | **Unreachable records:** unchanged (the proof at the tier reached, `completed`). **A blocking conflict:** the conflict step names the record that could settle it and offers the planning step (section E), no `decision` exit needed |
@@ -990,8 +1047,14 @@ in parallel with PR 2.
   named:**
   1. **research-plan,** after PR #3479 merges: the edit mode (G), the dispose wording for
      wrap-up, and the FAN pivot and a conflict's decisive records as plan items
-     (E). Tests: `ut_research_plan_q7m`, which calls ending on an execution question
-     non-compliant, and a plan edit is applied.
+     (E). Dispose also completes named `in_progress` items whose search ran (B), and
+     Termination completes an `in_progress` item whose search ran instead of skipping it.
+     research-plan reads the subject's timeline for `high` gaps (E). Until PR 2 rewrites
+     priority 3, question-selection still turns the same gap into a question, so expect
+     duplicate searches in that window. Tests: `ut_research_plan_q7m`, which calls ending on an
+     execution question non-compliant; a plan edit is applied; and Dispose, named one
+     `in_progress` item with a nil search entry and one `planned` item never searched,
+     completes the first and skips the second (B).
   2. **The route PRs,** after the research-plan PR: conflict-resolution, hypothesis-tracking
      and timeline each route a needed search to research-plan (E). One PR per agent, in any
      order, each with its route test. The first to merge carries the ladder's conflict-evidence
@@ -1069,7 +1132,9 @@ in parallel with PR 2.
     following the ladder's `nextStep` with the no-next-step row above it (E); the upload turn
     (I); questions between
     steps (J); Cowork's one-turn "Keep going" sentence (A2); the objective row (E) and the
-    deleted "return to question-selection" line;
+    deleted "return to question-selection" line; the refused-declaration dispose row naming
+    `in_progress` items too (B); the hints item sent to search-hints as an errand (D), when issue
+    #3153 has landed (otherwise issue #3153 carries this row and its test);
   - **research-exhaustiveness:** B, B2 and its `wrapUp` exemptions (with a zero-assertion,
     no-plan test), and waiting items (I);
   - **person-evidence:** B2's reworded autonomy rule;
@@ -1089,10 +1154,17 @@ in parallel with PR 2.
       `userPresent: no`;
     - the five question-selection tests and the two-fact test (E);
     - the new tests for B2's wrap-up before evidence, E's different-question reply, I and J in
-      acceptance item 7, and the unsettled-conflict "continue runs no step" case.
-- **Prerequisites, staffed separately:** issue #2243 for the fan-out; its handed-state follow-up
-  for D's handed state; prototype uploads (research-as-a-job's "let documents in") for
-  external-site searches on the prototype (section I).
+      acceptance item 7, and the unsettled-conflict "continue runs no step" case;
+    - a search step with a hints item reports triage's recommendations as statements and still
+      ends "Continue with linking the records?" (D), when issue #3153 has landed.
+- **Prerequisites, staffed separately:**
+  - issue #2243 for the fan-out, and its handed-state follow-up for D's handed state;
+  - prototype uploads (research-as-a-job's "let documents in") for external-site searches on
+    the prototype (section I);
+  - **issue #3516's PR B** (`docs/plan/attached-records-baseline.md`): FamilySearch plan items
+    close in code, and a searched item cannot be skipped. B's choice, B2's dispose, E's rule
+    and `step_ctx`'s `open_items` all count those items as open until they do. It lands before
+    PR 2's paid research run.
 
 **Phase 2 — cleanup, once step mode is live.**
 - **Delete `research_delivered` everywhere.** About 24 files, including:
@@ -1102,6 +1174,9 @@ in parallel with PR 2.
   - `mock_mcp.py`, `instrument.py` and the tests;
   - `DELIVERY_GUIDANCE`;
   - the bounded-ask section's `research_delivered` close. Keep its routing list.
+  - **Open, for Praise:** decision 25's prototype halt reuses `_halt`, which a main-thread
+    `research_delivered` triggers today (`apps/server/proto/worker/options.py`). Say whether
+    this bullet still stands under decision 25, and if it does, what ends a bounded ask.
 - **Delete the Stop veto:** `should_continue_run`'s nudge path, `CONTINUE_REASON`, the nudge
   counters, `stop_checker.py`'s veto, and `AUTONOMOUS_MAX_NUDGES` with its compose, Beanstalk
   and bundle settings, and the alpha's `autonomous_max_nudges` and `auto_continue_max_steps`.
@@ -1240,6 +1315,8 @@ in parallel with PR 2.
      "Continue with linking the records?" line;
    - a search step with an external item hands out the link and still offers linking; an
      upload turn triages it and offers linking;
+   - after a refused declaration, an `in_progress` item whose search found nothing ends
+     `completed`, never `skipped`, and the choice then fires (B, with the router's dispose row);
    - research-exhaustiveness beside an item waiting on an upload declines, lists it as
      `handed_to_user` with its URL, and offers upload or conclude.
 8. **Phase 0's hosted arm on the phase 1 build:** the second step is denied on both planes.  **SUPERSEDED by decision 25**: the boundary is a halt, on the FS prototype only
@@ -1256,7 +1333,8 @@ in parallel with PR 2.
 ## Coordinates with
 - **PR #3262 and `research-as-a-job-later.md` (Praise):** see "Integrating with
   research-as-a-job".
-- **Issue #2813 (Praise):** phase 2 replaces its `research_delivered` exit; H keeps its routing.
+- **Issue #2813 (Praise):** phase 2 replaces its `research_delivered` exit (pending the "Open, for
+  Praise" question in phase 2); H keeps its routing.
 - **PR #3479 (clack391):** it rewrites the router rows this plan edits. research-plan's prose
   changes land in this plan's research-plan prep PR after it merges.
 - **PR #3494** (`question-state.ts`, the router) and **PR #3476** (`proof-conclusion.md`).
@@ -1264,6 +1342,27 @@ in parallel with PR 2.
 - **Issue #1830:** plan-time breadth for completeness questions.
 - **Issue #2243 and its handed-state follow-up:** the parallel prerequisites.
 - **Issue #3384:** fast project creation, so a PID one-shot needs no extra prompt.
+- **Issue #3516 (`docs/plan/attached-records-baseline.md`):** its PR B is a prerequisite
+  (Phases). Its setup baseline is tool calls, so it adds no step boundary. It writes the
+  subject's timeline that E's priority-3 rewrite and research-plan read.
+  - Its PR D edits `agents/timeline.md`, `person-evidence.md`, `question-selection.md` and
+    `research/SKILL.md`, bodies the prep PRs and PR 2 also edit, so whichever lands second
+    re-runs those four suites.
+  - Its PR D and PR 2 land in either order. If PR D is first, E's rewrite, which moves
+    Priority 3 to research-plan, also deletes PR D's Priority 3 gate and the timeline
+    sentence PR D adds to the "Fresh project" edge case, and keeps PR D's first-question
+    test passing. If PR 2 is first, PR D drops its question-selection.md edit, keeps the
+    test, and adds the setup report's attached-records line.
+- **PR #3583** (merged): added a "none linked → person-evidence" rung to the ladder. B's choice
+  arm sits below it, so a declined question with unlinked evidence is linked first.
+- **Issue #3153:** the hints plan item, an errand in the search step (D). It creates the hints
+  item, its marker and its router row. Whichever of issue #3153 and PR 2 lands second adds the
+  errand form: the router row dispatching the hints item after the step's first search-group
+  spawn, and the waiting arm for the hints marker in the shared helper and its `step_ctx`
+  mirror.
+- **Issue #3568 (option D, adopted 2026-10-20):** once built, a callee no research test runs
+  live stops staling the research suite, which removes most of the extra research runs in
+  Costs.
 
 ## Costs
 - **About +20–30% model calls** per run, roughly two per step boundary. "Keep going" runs pay
@@ -1277,4 +1376,12 @@ in parallel with PR 2.
   `hypothesis-tracking`, `timeline` and `proof-conclusion` in the prep PRs; `research`,
   `research-exhaustiveness`, `person-evidence` and `question-selection` in PR 2; second runs of
   `conflict-resolution` and `proof-conclusion` in the conflict PR; `search-records` in phase 2; plus `make hook-smoke`.
+- **Plus the suites a callee edit stales, until issue #3568's option D is built:**
+  - each of the research-plan, conflict-resolution, hypothesis-tracking and proof-conclusion
+    prep PRs also stales `research`: four more runs, and a fifth if the conflict PR lands
+    after PR 2's research run;
+  - the research-plan prep PR and PR 2's research-exhaustiveness edit each stale
+    `search-records` until PR #3567 makes it an agent: two more runs;
+  - at the last runs' prices that is about $23–29 for research and $25 for search-records,
+    before annotation.
 - **The biggest single build** is the e2e persistent session.

@@ -180,3 +180,98 @@
   outline: 2px solid var(--accent-gold-strong);
   outline-offset: 1px;
 }
+
+/* The off-plan group's header row. Deliberately quiet: it is a boundary in the
+   reading order, not an alarm — the work it introduces is legitimate, it is just
+   work the plan never named. */
+.offPlanHeader {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  /* `--color-text-muted`, `--color-surface-subtle` and `--color-border` were never
+     tokens in this theme -- nothing defines them -- so all three `var()`s fell through
+     to their hardcoded LIGHT fallbacks and ignored the theme entirely. In dark mode this
+     row was a near-white bar carrying grey text, which is the one row in the table you
+     could not read. The real tokens carry a dark value too. */
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+/* The collapsed row's identity line — who/where/when the search was for. Quiet and
+   secondary to the tool name: it disambiguates, it does not compete. */
+.entryIdentity {
+  display: block;
+  font-size: 0.8rem;
+  /* Same undefined token as above: #666 on a #1a1714 background in dark mode. */
+  color: var(--text-secondary);
+}
+
+
+/* --- The "when" column ------------------------------------------------------------
+   Was `2026-05-01T10:15:00Z` on one line: a wire format shown to a genealogist, and the
+   widest thing in the narrowest column. Date over time reads better AND is narrower,
+   which is part of what lets six columns fit without scrolling sideways. */
+.whenCell {
+  white-space: nowrap;
+}
+
+.whenDate {
+  display: block;
+}
+
+.whenTime {
+  display: block;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* --- Horizontal scrolling, only when it is genuinely needed ------------------------
+   The table used to overflow the SECTION, so the whole pane scrolled sideways and the
+   header scrolled away with it. It now scrolls inside its own box, and only once the
+   pane is narrower than the table can usefully compress -- which on a desktop means
+   when the reader has zoomed in or dragged the splitter hard over, not at rest.
+
+   `min-width` is what makes that true. Without it the table keeps compressing until the
+   columns are unreadable slivers and no scrollbar ever appears; with it, the columns stop
+   shrinking at a legible floor and the box scrolls instead. 520px is the table's natural
+   width once the timestamp is split and the gutters are no longer doubled. */
+.tableScroll {
+  overflow-x: auto;
+}
+
+.tableScroll > table {
+  /* The floor at which the columns stop compressing and the box scrolls instead. Derived
+     by measuring the widest cell per column with wrapping allowed, not picked: below this
+     the tool and results columns break mid-word. */
+  min-width: 420px;
+}
+
+/* Wrapping is what lets the table compress at all. These three were `nowrap`, so the
+   table's natural width was the sum of its longest single-line cells -- 569px against a
+   407px pane -- and no amount of available width could ever be enough. */
+.tableScroll th,
+.tableScroll td {
+  /* Tighter horizontal padding than the 12px other sections use. Six columns pay this
+     twelve times over: at 12px it is 144px of the table, which on a narrow pane is the
+     difference between fitting and scrolling. Vertical padding is untouched -- rows need
+     the breathing room and height is not what is scarce. */
+  padding-left: var(--spacing-sm);
+  padding-right: var(--spacing-sm);
+}
+
+.tableScroll th {
+  white-space: normal;
+  /* 0.5px across ~55 header characters is another ~28px spent on letterform spacing. */
+  letter-spacing: 0.2px;
+}
+
+.entryIdentity {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.tableScroll .linkList {
+  flex-wrap: wrap;
+  white-space: normal;
+}

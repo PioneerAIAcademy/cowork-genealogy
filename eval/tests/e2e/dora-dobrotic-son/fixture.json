@@ -1,0 +1,19 @@
+{
+  "id": "dora-dobrotic-son",
+  "name": "Dora Dobrotić — a son Jacobus baptised in 1871, Križovljan Radovečki, Croatia",
+  "genre": "record-hint",
+  "source_pid": "K48B-4CP",
+  "captured": "2026-10-20",
+  "researcher_question": "Which children were born to Dora (Dorothea) Dobrotić, born about 1841 at Veliki Lovrečan, Varaždin, Croatia, and her husband Franjo Korotaj?",
+  "tags": {
+    "question_type": "children",
+    "era": "1870s",
+    "geography": "HR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 7, hint-samples.csv row 228, flag adds_son, confidence 3). Draft transcribed from a Croatian Catholic church-book entry indexing the baptism of Jacobus Korota on 3 April 1871 at Križovljan Radovečki, son of Franciscus Korota and Dorothea Dobrotić; unverified. The entry's image sits in a Kotoriba death register for 1890-1917, so the record type itself needs checking."
+}

@@ -1,0 +1,38 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Maria Vázsan was the wife of János Czibula; the couple's daughter Maria Czibula was baptised at Bojnice on 9 June 1900.",
+      "details": {
+        "subject_person": "Maria Vázsan (LJTH-GRX)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "János Czibula"
+        }
+      },
+      "supporting_sources": [
+        "Slovakia, Church and Synagogue Books, 1592-1935 — baptism of Maria Czibula, Bojnice, 9 Jun 1900, daughter of János Czibula and Maria Vázsan"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Maria Vázsan and János Czibula had a daughter, Maria Czibula, baptised at Bojnice on 9 June 1900.",
+      "details": {
+        "subject_person": "Maria Vázsan (LJTH-GRX)",
+        "relation": "child",
+        "target_person": {
+          "name": "Maria Czibula",
+          "baptism": "9 June 1900, Bojnice, Prievidza, Slovakia"
+        },
+        "father": "János Czibula"
+      },
+      "supporting_sources": [
+        "Slovakia, Church and Synagogue Books, 1592-1935 — baptism of Maria Czibula, Bojnice, 9 Jun 1900, daughter of János Czibula and Maria Vázsan"
+      ],
+      "required": true
+    }
+  ]
+}

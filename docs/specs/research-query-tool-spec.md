@@ -45,9 +45,10 @@ cost, in skills `project_context` doesn't serve, for content
 research_query({
   projectPath: string,
   section: "questions" | "plans" | "log" | "sources" | "assertions"
-         | "person_evidence" | "conflicts" | "hypotheses" | "timelines"
+         | "person_evidence" | "rejected_links" | "conflicts" | "hypotheses" | "timelines"
          | "proof_summaries" | "evaluations" | "localities"
          | "external_collections",   // reads external-collections.json, not research.json — §2.4
+  orderBy?: "review",            // person_evidence only — §2.5
   // well-known filters — only some apply to a given section; see §2.1.
   // The four id keys also take a list (≤50 ids) — §2.1, "Lists of ids".
   recordId?: string | string[],
@@ -89,6 +90,7 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | | `questionId` | `extracted_for_question_ids` | contains |
 | `person_evidence` | `personId` | `person_id` | exact |
 | | `assertionId` | `assertion_id` | exact |
+| `rejected_links` | — | — | no filters; the whole section is small by construction |
 | `conflicts` | `assertionId` | `competing_assertion_ids` | contains |
 | | `questionId` | `blocks_question_ids`, OR a `competing_assertion_ids` entry whose assertion's `extracted_for_question_ids` contains the value — the link the completion gate derives; any status, so a resolved conflict (whose `blocks_question_ids` is empty) still answers for its question | via assertions |
 | | `status` | `status` | exact |
@@ -222,6 +224,25 @@ with `rows: []`, and a place name in another form (`Pennsylvania` for the stored
 `Pennsylvania, United States`) all answer it. To tell "fetched, nothing here"
 from "never fetched", read `project_context`'s `externalCollections`, which lists
 every fetched place, `total: 0` included.
+
+
+### 2.5 `orderBy: "review"` — ordering `person_evidence` by consequence
+
+By default `items` are in document order, and that is deliberate: it is what every
+committed run replays against, so changing it rewrites recorded truth.
+
+`orderBy: "review"` orders `person_evidence` by how much a wrong link would cost —
+a recorded `core_identifier_conflict` first, then `speculative` over `probable` over
+`confident`, then a missing `match_score`. It only matters because of paging: a run
+that wrote 311 links shows 50 at a time, so the ordering decides which links a
+reviewer ever sees.
+
+The response then carries `reviewReasons`, keyed by link id, naming why each ranked
+link sits where it does — a rank with no reason is a number to distrust. Links with
+nothing notable carry no entry, and the key is absent when none do.
+
+Ignored for every other section: a plan's items are sequenced, and reordering them
+would destroy meaning rather than add it.
 
 ## 3. Decisions recorded
 
