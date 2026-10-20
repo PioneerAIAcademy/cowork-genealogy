@@ -295,18 +295,72 @@ async function recordIdsMode(
     }
   });
 
+  const assertionLogIds = new Set(
+    (Array.isArray(research.assertions) ? research.assertions : []).map((a: any) => a?.log_entry_id),
+  );
+  const reusedHint = new Set<string>();
+  for (const o of outcomes) {
+    if (o.status !== "extracted" || !o.stagedRef) continue;
+    o.logId = acceptedHintLogId(research, arkToBareId(o.recordId), assertionLogIds);
+    if (o.logId) reusedHint.add(o.recordId);
+  }
+
+  // 2b. Household skip. record_search returns one hit per household member,
+  //     each under its own persona ARK, so step 1 cannot see that a member's
+  //     record is already extracted. The staged record names every persona: a
+  //     record whose persona ARKs are already cited is skipped, and so is a
+  //     later record in this call that is one already in it. A record with an
+  //     accepted hint is never skipped, so its hint entry is cited. Nothing is
+  //     logged for a skipped record; its staged file ages out.
+  const docs = new Map<string, ExtractDocument>();
+  const households = new Map<string, Set<string>>();
+  for (const o of outcomes) {
+    if (o.status !== "extracted" || !o.stagedRef) continue;
+    try {
+      const doc = findStagedDoc(await readStagedResults(input.projectPath, o.stagedRef), o.recordId);
+      if (!doc) continue;
+      docs.set(o.recordId, doc);
+      const arks = new Set<string>();
+      for (const p of Array.isArray(doc.gedcomx?.persons) ? doc.gedcomx.persons : []) {
+        if (typeof (p as { ark?: unknown })?.ark === "string") arks.add(arkToBareId((p as { ark: string }).ark));
+      }
+      if (arks.size > 0) households.set(o.recordId, arks);
+    } catch {
+      // Step 4 reads it again and reports the error.
+    }
+  }
+  const sameAs = new Map<string, RecordOutcome>();
+  const leads: RecordOutcome[] = [];
+  const hintFirst = [
+    ...outcomes.filter((o) => reusedHint.has(o.recordId)),
+    ...outcomes.filter((o) => !reusedHint.has(o.recordId)),
+  ];
+  for (const o of hintFirst) {
+    const arks = households.get(o.recordId);
+    if (o.status !== "extracted" || !arks) continue;
+    if (!reusedHint.has(o.recordId)) {
+      const existing = sourceIdsForRecordIds(research, arks);
+      if (existing.size > 0) {
+        o.status = "already_extracted";
+        o.srcId = [...existing][0];
+        o.summary = `${o.recordId}: already extracted as ${o.srcId} (same household); nothing written.`;
+        continue;
+      }
+      const own = arkToBareId(o.recordId);
+      const lead = leads.find((l) => households.get(l.recordId)!.has(own) || arks.has(arkToBareId(l.recordId)));
+      if (lead) {
+        o.status = "already_extracted";
+        sameAs.set(o.recordId, lead);
+        continue;
+      }
+    }
+    leads.push(o);
+  }
+
   const staged = outcomes.filter((o) => o.status === "extracted" && o.stagedRef);
   if (staged.length > 0) {
     // 3. ONE log batch for every read, except a record an accepted hint already
     //    logged: that entry is the record's own and is reused, never a second.
-    const assertionLogIds = new Set(
-      (Array.isArray(research.assertions) ? research.assertions : []).map((a: any) => a?.log_entry_id),
-    );
-    const reusedHint = new Set<string>();
-    for (const o of staged) {
-      o.logId = acceptedHintLogId(research, arkToBareId(o.recordId), assertionLogIds);
-      if (o.logId) reusedHint.add(o.recordId);
-    }
     const fresh = staged.filter((o) => !o.logId);
     const logged = fresh.length === 0
       ? { ok: true as const, results: [] as { logId: string; resultsRef?: string | null }[] }
@@ -339,14 +393,9 @@ async function recordIdsMode(
     //    it to be written.
     for (const o of staged) {
       if (o.status !== "extracted" || !o.logId) continue;
-      let doc: ExtractDocument | undefined;
+      let doc = docs.get(o.recordId);
       try {
-        const rows = await readStagedResults(input.projectPath, o.stagedRef!);
-        const key = arkToBareId(o.recordId);
-        doc = rows.find((r: any) => {
-          const id = r?.recordId ?? r?.id;
-          return typeof id === "string" && arkToBareId(id) === key;
-        }) as ExtractDocument | undefined;
+        doc ??= findStagedDoc(await readStagedResults(input.projectPath, o.stagedRef!), o.recordId);
       } catch (e) {
         o.status = "refused";
         o.summary = `${o.recordId}: logged as ${o.logId}, but its sidecar could not be read: ${e instanceof Error ? e.message : String(e)}.`;
@@ -385,10 +434,31 @@ async function recordIdsMode(
     }
   }
 
+  // A household duplicate in this call takes its lead's result.
+  for (const [recordId, lead] of sameAs) {
+    const o = outcomes.find((x) => x.recordId === recordId)!;
+    if (lead.status === "extracted" && lead.srcId) {
+      o.srcId = lead.srcId;
+      o.summary = `${o.recordId}: already extracted as ${lead.srcId} (same household as ${lead.recordId}); nothing written.`;
+    } else {
+      o.status = "refused";
+      o.summary = `${o.recordId}: not extracted: same household as ${lead.recordId}, which was not extracted.`;
+    }
+  }
+
   return {
     ok: outcomes.some((o) => o.status === "extracted" || o.status === "already_extracted"),
     records: outcomes.map(({ stagedRef: _s, ...rest }) => rest),
   };
+}
+
+/** The staged sidecar row for `recordId`, matched on its bare ARK id. */
+function findStagedDoc(rows: unknown[], recordId: string): ExtractDocument | undefined {
+  const key = arkToBareId(recordId);
+  return rows.find((r: any) => {
+    const id = r?.recordId ?? r?.id;
+    return typeof id === "string" && arkToBareId(id) === key;
+  }) as ExtractDocument | undefined;
 }
 
 /**

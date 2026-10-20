@@ -737,6 +737,85 @@ describe("extraction_append: recordIds and absences", () => {
     expect((await research()).sources).toHaveLength(1);
   });
 
+  // ─── one household, one source (issue #3543) ─────────────────────────────────
+
+  /** Two members of one census household: the same record, read through each
+   *  member's own persona ARK, as record_search returns them. */
+  const household = () => {
+    const a = element("census-1850-no-relationship-column");
+    const memberArk = a.gedcomx.persons.map((p: any) => p.ark).find((k: string) => arkToBareId(k) !== arkToBareId(a.recordId));
+    return { a, b: { ...a, recordId: arkToBareId(memberArk) } };
+  };
+
+  it("skips a household member of a record already extracted, before logging", async () => {
+    const { a, b } = household();
+    await runExtractionAppend({ projectPath: dir, recordIds: [a.recordId] }, readerFor([a]) as any, LOCAL);
+    const before = await research();
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [b.recordId] }, readerFor([b]) as any, LOCAL);
+    expect(r.ok).toBe(true);
+    expect(r.records[0].status).toBe("already_extracted");
+    expect(r.records[0].srcId).toBe(before.sources[0].id);
+    expect(r.records[0].summary).toMatch(/already extracted as src_\d+ \(same household\)/);
+    expect(await research()).toEqual(before);
+  });
+
+  it("writes one source when two household members arrive in one call", async () => {
+    const { a, b } = household();
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [a.recordId, b.recordId] }, readerFor([a, b]) as any, LOCAL);
+    expect(r.records.map((o) => o.status)).toEqual(["extracted", "already_extracted"]);
+    expect(r.records[1].srcId).toBe(r.records[0].srcId);
+    const after = await research();
+    expect(after.sources).toHaveLength(1);
+    expect(after.log).toHaveLength(1);
+  });
+
+  it("refuses the household duplicate when the first member's write is refused", async () => {
+    const { a, b } = household();
+    failWriteFor.recordId = a.recordId;
+    const r = await runExtractionAppend(
+      { projectPath: dir, recordIds: [a.recordId, b.recordId] },
+      readerFor([a, b]) as any,
+      LOCAL,
+    ).finally(() => {
+      failWriteFor.recordId = null;
+    });
+    expect(r.ok).toBe(false);
+    expect(r.records.map((o) => o.status)).toEqual(["refused", "refused"]);
+    expect(r.records[1].summary).toMatch(/same household as .*not extracted/);
+    expect((await research()).sources).toHaveLength(0);
+  });
+
+  it("still extracts a household member with an accepted hint, so the hint's entry is cited", async () => {
+    const { a, b } = household();
+    await runExtractionAppend({ projectPath: dir, recordIds: [a.recordId] }, readerFor([a]) as any, LOCAL);
+    const res = await research();
+    await seedLog([...res.log, hintEntry("log_009", b.recordId)]);
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [b.recordId] }, readerFor([b]) as any, LOCAL);
+    expect(r.records[0].status).toBe("extracted");
+    expect(r.records[0].logId).toBe("log_009");
+    const after = await research();
+    const cited = new Set(after.assertions.map((x: any) => x.log_entry_id));
+    expect(after.log.filter((e: any) => e.outcome === "positive" && !cited.has(e.id))).toEqual([]);
+  });
+
+  it("never groups records that carry no persona ARKs, even when their person ids collide", async () => {
+    const strip = (el: any, rid: string) => ({
+      ...el,
+      recordId: rid,
+      gedcomx: { ...el.gedcomx, persons: el.gedcomx.persons.map(({ ark: _a, ...p }: any, i: number) => ({ ...p, id: `p_${i + 1}` })) },
+    });
+    const one = strip(element("census-1850-no-relationship-column"), "AAAA-001");
+    const two = strip(element("death"), "AAAA-002");
+    const three = strip(element("baptism"), "AAAA-003");
+    const r = await runExtractionAppend(
+      { projectPath: dir, recordIds: ["AAAA-001", "AAAA-002", "AAAA-003"] },
+      readerFor([one, two, three]) as any,
+      LOCAL,
+    );
+    expect(r.records.map((o) => o.status)).toEqual(["extracted", "extracted", "extracted"]);
+    expect((await research()).sources).toHaveLength(3);
+  });
+
   it("refuses two call shapes together, naming both", async () => {
     const r = await runExtractionAppend(
       { projectPath: dir, recordIds: ["X"], absences: [] } as any,
