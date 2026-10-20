@@ -588,7 +588,7 @@ Array of question objects.
 | `justification` | string or null | no | Prose explaining why the search stopped |
 | `log_entry_ids` | string[] | yes | Log entry IDs supporting the stop claim (required non-empty when `stopped_because` is a gate value) |
 | `stop_criteria` | object or null | yes | Null when `stopped_because` is null or a non-gate value; required object when `stopped_because` is a gate value. Always present as a key (null, not omitted) for consistency. See below |
-| `not_reached` | object[] | yes | Sources that could not be reached, each with `kind`, `description`, and optional `wiki_title`. See below |
+| `not_reached` | object[] | yes | Sources that could not be reached, each with `kind`, `description`, `log_entry_id` and `wiki_title` (both nullable). May be empty. See below |
 
 **`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences).
 
@@ -602,7 +602,7 @@ Array of question objects.
 | `conflict_resolution` | string | yes | Have all discrepancies been resolved through reasoning? |
 | `overturn_risk` | string | yes | What is the likelihood that new evidence would overturn this conclusion? |
 
-**`not_reached` entries** — Each entry records a source that could not be accessed during the search. Built only from things the agent already produces — never from claims about what might exist offline.
+**`not_reached` entries** — Each entry records a source that could not be accessed during the search. Built only from things the agent already produces — never from an uncited claim about what might exist offline. A `wiki_named_untouched` entry repeats a claim made by a wiki page the project read, and names that page in `wiki_title`.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -610,6 +610,13 @@ Array of question objects.
 | `description` | string | yes | Brief description of what could not be reached |
 | `log_entry_id` | string or null | yes | Log entry that corroborates the barrier; null when no direct search produced it |
 | `wiki_title` | string or null | yes | FamilySearch Research Wiki page title; non-null when `kind` is `wiki_named_untouched`; null otherwise |
+
+**Where `handed_to_user` entries come from (lead, 2026-10-16).** research-exhaustiveness builds them from the research log, not from `project_context.awaitingUser`. A hand-off is an `external_site` log entry on the question's plan items with `outcome: "partial"` and `capture_received: false`. It stays an entry unless a *later* entry in `log[]` on the same question's plan items with the same `url_generated` has `capture_received: true`. Those are the entries `research_query` returns for the question, and where a capture for the hand-off is logged. A later entry without a capture, such as a `negative` the agent wrote because it had no subscription, does not close it, and `log_entry_id` names the original hand-off, not the closer. Why: `closesHandOff` (`project-context.ts`) closes a row on any later non-`partial` entry, including one the agent wrote itself, so in an October 2026 alpha session `awaitingUser` dropped an agent-closed Ancestry civil-register hand-off, and the user was told the record was unreachable without being given the link again. Considered and not chosen:
+- Widening `awaitingUser`: a "no access" reply would stop closing a row, so the user would be shown links they cannot open as still waiting on them.
+- A new `project_context` field: a tool-contract change for data the log already holds.
+- A `research_append` precondition refusing a `search_stop` that omits an uncaptured hand-off: engine work for 1 agent-closed hand-off in 209 committed e2e runs. This is the escalation if an e2e run shows the agent missing entries.
+
+`paywalled` is for a paywalled hit that was never handed to the user. `wiki_named_untouched` entries come from the `guide_markdown` of a locality the project already holds. `wiki_title` is the page title from `pages_read[].url` (the segment after `/wiki/`), never the `pages_read[].section` enum, which the validator would also accept.
 
 ### 5.3 `plans`
 
