@@ -1,0 +1,22 @@
+{
+ "log_id": "log_016",
+ "tool": "record_search",
+ "retrieved": "2026-10-20T16:04:49.927Z",
+ "returned_count": 0,
+ "payload": {
+  "query": {
+   "count": 20,
+   "givenName": "Elizabeth",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2",
+   "recordType": "marriage",
+   "spouseSurname": "Barker",
+   "surname": "Turnbow"
+  },
+  "totalMatches": 2715,
+  "paginationCappedAt": 4999,
+  "returned": 20,
+  "offset": 0,
+  "hasMore": true,
+  "results": []
+ }
+}

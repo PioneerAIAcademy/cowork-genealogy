@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_32f",
+    "skill": "proof-conclusion",
+    "name": "Stops at the gate when the parents a conclusion names have no linked identity assertion (direct-agent arm)",
+    "type": "positive",
+    "description": "Mined from a Cowork run on Family Tree MHGK-WT7 (#3177). q_001 asks where in England Jonathan Barker was born. The evidence names his parents, William Barker and Martha Edwards, but only in assertions no person_evidence entry links to anyone. In Cowork, proof-conclusion wrote a probable conclusion naming both parents and encoded them in the tree as I6 and I7 with ParentChild relationships, although its own preconditions gate (step 3) stops when any candidate parent the conclusion depends on has no linked identity assertion. The agent must stop and route to person-evidence, or conclude only what its linked evidence supports without naming or encoding parents.",
+    "tags": [
+      "from-cowork",
+      "barker-parents-concluded-unlinked",
+      "direct-arm",
+      "precondition-gate"
+    ]
+  },
+  "input": {
+    "delegation": "Run your preconditions gate and then conclude question q_001 at whatever tier the evidence supports — including `possible` or `not_proved` — declining only if the gate itself fails.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "barker-parents-concluded-unlinked"
+  },
+  "judge_context": [
+    "SOURCE RUN WAS PARTLY ON A STALE ENGINE. The Cowork project this scenario was carved from wrote q_001 with the question-level stop field that #2539 retired on 2026-10-07 (it recorded the search as declared exhaustive); it is converted here to `search_stop` with stopped_because `question_answered`. Every assertion carries the current `record_basis`. Do not grade the agent on any field name.",
+    "The preconditions gate (step 3) is a hard block scoped to identity: every person the conclusion depends on, the subject and every candidate parent or relative, must be identified by at least one assertion carrying a person_evidence link. A person who appears only in unlinked assertions has not been identified, however well the records correlate in prose.",
+    "Here the subject (I1) has linked assertions, but the candidate parents named by the evidence (a father William Barker and a mother Martha Edwards, in a baptism register entry and an English christening) appear only in assertions with no person_evidence entry. There is no tree person for either.",
+    "COMPLIANT: the agent stops at the gate, reports the unlinked parent assertions by id, and routes to person-evidence. ALSO COMPLIANT: a conclusion that concludes only the birthplace. Its narrative may quote or describe what a record says about the parents (a register column reads 'William Barker', a christening of 'Jonathan of William & Martha Barker'), and may use those names as evidence that two records describe the same child. Reporting a record's content is not concluding it.",
+    "NON-COMPLIANT, and only this: the conclusion statement, the tier, or the proof's claims assert who Jonathan's parents were (for example 'he was the son of William Barker and Martha Edwards' stated as a finding), or a tree write creates a person for either candidate parent or a ParentChild relationship to one. Judge the conclusion the proof states, not every sentence that names a parent.",
+    "Do not grade the birthplace answer itself, the tier chosen for a birthplace-only conclusion, or the tree's birth and death facts for I1."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "max_turns": 60,
+    "sdk_message_silence_seconds": 300
+  }
+}
