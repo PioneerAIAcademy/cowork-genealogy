@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import case, distinct, func
 from sqlmodel import Session, select
 
-from .agent.spend import TOKEN_CLASSES, rates_for
+from .agent.spend import TOKEN_CLASSES, cache_write_1h_rate, rates_for
 from .db import get_engine
 from .models import ApiCall, TurnCost, User, utcnow
 from .sessions import SESSION_MAX_AGE
@@ -86,6 +86,7 @@ def _calls(session: Session, cutoff: datetime, emails: dict[str, str],
         ApiCall.model, spent, func.count(),
         func.sum(ApiCall.input_tokens), func.sum(ApiCall.cache_creation_input_tokens),
         func.sum(ApiCall.cache_read_input_tokens), func.sum(ApiCall.output_tokens),
+        func.sum(ApiCall.cache_creation_1h_input_tokens),
     ).where(since).group_by(ApiCall.model).order_by(spent.desc())).all()
     out += ["", "Every call, by model"] + _table(
         ["model", "cost", "calls", "% of cost"],
@@ -107,27 +108,53 @@ def _calls(session: Session, cutoff: datetime, emails: dict[str, str],
          for a, e, c, k, ctx, o in agents],
     )
 
-    priced = [0.0] * len(TOKEN_CLASSES)
-    for m, _, _, *tokens in models:
+    # Cache writes split by TTL: the 1h ones at 2x input, the rest at the 5-minute rate.
+    names = ["input", "cache write 5m", "cache write 1h", "cache read", "output"]
+    priced = [0.0] * len(names)
+    for m, _, _, inp, writes, reads, outp, one_hour in models:
         rates = rates_for(m)
-        for i, (name, t) in enumerate(zip(TOKEN_CLASSES, tokens)):
-            priced[i] += t / 1_000_000 * rates[name]
+        # None: every row in the group was recorded before the 1h column existed.
+        one_hour = min(one_hour or 0, writes or 0)
+        for i, value in enumerate((
+                inp / 1_000_000 * rates["input"],
+                (writes - one_hour) / 1_000_000 * rates["cache_write"],
+                one_hour / 1_000_000 * cache_write_1h_rate(rates),
+                reads / 1_000_000 * rates["cache_read"],
+                outp / 1_000_000 * rates["output"])):
+            priced[i] += value
     whole = sum(priced) or 1
     out += ["", "Every call, by token type"] + _table(
         ["tokens", "cost", "% of cost"],
-        [[name.replace("_", " "), f"${p:,.2f}", round(100 * p / whole)]
-         for name, p in zip(TOKEN_CLASSES, priced)],
+        [[name, f"${p:,.2f}", round(100 * p / whole)] for name, p in zip(names, priced)],
     )
+
+    # The share of each session's cache writes that were 1-hour, main thread and the rest:
+    # the visibility check for `prompt_cache_ttl_main` (only `main` should move). A main
+    # thread's compaction call writes 5-minute entries yet is named `main`, so `1h main`
+    # sits a little under 100% with the switch on.
+    is_main = ApiCall.agent == "main"
+    one_hour = func.coalesce(ApiCall.cache_creation_1h_input_tokens, 0)
+
+    def written(cond, col):
+        return func.coalesce(func.sum(case((cond, col), else_=0)), 0)
 
     worst = session.exec(select(
         ApiCall.project_id, ApiCall.user_id, spent, func.count(),
         func.max(ApiCall.session_age_s), func.max(ApiCall.created),
+        written(is_main, one_hour), written(is_main, ApiCall.cache_creation_input_tokens),
+        written(~is_main | ApiCall.agent.is_(None), one_hour),
+        written(~is_main | ApiCall.agent.is_(None), ApiCall.cache_creation_input_tokens),
     ).where(since).group_by(ApiCall.project_id, ApiCall.user_id)
         .order_by(spent.desc()).limit(top)).all()
+
+    def share(part, whole):
+        return f"{100 * part / whole:.0f}%" if whole else "-"
+
     out += ["", f"Every call, the {len(worst)} most expensive sessions"] + _table(
-        ["session", "cost", "calls", "user", "age", "last call"],
-        [[pid, f"${c:,.2f}", k, emails.get(uid, uid), _age(age), last.strftime("%Y-%m-%d %H:%M")]
-         for pid, uid, c, k, age, last in worst],
+        ["session", "cost", "calls", "user", "age", "last call", "1h main", "1h other"],
+        [[pid, f"${c:,.2f}", k, emails.get(uid, uid), _age(age), last.strftime("%Y-%m-%d %H:%M"),
+          share(m1h, mw), share(o1h, ow)]
+         for pid, uid, c, k, age, last, m1h, mw, o1h, ow in worst],
     )
     return summary, out
 

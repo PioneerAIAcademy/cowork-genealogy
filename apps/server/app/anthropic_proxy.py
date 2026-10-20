@@ -30,7 +30,7 @@ from fastapi import APIRouter, Request, Response
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
 
-from .agent.spend import price_usd, usage_tokens
+from .agent.spend import price_usd, usage_cache_write_1h, usage_tokens
 from .config import get_settings
 from .db import get_engine
 from .models import ApiCall, Project, utcnow
@@ -170,6 +170,7 @@ class _UsageMeter:
         self._event = b""
         self._model: str | None = None
         self._usage: dict[str, int] = {}
+        self._split: dict = {}
 
     def feed(self, chunk: bytes) -> None:
         self._buf += chunk
@@ -191,9 +192,11 @@ class _UsageMeter:
             data = json.loads(raw)
             body = data.get("message") or data
             self._model = body.get("model") or self._model
-            self._usage.update(
-                (k, v) for k, v in (body.get("usage") or {}).items() if isinstance(v, int)
-            )
+            usage = body.get("usage") or {}
+            self._usage.update((k, v) for k, v in usage.items() if isinstance(v, int))
+            # The 5m/1h split is a nested object, which the int filter above drops.
+            if isinstance(usage.get("cache_creation"), dict):
+                self._split = usage["cache_creation"]
         except Exception:  # noqa: BLE001 — never into the relay
             log.warning("proxy: unreadable usage for project %s", self._project.id)
 
@@ -207,6 +210,7 @@ class _UsageMeter:
             if self._model is None and not self._usage:
                 return
             tokens = usage_tokens(self._usage)
+            one_hour = min(usage_cache_write_1h({"cache_creation": self._split}), tokens[1])
             created = self._project.created
             if created.tzinfo is None:  # SQLite hands back naive datetimes
                 created = created.replace(tzinfo=timezone.utc)
@@ -218,7 +222,8 @@ class _UsageMeter:
                 cache_creation_input_tokens=tokens[1],
                 cache_read_input_tokens=tokens[2],
                 output_tokens=tokens[3],
-                cost_usd=price_usd(tokens, self._model),
+                cache_creation_1h_input_tokens=one_hour,
+                cost_usd=price_usd(tokens, self._model, cache_write_1h=one_hour),
                 session_age_s=int((utcnow() - created).total_seconds()),
             ), self._request_body)
         except Exception:  # noqa: BLE001 — the relay's finally must reach aclose()

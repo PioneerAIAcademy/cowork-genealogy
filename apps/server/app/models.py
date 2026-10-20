@@ -117,3 +117,7 @@ class ApiCall(SQLModel, table=True):
     # sessions resume at their creation-time level. Null when the request carried none,
     # and on rows written before the column existed.
     effort: str | None = None
+    # How many of `cache_creation_input_tokens` were 1-hour writes (the response's
+    # `cache_creation.ephemeral_1h_input_tokens`), priced at 2x input against 1.25x for the
+    # rest. Null on rows recorded before the split was captured.
+    cache_creation_1h_input_tokens: int | None = None
