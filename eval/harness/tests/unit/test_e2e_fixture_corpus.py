@@ -66,6 +66,77 @@ def test_starting_tree_is_a_subset_of_its_unstripped_tree(fixture_dir: Path):
     assert starting_pids <= unstripped_pids
 
 
+# --- a record-hint fixture strips nothing ------------------------------
+#
+# Its answer is a record, never part of the tree, so its starting tree is the
+# snapshot as-is and its unstripped tree is committed identical to it
+# (e2e-test-spec.md §3.6). `author.py validate` checks that at authoring time;
+# nothing checked it in CI, so stripping a source to quiet the attached-
+# evidence leak check would have gone green with a broken fixture.
+
+
+def record_hint_tree_mismatch(fixture_dir: Path) -> str | None:
+    """Why this record-hint fixture's two trees are not the same tree, or None."""
+    slug = fixture_dir.name
+    if not (fixture_dir / "unstripped-tree.gedcomx.json").exists():
+        return (
+            f"{slug}: a record-hint fixture commits unstripped-tree.gedcomx.json identical to its "
+            f"starting tree — run `author.py strip --slug {slug} --none`"
+        )
+    if _load(fixture_dir, "unstripped-tree.gedcomx.json") != _load(fixture_dir, "starting-tree.gedcomx.json"):
+        return (
+            f"{slug}: genre 'record-hint' strips nothing, but its starting and unstripped trees differ — "
+            f"re-run `author.py strip --slug {slug} --none`, or fix the genre"
+        )
+    return None
+
+
+@pytest.mark.parametrize(
+    "fixture_dir",
+    [p for p in FIXTURE_DIRS if _load(p, "fixture.json").get("genre") == "record-hint"]
+    if FIXTURE_DIRS
+    else [],
+    ids=lambda p: p.name,
+)
+def test_a_record_hint_fixture_strips_nothing(fixture_dir: Path):
+    assert record_hint_tree_mismatch(fixture_dir) is None
+
+
+def _record_hint_copy(tmp_path: Path, tree: dict, unstripped_text: str | None) -> Path:
+    d = tmp_path / "fx"
+    d.mkdir()
+    (d / "starting-tree.gedcomx.json").write_text(json.dumps(tree), encoding="utf-8")
+    if unstripped_text is not None:
+        (d / "unstripped-tree.gedcomx.json").write_text(unstripped_text, encoding="utf-8")
+    return d
+
+
+_TREE = {
+    "persons": [{"id": "P1", "names": [{"given": "Ann"}], "sources": [{"ref": "S1"}, {"ref": "S2"}]}],
+    "relationships": [],
+    "sources": [{"id": "S1", "title": "a"}, {"id": "S2", "title": "b"}],
+}
+
+
+def test_a_stripped_source_fails_the_record_hint_check(tmp_path):
+    stripped = json.loads(json.dumps(_TREE))
+    stripped["persons"][0]["sources"] = [{"ref": "S1"}]
+    stripped["sources"] = [{"id": "S1", "title": "a"}]
+    d = _record_hint_copy(tmp_path, stripped, json.dumps(_TREE))
+    assert "differ" in (record_hint_tree_mismatch(d) or "")
+
+
+def test_a_missing_unstripped_tree_fails_the_record_hint_check(tmp_path):
+    d = _record_hint_copy(tmp_path, _TREE, None)
+    assert "--none" in (record_hint_tree_mismatch(d) or "")
+
+
+def test_a_reformatted_identical_tree_passes_the_record_hint_check(tmp_path):
+    reordered = {k: _TREE[k] for k in reversed(list(_TREE))}
+    d = _record_hint_copy(tmp_path, _TREE, json.dumps(reordered, indent=4))
+    assert record_hint_tree_mismatch(d) is None
+
+
 # --- avoid-guard collisions: stop the defect propagating ---------------
 #
 # `apply_avoid_guard` (e2e/judge.py) runs `check_stripping` against the

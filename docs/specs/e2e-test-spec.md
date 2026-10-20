@@ -486,6 +486,16 @@ stripped:
   **identical** to it, so `snapshot --check` can still audit upstream
   drift. `e2e.author validate` enforces the equality and skips the
   presence mirror (expected findings are extra-tree by definition).
+  The harness's corpus test enforces it too, on every push
+  (`test_e2e_fixture_corpus.py`), and fails a record-hint fixture with
+  no unstripped tree.
+- A record an expected finding cites by its `1:1:` ark must not be
+  attached to a subject person in the starting tree (person, name or
+  fact level), because a project extracts every attached record before
+  its first question. Starting evidence that a finding cites is listed,
+  with a reason, in `eval/tests/e2e/attached-evidence-allowlist.json`;
+  `test_e2e_attached_evidence.py` fails an unlisted one, and a stale
+  entry. A record-hint fixture is never stripped to fix it.
 - Findings drafted from an unverified hint record are a **draft
   pending adjudication**: a genealogist must confirm the hint record
   concerns the tree person before the fixture's grades are trusted.
