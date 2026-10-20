@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_question_selection_q4v",
+    "skill": "question-selection",
+    "name": "Census born-minus-living names a deceased child that is a research target",
+    "type": "positive",
+    "description": "Re-authored from the retired ut_init_project_q4v now that gap analysis is question-selection's job, not init-project's. From 1900/1910 census fertility counts given in the delegation, the skill must call census_children_gap and find TWO missing children: one born and died before the June 1900 enumeration (children-born minus children-living), and one living child born between the two censuses. The failure this guards: reading living-count parity with the tree as 'accounted for' and never making the pre-1900 deceased child a research target.",
+    "tags": ["from-cowork", "census-deceased-child", "direct-arm"]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project.\n\nThe 1900 US census records 6 children born to Margaret Mercer and 5 still living. The 1910 US census records 8 children born and 7 still living.\n\nprojectPath: <workspace>",
+    "scenario": "mercer-census-children-gap"
+  },
+  "judge_context": [
+    "Should call census_children_gap with motherId I1, projectPath, and both census entries (1900: 6 born/5 living; 1910: 8 born/7 living) before writing a question",
+    "The tool reports TWO missing children: one died before the 1900 enumeration (born on or before 1900-06-01), and one living child born between the 1900 and 1910 enumerations. Grade the written question(s) against this, not against one child alone",
+    "The pre-1900 deceased child is absent from the tree; the five tree children born before 1900 (Mary, John, Anna, Edward, Grace) are the survivors, not proof the family is complete",
+    "The post-1900 living child is NOT William Mercer (already in the tree, b. 1906) — it is a child the tree does not yet have",
+    "Naming only the post-1900 living child while missing the pre-1900 deceased child is a FAIL on the gap dimension, not a partial",
+    "The deceased child is a research target (born and died before the enumeration), not a tree or data error — do not present it as a person_warnings-style contradiction",
+    "The question's selection_basis should be objective_decomposition (Priority 5 — a missing-child group from census_children_gap), per the skill's priority table"
+  ]
+}

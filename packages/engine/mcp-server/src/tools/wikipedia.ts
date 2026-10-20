@@ -76,18 +76,36 @@ function words(text: string): string[] {
     .filter((w) => w !== "");
 }
 
+/** Whether `titleWords` appear in `queryWords` in the same order, other words allowed between. */
+function inOrder(titleWords: string[], queryWords: readonly string[]): boolean {
+  let next = 0;
+  for (const w of titleWords) {
+    next = queryWords.indexOf(w, next) + 1;
+    if (next === 0) return false;
+  }
+  return true;
+}
+
 /**
- * Whether the query spells out a search hit's title: every significant word of
- * the title, less a trailing parenthetical, appears in the query. Search
- * ranks by relevance, not meaning, so a query for a place with no article of
- * its own gets some other article back ("Maddock North Dakota history" → "List
- * of governors of North Dakota"), and the caller would take it as the answer.
+ * Whether the query spells out a search hit's title, by the rule in
+ * docs/specs/wikipedia-search-tool-spec.md, "Lookup order". Search ranks by
+ * relevance, not meaning, so a query for a place with no article of its own
+ * gets some other article back ("Maddock North Dakota history" → "List of
+ * governors of North Dakota"), and the caller would take it as the answer.
  */
-function titleMatches(title: string, queryWords: ReadonlySet<string>): boolean {
-  const significant = words(title.replace(/\s*\([^()]*\)\s*$/, "")).filter(
-    (w) => !FUNCTION_WORDS.has(w),
-  );
-  return significant.length > 0 && significant.every((w) => queryWords.has(w));
+function titleMatches(title: string, queryWords: readonly string[]): boolean {
+  const paren = title.match(/^(.*?)\s*\(([^()]*)\)\s*$/);
+  const base = paren ? paren[1] : title;
+  const dated = paren !== null && /\d/.test(paren[2]);
+  const headOf = dated ? null : base.match(/^(.+?) of (.+)$/);
+  const spellings = headOf ? [base, `${headOf[2]} ${headOf[1]}`] : [base];
+  return spellings.some((spelling) => {
+    const parts = spelling
+      .split(",")
+      .map((part) => words(part).filter((w) => !FUNCTION_WORDS.has(w)))
+      .filter((part) => part.length > 0);
+    return parts.length > 0 && parts.every((part) => inOrder(part, queryWords));
+  });
 }
 
 /** The first of Wikipedia's top search hits for `query` whose title matches it, or null. */
@@ -99,7 +117,7 @@ async function matchingSearchTitle(query: string, request: DeadlineFetch): Promi
     throw new Error(`Wikipedia search API error: ${response.status}`);
   }
   const data: WikipediaPageSearchResponse = await response.json();
-  const queryWords = new Set(words(query));
+  const queryWords = words(query);
   for (const page of data.pages ?? []) {
     if (typeof page.title === "string" && titleMatches(page.title, queryWords)) return page.title;
   }

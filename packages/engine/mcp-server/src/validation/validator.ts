@@ -381,6 +381,19 @@ function checkIdPrefix(
   }
 }
 
+// The schema gives these id arrays an item pattern (`^q_`); without this check
+// a writer persisted `extracted_for_question_ids: ["flynn-household-origins"]`,
+// which the JSON schema then rejected (ut_search_records_003, issue #2116).
+function checkIdPrefixArray(
+  values: unknown,
+  expectedPrefix: string,
+  path: string,
+  report: ValidationReport
+): void {
+  if (!Array.isArray(values)) return;
+  values.forEach((v, j) => checkIdPrefix(v, expectedPrefix, `${path}[${j}]`, report));
+}
+
 function checkEnum(
   value: any,
   enumName: string,
@@ -460,6 +473,37 @@ function checkRefExists(
 ): void {
   if (!validIds.has(refId)) {
     addError(report, path, `references ${refType} '${refId}' which does not exist`);
+  }
+}
+
+/**
+ * An array-of-assertion-ids field: a container-type guard, an entry-type check
+ * and a referential check, each embedding the offending value. Null and absent
+ * are left to `checkRequired`, which already reports them.
+ */
+function checkAssertionIdArray(
+  value: unknown,
+  field: string,
+  validIds: Set<string>,
+  path: string,
+  report: ValidationReport
+): void {
+  if (value == null) return;
+  if (!Array.isArray(value)) {
+    addError(report, path, `'${field}' must be an array (got ${JSON.stringify(value)})`);
+    return;
+  }
+  for (const aid of value) {
+    if (typeof aid !== "string") {
+      addError(
+        report,
+        path,
+        `${field} contains a non-string entry ` +
+          `(${JSON.stringify(aid)}); every entry must be an 'a_' assertion id`
+      );
+      continue;
+    }
+    checkRefExists(aid, validIds, "assertion", path, report);
   }
 }
 
@@ -1164,6 +1208,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkIdPrefix(a.id, ID_PREFIXES.assertions, ap, report);
       ids.assertions.add(a.id);
     }
+    checkIdPrefixArray(a.extracted_for_question_ids, ID_PREFIXES.questions, `${ap}.extracted_for_question_ids`, report);
     if ("information_quality" in a) {
       checkEnum(a.information_quality, "information_quality", ap, report);
     }
@@ -1336,6 +1381,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkIdPrefix(c.id, ID_PREFIXES.conflicts, cp, report);
       ids.conflicts.add(c.id);
     }
+    checkIdPrefixArray(c.blocks_question_ids, ID_PREFIXES.questions, `${cp}.blocks_question_ids`, report);
     if ("conflict_type" in c) {
       checkEnum(c.conflict_type, "conflict_type", cp, report);
     }
@@ -1397,6 +1443,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkIdPrefix(h.id, ID_PREFIXES.hypotheses, hp, report);
       ids.hypotheses.add(h.id);
     }
+    checkIdPrefixArray(h.related_question_ids, ID_PREFIXES.questions, `${hp}.related_question_ids`, report);
     if ("status" in h) {
       checkEnum(h.status, "hypothesis_status", hp, report);
     }
@@ -1420,6 +1467,13 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       ids.timelines.add(t.id);
     }
 
+    // The loops below read a non-array as empty, so an object or string here
+    // persisted unchecked and broke the viewer's `.map`.
+    for (const field of ["events", "gaps"] as const) {
+      if (t[field] != null && !Array.isArray(t[field])) {
+        addError(report, tp, `'${field}' must be an array (got ${JSON.stringify(t[field])})`);
+      }
+    }
     const events = Array.isArray(t.events) ? t.events : [];
     for (let j = 0; j < events.length; j++) {
       const ev = events[j];
@@ -1431,6 +1485,10 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         const sorted = Array.from(DATE_CERTAINTY_TIMELINE).sort();
         addError(report, ep, `'${ev.date_certainty}' is not valid for timeline events (use: ${sorted.join(', ')})`);
       }
+      // Without these `"a_001"` and a dangling `["a_999"]` persisted and read as
+      // sourced, which the unsourced-event advisory then could not see. Zero of
+      // 411 references in 515 committed research documents fail them.
+      checkAssertionIdArray(ev.assertion_ids, "assertion_ids", ids.assertions, ep, report);
     }
 
     const gaps = Array.isArray(t.gaps) ? t.gaps : [];
@@ -1570,32 +1628,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // documents carrying the field and 2,123-2,131 references, with zero
     // dangling, non-string or non-array. That is what makes it a fix here
     // rather than a card.
-    if (
-      "supporting_assertion_ids" in ps &&
-      ps.supporting_assertion_ids !== null &&
-      !Array.isArray(ps.supporting_assertion_ids)
-    ) {
-      addError(
-        report,
-        psp,
-        `'supporting_assertion_ids' must be an array (got ` +
-          `${JSON.stringify(ps.supporting_assertion_ids)})`
-      );
-    }
-    if (Array.isArray(ps.supporting_assertion_ids)) {
-      for (const aid of ps.supporting_assertion_ids) {
-        if (typeof aid !== "string") {
-          addError(
-            report,
-            psp,
-            `supporting_assertion_ids contains a non-string entry ` +
-              `(${JSON.stringify(aid)}); every entry must be an 'a_' assertion id`
-          );
-          continue;
-        }
-        checkRefExists(aid, ids.assertions, "assertion", psp, report);
-      }
-    }
+    checkAssertionIdArray(ps.supporting_assertion_ids, "supporting_assertion_ids", ids.assertions, psp, report);
 
     if (Array.isArray(ps.resolved_conflict_ids)) {
       for (const cid of ps.resolved_conflict_ids) {

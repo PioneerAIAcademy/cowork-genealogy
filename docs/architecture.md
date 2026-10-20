@@ -221,16 +221,16 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **4** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **28** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **3** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **29** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-eight agents are `gps-mentor`, `record-structurer`, `image-reader`,
+The twenty-nine agents are `gps-mentor`, `record-structurer`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`,
 `timeline`, `search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
-`init-project` and `tree-survey`.
+`init-project`, `tree-survey` and `research-plan`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -355,7 +355,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-2 of the 4 skills carry a `references/` folder, loaded on demand, in-session,
+1 of the 3 skills carries a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -510,7 +510,7 @@ names a step it no longer takes (`project_create` carries the
 — but pinned to a **sha256 of its own content**, so an edit inside it fails CI
 until the hash moves in the same diff. `research-plan` carried a specialized
 copy too until it was deleted under the lead's 2026-08-31 ruling and the two
-rules it needed were inlined into its `SKILL.md`. **Copy that shape, not a bare
+rules it needed were inlined into its body (now `agents/research-plan.md`). **Copy that shape, not a bare
 exemption**, when a fourth family gets a lint: every skill must land in exactly
 one of the two lists, and the test asserts that too.
 
@@ -805,7 +805,7 @@ There **is** an orchestrator, and it is a skill:
    reads `research.json` through `research_query` and derives where the project
    is: which questions have plans, which log entries lack assertions, which
    conflicts are open, which proofs lack verdicts.
-2. **A 17-row routing table maps state → next sub-skill** — in
+2. **A 21-row routing table maps state → next sub-skill** — in
    `research/SKILL.md` under `## What to do`, the table whose header row reads
    `| If research.json has... | Invoke |`. The table is the source of truth and
    is not duplicated here. Its `Invoke` column is a **literal tool call, by the
@@ -1239,8 +1239,8 @@ is the only instrument that can.
 **Why it ships in the plugin:** `hooks=` is an SDK argument the hosted control
 plane can set and Cowork cannot be made to. A plugin-shipped `hooks/hooks.json`
 binds in **both** — verified live in Cowork 2026-07-30. Cowork runs
-`permission_mode: "default"`, the hosted path `bypassPermissions`; a hook binds
-under both.
+the hosted path `bypassPermissions`; a hook binds under both, under either
+Cowork `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005).
 
 Two behaviors of the script that are deliberate:
 
@@ -1529,9 +1529,9 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 4 skills carry a `**Narration:**` line near the top of the body —
+All 3 skills carry a `**Narration:**` line near the top of the body —
 directly after the frontmatter for `forget-and-rederive`, right after the
-title heading for the other three — instructing Claude to read
+title heading for the other two — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. The `init-project` agent writes the profile at
 project creation as fixed values and asks only the research objective — it
@@ -2093,7 +2093,7 @@ Do not search for the phrase instead of the label: issue titles name the
 mechanism, not the shape, so a text search finds about half of them and returns
 confident near-misses for the rest.
 
-Three of these gaps are **architecture rather than backlog**, because each one
+Four of these gaps are **architecture rather than backlog**, because each one
 changes how a correct change is made:
 
 1. **Spelling is not binding.** No *CI job* proves a declared agent tool actually
@@ -2141,6 +2141,30 @@ changes how a correct change is made:
    the success gate can and cannot see"). `make e2e-corpus` deliberately reports
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
+4. **Step mode's boundary is enforced on one plane and graded on another.** Under
+   `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19), a step ends by
+   asking the researcher with `AskUserQuestion`, and what stops a model starting the
+   next step without asking differs by plane: the FS prototype gets a `PreToolUse`
+   deny and then a halt; **Cowork gets router prose and no hook at all**; the alpha
+   gets nothing. **None of it is built yet.** When it is, the gap will be that
+   the e2e harness tracks `real_agent` (`eval/harness/e2e/orchestrator.py`),
+   which is the alpha, and the alpha gets nothing -- so the suite will exercise
+   a plane with no enforcement while the one that HAS it goes ungraded. **A
+   green eval suite will therefore say nothing about whether the boundary
+   holds anywhere.**
+   Do not read a passing step-mode test as evidence the boundary holds in Cowork.
+
+   This is a deliberate choice, not a limitation: phase 0 measured that a Cowork hook
+   *could* do it (ADR-0005 item 9 — a plugin `PreToolUse` returning `"continue": false`
+   does end a Cowork turn), and the lead judged it not worth a stateful hook yet,
+   because the cost exposure is the prototype and a Cowork researcher can press stop.
+   Two things would close it, and the first is already instrumented: decision 25's
+   rider logs **every halt on the prototype**, and because the router prose is identical
+   on both planes that rate estimates how often Cowork runs past a boundary — a high
+   one buys the hook with numbers rather than a guess. The facts such a hook would
+   need are already recorded, so they need no re-measuring (ADR-0005, "PARKED for a
+   possible future Cowork hook"). Otherwise it needs an instrument that reaches Cowork,
+   which today is only a live session, for the same reason as gap 1.
 
 ### 9.5 An autonomous run must be able to reach what a production run can
 

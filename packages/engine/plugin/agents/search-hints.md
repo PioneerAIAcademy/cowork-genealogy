@@ -117,12 +117,12 @@ Otherwise proceed.
    - **Extracted, not linked** — assertions came back but no such entry cites
      them (never linked, or only superseded links). Its line is a
      recommendation — `accept`, `reject` or `not enough information to judge` —
-     never `already linked` or any other label: there is no pe_ id to name.
+     never `already linked`, `already extracted`, or any other status phrase: there is no pe_ id to name.
      Being unlinked is no reason for `not enough information to judge`, and
-     triage hands nothing back. Read it and triage it like any other hint; the
+     triage hands nothing back. Read it with `record_read` (step 3) and triage it like any other hint; the
      line reads, for example, `Hint <ark>: accept — extracted as <src id>, not
      linked; …`.
-3. **Read each remaining hint:** `record_read({ recordId: <ark> })`. Compare its persona to
+3. **Read each hint that step 2 did not classify 'Already linked':** `record_read({ recordId: <ark> })`. This includes 'Extracted, not linked' hints. Compare its persona to
    the tree person — the project's `tree.gedcomx.json` first, `person_read` when
    the project tree does not hold them: name, dates, places, parents, spouse,
    household.

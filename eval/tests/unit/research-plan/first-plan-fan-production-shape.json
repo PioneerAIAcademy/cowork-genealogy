@@ -14,11 +14,12 @@
       "new-plan-items-planned-status",
       "first-plan-fan-production-shape",
       "issue-2208",
-      "production-tree-shape"
+      "production-tree-shape",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Create the first research plan for q_001 -- why did Michael Sheahan move to Schuylkill County around 1882?",
+    "delegation": "Create the first research plan for q_001 -- why did Michael Sheahan move to Schuylkill County around 1882?\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "first-plan-fan-production-shape"
   },
   "mcp_fixtures": [
@@ -30,7 +31,14 @@
     "collections-search-pennsylvania",
     "external-links-search-schuylkill",
     "volume-search-schuylkill",
-    "collections-search-us-national"
+    "collections-search-us-national",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "GENERAL RULE UNDER TEST: before planning new searches, the skill must survey what the project's tree already holds for every in-scope FAN-cluster person, not just the subject -- research-plan's own stated inputs include tree.gedcomx.json, which already holds this. Skipping straight to new-record planning without this survey is the specific failure this test guards against.",
