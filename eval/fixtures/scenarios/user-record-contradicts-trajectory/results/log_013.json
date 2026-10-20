@@ -1,0 +1,585 @@
+{
+  "log_id": "log_013",
+  "tool": "record_search",
+  "retrieved": "2026-10-05T18:02:01.703Z",
+  "returned_count": 5,
+  "payload": {
+    "query": {
+      "surname": "Burton",
+      "givenName": "Mary",
+      "collectionId": "1674848",
+      "deathYearFrom": 1898,
+      "deathYearTo": 1910,
+      "deathPlace": "Boyd, Kentucky",
+      "subjectId": "I2",
+      "projectPath": "/project"
+    },
+    "totalMatches": 5,
+    "paginationCappedAt": 4999,
+    "returned": 5,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:FWY2-YYQ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary Burton",
+        "score": 4.8636,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "1866",
+        "deathDate": "26 April 1905",
+        "deathPlace": "Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Mary Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6DX-V8N",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11103235114",
+              "ark": "ark:/61903/1:1:FWY2-YYQ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "26 Apr 1905",
+                  "standard_date": "26 Apr 1905",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_326014546",
+              "resource_type": "Record",
+              "title": "Entry for Mary Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6DX-V8N : 19 February 2021), Entry for Mary Burton, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6DX-V8N",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "26 Apr 1905",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11103235114",
+              "resource_type": "Person",
+              "url": "#p_11103235114"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            }
+          ]
+        },
+        "primaryId": "p_11103235114",
+        "batchNumber": "B07072-0",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWYG-MNP",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary E. Burton",
+        "score": 4.8636,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "1828",
+        "deathDate": "21 April 1906",
+        "deathPlace": "Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Mary E. Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6DX-RTP",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11103264503",
+              "ark": "ark:/61903/1:1:FWYG-MNP",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary E.",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "21 Apr 1906",
+                  "standard_date": "21 Apr 1906",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1828",
+                  "standard_date": "1828"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_326021303",
+              "resource_type": "Record",
+              "title": "Entry for Mary E. Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6DX-RTP : 19 February 2021), Entry for Mary E. Burton, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6DX-RTP",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "21 Apr 1906",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11103264503",
+              "resource_type": "Person",
+              "url": "#p_11103264503"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            }
+          ]
+        },
+        "primaryId": "p_11103264503",
+        "batchNumber": "B07072-0",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWYL-D24",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary J. Barton",
+        "score": 4.13288,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "1833",
+        "deathDate": "5 October 1905",
+        "deathPlace": "Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Mary J. Barton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6DX-F4M",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11103248407",
+              "ark": "ark:/61903/1:1:FWYL-D24",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary J.",
+                  "surname": "Barton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "5 Oct 1905",
+                  "standard_date": "5 Oct 1905",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1833",
+                  "standard_date": "1833"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_326011710",
+              "resource_type": "Record",
+              "title": "Entry for Mary J. Barton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6DX-F4M : 19 February 2021), Entry for Mary J. Barton, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6DX-F4M",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "5 Oct 1905",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11103248407",
+              "resource_type": "Person",
+              "url": "#p_11103248407"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            }
+          ]
+        },
+        "primaryId": "p_11103248407",
+        "batchNumber": "B07072-0",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWTM-4DQ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary Barton",
+        "score": 3.1528804,
+        "confidence": 2,
+        "sex": "Female",
+        "birthPlace": "Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Clarinda Ann Bowen, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6D7-2SZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11101866664",
+              "ark": "ark:/61903/1:1:FWTM-4DQ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Barton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11101866662",
+              "ark": "ark:/61903/1:1:FWTM-4DS",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Clarinda Ann",
+                  "surname": "Bowen"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "11 Jul 1944",
+                  "standard_date": "11 Jul 1944",
+                  "place": "Dayton, Campbell, Kentucky, United States",
+                  "standard_place": "Dayton, Campbell, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "22 Nov 1867",
+                  "standard_date": "22 Nov 1867",
+                  "place": "Pendleton Co., Kentucky",
+                  "standard_place": "Pendleton, Kentucky, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11101866663",
+              "ark": "ark:/61903/1:1:FWTM-4D3",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "William",
+                  "surname": "McMillian"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11101866663",
+              "child": "p_11101866662"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11101866664",
+              "child": "p_11101866662"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11101866663",
+              "person2": "p_11101866664"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_325773070",
+              "resource_type": "Record",
+              "title": "Entry for Clarinda Ann Bowen, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6D7-2SZ : 19 February 2021), Entry for Clarinda Ann Bowen, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6D7-2SZ",
+              "coverage": {
+                "place_rep_id": "4130352",
+                "date_range": "11 Jul 1944",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11101866664",
+              "resource_type": "Person",
+              "url": "#p_11101866664"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "394376",
+              "name": "Pendleton, Kentucky, United States",
+              "latitude": 38.7,
+              "longitude": -84.366669
+            },
+            {
+              "id": "4130352",
+              "name": "Dayton, Campbell, Kentucky, United States",
+              "latitude": 39.1128,
+              "longitude": -84.4728
+            }
+          ]
+        },
+        "primaryId": "p_11101866664",
+        "batchNumber": "B00705-4",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWPJ-32T",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Borton",
+        "score": -2.2705376,
+        "confidence": 1,
+        "sex": "Male",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1674848",
+        "recordTitle": "Entry for Grace V. Eslinger, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6D7-HFZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11099892326",
+              "ark": "ark:/61903/1:1:FWPJ-32T",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Borton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            },
+            {
+              "id": "p_11099892325",
+              "ark": "ark:/61903/1:1:FWPJ-32R",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Grace V.",
+                  "surname": "Eslinger"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "14 Jan 1949",
+                  "standard_date": "14 Jan 1949",
+                  "place": "Alexandria, Campbell, Kentucky, United States",
+                  "standard_place": "Alexandria, Campbell, Kentucky, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "11 Jan 1949",
+                  "standard_date": "11 Jan 1949"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1882",
+                  "standard_date": "1882",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11099892326",
+              "child": "p_11099892325"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_325762660",
+              "resource_type": "Record",
+              "title": "Entry for Grace V. Eslinger, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6D7-HFZ : 21 September 2026), Entry for Grace V. Eslinger, 1949.",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6D7-HFZ",
+              "coverage": {
+                "place_rep_id": "4145019",
+                "date_range": "14 Jan 1949",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://familysearch.org/ark:/61903/3:1:3QSQ-G9XF-CXMM?cc=1674848"
+            },
+            {
+              "id": "src_p_p_11099892326",
+              "resource_type": "Person",
+              "url": "#p_11099892326"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "4145019",
+              "name": "Alexandria, Campbell, Kentucky, United States",
+              "latitude": 38.9594,
+              "longitude": -84.3881
+            }
+          ]
+        },
+        "primaryId": "p_11099892326",
+        "batchNumber": "B03628-2",
+        "role": "Father"
+      }
+    ]
+  }
+}
