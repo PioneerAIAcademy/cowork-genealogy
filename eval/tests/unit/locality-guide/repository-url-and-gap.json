@@ -1,0 +1,45 @@
+{
+  "test": {
+    "id": "ut_locality_guide_v7h",
+    "skill": "locality-guide",
+    "name": "Repository listed with an unsourced URL and not connected to the stated gap",
+    "type": "positive",
+    "description": "Mined from alpha feedback (case feedback-2026-10-07). The Ireland Church Records wiki result lists the Ulster Historical Foundation at ancestryireland.com. The guide listed the Foundation with a different URL (ulsterancestry.com) that no tool returned, and did not connect it to the pre-1837 register gap the guide itself flags. A repository entry must use the URL a tool returned, and a relevant index should be tied to the documented research gap.",
+    "tags": [
+      "locality",
+      "ireland",
+      "repositories",
+      "sourced-claims",
+      "research-gap",
+      "from-cowork",
+      "re-invoke-safe"
+    ]
+  },
+  "input": {
+    "delegation": "Build a locality guide for Billy civil parish, County Antrim, Ireland (1780-1870): include which repositories and online indexes could help close any gap in church-register coverage, with their addresses/URLs.",
+    "scenario": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
+  "judge_context": [
+    "The tool result (Ireland Church Records) lists the Ulster Historical Foundation at ancestryireland.com. No tool result returns the URL ulsterancestry.com.",
+    "A repository URL the guide prints must be one the tools returned. Printing a URL no tool returned (e.g. ulsterancestry.com) is the first failure under test.",
+    "When the guide states a record-availability gap and a tool result names an index/repository that bears on it, the guide should connect them rather than listing the repository as a generic fee-based service. Failing to connect a returned index to the stated gap is the second failure under test.",
+    "Passing behavior: cite the returned URL (ancestryireland.com) and tie the Foundation (or an equivalent returned index) to the gap it addresses. Grade URL fidelity and gap-connection, not any exact coverage dates.",
+    "General class: repository details must be grounded in tool output, and a named index should be connected to the gap it fills."
+  ],
+  "mcp_fixtures": [
+    "wiki-read-ireland-church-records",
+    "place-search-any",
+    "place-search-all-any",
+    "place-population-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-any",
+    "wiki-place-page-any",
+    "wiki-search-any",
+    "wikipedia-search-any"
+  ]
+}

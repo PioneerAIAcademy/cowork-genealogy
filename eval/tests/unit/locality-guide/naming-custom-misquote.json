@@ -1,0 +1,44 @@
+{
+  "test": {
+    "id": "ut_locality_guide_m4t",
+    "skill": "locality-guide",
+    "name": "Naming-custom pattern reversed from the wiki page it read",
+    "type": "positive",
+    "description": "Mined from alpha feedback (case feedback-2026-10-07). The agent read the FamilySearch 'Ireland Naming Customs' page, which states the first daughter was usually named for the mother's mother (maternal grandmother). The guide's output reversed it, stating the first daughter was named for the paternal grandmother. A naming custom attributed to a consulted source must match that source's wording.",
+    "tags": [
+      "locality",
+      "ireland",
+      "naming-customs",
+      "source-fidelity",
+      "from-cowork",
+      "re-invoke-safe"
+    ]
+  },
+  "input": {
+    "delegation": "Build a locality guide for Billy civil parish, County Antrim, Ireland (1780-1870). If you include Irish naming conventions, base them on the FamilySearch wiki.",
+    "scenario": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
+  "judge_context": [
+    "The tool result (FamilySearch Wiki, Ireland Naming Customs) states: first son for the father's father; FIRST DAUGHTER usually named for the MOTHER'S MOTHER; second daughter for the father's mother.",
+    "If the guide states a daughter-naming custom, it must match the source: first daughter -> maternal grandmother (mother's mother).",
+    "The failure under test: reversing the pattern -- stating the first daughter was named for the PATERNAL grandmother.",
+    "A guide that omits the naming custom, or states it in agreement with the source, passes. Grade source-fidelity of a quoted custom, not whether a naming pattern applied across Ireland (out of scope).",
+    "General class: a convention attributed to a consulted source must not invert that source's content."
+  ],
+  "mcp_fixtures": [
+    "wiki-read-ireland-naming-customs",
+    "place-search-any",
+    "place-search-all-any",
+    "place-population-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-any",
+    "wiki-place-page-any",
+    "wiki-search-any",
+    "wikipedia-search-any"
+  ]
+}

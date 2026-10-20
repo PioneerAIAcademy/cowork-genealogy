@@ -436,6 +436,10 @@ is what tells the researcher where to route the search.
 | Ancestry | [list] | Subscription |
 | [Others] | [list] | [Access type] |
 
+[List a repository or online index only with a URL a tool result returned —
+never one from memory — and name which gap (a "Records NOT online" entry or a
+pre-filing-period gap) each index helps fill.]
+
 **Coverage of this survey:** [state how much of the digitized material the
 volumes above represent. When `volume_search` returned a `nextPageToken`, or
 `totalResults` is higher than the number of volumes detailed, give both
@@ -459,16 +463,24 @@ records do not exist.]
 
 ## Known record losses
 
-[Document any known destructions — courthouse fires, floods, wartime
-damage, intentional destruction — with dates and what was lost. Note
-any substitute sources that partially compensate.]
+[State the fate of a specific parish's registers — destroyed, lost, survived,
+preserved, or less/more severely affected — only when a tool result supports
+that specific claim; cite it. A generic historical statement (e.g. that
+'two-thirds' of a record class were destroyed in the 1922 fire) or a zero
+volume_search/collections_search result establishes neither loss nor survival of
+these particular registers; it is a coverage gap. When no tool result settles
+the fate, report the gap or the uncertainty and direct the researcher to the
+holding repositories (e.g. PRONI, RCB Library) to confirm — do not infer either
+destruction or survival. An accurate, source-supported statement about the 1922
+fire remains permitted. Note any substitute sources that partially compensate.]
 
 ## Research tips
 - [Jurisdiction-specific advice from wiki articles — cite the source page URL
   inline per the rule "Cite the FamilySearch Wiki page, not just its title",
   i.e. the claim, then the returned page title linked to its returned URL. Take the
   claim from the fetched page; do not carry one over from this template]
-- [Naming conventions or spelling patterns for this area]
+- [Naming conventions or spelling patterns for this area — quote the cited
+  source exactly; do not reverse or alter which relative a naming position names]
 - [Alternative sources when primary records are missing]
 - [Efficient research sequence for this jurisdiction]
 - [Relevant finding aids and research guides to consult]
