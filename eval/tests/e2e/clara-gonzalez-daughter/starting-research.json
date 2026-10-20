@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_clara_gonzalez_daughter",
+    "objective": "Clara González Pimienta, born 31 July 1867 at Pumanque, Colchagua, married Benjamín Silva Díaz about 1894, and two sons are known: Saúl Antonio (born 18 September 1894) and Manuel Jesús (born 27 December 1895), both registered in Colchagua. What other children did Clara and Benjamín have?",
+    "subject_person_ids": [
+      "GJVV-FHW"
+    ],
+    "status": "active",
+    "created": "2026-10-20",
+    "updated": "2026-10-20"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

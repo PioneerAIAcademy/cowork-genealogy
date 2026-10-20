@@ -1,0 +1,19 @@
+{
+  "id": "nicolasa-cedillo-death",
+  "name": "Nicolasa Cedillo — death in May 1943, Santa Lucía, Intibucá, Honduras",
+  "genre": "record-hint",
+  "source_pid": "GJG6-F2L",
+  "captured": "2026-10-20",
+  "researcher_question": "When and where did Nicolasa Cedillo die? She was the wife of Santiago Cedillo, and their children were baptised between 1899 and 1914 in Camasca and neighbouring parishes of southern Intibucá and Lempira, Honduras.",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1940s",
+    "geography": "HN"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 15, hint-samples.csv row 464, flags adds_birth/adds_death, confidence 3). Draft transcribed from a 1943 Honduran civil death registration at Santa Lucía, Intibucá; unverified."
+}

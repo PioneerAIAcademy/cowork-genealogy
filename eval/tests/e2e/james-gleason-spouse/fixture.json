@@ -1,0 +1,19 @@
+{
+  "id": "james-gleason-spouse",
+  "name": "James F. Gleason — a wife Norah and a son Robert F. Gleason born in Boston in 1893",
+  "genre": "record-hint",
+  "source_pid": "L4ZG-21Q",
+  "captured": "2026-10-20",
+  "researcher_question": "Did James F. Gleason, born 1 March 1865 in Boston, son of John Gleason and Delia A. Fitzgerald, who died in Boston on 13 August 1896, marry and have children?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1890s",
+    "geography": "US-MA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 3, hint-samples.csv row 126, flags adds_spouse/adds_son, confidence 3). Draft transcribed from an 1893 Boston birth register entry naming James F. Gleason and Norah as parents of Robert F. Gleason; unverified. The subject's own 1896 death record, already a tree source, calls him single."
+}

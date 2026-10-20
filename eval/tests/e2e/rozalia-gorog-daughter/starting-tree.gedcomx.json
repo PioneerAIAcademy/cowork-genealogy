@@ -1,0 +1,971 @@
+{
+  "persons": [
+    {
+      "id": "L7KC-KQT",
+      "ark": "ark:/61903/4:1:L7KC-KQT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Rozália",
+          "surname": "Görög",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2a2bd6a6-60c2-4614-89c7-2b5850a7406c",
+          "type": "Birth",
+          "date": "1860",
+          "standard_date": "1860"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "1916. október 30.",
+          "standard_date": "30 Oct 1916",
+          "place": "Kecskemét, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kecskemét, Pest-Pilis-Solt-Kiskun, Hungary"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7PN8-L7J"
+        },
+        {
+          "ref": "7PN8-VZM"
+        },
+        {
+          "ref": "7PN8-NJ8"
+        },
+        {
+          "ref": "7PNZ-LHV"
+        },
+        {
+          "ref": "7PNZ-V9G"
+        },
+        {
+          "ref": "7PNZ-DQ9"
+        },
+        {
+          "ref": "7PNZ-CQZ"
+        },
+        {
+          "ref": "7PNZ-Q55"
+        },
+        {
+          "ref": "7PNC-BSC"
+        },
+        {
+          "ref": "7PNC-RF4"
+        },
+        {
+          "ref": "7PNC-NSS"
+        },
+        {
+          "ref": "7PNC-D7D"
+        },
+        {
+          "ref": "7PNH-LCP"
+        },
+        {
+          "ref": "7PNH-R31"
+        }
+      ]
+    },
+    {
+      "id": "L7KC-K9Z",
+      "ark": "ark:/61903/4:1:L7KC-K9Z",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Anna",
+          "surname": "Tarjányi",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "76a7ab99-2d8d-40b1-b0a4-d465fde688c0",
+          "type": "Birth",
+          "date": "1894. október 22.",
+          "standard_date": "22 Oct 1894",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "1894. október 23.",
+          "standard_date": "23 Oct 1894",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7PNC-NYS"
+        },
+        {
+          "ref": "7PNC-ZSD"
+        },
+        {
+          "ref": "7PNC-4LY"
+        },
+        {
+          "ref": "7PNC-7B3"
+        },
+        {
+          "ref": "7PNC-3F2"
+        },
+        {
+          "ref": "7PNH-YTJ"
+        },
+        {
+          "ref": "7PNH-R91"
+        }
+      ]
+    },
+    {
+      "id": "L7R3-GGL",
+      "ark": "ark:/61903/4:1:L7R3-GGL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Rozália",
+          "surname": "Tarjányi",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "1887. április 23.",
+          "standard_date": "23 Apr 1887",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "c75fb698-4e92-456f-9b2c-6cd1b3a4d61e",
+          "type": "Birth",
+          "date": "1887. április 23.",
+          "standard_date": "23 Apr 1887",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "1899. február 4.",
+          "standard_date": "4 Feb 1899",
+          "place": "Jászszentlászló, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Jászszentlászló, Pest-Pilis-Solt-Kiskun, Hungary"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7PNC-Y1P"
+        },
+        {
+          "ref": "7PNC-RKW"
+        }
+      ]
+    },
+    {
+      "id": "PQ6N-SP8",
+      "ark": "ark:/61903/4:1:PQ6N-SP8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "567c1ac3-be03-4999-9922-ac384c9efa9f",
+          "preferred": true,
+          "given": "Veronika",
+          "surname": "Tarjányi",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0e783afd-ddfb-40c6-a451-f9b9d220df76",
+          "type": "Birth",
+          "date": "1897. január 24.",
+          "standard_date": "24 Jan 1897"
+        },
+        {
+          "id": "e43c8e1c-bed4-45d7-aebb-37c3fbaddf45",
+          "type": "Birth Registration",
+          "date": "1897. január 29.",
+          "standard_date": "29 Jan 1897",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "239da993-e9a7-4bc3-aa5b-1d6d787f9758",
+          "type": "Death",
+          "date": "1915. június 7.",
+          "standard_date": "7 Jun 1915",
+          "place": "Kecskemét, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kecskemét, Pest-Pilis-Solt-Kiskun, Hungary"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7PN8-NF2"
+        },
+        {
+          "ref": "7PNZ-LNM"
+        }
+      ]
+    },
+    {
+      "id": "PQ6X-BGP",
+      "ark": "ark:/61903/4:1:PQ6X-BGP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "1fe04a00-2e60-4344-b879-19245242ac5c",
+          "preferred": true,
+          "given": "János",
+          "surname": "Tarjányi",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9fb23d9e-1eb4-47ad-9862-b771ef18b70d",
+          "type": "Birth",
+          "date": "1884. augusztus 22.",
+          "standard_date": "22 Aug 1884",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "4b5a8325-f368-4832-a46b-ef4ed880d8f1",
+          "type": "Christening",
+          "date": "1884. augusztus 23.",
+          "standard_date": "23 Aug 1884",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "215d6bbe-f01d-4616-8f68-102e51b16481",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7PNZ-7J4"
+        }
+      ]
+    },
+    {
+      "id": "L7RQ-YDQ",
+      "ark": "ark:/61903/4:1:L7RQ-YDQ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Mária",
+          "surname": "Tarjányi",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "bf7db791-0026-4a89-b955-0fb41e13bffe",
+          "type": "Birth",
+          "date": "1889. május 4.",
+          "standard_date": "4 May 1889",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "1889. május 5.",
+          "standard_date": "5 May 1889",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7PNC-NWD"
+        }
+      ]
+    },
+    {
+      "id": "PQ6X-6RK",
+      "ark": "ark:/61903/4:1:PQ6X-6RK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "7cda29d6-a2cb-4e82-8d5f-3a62e36124cc",
+          "preferred": true,
+          "given": "János",
+          "surname": "Tarjányi",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3b40f92e-5ce9-4b73-9c60-990371ee1d81",
+          "type": "Birth",
+          "date": "1893. február 8.",
+          "standard_date": "8 Feb 1893",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "b48f2801-b67d-4100-9dac-2fdfb1e8e94f",
+          "type": "Christening",
+          "date": "1893. február 9.",
+          "standard_date": "9 Feb 1893",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "3453b04a-8362-4ee9-a6fa-162ee736b52a",
+          "type": "Death",
+          "date": "1902. június 10.",
+          "standard_date": "10 Jun 1902",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7PNZ-VMS"
+        },
+        {
+          "ref": "7PNZ-CDY"
+        }
+      ]
+    },
+    {
+      "id": "L7R3-GGP",
+      "ark": "ark:/61903/4:1:L7R3-GGP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "János",
+          "surname": "Tarjányi",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9ba49e5c-3c30-4fb6-99cb-4efaba818f3a",
+          "type": "Birth",
+          "date": "1861",
+          "standard_date": "1861"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "1940. március 4.",
+          "standard_date": "4 Mar 1940",
+          "place": "Kecskemét, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kecskemét, Pest-Pilis-Solt-Kiskun, Hungary"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7PN8-LQ9"
+        },
+        {
+          "ref": "7PN8-VDW"
+        },
+        {
+          "ref": "7PN8-NKS"
+        },
+        {
+          "ref": "7PNZ-L43"
+        },
+        {
+          "ref": "7PNZ-VS1"
+        },
+        {
+          "ref": "7PNZ-DSZ"
+        },
+        {
+          "ref": "7PNZ-CSR"
+        },
+        {
+          "ref": "7PNZ-QPM"
+        },
+        {
+          "ref": "7PNC-N3G"
+        },
+        {
+          "ref": "7PNC-DFC"
+        },
+        {
+          "ref": "7PNH-R7H"
+        },
+        {
+          "ref": "7PNH-L85"
+        },
+        {
+          "ref": "7PNC-B3J"
+        },
+        {
+          "ref": "7PNC-RNW"
+        }
+      ]
+    },
+    {
+      "id": "L72G-LYX",
+      "ark": "ark:/61903/4:1:L72G-LYX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Mária",
+          "surname": "Tarjányi",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "14ca3027-32b4-49b6-9cd2-cdbcc5171ba7",
+          "type": "Birth",
+          "date": "1890. december 20.",
+          "standard_date": "20 Dec 1890",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "1890. december 21.",
+          "standard_date": "21 Dec 1890",
+          "place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Magyarország",
+          "standard_place": "Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7PNH-L7G"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "L7R3-GGP",
+      "person2": "L7KC-KQT"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "L7R3-GGP",
+      "child": "PQ6X-BGP",
+      "sources": [
+        {
+          "ref": "7PNZ-QYG"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "L7KC-KQT",
+      "child": "PQ6X-BGP",
+      "sources": [
+        {
+          "ref": "7PNZ-QYG"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L7R3-GGP",
+      "child": "L7R3-GGL"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "L7KC-KQT",
+      "child": "L7R3-GGL"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "L7R3-GGP",
+      "child": "L7RQ-YDQ"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "L7KC-KQT",
+      "child": "L7RQ-YDQ"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "L7R3-GGP",
+      "child": "L72G-LYX"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "L7KC-KQT",
+      "child": "L72G-LYX"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "L7R3-GGP",
+      "child": "PQ6X-6RK",
+      "sources": [
+        {
+          "ref": "7PNZ-C4P"
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "L7KC-KQT",
+      "child": "PQ6X-6RK",
+      "sources": [
+        {
+          "ref": "7PNZ-C4P"
+        }
+      ]
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "L7R3-GGP",
+      "child": "L7KC-K9Z",
+      "sources": [
+        {
+          "ref": "7PNC-N5F"
+        }
+      ]
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "L7KC-KQT",
+      "child": "L7KC-K9Z",
+      "sources": [
+        {
+          "ref": "7PNC-N5F"
+        }
+      ]
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "L7R3-GGP",
+      "child": "PQ6N-SP8",
+      "sources": [
+        {
+          "ref": "7PNZ-LDB"
+        }
+      ]
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "L7KC-KQT",
+      "child": "PQ6N-SP8",
+      "sources": [
+        {
+          "ref": "7PNZ-LDB"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_L7KC-KQT",
+      "title": "Görög Rozália",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Görög Rozália (PID L7KC-KQT); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L7KC-KQT"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_L7KC-K9Z",
+      "title": "Tarjányi Anna",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Tarjányi Anna (PID L7KC-K9Z); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L7KC-K9Z"
+    },
+    {
+      "id": "sd_person_L7R3-GGL",
+      "title": "Tarjányi Rozália",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Tarjányi Rozália (PID L7R3-GGL); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L7R3-GGL"
+    },
+    {
+      "id": "sd_person_PQ6N-SP8",
+      "title": "Tarjányi Veronika",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Tarjányi Veronika (PID PQ6N-SP8); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PQ6N-SP8"
+    },
+    {
+      "id": "sd_person_PQ6X-BGP",
+      "title": "Tarjányi János",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Tarjányi János (PID PQ6X-BGP); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PQ6X-BGP"
+    },
+    {
+      "id": "sd_person_L7RQ-YDQ",
+      "title": "Tarjányi Mária",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Tarjányi Mária (PID L7RQ-YDQ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L7RQ-YDQ"
+    },
+    {
+      "id": "sd_person_PQ6X-6RK",
+      "title": "Tarjányi János",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Tarjányi János (PID PQ6X-6RK); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PQ6X-6RK"
+    },
+    {
+      "id": "sd_person_L7R3-GGP",
+      "title": "Tarjányi János",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Tarjányi János (PID L7R3-GGP); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L7R3-GGP"
+    },
+    {
+      "id": "sd_person_L72G-LYX",
+      "title": "Tarjányi Mária",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Tarjányi Mária (PID L72G-LYX); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L72G-LYX"
+    },
+    {
+      "id": "7PNZ-CQZ",
+      "title": "Görög Rozál, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFQ-X5N : Fri Aug 15 04:07:04 UTC 2025), Görög Rozál in entry for Tarjányi János, 1893. február 9..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFQ-X5N"
+    },
+    {
+      "id": "7PNC-D7D",
+      "title": "Görög Rozál, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFZ-RQ9 : Fri Aug 15 03:35:01 UTC 2025), Görög Rozál in entry for Tarjányi Anna, 1894. október 23..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFZ-RQ9"
+    },
+    {
+      "id": "7PNZ-Q55",
+      "title": "Görög Rozál, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFM-6F2 : Fri Aug 15 04:01:57 UTC 2025), Görög Rozál in entry for Tarjányi János, 1884. augusztus 23..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFM-6F2"
+    },
+    {
+      "id": "7PN8-NJ8",
+      "title": "Görög Rozália, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6V15-L923 : Fri Aug 15 04:57:36 UTC 2025), Görög Rozália in entry for Tarjányi Veronika, 1915. június 8..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6V15-L923"
+    },
+    {
+      "id": "7PN8-VZM",
+      "title": "Görög Rozália, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6V15-LZ5H : Fri Aug 15 05:00:06 UTC 2025), Görög Rozália, 1916. október 31..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6V15-LZ5H"
+    },
+    {
+      "id": "7PNH-LCP",
+      "title": "Görög Rozál, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFH-HM5 : Fri Aug 15 03:09:07 UTC 2025), Görög Rozál in entry for Tarjányi Mária, 1890. december 21..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFH-HM5"
+    },
+    {
+      "id": "7PNH-R31",
+      "title": "Görög Rozália, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JSD-SLN8 : Fri Aug 15 03:15:06 UTC 2025), Görög Rozália in entry for Kovács András, 1911. december 2..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JSD-SLN8"
+    },
+    {
+      "id": "7PNC-RF4",
+      "title": "Görög Rozál, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFS-M23 : Fri Aug 15 03:50:57 UTC 2025), Görög Rozál in entry for Tarjányi Rozália, 1887. április 23..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFS-M23"
+    },
+    {
+      "id": "7PNC-NSS",
+      "title": "Görög Rozál, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFS-KPB : Fri Aug 15 03:39:43 UTC 2025), Görög Rozál in entry for Tarjányi Mária, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFS-KPB"
+    },
+    {
+      "id": "7PNZ-V9G",
+      "title": "Görög Rozália, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JS8-LW97 : Fri Aug 15 04:12:35 UTC 2025), Görög Rozália in entry for Tarjányi János, 1902. június 12..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JS8-LW97"
+    },
+    {
+      "id": "7PNZ-LHV",
+      "title": "Görög Rozália, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JSZ-YWNB : Fri Aug 15 04:23:42 UTC 2025), Görög Rozália in entry for Tarjányi Veronika, 1897. január 29..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JSZ-YWNB"
+    },
+    {
+      "id": "7PN8-L7J",
+      "title": "Görög Rozália, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JSD-Z1SQ : Fri Aug 15 05:04:21 UTC 2025), Görög Rozália in entry for Juhász Imre, 1922. szeptember 16..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JSD-Z1SQ"
+    },
+    {
+      "id": "7PNC-BSC",
+      "title": "Görög Rozália, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6N7Y-JRFW : Fri Aug 15 03:53:35 UTC 2025), Görög Rozália in entry for Tarjányi Rozália, 1899. február 5..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6N7Y-JRFW"
+    },
+    {
+      "id": "7PNZ-DQ9",
+      "title": "Görög Rozália, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JY5-DJZ7 : Fri Aug 15 04:10:14 UTC 2025), Görög Rozália in entry for Tarjányi János, 1940. március 6..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JY5-DJZ7"
+    },
+    {
+      "id": "7PNC-NYS",
+      "title": "Tarjányi Anna, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFZ-R31 : Fri Aug 15 03:35:01 UTC 2025), Tarjányi Anna, 1894. október 23..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFZ-R31"
+    },
+    {
+      "id": "7PNC-ZSD",
+      "title": "Tarjányi Anna, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6V15-PSDD : Sun Nov 09 11:30:18 UTC 2025), Tarjányi Anna in entry for Kovács Sándor, 1949. december 29..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6V15-PSDD"
+    },
+    {
+      "id": "7PNC-4LY",
+      "title": "Tarjányi Anna, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6V1R-W79Z : Fri Aug 15 03:29:24 UTC 2025), Tarjányi Anna in entry for Kovács Sándor, 1914. november 8..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6V1R-W79Z"
+    },
+    {
+      "id": "7PNC-7B3",
+      "title": "Tajányi Anna, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6V1R-M2DX : Fri Aug 15 03:27:20 UTC 2025), Tajányi Anna in entry for Kovács András, 1980. április 8..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6V1R-M2DX"
+    },
+    {
+      "id": "7PNC-3F2",
+      "title": "Tarjányi Anna, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6V15-5ZPG : Fri Aug 15 03:23:59 UTC 2025), Tarjányi Anna in entry for Kovács András, 1944. március 4..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6V15-5ZPG"
+    },
+    {
+      "id": "7PNH-YTJ",
+      "title": "Tarjányi Anna, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JYG-ZWL9 : Fri Aug 15 03:18:20 UTC 2025), Tarjányi Anna in entry for Kovács András, 1912. szeptember 22..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JYG-ZWL9"
+    },
+    {
+      "id": "7PNH-R91",
+      "title": "Tarjányi Anna, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JSD-SLN4 : Fri Aug 15 03:15:06 UTC 2025), Tarjányi Anna in entry for Kovács András, 1911. december 2..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JSD-SLN4"
+    },
+    {
+      "id": "7PNC-Y1P",
+      "title": "Tarjányi Rozália, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6N7Y-JRXY : Fri Aug 15 03:53:35 UTC 2025), Tarjányi Rozália, 1899. február 5..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6N7Y-JRXY"
+    },
+    {
+      "id": "7PNC-RKW",
+      "title": "Tarjányi Rozália, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFS-M29 : Fri Aug 15 03:50:57 UTC 2025), Tarjányi Rozália, 1887. április 23..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFS-M29"
+    },
+    {
+      "id": "7PN8-NF2",
+      "title": "Tarjányi Veronika, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6V15-L929 : Fri Aug 15 04:57:36 UTC 2025), Tarjányi Veronika, 1915. június 8..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6V15-L929"
+    },
+    {
+      "id": "7PNZ-LNM",
+      "title": "Tarjányi Veronika, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JSZ-YWNT : Fri Aug 15 04:23:42 UTC 2025), Tarjányi Veronika, 1897. január 29..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JSZ-YWNT"
+    },
+    {
+      "id": "7PNZ-7J4",
+      "title": "Tarjányi János, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFM-6FV : Fri Aug 15 04:01:57 UTC 2025), Tarjányi János, 1884. augusztus 23..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFM-6FV"
+    },
+    {
+      "id": "7PNC-NWD",
+      "title": "Tarjányi Mária, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFS-KPT : Fri Aug 15 03:39:43 UTC 2025), Tarjányi Mária, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFS-KPT"
+    },
+    {
+      "id": "7PNZ-VMS",
+      "title": "Tarjányi János, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JS8-LW93 : Fri Aug 15 04:12:35 UTC 2025), Tarjányi János, 1902. június 12..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JS8-LW93"
+    },
+    {
+      "id": "7PNZ-CDY",
+      "title": "Tarjányi János, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFQ-X5X : Fri Aug 15 04:07:04 UTC 2025), Tarjányi János, 1893. február 9..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFQ-X5X"
+    },
+    {
+      "id": "7PN8-LQ9",
+      "title": "Tarjányi János, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JSD-Z1S3 : Fri Aug 15 05:04:21 UTC 2025), Tarjányi János in entry for Juhász Imre, 1922. szeptember 16..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JSD-Z1S3"
+    },
+    {
+      "id": "7PN8-VDW",
+      "title": "Tarjányi János, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6V15-LZ58 : Fri Aug 15 05:00:06 UTC 2025), Tarjányi János in entry for Görög Rozália, 1916. október 31..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6V15-LZ58"
+    },
+    {
+      "id": "7PN8-NKS",
+      "title": "Tarjányi János, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6V15-L92S : Fri Aug 15 04:57:36 UTC 2025), Tarjányi János in entry for Tarjányi Veronika, 1915. június 8..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6V15-L92S"
+    },
+    {
+      "id": "7PNZ-L43",
+      "title": "Tarjányi János, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JSZ-YWNY : Fri Aug 15 04:23:42 UTC 2025), Tarjányi János in entry for Tarjányi Veronika, 1897. január 29..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JSZ-YWNY"
+    },
+    {
+      "id": "7PNZ-VS1",
+      "title": "Tarjányi János, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JS8-LW9Q : Fri Aug 15 04:12:35 UTC 2025), Tarjányi János in entry for Tarjányi János, 1902. június 12..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JS8-LW9Q"
+    },
+    {
+      "id": "7PNZ-DSZ",
+      "title": "Tarjányi János, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JY5-DJZ9 : Fri Aug 15 04:10:14 UTC 2025), Tarjányi János, 1940. március 6..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JY5-DJZ9"
+    },
+    {
+      "id": "7PNZ-CSR",
+      "title": "Tarjányi János, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFQ-X5F : Fri Aug 15 04:07:04 UTC 2025), Tarjányi János in entry for Tarjányi János, 1893. február 9..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFQ-X5F"
+    },
+    {
+      "id": "7PNZ-QPM",
+      "title": "Tarjányi János, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFM-6FK : Fri Aug 15 04:01:57 UTC 2025), Tarjányi János in entry for Tarjányi János, 1884. augusztus 23..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFM-6FK"
+    },
+    {
+      "id": "7PNC-N3G",
+      "title": "Tarjányi János, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFS-KPY : Fri Aug 15 03:39:43 UTC 2025), Tarjányi János in entry for Tarjányi Mária, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFS-KPY"
+    },
+    {
+      "id": "7PNC-DFC",
+      "title": "Tarjányi János, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFZ-RQM : Fri Aug 15 03:35:01 UTC 2025), Tarjányi János in entry for Tarjányi Anna, 1894. október 23..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFZ-RQM"
+    },
+    {
+      "id": "7PNH-R7H",
+      "title": "Tarjányi János, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JSD-SLNH : Fri Aug 15 03:15:06 UTC 2025), Tarjányi János in entry for Kovács András, 1911. december 2..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JSD-SLNH"
+    },
+    {
+      "id": "7PNH-L85",
+      "title": "Tarjányi János, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFH-HMP : Fri Aug 15 03:09:07 UTC 2025), Tarjányi János in entry for Tarjányi Mária, 1890. december 21..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFH-HMP"
+    },
+    {
+      "id": "7PNC-B3J",
+      "title": "Tarjányi János, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6N7Y-JRFS : Fri Aug 15 03:53:35 UTC 2025), Tarjányi János in entry for Tarjányi Rozália, 1899. február 5..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6N7Y-JRFS"
+    },
+    {
+      "id": "7PNC-RNW",
+      "title": "Tarjányi János, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFS-M2S : Fri Aug 15 03:50:57 UTC 2025), Tarjányi János in entry for Tarjányi Rozália, 1887. április 23..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFS-M2S"
+    },
+    {
+      "id": "7PNH-L7G",
+      "title": "Tarjányi Mária, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFH-HMG : Fri Aug 15 03:09:07 UTC 2025), Tarjányi Mária, 1890. december 21..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFH-HMG"
+    },
+    {
+      "id": "7PNZ-QYG",
+      "title": "Tarjányi János, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFM-6FV : Fri Aug 15 04:01:57 UTC 2025), Tarjányi János, 1884. augusztus 23..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFM-6FV"
+    },
+    {
+      "id": "7PNZ-C4P",
+      "title": "Tarjányi János, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFQ-X5X : Fri Aug 15 04:07:04 UTC 2025), Tarjányi János, 1893. február 9..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFQ-X5X"
+    },
+    {
+      "id": "7PNC-N5F",
+      "title": "Tarjányi Anna, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "citation": "\"Hungary, Catholic Church Records, 1636-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZFZ-R31 : Fri Aug 15 03:35:01 UTC 2025), Tarjányi Anna, 1894. október 23..",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZFZ-R31"
+    },
+    {
+      "id": "7PNZ-LDB",
+      "title": "Tarjányi Veronika, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JSZ-YWNT : Fri Aug 15 04:23:42 UTC 2025), Tarjányi Veronika, 1897. január 29..",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JSZ-YWNT"
+    }
+  ]
+}

@@ -29,22 +29,33 @@ import pytest
 
 # --- Both files exist after init ---------------------------------------
 
-def test_both_project_files_created(before_state, after_state, test):
+
+def test_both_project_files_created(before_state, after_state, test, builtin_tool_calls):
     """init-project positive tests must produce BOTH research.json and
     tree.gedcomx.json. Either file missing is a structural failure even
     if the other validates. Per issue #1510, every opening-turn question
     (objective, experience level, access) is non-blocking and defaults
     silently if unanswered, so a positive test always completes in one
-    pass -- there is no longer a premature-write exception to gate."""
+    pass -- there is no longer a premature-write exception to gate.
+
+    THAT PREMISE NO LONGER HOLDS IN ONE CASE. A project always starts from a
+    FamilySearch PID (lead, 2026-10-15): a message carrying none gets a return
+    asking for one and no project, by design. Those tests carry `asks-for-pid`,
+    which the skip below reads. The blocking person pick this replaced is gone
+    -- init-project does not search, and does not hold `AskUserQuestion`."""
     if test.get("type") != "positive":
         pytest.skip("file-existence rules apply only to positive tests")
+    if "asks-for-pid" in (test.get("tags") or []) and after_state.get("research_json") is None:
+        # The no-PID path: init-project creates nothing and asks for the ID in its
+        # return. There is no project BY DESIGN, so file-existence cannot apply.
+        pytest.skip("test expects the no-PID ask; no project by design")
     if after_state.get("research_json") is None:
         assert False, "init-project did not create research.json"
     if after_state.get("tree_gedcomx_json") is None:
         assert False, "init-project did not create tree.gedcomx.json"
 
 
-_INIT_TOOLS = ("person_read", "person_search", "project_create")
+_INIT_TOOLS = ("person_read", "project_create")
 
 
 def test_existing_project_is_not_reinitialized(before_state, after_state, tool_calls, test):
@@ -327,7 +338,7 @@ def test_init_empty_sections(after_state, test, tool_calls):
 
 # --- The write PATH, not just the resulting state ----------------------
 
-def test_project_files_written_through_the_writer_tools(tool_calls, after_state, test):
+def test_project_files_written_through_the_writer_tools(tool_calls, after_state, test, builtin_tool_calls):
     """init-project must create the project by CALLING `project_create`.
 
     One assertion, on one tool, because `project_create` writes BOTH documents
@@ -359,6 +370,8 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
     """
     if test.get("type") != "positive":
         pytest.skip("write-path rules apply only to positive tests")
+    if "asks-for-pid" in (test.get("tags") or []) and after_state.get("research_json") is None:
+        pytest.skip("test expects the no-PID ask; project_create legitimately not reached")
 
     called = {(call.get("tool") or "").rsplit("__", 1)[-1] for call in tool_calls or []}
 
@@ -380,6 +393,32 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
             "never called — project_create does not write one, so it arrived by a "
             f"route the lockdown denies. Tools called: {sorted(called) or 'none'}"
         )
+
+
+def test_asks_for_pid_creates_no_project(tool_calls, after_state, test):
+    """A message with no FamilySearch person ID must create nothing.
+
+    The two skips above excuse an `asks-for-pid` run that wrote no files. This is
+    the other side of that excuse: a tagged run that builds a project anyway --
+    by calling `project_create`, or by getting files onto disk without it --
+    fails here rather than passing on the skip.
+    """
+    if "asks-for-pid" not in (test.get("tags") or []):
+        pytest.skip("not an asks-for-pid test")
+    called = {_tool(c) for c in tool_calls or []}
+    # The tree file is checked too. Without it a tagged run that wrote
+    # tree.gedcomx.json and no research.json passed BOTH this rule and the
+    # file skips above, so "created nothing" was never actually asserted.
+    assert (
+        "project_create" not in called
+        and after_state.get("research_json") is None
+        and after_state.get("tree_gedcomx_json") is None
+    ), (
+        "the message carries no FamilySearch person ID, so no project may be created; "
+        f"tools called: {sorted(called) or 'none'}; "
+        f"research_json={after_state.get('research_json') is not None}, "
+        f"tree_gedcomx_json={after_state.get('tree_gedcomx_json') is not None}"
+    )
 
 # --- Wrote-it vs. the-tool-returned-it (the deep dive's V1-V8) ----------
 #
@@ -1012,31 +1051,3 @@ def test_narration_guidance_is_the_house_style(after_state):
     )
 
 
-# --- V7: search before stubs (tag-gated) --------------------------------
-
-def test_search_before_stubs(tool_calls, after_state, test):
-    """Tag-gated on `expects-person-search`: when the premise is a named person
-    with no id supplied and no claim that they are absent from FamilySearch,
-    stubbing without searching mints the duplicate `merge_tree_persons` then has
-    to undo.
-
-    Tag-gated rather than derived from the message, and that narrowing is load
-    bearing -- see the module note above. The premise belongs to the test
-    author, who knows whether the message concedes absence; a validator parsing
-    prose would have failed `ut_init_project_002`, which the 2026-08-20
-    annotation confirmed as a pass.
-
-    Armed on `new-project-from-search` (`ut_init_project_004`): "I don't have his
-    FamilySearch ID", no claim of absence, and it does search. Every other
-    init-project test skips it.
-    """
-    if "expects-person-search" not in test.get("tags", []):
-        pytest.skip("not an expects-person-search scenario")
-    if not _written_tree(after_state).get("persons"):
-        pytest.skip("no tree person written")
-    called = {_tool(c) for c in tool_calls or []}
-    assert "person_search" in called, (
-        "a tree person was created without searching FamilySearch first; if the "
-        "person is already in the tree this mints a duplicate. Tools called: "
-        f"{sorted(called) or 'none'}"
-    )

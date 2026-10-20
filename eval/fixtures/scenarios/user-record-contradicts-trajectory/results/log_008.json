@@ -1,0 +1,402 @@
+{
+  "log_id": "log_008",
+  "tool": "record_read",
+  "retrieved": "2026-10-05T17:59:11.790Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:MX4M-62D"
+    },
+    "results": [
+      {
+        "recordId": "MX4M-62D",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_345882312",
+              "ark": "ark:/61903/1:1:MX4M-62D",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "149a327b-432c-474a-9c07-020ed9f47453",
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "bc900688-8492-4a19-b507-68ac0f15e438",
+                  "type": "Birth",
+                  "date": "1818",
+                  "standard_date": "1818",
+                  "place": "Kentucky"
+                },
+                {
+                  "id": "91af64b6-0631-4f4d-8a65-1074a348d016",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Pulaski, Kentucky, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345882313",
+              "ark": "ark:/61903/1:1:MX4M-626",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "13a352ac-70cd-4111-a765-6206d71e7904",
+                  "type": "BirthName",
+                  "given": "Polly Ann",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "fb024cdc-35fe-4b15-9171-d2ea1e3a618b",
+                  "type": "Birth",
+                  "date": "1825",
+                  "standard_date": "1825",
+                  "place": "Kentucky"
+                },
+                {
+                  "id": "20af2033-346e-461e-a702-7c8bd335031e",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Pulaski, Kentucky, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345882314",
+              "ark": "ark:/61903/1:1:MX4M-62X",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "5973af56-bc3c-4d53-9be5-9215614a33e0",
+                  "type": "BirthName",
+                  "given": "Thomas H",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "4c4004ea-d6fa-4c4e-8916-302afadae20b",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Pulaski, Kentucky, United States"
+                },
+                {
+                  "id": "89ea6c38-92f7-46e6-b65f-beb2113c461b",
+                  "type": "Birth",
+                  "date": "1852",
+                  "standard_date": "1852",
+                  "place": "Kentucky"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345882315",
+              "ark": "ark:/61903/1:1:MX4M-62F",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "5b6dde95-4969-4ad1-ab44-2612e9b044f9",
+                  "type": "BirthName",
+                  "given": "Elizabeth J",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "7972f4f0-6335-41a7-b80e-125ef351542e",
+                  "type": "Birth",
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Kentucky"
+                },
+                {
+                  "id": "c7891811-f7df-4ecf-a7cc-de693bec4004",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Pulaski, Kentucky, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345882316",
+              "ark": "ark:/61903/1:1:MX4M-62N",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "1fe0f8d2-d7ad-4024-ae65-4785aa19165a",
+                  "type": "BirthName",
+                  "given": "John Mandy",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "a8a274f7-9bd0-45fe-a2b6-907687a4d875",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Pulaski, Kentucky, United States"
+                },
+                {
+                  "id": "0f4c9a84-144f-496c-b8d7-29ae7d8ff6c5",
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858",
+                  "place": "Kentucky"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345882317",
+              "ark": "ark:/61903/1:1:MX4M-62J",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "43d79804-16bc-424f-ac32-7e6fa17fc3ab",
+                  "type": "BirthName",
+                  "given": "Martha F",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "f15e0a8f-46a8-4ac5-8545-752973df88b8",
+                  "type": "Birth",
+                  "date": "1864",
+                  "standard_date": "1864",
+                  "place": "Kentucky"
+                },
+                {
+                  "id": "6cdbffc9-846a-4f41-8215-81203233b959",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Pulaski, Kentucky, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345882318",
+              "ark": "ark:/61903/1:1:MX4M-62V",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "642bcfb8-daf6-45f0-8d4f-2c8b10b797b9",
+                  "type": "BirthName",
+                  "given": "Samuel",
+                  "surname": "Goff"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "e33d176c-1605-4792-b8a5-14018754bee2",
+                  "type": "Birth",
+                  "date": "1863",
+                  "standard_date": "1863",
+                  "place": "Kentucky"
+                },
+                {
+                  "id": "4e47c3e2-97e4-478c-8e59-706f57660e49",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Pulaski, Kentucky, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_209324025",
+              "resource_type": "Record",
+              "title": "Household of John Burton, \"United States, Census, 1870\"",
+              "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MX4M-62D : Thu Jan 16 15:41:10 UTC 2025), Entry for John Burton and Polly Ann Burton, 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHVD-G4F",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1870",
+                "record_type": "Census",
+                "standard_place": "Pulaski, Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_c_1438024",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1870",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1438024",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1870/1870",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6QS9-Y5",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1870",
+                "record_type": "Census",
+                "standard_place": "Pulaski, Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_p_345882315",
+              "resource_type": "Person",
+              "title": "Elizabeth J Burton, \"United States, Census, 1870\"",
+              "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MX4M-62D : Thu Jan 16 15:41:10 UTC 2025), Entry for John Burton and Polly Ann Burton, 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MX4M-62F"
+            },
+            {
+              "id": "sd_p_345882317",
+              "resource_type": "Person",
+              "title": "Martha F Burton, \"United States, Census, 1870\"",
+              "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MX4M-62D : Thu Jan 16 15:41:10 UTC 2025), Entry for John Burton and Polly Ann Burton, 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MX4M-62J"
+            },
+            {
+              "id": "sd_p_345882312",
+              "resource_type": "Person",
+              "title": "John Burton, \"United States, Census, 1870\"",
+              "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MX4M-62D : Thu Jan 16 15:41:10 UTC 2025), Entry for John Burton and Polly Ann Burton, 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MX4M-62D"
+            },
+            {
+              "id": "sd_p_345882313",
+              "resource_type": "Person",
+              "title": "Polly Ann Burton, \"United States, Census, 1870\"",
+              "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MX4M-62D : Thu Jan 16 15:41:10 UTC 2025), Entry for John Burton and Polly Ann Burton, 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MX4M-626"
+            },
+            {
+              "id": "sd_p_345882314",
+              "resource_type": "Person",
+              "title": "Thomas H Burton, \"United States, Census, 1870\"",
+              "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MX4M-62D : Thu Jan 16 15:41:10 UTC 2025), Entry for John Burton and Polly Ann Burton, 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MX4M-62X"
+            },
+            {
+              "id": "sd_p_345882318",
+              "resource_type": "Person",
+              "title": "Samuel Goff, \"United States, Census, 1870\"",
+              "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MX4M-62D : Thu Jan 16 15:41:10 UTC 2025), Entry for John Burton and Polly Ann Burton, 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MX4M-62V"
+            },
+            {
+              "id": "sd_p_345882316",
+              "resource_type": "Person",
+              "title": "John Mandy Burton, \"United States, Census, 1870\"",
+              "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MX4M-62D : Thu Jan 16 15:41:10 UTC 2025), Entry for John Burton and Polly Ann Burton, 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MX4M-62N"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            }
+          ],
+          "places": [
+            {
+              "id": "place_394372"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
