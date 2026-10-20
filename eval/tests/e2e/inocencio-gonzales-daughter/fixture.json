@@ -1,0 +1,19 @@
+{
+  "id": "inocencio-gonzales-daughter",
+  "name": "Inocencio Gonzales — a daughter Juana baptised in July 1895, Sacaca, Potosí, Bolivia",
+  "genre": "record-hint",
+  "source_pid": "GY75-S9D",
+  "captured": "2026-10-20",
+  "researcher_question": "Inocencio Gonzales (also Gonzalo) and his wife Antonia Uraque (also indexed Elsaque) are known from their daughter Victoria's Potosí marriages of 1905 and 1914, which give her birth as about 1886. What other children did Inocencio and Antonia have?",
+  "tags": {
+    "question_type": "children",
+    "era": "1890s",
+    "geography": "BO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 2, hint-samples.csv row 91, flag adds_daughter, confidence 3). Draft transcribed from an 1895 Sacaca (Potosí) Catholic baptism of Juana Gonsalo naming Inocencio Gonsalo and Antonia Araque as parents; unverified."
+}

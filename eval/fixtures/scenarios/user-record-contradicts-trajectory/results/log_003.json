@@ -1,0 +1,3437 @@
+{
+  "log_id": "log_003",
+  "tool": "record_search",
+  "retrieved": "2026-10-05T17:55:56.874Z",
+  "returned_count": 20,
+  "payload": {
+    "query": {
+      "surname": "Burton",
+      "givenName": "John",
+      "collectionId": "1804888",
+      "marriagePlace": "Pulaski, Kentucky",
+      "marriageYearFrom": 1835,
+      "marriageYearTo": 1850,
+      "subjectId": "I1",
+      "projectPath": "/project"
+    },
+    "totalMatches": 20,
+    "paginationCappedAt": 4999,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:QG1D-5TPM",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Burton",
+        "score": 5.4535995,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for John Burton and Sarah B Burton, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QRNR-MHMR",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104233092090",
+              "ark": "ark:/61903/1:1:QG1D-5TPM",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233092096",
+              "ark": "ark:/61903/1:1:QG1D-5TPW",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sarah B",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_104233092090",
+              "person2": "p_104233092096",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "29 May 1849",
+                  "standard_date": "29 May 1849",
+                  "place": "Pulaski, Kentucky, United States",
+                  "standard_place": "Pulaski, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106114057225",
+              "resource_type": "Record",
+              "title": "Entry for John Burton and Sarah B Burton, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1D-5TPM : Sat Feb 24 07:06:39 UTC 2024), Entry for John Burton and Sarah B Burton, 29 May 1849.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRNR-MHMR",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "29 May 1849",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91S-N9TP-L",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1799-1863",
+                "record_type": "MarriageBond"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104233092090",
+              "resource_type": "Person",
+              "url": "#p_104233092090"
+            }
+          ],
+          "places": [
+            {
+              "id": "394372",
+              "name": "Pulaski, Kentucky, United States",
+              "latitude": 37.116669,
+              "longitude": -84.599998
+            }
+          ]
+        },
+        "primaryId": "p_104233092090",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2DN-75VB",
+        "events": [
+          {
+            "type": "Unknown",
+            "place": "Floyd"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Burton",
+        "score": 5.4435997,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for John Burton and Salley Binion, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QLWD-ZGV6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102364717168",
+              "ark": "ark:/61903/1:1:Q2DN-75VB",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "John"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Unknown",
+                  "primary": true,
+                  "place": "Floyd",
+                  "standard_place": "Floyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102364717171",
+              "ark": "ark:/61903/1:1:Q2DN-75K9",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Binion",
+                  "given": "Salley"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102364717168",
+              "person2": "p_102364717171",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "11 May 1843",
+                  "standard_date": "11 May 1843",
+                  "place": "Floyd, Kentucky, United States",
+                  "standard_place": "Floyd, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102944810353",
+              "resource_type": "Record",
+              "title": "Entry for John Burton and Salley Binion, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DN-75VB : Sat Feb 24 07:43:09 UTC 2024), Entry for John Burton and Salley Binion, 11 May 1843.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWD-ZGV6",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91F-P32D-L",
+              "coverage": {
+                "place_rep_id": "394103",
+                "date_range": "1823-1843",
+                "record_type": "MarriageBond"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102364717168",
+              "resource_type": "Person",
+              "url": "#p_102364717168"
+            }
+          ],
+          "places": [
+            {
+              "id": "394103",
+              "name": "Floyd, Kentucky, United States",
+              "latitude": 37.549999,
+              "longitude": -82.750559
+            }
+          ]
+        },
+        "primaryId": "p_102364717168",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2DD-1WBG",
+        "events": [
+          {
+            "type": "Unknown",
+            "place": "Floyd"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Burton",
+        "score": 5.4435997,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for John Burton and <Unknown>, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QLW8-NW91",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102362109262",
+              "ark": "ark:/61903/1:1:Q2DD-1WBG",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "John"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Unknown",
+                  "primary": true,
+                  "place": "Floyd",
+                  "standard_place": "Floyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102362109265",
+              "ark": "ark:/61903/1:1:Q2DD-1WBR",
+              "principal": true,
+              "gender": "Female",
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102362109262",
+              "person2": "p_102362109265",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "14 May 1843",
+                  "standard_date": "14 May 1843",
+                  "place": "Floyd, Kentucky, United States",
+                  "standard_place": "Floyd, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102944147459",
+              "resource_type": "Record",
+              "title": "Entry for John Burton and <Unknown>, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DD-1WBG : Sat Feb 24 07:54:59 UTC 2024), Entry for John Burton and <Unknown>, 14 May 1843.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLW8-NW91",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91F-Y4LV-D",
+              "coverage": {
+                "place_rep_id": "394103",
+                "date_range": "1829–1843",
+                "record_type": "MarriageCertificate"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102362109262",
+              "resource_type": "Person",
+              "url": "#p_102362109262"
+            }
+          ],
+          "places": [
+            {
+              "id": "394103",
+              "name": "Floyd, Kentucky, United States",
+              "latitude": 37.549999,
+              "longitude": -82.750559
+            }
+          ]
+        },
+        "primaryId": "p_102362109262",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2DD-14M1",
+        "events": [
+          {
+            "type": "Unknown",
+            "place": "Floyd"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Burton",
+        "score": 5.4435997,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for John Burton and Salley Benion, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QLW8-NWS6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102362109329",
+              "ark": "ark:/61903/1:1:Q2DD-14M1",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "John"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Unknown",
+                  "primary": true,
+                  "place": "Floyd",
+                  "standard_place": "Floyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102362109333",
+              "ark": "ark:/61903/1:1:Q2DD-1493",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Benion",
+                  "given": "Salley"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102362109329",
+              "person2": "p_102362109333",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "11 May 1843",
+                  "standard_date": "11 May 1843",
+                  "place": "Floyd, Kentucky, United States",
+                  "standard_place": "Floyd, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102944147473",
+              "resource_type": "Record",
+              "title": "Entry for John Burton and Salley Benion, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DD-14M1 : Sat Feb 24 02:26:24 UTC 2024), Entry for John Burton and Salley Benion, 11 May 1843.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLW8-NWS6",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91F-Y4KV-M",
+              "coverage": {
+                "place_rep_id": "394103",
+                "date_range": "1829–1843",
+                "record_type": "MarriageCertificate"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102362109329",
+              "resource_type": "Person",
+              "url": "#p_102362109329"
+            }
+          ],
+          "places": [
+            {
+              "id": "394103",
+              "name": "Floyd, Kentucky, United States",
+              "latitude": 37.549999,
+              "longitude": -82.750559
+            }
+          ]
+        },
+        "primaryId": "p_102362109329",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QG1D-BBRV",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Burton",
+        "score": 4.2936,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Jesse Burton and Nancy N Burton, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QRNR-QLSJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104233201968",
+              "ark": "ark:/61903/1:1:QG1D-BBRV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233201965",
+              "ark": "ark:/61903/1:1:QG1D-BBRF",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Nancy N",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1846",
+                  "standard_date": "1846"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233201972",
+              "ark": "ark:/61903/1:1:QG1D-BBRG",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "S B",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233201963",
+              "ark": "ark:/61903/1:1:QG1D-BBR6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Jesse",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1826",
+                  "standard_date": "1826"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_104233201968",
+              "person2": "p_104233201972"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104233201972",
+              "child": "p_104233201965"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104233201963",
+              "person2": "p_104233201965"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104233201968",
+              "child": "p_104233201965"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106114176977",
+              "resource_type": "Record",
+              "title": "Entry for Jesse Burton and Nancy N Burton, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1D-BBR6 : Sat Feb 24 07:07:19 UTC 2024), Entry for Jesse Burton and Nancy N Burton, 8 Jan 1862.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRNR-QLSJ",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "8 Jan 1862",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91S-N9TK-R",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1799-1863",
+                "record_type": "MarriageBond"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104233201968",
+              "resource_type": "Person",
+              "url": "#p_104233201968"
+            }
+          ]
+        },
+        "primaryId": "p_104233201968",
+        "role": "Father Of Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2Q6-L3C7",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John W. Burton",
+        "score": 4.2936,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for James T. Burton and Minnie Burton, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QL9F-T538",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102168299975",
+              "ark": "ark:/61903/1:1:Q2Q6-L3C7",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John W.",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168299973",
+              "ark": "ark:/61903/1:1:Q2Q6-L3C3",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "James T.",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1881",
+                  "standard_date": "1881"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168299980",
+              "ark": "ark:/61903/1:1:Q2Q6-L3CZ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168299985",
+              "ark": "ark:/61903/1:1:Q2Q6-L3CF",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Minnie",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1881",
+                  "standard_date": "1881"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168299991",
+              "ark": "ark:/61903/1:1:Q2Q6-L3CL",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Thomas H.",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168299997",
+              "ark": "ark:/61903/1:1:Q2Q6-L3CY",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Susan",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_102168299980",
+              "child": "p_102168299973"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102168299973",
+              "person2": "p_102168299985"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102168299975",
+              "child": "p_102168299973"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102168299975",
+              "person2": "p_102168299980"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102826173701",
+              "resource_type": "Record",
+              "title": "Entry for James T. Burton and Minnie Burton, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2Q6-L3C3 : Sat Feb 24 06:17:33 UTC 2024), Entry for James T. Burton and John W. Burton, 21 Apr 1905.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL9F-T538",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9SJ-V9DB-H",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1903–1904",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102168299975",
+              "resource_type": "Person",
+              "url": "#p_102168299975"
+            }
+          ]
+        },
+        "primaryId": "p_102168299975",
+        "batchNumber": "I11518-2",
+        "role": "Father Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QG1D-BJQR",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Burton",
+        "score": 4.2936,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Nathaniel Burton and Sally Floyd, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QRNR-4CCY",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104233191445",
+              "ark": "ark:/61903/1:1:QG1D-BJQR",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233191442",
+              "ark": "ark:/61903/1:1:QG1D-BJQG",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Nathaniel",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233191447",
+              "ark": "ark:/61903/1:1:QG1D-BJQY",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sally",
+                  "surname": "Floyd"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233191449",
+              "ark": "ark:/61903/1:1:QG1D-BJQ1",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mathew",
+                  "surname": "Floyd"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_104233191445",
+              "child": "p_104233191442"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104233191442",
+              "person2": "p_104233191447"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106114247397",
+              "resource_type": "Record",
+              "title": "Entry for Nathaniel Burton and Sally Floyd, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1D-BJQG : Sat Feb 24 07:08:27 UTC 2024), Entry for Nathaniel Burton and John Burton, 27 Oct 1829.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRNR-4CCY",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "27 Oct 1829",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91S-N9TB-5",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1799-1863",
+                "record_type": "MarriageBond"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104233191445",
+              "resource_type": "Person",
+              "url": "#p_104233191445"
+            }
+          ]
+        },
+        "primaryId": "p_104233191445",
+        "role": "Father Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QG1D-T8TX",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Burton",
+        "score": 4.2936,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Lemuel Burton and Elizabeth Burton, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QRNR-42XM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104233132694",
+              "ark": "ark:/61903/1:1:QG1D-T8TX",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "John"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233132691",
+              "ark": "ark:/61903/1:1:QG1D-T8T8",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Elizabeth"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233132689",
+              "ark": "ark:/61903/1:1:QG1D-T8TC",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Lemuel"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_104233132689",
+              "person2": "p_104233132691"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104233132694",
+              "child": "p_104233132691"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106114257420",
+              "resource_type": "Record",
+              "title": "Entry for Lemuel Burton and Elizabeth Burton, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1D-T8TC : Sat Feb 24 07:04:56 UTC 2024), Entry for Lemuel Burton and Elizabeth Burton, May 1839.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRNR-42XM",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "May 1839",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91S-N9TJ-P",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1799-1863",
+                "record_type": "MarriageBond"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104233132694",
+              "resource_type": "Person",
+              "url": "#p_104233132694"
+            }
+          ]
+        },
+        "primaryId": "p_104233132694",
+        "role": "Father Of Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QG1D-BBTZ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Burton",
+        "score": 4.2936,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for William Burton and Mary Warren, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QRNR-QLST",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104233201990",
+              "ark": "ark:/61903/1:1:QG1D-BBTZ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "John"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233201987",
+              "ark": "ark:/61903/1:1:QG1D-BBT4",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "William"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1840",
+                  "standard_date": "1840"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233201994",
+              "ark": "ark:/61903/1:1:QG1D-BBTX",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Malinda"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233201998",
+              "ark": "ark:/61903/1:1:QG1D-BBTV",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Warren",
+                  "given": "Mary"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1845",
+                  "standard_date": "1845"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233201999",
+              "ark": "ark:/61903/1:1:QG1D-BBTK",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Warren",
+                  "given": "Fielden"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233072001",
+              "ark": "ark:/61903/1:1:QG1D-5Q68",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Warren",
+                  "given": "Rebecca"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_104233201990",
+              "child": "p_104233201987"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104233201990",
+              "person2": "p_104233201994"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104233201994",
+              "child": "p_104233201987"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104233201987",
+              "person2": "p_104233201998"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106114176986",
+              "resource_type": "Record",
+              "title": "Entry for William Burton and Mary Warren, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1D-BBT4 : Sat Feb 24 06:08:25 UTC 2024), Entry for William Burton and John Burton, 30 Dec 1862.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRNR-QLST",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "30 Dec 1862",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91S-N9TK-R",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1799-1863",
+                "record_type": "MarriageBond"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104233201990",
+              "resource_type": "Person",
+              "url": "#p_104233201990"
+            }
+          ]
+        },
+        "primaryId": "p_104233201990",
+        "role": "Father Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QG1D-T9G4",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Burton",
+        "score": 4.2936,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Elijah Goff and Zerelda Burton, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QRNR-WNPX",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104233123567",
+              "ark": "ark:/61903/1:1:QG1D-T9G4",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "John"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233123565",
+              "ark": "ark:/61903/1:1:QG1D-T9G7",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Zerelda"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1838",
+                  "standard_date": "1838"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233123563",
+              "ark": "ark:/61903/1:1:QG1D-T9G3",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elijah",
+                  "surname": "Goff"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1835",
+                  "standard_date": "1835"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_104233123563",
+              "person2": "p_104233123565"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104233123567",
+              "child": "p_104233123565"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106114227104",
+              "resource_type": "Record",
+              "title": "Entry for Elijah Goff and Zerelda Burton, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1D-T9G3 : Sat Feb 24 06:10:55 UTC 2024), Entry for Elijah Goff and Zerelda Burton, 7 Apr 1859.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRNR-WNPX",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "7 Apr 1859",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91S-N9TG-4",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1799-1863",
+                "record_type": "MarriageBond"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104233123567",
+              "resource_type": "Person",
+              "url": "#p_104233123567"
+            }
+          ]
+        },
+        "primaryId": "p_104233123567",
+        "role": "Father Of Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QKJS-H58P",
+        "events": [],
+        "treeMatches": [],
+        "personName": "R J Burton",
+        "score": 3.82198,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for R J Burton and J R Crowder, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:Q2PD-K6RH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_101745957953",
+              "ark": "ark:/61903/1:1:QKJS-H58P",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "R J"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_101745957959",
+              "ark": "ark:/61903/1:1:QKJS-H581",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "J R",
+                  "surname": "Crowder"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_101745957953",
+              "person2": "p_101745957959",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "place": "Todd, Kentucky, United States",
+                  "standard_place": "Todd, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102629145458",
+              "resource_type": "Record",
+              "title": "Entry for R J Burton and J R Crowder, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKJS-H58P : Sat Feb 24 06:49:49 UTC 2024), Entry for R J Burton and J R Crowder.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q2PD-K6RH",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-8937-5XR9",
+              "coverage": {
+                "place_rep_id": "394328",
+                "date_range": "1845-1854",
+                "record_type": "MarriageCertificate"
+              }
+            },
+            {
+              "id": "src_p_p_101745957953",
+              "resource_type": "Person",
+              "url": "#p_101745957953"
+            }
+          ],
+          "places": [
+            {
+              "id": "394328",
+              "name": "Todd, Kentucky, United States",
+              "latitude": 36.766669,
+              "longitude": -87.13333
+            }
+          ]
+        },
+        "primaryId": "p_101745957953",
+        "role": "Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2D6-TRKK",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Jack Burton",
+        "score": 3.5658803,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Homer Freddie Garrett and Lettie Grant, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QLW8-R321",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102362855089",
+              "ark": "ark:/61903/1:1:Q2D6-TRKK",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Jack",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102362855086",
+              "ark": "ark:/61903/1:1:Q2D6-TRKN",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Lettie",
+                  "surname": "Grant"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1890",
+                  "standard_date": "1890"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102362855091",
+              "ark": "ark:/61903/1:1:Q2D6-TRKL",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Nancy",
+                  "surname": "Slapleton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102362855077",
+              "ark": "ark:/61903/1:1:Q2D6-TRK4",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Homer Freddie",
+                  "surname": "Garrett"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Unknown",
+                  "primary": true,
+                  "place": "Lincoln",
+                  "standard_place": "Lincoln, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1899",
+                  "standard_date": "1899"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102362855079",
+              "ark": "ark:/61903/1:1:Q2D6-TRKC",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pok",
+                  "surname": "Garrett"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102362855082",
+              "ark": "ark:/61903/1:1:Q2D6-TRKD",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Dawson"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102362855089",
+              "person2": "p_102362855091"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102362855091",
+              "child": "p_102362855086"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102362855089",
+              "child": "p_102362855086"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102362855077",
+              "person2": "p_102362855086"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102944388329",
+              "resource_type": "Record",
+              "title": "Entry for Homer Freddie Garrett and Lettie Grant, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2D6-TRK4 : Sat Feb 24 07:19:57 UTC 2024), Entry for Homer Freddie Garrett and Pok Garrett, 9 Jan 1929.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLW8-R321",
+              "coverage": {
+                "place_rep_id": "4126786",
+                "date_range": "9 Jan 1929",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91S-7312-2",
+              "coverage": {
+                "place_rep_id": "394137",
+                "date_range": "1925-1933",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Z16",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Births, from 0041 to 2007",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+0041-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102362855089",
+              "resource_type": "Person",
+              "url": "#p_102362855089"
+            }
+          ],
+          "places": [
+            {
+              "id": "394137",
+              "name": "Lincoln, Kentucky, United States",
+              "latitude": 37.45,
+              "longitude": -84.666669
+            }
+          ]
+        },
+        "primaryId": "p_102362855089",
+        "role": "Father Of Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QG1D-574W",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John Barton",
+        "score": 3.55588,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Wiatt Hufman and Larena J Banton, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QRNR-QZJP",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104233072716",
+              "ark": "ark:/61903/1:1:QG1D-574W",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Barton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233072711",
+              "ark": "ark:/61903/1:1:QG1D-5749",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Larena J",
+                  "surname": "Banton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104233072708",
+              "ark": "ark:/61903/1:1:QG1D-57WB",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Wiatt",
+                  "surname": "Hufman"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_104233072716",
+              "child": "p_104233072711"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104233072708",
+              "person2": "p_104233072711"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106114167533",
+              "resource_type": "Record",
+              "title": "Entry for Wiatt Hufman and Larena J Banton, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1D-57WB : Sat Feb 24 06:09:56 UTC 2024), Entry for Wiatt Hufman and Larena J Banton, 12 Dec 1835.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRNR-QZJP",
+              "coverage": {
+                "place_rep_id": "394137",
+                "date_range": "12 Dec 1835",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4F-H3F5-S",
+              "coverage": {
+                "place_rep_id": "394137",
+                "date_range": "1830–1865",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104233072716",
+              "resource_type": "Person",
+              "url": "#p_104233072716"
+            }
+          ]
+        },
+        "primaryId": "p_104233072716",
+        "role": "Father Of Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:V5Z4-5D2",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Martha J Barton",
+        "score": 3.0912602,
+        "confidence": 3,
+        "sex": "Female",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Moses F Foley and Martha J Barton, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:9MHL-R8X2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_13713510980",
+              "ark": "ark:/61903/1:1:V5Z4-5D2",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Barton",
+                  "given": "Martha J"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_13713510979",
+              "ark": "ark:/61903/1:1:V5Z4-5DK",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Foley",
+                  "given": "Moses F"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_13713510979",
+              "person2": "p_13713510980",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "22 Dec 1846",
+                  "standard_date": "22 Dec 1846",
+                  "place": "Bourbon, Kentucky, United States",
+                  "standard_place": "Bourbon, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22082095340",
+              "resource_type": "Record",
+              "title": "Entry for Moses F Foley and Martha J Barton, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V5Z4-5DK : Sat Feb 24 06:35:24 UTC 2024), Entry for Moses F Foley and Martha J Barton, 22 Dec 1846.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9MHL-R8X2",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:9398-3C2M-P",
+              "coverage": {
+                "place_rep_id": "394114",
+                "date_range": "1852–1898",
+                "record_type": "CivilMarriageRegister"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_13713510980",
+              "resource_type": "Person",
+              "url": "#p_13713510980"
+            }
+          ],
+          "places": [
+            {
+              "id": "394114",
+              "name": "Bourbon, Kentucky, United States",
+              "latitude": 38.2,
+              "longitude": -84.216669
+            }
+          ]
+        },
+        "primaryId": "p_13713510980",
+        "batchNumber": "M03184-4",
+        "role": "Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2Q6-LZCN",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Jon Burten",
+        "score": 2.8421602,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Thomas Burten and Dora Jackson, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QL9F-TTG3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102168306286",
+              "ark": "ark:/61903/1:1:Q2Q6-LZCN",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burten",
+                  "given": "Jon"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168306283",
+              "ark": "ark:/61903/1:1:Q2Q6-LZC6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burten",
+                  "given": "Thomas"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1882",
+                  "standard_date": "1882"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168306290",
+              "ark": "ark:/61903/1:1:Q2Q6-LZC2",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burten",
+                  "given": "Jane"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168306294",
+              "ark": "ark:/61903/1:1:Q2Q6-LZC5",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Jackson",
+                  "given": "Dora"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1891",
+                  "standard_date": "1891"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168306298",
+              "ark": "ark:/61903/1:1:Q2Q6-LZCB",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Bullock",
+                  "given": "Martha"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102168306286",
+              "person2": "p_102168306290"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102168306286",
+              "child": "p_102168306283"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102168306283",
+              "person2": "p_102168306294"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102168306290",
+              "child": "p_102168306283"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102826176063",
+              "resource_type": "Record",
+              "title": "Entry for Thomas Burten and Dora Jackson, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2Q6-LZC6 : Sat Feb 24 06:15:55 UTC 2024), Entry for Thomas Burten and Jon Burten, 2 Nov 1918.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL9F-TTG3",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9SJ-5JW8",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1921",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102168306286",
+              "resource_type": "Person",
+              "url": "#p_102168306286"
+            }
+          ]
+        },
+        "primaryId": "p_102168306286",
+        "batchNumber": "I11520-5",
+        "role": "Father Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2Q6-22V9",
+        "events": [],
+        "treeMatches": [],
+        "personName": "N. J. Burton",
+        "score": 2.67198,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Ethas Burton and May Trimble, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QL9F-TL68",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102168288541",
+              "ark": "ark:/61903/1:1:Q2Q6-22V9",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "N. J.",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168288537",
+              "ark": "ark:/61903/1:1:Q2Q6-22JY",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Ethas",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1888",
+                  "standard_date": "1888"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168288545",
+              "ark": "ark:/61903/1:1:Q2Q6-22V7",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "J. A.",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168288554",
+              "ark": "ark:/61903/1:1:Q2Q6-22VX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "May",
+                  "surname": "Trimble"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1891",
+                  "standard_date": "1891"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168288558",
+              "ark": "ark:/61903/1:1:Q2Q6-22VV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Green",
+                  "surname": "Trimble"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168288564",
+              "ark": "ark:/61903/1:1:Q2Q6-22V5",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Rexie",
+                  "surname": "Trimble"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_102168288545",
+              "child": "p_102168288537"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102168288541",
+              "person2": "p_102168288545"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102168288541",
+              "child": "p_102168288537"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102168288537",
+              "person2": "p_102168288554"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102826171301",
+              "resource_type": "Record",
+              "title": "Entry for Ethas Burton and May Trimble, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2Q6-22JY : Sat Feb 24 07:01:07 UTC 2024), Entry for Ethas Burton and N. J. Burton, 23 Dec 1915.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL9F-TL68",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89SJ-LSPR",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1915–1916",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102168288541",
+              "resource_type": "Person",
+              "url": "#p_102168288541"
+            }
+          ]
+        },
+        "primaryId": "p_102168288541",
+        "batchNumber": "I11520-7",
+        "role": "Father Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2DH-9QBQ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "N J Burton",
+        "score": 2.66498,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Ethus Burton and Amy Trimble, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QLWZ-8DT5",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102358111444",
+              "ark": "ark:/61903/1:1:Q2DH-9QBQ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "N J"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102358111443",
+              "ark": "ark:/61903/1:1:Q2DH-9QB3",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Ethus"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1886",
+                  "standard_date": "1886"
+                },
+                {
+                  "type": "Unknown",
+                  "primary": true,
+                  "place": "Pulaski",
+                  "standard_place": "Pulaski, Faulk, South Dakota, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102358111445",
+              "ark": "ark:/61903/1:1:Q2DH-9QB7",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Joyce"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102358111446",
+              "ark": "ark:/61903/1:1:Q2DH-9QBW",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Trimble",
+                  "given": "Amy"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1893",
+                  "standard_date": "1893"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102358111450",
+              "ark": "ark:/61903/1:1:Q2DH-9QBZ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Trimble",
+                  "given": "Grun"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102358111457",
+              "ark": "ark:/61903/1:1:Q2DH-9QBJ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Trimble",
+                  "given": "Racksy"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102358111443",
+              "person2": "p_102358111446"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102358111444",
+              "person2": "p_102358111445"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102358111445",
+              "child": "p_102358111443"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102358111444",
+              "child": "p_102358111443"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102943208604",
+              "resource_type": "Record",
+              "title": "Entry for Ethus Burton and Amy Trimble, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DH-9QB3 : Sat Feb 24 07:50:01 UTC 2024), Entry for Ethus Burton and N J Burton, 26 Nov 1931.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWZ-8DT5",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C913-ZSV6-L",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1932–1933",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102358111444",
+              "resource_type": "Person",
+              "url": "#p_102358111444"
+            }
+          ],
+          "places": [
+            {
+              "id": "4897523",
+              "name": "Pulaski, Faulk, South Dakota, United States",
+              "latitude": 45.116109,
+              "longitude": -99.147499
+            }
+          ]
+        },
+        "primaryId": "p_102358111444",
+        "role": "Father Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2ZM-DVCZ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "J W Barton",
+        "score": 1.52126,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for J M Barton and Martha Foster, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QL7D-YSZD",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102303340480",
+              "ark": "ark:/61903/1:1:Q2ZM-DVCZ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Barton",
+                  "given": "J W"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102303340476",
+              "ark": "ark:/61903/1:1:Q2ZM-DVCW",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Barton",
+                  "given": "J M"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1881",
+                  "standard_date": "1881"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102303340484",
+              "ark": "ark:/61903/1:1:Q2ZM-DVCX",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Barton",
+                  "given": "Rebecca"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102303340488",
+              "ark": "ark:/61903/1:1:Q2ZM-DVCV",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Foster",
+                  "given": "Martha"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1892",
+                  "standard_date": "1892"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102303340491",
+              "ark": "ark:/61903/1:1:Q2ZM-DVCL",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Foster",
+                  "given": "Shelby"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102303340476",
+              "person2": "p_102303340488"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102303340480",
+              "person2": "p_102303340484"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102303340484",
+              "child": "p_102303340476"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102303340480",
+              "child": "p_102303340476"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102920951112",
+              "resource_type": "Record",
+              "title": "Entry for J M Barton and Martha Foster, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2ZM-DVCW : Sat Feb 24 07:21:47 UTC 2024), Entry for J M Barton and J W Barton, 28 Nov 1914.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL7D-YSZD",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "28 Nov 1914",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BT-1SWH-Y",
+              "coverage": {
+                "place_rep_id": "394359",
+                "date_range": "1915–1917",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102303340480",
+              "resource_type": "Person",
+              "url": "#p_102303340480"
+            }
+          ]
+        },
+        "primaryId": "p_102303340480",
+        "role": "Father Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2Q6-2GPM",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Burton",
+        "score": -1.129818,
+        "confidence": 1,
+        "sex": "Female",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Alexander Haynes and Fronie Pettyjohn, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QL9F-TLBN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102168290490",
+              "ark": "ark:/61903/1:1:Q2Q6-2GPM",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168290479",
+              "ark": "ark:/61903/1:1:Q2Q6-2GGK",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Pettyjohn",
+                  "given": "Fronie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1878",
+                  "standard_date": "1878"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168290483",
+              "ark": "ark:/61903/1:1:Q2Q6-2GGP",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Ben"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168290464",
+              "ark": "ark:/61903/1:1:Q2Q6-2GGQ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Haynes",
+                  "given": "Alexander"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168290471",
+              "ark": "ark:/61903/1:1:Q2Q6-2GG8",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Haynes",
+                  "given": "E..."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102168290475",
+              "ark": "ark:/61903/1:1:Q2Q6-2GGF",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Haynes",
+                  "given": "Margaret"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_102168290483",
+              "child": "p_102168290479"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102168290483",
+              "person2": "p_102168290490"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102168290490",
+              "child": "p_102168290479"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102168290464",
+              "person2": "p_102168290479"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102826171756",
+              "resource_type": "Record",
+              "title": "Entry for Alexander Haynes and Fronie Pettyjohn, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2Q6-2GGQ : Sat Feb 24 01:47:29 UTC 2024), Entry for Alexander Haynes and E... Haynes, 29 Mar 1918.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL9F-TLBN",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9SJ-LQHH",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1915–1916",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102168290490",
+              "resource_type": "Person",
+              "url": "#p_102168290490"
+            }
+          ]
+        },
+        "primaryId": "p_102168290490",
+        "batchNumber": "I11520-8",
+        "role": "Mother Of Bride"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2DH-MDV7",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Burton",
+        "score": -1.136818,
+        "confidence": 1,
+        "sex": "Female",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Wm J Hines and Ermine Wesley, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QLWZ-8HMD",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102358091345",
+              "ark": "ark:/61903/1:1:Q2DH-MDV7",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102358091343",
+              "ark": "ark:/61903/1:1:Q2DH-MDV3",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Ermine",
+                  "surname": "Wesley"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1894",
+                  "standard_date": "1894"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102358091344",
+              "ark": "ark:/61903/1:1:Q2DH-MDVQ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102358091335",
+              "ark": "ark:/61903/1:1:Q2DH-MDJR",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Wm J",
+                  "surname": "Hines"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Unknown",
+                  "primary": true,
+                  "place": "Pulaski",
+                  "standard_place": "Pulaski, Faulk, South Dakota, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1874",
+                  "standard_date": "1874"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102358091338",
+              "ark": "ark:/61903/1:1:Q2DH-MDJB",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Linzy P",
+                  "surname": "Hines"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102358091342",
+              "ark": "ark:/61903/1:1:Q2DH-MDVS",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Rosanna",
+                  "surname": "Hines"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102358091335",
+              "person2": "p_102358091343"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102358091345",
+              "child": "p_102358091343"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102358091344",
+              "person2": "p_102358091345"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102358091344",
+              "child": "p_102358091343"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102943204212",
+              "resource_type": "Record",
+              "title": "Entry for Wm J Hines and Ermine Wesley, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DH-MDJR : Sat Feb 24 07:08:41 UTC 2024), Entry for Wm J Hines and Linzy P Hines, 25 Sep 1932.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWZ-8HMD",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C913-ZSKC-M",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1932–1933",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102358091345",
+              "resource_type": "Person",
+              "url": "#p_102358091345"
+            }
+          ],
+          "places": [
+            {
+              "id": "4897523",
+              "name": "Pulaski, Faulk, South Dakota, United States",
+              "latitude": 45.116109,
+              "longitude": -99.147499
+            }
+          ]
+        },
+        "primaryId": "p_102358091345",
+        "role": "Mother Of Bride"
+      }
+    ]
+  }
+}

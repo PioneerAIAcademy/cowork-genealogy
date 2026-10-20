@@ -1,0 +1,19 @@
+{
+  "id": "aleksiy-ivanov-son",
+  "name": "Алексий Васильев Иванов — a son Павел born in Samara in November 1885",
+  "genre": "record-hint",
+  "source_pid": "L8PL-3W8",
+  "captured": "2026-10-20",
+  "researcher_question": "What children did Алексий Васильев Иванов of Samara, husband of Елизавета Васильева and father of Виктор (born 29 October 1894) and Павел (born 15 February 1902), have besides these two?",
+  "tags": {
+    "question_type": "children",
+    "era": "1880s",
+    "geography": "RU"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 22, hint-samples.csv row 758, flag adds_son, confidence 3). Draft transcribed from an 1885 Samara metrical-book birth entry for Павел Иванов naming his parents as Василий Иванов and Степанида Иванова; unverified. Both parents' given names differ from the tree couple's, so the likely outcome is a false match."
+}

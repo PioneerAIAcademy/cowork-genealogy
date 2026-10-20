@@ -1,0 +1,33 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Nicolasa Cedillo died on 22 May 1943 at Santa Lucía, Intibucá, Honduras; the civil death registration indexes her as Ma Nicolasa Cedillo, born about 1868, with her spouse Santiago Cedillo.",
+      "details": {
+        "subject_person": "Nicolasa Cedillo (GJG6-F2L)",
+        "fact_type": "Death",
+        "date": "22 May 1943",
+        "place": "Santa Lucía, Intibucá, Honduras"
+      },
+      "supporting_sources": [
+        "Honduras, Registro Civil, 1841-1968 — death registration for Ma Nicolasa Cedillo, 22 May 1943, Santa Lucía, Intibucá, spouse Santiago Cedillo, born about 1868"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Nicolasa Cedillo was born about 1868, the year the 1943 death registration's stated age implies.",
+      "details": {
+        "subject_person": "Nicolasa Cedillo (GJG6-F2L)",
+        "fact_type": "Birth",
+        "date": "about 1868"
+      },
+      "supporting_sources": [
+        "Honduras, Registro Civil, 1841-1968 — death registration for Ma Nicolasa Cedillo, 22 May 1943, Santa Lucía, Intibucá, birth year indexed as 1868"
+      ],
+      "required": false
+    }
+  ]
+}
