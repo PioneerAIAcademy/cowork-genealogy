@@ -12,9 +12,10 @@ from __future__ import annotations
 
 # Waiting on a person: the agent asked something and the turn ended on it.
 #
-# "queued" used to be in here and could NEVER be reached: `latest_outcome` is read from
-# turns with `completed_at IS NOT NULL`, and a held message is precisely a turn that has
-# not completed. A held message is now its own parameter instead.
+# "queued" used to be in here as an OUTCOME and could never be reached:
+# `latest_outcome` is read from turns with `completed_at IS NOT NULL`, and a held
+# message is precisely a turn that has not completed. It is now a state of its own,
+# driven by `has_queued` -- the parameter that CAN say it -- rather than an outcome.
 _NEEDS_YOU = {"decision"}
 
 
@@ -25,7 +26,7 @@ def job_state(
     project_completed: bool,
     has_queued: bool = False,
 ) -> str:
-    """One of: ``running``, ``needs you``, ``done``, ``stopped``, ``new``.
+    """One of: ``running``, ``queued``, ``needs you``, ``done``, ``stopped``, ``new``.
 
     Order matters. Work happening NOW outranks whatever the last turn concluded --
     a new turn on a finished project is running, not done.
@@ -38,11 +39,20 @@ def job_state(
     if turn_in_flight:
         return "running"
     if has_queued:
-        # A message the reader sent mid-turn, held until the turn ends. It is not
-        # running -- nothing is working on it -- and it is not whatever the last turn
-        # concluded either. Ranked below `turn_in_flight` because a live turn is the
-        # more useful thing to say when both are true.
-        return "needs you"
+        # A message the reader sent mid-turn, held until the turn ends.
+        #
+        # NOT "needs you": the reader has already spoken and the SYSTEM owes the next
+        # move, so asking them for something they have just given is backwards.
+        #
+        # NOT "running" either, which is the other obvious mapping and the wrong one:
+        # `turn_in_flight` once counted held turns, so "running" latched on and the
+        # session read as working forever (`test_a_held_message_does_not_latch_running
+        # _through_the_real_query`). Reusing it here would blur the very distinction
+        # that test exists to keep.
+        #
+        # Its own state, then. Ranked below `turn_in_flight` because a live turn is
+        # the more useful thing to say when both are true.
+        return "queued"
     if latest_outcome is None:
         # No turn has ever run. "stopped" would read as a failure on a new session.
         return "new"

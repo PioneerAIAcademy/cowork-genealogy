@@ -25,13 +25,17 @@ def test_a_decision_is_waiting_on_the_researcher():
 
 
 def test_a_queued_message_is_also_waiting():
-    """A held message still reads "needs you" — but via its own signal, not as an
-    outcome. This test used to pass `latest_outcome="queued"`, an input production can
-    never produce: `latest_outcome` is read from turns with `completed_at IS NOT NULL`,
-    and a held message is precisely a turn that has not completed. So it pinned a branch
-    nothing could reach, which is why the branch stayed dead and unnoticed."""
+    """A held message reads "queued", via its own signal rather than an outcome.
+
+    NOT "needs you": the reader has already spoken and the system owes the next move.
+    NOT "running" either: `turn_in_flight` once counted held turns and latched running
+    on forever, so reusing it would blur the distinction the pg test below keeps.
+
+    This test used to pass `latest_outcome="queued"`, an input production can never
+    produce: `latest_outcome` is read from turns with `completed_at IS NOT NULL`, and
+    a held message is precisely a turn that has not completed."""
     assert job_state(latest_outcome=None, turn_in_flight=False,
-                     project_completed=False, has_queued=True) == "needs you"
+                     project_completed=False, has_queued=True) == "queued"
 
 
 def test_a_completed_project_is_done():
@@ -73,7 +77,7 @@ def test_a_held_message_is_not_running_even_after_a_completed_turn():
     reader sent mid-turn latched "running" on and the session read as working forever --
     the exclusion `TURN_ACTIVE_SQL` already makes, missing from the list's own query."""
     assert job_state(latest_outcome="completed", turn_in_flight=False,
-                     project_completed=False, has_queued=True) == "needs you"
+                     project_completed=False, has_queued=True) == "queued"
 
 
 def test_a_live_turn_outranks_a_held_message():
@@ -87,7 +91,7 @@ def test_a_held_message_outranks_what_the_last_turn_concluded():
     """Ranked above `done` too: a reader with a message waiting is not finished, however
     the previous turn ended."""
     assert job_state(latest_outcome="completed", turn_in_flight=False,
-                     project_completed=True, has_queued=True) == "needs you"
+                     project_completed=True, has_queued=True) == "queued"
 
 
 def test_queued_is_no_longer_read_as_an_outcome():

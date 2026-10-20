@@ -105,7 +105,8 @@ def test_every_state_is_reachable_through_the_real_query(pg_dsn):
     assert _state(pg_dsn, owner) == "needs you", "a decision outcome must mean needs you"
     held = turn(pg_dsn, row.session_id, row.project_id, "sent mid-turn")
     sql(pg_dsn, "UPDATE turns SET completed_at = NULL, outcome = 'queued' WHERE turn_id = %s", (held,))
-    assert _state(pg_dsn, owner) == "needs you", "a HELD message must mean needs you"
+    assert _state(pg_dsn, owner) == "queued", "a HELD message must mean queued"
+    seen["queued"] = _state(pg_dsn, owner)
     sql(pg_dsn, "DELETE FROM turns WHERE turn_id = %s", (held,))
     seen["needs you"] = "needs you"
 
@@ -115,7 +116,7 @@ def test_every_state_is_reachable_through_the_real_query(pg_dsn):
     seen["done"] = _state(pg_dsn, owner)
 
     assert seen == {"new": "new", "stopped": "stopped", "running": "running",
-                    "needs you": "needs you", "done": "done"}, seen
+                    "queued": "queued", "needs you": "needs you", "done": "done"}, seen
 
 
 def test_latest_outcome_is_the_newest_COMPLETED_turn(pg_dsn):
@@ -173,7 +174,11 @@ def test_a_held_message_does_not_latch_running_through_the_real_query(pg_dsn):
     sql(pg_dsn, "UPDATE turns SET completed_at = NULL, outcome = 'queued' WHERE turn_id = %s", (held,))
 
     state = _state(pg_dsn, _owner_of(pg_dsn, row.project_id))
-    assert state == "needs you", (
+    # `queued` since the held message became its own state; what this test guards is
+    # unchanged and is the NEGATIVE: it must not read `running`, which would mean the
+    # subquery is counting held turns as in-flight again. Keeping `queued` distinct
+    # from `running` is exactly what lets this assertion stay sharp.
+    assert state == "queued", (
         f"a held message read as {state!r}; 'running' means the subquery is counting "
         "held turns as in-flight again"
     )
