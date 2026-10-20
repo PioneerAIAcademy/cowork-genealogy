@@ -8,8 +8,9 @@ month 1; the payback is a helper doing the mentor's real work.
 
 ## How it works
 
-- **Week 1:** a one-hour kickoff gets everyone's repo, credentials and Claude
-  Code working.
+- **Week 1:** each Contributor signs the CLA and the Team Agreement
+  ([TEAM-SIGNERS.md](../TEAM-SIGNERS.md)) before any access is granted; then a
+  one-hour kickoff gets everyone's repo, credentials and Claude Code working.
 - **From week 2:** the mentor hands over a small piece of their own work that
   nothing waits on: tests, a `dev/try-*.ts` smoke script, a bug repro, a browser
   check of their PR. The Contributor files it as an issue labelled `developer`

@@ -579,10 +579,11 @@ reporting, and the reports are the entire point of the alpha.
 
 ## Step 10 — Clean up
 
-When the PR is merged, delete both case directories:
+When the PR is merged, delete both case directories and the zip:
 
 - `~/feedback/<slug>/` — your iteration workspace
 - `~/feedback/<slug>-cowork-check/` — the fresh unzip from Step 8
+- `~/Downloads/feedback-<timestamp>.zip` — the zip you downloaded
 
 Use your OS's file manager or any delete method you trust. The zip stays in the
 Drive folder as the immutable record, so re-importing later is always possible.
@@ -604,7 +605,7 @@ Drive folder as the immutable record, so re-importing later is always possible.
 | 7 Verify the case | reset + `/clear` + re-paste; `/compare-state --against=desired` | 🤖 Claude Code (case dir) + Viewer |
 | 8 Confirm in Cowork | build + install; fresh unzip; re-issue the prompt | 🖥️ Cowork |
 | 9 Final run + PR | `make eval-skill`, grade **every** dimension, commit, PR, reply | ⌨️ Terminal → 🌐 browser → GitHub |
-| 10 Clean up | delete both case directories | ⌨️ Terminal / file manager |
+| 10 Clean up | delete both case directories and the downloaded zip | ⌨️ Terminal / file manager |
 
 **Between any two attempts** (Step 3 retries, Step 7):
 `make feedback-reset CASE=~/feedback/<slug>` for the data, plus `/clear` for a
