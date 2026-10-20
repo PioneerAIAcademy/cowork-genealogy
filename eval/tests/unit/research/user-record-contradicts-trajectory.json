@@ -1,0 +1,104 @@
+{
+  "test": {
+    "id": "ut_research_gm4",
+    "skill": "research",
+    "name": "A researcher-reported record that contradicts the research direction is followed as a new lead, not fitted to the old one",
+    "type": "positive",
+    "description": "Mined from alpha feedback (issue #3266). Mid-project, the researcher describes in prose, with no record ID, a death record that contradicts the active hypothesis: it places the man in a different county and names his parents, without stating where the parents lived. In the session the router ruled the hypothesis out at once (that part worked) but then attributed the parents to the county the research had already been working, declared the existing conclusion unaffected, and moved toward wrap-up, never pursuing the record's own place and people; the researcher had to ask for that search later. The correct turn reads the record for only what the researcher said it states and treats its place and named people as a new lead. GRADING: judge-only, on purpose. Several next steps are legitimate (searching for the record, framing a question about the named parents, planning a search in that county, or stopping to ask for the record's identifier), and a reply that stops to ask makes no hand-off at all, so neither routes-to: nor delivers: can grade this without failing a correct turn. What fails is a property of the reply and of what it writes, which the judge reads. ENTRY: /research, as ut_research_021 does, because a bare mid-project message may not activate the skill in the single-turn harness.",
+    "tags": [
+      "from-cowork",
+      "user-record-contradicts-trajectory",
+      "user-supplied-evidence"
+    ]
+  },
+  "input": {
+    "user_message": "/research There is a death record for Robert Eastham in Pulaski County, Kentucky in 1861. Who was born about 1823 matching the two censuses with the Burton household.  The death record names Robert Eastham's parents as James and Elizabeth Eastham. Reevaluate based on this evidence.",
+    "scenario": "user-record-contradicts-trajectory"
+  },
+  "mcp_fixtures": [
+    "person-read-burton-l7f5"
+  ],
+  "judge_context": [
+    "This tests how the research router responds when the researcher reports, in prose, a record that bears on the current research direction. The record is not yet in the project and the message gives no record identifier.",
+    "Read the reported record for what the researcher said it states and no more. Taking the researcher's report as a working premise before the record is extracted is correct, not a fault; what fails is adding to it. Here that is a death in a named county in a named year, an approximate birth year, and the parents' names. Attributing to it a residence, an origin or a relationship the researcher did not state is a failure, whether in the reply or in anything written to research.json (judge_reads_files is on). Inferences are fine when labelled as inferences to be tested. Before scoring this, quote the reply's actual words; do not attribute a claim to it that it does not make.",
+    "Weigh the reported facts against each existing hypothesis before calling them support. If the record makes a hypothesis's identity impossible, for example because it reports a person's death before an event the hypothesis attributes to that same person, the record contradicts that hypothesis. Presenting it as corroboration, or keeping the hypothesis alive by not noticing the conflict, is the failure. Ruling out or flagging the contradicted hypothesis is expected, but it is not sufficient on its own.",
+    "A record that contradicts the research direction is a new lead. Its own place and its named people are something to research. Locating or extracting the record itself (a hand-off to search for it, or asking the researcher for its identifier or collection) is a legitimate first step and counts as following the lead; check the tool calls and the reply for it before saying it did not happen. The failure is a forward plan that goes from that record straight to wrap-up on the existing question (exhaustiveness, a conclusion) with no step that researches the people the record names where it places them. Keeping an earlier finding is acceptable as long as the reply does not use it as a reason to set the new lead aside.",
+    "Do NOT grade which step the router hands off to, whether it hands off at all, or whether it ends by asking the researcher before continuing. Do not grade citation formatting; the record has not been extracted yet.",
+    "Narration follows researcher_profile.narration_guidance (plain language for a novice). Do not penalize the reply for omitting identifiers."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "hypothesis-tracking",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "conflict-resolution",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "timeline",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-hints",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "image-reader",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  }
+}

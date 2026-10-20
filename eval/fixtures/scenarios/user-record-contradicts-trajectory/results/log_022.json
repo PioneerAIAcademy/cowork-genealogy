@@ -1,0 +1,506 @@
+{
+  "log_id": "log_022",
+  "tool": "record_read",
+  "retrieved": "2026-10-05T19:07:21.154Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:M9W6-4RT"
+    },
+    "results": [
+      {
+        "recordId": "M9W6-4RT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_29518076",
+              "ark": "ark:/61903/1:1:M9W6-4RT",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "56255f3b-e38a-4119-9bda-307c4fb32905",
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Edward E"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "id": "af0c6435-2f4b-4074-85ac-144525685f79",
+                  "type": "Birth",
+                  "date": "Jan 1859",
+                  "standard_date": "Jan 1859",
+                  "place": "Kentucky"
+                },
+                {
+                  "id": "d7a5120e-31bc-491e-926e-95d2ba88e86d",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 3 Cannonsburg, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_29518077",
+              "ark": "ark:/61903/1:1:M9W6-4RY",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "ef4b520f-47af-4e15-9ec2-915088facc20",
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Julia"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "id": "d5b0de92-ad3c-4988-ba20-2e483325e789",
+                  "type": "Birth",
+                  "date": "Aug 1866",
+                  "standard_date": "Aug 1866",
+                  "place": "Kentucky"
+                },
+                {
+                  "id": "83464a61-b83c-49f7-a89e-f0357d639585",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 3 Cannonsburg, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_29518078",
+              "ark": "ark:/61903/1:1:M9W6-4RB",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "207b13a4-d0cf-4fd2-bdb6-ee81dba3dd21",
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Bertha"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "id": "efefa9a9-58de-4f96-9979-18a7230693eb",
+                  "type": "Birth",
+                  "date": "Mar 1890",
+                  "standard_date": "Mar 1890",
+                  "place": "Kentucky"
+                },
+                {
+                  "id": "cf3eaa3f-8906-44b5-82f7-5610bf96c751",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 3 Cannonsburg, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_29518079",
+              "ark": "ark:/61903/1:1:M9W6-4R1",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "eeb3703f-520b-4625-a717-887a23ad2f9c",
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Fred"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "a477b79c-aac0-4b65-8526-58d8e119bd8a",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 3 Cannonsburg, Boyd, Kentucky, United States"
+                },
+                {
+                  "id": "f718c325-cb03-4f2f-a3f7-702725e3992d",
+                  "type": "Birth",
+                  "date": "Dec 1892",
+                  "standard_date": "Dec 1892",
+                  "place": "Kentucky"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_29518080",
+              "ark": "ark:/61903/1:1:M9W6-4TM",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "7b08896f-a64a-4314-ad57-19bb708bcbf1",
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Minnie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "id": "afa546a5-a6f7-403a-a085-d1dc8fc8b892",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 3 Cannonsburg, Boyd, Kentucky, United States"
+                },
+                {
+                  "id": "f7631fe0-6487-41ec-bde8-cb95e90c19cf",
+                  "type": "Birth",
+                  "date": "Apr 1894",
+                  "standard_date": "Apr 1894",
+                  "place": "Kentucky"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_29518081",
+              "ark": "ark:/61903/1:1:M9W6-4T9",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "cd301e12-aa52-4f76-940d-3eb472d149a9",
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Emma"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "id": "98168b8a-5e4e-461f-8c55-a14729231d84",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 3 Cannonsburg, Boyd, Kentucky, United States"
+                },
+                {
+                  "id": "3b2eb7dc-4675-4e90-a61f-b12c3b38f5a4",
+                  "type": "Birth",
+                  "date": "Apr 1896",
+                  "standard_date": "Apr 1896",
+                  "place": "Kentucky"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_29518082",
+              "ark": "ark:/61903/1:1:M9W6-4TS",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "6bf32034-f02b-4d1b-887c-745cdc0b9c37",
+                  "type": "BirthName",
+                  "surname": "Eastham",
+                  "given": "Robert"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "id": "e75f99b4-05d7-4b10-a650-849b8b8e89c1",
+                  "type": "Birth",
+                  "date": "Sep 1898",
+                  "standard_date": "Sep 1898",
+                  "place": "Kentucky"
+                },
+                {
+                  "id": "f057de87-72a3-4390-8c9f-51685716ac0c",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 3 Cannonsburg, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "de118ad7-15d5-4fea-9844-d8d3a2a6610d",
+              "type": "ParentChild",
+              "parent": "p_29518076",
+              "child": "p_29518079"
+            },
+            {
+              "id": "4fbb541c-583a-4fff-9c55-7dca23777688",
+              "type": "ParentChild",
+              "parent": "p_29518077",
+              "child": "p_29518079"
+            },
+            {
+              "id": "11d56d54-9148-42c2-b3a7-2792c8bf20dd",
+              "type": "ParentChild",
+              "parent": "p_29518076",
+              "child": "p_29518078"
+            },
+            {
+              "id": "3e81f9c6-3294-4629-855b-bbff60772be4",
+              "type": "ParentChild",
+              "parent": "p_29518076",
+              "child": "p_29518082"
+            },
+            {
+              "id": "fe768916-7c28-42c5-bbb0-b63908064c35",
+              "type": "ParentChild",
+              "parent": "p_29518076",
+              "child": "p_29518080"
+            },
+            {
+              "id": "3594baf3-4186-4e21-8c74-558d465ec627",
+              "type": "Couple",
+              "person1": "p_29518076",
+              "person2": "p_29518077",
+              "facts": [
+                {
+                  "id": "5c4a9377-eac9-49d5-a8f0-87a4c8ffe33b",
+                  "type": "Marriage",
+                  "date": "1889",
+                  "standard_date": "1889"
+                }
+              ]
+            },
+            {
+              "id": "89f4a59b-994d-48cc-9952-0cdb87aba104",
+              "type": "ParentChild",
+              "parent": "p_29518076",
+              "child": "p_29518081"
+            },
+            {
+              "id": "d8293bde-1f79-4d3c-b41e-4b5be7f02e8b",
+              "type": "ParentChild",
+              "parent": "p_29518077",
+              "child": "p_29518080"
+            },
+            {
+              "id": "ae6727b8-0e07-4b1c-924c-dda1a494cdf0",
+              "type": "ParentChild",
+              "parent": "p_29518077",
+              "child": "p_29518082"
+            },
+            {
+              "id": "e5b43dc4-e226-465b-b675-3fe94f94c63c",
+              "type": "ParentChild",
+              "parent": "p_29518077",
+              "child": "p_29518078"
+            },
+            {
+              "id": "08fa3a61-2d36-425f-8794-797a08dbb96c",
+              "type": "ParentChild",
+              "parent": "p_29518077",
+              "child": "p_29518081"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21796837784",
+              "resource_type": "Record",
+              "title": "Household of Edward E Eastham, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9W6-4RT : Sat Jan 18 12:29:12 UTC 2025), Entry for Edward E Eastham and Julia Eastham, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1T12-HKX",
+              "coverage": {
+                "place_rep_id": "8059841",
+                "date_range": "1900",
+                "record_type": "Census",
+                "standard_place": "Magisterial District 3 Cannonsburg, Boyd, Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_c_1325221",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1900",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1900/1900",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DYLC-1BF",
+              "coverage": {
+                "place_rep_id": "394113",
+                "date_range": "+1900-01-01T00:00:00Z/+1900-12-31T23:59:59Z",
+                "record_type": "Census",
+                "standard_place": "Boyd, Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_p_29518079",
+              "resource_type": "Person",
+              "title": "Fred Eastham, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9W6-4RT : Sat Jan 18 12:29:12 UTC 2025), Entry for Edward E Eastham and Julia Eastham, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M9W6-4R1"
+            },
+            {
+              "id": "sd_p_29518076",
+              "resource_type": "Person",
+              "title": "Edward E Eastham, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9W6-4RT : Sat Jan 18 12:29:12 UTC 2025), Entry for Edward E Eastham and Julia Eastham, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M9W6-4RT"
+            },
+            {
+              "id": "sd_p_29518077",
+              "resource_type": "Person",
+              "title": "Julia Eastham, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9W6-4RT : Sat Jan 18 12:29:12 UTC 2025), Entry for Edward E Eastham and Julia Eastham, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M9W6-4RY"
+            },
+            {
+              "id": "sd_p_29518078",
+              "resource_type": "Person",
+              "title": "Bertha Eastham, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9W6-4RT : Sat Jan 18 12:29:12 UTC 2025), Entry for Edward E Eastham and Julia Eastham, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M9W6-4RB"
+            },
+            {
+              "id": "sd_p_29518082",
+              "resource_type": "Person",
+              "title": "Robert Eastham, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9W6-4RT : Sat Jan 18 12:29:12 UTC 2025), Entry for Edward E Eastham and Julia Eastham, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M9W6-4TS"
+            },
+            {
+              "id": "sd_p_29518080",
+              "resource_type": "Person",
+              "title": "Minnie Eastham, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9W6-4RT : Sat Jan 18 12:29:12 UTC 2025), Entry for Edward E Eastham and Julia Eastham, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M9W6-4TM"
+            },
+            {
+              "id": "sd_p_29518081",
+              "resource_type": "Person",
+              "title": "Emma Eastham, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9W6-4RT : Sat Jan 18 12:29:12 UTC 2025), Entry for Edward E Eastham and Julia Eastham, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M9W6-4T9"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            }
+          ],
+          "places": [
+            {
+              "id": "place_8059841"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
