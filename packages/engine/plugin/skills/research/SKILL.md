@@ -108,7 +108,7 @@ finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
-where the project stands (answer from `project_context` in one paragraph).
+where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
 Two or more of them in one message is still bounded: deliver each, name each,
 and end the turn when the last one is met, the same way a single one ends it. A message that also asks for
 open-ended research is a job.
@@ -207,6 +207,19 @@ it by name.
    entry, the concluded tree relationship/fact) is not invoking it — it
    is skipping it while leaving state that looks like it ran. See the
    **Exhaustiveness/proof-conclusion contract** below.
+
+   **Researcher-reported evidence.** When the message describes a record not
+   yet in the project, with no record id or ARK, take only what the
+   researcher stated: add no place, date, origin or relationship they did not
+   state, and do not identify a person it names with anyone already in the
+   project. A report that makes a hypothesis's identity impossible contradicts
+   it: name that hypothesis id when you spawn `@plugin:hypothesis-tracking`.
+   The record and each person it names are new leads: spawn
+   `@plugin:research-plan` with `projectPath` and the question id to plan a
+   search for each, or ask the researcher for the record's identifier, before
+   `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`. If the
+   record contradicts a hypothesis, say so — do not present its facts as
+   support for that hypothesis or any theory built on it.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
