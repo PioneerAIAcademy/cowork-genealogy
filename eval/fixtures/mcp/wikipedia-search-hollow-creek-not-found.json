@@ -1,0 +1,9 @@
+{
+  "tool": "wikipedia_search",
+  "description": "wikipedia_search's not-found answer for a fictional hamlet, served the way production serves it: src/server.ts catches the thrown error and returns {error} with isError: true, so this fixture is marked is_error. Used by search-wikipedia's ut_search_wikipedia_011. A copy of wikipedia-search-hollow-creek-error.json, which carries no is_error and stays as it is because historical-context snapshots it.",
+  "args": { "query": "~Hollow Creek" },
+  "is_error": true,
+  "response": {
+    "error": "No Wikipedia article found for 'Hollow Creek Settlement'"
+  }
+}
