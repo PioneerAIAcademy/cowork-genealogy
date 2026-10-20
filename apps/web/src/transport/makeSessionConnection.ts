@@ -43,6 +43,11 @@ export async function makeSessionConnection(
     // `localhost` that is a CROSS-ORIGIN socket, and some browsers refuse it -- while
     // every HTTP call still succeeds through the dev proxy, so the app looks broken
     // and the backend looks healthy. Real deployment hosts are left untouched.
-    return { wssUrl: sameOriginLoopback(r.wssUrl, window.location.hostname), token: r.token }
+    return {
+      wssUrl: sameOriginLoopback(r.wssUrl, window.location.hostname),
+      token: r.token,
+      readOnly: r.readOnly,
+      message: r.message
+    }
   })
 }
