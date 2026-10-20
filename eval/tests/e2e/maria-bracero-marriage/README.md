@@ -42,4 +42,4 @@ match strength.
 
 **Retrieval** was read-only via the MCP `record_read` / `image_transcribe` tools against live FamilySearch; the identity judgement is the genealogist's (Isaac Boateng).
 
-**f2 is not required (lead, 2026-10-20).** Her 1973 death registration (`ark:/61903/1:1:QVJX-8L5R`) is attached to Maria in the starting tree and names her father, so once a project extracts the subject's attached records it answers f2 without the hint. f1, the 1907 marriage itself, still needs the hint record. The death registration is listed as starting evidence in `eval/tests/e2e/attached-evidence-allowlist.json`.
+**f2 is not required (lead, 2026-10-20).** Her 1973 death registration (`ark:/61903/1:1:QVJX-8L5R`) is attached to Maria in the starting tree and names both her parents, Juan Bracero and Juana Irizarry, so once a project extracts the subject's attached records it answers f2 without the hint. f1, the 1907 marriage itself, still needs the hint record. The death registration is listed as starting evidence in `eval/tests/e2e/attached-evidence-allowlist.json`.
