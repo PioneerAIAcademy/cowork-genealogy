@@ -151,8 +151,8 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Repeats the stub's \"1860 and 1870 censuses\" and \"1850 not searched\", both wrong against the scenario's own sources (1850 x2, 1860, no 1870); the fault is in the stub, but the reply still states false facts."
+      "corrected_score": 3,
+      "comment": "The stub is at fault, and the agent relayed it faithfully."
     },
     {
       "test_id": "ut_research_so2",
