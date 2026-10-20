@@ -409,9 +409,6 @@ candidates; you still confirm the top ones:
   name, year or place clears it, and a user's advance go-ahead to extract does not
   apply: do not extract, and name the anchor that would settle identity (a precise
   date, a named spouse, parent or child).
-- **Several candidates you cannot tell apart → search the household.** When the tree
-  names a co-resident (mother, step-parent), use the household lever in
-  `references/search-strategy-levers.md` before choosing one.
 - **A hit under a surname only the researcher names is `needs-review`.** Report it as
   consistent with that marriage, never as a confident match, until an independent
   record ties her to it.

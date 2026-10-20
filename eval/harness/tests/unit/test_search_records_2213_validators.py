@@ -21,8 +21,6 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_search_records import (  # noqa: E402
-    test_household_not_searched_by_co_resident_when_unneeded as triangulation_unneeded,
-    test_household_searched_by_co_resident as triangulation,
     test_thin_subject_hit_not_extracted as thin_subject,
     test_unproven_surname_used_as_search_input as unproven_surname,
 )
@@ -97,81 +95,6 @@ def test_thin_subject_skips_untagged():
         thin_subject([call("extraction_append")], [], UNTAGGED)
 
 
-# --- household-triangulation (ut_search_records_d31 / d32) ---------------
-
-D31 = spec("household-triangulation-by-co-resident.json")
-D32 = spec("household-triangulation-not-overapplied.json")
-
-
-@pytest.fixture
-def d31_before():
-    return scenario_state("search-records-household-triangulation")
-
-
-@pytest.fixture
-def d32_before():
-    return scenario_state("search-records-household-triangulation-unneeded")
-
-
-SUBJECT_CALLS = [
-    rs({"surname": "Weber", "givenName": "Henry", "residenceYearFrom": 1870}),
-    rs({"surname": "Weber", "givenName": "Henry", "motherGivenName": "Catharina"}),
-    rs({"surname": "Kessler", "givenName": "Henry"}),
-]
-
-
-@pytest.mark.parametrize("args", [
-    {"surname": "Kessler", "givenName": "Catharina", "residenceYearFrom": 1870},
-    {"surname": "Kesler", "givenName": "Catherine"},
-    {"surname": "Kessler", "givenName": "Jacob", "spouseGivenName": "Catharina"},
-    {"givenName": "Cath*", "surname": "Weber"},
-])
-def test_triangulation_passes_on_co_resident_principal(d31_before, args):
-    triangulation(d31_before, SUBJECT_CALLS + [rs(args)], D31)
-
-
-def test_triangulation_fails_on_subject_searches_only(d31_before):
-    with pytest.raises(AssertionError, match="no record_search named a parent"):
-        triangulation(d31_before, SUBJECT_CALLS, D31)
-
-
-def test_triangulation_fails_on_no_search(d31_before):
-    with pytest.raises(AssertionError):
-        triangulation(d31_before, [], D31)
-
-
-def test_triangulation_ignores_record_reads(d31_before):
-    reads = [call("record_read", {"recordId": "MXK7-1HW"})]
-    with pytest.raises(AssertionError):
-        triangulation(d31_before, SUBJECT_CALLS + reads, D31)
-
-
-def test_triangulation_skips_untagged(d31_before):
-    with pytest.raises(pytest.skip.Exception):
-        triangulation(d31_before, [], UNTAGGED)
-
-
-def test_unneeded_passes_on_subject_search_only(d32_before):
-    calls = [rs({"surname": "Quarrington", "givenName": "Thaddeus", "subjectId": "I1"}),
-             rs({"surname": "Quarrington", "residenceYearFrom": 1870})]
-    triangulation_unneeded(d32_before, calls, D32)
-
-
-@pytest.mark.parametrize("args", [
-    {"surname": "Quarrington", "givenName": "Lavinia"},
-    {"givenName": "Lavina", "surname": "Quarington"},
-])
-def test_unneeded_fails_on_co_resident_search(d32_before, args):
-    calls = [rs({"surname": "Quarrington", "givenName": "Thaddeus"}), rs(args)]
-    with pytest.raises(AssertionError, match="searched the household"):
-        triangulation_unneeded(d32_before, calls, D32)
-
-
-def test_unneeded_skips_untagged(d32_before):
-    with pytest.raises(pytest.skip.Exception):
-        triangulation_unneeded(d32_before, [rs({"givenName": "Lavinia"})], UNTAGGED)
-
-
 # --- unproven-surname-search (ut_search_records_d33) ---------------------
 
 D33 = spec("unproven-married-surname-search.json")
@@ -233,9 +156,3 @@ def test_unproven_tag_without_map_entry_fails(d33_before):
     with pytest.raises(AssertionError, match="no entry"):
         unproven_surname(d33_before, d33_before, [], other)
 
-
-def test_triangulation_fails_on_a_surname_only_search(d31_before):
-    """A surname alone, even the stepfather's, does not name the co-resident."""
-    calls = [rs({"surname": "Weber", "givenName": "Henry"}), rs({"surname": "Kessler", "residencePlace": "Lancaster, Pennsylvania"})]
-    with pytest.raises(AssertionError, match="no record_search named a parent"):
-        triangulation(d31_before, calls, D31)

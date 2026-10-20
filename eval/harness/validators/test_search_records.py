@@ -894,8 +894,7 @@ def test_census_wiki_fixture_actually_used(tool_calls, test):
     )
 
 
-# --- Issue #2213 PR 3: thin subjects,
-# --- household triangulation, unproven surnames ------------------------
+# --- Issue #2213 PR 3: thin subjects, unproven surnames ----------------
 
 def _calls_named(tool_calls, *names) -> list[dict]:
     wanted = set(names)
@@ -941,107 +940,10 @@ def _norm_name(value) -> str:
     return re.sub(r"[^a-z]", "", str(value or "").lower())
 
 
-def _subject_and_co_residents(before_state) -> tuple[list[dict], list[list[dict]]]:
-    """(the subject's names, each co-resident's names): parents of the
-    project's first subject person and their other couple partners."""
-    research = before_state.get("research_json") or {}
-    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
-    subjects = (research.get("project") or {}).get("subject_person_ids") or []
-    if not subjects:
-        return [], []
-    subject = subjects[0]
-    persons = {p.get("id"): p for p in tree.get("persons") or []}
-    rels = tree.get("relationships") or []
-    parents = {
-        r.get("parent") for r in rels
-        if r.get("type") == "ParentChild" and r.get("child") == subject
-    }
-    co = set(parents)
-    for r in rels:
-        if r.get("type") != "Couple":
-            continue
-        a, b = r.get("person1"), r.get("person2")
-        if a in parents:
-            co.add(b)
-        if b in parents:
-            co.add(a)
-    co.discard(subject)
-    subject_names = (persons.get(subject) or {}).get("names") or []
-    return subject_names, [
-        (persons.get(pid) or {}).get("names") or [] for pid in sorted(co) if pid in persons
-    ]
-
-
 def _same_name(a, b, width: int) -> bool:
     a, b = _norm_name(a), _norm_name(b)
     n = min(width, len(a), len(b))
     return n > 0 and a[:n] == b[:n]
-
-
-def _co_resident_searches(before_state, tool_calls) -> list[dict]:
-    """record_search args whose principal is a co-resident, not the subject.
-
-    Principal means the givenName/surname fields; a parent-name anchor on a
-    search for the subject (motherGivenName, ...) is not a co-resident search.
-    A given name counts as the co-resident's when it shares its first four
-    letters (Catharina/Catherine), a surname when it shares its first three
-    (Kessler/Kesler), so a variant spelling still counts. A call whose given
-    name is the subject's is the subject's own search. A call with no given
-    name never counts: a surname alone does not name the co-resident.
-    """
-    subject_names, co_names = _subject_and_co_residents(before_state)
-    subject_given = [n.get("given") for n in subject_names]
-    found = []
-    for call in _calls_named(tool_calls, "record_search"):
-        args = _as_mapping(call.get("args"))
-        given, surname = args.get("givenName"), args.get("surname")
-        if given and any(_same_name(given, g, 4) for g in subject_given):
-            continue
-        for names in co_names:
-            givens = [n.get("given") for n in names]
-            surnames = [n.get("surname") for n in names]
-            surname_ok = surname is None or any(_same_name(surname, s, 3) for s in surnames)
-            if given and surname_ok and any(_same_name(given, g, 4) for g in givens):
-                found.append(args)
-                break
-    return found
-
-
-def test_household_searched_by_co_resident(before_state, tool_calls, test):
-    """Tag-gated (household-triangulation): issue #2213 PR 3 item 6. When the
-    subject's own entries are too many to tell apart and a co-resident (a
-    parent, or a parent's other spouse) is known, the household is searched by
-    that co-resident: a record_search naming them as the principal.
-
-    Co-residents are read from the starting tree, so the test names nobody.
-    """
-    if "household-triangulation" not in test.get("tags", []):
-        pytest.skip("not a household-triangulation scenario")
-    _, co_names = _subject_and_co_residents(before_state)
-    assert co_names, "scenario's subject has no parent or step-parent in the tree"
-    searched = _co_resident_searches(before_state, tool_calls)
-    assert searched, (
-        "the subject's entries could not be told apart and a co-resident is "
-        "known, but no record_search named a parent or step-parent as the "
-        "principal. record_search calls: "
-        f"{[_as_mapping(c.get('args')) for c in _calls_named(tool_calls, 'record_search')]}"
-    )
-
-
-def test_household_not_searched_by_co_resident_when_unneeded(
-    before_state, tool_calls, test
-):
-    """Tag-gated (household-triangulation-unneeded): the over-application guard
-    for test_household_searched_by_co_resident. A unique, well-indexed subject
-    has nothing to triangulate, so no record_search names a co-resident as the
-    principal."""
-    if "household-triangulation-unneeded" not in test.get("tags", []):
-        pytest.skip("not a household-triangulation-unneeded scenario")
-    searched = _co_resident_searches(before_state, tool_calls)
-    assert not searched, (
-        "the subject had one clear match, yet the run searched the household "
-        f"by a co-resident: {searched}"
-    )
 
 
 # Test id -> (her given name, the researcher-named surname that is not proven).
