@@ -2588,6 +2588,48 @@ export function competingParentSetsInvariants(
   ];
 }
 
+/** A conclusion above `not_proved` may not rest on evidence no identity decision
+ *  has touched: refused when none of the summary's supporting assertions carries
+ *  a live `person_evidence` link in the pre-call document.
+ *
+ *  None, not all. A household record leaves its children and wife unlinked once
+ *  the subject is linked, so an all-linked rule would refuse 27 of 211 committed
+ *  e2e proofs; none-linked refuses 3, and every one of the 3 comes from a run
+ *  with no `person_evidence` row at all (chresten-nielsen-daughter 2026-08-09,
+ *  victoriano-macatangay-parents 2026-08-13 ×2). That is the identity step never
+ *  run, which is the case worth refusing: LZJF-J13 (issue #3177) concluded
+ *  `probable` on "correlation across several independent entries" with 0 of 15
+ *  assertions linked.
+ *
+ *  Pre-call snapshot, as the conflict gates: a batch may not supply the link and
+ *  spend it on a tier in the same call — and `person_evidence` is written only by
+ *  person-evidence, never by the agent writing the proof. */
+export function unlinkedProofInvariants(entry: any, preCallResearch: any): string[] {
+  const tier = entry?.tier;
+  if (typeof tier !== "string" || tier === "not_proved") return [];
+  const known = new Set(
+    (Array.isArray(preCallResearch?.assertions) ? preCallResearch.assertions : []).map((a: any) => a?.id),
+  );
+  const supporting = (Array.isArray(entry?.supporting_assertion_ids) ? entry.supporting_assertion_ids : []).filter(
+    (id: unknown) => typeof id === "string" && known.has(id),
+  );
+  if (supporting.length === 0) return [];
+  const linked = new Set(
+    (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : [])
+      .filter((pe: any) => pe?.superseded_by == null)
+      .map((pe: any) => pe?.assertion_id),
+  );
+  if (supporting.some((id: string) => linked.has(id))) return [];
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: tier '${tier}' rests on ${supporting.length} ` +
+      `supporting assertion(s), and none is linked to a person in person_evidence. A conclusion ` +
+      `correlates records about the same person, and no identity decision says these records ` +
+      `are about anyone. Run person-evidence on those assertions first (from an agent, hand back ` +
+      `to the main thread and name it), then send this write again. Recording the attempt at ` +
+      `'not_proved' is allowed now.`,
+  ];
+}
+
 /** A question's `status` may not claim an exhaustiveness that its stop decision
  *  does not carry.
  *
@@ -4910,6 +4952,9 @@ function applyOne(
       op.op === "append" || Object.prototype.hasOwnProperty.call(op.fields ?? {}, "tier");
     if (tierTouchedThisOp) {
       invariantErrors.push(...proofSummaryInvariants(resultEntry, preCallExhaustiveDeclared));
+      // Tier-gated like the line above, so a narrative edit to a summary that
+      // predates the rule is not refused.
+      invariantErrors.push(...unlinkedProofInvariants(resultEntry, preCallResearch));
     }
     // NOT gated on `tierTouchedThisOp`, unlike the exhaustiveness check above.
     // That gate asks "is this op setting the tier"; this rule asks "does the
