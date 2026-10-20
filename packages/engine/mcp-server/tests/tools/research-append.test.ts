@@ -3293,10 +3293,50 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
       const appended = (await readResearch()).proof_summaries[1];
       expect(Date.parse(appended.updated)).toBeGreaterThan(Date.parse("2026-01-01T00:00:00Z"));
-      const r2 = await updatePs001({ tier: "not_proved", updated: "2020-01-01T00:00:00Z" });
+      const r2 = await updatePs001({
+        narrative_markdown: "## Conclusion\nreworded",
+        updated: "2020-01-01T00:00:00Z",
+      });
       expect(r2.ok, `refused: ${JSON.stringify((r2 as any).errors)}`).toBe(true);
       const updated = (await readResearch()).proof_summaries[0].updated;
       expect(Date.parse(updated)).toBeGreaterThan(Date.parse("2026-01-01T00:00:00Z"));
+    });
+
+    // A tier-only update does not check either text against the log, so moving
+    // the stamp on it would hide the later search from the next one-field update.
+    it("keeps the stamp on a tier-only update, so a later one-field update is still refused", async () => {
+      await writeProject(withSearchedSince());
+      const r = await updatePs001({ tier: "not_proved", updated: "2026-10-10T00:00:00Z" });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect((await readResearch()).proof_summaries[0].updated).toBe(SUMMARY_WRITTEN);
+      const r2 = await updatePs001({ narrative_markdown: "## Not proved\nreworded" });
+      expect(r2.ok).toBe(false);
+      if (r2.ok) return;
+      expect(r2.errors.join(" ")).toContain("log_001");
+    });
+
+    it("refuses the same tier-only then one-field sequence inside a single batch", async () => {
+      await writeProject(withSearchedSince());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "proof_summaries", op: "update", entryId: "ps_001", fields: { tier: "not_proved" } },
+          {
+            section: "proof_summaries", op: "update", entryId: "ps_001",
+            fields: { exhaustive_search_summary: "census; 1855 image read" },
+          },
+        ],
+      } as any);
+      expect(r.ok).toBe(false);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("drops a caller-supplied stamp on a tier-only update of an unstamped summary", async () => {
+      await writeProject(withSearchedSince("2026-10-09T12:00:00Z", null));
+      const r = await updatePs001({ tier: "not_proved", updated: "2030-01-01T00:00:00Z" });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect((await readResearch()).proof_summaries[0]).not.toHaveProperty("updated");
     });
 
     it("allows updating the existing summary", async () => {

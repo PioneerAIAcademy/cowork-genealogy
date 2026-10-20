@@ -92,8 +92,14 @@ interface SectionConfig {
   /** id prefix, including the trailing underscore (e.g. "src_"). */
   prefix: string;
   /** Tool-owned timestamp stamped on append when the entry omits it. With
-   *  `everyWrite`, stamped on every append and update, overwriting the caller's. */
-  stampTimestamp?: { field: string; kind: "date" | "datetime"; everyWrite?: boolean };
+   *  `everyWrite`, stamped on every append and update, overwriting the caller's;
+   *  `restampOn` narrows the updates that move it to those setting one of its fields. */
+  stampTimestamp?: {
+    field: string;
+    kind: "date" | "datetime";
+    everyWrite?: boolean;
+    restampOn?: readonly string[];
+  };
   /** Nested section: entries live in `<parent>[<param>].<field>` (plan_items). */
   nested?: { parent: string; param: "planId"; field: string };
   /** Singleton object section (e.g. `project`): `op:"update"` shallow-merges
@@ -141,10 +147,16 @@ const SECTIONS: Record<string, SectionConfig> = {
   // Phase 3
   timelines: { prefix: "t_", stampTimestamp: { field: "generated", kind: "datetime" } },
   // `updated` is what `narrativeAndSearchSummaryTogether` compares the
-  // question's log against, so it must move on every write, not just the first.
+  // question's log against, so it moves on every write that checks either text
+  // against the log, not just the first, and never on one that checks neither.
   proof_summaries: {
     prefix: "ps_",
-    stampTimestamp: { field: "updated", kind: "datetime", everyWrite: true },
+    stampTimestamp: {
+      field: "updated",
+      kind: "datetime",
+      everyWrite: true,
+      restampOn: ["narrative_markdown", "exhaustive_search_summary"],
+    },
   },
   evaluations: { prefix: "ev_", stampTimestamp: { field: "timestamp", kind: "datetime" } },
   known_holdings: { prefix: "kh_", stampTimestamp: CREATED_DATE },
@@ -4233,7 +4245,11 @@ function applyOne(
     }
     const updateStamp = config.stampTimestamp;
     if (updateStamp?.everyWrite) {
-      existing[updateStamp.field] = updateStamp.kind === "date" ? today() : now();
+      const moves = !updateStamp.restampOn ||
+        updateStamp.restampOn.some((k) => Object.prototype.hasOwnProperty.call(op.fields, k));
+      if (moves) existing[updateStamp.field] = updateStamp.kind === "date" ? today() : now();
+      else if (priorStamp === undefined) delete existing[updateStamp.field];
+      else existing[updateStamp.field] = priorStamp;
     }
     normalizeDateFields(existing);
     normalizeAccessDate(existing);
