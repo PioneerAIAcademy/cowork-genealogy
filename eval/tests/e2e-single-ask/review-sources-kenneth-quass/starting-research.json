@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_review_sources_kenneth_quass",
+    "objective": "Review the existing sources on Kenneth Werner Quass (KNS4-P6W).",
+    "subject_person_ids": [
+      "KNS4-P6W"
+    ],
+    "status": "active",
+    "created": "2026-06-15",
+    "updated": "2026-06-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
