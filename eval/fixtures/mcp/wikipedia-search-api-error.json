@@ -1,0 +1,9 @@
+{
+  "tool": "wikipedia_search",
+  "description": "wikipedia_search failing on an upstream outage (the tool's `Wikipedia API error: <status>` message for a non-404 summary response), marked is_error because src/server.ts returns {error} with isError: true. A failed lookup, not a not-found answer. Used by search-wikipedia's ut_search_wikipedia_012.",
+  "args": { "query": "~Cornish" },
+  "is_error": true,
+  "response": {
+    "error": "Wikipedia API error: 503"
+  }
+}

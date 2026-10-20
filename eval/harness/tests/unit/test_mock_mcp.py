@@ -1567,6 +1567,9 @@ def test_person_read_is_staged_when_given_project_path(tmp_path):
     ]
     # The rest of the response is the fixture, unchanged.
     assert {k: v for k, v in body.items() if k != "staged"} == fixture
+    # `staged` leads, as production serializes it (#3384), so a truncated
+    # preview of an over-limit response still carries the ref.
+    assert next(iter(body)) == "staged"
 
 
 @pytest.mark.parametrize("project_path", [None, "", "   "])
@@ -1978,3 +1981,26 @@ def test_image_transcribe_capture_id_for_a_file(tmp_path, monkeypatch):
         pytest.skip("no engine build: the node script was never reached")
     assert seen["element"]["id"] == "capture:will-scan.page1"
     assert seen["element"]["source"] == {"file": "uploads/will-scan.page1.jpg"}
+
+
+def test_image_transcribe_stages_the_scan_ref_beside_the_text(tmp_path, monkeypatch):
+    """Production stages the retained scan's imageRef as `image_ref`, which
+    extraction_append cites as the source's image_filename; a response with no
+    imageRef stages none."""
+    seen = []
+
+    def _capture(script, stdin, timeout):
+        seen.append(json.loads(stdin)["element"])
+        raise TimeoutError("stop here")
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _capture)
+    with pytest.warns(UserWarning):
+        mock_mcp._stage_image_transcribe(
+            tmp_path, {"imageId": "007936749_00008"},
+            {"transcription": "x", "imageRef": "images/007936749_00008.jpg"},
+        )
+        mock_mcp._stage_image_transcribe(tmp_path, {"imageId": "007936749_00008"}, {"transcription": "x"})
+    if not seen:
+        pytest.skip("no engine build: the node script was never reached")
+    assert seen[0]["image_ref"] == "images/007936749_00008.jpg"
+    assert "image_ref" not in seen[1]

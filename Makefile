@@ -1741,5 +1741,5 @@ deploy-status: ## Health-check the deployed control plane (expect "db":"postgres
 # Runs on the Fly machine, which holds DATABASE_URL, so no database credential is needed
 # here. Reads api_calls and turn_costs (apps/server/app/cost_report.py).
 .PHONY: alpha-costs
-alpha-costs: ## Claude API cost of the hosted alpha: every call and every turn, per day and session (DAYS=30)
+alpha-costs: ## Claude API cost of the hosted alpha: every call and every turn, per day, agent and session (DAYS=30)
 	fly ssh console --app genealogy-workbench -C "sh -c 'cd /app/server && python -m app.cost_report --days $(or $(DAYS),30)'"

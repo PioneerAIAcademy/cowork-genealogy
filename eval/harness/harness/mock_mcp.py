@@ -884,6 +884,10 @@ def _stage_image_transcribe(
         element["truncated"] = True
     if response.get("found"):
         element["found"] = response["found"]
+    # Production stages the retained scan's imageRef beside the text, and
+    # extraction_append cites it as the source's image_filename.
+    if isinstance(response.get("imageRef"), str) and response["imageRef"]:
+        element["image_ref"] = response["imageRef"]
     query = {**source, **({"lookingFor": args["lookingFor"]} if args.get("lookingFor") else {})}
 
     def _unstaged(why: str) -> dict[str, Any]:
@@ -1104,7 +1108,9 @@ def _stage_person_read(
         if not isinstance(parsed, dict) or "staged" not in parsed:
             _warn_unstaged("the stager returned no `staged` key")
             return response
-        return {**response, **parsed}
+        # Staging keys first, as the real tool returns them (#3384): an
+        # over-limit result reaches the model as a preview of its head.
+        return {**parsed, **{k: v for k, v in response.items() if k not in parsed}}
     except Exception as e:
         _warn_unstaged(f"{type(e).__name__}: {e}")
         return response

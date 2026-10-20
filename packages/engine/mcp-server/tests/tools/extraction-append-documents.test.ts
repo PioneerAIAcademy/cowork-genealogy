@@ -286,21 +286,52 @@ describe("extraction_append: documents", () => {
     expect(after.sources[0].image_filename).toBe("images/004022578_00190.jpg");
   });
 
-  it("a transcription a caller already logged is cited through that log entry, not logged again (#2490)", async () => {
+  async function stageScan(imageRef?: string) {
     const staged = await stageSearchResults({
       projectPath: dir,
       tool: "image_transcribe",
       response: {
         query: { imageId: "004022578_00190" },
-        results: [{ id: "004022578_00190", source: { imageId: "004022578_00190" }, content_type: "image/jpeg", size_bytes: 1, model: "m", transcription: "Harold Dean Whitaker, 91, of Logan…" }],
+        results: [{
+          id: "004022578_00190", source: { imageId: "004022578_00190" }, content_type: "image/jpeg", size_bytes: 1, model: "m",
+          transcription: "Harold Dean Whitaker, 91, of Logan…", ...(imageRef ? { image_ref: imageRef } : {}),
+        }],
       },
     });
+    return staged!.resultsRef;
+  }
+
+  it("a transcribed source cites its scan from the staged result when the agent relays no imageFilename", async () => {
+    const ref = await stageScan("images/004022578_00190.jpg");
+    const r = await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref }]);
+    expect(r.ok).toBe(true);
+    const source = (await read()).sources[0];
+    expect(source.transcription).toMatch(/Harold Dean Whitaker/);
+    expect(source.image_filename).toBe("images/004022578_00190.jpg");
+  });
+
+  it("the staged scan wins over a different imageFilename the agent relayed", async () => {
+    const ref = await stageScan("images/004022578_00190.jpg");
+    await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref, imageFilename: "images/someone-else.jpg" }]);
+    expect((await read()).sources[0].image_filename).toBe("images/004022578_00190.jpg");
+  });
+
+  it("a staged result with no image_ref and no relayed imageFilename writes no image_filename", async () => {
+    const ref = await stageScan();
+    await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref }]);
+    const source = (await read()).sources[0];
+    expect(source.transcription).toMatch(/Harold Dean Whitaker/);
+    expect(source).not.toHaveProperty("image_filename");
+  });
+
+  it("a transcription a caller already logged is cited through that log entry, not logged again (#2490)", async () => {
+    const ref = await stageScan("images/004022578_00190.jpg");
     const pre = await researchLogAppend({
       projectPath: dir,
       tool: "image_transcribe",
       outcome: "positive",
       resultsExamined: 1,
-      stagedResultsRef: staged!.resultsRef,
+      stagedResultsRef: ref,
     } as any);
     if (!pre.ok || !("resultsRef" in pre)) throw new Error(`setup log refused: ${JSON.stringify(pre)}`);
     const r = await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: pre.resultsRef! }]);
@@ -310,6 +341,7 @@ describe("extraction_append: documents", () => {
     expect(after.log).toHaveLength(1);
     expect(after.sources[0].log_entry_id).toBe(pre.logId);
     expect(after.sources[0].transcription).toMatch(/Harold Dean Whitaker/);
+    expect(after.sources[0].image_filename).toBe("images/004022578_00190.jpg");
   });
 
   it("refuses a results/ ref that is neither staged nor any log entry's sidecar, and writes nothing", async () => {

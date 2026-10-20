@@ -165,7 +165,8 @@ export interface DocumentInput {
   document: StructuredDocument;
   /** The `results/` ref of the StagedTranscription the agent read. */
   transcriptionRef?: string;
-  /** `image_transcribe`'s imageRef, written to the source's image_filename. */
+  /** `image_transcribe`'s imageRef. The source's image_filename comes from the
+   *  staged transcription's `image_ref` when it has one; this is the fallback. */
   imageFilename?: string;
 }
 
@@ -548,8 +549,12 @@ function buildDocumentSource(
   d: DocumentInput,
   logEntryId: string,
   transcription: string | undefined,
+  stagedImageRef: string | undefined,
 ): Record<string, unknown> {
   const src = d.document.source;
+  // Derived at the write boundary, like transcription_truncated: the scan the
+  // staged text was read from beats whatever the agent relayed.
+  const imageFilename = stagedImageRef ?? d.imageFilename;
   const accessed = todayIso();
   const head = [src.title, src.creator, src.created, src.locator].filter(Boolean).join(", ");
   return {
@@ -569,7 +574,7 @@ function buildDocumentSource(
     notes: [FORM_NOTE[d.document.documentForm], src.notes].filter(Boolean).join(". "),
     ...(src.url ? { url: src.url } : {}),
     ...(transcription ? { transcription } : {}),
-    ...(d.imageFilename ? { image_filename: d.imageFilename } : {}),
+    ...(imageFilename ? { image_filename: imageFilename } : {}),
   };
 }
 
@@ -665,11 +670,13 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
       for (const [o, lr] of logs) {
         o.logId = lr.logId;
         let transcription: string | undefined;
+        let stagedImageRef: string | undefined;
         if (o.d.transcriptionRef && lr.resultsRef) {
           try {
             const rows = await readStagedResults(input.projectPath, lr.resultsRef);
-            const t = (rows as any[]).map((r) => r?.transcription).find((x) => typeof x === "string");
-            if (t) transcription = t;
+            const row = (rows as any[]).find((r) => typeof r?.transcription === "string");
+            if (row?.transcription) transcription = row.transcription;
+            if (typeof row?.image_ref === "string" && row.image_ref) stagedImageRef = row.image_ref;
           } catch {
             // The transcription is a copy for the viewer; its absence is not a
             // reason to refuse the extraction. §5.4's warning still fires.
@@ -678,7 +685,7 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
         const { extract, mode } = documentToExtract(o.recordId, o.d.document, censusStatedRelationships);
         const extraction = extractRecord(extract, { logEntryId: lr.logId, questionIds: input.questionIds ?? [], mode });
         const ops: ResearchAppendOp[] = [
-          { section: "sources", op: "append", entry: buildDocumentSource(o.d, lr.logId, transcription) },
+          { section: "sources", op: "append", entry: buildDocumentSource(o.d, lr.logId, transcription, stagedImageRef) },
           ...extraction.assertions.map((a) => ({
             section: "assertions" as const,
             op: "append" as const,

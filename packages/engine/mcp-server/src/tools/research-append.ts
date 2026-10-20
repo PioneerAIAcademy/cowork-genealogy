@@ -375,6 +375,25 @@ function unorderableDateWarnings(entry: any, research: any): string[] {
   return out;
 }
 
+// A timeline event with no assertion_ids came from the tree or the user, not
+// from a record, and a reply that presents it beside record-backed events
+// reads it as established (issue #3516). A warning, not a refusal: refusal was
+// rejected 2026-10-18 and the 2026-10-19 ruling kept this a warning, though it
+// withdrew the "tree-built first pass" premise for person-mode timelines.
+// research-append-tool-spec.md §5.5 has the detail.
+function unsourcedTimelineEventWarnings(entry: any): string[] {
+  const events: any[] = Array.isArray(entry.events) ? entry.events : [];
+  const unsourced = events.filter(
+    (e) => Array.isArray(e?.assertion_ids) && e.assertion_ids.length === 0,
+  ).length;
+  if (unsourced === 0) return [];
+  return [
+    `${unsourced} of ${events.length} events in ${entry.id} cite no record ` +
+      `(assertion_ids empty); they come from the tree or the user and are ` +
+      `unchecked. Say so to the user.`,
+  ];
+}
+
 // The US 1890 federal census does not survive and can never fill a gap
 // (ADR-0012, issue #2261) -- `expected_events` naming it, bare or with a
 // destruction caveat attached, is a false claim prose alone let through 4
@@ -898,8 +917,18 @@ function planActiveInvariants(entry: any, research: any): string[] {
     (p: any) => p && p !== entry && p.question_id === entry.question_id && p.status === "active",
   );
   if (conflicting.length > 0) {
+    const plan = conflicting[0];
+    const items: any[] = Array.isArray(plan.items) ? plan.items : [];
+    const searchedOut =
+      items.length > 0 &&
+      items.every((it: any) => it?.status === "completed" || it?.status === "skipped");
+    if (searchedOut) {
+      return [
+        `question '${entry.question_id}' already has an active plan (${plan.id}) whose items are all searched out; complete it first: {section:'plans', op:'update', entryId:'${plan.id}', fields:{status:'completed'}}`,
+      ];
+    }
     return [
-      `question '${entry.question_id}' already has an active plan (${conflicting[0].id}); supersede it before adding another`,
+      `question '${entry.question_id}' already has an active plan (${plan.id}); supersede it before adding another`,
     ];
   }
   return [];
@@ -4598,6 +4627,11 @@ function applyOne(
     const timelineFields = op.fields ?? {};
     if (op.op === "append" || Object.prototype.hasOwnProperty.call(timelineFields, "gaps")) {
       invariantErrors.push(...timelineCensus1890Invariants(resultEntry));
+    }
+    // Non-blocking, on the ops that set events. See
+    // unsourcedTimelineEventWarnings for why this warns rather than refuses.
+    if (op.op === "append" || Object.prototype.hasOwnProperty.call(timelineFields, "events")) {
+      opWarnings.push(...unsourcedTimelineEventWarnings(resultEntry));
     }
   }
   // One active plan per question — enforced on append OR an update that
