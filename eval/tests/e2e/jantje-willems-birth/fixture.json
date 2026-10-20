@@ -16,5 +16,8 @@
   },
   "difficulty": "medium",
   "notes": "Record-hint fixture (filtered-list-samples-3.csv row 17, hint-samples.csv row 591, flags adds_father/adds_mother/adds_christening, confidence 3). Resolved 2026-10-14 (#3338): false match, no substitute found. The 10 Nov 1748 Groningen baptism (ark:/61903/1:1:4G7B-5YMM, parents Willem Jans and Ikjen Jans) is very unlikely to be the subject: the 1772 banns with Jacob Jeltes (ark:/61903/1:1:H5TP-6GPZ, image ark:/61903/3:1:3QSQ-G9WL-2S47) call her the widow of Hindrik Harms Bos, whom she married in April/May 1764 (ark:/61903/1:1:H5T5-QW2M, ark:/61903/1:1:QLRY-B3VZ) at fifteen and a half if born in 1748. Avoid guards on the parents and the baptism plus a documented-negative finding; image_basis on, because the widow link exists only on the register page.",
-  "image_basis": true
+  "image_basis": true,
+  "caps": {
+    "wall_clock_seconds": 9000
+  }
 }
