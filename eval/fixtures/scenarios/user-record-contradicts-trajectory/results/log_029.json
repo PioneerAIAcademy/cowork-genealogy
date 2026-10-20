@@ -1,0 +1,162 @@
+{
+  "log_id": "log_029",
+  "tool": "record_read",
+  "retrieved": "2026-10-05T19:22:42.310Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:Q2DC-68RM"
+    },
+    "results": [
+      {
+        "recordId": "Q2DC-68RM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102359251650",
+              "ark": "ark:/61903/1:1:Q2DC-68RM",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "551f6937-6277-4c69-9b24-8d69b0be38ea",
+                  "type": "BirthName",
+                  "surname": "Easthan",
+                  "given": "Robert"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "fa051664-3849-40f6-8cc1-fe3d15e7241f",
+                  "type": "Unknown",
+                  "primary": true,
+                  "place": "Boyd"
+                },
+                {
+                  "id": "eea024a9-df3e-4ff0-8490-190201852f36",
+                  "type": "Birth",
+                  "date": "1822",
+                  "standard_date": "1822"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102359251652",
+              "ark": "ark:/61903/1:1:Q2DC-68RS",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "144c8144-ecb7-4d53-90e7-485131103df6",
+                  "type": "BirthName",
+                  "surname": "Rucker",
+                  "given": "Margaret"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "51792087-9d58-4069-a708-6e8ee6f766d7",
+                  "type": "Birth",
+                  "date": "1843",
+                  "standard_date": "1843"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "b71574f4-034d-4af9-9923-92635ce4c9b9",
+              "type": "Couple",
+              "person1": "p_102359251650",
+              "person2": "p_102359251652",
+              "facts": [
+                {
+                  "id": "6ab28aef-c703-4656-9cd4-264212c03517",
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "25 Jan 1870",
+                  "standard_date": "25 Jan 1870",
+                  "place": "Boyd, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102943466568",
+              "resource_type": "Record",
+              "title": "Entry for Robert Easthan and Margaret Rucker, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DC-68RM : Sat Feb 24 01:07:33 UTC 2024), Entry for Robert Easthan and Margaret Rucker, 25 Jan 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWZ-21FV",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage",
+                "standard_place": "Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91F-YQ6H-Q",
+              "coverage": {
+                "place_rep_id": "394113",
+                "date_range": "1867-1874",
+                "record_type": "MarriageBond",
+                "standard_place": "Boyd, Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_p_102359251652",
+              "resource_type": "Person",
+              "title": "Margaret Rucker, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DC-68RM : Sat Feb 24 01:07:33 UTC 2024), Entry for Robert Easthan and Margaret Rucker, 25 Jan 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:Q2DC-68RS"
+            },
+            {
+              "id": "sd_p_102359251650",
+              "resource_type": "Person",
+              "title": "Robert Easthan, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DC-68RM : Sat Feb 24 01:07:33 UTC 2024), Entry for Robert Easthan and Margaret Rucker, 25 Jan 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:Q2DC-68RM"
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z",
+                "standard_place": "Kentucky, United States"
+              }
+            }
+          ],
+          "places": [
+            {
+              "id": "place_394113"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
