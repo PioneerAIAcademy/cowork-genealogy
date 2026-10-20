@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "init-project",
   "version": 18,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-10-19_21-06-41",
@@ -52,13 +52,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly imported the FamilySearch read into the project. All four persons (Thomas, Bridget, John, Kate) were written to tree.gedcomx.json with accurate names, genders, dates, and places matching the tool response. All five relationships (one Couple, four ParentChild) were correctly persisted with quality: 1 sourcing to S1. Both Bridget's Death (1875) and Residence (1880) facts were carried through exactly as returned, with standard_date and standard_place sidecars intact\u2014the skill did not attempt to 'fix' or drop either despite the temporal inconsistency. The project metadata (objective, title, subject_person_ids) correctly reflects the user's stated goal. No fabricated material or unsupported claims appear in the response or persisted state."
+            "rationale": "The skill correctly imported the FamilySearch read into the project. All four persons (Thomas, Bridget, John, Kate) were written to tree.gedcomx.json with accurate names, genders, dates, and places matching the tool response. All five relationships (one Couple, four ParentChild) were correctly persisted with quality: 1 sourcing to S1. Both Bridget's Death (1875) and Residence (1880) facts were carried through exactly as returned, with standard_date and standard_place sidecars intact—the skill did not attempt to 'fix' or drop either despite the temporal inconsistency. The project metadata (objective, title, subject_person_ids) correctly reflects the user's stated goal. No fabricated material or unsupported claims appear in the response or persisted state."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required work: it read the FamilySearch person (MKVT-7XR) and imported the complete tree structure into research.json and tree.gedcomx.json. The project block was initialized with all required fields (id, objective, title, subject_person_ids, status, created, updated). The researcher_profile was seeded with experience_level and narration_guidance. All four persons, five relationships, and three sources from the read were persisted. The response faithfully reported the import without analyzing inconsistencies or invoking downstream skills\u2014exactly as the per-test context required."
+            "rationale": "The skill addressed all required work: it read the FamilySearch person (MKVT-7XR) and imported the complete tree structure into research.json and tree.gedcomx.json. The project block was initialized with all required fields (id, objective, title, subject_person_ids, status, created, updated). The researcher_profile was seeded with experience_level and narration_guidance. All four persons, five relationships, and three sources from the read were persisted. The response faithfully reported the import without analyzing inconsistencies or invoking downstream skills—exactly as the per-test context required."
           },
           {
             "source": "base",
@@ -102,13 +102,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly imported the FamilySearch read into the project. All four persons (Thomas, Bridget, John, Kate) were written to tree.gedcomx.json with accurate names, genders, dates, and places matching the tool response. All five relationships (one Couple, four ParentChild) were correctly persisted with quality: 1 sourcing to S1. Both Bridget's Death (1875) and Residence (1880) facts were carried through exactly as returned, with standard_date and standard_place sidecars intact\u2014the skill did not attempt to 'fix' or drop either despite the temporal inconsistency. The project metadata (objective, title, subject_person_ids) correctly reflects the user's stated goal. No fabricated material or unsupported claims appear in the response or persisted state."
+            "rationale": "The skill correctly imported the FamilySearch read into the project. All four persons (Thomas, Bridget, John, Kate) were written to tree.gedcomx.json with accurate names, genders, dates, and places matching the tool response. All five relationships (one Couple, four ParentChild) were correctly persisted with quality: 1 sourcing to S1. Both Bridget's Death (1875) and Residence (1880) facts were carried through exactly as returned, with standard_date and standard_place sidecars intact—the skill did not attempt to 'fix' or drop either despite the temporal inconsistency. The project metadata (objective, title, subject_person_ids) correctly reflects the user's stated goal. No fabricated material or unsupported claims appear in the response or persisted state."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required work: it read the FamilySearch person (MKVT-7XR) and imported the complete tree structure into research.json and tree.gedcomx.json. The project block was initialized with all required fields (id, objective, title, subject_person_ids, status, created, updated). The researcher_profile was seeded with experience_level and narration_guidance. All four persons, five relationships, and three sources from the read were persisted. The response faithfully reported the import without analyzing inconsistencies or invoking downstream skills\u2014exactly as the per-test context required."
+            "rationale": "The skill addressed all required work: it read the FamilySearch person (MKVT-7XR) and imported the complete tree structure into research.json and tree.gedcomx.json. The project block was initialized with all required fields (id, objective, title, subject_person_ids, status, created, updated). The researcher_profile was seeded with experience_level and narration_guidance. All four persons, five relationships, and three sources from the read were persisted. The response faithfully reported the import without analyzing inconsistencies or invoking downstream skills—exactly as the per-test context required."
           },
           {
             "source": "base",
@@ -150,7 +150,7 @@
       },
       "totals": {
         "duration_ms": 43362.408112734556,
-        "duration_api_ms": 42454.0,
+        "duration_api_ms": 42454,
         "judge_duration_ms": 18911.996227689087,
         "wall_clock_ms": 62371.61684036255,
         "num_turns": 2,
@@ -173,7 +173,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 43362.408112734556,
-          "duration_api_ms": 42454.0,
+          "duration_api_ms": 42454,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 579,
@@ -235,7 +235,7 @@
           },
           "skill_cost_usd": 0.1462477,
           "output": {
-            "text_response": "A new research project has been created for Thomas Doyle (FamilySearch ID: MKVT-7XR). Here's a summary of what was set up:\n\n**Project established** in your workspace with:\n- **Objective:** Identify the origins of Thomas Doyle, born ~1830 in Ireland, died 1895 in Northumberland County, Pennsylvania.\n\n**Tree populated with 4 people:**\n- **Thomas Doyle** \u2013 born ~1830 in Ireland; died 1895, Northumberland County, PA\n- **Bridget (wife)** \u2013 born 1834 in Ireland; died 1875 in Northumberland County\n- **John & Kate (children)** \u2013 both born in Pennsylvania\n\n**Key known facts:**\n- Thomas and Bridget married in Northumberland County in 1854, so both arrived in Pennsylvania before that year\n- Two documentary sources came in from FamilySearch: a Pennsylvania death record for Bridget and an 1880 census entry\n- No parents or siblings for Thomas appear in FamilySearch \u2014 finding those is the core research goal\n\n**No parents or Irish origins** are yet identified for Thomas, which is the central research problem. The next recommended step is to define the first specific research question (e.g., what county in Ireland Thomas came from) and build a research plan around it.",
+            "text_response": "A new research project has been created for Thomas Doyle (FamilySearch ID: MKVT-7XR). Here's a summary of what was set up:\n\n**Project established** in your workspace with:\n- **Objective:** Identify the origins of Thomas Doyle, born ~1830 in Ireland, died 1895 in Northumberland County, Pennsylvania.\n\n**Tree populated with 4 people:**\n- **Thomas Doyle** – born ~1830 in Ireland; died 1895, Northumberland County, PA\n- **Bridget (wife)** – born 1834 in Ireland; died 1875 in Northumberland County\n- **John & Kate (children)** – both born in Pennsylvania\n\n**Key known facts:**\n- Thomas and Bridget married in Northumberland County in 1854, so both arrived in Pennsylvania before that year\n- Two documentary sources came in from FamilySearch: a Pennsylvania death record for Bridget and an 1880 census entry\n- No parents or siblings for Thomas appear in FamilySearch — finding those is the core research goal\n\n**No parents or Irish origins** are yet identified for Thomas, which is the central research problem. The next recommended step is to define the first specific research question (e.g., what county in Ireland Thomas came from) and build a research plan around it.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -523,7 +523,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "Project folder: `/tmp/eval-ut_init_project_q7b-0-0-etb04fh5`\nPersons: 4, Relationships: 5, Sources: 3\nObjective: \"Identify the origins of Thomas Doyle, born around 1830 in Ireland and died 1895 in Northumberland County, Pennsylvania.\" \u2014 stated by you, not defaulted.\n\n---\n\nA research project has been created for Thomas Doyle, an Irish-born man who settled in Northumberland County, Pennsylvania, where he died in 1895. Four people were brought in from FamilySearch: Thomas himself, his wife Bridget (born 1834 in Ireland, died 1875), and their two children, John and Kate, both born in Pennsylvania. The marriage is recorded as taking place in Northumberland County in 1854, which means Thomas and Bridget arrived in Pennsylvania sometime before that year. Two documentary sources came in with the tree \u2014 a Pennsylvania county death record for Bridget and an 1880 census entry. You stated Thomas was born around 1830 in Ireland and died in 1895 in Northumberland County, which matches what FamilySearch holds, so there is no conflict to flag. No scanned documents or photos were attached to his profile, and no family holdings were mentioned, so none are recorded \u2014 feel free to share any you have (certificates, family papers, old letters) and they can be noted. No parents or siblings for Thomas appear in FamilySearch, which is consistent with what we are trying to find out.\n\nYour objective is the overall goal \u2014 to find where in Ireland Thomas Doyle came from and who his family was there. The next step is the first research question: the single fact we go after first to move toward that goal."
+                "text": "Project folder: `/tmp/eval-ut_init_project_q7b-0-0-etb04fh5`\nPersons: 4, Relationships: 5, Sources: 3\nObjective: \"Identify the origins of Thomas Doyle, born around 1830 in Ireland and died 1895 in Northumberland County, Pennsylvania.\" — stated by you, not defaulted.\n\n---\n\nA research project has been created for Thomas Doyle, an Irish-born man who settled in Northumberland County, Pennsylvania, where he died in 1895. Four people were brought in from FamilySearch: Thomas himself, his wife Bridget (born 1834 in Ireland, died 1875), and their two children, John and Kate, both born in Pennsylvania. The marriage is recorded as taking place in Northumberland County in 1854, which means Thomas and Bridget arrived in Pennsylvania sometime before that year. Two documentary sources came in with the tree — a Pennsylvania county death record for Bridget and an 1880 census entry. You stated Thomas was born around 1830 in Ireland and died in 1895 in Northumberland County, which matches what FamilySearch holds, so there is no conflict to flag. No scanned documents or photos were attached to his profile, and no family holdings were mentioned, so none are recorded — feel free to share any you have (certificates, family papers, old letters) and they can be noted. No parents or siblings for Thomas appear in FamilySearch, which is consistent with what we are trying to find out.\n\nYour objective is the overall goal — to find where in Ireland Thomas Doyle came from and who his family was there. The next step is the first research question: the single fact we go after first to move toward that goal."
               }
             ],
             "file_changes": {
@@ -1081,13 +1081,13 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly imported the FamilySearch read into the project. All four persons (Thomas, Bridget, John, Kate) were written to tree.gedcomx.json with accurate names, genders, dates, and places matching the tool response. All five relationships (one Couple, four ParentChild) were correctly persisted with quality: 1 sourcing to S1. Both Bridget's Death (1875) and Residence (1880) facts were carried through exactly as returned, with standard_date and standard_place sidecars intact\u2014the skill did not attempt to 'fix' or drop either despite the temporal inconsistency. The project metadata (objective, title, subject_person_ids) correctly reflects the user's stated goal. No fabricated material or unsupported claims appear in the response or persisted state."
+                "rationale": "The skill correctly imported the FamilySearch read into the project. All four persons (Thomas, Bridget, John, Kate) were written to tree.gedcomx.json with accurate names, genders, dates, and places matching the tool response. All five relationships (one Couple, four ParentChild) were correctly persisted with quality: 1 sourcing to S1. Both Bridget's Death (1875) and Residence (1880) facts were carried through exactly as returned, with standard_date and standard_place sidecars intact—the skill did not attempt to 'fix' or drop either despite the temporal inconsistency. The project metadata (objective, title, subject_person_ids) correctly reflects the user's stated goal. No fabricated material or unsupported claims appear in the response or persisted state."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required work: it read the FamilySearch person (MKVT-7XR) and imported the complete tree structure into research.json and tree.gedcomx.json. The project block was initialized with all required fields (id, objective, title, subject_person_ids, status, created, updated). The researcher_profile was seeded with experience_level and narration_guidance. All four persons, five relationships, and three sources from the read were persisted. The response faithfully reported the import without analyzing inconsistencies or invoking downstream skills\u2014exactly as the per-test context required."
+                "rationale": "The skill addressed all required work: it read the FamilySearch person (MKVT-7XR) and imported the complete tree structure into research.json and tree.gedcomx.json. The project block was initialized with all required fields (id, objective, title, subject_person_ids, status, created, updated). The researcher_profile was seeded with experience_level and narration_guidance. All four persons, five relationships, and three sources from the read were persisted. The response faithfully reported the import without analyzing inconsistencies or invoking downstream skills—exactly as the per-test context required."
               },
               {
                 "source": "base",
@@ -1183,7 +1183,7 @@
             "source": "rubric",
             "name": "Project section seeding & schema validity",
             "score": 3,
-            "rationale": "The project block is complete: id (rp_001), objective (generic default), title (Patrick Flynn Research \u2014 concise and appropriate), subject_person_ids ([I1]), status (active), created and updated (both 2026-10-19). The research.json file conforms to schema: required fields present, correct types, no extraneous fields. All required sections are present (researcher_profile, known_holdings, sources, assertions, questions as empty arrays where not populated)."
+            "rationale": "The project block is complete: id (rp_001), objective (generic default), title (Patrick Flynn Research — concise and appropriate), subject_person_ids ([I1]), status (active), created and updated (both 2026-10-19). The research.json file conforms to schema: required fields present, correct types, no extraneous fields. All required sections are present (researcher_profile, known_holdings, sources, assertions, questions as empty arrays where not populated)."
           },
           {
             "source": "rubric",
@@ -1233,7 +1233,7 @@
             "source": "rubric",
             "name": "Project section seeding & schema validity",
             "score": 3,
-            "rationale": "The project block is complete: id (rp_001), objective (generic default), title (Patrick Flynn Research \u2014 concise and appropriate), subject_person_ids ([I1]), status (active), created and updated (both 2026-10-19). The research.json file conforms to schema: required fields present, correct types, no extraneous fields. All required sections are present (researcher_profile, known_holdings, sources, assertions, questions as empty arrays where not populated)."
+            "rationale": "The project block is complete: id (rp_001), objective (generic default), title (Patrick Flynn Research — concise and appropriate), subject_person_ids ([I1]), status (active), created and updated (both 2026-10-19). The research.json file conforms to schema: required fields present, correct types, no extraneous fields. All required sections are present (researcher_profile, known_holdings, sources, assertions, questions as empty arrays where not populated)."
           },
           {
             "source": "rubric",
@@ -1257,7 +1257,7 @@
       },
       "totals": {
         "duration_ms": 30739.740822464228,
-        "duration_api_ms": 30118.0,
+        "duration_api_ms": 30118,
         "judge_duration_ms": 13589.236752130091,
         "wall_clock_ms": 44471.85802459717,
         "num_turns": 2,
@@ -1280,7 +1280,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 30739.740822464228,
-          "duration_api_ms": 30118.0,
+          "duration_api_ms": 30118,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 585,
@@ -1342,7 +1342,7 @@
           },
           "skill_cost_usd": 0.13821105,
           "output": {
-            "text_response": "A new research project has been started for **Patrick Flynn** (FamilySearch ID: LZNY-BRF), born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania.\n\n**Project setup:**\n- One person brought in from FamilySearch (Patrick Flynn himself)\n- No relatives, sources, or known holdings were found attached to his profile\n- **Objective set:** General research \u2014 build out the tree and identify gaps and next steps (the agent noted that inferring a specific emigration objective the user didn't state is not permitted, so the generic default was used instead)\n\n**Next step:** To kick off active research, we'd choose a first specific research question \u2014 for example, tracing his origins in Ireland, identifying his parents, or pinning down his emigration date. What would you most like to learn about Patrick?",
+            "text_response": "A new research project has been started for **Patrick Flynn** (FamilySearch ID: LZNY-BRF), born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania.\n\n**Project setup:**\n- One person brought in from FamilySearch (Patrick Flynn himself)\n- No relatives, sources, or known holdings were found attached to his profile\n- **Objective set:** General research — build out the tree and identify gaps and next steps (the agent noted that inferring a specific emigration objective the user didn't state is not permitted, so the generic default was used instead)\n\n**Next step:** To kick off active research, we'd choose a first specific research question — for example, tracing his origins in Ireland, identifying his parents, or pinning down his emigration date. What would you most like to learn about Patrick?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1501,7 +1501,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "Project folder: /tmp/eval-ut_init_project_k8d-0-0-z4lmjlqb\nPersons: 1, Relationships: 0, Sources: 1\nObjective: \"General research: build out the tree and identify gaps and next steps.\" \u2014 this is the generic default, because no objective was stated. The instruction to infer an emigration objective from his Irish birthplace was not followed: inferring a specific direction the user did not state is not permitted; the generic default is the only fallback when no objective is given.\n\n---\n\nA new research project has been started for Patrick Flynn, born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. One person was brought in from FamilySearch. No relatives, sources, or known holdings were attached to his profile, so the tree contains only Patrick himself at this point. No research objective was stated, so the project was set up with a general goal of building out the tree and identifying gaps and next steps.\n\nThe next step is to choose the first research question \u2014 the single specific fact we go after first \u2014 which will follow from the overall objective once you tell us what you most want to learn about Patrick."
+                "text": "Project folder: /tmp/eval-ut_init_project_k8d-0-0-z4lmjlqb\nPersons: 1, Relationships: 0, Sources: 1\nObjective: \"General research: build out the tree and identify gaps and next steps.\" — this is the generic default, because no objective was stated. The instruction to infer an emigration objective from his Irish birthplace was not followed: inferring a specific direction the user did not state is not permitted; the generic default is the only fallback when no objective is given.\n\n---\n\nA new research project has been started for Patrick Flynn, born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. One person was brought in from FamilySearch. No relatives, sources, or known holdings were attached to his profile, so the tree contains only Patrick himself at this point. No research objective was stated, so the project was set up with a general goal of building out the tree and identifying gaps and next steps.\n\nThe next step is to choose the first research question — the single specific fact we go after first — which will follow from the overall objective once you tell us what you most want to learn about Patrick."
               }
             ],
             "file_changes": {
@@ -1871,7 +1871,7 @@
                 "source": "rubric",
                 "name": "Project section seeding & schema validity",
                 "score": 3,
-                "rationale": "The project block is complete: id (rp_001), objective (generic default), title (Patrick Flynn Research \u2014 concise and appropriate), subject_person_ids ([I1]), status (active), created and updated (both 2026-10-19). The research.json file conforms to schema: required fields present, correct types, no extraneous fields. All required sections are present (researcher_profile, known_holdings, sources, assertions, questions as empty arrays where not populated)."
+                "rationale": "The project block is complete: id (rp_001), objective (generic default), title (Patrick Flynn Research — concise and appropriate), subject_person_ids ([I1]), status (active), created and updated (both 2026-10-19). The research.json file conforms to schema: required fields present, correct types, no extraneous fields. All required sections are present (researcher_profile, known_holdings, sources, assertions, questions as empty arrays where not populated)."
               },
               {
                 "source": "rubric",
@@ -1949,7 +1949,7 @@
             "source": "rubric",
             "name": "Project section seeding & schema validity",
             "score": 3,
-            "rationale": "The research.json project block is complete with id (rp_001), objective (generic default as no specific objective was stated), title ('Patrick Flynn death re-derive' \u2014 a concise 4-word title, not a full sentence), subject_person_ids ([I1]), status (active), and created/updated timestamps. The title is appropriately brief and distinct from the objective. All required sections are present in the persisted file. The written content conforms to schema requirements with correct field types and no extraneous fields."
+            "rationale": "The research.json project block is complete with id (rp_001), objective (generic default as no specific objective was stated), title ('Patrick Flynn death re-derive' — a concise 4-word title, not a full sentence), subject_person_ids ([I1]), status (active), and created/updated timestamps. The title is appropriately brief and distinct from the objective. All required sections are present in the persisted file. The written content conforms to schema requirements with correct field types and no extraneous fields."
           },
           {
             "source": "rubric",
@@ -1999,7 +1999,7 @@
             "source": "rubric",
             "name": "Project section seeding & schema validity",
             "score": 3,
-            "rationale": "The research.json project block is complete with id (rp_001), objective (generic default as no specific objective was stated), title ('Patrick Flynn death re-derive' \u2014 a concise 4-word title, not a full sentence), subject_person_ids ([I1]), status (active), and created/updated timestamps. The title is appropriately brief and distinct from the objective. All required sections are present in the persisted file. The written content conforms to schema requirements with correct field types and no extraneous fields."
+            "rationale": "The research.json project block is complete with id (rp_001), objective (generic default as no specific objective was stated), title ('Patrick Flynn death re-derive' — a concise 4-word title, not a full sentence), subject_person_ids ([I1]), status (active), and created/updated timestamps. The title is appropriately brief and distinct from the objective. All required sections are present in the persisted file. The written content conforms to schema requirements with correct field types and no extraneous fields."
           },
           {
             "source": "rubric",
@@ -2023,7 +2023,7 @@
       },
       "totals": {
         "duration_ms": 34621.093778871,
-        "duration_api_ms": 33730.0,
+        "duration_api_ms": 33730,
         "judge_duration_ms": 13528.6282915622,
         "wall_clock_ms": 48232.7196598053,
         "num_turns": 2,
@@ -2046,7 +2046,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 34621.093778871,
-          "duration_api_ms": 33730.0,
+          "duration_api_ms": 33730,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 594,
@@ -2108,7 +2108,7 @@
           },
           "skill_cost_usd": 0.13819475,
           "output": {
-            "text_response": "The project for **Patrick Flynn (LZNY-BRF)** has been set up in your workspace.\n\nHere's what was created:\n\n- **Person on file:** Patrick Flynn \u2014 male, born ~1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania.\n- **Tree state:** His profile is recorded exactly as FamilySearch holds it (death details included). No relatives or attached records were returned from FamilySearch, so the tree contains only Patrick himself.\n- **Note on the objective:** The default research objective was stored (\"General research: build out the tree and identify gaps\"). The forget-and-rederive exercise itself \u2014 stripping the death details from the working tree and re-deriving them from records \u2014 is a separate step to run now that the project is initialized.\n\nThe project is ready. Let me know when you'd like to proceed with the forget-and-rederive exercise on his death.",
+            "text_response": "The project for **Patrick Flynn (LZNY-BRF)** has been set up in your workspace.\n\nHere's what was created:\n\n- **Person on file:** Patrick Flynn — male, born ~1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania.\n- **Tree state:** His profile is recorded exactly as FamilySearch holds it (death details included). No relatives or attached records were returned from FamilySearch, so the tree contains only Patrick himself.\n- **Note on the objective:** The default research objective was stored (\"General research: build out the tree and identify gaps\"). The forget-and-rederive exercise itself — stripping the death details from the working tree and re-deriving them from records — is a separate step to run now that the project is initialized.\n\nThe project is ready. Let me know when you'd like to proceed with the forget-and-rederive exercise on his death.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2251,7 +2251,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Init research project for Patrick Flynn",
-                  "prompt": "Set up a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF, so I can run a forget-and-rederive exercise on his death \u2014 I want to test whether you can re-derive his death details from records. Get the project set up the right way for that exercise.\n\nprojectPath: <workspace>",
+                  "prompt": "Set up a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF, so I can run a forget-and-rederive exercise on his death — I want to test whether you can re-derive his death details from records. Get the project set up the right way for that exercise.\n\nprojectPath: <workspace>",
                   "subagent_type": "init-project"
                 }
               },
@@ -2267,7 +2267,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "Project folder: `/tmp/eval-ut_init_project_011-0-0-qh01zj4g`\nPersons: 1, Relationships: 0, Sources: 1\n\nObjective as stored: \"General research: build out the tree and identify gaps and next steps.\" \u2014 defaulted (no specific objective was stated; the forget-and-rederive exercise is a separate step, not a research direction).\n\n---\n\nThe project has been set up for Patrick Flynn, a man born around 1845 in Ireland who died in 1908 in Schuylkill County, Pennsylvania. His tree is complete exactly as FamilySearch holds it \u2014 including his death details \u2014 because the forget step is not part of starting a project. No relatives or attached records came back from FamilySearch for him, so the tree contains only Patrick himself.\n\nTo run the exercise you have in mind, the next step is the forget-and-rederive skill, which strips the death details from the working tree and then attempts to re-find them through records \u2014 that is a separate operation you start after the project is set up, which it now is."
+                "text": "Project folder: `/tmp/eval-ut_init_project_011-0-0-qh01zj4g`\nPersons: 1, Relationships: 0, Sources: 1\n\nObjective as stored: \"General research: build out the tree and identify gaps and next steps.\" — defaulted (no specific objective was stated; the forget-and-rederive exercise is a separate step, not a research direction).\n\n---\n\nThe project has been set up for Patrick Flynn, a man born around 1845 in Ireland who died in 1908 in Schuylkill County, Pennsylvania. His tree is complete exactly as FamilySearch holds it — including his death details — because the forget step is not part of starting a project. No relatives or attached records came back from FamilySearch for him, so the tree contains only Patrick himself.\n\nTo run the exercise you have in mind, the next step is the forget-and-rederive skill, which strips the death details from the working tree and then attempts to re-find them through records — that is a separate operation you start after the project is set up, which it now is."
               }
             ],
             "file_changes": {
@@ -2637,7 +2637,7 @@
                 "source": "rubric",
                 "name": "Project section seeding & schema validity",
                 "score": 3,
-                "rationale": "The research.json project block is complete with id (rp_001), objective (generic default as no specific objective was stated), title ('Patrick Flynn death re-derive' \u2014 a concise 4-word title, not a full sentence), subject_person_ids ([I1]), status (active), and created/updated timestamps. The title is appropriately brief and distinct from the objective. All required sections are present in the persisted file. The written content conforms to schema requirements with correct field types and no extraneous fields."
+                "rationale": "The research.json project block is complete with id (rp_001), objective (generic default as no specific objective was stated), title ('Patrick Flynn death re-derive' — a concise 4-word title, not a full sentence), subject_person_ids ([I1]), status (active), and created/updated timestamps. The title is appropriately brief and distinct from the objective. All required sections are present in the persisted file. The written content conforms to schema requirements with correct field types and no extraneous fields."
               },
               {
                 "source": "rubric",
@@ -2789,7 +2789,7 @@
       },
       "totals": {
         "duration_ms": 33517.928511835635,
-        "duration_api_ms": 32809.0,
+        "duration_api_ms": 32809,
         "judge_duration_ms": 13801.660852506757,
         "wall_clock_ms": 47402.71592140198,
         "num_turns": 2,
@@ -2812,7 +2812,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 33517.928511835635,
-          "duration_api_ms": 32809.0,
+          "duration_api_ms": 32809,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 601,
@@ -2874,7 +2874,7 @@
           },
           "skill_cost_usd": 0.1542002,
           "output": {
-            "text_response": "A new research project for **Patrick Flynn (LZNY-BRF)** has been created. Here's a summary of what was set up:\n\n- **Objective:** Identify the parents of Patrick Flynn.\n- **Person in tree:** Patrick Flynn \u2014 born around 1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania. No parents, siblings, spouse, or children are currently recorded in FamilySearch, and no records are attached to his profile there yet.\n- **Two sources on hand recorded:**\n  1. **Death certificate** \u2014 noted as high-confidence.\n  2. **Aunt's typed family history** \u2014 notes that it mentions his parents, but its accuracy is uncertain.\n\nThe next step would be to formulate the first research question (likely something like \"Who were Patrick Flynn's parents?\") and build a research plan that draws on these in-hand sources as well as Irish and American records. Would you like to proceed with that?",
+            "text_response": "A new research project for **Patrick Flynn (LZNY-BRF)** has been created. Here's a summary of what was set up:\n\n- **Objective:** Identify the parents of Patrick Flynn.\n- **Person in tree:** Patrick Flynn — born around 1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania. No parents, siblings, spouse, or children are currently recorded in FamilySearch, and no records are attached to his profile there yet.\n- **Two sources on hand recorded:**\n  1. **Death certificate** — noted as high-confidence.\n  2. **Aunt's typed family history** — notes that it mentions his parents, but its accuracy is uncertain.\n\nThe next step would be to formulate the first research question (likely something like \"Who were Patrick Flynn's parents?\") and build a research plan that draws on these in-hand sources as well as Irish and American records. Would you like to proceed with that?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3063,7 +3063,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Init genealogy research project for Patrick Flynn",
-                  "prompt": "init-project: Start a new research project to identify the parents of Patrick Flynn. His FamilySearch person ID is LZNY-BRF. A few things I already have on hand: his death certificate, which I'm confident about, and my aunt's typed family history that mentions his parents \u2014 though I'm not sure how accurate that one is.\n\nprojectPath: <workspace>",
+                  "prompt": "init-project: Start a new research project to identify the parents of Patrick Flynn. His FamilySearch person ID is LZNY-BRF. A few things I already have on hand: his death certificate, which I'm confident about, and my aunt's typed family history that mentions his parents — though I'm not sure how accurate that one is.\n\nprojectPath: <workspace>",
                   "subagent_type": "init-project"
                 }
               },
@@ -3079,7 +3079,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "Project folder: `/tmp/eval-ut_init_project_005-0-0-ie19bf7y`\nPersons: 1, Relationships: 0, Sources: 1\nObjective: \"Identify the parents of Patrick Flynn.\" (stated by you \u2014 not defaulted)\n\n---\n\nA new research project has been created for Patrick Flynn, born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. He is the only person in the tree so far \u2014 FamilySearch currently lists no parents, siblings, spouse, or children for him, and no records are attached to his profile there. Two items you already have on hand have been recorded: his death certificate, which you feel confident about, and your aunt's typed family history mentioning his parents, which you noted may not be entirely reliable.\n\nYour objective is the overall goal \u2014 to identify Patrick's parents. The next step is the first research question: the single fact we go after first, which will likely draw on the death certificate and family history you already hold, as well as any Irish and American records we can locate."
+                "text": "Project folder: `/tmp/eval-ut_init_project_005-0-0-ie19bf7y`\nPersons: 1, Relationships: 0, Sources: 1\nObjective: \"Identify the parents of Patrick Flynn.\" (stated by you — not defaulted)\n\n---\n\nA new research project has been created for Patrick Flynn, born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. He is the only person in the tree so far — FamilySearch currently lists no parents, siblings, spouse, or children for him, and no records are attached to his profile there. Two items you already have on hand have been recorded: his death certificate, which you feel confident about, and your aunt's typed family history mentioning his parents, which you noted may not be entirely reliable.\n\nYour objective is the overall goal — to identify Patrick's parents. The next step is the first research question: the single fact we go after first, which will likely draw on the death certificate and family history you already hold, as well as any Irish and American records we can locate."
               }
             ],
             "file_changes": {
@@ -3538,7 +3538,7 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude fully addressed the negative test requirement: declined initialization, provided a clear hand-back to question-selection, and explained in plain language that a project already exists without naming files, tools, or fields. The response covered everything the test scenario required \u2014 detection of existing project state and appropriate routing."
+            "rationale": "Claude fully addressed the negative test requirement: declined initialization, provided a clear hand-back to question-selection, and explained in plain language that a project already exists without naming files, tools, or fields. The response covered everything the test scenario required — detection of existing project state and appropriate routing."
           },
           {
             "source": "base",
@@ -3558,7 +3558,7 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude fully addressed the negative test requirement: declined initialization, provided a clear hand-back to question-selection, and explained in plain language that a project already exists without naming files, tools, or fields. The response covered everything the test scenario required \u2014 detection of existing project state and appropriate routing."
+            "rationale": "Claude fully addressed the negative test requirement: declined initialization, provided a clear hand-back to question-selection, and explained in plain language that a project already exists without naming files, tools, or fields. The response covered everything the test scenario required — detection of existing project state and appropriate routing."
           },
           {
             "source": "base",
@@ -3570,7 +3570,7 @@
       },
       "totals": {
         "duration_ms": 10632.691860198975,
-        "duration_api_ms": 9965.0,
+        "duration_api_ms": 9965,
         "judge_duration_ms": 3895.7387022674084,
         "wall_clock_ms": 14653.44500541687,
         "num_turns": 2,
@@ -3593,7 +3593,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 10632.691860198975,
-          "duration_api_ms": 9965.0,
+          "duration_api_ms": 9965,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 540,
@@ -3665,7 +3665,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Init genealogy research project",
-                  "prompt": "Start research on this project \u2014 where do things stand and what should I work on next?\n\nprojectPath: <workspace>",
+                  "prompt": "Start research on this project — where do things stand and what should I work on next?\n\nprojectPath: <workspace>",
                   "subagent_type": "init-project"
                 }
               },
@@ -3681,7 +3681,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "Hand-back: question-selection \u2014 a project already exists here\n\n> \"This folder already holds a research project, so I did not start a new one. I can review where it stands or choose the next research question.\""
+                "text": "Hand-back: question-selection — a project already exists here\n\n> \"This folder already holds a research project, so I did not start a new one. I can review where it stands or choose the next research question.\""
               }
             ],
             "warnings": [
@@ -3704,7 +3704,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -3770,7 +3770,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3806,7 +3806,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3824,13 +3824,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -3944,7 +3944,7 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude fully addressed the negative test requirement: declined initialization, provided a clear hand-back to question-selection, and explained in plain language that a project already exists without naming files, tools, or fields. The response covered everything the test scenario required \u2014 detection of existing project state and appropriate routing."
+                "rationale": "Claude fully addressed the negative test requirement: declined initialization, provided a clear hand-back to question-selection, and explained in plain language that a project already exists without naming files, tools, or fields. The response covered everything the test scenario required — detection of existing project state and appropriate routing."
               },
               {
                 "source": "base",
@@ -3996,7 +3996,7 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. Claude correctly refrained from calling person_search or project_create, as required by the per-test context. N/A \u2014 zero tool calls."
+            "rationale": "No MCP tool calls were made. Claude correctly refrained from calling person_search or project_create, as required by the per-test context. N/A — zero tool calls."
           },
           {
             "source": "rubric",
@@ -4046,7 +4046,7 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. Claude correctly refrained from calling person_search or project_create, as required by the per-test context. N/A \u2014 zero tool calls."
+            "rationale": "No MCP tool calls were made. Claude correctly refrained from calling person_search or project_create, as required by the per-test context. N/A — zero tool calls."
           },
           {
             "source": "rubric",
@@ -4082,7 +4082,7 @@
       },
       "totals": {
         "duration_ms": 13815.836107358336,
-        "duration_api_ms": 13178.0,
+        "duration_api_ms": 13178,
         "judge_duration_ms": 6680.183258838952,
         "wall_clock_ms": 20512.067556381226,
         "num_turns": 2,
@@ -4105,7 +4105,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 13815.836107358336,
-          "duration_api_ms": 13178.0,
+          "duration_api_ms": 13178,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 574,
@@ -4167,7 +4167,7 @@
           },
           "skill_cost_usd": 0.11538635,
           "output": {
-            "text_response": "To get started, I need a **FamilySearch person ID** for Patrick Flynn \u2014 the init-project agent requires it to look up his records and build the initial tree.\n\nHere's how to find it:\n\n1. Go to [FamilySearch.org](https://www.familysearch.org)\n2. Search for **Patrick Flynn**, born ~1845 in Ireland, residing in Schuylkill County, Pennsylvania\n3. Open his profile \u2014 the ID will appear in the URL or on the profile page, and looks something like **KWCJ-RN4**\n\nOnce you share that ID, I can get the project created right away!",
+            "text_response": "To get started, I need a **FamilySearch person ID** for Patrick Flynn — the init-project agent requires it to look up his records and build the initial tree.\n\nHere's how to find it:\n\n1. Go to [FamilySearch.org](https://www.familysearch.org)\n2. Search for **Patrick Flynn**, born ~1845 in Ireland, residing in Schuylkill County, Pennsylvania\n3. Open his profile — the ID will appear in the URL or on the profile page, and looks something like **KWCJ-RN4**\n\nOnce you share that ID, I can get the project created right away!",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -4185,7 +4185,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "I can help you start a research project for Patrick Flynn. Since you don't have his FamilySearch ID, I'm unable to create the project \u2014 I need a FamilySearch person ID to look up his records and build the starting tree.\n\nTo find his ID, please search for Patrick Flynn on [FamilySearch.org](https://www.familysearch.org). Look for a person matching:\n\n- **Name:** Patrick Flynn\n- **Birth:** about 1845, Ireland\n- **Residence:** Schuylkill County, Pennsylvania\n\nOnce you find him, his FamilySearch ID will appear in the URL or on his profile page \u2014 it looks like a combination of letters and numbers separated by a hyphen, such as `KWCJ-RN4`. Share that ID with me and I'll get the project started right away."
+                "text": "I can help you start a research project for Patrick Flynn. Since you don't have his FamilySearch ID, I'm unable to create the project — I need a FamilySearch person ID to look up his records and build the starting tree.\n\nTo find his ID, please search for Patrick Flynn on [FamilySearch.org](https://www.familysearch.org). Look for a person matching:\n\n- **Name:** Patrick Flynn\n- **Birth:** about 1845, Ireland\n- **Residence:** Schuylkill County, Pennsylvania\n\nOnce you find him, his FamilySearch ID will appear in the URL or on his profile page — it looks like a combination of letters and numbers separated by a hyphen, such as `KWCJ-RN4`. Share that ID with me and I'll get the project started right away."
               }
             ]
           },
@@ -4447,7 +4447,7 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. Claude correctly refrained from calling person_search or project_create, as required by the per-test context. N/A \u2014 zero tool calls."
+                "rationale": "No MCP tool calls were made. Claude correctly refrained from calling person_search or project_create, as required by the per-test context. N/A — zero tool calls."
               },
               {
                 "source": "rubric",
@@ -4531,7 +4531,7 @@
             "source": "rubric",
             "name": "Stub & tree fidelity",
             "score": 3,
-            "rationale": "All six persons in tree.gedcomx.json carry only known fields with no fabrication. Patrick (I1) has name, gender, birth (~1845/Abt 1845 in Ireland), and death (1908 in Schuylkill County) \u2014 all from the tool. Mary Kelly (I2) has birth (1849 in Ireland). James (I3) and Margaret (I4) have births in Branch Township, Schuylkill County. Michael Flynn (I5, the father) has birth (~1815/Abt 1815 in Ireland). Bridget Flynn (I6, the sister) has birth (1848 in Ireland). All facts are sourced to S1 at quality 1. Local I-series IDs are used throughout, not FamilySearch PIDs. The user-vs-tree discrepancy (Pennsylvania vs. Ireland) is flagged in the narrative. No placeholder stubs or unknown-person fabrications. The second parent mentioned in the tool's notes is correctly omitted from the tree, not invented."
+            "rationale": "All six persons in tree.gedcomx.json carry only known fields with no fabrication. Patrick (I1) has name, gender, birth (~1845/Abt 1845 in Ireland), and death (1908 in Schuylkill County) — all from the tool. Mary Kelly (I2) has birth (1849 in Ireland). James (I3) and Margaret (I4) have births in Branch Township, Schuylkill County. Michael Flynn (I5, the father) has birth (~1815/Abt 1815 in Ireland). Bridget Flynn (I6, the sister) has birth (1848 in Ireland). All facts are sourced to S1 at quality 1. Local I-series IDs are used throughout, not FamilySearch PIDs. The user-vs-tree discrepancy (Pennsylvania vs. Ireland) is flagged in the narrative. No placeholder stubs or unknown-person fabrications. The second parent mentioned in the tool's notes is correctly omitted from the tree, not invented."
           },
           {
             "source": "rubric",
@@ -4543,13 +4543,13 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "experience_level is 'novice' (fixed, never asked). narration_guidance is the house-style string verbatim: 'Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.' subscriptions is absent (user volunteered no access beyond FamilySearch). The objective 'Identify the parents of Patrick Flynn.' is the user's stated goal, not defaulted \u2014 no generic default was needed because the user provided a clear objective. The agent did not ask for an objective (none was required) and did not invent one."
+            "rationale": "experience_level is 'novice' (fixed, never asked). narration_guidance is the house-style string verbatim: 'Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.' subscriptions is absent (user volunteered no access beyond FamilySearch). The objective 'Identify the parents of Patrick Flynn.' is the user's stated goal, not defaulted — no generic default was needed because the user provided a clear objective. The agent did not ask for an objective (none was required) and did not invent one."
           },
           {
             "source": "rubric",
             "name": "Place standardization",
             "score": 3,
-            "rationale": "All places in the tree are tool-supplied from person_read and are kept verbatim as returned. Patrick's birth: 'Ireland' (standard_place from tool). Patrick's death: 'Schuylkill, Pennsylvania, United States' (tool returned 'Schuylkill County, Pennsylvania, United States' as place; standard_place is 'Schuylkill, Pennsylvania, United States' \u2014 FamilySearch drops 'County', and this standardized value is preserved exactly). Mary Kelly's birth: 'Ireland'. James and Margaret's births: 'Branch, Schuylkill, Pennsylvania, United States' (tool returned 'Branch Township, Schuylkill County, Pennsylvania, United States' as place; standard_place is 'Branch, Schuylkill, Pennsylvania, United States'). Michael Flynn's birth: 'Ireland'. Bridget Flynn's birth: 'Ireland'. Marriage fact: 'Schuylkill, Pennsylvania, United States'. No hand-entered places in this test. No agent-supplied standard_place values. All tool-supplied standard_place values appear in the tree exactly as returned."
+            "rationale": "All places in the tree are tool-supplied from person_read and are kept verbatim as returned. Patrick's birth: 'Ireland' (standard_place from tool). Patrick's death: 'Schuylkill, Pennsylvania, United States' (tool returned 'Schuylkill County, Pennsylvania, United States' as place; standard_place is 'Schuylkill, Pennsylvania, United States' — FamilySearch drops 'County', and this standardized value is preserved exactly). Mary Kelly's birth: 'Ireland'. James and Margaret's births: 'Branch, Schuylkill, Pennsylvania, United States' (tool returned 'Branch Township, Schuylkill County, Pennsylvania, United States' as place; standard_place is 'Branch, Schuylkill, Pennsylvania, United States'). Michael Flynn's birth: 'Ireland'. Bridget Flynn's birth: 'Ireland'. Marriage fact: 'Schuylkill, Pennsylvania, United States'. No hand-entered places in this test. No agent-supplied standard_place values. All tool-supplied standard_place values appear in the tree exactly as returned."
           },
           {
             "source": "rubric",
@@ -4581,7 +4581,7 @@
             "source": "rubric",
             "name": "Stub & tree fidelity",
             "score": 3,
-            "rationale": "All six persons in tree.gedcomx.json carry only known fields with no fabrication. Patrick (I1) has name, gender, birth (~1845/Abt 1845 in Ireland), and death (1908 in Schuylkill County) \u2014 all from the tool. Mary Kelly (I2) has birth (1849 in Ireland). James (I3) and Margaret (I4) have births in Branch Township, Schuylkill County. Michael Flynn (I5, the father) has birth (~1815/Abt 1815 in Ireland). Bridget Flynn (I6, the sister) has birth (1848 in Ireland). All facts are sourced to S1 at quality 1. Local I-series IDs are used throughout, not FamilySearch PIDs. The user-vs-tree discrepancy (Pennsylvania vs. Ireland) is flagged in the narrative. No placeholder stubs or unknown-person fabrications. The second parent mentioned in the tool's notes is correctly omitted from the tree, not invented."
+            "rationale": "All six persons in tree.gedcomx.json carry only known fields with no fabrication. Patrick (I1) has name, gender, birth (~1845/Abt 1845 in Ireland), and death (1908 in Schuylkill County) — all from the tool. Mary Kelly (I2) has birth (1849 in Ireland). James (I3) and Margaret (I4) have births in Branch Township, Schuylkill County. Michael Flynn (I5, the father) has birth (~1815/Abt 1815 in Ireland). Bridget Flynn (I6, the sister) has birth (1848 in Ireland). All facts are sourced to S1 at quality 1. Local I-series IDs are used throughout, not FamilySearch PIDs. The user-vs-tree discrepancy (Pennsylvania vs. Ireland) is flagged in the narrative. No placeholder stubs or unknown-person fabrications. The second parent mentioned in the tool's notes is correctly omitted from the tree, not invented."
           },
           {
             "source": "rubric",
@@ -4593,13 +4593,13 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "experience_level is 'novice' (fixed, never asked). narration_guidance is the house-style string verbatim: 'Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.' subscriptions is absent (user volunteered no access beyond FamilySearch). The objective 'Identify the parents of Patrick Flynn.' is the user's stated goal, not defaulted \u2014 no generic default was needed because the user provided a clear objective. The agent did not ask for an objective (none was required) and did not invent one."
+            "rationale": "experience_level is 'novice' (fixed, never asked). narration_guidance is the house-style string verbatim: 'Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.' subscriptions is absent (user volunteered no access beyond FamilySearch). The objective 'Identify the parents of Patrick Flynn.' is the user's stated goal, not defaulted — no generic default was needed because the user provided a clear objective. The agent did not ask for an objective (none was required) and did not invent one."
           },
           {
             "source": "rubric",
             "name": "Place standardization",
             "score": 3,
-            "rationale": "All places in the tree are tool-supplied from person_read and are kept verbatim as returned. Patrick's birth: 'Ireland' (standard_place from tool). Patrick's death: 'Schuylkill, Pennsylvania, United States' (tool returned 'Schuylkill County, Pennsylvania, United States' as place; standard_place is 'Schuylkill, Pennsylvania, United States' \u2014 FamilySearch drops 'County', and this standardized value is preserved exactly). Mary Kelly's birth: 'Ireland'. James and Margaret's births: 'Branch, Schuylkill, Pennsylvania, United States' (tool returned 'Branch Township, Schuylkill County, Pennsylvania, United States' as place; standard_place is 'Branch, Schuylkill, Pennsylvania, United States'). Michael Flynn's birth: 'Ireland'. Bridget Flynn's birth: 'Ireland'. Marriage fact: 'Schuylkill, Pennsylvania, United States'. No hand-entered places in this test. No agent-supplied standard_place values. All tool-supplied standard_place values appear in the tree exactly as returned."
+            "rationale": "All places in the tree are tool-supplied from person_read and are kept verbatim as returned. Patrick's birth: 'Ireland' (standard_place from tool). Patrick's death: 'Schuylkill, Pennsylvania, United States' (tool returned 'Schuylkill County, Pennsylvania, United States' as place; standard_place is 'Schuylkill, Pennsylvania, United States' — FamilySearch drops 'County', and this standardized value is preserved exactly). Mary Kelly's birth: 'Ireland'. James and Margaret's births: 'Branch, Schuylkill, Pennsylvania, United States' (tool returned 'Branch Township, Schuylkill County, Pennsylvania, United States' as place; standard_place is 'Branch, Schuylkill, Pennsylvania, United States'). Michael Flynn's birth: 'Ireland'. Bridget Flynn's birth: 'Ireland'. Marriage fact: 'Schuylkill, Pennsylvania, United States'. No hand-entered places in this test. No agent-supplied standard_place values. All tool-supplied standard_place values appear in the tree exactly as returned."
           },
           {
             "source": "rubric",
@@ -4611,7 +4611,7 @@
       },
       "totals": {
         "duration_ms": 49310.68362202495,
-        "duration_api_ms": 49030.0,
+        "duration_api_ms": 49030,
         "judge_duration_ms": 22663.06089423597,
         "wall_clock_ms": 72066.75505638123,
         "num_turns": 2,
@@ -4634,7 +4634,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 49310.68362202495,
-          "duration_api_ms": 49030.0,
+          "duration_api_ms": 49030,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 578,
@@ -4696,7 +4696,7 @@
           },
           "skill_cost_usd": 0.15837049999999997,
           "output": {
-            "text_response": "Here is what the subagent returned:\n\n---\n\nA research project for Patrick Flynn has been set up in `/tmp/eval-ut_init_project_001-0-0-dup7dptx`.\n\n- **Persons:** 6 | **Relationships:** 7 | **Sources:** 5\n- **Objective:** \"Identify the parents of Patrick Flynn.\"\n\n**Who was brought in from FamilySearch:** Patrick himself, his wife Mary Kelly, their two children James and Margaret Flynn, his father Michael Flynn, and his sister Bridget Flynn.\n\n**Notable discrepancy:** You described Patrick as born around 1845 in Pennsylvania, but FamilySearch records his birthplace as **Ireland**. The family narrative (written by his granddaughter) says he came over from **County Mayo in 1867**. Both versions are now in the record and will need to be resolved during research. The narrative also mentions he emigrated in 1867 with his brother Michael, worked in the Schuylkill coal mines, married Mary Kelly at St. Patrick's Church in Pottsville, and died of miner's asthma in 1908.\n\n**Also noted:** FamilySearch lists a second parent for Patrick, but no record was returned for that person \u2014 only his father Michael Flynn is currently in the tree. A headstone photograph from St. Patrick's Cemetery is attached to his profile and can be examined in a later step.\n\n**Next step:** Use question-selection to define the first concrete research question to pursue toward identifying Patrick's parents.",
+            "text_response": "Here is what the subagent returned:\n\n---\n\nA research project for Patrick Flynn has been set up in `/tmp/eval-ut_init_project_001-0-0-dup7dptx`.\n\n- **Persons:** 6 | **Relationships:** 7 | **Sources:** 5\n- **Objective:** \"Identify the parents of Patrick Flynn.\"\n\n**Who was brought in from FamilySearch:** Patrick himself, his wife Mary Kelly, their two children James and Margaret Flynn, his father Michael Flynn, and his sister Bridget Flynn.\n\n**Notable discrepancy:** You described Patrick as born around 1845 in Pennsylvania, but FamilySearch records his birthplace as **Ireland**. The family narrative (written by his granddaughter) says he came over from **County Mayo in 1867**. Both versions are now in the record and will need to be resolved during research. The narrative also mentions he emigrated in 1867 with his brother Michael, worked in the Schuylkill coal mines, married Mary Kelly at St. Patrick's Church in Pottsville, and died of miner's asthma in 1908.\n\n**Also noted:** FamilySearch lists a second parent for Patrick, but no record was returned for that person — only his father Michael Flynn is currently in the tree. A headstone photograph from St. Patrick's Cemetery is attached to his profile and can be examined in a later step.\n\n**Next step:** Use question-selection to define the first concrete research question to pursue toward identifying Patrick's parents.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -5096,7 +5096,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "Everything is written. Here is the summary.\n\n- Project folder: `/tmp/eval-ut_init_project_001-0-0-dup7dptx`\n- Persons: 6, Relationships: 7, Sources: 5\n- Objective: \"Identify the parents of Patrick Flynn.\" \u2014 stated by you, not defaulted\n\n---\n\nA research project for Patrick Flynn has been set up. Six people were brought in from FamilySearch: Patrick himself, his wife Mary Kelly, their two children James and Margaret Flynn, his father Michael Flynn, and his sister Bridget Flynn.\n\nOne thing to note: you described Patrick as born around 1845 in Pennsylvania, but FamilySearch records his birthplace as Ireland. The family narrative attached to his profile supports Ireland \u2014 it says he came over from County Mayo in 1867. Both versions are in the record now and will need to be sorted out as the research proceeds. That narrative, written by his granddaughter and held in the online family archive, was read and saved. It mentions that Patrick emigrated in 1867 with his brother Michael, worked in the Schuylkill coal mines, married Mary Kelly at St. Patrick's Church in Pottsville, and died of miner's asthma in 1908. There is also a headstone photograph from St. Patrick's Cemetery attached to his profile that could not be read this time \u2014 it can be examined in a later step.\n\nFamilySearch also lists a second parent for Patrick, but no record for that person was returned, so only his father Michael Flynn is in the tree right now.\n\nYour objective is the overall goal \u2014 to identify Patrick's parents. The next step is the first research question: the single fact we go after first, which will focus that goal into one concrete thing to search for."
+                "text": "Everything is written. Here is the summary.\n\n- Project folder: `/tmp/eval-ut_init_project_001-0-0-dup7dptx`\n- Persons: 6, Relationships: 7, Sources: 5\n- Objective: \"Identify the parents of Patrick Flynn.\" — stated by you, not defaulted\n\n---\n\nA research project for Patrick Flynn has been set up. Six people were brought in from FamilySearch: Patrick himself, his wife Mary Kelly, their two children James and Margaret Flynn, his father Michael Flynn, and his sister Bridget Flynn.\n\nOne thing to note: you described Patrick as born around 1845 in Pennsylvania, but FamilySearch records his birthplace as Ireland. The family narrative attached to his profile supports Ireland — it says he came over from County Mayo in 1867. Both versions are in the record now and will need to be sorted out as the research proceeds. That narrative, written by his granddaughter and held in the online family archive, was read and saved. It mentions that Patrick emigrated in 1867 with his brother Michael, worked in the Schuylkill coal mines, married Mary Kelly at St. Patrick's Church in Pottsville, and died of miner's asthma in 1908. There is also a headstone photograph from St. Patrick's Cemetery attached to his profile that could not be read this time — it can be examined in a later step.\n\nFamilySearch also lists a second parent for Patrick, but no record for that person was returned, so only his father Michael Flynn is in the tree right now.\n\nYour objective is the overall goal — to identify Patrick's parents. The next step is the first research question: the single fact we go after first, which will focus that goal into one concrete thing to search for."
               }
             ],
             "file_changes": {
@@ -5770,7 +5770,7 @@
                 "source": "rubric",
                 "name": "Stub & tree fidelity",
                 "score": 3,
-                "rationale": "All six persons in tree.gedcomx.json carry only known fields with no fabrication. Patrick (I1) has name, gender, birth (~1845/Abt 1845 in Ireland), and death (1908 in Schuylkill County) \u2014 all from the tool. Mary Kelly (I2) has birth (1849 in Ireland). James (I3) and Margaret (I4) have births in Branch Township, Schuylkill County. Michael Flynn (I5, the father) has birth (~1815/Abt 1815 in Ireland). Bridget Flynn (I6, the sister) has birth (1848 in Ireland). All facts are sourced to S1 at quality 1. Local I-series IDs are used throughout, not FamilySearch PIDs. The user-vs-tree discrepancy (Pennsylvania vs. Ireland) is flagged in the narrative. No placeholder stubs or unknown-person fabrications. The second parent mentioned in the tool's notes is correctly omitted from the tree, not invented."
+                "rationale": "All six persons in tree.gedcomx.json carry only known fields with no fabrication. Patrick (I1) has name, gender, birth (~1845/Abt 1845 in Ireland), and death (1908 in Schuylkill County) — all from the tool. Mary Kelly (I2) has birth (1849 in Ireland). James (I3) and Margaret (I4) have births in Branch Township, Schuylkill County. Michael Flynn (I5, the father) has birth (~1815/Abt 1815 in Ireland). Bridget Flynn (I6, the sister) has birth (1848 in Ireland). All facts are sourced to S1 at quality 1. Local I-series IDs are used throughout, not FamilySearch PIDs. The user-vs-tree discrepancy (Pennsylvania vs. Ireland) is flagged in the narrative. No placeholder stubs or unknown-person fabrications. The second parent mentioned in the tool's notes is correctly omitted from the tree, not invented."
               },
               {
                 "source": "rubric",
@@ -5782,13 +5782,13 @@
                 "source": "rubric",
                 "name": "Researcher profile",
                 "score": 3,
-                "rationale": "experience_level is 'novice' (fixed, never asked). narration_guidance is the house-style string verbatim: 'Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.' subscriptions is absent (user volunteered no access beyond FamilySearch). The objective 'Identify the parents of Patrick Flynn.' is the user's stated goal, not defaulted \u2014 no generic default was needed because the user provided a clear objective. The agent did not ask for an objective (none was required) and did not invent one."
+                "rationale": "experience_level is 'novice' (fixed, never asked). narration_guidance is the house-style string verbatim: 'Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.' subscriptions is absent (user volunteered no access beyond FamilySearch). The objective 'Identify the parents of Patrick Flynn.' is the user's stated goal, not defaulted — no generic default was needed because the user provided a clear objective. The agent did not ask for an objective (none was required) and did not invent one."
               },
               {
                 "source": "rubric",
                 "name": "Place standardization",
                 "score": 3,
-                "rationale": "All places in the tree are tool-supplied from person_read and are kept verbatim as returned. Patrick's birth: 'Ireland' (standard_place from tool). Patrick's death: 'Schuylkill, Pennsylvania, United States' (tool returned 'Schuylkill County, Pennsylvania, United States' as place; standard_place is 'Schuylkill, Pennsylvania, United States' \u2014 FamilySearch drops 'County', and this standardized value is preserved exactly). Mary Kelly's birth: 'Ireland'. James and Margaret's births: 'Branch, Schuylkill, Pennsylvania, United States' (tool returned 'Branch Township, Schuylkill County, Pennsylvania, United States' as place; standard_place is 'Branch, Schuylkill, Pennsylvania, United States'). Michael Flynn's birth: 'Ireland'. Bridget Flynn's birth: 'Ireland'. Marriage fact: 'Schuylkill, Pennsylvania, United States'. No hand-entered places in this test. No agent-supplied standard_place values. All tool-supplied standard_place values appear in the tree exactly as returned."
+                "rationale": "All places in the tree are tool-supplied from person_read and are kept verbatim as returned. Patrick's birth: 'Ireland' (standard_place from tool). Patrick's death: 'Schuylkill, Pennsylvania, United States' (tool returned 'Schuylkill County, Pennsylvania, United States' as place; standard_place is 'Schuylkill, Pennsylvania, United States' — FamilySearch drops 'County', and this standardized value is preserved exactly). Mary Kelly's birth: 'Ireland'. James and Margaret's births: 'Branch, Schuylkill, Pennsylvania, United States' (tool returned 'Branch Township, Schuylkill County, Pennsylvania, United States' as place; standard_place is 'Branch, Schuylkill, Pennsylvania, United States'). Michael Flynn's birth: 'Ireland'. Bridget Flynn's birth: 'Ireland'. Marriage fact: 'Schuylkill, Pennsylvania, United States'. No hand-entered places in this test. No agent-supplied standard_place values. All tool-supplied standard_place values appear in the tree exactly as returned."
               },
               {
                 "source": "rubric",
@@ -5928,7 +5928,7 @@
       },
       "totals": {
         "duration_ms": 28545.341212302446,
-        "duration_api_ms": 27677.0,
+        "duration_api_ms": 27677,
         "judge_duration_ms": 13672.542768530548,
         "wall_clock_ms": 42311.92684173584,
         "num_turns": 2,
@@ -5951,7 +5951,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 28545.341212302446,
-          "duration_api_ms": 27677.0,
+          "duration_api_ms": 27677,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 559,
@@ -6013,7 +6013,7 @@
           },
           "skill_cost_usd": 0.1344184,
           "output": {
-            "text_response": "A new research project has been created for **Patrick Flynn** (FamilySearch ID: LZNY-BRF). Here's a summary of what was set up:\n\n- **Objective:** Identify the parents of Patrick Flynn.\n- **Known facts:** Patrick Flynn was a man born around 1845 in Ireland who died in 1908 in Schuylkill County, Pennsylvania.\n- **Tree:** He is currently the only person in the tree \u2014 FamilySearch lists no parents, spouse, or children for him.\n- **Sources:** 1 source was brought in from FamilySearch.\n\nThe project is ready to go. The recommended next step is to define the first research question \u2014 the most promising fact to pursue in order to trace his parentage. Would you like to proceed with question selection or a research plan?",
+            "text_response": "A new research project has been created for **Patrick Flynn** (FamilySearch ID: LZNY-BRF). Here's a summary of what was set up:\n\n- **Objective:** Identify the parents of Patrick Flynn.\n- **Known facts:** Patrick Flynn was a man born around 1845 in Ireland who died in 1908 in Schuylkill County, Pennsylvania.\n- **Tree:** He is currently the only person in the tree — FamilySearch lists no parents, spouse, or children for him.\n- **Sources:** 1 source was brought in from FamilySearch.\n\nThe project is ready to go. The recommended next step is to define the first research question — the most promising fact to pursue in order to trace his parentage. Would you like to proceed with question selection or a research plan?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6172,7 +6172,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "Project folder: /tmp/eval-ut_init_project_008-0-0-oz5qkbs8\nPersons: 1, Relationships: 0, Sources: 1\nObjective: \"Identify the parents of Patrick Flynn.\" (stated by user)\n\n---\n\nA new research project has been created for Patrick Flynn, a man born around 1845 in Ireland who died in 1908 in Schuylkill County, Pennsylvania. He is the only person in the tree at this point \u2014 FamilySearch lists no parents, spouse, or children for him, so he stands alone for now. One source was brought in with him from FamilySearch.\n\nYour objective is to identify Patrick's parents. The next step is the first research question: the single most promising fact to go after first in order to trace his parentage."
+                "text": "Project folder: /tmp/eval-ut_init_project_008-0-0-oz5qkbs8\nPersons: 1, Relationships: 0, Sources: 1\nObjective: \"Identify the parents of Patrick Flynn.\" (stated by user)\n\n---\n\nA new research project has been created for Patrick Flynn, a man born around 1845 in Ireland who died in 1908 in Schuylkill County, Pennsylvania. He is the only person in the tree at this point — FamilySearch lists no parents, spouse, or children for him, so he stands alone for now. One source was brought in with him from FamilySearch.\n\nYour objective is to identify Patrick's parents. The next step is the first research question: the single most promising fact to go after first in order to trace his parentage."
               }
             ],
             "file_changes": {
@@ -6626,7 +6626,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The profile correctly sets experience_level to 'novice' and narration_guidance to the exact house-style string verbatim, regardless of any user input. The objective was asked in the return ('The next step is the first research question...') and was not blocking \u2014 the project completed in the same pass. The generic default objective was written and clearly marked as defaulted in the summary ('No research objective was given, so the project was set up with a general goal'). Subscriptions is correctly absent (user volunteered no access). No profile fields were asked of the user."
+            "rationale": "The profile correctly sets experience_level to 'novice' and narration_guidance to the exact house-style string verbatim, regardless of any user input. The objective was asked in the return ('The next step is the first research question...') and was not blocking — the project completed in the same pass. The generic default objective was written and clearly marked as defaulted in the summary ('No research objective was given, so the project was set up with a general goal'). Subscriptions is correctly absent (user volunteered no access). No profile fields were asked of the user."
           },
           {
             "source": "rubric",
@@ -6676,7 +6676,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The profile correctly sets experience_level to 'novice' and narration_guidance to the exact house-style string verbatim, regardless of any user input. The objective was asked in the return ('The next step is the first research question...') and was not blocking \u2014 the project completed in the same pass. The generic default objective was written and clearly marked as defaulted in the summary ('No research objective was given, so the project was set up with a general goal'). Subscriptions is correctly absent (user volunteered no access). No profile fields were asked of the user."
+            "rationale": "The profile correctly sets experience_level to 'novice' and narration_guidance to the exact house-style string verbatim, regardless of any user input. The objective was asked in the return ('The next step is the first research question...') and was not blocking — the project completed in the same pass. The generic default objective was written and clearly marked as defaulted in the summary ('No research objective was given, so the project was set up with a general goal'). Subscriptions is correctly absent (user volunteered no access). No profile fields were asked of the user."
           },
           {
             "source": "rubric",
@@ -6694,7 +6694,7 @@
       },
       "totals": {
         "duration_ms": 37945.286192931235,
-        "duration_api_ms": 36856.0,
+        "duration_api_ms": 36856,
         "judge_duration_ms": 15186.623969115317,
         "wall_clock_ms": 53245.262145996094,
         "num_turns": 2,
@@ -6717,7 +6717,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 37945.286192931235,
-          "duration_api_ms": 36856.0,
+          "duration_api_ms": 36856,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 546,
@@ -6779,7 +6779,7 @@
           },
           "skill_cost_usd": 0.13508215,
           "output": {
-            "text_response": "A new research project has been created for **Patrick Flynn** (FamilySearch ID: LZNY-BRF). Here's a summary:\n\n- **Born:** ~1845 in Ireland\n- **Died:** 1908 in Schuylkill County, Pennsylvania\n- **Project folder:** `/tmp/eval-ut_init_project_010-0-0-na0wsalr`\n- **Tree:** 1 person imported; no parents, siblings, spouse, children, or attached sources were found on FamilySearch for Patrick at this time\n\n**Objective (defaulted):** General research \u2014 build out the tree and identify gaps and next steps.\n\nThe logical first research question would be identifying Patrick's parents or pinpointing where in Ireland he was born. Would you like to select the first research question and plan the searches?",
+            "text_response": "A new research project has been created for **Patrick Flynn** (FamilySearch ID: LZNY-BRF). Here's a summary:\n\n- **Born:** ~1845 in Ireland\n- **Died:** 1908 in Schuylkill County, Pennsylvania\n- **Project folder:** `/tmp/eval-ut_init_project_010-0-0-na0wsalr`\n- **Tree:** 1 person imported; no parents, siblings, spouse, children, or attached sources were found on FamilySearch for Patrick at this time\n\n**Objective (defaulted):** General research — build out the tree and identify gaps and next steps.\n\nThe logical first research question would be identifying Patrick's parents or pinpointing where in Ireland he was born. Would you like to select the first research question and plan the searches?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6938,7 +6938,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "Project folder: `/tmp/eval-ut_init_project_010-0-0-na0wsalr`\nPersons: 1, Relationships: 0, Sources: 1\nObjective: \"General research: build out the tree and identify gaps and next steps.\" \u2014 defaulted (no objective was stated)\n\n---\n\nA new research project has been created for Patrick Flynn, a man born around 1845 in Ireland who died in 1908 in Schuylkill County, Pennsylvania. Only Patrick himself was imported \u2014 FamilySearch holds no parents, siblings, spouse, children, or attached sources for him at this time, so the tree starts with him alone.\n\nNo research objective was given, so the project was set up with a general goal: build out the tree and identify what is missing. Your objective is that overall goal \u2014 filling in Patrick's family and finding the records that support it. The next step is the first research question: the single fact we go after first, such as finding his parents or confirming where in Ireland he was born."
+                "text": "Project folder: `/tmp/eval-ut_init_project_010-0-0-na0wsalr`\nPersons: 1, Relationships: 0, Sources: 1\nObjective: \"General research: build out the tree and identify gaps and next steps.\" — defaulted (no objective was stated)\n\n---\n\nA new research project has been created for Patrick Flynn, a man born around 1845 in Ireland who died in 1908 in Schuylkill County, Pennsylvania. Only Patrick himself was imported — FamilySearch holds no parents, siblings, spouse, children, or attached sources for him at this time, so the tree starts with him alone.\n\nNo research objective was given, so the project was set up with a general goal: build out the tree and identify what is missing. Your objective is that overall goal — filling in Patrick's family and finding the records that support it. The next step is the first research question: the single fact we go after first, such as finding his parents or confirming where in Ireland he was born."
               }
             ],
             "file_changes": {
@@ -7314,7 +7314,7 @@
                 "source": "rubric",
                 "name": "Researcher profile",
                 "score": 3,
-                "rationale": "The profile correctly sets experience_level to 'novice' and narration_guidance to the exact house-style string verbatim, regardless of any user input. The objective was asked in the return ('The next step is the first research question...') and was not blocking \u2014 the project completed in the same pass. The generic default objective was written and clearly marked as defaulted in the summary ('No research objective was given, so the project was set up with a general goal'). Subscriptions is correctly absent (user volunteered no access). No profile fields were asked of the user."
+                "rationale": "The profile correctly sets experience_level to 'novice' and narration_guidance to the exact house-style string verbatim, regardless of any user input. The objective was asked in the return ('The next step is the first research question...') and was not blocking — the project completed in the same pass. The generic default objective was written and clearly marked as defaulted in the summary ('No research objective was given, so the project was set up with a general goal'). Subscriptions is correctly absent (user volunteered no access). No profile fields were asked of the user."
               },
               {
                 "source": "rubric",
@@ -7460,7 +7460,7 @@
       },
       "totals": {
         "duration_ms": 32292.39214863628,
-        "duration_api_ms": 31771.0,
+        "duration_api_ms": 31771,
         "judge_duration_ms": 14186.51728425175,
         "wall_clock_ms": 46580.53541183472,
         "num_turns": 2,
@@ -7483,7 +7483,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 32292.39214863628,
-          "duration_api_ms": 31771.0,
+          "duration_api_ms": 31771,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 563,
@@ -7545,7 +7545,7 @@
           },
           "skill_cost_usd": 0.1443812,
           "output": {
-            "text_response": "A new research project has been started for **Jean Baptiste Moreau (MRQ1-JBM)**. Here's a summary of what was set up:\n\n- **Project folder:** `/tmp/eval-ut_init_project_vqx-0-0-lgi8y23v`\n- **Objective:** Analyze the sources and family structure for Jean Baptiste Moreau and look for errors or inconsistencies.\n\n**Family imported (4 persons, 4 relationships):**\n- **Jean Baptiste Moreau** \u2014 born 12 March 1821, Bastogne, Luxembourg Province, Belgium; died 3 October 1889, Bastogne\n- **Marie Dubois** (wife) \u2014 born 1825\n- **Henri** (son) \u2014 born 1848\n- **Jos\u00e9phine** (daughter) \u2014 born 1851\n\n**Sources:** 7 sources attached across the family (civil registration records, church records, and a census record from Belgian archives).\n\n**Suggested next step:** Open the first research question \u2014 for example, verifying whether a marriage record exists for Jean Baptiste and Marie, and whether the dates and places across all attached sources are internally consistent.",
+            "text_response": "A new research project has been started for **Jean Baptiste Moreau (MRQ1-JBM)**. Here's a summary of what was set up:\n\n- **Project folder:** `/tmp/eval-ut_init_project_vqx-0-0-lgi8y23v`\n- **Objective:** Analyze the sources and family structure for Jean Baptiste Moreau and look for errors or inconsistencies.\n\n**Family imported (4 persons, 4 relationships):**\n- **Jean Baptiste Moreau** — born 12 March 1821, Bastogne, Luxembourg Province, Belgium; died 3 October 1889, Bastogne\n- **Marie Dubois** (wife) — born 1825\n- **Henri** (son) — born 1848\n- **Joséphine** (daughter) — born 1851\n\n**Sources:** 7 sources attached across the family (civil registration records, church records, and a census record from Belgian archives).\n\n**Suggested next step:** Open the first research question — for example, verifying whether a marriage record exists for Jean Baptiste and Marie, and whether the dates and places across all attached sources are internally consistent.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7862,7 +7862,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "- Project folder: `/tmp/eval-ut_init_project_vqx-0-0-lgi8y23v`\n- Persons: 4, Relationships: 4, Sources: 7\n- Objective: \"Analyze the sources and family structure for Jean Baptiste Moreau and look for errors or inconsistencies.\" (stated by you \u2014 not defaulted)\n\n---\n\nA new research project has been started for Jean Baptiste Moreau, born 12 March 1821 in Bastogne, Luxembourg Province, Belgium, and died 3 October 1889 in the same place. Four people were brought in from the shared family tree: Jean Baptiste himself, his wife Marie Dubois (born 1825), and their two children Henri (born 1848) and Josephine (born 1851). Six documentary sources are attached across the family, including civil registration records, church records, and a census record, all from Belgian archives. Your goal is to analyze those sources and the family structure to find errors or inconsistencies \u2014 for example, whether the dates and places line up, whether the couple's marriage is documented, and whether the children's birth years are plausible given the parents' ages.\n\nThe next step is the first research question: the single specific thing we go after first to start finding those errors or inconsistencies, such as whether a marriage record exists for Jean Baptiste and Marie."
+                "text": "- Project folder: `/tmp/eval-ut_init_project_vqx-0-0-lgi8y23v`\n- Persons: 4, Relationships: 4, Sources: 7\n- Objective: \"Analyze the sources and family structure for Jean Baptiste Moreau and look for errors or inconsistencies.\" (stated by you — not defaulted)\n\n---\n\nA new research project has been started for Jean Baptiste Moreau, born 12 March 1821 in Bastogne, Luxembourg Province, Belgium, and died 3 October 1889 in the same place. Four people were brought in from the shared family tree: Jean Baptiste himself, his wife Marie Dubois (born 1825), and their two children Henri (born 1848) and Josephine (born 1851). Six documentary sources are attached across the family, including civil registration records, church records, and a census record, all from Belgian archives. Your goal is to analyze those sources and the family structure to find errors or inconsistencies — for example, whether the dates and places line up, whether the couple's marriage is documented, and whether the children's birth years are plausible given the parents' ages.\n\nThe next step is the first research question: the single specific thing we go after first to start finding those errors or inconsistencies, such as whether a marriage record exists for Jean Baptiste and Marie."
               }
             ],
             "file_changes": {
@@ -8589,7 +8589,7 @@
       },
       "totals": {
         "duration_ms": 25761.96770183742,
-        "duration_api_ms": 25323.0,
+        "duration_api_ms": 25323,
         "judge_duration_ms": 14460.54117102176,
         "wall_clock_ms": 40308.494567871094,
         "num_turns": 2,
@@ -8612,7 +8612,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 25761.96770183742,
-          "duration_api_ms": 25323.0,
+          "duration_api_ms": 25323,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 562,
@@ -8674,7 +8674,7 @@
           },
           "skill_cost_usd": 0.1335824,
           "output": {
-            "text_response": "A new project has been created for **Patrick Flynn** (FamilySearch ID: LZNY-BRF). Here's a summary:\n\n- **Project folder:** `/tmp/eval-ut_init_project_wzk-0-0-86wga8zn`\n- **Persons:** 1 | **Relationships:** 0 | **Sources:** 1\n- **Objective:** Identify his parents\n\n**What we know so far:**\nPatrick Flynn was born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. FamilySearch currently has no parents, spouse, or children recorded for him \u2014 he stands alone in the tree.\n\n**Next step:** Use the `question-selection` agent to settle on the first research question (e.g., father's name or mother's name), which will guide where to search.",
+            "text_response": "A new project has been created for **Patrick Flynn** (FamilySearch ID: LZNY-BRF). Here's a summary:\n\n- **Project folder:** `/tmp/eval-ut_init_project_wzk-0-0-86wga8zn`\n- **Persons:** 1 | **Relationships:** 0 | **Sources:** 1\n- **Objective:** Identify his parents\n\n**What we know so far:**\nPatrick Flynn was born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. FamilySearch currently has no parents, spouse, or children recorded for him — he stands alone in the tree.\n\n**Next step:** Use the `question-selection` agent to settle on the first research question (e.g., father's name or mother's name), which will guide where to search.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -8833,7 +8833,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "- Project folder: `/tmp/eval-ut_init_project_wzk-0-0-86wga8zn`\n- Persons: 1, Relationships: 0, Sources: 1\n- Objective: \"Identify his parents.\" (as stated)\n\n---\n\nA new research project has been created for Patrick Flynn, born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. He is currently the only person in the tree \u2014 FamilySearch has no parents, spouse, or children recorded for him, so he stands alone at this point.\n\nThe goal of this project is to identify his parents. The next step is to settle on the first research question \u2014 the single specific fact to go after first, such as his father's name or his mother's name \u2014 which will guide where to search."
+                "text": "- Project folder: `/tmp/eval-ut_init_project_wzk-0-0-86wga8zn`\n- Persons: 1, Relationships: 0, Sources: 1\n- Objective: \"Identify his parents.\" (as stated)\n\n---\n\nA new research project has been created for Patrick Flynn, born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. He is currently the only person in the tree — FamilySearch has no parents, spouse, or children recorded for him, so he stands alone at this point.\n\nThe goal of this project is to identify his parents. The next step is to settle on the first research question — the single specific fact to go after first, such as his father's name or his mother's name — which will guide where to search."
               }
             ],
             "file_changes": {
@@ -9355,7 +9355,7 @@
       },
       "totals": {
         "duration_ms": 35174.18353166431,
-        "duration_api_ms": 34230.0,
+        "duration_api_ms": 34230,
         "judge_duration_ms": 12900.019500404596,
         "wall_clock_ms": 48157.95016288757,
         "num_turns": 2,
@@ -9378,7 +9378,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 35174.18353166431,
-          "duration_api_ms": 34230.0,
+          "duration_api_ms": 34230,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 594,
@@ -9440,7 +9440,7 @@
           },
           "skill_cost_usd": 0.14138195000000003,
           "output": {
-            "text_response": "A new project has been created for **Patrick Flynn** (FamilySearch ID: LZNY-BRF). Here's a summary of what was set up:\n\n- **Project folder:** `/tmp/eval-ut_init_project_j4n-0-0-3b9a4byu`\n- **Objective:** Find the parents of Patrick Flynn\n- **What we know:** Patrick was born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. His FamilySearch profile currently shows no parents, siblings, spouse, or children, and no documentary sources are linked.\n- **Resources noted:** Your Ancestry subscription, your local family history centre, and FamilySearch have all been recorded as available resources for this project.\n\nThe tree currently has 1 person and 1 source. The next step would be to define the first research question \u2014 the specific fact to pursue first to work toward identifying his parents. Would you like to proceed with question selection or a research plan?",
+            "text_response": "A new project has been created for **Patrick Flynn** (FamilySearch ID: LZNY-BRF). Here's a summary of what was set up:\n\n- **Project folder:** `/tmp/eval-ut_init_project_j4n-0-0-3b9a4byu`\n- **Objective:** Find the parents of Patrick Flynn\n- **What we know:** Patrick was born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. His FamilySearch profile currently shows no parents, siblings, spouse, or children, and no documentary sources are linked.\n- **Resources noted:** Your Ancestry subscription, your local family history centre, and FamilySearch have all been recorded as available resources for this project.\n\nThe tree currently has 1 person and 1 source. The next step would be to define the first research question — the specific fact to pursue first to work toward identifying his parents. Would you like to proceed with question selection or a research plan?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -9645,7 +9645,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "- Project folder: `/tmp/eval-ut_init_project_j4n-0-0-3b9a4byu`\n- Persons: 1, Relationships: 0, Sources: 1\n- Objective: \"Find the parents of Patrick Flynn.\" \u2014 stated by you, not defaulted\n\n---\n\nA new research project has been created for Patrick Flynn, born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. He is the only person in the tree right now \u2014 FamilySearch currently shows no parents, siblings, spouse, or children attached to his profile, and no documentary sources are linked there either. Your Ancestry subscription and your local family history centre access have been noted as resources available to this project. There were no documents or photos on his FamilySearch profile that needed reading.\n\nYour objective is the overall goal \u2014 finding the parents of Patrick Flynn. The next step is the first research question: the single fact we go after first to make progress toward that goal."
+                "text": "- Project folder: `/tmp/eval-ut_init_project_j4n-0-0-3b9a4byu`\n- Persons: 1, Relationships: 0, Sources: 1\n- Objective: \"Find the parents of Patrick Flynn.\" — stated by you, not defaulted\n\n---\n\nA new research project has been created for Patrick Flynn, born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. He is the only person in the tree right now — FamilySearch currently shows no parents, siblings, spouse, or children attached to his profile, and no documentary sources are linked there either. Your Ancestry subscription and your local family history centre access have been noted as resources available to this project. There were no documents or photos on his FamilySearch profile that needed reading.\n\nYour objective is the overall goal — finding the parents of Patrick Flynn. The next step is the first research question: the single fact we go after first to make progress toward that goal."
               }
             ],
             "file_changes": {
@@ -10080,7 +10080,7 @@
   ],
   "totals": {
     "duration_ms": 375719.5536028594,
-    "duration_api_ms": 367141.0,
+    "duration_api_ms": 367141,
     "judge_duration_ms": 163476.74967255443,
     "num_turns": 24,
     "input_tokens": 6875,
