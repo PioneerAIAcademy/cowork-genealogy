@@ -1,14 +1,38 @@
 {
   "run_log": "v28.json",
-  "annotator": "mbadiweikennaya9@gmail.com",
+  "annotator": "praisenato@gmail.com",
   "corrections": [
     {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_research_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The judge's three objections don't hold. Zero person_evidence entries is unlinked. The hand-off to person-evidence did happen (an Agent call, which the judge doesn't seem to see). And \"confirm the links are written\" is a correct remaining step, because the stub stopped the run before they were. The real errors, checked against the seeded scenario:\n\n\"Write a proof summary for q_001\" — ps_001 (Probable) already exists for q_001, and the reply never mentions it.\nThe \"seven\" unlinked assertions are really eight: a_011 (death, 12 March 1908) is missing from the list.\nThe objective is restated as \"b. ~1845, Ireland\", while the stored objective says Pennsylvania."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_research_005",
@@ -16,7 +40,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "It read the context, both questions, the q_001 log and assertions, and person evidence for I1 and I2. It found the linking gap and laid out the remaining workflow. The missed proof summary is counted once, under Correctness."
+      "comment": null
     },
     {
       "test_id": "ut_research_005",
@@ -24,55 +48,175 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "All eight calls ran live, with well-formed arguments and no misses. It never queried proof_summaries, which is how it missed ps_001, but that's coverage, not wrong arguments."
+      "comment": null
     },
     {
-      "test_id": "ut_research_rpn",
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s59",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s59",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s59",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_utf",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_utf",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_utf",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "checked"
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
-      "comment": "No MCP calls were made, so there are no arguments to grade. The real fault, never calling project_context, is counted under Correctness and Completeness."
-    },
-    {
-      "test_id": "ut_research_rpn",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "In the seeded project, q_001 is resolved: all seven stop criteria are filled, stopped_because is \"question_answered\", every plan item is completed, and the project status is completed. The reply presents that as open (\"depends on whether other planned searches remain\") and offers research-plan \"to draft the next item\". It also contradicts itself: \"I can work with what I have\", then it asks for the project path. The judge's view that asking for the path was correct is wrong, since the project sat in the working directory and project_context would have answered."
-    },
-    {
-      "test_id": "ut_research_rpn",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "The user asked whether planning is done. The project answers yes: the question is resolved, and the empty probate search (log_006) is already counted in its stop decision. The reply never says so. It correctly declines to draft a plan item and names research-exhaustiveness as the check, but it does none of the test's acceptable responses cleanly: answer from project_context, route, or decline citing the resolved question. It only asks for input."
-    },
-    {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The judge's objection doesn't hold. Both hand-offs happened (proof-conclusion for q_002, question-selection for the origin and immigration questions). The reply says \"handed off to…\" and \"once question selection registers those new questions\", which doesn't claim the work was done. The parentage facts it states match the project. The real slips are in its advice:\n\n\"Naturalization papers (which often state county of origin)\" overstates pre-1906 papers, which usually give only the country. Patrick arrived as a child, so he likely derived citizenship through his father anyway.\nIt points to Castle Garden for 1840s arrivals, but that depot opened in 1855.\n\"Secondary evidence… but direct\" misuses the terms: \"secondary\" describes the information, not the evidence."
-    },
-    {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 2,
-      "comment": "The judge's reason misreads the stubbed setup: the router can't search, and handing the Irish-origin and immigration facts to question-selection is the correct first move. Two real faults. Its first hand-off was q_002 housekeeping, which has nothing to do with the user's request. And it ended by asking \"Shall I continue driving the workflow forward…?\", which the research skill forbids on a job; the stub told it to move on. It also never queried sources, so it missed the unworked 1908 obituary, a likely origin source."
-    },
-    {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "Three live reads (project context, questions, proof summaries), all correctly formed, with no misses."
+      "comment": null
     },
     {
       "test_id": "ut_research_018",
@@ -80,7 +224,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "It routed \"What should I research next?\" to question-selection, not research-exhaustiveness. The only text it produced is the hand-off prompt, which is accurate: research.json is at the project root. N/A would also be defensible, since the harness stopped at the hand-off before any reply."
+      "comment": null
     },
     {
       "test_id": "ut_research_018",
@@ -88,7 +232,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "The hand-off is the whole job here. Nothing was skipped, and the \"nothing written\" check passed."
+      "comment": null
     },
     {
       "test_id": "ut_research_018",
@@ -96,23 +240,23 @@
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
-      "comment": "No MCP calls were made. One small note: the hand-off gave projectPath as \".\" rather than an absolute path, which would rely on the working directory in a real run. It had no effect here."
+      "comment": null
     },
     {
       "test_id": "ut_research_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 1,
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Nothing in the reply is false. Its one premise, that the message doesn't say who \"this person\" is, is right. The judge's \"performed its own task\" is wrong: it made no tool calls and started no research. Its routing failure is a Completeness matter, not a factual error."
+      "comment": null
     },
     {
       "test_id": "ut_research_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 2,
-      "comment": "The user asked to \"set up a project and begin\". The reply never hands off to init-project and never says a project has to be created first, which is the main thing this test expects. Asking who the person is was a reasonable partial step, since init-project would need that anyway, so it's a miss rather than nothing."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_research_008",
@@ -120,15 +264,39 @@
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
-      "comment": "No calls were made. It also never checked whether research.json exists, which would have shown the folder was empty."
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_research_016",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "The reply to the user is fine apart from a small overclaim: research-plan \"has full knowledge of what's been searched\", when it actually starts cold and reads the project. The real error is in the hand-off message to research-plan. It calls src_005–src_009 \"placeholder source entries for unindexed collections not yet browsed\". They are specific records already found and waiting to be worked: Patrick's 1845 baptism at St. Mary's, Pottsville, Thomas's 1881 will, the 1881 deed, a 1905 birth certificate, and the 1908 obituary. That could send research-plan off to browse St. Mary's registers for an entry already in hand."
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_research_016",
@@ -136,7 +304,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "It routed the planning question to research-plan and gave the user no strategy inline, which is what the test wants. The hand-off message lightly steers the plan (church registers, naturalization, court records), but the user never sees that."
+      "comment": null
     },
     {
       "test_id": "ut_research_016",
@@ -144,7 +312,31 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "One live project_context call with the correct path. The Glob for research.json first was redundant but harmless."
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_research_019",
@@ -152,7 +344,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Every claim traces to the live project_context response: the objective quoted exactly, Patrick Flynn as I1, and no questions registered yet. It describes the hand-off as a hand-off and doesn't claim a question was written. One trivial framing slip: \"not plannable under the GPS workflow\". That's the plugin's own routing rule, not a requirement of the Genealogical Proof Standard."
+      "comment": null
     },
     {
       "test_id": "ut_research_019",
@@ -160,7 +352,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "It treated \"find the parents\" as an open job: it read the project, matched the \"objective but no questions\" case and handed off to question-selection with the absolute project path. It didn't stop early or claim the work was delivered, and it stopped only when the stub told it to."
+      "comment": null
     },
     {
       "test_id": "ut_research_019",
@@ -168,23 +360,47 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "One live project_context call with the correct path, and no redundant reads."
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_r2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_r2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_r2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
     },
     {
       "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The judge's objection doesn't hold. \"No wife or mother name was extracted\" is literally true, since no assertion names a mother. The reply hedges on the censuses and recommends re-reading them. The real slips:\n\n\"Irish civil or church records… Irish birth/baptism records for Patrick (~1845) would record both parents\". Irish civil birth registration began in 1864, so only a parish baptism could exist.\nThe narration says it checked \"the q_002 log entries\", but the call actually read q_002's assertions.\nIt calls the father \"ready for a proof conclusion\" without mentioning that a Probable proof summary (ps_001) already exists."
-    },
-    {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "The judge didn't notice that the reply tells the user to search for \"Thomas Flynn's probate or will\" and \"Catholic parish registers\" when the project already holds both, unworked. src_005 is Patrick's 1845 baptism at St. Mary's, Pottsville, and a baptism names both parents; src_006 is Thomas Flynn's 1881 will. Those are the quickest route to the mother. It also wrote the mother plan itself (in the hand-off and as a seven-item list in the reply) instead of leaving it to research-plan. And it stopped after two hand-offs, calling that a \"blocker\", though the stub said to move on."
+      "comment": "checked"
     },
     {
       "test_id": "ut_research_001",
@@ -192,7 +408,319 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Seven live reads, all correctly formed, with no misses. It never queried the sources section, which is how it missed src_005 and src_006, but that's coverage, not wrong arguments."
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_si3",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_si3",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_si3",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_es9",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_es9",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_es9",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_zfp",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_zfp",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_zfp",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rx4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rx4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rx4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_research_015",
@@ -200,7 +728,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Every state claim matches the project: the objective quoted correctly, \"freshly initialized\", no questions registered. It doesn't claim question-selection wrote anything."
+      "comment": null
     },
     {
       "test_id": "ut_research_015",
@@ -208,7 +736,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "It didn't take the shortcut to proof-conclusion: it went back over the project state and handed off to question-selection, the right first step. One thing the judge credits that isn't there: the reply never actually says a proof conclusion can't be written yet, or that there's no plan or evidence. It only says no questions are registered. The test marks that explanation as optional, so it's not worth a lower score."
+      "comment": null
     },
     {
       "test_id": "ut_research_015",
@@ -216,7 +744,79 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "The judge says it \"passed no arguments\". It actually passed the project's absolute path, which is correct. expected_args: null only means a live tool answered the call rather than a canned fixture."
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pe7",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pe7",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pe7",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_so2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_so2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_so2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     }
   ]
 }

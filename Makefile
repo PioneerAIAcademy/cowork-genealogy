@@ -1109,6 +1109,14 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
 	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(RUNLOG_ROOT),--runlog-root $(abspath $(RUNLOG_ROOT)),)
 
+.PHONY: e2e-single-ask
+e2e-single-ask: $(ENGINE_BUILD) ## Run the single-ask e2e panel — one ordinary turn per fixture, graded on which unit ran and what was saved (live, billed): make e2e-single-ask [TEST=<slug>]
+	# Fixtures: eval/tests/e2e-single-ask/<slug>/. Run logs: eval/runlogs/e2e-single-ask/<slug>/
+	# (siblings of the autonomous trees on purpose — docs/specs/e2e-test-spec.md §16).
+	# No judge and no ANTHROPIC_API_KEY check: the grade is deterministic.
+	# Override: EFFORT_LEVEL (default high), AGENT_MODEL (parent + all subagents).
+	cd eval/harness && uv run python -m e2e.run_single_ask $(if $(TEST),--test $(TEST),) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),)
+
 .PHONY: e2e-view
 e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death
 	# Copies the newest run's final tree + research.json into eval/e2e-view/
@@ -1741,5 +1749,5 @@ deploy-status: ## Health-check the deployed control plane (expect "db":"postgres
 # Runs on the Fly machine, which holds DATABASE_URL, so no database credential is needed
 # here. Reads api_calls and turn_costs (apps/server/app/cost_report.py).
 .PHONY: alpha-costs
-alpha-costs: ## Claude API cost of the hosted alpha: every call and every turn, per day and session (DAYS=30)
+alpha-costs: ## Claude API cost of the hosted alpha: every call and every turn, per day, agent and session (DAYS=30)
 	fly ssh console --app genealogy-workbench -C "sh -c 'cd /app/server && python -m app.cost_report --days $(or $(DAYS),30)'"

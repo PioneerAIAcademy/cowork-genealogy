@@ -42,17 +42,18 @@ A project often starts with a question about a person who does not yet exist in 
   "timelines": [ ],
   "proof_summaries": [ ],
   "evaluations": [ ],
-  "localities": [ ]
+  "localities": [ ],
+  "rejected_links": [ ]
 }
 ```
 
 All arrays start empty. The file is created at project initialization.
 
-**Twelve of these fifteen keys must be present**, even when their array is
+**Twelve of these seventeen keys must be present**, even when their array is
 empty: `project`, `questions`, `plans`, `log`, `sources`, `assertions`,
 `person_evidence`, `conflicts`, `hypotheses`, `timelines`,
 `proof_summaries`, `evaluations`. Omitting one is a validation failure, not
-a shorthand for "empty". The other three are optional and may be absent
+a shorthand for "empty". The other four are optional and may be absent
 entirely:
 
 - `researcher_profile` — written by `init-project` as a fixed profile at
@@ -63,6 +64,8 @@ entirely:
   knowledge) before any new research begins (Section 5.1.2).
 - `localities` — written by `locality-guide`; absent on projects that predate
   it (Section 5.13).
+- `rejected_links` — written by the `person-evidence` agent; absent on projects
+  that predate it (Section 5.14).
 
 **No other top-level key is permitted.** Every object in this file is
 closed: the JSON Schema sets `additionalProperties: false` on the document
@@ -216,6 +219,7 @@ value is rejected at write time.
 | `ps_` | proof_summaries | `ps_001` |
 | `ev_` | evaluations | `ev_001` |
 | `loc_` | localities | `loc_001` |
+| `rj_` | rejected_links | `rj_001` |
 
 The digits after the prefix are a convention, not a constraint — `q_flynn-1850`
 is as valid as `q_002` — with one exception: an `ev_` id must be the prefix
@@ -290,6 +294,7 @@ described under "Who actually writes a row" below.
 | `evaluations` | **the gps-mentor agent** | proof-conclusion, question-selection | Retire an entry by pointing `superseded_by` at its replacement; never delete. The owner is an agent, and the harness ownership check keys on the calling *skill's* name — so this row cannot be enforced there, and is declared unenforceable rather than left to look covered |
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
 | `warning_justifications` | (none — writer-tool only) | gps-mentor (audit trail) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
+| `rejected_links` | person-evidence | any caller via `research_query` | Mutable (`reason` may be filled in later); never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
 
 `research_append` also accepts a `plan_items` pseudo-section, which addresses
 `plans[].items[]` rather than a top-level property of this file. It carries the
@@ -583,7 +588,7 @@ Array of question objects.
 | `justification` | string or null | no | Prose explaining why the search stopped |
 | `log_entry_ids` | string[] | yes | Log entry IDs supporting the stop claim (required non-empty when `stopped_because` is a gate value) |
 | `stop_criteria` | object or null | yes | Null when `stopped_because` is null or a non-gate value; required object when `stopped_because` is a gate value. Always present as a key (null, not omitted) for consistency. See below |
-| `not_reached` | object[] | yes | Sources that could not be reached, each with `kind`, `description`, and optional `wiki_title`. See below |
+| `not_reached` | object[] | yes | Sources that could not be reached, each with `kind`, `description`, `log_entry_id` and `wiki_title` (both nullable). May be empty. See below |
 
 **`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences).
 
@@ -597,7 +602,7 @@ Array of question objects.
 | `conflict_resolution` | string | yes | Have all discrepancies been resolved through reasoning? |
 | `overturn_risk` | string | yes | What is the likelihood that new evidence would overturn this conclusion? |
 
-**`not_reached` entries** — Each entry records a source that could not be accessed during the search. Built only from things the agent already produces — never from claims about what might exist offline.
+**`not_reached` entries** — Each entry records a source that could not be accessed during the search. Built only from things the agent already produces — never from an uncited claim about what might exist offline. A `wiki_named_untouched` entry repeats a claim made by a wiki page the project read, and names that page in `wiki_title`.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -605,6 +610,13 @@ Array of question objects.
 | `description` | string | yes | Brief description of what could not be reached |
 | `log_entry_id` | string or null | yes | Log entry that corroborates the barrier; null when no direct search produced it |
 | `wiki_title` | string or null | yes | FamilySearch Research Wiki page title; non-null when `kind` is `wiki_named_untouched`; null otherwise |
+
+**Where `handed_to_user` entries come from (lead, 2026-10-16).** research-exhaustiveness builds them from the research log, not from `project_context.awaitingUser`. A hand-off is an `external_site` log entry on the question's plan items with `outcome: "partial"` and `capture_received: false`. It stays an entry unless a *later* entry in `log[]` on the same question's plan items with the same `url_generated` has `capture_received: true`. Those are the entries `research_query` returns for the question, and where a capture for the hand-off is logged. A later entry without a capture, such as a `negative` the agent wrote because it had no subscription, does not close it, and `log_entry_id` names the original hand-off, not the closer. Why: `closesHandOff` (`project-context.ts`) closes a row on any later non-`partial` entry, including one the agent wrote itself, so in an October 2026 alpha session `awaitingUser` dropped an agent-closed Ancestry civil-register hand-off, and the user was told the record was unreachable without being given the link again. Considered and not chosen:
+- Widening `awaitingUser`: a "no access" reply would stop closing a row, so the user would be shown links they cannot open as still waiting on them.
+- A new `project_context` field: a tool-contract change for data the log already holds.
+- A `research_append` precondition refusing a `search_stop` that omits an uncaptured hand-off: engine work for 1 agent-closed hand-off in 209 committed e2e runs. This is the escalation if an e2e run shows the agent missing entries.
+
+`paywalled` is for a paywalled hit that was never handed to the user. `wiki_named_untouched` entries come from the `guide_markdown` of a locality the project already holds. `wiki_title` is the page title from `pages_read[].url` (the segment after `/wiki/`), never the `pages_read[].section` enum, which the validator would also accept.
 
 ### 5.3 `plans`
 
@@ -638,7 +650,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 
 Array of log entry objects. **Append-only — entries are never modified or deleted.** This is the core GPS audit trail. Every tool call that searches for records must produce a log entry, including searches that return no results.
 
-Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search`, `wiki_read` or `historical_context`) record a looked-up article, wiki guidance or overview rather than a record search: the reference text itself is carried in `notes` (historical-context's per-lookup entries carry `notes: null`, its overview being in its one `historical_context` entry), and `outcome` / `results_examined` hold stand-in values (`positive` and the pages read; a `wiki_search` that returned nothing is `negative` with `results_examined: 0` and `notes` null). These entries hold no evidence to persist, so `research_log_append`'s logging-without-persistence nudge does not count them; its pre-1880 census hedge still applies to their `notes`.
+Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search`, `wiki_read` or `historical_context`) record a looked-up article, wiki guidance or overview rather than a record search: the reference text itself is carried in `notes` (historical-context's per-lookup entries carry `notes: null`, its overview being in its one `historical_context` entry), and `outcome` / `results_examined` hold stand-in values (`positive` and the pages read; a `wiki_search` that returned nothing, or a `wikipedia_search` that answered not-found, is `negative` with `results_examined: 0` and `notes` null — skipping the entry would leave no trace that the topic was tried, so the next session repeats the lookup; any other `wikipedia_search` error is a failed lookup, not an answer, and is not logged). These entries hold no evidence to persist, so `research_log_append`'s logging-without-persistence nudge does not count them; its pre-1880 census hedge still applies to their `notes`.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -1068,6 +1080,43 @@ written as free text in the plan item that uses it. The section shipped with
 a viewer Localities tab; `search-records` deliberately stays general (see the
 consumer table above).
 
+### 5.14 `rejected_links`
+
+Array of person-links the researcher ruled out. Written exclusively by the
+`person-evidence` skill.
+
+**Nothing reads it in order to obey it.** Whether a pair was rejected is decidable
+from `research.json` alone, so per ADR-0011 the rule lives in `research_append`,
+which refuses to re-link the exact pair — a precondition binds everywhere, where a
+line in a skill body is a rule the model may not follow. The refusal names the
+researcher's own reason when they gave one, since a refusal they cannot trace back
+to their decision reads as a broken tool. It refuses that pair and no more:
+rejecting "this record is not Mary" says nothing about her sister, nor about a
+different record for Mary.
+
+The section is exposed through `research_query` so an agent can **explain** a
+refusal, not so it can enforce one. The person-evidence agent body names it only to
+write a rejection; no body reads it to decide whether to link.
+
+**Its own section rather than a fourth `person_evidence.confidence` value.** That
+field says how sure we are a link **is** a match; a rejection is the opposite
+claim, not a weaker version of it. Folding the two would make "we checked and it
+is not him" indistinguishable from "we have not checked."
+
+**Kept, never deleted.** A rejection that disappears buys nothing: the next pass
+re-opens the same pair and spends the search again. Deleting is also how a
+disagreement gets erased rather than answered.
+
+**Optional section** (not in `required`): absent on projects that predate it.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | yes | `rj_` prefix, `^rj_[0-9]+$` |
+| `assertion_id` | string | yes | `^a_[0-9]+$` — the assertion proposing the link |
+| `person_id` | string | yes | The tree person the assertion was proposed against |
+| `reason` | string or null | no | Why it was rejected. Optional on purpose: **a rejection is never a demand for the right answer.** Requiring a reason would push a researcher who simply knows it is wrong into inventing a justification, and a fabricated reason is worse than none |
+| `created` | string | yes | Tool-stamped ISO 8601 date |
+
 ---
 
 ## 6. Cross-Reference Map
@@ -1126,6 +1175,10 @@ evaluations
   ├─ target_id (when target_type == "question") ─► questions[].id
   ├─ target_id (when target_type == "proof_summary") ► proof_summaries[].id
   └─ superseded_by ──────────────────────────────► evaluations[].id
+
+rejected_links
+  ├─ assertion_id ───────────────────────────────► assertions[].id
+  └─ person_id ──────────────────────────────────► tree.gedcomx.json persons[].id
 ```
 
 ---

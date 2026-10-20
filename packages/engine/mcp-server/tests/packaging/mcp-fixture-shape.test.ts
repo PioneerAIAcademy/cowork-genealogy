@@ -688,6 +688,39 @@ function mismatch(
   return parts.join("; ");
 }
 
+describe("person_search fixtures carry no retired `pick` field", () => {
+  /**
+   * `pick`/`decisiveness()` were deleted when `init-project` stopped searching by name:
+   * it now always requires a FamilySearch PID, so nothing branches on whether a result
+   * set is decisive and nothing reads the field.
+   *
+   * The guard is inverted rather than deleted. A fixture is served VERBATIM, so one that
+   * still carries `pick` would quietly teach the eval about a field the tool no longer
+   * emits — the same defect class this block was written for, pointing the other way.
+   */
+  const searchFixtures = fixtures.filter((f) => f.tool === "person_search");
+
+  it("has fixtures to check — a zero-length scan proves nothing", () => {
+    expect(searchFixtures.length).toBeGreaterThan(0);
+  });
+
+  it("no fixture still carries it", () => {
+    const stale = searchFixtures
+      .filter((f) => {
+        const response = f.response as Record<string, unknown> | null;
+        return !!response && typeof response === "object"
+          && Object.prototype.hasOwnProperty.call(response, "pick");
+      })
+      .map((f) => f.name)
+      .sort();
+    expect(
+      stale,
+      "`pick` was removed from person_search; these fixtures still carry it and would " +
+        "serve a field the tool does not emit:\n" + stale.map((n) => `  - ${n}`).join("\n"),
+    ).toEqual([]);
+  });
+});
+
 describe("eval/fixtures/mcp response shapes match the tools' return types", () => {
   it("every fixture declares the envelope the harness requires", () => {
     // `harness/fixtures.py` `build_manifest` raises on a missing `tool`, a

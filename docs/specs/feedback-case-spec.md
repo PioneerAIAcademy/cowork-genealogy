@@ -227,6 +227,37 @@ the owner's current access and refresh tokens are replaced literally, for token
 text with no `Bearer` in front. Test: `test_living_people_api_keys_and_tokens_are_redacted`
 (`apps/server/tests/test_proto_feedback.py`).
 
+### 2.4 The project-file budget
+
+The bundle carries a snapshot of the project folder — `research.json`,
+`tree.gedcomx.json`, `starting-tree.gedcomx.json`, `results/` sidecars, images,
+and any other file the walker returns. An uncompressed size cap
+(`_ZIP_CAP_BYTES` / `ZIP_CAP_BYTES`, 35 MiB) keeps the upload manageable. When
+the selected files exceed it, the bundler evicts in **tiers**, each
+largest-first within the tier:
+
+1. **Media** (`_MEDIA_EXTS` / `MEDIA_EXTS`) — images, audio, video.
+2. **`results/` sidecars** — search-result JSON files.
+3. **Everything else** that is not protected.
+
+Three files are **never evicted** (the "protected set"): `research.json`,
+`tree.gedcomx.json`, `starting-tree.gedcomx.json` — exact root-level paths
+only; a `results/research.json` is not protected. If the protected files alone
+exceed 35 MiB, the bundle keeps them all and drops everything else. The bundle
+goes over the cap in that case; JSON deflates several-fold, so the uploaded zip
+stays well under the cap.
+
+The per-file skip (`_INDIVIDUAL_FILE_CAP_BYTES`, 25 MiB) is separate and runs
+before selection: any file over 25 MiB — including a protected one — is skipped
+by the walker, not by the budget loop.
+
+Whatever gets dropped is named in `FEEDBACK.md` rather than vanishing silently.
+
+Implemented as `_select_files` in both server bundlers
+(`apps/server/app/feedback.py`, `apps/server/proto/web/feedback.py`) and the
+budget loop in the Electron bundler (`apps/electron/src/main/feedback.ts`).
+`test_parity_select_files` holds the two server copies equal.
+
 ## 3. The case directory contract
 
 Produced by `scripts/setup-feedback-case.sh` (and its `.bat` counterpart),

@@ -1735,10 +1735,12 @@ it costs nothing at runtime, and **it is not a gap and no decision waits on it.*
   hour. A session therefore runs for as many hours as it needs. **Do not read the
   cap as a session-length limit** —
   both "there is a 1-hour cap" and "sessions run for hours" are true at once. The
-  control plane sets the outer limit: `/connect` refuses a session more than 72 h
-  past `projects.created` with a 410 (`SESSION_MAX_AGE` in `app/sessions.py`),
-  because its sandbox still runs the agent code it was created with. `/resume` and
-  the read endpoints stay open, so an ended session's research can still be read.
+  control plane sets the outer limit: `/connect` gives a session more than 72 h
+  past `projects.created` only a read-only connection (`SESSION_MAX_AGE` in
+  `app/sessions.py`), because its sandbox still runs the agent code it was created
+  with. The chat replays and the client shows no composer; read-only is
+  client-enforced. `/resume` and the read endpoints stay open, so an ended
+  session's research can still be read.
   **A turn cannot run through the cap, though.** `set_timeout` cannot push a
   running sandbox's end time past its hour: five minutes after create,
   `set_timeout(3600)` returns success and leaves the end time at start + 3600,
@@ -1971,6 +1973,7 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 | `make eval-skill SKILL=<name> STORE=pg` + `make unit-pg-parity` | the same suite with every live tool call on `PgS3ProjectStore` (U15; non-releasable, logged to `eval/runlogs/unit-pg/`), and its parity with the newest file-store log: outcome flips and any live response that reads as a store fault | a fixture-backed tool's I/O (only live tools touch the store); the hosted worker's per-request binding and claim fence; anything after 2026-10-12 — no job re-runs it, so it is a dated measurement, not a check |
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. |
+| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first, that no research job started, and that the expected source or log entry was saved — deterministic, no judge. Live and billed | the hosted alpha, which appends DELIVERY_GUIDANCE and nudges any stop not preceded by `research_delivered` (the `delivered` column shows that risk but does not gate); Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
 
 ### 9.2 The lint layer
 
