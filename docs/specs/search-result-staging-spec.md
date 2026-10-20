@@ -228,6 +228,11 @@ names, then runs its own checks on that canonical ref.
 A staged name is a random v4 UUID, so two staged files within 3 edits of each other
 do not occur in practice; the single-candidate rule still refuses that case.
 
+`project_create` alone has a second, later step: a `personReadRef` this resolution
+leaves unusable falls back to the newest staged `person_read` of the person named in
+`subjectPersonIds[0]` (`project-create-tool-spec.md` §4). That step matches on the
+stated person, never on the ref's name, so it does not widen the rule above.
+
 When the log editor is called with `stagedResultsRef`, it (host-side):
 
 1. Resolves `stagedResultsRef` and **rejects anything not inside

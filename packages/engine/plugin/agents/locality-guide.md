@@ -110,17 +110,16 @@ Once `place_search` (step 2) has returned the `standardPlace`, issue the survey 
 **Fetch the jurisdiction's own wiki pages by constructed URL — never restate their contents from memory.** A `{Jurisdiction}_{Topic}` page needs no `wiki_search` first, so these join the batch above:
 
 - `{Jurisdiction}_Vital_Records` — REQUIRED. The level and year each registration system began.
-- `{County}_County,_{State}_Genealogy` when the target is a county — REQUIRED. A county's own page is reachable this way even where the `wiki_place_page` sections below are not, so the note there about broadening does not apply to it. Its *Neighboring Counties* table names the adjoining jurisdictions.
 - `{Jurisdiction}_Land_and_Property`, `_Church_Records`, `_Probate_Records`, `_Census`, `_Naming_Customs` — at the point the guide needs that record type's facts.
 
 On `No wiki page found`, or a page that returns only generic content, record and report the gap; do not fill it from memory, and do not drop an instruction that does not depend on the page. Only a `wiki_read` on a URL `wiki_search` returned waits for that call.
 
-**All four `wiki_place_page` sections are REQUIRED, not optional.** The place-oriented research pages (overview, getting-started, online-records, research-tips) are the main source of a locality's research strategy and indexing quirks — reading only one (or none) is the most common defect in this skill and defeats its purpose. You will record the outcome of every section in `pages_read` when you persist (Step 6): a section that returns content is logged `found: true`, one that 404s for this place is logged `found: false` — but every section must be *attempted*, never silently skipped. If the exact-place page 404s, broaden the `standardPlace` one jurisdiction level (a county has no page; its state/country does) and retry before recording `found: false`.
+**All four `wiki_place_page` sections are REQUIRED, not optional.** The place-oriented research pages (overview, getting-started, online-records, research-tips) are the main source of a locality's research strategy and indexing quirks — reading only one (or none) is the most common defect in this skill and defeats its purpose. You will record the outcome of every section in `pages_read` when you persist (Step 6): a section that returns content is logged `found: true`, one that 404s for this place is logged `found: false` — but every section must be *attempted*, never silently skipped. Pass the most specific `standardPlace` for every section. `home` returns the place's own page at any level the wiki has one; for a county, its *Neighboring Counties* table names the adjoining jurisdictions. The other three sections exist only for a state or country: when one returns `No wiki page found` for a smaller place, broaden the `standardPlace` one jurisdiction level and retry before recording `found: false`.
 
 ```
 place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
-wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "home" })
+wiki_place_page({ standardPlace: "Schuylkill, Pennsylvania, United States", section: "home" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "getting_started" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "research_tips" })
@@ -129,7 +128,6 @@ external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States"
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 catalog_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 wiki_read({ url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" })
-wiki_read({ url: "https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy" })
 # then, once wiki_search returns a page URL:
 wiki_read({ url: "<relevant FamilySearch Wiki page URL>" })
 ```

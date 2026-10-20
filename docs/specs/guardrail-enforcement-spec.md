@@ -1639,8 +1639,8 @@ are not ours to set, so a host-side hook can never reach Cowork. A
 plugin-shipped `hooks/hooks.json` does. Verified live in Cowork 2026-07-30: the
 hook loads, fires for `Write` and for `Bash`, both matcher forms bind, and a
 `deny` is honored with the script's own reason text surfacing to the agent.
-Cowork runs `permission_mode: "default"`; the hosted path runs
-`bypassPermissions`; a hook binds under both. See `CLAUDE.md` § "Plugin hooks"
+The hosted path runs `bypassPermissions`; a hook binds under both, under
+either Cowork `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005). See `CLAUDE.md` § "Plugin hooks"
 for the packaging constraints (`scripts/package-plugin.mjs`'s `INCLUDE` must
 carry `"hooks"`) and the two upstream reports that do **not** reproduce.
 
@@ -1688,7 +1688,7 @@ some of them fails `make harness-test`.
   writes** to a protected file — but the earlier reading, that the shell route
   is never *attempted*, does not survive the measurement. The agent reaches for
   it; only the harness's permission mode stopped it, and that is not one of the
-  three guard copies. Cowork runs `permission_mode: "default"` and the hosted
+  three guard copies. Cowork runs `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005) and the hosted
   path runs `bypassPermissions`, so neither environment has the thing that
   refused these two.
 
