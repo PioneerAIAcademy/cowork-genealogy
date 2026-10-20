@@ -416,6 +416,30 @@ describe("extraction_append: documents", () => {
     expect((refused.errors ?? []).join(" ")).toMatch(/facts: must be a list/);
   });
 
+  it("summarizes each household of a census page under its own people (#3543)", async () => {
+    const person = (id: string, given: string, surname: string, household: string, occupation: string) => ({
+      id, household, names: [{ given, surname }], facts: [{ type: "occupation", value: occupation }],
+    });
+    const page = {
+      recordType: "census",
+      documentForm: "page_image",
+      census: { jurisdiction: "United States", year: 1860 },
+      source: { title: "1860 U.S. Census, Butler Township, page 37", repository: "NARA" },
+      persons: [
+        person("p1", "Thomas", "Flynn", "1", "Laborer"),
+        person("p2", "Bridget", "Flynn", "1", "Keeping house"),
+        person("p3", "Michael", "Gallagher", "2", "Miner"),
+        person("p4", "Ellen", "Gallagher", "2", "Seamstress"),
+      ],
+    };
+    const r = await run([{ recordId: "capture:census-1860-p37", document: page }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const lines = r.records[0].summary.split("\n");
+    expect(lines).toContain("- Thomas Flynn (head_of_household): occupation Laborer.");
+    expect(lines).toContain("- Michael Gallagher (head_of_household): occupation Miner.");
+    expect(lines).toContain("- Ellen Gallagher (household_member_1): occupation Seamstress.");
+  });
+
   describe("a computed entry written as a value (#3543)", () => {
     const death = (birth: Record<string, unknown>) => ({
       recordType: "death",
