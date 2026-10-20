@@ -510,3 +510,18 @@ def test_a_session_with_no_long_gap_saves_nothing_and_pays_the_premium(tmp_path)
 def test_a_bundle_already_on_1h_reports_its_share(tmp_path):
     ttl, _ = _ttl(tmp_path, _ttl_session(gap=410, one_hour=True))
     assert ttl["sessions"][0]["share_1h_main"] == pytest.approx(50_000 / 150_000)
+
+
+def test_a_main_thread_written_wholly_at_1h_reads_100_percent(tmp_path):
+    """The column the post-flip check reads (>= 99% on a session created after the flip)."""
+    rows = [_user("m1", 0, "go"),
+            *[_assistant(f"m{2 + i}", 10 + i, f"msg_{i}", [{"type": "text", "text": "ok"}],
+                         {"input_tokens": 0, "cache_creation_input_tokens": w,
+                          "cache_creation": {"ephemeral_1h_input_tokens": w}})
+              for i, w in enumerate((40_000, 2_000, 9_000))]]
+    ttl, text = _ttl(tmp_path, rows)
+    assert ttl["sessions"][0]["share_1h_main"] == 1.0
+    assert ttl["sessions"][0]["share_1h_agents"] == 0
+    total = next(line for line in text.split("CACHE TTL")[1].splitlines()
+                 if line.strip().startswith("TOTAL"))
+    assert total.split()[1:3] == ["100%", "0%"]

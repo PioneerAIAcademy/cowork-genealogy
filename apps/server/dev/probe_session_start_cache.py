@@ -48,7 +48,7 @@ A session BREAKS (exit 1) when any of these holds, and the line names which:
     no-search   request 1 offers no `ToolSearch`: tool search is off, and every genealogy
                 schema loads up front (+12-14% a run, T1.7), whatever `ENABLE_TOOL_SEARCH` says
 
-A session is VOID (exit 2, when nothing broke) when it has fewer than two main-thread
+A session is VOID (exit 2, unless another session broke cleanly) when it has fewer than two main-thread
 requests, its last main-thread request lacks one of the `ALWAYS_LOAD` tools, or
 `project_context` never returned a non-error result -- a run where the engine never
 connected has proved nothing. Exit 0 otherwise.
@@ -199,7 +199,10 @@ def judge_session(main_requests: list[dict], always_load: list[str]) -> dict:
 
 
 def exit_code(verdicts: list[dict]) -> int:
-    if any(v["breaks"] for v in verdicts):
+    """1 when a session broke and was not void; else 2 when any was void; else 0. Within one
+    session a void outranks a break: an engine that never connected also leaves request 1
+    without its tools, and that must not read as the session-start defect."""
+    if any(v["breaks"] and not v["void"] for v in verdicts):
         return 1
     if any(v["void"] for v in verdicts):
         return 2
@@ -339,7 +342,7 @@ async def main() -> None:
             reqs = await run_session(key, args.cli, engine)
             v = judge_session(reqs, always_load)
             verdicts.append(v)
-            state = "BREAK" if v["breaks"] else ("VOID" if v["void"] else "ok")
+            state = "VOID" if v["void"] else ("BREAK" if v["breaks"] else "ok")
             print(f"session {i + 1}: {state:5} main_calls={v['main_calls']} "
                   f"call1_ctx={v.get('call1_ctx')} call2_cache_read={v.get('call2_cache_read')} "
                   f"tool_search={v.get('tool_search_offered')} "

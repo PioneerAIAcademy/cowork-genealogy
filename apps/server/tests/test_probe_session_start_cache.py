@@ -149,3 +149,17 @@ def test_tool_search_off_is_a_break():
     v = judge_session([r1, r2], ALWAYS)
     assert any(b.startswith("no-search") for b in v["breaks"]) and not v["tool_search_offered"]
     assert exit_code([v]) == 1
+
+
+def test_a_dead_engine_voids_the_session_rather_than_reading_as_a_break():
+    """No genealogy tools at request 1 AND none at the end, project_context never answered:
+    the engine never connected. That is void, never the defect A1 counts on `main`."""
+    r1, r2 = _pair()
+    for r in (r1, r2):
+        r["body"]["tools"] = [t for t in r["body"]["tools"] if not t["name"].startswith(MCP_PREFIX)]
+    r2["body"]["messages"][-1]["content"][0]["is_error"] = True
+    v = judge_session([r1, r2], ALWAYS)
+    assert v["breaks"] and v["void"]
+    assert exit_code([v]) == 2
+    clean_break = judge_session(list(_pair(read2=0)), ALWAYS)
+    assert exit_code([v, clean_break]) == 1

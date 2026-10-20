@@ -545,8 +545,8 @@ async def main() -> None:
               f"total_tokens@2={second.get('total_tokens') if second else '-'}", flush=True)
         for line in res["effort_log"]:
             print(f"    {line}", flush=True)
-        if name.startswith("e-"):
-            for who, req in (("main", main_req), ("subagent", sub)):
+        for who, req in (("main", main_req), ("subagent", sub)):
+            if req:
                 print(f"    {who}: cache ttls={req.get('cache_ttls')} "
                       f"1h-beta={req.get('extended_cache_ttl_beta')} "
                       f"usage writes={req.get('usage_writes')} of which 1h={req.get('usage_1h')}",
