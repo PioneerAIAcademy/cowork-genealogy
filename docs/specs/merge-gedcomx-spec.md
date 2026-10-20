@@ -255,12 +255,12 @@ Sequence inside each tool:
    entry passes it, and running before the warning gate means a caller is never
    asked to justify warnings for a merge that is then refused.
 
-   Measured at e87e5a5ca over the 6 committed `merge_tree_persons` calls (7
+   Measured at ed4f73911 over the 6 committed `merge_tree_persons` calls (7
    pairs), by `packages/engine/mcp-server/dev/measure-namesake-cap.ts` (which runs
    `eval/harness/scripts/dump_namesake_call_states.py`): no pair is joined by a
    relationship, and none folds a FamilySearch or starting-tree person into one
    that is neither (0 of 7 each). No committed research document records a
-   namesake (0 of 515), so the namesake checks refuse nothing yet. With rows
+   namesake (0 of 548), so the namesake checks refuse nothing yet. With rows
    planted on the survivors, on the folded persons, or on both,
    `mergeNamesakeRefusals` refuses 7, 12 and 19 links, every one in a correct
    merge of two copies of one person whose row holder lacked what tied the other
