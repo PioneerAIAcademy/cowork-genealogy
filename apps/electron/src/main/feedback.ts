@@ -19,8 +19,9 @@ const TEXT_EXTS = new Set(['.json', '.md', '.txt', '.csv', '.tsv', '.yaml', '.ym
 
 const INDIVIDUAL_FILE_CAP_BYTES = 25 * 1024 * 1024
 // Project-file budget. Mirrors apps/server/app/feedback.py `_ZIP_CAP_BYTES`:
-// when the selection exceeds it we drop the largest files until it fits rather
-// than failing the send. Applied to uncompressed bytes, as the server does.
+// when the selection exceeds it we evict in tiers — media, then results/
+// sidecars, then everything else — each largest-first. Protected files
+// (research.json, tree, starting-tree) are never evicted.
 const ZIP_CAP_BYTES = 35 * 1024 * 1024
 // Session-log budget, separate from the file budget (again matching the
 // server's `_SESSION_LOG_CAP_BYTES`): over cap we keep the newest entries and
@@ -42,6 +43,7 @@ const REDACTED_KEY = '[REDACTED_API_KEY]'
 // contain the same thing.
 const TREE_FILENAME = 'tree.gedcomx.json'
 const STARTING_TREE_FILENAME = 'starting-tree.gedcomx.json'
+const PROTECTED_ROOT_FILES = new Set(['research.json', TREE_FILENAME, STARTING_TREE_FILENAME])
 // These two are named only in the FEEDBACK.md note now. Which files get
 // redacted is decided by shape, not by name — see redactLivingPersons.
 // starting-tree.gedcomx.json is the write-once completion-gate baseline; it
@@ -709,6 +711,18 @@ export function redactApiKeys(serialized: string): string {
   return out
 }
 
+function isProtected(rel: string): boolean {
+  return !rel.includes(path.sep) && PROTECTED_ROOT_FILES.has(rel)
+}
+
+function evictionTier(rel: string): number {
+  if (isProtected(rel)) return 3
+  const ext = path.extname(rel).toLowerCase()
+  if (MEDIA_EXTS.has(ext)) return 0
+  if (rel.split(path.sep)[0] === 'results') return 1
+  return 2
+}
+
 export async function buildFeedbackZip(options: FeedbackOptions): Promise<FeedbackResult> {
   const { folderPath, includeMedia, includeSessionLog, report, viewerVersion, buildDate, gitSha } =
     options
@@ -745,16 +759,20 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
     }
   }
 
-  // Over budget: drop the largest files until the selection fits. Same rule as
-  // the server, so a bundle built here and one built in the hosted app contain
-  // the same thing. Dropping beats throwing -- a too-big project should still
-  // produce a usable report, minus its heaviest attachments.
+  // Over budget: evict in tiers — media first, then results/ sidecars, then
+  // everything else — each largest-first. Protected files (research.json,
+  // tree, starting-tree) are never evicted. Same rule as the server.
   let uncompressedBytes = selected.reduce((n, s) => n + s.buf.length, 0)
   if (uncompressedBytes > ZIP_CAP_BYTES) {
-    const bySizeDesc = [...selected].sort((a, b) => b.buf.length - a.buf.length)
+    const evictionOrder = [...selected].sort((a, b) => {
+      const ta = evictionTier(a.relativePath)
+      const tb = evictionTier(b.relativePath)
+      return ta !== tb ? ta - tb : b.buf.length - a.buf.length
+    })
     const dropped = new Set<string>()
-    for (const s of bySizeDesc) {
+    for (const s of evictionOrder) {
       if (uncompressedBytes <= ZIP_CAP_BYTES) break
+      if (isProtected(s.relativePath)) break
       dropped.add(s.relativePath)
       uncompressedBytes -= s.buf.length
       skipped.push(`${s.relativePath} (dropped — archive size limit)`)
