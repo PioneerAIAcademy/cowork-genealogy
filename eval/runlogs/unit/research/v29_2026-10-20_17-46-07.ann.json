@@ -1,9 +1,17 @@
 {
-  "run_log": "v27_2026-10-19_13-12-16.json",
+  "run_log": "v29_2026-10-20_17-46-07.json",
   "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_c1k",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,15 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_c1k",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,15 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI surfaced existing census evidence and closed the turn with research_delivered rather than executing the full GPS workflow the per-test context required."
-    },
-    {
-      "test_id": "ut_research_004",
+      "test_id": "ut_research_rpn",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -43,15 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_005",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_005",
+      "test_id": "ut_research_025",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -59,7 +43,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_008",
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -67,23 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_017",
+      "test_id": "ut_research_h7w",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -91,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_017",
+      "test_id": "ut_research_h7w",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -99,33 +75,33 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_017",
+      "test_id": "ut_research_h7w",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_gm4",
+      "test_id": "ut_research_es9",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_es9",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_es9",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI called existing Boyd County assertions 'inapplicable' to that Robert (they remain valid for him) and labeled the parental names 'direct support' for the sibling theory before the connection was established."
-    },
-    {
-      "test_id": "ut_research_gm4",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_gm4",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -155,20 +131,44 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_research_gm4",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI claimed seven assertions lacked person_evidence links but the tool responses show only four (a_002, a_003, a_006, a_007) had zero links, overclaimed scope though the person-evidence hand-off was correct."
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_research_004",
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The AI stated proof-conclusion and question-selection hand-offs were made but the tool log shows only research_delivered was called; it reported routing that never happened."
+      "comment": "The AI overstates parental-name inference as established fact rather than flagging it as a hypothesis to verify."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": ": The AI correctly answered a status question about a completed project in one plain paragraph from project_context."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The AI read project_context, confirmed all plan items were done, and stopped; no routing was needed on a resolved project."
     }
   ]
 }
