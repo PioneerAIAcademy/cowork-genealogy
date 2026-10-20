@@ -352,6 +352,30 @@ def test_avoid_guard_does_not_force_when_the_avoided_person_is_unattached():
     assert out["per_finding"][0]["matched"] == "true"
 
 
+def test_avoid_guard_does_not_force_a_new_relative_sharing_only_the_surname():
+    # Pins the "given AND surname" rule: a newly-attached relative who shares
+    # only the surname (not the given name) with the wrong candidate is not the
+    # avoided person, so the guard must NOT force. Relaxing the match to
+    # "given OR surname" would wrongly force this and is otherwise untested.
+    output = _valid_output()
+    final = _starting_tree()
+    final["persons"].append(
+        {"id": "P9", "living": False,
+         "names": [{"id": "N9", "given": "William", "surname": "Smith"}]})
+    final["relationships"].append(
+        {"id": "R9", "type": "Couple", "person1": "SUBJECT", "person2": "P9"})
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_avoid_findings(),  # wrong candidate "Robert Smith"
+        final_tree=final,
+        starting_tree=_starting_tree(),
+        subject_person_ids={"SUBJECT"},
+    )
+    # Shares surname "Smith" only, not given "Robert" → not forced.
+    assert out is output
+    assert out["per_finding"][0]["matched"] == "true"
+
+
 def test_avoid_guard_ignores_a_preexisting_namesake_relationship():
     # The avoided name matches a person ALREADY linked to the subject in the
     # starting tree (a legitimate look-alike relative). Not new → not forced.
