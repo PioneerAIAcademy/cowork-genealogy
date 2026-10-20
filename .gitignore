@@ -91,6 +91,8 @@ eval/runlogs/e2e/*/*.transcript.md
 # is excluded from the release gate + comparisons (eval/CLAUDE.md).
 eval/runlogs/optimizer/*
 !eval/runlogs/optimizer/.gitkeep
+# Single-ask e2e runs are not committed (e2e-test-spec.md §16.1); the PR pastes the printed block.
+eval/runlogs/e2e-single-ask/
 
 # Playwright test artifacts.
 eval/app/test-results/
