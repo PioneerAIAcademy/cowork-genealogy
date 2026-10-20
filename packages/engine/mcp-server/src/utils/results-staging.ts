@@ -84,7 +84,7 @@ export interface StagedHandle {
 }
 
 /** The persisted staging envelope (snake_case — it is persisted project state). */
-interface StagingEnvelope {
+export interface StagingEnvelope {
   tool: string;
   retrieved: string;
   returned_count: number;
@@ -456,26 +456,19 @@ export async function unloggedStagedSearches(
 
   const store = getProjectStore();
 
-  let names: { name: string; mtimeMs: number }[];
-  try {
-    names = (await store.list(projectPath, STAGING_SUBDIR)).filter((e) => e.name.endsWith(".json"));
-  } catch {
-    return []; // no staging dir yet — nothing staged, nothing owed
-  }
-  if (names.length === 0) return [];
-
-  // Same cutoff `pruneStale` uses, but do NOT read this as "about to be deleted":
+  // The TTL cutoff is `pruneStale`'s, but do NOT read it as "about to be deleted":
   // `pruneStale` is called from one place — inside `stageSearchResults`, AFTER its
   // nil early-return — so a stale file survives any number of nil searches and is
   // swept only by the next search that actually stages. The cutoff is here because
   // a file past the TTL is past the window in which finalizing it is guaranteed to
   // work, not because deletion is imminent.
-  const cutoff = Date.now() - STAGING_TTL_MS;
+  const names = await freshStagingEntries(projectPath);
+  if (names.length === 0) return []; // no staging dir yet — nothing staged, nothing owed
+
   const staged: { ref: string; tool: string; retrieved: number; iso: string }[] = [];
   for (const entry of names) {
-    const ref = `${STAGING_SUBDIR}/${entry.name}`;
+    const ref = entry.ref;
     try {
-      if (entry.mtimeMs < cutoff) continue;
       const envelope = JSON.parse(await store.readText(projectPath, ref)) as StagingEnvelope;
       // An acquisition read is logged as `user_provided` or under the search that
       // found it, never under its own tool name, so it can never pair here.
@@ -530,6 +523,68 @@ export async function unloggedStagedSearches(
     else consumed[i] = true;
   }
   return unpaired;
+}
+
+/** One staged file of a tool, as `listStagedEnvelopes` returns it. */
+export interface StagedEnvelopeEntry {
+  /** Project-relative ref, `results/.staging/<name>.json`. */
+  ref: string;
+  /** The envelope's `retrieved`, or the file's mtime when that does not parse. */
+  retrievedMs: number;
+  envelope: StagingEnvelope;
+}
+
+/**
+ * Every staged file `tool` wrote that is still inside the TTL, newest first.
+ *
+ * Each file passes the same guard a consumer applies (`checkStagedResults`), so
+ * a file staged by another tool, unparseable, holding no `results`, or
+ * unreadable is left out: to a caller asking "what does a staged read hold",
+ * a file it cannot read holds nothing. One timestamp per file drives both the
+ * TTL and the order, so the two never disagree; it is `retrieved` first, as in
+ * `unloggedStagedSearches`, because a store's own clock is not the writer's
+ * (Postgres stamps a row, the file store keeps the OS mtime). Ties go by name,
+ * so the order is deterministic. Never throws: a missing staging directory is
+ * an empty list.
+ */
+export async function listStagedEnvelopes(
+  projectPath: string,
+  tool: string,
+): Promise<StagedEnvelopeEntry[]> {
+  if (typeof projectPath !== "string" || projectPath === "") return [];
+  const cutoff = Date.now() - STAGING_TTL_MS;
+  // A file is written just after the `retrieved` it carries, so one already
+  // past the cutoff by its write time is past it by `retrieved` too, and is
+  // never opened. The rest are read together.
+  const read = await Promise.all(
+    (await freshStagingEntries(projectPath)).map(async ({ ref, mtimeMs }) => {
+      try {
+        const { envelope } = await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: tool });
+        const parsed = Date.parse(envelope.retrieved);
+        return { ref, retrievedMs: Number.isNaN(parsed) ? mtimeMs : parsed, envelope };
+      } catch {
+        return undefined;
+      }
+    }),
+  );
+  return read
+    .filter((e): e is StagedEnvelopeEntry => e !== undefined && e.retrievedMs >= cutoff)
+    .sort((a, b) => b.retrievedMs - a.retrievedMs || (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0));
+}
+
+/** The staging folder's `.json` files still inside the TTL by their write time,
+ *  as project-relative refs. Empty when there is no staging folder. */
+async function freshStagingEntries(projectPath: string): Promise<{ ref: string; mtimeMs: number }[]> {
+  let entries: { name: string; mtimeMs: number }[];
+  try {
+    entries = await getProjectStore().list(projectPath, STAGING_SUBDIR);
+  } catch {
+    return [];
+  }
+  const cutoff = Date.now() - STAGING_TTL_MS;
+  return entries
+    .filter((e) => e.name.endsWith(".json") && e.mtimeMs >= cutoff)
+    .map((e) => ({ ref: `${STAGING_SUBDIR}/${e.name}`, mtimeMs: e.mtimeMs }));
 }
 
 /** How far a mis-copied staged name may drift and still name one file. */
