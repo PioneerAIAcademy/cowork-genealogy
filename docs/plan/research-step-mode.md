@@ -1147,7 +1147,7 @@ in parallel with PR 2.
   - `mock_mcp.py`, `instrument.py` and the tests;
   - `DELIVERY_GUIDANCE`;
   - the bounded-ask section's `research_delivered` close. Keep its routing list.
-  - **Open, for the lead:** decision 25's prototype halt reuses `_halt`, which a main-thread
+  - **Open, for Praise:** decision 25's prototype halt reuses `_halt`, which a main-thread
     `research_delivered` triggers today (`apps/server/proto/worker/options.py`). Say whether
     this bullet still stands under decision 25, and if it does, what ends a bounded ask.
 - **Delete the Stop veto:** `should_continue_run`'s nudge path, `CONTINUE_REASON`, the nudge
