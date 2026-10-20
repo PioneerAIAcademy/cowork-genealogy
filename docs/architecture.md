@@ -1739,10 +1739,12 @@ it costs nothing at runtime, and **it is not a gap and no decision waits on it.*
   hour. A session therefore runs for as many hours as it needs. **Do not read the
   cap as a session-length limit** —
   both "there is a 1-hour cap" and "sessions run for hours" are true at once. The
-  control plane sets the outer limit: `/connect` refuses a session more than 72 h
-  past `projects.created` with a 410 (`SESSION_MAX_AGE` in `app/sessions.py`),
-  because its sandbox still runs the agent code it was created with. `/resume` and
-  the read endpoints stay open, so an ended session's research can still be read.
+  control plane sets the outer limit: `/connect` gives a session more than 72 h
+  past `projects.created` only a read-only connection (`SESSION_MAX_AGE` in
+  `app/sessions.py`), because its sandbox still runs the agent code it was created
+  with. The chat replays and the client shows no composer; read-only is
+  client-enforced. `/resume` and the read endpoints stay open, so an ended
+  session's research can still be read.
   **A turn cannot run through the cap, though.** `set_timeout` cannot push a
   running sandbox's end time past its hour: five minutes after create,
   `set_timeout(3600)` returns success and leaves the end time at start + 3600,

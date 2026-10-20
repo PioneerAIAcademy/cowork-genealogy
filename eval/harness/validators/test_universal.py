@@ -82,7 +82,7 @@ DIFFED_SECTIONS = [
     "project", "known_holdings", "questions", "plans", "log", "sources",
     "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries",
-    "evaluations", "localities",
+    "evaluations", "localities", "rejected_links",
 ]
 
 
