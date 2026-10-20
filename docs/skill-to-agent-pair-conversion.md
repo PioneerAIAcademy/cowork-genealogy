@@ -566,16 +566,16 @@ up while the body ran on the main thread, and each cost a run to find.
 ## What is still open
 
 - **`search-records` orientation share (baseline for the handed-state follow-up,
-  issue #3581).** Committed run `eval/runlogs/unit/search-records/v8_2026-10-19_12-32-13.json`
+  issue #3581).** Committed run `eval/runlogs/unit/search-records/v8_2026-10-20_18-41-45.json`
   (ids-only delegation): 26 of 27 tests reach `record_search`. The MCP calls before
-  the first one are a median of 2 and a mean of 1.65 (min 1, max 3): the
+  the first one are a median of 2 and a mean of 1.77 (min 1, max 3): the
   `research_query` read of `plans`, plus, in 17 of the 26 tests, one or two
   `wiki_read`s of FamilySearch census pages. No question is read. Counting the
-  `Read` of `tree.gedcomx.json` as well gives a median of 3 and a mean of 2.65
+  `Read` of `tree.gedcomx.json` as well gives a median of 3 and a mean of 2.77
   (min 2, max 4). The first figures came from run `v7_2026-10-15_16-06-27`, which
-  was pruned from the tree and lives in commit b147b57fe; v8 gives the same MCP
-  count. The follow-up that hands the plan item's state in the delegation
-  (cost-latency plan §6) is measured against these.
+  was pruned from the tree and lives in commit b147b57fe; its MCP count was a
+  median of 2 and a mean of 1.7. The follow-up that hands the plan item's state in
+  the delegation (cost-latency plan §6) is measured against these.
 
 - **Tier selection resisted every prose fix.** Three successive wordings each
   repaired one test and broke a neighbour, so the tier ladder was reverted to
