@@ -1171,6 +1171,14 @@ recap — the shape the skill actually uses. Gated on the `index-discrepancy` ta
 that tag and no `index_error_source` fails rather than skipping, so the guard
 cannot be disarmed by omission.
 
+**What the guard reads is the agent's own return, not the main thread's
+reply.** `subject_reply_text` returns the subject's words whenever it made a
+return, and on a direct test it returns nothing else. The two texts differ on
+every committed `index-discrepancy` run, and differ structurally: the relay
+carries markdown headings on 52 of 53 and the agent's own return on 0 of 53.
+A check tuned against the relay therefore measures the dispatcher, and reads
+clean while the guard it is meant to validate has a live gap.
+
 A reply-wide check cannot express this rule. A correct audit of the same
 person also reports a genuinely *misattributed* source, for which detaching
 **is** the right recommendation — so any reply-wide licence for the word
@@ -1202,7 +1210,7 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 | search-records | `extraction_append` / `record-structurer` (an agent) | record data in context vs not |
 | question-selection | research-plan | "what question next" vs "how to answer this question" |
 | conflict-resolution | `extraction_append` (a tool) | conflicting facts vs classifying evidence type (classification is set in code at extraction and is not refined per assertion afterward) |
-| proof-conclusion | project-status (an agent, not a skill — its side of the pair is reached by auto-delegation from its own `description`, not by a routing row) | "write the proof" vs "where are we" |
+| proof-conclusion | the main-thread status answer (no skill; the `project_context` tool's description instructs the main thread to answer "where are we?" from the projection) | "write the proof" vs "where are we" |
 
 For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.
 
@@ -1619,6 +1627,21 @@ Validators are split into three tiers:
 - **Tier 2 (reporting):** `report_*` prefix. An `AssertionError` is a finding: it is fed to the judge as anonymous text under one of two observation slots and never gates the test outcome. A `report_*` whose signature draws only from `before_state`, `after_state`, `test`, and `skill_frontmatter` and includes at least one of `before_state`/`after_state` is state-derived and appears under "Harness observations on persisted project state"; the rest are response-derived and appear under "Harness observations on the response text". The function name goes only to the run log (`output.warnings[]` with `kind: "prose_observation"`) for traceability. Use this tier when the harness can detect a pattern but cannot decide whether it is wrong — that decision belongs to the judge.
   - **A broken tier-2 validator gates like tier 1.** A validator that declares an argument the harness does not supply, or raises anything other than `AssertionError`, is a bug in the validator rather than a finding about the run, so it fails the test and is recorded in the run log like any tier-1 failure. Its error text never reaches the judge — a harness diagnostic is not an observation about the response, and the judge is instructed to weigh whatever appears in that section.
 - **Advisory:** Existing `warnings.warn()` pattern inside `test_*` functions (e.g. `test_tool_allowlist`). Not surfaced to the judge.
+
+**A check that would fire on a large share of today's runs starts in tier 2.**
+A tier-1 failure fails the test, so a new gate that fires on a third of a
+suite's runs fails a third of the suite at once, whether or not those runs were
+otherwise right, and the next paid run of that skill reports a regression the
+change did not cause. Measure the rule over the committed run logs before
+choosing: near zero, gate it; frequent, start it as `report_*`, fix what makes
+it fire, and graduate it once one paid run shows zero. The worked example is
+the no-derivation-wording-in-`value` rule: ruled tier 2 on 2026-09-07 at 49 of
+150 record-extraction runs, and landed tier 1 (`test_value_holds_no_derivation`
+in `test_record_structurer.py`) once extraction moved into code and the rate
+fell to 0: none of the 30 eligible assertions (of 133, in the suite's one
+committed 6-run log) carried the wording. That base is small; the next paid
+record-structurer run is the first wider measure. The 2026-09-07 ruling also cited a tier-1 failure
+suppressing the judge; that cost is gone (the judge still runs, above).
 
 **A skip is recorded as its own outcome, not as a pass.** A validator that calls
 `pytest.skip()` did not apply to this state and executed no assertion. It stays

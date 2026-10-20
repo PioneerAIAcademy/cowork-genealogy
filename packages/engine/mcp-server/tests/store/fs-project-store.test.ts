@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mkdir, mkdtemp, rm, readdir, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, open, rm, readdir, symlink, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -83,6 +83,30 @@ describe("FsProjectStore specifics", () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+
+  it.skipIf(process.platform === "win32")(
+    "writeBytes replaces a scan whole: a reader that opened the old one still reads it intact",
+    async () => {
+      // A rewrite in place truncates the file under its readers, so one reading
+      // while image_transcribe re-saves the same scan could get a short image.
+      const root = await mkdtemp(join(tmpdir(), "fs-store-"));
+      try {
+        const store = new FsProjectStore();
+        await store.writeBytes(root, "images/scan.jpg", new Uint8Array([1, 2, 3, 4, 5, 6]));
+        const reader = await open(join(root, "images", "scan.jpg"), "r");
+        try {
+          await store.writeBytes(root, "images/scan.jpg", new Uint8Array([7, 8]));
+          expect(Array.from(await reader.readFile())).toEqual([1, 2, 3, 4, 5, 6]);
+        } finally {
+          await reader.close();
+        }
+        expect(Array.from(await store.readBytes(root, "images/scan.jpg"))).toEqual([7, 8]);
+        expect(await readdir(join(root, "images"))).toEqual(["scan.jpg"]);
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
 
   it.skipIf(process.platform === "win32")(
     "readText refuses a symlink that leaves the project and follows one that stays",

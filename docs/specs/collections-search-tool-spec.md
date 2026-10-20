@@ -61,6 +61,14 @@ reported back as, the state level).
 | `startYear` | integer | No | Earliest year of interest (inclusive). Omit for all periods. |
 | `endYear` | integer | No | Latest year of interest (inclusive). Must be ≥ startYear. Omit for all periods. |
 
+There is **no record-type filter**: the tool lists every collection for the
+place. `recordType`, `record_type`, `recordTypes`, `recordTypeGroup` and
+`recordTypeGroups` — the spellings the sibling tools take — are refused before
+any request, with an error that points to `volume_search`'s `recordTypeGroups`
+and names its valid groups. Nothing validates input against the advertised
+schema, so without the refusal the field would be dropped and the unfiltered
+list would come back looking filtered. Other unknown fields are not checked.
+
 Examples:
 
 ```json
@@ -252,6 +260,7 @@ contains only the collections that pass it.
 |-----------|----------|
 | `standardPlace` not provided | Throw error: `"collections_search requires a standardPlace (preferably the standardPlace from place_search)."` |
 | `endYear` less than `startYear` (both given) | Throw error: `"endYear must be greater than or equal to startYear."` |
+| `recordType`, `record_type`, `recordTypes`, `recordTypeGroup` or `recordTypeGroups` supplied | Throw, before any request: `"collections_search has no record-type filter: it lists every collection for the place, so {field} cannot narrow it. To filter by record type, use volume_search's recordTypeGroups (an array of group names). Valid groups: {RECORD_TYPE_GROUP_NAMES}."` |
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error ("User is not logged in to FamilySearch. Call the login tool to authenticate.") |
 | API returns non-OK status | Throw error: `"FamilySearch collections API error: {status} {statusText}"` |
 | API returns empty/malformed response | Return `{ query, scope, totalForPlace: 0, results: [] }` |
@@ -329,6 +338,7 @@ Smoke-test script for list mode.
 | 11 | `startYear`/`endYear` filter `results` but not `totalForPlace` | Date filter |
 | 12 | Collection with no year span always survives the date filter | Date filter edge case |
 | 13 | Throws when `endYear` < `startYear` | Input validation |
+| 14 | Each of the five record-type spellings throws, pointing to `volume_search`'s `recordTypeGroups`, with no token read and no request | Record-type refusal |
 
 **`standardPlaceToCollectionsQuery` unit tests:** US → state (any nesting
 depth); Canada/Mexico → `"Country, State"`; other countries → country;

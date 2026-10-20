@@ -161,7 +161,8 @@ export interface ProjectStore {
    */
   writeJsonBoth(projectPath: string, writes: JsonWrite[], options?: WriteJsonBothOptions): Promise<void>;
 
-  /** Write raw bytes at `ref` (retained page scans). Creates missing parents. */
+  /** Write raw bytes at `ref` (retained page scans), atomically: a reader never
+   *  observes a partial blob. Creates missing parents. */
   writeBytes(projectPath: string, ref: string, bytes: Uint8Array): Promise<void>;
 
   /** Append `text` to `ref`, creating it and its parents if absent (the

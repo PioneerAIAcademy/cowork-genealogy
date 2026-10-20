@@ -571,6 +571,15 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   protocol pings are not reliably counted as activity by the edge proxy, and a
 >   silent long turn was getting the socket dropped), and a capped replay buffer
 >   so a reconnect or a second tab rebuilds the chat history.
+> - **`seq` + `epoch` on recorded frames:** every frame that enters the replay
+>   buffer (`agent_event`, `user_msg`) is stamped with a per-session monotonic
+>   `seq` (from 1) and a per-server-process random `epoch` before it is sent.
+>   The client keeps a `lastSeq` cursor, drops any stamped frame at or below it
+>   — so the whole-history replay on a silent reconnect no longer re-folds the
+>   transcript — and resets the cursor when `epoch` changes, because a
+>   replacement server process counts from 1 again. Frames without a `seq`
+>   (`status`, the snapshot frames, `ping`, and everything from a pre-stamp
+>   server) are never deduped and pass through unchanged.
 > - `research_updated`/`gedcomx_updated` always carry the **full** document; the
 >   "or patch" option was never taken.
 > - **Lay mode: the server answers the hand-back itself (lead
@@ -638,15 +647,20 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   `init_db` adds any nullable column the model has and the table lacks
 >   (`db.add_missing_columns`). Only sandboxes built from 2026-10-12 on report, so it
 >   misses every older session still in use.
->   **`api_calls`** (project_id, user_id, model, the four token counts, cost_usd,
+>   **`api_calls`** (project_id, user_id, model, agent, the four token counts, cost_usd,
 >   session_age_s, created) covers them: one row per `POST /v1/messages` the credential
 >   proxy relays with a 200, its usage read off the response on the way back
 >   (`anthropic_proxy._UsageMeter`: `message_start` and the last `message_delta` when
 >   streamed, the body's `usage` when not) and priced at the calling model's own rates
 >   (`app/agent/spend.py` `rates_for`). Its daily total is the alpha's whole bill.
 >   `session_age_s` is the session's age at the call, which separates a reopened old
->   session's spend from a new one's. `make alpha-costs` prints both tables, in whole UTC
->   days: every call by day, by model, by token type and the most expensive sessions,
+>   session's spend from a new one's. `agent` is the agent that made the call, read off
+>   the request's `system` field in the writer thread (`anthropic_proxy._agent_name`):
+>   `main` for the hosted main thread (the opening of its appended prompt), otherwise the
+>   agent body's first `# ` heading verbatim, otherwise null. Claude Code's own prompts
+>   (built-in subagents, compaction's fallback) have no heading and read null, as do rows
+>   from before the column. `make alpha-costs` prints both tables, in whole UTC
+>   days: every call by day, by model, by agent, by token type and the most expensive sessions,
 >   then turns by day, by build and by session. Nothing enforces against either: the
 >   alpha has no spend limit (lead ruling 2026-09-25).
 

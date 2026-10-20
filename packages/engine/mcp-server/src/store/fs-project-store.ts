@@ -96,6 +96,23 @@ function tmpSibling(path: string): string {
   return join(dirname(path), `.${basename(path)}.tmp-${randomUUID()}`);
 }
 
+/**
+ * Replace `path` whole: write a sibling temp file, then rename it over the
+ * target. The rename is atomic on a POSIX filesystem, so a reader sees the old
+ * file or the new one, never a partly written one.
+ */
+async function replaceFile(path: string, bytes: Uint8Array): Promise<void> {
+  const tmp = tmpSibling(path);
+  await mkdir(dirname(path), { recursive: true });
+  try {
+    await writeFile(tmp, bytes);
+    await rename(tmp, path);
+  } catch (error) {
+    await unlink(tmp).catch(() => {});
+    throw error;
+  }
+}
+
 /** Three-way, unlike `exists`: an unreadable path is not an absent one. */
 async function fileState(path: string): Promise<"present" | "absent" | "unreadable"> {
   try {
@@ -297,22 +314,9 @@ export class FsProjectStore implements ProjectStore {
     return entries;
   }
 
-  /**
-   * Atomically write `data` as JSON: write a sibling temp file, then rename it
-   * over the target. The rename is atomic on a POSIX filesystem, so a reader
-   * never observes a partially written file.
-   */
+  /** Atomically write `data` as JSON (`replaceFile`). */
   async writeJson(projectPath: string, ref: string, data: unknown): Promise<void> {
-    const path = this.abs(projectPath, ref);
-    const tmp = tmpSibling(path);
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(tmp, serialize(data), "utf-8");
-    try {
-      await rename(tmp, path);
-    } catch (error) {
-      await unlink(tmp).catch(() => {});
-      throw error;
-    }
+    await replaceFile(this.abs(projectPath, ref), Buffer.from(serialize(data), "utf-8"));
   }
 
   /**
@@ -356,10 +360,9 @@ export class FsProjectStore implements ProjectStore {
     }
   }
 
+  /** Atomically write a blob (`replaceFile`): a scan re-saved while another call reads it is never short. */
   async writeBytes(projectPath: string, ref: string, bytes: Uint8Array): Promise<void> {
-    const path = this.abs(projectPath, ref);
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, Buffer.from(bytes));
+    await replaceFile(this.abs(projectPath, ref), bytes);
   }
 
   async appendText(projectPath: string, ref: string, text: string): Promise<void> {
