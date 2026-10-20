@@ -107,6 +107,14 @@ const KEYS = {
   absent: ["name", "factType", "note"],
 } as const;
 
+/** A stated relation that states the person's sex. Roles split mother from
+ *  father on gender, so a parent sent with only `statedRelation: "mother"` is
+ *  given the gender the text states. */
+const SEX_OF_RELATION: Record<string, "male" | "female"> = {
+  father: "male", son: "male", husband: "male", brother: "male",
+  mother: "female", daughter: "female", wife: "female", sister: "female",
+};
+
 const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 const isStr = (v: unknown) => typeof v === "string" && v.trim() !== "";
@@ -314,10 +322,11 @@ export function documentToExtract(
       ...(p.motherBirthPlace ? { motherBirthPlace: p.motherBirthPlace } : {}),
     };
     indexFields[p.id] = fields;
+    const gender = p.gender ?? SEX_OF_RELATION[p.statedRelation?.trim().toLowerCase() ?? ""];
     return {
       id: p.id,
       ...(p.principal ? { principal: true } : {}),
-      ...(p.gender ? { gender: p.gender === "male" ? "Male" : "Female" } : {}),
+      ...(gender ? { gender: gender === "male" ? "Male" : "Female" } : {}),
       names: p.names.map((n) => ({ ...(n.given ? { given: n.given } : {}), ...(n.surname ? { surname: n.surname } : {}) })),
       facts: p.facts.map((f) => ({
         type: f.type,

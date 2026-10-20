@@ -120,7 +120,11 @@ is §11.7's code.
   the Borough of Shenandoah", 2 of 3 runs) and a bride's father ("of Mahanoy
   City", 1 of 3).
 - **Gender for every person whose sex the text states**, not only the
-  principal.
+  principal. A kin word states it: when a person is sent with no `gender` and
+  a `statedRelation` of `father`, `son`, `husband`, `brother`, `mother`,
+  `daughter`, `wife` or `sister`, `extraction_append` sets the gender from it.
+  Roles split mother from father on gender alone, so without this a mother sent
+  without a gender is written as a father.
 - **Probate (2026-10-04).** The will's execution is a `will` fact; the
   court's acts (proof, letters granted) are `probate` facts, all on the
   testator, even where the letters name the executor.
