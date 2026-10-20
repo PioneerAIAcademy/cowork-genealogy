@@ -335,7 +335,7 @@ the first time it is pulled.
   halves edit the same instrumentation, and under merge doctrine they are one PR.
 - ~~**Per-thread windows for subagents**~~ — built (T1.3): `subagents[].peak_window_tokens`
   and `compactions`, shown per agent by `make e2e-agent-spend`. Awaits its first run.
-- **Issue #3568 (option D, adopted 2026-10-20) sets what each rung costs in eval runs.**
+- **Not a gate: issue #3568 (option D, adopted 2026-10-20) sets what each rung costs in eval runs.**
   Until it is built, a `model:` or `effort:` line on an agent stales every suite whose
   SKILL.md names it (A3 item 10), so a rung on a research callee also buys a research run.
   Once built, a callee no test runs live is fingerprinted by name, description and tools
