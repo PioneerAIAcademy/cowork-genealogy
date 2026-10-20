@@ -1006,7 +1006,9 @@ describe("extraction_append: closes the plan item and claims re-found records", 
       ],
       log: [
         await search("log_001", "pli_001", "positive", [death.recordId]),
-        entry("log_002", "record_search", "pli_002", "negative"),
+        // A nil search WITH a sidecar listing the record: only the "positive or
+        // partial" filter keeps this item open (Gennecis, review of #3613).
+        await search("log_002", "pli_002", "negative", [death.recordId]),
         await search("log_003", "pli_003", "positive", [death.recordId]),
       ],
     });
@@ -1128,5 +1130,248 @@ describe("extraction_append: closes the plan item and claims re-found records", 
     expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
     expect(reads).toEqual([el.recordId]);
     expect(r.records[0].logId).toBe("log_002");
+  });
+});
+
+// ─── personId: the baseline step (issue #3516 PR C) ─────────────────────────
+
+import { ATTACHMENT_LINK_RATIONALE, isAttachmentLink } from "../../src/utils/tree-person.js";
+import { errorsOf } from "../helpers/narrow.js";
+
+describe("extraction_append: personId extracts and links a person's attachments", () => {
+  const FIX = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "record-extract");
+  const element = (n: string) => JSON.parse(readFileSync(join(FIX, `${n}.json`), "utf8")).element;
+  // The captured 1870 census: John Boyer is p_260900945, ark MZGS-1B7; Anna is
+  // p_260900946, MZGS-1BW. The record itself is MZGS-1BH.
+  const CENSUS = () => element("census-1870-no-relationship-column");
+  let dir: string;
+  const url = (bare: string) => `https://familysearch.org/ark:/61903/1:1:${bare}`;
+  const person = (id: string, refs: { person?: string[]; names?: string[]; facts?: string[] }, ark?: string) => ({
+    id,
+    gender: "Male",
+    ...(ark ? { ark } : {}),
+    names: [{ id: `${id}-N1`, given: "John", surname: "Boyer", ...(refs.names ? { sources: refs.names.map((ref) => ({ ref })) } : {}) }],
+    facts: refs.facts ? [{ id: `${id}-F1`, type: "Birth", date: "1845", sources: refs.facts.map((ref) => ({ ref })) }] : [],
+    ...(refs.person ? { sources: refs.person.map((ref) => ({ ref })) } : {}),
+  });
+  const writeTree = async (persons: any[], sources: any[], relationships: any[] = []) =>
+    writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify({ persons, relationships, sources }), "utf8");
+  const research = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
+  const tree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf8"));
+  /** A live record_read: any persona's ARK returns the whole record, staged
+   *  under the ARK that was asked for. */
+  const reader = (els: any[], reads: string[] = []) => ({
+    readRecord: async ({ recordId, projectPath }: { recordId: string; projectPath?: string }) => {
+      reads.push(recordId);
+      const want = arkToBareId(recordId);
+      const el = els.find(
+        (e) => arkToBareId(e.recordId) === want || (e.gedcomx.persons ?? []).some((p: any) => p.ark && arkToBareId(p.ark) === want),
+      );
+      if (!el) throw new Error(`404 for ${recordId}`);
+      const row = { ...el, recordId: `ark:/61903/1:1:${want}` };
+      const staged = await stageSearchResults({ projectPath: projectPath!, tool: "record_read", response: { query: { recordId }, results: [row] } });
+      return { ...el.gedcomx, staged };
+    },
+  });
+  const run = (personId: string, rdr = reader([CENSUS()])) =>
+    runExtractionAppend({ projectPath: dir, personId } as any, rdr as any, LOCAL);
+  const S1 = { id: "S1", title: "United States Census, 1870", url: url("MZGS-1B7") };
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "extraction-person-test-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify({ ...baseResearch(), sources: [], assertions: [] }), "utf8");
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("extracts the attached record and links the attached persona's assertions as unverified", async () => {
+    await writeTree([person("I1", { person: ["S1"] })], [S1]);
+    const r = await run("I1");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.extracted).toBe(1);
+    const after = await research();
+    const links = after.person_evidence;
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.length).toBe(r.linked);
+    expect(links.every((pe: any) => isAttachmentLink(pe) && pe.person_id === "I1")).toBe(true);
+    expect(links[0].rationale).toBe(ATTACHMENT_LINK_RATIONALE);
+    const linkedPersonas = new Set(
+      links.map((pe: any) => after.assertions.find((a: any) => a.id === pe.assertion_id).record_persona_id),
+    );
+    expect([...linkedPersonas]).toEqual(["p_260900945"]);
+    expect(r.summary).toMatch(/linked as unverified attachments/);
+    expect(r.summary).toMatch(/separate request/);
+  });
+
+  it("reuses the import's S and mints no second tree source", async () => {
+    await writeTree([person("I1", { person: ["S1"] })], [S1]);
+    await run("I1");
+    expect((await research()).sources[0].gedcomx_source_description_id).toBe("S1");
+    expect((await tree()).sources.map((s: any) => s.id)).toEqual(["S1"]);
+  });
+
+  it("resolves a FamilySearch id through the person's ark", async () => {
+    await writeTree([person("I1", { person: ["S1"] }, "https://familysearch.org/ark:/61903/4:1:KWJ1-ABC")], [S1]);
+    const r = await run("KWJ1-ABC");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect((await research()).person_evidence.every((pe: any) => pe.person_id === "I1")).toBe(true);
+  });
+
+  it.each([
+    ["name-level", { names: ["S1"] }],
+    ["fact-level", { facts: ["S1"] }],
+  ])("counts a %s ref", async (_n, refs) => {
+    await writeTree([person("I1", refs)], [S1]);
+    const r = await run("I1");
+    expect(r.extracted).toBe(1);
+  });
+
+  it("takes no relationship-level ref and no relative's source", async () => {
+    await writeTree(
+      [person("I1", {}), person("I2", { person: ["S1"] })],
+      [S1],
+      [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] }],
+    );
+    const reads: string[] = [];
+    const r = await run("I1", reader([CENSUS()], reads));
+    expect(r.ok).toBe(true);
+    expect(reads).toEqual([]);
+    expect(r.summary).toMatch(/no attached indexed record/);
+  });
+
+  it("counts a source that is not an indexed record as skipped", async () => {
+    await writeTree([person("I1", { person: ["S1", "S2"] })], [S1, { id: "S2", title: "Family memory", url: "https://www.familysearch.org/photos/artifacts/123" }]);
+    const r = await run("I1");
+    expect(r.skipped).toBe(1);
+    expect(r.summary).toMatch(/1 attached source is not indexed records|1 attached source is not/);
+  });
+
+  it("with no attachment returns ok and writes nothing", async () => {
+    await writeTree([person("I1", {})], []);
+    const before = await readFile(join(dir, "research.json"), "utf8");
+    const r = await run("I1");
+    expect(r.ok).toBe(true);
+    expect(r.records).toEqual([]);
+    expect(await readFile(join(dir, "research.json"), "utf8")).toBe(before);
+  });
+
+  it("refuses personId together with recordIds", async () => {
+    await writeTree([person("I1", { person: ["S1"] })], [S1]);
+    const r = await runExtractionAppend({ projectPath: dir, personId: "I1", recordIds: ["MZGS-1B7"] } as any, reader([CENSUS()]) as any, LOCAL);
+    expect(r.ok).toBe(false);
+    expect(r.errors?.[0]).toMatch(/together/);
+  });
+
+  it("links a record extracted earlier without re-reading it", async () => {
+    await writeTree([person("I1", { person: ["S1"] })], [S1]);
+    await runExtractionAppend({ projectPath: dir, recordIds: ["ark:/61903/1:1:MZGS-1B7"] } as any, reader([CENSUS()]) as any, LOCAL);
+    const reads: string[] = [];
+    const r = await run("I1", reader([CENSUS()], reads));
+    expect(reads).toEqual([]);
+    expect(r.linked).toBeGreaterThan(0);
+  });
+
+  it("leaves a persona alone when any of its assertions is already linked to anyone", async () => {
+    await writeTree([person("I1", { person: ["S1"] }), person("I7", {})], [S1]);
+    await runExtractionAppend({ projectPath: dir, recordIds: ["ark:/61903/1:1:MZGS-1B7"] } as any, reader([CENSUS()]) as any, LOCAL);
+    const r0 = await research();
+    const johns = r0.assertions.filter((a: any) => a.record_persona_id === "p_260900945");
+    r0.person_evidence = [{ id: "pe_001", assertion_id: johns[0].id, person_id: "I7", confidence: "probable", rationale: "someone decided", created: "2026-01-01", match_score: null }];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
+    const r = await run("I1");
+    expect(r.linked).toBe(0);
+    expect(r.alreadyLinked).toBe(1);
+    expect((await research()).person_evidence).toHaveLength(1);
+  });
+
+  it("never re-links a rejected pair, and still links the persona's other assertions", async () => {
+    await writeTree([person("I1", { person: ["S1"] })], [S1]);
+    await runExtractionAppend({ projectPath: dir, recordIds: ["ark:/61903/1:1:MZGS-1B7"] } as any, reader([CENSUS()]) as any, LOCAL);
+    const r0 = await research();
+    const johns = r0.assertions.filter((a: any) => a.record_persona_id === "p_260900945");
+    r0.rejected_links = [{ id: "rj_001", assertion_id: johns[0].id, person_id: "I1", created: "2026-01-01" }];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
+    const r = await run("I1");
+    expect(r.rejectedSkipped).toBe(1);
+    expect(r.linked).toBe(johns.length - 1);
+    expect((await research()).person_evidence.some((pe: any) => pe.assertion_id === johns[0].id)).toBe(false);
+  });
+
+  it("treats a record re-found through another persona's ARK as one record: tied, not re-extracted", async () => {
+    await writeTree([person("I1", { person: ["S1"] })], [S1]);
+    await run("I1");
+    const before = await research();
+    const reads: string[] = [];
+    const r = await runExtractionAppend(
+      { projectPath: dir, recordIds: ["ark:/61903/1:1:MZGS-1BW"], questionIds: [] } as any,
+      reader([CENSUS()], reads) as any,
+      LOCAL,
+    );
+    expect(r.records[0].status, JSON.stringify(r)).toBe("already_extracted");
+    expect(reads).toEqual([]);
+    expect((await research()).sources).toHaveLength(before.sources.length);
+  });
+});
+
+describe("research_append: the attachment-link score exemption is code-only", () => {
+  const FIX = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "record-extract");
+  const CENSUS = () => JSON.parse(readFileSync(join(FIX, "census-1870-no-relationship-column.json"), "utf8")).element;
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "extraction-person-gate-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify({ ...baseResearch(), sources: [], assertions: [] }), "utf8");
+    // The write-once starting tree init-project leaves: I1 pre-existed this
+    // research, so the score gate cannot treat it as minted from the record.
+    const startTree = JSON.stringify({
+      persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Boyer" }], sources: [{ ref: "S1" }] }],
+      relationships: [],
+      sources: [{ id: "S1", title: "1870", url: "https://familysearch.org/ark:/61903/1:1:MZGS-1B7" }],
+    });
+    await writeFile(join(dir, "tree.gedcomx.json"), startTree, "utf8");
+    await writeFile(join(dir, "starting-tree.gedcomx.json"), startTree, "utf8");
+    const staged = { readRecord: async ({ recordId, projectPath }: any) => {
+      const row = { ...CENSUS(), recordId: `ark:/61903/1:1:${arkToBareId(recordId)}` };
+      return { ...row.gedcomx, staged: await stageSearchResults({ projectPath, tool: "record_read", response: { query: { recordId }, results: [row] } }) };
+    } };
+    await runExtractionAppend({ projectPath: dir, personId: "I1" } as any, staged as any, LOCAL);
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const research = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
+  const annaLink = async () => {
+    const anna = (await research()).assertions.find((a: any) => a.record_persona_id === "p_260900946");
+    return { section: "person_evidence", op: "append", entry: { assertion_id: anna.id, person_id: "I1", confidence: "speculative", match_score: null, rationale: ATTACHMENT_LINK_RATIONALE } };
+  };
+
+  it("refuses the same unscored speculative link from a caller without the internal flag", async () => {
+    const r = await researchAppend({ projectPath: dir, ops: [await annaLink()] } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)?.join(" ")).toMatch(/same_person/);
+  });
+
+  it("still refuses it with no starting-tree baseline, where the reused S would make the subject look minted", async () => {
+    await rm(join(dir, "starting-tree.gedcomx.json"));
+    const r = await researchAppend({ projectPath: dir, ops: [await annaLink()] } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)?.join(" ")).toMatch(/same_person/);
+  });
+
+  it("accepts it only on the internal flag", async () => {
+    const r = await researchAppend(
+      { projectPath: dir, ops: [await annaLink()] } as any,
+      { allowedSections: new Set(["person_evidence"]), toolName: "extraction_append", attachmentLink: true },
+    );
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+  });
+
+  it("refuses raising an attachment link in place, and accepts superseding it", async () => {
+    const pe = (await research()).person_evidence[0];
+    const raise = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { confidence: "probable" } } as any);
+    expect(raise.ok).toBe(false);
+    expect(errorsOf(raise)?.join(" ")).toMatch(/only ever superseded/);
+    const retire = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { superseded_by: "pe_999" } } as any);
+    expect(retire.ok, JSON.stringify(retire)).toBe(true);
   });
 });

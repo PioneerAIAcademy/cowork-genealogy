@@ -2095,6 +2095,14 @@ export function mintedFromThisRecord(
   // caught by both discriminators, 22 by the starting-tree baseline alone).
   if (FS_PERSON_PID.test(personId)) return false;
   if (startingPersonIds?.has(personId)) return false;
+  // A person with an attachment link came from FamilySearch: only an imported
+  // person has records attached there. Without this, reusing the import's S for
+  // an attached record makes that person's only ref reach this record, and a
+  // project with no starting-tree baseline would read them as minted from it,
+  // exempting any caller's link to them from the score gate.
+  if (((research?.person_evidence ?? []) as any[]).some((pe) => pe?.person_id === personId && isAttachmentLink(pe))) {
+    return false;
+  }
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
   if (!person) return false;
   const refs = new Set<string>();
