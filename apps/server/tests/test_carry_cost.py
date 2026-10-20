@@ -96,7 +96,8 @@ def worked(tmp_path):
         call(s, 22, "sub1", cw=10_000, out=1_000, isSidechain=True),   # last entry wins
     ]
     early = bundle(tmp_path, "b-early", "prj_worked", {"session-log.jsonl": rows[:8]})
-    late = bundle(tmp_path, "b-late", "prj_worked", {"session-log.jsonl": rows},
+    inline = call(s, 12.5, "side1", cw=7_000, out=1, isSidechain=True)  # an inline sidechain row
+    late = bundle(tmp_path, "b-late", "prj_worked", {"session-log.jsonl": [*rows, inline]},
                   subagents={"agent-a1.jsonl": agent})
     [project] = carry_cost.analyze([early, late])
     return project
@@ -140,7 +141,8 @@ def test_the_cost_counts_every_call_once_at_its_last_entry(worked):
     price = lambda t: sum(n * r for n, r in zip(t, rate)) / 1e6  # noqa: E731
     assert [c.tokens for c in worked.main_calls] == main
     assert worked.cost(main_only=True) == pytest.approx(sum(price(t) for t in main))
-    assert worked.cost() == pytest.approx(sum(price(t) for t in main) + price((0, 10_000, 0, 1_000)))
+    assert worked.cost() == pytest.approx(sum(price(t) for t in main) + price((0, 10_000, 0, 1_000))
+                                          + price((0, 7_000, 0, 1)))
 
 
 def test_a_hand_back_yes_is_folded_into_the_message_it_answers(worked):
@@ -289,3 +291,13 @@ def test_a_prompt_the_two_rules_read_differently_is_counted(tmp_path):
     rows[0]["parentUuid"] = None
     [project] = carry_cost.analyze([bundle(tmp_path, "b", "prj", {"session-log.jsonl": rows})])
     assert len(project.messages[True]) == 1 and project.disagree == 2
+
+
+def test_positional_prices_each_part_of_the_span_where_the_call_holds_it():
+    """Span 45,000-55,000 against 50,000 read, 3,000 written, 2,000 input: 5,000 read, 3,000
+    written, 2,000 input. Blended: 10,000 x (2,000 x 3 + 3,000 x 3.75 + 50,000 x 0.30) / 55,000."""
+    c = carry_cost.Call("claude-sonnet-4-6", (2_000, 3_000, 50_000, 0))
+    assert c.carry_cost(10_000, 45_000, positional=True) == pytest.approx(
+        (5_000 * 0.30 + 3_000 * 3.75 + 2_000 * 3.0) / 1e6)
+    assert c.carry_cost(10_000, 45_000, positional=False) == pytest.approx(
+        10_000 * (2_000 * 3.0 + 3_000 * 3.75 + 50_000 * 0.30) / 55_000 / 1e6)
