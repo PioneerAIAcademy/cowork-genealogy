@@ -2638,8 +2638,10 @@ function declarationStatusInvariants(entry: any): string[] {
  *  ADR-0011 retired the overridable-doctrine tier on 2026-08-24 and NO gate
  *  carries an override. What still bites is the route: measured 2026-08-23, no
  *  skill can move a plan item out of `in_progress` on the FamilySearch path, so
- *  a researcher who believes the search is done has no way to say so. Issue
- *  #1821 owns that fix.
+ *  a researcher who believes the search is done had no way to say so. Since
+ *  issue #3516, `extraction_append` completes an item once a record its
+ *  `record_search` found is extracted; an item whose searches all found
+ *  nothing still waits on research-plan's Dispose.
  *
  *  **`planned` BLOCKS, decided 2026-10-05 on issue #1830.** It did not until
  *  then. Dallan's `c78efb0b7` (#1847, 23 August) put "`planned` does NOT block"
@@ -2735,12 +2737,12 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
  *  (issue #1830): an undisposed item leaves the record unable to say whether it
  *  was answered by what is already held or simply never run. The two gates ask
  *  different questions of the same plan, so the status set is the caller's. */
-function activePlanItems(
+export function activePlanItems(
   research: any,
   includePlan: (plan: any) => boolean,
   statuses: readonly string[] = ["in_progress"],
-): { itemId: string; questionId: unknown; status: string }[] {
-  const found: { itemId: string; questionId: unknown; status: string }[] = [];
+): { itemId: string; planId: string; questionId: unknown; status: string }[] {
+  const found: { itemId: string; planId: string; questionId: unknown; status: string }[] = [];
   for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
     if (!plan || !includePlan(plan)) continue;
     // ONLY the active plan blocks, and this is what keeps the gate escapable.
@@ -2758,7 +2760,7 @@ function activePlanItems(
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
       if (typeof item?.id !== "string" || typeof item?.status !== "string") continue;
       if (statuses.includes(item.status)) {
-        found.push({ itemId: item.id, questionId: plan.question_id, status: item.status });
+        found.push({ itemId: item.id, planId: plan.id, questionId: plan.question_id, status: item.status });
       }
     }
   }
@@ -4423,6 +4425,7 @@ function applyOne(
   let entryId: string;
   let resultEntry: any;
   let arrayIndex: number | undefined;
+  let keptCompletedWarning: string | undefined;
 
   if (op.op === "append") {
     const entry = op.entry;
@@ -4502,6 +4505,24 @@ function applyOne(
       }
     }
 
+    // A completed plan item stays completed. search-records writes
+    // `in_progress` after every search it logs, and extraction_append completes
+    // the item once a record it found is extracted, so a later search on the
+    // same item would otherwise reopen it. The status is dropped from the op,
+    // which also keeps every status-gated arm below from reading it as touched.
+    if (
+      section === "plan_items" &&
+      existing.status === "completed" &&
+      op.fields.status === "in_progress"
+    ) {
+      const { status: _dropped, ...rest } = op.fields;
+      op.fields = rest;
+      keptCompletedWarning = `plan item '${op.entryId}' is already completed; left completed`;
+      if (Object.keys(rest).filter((k) => k !== "id").length === 0) {
+        return { section, op: op.op, entryId: op.entryId, noop: true, warnings: [keptCompletedWarning] };
+      }
+    }
+
     for (const [k, v] of Object.entries(op.fields)) {
       if (k === "id") continue;
       existing[k] = v;
@@ -4548,7 +4569,7 @@ function applyOne(
   // Warn-only advisories: collected here, surfaced on the successful response's
   // validation.warnings (via the caller's flatMap over AppliedOp.warnings), never
   // thrown. Distinct from invariantErrors, which reject the write (#1006).
-  const opWarnings: string[] = [];
+  const opWarnings: string[] = keptCompletedWarning ? [keptCompletedWarning] : [];
   // A question may only reach `resolved` once a proof summary for it exists.
   // Same "only when THIS op sets it" discipline as the proof_summaries block
   // below — an unrelated update to an already-resolved question must not

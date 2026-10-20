@@ -12459,3 +12459,48 @@ describe("research_append — unexplained move, update path", () => {
     expect((await update(id, { rationale: "Name, household and occupation agree." })).ok).toBe(true);
   });
 });
+
+describe("research_append — a completed plan item stays completed (#3516)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-kept-"));
+    const r = baseResearch();
+    r.questions = [validQuestion("q_001")];
+    r.plans = [validPlan("pl_001", "q_001", "active", [{ ...seededPlanItem("pli_001"), status: "completed" }])];
+    r.log = [{
+      id: "log_001", plan_item_id: "pli_001", performed: "2026-05-01T10:15:00Z", tool: "record_search",
+      query: { surname: "Flynn" }, outcome: "positive", results_examined: 1, results_ref: null, external_site: null,
+    }];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const update = (fields: Record<string, unknown>) =>
+    researchAppend({ projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields } as any);
+  const stored = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).plans[0].items[0];
+
+  it("an in_progress write on a completed item is a no-op with a warning", async () => {
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r: any = await update({ status: "in_progress" });
+    expect(r.ok).toBe(true);
+    expect(r.validation.warnings.join(" ")).toMatch(/pli_001.*already completed; left completed/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("keeps the other fields of the same op and drops only the status", async () => {
+    const r: any = await update({ status: "in_progress", rationale: "Re-run with a wider date range" });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await stored()).toMatchObject({ status: "completed", rationale: "Re-run with a wider date range" });
+  });
+
+  it("still moves an item that is not completed", async () => {
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.plans[0].items[0].status = "in_progress";
+    r0.log = [];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    expect((await update({ status: "planned" })).ok).toBe(true);
+    expect((await stored()).status).toBe("planned");
+  });
+});
