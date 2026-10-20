@@ -21,6 +21,7 @@ on `test["tags"]`.
 from __future__ import annotations
 
 import re
+from urllib.parse import unquote
 
 import pytest
 
@@ -162,6 +163,129 @@ def test_no_exhaustive_declaration(before_state, after_state, test):
         pytest.skip("missing research.json for diff")
     bad = check_no_gate_stop(before_state, after_state)
     assert not bad, "Unexpected stop-gate write:\n  - " + "\n  - ".join(bad)
+
+
+# --- Tag-gated: not_reached is built from what the project holds ------------
+
+_LOCALITY_PAGE_SECTIONS = frozenset({"home", "getting_started", "online_records", "research_tips"})
+
+
+def _plan_item_ids_for(research: dict, question_id: str) -> set[str]:
+    return {
+        item.get("id")
+        for plan in (research.get("plans") or [])
+        if plan.get("question_id") == question_id
+        for item in (plan.get("items") or [])
+        if item.get("id")
+    }
+
+
+def _handoff_scan(research: dict, question_id: str) -> tuple[list[str], set[str]]:
+    """Return (open hand-off ids, ids of the later uncaptured entries for them).
+
+    A hand-off is an `external_site` entry on the question's plan items with
+    `outcome: "partial"` and `capture_received: false`. A LATER entry (by
+    position in `log[]`) on those plan items with the same non-null
+    `url_generated` and `capture_received: true` closes it; a later entry
+    without a capture (an agent-written `negative`) does not, and is returned
+    as a closer id that no `not_reached` entry may cite (issue #2539, lead
+    2026-10-16). A later entry that is itself a hand-off of the same URL is a
+    hand-off, not a closer. Plan-item scope is what `research_query`
+    `questionId` returns to the agent."""
+    items = _plan_item_ids_for(research, question_id)
+    log = [e for e in (research.get("log") or []) if e.get("plan_item_id") in items]
+
+    def is_handoff(e: dict) -> bool:
+        site = e.get("external_site") or {}
+        return (e.get("tool") == "external_site"
+                and e.get("outcome") == "partial"
+                and site.get("capture_received") is False
+                and bool(site.get("url_generated")))
+
+    open_ids: list[str] = []
+    closers: set[str] = set()
+    for i, entry in enumerate(log):
+        if not is_handoff(entry):
+            continue
+        url = entry["external_site"]["url_generated"]
+        later = [e for e in log[i + 1:] if (e.get("external_site") or {}).get("url_generated") == url]
+        if any((e.get("external_site") or {}).get("capture_received") is True for e in later):
+            continue
+        open_ids.append(entry.get("id"))
+        closers.update(e.get("id") for e in later if e.get("id") and not is_handoff(e))
+    return open_ids, closers
+
+
+def uncaptured_handoff_ids(research: dict, question_id: str) -> list[str]:
+    return _handoff_scan(research, question_id)[0]
+
+
+def _norm_wiki_title(title: str) -> str:
+    return unquote(re.split(r"[#?]", title, maxsplit=1)[0]).replace("_", " ").strip().casefold()
+
+
+def held_wiki_titles(research: dict) -> set[str]:
+    """Normalised page titles from every locality's `pages_read[].url`."""
+    titles: set[str] = set()
+    for loc in (research.get("localities") or []):
+        for page in (loc.get("pages_read") or []):
+            url = page.get("url") or ""
+            if "/wiki/" in url:
+                titles.add(_norm_wiki_title(url.split("/wiki/", 1)[1]))
+    return titles
+
+
+def _written_questions(before_state, after_state) -> list[dict]:
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    written = [q for q in _questions_with_changed_declaration(before, after) if q.get("search_stop")]
+    assert written, "No question's search_stop was written, so not_reached was never built"
+    return written
+
+
+def test_not_reached_lists_uncaptured_handoffs(before_state, after_state, test):
+    """Tag-gated: every uncaptured hand-off is a `handed_to_user` entry under
+    the hand-off's own log id, never the id of the entry that closed it."""
+    if "not-reached-handoff" not in test.get("tags", []):
+        pytest.skip("not a not-reached-handoff scenario")
+    before = before_state.get("research_json") or {}
+    bad: list[str] = []
+    for q in _written_questions(before_state, after_state):
+        expected, closers = _handoff_scan(before, q.get("id"))
+        listed = {
+            e.get("log_entry_id")
+            for e in (q["search_stop"].get("not_reached") or [])
+            if e.get("kind") == "handed_to_user"
+        }
+        bad += [f"{q.get('id')}: hand-off {hid} has no handed_to_user entry" for hid in expected if hid not in listed]
+        bad += [f"{q.get('id')}: handed_to_user cites {lid}, which is not an uncaptured hand-off"
+                for lid in sorted(x for x in listed if x is not None) if lid not in expected]
+        bad += [f"{q.get('id')}: {e.get('kind')} entry cites {e.get('log_entry_id')}, a later entry that did not capture the hand-off"
+                for e in (q["search_stop"].get("not_reached") or []) if e.get("log_entry_id") in closers]
+    assert not bad, "not_reached hand-off entries wrong:\n  - " + "\n  - ".join(bad)
+
+
+def test_not_reached_wiki_title_is_page_title(before_state, after_state, test):
+    """Tag-gated: a `wiki_named_untouched` entry names a page the project
+    read, by its title from `pages_read[].url` — never the section enum,
+    which the schema validator also accepts."""
+    if "not-reached-wiki" not in test.get("tags", []):
+        pytest.skip("not a not-reached-wiki scenario")
+    held = held_wiki_titles(before_state.get("research_json") or {})
+    bad: list[str] = []
+    for q in _written_questions(before_state, after_state):
+        entries = [e for e in (q["search_stop"].get("not_reached") or []) if e.get("kind") == "wiki_named_untouched"]
+        if not entries:
+            bad.append(f"{q.get('id')}: no wiki_named_untouched entry")
+        for e in entries:
+            title = e.get("wiki_title") or ""
+            if not title.strip() or title.strip() in _LOCALITY_PAGE_SECTIONS:
+                bad.append(f"{q.get('id')}: wiki_title {title!r} is not a page title")
+            elif _norm_wiki_title(title) not in held:
+                bad.append(f"{q.get('id')}: wiki_title {title!r} is not a page the project read {sorted(held)}")
+    assert not bad, "not_reached wiki entries wrong:\n  - " + "\n  - ".join(bad)
 
 
 # --- The registration start date is fetched, not carried as prose ----------
