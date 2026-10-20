@@ -995,23 +995,7 @@ def load_fixture(fixture_dir: Path) -> Fixture:
     if src and "TODO" not in str(src):
         subject_ids.add(str(src))
 
-    # Fill omitted caps from FixtureCaps() — the single source of default
-    # values (don't re-hardcode the numbers here, or they drift).
-    caps_raw = fixture_json.get("caps") or {}
-    defaults = FixtureCaps()
-    caps = FixtureCaps(
-        wall_clock_seconds=caps_raw.get("wall_clock_seconds", defaults.wall_clock_seconds),
-        inactivity_seconds=caps_raw.get("inactivity_seconds", defaults.inactivity_seconds),
-        progress_stall_seconds=caps_raw.get(
-            "progress_stall_seconds", defaults.progress_stall_seconds
-        ),
-        tool_calls=caps_raw.get("tool_calls", defaults.tool_calls),
-        max_turns=caps_raw.get("max_turns", defaults.max_turns),
-        max_cost_usd=caps_raw.get("max_cost_usd", defaults.max_cost_usd),
-        max_continue_nudges=caps_raw.get(
-            "max_continue_nudges", defaults.max_continue_nudges
-        ),
-    )
+    caps = load_caps(fixture_json.get("caps") or {})
     model = fixture_json.get("model") or {}
     return Fixture(
         id=fixture_json["id"],
@@ -1026,6 +1010,26 @@ def load_fixture(fixture_dir: Path) -> Fixture:
         starting_tree_path=fixture_dir / "starting-tree.gedcomx.json",
         blocked_tools=frozenset(fixture_json.get("blocked_tools") or ()),
         subject_person_ids=frozenset(subject_ids),
+    )
+
+
+def load_caps(caps_raw: dict[str, Any]) -> FixtureCaps:
+    """A fixture.json `caps` block, with every omitted cap filled from
+    FixtureCaps() — the single source of default values (don't re-hardcode
+    the numbers here, or they drift). Shared with the single-ask loader."""
+    defaults = FixtureCaps()
+    return FixtureCaps(
+        wall_clock_seconds=caps_raw.get("wall_clock_seconds", defaults.wall_clock_seconds),
+        inactivity_seconds=caps_raw.get("inactivity_seconds", defaults.inactivity_seconds),
+        progress_stall_seconds=caps_raw.get(
+            "progress_stall_seconds", defaults.progress_stall_seconds
+        ),
+        tool_calls=caps_raw.get("tool_calls", defaults.tool_calls),
+        max_turns=caps_raw.get("max_turns", defaults.max_turns),
+        max_cost_usd=caps_raw.get("max_cost_usd", defaults.max_cost_usd),
+        max_continue_nudges=caps_raw.get(
+            "max_continue_nudges", defaults.max_continue_nudges
+        ),
     )
 
 
@@ -1261,6 +1265,12 @@ _RUNLOG_MAX_CHARS = 4000
 # announcement and overwrite the return with it.
 _RUNLOG_AGENT_STRING_MAX = 8000
 _RUNLOG_AGENT_MAX_CHARS = 12000
+
+
+def message_thread(message: Any) -> str:
+    """`"main"` or `"sub"`: the SDK sets `parent_tool_use_id` to None on the main
+    thread and to the spawning Task's id on a subagent (message_parser.py)."""
+    return "main" if getattr(message, "parent_tool_use_id", None) is None else "sub"
 
 
 def _is_agent_tool(tool_name: str | None) -> bool:
@@ -2059,6 +2069,8 @@ async def _run_agent(
     deny_project_reads: bool = False,
     context_1m: bool = False,
     tool_search: bool = True,
+    single_ask: bool = False,
+    user_message: str | None = None,
 ) -> tuple[
     list[dict[str, Any]],  # tool_calls
     list[dict[str, Any]],  # narration
@@ -2075,6 +2087,11 @@ async def _run_agent(
     Returns (tool_calls, narration, usage, aborted_reason, error,
     blocked_tree_reads, blocked_context_calls, guardrail_shadow_violations,
     unnamed_delegate_violations).
+
+    ``single_ask`` (spec §16) sends ``user_message`` as one ordinary turn: the
+    Stop hook never nudges, and the universal live-tree block is lifted, since
+    a single-ask fixture has no answer key to hide. ``user_message`` defaults
+    to the autonomous ``/research --autonomous`` rendering.
     """
     tool_calls: list[dict[str, Any]] = []
     # The agent's prose between tool calls, plus the two harness-side events
@@ -2449,7 +2466,9 @@ async def _run_agent(
         # call never runs, so it shouldn't consume the budget. The run
         # continues (no stopReason); the agent must find a records path.
         bare = _bare_tool_name(tool_name)
-        if is_blocked_tree_tool(tool_name, dict(input_data.get("tool_input") or {})):
+        if not single_ask and is_blocked_tree_tool(
+            tool_name, dict(input_data.get("tool_input") or {})
+        ):
             blocked_tree_reads.append(
                 {
                     "tool": bare,
@@ -2666,6 +2685,9 @@ async def _run_agent(
         return {}
 
     async def stop_hook(_input_data, _tool_use_id, _ctx):
+        # A single ask is one turn: whatever stop ends it is the answer.
+        if single_ask:
+            return {}
         # The agent is ending its turn. In an autonomous e2e run the only
         # valid end is project.status == "completed"; an earlier yield is the
         # known stall. Veto it (decision=block) and tell the agent to resume,
@@ -2841,7 +2863,8 @@ async def _run_agent(
         },
     )
 
-    user_message = _render_user_message(fixture)
+    if user_message is None:
+        user_message = _render_user_message(fixture)
 
     def _should_resume() -> bool:
         # Resume only in a provably-safe state: the flag is on, we have a session
@@ -2998,12 +3021,7 @@ async def _run_agent(
                                     # from the subagent's it is supposed to be
                                     # compared against (#3188). Same test the
                                     # usage tagger below already uses.
-                                    "thread": (
-                                        "main"
-                                        if getattr(message, "parent_tool_use_id", None)
-                                        is None
-                                        else "sub"
-                                    ),
+                                    "thread": message_thread(message),
                                 }
                             )
                             one_line = " ".join(block.text.split())
@@ -3015,6 +3033,10 @@ async def _run_agent(
                                 "tool": block.name,
                                 "args": dict(block.input or {}),
                                 "response_summary": None,
+                                # Exact, unlike `agent_id`, which is joined only
+                                # when a result arrives — an entry cut off by a cap
+                                # never gets one.
+                                "thread": message_thread(message),
                             }
                             tool_calls.append(entry)
                             pending_tool_uses[block.id] = entry
@@ -3036,11 +3058,7 @@ async def _run_agent(
                     # needed here — `cache_window.row_threads` infers the thread
                     # from `task_progress` adjacency only because it reads
                     # COMMITTED logs, which have no message object to ask.
-                    msg_thread[_usage_key] = (
-                        "main"
-                        if getattr(message, "parent_tool_use_id", None) is None
-                        else "sub"
-                    )
+                    msg_thread[_usage_key] = message_thread(message)
                     timeline.append(
                         [
                             round(now - run_started, 1),
@@ -3664,6 +3682,61 @@ def _find_session_transcript(workspace: Path) -> Path | None:
     the unit harness's main-thread capture.
     """
     return find_session_transcript(workspace)
+
+
+async def run_single_ask_turn(
+    *,
+    fixture: Fixture,
+    message: str,
+    workspace: Path,
+    mcp_server_entry: Path = DEFAULT_MCP_SERVER_ENTRY,
+    agent_model: str | None = None,
+) -> dict[str, Any]:
+    """Send ONE ordinary user turn into a built workspace and return its record.
+
+    Spec §16. A function of one message on purpose: under step mode
+    (docs/plan/research-step-mode.md §F) a single ask is one step turn. No stall
+    resume — that sends a second message. Subagent capture runs here, while
+    ``workspace`` exists, because the real work of a single ask is usually in a
+    subagent and the main-thread usage alone leaves most of the spend out.
+    """
+    (
+        tool_calls,
+        narration,
+        usage,
+        aborted,
+        error,
+        blocked_tree_reads,
+        blocked_context_calls,
+        _shadow,
+        _unnamed,
+    ) = await _run_agent(
+        fixture=fixture,
+        workspace=workspace,
+        mcp_server_entry=mcp_server_entry,
+        resume_on_stall=False,
+        agent_model=agent_model,
+        single_ask=True,
+        user_message=message,
+    )
+    subagents, subagent_capture_status = collect_subagents(workspace)
+    backfill_background_tool_calls(workspace, tool_calls)
+    whole_run_usage, whole_run_cost = merge_whole_run_usage(usage, subagents)
+    if isinstance(usage, dict):
+        usage["whole_run_usage"] = whole_run_usage
+        usage["whole_run_cost_usd_estimated"] = whole_run_cost
+    return {
+        "subagents": subagents,
+        "message": message,
+        "tool_calls": tool_calls,
+        "narration": narration,
+        "usage": usage,
+        "aborted_reason": aborted,
+        "error": error,
+        "blocked_tree_reads": blocked_tree_reads,
+        "blocked_context_calls": blocked_context_calls,
+        "subagent_capture_status": subagent_capture_status,
+    }
 
 
 async def run_e2e_test(

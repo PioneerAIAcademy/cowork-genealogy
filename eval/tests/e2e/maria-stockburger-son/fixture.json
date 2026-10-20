@@ -1,0 +1,19 @@
+{
+  "id": "maria-stockburger-son",
+  "name": "Maria Dorothea Stockburger — a son Andreas Mayer baptised at Sankt Georgen in September 1812",
+  "genre": "record-hint",
+  "source_pid": "9DQM-45L",
+  "captured": "2026-10-20",
+  "researcher_question": "What children did Maria Dorothea Stockburger, wife of Johann Georg Meyer and mother of Magdalena (born 5 March 1817) and Anna Maria (born 9 November 1821), both baptised at Sankt Georgen im Schwarzwald, Baden, have besides these two?",
+  "tags": {
+    "question_type": "children",
+    "era": "1810s",
+    "geography": "DE"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 1, hint-samples.csv row 49, flag adds_son, confidence 3). Draft transcribed from an 1812 Sankt Georgen baptism entry for Andreas Mayer naming his parents as Johann Georg Mayer and Maria Dorothea Stokburger; unverified. Indexed in the same collection and under the same place string as the 1821 baptism of the tree's daughter Anna Maria."
+}

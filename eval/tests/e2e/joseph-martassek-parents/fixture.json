@@ -1,0 +1,19 @@
+{
+  "id": "joseph-martassek-parents",
+  "name": "Joseph Martassek — parents named on an 1853 baptism, Krásno nad Kysucou, Slovakia",
+  "genre": "record-hint",
+  "source_pid": "L8JK-KDK",
+  "captured": "2026-10-20",
+  "researcher_question": "Who were the parents of Joseph Martassek of Krásno nad Kysucou, Slovakia, husband of Maria Szuchony and father of children baptised there between 1878 and 1893?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1850s",
+    "geography": "SK"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 9, hint-samples.csv row 250, flags adds_father/adds_mother, confidence 3). Draft transcribed from an 1853 Krásno nad Kysucou Catholic baptism of Josephus Martassek naming his parents Joannes Martassek and Maria Tizsinyák; unverified. The tree gives the subject no birth date, so the 1853 baptism is linked on name and parish alone. CSV country Czechoslovakia; the record is in present-day Slovakia, tagged SK."
+}

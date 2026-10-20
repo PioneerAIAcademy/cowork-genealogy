@@ -360,6 +360,11 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     why: "superseded design doc; it records the run-log layout decided then",
   },
   {
+    file: "docs/specs/e2e-test-spec.md",
+    path: "eval/runlogs/e2e-single-ask/<slug>/run-<timestamp>.json",
+    why: "single-ask run logs are written by `make e2e-single-ask` and never committed; gitignored, so absent at rest",
+  },
+  {
     file: "docs/realtime-architecture.md",
     path: "apps/server/app/ws.py",
     why: "named because it was deleted; the doc says so",
