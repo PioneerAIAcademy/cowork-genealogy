@@ -98,6 +98,24 @@ def test_handoff_listed_under_its_own_id_passes():
     _run(_handoff_fn, HANDOFF_BEFORE, _declared(HANDOFF_BEFORE, [_handoff("log_008")]), _HANDOFF_TEST)
 
 
+def _handed_twice() -> dict:
+    """The same URL handed to the user again after the agent's closer."""
+    research = copy.deepcopy(HANDOFF_BEFORE)
+    again = copy.deepcopy(next(e for e in research["log"] if e["id"] == "log_008"))
+    again["id"] = "log_010"
+    research["log"].append(again)
+    return research
+
+
+def test_a_repeated_handoff_is_a_handoff_not_a_closer():
+    assert uncaptured_handoff_ids(_handed_twice(), "q_001") == ["log_008", "log_010"]
+
+
+def test_both_listings_of_a_repeated_handoff_pass():
+    before = _handed_twice()
+    _run(_handoff_fn, before, _declared(before, [_handoff("log_008"), _handoff("log_010")]), _HANDOFF_TEST)
+
+
 @pytest.mark.parametrize("not_reached", [
     pytest.param([_handoff("log_009")], id="cites-the-closer"),
     pytest.param([], id="missing"),

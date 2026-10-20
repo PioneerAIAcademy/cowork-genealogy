@@ -189,25 +189,30 @@ def _handoff_scan(research: dict, question_id: str) -> tuple[list[str], set[str]
     `url_generated` and `capture_received: true` closes it; a later entry
     without a capture (an agent-written `negative`) does not, and is returned
     as a closer id that no `not_reached` entry may cite (issue #2539, lead
-    2026-10-16). Plan-item scope is what `research_query` `questionId` returns
-    to the agent."""
+    2026-10-16). A later entry that is itself a hand-off of the same URL is a
+    hand-off, not a closer. Plan-item scope is what `research_query`
+    `questionId` returns to the agent."""
     items = _plan_item_ids_for(research, question_id)
     log = [e for e in (research.get("log") or []) if e.get("plan_item_id") in items]
+
+    def is_handoff(e: dict) -> bool:
+        site = e.get("external_site") or {}
+        return (e.get("tool") == "external_site"
+                and e.get("outcome") == "partial"
+                and site.get("capture_received") is False
+                and bool(site.get("url_generated")))
+
     open_ids: list[str] = []
     closers: set[str] = set()
     for i, entry in enumerate(log):
-        site = entry.get("external_site") or {}
-        url = site.get("url_generated")
-        if (entry.get("tool") != "external_site"
-                or entry.get("outcome") != "partial"
-                or site.get("capture_received") is not False
-                or not url):
+        if not is_handoff(entry):
             continue
+        url = entry["external_site"]["url_generated"]
         later = [e for e in log[i + 1:] if (e.get("external_site") or {}).get("url_generated") == url]
         if any((e.get("external_site") or {}).get("capture_received") is True for e in later):
             continue
         open_ids.append(entry.get("id"))
-        closers.update(e.get("id") for e in later if e.get("id"))
+        closers.update(e.get("id") for e in later if e.get("id") and not is_handoff(e))
     return open_ids, closers
 
 
