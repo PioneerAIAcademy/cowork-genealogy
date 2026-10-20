@@ -92,13 +92,6 @@ def put_blob(conn: Any, blobs: Any, project_id: str, key: str, body: bytes,
     `<project_id>/<key>/<uuid>`-shaped, which is exactly what U19's orphan sweep collects,
     so the cost of leaving it is one orphan until the sweep runs.
     """
-    previous = conn.execute(
-        "SELECT s3_key FROM blobs WHERE project_id = %s AND key = %s", (project_id, key)
-    ).fetchone()
-    prior_key = None
-    if previous:
-        prior_key = previous[0] if not isinstance(previous, dict) else previous["s3_key"]
-
     s3_key = f"{project_id}/{key}/{uuid.uuid4()}"
     blobs.put(s3_key, body, content_type)
     conn.execute(

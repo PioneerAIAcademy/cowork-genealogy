@@ -70,8 +70,8 @@
   },
   "judge_context": [
     "This is a ROUTING test. The only assertion that matters is whether Skill('question-selection') is the first Skill call. A deterministic validator (test_routes_to_expected_skill) owns that check -- do not grade the routing decision yourself.",
-    "'Find the parents of X' is an OPEN ask, not a bounded one: it names a research question, not one deliverable. The router must reach its first callee by walking the routing table as it would for any job. That is about the routing DECISION only -- it does not mean the reply should continue past the callee it hands off to.",
-    "Do not penalise the reply for not naming a deliverable. Do not penalise it for stopping after the hand-off either: the question-selection stub tells it in so many words to not walk further down the routing table and to stop, so stopping there is obedience to the harness, not a shortcut. The failure this test exists to catch is over-classification -- treating an open ask as a bounded one and delivering a single thing INSTEAD of routing -- and per the note above that is the routing validator's call, not yours."
+    "'Find the parents of X' is an OPEN ask, not a bounded one: it names a research question, not one deliverable. The router must walk the routing table as it would for any job.",
+    "Do not penalise the reply for not naming a deliverable, and do not reward it for stopping early. Stopping early is the failure this test exists to catch."
   ],
   "judge_reads_files": true
 }

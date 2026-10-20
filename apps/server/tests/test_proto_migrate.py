@@ -37,7 +37,6 @@ PINNED = {
     # Phase 2. Renumbered FOUR times on main merges -- 008, 010, 012, 013 -- each taken
     # while this sat on the branch. Same file at its fifth name; the digest is the
     # file's, so it does not change with the number.
-    "014_writer_record.sql": "065e24629f929ab5615b85b3d6e3f8648ee215817447d87a02edd6fca65e339a",
 }
 
 

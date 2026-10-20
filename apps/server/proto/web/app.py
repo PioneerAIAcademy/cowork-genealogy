@@ -369,8 +369,6 @@ class Queue(Protocol):
 # ── pure helpers (tested without I/O) ────────────────────────────────────────────
 
 
-S3_ENDPOINT = os.environ.get("GENEALOGY_S3_ENDPOINT", "")
-S3_BUCKET = os.environ.get("GENEALOGY_S3_BUCKET", "projects")
 
 
 def _pg_dsn() -> str:
@@ -1811,8 +1809,15 @@ def create_app(
             raise HTTPException(status_code=404, detail="no blob store configured")
         import psycopg
 
-        with psycopg.connect(_pg_dsn()) as conn:
-            blob = fetch_sidecar(conn, blobs, row.project_id, log_id)
+        # Off the event loop: psycopg.connect and the S3 GET inside fetch_sidecar
+        # are both blocking, and this tier runs ONE uvicorn worker (eb-web/Procfile),
+        # so a slow round trip freezes every live SSE stream. The feedback route
+        # below already does this; these three did not.
+        def _read() -> object:
+            with psycopg.connect(_pg_dsn()) as conn:
+                return fetch_sidecar(conn, blobs, row.project_id, log_id)
+
+        blob = await asyncio.to_thread(_read)
         payload = sidecar_payload(blob)
         if payload is None:
             # 404 is a REAL state: most log entries have no sidecar.
@@ -1854,8 +1859,12 @@ def create_app(
             raise HTTPException(status_code=404, detail="no blob store configured")
         import psycopg
 
-        with psycopg.connect(_pg_dsn()) as conn:
-            blob = fetch_blob(conn, blobs, row.project_id, filename)
+        # Off the event loop, for the reason given on the sidecar route above.
+        def _read() -> object:
+            with psycopg.connect(_pg_dsn()) as conn:
+                return fetch_blob(conn, blobs, row.project_id, filename)
+
+        blob = await asyncio.to_thread(_read)
         if blob is None:
             # 404 is a REAL state: most projects hold no scans.
             raise HTTPException(status_code=404, detail="image not found")
@@ -1868,7 +1877,6 @@ def create_app(
     async def upload_session_file(
         session_id: str,
         request: Request,
-        file: UploadFile | None = File(default=None),
         user: User = Depends(current_user),
     ) -> dict:
         """Write a researcher-supplied document or image into `<project>/uploads/`.
@@ -1880,20 +1888,47 @@ def create_app(
         through to `image_transcribe`, which takes PDFs by magic bytes.
         """
         # Ownership first, for the same reason as the image route above.
+        # Ownership BEFORE the body is touched. Declaring `file: UploadFile = File(...)`
+        # made FastAPI parse the multipart body before this handler ran, and therefore
+        # before this check: a 60 MB POST with no cookie was spooled to temp disk and
+        # only then refused 401. The form is parsed below, after auth.
         row = await _session(request, session_id, user)
-        if file is None:
-            raise HTTPException(status_code=400, detail="no file in the request")
-        name = safe_upload_name(file.filename)
-        if name is None:
-            raise HTTPException(
-                status_code=400,
-                detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
-            )
-        body = await file.read()
-        if not body:
-            raise HTTPException(status_code=400, detail="the file is empty")
-        if len(body) > UPLOAD_MAX_BYTES:
-            raise HTTPException(status_code=413, detail="the file is larger than 25 MB")
+
+        # Reject on the declared length before reading anything. `max_part_size` then
+        # caps what is actually read, so a lying or absent Content-Length cannot load
+        # more than the limit into memory.
+        declared = request.headers.get("content-length")
+        if declared is not None:
+            try:
+                if int(declared) > UPLOAD_MAX_BYTES:
+                    raise HTTPException(status_code=413, detail="the file is larger than 25 MB")
+            except ValueError:
+                raise HTTPException(status_code=400, detail="bad content-length") from None
+
+        try:
+            form = await request.form(max_part_size=UPLOAD_MAX_BYTES)
+        except Exception:
+            # Starlette raises when a part exceeds max_part_size; that is a 413, not a 500.
+            raise HTTPException(status_code=413, detail="the file is larger than 25 MB") from None
+        try:
+            file = form.get("file")
+            if file is None or not hasattr(file, "read"):
+                raise HTTPException(status_code=400, detail="no file in the request")
+            name = safe_upload_name(file.filename)
+            if name is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
+                )
+            body = await file.read()
+            if not body:
+                raise HTTPException(status_code=400, detail="the file is empty")
+            if len(body) > UPLOAD_MAX_BYTES:
+                raise HTTPException(status_code=413, detail="the file is larger than 25 MB")
+            content_type = file.content_type or "application/octet-stream"
+        finally:
+            # Starlette spools large parts to temp files; close() removes them.
+            await form.close()
         blobs = request.app.state.blobs
         if blobs is None:
             # 503 here, unlike the GETs: the researcher asked to STORE something and a
@@ -1902,10 +1937,15 @@ def create_app(
         key = upload_key(name)
         import psycopg
 
-        with psycopg.connect(_pg_dsn()) as conn:
-            written = put_blob(conn, blobs, row.project_id, key, body,
-                               content_type=file.content_type or "application/octet-stream")
-            conn.commit()
+        # Off the event loop, for the reason given on the sidecar route above: this one
+        # also does an S3 PUT, so it is the longest of the three.
+        def _write() -> int:
+            with psycopg.connect(_pg_dsn()) as conn:
+                n = put_blob(conn, blobs, row.project_id, key, body, content_type=content_type)
+                conn.commit()
+                return n
+
+        written = await asyncio.to_thread(_write)
         return {"path": key, "sizeBytes": written}
 
     @app.post("/api/sessions/{session_id}/interrupt", status_code=202)

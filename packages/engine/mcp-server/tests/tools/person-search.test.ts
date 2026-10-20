@@ -465,7 +465,6 @@ describe("personSearchTool zero matches", () => {
   });
 });
 
-
 // ─── Errors ─────────────────────────────────────────────────────────────
 
 describe("personSearchTool errors", () => {
