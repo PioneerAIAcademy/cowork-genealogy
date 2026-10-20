@@ -8,7 +8,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": null
+      "comment": "Summarises the existing evidence accurately, but says an 1880 census search was \"delegated and in progress\" when no such delegation was made."
     },
     {
       "test_id": "ut_research_001",
@@ -16,7 +16,7 @@
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": null
+      "comment": "Identifies the father, but for the mother it only lists next steps; it never delegated a search, so half the request is left undone."
     },
     {
       "test_id": "ut_research_001",
@@ -128,7 +128,7 @@
       "dimension_name": "Correctness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": null
+      "comment": "Made no tool calls, so it never saw that q_001 is resolved; it asked the user for a project path instead of declining or routing."
     },
     {
       "test_id": "ut_research_rpn",
@@ -136,7 +136,7 @@
       "dimension_name": "Completeness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": null
+      "comment": "Neither declined, routed nor answered the status question; v27 called project_context here and recommended research-exhaustiveness."
     },
     {
       "test_id": "ut_research_rpn",
@@ -152,7 +152,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": null
+      "comment": "Repeats the stub's \"1860 and 1870 censuses\" and \"1850 not searched\", both wrong against the scenario's own sources (1850 x2, 1860, no 1870); the fault is in the stub, but the reply still states false facts."
     },
     {
       "test_id": "ut_research_so2",
