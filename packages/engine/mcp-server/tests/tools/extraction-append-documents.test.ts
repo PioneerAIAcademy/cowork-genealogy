@@ -415,4 +415,43 @@ describe("extraction_append: documents", () => {
     expect(refused.ok).toBe(false);
     expect((refused.errors ?? []).join(" ")).toMatch(/facts: must be a list/);
   });
+
+  describe("a computed entry written as a value (#3543)", () => {
+    const death = (birth: Record<string, unknown>) => ({
+      recordType: "death",
+      documentForm: "verbatim_transcript",
+      source: { title: "Death certificate of Albert Schreiber", repository: "Ohio Department of Health" },
+      persons: [
+        {
+          id: "p1", principal: true, names: [{ given: "Albert J.", surname: "Schreiber" }],
+          facts: [{ type: "death", date: "14 March 1921" }, { type: "age", value: "58" }, { type: "birth", ...birth }],
+        },
+      ],
+    });
+    const birthOf = async (recordId: string) =>
+      (await assertionsFor(recordId)).find((a: any) => a.fact_type === "birth" && a.date);
+
+    it.each([
+      ["equal to the fact's date", { date: "~1862", place: "Germany", computed: ["~1862"] }],
+      ["with no date at all (ut_record_structurer_002)", { place: "Germany", computed: ["~1862"] }],
+      ["beside its own attribute name", { date: "~1862", place: "Germany", computed: ["date", "~1862"] }],
+    ])("writes a year %s as a computed date", async (_name, birth) => {
+      const r = await run([{ recordId: "capture:schreiber", document: death(birth) }]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      const year = await birthOf("capture:schreiber");
+      expect(year.date).toBe("~1862");
+      expect(year.record_basis).toBe("inferred");
+    });
+
+    it.each([
+      ["a value matching no attribute and not a year", { date: "~1862", computed: ["about 1862"] }],
+      ["a year that differs from the fact's own date", { date: "~1862", computed: ["1861"] }],
+      ["a value two attributes share", { value: "1862", date: "1862", computed: ["1862"] }],
+    ])("still refuses %s", async (_name, birth) => {
+      const r = await run([{ recordId: "capture:schreiber", document: death(birth) }]);
+      expect(r.ok).toBe(false);
+      expect((r.errors ?? []).join(" ")).toMatch(/computed: '[^']+' is not an attribute/);
+      expect((await read()).sources).toHaveLength(0);
+    });
+  });
 });

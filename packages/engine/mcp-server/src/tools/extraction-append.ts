@@ -648,6 +648,37 @@ function buildDocumentSource(
   };
 }
 
+const COMPUTED_ATTRS = ["value", "date", "place"] as const;
+const YEAR_LIKE = /^~?\d{3,4}$/;
+
+/**
+ * A `computed` entry written as a value instead of an attribute name, fixed up
+ * before validation: one that equals exactly one of the fact's own `value`,
+ * `date` or `place` becomes that attribute's name, and a year (`~1862`) on a
+ * fact with no `date` becomes the date, marked computed. Anything else is left
+ * for the validator to refuse.
+ */
+function coerceComputed(f: unknown): void {
+  if (!f || typeof f !== "object" || Array.isArray(f)) return;
+  const fact = f as Record<string, unknown>;
+  if (!Array.isArray(fact.computed)) return;
+  const out: unknown[] = [];
+  for (const c of fact.computed) {
+    if (typeof c !== "string" || (COMPUTED_ATTRS as readonly string[]).includes(c)) {
+      out.push(c);
+      continue;
+    }
+    const t = c.trim();
+    const same = COMPUTED_ATTRS.filter((k) => typeof fact[k] === "string" && (fact[k] as string).trim() === t);
+    if (same.length === 1) out.push(same[0]);
+    else if (same.length === 0 && fact.date === undefined && YEAR_LIKE.test(t)) {
+      fact.date = t;
+      out.push("date");
+    } else out.push(c);
+  }
+  fact.computed = [...new Set(out)];
+}
+
 /**
  * `documents`: every document is validated before anything is written, so one
  * malformed document refuses the batch and writes nothing. Then, as for
@@ -668,6 +699,9 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     for (const p of Array.isArray(d?.document?.persons) ? d.document.persons : []) {
       if (p && typeof p === "object" && (p as { facts?: unknown }).facts === undefined) {
         (p as { facts: unknown[] }).facts = [];
+      }
+      for (const f of Array.isArray((p as { facts?: unknown })?.facts) ? (p as { facts: unknown[] }).facts : []) {
+        coerceComputed(f);
       }
     }
     errors.push(...validateStructuredDocument(d?.document, `documents[${i}].document`));

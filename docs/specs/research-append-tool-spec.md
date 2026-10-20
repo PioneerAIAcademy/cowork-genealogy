@@ -1714,6 +1714,18 @@ In order:
 2. **Reads,** in parallel, through `record_read`'s own live code with
    `projectPath`, so staging is identical. A read that errors, or returns
    `staged: null`, is reported and skipped; the others proceed.
+   **Household skip.** `record_search` returns one hit per
+   household member, each under its own persona ARK, so step 1 cannot see that
+   a member's record is already extracted. After the read, the staged record's
+   persona ARKs (every `persons[].ark`) go through the same
+   `sourceIdsForRecordIds`; a hit is skipped as "already extracted as src_NNN
+   (same household)". Within one call, a record whose own ARK is among an
+   earlier record's persona ARKs (or the reverse) is that record's duplicate: it
+   is not logged, and takes the earlier record's result — `already_extracted`
+   with its source, or `refused` when that one was not written. A record with
+   no persona ARKs is never grouped. A record with an accepted hint (step 3) is
+   never skipped, so its hint entry is cited. A skipped record's staged file is
+   not logged and ages out.
 3. **One `research_log_append` batch** logs every read (`tool: "record_read"`),
    finalizing each staged file into its sidecar. A record an accepted
    FamilySearch hint already logged is the exception: the
