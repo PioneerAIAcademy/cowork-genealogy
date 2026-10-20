@@ -16,8 +16,14 @@ export interface SessionConnection {
 }
 
 // Credentials for one WS handshake. Fetched fresh per connect attempt — never
-// captured — see the constructor.
-export type SessionCredentials = { wssUrl: string; token: string }
+// captured — see the constructor. `readOnly`: the session is more than 72 h old
+// (#3406); the socket replays its chat and nothing may be sent on it.
+export type SessionCredentials = {
+  wssUrl: string
+  token: string
+  readOnly?: boolean
+  message?: string
+}
 export type CredentialsProvider = () => Promise<SessionCredentials>
 
 // One WebSocket for both directions, connected directly to the sandbox's WS
@@ -98,10 +104,11 @@ export class WsSessionConnection implements SessionConnection {
   // silently billing compute for a tab nobody is viewing. Reconnects pause while
   // hidden and resume on focus.
   private hidden = false
-  // The 410 frame, kept because it can arrive before ChatPane subscribes: the
-  // refusal returns before any sandbox work, often inside the first render.
-  // `on()` replays it to a late listener. Every other terminal frame comes after
-  // seconds of retries, by which time the subscriber exists.
+  // The session_expired frame (a 410, or read-only credentials), kept because it
+  // can arrive before ChatPane subscribes: the refusal returns before any sandbox
+  // work, often inside the first render. `on()` replays it to a late listener.
+  // Every other terminal frame comes after seconds of retries, by which time the
+  // subscriber exists. Once set, send() drops everything.
   private expiredFrame: WsMessage | null = null
   // Guards the await window inside connect(): without it a retry firing while
   // the credentials request is in flight would open a second socket.
@@ -190,6 +197,19 @@ export class WsSessionConnection implements SessionConnection {
         this.credentialTimeouts = 0
         // close() or a racing connect landed while we were awaiting.
         if (this.closed || this.ws) return
+        // Read-only (#3406): the composer goes before the replay arrives. Once,
+        // across reconnects. `readOnly` on the frame tells ChatPane a replay is
+        // coming, unlike the 410's.
+        if (creds.readOnly && !this.expiredFrame) {
+          this.expiredFrame = {
+            type: 'status',
+            state: 'session_expired',
+            message: creds.message,
+            readOnly: true
+          }
+          this.outbox = []
+          for (const l of [...this.listeners]) l(this.expiredFrame)
+        }
         // Backgrounded mid-fetch: opening now would auto-resume a paused sandbox
         // for a tab nobody is watching, which is what the visibility gate exists
         // to prevent. Drop these credentials; onVisibility reconnects on focus.
@@ -369,6 +389,7 @@ export class WsSessionConnection implements SessionConnection {
   }
 
   send(obj: WsMessage): void {
+    if (this.expiredFrame) return
     const s = JSON.stringify(obj)
     if (this.ws && this.open) this.ws.send(s)
     else this.outbox.push(s)

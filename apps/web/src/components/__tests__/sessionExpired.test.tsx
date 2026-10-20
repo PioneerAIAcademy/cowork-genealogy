@@ -74,6 +74,68 @@ describe('ChatPane on session_expired', () => {
   })
 })
 
+describe('ChatPane on a read-only session_expired', () => {
+  it('shows the replayed chat with the notice in place of the composer', () => {
+    const conn = new FakeConn()
+    render(<ChatPane conn={conn} sessionId="sess_old" isNew={false} />)
+    conn.emit({ type: 'status', state: 'session_expired', message: SESSION_EXPIRED_TEXT, readOnly: true })
+    expect(screen.getByText("Loading this session's chat…")).toBeTruthy()
+
+    conn.emit({ type: 'user_msg', text: 'Who were the parents of John Smith?' })
+    conn.emit({ type: 'agent_event', event: { kind: 'text', text: 'His father was Adam Smith.' } })
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done' } })
+    conn.emit({ type: 'status', state: 'chat_ready' })
+
+    expect(screen.getByText('Who were the parents of John Smith?')).toBeTruthy()
+    expect(screen.getByText('His father was Adam Smith.')).toBeTruthy()
+    expect(screen.getByText(SESSION_EXPIRED_TEXT)).toBeTruthy()
+    expect(screen.queryByRole('textbox')).toBeNull()
+    expect(screen.queryByLabelText('Attach a document or image')).toBeNull()
+  })
+
+  it('a replayed question turn shows no answer buttons, and no "send a message" label', () => {
+    const conn = new FakeConn()
+    render(<ChatPane conn={conn} sessionId="sess_old" isNew={false} />)
+    conn.emit({ type: 'status', state: 'session_expired', message: SESSION_EXPIRED_TEXT, readOnly: true })
+    conn.emit({ type: 'user_msg', text: 'Find Mary Hales.' })
+    conn.emit({
+      type: 'agent_event',
+      event: {
+        kind: 'tool_use',
+        tool: 'AskUserQuestion',
+        summary: 'asking which Mary Hales',
+        questions: [
+          {
+            question: 'Which Mary Hales?',
+            header: 'Person',
+            options: [
+              { label: 'Mary Hales of Ohio (Recommended)', description: 'b. 1832' },
+              { label: 'Mary Hales of Indiana', description: 'b. 1841' }
+            ]
+          }
+        ]
+      }
+    })
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'decision' } })
+    conn.emit({ type: 'status', state: 'chat_ready' })
+    expect(screen.queryByRole('button', { name: /Indiana/ })).toBeNull()
+
+    conn.emit({ type: 'user_msg', text: 'Ohio.' })
+    conn.emit({ type: 'agent_event', event: { kind: 'text', text: 'Searching Ohio.' } })
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'stopped' } })
+    expect(screen.getByText('Searching Ohio.')).toBeTruthy()
+    expect(screen.queryByText(/carry on/)).toBeNull()
+  })
+
+  it('an empty chat says so once the replay is over, instead of loading forever', () => {
+    const conn = new FakeConn()
+    render(<ChatPane conn={conn} sessionId="sess_old" isNew={false} />)
+    conn.emit({ type: 'status', state: 'session_expired', message: SESSION_EXPIRED_TEXT, readOnly: true })
+    conn.emit({ type: 'status', state: 'chat_ready' })
+    expect(screen.getByText("This session's chat can't be shown.")).toBeTruthy()
+  })
+})
+
 const row = (continuable: boolean | undefined): SessionSummary =>
   ({
     id: `sess_${String(continuable)}`,

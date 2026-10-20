@@ -87,12 +87,16 @@ export const api = {
   // `familysearch` reports the user's FamilySearch grant AFTER a refresh+reinject
   // attempt: 'ok' (a live token was injected), 'expired' (the grant died — FS caps
   // it at 24h — and the user must Reconnect), or 'none' (this user never had one:
-  // dev-login / mock mode, nothing to reconnect).
+  // dev-login / mock mode, nothing to reconnect). A session more than 72 h old
+  // comes back `readOnly` with the notice in `message` (#3406).
   connectSession: (sessionId: string) =>
-    req<{ wssUrl: string; token: string; familysearch?: 'ok' | 'expired' | 'none' }>(
-      `/api/sessions/${sessionId}/connect`,
-      { method: 'POST' }
-    ),
+    req<{
+      wssUrl: string
+      token: string
+      familysearch?: 'ok' | 'expired' | 'none'
+      readOnly?: boolean
+      message?: string
+    }>(`/api/sessions/${sessionId}/connect?readOnly=true`, { method: 'POST' }),
 
   // Upload a document/image into <project>/uploads/ so the agent can read it.
   // Not routed through req(): multipart needs the browser to set Content-Type

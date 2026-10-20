@@ -288,9 +288,12 @@ and web (WebSocket transport).
 >    straight to the sandbox** — `POST /api/sessions/{id}/connect` resumes it,
 >    exposes port 8080, mints a per-sandbox HMAC token, and returns
 >    `{wssUrl, token, familysearch}` — except for a session more than 72 h past
->    `projects.created`, which it refuses with 410 before resuming
->    (`SESSION_MAX_AGE` in `app/sessions.py`; `/resume` and the read endpoints
->    stay open, so an ended session's research can still be read); the control plane is then out of the
+>    `projects.created` (`SESSION_MAX_AGE` in `app/sessions.py`). With
+>    `readOnly=true`, which the web client always sends, such a session gets
+>    `{wssUrl, token, readOnly: true, message}` with no secrets, config or grant
+>    written, so its chat replays and the client shows no composer; without it,
+>    410 before resuming. `/resume` and the read endpoints stay open, so an ended
+>    session's research can still be read; the control plane is then out of the
 >    streaming path entirely (affinity-free, the AWS-no-sticky requirement). The
 >    in-sandbox server is `apps/server/app/sandbox_server.py`. Full rationale:
 >    `docs/realtime-architecture.md`.

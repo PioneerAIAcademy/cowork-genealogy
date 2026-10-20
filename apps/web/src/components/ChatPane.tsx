@@ -326,9 +326,11 @@ export default function ChatPane({
   // event being folded, not as of the last render. See trackLiveTask.
   const liveTasksRef = useRef<ReadonlySet<string>>(new Set())
   const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
-  // Set when /connect refused the session as more than 72 h old (#3406). The
-  // connection never opens, so the composer is replaced for good.
+  // Set when the session is more than 72 h old (#3406): the composer is replaced
+  // for good. A read-only connection still replays the chat; `replaying` holds
+  // until chat_ready, which the server sends after the replay.
   const [expired, setExpired] = useState<string | null>(null)
+  const [replaying, setReplaying] = useState(false)
 
   // Re-armed whenever `ready` changes, so a connection that arrives late clears the notice
   // and one that drops later re-arms it.
@@ -462,7 +464,10 @@ export default function ChatPane({
           ...prev,
           { role: 'user', text: stripOpeningTurn(String(msg.text ?? '')), tools: [] }
         ])
-      else if (msg.type === 'status' && msg.state === 'chat_ready') setReady(true)
+      else if (msg.type === 'status' && msg.state === 'chat_ready') {
+        setReady(true)
+        setReplaying(false)
+      }
       // A turn was already running when we (re)connected — a reload mid-turn, or
       // a second tab. Without this the indicator is idle while the agent works,
       // because busy is otherwise set only locally in send(). turn_done clears it.
@@ -492,10 +497,12 @@ export default function ChatPane({
         setQueuedOnServer(false)
         setOutcome(null)
         setOutcomeKind(null)
+        setReplaying(msg.readOnly === true)
         setExpired(String(msg.message ?? SESSION_EXPIRED_TEXT))
       }
       else if (msg.type === 'status' && msg.state === 'chat_error') {
         setReady(false)
+        setReplaying(false)
         // Reconnect attempts are over — stop the "Reconnecting…" spinner so the
         // error message below carries the state instead of a stuck indicator.
         setConnState('open')
@@ -584,7 +591,9 @@ export default function ChatPane({
             <div className="chatPlaceholder">
               <p className="muted small">
                 {expired
-                  ? "This session's chat can't be shown."
+                  ? replaying
+                    ? "Loading this session's chat…"
+                    : "This session's chat can't be shown."
                   : ready
                     ? 'Say who you want to research and what you want to find out.'
                     : connectSlow
@@ -660,7 +669,7 @@ export default function ChatPane({
             // a working pause outranks "working", which is what six minutes of silence
             // used to render as.
             <div className="typing">●●● {COMPACTING_LABEL}</div>
-          ) : m0Decision && !busy && !decisionDismissed ? (
+          ) : m0Decision && !busy && !decisionDismissed && !expired ? (
             // Phase 3 item 1: a turn that ended `decision` gets the CARD, not the
             // one-line "Waiting on you" label. Answering sends the reader's choice
             // as the next message, which is what resumes the run -- the same path a
@@ -675,7 +684,7 @@ export default function ChatPane({
               onAnswer={send}
               onSomethingElse={() => setDecisionDismissed(true)}
             />
-          ) : outcome && !busy && !decisionDismissed ? (
+          ) : outcome && !busy && !decisionDismissed && !expired ? (
             // `!decisionDismissed` so dismissing the card for "something else" does not
             // fall through to the very label the card replaced -- the researcher already
             // acted, there is nothing more to wait on them for until they type.
