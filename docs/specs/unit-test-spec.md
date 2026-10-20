@@ -1214,8 +1214,7 @@ and `underlying …` branches count only where the noun is *not* followed
 immediately by a copula, so a statement that the original is wrong no longer
 satisfies a guard asking whether the reply recommended consulting it. A verb
 whitelist was rejected: fixing the verb is what these branches were widened
-away from, and it is the lexical-pattern-for-semantic-property shape issue
-#2481 exists to refuse.
+away from, and it is the lexical-pattern-for-semantic-property shape this guard exists to refuse.
 
 What the exclusion deliberately does **not** reach, because it inspects the
 next token position only: an intervening adverb (`the original record simply is
@@ -1237,9 +1236,9 @@ The unit is a clause split **inside** each `_passages` block, not `_passages`
 alone. A recap whose lead `_SUMMARY_LEAD_RE` does not recognise stays one whole
 block, and a block that wide carries an unrelated condition and an unrelated
 detach together: measured, `_passages` alone fires 7 times across 4 tests where
-the clause split fires 3 times across the 2 the card names. Splitting finer
+the clause split fires 3 times across the 2 the suite names. Splitting finer
 inside existing passages rather than adding a new top-level splitter is what
-keeps this clear of issue #2481's own bar.
+keeps this clear of the bar that forbids a sixth splitter.
 
 Three subtractions, each pinned by a case:
 

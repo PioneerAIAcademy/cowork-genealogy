@@ -1189,23 +1189,51 @@ def test_a_statement_about_the_original_is_not_a_direction_to_it():
         # was narrowed too.
         "Findings: the underlying record is not this man. Recommend detaching.",
         "Detach the Minnesota Death Index; the underlying attachment was a mistake.",
+        # The two-word noun. A copula-exclusion attempt let every one of these
+        # past, which is why the lead ruled for the remedy-verb rule instead
+        # (2026-10-20). Keep these: they are what distinguishes the two designs.
+        "Findings: the original death record is not this man. Recommend detaching.",
+        "Findings: the original census entry is not this man.",
+        "Detach it; the original source attachment was a mistake.",
     ):
         assert not _VALIDATOR._goes_to_source(text), text
 
 
-def test_emphasis_does_not_hide_the_copula_from_the_reread_guard():
-    """A bolded copula sits where the lookahead expects a letter.
+def test_emphasis_does_not_hide_the_remedy_verb_from_the_reread_guard():
+    """Emphasis must not change what the matcher reads, in either direction.
 
     The same bypass PR #3461 closed in the three detach matchers, in the one
-    matcher that test did not cover. Without `_unemphasised` these satisfy.
+    matcher that test did not cover.
     """
+    # Still a bare mention, bolded: must not satisfy.
     for text in (
         "Findings: the original record **is** not this man.",
-        "Findings: the original record *is* not this man.",
-        "Findings: the original record _is_ not this man.",
-        "Detach it; the original attachment **was** a mistake.",
+        "Detach it; the **original attachment** was a mistake.",
     ):
         assert not _VALIDATOR._goes_to_source(text), text
+    # A governed remedy verb, bolded: must still satisfy.
+    for text in (
+        "**Locate** the original death certificate.",
+        "Next step: *obtain* the underlying register entry.",
+        # THE case that makes the strip load-bearing: the emphasis closes
+        # BETWEEN the noun and its following word, so unstripped the
+        # `(?:original|underlying)\s+\w+` tail sees "original**" and fails.
+        # Without `_unemphasised` this one line is the only thing that reds.
+        "**Locate the original** death certificate.",
+    ):
+        assert _VALIDATOR._goes_to_source(text), text
+
+
+def test_the_remedy_verb_must_govern_the_noun_not_merely_precede_it():
+    """The window is bounded and forbids sentence-enders on purpose.
+
+    Widen it and a remedy verb in one sentence reaches a bare mention in the
+    next, which is the co-occurrence failure the whole rule replaces.
+    """
+    assert not _VALIDATOR._goes_to_source(
+        "Locate the man in the 1880 census and confirm the household. "
+        "The original record is not this man."
+    )
 
 
 def test_the_narrowed_branches_still_accept_every_remedy_phrasing():
@@ -1216,13 +1244,23 @@ def test_the_narrowed_branches_still_accept_every_remedy_phrasing():
         "Obtain the original register entry from the parish.",
         "Order the original death certificate to settle the year.",
         "Compare against the original image.",
-        "Requisition the original register from the county.",
-        # The noun followed by a NON-copula verb. This is what makes the
-        # "widen the exclusion set" break row bite: add `shows` to the copula
-        # list and this line goes red.
-        "The original certificate shows the death year as 1945; order a copy.",
+        "Next step: Locate the underlying death certificate.",
+        "Check the original image.",
+        "Compare it against the original register.",
     ):
         assert _VALIDATOR._goes_to_source(text), text
+
+
+def test_naming_where_the_original_lives_is_not_recommending_it():
+    """Lead ruling, 2026-10-20: a sentence that says where the record is and
+    asks the reader to do nothing does NOT satisfy doctrine point 1, which
+    requires *recommending* going back to it. Rejecting these is the rule
+    working, not a regression — an earlier draft counted them and was wrong."""
+    for text in (
+        "The original certificate is held at the state archive.",
+        "The original register is available from the parish on microfilm.",
+    ):
+        assert not _VALIDATOR._goes_to_source(text), text
 
 
 # --- #2481: a detach conditioned on evidence not yet obtained --------------

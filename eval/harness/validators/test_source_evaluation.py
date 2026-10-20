@@ -169,11 +169,18 @@ def _recommends_detach(block: str) -> bool:
 # phrasings: go back to the document the index was made from, go back to the
 # underlying document under any verb, or use the index's own correction route.
 # A reply that recommends only detaching still matches nothing here.
-# A statement ABOUT the original is not a direction TO it. Excluded in the next
-# token position only: an intervening adverb ("simply is"), a non-copula
-# predicate ("does not describe", "belongs to"), or punctuation ("record, is")
-# all still count. Said plainly here so no caller claims a grammatical rule.
-_COPULA_NEXT = r"(?:is|was|are|were|isn't|wasn't|seems|appears|looks|remains)"
+# A mention of the original is not a direction to it. The branch counts only
+# where a REMEDY VERB governs it — issue #2481's own checklist, and the lead's
+# ruling of 2026-10-20 after a copula-exclusion attempt was shown to let any
+# two-word noun past ("the original DEATH record is not this man").
+#
+# A verb list is wide enough here because the thing being named is a remedy,
+# and the remedies are few. The window is bounded and forbids sentence-enders,
+# so the verb and the noun must govern each other rather than merely co-occur.
+_REMEDY_VERB = (
+    r"(?:locate|obtain|consult|check|read|view|examine|order|request|pull"
+    r"|find|see|compare\s+(?:it\s+)?(?:against|with)|look\s+at|go\s+back\s+to)"
+)
 
 _GO_TO_SOURCE_PATTERN = re.compile(
     # Re-reading, in any spelling.
@@ -181,22 +188,11 @@ _GO_TO_SOURCE_PATTERN = re.compile(
     # Any verb applied to "the original ..." — the earlier pattern fixed the
     # verb (read/check) and the noun (image/record/page), so "locate the
     # original certificate" and "obtain the original register" both missed.
-    # ...but only where it is a DIRECTION to the document, not a statement
-    # ABOUT it. `_COPULA_NEXT` excludes the copula in the next token position,
-    # so "the original record is not this man" (issue #2382) stops counting
-    # while "locate the original certificate" still does. A verb WHITELIST was
-    # rejected: fixing the verb is what this branch was widened away from, and
-    # it is the sixth-splitter shape issue #2481 exists to refuse.
-    #
-    # The `\b` is load-bearing. `[\w'-]+` backtracks, so without it the engine
-    # matches "record", fails the lookahead, retries "recor", and the lookahead
-    # passes vacuously on the "d". Drop it and both issue #2382 strings satisfy
-    # again with every other test still green.
-    r"|the original\s+[\w'-]+\b(?!\s+" + _COPULA_NEXT + r"\b)"
-    # The document the index derives from, named as such. Same narrowing: the
-    # one-word reword "the underlying attachment was a mistake" is issue
-    # #2382's second string and satisfied until this branch was narrowed too.
-    r"|underlying\s+[\w'-]+\b(?!\s+" + _COPULA_NEXT + r"\b)"
+    # ...governed by a remedy verb. One alternative covers both nouns: the
+    # earlier pair of bare `the original \w+` / `underlying \w+` branches
+    # counted any MENTION, so a reply saying the original is WRONG satisfied a
+    # guard asking whether it recommended going back to it (issue #2382).
+    r"|\b" + _REMEDY_VERB + r"\b[^.;:\n]{0,40}?\b(?:the\s+)?(?:original|underlying)\s+\w+"
     r"|source of truth"
     r"|go(ing)? back to"
     r"|derive[sd]? from"
