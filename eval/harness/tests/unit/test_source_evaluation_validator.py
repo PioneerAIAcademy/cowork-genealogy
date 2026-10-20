@@ -1170,3 +1170,162 @@ def test_census_trap_skips_on_negative_test():
             text_response="1900 United States Census — indexing error",
             test={**_CENSUS_TEST, "type": "negative"},
         )
+
+
+# --- #2481: a mention of the original is not a direction to it -------------
+#
+# `_GO_TO_SOURCE_PATTERN` counted any mention of "the original <word>", so a
+# reply saying the original is WRONG satisfied the guard asking whether it
+# recommended going back to it. Both strings below are the ones issue #2382
+# records; both satisfied until the copula exclusion landed.
+
+
+def test_a_statement_about_the_original_is_not_a_direction_to_it():
+    for text in (
+        "Findings: the original record is not this man. Recommend detaching.",
+        "Detach the Minnesota Death Index; the original attachment was a mistake.",
+        # The same two reworded onto the sibling branch. "underlying attachment"
+        # is one word from #2382's second string and satisfied until that branch
+        # was narrowed too.
+        "Findings: the underlying record is not this man. Recommend detaching.",
+        "Detach the Minnesota Death Index; the underlying attachment was a mistake.",
+    ):
+        assert not _VALIDATOR._goes_to_source(text), text
+
+
+def test_emphasis_does_not_hide_the_copula_from_the_reread_guard():
+    """A bolded copula sits where the lookahead expects a letter.
+
+    The same bypass PR #3461 closed in the three detach matchers, in the one
+    matcher that test did not cover. Without `_unemphasised` these satisfy.
+    """
+    for text in (
+        "Findings: the original record **is** not this man.",
+        "Findings: the original record *is* not this man.",
+        "Findings: the original record _is_ not this man.",
+        "Detach it; the original attachment **was** a mistake.",
+    ):
+        assert not _VALIDATOR._goes_to_source(text), text
+
+
+def test_the_narrowed_branches_still_accept_every_remedy_phrasing():
+    """The false-deny edge. A verb whitelist is what this branch was widened
+    away from, so an unseen verb must still pass."""
+    for text in (
+        "Locate the original certificate held by the state archive.",
+        "Obtain the original register entry from the parish.",
+        "Order the original death certificate to settle the year.",
+        "Compare against the original image.",
+        "Requisition the original register from the county.",
+        # The noun followed by a NON-copula verb. This is what makes the
+        # "widen the exclusion set" break row bite: add `shows` to the copula
+        # list and this line goes red.
+        "The original certificate shows the death year as 1945; order a copy.",
+    ):
+        assert _VALIDATOR._goes_to_source(text), text
+
+
+# --- #2481: a detach conditioned on evidence not yet obtained --------------
+
+
+def test_a_conditional_detach_is_caught():
+    for text in (
+        "If the household does not fit, the source may belong to a different "
+        "man and should be detached.",
+        "If the entry belongs to a different person, detach it.",
+        "Unless the register disagrees, the 1885 entry should be detached.",
+        # Emphasis must not hide it either.
+        "If the household does not fit, it **should be detached**.",
+    ):
+        assert _VALIDATOR._conditional_detach(text), text
+
+
+def test_an_unconditional_or_declined_detach_is_not_caught():
+    for text in (
+        "Detach the 1885 State Census; it is a different man.",
+        # Bare "no" is absent from `_NEGATORS`, so `_recommends_detach` reads
+        # this as recommending one. The guard subtracts it explicitly.
+        "Action: No detach is warranted. If you wish to correct the index, "
+        "open the original image.",
+        "Do not detach the source if the year is merely mis-indexed.",
+        # The card's own named must-not-fire: asking permission is not
+        # deferring to a record.
+        "If you agree, detach the 1885 census.",
+        "If you would prefer, detach it and keep a note.",
+    ):
+        assert not _VALIDATOR._conditional_detach(text), text
+
+
+def test_the_condition_and_the_detach_must_share_a_clause():
+    """`_passages` alone leaves an unrecognised recap whole, so an unrelated
+    condition and an unrelated detach in one summary read as a conditional
+    detach. Measured: `_passages` alone fires 7 times across 4 tests; the
+    clause split inside it fires 3 times across the 2 the card names."""
+    recap = (
+        "To summarise what needs doing: the death index has one bad year that "
+        "should be checked against the original certificate and corrected in "
+        "the index if confirmed; and the 1885 State Census entry belongs to a "
+        "different man entirely and should be detached from this profile."
+    )
+    assert not _VALIDATOR._conditional_detach(recap)
+
+
+# The conditional-detach guard is invisible to
+# `test_both_guards_pass_on_every_committed_positive_run`, which calls exactly
+# `_recommends_reread` and `_no_detach`. Without a corpus direction of its own,
+# a false positive would be found inside the next PAID `source-evaluation` run
+# rather than in CI — the failure issue #2481 exists to stop.
+#
+# It pins the fire SET rather than asserting zero, because this guard is meant
+# to fire: `j4s` is the motivating case and `k9t` is the Melbourne sentence the
+# card names as must-fire. Both pass their mechanical guards today, so the next
+# suite run reds them under check_runlogs rule 6 until
+# `agents/source-evaluation.md` stops writing conditional detaches. That is the
+# intended coupling; issue #2942 owns that edit and has been told.
+_EXPECTED_CONDITIONAL_DETACH_TESTS = {
+    "ut_source_evaluation_j4s",
+    "ut_source_evaluation_k9t",
+}
+
+
+def test_the_conditional_detach_guard_fires_on_exactly_the_known_corpus_cases():
+    logs = sorted(
+        p for p in glob.glob(
+            str(_REPO / "eval/runlogs/unit/source-evaluation/v*.json")
+        )
+        if not p.endswith(".ann.json")
+    )
+    assert logs, "no committed source-evaluation run logs found"
+    fired: set[str] = set()
+    replayed = 0
+    for path in logs:
+        log = json.loads(Path(path).read_text(encoding="utf-8"))
+        for entry in log.get("tests") or []:
+            if entry.get("test_type") != "positive":
+                continue
+            for run in entry.get("runs") or []:
+                output = run.get("output") or {}
+                reply = subject_reply_text(
+                    output.get("agent_returns"),
+                    output.get("text_response"),
+                    "source-evaluation",
+                    _TEST,
+                ).strip()
+                if not reply:
+                    continue
+                replayed += 1
+                if _VALIDATOR._conditional_detach(reply):
+                    fired.add(entry.get("test_id", "<no id>"))
+    assert replayed, "replayed no positive runs — the corpus reader is broken"
+    unexpected = fired - _EXPECTED_CONDITIONAL_DETACH_TESTS
+    assert not unexpected, (
+        f"the conditional-detach guard fired on {sorted(unexpected)}, which the "
+        f"corpus does not expect. Read each clause before widening this set — a "
+        f"false positive here costs a paid run to discover."
+    )
+    missing = _EXPECTED_CONDITIONAL_DETACH_TESTS - fired
+    assert not missing, (
+        f"the guard stopped firing on {sorted(missing)}. Those are the cases "
+        f"issue #2481 names as must-fire; if the corpus changed, re-measure "
+        f"rather than shrinking the expectation."
+    )

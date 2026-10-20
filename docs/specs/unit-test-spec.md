@@ -1195,6 +1195,66 @@ A field declared in the schema and read by a validator but absent from that
 literal arrives as `None` on every run.
 `test_orchestrator_threads_index_error_source_into_validators` pins it.
 
+### 5.12.1 The re-read guard
+
+`test_index_discrepancy_recommends_reread` asks whether the reply directed the
+reader back to the document the index was made from. It is the only mechanical
+check that the first-line remedy was offered; everything else about the remedy
+is judged inside a paid run.
+
+It reads `_GO_TO_SOURCE_PATTERN` through `_goes_to_source()`, which strips
+markdown emphasis first. The strip is not cosmetic: a copula in bold sits
+exactly where the lookahead expects a letter, so `the original record **is**
+not this man` walks past an unstripped pattern. Both consumers of the pattern
+go through that accessor so neither can keep the bypass while the other loses
+it.
+
+**A mention of the original is not a direction to it.** The `the original …`
+and `underlying …` branches count only where the noun is *not* followed
+immediately by a copula, so a statement that the original is wrong no longer
+satisfies a guard asking whether the reply recommended consulting it. A verb
+whitelist was rejected: fixing the verb is what these branches were widened
+away from, and it is the lexical-pattern-for-semantic-property shape issue
+#2481 exists to refuse.
+
+What the exclusion deliberately does **not** reach, because it inspects the
+next token position only: an intervening adverb (`the original record simply is
+not…`), a non-copula predicate (`does not describe`, `belongs to`), and a
+comma (`the original record, is not…`). A hyphenated noun is reached, because
+the noun is `[\w'-]+`.
+
+### 5.12.2 The conditional-detach guard
+
+`test_index_discrepancy_detach_is_not_conditional` fails any
+`index-discrepancy`-tagged test whose reply recommends detaching **contingent
+on evidence it has not obtained**. A decided misattribution is detached
+unconditionally; an undecided one is not detached at all, so "if X turns out Y,
+detach it" is never the right answer. It is reply-wide and
+**source-independent** — it names no source, which is what lets it reach a
+conditional detach on a source the test declares nowhere.
+
+The unit is a clause split **inside** each `_passages` block, not `_passages`
+alone. A recap whose lead `_SUMMARY_LEAD_RE` does not recognise stays one whole
+block, and a block that wide carries an unrelated condition and an unrelated
+detach together: measured, `_passages` alone fires 7 times across 4 tests where
+the clause split fires 3 times across the 2 the card names. Splitting finer
+inside existing passages rather than adding a new top-level splitter is what
+keeps this clear of issue #2481's own bar.
+
+Three subtractions, each pinned by a case:
+
+| subtraction | why |
+|---|---|
+| bare `no detach` | `_recommends_detach("No detach is warranted")` is `True` — bare `no` is absent from `_NEGATORS`. Attached to the verb, never a proximity window: a window swallows `if the household does not fit, detach it`, whose `not` belongs to the condition. |
+| consent, not evidence | `if you agree, detach it` defers to the reader, not to a record. |
+| unconditional detaches | correct, and must stay silent. |
+
+**Rejected alternative:** declaring the ambiguous source in the test JSON, as
+`index_error_source` does. `_COSMETIC_TEST_FIELDS` is `("name", "description")`,
+so every other test field **and `tags`** are in the run-log snapshot — adding
+one would buy a paid `source-evaluation` run. This rule needs no declared
+source.
+
 ---
 
 ## 6. Negative Tests

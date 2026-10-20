@@ -169,15 +169,34 @@ def _recommends_detach(block: str) -> bool:
 # phrasings: go back to the document the index was made from, go back to the
 # underlying document under any verb, or use the index's own correction route.
 # A reply that recommends only detaching still matches nothing here.
+# A statement ABOUT the original is not a direction TO it. Excluded in the next
+# token position only: an intervening adverb ("simply is"), a non-copula
+# predicate ("does not describe", "belongs to"), or punctuation ("record, is")
+# all still count. Said plainly here so no caller claims a grammatical rule.
+_COPULA_NEXT = r"(?:is|was|are|were|isn't|wasn't|seems|appears|looks|remains)"
+
 _GO_TO_SOURCE_PATTERN = re.compile(
     # Re-reading, in any spelling.
     r"re-?read"
     # Any verb applied to "the original ..." — the earlier pattern fixed the
     # verb (read/check) and the noun (image/record/page), so "locate the
     # original certificate" and "obtain the original register" both missed.
-    r"|the original\s+\w+"
-    # The document the index derives from, named as such.
-    r"|underlying\s+\w+"
+    # ...but only where it is a DIRECTION to the document, not a statement
+    # ABOUT it. `_COPULA_NEXT` excludes the copula in the next token position,
+    # so "the original record is not this man" (issue #2382) stops counting
+    # while "locate the original certificate" still does. A verb WHITELIST was
+    # rejected: fixing the verb is what this branch was widened away from, and
+    # it is the sixth-splitter shape issue #2481 exists to refuse.
+    #
+    # The `\b` is load-bearing. `[\w'-]+` backtracks, so without it the engine
+    # matches "record", fails the lookahead, retries "recor", and the lookahead
+    # passes vacuously on the "d". Drop it and both issue #2382 strings satisfy
+    # again with every other test still green.
+    r"|the original\s+[\w'-]+\b(?!\s+" + _COPULA_NEXT + r"\b)"
+    # The document the index derives from, named as such. Same narrowing: the
+    # one-word reword "the underlying attachment was a mistake" is issue
+    # #2382's second string and satisfied until this branch was narrowed too.
+    r"|underlying\s+[\w'-]+\b(?!\s+" + _COPULA_NEXT + r"\b)"
     r"|source of truth"
     r"|go(ing)? back to"
     r"|derive[sd]? from"
@@ -432,12 +451,114 @@ def test_index_discrepancy_recommends_reread(text_response, test, agent_returns=
     from harness.skill_runner import subject_reply_text
 
     text_response = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
-    assert _GO_TO_SOURCE_PATTERN.search(text_response), (
+    assert _goes_to_source(text_response), (
         "source-evaluation reported on an index discrepancy without "
         "recommending a re-read of the original record. Doctrine point 1 "
         "of issue #1606: for a fact conflict that looks like a "
         "transcription or indexing error, the first-line remedy is to "
         "re-read the original image and correct the index."
+    )
+
+
+def _goes_to_source(text: str) -> bool:
+    """Does the text direct the reader to the underlying document?
+
+    Read with emphasis stripped. A copula in bold sits exactly where the
+    lookahead expects a letter, so `the original record **is** not this man`
+    walks straight past an unstripped pattern — the same bypass PR #3461 closed
+    in the three detach matchers, in the one matcher its test did not cover.
+    251 bold spans across the 53 committed graded replies.
+
+    Both consumers go through here (`:435` and the checklist-pointer guard), so
+    neither can keep the bypass while the other loses it.
+    """
+    return bool(_GO_TO_SOURCE_PATTERN.search(_unemphasised(text)))
+
+
+# --- the conditional detach (issue #2481) ---------------------------------
+#
+# Decided on issue #2481 (review-ready, 2026-10-05): a reply-wide,
+# source-independent rule. A detach recommendation conditioned on evidence not
+# yet obtained fails on any `index-discrepancy`-tagged test. A decided
+# misattribution is detached unconditionally; an undecided one is not detached
+# at all, so "if X turns out Y, detach it" is never the right answer.
+#
+# REJECTED ALTERNATIVE, recorded per the card: declare the ambiguous source in
+# the test JSON, as `index_error_source` does. `_COSMETIC_TEST_FIELDS` is
+# ("name", "description"), so every other test field AND `tags` are in the
+# run-log snapshot — adding one would buy a paid `source-evaluation` run.
+# This rule needs no declared source, which is the whole point of it.
+
+# Conditions on evidence not yet in hand.
+_UNMET_CONDITION_RE = re.compile(
+    r"\b(if|unless|were\s+it|should\s+it|turns?\s+out)\b", re.IGNORECASE
+)
+
+# ...but a condition on the READER is not a condition on evidence. The card
+# names "if you agree, detach the 1885 census" as a must-not-fire: asking
+# permission is not deferring to a record.
+_CONSENT_CONDITION_RE = re.compile(
+    r"\b(if|unless)\s+(you|the\s+user|the\s+researcher)\b", re.IGNORECASE
+)
+
+# `_recommends_detach` already subtracts negation, and correctly: it returns
+# True for "if the household does not fit, detach it", where the "not" belongs
+# to the condition rather than to the verb. Do NOT add a second proximity
+# window here — the first draft of this rule did, and its 40-character window
+# swallowed exactly that clause, waving through the shape this guard exists to
+# catch. It only looked right because the corpus phrasing is long enough to
+# fall outside the window, which is the shape-dependence issue #2481 is about.
+#
+# One gap is left to subtract: bare "no" as a determiner is absent from
+# `_NEGATORS` (`:54`), so `_recommends_detach("No detach is warranted")` is
+# True. Narrow, and attached to the verb rather than merely near it.
+_NO_DETACH_RE = re.compile(r"\bno\s+detach", re.IGNORECASE)
+
+# Clause boundaries WITHIN a passage. Deliberately not a sixth top-level
+# splitter: `_passages` alone leaves a recap whole when `_SUMMARY_LEAD_RE` does
+# not recognise its lead ("To summarise what needs doing:" does not match), and
+# a whole recap carries an unrelated condition and an unrelated detach together.
+# Measured: `_passages` alone fires 7 times across 4 tests; clause-split inside
+# it fires 3 times across the 2 the card names.
+_CLAUSE_SPLIT_RE = re.compile(r"(?<=[.!?;])\s+|\n")
+
+
+def _conditional_detach(text: str) -> str | None:
+    """The first clause recommending a detach contingent on unobtained evidence."""
+    for block in _passages(_unemphasised(text)):
+        for clause in _CLAUSE_SPLIT_RE.split(block):
+            clause = clause.strip()
+            if not clause:
+                continue
+            if (
+                _recommends_detach(clause)
+                and _UNMET_CONDITION_RE.search(clause)
+                and not _NO_DETACH_RE.search(clause)
+                and not _CONSENT_CONDITION_RE.search(clause)
+            ):
+                return clause
+    return None
+
+
+def test_index_discrepancy_detach_is_not_conditional(
+    text_response, test, agent_returns=None
+):
+    """A detach recommended on evidence the reply has not obtained.
+
+    `ut_source_evaluation_j4s` returns "If the household does not fit, the
+    source may belong to a different man and should be detached" and nothing
+    fails it. The remedy is unrecoverable and the condition is never resolved,
+    so the researcher is left holding a decision the report declined to make.
+    """
+    _requires_index_discrepancy(test)
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    offending = _conditional_detach(reply)
+    assert not offending, (
+        "source-evaluation recommended a detach conditioned on evidence it did "
+        "not obtain. A decided misattribution is detached unconditionally; an "
+        f"undecided one is not detached at all. Offending clause: {offending!r}"
     )
 
 
@@ -723,7 +844,7 @@ def test_checklist_pointer_carries_no_action(text_response, test, agent_returns=
     )
     acting = [
         p for p in pointers
-        if _recommends_detach(p) or _GO_TO_SOURCE_PATTERN.search(p) or _POINTER_ACTION_RE.search(p)
+        if _recommends_detach(p) or _goes_to_source(p) or _POINTER_ACTION_RE.search(p)
     ]
     assert not acting, f"a checklist pointer carries an action: {acting[0].strip()[:200]!r}"
 
