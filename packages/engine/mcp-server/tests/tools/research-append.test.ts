@@ -46,6 +46,8 @@ import {
   mintedFromThisRecord,
   personaReachable,
   coreIdentifierContradictionInvariants,
+  parentSide,
+  unlinkedParentProofInvariants,
 } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
@@ -3066,6 +3068,125 @@ describe("research_append (Phase 3)", () => {
         fields: { tier: "probable" },
       } as never);
       expect(r.ok).toBe(false);
+    });
+  });
+
+  // MHGK-WT7 (issue #3659): `probable` naming the parents, every parent assertion unlinked.
+  describe("a conclusion above not_proved may not rest on a parent nobody identified", () => {
+    const asr = (id: string, record_role: string, record_id = "rec1", extra: Record<string, unknown> = {}) => ({
+      ...validAssertion(id), record_role, record_id, ...extra,
+    });
+    const childOf = (id: string, related_person_role: string) => asr(id, "child", "rec1", {
+      fact_type: "relationship", value: "child of William Barker",
+      structured_value: { relationship_type: "child", related_person_role },
+    });
+    const proof = (tier: string, supporting: string[]) => ({
+      question_id: "q_001", tier, vehicle: "summary", shortfall: "gap",
+      supporting_assertion_ids: supporting, resolved_conflict_ids: [],
+      exhaustive_search_summary: "census", narrative_markdown: "## C\n...",
+    });
+    const project = async (assertions: Record<string, unknown>[], linkedIds: string[] = []) => {
+      const state = phase3Research();
+      state.assertions.push(...assertions);
+      state.person_evidence = liveLinks("a_001", ...linkedIds);
+      await writeProject(state);
+    };
+    const append = (entry: Record<string, unknown>) =>
+      researchAppend({ projectPath: dir, section: "proof_summaries", op: "append", entry } as never);
+
+    it("refuses when the cited father side has no linked assertion", async () => {
+      await project([asr("a_010", "father")]);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await append(proof("probable", ["a_001", "a_010"]));
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/father \(a_010\).*person-evidence/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("allows the father linked on another record: per person, not per persona", async () => {
+      await project([asr("a_010", "father", "rec1"), asr("a_011", "father_of_bride", "rec2")], ["a_011"]);
+      const r = await append(proof("probable", ["a_001", "a_010", "a_011"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("refuses when only an unlinked 'child of' assertion cites the father", async () => {
+      await project([childOf("a_012", "father")]);
+      const r = await append(proof("probable", ["a_001", "a_012"]));
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("father (a_012)");
+    });
+
+    it("allows a linked 'child of' assertion with no father persona cited", async () => {
+      await project([childOf("a_012", "father")], ["a_012"]);
+      const r = await append(proof("probable", ["a_001", "a_012"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows not_proved, the sanctioned record of a blocked attempt", async () => {
+      await project([asr("a_010", "father")]);
+      const r = await append(proof("not_proved", ["a_001", "a_010"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    const pre = (assertions: Record<string, unknown>[], linkedIds: string[] = [], superseded: string[] = []) => ({
+      assertions,
+      person_evidence: [
+        ...liveLinks(...linkedIds),
+        ...liveLinks(...superseded).map((pe) => ({ ...pe, superseded_by: "pe_999" })),
+      ],
+    });
+
+    it.each([
+      ["father_of_deceased", "father"], ["mother_of_deceased", "mother"], ["mother_1", "mother"],
+      ["groom_father", "father"], ["Father", "father"], ["parent", "parent"],
+      ["godparent_1", null], ["maternal_grandfather", null], ["father_of_mother", null],
+      ["father_in_law", null], ["child_2", null], ["wife", null], ["head_of_household", null],
+    ])("parentSide(%s) is %s", (role, side) => {
+      expect(parentSide(role)).toBe(side);
+    });
+
+    it("refuses an unlinked father_of_deceased and allows it linked", () => {
+      const a = [asr("a_010", "father_of_deceased")];
+      expect(unlinkedParentProofInvariants(proof("probable", ["a_010"]), pre(a))).toHaveLength(1);
+      expect(unlinkedParentProofInvariants(proof("probable", ["a_010"]), pre(a, ["a_010"]))).toEqual([]);
+    });
+
+    it("a disproof cites the parent it rules out, so disproved is not checked", () => {
+      const a = [asr("a_010", "father")];
+      expect(unlinkedParentProofInvariants(proof("disproved", ["a_010"]), pre(a))).toEqual([]);
+      expect(unlinkedParentProofInvariants(proof("possible", ["a_010"]), pre(a))).toHaveLength(1);
+    });
+
+    it("a superseded link does not satisfy a side", () => {
+      const a = [asr("a_010", "father")];
+      expect(unlinkedParentProofInvariants(proof("probable", ["a_010"]), pre(a, [], ["a_010"]))).toHaveLength(1);
+    });
+
+    it("unlinked godparents, grandparents and household members cite no side", () => {
+      const a = ["godparent_1", "maternal_grandfather", "father_of_mother", "child_2", "wife"]
+        .map((role, i) => asr(`a_02${i}`, role));
+      expect(unlinkedParentProofInvariants(proof("probable", a.map((x) => x.id)), pre(a))).toEqual([]);
+    });
+
+    it("a linked father or mother satisfies a 'parent' citation, and the reverse", () => {
+      const a = [asr("a_010", "father_of_deceased"), asr("a_011", "parent"), asr("a_012", "mother", "rec2")];
+      expect(unlinkedParentProofInvariants(proof("probable", ["a_010", "a_011"]), pre(a, ["a_010"]))).toEqual([]);
+      expect(unlinkedParentProofInvariants(proof("probable", ["a_011", "a_012"]), pre(a, ["a_011"]))).toEqual([]);
+    });
+
+    it("reads claim-level citations", () => {
+      const a = [asr("a_010", "mother")];
+      const entry = { ...proof("probable", []), claims: [{ claim: "maternity", supporting_assertion_ids: ["a_010"] }] };
+      expect(unlinkedParentProofInvariants(entry, pre(a))).toHaveLength(1);
+    });
+
+    it("refuses each unidentified side and names it", () => {
+      const a = [asr("a_010", "father"), asr("a_011", "mother"), asr("a_012", "mother", "rec2")];
+      const [msg] = unlinkedParentProofInvariants(proof("possible", ["a_010", "a_011", "a_012"]), pre(a, ["a_012"]));
+      expect(msg).toContain("father (a_010)");
+      expect(msg).not.toContain("mother (");
     });
   });
 

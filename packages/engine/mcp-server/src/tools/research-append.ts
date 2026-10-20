@@ -2664,6 +2664,91 @@ export function unlinkedProofInvariants(entry: any, preCallResearch: any): strin
   ];
 }
 
+const GRANDPARENT_ROLES = new Set(["father_of_mother", "mother_of_mother", "father_of_father", "mother_of_father"]);
+
+/** The parent side a record role names: `father`, `mother` or `parent`, read as
+ *  an underscore-delimited token because `record_role` is an open enum
+ *  (`father_of_deceased`, `mother_of_child_1`, `groom_father`, …). Grandparents,
+ *  godparents and in-laws are not the subject's parents. */
+export function parentSide(role: unknown): "father" | "mother" | "parent" | null {
+  if (typeof role !== "string") return null;
+  const r = role.toLowerCase();
+  if (GRANDPARENT_ROLES.has(r) || /grand|god|in_law/.test(r)) return null;
+  const tokens = r.split("_");
+  for (const side of ["father", "mother", "parent"] as const) {
+    if (tokens.includes(side)) return side;
+  }
+  return null;
+}
+
+/** A conclusion above `not_proved` may not rest on a parent nobody identified:
+ *  refused when a parent side the summary cites has no cited parent-role
+ *  assertion carrying a live `person_evidence` link in the pre-call document.
+ *
+ *  A side is cited by a parent-role assertion, or by an UNLINKED assertion whose
+ *  `structured_value.related_person_role` is a parent role ("child of William
+ *  Barker"), so dropping the parent's own assertions from the citation does not
+ *  evade it. A linked "child of" assertion cites nothing: its parent is usually
+ *  identified on another record, and counting it refused 26 legitimate e2e proofs.
+ *
+ *  Per side, not per persona: proof-conclusion's gate is satisfied per person, so
+ *  the father linked as `father_of_bride` on the marriage satisfies his unlinked
+ *  `father` persona on the baptism. A linked `parent` assertion satisfies either
+ *  side, and either side satisfies `parent`. Over the 249 committed proofs above
+ *  `not_proved` it refuses 5; one is a known false refusal (in-laws' fathers cited
+ *  as negative evidence), accepted because the rule cannot tell whose father a
+ *  role names without a tree lookup. Mined from MHGK-WT7 (#3659): `probable`
+ *  naming William Barker and Martha Edwards with every parent assertion unlinked. */
+export function unlinkedParentProofInvariants(entry: any, preCallResearch: any): string[] {
+  const tier = entry?.tier;
+  if (typeof tier !== "string" || tier === "not_proved" || tier === "disproved") return [];
+  const byId = new Map<string, any>(
+    (Array.isArray(preCallResearch?.assertions) ? preCallResearch.assertions : [])
+      .filter((a: any) => typeof a?.id === "string")
+      .map((a: any) => [a.id, a]),
+  );
+  const cited = [
+    ...(Array.isArray(entry?.supporting_assertion_ids) ? entry.supporting_assertion_ids : []),
+    ...(Array.isArray(entry?.claims) ? entry.claims : []).flatMap((c: any) =>
+      Array.isArray(c?.supporting_assertion_ids) ? c.supporting_assertion_ids : [],
+    ),
+  ].filter((id: unknown, i: number, all: unknown[]) => typeof id === "string" && byId.has(id) && all.indexOf(id) === i);
+  const linked = new Set(
+    (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : [])
+      .filter((pe: any) => pe?.superseded_by == null)
+      .map((pe: any) => pe?.assertion_id),
+  );
+
+  const citing = new Map<string, string[]>();
+  const satisfied = new Set<string>();
+  for (const id of cited as string[]) {
+    const a = byId.get(id);
+    const side = parentSide(a?.record_role);
+    if (side) {
+      citing.set(side, [...(citing.get(side) ?? []), id]);
+      if (linked.has(id)) satisfied.add(side);
+    }
+    const related = a?.structured_value && typeof a.structured_value === "object"
+      ? parentSide(a.structured_value.related_person_role)
+      : null;
+    if (related && !linked.has(id)) citing.set(related, [...(citing.get(related) ?? []), id]);
+  }
+  const ok = (side: string) =>
+    satisfied.has(side) ||
+    (side === "parent" && (satisfied.has("father") || satisfied.has("mother"))) ||
+    (side !== "parent" && satisfied.has("parent"));
+  const unsatisfied = [...citing].filter(([side]) => !ok(side));
+  if (unsatisfied.length === 0) return [];
+  const detail = unsatisfied.map(([side, ids]) => `${side} (${ids.join(", ")})`).join("; ");
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: tier '${tier}' cites a parent no identity ` +
+      `decision has identified — ${detail} — and none of the cited parent assertions on that side ` +
+      `is linked to a person in person_evidence. Run person-evidence on those assertions first ` +
+      `(from an agent, hand back to the main thread and name it), then send this write again. ` +
+      `Recording the attempt at 'not_proved' is allowed now.`,
+  ];
+}
+
 /** A question's `status` may not claim an exhaustiveness that its stop decision
  *  does not carry.
  *
@@ -5129,6 +5214,7 @@ function applyOne(
       // Tier-gated like the line above, so a narrative edit to a summary that
       // predates the rule is not refused.
       invariantErrors.push(...unlinkedProofInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...unlinkedParentProofInvariants(resultEntry, preCallResearch));
     }
     // NOT gated on `tierTouchedThisOp`, unlike the exhaustiveness check above.
     // That gate asks "is this op setting the tier"; this rule asks "does the
