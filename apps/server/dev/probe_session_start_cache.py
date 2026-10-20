@@ -83,6 +83,7 @@ from dev.probe_effort_capture import (  # noqa: E402
     api_key,
     cli_version,
     make_handler,
+    parse_usage,
     system_text,
 )
 
@@ -127,24 +128,6 @@ def prefix_breaks(req1: dict, req2: dict) -> list[str]:
     if m2[:len(m1)] != m1:
         out.append("messages")
     return out
-
-
-def parse_usage(head: bytes) -> dict | None:
-    """`usage` from a streamed reply's `message_start` event, or from a plain JSON reply."""
-    text = head.decode("utf-8", errors="replace")
-    for line in text.splitlines():
-        if not line.startswith("data:"):
-            continue
-        try:
-            event = json.loads(line[5:].strip())
-        except ValueError:
-            continue
-        if event.get("type") == "message_start":
-            return (event.get("message") or {}).get("usage")
-    try:
-        return json.loads(text).get("usage")
-    except (ValueError, AttributeError):
-        return None
 
 
 def context_tokens(usage: dict | None) -> int | None:

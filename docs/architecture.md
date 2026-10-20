@@ -581,9 +581,12 @@ agents.**
 > use that variable). The model is told to set it only when asked; the hosted hook sets
 > it from the operator's settings. 2.1.294 also carries two flag-driven mechanisms —
 > lowering an *unpinned* subagent's effort, and a per-subagent `<total_tokens>` budget
-> keyed on the session's effort — neither seen on the hosted path's API key on
-> 2026-10-20 (helper at `high` unpinned; no `<total_tokens>` reminder through the
-> subagent's second request, at orchestrator `high` or `medium`). The definition's field binds wherever `.claude/agents/*.md` is parsed, which is the hosted
+> keyed on the session's effort. On the hosted path's API key on 2026-10-20 the first
+> did not fire (helper at `high` unpinned), and the second was unstable: no
+> `<total_tokens>` reminder through the subagent's second request in four sessions
+> (orchestrator `high` and `medium`), one at `15000000 tokens left` on main and subagent
+> alike in a fifth (`high`), and none at `medium` minutes later — so no smaller budget
+> was ever seen under a lowered orchestrator (`apps/server/dev/probe_effort_capture.py`). The definition's field binds wherever `.claude/agents/*.md` is parsed, which is the hosted
 > control plane (`stage_plugin_agents` + `setting_sources=["project"]`), both
 > harnesses, **and Cowork — verified live on 2026-08-25**, the way the `model:` pins
 > were. A probe plugin pinned `record-extractor` to `effort: low` and a `PreToolUse`

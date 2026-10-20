@@ -103,6 +103,23 @@ class Settings(BaseSettings):
     orchestrator_effort: EffortSetting | None = None
     subagent_effort: EffortSetting | None = None
     subagent_effort_by_agent: dict[str, EffortSetting] = {}
+    # The main thread's prompt-cache lifetime, stamped into a NEW sandbox as
+    # CLAUDE_CODE_PROMPT_CACHE_TTL (CLI >= 2.1.294 reads it for the main thread only;
+    # helpers and the compaction call keep 5 minutes). UNSET BY DEFAULT = stamp nothing,
+    # which on an API key is 5 minutes, as before.
+    #
+    # The economics, so nobody flips it on a hunch: a 1-hour write costs 2x input against
+    # 1.25x (+$2.25/MTok on Sonnet 4.6) on EVERY write, to save $3.45/MTok on each token a
+    # 5-minute entry would have expired and re-written -- after an agent ran over ~5
+    # minutes, or the researcher paused. Dallan's 18 hosted sessions (Oct 5-18) put those
+    # re-writes at 12-20% of main-thread spend, which is the gross, not the saving. Flip it
+    # only when `make feedback-profile`'s CACHE TTL table reads a negative `net main` TOTAL
+    # on real bundles. Alpha only: the prototype's FamilySearch gateway drops the TTL.
+    #
+    # Rollback reaches new sessions only (a sandbox keeps its create-time env), and on CLI
+    # 2.1.220 the variable is silently ignored -- `test_prompt_cache_switch_needs_cli_2_1_294`
+    # turns red if the sandbox SDK pin drops below 0.2.165.
+    prompt_cache_ttl_main: Literal["5m", "1h"] | None = None
     # OpenRouter key for the engine's image_transcribe OCR tool. The in-sandbox
     # MCP server reads it config-only (never from env), so — unlike
     # ANTHROPIC_API_KEY, which is written into the sandbox by

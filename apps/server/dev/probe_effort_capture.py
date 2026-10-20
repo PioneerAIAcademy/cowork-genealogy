@@ -34,10 +34,18 @@ Re-answered 2026-10-20 under agent SDK 0.2.165 / CLI 2.1.294, with T4.1's three 
     d-env-subagent-map          high    low               none
     d-env-namespaced            high    low               none   (genealogy-research:...)
 
+    e-env-cache-1h-main         high    high              15000000 / 15000000 (also main)
+      CLAUDE_CODE_PROMPT_CACHE_TTL=1h: main wrote 52,120 tokens, all 1h, with the
+      extended-cache-ttl beta; the subagent wrote 28,089, none 1h, no beta. Run again
+      with d-env-orchestrator-medium minutes later: no <total_tokens> anywhere.
+
 So on 2.1.294 an unpinned helper still runs at `high` (the flag that can lower one did not
 fire for this key), the orchestrator setting moves only the main thread, a per-agent level
-reaches the helper under both spellings, and no per-subagent token budget appeared by the
-subagent's second request -- searched in `system` and `messages`, number or `Infinite`.
+reaches the helper under both spellings, and the cache switch moves the main thread alone.
+The per-subagent token budget (`<total_tokens>`) is remote-flag driven and NOT stable: absent
+in four sessions, present in one (main and subagent alike, at session effort `high`, value
+15,000,000 -- far above any helper's use). No session showed a smaller budget at `medium`.
+Searched in `system` and `messages`, number or `Infinite`; re-read it before relying on it.
 
 HOW
 
@@ -70,6 +78,7 @@ subagent through its SECOND request, where a per-turn `<total_tokens>` budget wo
     d-env-orchestrator-medium   ORCHESTRATOR_EFFORT=medium
     d-env-subagent-map          SUBAGENT_EFFORT_BY_AGENT={"person-evidence": "low"}
     d-env-namespaced            the same, delegating to genealogy-research:person-evidence
+    e-env-cache-1h-main         CLAUDE_CODE_PROMPT_CACHE_TTL=1h (Settings.prompt_cache_ttl_main)
 
 The `medium` arms are what make a `high` arm readable. If the default is already
 `high`, an arm setting `high` sends the same body whether or not the lever reached
@@ -163,6 +172,10 @@ ARMS = [
     ("d-env-subagent-map", None, None, {"SUBAGENT_EFFORT_BY_AGENT": BY_AGENT_LOW}, QUERY, 1),
     ("d-env-namespaced", None, None, {"SUBAGENT_EFFORT_BY_AGENT": BY_AGENT_LOW},
      QUERY_NAMESPACED, 1),
+    # The 1-hour main-thread cache switch (`Settings.prompt_cache_ttl_main`): read through the
+    # subagent's second request so its first response's usage has landed.
+    ("e-env-cache-1h-main", None, None, {"CLAUDE_CODE_PROMPT_CACHE_TTL": "1h"},
+     QUERY_TWO_REQUESTS, 2),
 ]
 # The CLI writes the budget as a number or as `Infinite`, in the system prompt or after a
 # tool result -- so the whole body is searched and the text kept as found.
@@ -200,7 +213,47 @@ def system_text(body: dict) -> str:
     return ""
 
 
+def parse_usage(head: bytes) -> dict | None:
+    """`usage` from a streamed reply's `message_start` event, or from a plain JSON reply."""
+    text = head.decode("utf-8", errors="replace")
+    for line in text.splitlines():
+        if not line.startswith("data:"):
+            continue
+        try:
+            event = json.loads(line[5:].strip())
+        except ValueError:
+            continue
+        if event.get("type") == "message_start":
+            return (event.get("message") or {}).get("usage")
+    try:
+        return json.loads(text).get("usage")
+    except (ValueError, AttributeError):
+        return None
+
+
+def cache_ttls(obj) -> list[str]:
+    """The distinct `ttl` of every `cache_control` block in a request ("default" = none set,
+    which the API reads as 5 minutes)."""
+    found: set[str] = set()
+
+    def walk(x):
+        if isinstance(x, dict):
+            cc = x.get("cache_control")
+            if isinstance(cc, dict):
+                found.add(str(cc.get("ttl") or "default"))
+            for v in x.values():
+                walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
+
+    walk(obj)
+    return sorted(found)
+
+
 class Capture:
+    wants_exchange = True
+
     def __init__(self, marker: str):
         self.marker = marker
         self.rows: list[dict] = []
@@ -209,11 +262,11 @@ class Capture:
         self.lock = threading.Lock()
         self.wanted = 1
 
-    def record(self, path: str, raw: bytes) -> None:
+    def record(self, path: str, raw: bytes, headers: dict | None = None) -> int | None:
         try:
             body = json.loads(raw)
         except ValueError:
-            return
+            return None
         sys_text = system_text(body)
         row = {
             "path": path,
@@ -225,12 +278,24 @@ class Capture:
             "delegates": any(isinstance(t, dict) and t.get("name") in ("Agent", "Task")
                              for t in body.get("tools") or []),
             "total_tokens": total_tokens(body),
+            "cache_ttls": cache_ttls(body),
+            "extended_cache_ttl_beta": "extended-cache-ttl" in (headers or {}).get("anthropic-beta", ""),
+            "usage_1h": None,
         }
         with self.lock:
             self.rows.append(row)
+            key = len(self.rows) - 1
             subs = sum(1 for r in self.rows if r["who"] == "subagent")
         if subs >= self.wanted:
             self.subagent_seen.set()
+        return key
+
+    def record_response(self, key: int, head: bytes) -> None:
+        usage = parse_usage(head) or {}
+        split = usage.get("cache_creation") if isinstance(usage.get("cache_creation"), dict) else {}
+        with self.lock:
+            self.rows[key]["usage_1h"] = split.get("ephemeral_1h_input_tokens")
+            self.rows[key]["usage_writes"] = usage.get("cache_creation_input_tokens")
 
 
 def total_tokens(body: dict) -> dict | None:
@@ -480,6 +545,12 @@ async def main() -> None:
               f"total_tokens@2={second.get('total_tokens') if second else '-'}", flush=True)
         for line in res["effort_log"]:
             print(f"    {line}", flush=True)
+        if name.startswith("e-"):
+            for who, req in (("main", main_req), ("subagent", sub)):
+                print(f"    {who}: cache ttls={req.get('cache_ttls')} "
+                      f"1h-beta={req.get('extended_cache_ttl_beta')} "
+                      f"usage writes={req.get('usage_writes')} of which 1h={req.get('usage_1h')}",
+                      flush=True)
     print(f"sdk={report['sdk']} cli={report['cli']} scrubbed_env={scrubbed}")
     if args.out:
         Path(args.out).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
