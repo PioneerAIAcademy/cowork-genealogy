@@ -396,6 +396,8 @@ Return **≤10 lines** to the caller, in this order:
 - the image range examined, and the count actually read
 - what was found, by image ID with its `staged.resultsRef` and `imageRef` — or
   the nil result and its scope
+- every page that could not be read, as `NOT READ: <imageId>` with the tool's
+  error quoted
 - the `log` id created, and the plan item's new `status` if one moved
 - next-step hint (e.g. "image 00058 ready for extraction", "film 2 of 2
   still to browse", "no digitized volume — try search-external-sites")
