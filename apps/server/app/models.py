@@ -108,3 +108,7 @@ class ApiCall(SQLModel, table=True):
     # be told from a new one's.
     session_age_s: int
     created: datetime = Field(default_factory=utcnow, sa_type=_TZ, index=True)
+    # Which agent made the call, read off the request's system prompt by the proxy: `main`
+    # for the hosted main thread, otherwise the agent body's first `# ` heading verbatim
+    # (`Record Structurer`), otherwise null. Nullable so `add_missing_columns` can add it.
+    agent: str | None = None

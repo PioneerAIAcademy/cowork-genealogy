@@ -1564,6 +1564,9 @@ def test_person_read_is_staged_when_given_project_path(tmp_path):
     ]
     # The rest of the response is the fixture, unchanged.
     assert {k: v for k, v in body.items() if k != "staged"} == fixture
+    # `staged` leads, as production serializes it (#3384), so a truncated
+    # preview of an over-limit response still carries the ref.
+    assert next(iter(body)) == "staged"
 
 
 @pytest.mark.parametrize("project_path", [None, "", "   "])

@@ -1239,8 +1239,8 @@ is the only instrument that can.
 **Why it ships in the plugin:** `hooks=` is an SDK argument the hosted control
 plane can set and Cowork cannot be made to. A plugin-shipped `hooks/hooks.json`
 binds in **both** — verified live in Cowork 2026-07-30. Cowork runs
-`permission_mode: "default"`, the hosted path `bypassPermissions`; a hook binds
-under both.
+the hosted path `bypassPermissions`; a hook binds under both, under either
+Cowork `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005).
 
 Two behaviors of the script that are deliberate:
 
@@ -2093,7 +2093,7 @@ Do not search for the phrase instead of the label: issue titles name the
 mechanism, not the shape, so a text search finds about half of them and returns
 confident near-misses for the rest.
 
-Three of these gaps are **architecture rather than backlog**, because each one
+Four of these gaps are **architecture rather than backlog**, because each one
 changes how a correct change is made:
 
 1. **Spelling is not binding.** No *CI job* proves a declared agent tool actually
@@ -2141,6 +2141,30 @@ changes how a correct change is made:
    the success gate can and cannot see"). `make e2e-corpus` deliberately reports
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
+4. **Step mode's boundary is enforced on one plane and graded on another.** Under
+   `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19), a step ends by
+   asking the researcher with `AskUserQuestion`, and what stops a model starting the
+   next step without asking differs by plane: the FS prototype gets a `PreToolUse`
+   deny and then a halt; **Cowork gets router prose and no hook at all**; the alpha
+   gets nothing. **None of it is built yet.** When it is, the gap will be that
+   the e2e harness tracks `real_agent` (`eval/harness/e2e/orchestrator.py`),
+   which is the alpha, and the alpha gets nothing -- so the suite will exercise
+   a plane with no enforcement while the one that HAS it goes ungraded. **A
+   green eval suite will therefore say nothing about whether the boundary
+   holds anywhere.**
+   Do not read a passing step-mode test as evidence the boundary holds in Cowork.
+
+   This is a deliberate choice, not a limitation: phase 0 measured that a Cowork hook
+   *could* do it (ADR-0005 item 9 — a plugin `PreToolUse` returning `"continue": false`
+   does end a Cowork turn), and the lead judged it not worth a stateful hook yet,
+   because the cost exposure is the prototype and a Cowork researcher can press stop.
+   Two things would close it, and the first is already instrumented: decision 25's
+   rider logs **every halt on the prototype**, and because the router prose is identical
+   on both planes that rate estimates how often Cowork runs past a boundary — a high
+   one buys the hook with numbers rather than a guess. The facts such a hook would
+   need are already recorded, so they need no re-measuring (ADR-0005, "PARKED for a
+   possible future Cowork hook"). Otherwise it needs an instrument that reaches Cowork,
+   which today is only a live session, for the same reason as gap 1.
 
 ### 9.5 An autonomous run must be able to reach what a production run can
 

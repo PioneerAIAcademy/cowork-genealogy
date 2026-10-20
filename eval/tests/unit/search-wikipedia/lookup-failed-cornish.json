@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_search_wikipedia_012",
+    "skill": "search-wikipedia",
+    "name": "Failed lookup — upstream outage logs nothing",
+    "type": "positive",
+    "description": "wikipedia_search fails with `Wikipedia API error: 503` (isError), which is a failed lookup, not a not-found answer. The agent makes no second call, logs nothing, fills no template, writes no file, and returns exactly 'The Wikipedia lookup failed; nothing was logged.' Graded mechanically by test_lookup_failed_logs_nothing.",
+    "tags": [
+      "lookup-failed",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Look up Cornish emigration to South Australia on Wikipedia\n\ntopic: Cornish emigration to South Australia\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "wikipedia-search-api-error"
+  ],
+  "judge_context": [
+    "Should call `wikipedia_search` once with a query targeting Cornish emigration to South Australia; the tool fails with an upstream error",
+    "The correct outcome is no log entry, no template and no second wikipedia_search call, so Template fidelity is N/A and '(no file changes)' is correct",
+    "The correct reply is exactly 'The Wikipedia lookup failed; nothing was logged.' Any fact about the topic in the reply is a fabrication"
+  ]
+}
