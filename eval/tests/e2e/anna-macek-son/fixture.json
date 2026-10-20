@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 12, flag adds_son, confidence 3). Resolved false match: the 1867 baptism predates Anna Macek's 1871 marriage and would require her to have given birth at 16 — a different Anna/Václav Jičinský couple, not this person."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 12, flag adds_son, confidence 3). Resolved false match: the 1867 baptism predates Anna Macek's 1871 marriage and would require her to have given birth at 16 — a different Anna/Václav Jičinský couple, not this person.",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:6PF8-X6G8",
+    "identity": "different"
+  }
 }
