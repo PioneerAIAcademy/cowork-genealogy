@@ -405,9 +405,10 @@ highest. A row the ranker could not score keeps its search position, has no
 **The ranked list is a review surface, not an auto-accept.** Match score orders the
 candidates; you still confirm the top ones:
 
-- **`ranked.subjectTooThin: true` → every hit is `needs-review`.** Never hand one to
-  extraction on score; name the anchor that would settle identity (a precise date, a
-  named spouse, parent or child).
+- **`ranked.subjectTooThin: true` → every hit is `needs-review`.** No cross-check on
+  name, year or place clears it, and a user's advance go-ahead to extract does not
+  apply: do not extract, and name the anchor that would settle identity (a precise
+  date, a named spouse, parent or child).
 - **Several candidates you cannot tell apart → search the household.** When the tree
   names a co-resident (mother, step-parent), use the household lever in
   `references/search-strategy-levers.md` before choosing one.
