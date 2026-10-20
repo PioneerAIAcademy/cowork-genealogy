@@ -1,6 +1,6 @@
 # Attached records baseline: extract, link and timeline a person in code, and close the plan item
 
-**Status:** PR A (PR #3616) and PR B (PR #3613), both Emruthwill, are on hold until this plan merges; each section below says what it still owes. PRs C and D start once it merges. Work order: issue #3516, which absorbs issue #3525 and issue #3585. One senior developer. Each PR says "Part of issue #3516"; only PR D closes it. Delete this file when PR D merges.
+**Status:** PRs C and D are not started. They build on PR A (PR #3616) and PR B (PR #3613), both Emruthwill, whose checklists live on those PRs. Work order: issue #3516, which absorbs issue #3525 and issue #3585. One senior developer. Each PR says "Part of issue #3516"; only PR D closes it. Delete this file when PR D merges.
 
 **Priority:** quality, and a prerequisite of step mode, not Beta's speed critical path (lead, 2026-10-20). PR B comes first, because step mode's "not exhaustive" choice, its wrap-up and its one-question rule all need searched plan items closed (`docs/plan/research-step-mode.md`, prerequisites).
 
@@ -8,8 +8,6 @@
 
 - **A baseline step, all code.** `extraction_append({ projectPath, personId })` extracts every indexed record FamilySearch has attached to a person and links each one to that person as `speculative`. `timeline_build({ projectPath, personId })` then builds the person's timeline from those links. No agent runs.
 - **Where it runs.** In a /research job, once per subject after init-project and before the first question-selection. "Create a timeline for <PID>" is a bounded ask that runs both and stops. The timeline agent runs `extraction_append` once itself when nothing is linked (decision 16).
-- **Plan items close in code.** `extraction_append` completes the plan item behind the records it extracts, and a question that finds a record already extracted claims it.
-- **The benchmark stays honest.** A leak check fails when a record an expected finding cites is attached to the fixture's subject, unless an allow-list names it as starting evidence.
 
 Not in this plan: verifying attachments (issue #3584, parked), the hints plan item (issue #3153), and the unit snapshot rule (issue #3568).
 
@@ -43,87 +41,12 @@ Added (lead, 2026-10-20):
 
 **One narrowing of the 2026-10-19 ruling, confirmed by the lead on 2026-10-20.** project_context's "none linked → person-evidence" rung ignores only links that carry `ATTACHMENT_LINK_RATIONALE`, not every speculative link. person-evidence itself writes a speculative link when the researcher confirms a weak match, and ignoring those would send the question back to person-evidence to ask again. The unlinked-proof gate still ignores every speculative link.
 
-## PR A — the allow-list and two fixture guards
+## PR A and PR B
 
-Free tier. On hold on PR #3616 until this plan merges. A genealogist reviews the reason lines and the f2 edit.
+Both are Emruthwill's, and their checklists live on the PRs.
 
-**Still owed on PR #3616:**
-- Move the record-hint equality from `test_e2e_fixture_corpus.py` into `validate_fixture.lint_fixture`, which `test_committed_fixture_passes_the_hard_gates` already calls, and keep PR #3616's `tmp_path` cases. One of them makes a record-hint fixture with no unstripped tree a hard error, so make `author.py validate`'s warning for that case an error too.
-- Add the two `e2e-test-spec.md` edits below that it does not have yet. Fold PR #3616's §3.6 leak-check bullet into the §6.1 callout edit, so the rule is stated once, and make its corpus-test sentence name `make e2e-validate` too.
-- Take the maria-bracero reason line from the table below. The table's thomas-hanrahan lines are PR #3616's own.
-
-The full checklist:
-
-- [ ] **maria-bracero-marriage.** In `expected-findings.json`, set f2 `required: false` (decision 13), and add a dated changelog line to its README saying why.
-- [ ] **The allow-list.** Create `eval/tests/e2e/attached-evidence-allowlist.json` as `{ "<fixture>": { "<bare 1:1 id>": "<reason>" } }`, with the 12 entries below. Use the bare record id, never the tree source id.
-- [ ] **Leak check** (a pytest under `eval/harness/tests/unit/`, run by `make harness-test`). For every `eval/tests/e2e/*/` fixture:
-  - fail when a `1:1:` record id cited in `expected-findings.json` is the `url` of a source attached to a `subject_person_ids` person in `starting-tree.gedcomx.json` by a person-, name- or fact-level ref, unless the allow-list names that id for that fixture;
-  - match the `1:1:<id>` token, not a substring of the file;
-  - fail on a stale entry: an allow-listed id that is no longer attached or no longer cited.
-- [ ] **Record-hint equality** in `validate_fixture.lint_fixture`, beside its unstripped-tree checks, as a hard error. A `"genre": "record-hint"` fixture whose `starting-tree.gedcomx.json` differs from `unstripped-tree.gedcomx.json` fails. Then `make e2e-validate` and the corpus test agree with `author.py validate`. All 114 record-hint fixtures pass it today.
-- [ ] **`docs/specs/e2e-test-spec.md`.**
-  - In §6.1's "The block is necessary but not sufficient" callout, name the leak check and the allow-list. Say what an entry means, and that a record answering a required finding is the lead's call, not an entry.
-  - In §3.4, add decision 13 as a third use of `required: false`.
-- [ ] **Prove each guard both ways:**
-  - a cited id planted on a subject fails, naming the fixture and the id;
-  - an allow-listed id, and a cited id attached only to a relative, pass;
-  - a stale allow-list entry fails;
-  - a stripped scratch copy fails the equality check, and a reformatted one passes.
-- Done when: `make harness-test` and `make e2e-validate` exit 0, and `git diff --stat` shows only these files and the spec.
-
-Reason lines. These are drafts from the 2026-10-20 review; check each against its fixture's README.
-
-| fixture | id | reason |
-|---|---|---|
-| fernando-suarez-marriage | 6DDW-L7XF | Fernando's persona in daughter Julia Rosa's 1896 baptism. f1 needs the 1891 hint marriage QG2B-LVHQ. This record also answers non-required f2, the bride's parents. |
-| grigory-kokosha-death | FNGV-JL3 | Grigory's 1843 marriage. f1 needs the 1846 hint death KX55-44K. |
-| grigory-kokosha-death | KXPB-DG6 | Daughter Anna's 1844 baptism. f1 needs the 1846 hint death KX55-44K. |
-| joao-sousa-death | 6NGD-BL9Q | The subject's own 1852 baptism; the index names only his mother. f1 turns on the 1919 hint death 6YP6-D37M (copy 6B9P-F8GR). |
-| joao-sousa-death | X911-WXWP | The elder namesake brother's 1865 marriage: evidence for f1's competing candidate. f1 still turns on the 1919 hint death. |
-| joao-sousa-death | X91B-LBSN | The elder brother's son Francisco's 1905 marriage, in the same role as X911-WXWP. |
-| maria-bracero-marriage | QVJX-8L5R | Maria's 1973 death registration, which names her father Juan Bracero and supports her mother's name Juana. It answers only f2, non-required since 2026-10-20. f1 still needs the 1907 hint marriage QVJH-YRN1. |
-| nancy-davis-marriage | MDZF-Q7C | The subject's 1850 census, her only source. f1 and f2 need evidence that the 1868 bride was born about 1853. |
-| nicola-domenichelli-death | 6ZYD-6L8N | Nicola's 1946 marriage. f1 needs the 1981 hint death 6ZB1-TVLX. |
-| thomas-hanrahan-marriage | MZF2-Y55 | The Saratoga Thomas's 1880 census, the New York evidence the rejection rests on. f1 (avoid) and f2 turn on rejecting the Ballylooby hint 6267-W22Q. |
-| thomas-hanrahan-marriage | F5GR-QBN | The Irish Thomas's father persona in daughter Mary's 1871 Tipperary birth entry, attached to the Saratoga Thomas where the live tree merged two families. f1 (avoid) and f2 turn on rejecting the Ballylooby hint 6267-W22Q. |
-| thomas-hanrahan-marriage | F5YK-84C | The same, in son John's 1872 Ardfinnan birth entry. f1 (avoid) and f2 turn on rejecting the Ballylooby hint 6267-W22Q. |
-
-## PR B — extraction_append closes plan items and claims re-found records
-
-Free tier. On hold on PR #3613 until this plan merges.
-
-**Done on PR #3613:**
-- the lanes, and both re-send ties;
-- one completion write per item, with `planItems.errors`;
-- the searched-skip rule in both arms, with the exemption, and the corpus measurement (60 of 476 skipped items had a search that ran, 59 of them legacy skips with no category);
-- kept-completed in the `plan_items` arm;
-- read reuse with the `indexFields` guard, and the documents citation;
-- both unit-plane predicates, the ownership rows, ADR-0006's plan-item and assertion clauses, and the docs, except the texts item 4 names.
-
-**Still owed on PR #3613:**
-1. **Gate the informant floor on ties.** Run `validateInformantQualityFloor` on an update only when the update sets `informant_proximity` or `information_quality`, as `validateRelationshipDirection` already does. Keep the per-assertion retry for other refusals.
-   - Without the gate, a record whose assertions all carry unknown proximity with primary or secondary quality is never tied. Its question holds no assertions, and `pendingExtraction` sends it back to extraction on every pass. That is 18 records in the committed e2e final states.
-   - Make "ties the other assertions when one written before a later rule refuses the update" use a legacy shape the update arm still refuses, such as `record_basis: "absent"` with a non-`absent` role.
-   - Add a case: a tie on an unknown/primary assertion succeeds.
-2. **Let capture-pending answer the exempt case.** Where capture-pending would refuse `completed`, `planItemSearchedSkipInvariants` returns no error for any `skip_category`. Capture-pending already refuses a non-exempt skip in the same call, with a message naming `inaccessible` and `user_declined`.
-   - Delete the "Leave it 'in_progress' until its external capture arrives" remedy from the code and the spec row.
-   - Make the "does not name completed…" test assert a single error, capture-pending's.
-3. **Add the kept-completed no-op to the `plans` arm's inline items,** as every other plan-item rule is. No committed run writes items through a `plans` update today.
-4. **Seven texts:**
-   - the last sentence of `research-append-tool-spec.md`'s `questions` stop-gate row ("which no skill can do on the FamilySearch path today");
-   - `skill-dataflow.md`'s "Who may write what" `plans` / `plan_items` row: `extraction_append` joins its writer tools and its writers of `items[].status`, `in_progress` → `completed` only, by tool identity;
-   - `skill-dataflow.md`'s "Stated twice, differently" item 1. Rewrite it, don't delete it: FamilySearch items now complete in code, nil-only items still wait for Dispose, and search-full-text's "extraction will complete it" stays untrue because completion reads only `record_search` sidecars;
-   - for item 1, `research-append-tool-spec.md`'s §5 informant-floor row and `research-schema-spec.md`'s `informant_proximity` row ("Refused by `research_append` on append and update"). Make both say the update arm checks the merged entry only when the op sets `informant_proximity` or `information_quality`. That still catches a flip to `unknown` over a stale `secondary`, but a question tie on a legacy pair is not re-checked;
-   - the comment above the floor call in `research-append.ts`'s update arm, to match;
-   - `extraction_append`'s description, whose "Each is read live" an earlier read's reuse now makes untrue.
-5. **One read for the PR body.** research-exhaustiveness's "if any is still `planned` or `in_progress`, refuse" and its decline rules still hold under decisions 8 and 9. If PR #3564 lands first, read its text.
-6. **Run the `plans` free cases as the research suite,** not search-hints. Issue #3153 adds search-hints to the `plans` row's callers, which turns those cases red or makes them vacuous.
-7. **The PR body.** Replace its "Needs the lead" section with the decided exemption (lead, 2026-10-20), as item 2 leaves it. Replace its "What nothing checks" bullet on search-hints with: no unit run reaches the `plans` completion predicate. Every positive research test is stubbed, so `test_ownership_table` skips it, and no search-hints scenario has a plan-tied `record_search` with a sidecar. The free cases, run as research (item 6), are its only check.
-
-Also noted for PR #3613:
-- research-plan's Termination skips `in_progress` items that cannot run. It is fixed in the step-mode plan's research-plan prep PR.
-- search-images' "completed // or skipped" after a logged browse is on issue #3549.
-- PR #3612 (draft) builds the same documents-mode citation. Whichever of PR #3612 and PR #3613 lands second drops its copy, and one of the two tests.
+- **PR A is PR #3616:** the allow-list of attached starting evidence, a leak check that fails when a record an expected finding cites is attached to the fixture's subject and not allow-listed, and the record-hint tree guard. PR D's acceptance run reads its allow-list.
+- **PR B is PR #3613:** `extraction_append` completes the plan item behind the records it extracts, and a question that finds a record already extracted claims it (decisions 6–9). PR C lands after it.
 
 ## PR C — the baseline step and timeline_build
 
@@ -152,7 +75,7 @@ Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. 
   - write each `person_evidence` row with `confidence: "speculative"`, `match_score: null` and `rationale: ATTACHMENT_LINK_RATIONALE`;
   - a record already extracted is linked from its existing sidecar, with no re-read, when none of its persona's assertions has a live link;
   - leave an assertion already linked to anyone alone;
-  - skip an assertion whose (assertion, person) pair `rejected_links` names (`isRejectedPair`, once PR #3577 is in), and count it in the summary;
+  - skip an assertion whose (assertion, person) pair `rejected_links` names (`isRejectedPair`, `src/utils/rejected-links.ts`), and count it in the summary;
   - write the links so one refused pair never sinks the record's other links;
   - a record whose assertions carry no persona id is extracted but not linked, and its outcome says so.
 - [ ] **Score-gate exemption.** Let this path past `personEvidenceScoreInvariants` with an internal option on `researchAppend`, never an input field.
@@ -444,22 +367,16 @@ No comparable baseline exists: joao-sousa-death's only committed run predates PR
 Before PR D merges, comment each item below on the open `nothing-checks` issue that covers it, or file one with that label, and name the issue here.
 
 - Most of the step in e2e: 46 of 186 starting trees cite an indexed source on the subject, and none of the four panel fixtures does.
-- PR B and PR C change graded behaviour while check_runlogs only warns.
-- The leak check sees only `1:1:` ARK citations. Once PR #3607 and PR #3517 land, 22 of the 46 fixtures with an indexed attachment on a subject cite no record id at all: ferber-grandparents, ferber-marriage, william-ferber-parents, and the 19 drafts PR #3618 added, until their findings are adjudicated. ferber-marriage's required f1 and f2 cite its attached 1900 census by title, which decision 15 accepts.
-- The leak check skips relationship-level refs (decision 11). umbelina-azevedo-death cites three records attached to its subject only through ParentChild refs, so reading relationship refs later would leak them with the check green.
-- An item whose positive searches kept no sidecar never completes in code; it goes to Dispose. That was 28 of 613 such items in the committed e2e final states.
+- PR C changes graded behaviour while check_runlogs only warns.
 - A census that FamilySearch does not hold never produces a gap (decision 14).
 
 ## Collisions
 
-- **PR #3616 and PR #3613** (Emruthwill): PR A and PR B, on hold until this plan merges.
-- **PR #3583** merged 2026-10-20 (2630a8578). PR C edits its gate, its rung and its two spec texts, which are on main as cited.
-- **PR #3564** (open). It edits `replay.py`, where PR C reports `timeline_build`, the `personId` call and PR B's completions and ties as unmodelled, `research-exhaustiveness.md`, which PR B's item 5 reads, and `research-schema-spec.md`. Whichever lands second rebases.
-- **PR #3476** (open). It edits `research-append.ts`, `research-append-tool-spec.md`, `research-schema-spec.md` and `research-append.test.ts`, as PR #3613 does. Whichever lands second rebases.
+- **PR #3564** edits `replay.py`, where PR C reports `timeline_build`, the `personId` call and PR B's completions and ties as unmodelled, and `research-schema-spec.md`. Whichever lands second rebases.
+- **PR #3476** edits `research-append.ts`, `research-append-tool-spec.md`, `research-schema-spec.md` and `research-append.test.ts`, as PR C does. Whichever lands second rebases.
 - **Issue #3552:** same score gate, reused-hint code, ADR-0009 constraint and guardrail row. Its step 1 turns PR C's "extracted, not linked" case into a link.
-- **PR #3567** (open). It edits the `plans` and `plan_items` callers in `ownership.json`. It also edits `hooks/guard_project_files.py`, `eval/harness/harness/skill_invocation.py`, `docs/skill-dataflow.md` and `docs/architecture.md`, all of them PR C sites. Whichever lands second rebases.
-- **PR #3577** (open). It edits `ownership.json`, `research-append.ts`, `test_universal.py`, `test_ownership_manifest.py`, `guard_project_files.py`, `agent-tool-names.test.ts`, and four of the docs PR B and PR C edit. It also adds `rejected_links` and refuses any `person_evidence` append onto a rejected pair, which PR C's link writes meet too. Check it before touching `ownership.json`, and rebase.
-- **PR #3612** (draft): it builds PR B's documents-mode citation too. It also rewrites the bounded sentence PR D extends, and edits these PR C and PR D sites:
+- **PR #3567** edits the `plans` and `plan_items` callers in `ownership.json`. It also edits `hooks/guard_project_files.py`, `eval/harness/harness/skill_invocation.py`, `docs/skill-dataflow.md` and `docs/architecture.md`, all of them PR C sites. Whichever lands second rebases.
+- **PR #3612** rewrites the bounded sentence PR D extends, and edits these PR C and PR D sites:
   - `bounded-ask-not-a-job.json`;
   - `mock_mcp.py`, `skill_invocation.py`, `test_universal.py`, `test_research.py`, `test_mock_mcp.py`;
   - `server.ts`, `smoke-calls.ts`, `no-project.test.ts`;
@@ -467,18 +384,14 @@ Before PR D merges, comment each item below on the open `nothing-checks` issue t
   - `agent-tool-names.test.ts`, `agent-delegation-framing.test.ts`.
 
   Whichever lands second rebases and re-checks that test.
-- **PR #3610 and PR #3605** (open): both edit `validate_fixture.py` and `e2e-test-spec.md` §3.6, which PR A edits.
-- **`agents/person-evidence.md` and its suite** are also edited by issue #3552, issue #3363, issue #3544, issue #2537, step mode's PR 2, and PR #3577, which already commits person-evidence run logs. Whichever lands second re-runs `make eval-skill SKILL=person-evidence`. PR D's $7.79 is its own run, and it is owed again if any of these lands after it.
-- **`skills/research/SKILL.md`** is also edited by PR #3567, PR #3577, PR #3507, PR #3612, issue #3526, issue #3153, and step mode's prep PRs and PR 2. PRs that edit an agent research names stale it too: PR #3476, PR #3500 and PR #3564. Whichever lands second re-runs research.
+- **`agents/person-evidence.md` and its suite** are also edited by issue #3552, issue #3363, issue #3544, issue #2537 and step mode's PR 2. Whichever lands second re-runs `make eval-skill SKILL=person-evidence`. PR D's $7.79 is its own run, and it is owed again if any of these lands after it.
+- **`skills/research/SKILL.md`** is also edited by PR #3567, PR #3507, PR #3612, issue #3526, issue #3153, and step mode's prep PRs and PR 2. PRs that edit an agent research names stale it too: PR #3476, PR #3500 and PR #3564. Whichever lands second re-runs research.
 - **Issue #3153.** Its hints item completes through search-hints' own lane, not rule 8, because a `person_record_matches` entry has no `record_search` sidecar. It also edits:
   - the `plans` row, `test_ownership_manifest.py`, and `research-schema-spec.md`'s ownership table;
   - `guard_project_files.py`, with its own `make hook-smoke`;
   - `catalog.md`, `skill-dataflow.md` and `agent-tool-names.test.ts`;
   - `question-state.ts`, where PR C edits the `noneLinked` rung.
-
-  Its `plans`-row caller entry would turn PR B's search-hints free cases red; PR B runs them as research instead.
 - **Issue #3568:** its opt-in edits stale the research suite. Whichever of it and PR D lands second re-runs research.
-- **Issue #3549:** it edits `agents/search-images.md`, whose "or skipped" now meets PR B's refusal (noted on that issue).
 - **Step mode** (`docs/plan/research-step-mode.md`): PR B is a prerequisite. Completing items whose searches all found nothing, routing a refused declaration's `in_progress` items to Dispose, and research-plan's Termination are in its research-plan prep PR and PR 2.
   - One of step mode's prep PRs edits `agents/timeline.md`, and its PR 2 edits `person-evidence.md`, `question-selection.md` and `research/SKILL.md`. So all four of PR D's suites overlap, and whichever lands second re-runs them.
   - PR D and step mode's PR 2 land in either order; of this plan's PRs, only PR B gates PR 2. If PR D lands first, PR 2's Priority 3 rewrite deletes PR D's gate and the "Fresh project" timeline sentence PR D adds, and keeps PR D's first-question test passing. If PR 2 lands first, PR D drops its `agents/question-selection.md` edit, because Priority 3 is already gone, and keeps the test. It also adds to the router's setup-step report what the attached records show (events, how many are unverified, the high gaps), which step mode's "What the researcher sees" names and PR 2 had nothing to report from.
@@ -486,7 +399,7 @@ Before PR D merges, comment each item below on the open `nothing-checks` issue t
 
 ## Costs
 
-- PR A and PR B owe no paid unit run. PR C owes one `make hook-smoke` and one `make engine-smoke-http`.
+- PR C owes one `make hook-smoke` and one `make engine-smoke-http`, and no paid unit run.
 - PR D owes four paid runs, about $2.15 for timeline, $5.70 for research, $3.44 for question-selection and $7.79 for person-evidence at the last runs' prices, plus four annotations. Then one e2e run, which the lead does.
 - At run time, a job's first pass gains two main-thread tool calls per subject (two in every e2e fixture), plus:
   - `timeline_build`'s catalog fetch, 33–36 s when cold, unless its 1-hour in-process cache is warm;
