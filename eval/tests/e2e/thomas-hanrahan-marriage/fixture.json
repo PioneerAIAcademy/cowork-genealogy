@@ -15,5 +15,8 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 14, hint-samples.csv row 495, flag adds_marriage, confidence 3). Resolved 2026-10-16 (#3336): false match. The 1 Feb 1868 Ballylooby marriage belongs to an Irish couple (children Mary 1871 and John 1872, Ardfinnan); the Saratoga couple were in New York in 1865 and 1880 with New York-born children (ark:/61903/1:1:QVNN-7MNR, ark:/61903/1:1:MZF2-Y55). Their own marriage is unidentified. Decided from the indexes, image_basis off."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 14, hint-samples.csv row 495, flag adds_marriage, confidence 3). Resolved 2026-10-16 (#3336): false match. The 1 Feb 1868 Ballylooby marriage belongs to an Irish couple (children Mary 1871 and John 1872, Ardfinnan); the Saratoga couple were in New York in 1865 and 1880 with New York-born children (ark:/61903/1:1:QVNN-7MNR, ark:/61903/1:1:MZF2-Y55). Their own marriage is unidentified. Decided from the indexes, image_basis off.",
+  "caps": {
+    "wall_clock_seconds": 9000
+  }
 }

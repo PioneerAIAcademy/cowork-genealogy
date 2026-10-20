@@ -1,0 +1,51 @@
+# review-sources-kenneth-quass
+
+**Ask:** "Review the sources attached to KNS4-P6W."
+
+**Expected owner:** `source-evaluation`. **Expected save:** one new `log` entry with
+`tool: "source_evaluation"`.
+
+## Where it came from
+
+A placeholder (issue #3527). Issue #3571 picks and adjudicates the real panel from
+alpha feedback; replace or extend this fixture from its comment on issue #3527.
+
+The `tool` value is provisional. Issue #3524 says the log entry's `tool` "names the
+activity" but does not fix the string. `source_evaluation` follows the one agent that
+already logs itself (`historical-context` writes `historical_context`). Match it to
+what #3524 ships.
+
+## Expected result today
+
+Measured 2026-10-19 on `main`, when the fixture still expected `source-evaluation`
+(the turn wrote no log entry at all, so the result is the same): FAIL on `save` only.
+
+```
+FAIL review-sources-kenneth-quass  expected=source-evaluation  first=source-evaluation  save=missing log tool=source-evaluation (new log tools: none)  delivered=no  stop=clean  failed=[save]
+```
+
+`owner` already passes. With no `/research` prefix the main thread matched the ask to
+`source-evaluation`'s own description and spawned it without the router, so this
+fixture cannot see the router gap issue #3526 fixes; #3526's own `routes-to:` unit
+tests cover that (Done-when amended on issue #3527, 2026-10-19). It turns PASS when
+issue #3524 (`source-evaluation` saves a log entry) lands.
+
+## Starting state
+
+Copied from `eval/tests/e2e/kenneth-quass-death/`, with the project `id` and
+`objective` changed to a source review. The project has no questions, plans, log
+entries or sources.
+
+## Caps
+
+`wall_clock_seconds: 1200`, `tool_calls: 60`, `max_turns: 60`. One source review of one
+person is a short job (the first run took 3 minutes and 25 tool calls). The autonomous
+defaults (two hours, 300 tool calls) would let a turn that wrongly starts a research job
+run on for the price of a full e2e run before it ends. `max_cost_usd: 3` only labels a
+run that went over; it does not stop one (spec §6).
+
+## Cost
+
+Measured 2026-10-19: $0.92 (`usage.whole_run_cost_usd_estimated`), 3 min 5 s of wall
+clock (164 s of it in the SDK's `duration_ms`), on
+`claude-sonnet-4-6` at effort `high`. One run, so read it as an order of magnitude.
