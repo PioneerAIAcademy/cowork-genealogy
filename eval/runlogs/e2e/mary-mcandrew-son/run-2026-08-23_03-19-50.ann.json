@@ -1,11 +1,11 @@
 {
   "per_finding": {
     "f1": "true",
-    "f2": "true"
+    "f2": "partial"
   },
   "proof_quality_score": 3,
   "notes": {
-    "f2": "Reached the correct conclusion (only five children) via a different route than the specific hint: it never mentions 'John A Morgan' or the 1873 birth record, instead investigating and eliminating four unrelated candidate children (Ralph J. Mogan, Elizabeth Mitchell, a Migan infant, John H. Magan). Did not contradict the finding, and reached the right headline answer with solid, independently corroborating evidence."
+    "f2": "Reached the correct conclusion (only five children) via a different route than the specific hint: it never mentions 'John A Morgan' or the 1873 birth record, instead investigating and eliminating four unrelated candidate children (Ralph J. Mogan, Elizabeth Mitchell, a Migan infant, John H. Magan). Did not contradict the finding, and reached the right headline answer with solid, independently corroborating evidence. Partial: the second clause, that the 1873 John A Morgan birth belongs to a different family, is absent."
   },
   "annotator": "122873616+Cia-3@users.noreply.github.com",
   "findings_hash": "b664b5427561e97317e87627ca566165b1bbd185c144a97afe2ea2821fe1ae58",

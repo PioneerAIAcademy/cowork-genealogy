@@ -483,6 +483,79 @@ def test_finding_shape_does_not_require_any_field_present():
     assert finding_shape_errors({"findings": [{"id": "f1"}]}) == []
 
 
+# --- avoid-finding tree/research conflation (issue #3465) --------------
+# `apply_avoid_guard` force-fails a target present in the final tree
+# however it is annotated there, including as an explicitly rejected
+# candidate — that is the allowance the rule exists to permit. These pin
+# the six shapes verified by hand before the PR landed: three that must
+# fire, three real fixture wordings that must not.
+
+
+def test_finding_shape_rejects_the_tree_research_conflation():
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    finding["description"] = (
+        "The agent must NOT assert Robert Smith as the father. Pass = neither "
+        "tree/research contains this relationship, however annotated."
+    )
+    errors = finding_shape_errors({"findings": [finding]})
+    assert any("tree/research" in e and "conflate" in e for e in errors)
+
+
+def test_finding_shape_rejects_a_rejection_naming_only_one_store():
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    finding["description"] = (
+        "The agent must NOT assert Robert Smith as the father. A rejected "
+        "candidate may be documented in research.json."
+    )
+    errors = finding_shape_errors({"findings": [finding]})
+    assert any("mentions rejection" in e for e in errors)
+
+
+def test_finding_shape_rejects_a_non_string_avoid_description():
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    finding["description"] = None
+    errors = finding_shape_errors({"findings": [finding]})
+    assert any("non-string" in e for e in errors)
+
+
+def test_finding_shape_accepts_the_matilde_cavagnaro_wording():
+    finding = _rel_finding("Pietro Dondero")
+    finding["polarity"] = "avoid"
+    finding["description"] = (
+        "The agent must NOT assert that Matilde Carmela Emanuela Cavagnaro "
+        "married Pietro Dondero. Pass = the agent's final tree.gedcomx.json "
+        "contains no spouse Pietro Dondero for this subject. A rejected "
+        "candidate may be documented in research.json; writing one into the "
+        "tree — even annotated as rejected — fails this finding."
+    )
+    assert finding_shape_errors({"findings": [finding]}) == []
+
+
+def test_finding_shape_accepts_the_domingo_olivera_wording():
+    finding = _rel_finding("Domingo Oliviery")
+    finding["polarity"] = "avoid"
+    finding["description"] = (
+        "The agent must NOT assert that Domingo Olivera y Valadyo's parents "
+        "were Domingo Oliviery and Francisca Gonzalez. Pass = no such "
+        "parents in tree.gedcomx.json; a rejection of the hint belongs in "
+        "research.json, never as persons in the tree."
+    )
+    assert finding_shape_errors({"findings": [finding]}) == []
+
+
+def test_finding_shape_accepts_an_avoid_description_with_no_rejection_clause():
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    finding["description"] = (
+        "The agent must NOT assert Robert Smith as the father. Pass = the "
+        "agent's final tree.gedcomx.json contains no such relationship."
+    )
+    assert finding_shape_errors({"findings": [finding]}) == []
+
+
 def test_lint_fixture_rejects_an_unrecognized_finding_field(tmp_path):
     finding = _rel_finding("Robert Smith")
     finding["expectation"] = "not_found"
