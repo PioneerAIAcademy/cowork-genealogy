@@ -6296,9 +6296,11 @@ export interface ResearchAppendOptions {
 
 /**
  * The ids of the existing sources that already cover any of `bareRecordIds`,
- * read off the assertions that cite them (§3.4.1). The one derivation of
- * "is this record already extracted", shared by source-reuse detection here and
- * by `extraction_append`'s resend skip, so the two cannot disagree.
+ * read off the assertions that cite them (§3.4.1). Source-reuse detection here
+ * passes one record's own id. `extraction_append`'s resend skip passes a wider
+ * set: every persona ARK of a `record_read` sidecar that lists the requested id,
+ * because a record extracted under one persona's ARK is the same record when
+ * another persona's ARK asks for it.
  */
 export function sourceIdsForRecordIds(research: any, bareRecordIds: ReadonlySet<string>): Set<string> {
   const out = new Set<string>();

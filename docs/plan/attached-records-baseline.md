@@ -1,6 +1,6 @@
 # Attached records baseline: extract, link and timeline a person in code, and close the plan item
 
-**Status:** PRs C and D are not started. They build on PR A (PR #3616) and PR B (PR #3613), both Emruthwill, whose checklists live on those PRs. Work order: issue #3516, which absorbs issue #3525 and issue #3585. One senior developer. Each PR says "Part of issue #3516"; only PR D closes it. Delete this file when PR D merges.
+**Status:** PR C is split in two (2026-10-20). C1, everything in § PR C except `timeline_build`, is in review. C2, `timeline_build`, waits on a lead ruling: Fix 3's fragment threshold (see § PR C). PR D is not started. They build on PR A (PR #3616) and PR B (PR #3613), both Emruthwill, whose checklists live on those PRs. Work order: issue #3516, which absorbs issue #3525 and issue #3585. One senior developer. Each PR says "Part of issue #3516"; only PR D closes it. Delete this file when PR D merges.
 
 **Priority:** quality, and a prerequisite of step mode, not Beta's speed critical path (lead, 2026-10-20). PR B comes first, because step mode's "not exhaustive" choice, its wrap-up and its one-question rule all need searched plan items closed (`docs/plan/research-step-mode.md`, prerequisites).
 
@@ -49,6 +49,14 @@ Both are Emruthwill's, and their checklists live on the PRs.
 - **PR B is PR #3613:** `extraction_append` completes the plan item behind the records it extracts, and a question that finds a record already extracted claims it (decisions 6–9). PR C lands after it.
 
 ## PR C — the baseline step and timeline_build
+
+**Split (2026-10-20).** Measured on the live catalog with `dev/probe-census-placeids.ts`:
+- **Fix 1 holds.** The `searchMetadata.placeIds` are the ids `standardPlaceToPlaceId` returns (Alabama 33, Ohio 43, New York 22, England 1986340, United States 1, Ireland 1927084, Denmark 1927025).
+- **Fix 3 has no single size threshold.** US 1790 is 0.26% of the US maximum and must stay, while Ireland 1821 is 6.27% and must go, and France files its département censuses under the country's id. That is put to the lead, as this section says.
+
+So:
+- **C1 (in review)** is the shared module, the `personId` mode, "a speculative link is not proof", `subjectPersonIds`, the replay and prune `extraction_append` items from the Ownership bullet below, and PR #3613's two post-merge review items.
+- **C2 (pending that ruling)** is everything under `timeline_build` below: the tool, the `collectionCoverage` fixes, `tree_gaps`, ADR-0012, the `timelines` ownership row and its `test_universal` arm, `PROJECT_WRITER_TOOLS`, `UNMODELLED_WRITERS += timeline_build`, and the unit-harness handler.
 
 Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. Land it after PR B. It shares the score gate, the reused-hint code, ADR-0009's same_person constraint and the guardrail row with issue #3552, so whichever lands second rebases.
 

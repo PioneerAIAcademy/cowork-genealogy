@@ -1167,9 +1167,10 @@ by a **second function parameter** (`researchAppend(input, { allowedSections, to
 that a tool caller structurally cannot reach, because dispatch builds only the
 first argument from tool input. Since 2026-10-20 the lane is chosen per call,
 not per tool. A separate `plan_items`-only call completes the plan item behind
-an extracted record. Code composes that op whole, as it does the
-`extracted_for_question_ids` growth a re-found record gets, so no input field
-reaches either (ADR-0006, amended 2026-10-20).
+an extracted record, and in `personId` mode a `person_evidence`-only call links
+a person's attached records as unchecked candidates. Code composes each op whole,
+as it does the `extracted_for_question_ids` growth a re-found record gets, so no
+input field reaches any of them (ADR-0006, amended 2026-10-20).
 
 The pattern comes from an observed failure: a delegation message prompted the
 extractor past its prose lane and it fabricated a match score. The analysis:
