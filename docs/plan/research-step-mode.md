@@ -227,9 +227,9 @@ that apply:
 
     Apart from that `ctx` check, the predicate checks membership and order only. Router
     prose says when a member is skipped:
-    - person-evidence runs only for an assertion with no live link, or for a question whose
-      `project_context` `nextStep` names person-evidence, as one resting on attachment links
-      does (`docs/plan/attached-records-baseline.md`);
+    - person-evidence runs only for a question's assertions with no live link, or for a
+      question whose `project_context` `nextStep` names person-evidence, as one resting on
+      attachment links does (`docs/plan/attached-records-baseline.md`, decision 17);
     - conflict-resolution runs only when an unresolved conflict blocks the question.
   - **The worker and the alpha load `step_boundary.py` from the plugin directory** with
     `importlib.util.spec_from_file_location`, as `eval/harness/harness/context_policy.py`
