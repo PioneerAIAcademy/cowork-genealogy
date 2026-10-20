@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Rozália Görög and János Tarjányi had a daughter Veronika Tarjányi, baptised in 1871 at Kiskunfélegyháza; the baptism indexes the mother as Rozália Bona.",
+      "details": {
+        "subject_person": "Rozália Görög (L7KC-KQT)",
+        "relation": "child",
+        "target_person": {
+          "name": "Veronika Tarjányi",
+          "baptism": "1871, Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        "father": "János Tarjányi"
+      },
+      "supporting_sources": [
+        "Hungary, Catholic Church Records, 1636-1895 — baptism of Veronika Tarjanyi, Kiskunfélegyháza, 1871, daughter of Janos Tarjanyi and Rozalia Bona"
+      ],
+      "required": true
+    }
+  ]
+}

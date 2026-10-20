@@ -24,8 +24,8 @@ interface OpenSession {
 export default function App(): React.JSX.Element {
   const { user, loading } = useAuth()
   // Seed from the URL on first load. A restored session is never "new" — only
-  // the +New button below opens with isNew:true (which prefixes the opening
-  // turn onto the user's first message); a refresh must not re-fire that.
+  // the +New button below opens with isNew:true (which asks for a person and
+  // objective in the empty composer); a refresh must not re-show that.
   const [open, setOpen] = useState<OpenSession | null>(() => {
     const id = readRoute()
     return id ? { id, isNew: false } : null
@@ -58,7 +58,15 @@ export default function App(): React.JSX.Element {
     return <LoginScreen />
   }
   if (open) {
-    return <SessionView key={open.id} sessionId={open.id} isNew={open.isNew} onBack={back} />
+    return <SessionView
+        key={open.id}
+        sessionId={open.id}
+        isNew={open.isNew}
+        onBack={back}
+        // isNew FALSE: the continue session runs on a project that already exists,
+        // so its composer must not ask for a new person and objective.
+        onOpenSession={(id) => openSession(id, false)}
+      />
   }
   return <SessionList onOpen={(id, isNew) => openSession(id, Boolean(isNew))} />
 }

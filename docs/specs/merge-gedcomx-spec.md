@@ -320,7 +320,7 @@ Net guarantee: the on-disk files are always schema-valid after the call, and
   newRelatives: string[],              // Mode 1 — ids of carried-in new relatives
   researchRefsUpdated: {               // Mode 2 only; absent/zero for Mode 1
     subject_person_ids: number, person_evidence: number,
-    timelines: number, known_holdings: number,
+    rejected_links: number, timelines: number, known_holdings: number,
     proof_summaries: number, namesakes: number,
   },
   validation: { valid: true, warnings: string[] },
@@ -588,8 +588,8 @@ Tool-level (wrappers over the pure core):
   `research.json` is byte-unchanged; the summary lists new relatives with their
   assigned ids.
 - **Within-tree persistence** — both files written; `research.json` person-id refs
-  (`subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`,
-  `known_holdings.relates_to_person_ids`,
+  (`subject_person_ids`, `person_evidence.person_id`, `rejected_links.person_id`,
+  `timelines.person_ids`, `known_holdings.relates_to_person_ids`,
   `proof_summaries[].claims[].relationship.parent`/`.child`,
   `namesakes[].person_id`) repointed collapsed → survivor;
   `researchRefsUpdated` counts match.
@@ -716,7 +716,7 @@ also asserts both files are byte-unchanged):
 - **`merge_tree_persons` (Mode 2) remaps `research.json`.** The collapsed id `B`
   is an existing tree person `research.json` may reference. Repoint every person-id
   reference `B → A`: `project.subject_person_ids`, `person_evidence[].person_id`,
-  `timelines[].person_ids`, `known_holdings[].relates_to_person_ids`,
+  `rejected_links[].person_id`, `timelines[].person_ids`, `known_holdings[].relates_to_person_ids`,
   `proof_summaries[].claims[].relationship.parent`/`.child`, and
   `namesakes[].person_id` (so a recorded namesake keeps capping the survivor's
   links). This set is exactly `validateCrossFile`'s person-id checks in

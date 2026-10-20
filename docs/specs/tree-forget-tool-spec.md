@@ -384,7 +384,7 @@ already tells the researcher that pre-existing assertions stating the answer
 compromise the exercise anyway.
 
 A namesake row cannot be cleared: `research_append` never deletes a row and
-refuses an update to its `person_id` (`research-schema-spec.md` §5.14). A forget
+refuses an update to its `person_id` (`research-schema-spec.md` §5.15). A forget
 that would orphan one is therefore refused, and the remedy is a new project. In
 any project with a plan the plan-phase precondition below fires first, so this
 refusal is reached only in a project that holds a namesake row and no plan.

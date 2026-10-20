@@ -95,6 +95,7 @@ const DEF_FOR: Record<string, string> = {
   sources: "source",
   assertions: "assertion",
   person_evidence: "person_evidence_entry",
+  rejected_links: "rejected_link_entry",
   questions: "question",
   plans: "plan",
   plan_items: "plan_item",

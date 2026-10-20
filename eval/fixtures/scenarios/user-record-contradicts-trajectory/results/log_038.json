@@ -1,0 +1,763 @@
+{
+  "log_id": "log_038",
+  "tool": "record_search",
+  "retrieved": "2026-10-05T20:38:52.212Z",
+  "returned_count": 2,
+  "payload": {
+    "query": {
+      "projectPath": "/project",
+      "surname": "Eastham",
+      "givenName": "Robert",
+      "birthYearFrom": 1818,
+      "birthYearTo": 1828,
+      "residenceYearFrom": 1870,
+      "residenceYearTo": 1870,
+      "residencePlace": "Kentucky, United States",
+      "collectionId": "1438024"
+    },
+    "totalMatches": 2,
+    "paginationCappedAt": 4999,
+    "returned": 2,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MXWH-Q76",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1870",
+            "place": "Spottsville, Henderson, Kentucky, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Robert S Eastin",
+        "score": 5.17288,
+        "confidence": 3,
+        "sex": "Male",
+        "birthDate": "1820",
+        "birthPlace": "Kentucky, United States",
+        "collectionId": "1438024",
+        "collectionTitle": "United States, Census, 1870",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1438024",
+        "recordTitle": "Household of Robert S Eastin, \"United States, Census, 1870\"",
+        "recordArk": "ark:/61903/1:2:MHVH-F5F",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_345279763",
+              "ark": "ark:/61903/1:1:MXWH-Q76",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert S",
+                  "surname": "Eastin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Spottsville, Henderson, Kentucky, United States",
+                  "standard_place": "Spottsville, Henderson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1820",
+                  "standard_date": "1820",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345279764",
+              "ark": "ark:/61903/1:1:MXWH-Q7X",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary E",
+                  "surname": "Eastin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Spottsville, Henderson, Kentucky, United States",
+                  "standard_place": "Spottsville, Henderson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1822",
+                  "standard_date": "1822",
+                  "place": "Virginia",
+                  "standard_place": "Virginia, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345279765",
+              "ark": "ark:/61903/1:1:MXWH-Q7F",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sydney",
+                  "surname": "Eastin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Spottsville, Henderson, Kentucky, United States",
+                  "standard_place": "Spottsville, Henderson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1853",
+                  "standard_date": "1853",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345279766",
+              "ark": "ark:/61903/1:1:MXWH-Q7N",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Richard",
+                  "surname": "Eastin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Spottsville, Henderson, Kentucky, United States",
+                  "standard_place": "Spottsville, Henderson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1856",
+                  "standard_date": "1856",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345279767",
+              "ark": "ark:/61903/1:1:MXWH-Q7J",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Madison",
+                  "surname": "Eastin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1859",
+                  "standard_date": "1859",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Spottsville, Henderson, Kentucky, United States",
+                  "standard_place": "Spottsville, Henderson, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345279768",
+              "ark": "ark:/61903/1:1:MXWH-Q7V",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "David",
+                  "surname": "Eastin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Spottsville, Henderson, Kentucky, United States",
+                  "standard_place": "Spottsville, Henderson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_209210235",
+              "resource_type": "Record",
+              "title": "Household of Robert S Eastin, \"United States, Census, 1870\"",
+              "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXWH-Q76 : Sun Oct 19 04:50:51 UTC 2025), Entry for Robert S Eastin and Mary E Eastin, 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHVH-F5F",
+              "coverage": {
+                "place_rep_id": "4126760",
+                "date_range": "1870",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1438024",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1870",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1438024",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1870/1870",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-69D3-LQ8",
+              "coverage": {
+                "place_rep_id": "394153",
+                "date_range": "1870",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_345279763",
+              "resource_type": "Person",
+              "url": "#p_345279763"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "360",
+              "name": "Virginia, United States",
+              "latitude": 37.5,
+              "longitude": -78.5
+            },
+            {
+              "id": "4126760",
+              "name": "Spottsville, Henderson, Kentucky, United States",
+              "latitude": 37.8575,
+              "longitude": -87.41361
+            }
+          ]
+        },
+        "primaryId": "p_345279763",
+        "batchNumber": "N01518-6",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MXWZ-668",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1870",
+            "place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Rob Easton",
+        "score": 4.46216,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1821",
+        "birthPlace": "Indiana, United States",
+        "collectionId": "1438024",
+        "collectionTitle": "United States, Census, 1870",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1438024",
+        "recordTitle": "Household of Rob Easton, \"United States, Census, 1870\"",
+        "recordArk": "ark:/61903/1:2:MHVH-1J6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_345342101",
+              "ark": "ark:/61903/1:1:MXWZ-668",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Rob",
+                  "surname": "Easton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1821",
+                  "standard_date": "1821",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345347802",
+              "ark": "ark:/61903/1:1:MXWZ-KPD",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sarah",
+                  "surname": "Easton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1835",
+                  "standard_date": "1835",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345347803",
+              "ark": "ark:/61903/1:1:MXWZ-KP6",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Easton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1867",
+                  "standard_date": "1867",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345347804",
+              "ark": "ark:/61903/1:1:MXWZ-KPX",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Harry",
+                  "surname": "Easton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1869",
+                  "standard_date": "1869",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345347805",
+              "ark": "ark:/61903/1:1:MXWZ-KPF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Easton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1856",
+                  "standard_date": "1856",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345347806",
+              "ark": "ark:/61903/1:1:MXWZ-KPN",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Martha",
+                  "surname": "Easton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345347807",
+              "ark": "ark:/61903/1:1:MXWZ-KPJ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Clara",
+                  "surname": "Fisher"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1859",
+                  "standard_date": "1859",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345347808",
+              "ark": "ark:/61903/1:1:MXWZ-KPV",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Edward",
+                  "surname": "Fisher"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_345347809",
+              "ark": "ark:/61903/1:1:MXWZ-KPK",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Jas",
+                  "surname": "Fisher"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Woods Magisterial District, Jefferson, Kentucky, United States",
+                  "standard_place": "Woods Magisterial District, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1862",
+                  "standard_date": "1862",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_209222623",
+              "resource_type": "Record",
+              "title": "Household of Rob Easton, \"United States, Census, 1870\"",
+              "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXWZ-668 : Sun May 17 05:17:27 UTC 2026), Entry for Rob Easton and Sarah Easton, 1870.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHVH-1J6",
+              "coverage": {
+                "place_rep_id": "8047057",
+                "date_range": "1870",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1438024",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1870",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1438024",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1870/1870",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-62WW-2Y9",
+              "coverage": {
+                "place_rep_id": "394131",
+                "date_range": "1870",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1526 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1526-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_345342101",
+              "resource_type": "Person",
+              "url": "#p_345342101"
+            }
+          ],
+          "places": [
+            {
+              "id": "331",
+              "name": "Indiana, United States",
+              "latitude": 40.0003,
+              "longitude": -86.2503
+            },
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "8047057",
+              "name": "Woods Magisterial District, Jefferson, Kentucky, United States",
+              "latitude": 38.09581,
+              "longitude": -85.76896
+            }
+          ]
+        },
+        "primaryId": "p_345342101",
+        "batchNumber": "N01518-9",
+        "role": "Principal"
+      }
+    ]
+  }
+}
