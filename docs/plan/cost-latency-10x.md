@@ -335,6 +335,11 @@ the first time it is pulled.
   halves edit the same instrumentation, and under merge doctrine they are one PR.
 - ~~**Per-thread windows for subagents**~~ — built (T1.3): `subagents[].peak_window_tokens`
   and `compactions`, shown per agent by `make e2e-agent-spend`. Awaits its first run.
+- **Issue #3568 (option D, adopted 2026-10-20) sets what each rung costs in eval runs.**
+  Until it is built, a `model:` or `effort:` line on an agent stales every suite whose
+  SKILL.md names it (A3 item 10), so a rung on a research callee also buys a research run.
+  Once built, a callee no test runs live is fingerprinted by name, description and tools
+  only, and a rung stales just its own suite and the suites that run it live.
 
 **The replay harness — built (T1.4): `make replay-sizes`.** Local-state read tools
 only (~36% of recorded answer chars); the network half is T1.4c. Re-issue a committed
@@ -367,6 +372,14 @@ runlog summary plus a warn-only check makes every future PR's cost visible.
   one exists. One anchor drifted 46 lines in 55 commits. Grep the symbol.
 - **The compaction stall is not where you would look.** The `compact_boundary` row has
   a ~0.1s gap; the 120.8s summarization sits in the **preceding `system:status` gap**.
+- **Two planned changes shift the baseline a little, and are not cost levers.**
+  - Issue #3516's setup baseline (`docs/plan/attached-records-baseline.md`) adds one or two
+    main-thread tool calls to every job. On a subject with attached records it also adds
+    record reads (4.5–7.2 s for 14–16 records) and the extraction summary in context.
+  - Issue #3153's hints item adds a search-hints spawn on identity and parentage questions.
+    In e2e that spawn cannot read hints, because `person_record_matches` is blocked.
+
+  Compare runs from either side of them like with like.
 
 ## 9. Not in your lane
 
