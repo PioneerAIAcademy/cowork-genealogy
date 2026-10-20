@@ -16,6 +16,9 @@
     "user_message": "Find the parents of Patrick Flynn, FamilySearch ID LZNY-BRF.",
     "scenario": "empty-folder-no-project"
   },
+  "mcp_fixtures": [
+    "person-read-flynn"
+  ],
   "judge_context": [
     "research must be the skill invoked — it is the only front door, and the message names a person and an objective",
     "It must be triggered by the description alone: the message carries no slash command and no canned opening-turn prefix",
@@ -24,7 +27,7 @@
     "Going straight to a sub-skill (question-selection, research-plan, search-records) without entering research is the failure this measures"
   ],
   "execution": {
-    "max_turns": 30,
+    "max_turns": 40,
     "max_wall_clock_seconds": 600,
     "stub_skills": [
       "init-project"
