@@ -1,3 +1,8 @@
+- [ ] I have signed the [CLA](../CLA.md) — `signatures/<my-login>.md`
+      exists ([how](../CLA-SIGNERS.md)). Contributing from outside the
+      team? Add the file in this PR. One time; skip this box on later
+      PRs.
+
 ## Summary
 
 <!-- 1-3 bullets describing what changed and why. Name the tier

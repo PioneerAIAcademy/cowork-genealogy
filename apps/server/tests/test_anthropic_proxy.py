@@ -6,6 +6,7 @@ sandbox never holds the real key.
 """
 import gzip
 import json
+import threading
 from datetime import timedelta
 
 import httpx
@@ -351,7 +352,12 @@ def send(monkeypatch):
                       created=utcnow() - timedelta(hours=30)))
         s.commit()
 
-    def _send(respond, path="v1/messages", method="POST"):
+    def _send(respond, path="v1/messages", method="POST", request_json=None):
+        """`request_json` is the request body: a dict goes as JSON, bytes as they are."""
+        if request_json is None:
+            request_json = {"model": "claude-sonnet-4-6", "messages": []}
+        body = ({"content": request_json} if isinstance(request_json, bytes)
+                else {"json": request_json})
         with TestClient(app) as client:
             saved = app.state.anthropic_proxy_client
             app.state.anthropic_proxy_client = httpx.AsyncClient(
@@ -359,7 +365,7 @@ def send(monkeypatch):
             try:
                 return client.request(method, f"{_PROXY_PREFIX}/{path}",
                                       headers={"x-api-key": proxy_token("sbx-meter")},
-                                      json={"model": "claude-sonnet-4-6", "messages": []})
+                                      **body)
             finally:
                 app.state.anthropic_proxy_client = saved
 
@@ -438,3 +444,90 @@ def test_a_failing_meter_never_reaches_the_relay(send, monkeypatch):
     resp = send(_streamed(_STREAM))
     assert resp.status_code == 200 and resp.content == _STREAM
     assert _recorded() == []
+
+
+# ── the agent behind each call ─────────────────────────────────
+
+# The main thread's system prompt: the claude_code preset, whose own `# ` headings come
+# before the hosted prompt appended to it.
+_MAIN_SYSTEM = (
+    "You are Claude Code, Anthropic's official CLI for Claude.\n\n# Tone and style\n"
+    "Be concise.\n\n# Doing tasks\nPlan first.\n\n"
+    f"{anthropic_proxy._MAIN_MARKER}. The active research project lives in your current "
+    "working directory."
+)
+# A named subagent's, as the CLI sends it: a billing block and the identity line, then the
+# agent body verbatim, then its notes and environment.
+_SUBAGENT_SYSTEM = [
+    {"type": "text", "text": "x-anthropic-billing-header: cc_version=2.1.220; cc_is_subagent=true;"},
+    {"type": "text", "text": "You are Claude Code, Anthropic's official CLI for Claude.",
+     "cache_control": {"type": "ephemeral"}},
+    {"type": "text", "text": "# Record Structurer\n\nTurn one record into assertions.\n\n"
+                             "Notes:\n- Use absolute paths.\n\nHere is useful information "
+                             "about the environment you are running in:"},
+]
+
+
+@pytest.mark.parametrize("system, agent", [
+    (_MAIN_SYSTEM, "main"),
+    (_SUBAGENT_SYSTEM, "Record Structurer"),
+    (None, None),
+    ({"text": "# Not a block list"}, None),
+    ("You are a helpful AI assistant tasked with summarizing conversations.", None),
+], ids=["main-thread", "subagent", "no-system", "not-text", "no-heading"])
+def test_each_call_records_the_agent_that_made_it(send, system, agent):
+    request = {"model": "claude-sonnet-4-6", "messages": []}
+    if system is not None:
+        request["system"] = system
+    resp = send(_streamed(_STREAM), request_json=request)
+    assert resp.status_code == 200 and resp.content == _STREAM
+    [row] = _recorded()
+    assert row.agent == agent
+
+
+def test_a_body_that_is_not_json_is_relayed_untouched_and_recorded_with_no_agent(send):
+    raw = b'{"model": "claude-sonnet-4-6", "system": "# Record Structurer'  # cut off
+    seen = []
+
+    def respond(req):
+        seen.append(req.content)
+        return httpx.Response(200, content=_STREAM, headers={"content-type": "text/event-stream"})
+
+    resp = send(respond, request_json=raw)
+    assert seen == [raw], "the proxy changed the request body"
+    assert resp.status_code == 200 and resp.content == _STREAM
+    [row] = _recorded()
+    assert row.agent is None and row.output_tokens == _FINAL[3]
+
+
+def test_the_agent_is_named_in_the_writer_thread_not_in_the_route(send, monkeypatch):
+    """Parsed in the route, a 100–500 KB body would hold up the relay and a bad one would
+    raise into it; in the writer thread the parse waits for the stream to end, and a
+    failure only leaves the agent null."""
+    threads = []
+    real = anthropic_proxy._agent_name
+
+    def spy(request_body):
+        threads.append(threading.current_thread().name)
+        return real(request_body)
+
+    monkeypatch.setattr(anthropic_proxy, "_agent_name", spy)
+    send(_streamed(_STREAM), request_json={"model": "claude-sonnet-4-6", "messages": [],
+                                           "system": "# Locality Guide\n\nFind the records."})
+    [row] = _recorded()
+    assert row.agent == "Locality Guide"
+    assert threads and all(t.startswith("api-usage") for t in threads), threads
+
+
+def test_the_main_marker_opens_the_hosted_prompt_and_no_agent_body(tmp_path):
+    """Reworded in `real_agent.build_options`, the marker would stop matching and every
+    main-thread call would be named after the preset's first heading."""
+    from pathlib import Path
+
+    from app.agent import real_agent
+
+    appended = real_agent.build_options(tmp_path).system_prompt["append"]
+    assert appended.startswith(anthropic_proxy._MAIN_MARKER)
+    bodies = sorted((Path(real_agent._PLUGIN_DIR) / "agents").glob("*.md"))
+    assert bodies
+    assert [b.name for b in bodies if anthropic_proxy._MAIN_MARKER in b.read_text(encoding="utf-8")] == []

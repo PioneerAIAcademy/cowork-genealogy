@@ -478,6 +478,37 @@ function checkRefExists(
 }
 
 /**
+ * An array-of-assertion-ids field: a container-type guard, an entry-type check
+ * and a referential check, each embedding the offending value. Null and absent
+ * are left to `checkRequired`, which already reports them.
+ */
+function checkAssertionIdArray(
+  value: unknown,
+  field: string,
+  validIds: Set<string>,
+  path: string,
+  report: ValidationReport
+): void {
+  if (value == null) return;
+  if (!Array.isArray(value)) {
+    addError(report, path, `'${field}' must be an array (got ${JSON.stringify(value)})`);
+    return;
+  }
+  for (const aid of value) {
+    if (typeof aid !== "string") {
+      addError(
+        report,
+        path,
+        `${field} contains a non-string entry ` +
+          `(${JSON.stringify(aid)}); every entry must be an 'a_' assertion id`
+      );
+      continue;
+    }
+    checkRefExists(aid, validIds, "assertion", path, report);
+  }
+}
+
+/**
  * Scalar-typed fields declared `["string", "null"]` in research.schema.json.
  *
  * `checkAllowedKeys` only checks that a KEY is permitted, never that its value
@@ -1472,6 +1503,13 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       ids.timelines.add(t.id);
     }
 
+    // The loops below read a non-array as empty, so an object or string here
+    // persisted unchecked and broke the viewer's `.map`.
+    for (const field of ["events", "gaps"] as const) {
+      if (t[field] != null && !Array.isArray(t[field])) {
+        addError(report, tp, `'${field}' must be an array (got ${JSON.stringify(t[field])})`);
+      }
+    }
     const events = Array.isArray(t.events) ? t.events : [];
     for (let j = 0; j < events.length; j++) {
       const ev = events[j];
@@ -1483,6 +1521,10 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         const sorted = Array.from(DATE_CERTAINTY_TIMELINE).sort();
         addError(report, ep, `'${ev.date_certainty}' is not valid for timeline events (use: ${sorted.join(', ')})`);
       }
+      // Without these `"a_001"` and a dangling `["a_999"]` persisted and read as
+      // sourced, which the unsourced-event advisory then could not see. Zero of
+      // 411 references in 515 committed research documents fail them.
+      checkAssertionIdArray(ev.assertion_ids, "assertion_ids", ids.assertions, ep, report);
     }
 
     const gaps = Array.isArray(t.gaps) ? t.gaps : [];
@@ -1622,32 +1664,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // documents carrying the field and 2,123-2,131 references, with zero
     // dangling, non-string or non-array. That is what makes it a fix here
     // rather than a card.
-    if (
-      "supporting_assertion_ids" in ps &&
-      ps.supporting_assertion_ids !== null &&
-      !Array.isArray(ps.supporting_assertion_ids)
-    ) {
-      addError(
-        report,
-        psp,
-        `'supporting_assertion_ids' must be an array (got ` +
-          `${JSON.stringify(ps.supporting_assertion_ids)})`
-      );
-    }
-    if (Array.isArray(ps.supporting_assertion_ids)) {
-      for (const aid of ps.supporting_assertion_ids) {
-        if (typeof aid !== "string") {
-          addError(
-            report,
-            psp,
-            `supporting_assertion_ids contains a non-string entry ` +
-              `(${JSON.stringify(aid)}); every entry must be an 'a_' assertion id`
-          );
-          continue;
-        }
-        checkRefExists(aid, ids.assertions, "assertion", psp, report);
-      }
-    }
+    checkAssertionIdArray(ps.supporting_assertion_ids, "supporting_assertion_ids", ids.assertions, psp, report);
 
     if (Array.isArray(ps.resolved_conflict_ids)) {
       for (const cid of ps.resolved_conflict_ids) {

@@ -3,15 +3,38 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Simon Heydöcker died on 24 August 1808, aged about 30 (born about 1778), according to an entry indexed as Simon Heydocker in the Catholic death register of Laakirchen, Gmunden, Upper Austria; the index gives only Austria as the place, and the register image is from Laakirchen.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Simon Heydöcker (PID GZRZ-TNG), husband of Katharina and father of Juliana (born 15 June 1798) and Josef (born 1801), died on 24 August 1808 at Laakirchen, Upper Austria. That death register entry is a different, younger Simon: the index gives his age as 30 (born about 1778), while the tree's Simon married Katharina Plank at Laakirchen on 18 November 1787 aged 21 (born about 1766) and fathered seven children by her baptized there from January 1789 to October 1801, the first when a man born in 1778 would have been about ten. Pass = the final `tree.gedcomx.json` carries no 24 August 1808 death (or any 1808 death) for Simon Heydöcker GZRZ-TNG. A rejected candidate may be documented in `research.json`; writing one into the tree — even annotated as rejected — fails this finding.",
       "details": {
         "subject_person": "Simon Heydöcker (GZRZ-TNG)",
         "fact_type": "Death",
-        "date": "24 August 1808",
-        "place": "Laakirchen, Gmunden, Upper Austria, Austria"
+        "wrong_candidate": {
+          "name": "Simon Heydocker",
+          "note": "died 24 August 1808 aged 30 at Laakirchen, Gmunden, Upper Austria; born about 1778"
+        }
       },
       "supporting_sources": [
-        "Österreich, Katholische Kirchenbücher, 1565-2007 — death entry for Simon Heydocker, 24. August 1808"
+        "Österreich, Katholische Kirchenbücher, 1565-2007 — Laakirchen death entry for Simon Heydocker, 24 Aug 1808, age 30 (ark:/61903/1:1:6VYC-Q9W5) — the rejected hint",
+        "Österreich, Katholische Kirchenbücher, 1565-2007 — Laakirchen marriage of Simon Hegdöcker, age 21, and Katharina Plank, 18 Nov 1787 (ark:/61903/1:1:6VYC-29XS) — the disproving record",
+        "Österreich, Katholische Kirchenbücher, 1565-2007 — Laakirchen baptisms of children of Simon Heydöcker and Katharina Plank(in): Maria, 12 Jan 1789 (ark:/61903/1:1:6VYH-61Z5); Magdalena, 25 Jun 1790 (ark:/61903/1:1:6VYH-4T54); Johann, 18 Jun 1791 (ark:/61903/1:1:6VYH-BLRG); Katharina, 14 Oct 1792 (ark:/61903/1:1:6VYH-GT9D); Simon, 1 Aug 1795 (ark:/61903/1:1:6VYH-2WKD); Juliana, 15 Jun 1798 (ark:/61903/1:1:6VYH-C1S3); Joseph, 7 Oct 1801 (ark:/61903/1:1:6VYH-6C3N)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having searched for a death of Simon Heydöcker after the 1801 baptism of his youngest child, the agent should document a negative conclusion: the 24 August 1808 Laakirchen death is rejected as belonging to a different, younger Simon (aged 30, against a husband who married in 1787 aged 21), and no record found and verified establishes when or where the husband of Katharina Plank died. What is required is that the rejection rest on a conflicting record the agent examined — the 18 November 1787 Laakirchen marriage of Simon Hegdöcker, aged 21, to Katharina Plank (ark:/61903/1:1:6VYC-29XS), or any of the couple's Laakirchen baptisms from 1789 on, which a man born about 1778 could not have fathered. A conclusion resting only on a failure to confirm — 'the 1808 entry names no wife or house, so it could not be linked to Simon', with no conflicting record cited — does NOT satisfy this finding.",
+      "details": {
+        "subject_person": "Simon Heydöcker (GZRZ-TNG)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: death date and place not established",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Österreich, Katholische Kirchenbücher, 1565-2007 — Laakirchen marriage of Simon Hegdöcker, age 21, and Katharina Plank, 18 Nov 1787 (ark:/61903/1:1:6VYC-29XS) — the conflicting record that excludes the 1808 decedent",
+        "No verified death record for Simon Heydöcker, husband of Katharina Plank, in FamilySearch's Austrian records, 1801-1860 (searched for Simon Heidegger as a death, 1798-1860, and for Simon Heydocker with any event, 1740-1860; FamilySearch's name matching also returned Heydöcker, Heydecker, Heudecker and Hegdocker spellings): the indexed Laakirchen deaths of a Simon in 1814 (age 63), 1821 (age 27, son of Simon) and 1836 (no age indexed), and a Linz death of a Simon Heidegger in 1834 (age 67), are not established as his"
       ],
       "required": true
     }

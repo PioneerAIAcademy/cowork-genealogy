@@ -28,8 +28,8 @@ ours to set, so a host-side hook can never reach Cowork. A plugin-shipped
 hard-denied and the agent surfaced this script's own reason text), after the
 upstream reports that plugin PreToolUse command hooks are dropped
 (anthropics/claude-code#34573) were found not to reproduce on the current
-build. Cowork runs `permission_mode: "default"`; the hosted path runs
-`bypassPermissions`, and a hook binds under both.
+build. The hosted path runs `bypassPermissions`, and a hook binds under both, under
+either Cowork `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005).
 
 Contract, from the hook protocol: read the payload as JSON on stdin, print a
 decision to stdout, exit 0. Printing `{}` means "no opinion" — the normal
