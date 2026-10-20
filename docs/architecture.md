@@ -1165,7 +1165,7 @@ the *tool*, not the prompt.
 sections (`sources`, `assertions`) — same implementation, gated
 by a **second function parameter** (`researchAppend(input, { allowedSections, toolName })`)
 that a tool caller structurally cannot reach, because dispatch builds only the
-first argument from tool input. Since issue #3516 the lane is chosen per call,
+first argument from tool input. Since 2026-10-20 the lane is chosen per call,
 not per tool. A separate `plan_items`-only call completes the plan item behind
 an extracted record. Code composes that op whole, as it does the
 `extracted_for_question_ids` growth a re-found record gets, so no input field
