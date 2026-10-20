@@ -319,19 +319,18 @@ hooks-test: ## Repo-tooling hooks — scripts/claude-hooks (stdlib python3, no v
 .PHONY: agent-smoke
 agent-smoke: $(ENGINE_BUILD) ## Live agent-registration check (issue #939) + dead-stub MCP abort check (issue #1743)
 	# Arm 1 — agent registration (issue #939). Reads the SDK init
-	# handshake's agent list — no query, no model call. The key comes from
-	# $$ANTHROPIC_API_KEY, else this repo's eval/.env, and is passed under a
-	# distinct name because tests/conftest.py blanks ANTHROPIC_API_KEY.
-	# AGENT_SMOKE=1 turns the live test's skips into hard errors.
+	# handshake's agent list — no query, no model call, and no credential:
+	# the bare names come from a filesystem staging nothing authenticates
+	# (issue #1142, measured 2026-08-23). AGENT_SMOKE=1 turns the live test's
+	# skips into hard errors. This arm now also runs in CI (server-tests.yml);
+	# it stays here for a quick local re-check.
 	#
 	# Arm 2 — dead-stub e2e abort (issue #1743). A real run_e2e against a
 	# server that dies at startup; asserts the init-message abort text and
-	# the retention rule (no files written). Bills one session start (~8s).
-	#
-	# Both arms are hand-run; issue #1142 is what would make them CI.
+	# the retention rule (no files written). Bills one session start (~8s),
+	# so it stays hand-run — not in CI.
 	cd apps/server && \
 	  AGENT_SMOKE=1 \
-	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_plugin_agents.py -q -rs
 	# Arm 2 — dead-stub e2e abort (issue #1743).
 	cd eval/harness && \
