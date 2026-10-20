@@ -9,7 +9,7 @@ import type {
 // One un-retried RAG request against the sidecar, and retrieval over the wiki
 // corpus is slower than a plain JSON read: calls have been measured up to 56s,
 // with 5 of 47 above the 30s default. Nothing retries behind this one.
-const WIKI_SEARCH_TIMEOUT_MS = 60_000;
+export const WIKI_SEARCH_TIMEOUT_MS = 60_000;
 
 export interface WikiSearchInput {
   query: string;
