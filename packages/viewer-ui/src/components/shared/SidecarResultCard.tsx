@@ -13,18 +13,94 @@ import { resolveFamilySearchTarget } from '../../lib/familysearch-url'
 import Pill from './Pill'
 import styles from './SidecarResultCard.module.css'
 
+// Local on purpose (#3594): `SidecarTool` is already `| string`, and the schema
+// package's sidecar types describe only the two search tools. These are the shapes
+// record-read.ts and external-links-search.ts stage.
+interface RecordReadSource {
+  id?: string
+  resource_type?: string
+  title?: string
+  citation?: string
+  url?: string
+}
+
+export interface RecordReadResult {
+  recordId?: string
+  gedcomx?: {
+    persons?: Array<GedcomxPerson & { principal?: boolean }>
+    relationships?: GedcomxRelationship[]
+    sources?: RecordReadSource[]
+  }
+  indexFields?: unknown
+}
+
+export interface ExternalLinkResult {
+  linkText?: string
+  url?: string
+}
+
+export type SidecarResult =
+  RecordSearchResult | FulltextSearchResult | RecordReadResult | ExternalLinkResult
+
+/** Tools rendered one card per result. SidecarPanel renders every other tool itself. */
+export const ROUTED_TOOLS: readonly string[] = ['record_search', 'fulltext_search', 'record_read']
+
 interface SidecarResultCardProps {
-  result: RecordSearchResult | FulltextSearchResult
+  result: SidecarResult
   tool: SidecarTool
   focusPersonaId?: string
   defaultExpanded: boolean
 }
 
-function isRecordSearch(
-  _result: RecordSearchResult | FulltextSearchResult,
-  tool: SidecarTool
-): _result is RecordSearchResult {
-  return tool === 'record_search'
+/** FamilySearch citations carry markup (`<i>FamilySearch</i>`); show it as plain text. */
+function plainText(html: string): string {
+  return new DOMParser().parseFromString(html, 'text/html').body.textContent ?? ''
+}
+
+function nonEmpty(value: unknown): value is string {
+  return typeof value === 'string' && value.trim() !== ''
+}
+
+interface RecordReadView {
+  title: string
+  citation?: string
+  recordSearch: RecordSearchResult
+}
+
+/**
+ * Adapt a staged `record_read` result to the record-search body. A record_read
+ * result carries no `primaryId`, and a census marks every household member
+ * principal, so the primary is the focused persona when it is on this record,
+ * else the first principal, else none ('' — document order, no labels).
+ */
+function recordReadView(result: RecordReadResult, focusPersonaId?: string): RecordReadView {
+  const persons = (result.gedcomx?.persons ?? []).filter(
+    (p) => p && typeof p.id === 'string' && Array.isArray(p.names)
+  )
+  const relationships = result.gedcomx?.relationships ?? []
+  const sources = (result.gedcomx?.sources ?? []).filter((s) => s && typeof s === 'object')
+  const record = sources.find((s) => s.resource_type === 'Record')
+  const collection = sources.find((s) => s.resource_type === 'Collection')
+
+  const primaryId =
+    (focusPersonaId !== undefined && persons.some((p) => p.id === focusPersonaId)
+      ? focusPersonaId
+      : persons.find((p) => p.principal === true)?.id) ?? ''
+
+  const recordId = nonEmpty(result.recordId) ? result.recordId : undefined
+  const title =
+    [record?.title, collection?.title, ...sources.map((s) => s.title)].find(nonEmpty) ??
+    (recordId ? `Record ${recordId}` : 'Record')
+
+  return {
+    title,
+    citation: nonEmpty(record?.citation) ? plainText(record?.citation) : undefined,
+    recordSearch: {
+      primaryId,
+      arkUrl: nonEmpty(record?.url) ? record?.url : recordId,
+      gedcomx: { persons, relationships }
+    }
+  }
 }
 
 function PersonRow({
@@ -38,11 +114,13 @@ function PersonRow({
   primaryRelationships: GedcomxRelationship[]
   focusPersonaId?: string
 }): React.JSX.Element {
-  const isPrimary = person.id === primaryId
+  const isPrimary = primaryId !== '' && person.id === primaryId
   const isFocused = focusPersonaId !== undefined && person.id === focusPersonaId
-  const label = isPrimary
-    ? null
-    : relationshipFromPerspective(primaryId, person.id, person.gender, primaryRelationships)
+  // No primary means no perspective: every label would read "Relative".
+  const label =
+    isPrimary || primaryId === ''
+      ? null
+      : relationshipFromPerspective(primaryId, person.id, person.gender, primaryRelationships)
   const birth = getPrimaryFact(person, 'Birth')
   const death = getPrimaryFact(person, 'Death')
 
@@ -238,12 +316,31 @@ export default function SidecarResultCard({
 }: SidecarResultCardProps): React.JSX.Element {
   const [expanded, setExpanded] = useState(defaultExpanded)
 
-  const isRS = isRecordSearch(result, tool)
-  const ft = result as FulltextSearchResult
-  const title = isRS
-    ? (result.recordTitle ?? result.collectionTitle ?? 'Untitled record')
-    : (ft.title || ft.recordType || ft.collectionTitle || 'Untitled record')
-  const score = isRS ? result.score : undefined
+  // Route on `tool` explicitly (#3594). An unrouted tool gets a neutral header and
+  // no body — never the full-text card, whose fields it does not have. SidecarPanel
+  // renders unrouted tools itself, so that branch is a backstop for direct callers.
+  let title: string
+  let subMeta: string | undefined
+  let score: number | undefined
+  let body: React.JSX.Element | null = null
+  if (tool === 'record_search') {
+    const rs = result as RecordSearchResult
+    title = rs.recordTitle ?? rs.collectionTitle ?? 'Untitled record'
+    subMeta = rs.collectionTitle
+    score = rs.score
+    body = <RecordSearchBody result={rs} focusPersonaId={focusPersonaId} />
+  } else if (tool === 'record_read') {
+    const view = recordReadView(result as RecordReadResult, focusPersonaId)
+    title = view.title
+    subMeta = view.citation
+    body = <RecordSearchBody result={view.recordSearch} focusPersonaId={focusPersonaId} />
+  } else if (tool === 'fulltext_search') {
+    const ft = result as FulltextSearchResult
+    title = ft.title || ft.recordType || ft.collectionTitle || 'Untitled record'
+    body = <FulltextSearchBody result={ft} />
+  } else {
+    title = tool
+  }
 
   return (
     <article className={styles.card}>
@@ -262,20 +359,13 @@ export default function SidecarResultCard({
         <h3 className={styles.title}>{title}</h3>
         <div className={styles.headerMeta}>
           {score !== undefined && <span className={styles.score}>score {score.toFixed(2)}</span>}
-          <span className={styles.chevron}>{expanded ? '▾' : '▸'}</span>
+          {body && <span className={styles.chevron}>{expanded ? '▾' : '▸'}</span>}
         </div>
       </header>
-      {isRS && (
-        <div className={styles.subMeta}>
-          {result.collectionTitle && <span>{result.collectionTitle}</span>}
-        </div>
+      {(tool === 'record_search' || tool === 'record_read') && (
+        <div className={styles.subMeta}>{subMeta && <span>{subMeta}</span>}</div>
       )}
-      {expanded &&
-        (isRS ? (
-          <RecordSearchBody result={result} focusPersonaId={focusPersonaId} />
-        ) : (
-          <FulltextSearchBody result={result as FulltextSearchResult} />
-        ))}
+      {expanded && body}
     </article>
   )
 }

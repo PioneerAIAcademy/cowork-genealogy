@@ -4,7 +4,9 @@ import userEvent from '@testing-library/user-event'
 import SidecarResultCard from '../SidecarResultCard'
 import { setOpenExternal, setOpenFamilySearch } from '../../../lib/external'
 import { patrickFlynnSidecar } from '../../../lib/__fixtures__/patrick-flynn-sidecar'
+import { flynnRecordReadSidecar } from '../../../lib/__fixtures__/flynn-record-read-sidecar'
 import type { RecordSearchResult, FulltextSearchResult } from '../../../lib/schema'
+import type { RecordReadResult } from '../SidecarResultCard'
 
 describe('SidecarResultCard — record_search', () => {
   const result = patrickFlynnSidecar.payload.results![0] as RecordSearchResult
@@ -111,7 +113,9 @@ describe('SidecarResultCard — fulltext_search', () => {
   })
 
   it('titles the card from `title`, not `recordType`', () => {
-    render(<SidecarResultCard result={fulltextResult} tool="fulltext_search" defaultExpanded={false} />)
+    render(
+      <SidecarResultCard result={fulltextResult} tool="fulltext_search" defaultExpanded={false} />
+    )
     expect(
       screen.getByRole('heading', { name: 'Last Will and Testament of Thomas Flynn' })
     ).toBeInTheDocument()
@@ -138,9 +142,7 @@ describe('SidecarResultCard — fulltext_search', () => {
     const { sourceUrl: _sourceUrl, ...noSourceUrl } = fulltextResult
     const spy = vi.fn()
     setOpenFamilySearch(spy)
-    render(
-      <SidecarResultCard result={noSourceUrl} tool="fulltext_search" defaultExpanded={true} />
-    )
+    render(<SidecarResultCard result={noSourceUrl} tool="fulltext_search" defaultExpanded={true} />)
     await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
     // openFamilySearch forwards the raw identifier; resolution happens
     // downstream in the platform implementation, not in this component.
@@ -271,7 +273,10 @@ describe('SidecarResultCard — fulltext_search', () => {
  */
 describe('SidecarResultCard — link visibility', () => {
   const withArkUrl = (arkUrl: string): RecordSearchResult =>
-    ({ ...(patrickFlynnSidecar.payload.results![0] as RecordSearchResult), arkUrl }) as RecordSearchResult
+    ({
+      ...(patrickFlynnSidecar.payload.results![0] as RecordSearchResult),
+      arkUrl
+    }) as RecordSearchResult
 
   it('renders the link for an arkUrl the policy resolves', () => {
     render(
@@ -318,5 +323,166 @@ describe('SidecarResultCard — link channel', () => {
     await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
     expect(fs).toHaveBeenCalledTimes(1)
     expect(generic).not.toHaveBeenCalled()
+  })
+})
+
+/**
+ * record_read (#3594). Every non-record_search tool used to fall through to the
+ * full-text card, whose title fields a record_read result does not have, so the
+ * drawer showed "Untitled record" and an empty body.
+ */
+describe('SidecarResultCard — record_read', () => {
+  const result = flynnRecordReadSidecar.payload.results![0] as unknown as RecordReadResult
+  const withSources = (sources: unknown[] | undefined): RecordReadResult => ({
+    ...result,
+    gedcomx: { ...result.gedcomx, sources: sources as never }
+  })
+  const fs = vi.fn()
+  const generic = vi.fn()
+
+  beforeEach(() => {
+    fs.mockClear()
+    generic.mockClear()
+    setOpenFamilySearch(fs)
+    setOpenExternal(generic)
+  })
+
+  it('titles the card from the Record source, not "Untitled record"', () => {
+    render(<SidecarResultCard result={result} tool="record_read" defaultExpanded={false} />)
+    expect(
+      screen.getByRole('heading', {
+        name: 'Entry for Thomas Flynn and Mary Flynn, "United States, Census, 1850"'
+      })
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Untitled record')).toBeNull()
+  })
+
+  it('renders the household persons when expanded', () => {
+    render(<SidecarResultCard result={result} tool="record_read" defaultExpanded={true} />)
+    for (const name of ['Thomas Flynn', 'Mary Flynn', 'Patrick Flynn']) {
+      expect(screen.getByText(name)).toBeInTheDocument()
+    }
+  })
+
+  it('marks the focused persona and takes it as the primary', () => {
+    render(
+      <SidecarResultCard
+        result={result}
+        tool="record_read"
+        focusPersonaId="p_3"
+        defaultExpanded={true}
+      />
+    )
+    const row = screen.getByText('Patrick Flynn').closest('[data-focused]')
+    expect(row).not.toBeNull()
+    expect(row!.getAttribute('data-focused')).toBe('true')
+    expect(document.querySelectorAll('[data-focused="true"]')).toHaveLength(1)
+    // Every member is principal; the focus, not the first principal, leads.
+    const patrick = screen.getByText('Patrick Flynn')
+    const thomas = screen.getByText('Thomas Flynn')
+    expect(patrick.compareDocumentPosition(thomas) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('shows the citation as plain text, without literal markup', () => {
+    render(<SidecarResultCard result={result} tool="record_read" defaultExpanded={false} />)
+    expect(
+      screen.getByText(/"United States, Census, 1850", FamilySearch \(https:/)
+    ).toBeInTheDocument()
+    expect(document.body.textContent).not.toContain('<i>')
+    expect(document.querySelector('i')).toBeNull()
+  })
+
+  it('opens the Record source url through the FamilySearch channel', async () => {
+    render(<SidecarResultCard result={result} tool="record_read" defaultExpanded={true} />)
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(fs).toHaveBeenCalledWith('https://www.familysearch.org/ark:/61903/1:1:MXHY-TQ2')
+    expect(generic).not.toHaveBeenCalled()
+  })
+
+  it('falls back to the Collection title when there is no Record source', () => {
+    render(
+      <SidecarResultCard
+        result={withSources([
+          { id: 'sd_c_1', resource_type: 'Collection', title: 'United States, Census, 1850' }
+        ])}
+        tool="record_read"
+        defaultExpanded={false}
+      />
+    )
+    expect(screen.getByRole('heading', { name: 'United States, Census, 1850' })).toBeInTheDocument()
+  })
+
+  it('falls back to the first titled source when no source carries a resource_type', () => {
+    // The older converter's shape: most committed record-read fixtures look like this.
+    render(
+      <SidecarResultCard
+        result={withSources([
+          { id: 's1', title: '' },
+          { id: 's2', title: 'Minnesota State Census, 1885' }
+        ])}
+        tool="record_read"
+        defaultExpanded={false}
+      />
+    )
+    expect(
+      screen.getByRole('heading', { name: 'Minnesota State Census, 1885' })
+    ).toBeInTheDocument()
+  })
+
+  it('with no sources, titles from the recordId and links to it', async () => {
+    render(
+      <SidecarResultCard
+        result={withSources(undefined)}
+        tool="record_read"
+        defaultExpanded={true}
+      />
+    )
+    expect(
+      screen.getByRole('heading', { name: 'Record ark:/61903/1:1:MXHY-TQ2' })
+    ).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(fs).toHaveBeenCalledWith('ark:/61903/1:1:MXHY-TQ2')
+  })
+
+  it('with no principal and no focus, shows no PRIMARY pill and no relationship labels', () => {
+    const persons = (result.gedcomx?.persons ?? []).map((p) => ({ ...p, principal: false }))
+    render(
+      <SidecarResultCard
+        result={{ ...result, gedcomx: { ...result.gedcomx, persons } }}
+        tool="record_read"
+        defaultExpanded={true}
+      />
+    )
+    expect(screen.getByText('Patrick Flynn')).toBeInTheDocument()
+    expect(screen.queryByText('Relative')).toBeNull()
+    expect(screen.queryByText('PRIMARY')).toBeNull()
+  })
+
+  it('survives a malformed person without crashing', () => {
+    const persons = [...(result.gedcomx?.persons ?? []), { id: 'p_9' }] as never
+    render(
+      <SidecarResultCard
+        result={{ ...result, gedcomx: { ...result.gedcomx, persons } }}
+        tool="record_read"
+        defaultExpanded={true}
+      />
+    )
+    expect(screen.getByText('Thomas Flynn')).toBeInTheDocument()
+  })
+})
+
+describe('SidecarResultCard — unrouted tool', () => {
+  it('renders neither "Untitled record" nor the full-text body', () => {
+    render(
+      <SidecarResultCard
+        result={{ id: 'x', textDocument: 'SHOULD NOT RENDER', names: ['Nobody'] }}
+        tool="person_read"
+        defaultExpanded={true}
+      />
+    )
+    expect(screen.getByRole('heading', { name: 'person_read' })).toBeInTheDocument()
+    expect(screen.queryByText('Untitled record')).toBeNull()
+    expect(screen.queryByText('SHOULD NOT RENDER')).toBeNull()
+    expect(screen.queryByText('Names')).toBeNull()
   })
 })
