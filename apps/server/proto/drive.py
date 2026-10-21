@@ -66,7 +66,9 @@ SEED_EVENTS = 40
 SEED_GAP_S = 0.1
 DRAIN_S = 15.0
 STREAM_DEADLINE_S = 120.0  # the seeder takes ~25 s (ping pause included); a real worker turn, minutes
-DEFAULT_TEXT = "Let's start a new genealogy research project."
+# No canned opener: the first message is what the user typed, and the router sends a
+# no-project message to init-project or tree-survey itself (lead, 2026-10-15).
+DEFAULT_TEXT = "Find the parents of Patrick Flynn, born about 1845 in Ireland."
 
 
 def _load_worker_complete():

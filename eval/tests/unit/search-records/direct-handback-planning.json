@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_search_records_hbk",
+    "skill": "search-records",
+    "name": "Planning delegation — hand back to research-plan, search and write nothing",
+    "type": "negative",
+    "description": "The agent's routing gate, reached by direct spawn. The delegation asks what to search next — planning, research-plan's job. The agent must hand back naming research-plan and make no search and no log write. Added in issue #2243 when the description-routing negative _005 was deleted: it graded which skill Cowork picked from a description and never reached this gate. A DIRECT negative graded on its invariant, gated by test_no_search_or_writes_on_planning_request (no-search-no-write) and test_hand_back_names_its_owner (hand-back).",
+    "tags": [
+      "no-search-no-write",
+      "hand-back",
+      "handback-to-research-plan",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "What should I search for next to find Patrick Flynn's parents?\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": [
+      "research-plan"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "Choosing what to search is planning. The agent hands it back to research-plan and runs no search."
+  },
+  "judge_context": [
+    "The correct reply is a one-line `Hand-back: research-plan` line. Running a search, ranking records or writing a plan is a fail."
+  ]
+}

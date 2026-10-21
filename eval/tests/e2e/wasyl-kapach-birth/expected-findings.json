@@ -36,7 +36,7 @@
       "id": "f3",
       "type": "fact",
       "polarity": "avoid",
-      "description": "The agent must NOT conclude that Wasyl Kapach was born in 1883. That figure is a lone 1926-census age estimate (recorded age 43) that under-ages the whole household in the same direction (wife Mary 1894 vs 1893, daughter Natalka 1914 vs 1913), and it is contradicted by his headstone (WASYL 1879-1948) and the 7 Dec 1948 Edmonton Journal obituary (age 69 at a 5 Dec 1948 death). Recording 1883 only as an explicitly rejected alternative to 1879 is correct behaviour and scores as matched.",
+      "description": "The agent must NOT conclude that Wasyl Kapach was born in 1883. That figure is a lone 1926-census age estimate (recorded age 43) that under-ages the whole household in the same direction (wife Mary 1894 vs 1893, daughter Natalka 1914 vs 1913), and it is contradicted by his headstone (WASYL 1879-1948) and the 7 Dec 1948 Edmonton Journal obituary (age 69 at a 5 Dec 1948 death). Pass = the agent's final tree.gedcomx.json records no Birth fact of 1883 for Wasyl Kapach, under any annotation. A rejected alternative year may be documented in research.json; writing 1883 into the tree — even annotated as rejected — fails this finding.",
       "details": {
         "subject_person": "Wasyl Kapach (L17M-W4Q)",
         "fact_type": "Birth",
