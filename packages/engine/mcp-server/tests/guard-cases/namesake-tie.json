@@ -5069,7 +5069,7 @@
       "id": "two-party-assertion-tying-itself",
       "expect": "silent",
       "known_let_through": true,
-      "why": "The groom's marriage assertion is linked to P and to P's wife, and nothing one-party of the groom is linked to P, so its own link to the wife ties it; with the groom's name also linked to P it would not. Narrowing this waits for the lead.",
+      "why": "The groom's marriage assertion is linked to P and to P's wife, and nothing one-party of the groom is linked to P, so its own link to the wife ties it; with the groom's name also linked to P it would not. With no committed instance it stays a known let through under the lead's scope note of 2026-10-18.",
       "write": "pe_001",
       "research": {
         "namesakes": [
