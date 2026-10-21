@@ -33,6 +33,13 @@
 //       `mergeNamesakeRefusals`, `mergeCarryRefusals` and the pair checks on the
 //       call's state, with brackets, unmoved links, the gates a merge skips and
 //       a replay of lowering every refused link.
+//   §4  the namesake warning (1d): each committed e2e final state, rows
+//       written in one call on every person holding a live probable or
+//       confident link, then on the fixture subject alone; what
+//       `namesakeRowListings` lists.
+//   §5  the materialize copy gate (1d): each persona op of a committed
+//       materialize_facts call, judged by `personaTargetRefusal` on the
+//       run's final state with and without the rows.
 //
 // Exits non-zero when a floor fails: a bracket that judged or refused nothing
 // would read as coverage and be none.
@@ -48,6 +55,7 @@ import {
   mergeCarryRefusals,
   mergeDirections,
   mergeNamesakeRefusals,
+  namesakeRowListings,
   namesakeVerdicts,
   RELATIONAL_FACT_TYPES,
   unexplainedMoveInvariants,
@@ -55,7 +63,8 @@ import {
 import { isTwoParty } from "../src/utils/record-persona.js";
 import { joinedPairRefusals, survivorOrderRefusals } from "../src/tools/merge-tree-persons.js";
 import { startingPersonIdsOf } from "../src/utils/starting-tree.js";
-import { repoRoot } from "./runlog-calls.js";
+import { personaTargetRefusal } from "../src/tools/materialize-facts.js";
+import { bareName, opsOf, readRunLog, repoRoot, responseOf, toolCalls } from "./runlog-calls.js";
 
 const VERBOSE = process.argv.includes("--verbose");
 const git = (...args: string[]) => execFileSync("git", args, { cwd: repoRoot, encoding: "utf-8" });
@@ -150,6 +159,7 @@ function section0(): void {
 // ─── §1 ─────────────────────────────────────────────────────────────────────
 
 interface FinalState {
+  file: string;
   slug: string;
   run: string;
   subject: string;
@@ -175,6 +185,7 @@ function finalStates(): { states: FinalState[]; skipped: number } {
     }
     const startTree = readJson(`eval/tests/e2e/${slug}/starting-tree.gedcomx.json`) ?? { persons: [], relationships: [] };
     states.push({
+      file: f,
       slug,
       run: basename(f).slice(4, 23),
       subject,
@@ -794,6 +805,112 @@ function section3(lines: any[], states: FinalState[]): void {
   floor(replays > 0, "§3 no call refuses a link in A, so the lowering replay judged nothing");
 }
 
+// ─── §4 the namesake warning ─────────────────────────────────────────────────
+
+/** Rows planted on every person holding a live probable or confident link, or
+ *  on the fixture subject alone when they hold one. */
+const BRACKETS = ["every linked person", "the subject alone"] as const;
+const holdersIn = (s: FinalState, bracket: (typeof BRACKETS)[number]) =>
+  linkedPersons(s.research).filter((p) => bracket === "every linked person" || p === s.subject);
+
+function section4(states: FinalState[]): void {
+  console.log(
+    "\n§4  the namesake warning (1d): each committed e2e final state, the rows written in one call; what " +
+      "`namesakeRowListings` lists: the links the cap refuses (relatives from the final tree, every strong link " +
+      "a voucher, as §1 TF), the facts their parties carried and the names citing their sources",
+  );
+  for (const bracket of BRACKETS) {
+    let withHolders = 0, persons = 0, warned = 0, warnedStates = 0, links = 0, facts = 0, names = 0, most = 0;
+    const subject: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
+    for (const s of states) {
+      const holders = holdersIn(s, bracket);
+      if (holders.length === 0) continue;
+      withHolders += 1;
+      persons += holders.length;
+      const planted = plantRows(s.research, holders);
+      const applied = (planted.namesakes as any[]).map((r) => ({ section: "namesakes", entryId: r.id }));
+      const listings = namesakeRowListings({ research: planted }, { research: planted, tree: s.finalTree }, applied, s.startingIds);
+      if (listings.length > 0) warnedStates += 1;
+      warned += listings.length;
+      let here = 0;
+      for (const l of listings) {
+        links += l.refused.length;
+        facts += l.facts.length;
+        names += l.names.length;
+        here += l.refused.length;
+        if (l.personId === s.subject) subject[labelOf(s.slug)] += l.refused.length;
+      }
+      most = Math.max(most, here);
+    }
+    console.log(
+      `  ${bracket}: ${withHolders} states, ${persons} persons with a row; warned ${warned} persons in ${warnedStates} ` +
+        `states, listing ${links} links (subject: hint the subject's own ${subject.true}, a namesake's ` +
+        `${subject.false}, unlabelled ${subject.unlabelled}; at most ${most} in one state), ${facts} facts, ${names} names`,
+    );
+    if (bracket === "every linked person") floor(links > 0, "§4 the warning listed no link");
+  }
+}
+
+// ─── §5 the materialize copy gate ────────────────────────────────────────────
+
+function section5(states: FinalState[]): void {
+  console.log(
+    "\n§5  the materialize copy gate (1d): each persona op of a committed materialize_facts call that did not " +
+      "fail, judged by `personaTargetRefusal` on the run's final state, as dev/replay-materialize-link.ts reads " +
+      "it. Explicit: ops onto a row holder's personId admitted without the row and refused with it. Implicit: " +
+      "row holders the op's persona facts reach in the final tree, admitted without the row and refused with " +
+      "it, so the op mints instead",
+  );
+  for (const bracket of BRACKETS) {
+    let explicitJudged = 0, explicitRefused = 0, implicitJudged = 0, implicitMint = 0;
+    const subject: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
+    for (const s of states) {
+      const holders = new Set(holdersIn(s, bracket));
+      if (holders.size === 0) continue;
+      const planted = plantRows(s.research, [...holders].sort());
+      const assertions = (s.research.assertions ?? []) as any[];
+      for (const call of toolCalls(readRunLog(s.file.replace(/\.final-research\.json$/, ".json")))) {
+        if (bareName(call) !== "materialize_facts" || responseOf(call)?.ok === false) continue;
+        for (const op of opsOf(call.args)) {
+          if (typeof op?.assertionId === "string" || typeof op?.recordId !== "string" || typeof op?.recordRole !== "string") continue;
+          const personId = typeof op.personId === "string" ? op.personId : undefined;
+          const own = new Set(
+            assertions.filter((a) => a?.record_id === op.recordId && a?.record_role === op.recordRole).map((a) => a?.id),
+          );
+          const targets =
+            personId !== undefined
+              ? [personId]
+              : ((s.finalTree.persons ?? []) as any[])
+                  .filter((p) => (p?.facts ?? []).some((f: any) => own.has(f?.assertion_id)))
+                  .map((p) => String(p.id));
+          for (const target of targets) {
+            if (!holders.has(target)) continue;
+            const judged = { ...op, personId: target };
+            if (personaTargetRefusal(s.finalTree, s.research, judged, s.startingIds) !== null) continue;
+            const refused = personaTargetRefusal(s.finalTree, planted, judged, s.startingIds) !== null;
+            if (personId !== undefined) {
+              explicitJudged += 1;
+              if (refused) explicitRefused += 1;
+              if (refused && target === s.subject) subject[labelOf(s.slug)] += 1;
+            } else {
+              implicitJudged += 1;
+              if (refused) implicitMint += 1;
+            }
+          }
+        }
+      }
+    }
+    console.log(
+      `  ${bracket}: explicit ${explicitJudged} judged, ${explicitRefused} refused (onto the subject: hint the ` +
+        `subject's own ${subject.true}, a namesake's ${subject.false}, unlabelled ${subject.unlabelled}); ` +
+        `implicit ${implicitJudged} judged, ${implicitMint} now mint`,
+    );
+    if (bracket === "every linked person") {
+      floor(explicitJudged > 0 && explicitRefused > 0, `§5 explicit judged ${explicitJudged}, refused ${explicitRefused}`);
+    }
+  }
+}
+
 // ─── main ───────────────────────────────────────────────────────────────────
 
 console.log(`measured at ${sha} (working tree of this checkout)\n`);
@@ -805,6 +922,8 @@ const lines = dumpCallStates();
 shapesLine(lines);
 section2(lines, states);
 section3(lines, states);
+section4(states);
+section5(states);
 if (floorsFailed > 0) {
   console.log(`\n${floorsFailed} floor(s) failed`);
   process.exit(1);

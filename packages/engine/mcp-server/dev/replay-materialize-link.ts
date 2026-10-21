@@ -25,6 +25,12 @@
 //                qualifies, the rule before issue #3363: what this rule adds.
 //   baseline     of those, the ones admitted without the starting-tree ids.
 //   named-party  every named-party op the arm's decision refuses.
+//   exempt       persona ops onto a person minted from the op's own record
+//                (`mintedFromThisRecord`), explicit ones by their personId and
+//                implicit ones by every person their persona's facts reach in
+//                the final tree: how many item 34 keeps exempt (the person
+//                traces to this party and to no other) and how many it
+//                withholds, carrying another party or no party.
 //
 // Exit is always 0: this reports a rate for a human to read, it is not a gate.
 
@@ -32,6 +38,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   existingPersonLinkRefusal,
+  mintedExemption,
+  personaParty,
   namedPartyTargetRefusal,
   personaTargetRefusal,
 } from "../src/tools/materialize-facts.js";
@@ -52,6 +60,7 @@ type Fire = { run: string; detail: string };
 type Tally = {
   examined: { persona: number; batched: number; namedParty: number };
   fires: Record<"persona" | "twoParty" | "baseline" | "namedParty", Fire[]>;
+  exempt: { explicit: number; implicit: number; kept: number; anotherParty: Fire[]; noParty: Fire[] };
   why: Record<string, number>;
   dates: string[];
   runs: Set<string>;
@@ -59,6 +68,7 @@ type Tally = {
 const tally = (): Tally => ({
   examined: { persona: 0, batched: 0, namedParty: 0 },
   fires: { persona: [], twoParty: [], baseline: [], namedParty: [] },
+  exempt: { explicit: 0, implicit: 0, kept: 0, anotherParty: [], noParty: [] },
   why: {},
   dates: [],
   runs: new Set(),
@@ -95,13 +105,35 @@ for (const file of runFiles) {
     const batched = call.args.ops !== undefined;
     for (const op of opsOf(call.args)) {
       const personId = typeof op?.personId === "string" ? op.personId : undefined;
+      if (typeof op?.assertionId !== "string" && typeof op?.recordId === "string" && typeof op?.recordRole === "string") {
+        const party = personaParty(research, op.recordId, op.recordRole);
+        const own = new Set(
+          assertions
+            .filter((a) => a?.record_id === op.recordId && a?.record_role === op.recordRole && typeof a.id === "string")
+            .map((a) => a.id),
+        );
+        const targets = personId !== undefined
+          ? [personId]
+          : ((tree.persons ?? []) as any[])
+              .filter((p) => (p?.facts ?? []).some((f: any) => own.has(f?.assertion_id)))
+              .map((p) => String(p.id));
+        for (const target of targets) {
+          const how = mintedExemption(tree, research, target, op.recordId, party, starting);
+          if (how === "not minted") continue;
+          if (personId !== undefined) t.exempt.explicit++;
+          else t.exempt.implicit++;
+          const fire = { run: file, detail: `${target} <- ${op.recordId} ${op.recordRole}${personId === undefined ? " (implicit)" : ""}` };
+          if (how === "exempt") t.exempt.kept++;
+          else (how === "another party" ? t.exempt.anotherParty : t.exempt.noParty).push(fire);
+        }
+      }
       if (!personId) continue;
 
       if (typeof op.assertionId === "string") {
         t.examined.namedParty++;
         const named = assertions.find((a) => a?.id === op.assertionId);
         if (!named) continue;
-        const refusal = namedPartyTargetRefusal(tree, research, named, String(op.relatedRole ?? ""), personId, op.gender, starting);
+        const refusal = namedPartyTargetRefusal(tree, research, named, String(op.relatedRole ?? ""), personId, op.gender, starting, op.name);
         if (refusal !== null) t.fires.namedParty.push({ run: file, detail: `${personId} <- ${op.assertionId} (${op.relatedRole})` });
         continue;
       }
@@ -134,7 +166,7 @@ for (const file of runFiles) {
       t.runs.add(file);
       if (date) t.dates.push(date);
 
-      if (existingPersonLinkRefusal(tree, research, personId, op.recordId, persona, "it", starting) === null) {
+      if (existingPersonLinkRefusal(tree, research, personId, op.recordId, persona, "it", starting, personaParty(research, op.recordId, op.recordRole)) === null) {
         t.fires.twoParty.push({ run: file, detail: label });
       }
       if (personaTargetRefusal(tree, research, op) === null) t.fires.baseline.push({ run: file, detail: label });
@@ -167,4 +199,12 @@ for (const [name, t] of Object.entries(buckets)) {
       (t.examined.namedParty === 0 ? " (no named-party op here names a personId, so the arm has no population)" : ""),
   );
   show(t.fires.namedParty);
+  const exempt = t.exempt.explicit + t.exempt.implicit;
+  console.log(
+    `\nexempt: ${exempt} persona op(s) onto a person minted from the op's record (${t.exempt.explicit} explicit, ` +
+      `${t.exempt.implicit} implicit); item 34 keeps ${t.exempt.kept} and withholds ` +
+      `${t.exempt.anotherParty.length} carrying another party and ${t.exempt.noParty.length} carrying no party`,
+  );
+  show(t.exempt.anotherParty);
+  show(t.exempt.noParty);
 }
