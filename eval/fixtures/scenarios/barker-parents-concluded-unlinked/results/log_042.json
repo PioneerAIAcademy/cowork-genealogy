@@ -1,0 +1,26 @@
+{
+ "log_id": "log_042",
+ "tool": "record_search",
+ "retrieved": "2026-10-20T18:19:33.102Z",
+ "returned_count": 0,
+ "payload": {
+  "query": {
+   "birthYearFrom": 1815,
+   "birthYearTo": 1822,
+   "count": 20,
+   "givenName": "Jonathan",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2",
+   "recordType": "census",
+   "residencePlace": "Cumberland, England",
+   "residenceYearFrom": 1841,
+   "residenceYearTo": 1841,
+   "surname": "Barker"
+  },
+  "totalMatches": 531,
+  "paginationCappedAt": 4999,
+  "returned": 20,
+  "offset": 0,
+  "hasMore": true,
+  "results": []
+ }
+}

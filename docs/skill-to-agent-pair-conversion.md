@@ -417,7 +417,7 @@ Every one below fails CI if skipped. Put the whole list in the card.
 | `tests/packaging/enum-drift.test.ts` | any closed-enum declaration the fold moved into the agent body |
 | `tests/packaging/agent-return-contract.test.ts` | a `summary_for_user` return-contract heading, or a `PENDING` entry naming when it lands |
 | `docs/architecture.md`, `docs/skill-dataflow.md` | the agent count and any per-tool agent tally — re-measure, do not increment |
-| `make agent-smoke` | the only check that reads what the runtime resolved; **no CI job runs it** |
+| `make agent-smoke` | the only check that reads what the runtime resolved; its registration arm runs in CI (`server-tests.yml`); its dead-stub arm does not |
 
 **Deleting the skill trips more, and some of it bills other suites.** Under the
 2026-09-22 ruling every conversion deletes its skill (`citation`,

@@ -385,7 +385,8 @@ reads the record.
 
 When a search ranks, `results` comes back **annotated in place** — each row
 carries `matchRank`, `searchRank`, `matchScore`, and where available
-`matchConfidence`, `candidateFactCount` and the `attachedTo*` flags — and the
+`matchConfidence`, `candidateFactCount`, `birthYearConflict` with `birthYearGap` when the
+birth years differ by more than two, and the `attachedTo*` flags — and the
 list is ordered **best first**. `ranked` carries metadata only (plus
 `subjectTooThin: true` when the subject lacks both a narrow date and a named
 relative — see `rank-search-matches-tool-spec.md` § `subjectTooThin`); it has

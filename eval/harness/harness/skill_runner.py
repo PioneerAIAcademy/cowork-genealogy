@@ -50,6 +50,7 @@ from harness.context_policy import (
     subagent_only_denial,
     subagent_only_violation,
 )
+from harness.delegation import foreground_rewrite
 from harness.mock_mcp import create_mock_server
 from harness.sdk_query import close_query, open_query
 from harness.skill_stubs import stub_denial
@@ -94,40 +95,6 @@ DEFAULT_MAX_INPUT_TOKENS_PER_TURN = 200_000
 # requires longer thinking should also bump `execution.max_wall_clock_
 # seconds` (see eval/tests/unit/record-extraction/*.json).
 DEFAULT_SDK_MESSAGE_SILENCE_SECONDS = 180
-
-
-# Spec §15 "Known risks": disallowed_tools must actually block unlisted
-# tools — verify on every SDK version bump. We pin a known-good version
-# range and warn loudly if the installed SDK is outside it.
-# Update _KNOWN_GOOD_SDK_RANGE after running the e2e against a newer
-# version and confirming disallowed_tools still denies unlisted tools.
-_KNOWN_GOOD_SDK_RANGE = (">=0.1.81", "<0.2")
-
-
-def _check_sdk_version() -> str | None:
-    """Return a warning string if the SDK version is outside the
-    tested-known-good range; None when in range or undeterminable."""
-    try:
-        from importlib.metadata import PackageNotFoundError, version
-        installed = version("claude-agent-sdk")
-    except (ImportError, Exception):
-        return None
-    # Crude comparison: split on dots and compare tuples. Good enough
-    # for "0.1.x" vs "0.2.x" granularity.
-    try:
-        parts = tuple(int(p) for p in installed.split(".")[:2])
-        if parts < (0, 1) or parts >= (0, 2):
-            return (
-                f"claude-agent-sdk version {installed} is outside the "
-                f"harness's tested-known-good range "
-                f"{_KNOWN_GOOD_SDK_RANGE[0]},{_KNOWN_GOOD_SDK_RANGE[1]}. "
-                f"Spec §15 known-risks: verify disallowed_tools "
-                f"still blocks unlisted tools, then update "
-                f"_KNOWN_GOOD_SDK_RANGE in skill_runner.py."
-            )
-    except (ValueError, TypeError):
-        pass
-    return None
 
 
 # When the harness abandons a run mid-stream (wall-clock / silence abort or
@@ -1266,7 +1233,7 @@ async def run_skill(
                     "continue_": False,
                     "stopReason": "max_tool_calls",
                 }
-        return {}
+        return foreground_rewrite(tool_name, input_data.get("tool_input")) or {}
 
     options = ClaudeAgentOptions(
         cwd=str(workspace),

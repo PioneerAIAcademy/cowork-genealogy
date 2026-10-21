@@ -813,6 +813,25 @@ describe("materialize_facts", () => {
     const seedStart = (persons: any[]) =>
       writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify(tree({ persons }), null, 2), "utf-8");
 
+    // An S entry reaches EVERY research source that cites it (#3363). Read
+    // last-wins, I5 looked made from REC-X2 alone, and X2 copied with no link
+    // onto a person made from X1, another persona of the same document.
+    it("C9r refuses a persona onto a person made from another persona of the same document", async () => {
+      const r = research({
+        sources: [source("src_007", "S7"), source("src_008", "S7")],
+        assertions: [
+          assertion("a_071", { source_id: "src_007", record_id: "REC-X1", record_role: "child", fact_type: "name", value: "Robert Smith" }),
+          assertion("a_081", { source_id: "src_008", record_id: "REC-X2", record_role: "child", fact_type: "name", value: "Robert Smith" }),
+          assertion("a_082", { source_id: "src_008", record_id: "REC-X2", record_role: "child", fact_type: "birth", date: "1855" }),
+        ],
+      });
+      const madeFromX1 = { id: "I5", gender: "Male", names: [{ id: "N5", given: "Robert", surname: "Smith", sources: [{ ref: "S7" }] }] };
+      await writeProject(tree({ persons: [madeFromX1], sources: [{ id: "S7", title: "Baptism register" }] }), r, { link: false });
+      const out = single(await materializeFacts({ projectPath: dir, personId: "I5", recordId: "REC-X2", recordRole: "child" }));
+      expect(out.ok).toBe(false);
+      if (!out.ok) expect(out.errors[0]).toContain("research_append");
+    });
+
     it("refuses the persona arm onto a starting-tree person whose refs reach only this record", async () => {
       const seeded = { ...I2, names: [{ id: "N2", given: "Robert", surname: "Smith", sources: [{ ref: "S1" }] }] };
       const r = research({ sources: [S1], assertions: enrichPersona() });

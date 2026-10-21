@@ -149,4 +149,38 @@ describe("source_attachments", () => {
       /Could not reach FamilySearch attachments API: fetch failed <- ETIMEDOUT/,
     );
   });
+  it("with a treeId, reads attachments with the session switched to that tree and restores it", async () => {
+    const SESSION = "https://www.familysearch.org/service/tree/tree-data/user/CURRENT/tree/session";
+    let current = "PRIVATE";
+    const seen: string[] = [];
+    mockFetch.mockImplementation(async (u: string, init: { method?: string; body?: string } = {}) => {
+      if (u === SESSION && (init.method ?? "GET") === "GET") {
+        seen.push("get");
+        return { ok: true, status: 200, statusText: "OK", json: async () => ({ treeId: current }) };
+      }
+      if (u === SESSION) {
+        current = JSON.parse(init.body!).treeId;
+        seen.push(`set:${current}`);
+        return { ok: true, status: 204, statusText: "No Content", json: async () => ({}) };
+      }
+      seen.push(`attachments on ${current}`);
+      return okWith(current === "9NMM-TEST" ? { [url(1)]: entryFor("RTPR-111") } : { [url(1)]: entryFor("FTCP-111") });
+    });
+
+    const r = await sourceAttachmentsTool({ uris: [ark(1)] }, LOCAL, { treeId: "9NMM-TEST" });
+
+    expect(r.attachments[ark(1)]).toEqual([{ personId: "RTPR-111", tags: ["Birth"] }]);
+    expect(seen).toEqual(["get", "set:9NMM-TEST", "attachments on 9NMM-TEST", "set:PRIVATE"]);
+    expect(current).toBe("PRIVATE");
+  });
+
+  it("counts a source attached only to a relationship as unattached", async () => {
+    mockFetch.mockResolvedValue(
+      okWith({ [url(1)]: [{ parentChildRelationships: [{ entityId: "S6LV-FSK" }], sourceId: "S1" }] }),
+    );
+
+    const r = await sourceAttachmentsTool({ uris: [ark(1)] }, LOCAL);
+
+    expect(r).toEqual({ attachments: {}, unattached: [ark(1)] });
+  });
 });
