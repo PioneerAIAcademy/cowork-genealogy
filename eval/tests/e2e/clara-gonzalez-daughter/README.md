@@ -28,19 +28,14 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 5, `hint-samples.csv` row 170,
-flag `adds_daughter`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Chile, Civil Registration, 1880-1933", the birth registration of Zulema de Jesus Silva Gonzalez, born 12 November 1897 at Pichilemu, naming her parents as Benjamín Silva Díaz and Clara Gonzalez Pimienta.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Zulema as Clara's daughter, plus a `required` finding that the report documents
-the rejection.
+**Resolved: true match.** The birth registration of Zulema de Jesús Silva González (Entry 184, 1897 civil registration register, Colchagua) was confirmed by reading the original image (`ark:/61903/3:1:939K-PNQ3-4`). The image shows the father's name as "Benjamín Silva y Díaz" and the mother's as "Clara González y Pimienta de Silva" — the same compound surnames seen across all five records for this family. The birth date "doce de Noviembre" (12 November 1897) and stated birth place "Aguada de San Antonio" are clearly legible. The declarant is Benjamín Silva, identified as the child's father and described as "known to the official" — the same phrase used in prior registrations for this family.
 
-A strong candidate. Both parents' names match in full, maternal surname included: Benjamín Silva Díaz and Clara González Pimienta. The register is a Colchagua birth volume, and the birth falls 23 months after Manuel Jesús, which fits the couple's spacing. The tree holds no daughter and no source dated after 1895 for this family, so the hint is not a re-index of anything already attached.
+**Calibration (licensed).** Two other entries from the same civil registration register (Cáhuil, Colchagua, 1895–1896) were read and cross-checked against their FamilySearch index entries:
+- Entry 12 (Juan Francisco Bernabé Silva González): birth date 27 December 1895, father Benjamín Silva Díaz, mother Clarisa González Pimienta de Silva — image matched index exactly.
+- Entry 13 (Manuel Jesús Silva González): birth date 27 December 1895, same parents — image matched index exactly.
 
-Two cautions. The index standardises Pichilemu under "Petorca, Aconcagua", but the image group is "Chile, Colchagua, Births", and Pichilemu is the Colchagua coastal town. The event place is Pichilemu, Colchagua (now O'Higgins), and a reviewer should not carry the index's Aconcagua into the findings. Second, the tree's Colchagua places for this family are inland: Pumanque, Nancagua and the generic "Colchagua" registration of both sons. A move to the coast between 1895 and 1897 is plausible but unproven.
+Both matched, licensing the reading of Entry 184 for child name, parents and date.
 
-The discriminating check is the register office on the two sons' birth registrations already in the tree. If either was registered at Pichilemu, or at a neighbouring coastal circunscripción, the hint is a true match. If both sons were registered inland, read the 1897 entry's declarant and the parents' stated residence on the image, which should name the same household.
+**Marriage record cross-check.** The marriage record names the groom's father's mother as Mercedes Díaz and the bride's mother as Antonia Pimienta, locking the compound surnames to this specific family and ruling out coincidental name matches.
+
+**Place note.** The image states "Aguada de San Antonio" as the birth place, within the Pichilemu registration district, Colchagua. The FamilySearch index wrongly standardises this as "Petorca, Aconcagua"; the correct jurisdiction is Colchagua (now O'Higgins). The finding uses "Aguada de San Antonio, Colchagua, Chile" as stated in the record.
