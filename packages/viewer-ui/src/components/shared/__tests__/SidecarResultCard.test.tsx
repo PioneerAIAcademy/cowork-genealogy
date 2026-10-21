@@ -113,9 +113,7 @@ describe('SidecarResultCard — fulltext_search', () => {
   })
 
   it('titles the card from `title`, not `recordType`', () => {
-    render(
-      <SidecarResultCard result={fulltextResult} tool="fulltext_search" defaultExpanded={false} />
-    )
+    render(<SidecarResultCard result={fulltextResult} tool="fulltext_search" defaultExpanded={false} />)
     expect(
       screen.getByRole('heading', { name: 'Last Will and Testament of Thomas Flynn' })
     ).toBeInTheDocument()
@@ -142,7 +140,9 @@ describe('SidecarResultCard — fulltext_search', () => {
     const { sourceUrl: _sourceUrl, ...noSourceUrl } = fulltextResult
     const spy = vi.fn()
     setOpenFamilySearch(spy)
-    render(<SidecarResultCard result={noSourceUrl} tool="fulltext_search" defaultExpanded={true} />)
+    render(
+      <SidecarResultCard result={noSourceUrl} tool="fulltext_search" defaultExpanded={true} />
+    )
     await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
     // openFamilySearch forwards the raw identifier; resolution happens
     // downstream in the platform implementation, not in this component.
@@ -273,10 +273,7 @@ describe('SidecarResultCard — fulltext_search', () => {
  */
 describe('SidecarResultCard — link visibility', () => {
   const withArkUrl = (arkUrl: string): RecordSearchResult =>
-    ({
-      ...(patrickFlynnSidecar.payload.results![0] as RecordSearchResult),
-      arkUrl
-    }) as RecordSearchResult
+    ({ ...(patrickFlynnSidecar.payload.results![0] as RecordSearchResult), arkUrl }) as RecordSearchResult
 
   it('renders the link for an arkUrl the policy resolves', () => {
     render(
