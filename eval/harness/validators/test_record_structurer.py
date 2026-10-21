@@ -196,3 +196,34 @@ def test_value_holds_no_derivation(before_state, after_state, tool_calls, test):
         if found:
             hits.append(f"{a.get('id')}: {a.get('value')!r} ({', '.join(found)})")
     assert not hits, "values carry their derivation instead of the fact: " + "; ".join(hits)
+
+
+def test_census_households_are_kept_apart(before_state, after_state, test):
+    """Each household on a census page keeps its own head.
+
+    Gated on `multi-household`. Code assigns roles per `household`; a page read
+    as one household makes the second family's head a member of the first.
+    """
+    if not _tagged(test, "multi-household"):
+        pytest.skip("not a multi-household census test")
+    roles = _roles_by_name(_new_assertions(before_state, after_state))
+    assert roles, "no name assertion was written"
+    wrong = {n: roles.get(n) or "missing" for n in ("Thomas Flynn", "Michael Gallagher") if roles.get(n) != "head_of_household"}
+    assert not wrong, f"each dwelling's first person should head their own household: {wrong}"
+
+
+def test_a_batch_is_written_in_one_call(before_state, after_state, tool_calls, test):
+    """Every delegated source is written, in one `extraction_append` call.
+
+    Gated on `multi-document`. One resend of the whole batch after a refusal
+    is allowed, so up to two calls pass; a call per source does not.
+    """
+    if not _tagged(test, "multi-document"):
+        pytest.skip("not a multi-document batch test")
+    delegation = (test or {}).get("delegation") or ""
+    delegated = {_record_id(m) for m in _DELEGATED_ID_RE.findall(_RECORD_DATA_RE.sub("", delegation))}
+    written = {_record_id(a.get("record_id")) for a in _new_assertions(before_state, after_state)}
+    missing = sorted(delegated - written)
+    assert not missing, f"sources delegated but not written: {missing}"
+    calls = [c for c in (tool_calls or []) if _bare_tool_name(str(c.get("tool") or "")) == "extraction_append"]
+    assert len(calls) <= 2, f"{len(calls)} extraction_append calls for one batch; expected one (two with a resend)"
