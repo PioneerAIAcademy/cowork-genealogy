@@ -4,7 +4,7 @@
     "skill": "init-project",
     "name": "Initialize from a tree person and capture volunteered known holdings",
     "type": "positive",
-    "description": "Single-turn decomposition: the user gives a FamilySearch person ID AND volunteers what they already have on hand (a death certificate and a typed family history). The skill should seed the tree from person_read and record each volunteered item as a known_holdings entry in research.json — the 'gather known info' half of GPS Step 2. Because eval runs are single-turn, the holdings are stated in the first message so the survey fires without a follow-up.",
+    "description": "Single-turn decomposition: the user gives a FamilySearch person ID AND volunteers what they already have on hand (a death certificate and a typed family history). The skill should seed the tree with project_create (which reads the person) and record each volunteered item as a known_holdings entry in research.json — the 'gather known info' half of GPS Step 2. Because eval runs are single-turn, the holdings are stated in the first message so the survey fires without a follow-up.",
     "tags": [
       "initialization",
       "known-holdings",

@@ -14,7 +14,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   return { ...actual, resolveStandardPlace: vi.fn().mockResolvedValue(null) };
 });
 
-import { personReadTool } from "../../src/tools/person-read.js";
+import { personReadTool, readPerson } from "../../src/tools/person-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import type { GedcomXSourceReference } from "../../src/types/gedcomx.js";
 import type { FSTreeResponse } from "../../src/types/person-read.js";
@@ -1422,6 +1422,48 @@ describe("personReadTool — sibling fan-out", () => {
     expect(orphans).toEqual([]);
     // and the pointless request is not made at all
     expect(mockFetch.mock.calls.some(([u]) => String(u).includes(`/${COP}`))).toBe(false);
+  });
+
+  it("does not follow a merged parent's 301 once the read's clock has run out", async () => {
+    // The follow is part of the fan-out, so it keeps the fan-out's rule: with
+    // nothing left on the shared clock this parent yields no siblings, rather
+    // than a read that can push the whole call past the bridge's 60s abort.
+    const OLD_DAD = "DAD-001";
+    const NEW_DAD = "DAD-NEW-7";
+    const deadline = Date.now() + 10_000;
+    const clock = vi.spyOn(Date, "now");
+    mockFetch.mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes(`/${SUBJECT}`)) {
+        return Promise.resolve({
+          ok: true, status: 200, headers: new Headers(),
+          json: () => Promise.resolve({
+            persons: [person(SUBJECT, "Subject Person"), person(OLD_DAD, "Dad")],
+            relationships: [],
+            childAndParentsRelationships: [capr(SUBJECT, OLD_DAD)],
+          }),
+        });
+      }
+      if (u.includes(`/${OLD_DAD}`)) {
+        clock.mockReturnValue(deadline + 1);
+        return Promise.resolve({
+          ok: false, status: 301,
+          headers: new Headers({ location: `https://api.familysearch.org/platform/tree/persons/${NEW_DAD}` }),
+          json: () => Promise.reject(new Error("no body on a 301")),
+        });
+      }
+      return Promise.resolve({
+        ok: true, status: 200, headers: new Headers(),
+        json: () => Promise.resolve({ persons: [], relationships: [], childAndParentsRelationships: [] }),
+      });
+    });
+    try {
+      const { result } = await readPerson(SUBJECT, { deadline }, LOCAL);
+      expect(result.persons[0].id).toBe(SUBJECT);
+      expect(mockFetch.mock.calls.some(([u]) => String(u).includes(`/${NEW_DAD}`))).toBe(false);
+    } finally {
+      clock.mockRestore();
+    }
   });
 
   it("follows a merged parent's 301 instead of losing every sibling behind it", async () => {

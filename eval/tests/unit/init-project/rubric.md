@@ -18,10 +18,10 @@ fabrication? Stub persons carry whatever facts are known (name, gender if
 known, approximate dates/places); unknown fields are omitted, not guessed.
 FamilySearch-derived facts are sourced to a tree source (`S1`) at
 `quality: 1` (questionable), and local `I` person IDs are used throughout.
-When the agent passes `person_read`'s `staged.resultsRef` as `personReadRef`,
-`project_create` builds all of that from the read: grade the written tree as
-usual, and grade the agent on what it supplies itself (the stubs its statements
-imply) and on passing the ref rather than re-typing the read into `tree`.
+`project_create({ personId })` reads the person on the host and builds all of
+that itself: grade the written tree as usual, and grade the agent on what it
+supplies itself (a stub it adds afterwards with `tree_edit`, only for a person
+the read lacks) and on creating the project with `personId` alone.
 
 - **pass:** Subject and all known relatives have known fields populated and
   unknown fields omitted; FamilySearch-derived facts are sourced to `S1` at
@@ -109,7 +109,7 @@ and unremarked on the rest. Widening this dimension to cover both sidecars, and
 so grading dates on every test, is a rubric change the genealogist should make
 deliberately rather than inherit as a side effect of a wording fix.
 
-**Tool-supplied places.** When a `person_read` fact arrives carrying a
+**Tool-supplied places.** When a fact from the read arrives carrying a
 `standard_place`, that value is **kept verbatim**. Not refining it is the
 correct behavior and must never be penalized
 as a "missed opportunity," even if the place is only country-level (e.g.
@@ -124,11 +124,11 @@ entered as stated; `project_create` standardizes it itself, so its
 `standard_place` is the tool's. The agent writes no `standard_place`.
 
 Score this dimension **N/A (null)** only when the test involves no places
-at all. A test whose places all came from `person_read` is still scored:
+at all. A test whose places all came from the read is still scored:
 there is something to check — that each returned `standard_place`
 survived into the tree unchanged, and that none was invented for a fact
-the tool left without one. A value `project_create` resolved host-side, on the
-`personReadRef` path, for a fact the read returned with a `place` and no
+the tool left without one. A value `project_create` resolved host-side, when it
+read the person (`personId`), for a fact the read returned with a `place` and no
 `standard_place` is not invented: the host retries the same place resolver.
 
 - **pass:** Every hand-entered place reaches the tree as stated, with the

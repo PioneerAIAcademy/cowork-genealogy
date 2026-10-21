@@ -381,18 +381,6 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
         f"lockdown denies. Tools called: {sorted(called) or 'none'}"
     )
 
-    # `project_create` deliberately writes no `researcher_profile` — the seed
-    # must never invent one. So a profile in the output can only have arrived
-    # through `research_append`, or through a raw write the lockdown denies in
-    # production but the harness permits. Conditional on the profile existing,
-    # because a run where the researcher volunteered nothing legitimately makes
-    # exactly one call.
-    if (after_state.get("research_json") or {}).get("researcher_profile"):
-        assert "research_append" in called, (
-            "research.json ends with a researcher_profile but research_append was "
-            "never called — project_create does not write one, so it arrived by a "
-            f"route the lockdown denies. Tools called: {sorted(called) or 'none'}"
-        )
 
 
 def test_asks_for_pid_creates_no_project(tool_calls, after_state, test):
@@ -478,9 +466,20 @@ def _tool(call):
 
 
 def _responses(tool_calls, name):
-    """Every response body returned for `name`, errors excluded."""
+    """Every response body returned for `name`, errors excluded.
+
+    For `person_read`, also the read `project_create` made itself (issue
+    #3384): the mock records the canned read it served as `served_read` on the
+    `project_create` call, so every check written against what the read held
+    keeps grading what reached the project, rather than skipping because the
+    model never called `person_read`."""
     out = []
     for call in tool_calls or []:
+        if name == "person_read" and _tool(call) == "project_create":
+            served = (call.get("served_read") or {}).get("response")
+            if isinstance(served, dict):
+                out.append(served)
+            continue
         if _tool(call) != name:
             continue
         response = call.get("response")
@@ -757,16 +756,16 @@ def test_standard_place_came_from_a_tool(after_state, tool_calls):
     FamilySearch did not make.
 
     Three legitimate origins: carried from a `person_read` fact that already
-    had one; taken from a `place_search` result; or, when `project_create` built
-    the tree from a staged read (`personReadRef`, issue #2944), resolved by its
-    host-side retry for a fact that read (the one the ref named, never a second
-    `person_read`) returned with a `place` and no `standard_place`. The third is
-    matched on the fact's owner (by FamilySearch PID), type and raw `place`,
-    which the build carries unchanged, and only for facts that really arrived
-    unresolved, and only for the value the build wrote into the write-once
-    `starting-tree.gedcomx.json`. Fourth: every hand-entered place (the whole
-    tree without `personReadRef`, an addition with one) `project_create`
-    standardizes itself and reports in `placesFilled`, once per place however
+    had one; taken from a `place_search` result; or, when `project_create` read
+    the person itself (`personId`, issue #3384), resolved by its host-side retry
+    for a fact that read (the one recorded as `served_read` on a successful
+    `project_create` call) returned with a `place` and no `standard_place`. The
+    third is matched on the fact's owner (by FamilySearch PID), type and raw
+    `place`, which the build carries unchanged, and only for facts that really
+    arrived unresolved, and only for the value the build wrote into the
+    write-once `starting-tree.gedcomx.json`. Fourth: every hand-entered place
+    (the whole tree without `personId`) `project_create` standardizes itself and
+    reports in `placesFilled`, once per place however
     else it was spelled (trimmed, case-folded, spaces collapsed); such a value
     is accepted for that place only, and only as written into the starting
     tree. A copy of the
@@ -788,43 +787,35 @@ def test_standard_place_came_from_a_tool(after_state, tool_calls):
         for result in response.get("results") or []:
             if result.get("standardPlace"):
                 allowed.add(result["standardPlace"])
-    # Only a ref call that SUCCEEDED built the tree; a refused one built nothing.
-    # And the host retry covered only the read that ref named, never a second
-    # person_read whose people joined as additions.
-    # By staged file name: project_create accepts `./results/...`, an absolute
-    # path and other spellings of one ref, and every staged name is a fresh uuid.
-    def staged_name(ref):
-        return ref.strip().replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
-
-    built_refs = {
-        staged_name(c["args"]["personReadRef"])
+    # Only a create that SUCCEEDED built the tree; a refused one built nothing.
+    # And the host retry covered only the read that create made, never a
+    # separate person_read.
+    built_reads = [
+        c["served_read"]["response"]
         for c in tool_calls or []
         if _tool(c) == "project_create"
-        and isinstance((c.get("args") or {}).get("personReadRef"), str)
+        and isinstance((c.get("served_read") or {}).get("response"), dict)
         and isinstance(c.get("response"), dict)
         and c["response"].get("ok") is True
-    }
+    ]
     # Every returned fact, not `_returned_person_facts`: that keys on
     # (owner, type) and keeps one fact per type, so a second Residence, or a
     # second Couple's Marriage, would be lost.
     # Keyed on the owner too: a fact the read left unresolved on one person
     # must not exempt an invented value on another person's fact of that type.
     host_filled = set()
-    for response in _responses(tool_calls, "person_read"):
-        staged = response.get("staged")
-        if isinstance(staged, dict) and isinstance(staged.get("resultsRef"), str) \
-                and staged_name(staged["resultsRef"]) in built_refs:
-            holders = [
-                *((p.get("id"), p) for p in response.get("persons") or []),
-                *(
-                    (_relationship_owner(r, lambda v: v), r)
-                    for r in response.get("relationships") or []
-                ),
-            ]
-            for owner, holder in holders:
-                for f in holder.get("facts") or []:
-                    if isinstance(f, dict) and f.get("place") and not f.get("standard_place"):
-                        host_filled.add((owner, f.get("type"), f.get("place")))
+    for response in built_reads:
+        holders = [
+            *((p.get("id"), p) for p in response.get("persons") or []),
+            *(
+                (_relationship_owner(r, lambda v: v), r)
+                for r in response.get("relationships") or []
+            ),
+        ]
+        for owner, holder in holders:
+            for f in holder.get("facts") or []:
+                if isinstance(f, dict) and f.get("place") and not f.get("standard_place"):
+                    host_filled.add((owner, f.get("type"), f.get("place")))
     # What a successful project_create resolved itself, by place as its
     # resolver groups them.
     def place_key(place):
@@ -1022,6 +1013,120 @@ def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
 
 
 # --- V5: the fixed profile, verbatim ------------------------------------
+
+# --- Stubs beside a read (lead ruling, 2026-10-20) ------------------------
+
+def _starting_tree(after_state):
+    """The write-once `starting-tree.gedcomx.json`: the tree as `project_create`
+    built it, before anything the agent added afterwards."""
+    raw = (after_state.get("files") or {}).get("starting-tree.gedcomx.json")
+    try:
+        tree = json.loads(raw) if isinstance(raw, str) else None
+    except ValueError:
+        return None
+    return tree if isinstance(tree, dict) else None
+
+
+def _added_person_ids(after_state):
+    """Persons in the final tree that the starting tree does not hold: the stubs
+    init-project added after `project_create`."""
+    start = _starting_tree(after_state)
+    if start is None:
+        return None
+    before = {p.get("id") for p in start.get("persons") or [] if isinstance(p, dict)}
+    return {
+        p.get("id")
+        for p in _written_tree(after_state).get("persons") or []
+        if isinstance(p, dict) and p.get("id") not in before
+    }
+
+
+def test_no_filled_parent_slot_gets_a_stub(after_state):
+    """A parent slot the read already fills gets no stub, even when the stated
+    name differs (lead ruling, 2026-10-20): a stated maiden name, or a mother
+    the tree lists under her married name, must not become a second parent.
+
+    Fails when a person absent from the starting tree is a parent of someone who,
+    in the starting tree, already had a parent of the same sex, a parent of
+    unknown sex, or two parents -- or when the new parent's sex is unknown and
+    any parent already stood. A step or adoptive parent the researcher names is
+    reported and recorded instead, so no legitimate stub is caught here.
+    """
+    added = _added_person_ids(after_state)
+    if not added:
+        pytest.skip("no person added after project_create")
+    start = _starting_tree(after_state)
+    gender = {
+        p.get("id"): p.get("gender")
+        for tree in (start, _written_tree(after_state))
+        for p in tree.get("persons") or []
+        if isinstance(p, dict)
+    }
+    start_parents: dict = {}
+    for r in start.get("relationships") or []:
+        if isinstance(r, dict) and r.get("type") == "ParentChild":
+            start_parents.setdefault(r.get("child"), []).append(r.get("parent"))
+    bad = []
+    for r in _written_tree(after_state).get("relationships") or []:
+        if not (isinstance(r, dict) and r.get("type") == "ParentChild" and r.get("parent") in added):
+            continue
+        new, child = r["parent"], r.get("child")
+        stood = start_parents.get(child, [])
+        sexes = [gender.get(x) for x in stood]
+        known = gender.get(new) in ("Male", "Female")
+        if (
+            len(stood) >= 2
+            or any(sx not in ("Male", "Female") for sx in sexes)
+            or (known and gender.get(new) in sexes)
+            or (not known and stood)
+        ):
+            bad.append(f"{new} ({gender.get(new)}) added as a parent of {child}, who already had {stood} ({sexes})")
+    assert not bad, (
+        "a stub was added into a parent slot the read already fills; report the "
+        "difference and record the statement instead: " + "; ".join(bad)
+    )
+
+
+def test_a_stub_is_linked_and_cited(after_state):
+    """Every person init-project adds is linked to someone, by an edge cited to
+    a "Researcher's statement" source (lead ruling, 2026-10-20): a stub is the
+    researcher's claim, never FamilySearch's, and an unlinked one is lost."""
+    added = _added_person_ids(after_state)
+    if not added:
+        pytest.skip("no person added after project_create")
+    tree = _written_tree(after_state)
+    statement = {
+        s.get("id") for s in tree.get("sources") or []
+        if isinstance(s, dict) and s.get("title") == "Researcher's statement"
+    }
+    cited = set()
+    for r in tree.get("relationships") or []:
+        if not isinstance(r, dict):
+            continue
+        if not any(isinstance(ref, dict) and ref.get("ref") in statement for ref in r.get("sources") or []):
+            continue
+        for k in ("parent", "child", "person1", "person2"):
+            cited.add(r.get(k))
+    unlinked = sorted(added - cited)
+    assert not unlinked, (
+        f"added person(s) {unlinked} are linked by no edge citing the researcher's statement"
+    )
+
+
+def test_stub_expectation(after_state, test):
+    """Tag-gated, so the two stub checks above cannot pass by adding nothing:
+    `expects-stub` needs at least one person added after `project_create`,
+    `expects-no-stub` needs none."""
+    tags = test.get("tags") or []
+    if "expects-stub" not in tags and "expects-no-stub" not in tags:
+        pytest.skip("not a stub scenario")
+    added = _added_person_ids(after_state)
+    assert added is not None, "a stub scenario needs the starting tree to compare against"
+    if "expects-stub" in tags:
+        assert added, "the researcher named a person the tree lacks, and no stub was added"
+    else:
+        assert not added, f"no stub was expected, but {sorted(added)} were added"
+
 
 def test_narration_guidance_is_the_house_style(after_state):
     """One fixed profile: `novice` plus the house-style string, stored verbatim

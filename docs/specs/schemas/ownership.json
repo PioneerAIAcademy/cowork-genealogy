@@ -62,6 +62,7 @@
         "agent:init-project"
       ],
       "writerTools": [
+        "project_create",
         "research_append"
       ],
       "enforceableAt": [],
@@ -324,11 +325,12 @@
         {
           "agent": "agent:init-project",
           "tools": [
-            "research_append"
+            "project_create"
           ]
         }
       ],
       "writerTools": [
+        "project_create",
         "research_append",
         "extraction_append"
       ],
@@ -609,7 +611,8 @@
         {
           "agent": "agent:init-project",
           "tools": [
-            "project_create"
+            "project_create",
+            "tree_edit"
           ]
         }
       ],
@@ -675,7 +678,8 @@
         {
           "agent": "agent:init-project",
           "tools": [
-            "project_create"
+            "project_create",
+            "tree_edit"
           ]
         }
       ],
@@ -734,7 +738,7 @@
           "agent": "agent:init-project",
           "tools": [
             "project_create",
-            "research_append"
+            "tree_edit"
           ]
         }
       ],

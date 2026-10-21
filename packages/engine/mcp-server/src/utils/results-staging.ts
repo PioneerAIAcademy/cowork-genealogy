@@ -42,10 +42,11 @@ export const STAGING_SEARCH_TOOLS = new Set([
  * retained as a ONE-element `results[]` envelope, so finalize needs no second
  * shape. The acquisition producers carry none of the search notes:
  * `extraction_append` logs each read it makes with that read's own staged ref,
- * and an upload as `user_provided`, and a `person_read` file is staged for
- * `project_create` to build the starting tree from (issue #2944's Stage B, not
- * yet built) rather than logged, so there is nothing to nag about. An
- * unfinalized acquisition file is simply TTL-pruned.
+ * and an upload as `user_provided`, and a `person_read` file is never logged:
+ * `project_create` reads the person itself (`personId`, issue #3384), and a
+ * staged read is evidence only — what a hand-entered fact or relationship is
+ * checked against before it is cited to the FamilySearch Family Tree — so there
+ * is nothing to nag about. An unfinalized acquisition file is simply TTL-pruned.
  */
 export const STAGING_CAPABLE_TOOLS = new Set([
   ...STAGING_SEARCH_TOOLS,

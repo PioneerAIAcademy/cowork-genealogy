@@ -63,9 +63,11 @@ read. An acquisition file that is never finalized is removed by the TTL prune li
 **A third acquisition producer, `person_read`** (given a `projectPath`), stages the tree read
 it returns. It is in `STAGING_CAPABLE_TOOLS` only, never `STAGING_SEARCH_TOOLS`,
 so none of the search notes fire on it. Its file is not a log sidecar: no shipped flow
-finalizes it with `research_log_append`. `project_create` builds the starting tree
-from it (`personReadRef`; `project-create-tool-spec.md` §4) without consuming it, and it is otherwise
-TTL-pruned. The eval mock
+finalizes it with `research_log_append`, and nothing builds a tree from it any more:
+`project_create` reads the person itself (`personId`; `project-create-tool-spec.md` §4).
+A staged read is evidence only: `project_create` checks a hand-entered fact or
+relationship against every staged `person_read` before citing it to the FamilySearch
+Family Tree. It is never consumed, and is TTL-pruned. The eval mock
 stages a canned `person_read` through the tool's own compiled `stagePersonRead`, so the envelope
 has one definition.
 
@@ -205,8 +207,8 @@ part of `staged`.
 
 ### 6.0 Near-copy resolution (`resolveStagedRef`)
 
-Every consumer of a staged ref — `research_log_append` (each op), `project_create`
-(`personReadRef`), and the read-only `readStagedResults` behind `record_read` and
+Every consumer of a staged ref — `research_log_append` (each op) and the read-only
+`readStagedResults` behind `record_read` and
 `rank_search_matches` — first maps a mis-copied ref onto the one staged file it
 names, then runs its own checks on that canonical ref.
 
@@ -225,11 +227,6 @@ names, then runs its own checks on that canonical ref.
 
 A staged name is a random v4 UUID, so two staged files within 3 edits of each other
 do not occur in practice; the single-candidate rule still refuses that case.
-
-`project_create` alone has a second, later step: a `personReadRef` this resolution
-leaves unusable falls back to the newest staged `person_read` of the person named in
-`subjectPersonIds[0]` (`project-create-tool-spec.md` §4). That step matches on the
-stated person, never on the ref's name, so it does not widen the rule above.
 
 When the log editor is called with `stagedResultsRef`, it (host-side):
 

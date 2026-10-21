@@ -58,9 +58,9 @@ empty: `project`, `questions`, `plans`, `log`, `sources`, `assertions`,
 a shorthand for "empty". The other six are optional and may be absent
 entirely:
 
-- `researcher_profile` — written by `init-project` as a fixed profile at
-  project creation, in the same non-blocking opening turn that asks the
-  project's research objective (Section 5.1.1).
+- `researcher_profile` — seeded by `project_create` on every create, as the
+  fixed house profile (`HOUSE_RESEARCHER_PROFILE`); `init-project` adds
+  `subscriptions` only when the researcher volunteers site access (Section 5.1.1).
 - `known_holdings` — written by `init-project` from the holdings survey: what
   the researcher already has (documents, prior research, living-relative
   knowledge) before any new research begins (Section 5.1.2).
