@@ -137,11 +137,26 @@ describe("GPS terminology lint", () => {
       0,
     );
     expect(count("skills/", "/SKILL.md"), "skill bodies").toBeGreaterThan(0);
+    // No skill carries a references/ folder today, so a `> 0` floor cannot
+    // hold; require the walk to find exactly what is on disk instead.
+    const onDisk = readdirSync(join(engineRoot, "plugin", "skills"), {
+      withFileTypes: true,
+    })
+      .filter((d) => d.isDirectory())
+      .reduce((n, d) => {
+        const refs = join(engineRoot, "plugin", "skills", d.name, "references");
+        return (
+          n +
+          (existsSync(refs)
+            ? readdirSync(refs).filter((f) => f.endsWith(".md")).length
+            : 0)
+        );
+      }, 0);
     expect(
       allFiles.filter((f) => /^skills\/[^/]+\/references\/.+\.md$/.test(f.rel))
         .length,
       "skill reference files",
-    ).toBeGreaterThan(0);
+    ).toBe(onDisk);
   });
 
   it("no forbidden GPS terminology outside the allow-list", () => {

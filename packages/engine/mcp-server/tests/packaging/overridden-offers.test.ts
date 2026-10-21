@@ -13,7 +13,7 @@ import { join } from "node:path";
 // new one, which is what keeps the ledger honest as the slots are worked through.
 //
 // Ownership as of 2026-09-28, because a collision costs two paid slots:
-//   search-records/SKILL.md      — PR #2971
+//   agents/search-records.md     — PR #2971
 //   agents/person-evidence.md    — PR #2992
 const PLUGIN = join(__dirname, "..", "..", "..", "plugin");
 
@@ -22,7 +22,7 @@ const OFFER = /(Would you like me to|Shall I continue|Let the user confirm|Would
 
 /** Bodies that still end a reply with an offer the run overrides, and why each is still here. */
 const KNOWN: Record<string, string> = {
-  "skills/search-records/SKILL.md": "PR #2971 owns this file; batched behind it",
+  "agents/search-records.md": "carried over verbatim from skills/search-records/SKILL.md when it became an agent (issue #2243); PR #2971 owns the passage, batched behind it",
   "agents/search-external-sites.md": "batched with phase 3's errand — same passage (R5); an agent since the main merge",
   // MEASURED 2026-09-29: these two offers are load-bearing STOPS, not politeness.
   // Removing the question let each skill run on into the next skill's work, and
