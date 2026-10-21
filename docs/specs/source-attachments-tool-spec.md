@@ -264,15 +264,15 @@ FamilySearch's published docs; it was found by probing, and it can move.
 ## Researcher trees: the session's current tree
 
 The endpoint takes no tree parameter. It answers from the session's **current
-tree**, which defaults to the Family Tree. Probed live 2026-10-21 (issue #3408)
-on a record attached in researcher tree `9NMM-9QMF`:
+tree**, which defaults to the Family Tree. Probed live 2026-10-21 on a record
+attached in a researcher tree:
 
 | Request | Answer |
 |---|---|
 | Plain (session tree `PRIVATE`) | the Family Tree person the record is attached to |
-| `?treeId=9NMM-9QMF` | same: the parameter is ignored |
-| `?collection=cet&treeId=9NMM-9QMF` | same: ignored |
-| session switched to `9NMM-9QMF` | the researcher-tree person, each entry carrying `"treeId"`, plus entries attached only to a relationship (`parentChildRelationships`, no `persons`) |
+| `?treeId=<tree>` | same: the parameter is ignored |
+| `?collection=cet&treeId=<tree>` | same: ignored |
+| session switched to `<tree>` | the researcher-tree person, each entry carrying `"treeId"`, plus entries attached only to a relationship (`parentChildRelationships`, no `persons`) |
 
 The current tree is read with `GET` and set with `POST {"treeId": …}` (204) on
 `/service/tree/tree-data/user/CURRENT/tree/session`.
