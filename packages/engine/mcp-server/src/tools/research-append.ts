@@ -5890,7 +5890,8 @@ async function checkLocalityFirstPlaces(
         ),
       );
     } else if (status === "mismatch" || status === "not_found") {
-      const [first, context] = placeSegments(forPlace);
+      const segments = placeSegments(forPlace);
+      const [first, context] = [segments[0], segments[segments.length - 1]];
       errors.push(
         fmt(
           i,

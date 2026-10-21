@@ -1006,12 +1006,21 @@ describe("checkFirstPlace (#3696)", () => {
     expect(mockGetPlaceCandidateNames).not.toHaveBeenCalled();
   });
 
-  it("matches a county named with its suffix through the name list", async () => {
+  it("matches a county named with its suffix by ignoring the type word", async () => {
     mockSearchPlace.mockResolvedValue([
       entry({ placeRepId: "r1", placeId: "p1", fullName: "Schuylkill, Pennsylvania, United States", score: 90 }),
     ]);
-    names(["Schuylkill", "Schuylkill County"]);
     expect((await checkFirstPlace("Schuylkill County, Pennsylvania")).status).toBe("match");
+    expect(mockGetPlaceCandidateNames).not.toHaveBeenCalled();
+  });
+
+  it("matches an English alias only the name list holds", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Livorno, Toscana, Italy", score: 90 }),
+    ]);
+    names(["Livorno", "Leghorn"]);
+    expect((await checkFirstPlace("Leghorn, Toscana, Italy")).status).toBe("match");
+    expect(mockGetPlaceCandidateNames).toHaveBeenCalledWith("p1", {}, { anyLanguage: true });
   });
 
   it("folds case, spacing and diacritics on both sides", async () => {
@@ -1037,17 +1046,14 @@ describe("checkFirstPlace (#3696)", () => {
     mockSearchPlace.mockImplementation(async (name: string) => table[name] ?? []);
   }
 
-  it("checks the unfiltered search when the derived context drops the right entry", async () => {
-    // Context "Middlesex" keeps only the county; London itself is in the unfiltered set.
+  it("keeps segment 2 as a parent check: a real village under the wrong parish is refused", async () => {
+    // Helvesiek is real but sits in Rotenburg; context "Schneverdingen" keeps only that parish.
     mockSearchPlace.mockResolvedValue([
-      entry({ placeRepId: "r1", placeId: "p1", fullName: "London, England, United Kingdom", score: 99 }),
-      entry({ placeRepId: "r2", placeId: "p2", fullName: "Middlesex, England, United Kingdom", score: 80 }),
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Helvesiek, Rotenburg, Hanover, Prussia, Germany", score: 95 }),
+      entry({ placeRepId: "r2", placeId: "p2", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 90 }),
     ]);
-    names(["Middlesex"]);
-    expect(await checkFirstPlace("London, Middlesex, England")).toEqual({
-      status: "match",
-      standardPlace: "London, England, United Kingdom",
-    });
+    names(["Schneverdingen"]);
+    expect((await checkFirstPlace("Helvesiek, Schneverdingen, Hanover")).status).toBe("mismatch");
   });
 
   it("checks every entry tied for the top score, not only the first", async () => {
@@ -1144,6 +1150,17 @@ describe("checkFirstPlace (#3696)", () => {
     expect(mockGetPlaceCandidateNames).toHaveBeenCalledTimes(1);
   });
 
+  it("fetches at most five name lists however many entries tie", async () => {
+    mockSearchPlace.mockResolvedValue(
+      Array.from({ length: 40 }, (_, n) =>
+        entry({ placeRepId: `r${n}`, placeId: `p${n}`, fullName: `Place${n}, Springfield, Somewhere`, score: 90 }),
+      ),
+    );
+    names(["Elsewhere"]);
+    expect((await checkFirstPlace("Nowhereville, Springfield")).status).toBe("mismatch");
+    expect(mockGetPlaceCandidateNames).toHaveBeenCalledTimes(5);
+  });
+
   it("fetches a place's names once when two of its representations tie", async () => {
     mockSearchPlace.mockResolvedValue([
       entry({ placeRepId: "r1", placeId: "p1", fullName: "Germany", score: 80 }),
@@ -1154,26 +1171,30 @@ describe("checkFirstPlace (#3696)", () => {
     expect(mockGetPlaceCandidateNames).toHaveBeenCalledTimes(1);
   });
 
-  it("does not let the unfiltered entries add a same-named place outside the stated jurisdiction", async () => {
-    // Context "Bavaria" keeps only Bavaria; Springfield, Illinois is in the unfiltered top
-    // but its fullName holds neither "Bavaria" nor "Germany".
+  it("skips a tied entry with no place id rather than writing unchecked", async () => {
     mockSearchPlace.mockResolvedValue([
-      entry({ placeRepId: "r1", placeId: "p1", fullName: "Springfield, Sangamon, Illinois, United States", score: 95 }),
-      entry({ placeRepId: "r2", placeId: "p2", fullName: "Bavaria, Germany", score: 70 }),
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 90 }),
+      entry({ placeRepId: "r2", fullName: "Schneverdingen, Soltau, Hanover, Germany", score: 90 }),
     ]);
-    names(["Bavaria", "Bayern"]);
-    expect((await checkFirstPlace("Springfield, Bavaria, Germany")).status).toBe("mismatch");
+    names([], ["Schneverdingen"]);
+    expect((await checkFirstPlace("Helvesieck, Schneverdingen, Soltau, Hanover")).status).toBe("mismatch");
   });
 
-  it("counts a country written in its own language as the stated jurisdiction", async () => {
-    // Context "Bayern" keeps only Oberbayern; München itself is in the unfiltered top,
-    // rendered in English, so only "Deutschland" -> "germany" places it.
+  it("matches dotted initials against the undotted name: Washington D.C. is Washington DC", async () => {
     mockSearchPlace.mockResolvedValue([
-      entry({ placeRepId: "r1", placeId: "p1", fullName: "München, Bavaria, Germany", score: 95 }),
-      entry({ placeRepId: "r2", placeId: "p2", fullName: "Oberbayern, Bavaria, Germany", score: 80 }),
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Washington, District of Columbia, United States", score: 90 }),
     ]);
-    names(["Upper Bavaria"]);
-    expect((await checkFirstPlace("München, Bayern, Deutschland")).status).toBe("match");
+    names(["Washington", "Washington DC"]);
+    expect((await checkFirstPlace("Washington D.C., United States")).status).toBe("match");
+  });
+
+  it.each([
+    ["Co.Cork, Ireland", "Cork, Ireland"],
+    ["Stagstrup-Sogn, Thisted, Denmark", "Stagstrup, Thisted, Nordjylland, Denmark"],
+  ])("finds a type word joined by a period or hyphen: %s", async (text, fullName) => {
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "r1", placeId: "p1", fullName, score: 90 })]);
+    names([]);
+    expect((await checkFirstPlace(text)).status).toBe("match");
   });
 
   it("reads a period with no space after it as a word break", async () => {

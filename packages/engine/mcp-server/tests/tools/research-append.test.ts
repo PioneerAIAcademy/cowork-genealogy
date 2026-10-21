@@ -13187,7 +13187,7 @@ describe("research_append: a localities first place must be in the place standar
     await writeProject();
     const msg = failure(await append("Helvesieck, Schneverdingen, Soltau, Hanover")).errors.join(" ");
     expect(msg).not.toContain("Schneverdingen, Soltau, Hanover, Prussia");
-    expect(msg).toContain("Look up 'Helvesieck' with place_search, contextName 'Schneverdingen'");
+    expect(msg).toContain("Look up 'Helvesieck' with place_search, contextName 'Hanover'");
     expect(msg).not.toMatch(/free text|single name|skip/i);
   });
 

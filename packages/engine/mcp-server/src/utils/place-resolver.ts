@@ -135,17 +135,25 @@ const NAME_ABBREVIATIONS: Record<string, string> = {
 
 /** `foldPlaceName`, looser still, for `checkFirstPlace`'s name compare: "St Louis"
  *  is "St. Louis", "Sondre Land" is "Søndre Land", "Saint Jean" is "Saint-Jean",
- *  "Mt. Vernon" and "Mt.Vernon" are "Mount Vernon". Measured live 2026-10-21: each
- *  was refused without it. */
+ *  "Mt. Vernon" is "Mount Vernon". Measured live 2026-10-21: each was refused
+ *  without it. A period is dropped, so "D.C." meets FamilySearch's "Washington
+ *  DC"; `withoutTypeWords` is what splits "St.Louis" at the period. */
 function placeNameKey(s: string): string {
   return foldPlaceName(s)
     .replace(/[øæœßłđðþı]/g, (c) => UNDECOMPOSED_LETTERS[c])
     .replace(/['\u2019]/g, "")
-    .replace(/[.-]/g, " ")
+    .replace(/\./g, "")
+    .replace(/-/g, " ")
     .split(/\s+/)
     .filter((w) => w.length > 0)
     .map((w) => NAME_ABBREVIATIONS[w] ?? w)
     .join(" ");
+}
+
+/** The keys `checkFirstPlace` compares a name by: as written, and without type
+ *  words (which also splits a word at a period or hyphen). */
+function placeNameKeys(name: string): string[] {
+  return [placeNameKey(name), placeNameKey(withoutTypeWords(name))];
 }
 
 /** Words that name a jurisdiction's TYPE, not the place: "Stagstrup Sogn" is
@@ -159,9 +167,10 @@ const JURISDICTION_TYPE_WORDS: ReadonlySet<string> = new Set([
 
 /** A name with any administrative "X of" prefix and any leading or trailing type
  *  word removed, never down to nothing. Works on the raw words, so the result can
- *  be searched again. */
+ *  be searched again; a period with no space after it, or a hyphen, ends a word
+ *  ("Co.Cork", "Stagstrup-Sogn"). */
 function withoutTypeWords(name: string): string {
-  let words = name.trim().split(/\s+/);
+  let words = name.replace(/\.(?=\S)/g, ". ").trim().split(/[\s-]+/);
   if (words.length > 2 && ADMIN_PREFIX_RE.test(placeNameKey(words.slice(0, 2).join(" ")) + " ")) {
     words = words.slice(2);
   }
@@ -334,14 +343,6 @@ export function deriveContextName(text: string): string | undefined {
   return segs[1];
 }
 
-/** Entries whose fullName contains `context`, or all of them when none does. */
-function filterByContext(entries: SearchEntry[], context: string | undefined): SearchEntry[] {
-  const needle = context?.trim().toLowerCase();
-  if (!needle) return entries;
-  const filtered = entries.filter((e) => e.fullName.toLowerCase().includes(needle));
-  return filtered.length > 0 ? filtered : entries;
-}
-
 /**
  * Run (and memoize) a name search. Applies the same context-name filter as
  * place_search: narrow by substring, but keep the unfiltered set if nothing
@@ -380,7 +381,13 @@ async function getSearchEntries(
     entries = await searchPlace(name);
   }
 
-  entries = filterByContext(entries, effectiveContext);
+  const context = effectiveContext?.trim().toLowerCase();
+  if (context) {
+    const filtered = entries.filter((e) =>
+      e.fullName.toLowerCase().includes(context),
+    );
+    if (filtered.length > 0) entries = filtered;
+  }
 
   searchEntriesCache.set(key, entries);
   return entries;
@@ -662,7 +669,8 @@ export type FirstPlaceStatus = "match" | "mismatch" | "not_found" | "lookup_fail
 
 export interface FirstPlaceVerdict {
   status: FirstPlaceStatus;
-  /** The picked search entry's fullName, whenever the search found one. */
+  /** On a match, the entry that matched (from the tied set or the re-search);
+   *  otherwise the best entry, whenever the search found one. */
   standardPlace?: string;
 }
 
@@ -678,16 +686,13 @@ export interface FirstPlaceVerdict {
  * the English-only list is empty for Schneverdingen and lacks "Forfarshire"
  * (measured in issue #3696).
  *
- * Every widening below turns a refusal into a match (or, when its extra request
- * fails, into `lookup_failed`), and each was measured live (2026-10-21) to refuse a
- * real place without it:
- * - the unfiltered top entries are checked as well as the context-filtered ones,
- *   because the context derived from segment 2 drops the right entry for "London,
- *   Middlesex, England" and "Munich, Bayern, Germany". An unfiltered entry counts
- *   only if its fullName holds one of the later places written, so "Springfield,
- *   Atlantis" does not match Springfield, Illinois;
+ * The search is #3696's: the context derived from segment 2 filters the entries,
+ * so segment 2 acts as a parent check and "Helvesiek, Schneverdingen, Hanover"
+ * (a real village under the wrong parish) is refused. Widenings, each measured
+ * live (2026-10-21) to refuse a real place without it:
  * - every entry tied for the top score is checked, because "Mt. Pleasant, Iowa"
- *   ties the town with a Quaker meeting and the meeting comes first;
+ *   ties the town with a Quaker meeting and the meeting comes first; a tied entry
+ *   with no place id is skipped, not counted as a failure;
  * - type words are ignored ("Stagstrup Sogn", "Co. Cork"), and when that still
  *   misses the stripped text is searched once more ("Ringebu Parish, Oppland").
  *
@@ -705,53 +710,43 @@ export async function checkFirstPlace(text: string): Promise<FirstPlaceVerdict> 
   return retry.status === "match" || retry.status === "lookup_failed" ? retry : verdict;
 }
 
+/** Name lists fetched per pass. A context that matches many places can tie
+ *  hundreds of entries ("Nowhereville, Springfield": 189 live), and every fetch
+ *  runs under research_append's project lock. */
+const MAX_NAME_FETCHES = 5;
+
 async function checkFirstPlaceOnce(text: string, first: string): Promise<FirstPlaceVerdict> {
-  const wanted = new Set([placeNameKey(first), placeNameKey(withoutTypeWords(first))]);
-  const matches = (name: string) =>
-    wanted.has(placeNameKey(name)) || wanted.has(placeNameKey(withoutTypeWords(name)));
-  let unfiltered: SearchEntry[];
+  const wanted = new Set(placeNameKeys(first));
+  const matches = (name: string) => placeNameKeys(name).some((k) => wanted.has(k));
+  let entries: SearchEntry[];
   try {
-    unfiltered = await getSearchEntries(text, "");
+    entries = await getSearchEntries(text);
   } catch {
     return { status: "lookup_failed" };
   }
-  const filtered = filterByContext(unfiltered, deriveContextName(text));
-  const best = pickBest(filtered);
+  const best = pickBest(entries);
   if (!best) return { status: "not_found" };
-  // A country written in its own language ("Deutschland") is compared as the
-  // English name the standard renders ("Germany").
-  const later = placeSegments(text)
-    .slice(1)
-    .flatMap((seg) => [placeNameKey(seg), canonicalCountry(seg)])
-    .filter((k): k is string => !!k);
-  const inStatedJurisdiction = (e: SearchEntry) => {
-    const full = placeNameKey(e.fullName);
-    return later.some((k) => full.includes(k));
-  };
-  const candidates = [
-    ...new Set([...topScored(filtered), ...topScored(unfiltered).filter(inStatedJurisdiction)]),
-  ];
+  const candidates = topScored(entries);
   const hit = candidates.find((e) => matches(placeSegments(e.fullName)[0] ?? ""));
   if (hit) return { status: "match", standardPlace: hit.fullName };
-  let unchecked = false;
+  let checked = 0;
+  let failed = false;
   const seen = new Set<string>();
   for (const e of candidates) {
-    if (e.placeId && seen.has(e.placeId)) continue;
-    if (e.placeId) seen.add(e.placeId);
-    if (!e.placeId) {
-      unchecked = true;
-      continue;
-    }
+    if (!e.placeId || seen.has(e.placeId)) continue;
+    if (seen.size >= MAX_NAME_FETCHES) break;
+    seen.add(e.placeId);
     let names: string[];
     try {
       names = await getPlaceCandidateNames(e.placeId, {}, { anyLanguage: true });
     } catch {
-      unchecked = true;
+      failed = true;
       continue;
     }
+    checked++;
     if (names.some(matches)) return { status: "match", standardPlace: e.fullName };
   }
-  return { status: unchecked ? "lookup_failed" : "mismatch", standardPlace: best.fullName };
+  return { status: failed || checked === 0 ? "lookup_failed" : "mismatch", standardPlace: best.fullName };
 }
 
 /** Every entry sharing the highest score: `pickBest` keeps the first of a tie,
