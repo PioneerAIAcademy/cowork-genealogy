@@ -174,6 +174,9 @@ export interface ProjectCreateSummary {
   projectId: string;
   filesWritten: string[];
   subject: { id: string; familySearchId: string; name: string; birth?: string; death?: string };
+  /** The objective and title as stored, after `nameForId`. */
+  objective: string;
+  title?: string;
   relatives: SummaryPerson[];
   counts: { persons: number; relationships: number; sources: number; memorySources: number };
   memories: { transcribed: string[]; notTranscribed: string[] };
@@ -487,12 +490,23 @@ export async function runProjectCreate(
       );
     }
 
+    // An objective written before the read can name the subject only by the
+    // ID it was given; the read supplies the name.
+    let storedObjective = objective;
+    let storedTitle = input.title;
+    if (outcome) {
+      const subject = (tree.persons as Record<string, any>[]).find((p) => p?.id === idMap.persons[outcome!.resolvedId]);
+      const ids = [...new Set([pid as string, outcome.resolvedId])];
+      storedObjective = nameForId(objective, ids, displayName(subject));
+      if (storedTitle) storedTitle = nameForId(storedTitle, ids, displayName(subject));
+    }
+
     const stamp = today();
     const research: Record<string, unknown> = {
       project: {
         id: "rp_001",
-        objective,
-        ...(input.title ? { title: input.title } : {}),
+        objective: storedObjective,
+        ...(storedTitle ? { title: storedTitle } : {}),
         subject_person_ids: Array.isArray(subjectPersonIds) ? subjectPersonIds : [],
         status: "active",
         created: stamp,
@@ -541,6 +555,8 @@ export async function runProjectCreate(
         outcome,
         tree: tree as { persons: Record<string, any>[]; relationships: Record<string, any>[]; sources: unknown[] },
         subjectId: idMap.persons[outcome.resolvedId],
+        objective: storedObjective,
+        ...(storedTitle ? { title: storedTitle } : {}),
         memorySourceCount: memorySources.length,
         warnings,
       });
@@ -686,6 +702,22 @@ function relationTo(
   return "relative";
 }
 
+/**
+ * `text` with each mention of the subject by FamilySearch ID — bare, or as
+ * "FamilySearch ID <id>" / "person ID <id>" / "ID <id>" — replaced by `name`.
+ * A mention in parentheses is an annotation beside a name and is kept, and so
+ * is everything when the read gave no name.
+ */
+export function nameForId(text: string, ids: string[], name: string): string {
+  if (!name || name === "Unknown" || ids.length === 0) return text;
+  const alt = ids.map((id) => id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  const re = new RegExp(
+    `(\\(\\s*)?(?<![A-Za-z0-9-])(?:FamilySearch\\s+)?(?:person\\s+)?(?:ID:?\\s+)?(?:${alt})(?![A-Za-z0-9-])`,
+    "gi",
+  );
+  return text.replace(re, (match, paren: string | undefined) => (paren !== undefined ? match : name));
+}
+
 /** A fact as one short line: its date and place, whichever it has. */
 function factLine(person: Record<string, any> | undefined, type: string): string | undefined {
   const f = (Array.isArray(person?.facts) ? person!.facts : []).find((x: any) => x?.type === type);
@@ -703,6 +735,8 @@ function summarize(args: {
   outcome: PersonReadOutcome;
   tree: { persons: Record<string, any>[]; relationships: Record<string, any>[]; sources: unknown[] };
   subjectId: string;
+  objective: string;
+  title?: string;
   memorySourceCount: number;
   warnings: string[];
 }): ProjectCreateSummary {
@@ -730,6 +764,8 @@ function summarize(args: {
       ...(factLine(subject, "Birth") ? { birth: factLine(subject, "Birth") } : {}),
       ...(factLine(subject, "Death") ? { death: factLine(subject, "Death") } : {}),
     },
+    objective: args.objective,
+    ...(args.title ? { title: args.title } : {}),
     relatives: lists.relatives,
     counts: {
       persons: tree.persons.length,
@@ -784,8 +820,8 @@ export const projectCreateSchema = {
     "reads the person, their relatives and sources, and their transcribed memories itself; " +
     "do not call person_read first. It writes the starting tree, the house researcher " +
     "profile, and one research.json source per transcribed memory, and returns a summary: " +
-    "the subject, each relative with their tree id and relationship, and which memories were " +
-    "and were not transcribed. `tree` is refused beside `personId`: add a person the " +
+    "the subject, the objective and title as stored, each relative with their tree id and " +
+    "relationship, and which memories were and were not transcribed. `tree` is refused beside `personId`: add a person the " +
     "researcher named who is not among the relatives afterwards. `subjectPersonIds` takes " +
     "FamilySearch IDs, and defaults to the person read.\n" +
     "\n" +
@@ -821,11 +857,15 @@ export const projectCreateSchema = {
         description:
           "What this project sets out to find out, in the researcher's terms. Required " +
           "and non-empty. Written once and never rewritten — every later step plans " +
-          "against it.",
+          "against it. With personId, name the subject by that ID if you do not know their " +
+          "name: each mention is stored as the name the read gives.",
       },
       title: {
         type: "string",
-        description: "Concise 3-6 word session name (e.g. \"Patrick Flynn's parents\").",
+        description:
+          "Concise 3-6 word session name (e.g. \"KWCJ-RN4's parents\", stored as \"Patrick " +
+          "Flynn's parents\"). With personId, a mention of the subject by ID is named as the " +
+          "objective's is.",
       },
       subjectPersonIds: {
         type: "array",

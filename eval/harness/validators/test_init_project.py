@@ -116,16 +116,27 @@ _OBJECTIVE_FUNCTION_WORDS = frozenset({
 })
 
 
+def _stem(word: str) -> str:
+    """`word` less one plain ending, so "re-derived" is the user's "re-derive";
+    never a change of root, so "irish" stays apart from "ireland"."""
+    for suffix in ("ing", "ed", "es", "s", "e"):
+        if word.endswith(suffix) and len(word) - len(suffix) >= 4:
+            return word[: -len(suffix)]
+    return word
+
+
 def _content_words(text: str) -> list[str]:
     return [w for w in re.findall(r"[a-z0-9]+", text.lower())
             if len(w) > 3 and w not in _OBJECTIVE_FUNCTION_WORDS]
 
 
-def test_objective_kept_in_the_users_words(after_state, test):
+def test_objective_kept_in_the_users_words(after_state, test, tool_calls=None):
     """Tag-gated on `objective-stated`: when the user's message states an
     objective, the stored `project.objective` is that objective in their own
     words. It is never the generic default, and it adds no direction the user
-    did not state: every content word in it appears in the user's message."""
+    did not state: every content word in it appears in the user's message, or
+    in the subject's name, which `project_create` writes in place of an ID and
+    which is not a direction."""
     if "objective-stated" not in test.get("tags", []):
         pytest.skip("not an objective-stated scenario")
     stated = test.get("delegation") or test.get("user_message") or ""
@@ -137,11 +148,91 @@ def test_objective_kept_in_the_users_words(after_state, test):
         f"the user stated an objective, so the generic default must not replace it; got: {objective!r}"
     )
     said = set(re.findall(r"[a-z0-9]+", stated.lower()))
-    added = sorted({w for w in _content_words(objective) if w not in said})
+    create = _person_create(tool_calls)
+    if create:
+        said |= set(re.findall(r"[a-z0-9]+", create["name"].lower()))
+    said_stems = {_stem(w) for w in said}
+    added = sorted({w for w in _content_words(objective) if _stem(w) not in said_stems})
     assert not added, (
         f"the objective adds words the user did not say ({', '.join(added)}); "
         f"store it in the user's own words. Objective: {objective!r}"
     )
+
+
+def _person_create(tool_calls):
+    """The successful `project_create({ personId })`: the ids it was asked for
+    and resolved to, and the subject's name it read; None when there was none."""
+    for call in reversed(tool_calls or []):
+        if _tool(call) != "project_create":
+            continue
+        response = call.get("response")
+        if not isinstance(response, dict) or response.get("ok") is not True:
+            continue
+        subject = response.get("subject")
+        if isinstance(subject, dict):
+            ids = {str(i) for i in ((call.get("args") or {}).get("personId"), subject.get("familySearchId")) if i}
+            return {"ids": ids, "name": str(subject.get("name") or "")}
+    return None
+
+
+def _bare_id_mentions(text, ids):
+    """Each mention of an id in `text` outside parentheses, as `project_create`
+    names them (`nameForId`): bare, or after 'FamilySearch ID' / 'person ID' / 'ID'."""
+    found = []
+    for pid in ids:
+        pattern = (r"(\(\s*)?(?<![A-Za-z0-9-])(?:FamilySearch\s+)?(?:person\s+)?(?:ID:?\s+)?"
+                   + re.escape(pid) + r"(?![A-Za-z0-9-])")
+        found += [m.group(0) for m in re.finditer(pattern, text, re.IGNORECASE) if m.group(1) is None]
+    return found
+
+
+def test_objective_and_title_name_the_subject_not_their_id(after_state, tool_calls):
+    """A caller with only the FamilySearch ID writes the objective and title
+    before the read, so `project_create` stores the subject's name in place of
+    each mention by ID. Neither stored field keeps a bare ID."""
+    create = _person_create(tool_calls)
+    if not create:
+        pytest.skip("no project created from a FamilySearch person")
+    project = (after_state.get("research_json") or {}).get("project") or {}
+    for field in ("objective", "title"):
+        text = project.get(field) or ""
+        left = _bare_id_mentions(text, create["ids"])
+        assert not left, f"project.{field} still names the subject by ID ({', '.join(left)}): {text!r}"
+
+
+def test_objective_names_the_subject(after_state, tool_calls, test):
+    """Tag-gated on `objective-names-subject`: the user named the person only by
+    ID, so the stored objective carries the name the read gives."""
+    if "objective-names-subject" not in test.get("tags", []):
+        pytest.skip("not an objective-names-subject test")
+    create = _person_create(tool_calls)
+    assert create, "objective-names-subject requires a project created from a FamilySearch person"
+    objective = ((after_state.get("research_json") or {}).get("project") or {}).get("objective") or ""
+    assert create["name"].lower() in objective.lower(), (
+        f"the stored objective does not name {create['name']}: {objective!r}"
+    )
+
+
+#: The one sentence a defaulted objective's report carries, matched on its ask.
+_DEFAULTED_ASK = "tell me what you most want to learn"
+
+
+def test_defaulted_objective_asks_what_to_learn(after_state, tool_calls, text_response, test, agent_returns=None):
+    """The reply carries the fixed ask exactly when the stored objective is the
+    generic default: a defaulted project asks what the researcher wants to find
+    out, and a stated objective is never asked for again."""
+    from harness.skill_runner import subject_reply_text
+
+    if test.get("type") == "negative":
+        pytest.skip("negative test")
+    if not any(_tool(c) == "project_create" and (c.get("response") or {}).get("ok") is True for c in tool_calls or []):
+        pytest.skip("no project created")
+    objective = ((after_state.get("research_json") or {}).get("project") or {}).get("objective")
+    reply = " ".join(subject_reply_text(agent_returns, text_response, test.get("skill") or "", test).lower().split())
+    if objective == _DEFAULT_OBJECTIVE:
+        assert _DEFAULTED_ASK in reply, "the objective was defaulted, and the reply never asks what the researcher wants to learn"
+    else:
+        assert _DEFAULTED_ASK not in reply, f"the user stated an objective ({objective!r}), and the reply asks for one"
 
 
 def test_profile_defaults_when_all_default(after_state, test):

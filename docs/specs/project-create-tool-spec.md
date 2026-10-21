@@ -92,8 +92,8 @@ and in this build's place retry.
 | Input | Required | Notes |
 |---|---|---|
 | `projectPath` | yes | Absolute path to the project directory |
-| `objective` | yes | Non-empty after trimming. Stored trimmed |
-| `title` | no | Omitted from the document when absent, never written empty |
+| `objective` | yes | Non-empty after trimming. Stored trimmed. With `personId`, each mention of the subject by FamilySearch ID is stored as the subject's name ("Naming the subject" below) |
+| `title` | no | Omitted from the document when absent, never written empty. Named as `objective` is |
 | `personId` | no | A FamilySearch person ID, trimmed. When set, this tool reads the person (needs a FamilySearch login) and builds the starting tree from the read; `tree` is refused beside it |
 | `subjectPersonIds` | no | With `personId`: FamilySearch PIDs from the read (the requested id of a merged person included), mapped to tree ids; defaults to the person read. Without: local tree ids that must exist in `tree`; defaults to `[]` |
 | `tree` | no | Only without `personId`: the whole starting tree, simplified GedcomX. Defaults to `{persons: [], relationships: [], sources: []}` |
@@ -237,7 +237,7 @@ the budget running out — is left unset, never kept.
 **The result, with `personId`,** is a summary, never the tree, held under
 `SUMMARY_MAX_CHARS` (2,000 serialized characters): `subject` (`id`,
 `familySearchId`, `name`, and `birth` / `death` as "date, place" when the read
-has them), `relatives` (each other person's `id`, `name`, and `relationship` to
+has them), `objective` and `title` as stored, `relatives` (each other person's `id`, `name`, and `relationship` to
 the subject — `spouse`; `father` / `mother` for a parent recorded Male / Female,
 `parent` when the sex is unknown; `child`, `sibling`, or `relative`), `counts` (`persons`,
 `relationships`, `sources`, `memorySources`), `memories` (the titles of the
@@ -260,6 +260,19 @@ and `statementSource` when one was created. It also carries `placesFilled`,
 none). One resolution is listed once, in the spelling first met, however else
 the same place was written (trimmed, case-folded, spaces collapsed), so the
 caller can tell the researcher which places it standardized without being asked.
+
+**Naming the subject.** A caller that has only the FamilySearch ID writes the
+objective and title before the read, so it can name the subject only by that ID.
+With `personId`, each mention of the requested ID or the read's resolved ID —
+bare, or as `FamilySearch ID <id>`, `person ID <id>` or `ID <id>`, matched
+case-insensitively as a whole token — is replaced by the subject's name as the
+read gives it ("Identify the parents of LZNY-BRF" is stored as "Identify the
+parents of Patrick Flynn"). A mention inside parentheses, such as
+"Patrick Flynn (LZNY-BRF)", is an annotation beside a name the researcher wrote
+and is kept, and nothing is replaced when the read gives no name. A name is not
+a research direction, so this keeps the objective in the researcher's words; the
+generic default objective names no one and is never changed. The summary returns
+both as stored, so the caller reports what was written.
 
 **What it writes.** `project` with `id: "rp_001"`, the objective, optional title,
 `subject_person_ids`, `status: "active"`, and `created`/`updated` stamped with

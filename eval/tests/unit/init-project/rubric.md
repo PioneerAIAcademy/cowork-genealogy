@@ -11,6 +11,11 @@ alongside the base rubric (Correctness, Completeness, Tool Arguments).
 > score `null` (N/A) when a test does not exercise it (e.g. place
 > standardization on a test with no hand-entered place).
 
+**The guard call.** Every run opens with `project_context`. On a folder with no
+project it answers `ok: false` with `reason: "no_project"`: that is the expected
+answer that lets the create go ahead, not a failed call, and it lowers no score —
+Tool Arguments included.
+
 ## Stub & tree fidelity
 
 Does `tree.gedcomx.json` faithfully represent known information without

@@ -13,6 +13,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import {
   HOUSE_RESEARCHER_PROFILE,
+  nameForId,
   projectCreate as projectCreateAs,
   runProjectCreate,
   type ProjectCreateDeps,
@@ -890,8 +891,60 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     expect(await exists("research.json")).toBe(false);
   });
 
+  it("names the subject where the objective and title name them by ID, and returns them as stored", async () => {
+    const result: any = await create({
+      projectPath: dir,
+      objective: "Identify the parents of OLDX-001.",
+      title: "LZNY-BRF general research",
+      personId: "OLDX-001",
+    });
+    expect(result.ok).toBe(true);
+    const project = (await readJson("research.json")).project;
+    expect(project.objective).toBe("Identify the parents of Patrick Flynn.");
+    expect(project.title).toBe("Patrick Flynn general research");
+    expect(result.objective).toBe(project.objective);
+    expect(result.title).toBe(project.title);
+  });
+
+  it("leaves an objective that names no ID, or names it beside the name, as given", async () => {
+    const result: any = await create({
+      projectPath: dir,
+      objective: "General research: build out the tree and identify gaps and next steps.",
+      title: "Patrick Flynn (LZNY-BRF) parents",
+      personId: "OLDX-001",
+    });
+    const project = (await readJson("research.json")).project;
+    expect(project.objective).toBe("General research: build out the tree and identify gaps and next steps.");
+    expect(project.title).toBe("Patrick Flynn (LZNY-BRF) parents");
+    expect(result.objective).toBe(project.objective);
+  });
+
   const exists = async (name: string) =>
     access(join(dir, name)).then(() => true, () => false);
+});
+
+describe("nameForId", () => {
+  const ids = ["LZNY-BRF", "OLDX-001"];
+  it.each([
+    ["Identify the parents of LZNY-BRF.", "Identify the parents of Patrick Flynn."],
+    ["Find FamilySearch ID LZNY-BRF's parents", "Find Patrick Flynn's parents"],
+    ["person ID: lzny-brf origins", "Patrick Flynn origins"],
+    ["OLDX-001 and LZNY-BRF", "Patrick Flynn and Patrick Flynn"],
+  ])("replaces a mention by ID: %s", (text, want) => {
+    expect(nameForId(text, ids, "Patrick Flynn")).toBe(want);
+  });
+  it.each([
+    ["an ID in parentheses", "Patrick Flynn (LZNY-BRF) parents"],
+    ["a labelled ID in parentheses", "Patrick Flynn (FamilySearch ID LZNY-BRF)"],
+    ["a longer token", "XLZNY-BRF and LZNY-BRFX and LZNY-BRF2"],
+    ["no ID", "General research: build out the tree and identify gaps and next steps."],
+  ])("keeps %s", (_l, text) => {
+    expect(nameForId(text, ids, "Patrick Flynn")).toBe(text);
+  });
+  it("keeps everything when the read gave no name", () => {
+    expect(nameForId("of LZNY-BRF", ids, "Unknown")).toBe("of LZNY-BRF");
+    expect(nameForId("of LZNY-BRF", ids, "")).toBe("of LZNY-BRF");
+  });
 });
 
 describe("project_create — hand-built tree (no personReadRef)", () => {

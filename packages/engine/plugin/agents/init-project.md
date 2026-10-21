@@ -48,8 +48,8 @@ Any other result (no project here, or a folder that does not exist yet) → cont
 
 Ask one thing in the opening turn, alongside the person ID request: the research objective. **Never stop and wait for it. Complete the full initialization in a single pass:**
 
-1. **If the user's message already states an objective** — store it as `objective` in the user's own words. Never replace it with the generic default, and never add a direction, place, relative or record the user did not state. Anything the message asks to find out, research, analyze or check about the person is a stated objective, however general ("research the origins of Michael Brennan", "analyze his sources and look for errors"); the default is only for a message that names the person and asks nothing about them.
-2. **If not, ask it in your return's researcher paragraph, but do not wait for a reply before proceeding.** Store this exact text, verbatim, as `objective`: "General research: build out the tree and identify gaps and next steps." Never invent, infer, or default a *specific* research direction (a migration story, a disputed relationship, a name-origin theory) from the person's data alone — this verbatim generic default is the only fallback. Write the files now and say in the final summary that the objective was defaulted.
+1. **If the user's message already states an objective** — store it as `objective` in the words the user wrote: every word in it, other than the person's name or ID and small connecting words, appears in their message. Never replace it with the generic default, and never add a direction, place, relative, record, or how the work will be done that the user did not state. Anything the message asks to find out, research, analyze or check about the person is a stated objective, however general ("research the origins of Michael Brennan", "analyze his sources and look for errors", "set it up so I can test re-deriving his death from records"); the default is only for a message that names the person and asks nothing about them.
+2. **If not, do not wait for a reply before proceeding.** Store this exact text, verbatim, as `objective`: "General research: build out the tree and identify gaps and next steps." Never invent, infer, or default a *specific* research direction (a migration story, a disputed relationship, a name-origin theory) from the person's data alone — this verbatim generic default is the only fallback. Write the files now, and put this sentence, exactly, in your return's first researcher paragraph: "You did not say what you want to find out, so the project starts with a general goal: build out the tree and find its gaps. Tell me what you most want to learn, and the research will focus there." Never write that sentence when the user stated an objective.
 
 Asking a question and then stopping to wait is a failure: the project never gets created.
 
@@ -112,7 +112,7 @@ they run with the **forget-and-rederive** skill. You do **not**:
 project_create({ projectPath, objective, title, personId: "<id>", subjectPersonIds: ["<the same id>"] })
 ```
 
-`objective` from the opening turn; `title` a concise 3-6 word session name (e.g. "Patrick Flynn's parents"). It reads the person, their relatives, sources and memories, writes both files, the profile and the memory sources, and returns a summary: `subject`, `relatives` (each with `id`, `name` and `relationship`: `spouse`, `father`, `mother`, `parent`, `child`, `sibling` or `relative`), `counts`, `memories` (`transcribed`, `notTranscribed`), the read's `notes`, and `omitted` when a list was trimmed. Never call it with `tree`.
+`objective` from the opening turn; `title` a concise 3-6 word session name. Name the person as the user named them; when the user gave only the ID, name them by the ID ("Identify the parents of KWCJ-RN4", "KWCJ-RN4's parents"), and `project_create` stores the person's name in its place. It reads the person, their relatives, sources and memories, writes both files, the profile and the memory sources, and returns a summary: `subject`, `objective` and `title` as stored, `relatives` (each with `id`, `name` and `relationship`: `spouse`, `father`, `mother`, `parent`, `child`, `sibling` or `relative`), `counts`, `memories` (`transcribed`, `notTranscribed`), the read's `notes`, and `omitted` when a list was trimmed. Never call it with `tree`.
 
 - **Refused with `subject_person_ids contains '<id>' which is not in tree.gedcomx.json persons`, or a message naming `personReadRef`:** the installed extension is out of date. Tell the user to update it, and stop.
 - **An auth error:** tell the user to log in, and stop.
@@ -156,7 +156,7 @@ Report what the import did, and nothing else. You do not review the tree: no gap
 
 **Present to the user** — one short report in the house style, no tree table: the researcher paragraphs of the return contract.
 - That the project was created for the subject, and how many people were imported
-- The objective in one sentence, and whether it was defaulted
+- The objective as stored, in one sentence; when it was defaulted, the sentence from "Opening turn" step 2, exactly
 - Any discrepancy between what the user stated and the tree, and any person not added because the tree already holds someone in that place
 - Known holdings recorded (if any)
 - Any scanned documents or photos on the profile that could not be read this
@@ -172,7 +172,7 @@ Report what the import did, and nothing else. You do not review the tree: no gap
 User: "Start a new research project for person KWCJ-RN4. I want to identify his parents."
 
 1. `project_context` → no project here.
-2. `project_create({ projectPath, objective, title, personId: "KWCJ-RN4", subjectPersonIds: ["KWCJ-RN4"] })` → Patrick Flynn; a spouse and two children; no parents.
+2. `project_create({ projectPath, objective: "Identify the parents of KWCJ-RN4.", title: "KWCJ-RN4's parents", personId: "KWCJ-RN4", subjectPersonIds: ["KWCJ-RN4"] })` → Patrick Flynn, stored as "Identify the parents of Patrick Flynn."; a spouse and two children; no parents.
 3. No stubs: the user named no one. No holdings or subscriptions: nothing to write.
 4. Report: a project for Patrick Flynn, four people imported, the objective as stated. No review of the tree.
 
@@ -199,7 +199,7 @@ The files are already written; do not reproduce the tree. Return these
 caller-facing lines, in this order:
 
 - the project folder, and the persons, relationships and sources `project_create` reported
-- the objective as stored, and whether it was defaulted
+- the objective as `project_create` returned it, and whether it was defaulted
 
 ### `summary_for_user`
 

@@ -2,13 +2,14 @@
   "test": {
     "id": "ut_init_project_009",
     "skill": "init-project",
-    "name": "Start research on an existing project — refuse, hand back to question-selection, call no tool (direct-agent arm)",
+    "name": "Start research on an existing project — refuse, hand back to question-selection, call nothing past the guard (direct-agent arm)",
     "type": "negative",
-    "description": "The agent's own guard clause, reached by direct spawn. A research.json already exists (mid-research-flynn) and the delegation is init-flavored ('Start research'). The agent must call no MCP tool, write nothing, and return the one caller-facing line 'Hand-back: question-selection — <clause>'. Kept when init-project became an agent rather than deleted with the description-routing negatives: on the direct arm there is no router, so this grades the refuse-if-exists gate itself, the suite's only coverage of it. A DIRECT negative graded on its invariant (unit-test-spec.md 5.2.1): test_hand_back_names_its_owner and test_existing_project_is_not_reinitialized.",
+    "description": "The agent's own guard clause, reached by direct spawn. A research.json already exists (mid-research-flynn) and the delegation is init-flavored ('Start research'). The agent must call nothing past its one project_context guard call (the project-context-guard tag admits exactly that call), write nothing, and return the one caller-facing line 'Hand-back: question-selection — <clause>'. Kept when init-project became an agent rather than deleted with the description-routing negatives: on the direct arm there is no router, so this grades the refuse-if-exists gate itself, the suite's only coverage of it. A DIRECT negative graded on its invariant (unit-test-spec.md 5.2.1): test_hand_back_names_its_owner and test_existing_project_is_not_reinitialized.",
     "tags": [
       "refuse-if-exists",
       "hand-back",
-      "direct-arm"
+      "direct-arm",
+      "project-context-guard"
     ]
   },
   "input": {
