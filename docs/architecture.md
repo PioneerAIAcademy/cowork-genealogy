@@ -2151,18 +2151,21 @@ changes how a correct change is made:
    the success gate can and cannot see"). `make e2e-corpus` deliberately reports
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
-4. **Step mode's boundary is enforced on one plane and graded on another.** Under
-   `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19), a step ends by
-   asking the researcher with `AskUserQuestion`, and what stops a model starting the
-   next step without asking differs by plane: the FS prototype gets a `PreToolUse`
-   deny and then a halt; **Cowork gets router prose and no hook at all**; the alpha
-   gets nothing. **None of it is built yet.** When it is, the gap will be that
-   the e2e harness tracks `real_agent` (`eval/harness/e2e/orchestrator.py`),
-   which is the alpha, and the alpha gets nothing -- so the suite will exercise
-   a plane with no enforcement while the one that HAS it goes ungraded. **A
-   green eval suite will therefore say nothing about whether the boundary
-   holds anywhere.**
-   Do not read a passing step-mode test as evidence the boundary holds in Cowork.
+  4. **Step mode's boundary is enforced on one plane and graded on another.** Under
+     `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19, amended
+     2026-10-21), a step ends by asking the researcher with `AskUserQuestion`, and what
+     stops a model starting the next step without asking differs by plane: the FS
+     prototype gets a `PreToolUse` deny and then a halt; **Cowork and the alpha get
+     router prose and no hook at all**. There is no plugin step hook anywhere.
+     **None of it is built yet.** When it is, the gap will be that PR 1 gives the e2e
+     orchestrator the step check (rider 3) while the plane it tracks, `real_agent`
+     (`eval/harness/e2e/orchestrator.py`), is the alpha — which enforces nothing. So the
+     suite will enforce a boundary that neither Cowork nor the alpha has, and the one
+     plane that DOES enforce it, the prototype worker, goes ungraded. **A green eval
+     suite will therefore say nothing about whether the boundary holds where researchers
+     actually are.**
+     Do not read a passing step-mode test as evidence the boundary holds in Cowork or on
+     the alpha.
 
    This is a deliberate choice, not a limitation: phase 0 measured that a Cowork hook
    *could* do it (ADR-0005 item 9 — a plugin `PreToolUse` returning `"continue": false`

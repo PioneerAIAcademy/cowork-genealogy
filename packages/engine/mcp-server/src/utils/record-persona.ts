@@ -396,6 +396,75 @@ function projectable(a: any): boolean {
   );
 }
 
+const nonEmpty = (v: unknown): string | null => (typeof v === "string" && v !== "" ? v : null);
+
+/**
+ * The party key of each assertion of ONE record: which person on the record it
+ * describes. Pass every assertion of that record; the returned function keys any
+ * of them.
+ *
+ * The key is the `record_persona_id` when the record named one, else the
+ * `record_role`. Grouping on the role ALONE merges two personas that share a
+ * role (a transcribed register page holds many entries at one role each). But
+ * read per assertion, that rule splits one party in two whenever only some of
+ * its assertions carry the persona id (a hint re-extraction writes none), and
+ * merges a household when an extraction stamped one persona id on every party
+ * (spriggs-parents-1898: father, wife and children on one id). So it is read
+ * across the record (#2537):
+ *
+ *   - a persona id worn by more than one role names no single party, so its
+ *     assertions key on their role;
+ *   - an assertion with no usable persona id joins the one persona that carries
+ *     its role, when exactly one does, and only when it comes from an extraction
+ *     (`log_entry_id`) that set no persona id at all and names one person at
+ *     that role. That is a re-extraction of the record without its ids (a hint).
+ *     Inside an extraction that set ids, a party without one is a different
+ *     person; and two names at one role (a register page's children) are two
+ *     people, so neither joins.
+ *
+ * `absent` (negative evidence) is not a role a persona carries.
+ */
+export function recordPartyKeyer(recordAssertions: Iterable<any>): (a: any) => string | null {
+  const list = [...recordAssertions];
+  const logOf = (a: any) => nonEmpty(a?.log_entry_id) ?? "";
+  const rolesByPid = new Map<string, Set<string>>();
+  const logsWithPid = new Set<string>();
+  const namesByLogRole = new Map<string, Set<string>>();
+  for (const a of list) {
+    const pid = nonEmpty(a?.record_persona_id);
+    const role = nonEmpty(a?.record_role);
+    if (pid !== null) logsWithPid.add(logOf(a));
+    if (role !== null && String(a?.fact_type ?? "").toLowerCase() === "name") {
+      const k = `${logOf(a)}\u0000${role}`;
+      const names = namesByLogRole.get(k) ?? new Set<string>();
+      names.add(String(a?.value ?? ""));
+      namesByLogRole.set(k, names);
+    }
+    if (pid === null || role === null || role === "absent") continue;
+    const roles = rolesByPid.get(pid) ?? new Set<string>();
+    roles.add(role);
+    rolesByPid.set(pid, roles);
+  }
+  const pidsByRole = new Map<string, Set<string>>();
+  for (const [pid, roles] of rolesByPid) {
+    if (roles.size !== 1) continue;
+    const [role] = roles;
+    const pids = pidsByRole.get(role) ?? new Set<string>();
+    pids.add(pid);
+    pidsByRole.set(role, pids);
+  }
+  return (a: any) => {
+    const pid = nonEmpty(a?.record_persona_id);
+    if (pid !== null && (rolesByPid.get(pid)?.size ?? 0) <= 1) return pid;
+    const role = nonEmpty(a?.record_role);
+    if (role === null) return null;
+    if (pid !== null || logsWithPid.has(logOf(a))) return role;
+    if ((namesByLogRole.get(`${logOf(a)}\u0000${role}`)?.size ?? 0) > 1) return role;
+    const pids = pidsByRole.get(role);
+    return pids && pids.size === 1 ? [...pids][0] : role;
+  };
+}
+
 /**
  * Project every party of `recordId` out of `research.assertions`.
  *
@@ -406,18 +475,16 @@ export function projectRecordPersonas(
   assertions: unknown,
   recordIdForArk?: string,
 ): RecordPersonaGroup[] {
-  // Key on `record_persona_id` when the record named one, else on
-  // `record_role`. Grouping on the role ALONE merges two personas that share a
-  // role into one projected person — a transcribed register page holds many
-  // entries at one role each — and it also makes `recordPersonaId` unusable as
-  // a disambiguator, because the two people the caller is trying to choose
-  // between have already been collapsed by the time it is read.
+  // Keyed by `recordPartyKeyer`, never by role alone: that merges two personas
+  // that share a role into one projected person, and makes `recordPersonaId`
+  // unusable as a disambiguator, because the two people the caller is trying
+  // to choose between have already been collapsed by the time it is read.
+  const list: any[] = Array.isArray(assertions) ? assertions : [];
+  const partyKey = recordPartyKeyer(list);
   const byKey = new Map<string, any[]>();
-  for (const a of Array.isArray(assertions) ? assertions : []) {
+  for (const a of list) {
     if (!projectable(a)) continue;
-    const pid = (a as any).record_persona_id;
-    const key =
-      typeof pid === "string" && pid !== "" ? pid : ((a as any).record_role as string);
+    const key = partyKey(a) as string;
     const bucket = byKey.get(key);
     if (bucket) bucket.push(a);
     else byKey.set(key, [a]);
@@ -458,7 +525,8 @@ export function projectRecordPersonas(
     out.push({
       key,
       role,
-      personaId: personaIds.size === 1 ? [...personaIds][0] : null,
+      // Keyed on its role, the group's persona id named several parties.
+      personaId: personaIds.has(key) ? key : null,
       names,
       person,
     });
