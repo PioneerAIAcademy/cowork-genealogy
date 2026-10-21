@@ -233,9 +233,13 @@ borderline — don't guess alone.
 ```
 
 Give it the issue (number or URL) or the slug. It asks what you found, writes
-the fixture files, and validates the result. The three outcomes:
+the fixture files, and validates the result. It also asks, separately from the
+outcome, whether the hint persona is the tree person — same, different or
+unresolved — and writes that with the persona's ark to `fixture.json`'s `hint`,
+which `make matcher-accuracy` scores when the verdict is same or different
+(spec §3.6.2). The three outcomes:
 
-1. **The hint is right** — the fixture stays as it is.
+1. **The hint is right** — the fixture's expected findings stay as they are.
 2. **The answer is something else** — the skill rewrites the fixture's expected
    findings to the correct answer.
 3. **The hint is wrong, and no other record answers the question** — the skill

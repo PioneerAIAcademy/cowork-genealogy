@@ -1069,6 +1069,12 @@ source-screen-score: $(ENGINE_DEPS) ## Score findings against the fixture spec: 
 	@test -n "$(FINDINGS)" || { echo "ERROR: set FINDINGS" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts score --spec dev/source-screen-fixtures.json $(foreach f,$(FINDINGS),--findings "$(abspath $(f))")
 
+# ── Matcher accuracy (issue #3553; docs/specs/e2e-test-spec.md §3.6.2) ──
+# Live and unbilled, but needs a FamilySearch session, so no CI job runs it.
+.PHONY: matcher-accuracy
+matcher-accuracy: $(ENGINE_DEPS) ## Score the matcher on the record-hint fixtures' same/different hints (needs a FamilySearch login: make e2e-login); fails when AUC < MIN_AUC (default 0.65) — [MIN_AUC=0.7] [REFRESH=1] [CSV=<path>]
+	cd $(ENGINE_DIR) && MIN_AUC='$(MIN_AUC)' npx tsx dev/matcher-accuracy.ts $(if $(filter 1 true yes on,$(REFRESH)),--refresh,) $(if $(CSV),--csv "$(abspath $(CSV))")
+
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
 	# Changed this recipe? Keep eval/RunE2E.bat in sync — it is the Windows
