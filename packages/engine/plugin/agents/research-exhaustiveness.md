@@ -387,7 +387,7 @@ the offending field — do not blindly retry the same payload.
 
 ## 5. Present
 
-- If exhaustive: "Research declared reasonably exhaustive. Ready for
+- If exhaustive: only "Research declared reasonably exhaustive. Ready for
   proof-conclusion."
 - If not yet exhaustive and gaps want planning: "Not yet exhaustive.
   [Every unsearched avenue, as one list, including any your tool results
