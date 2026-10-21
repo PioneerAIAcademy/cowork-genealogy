@@ -238,6 +238,8 @@ Sorted by `matchScore` descending; no gedcomx.
       "matchConfidence": 5,        // 1–5; omitted on no-match
       "attachedToSubject": false,  // only when checkAttachments
       "attachedToOther": true,
+      "birthYearConflict": true,   // only when the birth years differ by more than 2
+      "birthYearGap": -5,          // candidate year minus subject year; with the flag
       "relativeTerms": {           // only when the search anchored on a relative
         "father": { "status": "absent" }
       },
@@ -304,6 +306,25 @@ spec says it belongs.
 
 See `record-search-tool-spec-v2.md` § `relativeTerms` for the statuses and how
 they are resolved.
+
+### `birthYearConflict` and `birthYearGap` — computed, advisory, never scored
+
+When the candidate's birth year and the subject's birth year are both known and
+differ by **more than two years**, the stub carries `birthYearConflict: true` and
+`birthYearGap`, the candidate year minus the subject year (negative when the
+candidate is older). Both are omitted otherwise: a gap of two years or less, a
+candidate with no `birthDate`, or a subject with no usable year.
+
+The subject's year is the tree person's `Birth` fact, falling back to a `Baptism`
+or `Christening` fact (within a year or two of birth). The candidate's year is the
+first four-digit year in the staged row's `birthDate`. Both are read in code,
+because a model shown the two numbers has been measured explaining a five-year
+gap away as census-age estimation and adopting the record on its score.
+
+It is advice, not a scoring change: `matchScore`, `matchRank` and the order are
+untouched, for the same reason `relativeTerms` is. The flag reaches the
+annotated `results` row as well as the stub (`record-search-tool-spec-v2.md` §
+"The response is re-ordered").
 
 ### `batchNumber` — carried, never scored and never annotated
 

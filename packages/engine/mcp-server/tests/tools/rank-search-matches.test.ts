@@ -310,6 +310,68 @@ describe("rank_search_matches", () => {
     expect(out.matches).toHaveLength(2);
   });
 
+  // ── Birth-year conflict flag (#3658) ───────────────────────────────────────
+
+  describe("birth-year conflict flag", () => {
+    // The default subject was born 4 Dec 1917.
+    const rank = async (candidates: unknown[], tree?: unknown) => {
+      await writeTree(tree);
+      scorePairMock.mockResolvedValue(scoreResult(0.86, 4));
+      const ref = await stage(candidates);
+      return rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: SUBJECT_ID }, LOCAL);
+    };
+    const byId = (out: { matches: { recordId: string }[] }, id: string) =>
+      out.matches.find((m) => m.recordId === id) as Record<string, unknown>;
+
+    it("flags a candidate three years off the subject, with the signed gap", async () => {
+      const older = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1", birthDate: "1914" });
+      const younger = candidate({ recordId: "ark:/61903/1:1:AAAA-AA2", primaryId: "p2", birthDate: "abt 1921" });
+      const out = await rank([older, younger]);
+      expect(byId(out, "ark:/61903/1:1:AAAA-AA1")).toMatchObject({ birthYearConflict: true, birthYearGap: -3 });
+      expect(byId(out, "ark:/61903/1:1:AAAA-AA2")).toMatchObject({ birthYearConflict: true, birthYearGap: 4 });
+    });
+
+    it("does not flag a candidate one or two years off (the threshold is MORE than two)", async () => {
+      const one = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1", birthDate: "1916" });
+      const two = candidate({ recordId: "ark:/61903/1:1:AAAA-AA2", primaryId: "p2", birthDate: "1919" });
+      const same = candidate({ recordId: "ark:/61903/1:1:AAAA-AA3", primaryId: "p3", birthDate: "4 Dec 1917" });
+      const out = await rank([one, two, same]);
+      for (const id of ["AA1", "AA2", "AA3"]) {
+        const m = byId(out, `ark:/61903/1:1:AAAA-${id}`);
+        expect(m).not.toHaveProperty("birthYearConflict");
+        expect(m).not.toHaveProperty("birthYearGap");
+      }
+    });
+
+    it("never flags when the candidate has no birth year", async () => {
+      const dateless = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" });
+      const out = await rank([dateless]);
+      expect(byId(out, "ark:/61903/1:1:AAAA-AA1")).not.toHaveProperty("birthYearConflict");
+    });
+
+    it("never flags when the subject has no birth year", async () => {
+      const noBirth = { persons: [{ id: SUBJECT_ID, names: [{ preferred: true, given: "K", surname: "Q" }], facts: [{ type: "Residence", date: "1950", place: "Ohio" }] }], relationships: [], sources: [] };
+      const far = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1", birthDate: "1850" });
+      const out = await rank([far], noBirth);
+      expect(byId(out, "ark:/61903/1:1:AAAA-AA1")).not.toHaveProperty("birthYearConflict");
+    });
+
+    it("falls back to a baptism year when the subject has no birth fact", async () => {
+      const bapt = { persons: [{ id: SUBJECT_ID, names: [{ preferred: true, given: "K", surname: "Q" }], facts: [{ type: "Baptism", date: "1826" }] }], relationships: [], sources: [] };
+      const far = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1", birthDate: "1821" });
+      const out = await rank([far], bapt);
+      expect(byId(out, "ark:/61903/1:1:AAAA-AA1")).toMatchObject({ birthYearConflict: true, birthYearGap: -5 });
+    });
+
+    it("keeps the high score and rank untouched: the flag is advice, not a scoring change", async () => {
+      const far = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1", birthDate: "1912" });
+      const out = await rank([far]);
+      const m = byId(out, "ark:/61903/1:1:AAAA-AA1");
+      expect(m.matchScore).toBe(0.86);
+      expect(m.matchRank).toBe(1);
+    });
+  });
+
   // ── Return shape / ordering / top-N ────────────────────────────────────────
 
   it("returns top-N stubs sorted by matchScore desc (nulls last), searchRank preserved", async () => {
