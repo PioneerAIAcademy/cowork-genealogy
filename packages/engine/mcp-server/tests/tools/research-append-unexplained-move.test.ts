@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { unexplainedMoveInvariants, placeCountry } from "../../src/tools/research-append.js";
+import { ATTACHMENT_LINK_RATIONALE } from "../../src/utils/tree-person.js";
 
 // A household attested in England whose candidate census places it in Tennessee
 // (#2537, ut_person_evidence_g7m). The research side holds the record's
@@ -31,6 +32,26 @@ function project(opts: { treeResidence?: string; recordPlace?: string; weakLinkS
 const link = (over: any = {}) => ({ id: "pe_001", assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "r", ...over });
 
 describe("unexplainedMoveInvariants (#2537)", () => {
+  it("still lets an imported residence vouch once its S is reused for an attachment link (#3516)", () => {
+    // The baseline step extracts the record behind the imported England
+    // residence under the import's own S1, and links it as an unchecked
+    // attachment. That must not stop the fact vouching, or this gate turns off
+    // for every subject the step touches.
+    const withAttachment = (pe: any) => {
+      const { research, tree } = project({ treeResidence: "Horsham, Sussex, England" });
+      research.sources.push({ id: "src_010", gedcomx_source_description_id: "S1" });
+      research.assertions.push({ id: "a_010", source_id: "src_010", record_id: "ark:EN61", record_role: "head", fact_type: "residence", place: "Horsham, Sussex, England" });
+      research.person_evidence.push({ id: "pe_010", assertion_id: "a_010", person_id: "I1", ...pe });
+      return { research, tree };
+    };
+    const attached = withAttachment({ confidence: "speculative", match_score: null, rationale: ATTACHMENT_LINK_RATIONALE });
+    expect(unexplainedMoveInvariants(link(), attached.research, attached.tree)).toHaveLength(1);
+    // The rationale alone is not the attachment shape: a probable link carrying
+    // it is an ordinary below-confident link, whose source does not vouch.
+    const forged = withAttachment({ confidence: "probable", match_score: 0.9, rationale: ATTACHMENT_LINK_RATIONALE });
+    expect(unexplainedMoveInvariants(link(), forged.research, forged.tree)).toEqual([]);
+  });
+
   it("refuses confident when the record's country differs from every attested residence", () => {
     const { research, tree } = project({ treeResidence: "Horsham, Sussex, England" });
     const out = unexplainedMoveInvariants(link(), research, tree);
