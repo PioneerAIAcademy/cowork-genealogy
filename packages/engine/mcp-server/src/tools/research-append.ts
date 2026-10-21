@@ -5880,8 +5880,8 @@ function declarationStatusInvariants(entry: any): string[] {
  *  looser reading that also counts unattached plans is indistinguishable today —
  *  it is pinned here and by a synthetic test rather than by the corpus. */
 /** Each stop criterion is 1–2 sentences (the agent's Step 2). 800 chars sits above
- *  the corpus p90 (689); over 179 committed `stop_criteria` objects it refuses 32
- *  (#3546). Runs only when the op writes `search_stop`, so a later edit to a
+ *  the corpus p90 (701); over 182 committed `stop_criteria` objects it refuses 35
+ *  (#3546, measured 2026-10-21). Runs only when the op writes `search_stop`, so a later edit to a
  *  question that already stores a longer criterion is not refused. */
 export const STOP_CRITERION_MAX_CHARS = 800;
 
