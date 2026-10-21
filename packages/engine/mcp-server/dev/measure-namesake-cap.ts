@@ -859,7 +859,7 @@ function section5(states: FinalState[]): void {
       "fail, judged by `personaTargetRefusal` on the run's final state, as dev/replay-materialize-link.ts reads " +
       "it. Explicit: ops onto a row holder's personId admitted without the row and refused with it. Implicit: " +
       "row holders the op's persona facts reach in the final tree, admitted without the row and refused with " +
-      "it, so the op mints instead",
+      "it, so the lookup passes them over",
   );
   for (const bracket of BRACKETS) {
     let explicitJudged = 0, explicitRefused = 0, implicitJudged = 0, implicitMint = 0;
@@ -903,7 +903,7 @@ function section5(states: FinalState[]): void {
     console.log(
       `  ${bracket}: explicit ${explicitJudged} judged, ${explicitRefused} refused (onto the subject: hint the ` +
         `subject's own ${subject.true}, a namesake's ${subject.false}, unlabelled ${subject.unlabelled}); ` +
-        `implicit ${implicitJudged} judged, ${implicitMint} now mint`,
+        `implicit ${implicitJudged} row holders judged, ${implicitMint} passed over`,
     );
     if (bracket === "every linked person") {
       floor(explicitJudged > 0 && explicitRefused > 0, `§5 explicit judged ${explicitJudged}, refused ${explicitRefused}`);

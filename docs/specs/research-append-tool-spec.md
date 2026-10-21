@@ -1267,21 +1267,22 @@ refuses. One line per holder, from `namesakeRowWarnings` over
 `namesakeRowListings` in `research-append.ts`: `"namesake '<ns>' (<name>,
 <place>, <time_period>) recorded for '<P>': <N> probable or confident link(s) to
 '<P>' stand with nothing in their record tying them to '<P>': '<pe>' (assertion
-'<a>' on source '<src>', <fact_type>), … <M> fact(s) on '<P>' were copied through
-them: '<F>' <type> (cites <S>), …[; <K> name(s) also cite those records and stay,
-since no tool removes a name]. The row is recorded and these stay as they are,
+'<a>' on source '<src>', <fact_type>), ….[ <M> fact(s) on '<P>' were copied through
+them: '<F>' <type> (cites <S>), ….][ <K> name(s) on '<P>' also cite those records
+and stay, since no tool removes a name.] The row is recorded and these stay as they are,
 but materialize_facts will not copy any further fact onto '<P>' through these
 links. For each link, person-evidence either ties it or lowers it to
 'speculative' naming the namesake.[ Remove a listed fact that belongs to the
 namesake with tree_correct (operation 'remove', its factId and personId
 '<P>').]"` The fact sentence and the removal sentence appear only when a fact
-is listed. It rides `validation.warnings` and never touches `ok`.
+is listed, and the name sentence only when a name is. It rides
+`validation.warnings` and never touches `ok`.
 
 - **Why warn and not refuse (lead, 2026-10-18, item 5 of the list of
   2026-10-17).** A row over untied links is recorded with a warning listing
   them and the facts copied through them; `materialize_facts` then refuses an
   explicit copy through them, and an implicit one makes a new person with a
-  warning (tree-materialization-spec §4.3).
+  warning, or goes to another eligible person (tree-materialization-spec §4.3).
 - **What it lists.** Links: judged by `namesakeVerdicts` on the call's end
   state, vouchers being the pairings live and strong both before and after the
   call, as the cap judges a link the call asserts. A refused link the call
@@ -1291,10 +1292,13 @@ is listed. It rides `validation.warnings` and never touches `ok`.
   `assertion_id`, else every research source its refs reach, any party) holds a
   refused link and no allowed one. Names: those citing a refused link's source,
   counted rather than listed, since no tool removes a name.
-- **Measured** at `d2db6c1bb` by `dev/measure-namesake-cap.ts` §4 over the 212
+- **Measured** at `67b7d8a1b` by `dev/measure-namesake-cap.ts` §4 over the 212
   committed e2e final states, the rows written in one call: on every person
   holding a live strong link, 455 of 1,306 persons are warned, in 139 states,
-  listing 2,216 links, 530 facts and 367 names; on the fixture subject alone,
+  listing 2,216 links, 530 facts and 367 names (the links are §1's refusals on the
+  final trees at this sha; the §5 cap row's 2,260 is at `ed4f73911`, before one
+  more committed run and the party key read across the record); on the fixture
+  subject alone,
   58 of 181, listing 366 links (31 in fixtures whose hint is the subject's own
   record, 45 a namesake's, 290 unlabelled; at most 24 in one state), 77 facts
   and 35 names.

@@ -206,8 +206,8 @@ for (const [name, t] of Object.entries(buckets)) {
   show(t.fires.namedParty);
   const exempt = t.exempt.explicit + t.exempt.implicit;
   console.log(
-    `\nexempt: ${exempt} persona op(s) onto a person minted from the op's record (${t.exempt.explicit} explicit, ` +
-      `${t.exempt.implicit} implicit); item 34 keeps ${t.exempt.kept} and withholds ` +
+    `\nexempt: ${exempt} (op, person) pair(s) onto a person minted from the op's record (${t.exempt.explicit} ` +
+      `explicit, ${t.exempt.implicit} implicit); item 34 keeps ${t.exempt.kept} and withholds ` +
       `${t.exempt.anotherParty.length} carrying another party and ${t.exempt.noParty.length} carrying no party`,
   );
   show(t.exempt.anotherParty);

@@ -317,7 +317,8 @@ qualify.
   refused: "'<id>' has a recorded namesake ('<ns>'), so a record's facts
   reach '<id>' only through a link the namesake cap allows. '<pe>' ties
   assertion '<a>' to '<id>' at '<confidence>', but nothing in source '<src>'
-  ties it to '<id>' (<reason>). Route that link to person-evidence, which ties
+  ties it to '<id>' (<reason>).[ Nothing ties '<pe2>', … either.] Route that
+  link to person-evidence, which ties
   it (links another party of this record to a spouse, parent or child of
   '<id>') or lowers it to 'speculative' naming the namesake.", followed by
   the arm's own suffix. When `personId` is omitted, a person the lookup would
@@ -325,13 +326,16 @@ qualify.
   mints one, with a warning: "persona '<role>' of record '<record>' would
   have reused '<id>', but '<id>' has a recorded namesake and its link '<pe>'
   from this record is not tied; '<new>' was created instead. Route '<pe>' to
-  person-evidence to tie or lower it." Measured at `d2db6c1bb` by
+  person-evidence to tie or lower it.", or "'<other>' was used instead" when
+  the lookup takes another eligible person. Measured at `67b7d8a1b` by
   `dev/measure-namesake-cap.ts` §5 over the committed runs' persona ops, on
   each run's final state: with rows on every person holding a live strong
   link, 162 of the 967 explicit ops onto a row holder admitted without the row
-  are refused, and 7 of 116 implicit ones mint; with rows on the subject
-  alone, 35 of 260 (7 in fixtures whose hint is the subject's own record, 8 a
-  namesake's, 20 unlabelled) and 0 of 1.
+  are refused, and of the 116 row holders an implicit op's persona facts reach
+  that are admitted without the row, 7 are refused with it, so the lookup
+  passes them over; with rows on the subject alone, 35 of 260 (7 in fixtures
+  whose hint is the subject's own record, 8 a namesake's, 20 unlabelled) and 0
+  of 1.
 
 Known let-throughs, none with an executed op in the corpus:
 
@@ -367,11 +371,13 @@ link from another role's one-party assertion. Names do not count for another
 role, since two people on one record can share one, and a two-party assertion
 is no party's trace, since its link may be about either. A stub that fails it
 falls to the link rule, and its refusal opens "'<id>' was created from record
-'<record>', but it carries that record's '<role>' party (fact '<F>')", or "but
+'<record>', but it carries that record's '<role>' party (fact '<F>')" (or "(link
+'<pe>')"), or "but
 nothing on it (a fact, a link from a one-party assertion, or a name) comes from
-this party", then "so it is not this party's stub." The replay
-(`dev/replay-materialize-link.ts`, its exempt bucket) finds 121 committed
-persona ops onto a stub of their own record, and the party test withholds the
+this party", then "so it is not this party's stub." Measured at `67b7d8a1b` by
+the replay (`dev/replay-materialize-link.ts`, its exempt bucket): 121 committed
+(op, person) pairs land on a stub of the op's own record, an implicit op counted
+once per person its persona's facts reach, and the party test withholds the
 exemption from none. Persons are checked as the
 tree stands at each op, so a batch that mints a person from one record cannot
 copy a second record onto them without a link. Both arms rest on one decision,
@@ -463,7 +469,8 @@ already-duplicated project, and hands the agent a choice with no rule.
   makes the content a no-op. Mirrors the idempotent-skip ratified as correct
   in the structured-fact model. One exception: under a recorded namesake, an
   omitted `personId` skips a person whose link from this persona the cap does
-  not tie and makes a new person with a warning (§4.3), so a re-run made after
+  not tie and goes to another eligible person or makes a new one, with a
+  warning (§4.3), so a re-run made after
   the row was recorded can add a person.
 - **Conflicts surfaced, not resolved — and only for single-valued types.**
   Conflict surfacing is **gated to single-valued / vital fact types**: reuse
