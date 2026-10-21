@@ -497,7 +497,9 @@ def test_lint_fixture_rejects_an_unrecognized_finding_field(tmp_path):
 
 # --- record-hint ark citation (issue #970 / #1025) --------------------
 
-_UNSET = object()  # distinguishes "omit image_basis" from writing `null`
+_UNSET = object()  # distinguishes "omit image_basis"/"omit hint" from writing `null`
+
+_VALID_HINT = {"persona_ark": "ark:/61903/1:1:6PFD-Q43C", "identity": "different"}
 
 
 def _commit_snapshot(fixture_dir) -> None:
@@ -508,11 +510,21 @@ def _commit_snapshot(fixture_dir) -> None:
 
 
 def _write_record_hint_meta(
-    fixture_dir, *, resolved: bool, genre: str = "record-hint", image_basis=_UNSET
+    fixture_dir,
+    *,
+    resolved: bool,
+    genre: str = "record-hint",
+    image_basis=_UNSET,
+    hint=_VALID_HINT,
+    source_pid=_UNSET,
 ):
     meta = {"id": fixture_dir.name, "genre": genre}
+    if source_pid is not _UNSET:
+        meta["source_pid"] = source_pid
     if image_basis is not _UNSET:
         meta["image_basis"] = image_basis  # may be a non-bool / None on purpose
+    if hint is not _UNSET:
+        meta["hint"] = hint  # may be malformed / None on purpose
     (fixture_dir / "fixture.json").write_text(json.dumps(meta), encoding="utf-8")
     body = "Notes for reviewers\n\n" + (
         "Resolved: false match, no findable substitute."
@@ -733,6 +745,230 @@ def test_committed_no_image_read_fixtures_still_pass(slug):
     assert fixture_dir.is_dir(), f"missing corpus fixture {slug}"
     _, errors = lint_fixture(fixture_dir)
     assert errors == [], errors
+
+
+# --- fixture.json `hint` (issue #3553) --------------------------------
+#
+# A resolved record-hint fixture declares the hinted persona and the
+# genealogist's identity judgement, which `make matcher-accuracy` scores.
+# Every case below carries a valid ark in its findings, so the only error
+# that can fire is the hint check's.
+
+_HINT_FINDINGS = _avoid_pair_findings(_INDEX_ONLY)
+
+
+def _hint_errors_for(
+    tmp_path, hint, *, resolved=True, genre="record-hint", source_pid=_UNSET
+):
+    _write_record_hint_meta(
+        tmp_path, resolved=resolved, genre=genre, hint=hint, source_pid=source_pid
+    )
+    return record_hint_citation_errors(tmp_path, _HINT_FINDINGS)
+
+
+def test_hint_missing_on_a_resolved_fixture_is_error(tmp_path):
+    errors = _hint_errors_for(tmp_path, _UNSET)
+    assert len(errors) == 1
+    assert "has no `hint` key" in errors[0]
+
+
+def test_lint_fixture_hard_fails_a_resolved_fixture_with_no_hint(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, hint=_UNSET)
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I1", "John", "Smith")),
+        findings=_HINT_FINDINGS,
+    )
+    _, errors = lint_fixture(tmp_path)
+    assert any("has no `hint` key" in e for e in errors)
+
+
+def test_hint_explicit_null_is_accepted(tmp_path):
+    assert _hint_errors_for(tmp_path, None) == []
+
+
+def test_hint_not_required_on_a_draft(tmp_path):
+    assert _hint_errors_for(tmp_path, _UNSET, resolved=False) == []
+
+
+def test_hint_not_required_on_a_strip_fixture(tmp_path):
+    assert _hint_errors_for(tmp_path, _UNSET, genre="strip") == []
+
+
+def test_malformed_hint_on_a_draft_is_not_checked(tmp_path):
+    assert _hint_errors_for(tmp_path, "same", resolved=False) == []
+
+
+@pytest.mark.parametrize("identity", ["same", "different", "unresolved"])
+def test_hint_with_each_identity_is_accepted(tmp_path, identity):
+    hint = {"persona_ark": "ark:/61903/1:1:6PFD-Q43C", "identity": identity}
+    assert _hint_errors_for(tmp_path, hint) == []
+
+
+@pytest.mark.parametrize(
+    "persona_ark",
+    ["ark:/61903/1:1:6PFD-Q43C", "ark:/61903/1:1:QVS9-DHD", "ark:/61903/1:1:K8T2-9X"],
+    ids=["4-4", "4-3", "4-2"],
+)
+def test_hint_accepts_every_persona_id_shape(tmp_path, persona_ark):
+    hint = {"persona_ark": persona_ark, "identity": "same"}
+    assert _hint_errors_for(tmp_path, hint) == []
+
+
+def test_hint_key_order_does_not_matter(tmp_path):
+    hint = {"identity": "unresolved", "persona_ark": "ark:/61903/1:1:6PFD-Q43C"}
+    assert _hint_errors_for(tmp_path, hint) == []
+
+
+@pytest.mark.parametrize(
+    "identity",
+    ["Same", "SAME", " same", "same ", True, False, "1", 1, 2, "2", None, "yes", ""],
+)
+def test_hint_bad_identity_is_error(tmp_path, identity):
+    hint = {"persona_ark": "ark:/61903/1:1:6PFD-Q43C", "identity": identity}
+    errors = _hint_errors_for(tmp_path, hint)
+    assert len(errors) == 1
+    assert "`hint.identity` must be one of" in errors[0]
+
+
+def test_hint_missing_identity_is_error(tmp_path):
+    errors = _hint_errors_for(tmp_path, {"persona_ark": "ark:/61903/1:1:6PFD-Q43C"})
+    assert len(errors) == 1
+    assert "`hint.identity` is missing" in errors[0]
+
+
+@pytest.mark.parametrize(
+    "persona_ark",
+    [
+        "ark:/61903/1:2:4BT2-KM71",
+        "ark:/61903/3:1:9Q97-YSRZ-GWP",
+        "ark:/61903/3:2:77TF-QRBM",
+        "6PFD-Q43C",
+        "LZ1N-QK9",
+        "ark:/61903/4:1:LZ1N-QK9",
+        "https://www.familysearch.org/ark:/61903/1:1:6PFD-Q43C",
+        "ark:/61903/1:1:6PFD-Q43C\n",
+        "ark:/61903/1:1:6pfd-q43c",
+        "ark:/61903/1:1:6PFD",
+        "ark:/61903/1:1:",
+        "ark:/61903/1:1:6PFD-Q43C, ark:/61903/1:1:QVS9-DHD",
+        "",
+        None,
+        ["ark:/61903/1:1:6PFD-Q43C"],
+    ],
+    ids=[
+        "1:2-record-ark",
+        "3:1-image-ark",
+        "3:2-image-ark",
+        "bare-persona-id",
+        "tree-pid",
+        "tree-person-ark",
+        "url-wrapped",
+        "trailing-newline",
+        "lowercase",
+        "no-id-suffix",
+        "prefix-only",
+        "two-arks",
+        "empty",
+        "null",
+        "list",
+    ],
+)
+def test_hint_bad_persona_ark_is_error(tmp_path, persona_ark):
+    hint = {"persona_ark": persona_ark, "identity": "same"}
+    errors = _hint_errors_for(tmp_path, hint)
+    assert len(errors) == 1
+    assert "`hint.persona_ark` must be a 1:1: record-persona ark" in errors[0]
+
+
+# A tree PID is the same 4-3 shape as a persona id, so `ark:/61903/1:1:<PID>`
+# passes the regex; only the comparison against `source_pid` catches it.
+_SOURCE_PID = "LZ1N-QK9"
+
+
+@pytest.mark.parametrize(
+    "source_pid",
+    [_SOURCE_PID, " LZ1N-QK9 ", "lz1n-qk9"],
+    ids=["exact", "padded", "lowercase"],
+)
+def test_hint_persona_ark_wrapping_source_pid_is_error(tmp_path, source_pid):
+    hint = {"persona_ark": f"ark:/61903/1:1:{_SOURCE_PID}", "identity": "same"}
+    errors = _hint_errors_for(tmp_path, hint, source_pid=source_pid)
+    assert len(errors) == 1
+    assert "wraps the tree person's PID (`source_pid`" in errors[0]
+
+
+def test_lint_fixture_hard_fails_a_hint_wrapping_source_pid(tmp_path):
+    _write_record_hint_meta(
+        tmp_path,
+        resolved=True,
+        hint={"persona_ark": f"ark:/61903/1:1:{_SOURCE_PID}", "identity": "different"},
+        source_pid=_SOURCE_PID,
+    )
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I1", "John", "Smith")),
+        findings=_HINT_FINDINGS,
+    )
+    _, errors = lint_fixture(tmp_path)
+    assert any("wraps the tree person's PID" in e for e in errors)
+
+
+@pytest.mark.parametrize(
+    "persona_ark",
+    ["ark:/61903/1:1:QVS9-DHD", "ark:/61903/1:1:LZ1N-QK9X", "ark:/61903/1:1:LZ1N-QK"],
+    ids=["other-4-3", "source-pid-prefix-4-4", "source-pid-prefix-4-2"],
+)
+def test_hint_persona_ark_not_equal_to_source_pid_passes(tmp_path, persona_ark):
+    hint = {"persona_ark": persona_ark, "identity": "same"}
+    assert _hint_errors_for(tmp_path, hint, source_pid=_SOURCE_PID) == []
+
+
+def test_hint_wrapping_source_pid_on_a_draft_is_not_checked(tmp_path):
+    hint = {"persona_ark": f"ark:/61903/1:1:{_SOURCE_PID}", "identity": "same"}
+    assert _hint_errors_for(tmp_path, hint, resolved=False, source_pid=_SOURCE_PID) == []
+
+
+@pytest.mark.parametrize("source_pid", [None, 7, ""], ids=["null", "int", "empty"])
+def test_hint_non_string_or_empty_source_pid_does_not_fire(tmp_path, source_pid):
+    hint = {"persona_ark": f"ark:/61903/1:1:{_SOURCE_PID}", "identity": "same"}
+    assert _hint_errors_for(tmp_path, hint, source_pid=source_pid) == []
+
+
+def test_hint_malformed_persona_ark_reports_shape_not_source_pid(tmp_path):
+    hint = {"persona_ark": _SOURCE_PID, "identity": "same"}
+    errors = _hint_errors_for(tmp_path, hint, source_pid=_SOURCE_PID)
+    assert len(errors) == 1
+    assert "`hint.persona_ark` must be a 1:1: record-persona ark" in errors[0]
+
+
+def test_hint_missing_persona_ark_is_error(tmp_path):
+    errors = _hint_errors_for(tmp_path, {"identity": "same"})
+    assert len(errors) == 1
+    assert "`hint.persona_ark` is missing" in errors[0]
+
+
+def test_hint_unknown_key_is_error(tmp_path):
+    hint = {"persona_ark": "ark:/61903/1:1:6PFD-Q43C", "identity": "same", "outcome": 2}
+    errors = _hint_errors_for(tmp_path, hint)
+    assert len(errors) == 1
+    assert "unrecognized field(s) ['outcome']" in errors[0]
+
+
+@pytest.mark.parametrize(
+    "hint",
+    ["same", "ark:/61903/1:1:6PFD-Q43C", True, 0, [], ["same"]],
+)
+def test_hint_not_an_object_or_null_is_error(tmp_path, hint):
+    errors = _hint_errors_for(tmp_path, hint)
+    assert len(errors) == 1
+    assert "`hint` must be an object or null" in errors[0]
+
+
+def test_hint_empty_object_reports_both_missing_fields(tmp_path):
+    errors = _hint_errors_for(tmp_path, {})
+    assert any("`hint.persona_ark` is missing" in e for e in errors)
+    assert any("`hint.identity` is missing" in e for e in errors)
 
 
 # --- genre-aware WARN advice (issue #2306 / PR #2634) ------------------

@@ -225,6 +225,10 @@ AGENT_WRITABLE_SECTIONS = {
     # Its log entries go through research_log_append and build_external_search_url,
     # which carry no `section`.
     "search-external-sites": frozenset({"plan_items"}),
+    # search-records updates the status of the plan item a search executed (Step 6).
+    # Its search log goes through research_log_append, which carries no `section`.
+    # This lane is a repo CI requirement (plugin-hooks.test.ts), not a hook route.
+    "search-records": frozenset({"plan_items"}),
     # search-full-text updates the status of the plan item a search executed.
     # Its search log goes through research_log_append, which carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire

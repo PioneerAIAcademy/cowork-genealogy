@@ -12,11 +12,12 @@
       "given-name",
       "norway",
       "secondary-party",
-      "regression"
+      "regression",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute plan item pli_001 — search FamilySearch collection 1468080 ('Norway, Marriages, 1660-1926') for the marriage of Unna Halsteinsdatter (KZHH-VTX, b. May 1745, Hestdal, Meland, Hordaland), using her as the search principal.",
+    "delegation": "Execute plan item pli_001 — search FamilySearch collection 1468080 ('Norway, Marriages, 1660-1926') for the marriage of Unna Halsteinsdatter (KZHH-VTX, b. May 1745, Hestdal, Meland, Hordaland), using her as the search principal.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "anders-unna-marriage-search",
     "scenario_notes": null
   },
