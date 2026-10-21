@@ -62,6 +62,7 @@ from harness.orchestrator import (
 )
 from harness.runlog import (
     build_run_log,
+    bundled_cli_version,
     promote_partial_to_scratch,
     suppressed_failure,
     unexpected_pass,
@@ -824,11 +825,6 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(f"Auth: {auth.detail}")
-    # SDK-version probe (spec §15 known-risks): disallowed_tools enforcement
-    # has to be re-verified per SDK release.
-    from harness.skill_runner import _check_sdk_version
-    if (sdk_warning := _check_sdk_version()):
-        print(f"  WARNING: {sdk_warning}", file=sys.stderr)
     # Judge preflight. A missing key does not stop the skills from running —
     # it fails every *positive* test at the very end, after the suite has been
     # paid for in full, because a positive test cannot score pass without judge
@@ -1105,6 +1101,7 @@ def main(argv: list[str] | None = None) -> int:
                     tests=entries,
                     tool_search=args.tool_search,
                     store=store,
+                    cli_version=bundled_cli_version(),
                 )
                 partial_paths[skill] = write_partial_runlog(
                     log,
@@ -1513,6 +1510,7 @@ def main(argv: list[str] | None = None) -> int:
             review_sample=sample,
             tool_search=args.tool_search,
             store=store,
+            cli_version=bundled_cli_version(),
         )
         path = write_run_log(
             log,

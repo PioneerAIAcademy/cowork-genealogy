@@ -792,5 +792,662 @@
         }
       ]
     }
-  }
+  },
+  "census-page-two-households": {
+    "recordId": "capture:census-1860-butler-p37",
+    "document": {
+      "recordType": "census",
+      "documentForm": "page_image",
+      "census": {
+        "jurisdiction": "United States",
+        "year": 1860
+      },
+      "source": {
+        "title": "1860 U.S. Census, Butler Township, Schuylkill County, Pennsylvania, page 37",
+        "repository": "National Archives",
+        "locator": "dwellings 412-413"
+      },
+      "persons": [
+        {
+          "id": "p1",
+          "household": "1",
+          "gender": "male",
+          "names": [
+            {
+              "given": "Thomas",
+              "surname": "Flynn"
+            }
+          ],
+          "facts": [
+            {
+              "type": "age",
+              "value": "42"
+            },
+            {
+              "type": "birth",
+              "date": "~1818",
+              "place": "Ireland",
+              "computed": [
+                "date"
+              ]
+            },
+            {
+              "type": "occupation",
+              "value": "Laborer"
+            },
+            {
+              "type": "residence",
+              "date": "1860",
+              "place": "Butler Township, Schuylkill, Pennsylvania"
+            }
+          ]
+        },
+        {
+          "id": "p2",
+          "household": "1",
+          "gender": "female",
+          "names": [
+            {
+              "given": "Bridget",
+              "surname": "Flynn"
+            }
+          ],
+          "facts": [
+            {
+              "type": "age",
+              "value": "38"
+            },
+            {
+              "type": "birth",
+              "date": "~1822",
+              "place": "Ireland",
+              "computed": [
+                "date"
+              ]
+            },
+            {
+              "type": "residence",
+              "date": "1860",
+              "place": "Butler Township, Schuylkill, Pennsylvania"
+            }
+          ]
+        },
+        {
+          "id": "p3",
+          "household": "1",
+          "gender": "male",
+          "names": [
+            {
+              "given": "Patrick",
+              "surname": "Flynn"
+            }
+          ],
+          "facts": [
+            {
+              "type": "age",
+              "value": "12"
+            },
+            {
+              "type": "birth",
+              "date": "~1848",
+              "place": "Pennsylvania",
+              "computed": [
+                "date"
+              ]
+            },
+            {
+              "type": "education",
+              "value": "attended school"
+            },
+            {
+              "type": "residence",
+              "date": "1860",
+              "place": "Butler Township, Schuylkill, Pennsylvania"
+            }
+          ]
+        },
+        {
+          "id": "p4",
+          "household": "1",
+          "gender": "female",
+          "names": [
+            {
+              "given": "Mary",
+              "surname": "Flynn"
+            }
+          ],
+          "facts": [
+            {
+              "type": "age",
+              "value": "9"
+            },
+            {
+              "type": "birth",
+              "date": "~1851",
+              "place": "Pennsylvania",
+              "computed": [
+                "date"
+              ]
+            },
+            {
+              "type": "education",
+              "value": "attended school"
+            },
+            {
+              "type": "residence",
+              "date": "1860",
+              "place": "Butler Township, Schuylkill, Pennsylvania"
+            }
+          ]
+        },
+        {
+          "id": "p5",
+          "household": "2",
+          "gender": "male",
+          "names": [
+            {
+              "given": "Michael",
+              "surname": "Gallagher"
+            }
+          ],
+          "facts": [
+            {
+              "type": "age",
+              "value": "50"
+            },
+            {
+              "type": "birth",
+              "date": "~1810",
+              "place": "Ireland",
+              "computed": [
+                "date"
+              ]
+            },
+            {
+              "type": "occupation",
+              "value": "Miner"
+            },
+            {
+              "type": "residence",
+              "date": "1860",
+              "place": "Butler Township, Schuylkill, Pennsylvania"
+            }
+          ]
+        },
+        {
+          "id": "p6",
+          "household": "2",
+          "gender": "female",
+          "names": [
+            {
+              "given": "Ellen",
+              "surname": "Gallagher"
+            }
+          ],
+          "facts": [
+            {
+              "type": "age",
+              "value": "45"
+            },
+            {
+              "type": "birth",
+              "date": "~1815",
+              "place": "Ireland",
+              "computed": [
+                "date"
+              ]
+            },
+            {
+              "type": "residence",
+              "date": "1860",
+              "place": "Butler Township, Schuylkill, Pennsylvania"
+            }
+          ]
+        },
+        {
+          "id": "p7",
+          "household": "2",
+          "gender": "female",
+          "names": [
+            {
+              "given": "Catherine",
+              "surname": "Gallagher"
+            }
+          ],
+          "facts": [
+            {
+              "type": "age",
+              "value": "16"
+            },
+            {
+              "type": "birth",
+              "date": "~1844",
+              "place": "Pennsylvania",
+              "computed": [
+                "date"
+              ]
+            },
+            {
+              "type": "residence",
+              "date": "1860",
+              "place": "Butler Township, Schuylkill, Pennsylvania"
+            }
+          ]
+        },
+        {
+          "id": "p8",
+          "household": "2",
+          "gender": "male",
+          "names": [
+            {
+              "given": "John",
+              "surname": "Doyle"
+            }
+          ],
+          "facts": [
+            {
+              "type": "age",
+              "value": "24"
+            },
+            {
+              "type": "birth",
+              "date": "~1836",
+              "place": "Ireland",
+              "computed": [
+                "date"
+              ]
+            },
+            {
+              "type": "occupation",
+              "value": "Laborer"
+            },
+            {
+              "type": "residence",
+              "date": "1860",
+              "place": "Butler Township, Schuylkill, Pennsylvania"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "batch-of-four-documents": [
+    {
+      "recordId": "capture:burial-flynn-1871",
+      "document": {
+        "recordType": "burial",
+        "documentForm": "verbatim_transcript",
+        "source": {
+          "title": "St. Joseph's Church, Ashland, burial register, 1871, page 12",
+          "repository": "St. Joseph's Church, Ashland"
+        },
+        "persons": [
+          {
+            "id": "p1",
+            "principal": true,
+            "gender": "male",
+            "names": [
+              {
+                "given": "Thomas",
+                "surname": "Flynn"
+              }
+            ],
+            "facts": [
+              {
+                "type": "burial",
+                "date": "4 March 1871",
+                "place": "St. Joseph's cemetery, Ashland"
+              },
+              {
+                "type": "residence",
+                "date": "1871",
+                "place": "Ashland"
+              },
+              {
+                "type": "age",
+                "value": "53 years"
+              },
+              {
+                "type": "birth",
+                "date": "~1818",
+                "place": "Ireland",
+                "computed": [
+                  "date"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "statedRelation": "officiant",
+            "names": [
+              {
+                "given": "D.",
+                "surname": "O'Connor"
+              }
+            ],
+            "facts": []
+          }
+        ]
+      }
+    },
+    {
+      "recordId": "capture:baptism-flynn-1863",
+      "document": {
+        "recordType": "christening",
+        "documentForm": "verbatim_transcript",
+        "source": {
+          "title": "St. Joseph's Church, Ashland, baptismal register, 1863, page 40",
+          "repository": "St. Joseph's Church, Ashland"
+        },
+        "persons": [
+          {
+            "id": "p1",
+            "principal": true,
+            "gender": "female",
+            "names": [
+              {
+                "given": "Mary Ann",
+                "surname": "Flynn"
+              }
+            ],
+            "facts": [
+              {
+                "type": "christening",
+                "date": "7 June 1863"
+              },
+              {
+                "type": "birth",
+                "date": "30 May 1863"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "gender": "male",
+            "statedRelation": "father",
+            "names": [
+              {
+                "given": "Thomas",
+                "surname": "Flynn"
+              }
+            ],
+            "facts": []
+          },
+          {
+            "id": "p3",
+            "gender": "female",
+            "statedRelation": "mother",
+            "names": [
+              {
+                "given": "Bridget",
+                "surname": "Doyle"
+              }
+            ],
+            "facts": []
+          },
+          {
+            "id": "p4",
+            "statedRelation": "sponsor",
+            "names": [
+              {
+                "given": "Michael",
+                "surname": "Gallagher"
+              }
+            ],
+            "facts": []
+          },
+          {
+            "id": "p5",
+            "statedRelation": "sponsor",
+            "names": [
+              {
+                "given": "Ellen",
+                "surname": "Gallagher"
+              }
+            ],
+            "facts": []
+          },
+          {
+            "id": "p6",
+            "statedRelation": "officiant",
+            "names": [
+              {
+                "given": "D.",
+                "surname": "O'Connor"
+              }
+            ],
+            "facts": []
+          }
+        ],
+        "relationships": [
+          {
+            "type": "parent_child",
+            "person1": "p2",
+            "person2": "p1"
+          },
+          {
+            "type": "parent_child",
+            "person1": "p3",
+            "person2": "p1"
+          },
+          {
+            "type": "couple",
+            "person1": "p2",
+            "person2": "p3"
+          }
+        ]
+      }
+    },
+    {
+      "recordId": "capture:marriage-flynn-1845",
+      "document": {
+        "recordType": "marriage",
+        "documentForm": "verbatim_transcript",
+        "source": {
+          "title": "Kilmore parish, County Mayo, marriage register, 1845",
+          "repository": "Kilmore parish"
+        },
+        "persons": [
+          {
+            "id": "p1",
+            "principal": true,
+            "gender": "male",
+            "names": [
+              {
+                "given": "Thomas",
+                "surname": "Flynn"
+              }
+            ],
+            "facts": [
+              {
+                "type": "marriage",
+                "date": "11 February 1845"
+              },
+              {
+                "type": "residence",
+                "date": "1845",
+                "place": "Kilmore"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "principal": true,
+            "gender": "female",
+            "names": [
+              {
+                "given": "Bridget",
+                "surname": "Doyle"
+              }
+            ],
+            "facts": [
+              {
+                "type": "marriage",
+                "date": "11 February 1845"
+              },
+              {
+                "type": "residence",
+                "date": "1845",
+                "place": "Kilmore"
+              }
+            ]
+          },
+          {
+            "id": "p3",
+            "statedRelation": "witness",
+            "names": [
+              {
+                "given": "James",
+                "surname": "Doyle"
+              }
+            ],
+            "facts": []
+          },
+          {
+            "id": "p4",
+            "statedRelation": "witness",
+            "names": [
+              {
+                "given": "Honora",
+                "surname": "Flynn"
+              }
+            ],
+            "facts": []
+          },
+          {
+            "id": "p5",
+            "statedRelation": "officiant",
+            "names": [
+              {
+                "given": "P.",
+                "surname": "Walsh"
+              }
+            ],
+            "facts": []
+          }
+        ],
+        "relationships": [
+          {
+            "type": "couple",
+            "person1": "p1",
+            "person2": "p2"
+          }
+        ]
+      }
+    },
+    {
+      "recordId": "capture:obituary-bridget-flynn-1890",
+      "document": {
+        "recordType": "obituary",
+        "documentForm": "verbatim_transcript",
+        "source": {
+          "title": "Obituary of Bridget Flynn, Ashland Advocate, 12 April 1890",
+          "repository": "Ashland Advocate"
+        },
+        "persons": [
+          {
+            "id": "p1",
+            "principal": true,
+            "gender": "female",
+            "names": [
+              {
+                "given": "Bridget",
+                "surname": "Flynn"
+              }
+            ],
+            "facts": [
+              {
+                "type": "death",
+                "place": "Centre Street, Ashland"
+              },
+              {
+                "type": "age",
+                "value": "68 years"
+              },
+              {
+                "type": "birth",
+                "date": "~1822",
+                "place": "County Mayo",
+                "computed": [
+                  "date"
+                ]
+              },
+              {
+                "type": "immigration",
+                "date": "1849"
+              },
+              {
+                "type": "marital_status",
+                "value": "widow"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "gender": "male",
+            "statedRelation": "late husband",
+            "names": [
+              {
+                "given": "Thomas",
+                "surname": "Flynn"
+              }
+            ],
+            "facts": []
+          },
+          {
+            "id": "p3",
+            "gender": "male",
+            "statedRelation": "son",
+            "names": [
+              {
+                "given": "Patrick",
+                "surname": "Flynn"
+              }
+            ],
+            "facts": [
+              {
+                "type": "residence",
+                "place": "Shenandoah"
+              }
+            ]
+          },
+          {
+            "id": "p4",
+            "gender": "female",
+            "statedRelation": "daughter",
+            "names": [
+              {
+                "given": "Mary Ann",
+                "surname": "Gallagher"
+              }
+            ],
+            "facts": [
+              {
+                "type": "residence",
+                "place": "Ashland"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "couple",
+            "person1": "p1",
+            "person2": "p2"
+          },
+          {
+            "type": "parent_child",
+            "person1": "p1",
+            "person2": "p3"
+          },
+          {
+            "type": "parent_child",
+            "person1": "p1",
+            "person2": "p4"
+          }
+        ]
+      }
+    }
+  ]
 }

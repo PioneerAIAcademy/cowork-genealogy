@@ -63,7 +63,7 @@ Craft → keep as rubric dimension. Mechanical → move to a validator.
 
 A working Python harness at `eval/harness/`:
 
-- `pyproject.toml` + uv; deps with a tightened `claude-agent-sdk>=0.1.81,<0.2`
+- `pyproject.toml` + uv; deps with `claude-agent-sdk` pinned exactly to apps/server's `sandbox` group (was `>=0.1.81,<0.2`)
   bound so the session-cleanup contract can't silently regress.
 - `run_tests.py` — CLI with `--test`, `--skill`, `--tag` (repeatable),
   `--max-cost-usd`, `--max-wall-clock-seconds`, `--runlogs-root`,
@@ -124,10 +124,11 @@ Features added since v1.6 (the seventh-pass review):
   judge dimension scored pass"; zero dimensions can't satisfy that.
   Regression tests cover the unit-level outcome + the orchestrator
   integration via JudgeError mock.
-- **SDK-version probe** on harness startup. Pins claude-agent-sdk to a
-  tested-known-good range `>=0.1.81,<0.2`; emits a stderr warning if
-  the installed version is outside that range. Closes spec §15 known
-  risk on `permission_mode="dontAsk"` regression.
+- **SDK-version probe** on harness startup — retired 2026-10-21. The
+  SDK is now pinned exactly to the hosted alpha's
+  (`tests/unit/test_sdk_pin_matches_hosted.py`), and
+  `tests/unit/test_disallowed_backstop_binds.py` checks on every run that
+  `disallowed_tools` still removes the backstop tools on the pinned CLI.
 - **Leakage detector widened** with 4 new patterns: verdict-first
   ("Ireland is the right birthplace"), reason-baked-in
   ("since X is true"), negated forms ("should not conclude Y"), and
