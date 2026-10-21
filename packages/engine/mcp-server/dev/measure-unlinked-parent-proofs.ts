@@ -18,7 +18,11 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { unlinkedParentProofInvariants, unlinkedProofInvariants } from "../src/tools/research-append.js";
+import {
+  unlinkedParentNarrativeInvariants,
+  unlinkedParentProofInvariants,
+  unlinkedProofInvariants,
+} from "../src/tools/research-append.js";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
 const E2E = join(REPO, "eval", "runlogs", "e2e");
@@ -57,10 +61,13 @@ function documents(): Array<{ label: string; doc: any }> {
 
 let denominator = 0;
 const refused: string[] = [];
+const narrativeRefused: string[] = [];
 for (const { label, doc } of documents()) {
   for (const ps of Array.isArray(doc?.proof_summaries) ? doc.proof_summaries : []) {
     if (!["proved", "probable", "possible"].includes(ps?.tier)) continue;
     denominator++;
+    const narrative = unlinkedParentNarrativeInvariants(ps, doc);
+    if (narrative.length > 0) narrativeRefused.push(`${label} ${ps.id} (${ps.tier})\n    ${narrative[0].split(" — ")[1] ?? narrative[0]}`);
     const errors = unlinkedParentProofInvariants(ps, doc);
     if (errors.length === 0) continue;
     const alsoZeroLinks = unlinkedProofInvariants(ps, doc).length > 0;
@@ -69,4 +76,7 @@ for (const { label, doc } of documents()) {
 }
 for (const line of refused) console.log(line);
 console.log(`\nproofs above not_proved: ${denominator}; refused: ${refused.length}`);
+console.log("\nunlinkedParentNarrativeInvariants (a parentage stated in prose):");
+for (const line of narrativeRefused) console.log(line);
+console.log(`refused: ${narrativeRefused.length}`);
 console.log("snapshot: final document (a link written after the proof counts), so this is a lower bound");

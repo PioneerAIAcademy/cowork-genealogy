@@ -47,6 +47,7 @@ import {
   personaReachable,
   coreIdentifierContradictionInvariants,
   parentSide,
+  unlinkedParentNarrativeInvariants,
   unlinkedParentProofInvariants,
 } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
@@ -3187,6 +3188,117 @@ describe("research_append (Phase 3)", () => {
       const [msg] = unlinkedParentProofInvariants(proof("possible", ["a_010", "a_011", "a_012"]), pre(a, ["a_012"]));
       expect(msg).toContain("father (a_010)");
       expect(msg).not.toContain("mother (");
+      expect(msg).toContain("does NOT fix this");
+    });
+  });
+
+  // ut_proof_conclusion_32f (#3659): the parent's ids dropped from the citation,
+  // "the son of William Barker" left in the conclusion.
+  describe("a conclusion above not_proved may not state a parent nobody identified", () => {
+    const named = (id: string, record_role: string, given: string, record_id = "rec1") => ({
+      ...validAssertion(id), record_role, record_id, fact_type: "name",
+      value: `${given} Barker`, structured_value: { given, surname: "Barker" },
+    });
+    const proof = (tier: string, narrative: string, supporting = ["a_001"]) => ({
+      question_id: "q_001", tier, vehicle: "summary", shortfall: "gap",
+      supporting_assertion_ids: supporting, resolved_conflict_ids: [],
+      exhaustive_search_summary: "census", narrative_markdown: narrative,
+    });
+    const pre = (assertions: Record<string, unknown>[], linkedIds: string[] = []) => ({
+      assertions: [validAssertion("a_001"), ...assertions],
+      person_evidence: liveLinks("a_001", ...linkedIds),
+    });
+    const father = [named("a_010", "father", "William")];
+
+    it("refuses the ids dropped and the parentage left in the prose", async () => {
+      const state = phase3Research();
+      state.assertions.push(...father);
+      state.person_evidence = liveLinks("a_001");
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append",
+        entry: proof("probable", "**Conclusion:** born at Whitehaven, the son of William Barker, a sailor."),
+      } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/William \(a_010\).*person-evidence/);
+    });
+
+    it.each([
+      ["the son of William Barker"],
+      ["His parents were William and Martha Barker"],
+      ["born to William Barker and his wife"],
+      ["christened at St James, Whitehaven, son of William Barker (a sailor)"],
+    ])("refuses %j", (phrase) => {
+      expect(unlinkedParentNarrativeInvariants(proof("possible", `Jonathan was ${phrase}.`), pre(father))).toHaveLength(1);
+    });
+
+    it("reads a claim's text as well as the narrative", () => {
+      const entry = { ...proof("probable", "## C\nWhitehaven."), claims: [{ claim: "the son of William Barker", supporting_assertion_ids: ["a_001"] }] };
+      expect(unlinkedParentNarrativeInvariants(entry, pre(father))).toHaveLength(1);
+    });
+
+    it.each([
+      ["a sentence reporting a record", "The index reads Jonathan Barker, son of William Barker and Martha."],
+      ["a participle reporting a record", "A baptism record showing a Jonathan, son of William and Martha Barker, at Whitehaven."],
+      ["a record's child", "This entry — the christening of a Jonathan, son of William and Martha Barker — fits."],
+      ["quoted record text", 'The register reads "the son of William Barker".'],
+      ["single-quoted record text", "The entry reads 'the son of William Barker, sailor'."],
+      ["a different family set aside", "She was the daughter of a different William Barker family."],
+      ["a parentage naming nobody unidentified", "He was the son of Thomas Barker."],
+    ])("allows %s", (_label, narrative) => {
+      expect(unlinkedParentNarrativeInvariants(proof("probable", narrative), pre(father))).toEqual([]);
+    });
+
+    it("allows the parent once a name assertion for him is linked, on any record", () => {
+      const a = [...father, named("a_011", "father_of_bride", "William", "rec2")];
+      expect(unlinkedParentNarrativeInvariants(proof("probable", "the son of William Barker"), pre(a, ["a_011"]))).toEqual([]);
+    });
+
+    // mcaloney-mother: the subject's mother is the bride, and the proof states HER parents.
+    const marriage = (brideIsSubject: boolean) => ({
+      assertions: [
+        validAssertion("a_001"), validAssertion("a_002"),
+        { ...validAssertion("a_020"), record_id: "rec2", record_role: "bride" },
+        named("a_021", "father_of_bride", "William", "rec2"),
+      ],
+      person_evidence: [
+        ...liveLinks("a_001", "a_002"),
+        { ...liveLinks("a_020")[0], id: "pe_009", person_id: brideIsSubject ? "I1" : "I2" },
+      ],
+    });
+    const cited = ["a_001", "a_002", "a_020"];
+
+    it("ignores the parent of a party who is not the subject", () => {
+      expect(unlinkedParentNarrativeInvariants(proof("proved", "Jessie, daughter of William Barker, is the mother.", cited), marriage(false))).toEqual([]);
+    });
+
+    it("refuses the parent of a party who is the subject", () => {
+      expect(unlinkedParentNarrativeInvariants(proof("proved", "She was the daughter of William Barker.", cited), marriage(true))).toHaveLength(1);
+    });
+
+    it("ignores a parent on a record the summary does not cite", () => {
+      const a = [named("a_010", "father", "William", "rec9")];
+      expect(unlinkedParentNarrativeInvariants(proof("probable", "the son of William Barker"), pre(a))).toEqual([]);
+    });
+
+    it("allows not_proved and disproved", () => {
+      for (const tier of ["not_proved", "disproved"]) {
+        expect(unlinkedParentNarrativeInvariants(proof(tier, "the son of William Barker"), pre(father))).toEqual([]);
+      }
+    });
+
+    it("checks a narrative-only update to a summary already at probable", async () => {
+      const state = phase3Research() as any;
+      state.assertions.push(...father);
+      state.person_evidence = liveLinks("a_001");
+      state.proof_summaries = [{ id: "ps_001", ...proof("probable", "## C\nWhitehaven.") }];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001",
+        fields: { narrative_markdown: "## C\nWhitehaven, the son of William Barker." },
+      } as never);
+      expect(r.ok).toBe(false);
     });
   });
 
