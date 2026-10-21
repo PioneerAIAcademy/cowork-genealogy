@@ -375,18 +375,20 @@
       "callers": [],
       "writerTools": [
         "research_append",
-        "merge_tree_persons"
+        "merge_tree_persons",
+        "extraction_append"
       ],
       "toolAuthorized": [
-        "merge_tree_persons"
+        "merge_tree_persons",
+        "extraction_append"
       ],
       "enforceableAt": [
         "unit",
         "hook"
       ],
-      "notes": "Enforced at the hook plane since 2026-09-01, section-scoped: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the person-evidence AGENT. The section has one owner and `extraction_append` does not accept it, so a section rule fits and the field-scoped treatment `exhaustive_declaration` needed does not apply here — nothing on this section is required on every question. The unit plane resolves `agent:person-evidence` via `writer_sets(..., subject=skill_name)` when person-evidence is the suite's own subject (issue #2799 ruling, issue #2821 conversion). Known limit, stated rather than implied: `owner_denied` only inspects research_append, so `materialize_facts` with no `personId` mints a brand-new tree person and reaches this lane's work without passing the section check.",
-      "requires": "Only person-evidence links a persona to a tree person. Extraction is held off this section by tool identity: `extraction_append` does not accept it.",
-      "failure": "A skill writing an identity link asserts a `match_score` no tool computed — the exact failure that produced the narrower extraction tool.",
+      "notes": "Enforced at the hook plane since 2026-09-01, section-scoped: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the person-evidence AGENT. The section has one owner, and `extraction_append` writes it only in `personId` mode, and only the unchecked attachment links it composes whole in code, so a section rule fits and the field-scoped treatment `exhaustive_declaration` needed does not apply here — nothing on this section is required on every question. The unit plane resolves `agent:person-evidence` via `writer_sets(..., subject=skill_name)` when person-evidence is the suite's own subject (issue #2799 ruling, issue #2821 conversion). Known limit, stated rather than implied: `owner_denied` only inspects research_append, so `materialize_facts` with no `personId` mints a brand-new tree person and reaches this lane's work without passing the section check.",
+      "requires": "Only person-evidence makes an identity decision linking a persona to a tree person. `extraction_append({ personId })` writes the one other kind of link, by tool identity: an unchecked FamilySearch attachment, always `speculative`, with no `match_score` and the fixed `ATTACHMENT_LINK_RATIONALE`. An attachment link is only ever superseded, never raised in place.",
+      "failure": "A skill writing an identity link asserts a `match_score` no tool computed — the exact failure that produced the narrower extraction tool. An attachment link raised in place would turn an unchecked attachment into an identity without `same_person`.",
       "remedy": "Route the identity link through person-evidence.",
       "override": "none",
       "hookCallers": [

@@ -89,14 +89,22 @@ import {
 } from "../utils/record-persona.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
+import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
 interface SectionConfig {
   /** id prefix, including the trailing underscore (e.g. "src_"). */
   prefix: string;
-  /** Tool-owned timestamp stamped on append when the entry omits it. */
-  stampTimestamp?: { field: string; kind: "date" | "datetime" };
+  /** Tool-owned timestamp stamped on append when the entry omits it. With
+   *  `everyWrite`, stamped on every append and update, overwriting the caller's;
+   *  `restampOn` narrows the updates that move it to those setting one of its fields. */
+  stampTimestamp?: {
+    field: string;
+    kind: "date" | "datetime";
+    everyWrite?: boolean;
+    restampOn?: readonly string[];
+  };
   /** Nested section: entries live in `<parent>[<param>].<field>` (plan_items). */
   nested?: { parent: string; param: "planId"; field: string };
   /** Singleton object section (e.g. `project`): `op:"update"` shallow-merges
@@ -144,7 +152,18 @@ const SECTIONS: Record<string, SectionConfig> = {
   hypotheses: { prefix: "h_" },
   // Phase 3
   timelines: { prefix: "t_", stampTimestamp: { field: "generated", kind: "datetime" } },
-  proof_summaries: { prefix: "ps_" },
+  // `updated` is what `narrativeAndSearchSummaryTogether` compares the
+  // question's log against, so it moves on every write that checks either text
+  // against the log, not just the first, and never on one that checks neither.
+  proof_summaries: {
+    prefix: "ps_",
+    stampTimestamp: {
+      field: "updated",
+      kind: "datetime",
+      everyWrite: true,
+      restampOn: ["narrative_markdown", "exhaustive_search_summary"],
+    },
+  },
   evaluations: { prefix: "ev_", stampTimestamp: { field: "timestamp", kind: "datetime" } },
   known_holdings: { prefix: "kh_", stampTimestamp: CREATED_DATE },
   localities: { prefix: "loc_", stampTimestamp: CREATED_DATE },
@@ -1921,6 +1940,10 @@ export function unexplainedMoveInvariants(
     // The entry under write is already in the array; it must not vouch for itself.
     if (!pe || pe === entry || (entry.id && pe.id === entry.id)) continue;
     if (pe.person_id !== entry.person_id || pe.superseded_by) continue;
+    // An attachment link reuses the import's S, which an imported residence
+    // fact cites. Counting it here would stop that fact vouching, and so turn
+    // this gate off for exactly the subjects the baseline step links.
+    if (isAttachmentLink(pe)) continue;
     const a = assertionById.get(pe.assertion_id);
     if (!a || typeof a.source_id !== "string") continue;
     (pe.confidence === "confident" ? linkedConfident : linkedBelowConfident).add(a.source_id);
@@ -2233,6 +2256,14 @@ export function mintedFromThisRecord(
   // caught by both discriminators, 22 by the starting-tree baseline alone).
   if (FS_PERSON_PID.test(personId)) return false;
   if (startingPersonIds?.has(personId)) return false;
+  // A person with an attachment link came from FamilySearch: only an imported
+  // person has records attached there. Without this, reusing the import's S for
+  // an attached record makes that person's only ref reach this record, and a
+  // project with no starting-tree baseline would read them as minted from it,
+  // exempting any caller's link to them from the score gate.
+  if (((research?.person_evidence ?? []) as any[]).some((pe) => pe?.person_id === personId && isAttachmentLink(pe))) {
+    return false;
+  }
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
   if (!person) return false;
   const refs = new Set<string>();
@@ -2711,9 +2742,87 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
     `question '${qid}' already has a proof summary (${ids.join(", ")}), and a question may ` +
       "carry only one. Re-concluding is an UPDATE of that entry, not a second append: retry " +
       `with { section: "proof_summaries", op: "update", entryId: "${ids[0]}", fields: { … } }, ` +
-      "passing only the fields that changed. Appending here would leave two contradictory " +
+      "passing only the fields that changed — but if the question has been searched since the " +
+      "summary was written, `narrative_markdown` and `exhaustive_search_summary` count as one, so " +
+      "pass both or neither. Appending here would leave two contradictory " +
       "conclusions on one question, with nothing to say which is current.",
   ];
+}
+
+/** A summary's narrative and its `exhaustive_search_summary` are rewritten
+ *  together once the question has been searched since the summary was written.
+ *
+ *  Both say what was searched and what could still resolve the question, so a
+ *  later search that changes one changes the other. Observed 2026-10-09 (issue
+ *  #3177, G9GJ-959): after three more searches, `ps_002`'s summary was rewritten
+ *  to report them and its narrative's "What could resolve it" was left
+ *  recommending all three, while `ps_001` got the reverse — a new narrative over
+ *  a summary still calling the same images "Not completed". The re-invocation
+ *  rule said to pass only the fields that changed, and each update did.
+ *
+ *  Scoped to that case: a one-field update is refused only when a `log[]` entry
+ *  attributed to the summary's question (through a plan item of one of its
+ *  plans) was performed after the summary's pre-op `updated` stamp. With no
+ *  later search, a one-field edit — a tier change with a reworded narrative —
+ *  is ordinary and passes. A summary with no `updated` predates the stamp and
+ *  is never refused. `log` is not a `research_append` section, so live and
+ *  pre-call research carry the same log.
+ *
+ *  Update-only: an append already requires both. Passing a field's current
+ *  text again satisfies it — the point is that the caller re-checked it. */
+function narrativeAndSearchSummaryTogether(
+  op: any,
+  entry: any,
+  priorUpdated: unknown,
+  research: any,
+): string[] {
+  if (op?.op !== "update") return [];
+  const fields = op.fields ?? {};
+  const has = (k: string) => Object.prototype.hasOwnProperty.call(fields, k);
+  const narrative = has("narrative_markdown");
+  const summary = has("exhaustive_search_summary");
+  if (narrative === summary) return [];
+  const since = typeof priorUpdated === "string" ? datetimeMs(priorUpdated) : NaN;
+  if (Number.isNaN(since)) return [];
+  const qid = entry?.question_id;
+  if (typeof qid !== "string" || qid === "") return [];
+  const itemIds = new Set<string>();
+  for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
+    if (plan?.question_id !== qid) continue;
+    for (const item of Array.isArray(plan.items) ? plan.items : []) {
+      if (typeof item?.id === "string") itemIds.add(item.id);
+    }
+  }
+  const later = (Array.isArray(research?.log) ? research.log : [])
+    .filter(
+      (e: any) =>
+        e &&
+        itemIds.has(e.plan_item_id) &&
+        typeof e.performed === "string" &&
+        datetimeMs(e.performed) > since,
+    )
+    .map((e: any) => e.id ?? "(no id)");
+  if (later.length === 0) return [];
+  const [set, missing] = narrative
+    ? ["narrative_markdown", "exhaustive_search_summary"]
+    : ["exhaustive_search_summary", "narrative_markdown"];
+  return [
+    `proof_summaries update of ${op.entryId ?? "(no entryId)"} sets \`${set}\` without ` +
+      `\`${missing}\`, and question ${qid} has been searched since this summary was last ` +
+      `written (${later.join(", ")}). Both fields say what was searched and what could still ` +
+      "resolve the question, so read those log entries, rewrite both, and pass both in this one " +
+      `update. If \`${missing}\` is still accurate after you check it against them, pass its ` +
+      "current text unchanged. Leaving one stale is how a narrative ends up recommending records " +
+      "its own summary says were searched.",
+  ];
+}
+
+/** Epoch ms of an `iso_datetime`, accepting the dash-separated time form the
+ *  schema allows (`2026-05-01T10-15-00Z`); NaN when it does not parse. */
+function datetimeMs(value: string): number {
+  const m = /^(\d{4}-\d{2}-\d{2}T\d{2})[:-](\d{2})[:-](\d{2})(?:[.-](\d+))?(.*)$/.exec(value);
+  if (!m) return Date.parse(value);
+  return Date.parse(`${m[1]}:${m[2]}:${m[3]}${m[4] ? "." + m[4] : ""}${m[5]}`);
 }
 
 /** A `proof_summaries` write when the persons this proof bears on — its
@@ -2767,20 +2876,24 @@ export function competingParentSetsInvariants(
 
 /** A conclusion above `not_proved` may not rest on evidence no identity decision
  *  has touched: refused when none of the summary's supporting assertions carries
- *  a live `person_evidence` link in the pre-call document.
+ *  a live `person_evidence` link that is not speculative (`countsForProofGate`)
+ *  in the pre-call document. A speculative link is a candidate, not an identity,
+ *  and an unchecked FamilySearch attachment is always speculative.
  *
  *  None, not all. A household record leaves its children and wife unlinked once
  *  the subject is linked, so an all-linked rule would refuse 27 of 211 committed
- *  e2e proofs; none-linked refuses 3, and every one of the 3 comes from a run
- *  with no `person_evidence` row at all (chresten-nielsen-daughter 2026-08-09,
- *  victoriano-macatangay-parents 2026-08-13 ×2). That is the identity step never
- *  run, which is the case worth refusing: LZJF-J13 (issue #3177) concluded
- *  `probable` on "correlation across several independent entries" with 0 of 15
- *  assertions linked.
+ *  e2e proofs. This rule refuses 5 of 206 (re-counted 2026-10-20). 3 come from
+ *  runs with no live link at all (chresten-nielsen-daughter 2026-08-09,
+ *  victoriano-macatangay-parents 2026-08-13 ×2): the identity step never run,
+ *  the case worth refusing. LZJF-J13 (issue #3177) concluded `probable` on
+ *  "correlation across several independent entries" with 0 of 15 assertions
+ *  linked. The other 2 rest on speculative links only (cruz-corona-ancestry
+ *  ps_001 proved, robert-lord-children ps_001 disproved).
  *
  *  Pre-call snapshot, as the conflict gates: a batch may not supply the link and
- *  spend it on a tier in the same call — and `person_evidence` is written only by
- *  person-evidence, never by the agent writing the proof. */
+ *  spend it on a tier in the same call. `person_evidence` is written by
+ *  person-evidence and, for unchecked attachments only, by extraction_append —
+ *  never by the agent writing the proof. */
 export function unlinkedProofInvariants(entry: any, preCallResearch: any): string[] {
   const tier = entry?.tier;
   if (typeof tier !== "string" || tier === "not_proved") return [];
@@ -2793,13 +2906,14 @@ export function unlinkedProofInvariants(entry: any, preCallResearch: any): strin
   if (supporting.length === 0) return [];
   const linked = new Set(
     (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : [])
-      .filter((pe: any) => pe?.superseded_by == null)
+      .filter(countsForProofGate)
       .map((pe: any) => pe?.assertion_id),
   );
   if (supporting.some((id: string) => linked.has(id))) return [];
   return [
     `proof_summaries ${entry.id ?? "(new entry)"}: tier '${tier}' rests on ${supporting.length} ` +
-      `supporting assertion(s), and none is linked to a person in person_evidence. A conclusion ` +
+      `supporting assertion(s), and none is linked to a person in person_evidence by a link that ` +
+      `is not speculative (a speculative link is a candidate, not an identity). A conclusion ` +
       `correlates records about the same person, and no identity decision says these records ` +
       `are about anyone. Run person-evidence on those assertions first (from an agent, hand back ` +
       `to the main thread and name it), then send this write again. Recording the attempt at ` +
@@ -4495,6 +4609,9 @@ function applyOne(
   createdAssertions?: ReadonlySet<string>,
   personLinks?: ReadonlyArray<PersonLink>,
   birthPlaceCoords?: BirthPlaceCoords,
+  // `ResearchAppendOptions.attachmentLink`: only extraction_append's personId
+  // mode sets it, as a function argument no tool input reaches.
+  attachmentLink = false,
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -4687,6 +4804,8 @@ function applyOne(
   let entryId: string;
   let resultEntry: any;
   let arrayIndex: number | undefined;
+  // The entry's own timestamp as it stood before this op restamped it.
+  let priorStamp: unknown;
   // An update's link pair and retired state as they stood BEFORE its fields merge,
   // so the rejected-link gate below can tell an edit from a re-link.
   let priorPair: { assertion_id: unknown; person_id: unknown; superseded_by: unknown } | undefined;
@@ -4712,7 +4831,7 @@ function applyOne(
     validateInformantQualityFloor(newEntry);
     validateRelationshipDirection(newEntry);
     const stamp = config.stampTimestamp;
-    if (stamp && newEntry[stamp.field] === undefined) {
+    if (stamp && (stamp.everyWrite || newEntry[stamp.field] === undefined)) {
       newEntry[stamp.field] = stamp.kind === "date" ? today() : now();
     }
     array.push(newEntry);
@@ -4775,6 +4894,8 @@ function applyOne(
       }
     }
 
+    priorStamp = config.stampTimestamp ? existing[config.stampTimestamp.field] : undefined;
+
     // A completed plan item stays completed. search-records writes
     // `in_progress` after every search it logs, and extraction_append completes
     // the item once a record it found is extracted, so a later search on the
@@ -4824,6 +4945,14 @@ function applyOne(
     for (const [k, v] of Object.entries(op.fields)) {
       if (k === "id") continue;
       existing[k] = v;
+    }
+    const updateStamp = config.stampTimestamp;
+    if (updateStamp?.everyWrite) {
+      const moves = !updateStamp.restampOn ||
+        updateStamp.restampOn.some((k) => Object.prototype.hasOwnProperty.call(op.fields, k));
+      if (moves) existing[updateStamp.field] = updateStamp.kind === "date" ? today() : now();
+      else if (priorStamp === undefined) delete existing[updateStamp.field];
+      else existing[updateStamp.field] = priorStamp;
     }
     normalizeDateFields(existing);
     normalizeAccessDate(existing);
@@ -5176,6 +5305,28 @@ function applyOne(
     if (reRaising) {
       invariantErrors.push(...rejectedLinkInvariants(resultEntry, research));
     }
+    // An attachment link is only ever superseded. Raising it in place would skip
+    // same_person: the score gate checks an update only when it writes
+    // `match_score`, `assertion_id` or `person_id`, so a confidence edit alone
+    // would turn an unchecked attachment into an identity.
+    if (op.op === "update") {
+      const stored = (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : []).find(
+        (pe: any) => pe && pe.id === op.entryId,
+      );
+      const fieldKeys = Object.keys(op.fields ?? {}).filter((k) => k !== "id");
+      if (
+        stored &&
+        isAttachmentLink(stored) &&
+        !(fieldKeys.length === 1 && fieldKeys[0] === "superseded_by")
+      ) {
+        invariantErrors.push(
+          `person_evidence ${op.entryId} is an unverified FamilySearch attachment link, which is only ` +
+            `ever superseded. To raise it, score the pair with same_person({ projectPath, assertionId: ` +
+            `'${stored.assertion_id}', treePersonId: '${stored.person_id}' }), append a new link at the ` +
+            `confidence the score supports, then update this one with only { superseded_by: "<new pe_ id>" }.`,
+        );
+      }
+    }
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
     invariantErrors.push(...coreIdentifierConflictInvariants(resultEntry));
     // A REFUSAL, not a warning. The lead's standing ruling on issue #2272 is
@@ -5248,7 +5399,12 @@ function applyOne(
         scoreFields.some((f) =>
           Object.prototype.hasOwnProperty.call((op as any).fields ?? {}, f),
         ));
-    if (writesScore) {
+    // An attachment link carries no score by design (lead, 2026-10-19: the
+    // baseline step assumes every attachment is correct, with no same_person
+    // gate). Exempt only on extraction_append's internal flag AND the entry's
+    // full attachment shape, so neither half alone reaches the exemption.
+    const exemptAttachment = attachmentLink && op.op === "append" && isAttachmentLink(resultEntry);
+    if (writesScore && !exemptAttachment) {
       invariantErrors.push(
         ...personEvidenceScoreInvariants(
           resultEntry,
@@ -5308,6 +5464,7 @@ function applyOne(
     // update walked past it. `oneSummaryPerQuestion` excludes the entry by id,
     // so an ordinary update of an existing summary still passes.
     invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
+    invariantErrors.push(...narrativeAndSearchSummaryTogether(op, resultEntry, priorStamp, research));
     // Reads PRE-CALL tree and PRE-CALL research: a same-batch hypothesis write
     // does not satisfy this precondition. Gated only on the entry's standing
     // tier (not_proved/disproved pass), not on which fields this op touches.
@@ -6400,15 +6557,21 @@ async function prepareOps(
 export interface ResearchAppendOptions {
   /** Sections this caller may write. Omitted = every section (`research_append`). */
   allowedSections?: ReadonlySet<string>;
+  /** extraction_append's personId mode: its `person_evidence` appends of the
+   *  attachment shape (`isAttachmentLink`) skip the score gate. Never set by a
+   *  tool caller. */
+  attachmentLink?: boolean;
   /** Tool name used in lane-rejection text, so a narrow caller names itself. */
   toolName?: string;
 }
 
 /**
  * The ids of the existing sources that already cover any of `bareRecordIds`,
- * read off the assertions that cite them (§3.4.1). The one derivation of
- * "is this record already extracted", shared by source-reuse detection here and
- * by `extraction_append`'s resend skip, so the two cannot disagree.
+ * read off the assertions that cite them (§3.4.1). Source-reuse detection here
+ * passes one record's own id. `extraction_append`'s resend skip passes a wider
+ * set: every persona ARK of a `record_read` sidecar that lists the requested id,
+ * because a record extracted under one persona's ARK is the same record when
+ * another persona's ARK asks for it.
  */
 export function sourceIdsForRecordIds(research: any, bareRecordIds: ReadonlySet<string>): Set<string> {
   const out = new Set<string>();
@@ -6603,6 +6766,7 @@ export async function researchAppend(
             prep.createdAssertions,
             prep.personLinks,
             prep.birthPlaceCoords,
+            options.attachmentLink === true,
           ),
         );
       } catch (e) {
