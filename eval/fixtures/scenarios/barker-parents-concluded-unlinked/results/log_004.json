@@ -1,0 +1,24 @@
+{
+ "log_id": "log_004",
+ "tool": "record_search",
+ "retrieved": "2026-10-20T15:50:54.804Z",
+ "returned_count": 0,
+ "payload": {
+  "query": {
+   "count": 20,
+   "deathYearFrom": 1930,
+   "deathYearTo": 1934,
+   "givenName": "Amanda",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2",
+   "recordCountry": "United States",
+   "recordSubdivision": "Mississippi",
+   "surname": "Ainsworth"
+  },
+  "totalMatches": 685,
+  "paginationCappedAt": 4999,
+  "returned": 20,
+  "offset": 0,
+  "hasMore": true,
+  "results": []
+ }
+}

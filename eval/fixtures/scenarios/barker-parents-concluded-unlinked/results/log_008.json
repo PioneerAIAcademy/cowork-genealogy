@@ -1,0 +1,22 @@
+{
+ "log_id": "log_008",
+ "tool": "record_search",
+ "retrieved": "2026-10-20T15:57:35.947Z",
+ "returned_count": 0,
+ "payload": {
+  "query": {
+   "collectionId": "3308840",
+   "count": 50,
+   "givenName": "John",
+   "givenNameAlt": "Jonathan",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2",
+   "surname": "Barker"
+  },
+  "totalMatches": 28,
+  "paginationCappedAt": 4999,
+  "returned": 28,
+  "offset": 0,
+  "hasMore": false,
+  "results": []
+ }
+}

@@ -565,7 +565,7 @@ agents.**
 | **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
-| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220 and 2.1.294 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12 and 2026-10-20; the harnesses' CLI 2.1.139 is unprobed). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
+| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220 and 2.1.294 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12 and 2026-10-20; the harnesses run the hosted CLI, 2.1.294). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
 | **Per-spawn effort** (hosted, CLI 2.1.294+) | the `Agent` call's own `effort` field, written by `real_agent._pretool_hook` from `SUBAGENT_EFFORT` / `SUBAGENT_EFFORT_BY_AGENT`; outranks the agent definition's `effort:`; matches bare and `genealogy-research:` names. `ORCHESTRATOR_EFFORT` alone pins every helper to `HELPER_DEFAULT_EFFORT` (`high`) so only the main thread moves — measured 2026-10-20: main `medium`, `person-evidence` `high` | unset — the hook adds nothing. `api_calls.effort` records each request's `output_config.effort`; `make alpha-costs` splits the by-agent table on it |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
@@ -1500,8 +1500,8 @@ edit and re-emit.**
 
 > **Today:** `research_query` returns 50 items per call with a `truncated` flag
 > and an `offset` parameter for paging past 50, and covers
-> **12 of the 15** `research.json` sections — missing `project`,
-> `researcher_profile`, and `known_holdings`. On the tree side,
+> **14 of the 18** `research.json` sections — missing `project`,
+> `researcher_profile`, `known_holdings`, and `warning_justifications`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,
 > sourceRefs), but there is **no query surface over `tree.gedcomx.json`** the way
 > `research_query` gives one over `research.json`.
@@ -1565,8 +1565,10 @@ duplicated and the *value* it reads is centralized in project state.
 
 ### If you're asked to…
 
-**Add a field or section to `research.json`.** Ten sites in the shipping product
-— and **two of them are checked by nothing.** *(Unprefixed paths are under
+**Add a field or section to `research.json`.** Fourteen sites in the shipping
+product, the last four only for a new section or a field holding tree person ids
+— and **three of them (8, 11 and 14) are checked by nothing**, while 2 is checked
+only for closed-enum values. *(Unprefixed paths are under
 `packages/engine/mcp-server/`. The eval CRUD UI carries a parallel scenario
 viewer, `eval/app/components/scenario/`. Its **types** are no longer a site:
 `lib/schema.ts` re-exports `@genealogy/schema`, so site 5 covers it and
@@ -1583,24 +1585,29 @@ product one.)*
 |---|---|---|
 | 1 | `docs/specs/schemas/research.schema.json` | `make engine-test` |
 | 2 | the prose table in `docs/specs/research-schema-spec.md` (and `simplified-gedcomx-spec.md` Section 5) | `make engine-test` (`enum-drift.test.ts`) — closed-enum value rows only; the field tables and prose descriptions stay unchecked |
-| 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema) | `make engine-test` |
+| 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema); for a new section also `ID_PREFIXES` and the section's own `validate*` pass | `make engine-test`; the `validate*` pass, nothing |
 | 4 | `packages/schema/schemas/research.schema.json` | `make harness-test` — held **byte-identical** to site 1 (and every schema) by `test_schema_mirrors.py`, which loops both trees |
 | 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches. One value-type constraint is now held, by a type-level assertion in that package's own `tsc` rather than by this lint: `Plan.items` is a non-empty tuple, mirroring the schema's only property-level `minItems` (`packages/schema/src/type-assertions.ts`) |
-| 6 | `src/tools/research-append-examples.ts` — the worked-example registry | round-trip validity only |
+| 6 | `src/tools/research-append-examples.ts` — the worked-example registry; the section's `DEF_FOR` row in `tests/packaging/research-append-examples.test.ts` | `make engine-test` requires an example for every `RESEARCH_APPEND_SECTIONS` section and a `DEF_FOR` row for every example, checks each against the schema, and round-trips every registry example through `research_append` (`SECTIONS_WITH_EXAMPLES` in `tests/tools/research-append.test.ts`, read from the registry) |
 | 7 | `packages/viewer-ui/src/components/sections/<X>Section.tsx` (+ `.module.css`) | `make engine-test` (`field-render-drift.test.ts`) — but only as a **sibling outlier**: if the object renders nothing at all, nothing fires |
 | 8 | the `SKILL.md` of whichever skill must populate it | **nothing** |
 | 9 | *(required only)* `eval/fixtures/scenarios/*/research.json` + the eval Python stubs | eval suites fail until backfilled |
 | 10 | *(required only)* `packages/viewer-ui/src/lib/__fixtures__/` | `make typecheck` |
+| 11 | *(a section `research_append` writes)* its `SECTIONS` entry in `src/tools/research-append.ts` (prefix, stamp, `updatableFields`) and its name in `RESEARCH_APPEND_SECTIONS`, the `section` enum | **nothing** — a section left out is simply unwritable; once listed, sites 6 and 12 bind it |
+| 12 | *(new section)* its row in `docs/specs/schemas/ownership.json` | `make engine-test` (`ownership-manifest.test.ts`: one row per schema property and `research_append` section, and `merge_tree_persons` among the writer tools of every section the site-14 walker reaches) |
+| 13 | *(new array section)* `src/tools/research-query.ts`: `RESEARCH_QUERY_SECTIONS` with a `SECTION_FILTERS` entry, or `RESEARCH_QUERY_EXCLUDED` with its reason; `RESEARCH_QUERY_OPTIONAL_SECTIONS` when the schema does not require it; the section list in the tool's description | `make engine-test` (`research-query.test.ts`: every array section queryable or excluded, the optional set exact; `tsc`: the filter entry); the description, nothing |
+| 14 | *(holds tree person ids)* `src/validation/person-id-refs.ts` — `PersonIdRefField`, `PERSON_ID_REF_FIELDS` and a block in `iteratePersonIdRefs`, the one walker behind the validator's dangling-id check and `merge_tree_persons`' re-key; `ResearchRefsUpdated` and its zero object in `src/tools/merge-shared.ts`; the re-pointed list in `merge_tree_persons`' description | **nothing** for the walker: an unwalked id is never re-keyed by a merge or reported once it dangles. Once walked, `make engine-test` requires the `ResearchRefsUpdated` key (`tsc`) and site 12's writer tool |
 
 Two things the site list alone won't tell you:
 
 - **Sites 6, 7, and 8 are the "did this field ever become real" set** — 6 teaches
   the model the shape, 8 tells a skill to write it, 7 shows it to the researcher
-  in both the Electron viewer and the web workbench. 6 is checked for round-trip
-  validity and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
+  in both the Electron viewer and the web workbench. 6 is checked against the
+  schema and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
   A change touching only 1–5 is a schema change, not a feature.
 - **Run `make test-all`.** A schema field lands in four different suites —
-  `engine-test` (sites 1, 3, 6, 7), `harness-test` (the JSON-schema mirror, site 4,
+  `engine-test` (sites 1, 3, 6, 7, 12 and 13, and 14 once the walker yields the
+  field), `harness-test` (the JSON-schema mirror, site 4,
   byte-identical across both trees via `test_schema_mirrors.py`), `test-js` (the
   TS-interface mirror, site 5) and `typecheck` (site 10) — and no shorter target
   reaches all four. Naming them individually is how the last one gets skipped.
