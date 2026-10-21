@@ -1051,10 +1051,14 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 
 # ── Source screen (issue #3408) ──
 # Every path is outside the repo: the truth set is restricted. Report counts only.
-.PHONY: source-screen-snapshot source-screen-baseline source-screen-plant source-screen-judge source-screen-score
-source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source screen: make source-screen-snapshot PIDS=<file> OUT=<dir> [SAMPLE=100] [SEED=1]
+.PHONY: source-screen-snapshot source-screen-attachments source-screen-baseline source-screen-plant source-screen-judge source-screen-score
+source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source screen: make source-screen-snapshot PIDS=<file> OUT=<dir> [SAMPLE=100] [SEED=1] [TREE=<researcher tree id>]
 	@test -n "$(PIDS)" -a -n "$(OUT)" || { echo "ERROR: set PIDS and OUT (both outside the repo)" >&2; exit 1; }
-	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts snapshot --pids "$(abspath $(PIDS))" --out "$(abspath $(OUT))" $(if $(SAMPLE),--sample $(SAMPLE)) $(if $(SEED),--seed $(SEED))
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts snapshot --pids "$(abspath $(PIDS))" --out "$(abspath $(OUT))" $(if $(SAMPLE),--sample $(SAMPLE)) $(if $(SEED),--seed $(SEED)) $(if $(TREE),--tree $(TREE))
+
+source-screen-attachments: $(ENGINE_DEPS) ## Re-read a snapshot's attachments from a researcher tree: make source-screen-attachments SNAPSHOT=<dir> TREE=<tree id>
+	@test -n "$(SNAPSHOT)" -a -n "$(TREE)" || { echo "ERROR: set SNAPSHOT and TREE" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts attachments --snapshot "$(abspath $(SNAPSHOT))" --tree $(TREE)
 
 source-screen-baseline: $(ENGINE_DEPS) ## Score a snapshot with the existing checks, offline: make source-screen-baseline SNAPSHOT=<dir> [THRESHOLD=0.5]
 	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }

@@ -261,6 +261,41 @@ FamilySearch's published docs; it was found by probing, and it can move.
 
 ---
 
+## Researcher trees: the session's current tree
+
+The endpoint takes no tree parameter. It answers from the session's **current
+tree**, which defaults to the Family Tree. Probed live 2026-10-21 on a record
+attached in a researcher tree:
+
+| Request | Answer |
+|---|---|
+| Plain (session tree `PRIVATE`) | the Family Tree person the record is attached to |
+| `?treeId=<tree>` | same: the parameter is ignored |
+| `?collection=cet&treeId=<tree>` | same: ignored |
+| session switched to `<tree>` | the researcher-tree person, each entry carrying `"treeId"`, plus entries attached only to a relationship (`parentChildRelationships`, no `persons`) |
+
+The current tree is read with `GET` and set with `POST {"treeId": …}` (204) on
+`/service/tree/tree-data/user/CURRENT/tree/session`.
+
+So the tool function takes an optional third argument, `{ treeId }`. With it,
+`withSessionTree` (`src/utils/session-tree.ts`) reads the current tree, switches
+to `treeId`, makes the call, and restores the original whether the call succeeds
+or throws. A failed restore is an error, never silent. A switch still in flight
+is recorded, and `source-screen`'s SIGINT handlers call
+`restoreSwitchedSessionTrees()` before exiting, so Ctrl-C does not leave the
+session on the researcher tree. Callers on one principal
+run one at a time, because the selection is per session, not per request: while
+it is switched, every other caller on the session (the user's open browser tabs
+included) sees the researcher tree. The lock is in-process only, so two
+processes sharing a session can still interleave.
+
+`treeId` is **not** in the MCP schema. An agent has no tree id to pass, and the
+only caller today is `dev/source-screen.ts` (`snapshot --tree`, and the
+`attachments` subcommand that re-reads an existing snapshot). An entry with no
+`persons` counts the URI as `unattached`, as before.
+
+---
+
 ## Files
 
 ### `packages/engine/mcp-server/src/types/source-attachments.ts`
