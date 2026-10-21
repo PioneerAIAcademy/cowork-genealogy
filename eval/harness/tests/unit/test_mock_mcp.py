@@ -1983,6 +1983,29 @@ def test_image_transcribe_capture_id_for_a_file(tmp_path, monkeypatch):
     assert seen["element"]["source"] == {"file": "uploads/will-scan.page1.jpg"}
 
 
+@pytest.mark.parametrize("args,expected", [
+    ({"imageArk": "ark:/61903/3:1:3Q9M-CS80-L7Q2"}, "ark:/61903/3:1:3Q9M-CS80-L7Q2"),
+    ({"ark": "  ", "imageArk": "ark:/61903/3:1:3Q9M-CS80-L7Q2"}, "ark:/61903/3:1:3Q9M-CS80-L7Q2"),
+    ({"ark": "ark:/61903/3:1:AAAA-BBBB-CCC", "imageArk": "  "}, "ark:/61903/3:1:AAAA-BBBB-CCC"),
+])
+def test_image_transcribe_folds_image_ark_into_ark(tmp_path, monkeypatch, args, expected):
+    """record_read hands back `imageArk`; production folds it into `ark`, so the
+    staged page is keyed and sourced by it rather than staged with an empty id."""
+    seen = {}
+
+    def _capture(script, stdin, timeout):
+        seen.update(json.loads(stdin))
+        raise TimeoutError("stop here")
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _capture)
+    with pytest.warns(UserWarning):
+        mock_mcp._stage_image_transcribe(tmp_path, args, {"transcription": "x"})
+    if not seen:
+        pytest.skip("no engine build: the node script was never reached")
+    assert seen["element"]["id"] == expected
+    assert seen["element"]["source"] == {"ark": expected}
+
+
 def test_image_transcribe_stages_the_scan_ref_beside_the_text(tmp_path, monkeypatch):
     """Production stages the retained scan's imageRef as `image_ref`, which
     extraction_append cites as the source's image_filename; a response with no

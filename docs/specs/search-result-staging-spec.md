@@ -74,8 +74,9 @@ has one definition.
 person_read's memories leg calls the function in-process, below the MCP boundary where the strip
 is applied, and keeps the text (`image-transcribe-tool-spec.md` §5.5).
 
-The change is **purely additive and back-compatible**: no `projectPath` → the tools
-behave exactly as today.
+For the search tools the change is **purely additive and back-compatible**: no
+`projectPath` → they behave exactly as before. `image_transcribe` is the exception: it
+requires `projectPath` and refuses a call without one.
 
 **Inline-payload strip (overflow protection).** Once a producer has staged its
 full payload, it drops the heavy per-result field from the *inline* copy so a

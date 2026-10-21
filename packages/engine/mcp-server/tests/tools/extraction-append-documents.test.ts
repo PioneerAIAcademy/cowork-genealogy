@@ -352,6 +352,58 @@ describe("extraction_append: documents", () => {
     expect((await read()).log ?? []).toHaveLength(0);
   });
 
+  it("a logged page is written even when the staged page beside it is refused", async () => {
+    const pre = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", outcome: "positive", resultsExamined: 1,
+      stagedResultsRef: await stageScan(),
+    } as any);
+    if (!pre.ok || !("resultsRef" in pre)) throw new Error(`setup log refused: ${JSON.stringify(pre)}`);
+    const r = await run([
+      { recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: pre.resultsRef! },
+      { recordId: "capture:obituary-pruned", document: obituary, transcriptionRef: "results/.staging/pruned-after-24h.json" },
+    ]);
+    expect(r.ok).toBe(true);
+    expect(r.records[0]).toMatchObject({ status: "extracted", logId: pre.logId });
+    expect(r.records[0].srcId).toBeTruthy();
+    expect(r.records[1].status).toBe("refused");
+    const after = await read();
+    expect(after.sources).toHaveLength(1);
+    expect(after.sources[0].log_entry_id).toBe(pre.logId);
+  });
+
+  it("refuses a logged search sidecar passed as a transcription, and writes nothing", async () => {
+    const staged = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: { surname: "Whitaker" }, results: [{ recordId: "ark:/61903/1:1:QVS9-DHDB", names: ["Harold Whitaker"] }] },
+    });
+    const pre = await researchLogAppend({
+      projectPath: dir, tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: staged!.resultsRef,
+    } as any);
+    if (!pre.ok || !("resultsRef" in pre)) throw new Error(`setup log refused: ${JSON.stringify(pre)}`);
+    const r = await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: pre.resultsRef! }]);
+    expect(r.ok).toBe(false);
+    expect(r.records[0].errors?.[0]).toMatch(/image_transcribe log entry/);
+    expect((await read()).sources ?? []).toHaveLength(0);
+  });
+
+  it("two documents on one staged page log it once and both are written with the page", async () => {
+    const ref = await stageScan("images/004022578_00190.jpg");
+    const r = await run([
+      { recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref },
+      { recordId: "capture:obituary-whitaker-neighbour", document: obituary, transcriptionRef: ref },
+    ]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.records.map((x: any) => x.status)).toEqual(["extracted", "extracted"]);
+    const after = await read();
+    expect(after.log).toHaveLength(1);
+    expect(after.sources).toHaveLength(2);
+    for (const s of after.sources) {
+      expect(s.log_entry_id).toBe(after.log[0].id);
+      expect(s.transcription).toMatch(/Harold Dean Whitaker/);
+    }
+  });
+
   it("flags an Old Style date in the summary without changing it", async () => {
     const baptism = {
       recordType: "christening",
@@ -445,9 +497,76 @@ describe("extraction_append: documents", () => {
     expect(flagged.find((v: any[]) => v[0] === "occupation")?.[1]).toBe("skipper [?]");
     const marked = await values("capture:b2", { given: "Tollev", surname: "Nadnesen [?]", uncertain: true }, { type: "residence", place: "Hetland", uncertain: true });
     expect(marked).toContainEqual(["name", "Tollev Nadnesen [?]", undefined]);
-    expect(marked.find((v: any[]) => v[0] === "residence")?.[2]).toBe("Hetland [?]");
+    expect(marked.find((v: any[]) => v[0] === "residence")?.slice(1)).toEqual(["Hetland [?]", "Hetland"]);
     const plain = await values("capture:b3", { given: "Tollev", surname: "Nadnesen" }, { type: "occupation", value: "skipper" });
     expect(plain).toContainEqual(["name", "Tollev Nadnesen", undefined]);
+  });
+
+  it("a wedding notice stays a wedding when both list a birth first, in either order, or only the groom is principal", async () => {
+    const groom = (principal: boolean) => ({ id: "p1", ...(principal ? { principal: true } : {}), gender: "male", names: [{ given: "Patrick", surname: "Flynn" }], facts: [{ type: "birth", place: "County Mayo, Ireland" }, { type: "marriage", date: "15 October 1870" }] });
+    const bride = (principal: boolean, facts: any[]) => ({ id: "p2", ...(principal ? { principal: true } : {}), gender: "female", names: [{ given: "Catherine", surname: "Gallagher" }], facts });
+    const birthThenMarriage = [{ type: "birth", place: "Shenandoah" }, { type: "marriage", date: "15 October 1870" }];
+    const roles = async (id: string, persons: any[]) => {
+      const doc = {
+        recordType: "newspaper_announcement",
+        recordLabel: "wedding notice",
+        documentForm: "verbatim_transcript",
+        source: { title: "Flynn-Gallagher wedding notice, Shenandoah Herald, 1870", repository: "Shenandoah Herald" },
+        persons,
+        relationships: [{ type: "couple", person1: "p1", person2: "p2" }],
+      };
+      const r = await run([{ recordId: id, document: doc }]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      const as = await assertionsFor(id);
+      const of = (v: string) => as.find((a: any) => a.fact_type === "name" && a.value === v)?.record_role;
+      return [of("Patrick Flynn"), of("Catherine Gallagher")];
+    };
+    expect(await roles("capture:w-both", [groom(true), bride(true, birthThenMarriage)])).toEqual(["groom", "bride"]);
+    expect(await roles("capture:w-bride-first", [bride(true, birthThenMarriage), groom(true)])).toEqual(["groom", "bride"]);
+    expect(await roles("capture:w-groom-only", [groom(true), bride(false, [])])).toEqual(["groom", "bride"]);
+  });
+
+  it("an uncertain dated fact carries [?] in its value, with the date and place clean", async () => {
+    const doc = (facts: any[]) => ({
+      recordType: "christening",
+      documentForm: "verbatim_transcript",
+      source: { title: "Stavanger Domkirke, baptisms 1790", repository: "Digitalarkivet" },
+      persons: [{ id: "c", principal: true, names: [{ given: "Kristian" }], facts }],
+    });
+    const birthOf = async (id: string, fact: any) => {
+      const r = await run([{ recordId: id, document: doc([fact]) }]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      const a = (await assertionsFor(id)).find((x: any) => x.fact_type === "birth");
+      return { value: a.value, date: a.date, place: a.place, summary: r.records[0].summary };
+    };
+    const dateOnly = await birthOf("capture:d1", { type: "birth", date: "1790", uncertain: true });
+    expect(dateOnly).toMatchObject({ value: "1790 [?]", date: "1790" });
+    const dated = await birthOf("capture:d2", { type: "birth", date: "1790", place: "Hetland", uncertain: true });
+    expect(dated).toMatchObject({ value: "1790 [?]", date: "1790", place: "Hetland" });
+    expect(dated.summary).toMatch(/birth 1790 Hetland \[\?\]/);
+    expect(dated.summary).not.toMatch(/1790 \[\?\] 1790/);
+    const oldStyle = await birthOf("capture:d3", { type: "birth", date: "11 March 1717", uncertain: true });
+    expect(oldStyle.summary).toMatch(/^Calendar: 11 March 1717 may fall/m);
+  });
+
+  it("a doubted principal surname raises no different-surname lead; a real difference still does", async () => {
+    const census = (principalSurname: string, uncertain: boolean) => ({
+      recordType: "census",
+      documentForm: "verbatim_transcript",
+      census: { jurisdiction: "United States", year: 1880 },
+      source: { title: "1880 U.S. Census, Schuylkill County", repository: "NARA" },
+      persons: [
+        { id: "h", gender: "male", statedRelation: "head", names: [{ given: "Thomas", surname: "Flynn" }], facts: [] },
+        { id: "s", principal: true, gender: "male", statedRelation: "son", names: [{ given: "John", surname: principalSurname, ...(uncertain ? { uncertain: true } : {}) }], facts: [] },
+      ],
+    });
+    const lead = async (id: string, surname: string, uncertain: boolean) => {
+      const r = await run([{ recordId: id, document: census(surname, uncertain) }]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      return /different surname/.test(r.records[0].summary);
+    };
+    expect(await lead("capture:c-doubted", "Flynn", true)).toBe(false);
+    expect(await lead("capture:c-other", "Brennan", false)).toBe(true);
   });
 
   it("a birth announcement for twins, both principals, stays a birth", async () => {

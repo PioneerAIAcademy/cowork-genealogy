@@ -865,6 +865,11 @@ def _stage_image_transcribe(
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    # Production folds record_read's `imageArk` into `ark` (foldImageArkInput):
+    # a blank `ark` counts as absent, and a blank alias is ignored.
+    alias, ark = args.get("imageArk"), args.get("ark")
+    if not (isinstance(ark, str) and ark.strip()) and isinstance(alias, str) and alias.strip():
+        args = {**{k: v for k, v in args.items() if k != "imageArk"}, "ark": alias}
     source = {k: args[k] for k in _IMAGE_TRANSCRIBE_SOURCE_KEYS if args.get(k) is not None}
     if isinstance(args.get("file"), str):
         element_id = "capture:" + re.sub(r"\.[A-Za-z0-9]+$", "", args["file"].split("/")[-1])

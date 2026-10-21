@@ -1058,7 +1058,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Twenty-nine agents and 3 skills registered: clean. Twenty-eight, or 2: the miss, whatever loaded --
+    # Twenty-eight agents and 3 skills registered: clean. Twenty-seven, or 2: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
     assert worker.registration_problems(_info(AGENTS, 3)) == []

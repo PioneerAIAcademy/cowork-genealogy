@@ -43,7 +43,7 @@ import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import type { Principal } from "../auth/principal.js";
 import { recordReadTool } from "./record-read.js";
 import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
-import { researchLogAppend } from "./research-log-append.js";
+import { researchLogAppend, type ResearchLogAppendOp } from "./research-log-append.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { sourceIdsForRecordIds } from "./research-append.js";
 import { summarizeExtraction, censusStatedRelationships } from "../utils/record-extract.js";
@@ -636,28 +636,33 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
       const ref = o.d.transcriptionRef;
       if (!ref || ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
       const entry = (Array.isArray(research?.log) ? research.log : []).find(
-        (l: any) => l && l.results_ref === ref && typeof l.id === "string",
+        (l: any) => l && l.results_ref === ref && l.tool === "image_transcribe" && typeof l.id === "string",
       );
       if (entry) {
         logs.set(o, { logId: entry.id, resultsRef: ref });
       } else {
         o.status = "refused";
-        o.errors = [`transcriptionRef '${ref}' is neither a staged ${STAGING_SUBDIR}/ ref nor the results_ref of a log entry`];
+        o.errors = [`transcriptionRef '${ref}' is neither a staged ${STAGING_SUBDIR}/ ref nor the results_ref of an image_transcribe log entry`];
         o.summary = `${o.recordId}: not extracted: ${o.errors[0]}.`;
       }
     }
     const toLog = todo.filter((o) => o.status === "extracted" && !logs.has(o));
-    const logged =
-      toLog.length === 0
-        ? null
-        : await researchLogAppend({
-            projectPath: input.projectPath,
-            ops: toLog.map((o) =>
-              o.d.transcriptionRef
-                ? { tool: "image_transcribe", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1, stagedResultsRef: o.d.transcriptionRef }
-                : { tool: "user_provided", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1 },
-            ),
-          });
+    // One page often holds two entries, so two documents can share a staged
+    // ref; it is logged once and both cite that entry.
+    const logOps: ResearchLogAppendOp[] = [];
+    const opOf = new Map<string, number>();
+    const opIndex = toLog.map((o) => {
+      const ref = o.d.transcriptionRef;
+      if (ref && opOf.has(ref)) return opOf.get(ref)!;
+      if (ref) opOf.set(ref, logOps.length);
+      logOps.push(
+        ref
+          ? { tool: "image_transcribe", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1, stagedResultsRef: ref }
+          : { tool: "user_provided", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1 },
+      );
+      return logOps.length - 1;
+    });
+    const logged = logOps.length === 0 ? null : await researchLogAppend({ projectPath: input.projectPath, ops: logOps });
     if (logged && (!logged.ok || !("results" in logged))) {
       const errs = (logged as any).errors ?? ["research_log_append refused the batch"];
       for (const o of toLog) {
@@ -665,68 +670,72 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
         o.errors = errs;
         o.summary = `${o.recordId}: not extracted, because logging it was refused: ${errs.join("; ")}.`;
       }
-    } else {
-      if (logged && "results" in logged) toLog.forEach((o, i) => logs.set(o, logged.results[i]));
-      for (const [o, lr] of logs) {
-        o.logId = lr.logId;
-        let transcription: string | undefined;
-        let stagedImageRef: string | undefined;
-        if (o.d.transcriptionRef && lr.resultsRef) {
-          try {
-            const rows = await readStagedResults(input.projectPath, lr.resultsRef);
-            const row = (rows as any[]).find((r) => typeof r?.transcription === "string");
-            if (row?.transcription) transcription = row.transcription;
-            if (typeof row?.image_ref === "string" && row.image_ref) stagedImageRef = row.image_ref;
-          } catch {
-            // The transcription is a copy for the viewer; its absence is not a
-            // reason to refuse the extraction. §5.4's warning still fires.
-          }
+    } else if (logged && "results" in logged) {
+      toLog.forEach((o, i) => logs.set(o, logged.results[opIndex[i]]));
+    }
+    // Outside the branch above: a document citing an already-logged page is
+    // written even when the staged batch beside it was refused.
+    for (const o of todo) {
+      const lr = logs.get(o);
+      if (!lr) continue;
+      o.logId = lr.logId;
+      let transcription: string | undefined;
+      let stagedImageRef: string | undefined;
+      if (o.d.transcriptionRef && lr.resultsRef) {
+        try {
+          const rows = await readStagedResults(input.projectPath, lr.resultsRef);
+          const row = (rows as any[]).find((r) => typeof r?.transcription === "string");
+          if (row?.transcription) transcription = row.transcription;
+          if (typeof row?.image_ref === "string" && row.image_ref) stagedImageRef = row.image_ref;
+        } catch {
+          // The transcription is a copy for the viewer; its absence is not a
+          // reason to refuse the extraction. §5.4's warning still fires.
         }
-        const { extract, mode } = documentToExtract(o.recordId, o.d.document, censusStatedRelationships);
-        const extraction = extractRecord(extract, { logEntryId: lr.logId, questionIds: input.questionIds ?? [], mode });
-        const ops: ResearchAppendOp[] = [
-          { section: "sources", op: "append", entry: buildDocumentSource(o.d, lr.logId, transcription, stagedImageRef) },
-          ...extraction.assertions.map((a) => ({
-            section: "assertions" as const,
-            op: "append" as const,
-            entry: a as unknown as Record<string, unknown>,
-          })),
-          ...(o.d.document.absentPersons ?? []).map((p) => ({
-            section: "assertions" as const,
-            op: "append" as const,
-            entry: {
-              record_id: o.recordId,
-              record_role: "absent",
-              fact_type: p.factType ?? "name",
-              value: p.note ?? `${p.name} was expected in this record and is not present`,
-              information_quality: "indeterminate",
-              informant: "the researcher",
-              informant_proximity: "researcher",
-              record_basis: "absent",
-              log_entry_id: lr.logId,
-              extracted_for_question_ids: [...(input.questionIds ?? [])],
-            } as Record<string, unknown>,
-          })),
-        ];
-        const src = o.d.document.source;
-        const written = await researchAppend(
-          {
-            projectPath: input.projectPath,
-            ops,
-            sourceDescription: src.url ? { title: src.title, url: src.url } : { title: src.title },
-          } as ResearchAppendInput,
-          { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
-        );
-        if (!written.ok) {
-          o.status = "refused";
-          o.errors = written.errors;
-          o.summary = `${o.recordId}: logged as ${lr.logId}, but the write was refused: ${written.errors.join("; ")}.`;
-          continue;
-        }
-        o.srcId = srcIdOf(written);
-        o.summary = summarizeExtraction(extract, extraction);
-        o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
       }
+      const { extract, mode } = documentToExtract(o.recordId, o.d.document, censusStatedRelationships);
+      const extraction = extractRecord(extract, { logEntryId: lr.logId, questionIds: input.questionIds ?? [], mode });
+      const ops: ResearchAppendOp[] = [
+        { section: "sources", op: "append", entry: buildDocumentSource(o.d, lr.logId, transcription, stagedImageRef) },
+        ...extraction.assertions.map((a) => ({
+          section: "assertions" as const,
+          op: "append" as const,
+          entry: a as unknown as Record<string, unknown>,
+        })),
+        ...(o.d.document.absentPersons ?? []).map((p) => ({
+          section: "assertions" as const,
+          op: "append" as const,
+          entry: {
+            record_id: o.recordId,
+            record_role: "absent",
+            fact_type: p.factType ?? "name",
+            value: p.note ?? `${p.name} was expected in this record and is not present`,
+            information_quality: "indeterminate",
+            informant: "the researcher",
+            informant_proximity: "researcher",
+            record_basis: "absent",
+            log_entry_id: lr.logId,
+            extracted_for_question_ids: [...(input.questionIds ?? [])],
+          } as Record<string, unknown>,
+        })),
+      ];
+      const src = o.d.document.source;
+      const written = await researchAppend(
+        {
+          projectPath: input.projectPath,
+          ops,
+          sourceDescription: src.url ? { title: src.title, url: src.url } : { title: src.title },
+        } as ResearchAppendInput,
+        { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
+      );
+      if (!written.ok) {
+        o.status = "refused";
+        o.errors = written.errors;
+        o.summary = `${o.recordId}: logged as ${lr.logId}, but the write was refused: ${written.errors.join("; ")}.`;
+        continue;
+      }
+      o.srcId = srcIdOf(written);
+      o.summary = summarizeExtraction(extract, extraction);
+      o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
     }
   }
   return {

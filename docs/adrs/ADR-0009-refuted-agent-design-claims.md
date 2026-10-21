@@ -147,8 +147,8 @@ there, not missing.
 | **A `MUST delegate` sentence in a skill body decides who calls a tool** | In the 30 attributed runs `image_transcribe` was called **128 times by `image-reader` and 75 times from the main thread** — 37% bypass, against a body that says "Do not call `image_read` yourself", mandates the delegation in bold, and calls reporting a miss without an attempt "a completeness failure." What binds is the grant: `allowed-tools` is additive, both production paths hold every advertised tool, and nothing denies the main thread this one. Corpus-wide it runs 459 times across 53 of the 169 runs, median 2 per run, max 81 |
 | **The image-acquisition paths are three paths needing one owner** | They are one call with three input spellings. An image ARK and an Image Group Number already resolve through a single function inside `image_transcribe`, and an uploaded image file is the same call with a third input form (issue #2048). The split that matters is **host-fetchable vs model-read**: the only medium genuinely outside the artifact channel was the PDF, because nothing in the engine reads one — which is why issue #2489 adds a PDF reader instead of a fourth acquisition path |
 
-**Acted on, 2026-10-16 (lead ruling; issue #2490).** The first row's finding
-retired `image-reader` outright rather than renaming it to `document-capture`: it
+The first row's finding retired `image-reader` (lead ruling 2026-10-16, issue
+#2490) outright rather than renaming it to `document-capture`: it
 protected nothing the tool does not, and it still cost a retype of every page
 (about 1,040 output tokens a read), with 79 of its 107 reads from 2026-09-15 to
 2026-10-16 staging nothing. `image_transcribe` now requires `projectPath`,

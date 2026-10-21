@@ -2018,7 +2018,7 @@ document travels as a tool parameter.
 | `documents` | yes | A non-empty list, one entry per source: `{ recordId, document, transcriptionRef?, imageFilename? }`. |
 | `documents[].recordId` | yes | The `capture:<descriptive>`, `ancestry:<collection>:<id>` or ARK that identifies the source. |
 | `documents[].document` | yes | The document below. |
-| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. The tool finalizes it into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`), and copies its `transcription` into the source entry, so no model re-emits the page text. |
+| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. A staged ref is finalized into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`); a ref a caller already finalized is cited through its existing `image_transcribe` log entry instead, and any other `results/` ref is refused. Either way the tool copies the page's `transcription` into the source entry, so no model re-emits the page text. |
 | `documents[].imageFilename` | no | `image_transcribe`'s `imageRef`, relayed. The source's `image_filename` comes from the staged transcription's `image_ref` when `transcriptionRef` is set and that row has one, which wins over this value; otherwise this is written. §5.4's warning still fires when a transcription lands without one. |
 | `questionIds` | no | Stamped on every assertion in the batch, as in §11.6. |
 | `absentPersons` | no | Expected-but-absent persons, keyed by `recordId`, as in §11.6. |
@@ -2029,8 +2029,11 @@ is logged `tool: "user_provided"` with no sidecar.
 **Validated before any write.** Every document is validated before anything is
 written: one malformed document refuses the call, naming its index and JSON
 path, and writes nothing. After validation, the writes are §11.6's. There is one
-log batch, then one `research_append` per source, so a refusal on document *k*
-leaves the earlier ones written. The resend skip (a `recordId` that already has
+log batch, with one op per distinct staged ref, so documents for two entries on
+one page share its log entry. Then there is one `research_append` per source, in
+document order, so a refusal on document *k* leaves the earlier ones written. A
+document citing an already-finalized page is written even when the staged batch
+beside it is refused. The resend skip (a `recordId` that already has
 a source is skipped and named) makes a corrected resend of the whole batch
 safe.
 
@@ -2081,12 +2084,15 @@ has no stated/computed field. The adapter builds an `ExtractDocument` and
 passes these fields to `extractRecord` **alongside** it, as a document-mode
 options argument. The shape is never widened to fit them.
 
-**`uncertain` reaches the value.** The adapter carries the flag into the stored
-assertion as a `[?]` the agent may have left out: appended to the surname (the
-given name when there is none) for a name, and to the value, else the place,
-for a fact. A field that already carries `[?]` gets no second one. The
-`person_evidence` `confident` precondition above reads that marker, so a doubt
-the flag alone recorded would otherwise never reach it.
+**`uncertain` reaches the value.** The flag puts a `[?]` the agent may have left
+out into the stored assertion's `value`, once. For a name it is appended to the
+surname (the given name when there is none). For a fact it is appended to the
+assertion's value, which for a dated fact is the date, so the `date` and `place`
+fields stay clean and never carry the marker into the tree. The summary prints it
+once at the end of the fact, and the calendar flag and the census surname
+comparison read the value without it. The `person_evidence` `confident`
+precondition above reads `value`, so a doubt the flag alone recorded would
+otherwise never reach it.
 
 **What the document cannot say** is the reason it exists. It has no key for
 `record_role`, `record_basis`, `informant_proximity`, `information_quality`,
@@ -2154,11 +2160,12 @@ submitting family knows them firsthand, as with a surviving spouse's name.
   when the file holds a will and `decedent` when it is intestate. On a
   newspaper announcement, the event's subject: `child` for a birth, `bride` /
   `groom` for an engagement or wedding, `husband` / `wife` for an
-  anniversary, and `principal` otherwise. With several principals the event
-  is the type they all carry, else their pair event (marriage, engagement,
-  anniversary) over a birth, so a wedding notice that gives the groom's
-  birthplace is still a wedding; the order the facts were sent in never
-  decides it.
+  anniversary, and `principal` otherwise. A pair event (marriage, engagement,
+  anniversary) beats a birth, whatever the order of the facts and however many
+  principals there are, so a wedding notice that gives the groom's birthplace is
+  still a wedding. Among events of one kind, the one every principal carries
+  wins, and then the first listed. In a pair event a principal's couple partner
+  takes the other side even when the agent did not mark them principal.
 - **Other parties' roles** come from `statedRelation` through
   `roleFromRelationship` (son → `child_N`, daughter-in-law →
   `daughter_in_law_N`, executor, `heir_N`, `witness_N`). A party the text

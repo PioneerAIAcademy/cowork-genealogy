@@ -102,10 +102,9 @@ at all. That dissolves the entire T13 problem class at once:
 For the **large** scans `image_read` refuses today, this is a clean win — and
 the spike (§4) showed a hosted VLM is a strong-enough reader that it became the
 **only reader for every image**, not just the large ones: the `image-reader`
-subagent OCRs via `image_transcribe` for every scan and never reads inline. The
-subagent is not retired, but its base64-isolation job is now moot (the tool
-returns text) — it remains as the delegation seam + one-image-per-source
-boundary.
+subagent OCRs via `image_transcribe` for every scan and never reads inline. That
+subagent was later retired: its base64-isolation job was moot once the tool OCRs
+host-side, and the tool now stages the page and returns its ref (§5.5).
 
 This spec proposes a new tool, **`image_transcribe`**, that fetches the FS
 scan host-side and sends the raw bytes to a vision-language model (VLM)
@@ -148,8 +147,7 @@ the constraint the pre-spike spec named is still the live one.
 - Not a general document-understanding tool. It transcribes one page and
   returns text; matching the page to the research objective stays with the
   caller (the `record-structurer` agent, which reads the transcription and
-  sends it to `extraction_append` as a document), exactly as the
-  `image-reader` subagent contract requires today.
+  sends it to `extraction_append` as a document).
 - Not batching / multi-image in v1 (one image per call; see §10 open q.).
 
 ---
@@ -622,6 +620,7 @@ target), original spelling/language, with `[?]` / `[illegible]` / `[torn]` marks
 | More than one provided | `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not X and Y.` (`imageArk` counts as `ark`) |
 | `ark` and `imageArk` both given, and they do not name the same image (`image-read-spec.md`, Input) | `image_transcribe was given both ark ('…') and imageArk ('…'), which do not name the same image. imageArk is another name for ark: pass only one.` Refused before the key lookup and any fetch |
 | `ark` is not a string | `image_transcribe was given an ark that is not a string (…). Pass ark as a string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given.` Refused before the key lookup and any fetch |
+| No `projectPath` (any input form, at the MCP boundary) | `projectPath is required: image_transcribe stages the page under the project's results/ and returns its ref, not the text.` Refused before the key lookup, any fetch and any OCR; a folder holding neither project file RETURNS `{ ok: false, reason: "no_project" }` |
 | `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file RETURNS `{ ok: false, reason: "no_project" }` (not thrown) |
 | `file` ref shape | absolute / drive letter / backslash / NUL / empty, `.`, `..` segment — named before any I/O; a symlink out of the project is the store's "escapes the project directory" |
 | `file` missing / a directory / not an image or PDF | `'<ref>' was not found under the project folder …` / `is a directory` / `is not an image or a PDF (by its content, not its name) …` |
@@ -1088,7 +1087,7 @@ so projects don't bloat with every scan read.
 
 **A `file` input is never copied here and never yields `imageRef`**: the upload is
 already retained at its own path inside the project, `images/` is the retained-*scan* store this
-section's GC sweeps (`*.jpg`), and citing an upload on a source is `document-capture`'s job.
+section's GC sweeps (`*.jpg`), and citing an upload on a source is `record-structurer`'s job.
 
 **Save-by-imageId + TTL sweep (design B).** A source carries no imageId to
 key a staging→finalize on, so a GC sweep replaces the finalize:
@@ -1097,8 +1096,8 @@ key a staging→finalize on, so a GC sweep replaces the finalize:
   or ARK label; `src/utils/image-store.ts`) and returns `imageRef` (the
   project-relative path). Best-effort — a save failure omits `imageRef` rather
   than losing the transcription. It does **not** write `research.json`.
-- The `image-reader` subagent threads `projectPath` into that call and reports
-  the returned `imageRef`; it is also staged beside the text as `image_ref`, and
+- Every caller passes `projectPath` (the MCP schema requires it), and the
+  returned `imageRef` is also staged beside the text as `image_ref`, and
   `extraction_append` writes it to the retained source's `sources[].image_filename`
   from that staged row whenever a document carries the `transcriptionRef` (the
   `record-structurer` agent's relayed `imageFilename` is only the fallback, for a
@@ -1146,10 +1145,9 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
 
 The truncation of a read is known **here**, at `image_transcribe` (§6.2), but the
 consumer that persists a source is not: `record-structurer`, which sends the
-source to `extraction_append`, does not hold `image_transcribe` (only
-`image-reader` does), so it receives the transcription
-*text* relayed across a subagent boundary, with the `truncated` flag gone. A
-model asked to set `transcription_truncated` from that relayed text can only
+source to `extraction_append`, does not hold `image_transcribe`; it receives the
+page as a staged ref and reads the text with `sidecar_read`, with no `truncated`
+flag beside it. A model asked to set `transcription_truncated` from text can only
 guess from prose — and was observed to set it while saving no transcription at
 all. So the field is **derived at the write boundary, never
 asserted by the agent**:
@@ -1494,12 +1492,11 @@ passed unedited across the move:*
 ## 16. References
 
 - `docs/record-extraction-consolidation-closing-report.md` §1 (T13)
-- `docs/specs/image-read-spec.md` (`image_read`'s inline-base64 path is no
-  longer used by the `image-reader` subagent; it stays only for the Issue #28
-  pixel consumer, and its transport floor still guards that single read)
-- `docs/specs/image-reader-agent-spec.md` (the subagent — **kept**; single
-  reader via `image_transcribe`; its OCR prompt/output protocol is reused
-  verbatim)
+- `docs/specs/image-read-spec.md` (`image_read`'s inline-base64 path is used by
+  no agent; it stays only for the pixel consumer, and its transport floor still
+  guards that single read)
+- `docs/specs/image-reader-agent-spec.md` (deleted with the subagent; its OCR
+  prompt and output protocol live on in this tool's prompt)
 - `~/pioneeracademy/book-to-tree/backend/src/book_to_tree/ocr/image_prep.py`
   (`enhance_for_ocr` — the prep pipeline the spike evaluated and rejected; §7)
 - `src/tools/wiki-search.ts` + `tests/tools/wiki-search.test.ts` (HTTP-tool
