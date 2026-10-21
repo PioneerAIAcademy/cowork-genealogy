@@ -167,8 +167,17 @@ From the question's `rationale` and `selection_basis`, determine:
 You always start cold: you run in fresh context, and a delegation message is a
 caller's summary, not project state. Once the routing gate above has let the
 request through, read the project yourself — `project_context` for the objective and the questions, `research_query` for
-the `plans`, `log`, `localities` and `proof_summaries` sections, and `Read` on
-`tree.gedcomx.json` for the persons. (Step 1a requires reading **all plans for
+the `plans`, `log`, `localities`, `proof_summaries` and `timelines` sections, and `Read` on
+`tree.gedcomx.json` for the persons.
+
+**Read the subject's timeline for `high` gaps.** `timeline_build` writes a
+timeline at setup, and a `gaps` entry at `severity: "high"` on the current
+question's subject is a search to plan: the records that would fill that span.
+Plan it as an item like any other, with its own record type and jurisdiction.
+Until the router's priority 3 is rewritten, question-selection still turns the
+same gap into a question, so the same ground may be searched twice in that
+window; plan it anyway, because an unplanned high gap is the one nobody
+searches. (Step 1a requires reading **all plans for
 the target question** before you pick the mode.)
 
 **Verify the starting point (BCG Standard 11).** Before planning,
@@ -245,9 +254,16 @@ calls finished while an item is still `planned` or `in_progress`, is not
 superseded: take Review mode and put the improvements in your recap.
 
 **Dispose mode** — `research-exhaustiveness` refused a declaration
-because items on the active plan are still `planned`, and you were
-given their ids. Set each: `completed` if its search was done and
-logged, otherwise `skipped` with a `skip_category`. Add no items and do
+because items on the active plan are still open, and you were given
+their ids. The ids may be `planned` OR `in_progress`: a search that ran
+without closing its item leaves it `in_progress`, and those must close
+too or the declaration stays refused. Set each: `completed` if its
+search was done and logged — FamilySearch, full-text and image items
+alike, even when every search found nothing — otherwise `skipped` with a
+`skip_category`. `research_append` refuses `skipped` on an item whose
+search ran, so `completed` is not a preference there but the only write
+it will accept. An external-site item waiting on a capture stays with
+the researcher: skip it `user_declined` rather than completing it. Add no items and do
 not supersede — the stop criteria are already judged, and superseding
 carries the same items into the new plan and re-blocks the gate. Put
 every item in ONE `research_append` call; one `skip_reason` may cover
@@ -724,9 +740,13 @@ made by the executing skills (search-records, search-external-sites),
 not here — except in Dispose mode.
 
 **Termination (BCG Standard 18):** If all identified sources are
-exhausted or inaccessible and the question remains unresolved, skip each
-item still `planned` or `in_progress` that cannot run, with its
-`skip_category`, then set the plan status to `completed` with an update.
+exhausted or inaccessible and the question remains unresolved, close each
+item still `planned` or `in_progress`: one whose search already ran is
+`completed`, even when it found nothing, and only one that cannot run is
+`skipped` with its `skip_category`. An `in_progress` item is usually the
+first kind — it is in progress because a search started — and
+`research_append` refuses `skipped` on it. Then set the plan status to
+`completed` with an update.
 Why the search stopped is research-exhaustiveness's to record, in the
 question's `search_stop`:
 
