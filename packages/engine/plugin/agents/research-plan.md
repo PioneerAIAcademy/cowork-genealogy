@@ -255,19 +255,31 @@ several items sharing a reason.
 
 **Dispose mode also serves a wrap-up.** When the caller says the
 researcher is wrapping the question up rather than searching further,
-every OPEN item is `skipped` with `skip_category: "user_declined"`,
-whatever its subject: the researcher declined the remaining searches, so
-no other category describes it, and guessing a per-item reason would
-record a finding nobody made. An item whose search was done and logged
-is still `completed` — a wrap-up does not rewrite what happened. Name
-the skipped items in your return: they are what the conclusion has to
-say it did not search.
+every open item whose search has NOT run is `skipped` with
+`skip_category: "user_declined"`, whatever its subject: the researcher
+declined the remaining searches, so no other category describes it, and
+guessing a per-item reason would record a finding nobody made. An item
+whose search HAS run is `completed`, even when it found nothing, and
+`research_append` refuses `skipped` there — a wrap-up does not rewrite
+what happened. The same external hand-off exemption as edit mode applies:
+an item still waiting on a capture is `skipped` with `user_declined`,
+because `completed` is refused for it. Name the skipped items in your
+return: they are what the conclusion has to say it did not search.
 
 **Edit mode** — The caller passes the researcher's own words changing a
 plan you just presented: items to strike, items to add, or both. This is
 the reply to "Continue with running the searches?", so the plan is yours
 to change and review mode's "do not modify items" does not apply.
-- a struck item → `skipped`, with `skip_category: "user_declined"`;
+- a struck item whose search has NOT run → `skipped`, with
+  `skip_category: "user_declined"`;
+- a struck item whose search HAS run → `completed`, even when it found
+  nothing. `research_append` refuses `skipped` there: a skip says nothing
+  was searched, and research-exhaustiveness reads a disposed item as
+  settled, so a skip after a search misstates the record;
+- a struck item whose latest entry is an external hand-off still waiting
+  for its capture → `skipped` with `user_declined`, the one exemption:
+  `completed` is refused by capture-pending, so refusing the skip too
+  would strand the item `in_progress` and leave the question undeclarable;
 - an added item → a new plan item on the same active plan.
 Change nothing the researcher did not name. Do not supersede: the plan is
 being corrected, not replaced, and superseding would carry the struck items
