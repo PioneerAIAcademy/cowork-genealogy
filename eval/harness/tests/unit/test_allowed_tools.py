@@ -25,6 +25,28 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 PLUGIN_SKILLS = REPO_ROOT / "packages/engine/plugin/skills"
 
 
+@pytest.fixture
+def skills_dir(tmp_path):
+    """The shipped skills plus one synthetic caller that delegates the three ways
+    the sub-skill union (issue #1012) has to follow: two `Skill()` callees and a
+    `@plugin:` spawn. No shipped skill carries a `Skill()` callee any more
+    (search-records, the last, became an agent in issue #2243), so the machinery
+    is covered against a constructed caller and the real callees."""
+    import shutil
+
+    dest = tmp_path / "skills"
+    shutil.copytree(PLUGIN_SKILLS, dest)
+    caller = dest / "caller-skill"
+    caller.mkdir()
+    (caller / "SKILL.md").write_text(
+        "---\nname: caller-skill\nallowed-tools:\n  - record_search\n---\n"
+        'Hand back with Skill("project-status") or Skill("research-plan"), and escalate by spawning '
+        "`@plugin:search-external-sites`.\n",
+        encoding="utf-8",
+    )
+    return dest
+
+
 def test_search_wikipedia_includes_wikipedia_search():
     tools = compute_allowed_tools("search-wikipedia", PLUGIN_SKILLS)
     assert "mcp__genealogy__wikipedia_search" in tools
@@ -211,10 +233,6 @@ def _skill_pair(tmp_path: Path) -> tuple[Path, Path]:
 def test_skill_refs_finds_every_declared_callee(tmp_path):
     from harness.allowed_tools import skill_refs_for_skill
 
-    # The real file: search-external-sites (issue #2802) and research-plan
-    # (issue #2116) left this list when each became an agent that search-records
-    # spawns, and project-status left when issue #3112 deleted that agent.
-    assert skill_refs_for_skill(PLUGIN_SKILLS / "search-records" / "SKILL.md") == []
     skills, _ = _skill_pair(tmp_path)
     assert skill_refs_for_skill(skills / "caller" / "SKILL.md") == ["callee", "other"]
 
@@ -364,10 +382,10 @@ def test_opting_in_to_one_callee_does_not_grant_another(tmp_path):
     assert "mcp__genealogy__catalog_search" not in tools
 
 
-def test_declaring_a_callee_the_skill_never_invokes_is_an_error():
+def test_declaring_a_callee_the_skill_never_invokes_is_an_error(skills_dir):
     with pytest.raises(ValueError, match="never invokes"):
         compute_allowed_tools(
-            "search-records", PLUGIN_SKILLS, run_skills={"timeline"}
+            "caller-skill", skills_dir, run_skills={"timeline"}
         )
 
 
@@ -412,6 +430,7 @@ def test_preflight_is_satisfied_once_the_fixtures_are_stocked(tmp_path):
         t.rsplit("__", 1)[-1]
         for t in (callee_fm.get("allowed-tools") or []) + (agent_fm.get("tools") or [])
     } | {"record_search"}
+    assert {t.rsplit("__", 1)[-1] for t in (callee_fm.get("allowed-tools") or [])} <= stocked
     assert "collections_search" in stocked, (
         "sanity: the callee's frontmatter should be the source of this set"
     )

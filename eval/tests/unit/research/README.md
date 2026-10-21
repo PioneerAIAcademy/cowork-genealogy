@@ -64,6 +64,40 @@ that is still a skill is stubbed at its `Skill` call only, except on a test that
 sets `execution.stop_at_stub`, such as `ut_research_015` below: there a spawn of
 any stubbed name is denied too and ends the run.
 
+## Agent dispatch tests (issue #1851)
+
+Every agent the routing table spawns is the asserted first hand-off of at least
+one `routes-to:` test. The last five were added together, each copying `ut_research_012`: every neighbour stubbed, the
+first hand-off asserted by `test_routes_to_expected_skill`, and a `judge_context`
+that keeps the judge off the routing decision.
+
+| Test | Row | Scenario |
+|---|---|---|
+| `ut_research_pe7` | Assertions not yet linked to persons | `flynn-household-skeleton` |
+| `ut_research_rx4` | All plan items completed or skipped, analysis done | `ma-birth-record-unsearched` |
+| `ut_research_es9` | Unexecuted plan item, non-FS branch | `ma-state-census-external` |
+| `ut_research_si3` | Plan item targets a digitized-but-unindexed set | `barren-order-books-browse-only` |
+| `ut_research_rs5` | Positive log entry with no assertion, non-FS branch | `ma-state-census-capture-returned` |
+
+`search-images` was spelled as a bare name in the table, which the table's own
+legend reads as a `Skill` call. The skill was deleted in #2268, so the row now
+spells `@plugin:search-images`, and `_paired_names()` picks it up.
+
+`ut_research_es9` failed once in its first suite run because the router followed
+`project_context`'s advisory `nextStep`, which then said `search-records` for any
+planned item whatever its repository. The step now names `search-external-sites`
+for a non-FamilySearch item (`docs/specs/project-context-tool-spec.md`). The
+advisory is still wrong on two of these states and the router passed both 3 of 3
+regardless: for `pe7` it says `research-exhaustiveness`, because a no-link leaves
+no record to tell a rejected assertion from an unlinked one, and for `si3` it says
+`search-records`, because browse-only is stated only in the plan item's rationale.
+
+Rows not given a test of their own: the "not yet exhaustive" and "declaration
+refused" rows route on what `research-exhaustiveness` returned in the same
+session, which a fresh-context test cannot seed; the proof-conclusion
+tree-encoding and `exhaustive_declared` rows reach the same agent that
+`ut_research_s59` already asserts.
+
 ## What is NOT covered (and why)
 
 - **Second-opinion verdict handling**: gps-mentor is not a routing row; it

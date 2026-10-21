@@ -14,11 +14,12 @@
       "multiple-marriages",
       "plan-execution",
       "pre-1880-census-household",
-      "topical-fixture-required"
+      "topical-fixture-required",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute the 1860 census search for plan item pli_001. Sarah has three name entries in the tree — her birth name Mullen and two married names (Price, Mielke).",
+    "delegation": "Execute the 1860 census search for plan item pli_001. Sarah has three name entries in the tree — her birth name Mullen and two married names (Price, Mielke).\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "mullen-price-multiple-marriages"
   },
   "execution": {

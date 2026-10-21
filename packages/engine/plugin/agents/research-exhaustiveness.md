@@ -142,13 +142,16 @@ Step 0 precondition owes nothing below, the `wiki_read` included.
 
 Read:
 - The question and its `search_stop`
-- Log entries for its plan items (via `plan_item_id`)
+- Log entries for its plan items: `research_query` `section: "log"`, `questionId`;
+  page with `offset` while `truncated` is true
 - Assertions from those searches (via each assertion's `log_entry_id`)
 - Skipped plan items — their `skip_category` and `skip_reason` where present
 
-Then **call `wiki_read`** for the jurisdiction's registration start date —
+Then **call `research_query` `section: "localities"`** and keep the entries
+whose `place` or `for_place` covers the question's place, and **call
+`wiki_read`** for the jurisdiction's registration start date —
 `{State}_Vital_Records` for a US state, `{Country}_Civil_Registration`
-otherwise — and do not begin Step 2 until it has returned or failed.
+otherwise. Do not begin Step 2 until both have returned or failed.
 
 ## 2. Assess the 7-Point Stop Criteria
 
@@ -229,6 +232,33 @@ named in `justification`.
   "blocked_by_conflict"`, `stop_criteria: null`. **Do not change `status`** —
   leave it `"in_progress"`. Routes to `conflict-resolution`.
 
+## Build `not_reached`
+
+Every `search_stop` write — a stop-gate value, `resources_spent` or
+`blocked_by_conflict` — carries `not_reached` built from these rules,
+alongside the entries §3 names.
+
+- **`handed_to_user`** — one entry per log entry on this question's plan
+  items with `tool: "external_site"`, `outcome: "partial"` and
+  `external_site.capture_received: false`, unless a later entry on those plan
+  items with the same `external_site.url_generated` has `capture_received: true`.
+  A later entry without a capture — a `negative` the agent wrote, "requires a
+  paid subscription" — does not close it. `log_entry_id` is the hand-off's own
+  id, never the later entry's; `wiki_title: null`; `description` names the
+  site, the `url_generated`, and what the search was for.
+- **`paywalled`** — only a paywalled hit that was never handed to the user.
+- **`wiki_named_untouched`** — from a kept locality's `guide_markdown`. This
+  needs the §1 `research_query` `section: "localities"` result; if that call
+  has not been made, make it now — never conclude there is no guide without
+  it. Call `wiki_read` on the page only when `guide_markdown` is null; no
+  kept locality, no entries. One entry per record type that could hold this question's
+  target fact, is named for the question's place and period, and was searched
+  by no log entry on this question's plan items. On a stop-gate write list
+  only the types the guide places beyond reach of our tools — a reachable one
+  is an unsearched gap (§3). On `resources_spent` or `blocked_by_conflict`
+  list every such type. `wiki_title` is the page title: the path segment after
+  `/wiki/` in that locality's `pages_read[].url` — never `pages_read[].section`.
+
 ## 4. Write the declaration
 
 Persist via `research_append` `op: "update"` on the question. You pass
@@ -270,6 +300,12 @@ research_append({
 })
 ```
 
+A `not_reached` entry for a hand-off the user never returned:
+
+```
+{ kind: "handed_to_user", log_entry_id: "log_014", wiki_title: null, description: "Newspapers.com search (https://www.newspapers.com/search/?query=Keller&dr_year=1852-1852) for an 1852 birth notice naming Anna Keller's parents — handed to the user, no capture returned." }
+```
+
 **Early termination** (`resources_spent` or `blocked_by_conflict`) — leave
 `status` as `"in_progress"`; pass only `search_stop`, NOT `status`.
 `stop_criteria` must be `null` for non-gate values. Record in `not_reached`
@@ -296,7 +332,7 @@ research_append({
 ```
 
 `blocked_by_conflict`: same structure — name the blocking conflict by id in
-`justification`, `not_reached: []`, `stop_criteria: null`.
+`justification`, `not_reached` built as above, `stop_criteria: null`.
 
 If the call returns `{ ok: false, errors }`, surface the errors and fix
 the offending field — do not blindly retry the same payload.

@@ -614,7 +614,13 @@ describe("measured figures stay traceable to the probe artifact", () => {
   it("the agent population is derived, and reaches every kind of model-read file", () => {
     const has = (re: RegExp) => AGENT_SURFACES.some((s) => re.test(s));
     expect(has(/\/skills\/[^/]+\/SKILL\.md$/), "skill bodies").toBe(true);
-    expect(has(/\/skills\/[^/]+\/references\/[^/]+\.md$/), "skill references").toBe(true);
+    // No skill carries a references/ folder today; the walk must reach one exactly when one exists.
+    const skillsOnDisk = join(projectRoot, "packages/engine/plugin/skills");
+    const refsExist = readdirSync(skillsOnDisk).some((d) => {
+      const refs = join(skillsOnDisk, d, "references");
+      return existsSync(refs) && readdirSync(refs).some((f) => f.endsWith(".md"));
+    });
+    expect(has(/\/skills\/[^/]+\/references\/[^/]+\.md$/), "skill references").toBe(refsExist);
     expect(has(/\/agents\/[^/]+\.md$/), "agent bodies").toBe(true);
     expect(TOOL_DESCRIPTION_SURFACES.length, "tool descriptions").toBeGreaterThan(40);
     expect(TOOL_DESCRIPTION_SURFACES.some((t) => t.text.length === 0), "a tool with no description text").toBe(false);

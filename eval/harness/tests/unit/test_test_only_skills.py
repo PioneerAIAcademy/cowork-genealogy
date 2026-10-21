@@ -45,9 +45,9 @@ def test_it_is_staged_for_its_own_suite(tmp_path):
 def test_it_is_not_staged_for_any_other_suite(tmp_path):
     """The other direction: staged everywhere, every other suite's tests would run
     with a skill production lacks."""
-    build_workspace(None, SCENARIOS, DEFAULT_PLUGIN_SKILLS, tmp_path, suite="search-records")
+    build_workspace(None, SCENARIOS, DEFAULT_PLUGIN_SKILLS, tmp_path, suite="research")
     assert not (tmp_path / ".claude" / "skills" / SKILL).exists()
-    assert (tmp_path / ".claude" / "skills" / "search-records" / "SKILL.md").is_file()
+    assert (tmp_path / ".claude" / "skills" / "research" / "SKILL.md").is_file()
 
 
 def test_its_body_is_in_its_suites_snapshot():

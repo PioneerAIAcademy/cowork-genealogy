@@ -46,6 +46,11 @@ const sourcePath = join(repoRoot, 'packages', 'schema', 'src', 'index.ts')
 /** `$defs` name → the TS interface name, where PascalCase isn't the answer. */
 const RENAMED: Record<string, string> = {
   person_evidence_entry: 'PersonEvidence',
+  // Same reason: the section-singular name is the convention in packages/schema
+  // (`Source`, `Assertion`, `PersonEvidence`), while the `$def` carries `_entry`.
+  // This section shipped with BOTH `RejectedLink` and an identical
+  // `RejectedLinkEntry`, neither imported anywhere; the duplicate is gone.
+  rejected_link_entry: 'RejectedLink',
 }
 
 /** `$defs` that intentionally have no TS interface. */
