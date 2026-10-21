@@ -252,7 +252,10 @@ and the model silently falls back to a general-purpose stand-in that binds none
 of the `tools:`/`disallowedTools:` below (ADR-0004; skills are unaffected —
 the loader registers *those* under bare names). If you change how the hosted
 agent is configured, run `make agent-smoke`: it is the only check that reads
-what the runtime actually resolved, and no CI job covers this path.
+what the runtime actually resolved. Its agent-registration arm now also runs in
+CI (`server-tests.yml`, keyless, under `AGENT_SMOKE=1`); its dead-stub arm and
+whether a granted tool actually *binds* (`make probe-agent-binding`) still have
+no CI job.
 
 **Dual-spelled tool names.** (Heading kept as a stable anchor — the
 architecture guide and ADR-0004 both cite it by name — though the rule now
