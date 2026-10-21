@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import { materializeFacts } from "../../src/tools/materialize-facts.js";
+import { materializeFacts, namedPartyTargetRefusal } from "../../src/tools/materialize-facts.js";
 
 // The namesake copy gate and item 34 (issue #3363 PR 1d): a record's facts reach
 // a person with a recorded namesake only through a link the namesake cap allows,
@@ -418,6 +418,18 @@ describe("materialize_facts under a recorded namesake (#3363 PR 1d)", () => {
         name: { given: 5 as any, surname: "Brennan" },
       });
       expect(r.ok).toBe(false);
+    });
+
+    it("I5g takes a raw name part without throwing when the replay calls the named party decision directly", async () => {
+      // The tool refuses a non-string name before this decision runs (I5e); the
+      // corpus replay passes a run log's name straight in.
+      const stub = await marriageWithoutNames();
+      const r = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      const t = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+      const naming = r.assertions.find((a: any) => a.id === "a_082");
+      expect(() =>
+        namedPartyTargetRefusal(t, r, naming, "bride", stub, undefined, new Set(), { given: 5 as any, surname: "Doyle" }),
+      ).not.toThrow();
     });
 
     it("I5f refuses the bride's own persona onto a stub her name only op made, until a link ties it", async () => {
