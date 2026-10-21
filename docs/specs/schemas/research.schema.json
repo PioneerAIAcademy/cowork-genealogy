@@ -1520,6 +1520,9 @@
         "narrative_markdown": {
           "type": "string"
         },
+        "updated": {
+          "$ref": "enums.schema.json#/$defs/iso_datetime"
+        },
         "claims": {
           "type": "array",
           "items": {

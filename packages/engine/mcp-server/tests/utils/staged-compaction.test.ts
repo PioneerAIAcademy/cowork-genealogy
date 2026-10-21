@@ -189,6 +189,18 @@ describe("annotateResultsWithRanking", () => {
     expect(out.results[1]).toMatchObject({ matchRank: 2, searchRank: 1, matchScore: 0.2 });
   });
 
+  it("copies the birth-year conflict flag and gap onto the annotated row", () => {
+    const out = annotateResultsWithRanking(
+      resp(rankedWith([
+        { recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.9, birthYearConflict: true, birthYearGap: -5 },
+        { recordId: rowB.recordId, matchRank: 2, searchRank: 2, matchScore: 0.8 },
+      ])),
+    );
+    expect(out.results[0]).toMatchObject({ birthYearConflict: true, birthYearGap: -5 });
+    expect(out.results[1]).not.toHaveProperty("birthYearConflict");
+    expect(out.results[1]).not.toHaveProperty("birthYearGap");
+  });
+
   it("gives up the duplicate row list: `ranked` keeps metadata, not matches", () => {
     const out = annotateResultsWithRanking(
       resp(rankedWith([{ recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.5 }])),

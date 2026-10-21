@@ -241,12 +241,13 @@ Two distinct formats appear in this file, and the distinction is enforced.
 | Format | Fields | Shape |
 |--------|--------|-------|
 | **Date** | `project.created`, `project.updated`, `known_holdings[].created`, `questions[].created`, `questions[].resolved`, `plans[].created`, `sources[].access_date`, `person_evidence[].created`, `localities[].created`, `localities[].updated`, `namesakes[].created` | `YYYY-MM-DD` exactly — `2026-05-01`. No time part, no month- or year-only form. Enforced by both validators |
-| **Timestamp** | `log[].performed`, `timelines[].generated`, `evaluations[].timestamp` | ISO 8601 date-time **with an explicit timezone** — `2026-05-01T10:15:00Z` or `2026-05-01T10:15:00+01:00` |
+| **Timestamp** | `log[].performed`, `timelines[].generated`, `evaluations[].timestamp`, `proof_summaries[].updated` | ISO 8601 date-time **with an explicit timezone** — `2026-05-01T10:15:00Z` or `2026-05-01T10:15:00+01:00` |
 
 Write the colon form with a `Z` or a numeric offset and both validators accept
 it. Two footnotes for anyone reading a file rather than writing one:
 
-- For `log[].performed` and `timelines[].generated` the time part may also use
+- For `log[].performed`, `timelines[].generated` and `proof_summaries[].updated`
+  the time part may also use
   dashes instead of colons (`2026-05-01T10-15-00Z`), with optional fractional
   seconds after either a dot or a dash. That tolerance exists so a timestamp can
   double as a filename on filesystems that disallow colons. Nothing in the
@@ -293,7 +294,7 @@ described under "Who actually writes a row" below.
 | `log` | search-records, search-full-text, search-external-sites, search-images, search-hints (one entry per researcher verdict on a hint), survey-surname; `extraction_append` (its own `record_read` entry per record it reads live; an earlier uncited read is cited instead) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
 | `sources` | `extraction_append` (by tool identity), citation | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |
 | `assertions` | `extraction_append` (by tool identity) | timeline, conflict-resolution, proof-conclusion, question-selection | Classifications are set in code at extraction and not refined afterward; `research_append` refuses every assertions write except an update setting only `informant_bias_notes`. Never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
-| `person_evidence` | person-evidence | all downstream | Mutable (confidence, rationale); never delete, use superseded_by |
+| `person_evidence` | person-evidence; `extraction_append` (attachment links, by tool identity) | all downstream | Mutable (confidence, rationale); never delete, use superseded_by. An attachment link (`speculative`, no `match_score`, `ATTACHMENT_LINK_RATIONALE`) is only ever superseded |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
 | `hypotheses` | the hypothesis-tracking agent | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
 | `timelines` | timeline | question-selection, conflict-resolution | Regeneratable; replaced wholesale when regenerated |
@@ -986,6 +987,7 @@ Array of proof summary objects. Each proof summary is a self-contained GPS concl
 | `exhaustive_search_summary` | string | yes | Brief summary of search scope, referencing log entries |
 | `shortfall` | `proof_shortfall` | yes | Why this conclusion is not at a higher tier — **remediability, orthogonal to the confidence `tier` carries**, and it never changes the tier. `none` only on a **conclusive** tier — `proved` or `disproved`, both final answers with nothing holding them back (`not_proved` is a non-answer, not a negative answer, so it always carries one of the other three); `conflict` when an unresolved `conflicts[]` entry names this summary's `question_id` in its `blocks_question_ids`; `ceiling` when the reachable record is exhausted so no further search would raise the tier (reachable = retrievable by an MCP tool or constructible as a subscription-site handoff — never the offline world); `gap` when a reachable source remains unsearched. `ceiling` and `gap` are not interchangeable: `ceiling` asserts the search is finished, so anything `exhaustive_search_summary` still names as outstanding makes it `gap`. **Not a writer-tool precondition:** tying `shortfall: "conflict"` to a matching open conflict is a cross-object join, which the write boundary cannot do — it is a rubric dimension |
 | `narrative_markdown` | string | yes | Self-contained GPS conclusion narrative |
+| `updated` | `iso_datetime` | no | Tool-owned: `research_append` stamps it on every append of the entry and on every update that sets `narrative_markdown` or `exhaustive_search_summary`, overwriting any value the caller passed. An update setting neither keeps the existing stamp. `research_append` compares it against `log[].performed` to decide whether a summary is stale: when the question's log has an entry performed after it, an update must rewrite `narrative_markdown` and `exhaustive_search_summary` together. Absent on summaries written before the field existed, and such a summary is never treated as stale |
 | `claims` | `proof_claim[]` | no | Optional per-claim tier breakdown — see below |
 
 **Timing:** Proof summaries may be written for questions at any status. A summary for an `in_progress` question represents a preliminary conclusion; its tier should reflect the incomplete state of research (typically `probable` or `possible`, not `proved`). Writing preliminary conclusions is encouraged — it forces the skill to articulate the current state of evidence and identify what's missing.

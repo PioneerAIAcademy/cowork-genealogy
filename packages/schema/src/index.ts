@@ -319,6 +319,7 @@ export interface ProofSummary {
   resolved_conflict_ids: string[]
   exhaustive_search_summary: string
   narrative_markdown: string
+  updated?: string
   claims?: ProofClaim[]
 }
 
