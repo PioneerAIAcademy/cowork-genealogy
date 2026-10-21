@@ -1357,6 +1357,18 @@ e2e-nudges: ## How /research hands back at a step boundary, over committed e2e r
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-routing-agreement
+e2e-routing-agreement: ## How often project_context's nextStep names the unit run next, over committed e2e runs (issue #3523): make e2e-routing-agreement | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. A decision is a
+	# project_context call carrying a nextStep, paired with the next spawn,
+	# Skill call or extraction_append before the next project_context. Router
+	# and subagent decisions print separately, then the same per run git_sha.
+	# It reads response_summary, which is stripped from runs older than 14
+	# days, so SINCE=all mostly adds unreadable calls; the report counts them.
+	cd eval/harness && uv run python -m e2e.routing_agreement_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-advisories
 e2e-advisories: ## Do the 4 advisory return-fields fire, and does the agent act? Over committed e2e runs (issue #3199): make e2e-advisories | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs. For each advisory
