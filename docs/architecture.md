@@ -942,6 +942,18 @@ they have different fixes, and only one of them is a description problem.
    that corpus, and **refuses to run** when that set has no positives (it used to
    report a pass without scoring anything). It makes real paid model calls, is not
    in CI, and only *proposes* text you then apply by hand.
+
+   **This step does not work for an agent, and there is no instrument that
+   does.** `make optimize-skill` takes `--skill-path .../skills/$(SKILL)` and
+   `build_eval_set.py` exits `ERROR: no skill` when that directory is absent, so
+   it cannot be pointed at `agents/<name>.md`. Pointing it there would not help
+   either: the builder reads only `input.user_message`, and a converted agent's
+   suite holds `input.delegation` tests instead — measured 2026-10-21,
+   `historical-context` 0/14, `check-warnings` 0/16, `tree-edit` 0/14. The
+   trigger runner also counts a trigger only on a `Skill` tool call, never an
+   `Agent` spawn. **Agent triggering has no measurement today**; issue #3220
+   carries the diagnosis, and a miss there is not evidence about the
+   description.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 
