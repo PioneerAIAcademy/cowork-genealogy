@@ -96,8 +96,15 @@ import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
 interface SectionConfig {
   /** id prefix, including the trailing underscore (e.g. "src_"). */
   prefix: string;
-  /** Tool-owned timestamp stamped on append when the entry omits it. */
-  stampTimestamp?: { field: string; kind: "date" | "datetime" };
+  /** Tool-owned timestamp stamped on append when the entry omits it. With
+   *  `everyWrite`, stamped on every append and update, overwriting the caller's;
+   *  `restampOn` narrows the updates that move it to those setting one of its fields. */
+  stampTimestamp?: {
+    field: string;
+    kind: "date" | "datetime";
+    everyWrite?: boolean;
+    restampOn?: readonly string[];
+  };
   /** Nested section: entries live in `<parent>[<param>].<field>` (plan_items). */
   nested?: { parent: string; param: "planId"; field: string };
   /** Singleton object section (e.g. `project`): `op:"update"` shallow-merges
@@ -145,7 +152,18 @@ const SECTIONS: Record<string, SectionConfig> = {
   hypotheses: { prefix: "h_" },
   // Phase 3
   timelines: { prefix: "t_", stampTimestamp: { field: "generated", kind: "datetime" } },
-  proof_summaries: { prefix: "ps_" },
+  // `updated` is what `narrativeAndSearchSummaryTogether` compares the
+  // question's log against, so it moves on every write that checks either text
+  // against the log, not just the first, and never on one that checks neither.
+  proof_summaries: {
+    prefix: "ps_",
+    stampTimestamp: {
+      field: "updated",
+      kind: "datetime",
+      everyWrite: true,
+      restampOn: ["narrative_markdown", "exhaustive_search_summary"],
+    },
+  },
   evaluations: { prefix: "ev_", stampTimestamp: { field: "timestamp", kind: "datetime" } },
   known_holdings: { prefix: "kh_", stampTimestamp: CREATED_DATE },
   localities: { prefix: "loc_", stampTimestamp: CREATED_DATE },
@@ -2724,9 +2742,87 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
     `question '${qid}' already has a proof summary (${ids.join(", ")}), and a question may ` +
       "carry only one. Re-concluding is an UPDATE of that entry, not a second append: retry " +
       `with { section: "proof_summaries", op: "update", entryId: "${ids[0]}", fields: { … } }, ` +
-      "passing only the fields that changed. Appending here would leave two contradictory " +
+      "passing only the fields that changed — but if the question has been searched since the " +
+      "summary was written, `narrative_markdown` and `exhaustive_search_summary` count as one, so " +
+      "pass both or neither. Appending here would leave two contradictory " +
       "conclusions on one question, with nothing to say which is current.",
   ];
+}
+
+/** A summary's narrative and its `exhaustive_search_summary` are rewritten
+ *  together once the question has been searched since the summary was written.
+ *
+ *  Both say what was searched and what could still resolve the question, so a
+ *  later search that changes one changes the other. Observed 2026-10-09 (issue
+ *  #3177, G9GJ-959): after three more searches, `ps_002`'s summary was rewritten
+ *  to report them and its narrative's "What could resolve it" was left
+ *  recommending all three, while `ps_001` got the reverse — a new narrative over
+ *  a summary still calling the same images "Not completed". The re-invocation
+ *  rule said to pass only the fields that changed, and each update did.
+ *
+ *  Scoped to that case: a one-field update is refused only when a `log[]` entry
+ *  attributed to the summary's question (through a plan item of one of its
+ *  plans) was performed after the summary's pre-op `updated` stamp. With no
+ *  later search, a one-field edit — a tier change with a reworded narrative —
+ *  is ordinary and passes. A summary with no `updated` predates the stamp and
+ *  is never refused. `log` is not a `research_append` section, so live and
+ *  pre-call research carry the same log.
+ *
+ *  Update-only: an append already requires both. Passing a field's current
+ *  text again satisfies it — the point is that the caller re-checked it. */
+function narrativeAndSearchSummaryTogether(
+  op: any,
+  entry: any,
+  priorUpdated: unknown,
+  research: any,
+): string[] {
+  if (op?.op !== "update") return [];
+  const fields = op.fields ?? {};
+  const has = (k: string) => Object.prototype.hasOwnProperty.call(fields, k);
+  const narrative = has("narrative_markdown");
+  const summary = has("exhaustive_search_summary");
+  if (narrative === summary) return [];
+  const since = typeof priorUpdated === "string" ? datetimeMs(priorUpdated) : NaN;
+  if (Number.isNaN(since)) return [];
+  const qid = entry?.question_id;
+  if (typeof qid !== "string" || qid === "") return [];
+  const itemIds = new Set<string>();
+  for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
+    if (plan?.question_id !== qid) continue;
+    for (const item of Array.isArray(plan.items) ? plan.items : []) {
+      if (typeof item?.id === "string") itemIds.add(item.id);
+    }
+  }
+  const later = (Array.isArray(research?.log) ? research.log : [])
+    .filter(
+      (e: any) =>
+        e &&
+        itemIds.has(e.plan_item_id) &&
+        typeof e.performed === "string" &&
+        datetimeMs(e.performed) > since,
+    )
+    .map((e: any) => e.id ?? "(no id)");
+  if (later.length === 0) return [];
+  const [set, missing] = narrative
+    ? ["narrative_markdown", "exhaustive_search_summary"]
+    : ["exhaustive_search_summary", "narrative_markdown"];
+  return [
+    `proof_summaries update of ${op.entryId ?? "(no entryId)"} sets \`${set}\` without ` +
+      `\`${missing}\`, and question ${qid} has been searched since this summary was last ` +
+      `written (${later.join(", ")}). Both fields say what was searched and what could still ` +
+      "resolve the question, so read those log entries, rewrite both, and pass both in this one " +
+      `update. If \`${missing}\` is still accurate after you check it against them, pass its ` +
+      "current text unchanged. Leaving one stale is how a narrative ends up recommending records " +
+      "its own summary says were searched.",
+  ];
+}
+
+/** Epoch ms of an `iso_datetime`, accepting the dash-separated time form the
+ *  schema allows (`2026-05-01T10-15-00Z`); NaN when it does not parse. */
+function datetimeMs(value: string): number {
+  const m = /^(\d{4}-\d{2}-\d{2}T\d{2})[:-](\d{2})[:-](\d{2})(?:[.-](\d+))?(.*)$/.exec(value);
+  if (!m) return Date.parse(value);
+  return Date.parse(`${m[1]}:${m[2]}:${m[3]}${m[4] ? "." + m[4] : ""}${m[5]}`);
 }
 
 /** A `proof_summaries` write when the persons this proof bears on — its
@@ -4708,6 +4804,8 @@ function applyOne(
   let entryId: string;
   let resultEntry: any;
   let arrayIndex: number | undefined;
+  // The entry's own timestamp as it stood before this op restamped it.
+  let priorStamp: unknown;
   // An update's link pair and retired state as they stood BEFORE its fields merge,
   // so the rejected-link gate below can tell an edit from a re-link.
   let priorPair: { assertion_id: unknown; person_id: unknown; superseded_by: unknown } | undefined;
@@ -4733,7 +4831,7 @@ function applyOne(
     validateInformantQualityFloor(newEntry);
     validateRelationshipDirection(newEntry);
     const stamp = config.stampTimestamp;
-    if (stamp && newEntry[stamp.field] === undefined) {
+    if (stamp && (stamp.everyWrite || newEntry[stamp.field] === undefined)) {
       newEntry[stamp.field] = stamp.kind === "date" ? today() : now();
     }
     array.push(newEntry);
@@ -4796,6 +4894,8 @@ function applyOne(
       }
     }
 
+    priorStamp = config.stampTimestamp ? existing[config.stampTimestamp.field] : undefined;
+
     // A completed plan item stays completed. search-records writes
     // `in_progress` after every search it logs, and extraction_append completes
     // the item once a record it found is extracted, so a later search on the
@@ -4845,6 +4945,14 @@ function applyOne(
     for (const [k, v] of Object.entries(op.fields)) {
       if (k === "id") continue;
       existing[k] = v;
+    }
+    const updateStamp = config.stampTimestamp;
+    if (updateStamp?.everyWrite) {
+      const moves = !updateStamp.restampOn ||
+        updateStamp.restampOn.some((k) => Object.prototype.hasOwnProperty.call(op.fields, k));
+      if (moves) existing[updateStamp.field] = updateStamp.kind === "date" ? today() : now();
+      else if (priorStamp === undefined) delete existing[updateStamp.field];
+      else existing[updateStamp.field] = priorStamp;
     }
     normalizeDateFields(existing);
     normalizeAccessDate(existing);
@@ -5356,6 +5464,7 @@ function applyOne(
     // update walked past it. `oneSummaryPerQuestion` excludes the entry by id,
     // so an ordinary update of an existing summary still passes.
     invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
+    invariantErrors.push(...narrativeAndSearchSummaryTogether(op, resultEntry, priorStamp, research));
     // Reads PRE-CALL tree and PRE-CALL research: a same-batch hypothesis write
     // does not satisfy this precondition. Gated only on the entry's standing
     // tier (not_proved/disproved pass), not on which fields this op touches.

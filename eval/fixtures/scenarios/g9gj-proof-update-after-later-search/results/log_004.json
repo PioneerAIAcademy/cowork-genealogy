@@ -1,0 +1,2769 @@
+{
+  "log_id": "log_004",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T15:09:31.447Z",
+  "returned_count": 20,
+  "payload": {
+    "query": {
+      "count": 20,
+      "deathYearFrom": 1872,
+      "deathYearTo": 1874,
+      "givenName": "Iram",
+      "givenNameAlt": "Hiram",
+      "projectPath": "<workspace>",
+      "surname": "Hyde"
+    },
+    "totalMatches": 21703,
+    "paginationCappedAt": 4999,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:V6HW-M4C",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Lake Odessa, Ionia, Michigan, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 4.2536,
+        "confidence": 2,
+        "deathDate": "13 April 1872",
+        "collectionId": "1913388",
+        "collectionTitle": "United States, Records of Headstones of Deceased Union Veterans, 1879-1903",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1913388",
+        "recordTitle": "Entry for Hiram Hyde, \"United States, Records of Headstones of Deceased Union Veterans, 1879-1903\"",
+        "recordArk": "ark:/61903/1:2:9M3N-SNZK",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_13444542219",
+              "ark": "ark:/61903/1:1:V6HW-M4C",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "date": "13 Apr 1872",
+                  "standard_date": "13 Apr 1872"
+                },
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "place": "Lake Odessa, Ionia, Michigan, United States",
+                  "standard_place": "Lake Odessa, Odessa Township, Ionia, Michigan, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21955928719",
+              "title": "Entry for Hiram Hyde, \"United States, Records of Headstones of Deceased Union Veterans, 1879-1903\"",
+              "citation": "\"United States, Records of Headstones of Deceased Union Veterans, 1879-1903\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V6HW-M4C : Wed May 13 09:28:59 UTC 2026), Entry for Hiram Hyde.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9M3N-SNZK"
+            },
+            {
+              "id": "sd_c_1913388",
+              "title": "United States, Records of Headstones of Deceased Union Veterans, 1879-1903",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1913388"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:2:77TD-VGGV"
+            },
+            {
+              "id": "sd_auto_M9JR-1KV",
+              "title": "United States, Military Service, from 0001 to 2012"
+            },
+            {
+              "id": "src_p_p_13444542219",
+              "url": "#p_13444542219"
+            }
+          ],
+          "places": [
+            {
+              "id": "4236097",
+              "name": "Lake Odessa, Odessa Township, Ionia, Michigan, United States",
+              "latitude": 42.7847,
+              "longitude": -85.1383
+            }
+          ]
+        },
+        "primaryId": "p_13444542219"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QVK2-BSBN",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Lake Odessa, Ionia, Michigan, United States of America"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pvt Hiram Hyde",
+        "score": 4.2536,
+        "confidence": 2,
+        "birthDate": "1829",
+        "deathDate": "13 April 1872",
+        "collectionId": "2221801",
+        "collectionTitle": "Find a Grave Index",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "recordTitle": "Entry for Pvt Hiram Hyde, \"Find a Grave Index\"",
+        "recordArk": "ark:/61903/1:2:Q29T-YVVN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_101080658656",
+              "ark": "ark:/61903/1:1:QVK2-BSBN",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "prefix": "Pvt",
+                  "given": "Hiram",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "place": "Lake Odessa, Ionia, Michigan, United States of America",
+                  "standard_place": "Lake Odessa, Odessa Township, Ionia, Michigan, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1829",
+                  "standard_date": "1829"
+                },
+                {
+                  "type": "Death",
+                  "date": "13 Apr 1872",
+                  "standard_date": "13 Apr 1872"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102106105756",
+              "title": "Entry for Pvt Hiram Hyde, \"Find a Grave Index\"",
+              "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVK2-BSBN : Sat Oct 03 00:38:12 UTC 2026), Entry for Pvt Hiram Hyde.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q29T-YVVN"
+            },
+            {
+              "id": "sd_c_2221801",
+              "title": "Find a Grave Index",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801"
+            },
+            {
+              "id": "sd_da1",
+              "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=50494218"
+            },
+            {
+              "id": "src_p_p_101080658656",
+              "url": "#p_101080658656"
+            }
+          ],
+          "places": [
+            {
+              "id": "4236097",
+              "name": "Lake Odessa, Odessa Township, Ionia, Michigan, United States",
+              "latitude": 42.7847,
+              "longitude": -85.1383
+            }
+          ]
+        },
+        "primaryId": "p_101080658656"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MCJQ-WX7",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "West Baton Rouge, Port Allen, West Baton Rouge, Louisiana, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "H I Hyde",
+        "score": 3.8439598,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1814",
+        "birthPlace": "Ohio, United States",
+        "collectionId": "1401638",
+        "collectionTitle": "United States, Census, 1850",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+        "recordTitle": "Household of H I Hyde, \"United States, Census, 1850\"",
+        "recordArk": "ark:/61903/1:2:M44L-C67",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_232583825",
+              "ark": "ark:/61903/1:1:MCJQ-WX7",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "H I"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "West Baton Rouge, Port Allen, West Baton Rouge, Louisiana, United States",
+                  "standard_place": "Port Allen, West Baton Rouge, Louisiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1814",
+                  "standard_date": "1814",
+                  "place": "Ohio",
+                  "standard_place": "Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_176345495",
+              "title": "Household of H I Hyde, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCJQ-WX7 : Fri Aug 29 19:01:59 UTC 2025), Entry for H I Hyde, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M44L-C67"
+            },
+            {
+              "id": "sd_c_1401638",
+              "title": "United States, Census, 1850",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-63KH-VX"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_232583825",
+              "url": "#p_232583825"
+            }
+          ],
+          "places": [
+            {
+              "id": "357",
+              "name": "Ohio, United States",
+              "latitude": 40.25028,
+              "longitude": -83.00028
+            },
+            {
+              "id": "5441643",
+              "name": "Port Allen, West Baton Rouge, Louisiana, United States",
+              "latitude": 30.452,
+              "longitude": -91.21
+            }
+          ]
+        },
+        "primaryId": "p_232583825"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2QG-LFJZ",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1843",
+            "place": "Harrison Land District, Texas, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "I H Hyde",
+        "score": 3.8439598,
+        "confidence": 2,
+        "collectionId": "1827575",
+        "collectionTitle": "Texas, County Tax Rolls, 1837-1910",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1827575",
+        "recordTitle": "Entry for I H Hyde, \"Texas, County Tax Rolls, 1837-1910\"",
+        "recordArk": "ark:/61903/1:2:QL9L-6MRZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102175601020",
+              "ark": "ark:/61903/1:1:Q2QG-LFJZ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "I H",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "TaxAssessment",
+                  "primary": true,
+                  "date": "1843",
+                  "standard_date": "1843",
+                  "place": "Harrison Land District, Texas, United States",
+                  "standard_place": "Harrison Land District, Texas, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102830661760",
+              "title": "Entry for I H Hyde, \"Texas, County Tax Rolls, 1837-1910\"",
+              "citation": "\"Texas, County Tax Rolls, 1837-1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2QG-LFJZ : Fri Mar 08 19:02:32 UTC 2024), Entry for I H Hyde, 1843.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL9L-6MRZ"
+            },
+            {
+              "id": "sd_c_1827575",
+              "title": "Texas, County Tax Rolls, 1837-1910",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1827575"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939F-WH33-9"
+            },
+            {
+              "id": "sd_auto_M9KR-7TL",
+              "title": "United States, Texas, Legal, from 1517 to 2019"
+            },
+            {
+              "id": "src_p_p_102175601020",
+              "url": "#p_102175601020"
+            }
+          ],
+          "places": [
+            {
+              "id": "3459196",
+              "name": "Harrison Land District, Texas, United States",
+              "latitude": 32.383,
+              "longitude": -94.316997
+            }
+          ]
+        },
+        "primaryId": "p_102175601020"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGTF-R3HY",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "2001287",
+        "collectionTitle": "California, County Birth and Death Records, 1800-1994",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2001287",
+        "recordTitle": "Entry for Vilora Pulver, \"California, County Birth and Death Records, 1800-1994\"",
+        "recordArk": "ark:/61903/1:2:QRX1-KVDJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104162627967",
+              "ark": "ark:/61903/1:1:QGTF-R3HY",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104162627966",
+              "ark": "ark:/61903/1:1:QGTF-R3HT",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Pulver",
+                  "given": "Vilora"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "26 July 1944",
+                  "standard_date": "26 Jul 1944",
+                  "place": "Los Angeles, California, United States",
+                  "standard_place": "Los Angeles, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1857",
+                  "standard_date": "1857"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104162627968",
+              "ark": "ark:/61903/1:1:QGTF-R3HB",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Smith",
+                  "given": "Marian"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104162627969",
+              "ark": "ark:/61903/1:1:QGTF-R3H1",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Pulver",
+                  "given": "David"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_104162627966",
+              "person2": "p_104162627969"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104162627967",
+              "child": "p_104162627966"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104162627968",
+              "child": "p_104162627966"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104162627967",
+              "person2": "p_104162627968"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106069219577",
+              "title": "Entry for Vilora Pulver, \"California, County Birth and Death Records, 1800-1994\"",
+              "citation": "\"California, County Birth and Death Records, 1800-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGTF-R3HT : Sat Mar 09 18:33:47 UTC 2024), Entry for Vilora Pulver and Hiram Hyde, 26 July 1944.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRX1-KVDJ"
+            },
+            {
+              "id": "sd_c_2001287",
+              "title": "California, County Birth and Death Records, 1800-1994",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2001287"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89SJ-JCG9"
+            },
+            {
+              "id": "sd_auto_M9J1-94V",
+              "title": "United States, California, Deaths, from 0194 to 2026"
+            },
+            {
+              "id": "src_p_p_104162627967",
+              "url": "#p_104162627967"
+            }
+          ],
+          "places": [
+            {
+              "id": "395580",
+              "name": "Los Angeles, California, United States",
+              "latitude": 34.36667,
+              "longitude": -118.2
+            }
+          ]
+        },
+        "primaryId": "p_104162627967"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X67T-TS9",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1307272",
+        "collectionTitle": "Ohio, Deaths, 1908-1953",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1307272",
+        "recordTitle": "Entry for Lillian Stull, \"Ohio, Deaths, 1908-1953\"",
+        "recordArk": "ark:/61903/1:2:MSGM-G17",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10526675461",
+              "ark": "ark:/61903/1:1:X67T-TS9",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10526675460",
+              "ark": "ark:/61903/1:1:X67T-TSM",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Stull",
+                  "given": "Lillian"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "12 Jul 1860",
+                  "standard_date": "12 Jul 1860",
+                  "place": "Kalamazoo, Mich.",
+                  "standard_place": "Kalamazoo, Michigan, United States"
+                },
+                {
+                  "type": "Burial",
+                  "date": "24 Jan 1935",
+                  "standard_date": "24 Jan 1935"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "23 Jan 1935",
+                  "standard_date": "23 Jan 1935",
+                  "place": "Toledo, Lucas, Ohio",
+                  "standard_place": "Toledo, Lucas, Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10526675462",
+              "ark": "ark:/61903/1:1:X67T-TSS",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "La Fountain"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10526675463",
+              "ark": "ark:/61903/1:1:X67T-TS3",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Joseph"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10526675463",
+              "person2": "p_10526675460"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10526675461",
+              "child": "p_10526675460"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10526675462",
+              "child": "p_10526675460"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10526675461",
+              "person2": "p_10526675462"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_66440675",
+              "title": "Entry for Lillian Stull, \"Ohio, Deaths, 1908-1953\"",
+              "citation": "\"Ohio, Deaths, 1908-1953\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X67T-TSM : Fri Mar 08 04:49:57 UTC 2024), Entry for Lillian Stull and Hiram Hyde, 23 Jan 1935.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MSGM-G17"
+            },
+            {
+              "id": "sd_c_1307272",
+              "title": "Ohio, Deaths, 1908-1953",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1307272"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GPFX-SQXS"
+            },
+            {
+              "id": "sd_auto_M9J1-9HK",
+              "title": "United States, Ohio, Deaths, from 8 January 1271 to 2026"
+            },
+            {
+              "id": "src_p_p_10526675461",
+              "url": "#p_10526675461"
+            }
+          ],
+          "places": [
+            {
+              "id": "392828",
+              "name": "Kalamazoo, Michigan, United States",
+              "latitude": 42.2506,
+              "longitude": -85.55
+            },
+            {
+              "id": "4813801",
+              "name": "Toledo, Lucas, Ohio, United States",
+              "latitude": 41.652729,
+              "longitude": -83.540878
+            }
+          ]
+        },
+        "primaryId": "p_10526675461"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N3C5-JGH",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "birthPlace": "Indiana, United States",
+        "collectionId": "1438856",
+        "collectionTitle": "Illinois, Deaths and Stillbirths, 1916-1948",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1438856",
+        "recordTitle": "Entry for Kisiah Zimmerman, \"Illinois, Deaths and Stillbirths, 1916-1948\"",
+        "recordArk": "ark:/61903/1:2:9FQ7-8CJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11744853968",
+              "ark": "ark:/61903/1:1:N3C5-JGH",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11744853967",
+              "ark": "ark:/61903/1:1:N3C5-JG4",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Zimmerman",
+                  "given": "Kisiah"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "13 Dec 1867",
+                  "standard_date": "13 Dec 1867",
+                  "place": "Mason, Ill.",
+                  "standard_place": "Mason, Illinois, United States"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "07 Jan 1946",
+                  "standard_date": "7 Jan 1946",
+                  "place": "Limestone, Peoria, Illinois",
+                  "standard_place": "Limestone Township, Peoria, Illinois, United States"
+                },
+                {
+                  "type": "Burial",
+                  "date": "09 Jan 1946",
+                  "standard_date": "9 Jan 1946",
+                  "place": "Mason City, Mason, Ill.",
+                  "standard_place": "Mason City, Mason, Illinois, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11744853969",
+              "ark": "ark:/61903/1:1:N3C5-JGC",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Polock",
+                  "given": "Sophia"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11744853969",
+              "child": "p_11744853967"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11744853968",
+              "child": "p_11744853967"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11744853968",
+              "person2": "p_11744853969"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1096885187",
+              "title": "Entry for Kisiah Zimmerman, \"Illinois, Deaths and Stillbirths, 1916-1948\"",
+              "citation": "\"Illinois, Deaths and Stillbirths, 1916-1948\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3C5-JG4 : Mon Jan 27 21:23:17 UTC 2025), Entry for Kisiah Zimmerman and Hiram Hyde, 07 Jan 1946.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9FQ7-8CJ"
+            },
+            {
+              "id": "sd_c_1438856",
+              "title": "Illinois, Deaths and Stillbirths, 1916-1948",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1438856"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9K5-Z9B9-Y"
+            },
+            {
+              "id": "sd_auto_M9J1-SMV",
+              "title": "United States, Illinois, Deaths, from 0140 to 2026"
+            },
+            {
+              "id": "src_p_p_11744853968",
+              "url": "#p_11744853968"
+            }
+          ],
+          "places": [
+            {
+              "id": "331",
+              "name": "Indiana, United States",
+              "latitude": 40.0003,
+              "longitude": -86.2503
+            },
+            {
+              "id": "392565",
+              "name": "Mason, Illinois, United States",
+              "latitude": 40.25056,
+              "longitude": -89.88333
+            },
+            {
+              "id": "4035848",
+              "name": "Limestone Township, Peoria, Illinois, United States",
+              "latitude": 40.6731,
+              "longitude": -89.7022
+            },
+            {
+              "id": "4054895",
+              "name": "Mason City, Mason, Illinois, United States",
+              "latitude": 40.2022,
+              "longitude": -89.6981
+            }
+          ]
+        },
+        "primaryId": "p_11744853968"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NQNF-51S",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram B. Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "birthPlace": "Ohio, United States",
+        "collectionId": "1438856",
+        "collectionTitle": "Illinois, Deaths and Stillbirths, 1916-1948",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1438856",
+        "recordTitle": "Entry for Henry Loren Hyde, \"Illinois, Deaths and Stillbirths, 1916-1948\"",
+        "recordArk": "ark:/61903/1:2:9F7P-3BG",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11774587472",
+              "ark": "ark:/61903/1:1:NQNF-51S",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hiram B.",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Ohio",
+                  "standard_place": "Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11774587471",
+              "ark": "ark:/61903/1:1:NQNF-519",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Henry Loren",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "22 Sep 1938",
+                  "standard_date": "22 Sep 1938",
+                  "place": "Salt Creek Township, Mason, Illinois, United States",
+                  "standard_place": "Salt Creek Township, Mason, Illinois, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "30 Sep 1870",
+                  "standard_date": "30 Sep 1870",
+                  "place": "Mason City Tp., Mason Co., Ill.",
+                  "standard_place": "Mason City, Mason, Illinois, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "30 Sep 1870",
+                  "standard_date": "30 Sep 1870",
+                  "place": "Mason City Tp., Mason Co., Ill.",
+                  "standard_place": "Mason City, Mason, Illinois, United States"
+                },
+                {
+                  "type": "Burial",
+                  "date": "24 Sep 1938",
+                  "standard_date": "24 Sep 1938",
+                  "place": "Mason City Tp., Mason, Ill.",
+                  "standard_place": "Mason City, Mason, Illinois, United States"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "22 Sep 1938",
+                  "standard_date": "22 Sep 1938",
+                  "place": "Salt Creek Township, Mason, Illinois, United States",
+                  "standard_place": "Salt Creek Township, Mason, Illinois, United States"
+                },
+                {
+                  "type": "Burial",
+                  "date": "24 Sep 1938",
+                  "standard_date": "24 Sep 1938",
+                  "place": "Mason City Tp., Mason, Ill.",
+                  "standard_place": "Mason City, Mason, Illinois, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11774587473",
+              "ark": "ark:/61903/1:1:NQNF-513",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sophia",
+                  "surname": "Pollock"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Ohio",
+                  "standard_place": "Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11774587474",
+              "ark": "ark:/61903/1:1:NQNF-51Q",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Belle",
+                  "surname": "Hyde"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11774587473",
+              "child": "p_11774587471"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11774587471",
+              "person2": "p_11774587474"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11774587472",
+              "child": "p_11774587471"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11774587472",
+              "person2": "p_11774587473"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1098174562",
+              "title": "Entry for Henry Loren Hyde, \"Illinois, Deaths and Stillbirths, 1916-1948\"",
+              "citation": "\"Illinois, Deaths and Stillbirths, 1916-1948\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQNF-519 : Thu Aug 01 00:40:00 UTC 2024), Entry for Henry Loren Hyde and Hiram B. Hyde, 22 Sep 1938.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9F7P-3BG"
+            },
+            {
+              "id": "sd_c_1438856",
+              "title": "Illinois, Deaths and Stillbirths, 1916-1948",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1438856"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9K1-994K-9"
+            },
+            {
+              "id": "sd_auto_M9J1-SMV",
+              "title": "United States, Illinois, Deaths, from 0140 to 2026"
+            },
+            {
+              "id": "src_p_p_11774587472",
+              "url": "#p_11774587472"
+            }
+          ],
+          "places": [
+            {
+              "id": "357",
+              "name": "Ohio, United States",
+              "latitude": 40.25028,
+              "longitude": -83.00028
+            },
+            {
+              "id": "4035288",
+              "name": "Salt Creek Township, Mason, Illinois, United States",
+              "latitude": 40.1767,
+              "longitude": -89.7692
+            },
+            {
+              "id": "4054895",
+              "name": "Mason City, Mason, Illinois, United States",
+              "latitude": 40.2022,
+              "longitude": -89.6981
+            }
+          ]
+        },
+        "primaryId": "p_11774587472"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N356-M7T",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "birthPlace": "Ohio, United States",
+        "collectionId": "1438856",
+        "collectionTitle": "Illinois, Deaths and Stillbirths, 1916-1948",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1438856",
+        "recordTitle": "Entry for George M. Hyde, \"Illinois, Deaths and Stillbirths, 1916-1948\"",
+        "recordArk": "ark:/61903/1:2:9F75-JKY",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11756691176",
+              "ark": "ark:/61903/1:1:N356-M7T",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hiram",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Ohio",
+                  "standard_place": "Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11756691175",
+              "ark": "ark:/61903/1:1:N356-M7R",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "George M.",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "12 May 1939",
+                  "standard_date": "12 May 1939",
+                  "place": "East Peoria, Tazewell, Illinois, United States",
+                  "standard_place": "East Peoria, Tazewell, Illinois, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "20 Feb 1879",
+                  "standard_date": "20 Feb 1879",
+                  "place": "Mason City, Ill.",
+                  "standard_place": "Mason City, Mason, Illinois, United States"
+                },
+                {
+                  "type": "Burial",
+                  "date": "15 May 1939",
+                  "standard_date": "15 May 1939",
+                  "place": "Mason City, Mason, Ill.",
+                  "standard_place": "Mason City, Mason, Illinois, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11756691177",
+              "ark": "ark:/61903/1:1:N356-M7Y",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sofia",
+                  "surname": "Pollock"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Ohio",
+                  "standard_place": "Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11756691178",
+              "ark": "ark:/61903/1:1:N356-M7B",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Nettie",
+                  "surname": "Tomlinson"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11756691175",
+              "person2": "p_11756691178"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11756691177",
+              "child": "p_11756691175"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11756691176",
+              "person2": "p_11756691177"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11756691176",
+              "child": "p_11756691175"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1098213897",
+              "title": "Entry for George M. Hyde, \"Illinois, Deaths and Stillbirths, 1916-1948\"",
+              "citation": "\"Illinois, Deaths and Stillbirths, 1916-1948\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N356-M7R : Mon Jan 27 22:02:39 UTC 2025), Entry for George M. Hyde and Hiram Hyde, 12 May 1939.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9F75-JKY"
+            },
+            {
+              "id": "sd_c_1438856",
+              "title": "Illinois, Deaths and Stillbirths, 1916-1948",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1438856"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9KB-1QYF"
+            },
+            {
+              "id": "sd_auto_M9J1-SMV",
+              "title": "United States, Illinois, Deaths, from 0140 to 2026"
+            },
+            {
+              "id": "src_p_p_11756691176",
+              "url": "#p_11756691176"
+            }
+          ],
+          "places": [
+            {
+              "id": "357",
+              "name": "Ohio, United States",
+              "latitude": 40.25028,
+              "longitude": -83.00028
+            },
+            {
+              "id": "4054895",
+              "name": "Mason City, Mason, Illinois, United States",
+              "latitude": 40.2022,
+              "longitude": -89.6981
+            },
+            {
+              "id": "4058496",
+              "name": "East Peoria, Tazewell, Illinois, United States",
+              "latitude": 40.6661,
+              "longitude": -89.58
+            }
+          ]
+        },
+        "primaryId": "p_11756691176"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X8GV-8CZ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram L. Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "birthPlace": "Ohio, United States",
+        "collectionId": "1307272",
+        "collectionTitle": "Ohio, Deaths, 1908-1953",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1307272",
+        "recordTitle": "Entry for Perry G Hyde, \"Ohio, Deaths, 1908-1953\"",
+        "recordArk": "ark:/61903/1:2:M3XX-11D",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10491616180",
+              "ark": "ark:/61903/1:1:X8GV-8CZ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram L."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Ohio",
+                  "standard_place": "Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10491616179",
+              "ark": "ark:/61903/1:1:X8GV-8CC",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Perry G"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "15 Nov 1834",
+                  "standard_date": "15 Nov 1834",
+                  "place": "Penn Line, Pa.",
+                  "standard_place": "Pennline, Conneaut Township, Crawford, Pennsylvania, United States"
+                },
+                {
+                  "type": "Burial",
+                  "date": "28 Mar 1921",
+                  "standard_date": "28 Mar 1921",
+                  "place": "Lyme, O.",
+                  "standard_place": "Lyme, Erie, Ohio, United States"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "25 Mar 1921",
+                  "standard_date": "25 Mar 1921",
+                  "place": "New Lyme, Ashtabula, Ohio",
+                  "standard_place": "New Lyme, Ashtabula, Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10491616181",
+              "ark": "ark:/61903/1:1:X8GV-8C8",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gardner",
+                  "given": "Olive"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10491616182",
+              "ark": "ark:/61903/1:1:X8GV-8CD",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Addie J."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10491616181",
+              "child": "p_10491616179"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10491616180",
+              "child": "p_10491616179"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10491616179",
+              "person2": "p_10491616182"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10491616180",
+              "person2": "p_10491616181"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_84644982",
+              "title": "Entry for Perry G Hyde, \"Ohio, Deaths, 1908-1953\"",
+              "citation": "\"Ohio, Deaths, 1908-1953\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X8GV-8CC : Tue Mar 05 05:34:43 UTC 2024), Entry for Perry G Hyde and Hiram L. Hyde, 25 Mar 1921.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M3XX-11D"
+            },
+            {
+              "id": "sd_c_1307272",
+              "title": "Ohio, Deaths, 1908-1953",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1307272"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GPKP-SX7H"
+            },
+            {
+              "id": "sd_auto_M9J1-9HK",
+              "title": "United States, Ohio, Deaths, from 8 January 1271 to 2026"
+            },
+            {
+              "id": "src_p_p_10491616180",
+              "url": "#p_10491616180"
+            }
+          ],
+          "places": [
+            {
+              "id": "357",
+              "name": "Ohio, United States",
+              "latitude": 40.25028,
+              "longitude": -83.00028
+            },
+            {
+              "id": "4822523",
+              "name": "Lyme, Erie, Ohio, United States",
+              "latitude": 41.2917,
+              "longitude": -82.7828
+            },
+            {
+              "id": "4825776",
+              "name": "New Lyme, Ashtabula, Ohio, United States",
+              "latitude": 41.6047,
+              "longitude": -80.7811
+            },
+            {
+              "id": "8573632",
+              "name": "Pennline, Conneaut Township, Crawford, Pennsylvania, United States",
+              "latitude": 41.7122,
+              "longitude": -80.5117
+            }
+          ]
+        },
+        "primaryId": "p_10491616180"
+      },
+      {
+        "recordId": "ark:/61903/1:1:N3RK-Z5F",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram B. Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1438856",
+        "collectionTitle": "Illinois, Deaths and Stillbirths, 1916-1948",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1438856",
+        "recordTitle": "Entry for Sophia Hyde, \"Illinois, Deaths and Stillbirths, 1916-1948\"",
+        "recordArk": "ark:/61903/1:2:9F7M-98P",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11757672735",
+              "ark": "ark:/61903/1:1:N3RK-Z5F",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hiram B.",
+                  "surname": "Hyde"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11757672732",
+              "ark": "ark:/61903/1:1:N3RK-Z5D",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sophia",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "14 Oct 1926",
+                  "standard_date": "14 Oct 1926",
+                  "place": "Mason City Twp., Mason, Ill.",
+                  "standard_place": "Mason City, Mason, Illinois, United States"
+                },
+                {
+                  "type": "Burial",
+                  "date": "17 Oct 1926",
+                  "standard_date": "17 Oct 1926",
+                  "place": "Mason City, Ill.",
+                  "standard_place": "Mason City, Mason, Illinois, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "19 Nov 1848",
+                  "standard_date": "19 Nov 1848",
+                  "place": "Germantown, Ohio",
+                  "standard_place": "Germantown, Montgomery, Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11757672733",
+              "ark": "ark:/61903/1:1:N3RK-Z56",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "David",
+                  "surname": "Pollock"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Pa.",
+                  "standard_place": "Pennsylvania, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11757672734",
+              "ark": "ark:/61903/1:1:N3RK-Z5X",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Kislaf",
+                  "surname": "Loomas"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Pa.",
+                  "standard_place": "Pennsylvania, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11757672733",
+              "child": "p_11757672732"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11757672734",
+              "child": "p_11757672732"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11757672735",
+              "person2": "p_11757672732"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1097551253",
+              "title": "Entry for Sophia Hyde, \"Illinois, Deaths and Stillbirths, 1916-1948\"",
+              "citation": "\"Illinois, Deaths and Stillbirths, 1916-1948\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3RK-Z5D : Mon Jan 27 21:45:52 UTC 2025), Entry for Sophia Hyde and David Pollock, 14 Oct 1926.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9F7M-98P"
+            },
+            {
+              "id": "sd_c_1438856",
+              "title": "Illinois, Deaths and Stillbirths, 1916-1948",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1438856"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-8922-VK8X"
+            },
+            {
+              "id": "sd_auto_M9J1-SMV",
+              "title": "United States, Illinois, Deaths, from 0140 to 2026"
+            },
+            {
+              "id": "src_p_p_11757672735",
+              "url": "#p_11757672735"
+            }
+          ],
+          "places": [
+            {
+              "id": "338",
+              "name": "Pennsylvania, United States",
+              "latitude": 40.75,
+              "longitude": -77.75
+            },
+            {
+              "id": "4054895",
+              "name": "Mason City, Mason, Illinois, United States",
+              "latitude": 40.2022,
+              "longitude": -89.6981
+            },
+            {
+              "id": "4825949",
+              "name": "Germantown, Montgomery, Ohio, United States",
+              "latitude": 39.6261,
+              "longitude": -84.3694
+            }
+          ]
+        },
+        "primaryId": "p_11757672735"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VZQP-TFP",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1803978",
+        "collectionTitle": "Maine, Vital Records, 1670-1921",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803978",
+        "recordTitle": "Entry for Lucy Lawrence, \"Maine, Vital Records, 1670-1921\"",
+        "recordArk": "ark:/61903/1:2:9MSS-DKRP",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_13368884873",
+              "ark": "ark:/61903/1:1:VZQP-TFP",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_13368884872",
+              "ark": "ark:/61903/1:1:VZQP-TFG",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Lawrence",
+                  "given": "Lucy"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1816",
+                  "standard_date": "1816"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "23 Oct 1895",
+                  "standard_date": "23 Oct 1895",
+                  "place": "Eastport, , Maine, United States",
+                  "standard_place": "Eastport, Washington, Maine, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_13368884873",
+              "child": "p_13368884872"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21920561873",
+              "title": "Entry for Lucy Lawrence, \"Maine, Vital Records, 1670-1921\"",
+              "citation": "\"Maine, Vital Records, 1670-1921\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VZQP-TFG : Wed Jan 22 13:03:28 UTC 2025), Entry for Lucy Lawrence and Hiram Hyde, 23 Oct 1895.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9MSS-DKRP"
+            },
+            {
+              "id": "sd_c_1803978",
+              "title": "Maine, Vital Records, 1670-1921",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803978"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:9398-4X9X-JJ"
+            },
+            {
+              "id": "sd_auto_M9J1-WMM",
+              "title": "United States, Maine, Births, from 1634 to 2006"
+            },
+            {
+              "id": "src_p_p_13368884873",
+              "url": "#p_13368884873"
+            }
+          ],
+          "places": [
+            {
+              "id": "4273057",
+              "name": "Eastport, Washington, Maine, United States",
+              "latitude": 44.9068,
+              "longitude": -66.9893
+            }
+          ]
+        },
+        "primaryId": "p_13368884873"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q283-Y2WR",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1803978",
+        "collectionTitle": "Maine, Vital Records, 1670-1921",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803978",
+        "recordTitle": "Entry for Lucy Lawrence, \"Maine, Vital Records, 1670-1921\"",
+        "recordArk": "ark:/61903/1:2:QL71-CY69",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102330477205",
+              "ark": "ark:/61903/1:1:Q283-Y2WR",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hiram",
+                  "surname": "Hyde"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102330477204",
+              "ark": "ark:/61903/1:1:Q283-Y2W5",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Lucy",
+                  "surname": "Lawrence"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1895",
+                  "standard_date": "1895",
+                  "place": "Eastport, Washington, Maine, United States",
+                  "standard_place": "Eastport, Washington, Maine, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_102330477205",
+              "child": "p_102330477204"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102934257691",
+              "title": "Entry for Lucy Lawrence, \"Maine, Vital Records, 1670-1921\"",
+              "citation": "\"Maine, Vital Records, 1670-1921\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q283-Y2W5 : Sat Mar 01 11:59:31 UTC 2025), Entry for Lucy Lawrence and Hiram Hyde, 1895.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL71-CY69"
+            },
+            {
+              "id": "sd_c_1803978",
+              "title": "Maine, Vital Records, 1670-1921",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803978"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89N7-C7XN"
+            },
+            {
+              "id": "src_p_p_102330477205",
+              "url": "#p_102330477205"
+            }
+          ],
+          "places": [
+            {
+              "id": "4273057",
+              "name": "Eastport, Washington, Maine, United States",
+              "latitude": 44.9068,
+              "longitude": -66.9893
+            }
+          ]
+        },
+        "primaryId": "p_102330477205"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFZK-Y86",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1784223",
+        "collectionTitle": "Vermont, Vital Records, 1760-1954",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "recordTitle": "Entry for George Waterman Hyde, \"Vermont, Vital Records, 1760-1954\"",
+        "recordArk": "ark:/61903/1:2:9FDM-471",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10579137643",
+              "ark": "ark:/61903/1:1:XFZK-Y86",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10579137642",
+              "ark": "ark:/61903/1:1:XFZK-Y8D",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "George Waterman"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "29 Dec 1903",
+                  "standard_date": "29 Dec 1903",
+                  "place": "Vermont, United States",
+                  "standard_place": "Vermont, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1838",
+                  "standard_date": "1838",
+                  "place": "Hyde Park",
+                  "standard_place": "Hyde Park, Lamoille, Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10579137644",
+              "ark": "ark:/61903/1:1:XFZK-Y8X",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Patton",
+                  "given": "Mahitable"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10579137644",
+              "child": "p_10579137642"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10579137643",
+              "child": "p_10579137642"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10579137643",
+              "person2": "p_10579137644"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1103226479",
+              "title": "Entry for George Waterman Hyde, \"Vermont, Vital Records, 1760-1954\"",
+              "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFZK-Y8D : Sun Jul 14 01:05:57 UTC 2024), Entry for George Waterman Hyde and Hiram Hyde, 29 Dec 1903.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9FDM-471"
+            },
+            {
+              "id": "sd_c_1784223",
+              "title": "Vermont, Vital Records, 1760-1954",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-64J9-6GH"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_10579137643",
+              "url": "#p_10579137643"
+            }
+          ],
+          "places": [
+            {
+              "id": "361",
+              "name": "Vermont, United States",
+              "latitude": 44,
+              "longitude": -72.75
+            },
+            {
+              "id": "5405019",
+              "name": "Hyde Park, Lamoille, Vermont, United States",
+              "latitude": 44.61944,
+              "longitude": -72.56139
+            }
+          ]
+        },
+        "primaryId": "p_10579137643"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFV5-SYL",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "collectionId": "1784223",
+        "collectionTitle": "Vermont, Vital Records, 1760-1954",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "recordTitle": "Entry for Mehittable Hyde, \"Vermont, Vital Records, 1760-1954\"",
+        "recordArk": "ark:/61903/1:2:1G38-HF9",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10585730631",
+              "ark": "ark:/61903/1:1:XFV5-SYL",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585730630",
+              "ark": "ark:/61903/1:1:XFV5-SY2",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Mehittable"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "02 Sep 1865",
+                  "standard_date": "2 Sep 1865",
+                  "place": "Hyde Park, Vermont, United States",
+                  "standard_place": "Hyde Park, Lamoille, Vermont, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1804",
+                  "standard_date": "1804"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10585730630",
+              "person2": "p_10585730631"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21678334651",
+              "title": "Entry for Mehittable Hyde, \"Vermont, Vital Records, 1760-1954\"",
+              "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFV5-SY2 : Fri Mar 08 22:17:01 UTC 2024), Entry for Mehittable Hyde and Hiram Hyde, 02 Sep 1865.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1G38-HF9"
+            },
+            {
+              "id": "sd_c_1784223",
+              "title": "Vermont, Vital Records, 1760-1954",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939V-S6QZ-M"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_10585730631",
+              "url": "#p_10585730631"
+            }
+          ],
+          "places": [
+            {
+              "id": "5405019",
+              "name": "Hyde Park, Lamoille, Vermont, United States",
+              "latitude": 44.61944,
+              "longitude": -72.56139
+            }
+          ]
+        },
+        "primaryId": "p_10585730631"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFV5-SXW",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1784223",
+        "collectionTitle": "Vermont, Vital Records, 1760-1954",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "recordTitle": "Entry for Lafayette Hyde, \"Vermont, Vital Records, 1760-1954\"",
+        "recordArk": "ark:/61903/1:2:1G38-HHH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10585730226",
+              "ark": "ark:/61903/1:1:XFV5-SXW",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585730225",
+              "ark": "ark:/61903/1:1:XFV5-SX7",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Lafayette"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "01 Oct 1857",
+                  "standard_date": "1 Oct 1857",
+                  "place": "Hyde Park, Vermont, United States",
+                  "standard_place": "Hyde Park, Lamoille, Vermont, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1841",
+                  "standard_date": "1841"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585730227",
+              "ark": "ark:/61903/1:1:XFV5-SX4",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "M"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10585730226",
+              "child": "p_10585730225"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10585730227",
+              "child": "p_10585730225"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10585730226",
+              "person2": "p_10585730227"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21678334448",
+              "title": "Entry for Lafayette Hyde, \"Vermont, Vital Records, 1760-1954\"",
+              "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFV5-SX7 : Sun Mar 10 05:57:36 UTC 2024), Entry for Lafayette Hyde and Hiram Hyde, 01 Oct 1857.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1G38-HHH"
+            },
+            {
+              "id": "sd_c_1784223",
+              "title": "Vermont, Vital Records, 1760-1954",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939V-S67M-L"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_10585730226",
+              "url": "#p_10585730226"
+            }
+          ],
+          "places": [
+            {
+              "id": "5405019",
+              "name": "Hyde Park, Lamoille, Vermont, United States",
+              "latitude": 44.61944,
+              "longitude": -72.56139
+            }
+          ]
+        },
+        "primaryId": "p_10585730226"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFZK-188",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1784223",
+        "collectionTitle": "Vermont, Vital Records, 1760-1954",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "recordTitle": "Entry for Julo D. Hyde, \"Vermont, Vital Records, 1760-1954\"",
+        "recordArk": "ark:/61903/1:2:9FDM-4HH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10579139441",
+              "ark": "ark:/61903/1:1:XFZK-188",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10579139440",
+              "ark": "ark:/61903/1:1:XFZK-18Z",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Julo D."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1829",
+                  "standard_date": "1829",
+                  "place": "Vermont",
+                  "standard_place": "Vermont, United States"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "01 Mar 1907",
+                  "standard_date": "1 Mar 1907",
+                  "place": "Vermont, United States",
+                  "standard_place": "Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10579139442",
+              "ark": "ark:/61903/1:1:XFZK-18D",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Pettis",
+                  "given": "Mahitable"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10579139441",
+              "child": "p_10579139440"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10579139442",
+              "child": "p_10579139440"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10579139441",
+              "person2": "p_10579139442"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1103226548",
+              "title": "Entry for Julo D. Hyde, \"Vermont, Vital Records, 1760-1954\"",
+              "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFZK-18Z : Sat Jul 20 13:18:43 UTC 2024), Entry for Julo D. Hyde and Hiram Hyde, 01 Mar 1907.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9FDM-4HH"
+            },
+            {
+              "id": "sd_c_1784223",
+              "title": "Vermont, Vital Records, 1760-1954",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-64J9-6FC"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_10579139441",
+              "url": "#p_10579139441"
+            }
+          ],
+          "places": [
+            {
+              "id": "361",
+              "name": "Vermont, United States",
+              "latitude": 44,
+              "longitude": -72.75
+            }
+          ]
+        },
+        "primaryId": "p_10579139441"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFV5-S4V",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1784223",
+        "collectionTitle": "Vermont, Vital Records, 1760-1954",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "recordTitle": "Entry for John O Hyde, \"Vermont, Vital Records, 1760-1954\"",
+        "recordArk": "ark:/61903/1:2:1G38-HWL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10585730028",
+              "ark": "ark:/61903/1:1:XFV5-S4V",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585730027",
+              "ark": "ark:/61903/1:1:XFV5-S4J",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "John O"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1845",
+                  "standard_date": "1845"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "17 Nov 1849",
+                  "standard_date": "17 Nov 1849",
+                  "place": "Hyde Park, Vermont, United States",
+                  "standard_place": "Hyde Park, Lamoille, Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585730029",
+              "ark": "ark:/61903/1:1:XFV5-S4K",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "M"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10585730028",
+              "person2": "p_10585730029"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10585730029",
+              "child": "p_10585730027"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10585730028",
+              "child": "p_10585730027"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21678334401",
+              "title": "Entry for John O Hyde, \"Vermont, Vital Records, 1760-1954\"",
+              "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFV5-S4J : Sun Jul 21 20:07:46 UTC 2024), Entry for John O Hyde and Hiram Hyde, 17 Nov 1849.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1G38-HWL"
+            },
+            {
+              "id": "sd_c_1784223",
+              "title": "Vermont, Vital Records, 1760-1954",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939V-S6WB-G"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_10585730028",
+              "url": "#p_10585730028"
+            }
+          ],
+          "places": [
+            {
+              "id": "5405019",
+              "name": "Hyde Park, Lamoille, Vermont, United States",
+              "latitude": 44.61944,
+              "longitude": -72.56139
+            }
+          ]
+        },
+        "primaryId": "p_10585730028"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPQP-M8SJ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "collectionId": "1987653",
+        "collectionTitle": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1987653",
+        "recordTitle": "Entry for Mehittable Hyde, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "recordArk": "ark:/61903/1:2:QR2H-NWNV",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104362839977",
+              "ark": "ark:/61903/1:1:QPQP-M8SJ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104362839970",
+              "ark": "ark:/61903/1:1:QPQP-M8SZ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Mehittable"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "2 September 1865",
+                  "standard_date": "2 Sep 1865",
+                  "place": "Vermont, United States",
+                  "standard_place": "Vermont, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1804",
+                  "standard_date": "1804"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_104362839970",
+              "person2": "p_104362839977"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106197917898",
+              "title": "Entry for Mehittable Hyde, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+              "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQP-M8SZ : Sat Mar 09 21:55:08 UTC 2024), Entry for Mehittable Hyde and Hiram Hyde, 2 September 1865.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QR2H-NWNV"
+            },
+            {
+              "id": "sd_c_1987653",
+              "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1987653"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-8999-GRFK"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_104362839977",
+              "url": "#p_104362839977"
+            }
+          ],
+          "places": [
+            {
+              "id": "361",
+              "name": "Vermont, United States",
+              "latitude": 44,
+              "longitude": -72.75
+            }
+          ]
+        },
+        "primaryId": "p_104362839977"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPQP-6MSV",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6036,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1987653",
+        "collectionTitle": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1987653",
+        "recordTitle": "Entry for John O Hyde, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "recordArk": "ark:/61903/1:2:QR24-FDNZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104363181078",
+              "ark": "ark:/61903/1:1:QPQP-6MSV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104363181077",
+              "ark": "ark:/61903/1:1:QPQP-6MSJ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "John O"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1845",
+                  "standard_date": "1845"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "17 November 1849",
+                  "standard_date": "17 Nov 1849",
+                  "place": "Vermont, United States",
+                  "standard_place": "Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104363181081",
+              "ark": "ark:/61903/1:1:QPQP-6MSL",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "M"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_104363181078",
+              "person2": "p_104363181081"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104363181081",
+              "child": "p_104363181077"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104363181078",
+              "child": "p_104363181077"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106197086290",
+              "title": "Entry for John O Hyde, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+              "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQP-6MSJ : Sat Mar 09 21:55:08 UTC 2024), Entry for John O Hyde and Hiram Hyde, 17 November 1849.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QR24-FDNZ"
+            },
+            {
+              "id": "sd_c_1987653",
+              "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1987653"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-8999-GRFK"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_104363181078",
+              "url": "#p_104363181078"
+            }
+          ],
+          "places": [
+            {
+              "id": "361",
+              "name": "Vermont, United States",
+              "latitude": 44,
+              "longitude": -72.75
+            }
+          ]
+        },
+        "primaryId": "p_104363181078"
+      }
+    ]
+  }
+}
