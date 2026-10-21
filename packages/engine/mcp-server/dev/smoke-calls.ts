@@ -522,7 +522,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
 
   // Pure signal: no network, no token, no project state. The hosted PreToolUse hook
   // ends the turn on its NAME before it executes, so this exercises the arm that
-  // runs only where no hook binds (Cowork, the e2e harness).
+  // runs only where no hook binds (Cowork, the e2e harness, the unit harness).
   { tool: "research_delivered", args: () => ({ summary: "the plan you asked for" }), expect: noError },
 
   // Public-network tools: no token, must succeed.

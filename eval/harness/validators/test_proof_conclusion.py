@@ -788,3 +788,78 @@ def test_completion_summary_offers_second_opinion(
     )
     banned = sorted({m.group(0) for m in _BANNED_USER_WORDS.finditer(summary)})
     assert not banned, f"summary_for_user uses words kept out of user text: {banned}"
+
+
+# --- Stale proof refreshed after later searches (stale-proof-refresh) ---
+
+_STALE_PROOF_ID = "ps_002"
+_STALE_PROOF_QUESTION = "q_002"
+_SEARCHED_MARKER = re.compile(r"Walworth|Hyde Genealogy", re.I)
+_STILL_TO_SEARCH_CUE = re.compile(
+    r"could (?:still )?(?:resolve|advance|name|settle)|not yet (?:examined|searched)"
+    r"|remain(?:s|ing)? unsearched|still (?:to search|unsearched)|unexamined|next step",
+    re.I,
+)
+
+
+def _still_to_search_text(text):
+    """Each section's text, split at heading lines, from its first
+    still-to-search cue to its end."""
+    parts = []
+    for para in re.split(r"\n(?=[ \t]*(?:#{1,6}[ \t]|\*\*[^*\n]+\*\*[ \t]*$))", text or "", flags=re.M):
+        m = _STILL_TO_SEARCH_CUE.search(para)
+        if m:
+            parts.append(para[m.start():])
+    return "\n".join(parts)
+
+
+def _summary_by_id(state, ps_id):
+    research = state.get("research_json") or {}
+    for ps in research.get("proof_summaries", []):
+        if ps.get("id") == ps_id:
+            return ps
+    return None
+
+
+def test_stale_proof_refreshed(before_state, after_state, test):
+    """Tagged `stale-proof-refresh` (ut_proof_conclusion_g9j, G9GJ-959).
+
+    ps_002's narrative and search summary both list Walworth's Hyde Genealogy
+    as still to search, and log_021 then searched both volumes in full. A
+    re-invocation must rewrite both fields so neither still lists it. Walworth
+    is the marker because it has no look-alike: the other two records log_019
+    and log_020 read (Iram's own 1855 entry, Margaret Clark's 1880 entry) sit
+    beside genuinely unsearched relatives (the 1855 census searched for kin,
+    the other daughters' 1880 entries), and telling those apart is what the
+    judge got wrong on four of four compliant runs."""
+    if "stale-proof-refresh" not in test.get("tags", []):
+        pytest.skip("not a stale-proof-refresh scenario")
+    before = _summary_by_id(before_state, _STALE_PROOF_ID)
+    after_research = after_state.get("research_json")
+    if before is None or after_research is None:
+        pytest.skip("Missing research.json")
+    for_q = [
+        ps for ps in after_research.get("proof_summaries", [])
+        if ps.get("question_id") == _STALE_PROOF_QUESTION
+    ]
+    assert [ps.get("id") for ps in for_q] == [_STALE_PROOF_ID], (
+        f"expected {_STALE_PROOF_ID} to remain the only proof summary for "
+        f"{_STALE_PROOF_QUESTION}; found {[ps.get('id') for ps in for_q]}"
+    )
+    after = for_q[0]
+    unchanged = [
+        field for field in ("narrative_markdown", "exhaustive_search_summary")
+        if after.get(field) == before.get(field)
+    ]
+    assert not unchanged, (
+        f"{_STALE_PROOF_ID} was not refreshed: {', '.join(unchanged)} is unchanged "
+        "although log_019-log_021 searched records it lists as still to search"
+    )
+    stale = [
+        field for field in ("narrative_markdown", "exhaustive_search_summary")
+        if _SEARCHED_MARKER.search(_still_to_search_text(after.get(field)))
+    ]
+    assert not stale, (
+        f"{_STALE_PROOF_ID}'s {', '.join(stale)} still lists Walworth's Hyde "
+        "Genealogy as still to search, though log_021 searched both volumes"
+    )
