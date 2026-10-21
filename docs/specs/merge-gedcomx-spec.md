@@ -278,7 +278,7 @@ Net guarantee: the on-disk files are always schema-valid after the call, and
   newRelatives: string[],              // Mode 1 — ids of carried-in new relatives
   researchRefsUpdated: {               // Mode 2 only; absent/zero for Mode 1
     subject_person_ids: number, person_evidence: number,
-    timelines: number, known_holdings: number,
+    rejected_links: number, timelines: number, known_holdings: number,
     proof_summaries: number,
   },
   validation: { valid: true, warnings: string[] },
@@ -507,7 +507,7 @@ Tool-level (the rows above are the pure core's throws):
 | `candidateGedcomx` is not valid SimplifiedGedcomX | clear input error (reuse the exported `validateGedcomx`, `validate-project-refactor-spec.md` §10); write nothing |
 | Merge result carries a **merge-introduced** validation error | **write nothing**; return `{ ok: false, errors }` (§5b.2 step 4). A pre-existing error rides as a warning; for `merge_warnings` a drift-only project returns `{ ok: true }` |
 | A `merges` survivor id not found in the **on-disk** tree | staleness error (§5b.1); write nothing |
-| Merge introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", warnings: [...] }`. Re-call with `warningJustifications`. Pre-existing warnings on collapsed persons are remapped to survivors before diffing. |
+| Merge introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message, warnings: [...], conflicts_surfaced? }`. Re-call with `warningJustifications`. Pre-existing warnings on collapsed persons are remapped to survivors before diffing. A merge that joins two biological parents of one sex onto a child is refused with `conflicts_surfaced`, and no `warningJustifications` entry passes it (`tree-edit-tool-spec.md` §6). |
 
 ---
 
@@ -542,8 +542,8 @@ Tool-level (wrappers over the pure core):
   `research.json` is byte-unchanged; the summary lists new relatives with their
   assigned ids.
 - **Within-tree persistence** — both files written; `research.json` person-id refs
-  (`subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`,
-  `known_holdings.relates_to_person_ids`,
+  (`subject_person_ids`, `person_evidence.person_id`, `rejected_links.person_id`,
+  `timelines.person_ids`, `known_holdings.relates_to_person_ids`,
   `proof_summaries[].claims[].relationship.parent`/`.child`) repointed
   collapsed → survivor;
   `researchRefsUpdated` counts match.
@@ -581,7 +581,7 @@ Tool-level (wrappers over the pure core):
 - **`merge_tree_persons` (Mode 2) remaps `research.json`.** The collapsed id `B`
   is an existing tree person `research.json` may reference. Repoint every person-id
   reference `B → A`: `project.subject_person_ids`, `person_evidence[].person_id`,
-  `timelines[].person_ids`, `known_holdings[].relates_to_person_ids`, and
+  `rejected_links[].person_id`, `timelines[].person_ids`, `known_holdings[].relates_to_person_ids`, and
   `proof_summaries[].claims[].relationship.parent`/`.child`. This set
   is exactly `validateCrossFile`'s person-id checks in
   `src/validation/validator.ts` and **must stay in sync with it** — extract the

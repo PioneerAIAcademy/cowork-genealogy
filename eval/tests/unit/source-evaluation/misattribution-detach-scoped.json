@@ -10,6 +10,7 @@
       "doctrine",
       "misattribution",
       "regression",
+      "census-variance-trap",
       "direct-arm"
     ]
   },

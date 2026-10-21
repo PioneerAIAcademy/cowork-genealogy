@@ -1,5 +1,10 @@
 # Issue #2813 items 1, 4 and 6: the router's bounded/job decision
 
+> **Premise changed 2026-10-15.** The web opener is gone and `research` is the only
+> front door; the routing table sends a no-project first message to `init-project` or
+> `tree-survey`. Anything below that reasons from the prefix needs re-reading before
+> it is built.
+
 **Status:** CODE LANDED on `2813-router-bounded-decision` (items 1, 4, 6); **acceptance is
 unbought.** The paid `research` unit-eval run named at "Done when" has NOT been run — the
 newest log is `eval/runlogs/unit/research/v7`, which predates this branch — so the three
@@ -90,7 +95,7 @@ The other three #2813 items are deliberately NOT here:
    `CONTINUE_REASON`, whose text is "invoke the next GPS sub-skill now" with no router
    re-entry, and the default web path
    never enters the router at all — `apps/web/src/components/chatEvents.ts:114` prefixes
-   every new session's first message with `OPENING_TURN`, so `init-project` runs and nothing
+   every new session's first message with `OPENING_TURN`, so `init-project` ran and nothing
    in that chain invokes `research`.
 
 **Consequence for acceptance:** on the web path a bounded FIRST message never reaches this

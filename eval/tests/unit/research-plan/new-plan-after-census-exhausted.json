@@ -11,11 +11,12 @@
       "what-next",
       "plan-followup",
       "research-plan-new-plan-for-q-001",
-      "new-plan-items-planned-status"
+      "new-plan-items-planned-status",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Create the next research plan for the parentage question.",
+    "delegation": "Create the next research plan for the parentage question.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-census-exhausted-surveyed"
   },
   "mcp_fixtures": [
@@ -33,7 +34,14 @@
     "wiki-place-page-pennsylvania-online-records",
     "volume-search-schuylkill",
     "collections-search-us-national",
-    "wiki-read-ireland-military-records"
+    "wiki-read-ireland-military-records",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "Plan items should propose at least one substantive next source — probate, post-1860 censuses, FAN research, naturalization, immigration records — and explain in `rationale` why each is expected to advance q_001"

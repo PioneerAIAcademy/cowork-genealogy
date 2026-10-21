@@ -40,7 +40,17 @@ from web.app import PgStore, ReadyCheckError, create_app  # noqa: E402
 
 FILES = migrate.load()
 NAMES = [m.name for m in FILES]
-LATEST = "011_session_entries_uuid_index.sql"
+#: DERIVED, not hardcoded: this is the LAST file on disk, and a branch that adds a
+#: migration has moved it three times (008, 010, 012) before CI said so -- these `_pg`
+#: tests are skipped locally without Postgres, so a stale literal here passes every
+#: local run and only CI ever notices.
+#: From the DIRECTORY, not from NAMES: deriving it from the loader would make
+#: `NAMES[-1] == LATEST` vacuous. This way the assertion still cross-checks the loader
+#: against what is actually shipped.
+LATEST = sorted(q.name for q in migrate.SQL_DIR.glob("*.sql"))[-1]
+# Synthetic files numbered past LATEST, so they stay newer than every shipped one.
+NEXT = f"{int(LATEST[:3]) + 1:03d}"
+AFTER = f"{int(LATEST[:3]) + 2:03d}"
 RACE_SQLSTATES = {"23505", "42P07", "42710", "XX000"}
 
 
@@ -301,7 +311,7 @@ async def test_a_service_start_takes_no_table_lock(monkeypatch):
 
 def test_lock_timeout_bounds_a_migration_queued_behind_traffic(monkeypatch, tmp_path):
     monkeypatch.setattr(migrate, "_sleep", _no_retry)
-    files = sql_dir(tmp_path, {"012_probe_column.sql": "ALTER TABLE turns ADD COLUMN x int;\n"})
+    files = sql_dir(tmp_path, {f"{NEXT}_probe_column.sql": "ALTER TABLE turns ADD COLUMN x int;\n"})
     with database() as dsn:
         reader = psycopg.connect(dsn)
         try:
@@ -310,11 +320,11 @@ def test_lock_timeout_bounds_a_migration_queued_behind_traffic(monkeypatch, tmp_
             with pytest.raises(psycopg.errors.LockNotAvailable):
                 migrate.migrate(dsn, sql_dir=files, lock_timeout_s=0.5, attempts=1)
             assert time.monotonic() - started < 3
-            assert "012_probe_column.sql" not in ledger(dsn)
+            assert f"{NEXT}_probe_column.sql" not in ledger(dsn)
         finally:
             reader.rollback()
             reader.close()
-        assert migrate.migrate(dsn, sql_dir=files) == ["012_probe_column.sql"]
+        assert migrate.migrate(dsn, sql_dir=files) == [f"{NEXT}_probe_column.sql"]
         assert "x" in columns(dsn, "turns")
 
 
@@ -323,12 +333,12 @@ def test_a_failing_file_rolls_back_and_keeps_earlier_files(monkeypatch, tmp_path
     broken = "ALTER TABLE turns ADD COLUMN u9_probe int; SELECT 1/0;\n"
     with database(apply=False) as dsn:
         with pytest.raises(psycopg.errors.DivisionByZero) as raised:
-            migrate.migrate(dsn, sql_dir=sql_dir(tmp_path / "a", {"012_broken.sql": broken}))
+            migrate.migrate(dsn, sql_dir=sql_dir(tmp_path / "a", {f"{NEXT}_broken.sql": broken}))
         assert raised.value.sqlstate == "22012"
         assert sorted(ledger(dsn)) == NAMES, "the files before the broken one stay applied"
         assert "u9_probe" not in columns(dsn, "turns")
-        fixed = sql_dir(tmp_path / "b", {"012_broken.sql": "ALTER TABLE turns ADD COLUMN u9_probe int;\n"})
-        assert migrate.migrate(dsn, sql_dir=fixed) == ["012_broken.sql"]
+        fixed = sql_dir(tmp_path / "b", {f"{NEXT}_broken.sql": "ALTER TABLE turns ADD COLUMN u9_probe int;\n"})
+        assert migrate.migrate(dsn, sql_dir=fixed) == [f"{NEXT}_broken.sql"]
         assert "u9_probe" in columns(dsn, "turns")
 
 
@@ -366,12 +376,12 @@ def test_a_changed_file_is_refused_and_a_comment_edit_is_not(monkeypatch, tmp_pa
 async def test_build_and_schema_versions_in_either_order(monkeypatch):
     with database() as dsn:
         # A newer schema under this build: an old build stays healthy.
-        sql(dsn, "INSERT INTO schema_migrations (name, sha256) VALUES ('012_future.sql', 'f')")
+        sql(dsn, f"INSERT INTO schema_migrations (name, sha256) VALUES ('{NEXT}_future.sql', 'f')")
         got = migrate.verdict(FILES, ledger(dsn))
-        assert got.label is None and got.ahead == ["012_future.sql"]
+        assert got.label is None and got.ahead == [f"{NEXT}_future.sql"]
         assert await asyncio.to_thread(migrate.migrate, dsn) == []
         # A newer build on an older schema: 503 until someone migrates, then 200 with no restart.
-        sql(dsn, "DELETE FROM schema_migrations WHERE name IN ('012_future.sql', %s)", (LATEST,))
+        sql(dsn, f"DELETE FROM schema_migrations WHERE name IN ('{NEXT}_future.sql', %s)", (LATEST,))
         monkeypatch.setattr(app, "STARTUP_BACKOFF_FIRST_S", 0.05)
         monkeypatch.setattr(app, "STARTUP_BACKOFF_MAX_S", 0.05)
         async with web_tier(monkeypatch, dsn) as (_application, client):
@@ -400,10 +410,10 @@ async def test_a_lower_prefixed_new_file_is_refused(monkeypatch, tmp_path):
             status, body = await health(client)
         assert status == 503 and body["checks"]["schema"] == {"ok": False, "error": label}
         # A file sorting below a row a newer build recorded.
-        sql(dsn, "INSERT INTO schema_migrations (name, sha256) VALUES ('013_future.sql', 'f')")
-        late = sql_dir(tmp_path / "b", {"012_late.sql": "ALTER TABLE turns ADD COLUMN u9_late int;\n"})
-        assert migrate.verdict(migrate.load(late), ledger(dsn)).label == "schema: out_of_order 012_late.sql"
-        with pytest.raises(migrate.MigrateRefused, match="out_of_order 012_late.sql"):
+        sql(dsn, f"INSERT INTO schema_migrations (name, sha256) VALUES ('{AFTER}_future.sql', 'f')")
+        late = sql_dir(tmp_path / "b", {f"{NEXT}_late.sql": "ALTER TABLE turns ADD COLUMN u9_late int;\n"})
+        assert migrate.verdict(migrate.load(late), ledger(dsn)).label == f"schema: out_of_order {NEXT}_late.sql"
+        with pytest.raises(migrate.MigrateRefused, match=f"out_of_order {NEXT}_late.sql"):
             await asyncio.to_thread(migrate.migrate, dsn, sql_dir=late)
         assert "u9_late" not in columns(dsn, "turns")
 
@@ -436,7 +446,7 @@ async def test_a_dml_only_role_runs_the_services_but_not_the_migration(monkeypat
             worker.SHUTDOWN.set()
         assert await asyncio.to_thread(migrate.migrate, role_dsn) == []
         before = ledger_rows(dsn)
-        pending = sql_dir(tmp_path, {"012_owner_only.sql": "ALTER TABLE turns ADD COLUMN u9_dml int;\n"})
+        pending = sql_dir(tmp_path, {f"{NEXT}_owner_only.sql": "ALTER TABLE turns ADD COLUMN u9_dml int;\n"})
         with pytest.raises(psycopg.errors.InsufficientPrivilege) as raised:
             await asyncio.to_thread(migrate.migrate, role_dsn, sql_dir=pending)
         assert raised.value.sqlstate == "42501"

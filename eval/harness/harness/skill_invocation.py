@@ -1139,10 +1139,13 @@ def check_guardrail_compliance(
 # comment does not state one. It said "four" over a set of five for the four
 # days after proof-conclusion was added.
 #: The agents whose `extraction_append` is legitimate. `record-structurer`
-#: ships; `record-extractor` was retired, and stays so that committed runs,
+#: and `search-records` ship (the latter extracts only when its delegation says
+#: to); `record-extractor` was retired, and stays so that committed runs,
 #: which replay through this detector, keep the verdict they were graded under.
 #: No new run can carry it, because no plugin file declares it.
-EXTRACTION_AGENT_NAMES = frozenset({"record-structurer", "record-extractor"})
+EXTRACTION_AGENT_NAMES = frozenset(
+    {"record-structurer", "search-records", "record-extractor"}
+)
 
 DEDICATED_AGENT_NAMES = frozenset(
     {
@@ -1171,6 +1174,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # unnamed-delegate bypass. Do not read its presence here as evidence that
         # a hook route exists.
         "search-images",
+        # Same shape as search-images (issue #2243): cost-motivated, no hook route.
+        # Its writes are `log` entries and a plan item's `status`, plus
+        # `extraction_append` when its delegation says to extract (it is also in
+        # EXTRACTION_AGENT_NAMES); listed because the set is asserted equal to
+        # the shipped agent files.
+        "search-records",
         # Same shape as search-images, and for the same reason (issue #2799):
         # `citation` is a converted skill, not a hook-routed pair. No hook
         # routes anything to it. It is listed because the set is asserted equal
@@ -1193,13 +1202,6 @@ DEDICATED_AGENT_NAMES = frozenset(
         # an unnamed-delegate bypass. Do not read its presence here as evidence
         # of a hook route.
         "question-selection",
-        # Same shape as citation (issue #2793): a converted skill, not a
-        # hook-routed pair. No hook routes anything to it, and it writes
-        # NOTHING at all -- it is read-only by contract, so it cannot produce a
-        # protected write to attribute in the first place. It is listed only
-        # because the set is asserted equal to the shipped agent files. Do not
-        # read its presence here as evidence of a hook route.
-        "project-status",
         # A converted skill that writes nothing at all (issue #2118): its only
         # MCP tool is the read-only `person_warnings`. Listed solely because the
         # set is asserted equal to the shipped agent files.
@@ -1212,6 +1214,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # is not read as an unnamed-delegate bypass. Do not read its presence
         # here as evidence of a hook route.
         "search-wikipedia",
+        # Same shape again (issue #2797): a converted skill, no hook route.
+        # It writes one `timelines` entry, which `ownership.json` names
+        # `agent:timeline` on. Listed because the set is asserted equal to
+        # the shipped agent files.
+        "timeline",
         # Same shape as search-images, and for the same reason (issue #2790):
         # a converted skill, not a hook-routed pair. It writes nothing at all,
         # so no hook routes anything to it and `ownership.json` names it on no
@@ -1268,10 +1275,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # `ownership.json` names `agent:search-external-sites` on those rows.
         # Listed because the set is asserted equal to the shipped agent files.
         "search-external-sites",
-        # Same shape as convert-dates (issue #2800): a converted skill with no
-        # hook route. It writes no project state at all -- its output is a
-        # narrative to the user -- so `ownership.json` names it on no row. Listed
-        # because the set is asserted equal to the shipped agent files.
+        # Same shape as search-wikipedia (issue #2800): a converted skill with
+        # no hook route. It writes only `log` entries through
+        # `research_log_append` (#3244 option L) -- one per wiki/Wikipedia lookup
+        # and one `historical_context` entry, the overview in `notes`. Listed
+        # because the set is asserted equal to the shipped agent files, and so a
+        # log entry arriving from it is not read as an unnamed-delegate bypass.
         "historical-context",
         # The proof-conclusion shape, claim-scoped (issue #1852): the hook
         # routes a conflict's analytical product -- a resolve, or any of
@@ -1279,10 +1288,13 @@ DEDICATED_AGENT_NAMES = frozenset(
         # resolution now arrives from it.
         "conflict-resolution",
         # Same shape as search-images (issue #2065): a new agent, not a
-        # converted skill. It writes `log` entries via `research_log_append`
-        # and one standalone markdown file via `Write`. No hook routes anything
-        # to it. Listed because the set is asserted equal to the shipped agent
-        # files. `ownership.json` names `agent:survey-surname` on the `log` row.
+        # converted skill. It writes only `log` entries through
+        # `research_log_append`: one per search page, plus one carrying the
+        # household table in `notes` (#3244 option L, issue #3414). No hook
+        # routes anything to it. Listed because the set is asserted equal to
+        # the shipped agent files, and so a log entry arriving from it is not
+        # read as an unnamed-delegate bypass. `ownership.json` names
+        # `agent:survey-surname` on the `log` row.
         "survey-surname",
         # A new agent (issue #3273): it surveys a tree before any project exists,
         # so it writes nothing and no hook routes to it. Listed because the set is
@@ -1301,6 +1313,13 @@ DEDICATED_AGENT_NAMES = frozenset(
         # nothing to it; `ownership.json` names `agent:init-project` on those
         # rows, the `project` row, and the three tree rows `project_create` writes.
         "init-project",
+        # Same shape as search-images and citation (issue #2116): a
+        # cost-motivated conversion, no hook route. It writes `plans` and
+        # `plan_items` through `research_append`; the hook lanes it to those two
+        # sections and routes nothing to it. `ownership.json` names
+        # `agent:research-plan` as their owner. Listed because the set is
+        # asserted equal to the shipped agent files.
+        "research-plan",
     }
 )
 
@@ -1354,9 +1373,10 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     e.g. `find_effects_without_invocation`), and `extraction_append` is not
     one of the four guardrail skills' writes at all — it's hard-restricted at
     the TypeScript layer to exactly `sources`/`assertions`
-    (`extraction-append.ts`), and `record-structurer.md` is the only agent
-    file that declares the tool. So its legitimate delegate is narrower than
-    "any dedicated agent": only `agent_type == "record-structurer"` exactly —
+    (`extraction-append.ts`), and `record-structurer.md` and `search-records.md`
+    are the only agent files that declare the tool. So its legitimate delegate
+    is narrower than "any dedicated agent": only `agent_type ==
+    "record-structurer"` or `"search-records"` exactly —
     a wrong dedicated agent (e.g. `gps-mentor`) holding this tool is not a
     case any agent's own `tools:` declaration is set up to permit, and is
     itself worth flagging.

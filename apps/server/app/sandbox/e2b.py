@@ -52,17 +52,24 @@ log = logging.getLogger(__name__)
 
 # Continuous-running backstop, and — with no host-side idle loop — effectively
 # THE suspend driver. With lifecycle on_timeout=pause, hitting it pauses (FS
-# preserved) rather than killing, and connect() auto-resumes. `resume()` calls
-# set_timeout with this same value, so the clock restarts on every /connect.
+# preserved) rather than killing, and connect() auto-resumes.
 # Nothing else suspends a sandbox: `SandboxProvider.suspend()` has no route and
 # no background task behind it (only LocalProvider.delete() and the tests call
 # it). A session therefore ends by aging out here, not by being reaped.
 #
 # 3600 is E2B's Hobby-tier MAXIMUM, not a value we picked: create with 7200 fails
-# 400 "Timeout cannot be greater than 1 hours" (measured 2026-08-09). Raising it
-# here without a tier upgrade breaks create() outright. On Pro it becomes 86400.
-# Note set_timeout past the ceiling returns 204 and silently no-ops, so an
-# over-large value fails loudly at create and silently everywhere else.
+# 400 "Timeout cannot be greater than 1 hours" (measured 2026-08-09, again
+# 2026-10-15). Raising it here without a tier upgrade breaks create() outright. On
+# Pro it becomes 86400. Note set_timeout with a value over 3600 returns 204 and
+# silently no-ops (measured 2026-08-09), so an over-large value fails loudly at
+# create and silently everywhere else.
+#
+# Nothing extends a running sandbox past its hour on Hobby. Five minutes after
+# create, set_timeout(3600) returns success and leaves the end time at start + 3600;
+# set_timeout(1800) moves it in, and a second set_timeout(3600) is clamped back to
+# start + 3600 (measured 2026-10-15, dev/probe_e2b_heartbeat.py, #3305). The #3305
+# alpha bundle shows the same hour counted from each resume. So a turn still running
+# an hour after its sandbox started or last resumed is paused mid-flight.
 _RUNNING_TIMEOUT_S = 3600
 # The image's fixed prefix (e2b.Dockerfile AGENT_HOME). E2B commands.run does NOT
 # inherit the Dockerfile ENV, so the WS server launch must pass these explicitly.
@@ -301,10 +308,9 @@ class E2BProvider(SandboxProvider):
         value stands, so one bad read cannot blank a commit reported before.
 
         Every failure is LOGGED AT WARNING, and the level is load-bearing rather
-        than stylistic: `obs.py` attaches its handler to the `workbench` logger,
-        which this module is not under, so records here fall through to the root
-        logger at its default WARNING. An INFO would be dropped entirely
-        (measured: `isEnabledFor(INFO)` is False). Silence would be
+        than stylistic. `obs.setup_logging()` handles the `app` logger at INFO
+        (#3305), but wherever it has not run, only WARNING and above reach
+        Python's last-resort handler. Silence would be
         indistinguishable from the healthy "no session created yet" state,
         because both surface as a null on /api/health — a feature whose whole job
         is making an invisible staleness visible must not have an invisible
@@ -325,9 +331,11 @@ class E2BProvider(SandboxProvider):
     async def get(self, sandbox_id: str) -> Sandbox:
         from e2b.exceptions import SandboxNotFoundException
 
-        # NOTE: connect() auto-resumes a paused VM, so E2B get() wakes a
-        # suspended sandbox and can't report SUSPENDED (unlike LocalProvider's
-        # non-destructive get()). Harmless here: both callers — familysearch
+        # NOTE: E2B get() can't report SUSPENDED, and using what it returns wakes
+        # a suspended sandbox (unlike LocalProvider's non-destructive get()): a
+        # cache miss calls connect(), which auto-resumes, and on a cached handle
+        # the first request does, since auto_resume wakes a paused sandbox on
+        # inbound traffic. Harmless here: both callers — familysearch
         # /status (called only on session open + right after a connect attempt;
         # NOT polled on a timer) and the sessions sidecar read — fire during
         # active session use, when the sandbox is being resumed anyway, and an
@@ -345,40 +353,22 @@ class E2BProvider(SandboxProvider):
         from e2b.exceptions import SandboxNotFoundException
 
         try:
-            sb = await self._connect(sandbox_id)  # connect() auto-resumes a paused VM
+            # Only a cache miss calls AsyncSandbox.connect, which auto-resumes a paused VM.
+            sb = await self._connect(sandbox_id)
         except SandboxNotFoundException:
             # Parity with get()/LocalProvider: never raise on a gone sandbox.
             return E2BSandbox(None, sandbox_id=sandbox_id, state=SandboxState.MISSING)
-        # Give the session a fresh window on each /connect so a long turn isn't
-        # paused mid-flight (connect() can reset the VM timeout to a short
-        # default). on_timeout=pause is still the backstop — but it fires on
-        # continuous runtime, not on idleness. Best-effort.
+        # On a cache miss, connect resumed a paused VM on the SDK's 300 s default
+        # (`default_sandbox_timeout`); this lifts it to the full hour. It cannot extend
+        # a running sandbox past its hour (see _RUNNING_TIMEOUT_S). What it does to a
+        # paused sandbox through a cached handle is unmeasured (#3305); the next request
+        # to the sandbox resumes it (auto_resume). Best-effort, but a failure is logged.
         try:
             await sb.set_timeout(_RUNNING_TIMEOUT_S)
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning("resume: set_timeout failed for sandbox %s (%s: %s)",
+                        sandbox_id, type(exc).__name__, exc)
         return E2BSandbox(sb, sandbox_id=sandbox_id)
-
-    async def heartbeat(self, sandbox_id: str) -> bool:
-        """1d: restart the continuous-runtime clock on a sandbox that is still working.
-
-        The same call `resume()` makes on every /connect -- the difference is only that
-        this one happens WHILE a turn runs, which is the whole point: _RUNNING_TIMEOUT_S
-        clocks continuous runtime, not idleness, so a turn longer than the ceiling used to
-        be paused mid-flight however busy it was.
-
-        `_connect` auto-resumes a paused VM, which is deliberate here too: a sandbox that
-        already aged out comes back and gets a fresh window rather than staying down until
-        someone reconnects. Returns False rather than raising on a sandbox that is gone --
-        the loop beats many and must not stop at the first one that has been deleted."""
-        from e2b.exceptions import SandboxNotFoundException
-
-        try:
-            sb = await self._connect(sandbox_id)
-        except SandboxNotFoundException:
-            return False
-        await sb.set_timeout(_RUNNING_TIMEOUT_S)
-        return True
 
     async def suspend(self, sandbox_id: str) -> None:
         sb = await self._connect(sandbox_id)

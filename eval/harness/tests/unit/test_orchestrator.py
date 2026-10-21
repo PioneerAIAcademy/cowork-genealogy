@@ -2200,7 +2200,7 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
     import json
 
     raw = json.loads(WIKI_TEST_PATH.read_text(encoding="utf-8"))
-    raw["execution"] = {"stub_skills": ["gps-mentor", "search-records"]}
+    raw["execution"] = {"stub_skills": ["gps-mentor", "research"]}
     spec = load_test_from_dict(raw)
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
@@ -2222,7 +2222,7 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
         timestamp="2026-09-22_10-00-00",
     ))
     assert seen.get("stub_agents") == {"gps-mentor": None}
-    assert seen.get("stub_skills") == {"gps-mentor": None, "search-records": None}
+    assert seen.get("stub_skills") == {"gps-mentor": None, "research": None}
 
 
 # --- stop_at_stub: a test that ends at its first stubbed hand-off (#3119) -----
@@ -2380,9 +2380,10 @@ def test_a_stop_at_stub_test_reaches_run_skill_with_the_stop(tmp_path, monkeypat
 # return from flag_routing_negative_judge_fail, an invariant negative is coerced
 # too, so neither kind makes the coercion test below pass for the wrong reason.
 # This one is picked because its scenario exists and OrchestratorPaths resolves
-# it, and it sits in research-plan's suite, which stays a skill.
+# it, and it sits in the research suite, which never converts to an agent. (It
+# was research-plan's `_008` until issue #2116 deleted that skill and the test.)
 NEGATIVE_TEST_PATH = (
-    REPO_ROOT / "eval/tests/unit/research-plan/negative-execute-search-request.json"
+    REPO_ROOT / "eval/tests/unit/research/negative-next-question.json"
 )
 
 

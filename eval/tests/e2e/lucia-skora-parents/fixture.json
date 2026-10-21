@@ -1,0 +1,19 @@
+{
+  "id": "lucia-skora-parents",
+  "name": "Lucia Skora — parents named on an 1807 Przecław baptism",
+  "genre": "record-hint",
+  "source_pid": "LHBJ-WSN",
+  "captured": "2026-10-20",
+  "researcher_question": "Who were the parents of Lucia Skora, who married Laurentius Skrzypek on 12 November 1832 and bore him six children baptised at Przecław, Poland, between 1833 and 1846?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1800s",
+    "geography": "PL"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 21, hint-samples.csv row 684, flags adds_father/adds_mother, confidence 3). Draft transcribed from an 1807 Przecław Roman Catholic baptism entry; unverified."
+}

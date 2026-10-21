@@ -28,8 +28,8 @@ ours to set, so a host-side hook can never reach Cowork. A plugin-shipped
 hard-denied and the agent surfaced this script's own reason text), after the
 upstream reports that plugin PreToolUse command hooks are dropped
 (anthropics/claude-code#34573) were found not to reproduce on the current
-build. Cowork runs `permission_mode: "default"`; the hosted path runs
-`bypassPermissions`, and a hook binds under both.
+build. The hosted path runs `bypassPermissions`, and a hook binds under both, under
+either Cowork `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005).
 
 Contract, from the hook protocol: read the payload as JSON on stdin, print a
 decision to stdout, exit 0. Printing `{}` means "no opinion" — the normal
@@ -106,6 +106,9 @@ OWNED_SECTIONS = {
     # on every question the way `exhaustive_declaration` is, so this needs none
     # of OWNED_DECLARATIONS' field-scoped treatment.
     "person_evidence": "person-evidence",
+    # rejected_links, 2026-09-30. Same lane as the links themselves: a rejection
+    # cannot be written by something that could not have made the link.
+    "rejected_links": "person-evidence",
 }
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
@@ -209,7 +212,7 @@ AGENT_WRITABLE_SECTIONS = {
     # a blocker it meets -- an unclassified assertion, a genuinely competing
     # candidate -- is cleared by extraction or conflict-resolution, not
     # by this agent editing those sections itself.
-    "person-evidence": frozenset({"person_evidence"}),
+    "person-evidence": frozenset({"person_evidence", "rejected_links"}),
     # gps-mentor appends its verdict to `evaluations` and writes nothing else in
     # research.json; its description says so and every corpus write is there.
     "gps-mentor": frozenset({"evaluations"}),
@@ -220,6 +223,10 @@ AGENT_WRITABLE_SECTIONS = {
     # Its log entries go through research_log_append and build_external_search_url,
     # which carry no `section`.
     "search-external-sites": frozenset({"plan_items"}),
+    # search-records updates the status of the plan item a search executed (Step 6).
+    # Its search log goes through research_log_append, which carries no `section`.
+    # This lane is a repo CI requirement (plugin-hooks.test.ts), not a hook route.
+    "search-records": frozenset({"plan_items"}),
     # search-full-text updates the status of the plan item a search executed.
     # Its search log goes through research_log_append, which carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
@@ -243,6 +250,10 @@ AGENT_WRITABLE_SECTIONS = {
     # hypothesis-tracking states, links and rules out hypotheses, and writes
     # nothing else in research.json.
     "hypothesis-tracking": frozenset({"hypotheses"}),
+    # timeline regenerates one `timelines` entry wholesale and writes nothing
+    # else in research.json. Its coherence verdict and any geographic
+    # infeasibility have no persisted field at all -- they live in its reply.
+    "timeline": frozenset({"timelines"}),
     # conflict-resolution opens, analyses and settles conflicts, and writes
     # nothing else in research.json. A hypothesis or question change its finding
     # implies is handed back to the main thread, not made here.
@@ -255,6 +266,11 @@ AGENT_WRITABLE_SECTIONS = {
     # agent. It leaves out `questions`, which question-selection owns
     # (issue #2122).
     "init-project": frozenset({"project", "researcher_profile", "known_holdings", "sources"}),
+    # research-plan writes plans and their items and nothing else in
+    # research.json. A lane, not a route: tests/packaging/plugin-hooks.test.ts
+    # requires one for every agent granted research_append, and nothing is
+    # routed to this agent (issue #2116).
+    "research-plan": frozenset({"plans", "plan_items"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.

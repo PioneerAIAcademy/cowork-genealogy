@@ -61,7 +61,7 @@ def test_writer_tools_are_read_from_the_engine_and_non_empty():
 def test_listed_writers_reads_all_three_caller_fields():
     listed = listed_writers()
     # `callers` — the four search skills on research.json#log.
-    assert "skill:search-records" in listed["research_log_append"]
+    assert "agent:search-records" in listed["research_log_append"]
     # `agentCallers` — the direction #2575 added, paired with its tool.
     assert "agent:search-images" in listed["research_log_append"]
     # `hookCallers` — proof-conclusion is named there on proof_summaries.
@@ -71,7 +71,7 @@ def test_listed_writers_reads_all_three_caller_fields():
 def test_shipped_units_carries_both_kinds():
     units = shipped_units()
     assert "agent:search-images" in units
-    assert "skill:search-records" in units
+    assert "agent:search-records" in units
     assert "agent:general-purpose" not in units
     assert "skill:general-purpose" not in units
 
@@ -111,7 +111,7 @@ def test_an_unlisted_caller_is_classified_unlisted(tmp_path: Path):
     p = _run(tmp_path, "ferber-death", "run-1.json", {
         "subagents": [_capture("search-images", ["research_log_append"])],
     })
-    narrowed = {"research_log_append": {"skill:search-records"}}
+    narrowed = {"research_log_append": {"agent:search-records"}}
     pairs = classify(scan([p]), narrowed, shipped_units())
     assert [(x.identifier, x.verdict) for x in pairs] == [
         ("agent:search-images", "unlisted")

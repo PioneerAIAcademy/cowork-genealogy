@@ -55,29 +55,14 @@ Folder** — so you can watch it fill in live as you go (see "Watching it work" 
 Don't hand it your hardest brick wall.
 What we need instead is a **research objective that tests a specific ability** and
 whose answer is available by accessing FamilySearch records, full-text, or images.
-There are two ways to set one up, and they behave differently.
+Every project starts from a **FamilySearch person ID (PID)**. A message that
+names someone without one creates nothing: the agent asks for the ID first. If the
+person you want to research is not on FamilySearch yet, add them there, then start
+from their PID.
 
-#### Path A — your own research, not on FamilySearch
+#### A FamilySearch person, with something removed
 
-Use this when the answer lives in your files rather than in the FamilySearch tree.
-You supply the starting point and the target, and the agent builds a local tree
-from what you type.
-
-In your first message, give it:
-
-- **The starting point** — names, dates, places, and relationships you're confident
-  in. This is what it reasons *from*.
-- **The objective** — the specific question to answer. "Identify Mary Corrigan's
-  parents"; "establish whether the John Byrne in the 1880 census is the same man as
-  the one in the 1885 land record".
-- **What you've already ruled out**, and why.
-
-You know the answer; the agent has no way to look it up in the tree. That makes
-this the cleanest test of whether it can actually *research*.
-
-#### Path B — a FamilySearch person, with something removed
-
-Use this when the case you want to test is already well documented on FamilySearch.
+Use a case that is already well documented on FamilySearch.
 Give it a **PID**, and tell it **what to forget**:
 
 > "Research PID KWZX-1AB. Forget who his parents were and see if you can find them
@@ -99,9 +84,13 @@ were removed from the project's copy, and researches from what's left. Three thi
 If you give a PID and remove *nothing*, the agent will often just read the answer
 off the tree and you'll learn very little.
 
+Add anything you know that the tree does not — family memory, a document you
+hold, what you have already ruled out and why — in the same first message. It is
+recorded as a known holding.
+
 ### Also tell it about you
 
-Whichever path you take, you don't need to say anything about yourself. Every
+You don't need to say anything about yourself. Every
 project gets plain-language narration, and every subscription site is assumed
 reachable — mention a site you hold and it's recorded, but nothing is asked.
 
@@ -138,6 +127,13 @@ Click **Send Feedback** in the **Research Viewer's** header — not in Cowork,
 which has no feedback UI of its own. The Viewer bundles your project's
 current state and your notes and sends them to us privately, the same as it
 would for any project folder.
+
+> **Before you send: living people.** A member of our team will open and read
+> your research log, your notes, and your full session transcript in order to
+> reproduce what went wrong. Most projects reach back four or five generations
+> and never touch a living person. **If yours does, please don't send feedback
+> on it.** A report is never worth someone else's privacy, and we would rather
+> lose the report.
 
 1. **What you asked the agent to do.** Optional, but please fill it in. A Cowork
    session has no Claude Code session log to attach (see the checkbox note
@@ -201,7 +197,9 @@ Being straight with you, so you don't waste time:
   retry from scratch.
 - **Living people:** please don't enter information about anyone living. Nothing
   is encrypted yet.
-- **Sessions are private to you.** No sharing or collaboration.
+- **No sharing or collaboration yet.** A session is yours to work in; you can't
+  invite anyone into it. Your project folder stays on your machine — we read it
+  only when you send us feedback, and FamilySearch may read what you send.
 
 ---
 

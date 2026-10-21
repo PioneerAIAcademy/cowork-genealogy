@@ -1,28 +1,22 @@
 ---
 name: init-project
 description: >-
-  Initializes a new genealogy research project with GPS-conformant
-  file structures. Creates research.json (GPS audit trail) and
-  tree.gedcomx.json (simplified GedcomX deliverable) from a FamilySearch
-  person ID. If the user does not have a FamilySearch ID, searches the
-  Family Tree by name using person_search to find the right person.
-  Implements Steps 1-2 of the genealogical research process (define the
-  problem and survey known information). Use when the user says "new
-  project", "start research", "research [person]", "find parents of",
-  "begin researching", "I don't have their FamilySearch ID", or provides
-  a FamilySearch person ID to start working with. Pass the projectPath, the
-  user's own words (objective, person ID or name and known facts, any
-  holdings they mention). Do NOT use when a research.json file already
-  exists in the folder — use project-status instead to resume an existing
-  project.
+  Creates a new genealogy research project from a FamilySearch person ID:
+  research.json (GPS audit trail) and tree.gedcomx.json (simplified GedcomX
+  deliverable). Implements Steps 1-2 of the genealogical research process
+  (define the problem and survey known information). The `research` router
+  starts this when a message names a person or objective and the folder holds
+  no project; it is not a front door of its own, so it does not claim phrases
+  like "start research" or "find parents of" — `research` owns those. Requires
+  a FamilySearch person ID: with no ID it creates nothing and asks for one.
+  Pass the projectPath and the user's own words (objective, person ID, known
+  facts, any holdings they mention). Do NOT use when a research.json file
+  already exists in the folder — the project already exists.
 model: claude-sonnet-4-6
 tools:
   - mcp__genealogy__person_read
   - mcp__remote-devices__Genealogy_Research__person_read
   - mcp__Genealogy_Research__person_read
-  - mcp__genealogy__person_search
-  - mcp__remote-devices__Genealogy_Research__person_search
-  - mcp__Genealogy_Research__person_search
   - mcp__genealogy__project_create
   - mcp__remote-devices__Genealogy_Research__project_create
   - mcp__Genealogy_Research__project_create
@@ -35,7 +29,7 @@ tools:
 # Init Project
 
 **Guard clause — run BEFORE anything else, including file reads:**
-Check with one `Read` of `<projectPath>/research.json` (`limit: 1`), the only read before this decision. If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Return one caller-facing line instead — `Hand-back: project-status — a project already exists here` (it reports where the project stands and recommends the next step) — then the return contract, its researcher paragraph exactly:
+Check with one `Read` of `<projectPath>/research.json` (`limit: 1`), the only read before this decision. If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Return one caller-facing line instead — `Hand-back: question-selection — a project already exists here` (it picks the next research question; where the project stands is answered from project_context) — then the return contract, its researcher paragraph exactly:
 > "This folder already holds a research project, so I did not start a new one. I can review where it stands or choose the next research question."
 
 **Narration** (initialize path only — the guard clause above reads only `research.json`'s first line): the house style under "Researcher profile" below, verbatim. No preamble per action; one report when the project is written.
@@ -114,17 +108,13 @@ complete and that forgetting is a **separate next step** they run with the
 
 ### 1. Get the research objective
 
-The objective was captured in the opening-turn questions above (stated by the user, or the generic default if they didn't answer) — this step just uses it. You need a FamilySearch person ID (preferred) or name + known facts for `person_search` alongside it.
+The objective was captured in the opening-turn questions above (stated by the user, or the generic default if they didn't answer) — this step just uses it. You need a FamilySearch person ID alongside it.
 
 Do NOT call `person_read` before the opening turn's questions are asked — asking about "this person" needs no lookup. Do NOT invent, assume, or default a *specific* objective from the person's data (e.g., a hallucinated "trace migration from Upper Canada" guessed from a birthplace fact) — the generic default from the opening-turn rule above is the only fallback; a wrong specific assumption sends the whole project in a direction the user didn't ask for.
 
-If no ID, search by name (see below). If the stated objective is too vague (no named individual), create nothing and ask for clarification in your return — this is a distinct case from no objective at all, which gets the generic default, not a clarification request.
+**No ID, no project.** If the message carries no FamilySearch person ID, create nothing and ask for one in your return, naming the person as the user described them. Never search for them. If the stated objective is too vague (no named individual), likewise create nothing and ask for clarification — a distinct case from no objective at all, which gets the generic default.
 
-### Searching by name
-
-Call `person_search` with camelCase params: `surname` (required), plus one or more of `givenName`, `birthPlace`, `birthYearFrom`/`birthYearTo`, `residencePlace`, or a relative name (`fatherGivenName`, `motherGivenName`, `spouseGivenName`). Do NOT use snake_case (`given`, `birth_year`, `birth_place`) — those are not recognized params and the call is rejected. **Surname-plus-one rule:** `surname` required plus at least one other qualifying field (given name, date, place, or relative name).
-
-Select the top candidate, call `person_read` and continue. Name every other candidate whose facts also fit what the user stated — name, life dates, `personId` — as a caller-facing line, and say in the researcher paragraph that the project was started on the top match and which other person could be theirs. If no candidates match, initialize from objective text only using local stub persons.
+A first message naming a person ID and a task goes straight to work.
 
 ### 2. Fetch person data
 
@@ -144,13 +134,11 @@ The response carries `staged.resultsRef`: the read, kept on the host. Step 4 pas
 
 `project_create` builds the tree from the staged read: every person, relationship, and source, with its ids and source references. Do not copy the read into a tree. Your only tree input is **additions**, people the read does not contain that the researcher's own statements imply.
 
-An addition is a person with a label `id` (`A1`, `A2`…), `gender`, and `names`; a relationship to someone from the read names that person by FamilySearch ID. Use `Male`/`Female`/`Unknown`; ParentChild uses `parent`/`child`, Couple uses `person1`/`person2`. Shape additions and an objective-only tree per "Simplified GedcomX Quick Reference" below.
+An addition is a person with a label `id` (`A1`, `A2`…), `gender`, and `names`; a relationship to someone from the read names that person by FamilySearch ID. Use `Male`/`Female`/`Unknown`; ParentChild uses `parent`/`child`, Couple uses `person1`/`person2`. Shape additions per "Simplified GedcomX Quick Reference" below.
 
 Count attached sources from the read's top-level `sources` array, never from per-fact refs, and never call FamilySearch data "unsourced".
 
-**With no FamilySearch data (objective-only build),** build the people the researcher stated as a tree, with local `I` ids for persons, and pass it as `tree`. `project_create` assigns any missing name, fact, or relationship id and cites the researcher's statement for anything unsourced.
-
-**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, it fixes a surname in that woman's **parental line**, but does not by itself tell you *which* parent carries it. Assuming it is the father assumes patrilineal surname descent without evidence — an unsound assumption, and the canonical example of one ("a bride's surname is the same as her parents' surname"); unsound assumptions need positive evidence, not a default. Create one stub for that parent, sex left unspecified, linked via a `ParentChild` relationship — do not label or default it as "father." **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "A1", "gender": "Unknown", "names": [{ "given": "", "surname": "Donovan" }]}` (an `I` id in the objective-only build). **Set this person's `gender` to `"Unknown"` — do NOT omit the key.** `gender` is required on every person; a stub missing it fails the write for both project files, not just this person.
+**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, it fixes a surname in that woman's **parental line**, but does not by itself tell you *which* parent carries it. Assuming it is the father assumes patrilineal surname descent without evidence — an unsound assumption, and the canonical example of one ("a bride's surname is the same as her parents' surname"); unsound assumptions need positive evidence, not a default. Create one stub for that parent, sex left unspecified, linked via a `ParentChild` relationship — do not label or default it as "father." **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "A1", "gender": "Unknown", "names": [{ "given": "", "surname": "Donovan" }]}`. **Set this person's `gender` to `"Unknown"` — do NOT omit the key.** `gender` is required on every person; a stub missing it fails the write for both project files, not just this person.
 
 **Stub only the people the user actually named or directly implied — no others.** A stated maiden name implies exactly one new person: that woman's parent (not specifically her father).
 
@@ -175,7 +163,7 @@ When unsure: did the user name them, or is their surname fixed by a stated maide
 project_create({ projectPath, objective, title, personReadRef: <staged.resultsRef>, subjectPersonIds: ["<subject's FamilySearch ID>"], tree: { persons: [<additions>], relationships: [<their links>] } })
 ```
 
-`objective` from Step 1; `title` a concise 3-6 word session name (e.g. "Patrick Flynn's parents"); `personReadRef` the subject's `staged.resultsRef` (if you read more than one person, the subject's); `subjectPersonIds` the subject's FamilySearch ID. Omit `tree` when there are no additions. With no FamilySearch data, omit `personReadRef` and pass the Step 3 tree, with `subjectPersonIds` its local `I` id.
+`objective` from Step 1; `title` a concise 3-6 word session name (e.g. "Patrick Flynn's parents"); `personReadRef` the subject's `staged.resultsRef` (if you read more than one person, the subject's); `subjectPersonIds` the subject's FamilySearch ID. Omit `tree` when there are no additions.
 
 The result's `idMap` gives the tree ids assigned: `persons` (FamilySearch ID → `I` id), `sources` (FamilySearch source id → `S` id), `additions` (your labels → `I` ids). Use those ids in every later step.
 
@@ -252,7 +240,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 - **Treat imported data as unverified.** FamilySearch tree is collaborative, quality varies. Never correct what you import.
 - **Recording conventions:** maiden (birth) surnames for women; places most-specific to most-general; jurisdictions as they existed at event time; ISO 8601 dates in JSON.
 - **Handle isolated persons.** If `person_read` returns no relatives, still create the project. Note isolation in summary.
-- **No FamilySearch ID → search first.** Call `person_search` before falling back to stubs.
+- **No FamilySearch ID → no project.** Ask for the ID; never search by name and never build from stubs alone.
 - **Do not skip the preliminary survey.** The tree fetch + known-holdings survey together ARE the preliminary survey (GPS Step 2).
 - **The profile is fixed.** Always `novice` and the house-style string, verbatim; never ask, never map a stated level.
 
@@ -344,7 +332,7 @@ This is a condensed reference for the `tree.gedcomx.json` format.
 
 ## Additions (with `personReadRef`)
 
-The ids in the examples here are the objective-only build's. With
+The ids in the examples here are additions'. With
 `personReadRef`, an addition's `id` is a label (`A1`, `A2`…), a relationship
 names a person from the read by FamilySearch ID and an addition by its label,
 and a source ref names one of the read's FamilySearch source ids or an addition
@@ -421,7 +409,7 @@ source's label. `I`/`S` ids are assigned by `project_create`; never write them.
 
 `project_create` assigns every id when it builds from a staged `person_read`;
 an addition's ids are labels it re-assigns. These are the conventions it uses,
-and the ones an objective-only tree follows.
+and the ones additions follow.
 
 - ALL persons: `I` prefix (`I1`, `I2`) — including FamilySearch-seeded ones.
   Never a FamilySearch PID. A person's FamilySearch identity travels in `ark`,

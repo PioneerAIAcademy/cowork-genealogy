@@ -35,6 +35,10 @@
             1880
           ],
           "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
         }
       }
     ],

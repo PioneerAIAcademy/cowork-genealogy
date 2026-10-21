@@ -112,6 +112,58 @@ def test_an_avoid_finding_still_flags_but_carries_its_polarity():
     assert "must NOT" in warn
 
 
+# --- non-ASCII names (issue #3490) -----------------------------------
+
+def test_cyrillic_unstripped_target_flags_suspect():
+    """An all-Cyrillic answer left in the tree is caught. With an ASCII-only
+    letter class every Cyrillic name tokenized to nothing and never matched."""
+    expected = {"findings": [_rel_finding("Григорий Захаров Кокоша")]}
+    tree = {"persons": [
+        _person("I1", "Захар Иванов", "Кокошенко"),
+        _person("I9", "Григорий Захаров", "Кокоша"),  # the un-stripped answer
+    ]}
+    suspects = check_stripping(expected, tree)
+    assert [s.person_id for s in suspects] == ["I9"]
+    assert {"кокоша", "захаров"} <= suspects[0].shared
+
+
+def test_cyrillic_surname_only_overlap_does_not_flag():
+    expected = {"findings": [_rel_finding("Григорий Кокоша")]}
+    tree = {"persons": [_person("I2", "Илья", "Кокоша")]}
+    assert check_stripping(expected, tree) == []
+
+
+def test_accented_name_is_one_token_and_matches_its_unaccented_spelling():
+    """"João" must not split into "jo" + "o"; folding lets it match "Joao"."""
+    assert vf._tokens("João Gomes") == {"joao", "gomes"}
+    expected = {"findings": [_rel_finding("João Gomes de Sousa")]}
+    tree = {"persons": [_person("I9", "Joao", "Gomes de Souza")]}
+    assert [s.person_id for s in check_stripping(expected, tree)] == ["I9"]
+
+
+def test_cli_prints_a_cyrillic_warn_on_a_cp1252_console(tmp_path):
+    """The WARN line now carries Cyrillic tokens; on a Windows console
+    (cp1252) printing it must not raise UnicodeEncodeError."""
+    import os
+    import subprocess
+    import sys
+
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I9", "Григорий", "Кокоша")),
+        findings={"findings": [_rel_finding("Григорий Кокоша")]},
+    )
+    proc = subprocess.run(
+        [sys.executable, "-m", "e2e.validate_fixture", str(tmp_path)],
+        cwd=Path(vf.__file__).resolve().parents[1],
+        env={**os.environ, "PYTHONIOENCODING": "cp1252"},
+        capture_output=True,
+        encoding="utf-8",
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert "кокоша" in proc.stdout
+
+
 # --- subject-person leak regression (spriggs-parents-1898) -----------
 
 def _rel_finding_with_subject(target_name, subject_name, fid="f1"):
@@ -431,6 +483,79 @@ def test_finding_shape_does_not_require_any_field_present():
     assert finding_shape_errors({"findings": [{"id": "f1"}]}) == []
 
 
+# --- avoid-finding tree/research conflation (issue #3465) --------------
+# `apply_avoid_guard` force-fails a target present in the final tree
+# however it is annotated there, including as an explicitly rejected
+# candidate — that is the allowance the rule exists to permit. These pin
+# the six shapes verified by hand before the PR landed: three that must
+# fire, three real fixture wordings that must not.
+
+
+def test_finding_shape_rejects_the_tree_research_conflation():
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    finding["description"] = (
+        "The agent must NOT assert Robert Smith as the father. Pass = neither "
+        "tree/research contains this relationship, however annotated."
+    )
+    errors = finding_shape_errors({"findings": [finding]})
+    assert any("tree/research" in e and "conflate" in e for e in errors)
+
+
+def test_finding_shape_rejects_a_rejection_naming_only_one_store():
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    finding["description"] = (
+        "The agent must NOT assert Robert Smith as the father. A rejected "
+        "candidate may be documented in research.json."
+    )
+    errors = finding_shape_errors({"findings": [finding]})
+    assert any("mentions rejection" in e for e in errors)
+
+
+def test_finding_shape_rejects_a_non_string_avoid_description():
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    finding["description"] = None
+    errors = finding_shape_errors({"findings": [finding]})
+    assert any("non-string" in e for e in errors)
+
+
+def test_finding_shape_accepts_the_matilde_cavagnaro_wording():
+    finding = _rel_finding("Pietro Dondero")
+    finding["polarity"] = "avoid"
+    finding["description"] = (
+        "The agent must NOT assert that Matilde Carmela Emanuela Cavagnaro "
+        "married Pietro Dondero. Pass = the agent's final tree.gedcomx.json "
+        "contains no spouse Pietro Dondero for this subject. A rejected "
+        "candidate may be documented in research.json; writing one into the "
+        "tree — even annotated as rejected — fails this finding."
+    )
+    assert finding_shape_errors({"findings": [finding]}) == []
+
+
+def test_finding_shape_accepts_the_domingo_olivera_wording():
+    finding = _rel_finding("Domingo Oliviery")
+    finding["polarity"] = "avoid"
+    finding["description"] = (
+        "The agent must NOT assert that Domingo Olivera y Valadyo's parents "
+        "were Domingo Oliviery and Francisca Gonzalez. Pass = no such "
+        "parents in tree.gedcomx.json; a rejection of the hint belongs in "
+        "research.json, never as persons in the tree."
+    )
+    assert finding_shape_errors({"findings": [finding]}) == []
+
+
+def test_finding_shape_accepts_an_avoid_description_with_no_rejection_clause():
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    finding["description"] = (
+        "The agent must NOT assert Robert Smith as the father. Pass = the "
+        "agent's final tree.gedcomx.json contains no such relationship."
+    )
+    assert finding_shape_errors({"findings": [finding]}) == []
+
+
 def test_lint_fixture_rejects_an_unrecognized_finding_field(tmp_path):
     finding = _rel_finding("Robert Smith")
     finding["expectation"] = "not_found"
@@ -445,15 +570,34 @@ def test_lint_fixture_rejects_an_unrecognized_finding_field(tmp_path):
 
 # --- record-hint ark citation (issue #970 / #1025) --------------------
 
-_UNSET = object()  # distinguishes "omit image_basis" from writing `null`
+_UNSET = object()  # distinguishes "omit image_basis"/"omit hint" from writing `null`
+
+_VALID_HINT = {"persona_ark": "ark:/61903/1:1:6PFD-Q43C", "identity": "different"}
+
+
+def _commit_snapshot(fixture_dir) -> None:
+    """A record-hint fixture commits its unstripped tree identical to its
+    starting tree, and `lint_fixture` fails one that does not."""
+    start = fixture_dir / "starting-tree.gedcomx.json"
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(start.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def _write_record_hint_meta(
-    fixture_dir, *, resolved: bool, genre: str = "record-hint", image_basis=_UNSET
+    fixture_dir,
+    *,
+    resolved: bool,
+    genre: str = "record-hint",
+    image_basis=_UNSET,
+    hint=_VALID_HINT,
+    source_pid=_UNSET,
 ):
     meta = {"id": fixture_dir.name, "genre": genre}
+    if source_pid is not _UNSET:
+        meta["source_pid"] = source_pid
     if image_basis is not _UNSET:
         meta["image_basis"] = image_basis  # may be a non-bool / None on purpose
+    if hint is not _UNSET:
+        meta["hint"] = hint  # may be malformed / None on purpose
     (fixture_dir / "fixture.json").write_text(json.dumps(meta), encoding="utf-8")
     body = "Notes for reviewers\n\n" + (
         "Resolved: false match, no findable substitute."
@@ -555,6 +699,7 @@ def test_lint_fixture_passes_a_resolved_record_hint_fixture_with_an_ark(tmp_path
         {"f1": ["disproving record (ark:/61903/1:1:6PFD-Q43C)"]}
     )
     _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "John", "Smith")), findings=findings)
+    _commit_snapshot(tmp_path)
     _, errors = lint_fixture(tmp_path)
     assert errors == []
 
@@ -656,6 +801,7 @@ def test_lint_fixture_passes_image_basis_true_with_an_image_ark(tmp_path):
         _valid_tree(_valid_person("I1", "John", "Smith")),
         findings=_avoid_pair_findings(_WITH_IMAGE),
     )
+    _commit_snapshot(tmp_path)
     _, errors = lint_fixture(tmp_path)
     assert errors == []
 
@@ -672,6 +818,230 @@ def test_committed_no_image_read_fixtures_still_pass(slug):
     assert fixture_dir.is_dir(), f"missing corpus fixture {slug}"
     _, errors = lint_fixture(fixture_dir)
     assert errors == [], errors
+
+
+# --- fixture.json `hint` (issue #3553) --------------------------------
+#
+# A resolved record-hint fixture declares the hinted persona and the
+# genealogist's identity judgement, which `make matcher-accuracy` scores.
+# Every case below carries a valid ark in its findings, so the only error
+# that can fire is the hint check's.
+
+_HINT_FINDINGS = _avoid_pair_findings(_INDEX_ONLY)
+
+
+def _hint_errors_for(
+    tmp_path, hint, *, resolved=True, genre="record-hint", source_pid=_UNSET
+):
+    _write_record_hint_meta(
+        tmp_path, resolved=resolved, genre=genre, hint=hint, source_pid=source_pid
+    )
+    return record_hint_citation_errors(tmp_path, _HINT_FINDINGS)
+
+
+def test_hint_missing_on_a_resolved_fixture_is_error(tmp_path):
+    errors = _hint_errors_for(tmp_path, _UNSET)
+    assert len(errors) == 1
+    assert "has no `hint` key" in errors[0]
+
+
+def test_lint_fixture_hard_fails_a_resolved_fixture_with_no_hint(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, hint=_UNSET)
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I1", "John", "Smith")),
+        findings=_HINT_FINDINGS,
+    )
+    _, errors = lint_fixture(tmp_path)
+    assert any("has no `hint` key" in e for e in errors)
+
+
+def test_hint_explicit_null_is_accepted(tmp_path):
+    assert _hint_errors_for(tmp_path, None) == []
+
+
+def test_hint_not_required_on_a_draft(tmp_path):
+    assert _hint_errors_for(tmp_path, _UNSET, resolved=False) == []
+
+
+def test_hint_not_required_on_a_strip_fixture(tmp_path):
+    assert _hint_errors_for(tmp_path, _UNSET, genre="strip") == []
+
+
+def test_malformed_hint_on_a_draft_is_not_checked(tmp_path):
+    assert _hint_errors_for(tmp_path, "same", resolved=False) == []
+
+
+@pytest.mark.parametrize("identity", ["same", "different", "unresolved"])
+def test_hint_with_each_identity_is_accepted(tmp_path, identity):
+    hint = {"persona_ark": "ark:/61903/1:1:6PFD-Q43C", "identity": identity}
+    assert _hint_errors_for(tmp_path, hint) == []
+
+
+@pytest.mark.parametrize(
+    "persona_ark",
+    ["ark:/61903/1:1:6PFD-Q43C", "ark:/61903/1:1:QVS9-DHD", "ark:/61903/1:1:K8T2-9X"],
+    ids=["4-4", "4-3", "4-2"],
+)
+def test_hint_accepts_every_persona_id_shape(tmp_path, persona_ark):
+    hint = {"persona_ark": persona_ark, "identity": "same"}
+    assert _hint_errors_for(tmp_path, hint) == []
+
+
+def test_hint_key_order_does_not_matter(tmp_path):
+    hint = {"identity": "unresolved", "persona_ark": "ark:/61903/1:1:6PFD-Q43C"}
+    assert _hint_errors_for(tmp_path, hint) == []
+
+
+@pytest.mark.parametrize(
+    "identity",
+    ["Same", "SAME", " same", "same ", True, False, "1", 1, 2, "2", None, "yes", ""],
+)
+def test_hint_bad_identity_is_error(tmp_path, identity):
+    hint = {"persona_ark": "ark:/61903/1:1:6PFD-Q43C", "identity": identity}
+    errors = _hint_errors_for(tmp_path, hint)
+    assert len(errors) == 1
+    assert "`hint.identity` must be one of" in errors[0]
+
+
+def test_hint_missing_identity_is_error(tmp_path):
+    errors = _hint_errors_for(tmp_path, {"persona_ark": "ark:/61903/1:1:6PFD-Q43C"})
+    assert len(errors) == 1
+    assert "`hint.identity` is missing" in errors[0]
+
+
+@pytest.mark.parametrize(
+    "persona_ark",
+    [
+        "ark:/61903/1:2:4BT2-KM71",
+        "ark:/61903/3:1:9Q97-YSRZ-GWP",
+        "ark:/61903/3:2:77TF-QRBM",
+        "6PFD-Q43C",
+        "LZ1N-QK9",
+        "ark:/61903/4:1:LZ1N-QK9",
+        "https://www.familysearch.org/ark:/61903/1:1:6PFD-Q43C",
+        "ark:/61903/1:1:6PFD-Q43C\n",
+        "ark:/61903/1:1:6pfd-q43c",
+        "ark:/61903/1:1:6PFD",
+        "ark:/61903/1:1:",
+        "ark:/61903/1:1:6PFD-Q43C, ark:/61903/1:1:QVS9-DHD",
+        "",
+        None,
+        ["ark:/61903/1:1:6PFD-Q43C"],
+    ],
+    ids=[
+        "1:2-record-ark",
+        "3:1-image-ark",
+        "3:2-image-ark",
+        "bare-persona-id",
+        "tree-pid",
+        "tree-person-ark",
+        "url-wrapped",
+        "trailing-newline",
+        "lowercase",
+        "no-id-suffix",
+        "prefix-only",
+        "two-arks",
+        "empty",
+        "null",
+        "list",
+    ],
+)
+def test_hint_bad_persona_ark_is_error(tmp_path, persona_ark):
+    hint = {"persona_ark": persona_ark, "identity": "same"}
+    errors = _hint_errors_for(tmp_path, hint)
+    assert len(errors) == 1
+    assert "`hint.persona_ark` must be a 1:1: record-persona ark" in errors[0]
+
+
+# A tree PID is the same 4-3 shape as a persona id, so `ark:/61903/1:1:<PID>`
+# passes the regex; only the comparison against `source_pid` catches it.
+_SOURCE_PID = "LZ1N-QK9"
+
+
+@pytest.mark.parametrize(
+    "source_pid",
+    [_SOURCE_PID, " LZ1N-QK9 ", "lz1n-qk9"],
+    ids=["exact", "padded", "lowercase"],
+)
+def test_hint_persona_ark_wrapping_source_pid_is_error(tmp_path, source_pid):
+    hint = {"persona_ark": f"ark:/61903/1:1:{_SOURCE_PID}", "identity": "same"}
+    errors = _hint_errors_for(tmp_path, hint, source_pid=source_pid)
+    assert len(errors) == 1
+    assert "wraps the tree person's PID (`source_pid`" in errors[0]
+
+
+def test_lint_fixture_hard_fails_a_hint_wrapping_source_pid(tmp_path):
+    _write_record_hint_meta(
+        tmp_path,
+        resolved=True,
+        hint={"persona_ark": f"ark:/61903/1:1:{_SOURCE_PID}", "identity": "different"},
+        source_pid=_SOURCE_PID,
+    )
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I1", "John", "Smith")),
+        findings=_HINT_FINDINGS,
+    )
+    _, errors = lint_fixture(tmp_path)
+    assert any("wraps the tree person's PID" in e for e in errors)
+
+
+@pytest.mark.parametrize(
+    "persona_ark",
+    ["ark:/61903/1:1:QVS9-DHD", "ark:/61903/1:1:LZ1N-QK9X", "ark:/61903/1:1:LZ1N-QK"],
+    ids=["other-4-3", "source-pid-prefix-4-4", "source-pid-prefix-4-2"],
+)
+def test_hint_persona_ark_not_equal_to_source_pid_passes(tmp_path, persona_ark):
+    hint = {"persona_ark": persona_ark, "identity": "same"}
+    assert _hint_errors_for(tmp_path, hint, source_pid=_SOURCE_PID) == []
+
+
+def test_hint_wrapping_source_pid_on_a_draft_is_not_checked(tmp_path):
+    hint = {"persona_ark": f"ark:/61903/1:1:{_SOURCE_PID}", "identity": "same"}
+    assert _hint_errors_for(tmp_path, hint, resolved=False, source_pid=_SOURCE_PID) == []
+
+
+@pytest.mark.parametrize("source_pid", [None, 7, ""], ids=["null", "int", "empty"])
+def test_hint_non_string_or_empty_source_pid_does_not_fire(tmp_path, source_pid):
+    hint = {"persona_ark": f"ark:/61903/1:1:{_SOURCE_PID}", "identity": "same"}
+    assert _hint_errors_for(tmp_path, hint, source_pid=source_pid) == []
+
+
+def test_hint_malformed_persona_ark_reports_shape_not_source_pid(tmp_path):
+    hint = {"persona_ark": _SOURCE_PID, "identity": "same"}
+    errors = _hint_errors_for(tmp_path, hint, source_pid=_SOURCE_PID)
+    assert len(errors) == 1
+    assert "`hint.persona_ark` must be a 1:1: record-persona ark" in errors[0]
+
+
+def test_hint_missing_persona_ark_is_error(tmp_path):
+    errors = _hint_errors_for(tmp_path, {"identity": "same"})
+    assert len(errors) == 1
+    assert "`hint.persona_ark` is missing" in errors[0]
+
+
+def test_hint_unknown_key_is_error(tmp_path):
+    hint = {"persona_ark": "ark:/61903/1:1:6PFD-Q43C", "identity": "same", "outcome": 2}
+    errors = _hint_errors_for(tmp_path, hint)
+    assert len(errors) == 1
+    assert "unrecognized field(s) ['outcome']" in errors[0]
+
+
+@pytest.mark.parametrize(
+    "hint",
+    ["same", "ark:/61903/1:1:6PFD-Q43C", True, 0, [], ["same"]],
+)
+def test_hint_not_an_object_or_null_is_error(tmp_path, hint):
+    errors = _hint_errors_for(tmp_path, hint)
+    assert len(errors) == 1
+    assert "`hint` must be an object or null" in errors[0]
+
+
+def test_hint_empty_object_reports_both_missing_fields(tmp_path):
+    errors = _hint_errors_for(tmp_path, {})
+    assert any("`hint.persona_ark` is missing" in e for e in errors)
+    assert any("`hint.identity` is missing" in e for e in errors)
 
 
 # --- genre-aware WARN advice (issue #2306 / PR #2634) ------------------
@@ -754,6 +1124,8 @@ def _genre_fixture(path: Path, genre: str) -> None:
     (path / "fixture.json").write_text(
         json.dumps({"id": path.name, "genre": genre}), encoding="utf-8"
     )
+    if genre == "record-hint":
+        _commit_snapshot(path)
 
 
 def test_cli_wires_the_fixture_genre_into_the_advice_it_prints(tmp_path, capsys):

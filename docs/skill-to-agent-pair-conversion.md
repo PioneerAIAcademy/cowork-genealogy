@@ -426,7 +426,7 @@ the table above:
 | register | what it wants | paid? |
 |---|---|---|
 | `research/SKILL.md` routing table | any bare cell naming the skill flipped to `@plugin:<agent>` — see the exception in §0 | `research` run |
-| other suites' negatives with `correct_skill` naming the skill | a routed negative counts `Skill` calls only, so an `Agent` spawn never satisfies it and the test aborts `not_runnable` (`runnability.py`). Delete a test whose right answer *is* the agent; trim the name from a multi-target list only when the test is graded on an invariant | one run per suite touched |
+| other suites' negatives with `correct_skill` naming the skill | nothing mechanical since 2026-10-08: `runnability.py` accepts an agent name in `correct_skill` (#3092), the routing short-circuit stops on an `Agent` spawn of it (#3077), and `_compute_outcome` reads `handoffs`, which count spawns (#3131). Before #3092 (2026-10-03) the test aborted `not_runnable`; between #3092 and #3131 it loaded and a correctly routed run graded `fail`. What remains is the test's own merit: a description-routing negative is deleted under the 2026-09-22 ruling, while a `grade_on_invariant` near-miss or hand-back test keeps grading its invariant (#2116 kept five) | only for a suite whose test you edit |
 | `execution.stub_skills` naming the skill | nothing — an entry naming an agent stubs its spawn (`stub_agents`) | no |
 | the suite's own routed tests | every `input.user_message` becomes an `input.delegation`, tagged `direct-arm`; a routed original with a same-phrasing twin is deleted | the suite's run |
 | the agent's `description` | the deleted skill's user trigger phrases, now that it is the only thing a user's words match; within 1024 characters (`skill-description-length.test.ts`) | no |
@@ -525,14 +525,15 @@ up while the body ran on the main thread, and each cost a run to find.
    is the worked form, and
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's
-   pending list. Four agents are EXCLUDED from the contract rather than
+   pending list. Three agents are EXCLUDED from the contract rather than
    pending: `image-reader`, which by spec returns a transcription and nothing
-   else, and, under lead ruling "PS return: A" (2026-09-24, issue #2793),
-   `project-status` and `source-evaluation` (issue #2796), which write nothing,
-   so their id-bearing reports ARE their whole output — conforming would push
-   them below the caller's print line, where a production relay drops them.
-   `record-structurer` is excluded too: its whole return is `extraction_append`'s
-   code-written summary, verbatim (lead, 2026-09-29).
+   else; under lead ruling "PS return: A" (2026-09-24, issue #2793),
+   `source-evaluation` (issue #2796), which writes nothing, so its id-bearing
+   report IS its whole output — conforming would push it below the caller's
+   print line, where a production relay drops it; and `record-structurer`,
+   whose whole return is `extraction_append`'s code-written summary, verbatim
+   (lead, 2026-09-29). (The former `project-status` agent carried the "PS
+   return: A" exemption too; it was deleted outright by issue #3112.)
    Each goes in that test's `EXCLUDED` with its reason and carries no `---`
    section. Exclusion silences the lint in both directions, so a green run
    says nothing about an excluded body; read it.
@@ -563,6 +564,18 @@ up while the body ran on the main thread, and each cost a run to find.
 10. Fix one thing per run.
 
 ## What is still open
+
+- **`search-records` orientation share (baseline for the handed-state follow-up,
+  issue #3581).** Committed run `eval/runlogs/unit/search-records/v8_2026-10-20_18-41-45.json`
+  (ids-only delegation): 26 of 27 tests reach `record_search`. The MCP calls before
+  the first one are a median of 2 and a mean of 1.77 (min 1, max 3): the
+  `research_query` read of `plans`, plus, in 17 of the 26 tests, one or two
+  `wiki_read`s of FamilySearch census pages. No question is read. Counting the
+  `Read` of `tree.gedcomx.json` as well gives a median of 3 and a mean of 2.77
+  (min 2, max 4). The first figures came from run `v7_2026-10-15_16-06-27`, which
+  was pruned from the tree and lives in commit b147b57fe; its MCP count was a
+  median of 2 and a mean of 1.7. The follow-up that hands the plan item's state in
+  the delegation (cost-latency plan §6) is measured against these.
 
 - **Tier selection resisted every prose fix.** Three successive wordings each
   repaired one test and broke a neighbour, so the tier ladder was reverted to

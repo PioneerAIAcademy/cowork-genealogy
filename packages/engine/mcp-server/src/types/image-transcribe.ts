@@ -1,6 +1,9 @@
 export interface ImageTranscribeInput {
   imageId?: string;
   ark?: string;
+  /** Another name for `ark`: record_read returns a page image under it.
+   *  Folded into `ark` before the input forms are counted. */
+  imageArk?: string;
   /** A FamilySearch memory artifact URL, as carried by a person_read source
    *  that came from the memories API. Already a direct bytes URL, so it is
    *  used as-is rather than resolved, and it is fetched WITHOUT a token. */
@@ -103,6 +106,10 @@ export interface StagedTranscription {
   transcription: string;
   truncated?: true;
   found?: "FOUND" | "NOT FOUND";
+  /** The scan this text was read from, as `images/<key>.jpg`; absent whenever
+   *  no scan was retained (a failed save, non-image content such as a PDF, or a
+   *  `file` input). `extraction_append` cites it as the source's `image_filename`. */
+  image_ref?: string;
 }
 
 /** The subset of OpenRouter's chat-completions response we read. */

@@ -11,11 +11,12 @@
       "adhoc-with-results",
       "sidecar-write",
       "marriage",
-      "plan-item-null"
+      "plan-item-null",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I think there may be a second Mary Flynn in Schuylkill County besides the one already in the tree — possibly a sister of Patrick's. Search FamilySearch for a marriage record for her; I'd like to know who she married and when.",
+    "delegation": "I think there may be a second Mary Flynn in Schuylkill County besides the one already in the tree — possibly a sister of Patrick's. Search FamilySearch for a marriage record for her; I'd like to know who she married and when.\n\nprojectPath: <workspace>",
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [

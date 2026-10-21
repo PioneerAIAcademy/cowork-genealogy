@@ -226,10 +226,15 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
   // call returns. Issue #2944: `project_create` builds the starting tree from
   // the staged copy (`personReadRef`) instead of the model re-typing it.
   // Best-effort, like record_read: a staging failure never fails the read.
+  //
+  // The staging keys go FIRST (issue #3384). A well-sourced read is larger than
+  // the client accepts from one tool, and the model then sees only a preview of
+  // the head of the serialized text; `server.ts` keeps this insertion order. With
+  // `staged` last, the one field init-project needs fell outside the preview.
   if (typeof projectPath === "string" && projectPath.trim() !== "") {
     return {
-      ...result,
       ...(await stagePersonRead({ projectPath, input, resolvedId, result })),
+      ...result,
     };
   }
   return result;

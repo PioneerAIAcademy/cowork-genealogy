@@ -253,7 +253,7 @@ def test_revoked_cookie_is_not_resurrected_by_a_later_login():
             s.commit()
 
 
-# --- issue #3406: a session more than 24 h old can be read but not continued ---
+# --- issue #3406: a session more than 72 h old can be read but not continued ---
 
 
 def _new_session_aged(client: TestClient, hours: float) -> str:
@@ -283,14 +283,14 @@ def _count_resumes(monkeypatch) -> list[str]:
     return calls
 
 
-def test_connect_refuses_a_session_older_than_24h_without_waking_it(monkeypatch):
+def test_connect_refuses_a_session_older_than_72h_without_waking_it(monkeypatch):
     with TestClient(app) as client:
         client.post("/auth/dev-login", json={"email": "tester@example.com"})
-        sid = _new_session_aged(client, 25)
+        sid = _new_session_aged(client, 73)
         resumes = _count_resumes(monkeypatch)
         r = client.post(f"/api/sessions/{sid}/connect")
         assert r.status_code == 410, r.text
-        assert "more than 24 hours old" in r.json()["detail"]
+        assert "more than 72 hours old" in r.json()["detail"]
         assert resumes == []
         # Reading stays open.
         assert client.post(f"/api/sessions/{sid}/resume").status_code == 200
@@ -298,10 +298,46 @@ def test_connect_refuses_a_session_older_than_24h_without_waking_it(monkeypatch)
         client.delete(f"/api/sessions/{sid}")
 
 
-def test_connect_accepts_a_session_younger_than_24h():
+def test_connect_read_only_opens_an_old_session_without_refreshing_it(monkeypatch):
+    import app.sessions as sessions
+    from app.models import Project
+
+    def refused(*a, **kw):
+        raise AssertionError("a read-only connect must not refresh the sandbox")
+
     with TestClient(app) as client:
         client.post("/auth/dev-login", json={"email": "tester@example.com"})
-        sid = _new_session_aged(client, 23)
+        sid = _new_session_aged(client, 73)
+        monkeypatch.setattr(sessions.agent_secrets, "write_secrets", refused)
+        monkeypatch.setattr(sessions.fs_oauth, "merge_config", refused)
+        monkeypatch.setattr(sessions, "sync_fs_token", refused)
+        with Session(get_engine()) as s:
+            before = s.get(Project, sid).last_active
+        r = client.post(f"/api/sessions/{sid}/connect?readOnly=true")
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["readOnly"] is True
+        assert body["token"] and body["wssUrl"]
+        assert "more than 72 hours old" in body["message"]
+        with Session(get_engine()) as s:
+            assert s.get(Project, sid).last_active == before
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_connect_read_only_on_a_young_session_is_an_ordinary_connect():
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = _new_session_aged(client, 71)
+        r = client.post(f"/api/sessions/{sid}/connect?readOnly=true")
+        assert r.status_code == 200, r.text
+        assert "readOnly" not in r.json()
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_connect_accepts_a_session_younger_than_72h():
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = _new_session_aged(client, 71)
         r = client.post(f"/api/sessions/{sid}/connect")
         assert r.status_code == 200, r.text
         assert r.json()["token"]
@@ -311,8 +347,8 @@ def test_connect_accepts_a_session_younger_than_24h():
 def test_session_list_reports_continuable():
     with TestClient(app) as client:
         client.post("/auth/dev-login", json={"email": "tester@example.com"})
-        old = _new_session_aged(client, 25)
-        young = _new_session_aged(client, 23)
+        old = _new_session_aged(client, 73)
+        young = _new_session_aged(client, 71)
         rows = {p["id"]: p for p in client.get("/api/sessions").json()}
         assert rows[old]["continuable"] is False
         assert rows[young]["continuable"] is True
@@ -328,7 +364,7 @@ def test_continuable_handles_aware_and_naive_created():
     from app.models import Project, utcnow
     from app.sessions import _continuable
 
-    old, young = utcnow() - timedelta(hours=25), utcnow() - timedelta(hours=23)
+    old, young = utcnow() - timedelta(hours=73), utcnow() - timedelta(hours=71)
     assert _continuable(Project(created=old)) is False
     assert _continuable(Project(created=young)) is True
     assert _continuable(Project(created=old.replace(tzinfo=None))) is False

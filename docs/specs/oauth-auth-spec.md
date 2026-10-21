@@ -125,7 +125,7 @@ Uses Node.js built-in `crypto` module (no external deps).
 
 File-based token persistence.
 
-- `saveTokens(tokens)` — `mkdir({ recursive: true })` + `writeFile` JSON with `mode: 0o600` (user read/write only)
+- `saveTokens(tokens)` — `mkdir({ recursive: true })`, then `writeFile` JSON to a new temp file beside `tokens.json`, created with `mode: 0o600` (user read/write only) and `flag: "wx"`, and `rename` it over `tokens.json`, so a concurrent `loadTokens` reads the old tokens or the new ones, never a partial file. If the write or the rename fails, it removes the temp and rejects with that error
 - `loadTokens()` -> `TokenStore | null` — never throws (returns null on missing/corrupt/wrong-shape)
 - `isExpired(tokens)` -> boolean — pure function, checks `expiresAt - buffer`
 - `clearTokens()` — `rm({ force: true })`, silent if already gone
@@ -147,6 +147,11 @@ in a hosted deployment the web tier owns the grant. `loadConfig`,
   - No tokens: `"User is not logged in to FamilySearch. Call the login tool to authenticate."`
   - Expired + refresh fails: `"FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate."`
   - Expired + no refresh token: `"FamilySearch access token has expired and no refresh token is available. Call the login tool to re-authenticate."`
+
+**Shared refresh.** Concurrent `LOCAL` callers of `getValidToken` share one in-flight
+refresh, which re-reads `tokens.json` first: it returns an unexpired token found there
+as is, and otherwise refreshes with the refresh token stored there, so a caller whose
+read predates the last save never starts a second refresh.
 
 **Hosted-mode override.** When `config.json` carries `hosted: true` (the control
 plane sets it when it provisions a sandbox — see

@@ -48,6 +48,9 @@ services:
   minio:
     image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     container_name: proto-minio
+    # `pgsty/minio` is an official-style image: its CMD is bare `minio`, so with no
+    # command it prints usage and exits 0, and compose reports only "dependency failed
+    # to start". Restored from main, which has had this right since the image moved.
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: proto
@@ -210,6 +213,8 @@ services:
       SQSD_MAX_RETRIES: "${SQSD_MAX_RETRIES:-0}"
       SQSD_VISIBILITY_TIMEOUT_S: "${SQSD_VISIBILITY_TIMEOUT_S:-0}"
       SWEEP_INTERVAL_S: "${SWEEP_INTERVAL_S:-0}"
+      # U19: off. This volume holds the transcripts compare.py, grade.py and export.py read.
+      RETENTION_INTERVAL_S: "${RETENTION_INTERVAL_S:-0}"
       ENGINE_PLUGIN_DIR: /opt/genealogy/plugin
       WORKER_CWD: /project
       TMPDIR: /tmp
@@ -254,6 +259,12 @@ services:
       AWS_ACCESS_KEY_ID: x
       AWS_SECRET_ACCESS_KEY: x
       AWS_EC2_METADATA_DISABLED: "true"
+      # Sidecar bodies live in the blob store, so the tier that serves them needs to
+      # reach it. Same values the worker uses.
+      GENEALOGY_S3_ENDPOINT: http://minio:9000
+      GENEALOGY_S3_BUCKET: projects
+      GENEALOGY_S3_ACCESS_KEY: proto
+      GENEALOGY_S3_SECRET_KEY: protoproto
       POLL_S: "1"
       SSE_PING_S: "15"
       # U2 sign-in (web/auth.py). The defaults are dev-only; web/auth.py refuses to start
@@ -290,12 +301,6 @@ services:
       # regime. The cap is not the spend control either; 1e's per-session bound is.
       # test_proto_config re-derives the p99 from the corpus and fails if this drops below it.
       AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-60}
-      # U20: POST /api/feedback stores its zip under feedback/ in the projects bucket and
-      # reads blob bytes from it (web/blobstore.py); the same four as the tools service.
-      GENEALOGY_S3_ENDPOINT: http://minio:9000
-      GENEALOGY_S3_BUCKET: projects
-      GENEALOGY_S3_ACCESS_KEY: proto
-      GENEALOGY_S3_SECRET_KEY: protoproto
     depends_on:
       postgres:
         condition: service_healthy

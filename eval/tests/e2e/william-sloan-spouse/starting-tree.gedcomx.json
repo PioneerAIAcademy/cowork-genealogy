@@ -1,0 +1,3065 @@
+{
+  "persons": [
+    {
+      "id": "LHG6-L26",
+      "ark": "ark:/61903/4:1:LHG6-L26",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "William W",
+          "surname": "Sloan",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "William",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "22 July 1832",
+          "standard_date": "22 Jul 1832",
+          "place": "Ontario, Canada",
+          "standard_place": "Ontario, Canada"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "25 December 1921",
+          "standard_date": "25 Dec 1921",
+          "place": "Toronto, York, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "9103a2d6-2cd5-492e-ab93-34d0cd3eac77",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto South Sub-Districts 13-72, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "1ed32c35-d706-4491-bb2f-b5538f78a7e5",
+          "type": "Residence",
+          "date": "1921",
+          "standard_date": "1921",
+          "place": "Dunn, Haldimand, Ontario, Canada",
+          "standard_place": "Dunn, Haldimand, Ontario, Canada"
+        },
+        {
+          "id": "96a885d8-cc5e-4c7c-8247-e15b966f7005",
+          "type": "Burial",
+          "date": "28 December 1921",
+          "standard_date": "28 Dec 1921",
+          "place": "Blyth Union Cemetery, Blyth, Huron, Ontario, Canada",
+          "standard_place": "Blyth Union Cemetery, Blyth, Huron, Ontario, Canada"
+        },
+        {
+          "id": "fa2e367c-bd19-476a-997a-2c7fb7b9d08b",
+          "type": "Education",
+          "value": "1-37"
+        },
+        {
+          "id": "347cda95-93fb-48b8-b717-15bf242c6c95",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "770c9b00-46d5-4569-a3dd-8fade0ab3236",
+          "type": "Nationality",
+          "value": "Canada"
+        },
+        {
+          "id": "5b99f835-a7a6-4696-bcad-8b5c466c1bda",
+          "type": "Ethnicity",
+          "value": "Scotch"
+        },
+        {
+          "id": "98a0ef95-37ba-4277-98d5-0a52489cf165",
+          "type": "Religion",
+          "value": "Presby"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WFQL-PY5"
+        },
+        {
+          "ref": "W6MS-J7Z"
+        },
+        {
+          "ref": "71K8-PKF"
+        },
+        {
+          "ref": "71K8-GG5"
+        },
+        {
+          "ref": "7NV5-VHY"
+        },
+        {
+          "ref": "7NV5-N6Y"
+        },
+        {
+          "ref": "7DV4-R44"
+        },
+        {
+          "ref": "Q2R2-44T"
+        },
+        {
+          "ref": "SHHL-WQX"
+        },
+        {
+          "ref": "SHHL-9HV"
+        },
+        {
+          "ref": "9GVW-2G8"
+        },
+        {
+          "ref": "9GVW-J4Q"
+        },
+        {
+          "ref": "9GVW-NPC"
+        },
+        {
+          "ref": "9GV7-XXV"
+        },
+        {
+          "ref": "9GV7-5YX"
+        },
+        {
+          "ref": "9GV7-52F"
+        },
+        {
+          "ref": "9GV7-VDL"
+        },
+        {
+          "ref": "9L7W-GKH"
+        },
+        {
+          "ref": "9L7W-GXW"
+        },
+        {
+          "ref": "9L7W-G5J"
+        }
+      ]
+    },
+    {
+      "id": "LHG6-5YX",
+      "ark": "ark:/61903/4:1:LHG6-5YX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "Huron, Ontario, Canada",
+          "standard_place": "Huron, Ontario, Canada"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "place": "Dunwick, Elgin West, Ontario, Canada",
+          "standard_place": "Elgin, Leeds and Grenville, Ontario, Canada"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9GVW-THV"
+        },
+        {
+          "ref": "9GV7-XP7"
+        }
+      ]
+    },
+    {
+      "id": "LKN1-GQB",
+      "ark": "ark:/61903/4:1:LKN1-GQB",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "22 June 1808",
+          "standard_date": "22 Jun 1808",
+          "place": "Scotland",
+          "standard_place": "Scotland, United Kingdom"
+        },
+        {
+          "id": "133ef44a-f777-4d04-85fc-cc0ca9bf521e",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Downie, Perth, Canada West, British Colonial America",
+          "standard_place": "Downie, Perth South, Perth, Ontario, Canada"
+        },
+        {
+          "id": "f814ff82-1158-436a-9999-4f0836ea17f9",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Fullarton Township, Perth, Ontario, Canada",
+          "standard_place": "Fullarton Township, Perth, Ontario, Canada"
+        },
+        {
+          "id": "29a14218-b533-45ea-9e39-5ddbb6fb074e",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Essex, Ontario, Canada",
+          "standard_place": "Essex, Ontario, Canada"
+        },
+        {
+          "id": "99f2033d-3f1f-4b95-9995-079ba918c719",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Hullett, Huron, Ontario, Canada",
+          "standard_place": "Hullett Township, Huron, Ontario, Canada"
+        },
+        {
+          "id": "4baa4da8-f0af-41ac-ba47-acf4261c0cc5",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Essex, Essex, Ontario, Canada",
+          "standard_place": "Essex, Essex, Ontario, Canada"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "19 July 1881",
+          "standard_date": "19 Jul 1881",
+          "place": "Huron, Ontario, Canada",
+          "standard_place": "Huron, Ontario, Canada"
+        },
+        {
+          "id": "bd65dd61-757f-4dea-8f75-1659102b3e1f",
+          "type": "Burial",
+          "place": "Blyth Union Cemetery, Blyth, North Huron, Huron, Ontario, Canada",
+          "standard_place": "Blyth Union Cemetery, Blyth, Huron, Ontario, Canada"
+        },
+        {
+          "id": "5fccb3a7-085e-4e6b-ab94-c480af666cc1",
+          "type": "Residence",
+          "place": "Hullett, Huron Centre, Ontario, Canada",
+          "standard_place": "Hullett Township, Huron, Ontario, Canada"
+        },
+        {
+          "id": "d637a631-7543-4bc7-b635-6e760b1ac50a",
+          "type": "Occupation",
+          "value": "Yeoman"
+        },
+        {
+          "id": "1e246561-d269-4922-9216-ea0fe3c90b86",
+          "type": "Marital Status",
+          "value": "Widowed"
+        },
+        {
+          "id": "ccee8202-e93b-42a0-bc8a-89f4dc81bc9a",
+          "type": "Religion",
+          "value": "Presbeteriese"
+        },
+        {
+          "id": "4f961ace-038b-4545-91d7-0b8a978dda72",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "54cbd711-95d1-4b97-a139-4d5b1e1b7abd",
+          "type": "Nationality",
+          "value": "Scotch"
+        },
+        {
+          "id": "56708ae9-7f36-428b-b298-42b331b10a0e",
+          "type": "Occupation",
+          "value": "Gentleman"
+        },
+        {
+          "id": "bba905fd-f857-41ad-979b-e4e6bb69045c",
+          "type": "Ethnicity",
+          "value": "Scottish"
+        },
+        {
+          "id": "08222636-4188-498d-a673-bc5bf79e6002",
+          "type": "Religion",
+          "value": "Presb"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WFCM-6ZK"
+        },
+        {
+          "ref": "WXD1-CYN"
+        },
+        {
+          "ref": "W6MS-JST"
+        },
+        {
+          "ref": "WWGS-H1V"
+        },
+        {
+          "ref": "WWVS-FSK"
+        },
+        {
+          "ref": "SY1B-C1T"
+        },
+        {
+          "ref": "7NVL-NDD"
+        },
+        {
+          "ref": "381G-3FC"
+        },
+        {
+          "ref": "3CY7-165"
+        },
+        {
+          "ref": "9TZZ-7K7"
+        },
+        {
+          "ref": "9TZH-64W"
+        },
+        {
+          "ref": "9TZH-JT4"
+        },
+        {
+          "ref": "9TZH-NC4"
+        },
+        {
+          "ref": "9TZH-X95"
+        },
+        {
+          "ref": "9TZH-3B3"
+        }
+      ]
+    },
+    {
+      "id": "G74B-ZGD",
+      "ark": "ark:/61903/4:1:G74B-ZGD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "641a5a3b-0a83-4b69-8a7d-9af6e6d33bb7",
+          "preferred": true,
+          "given": "Alice Grace",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6986987e-9099-4bd0-919d-bb845e2c13ff",
+          "type": "Birth",
+          "date": "15 May 1865",
+          "standard_date": "15 May 1865",
+          "place": "Blyth, North Huron, Huron, Ontario, Canada",
+          "standard_place": "Blyth, Huron, Upper Canada, British North America"
+        },
+        {
+          "id": "16f559dd-04d5-400f-81d9-978d64f368b1",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Buffalo, Erie, New York, United States",
+          "standard_place": "Buffalo, Erie, New York, United States"
+        },
+        {
+          "id": "fac4fbfb-4c0e-4ca7-b01c-250080a0ae8b",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Waterloo North Sub-Districts 7-49, Ontario, Canada",
+          "standard_place": "Waterloo, Ontario, Canada"
+        },
+        {
+          "id": "1b5db612-585d-464b-bad7-3f58b637a578",
+          "type": "Death",
+          "date": "12 July 1922",
+          "standard_date": "12 Jul 1922",
+          "place": "Toronto, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "cc8da15f-e61f-42c4-a231-11846e7b37ce",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "43ba9ef2-fb1e-4b9e-8e22-6349c418cb40",
+          "type": "Ethnicity",
+          "value": "Can."
+        },
+        {
+          "id": "e220fdbe-0d43-464b-97a6-2949d10de51a",
+          "type": "Burial",
+          "place": "Toronto, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "19a22478-79fb-4c5d-8516-f04effbc1490",
+          "type": "Ethnicity",
+          "value": "W"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7DVH-MRP"
+        },
+        {
+          "ref": "7DV4-TCN"
+        },
+        {
+          "ref": "7DV4-RKV"
+        },
+        {
+          "ref": "9GVW-T81"
+        },
+        {
+          "ref": "9GV7-X5K"
+        },
+        {
+          "ref": "MR8P-FF7"
+        },
+        {
+          "ref": "3DMB-8VM"
+        },
+        {
+          "ref": "3DMB-8DS"
+        },
+        {
+          "ref": "3DMB-ZGT"
+        },
+        {
+          "ref": "3DMB-ZV3"
+        },
+        {
+          "ref": "3CWP-CPK"
+        },
+        {
+          "ref": "3HRG-QF5"
+        }
+      ]
+    },
+    {
+      "id": "LHG6-RHN",
+      "ark": "ark:/61903/4:1:LHG6-RHN",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "William W",
+          "surname": "Sloan",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "William",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7fa989c1-2662-420c-9b11-82fe97ab9ee2",
+          "type": "Residence",
+          "date": "1869",
+          "standard_date": "1869",
+          "place": "Ontario, Canada",
+          "standard_place": "Ontario, Canada"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "21 August 1869",
+          "standard_date": "21 Aug 1869",
+          "place": "Huron, Ontario, Canada",
+          "standard_place": "Huron, Ontario, Canada"
+        },
+        {
+          "id": "25d4d44b-ee89-495e-8dc8-7eed010d029f",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto South Sub-Districts 13-72, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "28 July 1931",
+          "standard_date": "28 Jul 1931",
+          "place": "Toronto, York, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "d1711470-2064-416e-8893-9a07effadf6c",
+          "type": "Burial",
+          "place": "Park Lawn Cemetery, Barry, Pike, Illinois, United States",
+          "standard_place": "Park Lawn Cemetery, Barry, Pike, Illinois, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WDX4-J6X"
+        },
+        {
+          "ref": "9L7W-G2N"
+        },
+        {
+          "ref": "9L7W-GF8"
+        },
+        {
+          "ref": "9GV7-F3Q"
+        },
+        {
+          "ref": "9GV7-X8C"
+        },
+        {
+          "ref": "9L7W-GMJ"
+        },
+        {
+          "ref": "9LQT-N2J"
+        },
+        {
+          "ref": "9L7W-GBV"
+        },
+        {
+          "ref": "9LQT-V4Q"
+        },
+        {
+          "ref": "9LQT-KHV"
+        }
+      ]
+    },
+    {
+      "id": "LHG6-GB4",
+      "ark": "ark:/61903/4:1:LHG6-GB4",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Agnes",
+          "surname": "McCaa",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Agnes",
+          "surname": "McCaa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "12 September 1839",
+          "standard_date": "12 Sep 1839",
+          "place": "Ontario, Canada",
+          "standard_place": "Ontario, Canada"
+        },
+        {
+          "id": "ed0d97ca-2a33-4470-b1a9-4dc7dd9346b0",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto South Sub-Districts 13-72, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "11871b63-c5ba-488d-b606-993da5bcbc40",
+          "type": "Residence",
+          "date": "1921",
+          "standard_date": "1921",
+          "place": "Dunn, Haldimand, Ontario, Canada",
+          "standard_place": "Dunn, Haldimand, Ontario, Canada"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "10 February 1924",
+          "standard_date": "10 Feb 1924",
+          "place": "Toronto, York, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "3c9dae19-74a7-40ed-99f6-c000d1a4d7f7",
+          "type": "Burial",
+          "date": "12 February 1924",
+          "standard_date": "12 Feb 1924",
+          "place": "Blyth, Huron, Ontario, Canada",
+          "standard_place": "Blyth, Huron, Ontario, Canada"
+        },
+        {
+          "id": "5b5a8533-0462-440d-bbc5-0e6b31684313",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "0a939c16-98cf-48b8-b2e9-2b32ed22d4ef",
+          "type": "Nationality",
+          "value": "Canada"
+        },
+        {
+          "id": "b87866ce-0503-4390-8723-6132d4bdd179",
+          "type": "Ethnicity",
+          "value": "Scotch"
+        },
+        {
+          "id": "1427d728-bd01-4d6e-9a5b-2ed28d722f4c",
+          "type": "Religion",
+          "value": "Presby"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WFQL-5NM"
+        },
+        {
+          "ref": "71KD-XVN"
+        },
+        {
+          "ref": "71K8-P9K"
+        },
+        {
+          "ref": "7DV4-RFN"
+        },
+        {
+          "ref": "Q2R2-4C6"
+        },
+        {
+          "ref": "3PX9-NRS"
+        },
+        {
+          "ref": "SHHL-W4B"
+        },
+        {
+          "ref": "SHHL-9ZQ"
+        },
+        {
+          "ref": "9GV7-LRL"
+        },
+        {
+          "ref": "9GV7-21C"
+        },
+        {
+          "ref": "9GV7-XNM"
+        },
+        {
+          "ref": "9GV7-2N5"
+        },
+        {
+          "ref": "9GV7-2HZ"
+        },
+        {
+          "ref": "9GV7-G7S"
+        },
+        {
+          "ref": "9L7W-GK1"
+        },
+        {
+          "ref": "9L7W-GXV"
+        },
+        {
+          "ref": "9L7W-G5T"
+        }
+      ]
+    },
+    {
+      "id": "LHG6-PQK",
+      "ark": "ark:/61903/4:1:LHG6-PQK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1859",
+          "standard_date": "1859",
+          "place": "Huron, Ontario, Canada",
+          "standard_place": "Huron, Ontario, Canada"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Huron, Ontario, Canada",
+          "standard_place": "Huron, Ontario, Canada"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9GVW-G8Z"
+        }
+      ]
+    },
+    {
+      "id": "LHG6-54L",
+      "ark": "ark:/61903/4:1:LHG6-54L",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Henry Cole",
+          "surname": "Sloan",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Henry C",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "20 January 1876",
+          "standard_date": "20 Jan 1876",
+          "place": "East Wawanosh, Huron, Ontario, Canada",
+          "standard_place": "East Wawanosh Township, Huron, Ontario, Canada"
+        },
+        {
+          "id": "8ce11652-385c-4d1f-beaa-3d88c1bf97b6",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto South Sub-Districts 13-72, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "16 February 1948",
+          "standard_date": "16 Feb 1948"
+        },
+        {
+          "id": "f742a49c-4a80-418e-929e-03540264db2a",
+          "type": "Burial",
+          "date": "1948",
+          "standard_date": "1948",
+          "place": "Park Lawn Cemetery, Toronto, York, Ontario, Canada",
+          "standard_place": "Park Lawn Cemetery, Toronto, Ontario, Canada"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "SHHL-WY9"
+        },
+        {
+          "ref": "SHH2-B66"
+        },
+        {
+          "ref": "9GV4-7GL"
+        },
+        {
+          "ref": "9GV7-XR2"
+        },
+        {
+          "ref": "9GV4-3NM"
+        },
+        {
+          "ref": "9GV7-2ZN"
+        },
+        {
+          "ref": "9GV4-7H1"
+        },
+        {
+          "ref": "9GV4-SXX"
+        }
+      ]
+    },
+    {
+      "id": "LHG6-K6K",
+      "ark": "ark:/61903/4:1:LHG6-K6K",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Margaret",
+          "surname": "Williamson",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1801",
+          "standard_date": "1801",
+          "place": "Scotland",
+          "standard_place": "Scotland, United Kingdom"
+        },
+        {
+          "id": "3663d6e2-272a-404b-a366-d430f40eddc6",
+          "type": "Death",
+          "date": "1 February 1867",
+          "standard_date": "1 Feb 1867",
+          "place": "Huron, Ontario, Canada",
+          "standard_place": "Huron, Ontario, Canada"
+        },
+        {
+          "id": "00914f42-9390-427b-844d-23266c865d78",
+          "type": "Burial",
+          "place": "Blyth Union Cemetery, Blyth, North Huron, Huron, Ontario, Canada",
+          "standard_place": "Blyth Union Cemetery, Blyth, Huron, Ontario, Canada"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W6MS-NBP"
+        },
+        {
+          "ref": "SY1B-ZS8"
+        },
+        {
+          "ref": "381G-3XL"
+        },
+        {
+          "ref": "9TZZ-72H"
+        },
+        {
+          "ref": "M95Y-722"
+        },
+        {
+          "ref": "M95Y-72G"
+        },
+        {
+          "ref": "9TZH-JJ4"
+        },
+        {
+          "ref": "9TZH-678"
+        },
+        {
+          "ref": "9TZH-61B"
+        },
+        {
+          "ref": "9TZH-NWM"
+        },
+        {
+          "ref": "9TZH-DQK"
+        }
+      ]
+    },
+    {
+      "id": "LHG6-R1P",
+      "ark": "ark:/61903/4:1:LHG6-R1P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Andrew McCaa",
+          "surname": "Sloan",
+          "type": "BirthName"
+        },
+        {
+          "id": "970ee2de-e481-4fa0-a7c8-bf4b3b3e24b7",
+          "given": "Andrew McCaa",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Hullett, Huron, Ontario, Canada",
+          "standard_place": "Hullett Township, Huron, Ontario, Canada"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "31 December 1886",
+          "standard_date": "31 Dec 1886",
+          "place": "Blyth, Huron, Ontario, Canada",
+          "standard_place": "Blyth, Huron, Ontario, Canada"
+        },
+        {
+          "id": "9cc55baf-0980-4542-bc1a-5e72713a6045",
+          "type": "Burial",
+          "place": "Blyth, Huron, Ontario, Canada",
+          "standard_place": "Blyth, Huron, Ontario, Canada"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3GQF-2GH"
+        },
+        {
+          "ref": "9GV7-LSD"
+        },
+        {
+          "ref": "9GV7-XG9"
+        },
+        {
+          "ref": "9L7W-PLY"
+        },
+        {
+          "ref": "9L7W-PV3"
+        }
+      ]
+    },
+    {
+      "id": "2WNV-QGH",
+      "ark": "ark:/61903/4:1:2WNV-QGH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "4082b11e-7001-4ad1-ae03-3fbf394265c9",
+          "preferred": true,
+          "given": "Annabella R R",
+          "surname": "Sloan",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Annabella Rattan Miller Rupert",
+          "surname": "Sloan",
+          "type": "BirthName"
+        },
+        {
+          "id": "970ee2de-e481-4fa0-a7c8-bf4b3b3e24b7",
+          "given": "Annabella Rattan",
+          "surname": "Soan",
+          "type": "BirthName"
+        },
+        {
+          "id": "57ad1591-2260-4f71-b6d8-4cdfcc2be80f",
+          "given": "Annabella",
+          "surname": "Snell",
+          "prefix": "Mrs",
+          "type": "MarriedName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f577e73a-4f64-402b-b51b-6c456be86ea4",
+          "type": "Birth",
+          "date": "about 13 July 1834",
+          "standard_date": "Abt 13 Jul 1834",
+          "place": "Scotland, United Kingdom",
+          "standard_place": "Scotland, United Kingdom"
+        },
+        {
+          "id": "adc66cd1-d4df-4f53-9c37-7a104a73572a",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Hullett, Huron, Ontario, Canada",
+          "standard_place": "Hullett Township, Huron, Ontario, Canada"
+        },
+        {
+          "id": "f8e7b9b2-c9a6-4c42-9fe4-31c429b91f34",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Hullett, Huron, Ontario, Canada",
+          "standard_place": "Hullett Township, Huron, Ontario, Canada"
+        },
+        {
+          "id": "9d5da165-c706-440e-b3c3-7c327d4c1869",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Huron, Ontario, Canada",
+          "standard_place": "Huron, Ontario, Canada"
+        },
+        {
+          "id": "b03b3c41-8efc-4600-a8a0-33bd0350c385",
+          "type": "Death",
+          "date": "28 Jul 1909",
+          "standard_date": "28 Jul 1909",
+          "place": "Hullett, Huron, Ontario",
+          "standard_place": "Hullett Township, Huron, Ontario, Canada"
+        },
+        {
+          "id": "4ab4f021-38a6-4e78-8ebd-ea04848bb6a5",
+          "type": "Residence",
+          "place": "Hullett, Huron Centre, Ontario, Canada",
+          "standard_place": "Hullett Township, Huron, Ontario, Canada"
+        },
+        {
+          "id": "5ca0d8e4-ba33-437d-a0a2-4f5845fc6c34",
+          "type": "Burial",
+          "place": "Kinburn United Cemetery, Kinburn, Central Huron, Huron, Ontario, Canada",
+          "standard_place": "Kinburn United Cemetery, Kinburn, Huron, Ontario, Canada"
+        },
+        {
+          "id": "0d0d072a-f323-40d6-8d8c-809607d1c5fb",
+          "type": "Ethnicity",
+          "value": "Scotch"
+        },
+        {
+          "id": "e61eb350-4ebc-4402-8922-1c542930c84e",
+          "type": "Marital Status",
+          "value": "Widowed"
+        },
+        {
+          "id": "68306c9e-b763-410b-b68f-d425283ed833",
+          "type": "Nationality",
+          "value": "Canadian"
+        },
+        {
+          "id": "045c9d95-cca5-4dbb-b52e-a7feadd9133e",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "5ffb243d-49a7-404b-b43f-99ccf6221177",
+          "type": "Religion",
+          "value": "Methodist"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WXC8-QR8"
+        },
+        {
+          "ref": "WMX8-41T"
+        },
+        {
+          "ref": "71VD-5L1"
+        },
+        {
+          "ref": "74BL-XRX"
+        },
+        {
+          "ref": "31SB-QFK"
+        },
+        {
+          "ref": "31SY-RJG"
+        },
+        {
+          "ref": "36Q4-24H"
+        },
+        {
+          "ref": "3QV4-TJG"
+        },
+        {
+          "ref": "9GDV-G92"
+        },
+        {
+          "ref": "9GDV-GJ6"
+        },
+        {
+          "ref": "9GDV-G1Q"
+        },
+        {
+          "ref": "9PFT-1HQ"
+        },
+        {
+          "ref": "9GDV-PGB"
+        },
+        {
+          "ref": "9GDV-PZT"
+        },
+        {
+          "ref": "9JFJ-C9N"
+        },
+        {
+          "ref": "9ZVJ-2TJ"
+        },
+        {
+          "ref": "9PFT-BKG"
+        },
+        {
+          "ref": "9TZH-JSH"
+        }
+      ]
+    },
+    {
+      "id": "LM9Z-9H8",
+      "ark": "ark:/61903/4:1:LM9Z-9H8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c60e6900-39c4-4acf-babb-36da82093b30",
+          "preferred": true,
+          "given": "Mary",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "30 September 1837",
+          "standard_date": "30 Sep 1837",
+          "place": "Thornhill, Ontario, Canada",
+          "standard_place": "Thornhill, York, Ontario, Canada"
+        },
+        {
+          "id": "13470fdc-01fa-41a8-a997-08ca825759f2",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Point Edward, Lambton, Ontario, Canada",
+          "standard_place": "Point Edward, Lambton, Ontario, Canada"
+        },
+        {
+          "id": "45889668-3335-4220-819b-727ec2873df7",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "McKillop, Huron, Ontario, Canada",
+          "standard_place": "McKillop Township, Huron, Ontario, Canada"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "3 February 1901",
+          "standard_date": "3 Feb 1901",
+          "place": "McKillop, Huron, Ontario, Canada",
+          "standard_place": "McKillop Township, Huron, Ontario, Canada"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "place": "Maitlandbank Cemetery, Huron East, Huron, Ontario, Canada",
+          "standard_place": "Maitlandbank Cemetery, Huron East, Huron, Ontario, Canada"
+        },
+        {
+          "id": "9ca5cfbc-4c03-4b6e-ba99-459453343e07",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "5cc5f073-2f66-4a2d-bc30-7d202fe6db3f",
+          "type": "Nationality",
+          "value": "Scotch"
+        },
+        {
+          "id": "3fa1cbe0-ff94-4c5b-badd-34ca25e178eb",
+          "type": "Religion",
+          "value": "C Presb"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "712H-WYP"
+        },
+        {
+          "ref": "71KP-5BB"
+        },
+        {
+          "ref": "7R7N-C8T"
+        },
+        {
+          "ref": "7R7N-CMY"
+        },
+        {
+          "ref": "7R7N-HCZ"
+        },
+        {
+          "ref": "7R7N-4GL"
+        },
+        {
+          "ref": "7R7N-489"
+        },
+        {
+          "ref": "75FH-XD9"
+        },
+        {
+          "ref": "7NVG-8FS"
+        },
+        {
+          "ref": "76KY-58C"
+        },
+        {
+          "ref": "74HG-3KN"
+        },
+        {
+          "ref": "3KXD-TDY"
+        },
+        {
+          "ref": "SNBN-G3D"
+        },
+        {
+          "ref": "9TZZ-7GC"
+        },
+        {
+          "ref": "MMP7-D2T"
+        },
+        {
+          "ref": "98X2-FQK"
+        },
+        {
+          "ref": "98WY-YND"
+        },
+        {
+          "ref": "MRDT-BM3"
+        }
+      ]
+    },
+    {
+      "id": "LHG6-LTK",
+      "ark": "ark:/61903/4:1:LHG6-LTK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "2d542bc2-62a5-4aaf-9c5b-75e10bb787d8",
+          "preferred": true,
+          "given": "Robert John",
+          "surname": "Sloan",
+          "prefix": "Dr",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Robert",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1838",
+          "standard_date": "1838",
+          "place": "Thornhill, Vaughan, York, Ontario, Canada",
+          "standard_place": "Thornhill, York, Ontario, Canada"
+        },
+        {
+          "id": "cc6a506e-eab4-4db1-8adb-b0bd8b59dca1",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Seaforth, Huron East, Huron, Ontario, Canada",
+          "standard_place": "Seaforth, Huron, Ontario, Canada"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "5 June 1919",
+          "standard_date": "5 Jun 1919",
+          "place": "Shanghai, China",
+          "standard_place": "Shanghai, China"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QY1X-L69"
+        },
+        {
+          "ref": "QG52-GBT"
+        },
+        {
+          "ref": "381G-4F2"
+        },
+        {
+          "ref": "3GG2-SN1"
+        },
+        {
+          "ref": "3GG2-S8G"
+        },
+        {
+          "ref": "381G-NPN"
+        },
+        {
+          "ref": "381G-XKV"
+        },
+        {
+          "ref": "381G-8XX"
+        },
+        {
+          "ref": "381G-CX1"
+        },
+        {
+          "ref": "381G-41B"
+        },
+        {
+          "ref": "381G-4HF"
+        },
+        {
+          "ref": "381G-31B"
+        },
+        {
+          "ref": "381G-3VY"
+        },
+        {
+          "ref": "381G-3N3"
+        },
+        {
+          "ref": "3812-RQ6"
+        },
+        {
+          "ref": "M95Y-GF2"
+        }
+      ]
+    },
+    {
+      "id": "MD6Q-YDP",
+      "ark": "ark:/61903/4:1:MD6Q-YDP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Thomas James",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1124de7a-2cdd-4fe9-89d5-d60122ecbfb4",
+          "type": "Birth",
+          "date": "16 January 1841",
+          "standard_date": "16 Jan 1841",
+          "place": "Darlington, Durham, Ontario, Canada",
+          "standard_place": "Darlington, Northumberland and Durham, Ontario, Canada"
+        },
+        {
+          "id": "c409a0e6-053c-41f1-884a-f0ad6844a3cc",
+          "type": "Immigration",
+          "date": "1868",
+          "standard_date": "1868"
+        },
+        {
+          "id": "c18e14a9-c975-474d-a16c-89aaf824c52c",
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Sheridan, Redwood, Minnesota",
+          "standard_place": "Sheridan Township, Redwood, Minnesota, United States"
+        },
+        {
+          "id": "e84b8076-8de3-4bae-8673-5c650fd3ae48",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Sheridan, Redwood, Minnesota, United States",
+          "standard_place": "Sheridan Township, Redwood, Minnesota, United States"
+        },
+        {
+          "id": "136c6056-852d-476d-92f8-6441f694f6be",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Sheridan Township, Redwood, Minnesota, United States",
+          "standard_place": "Sheridan Township, Redwood, Minnesota, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "21 December 1906",
+          "standard_date": "21 Dec 1906",
+          "place": "Los Angeles, Los Angeles, California, United States",
+          "standard_place": "Los Angeles, Los Angeles, California, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7NVG-7P4"
+        },
+        {
+          "ref": "MCHV-R72"
+        },
+        {
+          "ref": "MCC7-P53"
+        },
+        {
+          "ref": "M95Y-WN5"
+        },
+        {
+          "ref": "Q93B-ZP4"
+        },
+        {
+          "ref": "SY11-QRH"
+        },
+        {
+          "ref": "SY11-3WN"
+        },
+        {
+          "ref": "SY1B-LSZ"
+        },
+        {
+          "ref": "SY1B-KH2"
+        },
+        {
+          "ref": "SY1B-ZQG"
+        },
+        {
+          "ref": "SYYC-MXN"
+        },
+        {
+          "ref": "SYYH-GXB"
+        },
+        {
+          "ref": "95GW-1Y6"
+        },
+        {
+          "ref": "95GW-B79"
+        },
+        {
+          "ref": "95GW-Y78"
+        },
+        {
+          "ref": "95GW-TQ8"
+        },
+        {
+          "ref": "MCC7-P46"
+        }
+      ]
+    },
+    {
+      "id": "LHG6-GCQ",
+      "ark": "ark:/61903/4:1:LHG6-GCQ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Jane",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1842",
+          "standard_date": "1842",
+          "place": "Ontario, Canada",
+          "standard_place": "Ontario, Canada"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "M95Y-5XM"
+        }
+      ]
+    },
+    {
+      "id": "LHG6-JHP",
+      "ark": "ark:/61903/4:1:LHG6-JHP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Andrew Williamson",
+          "surname": "Sloan",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Andrew Williamson",
+          "surname": "Sloan",
+          "type": "BirthName"
+        },
+        {
+          "id": "970ee2de-e481-4fa0-a7c8-bf4b3b3e24b7",
+          "given": "Andrew W.",
+          "surname": "Sloan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "20 February 1843",
+          "standard_date": "20 Feb 1843",
+          "place": "Ontario, Canada",
+          "standard_place": "Ontario, Canada"
+        },
+        {
+          "id": "259a02b4-04b9-4929-9de4-9b65670592a1",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Hullett, Huron, Ontario, Canada",
+          "standard_place": "Hullett Township, Huron, Ontario, Canada"
+        },
+        {
+          "id": "c8e749b4-e4be-4d71-a987-8acfd8b20305",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Morris, Huron, Ontario, Canada",
+          "standard_place": "Morris Township, Huron, Ontario, Canada"
+        },
+        {
+          "id": "cc861630-ea77-437e-81e8-d2f7d1c3b63a",
+          "type": "Residence",
+          "date": "1901",
+          "standard_date": "1901",
+          "place": "Huron (east/est), Ontario",
+          "standard_place": "Huron, Ontario, Canada"
+        },
+        {
+          "id": "032537d9-7b44-48a8-b360-79e2ed29bca6",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Huron East Sub-Districts 1-21, Ontario, Canada",
+          "standard_place": "Huron, Ontario, Canada"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "13 March 1917",
+          "standard_date": "13 Mar 1917",
+          "place": "Goderich, Huron, Ontario, Canada",
+          "standard_place": "Goderich, Huron, Ontario, Canada"
+        },
+        {
+          "id": "e05cee57-aafe-4a60-9810-6da8a757c6a8",
+          "type": "Burial",
+          "place": "Blyth Union Cemetery, Blyth, North Huron, Huron, Ontario, Canada",
+          "standard_place": "Blyth Union Cemetery, Blyth, Huron, Ontario, Canada"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QTB3-FMP"
+        },
+        {
+          "ref": "QTB3-X71"
+        },
+        {
+          "ref": "QTB3-6B2"
+        },
+        {
+          "ref": "QTB3-6D8"
+        },
+        {
+          "ref": "QTB3-6WL"
+        },
+        {
+          "ref": "QTB3-81D"
+        },
+        {
+          "ref": "QTB3-4VR"
+        },
+        {
+          "ref": "QTB3-4DN"
+        },
+        {
+          "ref": "QTB3-4WW"
+        },
+        {
+          "ref": "QTB3-WLD"
+        },
+        {
+          "ref": "QTB3-W9F"
+        },
+        {
+          "ref": "QTB3-7KD"
+        },
+        {
+          "ref": "QW1R-1TG"
+        },
+        {
+          "ref": "Q34V-49J"
+        },
+        {
+          "ref": "SLM4-GLN"
+        },
+        {
+          "ref": "SLM4-FZY"
+        },
+        {
+          "ref": "9TZH-XHY"
+        },
+        {
+          "ref": "9TZH-6CF"
+        },
+        {
+          "ref": "9TZ4-VJS"
+        },
+        {
+          "ref": "9TZ4-CYN"
+        },
+        {
+          "ref": "MRFN-QLW"
+        },
+        {
+          "ref": "M95T-2CN"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LHG6-L26",
+      "person2": "LHG6-GB4"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "LKN1-GQB",
+      "person2": "LHG6-K6K",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "30 Sep 1831",
+          "standard_date": "30 Sep 1831",
+          "place": "Home Township, Algoma, Ontario, Canada",
+          "standard_place": "Home Township, Algoma, Ontario, Canada"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LKN1-GQB",
+      "child": "LHG6-L26"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LHG6-K6K",
+      "child": "LHG6-L26",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "LHG6-L26",
+      "child": "LHG6-PQK",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "LHG6-GB4",
+      "child": "LHG6-PQK",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "LHG6-L26",
+      "child": "LHG6-R1P",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LHG6-GB4",
+      "child": "LHG6-R1P",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "LHG6-L26",
+      "child": "G74B-ZGD"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "LHG6-GB4",
+      "child": "G74B-ZGD"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "LHG6-L26",
+      "child": "LHG6-5YX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "LHG6-GB4",
+      "child": "LHG6-5YX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "LHG6-L26",
+      "child": "LHG6-RHN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "LHG6-GB4",
+      "child": "LHG6-RHN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "LHG6-L26",
+      "child": "LHG6-54L",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "LHG6-GB4",
+      "child": "LHG6-54L",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "LKN1-GQB",
+      "child": "2WNV-QGH"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "LHG6-K6K",
+      "child": "2WNV-QGH"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "LKN1-GQB",
+      "child": "LM9Z-9H8"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "LHG6-K6K",
+      "child": "LM9Z-9H8"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "LKN1-GQB",
+      "child": "LHG6-LTK"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "LHG6-K6K",
+      "child": "LHG6-LTK"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "LKN1-GQB",
+      "child": "LHG6-JHP"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "LHG6-K6K",
+      "child": "LHG6-JHP"
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "parent": "LKN1-GQB",
+      "child": "LHG6-GCQ"
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "parent": "LHG6-K6K",
+      "child": "LHG6-GCQ"
+    },
+    {
+      "id": "R27",
+      "type": "ParentChild",
+      "parent": "LKN1-GQB",
+      "child": "MD6Q-YDP"
+    },
+    {
+      "id": "R28",
+      "type": "ParentChild",
+      "parent": "LHG6-K6K",
+      "child": "MD6Q-YDP"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_LHG6-L26",
+      "title": "William W Sloan",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for William W Sloan (PID LHG6-L26); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LHG6-L26"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_LHG6-5YX",
+      "title": "Thomas Sloan",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Thomas Sloan (PID LHG6-5YX); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LHG6-5YX"
+    },
+    {
+      "id": "sd_person_LKN1-GQB",
+      "title": "Thomas Sloan",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Thomas Sloan (PID LKN1-GQB); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LKN1-GQB"
+    },
+    {
+      "id": "sd_person_G74B-ZGD",
+      "title": "Alice Grace Sloan",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Alice Grace Sloan (PID G74B-ZGD); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G74B-ZGD"
+    },
+    {
+      "id": "sd_person_LHG6-RHN",
+      "title": "William Sloan",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for William Sloan (PID LHG6-RHN); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LHG6-RHN"
+    },
+    {
+      "id": "sd_person_LHG6-GB4",
+      "title": "Agnes McCaa",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Agnes McCaa (PID LHG6-GB4); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LHG6-GB4"
+    },
+    {
+      "id": "sd_person_LHG6-PQK",
+      "title": "Thomas Sloan",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Thomas Sloan (PID LHG6-PQK); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LHG6-PQK"
+    },
+    {
+      "id": "sd_person_LHG6-54L",
+      "title": "Henry C Sloan",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Henry C Sloan (PID LHG6-54L); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LHG6-54L"
+    },
+    {
+      "id": "sd_person_LHG6-K6K",
+      "title": "Margaret Williamson",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Margaret Williamson (PID LHG6-K6K); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LHG6-K6K"
+    },
+    {
+      "id": "sd_person_LHG6-R1P",
+      "title": "Andrew McCaa Sloan",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Andrew McCaa Sloan (PID LHG6-R1P); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LHG6-R1P"
+    },
+    {
+      "id": "7DV4-R44",
+      "title": "William Sloan, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JKHC-VWG : Tue Jan 21 07:51:03 UTC 2025), William Sloan in entry for Alice Grace Hess, 12 Jul 1932.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JKHC-VWG"
+    },
+    {
+      "id": "SHHL-9HV",
+      "title": "Wm Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZYB-5WR : Sat Mar 09 17:59:47 UTC 2024), Wm Sloan in entry for Wm Sloan and Edith Gertrude Young, 28 Jun 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZYB-5WR"
+    },
+    {
+      "id": "7NV5-VHY",
+      "title": "William Sloan, \"United States, Deceased Physician File (AMA), 1864-1968\"",
+      "citation": "\"United States, Deceased Physician File (AMA), 1864-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WDM7-J2T2 : Fri Dec 20 02:35:03 UTC 2024), William Sloan, 25 Dec 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WDM7-J2T2"
+    },
+    {
+      "id": "W6MS-J7Z",
+      "title": "William Sloan, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CB-C9MN : Fri Mar 08 20:44:57 UTC 2024), William Sloan and Agnes McAn, 04 Mar 1859.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CB-C9MN"
+    },
+    {
+      "id": "9GV7-XXV",
+      "title": "William Sloan, \"Canada Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVNS-H86 : Sun Mar 10 08:55:22 UTC 2024), William Sloan, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVNS-H86"
+    },
+    {
+      "id": "Q2R2-44T",
+      "title": "Wm W Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKM5-Z4XL : Sun Jul 06 21:15:32 UTC 2025), Wm W Sloan in entry for Henry Cole Sloan and Ida Houston Hay, 05 Nov 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKM5-Z4XL"
+    },
+    {
+      "id": "9L7W-GXW",
+      "title": "Wm. Sloan in entry for William Sloan, \"Canada Births and Baptisms, 1661-1959\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2FP-VHB : Tue Oct 20 01:07:14 UTC 2026), Wm. Sloan in entry for William Sloan, 21 Aug 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2FP-VHB"
+    },
+    {
+      "id": "9L7W-G5J",
+      "title": "Wm Sloan in entry for William W. Sloan, \"Ontario Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JJWT-GF9 : Fri Jan 03 18:08:04 UTC 2025), Wm Sloan in entry for William W. Sloan, 28 Jul 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JJWT-GF9"
+    },
+    {
+      "id": "9GVW-J4Q",
+      "title": "William Sloan, \"Ontario Census, 1861\"",
+      "citation": "\"Canada, Ontario, Census, 1861\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MQWS-Q7P : Mon Jan 20 01:07:41 UTC 2025), William Sloan, 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MQWS-Q7P"
+    },
+    {
+      "id": "9GV7-VDL",
+      "title": "William Sloan, \"Ontario Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JK7F-DVS : Fri Jul 26 13:42:44 UTC 2024), William Sloan, 25 Dec 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JK7F-DVS"
+    },
+    {
+      "id": "9GVW-NPC",
+      "title": "William Sloan, \"Canada Census, 1871\"",
+      "citation": "\"Canada, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M47Z-KJG : Sat Mar 09 19:17:49 UTC 2024), William Sloan, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M47Z-KJG"
+    },
+    {
+      "id": "SHHL-WQX",
+      "title": "William Sloan, \"Recensement du Canada de 1911\"",
+      "citation": "\"Recensement du Canada de 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:27XQ-988 : Sat Mar 09 01:42:03 UTC 2024), William Sloan, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:27XQ-988"
+    },
+    {
+      "id": "WFQL-PY5",
+      "title": "William Sloan, \"Canada Census, 1921\"",
+      "citation": "\"Canada Census, 1921\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7NJ-LHX7 : Thu Sep 24 06:54:52 UTC 2026), William Sloan, 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X7NJ-LHX7"
+    },
+    {
+      "id": "9L7W-GKH",
+      "title": "Wm. Sloan in entry for William Sloan, \"Ontario Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMCW-HMH : Sat Jan 18 21:09:47 UTC 2025), Wm. Sloan in entry for William Sloan, 21 Aug 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMCW-HMH"
+    },
+    {
+      "id": "9GVW-2G8",
+      "title": "Wm Sloan, \"Canada Census, 1851\"",
+      "citation": "\"Canada, Census, 1851\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWTF-CXT : Tue Jan 28 16:10:51 UTC 2025), Wm Sloan, 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MWTF-CXT"
+    },
+    {
+      "id": "71K8-GG5",
+      "title": "Wm. Sloan, \"Canada, Ontario, Births and Baptisms, 1779-1899\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FM3R-F19 : Tue Oct 20 00:54:33 UTC 2026), Wm. Sloan in entry for Henry Cole Sloan, 20 Jan 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FM3R-F19"
+    },
+    {
+      "id": "9GV7-52F",
+      "title": "William Sloan, \"Canada Census, 1901\"",
+      "citation": "\"Canada, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KHP3-9Q4 : Fri May 30 02:23:42 UTC 2025), William Sloan, 31 March 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KHP3-9Q4"
+    },
+    {
+      "id": "9GV7-5YX",
+      "title": "William Sloan, \"Canada Census, 1891\"",
+      "citation": "\"Canada, Census, 1891\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWL7-5DR : Wed Oct 01 02:16:45 UTC 2025), William Sloan, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MWL7-5DR"
+    },
+    {
+      "id": "7NV5-N6Y",
+      "title": "Dr William Sloan, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68J9-HC4M : Sun Oct 04 18:50:45 UTC 2026), Dr William Sloan.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68J9-HC4M"
+    },
+    {
+      "id": "71K8-PKF",
+      "title": "William Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMJ5-VTW : Fri Jul 19 19:33:19 UTC 2024), William Sloan in entry for Emil George Hess and Alice G Sloan, 24 Aug 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMJ5-VTW"
+    },
+    {
+      "id": "9GVW-THV",
+      "title": "Thomas Sloan, \"Canada Census, 1871\"",
+      "citation": "\"Canada, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M47Z-KVW : Sat Mar 09 19:17:49 UTC 2024), Thomas Sloan in entry for William Sloan, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M47Z-KVW"
+    },
+    {
+      "id": "9GV7-XP7",
+      "title": "Thomas Sloan in household of William Sloan, \"Canada Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVNS-H8N : Sun Mar 10 08:55:22 UTC 2024), Thomas Sloan in entry for William Sloan, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVNS-H8N"
+    },
+    {
+      "id": "WFCM-6ZK",
+      "title": "Thomas Slone, \"Canada, Census, 1851\"",
+      "citation": "\"Canada, Census, 1851\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWTF-CX5 : Tue Jan 28 16:11:14 UTC 2025), Thomas Slone, 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MWTF-CX5"
+    },
+    {
+      "id": "WXD1-CYN",
+      "title": "Thomas Sloan, \"Canada, Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVDT-2DC : Sun Mar 10 03:11:23 UTC 2024), Thomas Sloan in entry for James Chalmers, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVDT-2DC"
+    },
+    {
+      "id": "W6MS-JST",
+      "title": "G Sloan, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CB-C9MB : Fri Mar 08 20:44:57 UTC 2024), G Sloan in entry for William Sloan and Agnes McAn, 04 Mar 1859.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CB-C9MB"
+    },
+    {
+      "id": "WWGS-H1V",
+      "title": "Thomas Sloan, \"Canada, Census, 1851\"",
+      "citation": "\"Canada, Census, 1851\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZWHL-RQPZ : Tue Jan 28 15:10:52 UTC 2025), Thomas Sloan, 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ZWHL-RQPZ"
+    },
+    {
+      "id": "WWVS-FSK",
+      "title": "Thomas Sloan, \"Canada, Census, 1871\"",
+      "citation": "\"Canada, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4QK-1MW : Sun Mar 10 19:42:47 UTC 2024), Thomas Sloan in entry for Alix Renard, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M4QK-1MW"
+    },
+    {
+      "id": "SY1B-C1T",
+      "title": "Thos Sloan, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CB-CVTY : Fri Mar 08 08:26:49 UTC 2024), Thos Sloan in entry for Thomas Sloan and <Unknown>, 29 Jun 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CB-CVTY"
+    },
+    {
+      "id": "7NVL-NDD",
+      "title": "Thomas Sloan, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JD1G-VJX : Fri Jul 26 13:03:41 UTC 2024), Thomas Sloan, 17 Jul 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JD1G-VJX"
+    },
+    {
+      "id": "381G-3FC",
+      "title": "Thos Sloan, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CB-CKTW : Fri Mar 08 08:26:49 UTC 2024), Thos Sloan in entry for Robert Sloan and Elizabeth McMichel, 19 Oct 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CB-CKTW"
+    },
+    {
+      "id": "3CY7-165",
+      "title": "Thomas Sloan, \"Canada, Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVNM-18S : Sat Mar 09 04:06:34 UTC 2024), Thomas Sloan in entry for William Snell, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVNM-18S"
+    },
+    {
+      "id": "9TZZ-7K7",
+      "title": "Thos Sloan, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CB-CZ2M : Thu Mar 07 22:47:18 UTC 2024), Thos Sloan in entry for John Dickson and Mary Sloan, 22 Feb 1859.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CB-CZ2M"
+    },
+    {
+      "id": "9TZH-64W",
+      "title": "Thomas Sloan, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2YM-4C39 : Tue Jan 21 21:39:59 UTC 2025), Thomas Sloan in entry for Andrew Sloan and Janet Mcmichal, 17 Mar 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2YM-4C39"
+    },
+    {
+      "id": "9TZH-JT4",
+      "title": "Thomas Sloan, \"Canada, Ontario District Marriage Registers, 1801-1858\"",
+      "citation": "\"Canada, Ontario District Marriage Registers, 1801-1858\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2C1-L7ND : Fri Feb 13 22:29:53 UTC 2026), Thomas Sloan, 30 September 1831.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2C1-L7ND"
+    },
+    {
+      "id": "9TZH-NC4",
+      "title": "Thomas Sloan, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JF84-S2X : Tue Jul 16 08:06:39 UTC 2024), Thomas Sloan in entry for Annabella Snell, 28 Jul 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JF84-S2X"
+    },
+    {
+      "id": "9TZH-X95",
+      "title": "Thomas Sloan, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JD6Q-DLK : Fri Jul 26 14:00:20 UTC 2024), Thomas Sloan in entry for Andrew Sloan, 13 Mar 1917.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JD6Q-DLK"
+    },
+    {
+      "id": "9TZH-3B3",
+      "title": "Thomas Sloan, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKJ-5PD3 : Sat Oct 03 09:28:46 UTC 2026), Thomas Sloan.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKJ-5PD3"
+    },
+    {
+      "id": "7DVH-MRP",
+      "title": "Alice Hess, \"New York, State Census, 1905\"",
+      "citation": "\"New York, State Census, 1905\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MV1T-XB7 : Fri Jan 31 20:21:49 UTC 2025), Alice Hess in entry for Emil Hess, 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MV1T-XB7"
+    },
+    {
+      "id": "7DV4-TCN",
+      "title": "Alice G. Sloan Hess, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVGM-LMFX : Fri Oct 02 04:04:58 UTC 2026), Alice G. Sloan Hess.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVGM-LMFX"
+    },
+    {
+      "id": "7DV4-RKV",
+      "title": "Alice Grace Hess, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JKHC-VWL : Tue Jan 21 07:51:03 UTC 2025), Alice Grace Hess, 12 Jul 1932.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JKHC-VWL"
+    },
+    {
+      "id": "9GVW-T81",
+      "title": "Alice Sloan in household of Thomas Sloan, \"Canada Census, 1871\"",
+      "citation": "\"Canada, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M47Z-KV4 : Sat Mar 09 19:17:49 UTC 2024), Alice Sloan in entry for William Sloan, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M47Z-KV4"
+    },
+    {
+      "id": "9GV7-X5K",
+      "title": "Alice Sloan in household of William Sloan, \"Canada Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVNS-H8J : Sun Mar 10 08:55:22 UTC 2024), Alice Sloan in entry for William Sloan, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVNS-H8J"
+    },
+    {
+      "id": "MR8P-FF7",
+      "title": "Alice Grace Sloan, \"Canada, Ontario, Births and Baptisms, 1779-1899\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XLL4-3WP : Tue Oct 20 00:57:46 UTC 2026), Alice Grace Sloan in entry for Agnes Grace Hess, 5 Feb 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XLL4-3WP"
+    },
+    {
+      "id": "3DMB-8VM",
+      "title": "Alice Hess, \"Recensement du Canada de 1911\"",
+      "citation": "\"Recensement du Canada de 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:27X4-C2W : Wed Apr 29 18:42:16 UTC 2026), Alice Hess in entry for Emil Hess, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:27X4-C2W"
+    },
+    {
+      "id": "3DMB-8DS",
+      "title": "Alice G Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMJ5-VT7 : Fri Jul 19 19:33:19 UTC 2024), Emil George Hess and Alice G Sloan, 24 Aug 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMJ5-VT7"
+    },
+    {
+      "id": "3DMB-ZGT",
+      "title": "Alice Grace Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKM5-MRQY : Sun Jul 06 21:13:28 UTC 2025), Alice Grace Sloan in entry for Sherwood Barnett Marshall and Agnes Grace Hess, 19 Feb 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKM5-MRQY"
+    },
+    {
+      "id": "3DMB-ZV3",
+      "title": "Alice Grace Sloan, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMXX-M48 : Wed Jul 24 06:57:08 UTC 2024), Alice Grace Sloan in entry for Emil Sloan Hess, 16 Jan 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMXX-M48"
+    },
+    {
+      "id": "3CWP-CPK",
+      "title": "Alice Sloan, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JKH9-QML : Sat Jul 20 14:46:15 UTC 2024), Alice Sloan in entry for Sloan Hess, 08 Dec 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JKH9-QML"
+    },
+    {
+      "id": "3HRG-QF5",
+      "title": "Alice Grace Sloan, \"Canada, Ontario, Births and Baptisms, 1779-1899\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2G7-K54 : Tue Oct 20 00:59:09 UTC 2026), Alice Grace Sloan in entry for Emil Sloan Hess, 16 Jan 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2G7-K54"
+    },
+    {
+      "id": "WDX4-J6X",
+      "title": "William W Sloan, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVGM-L89L : Fri Oct 02 04:12:44 UTC 2026), William W Sloan.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVGM-L89L"
+    },
+    {
+      "id": "9L7W-G2N",
+      "title": "William Sloan, \"Ontario Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMCW-HM4 : Sat Jan 18 21:09:47 UTC 2025), William Sloan, 21 Aug 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMCW-HM4"
+    },
+    {
+      "id": "9L7W-GF8",
+      "title": "William Sloan, \"Canada Births and Baptisms, 1661-1959\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2FP-VHY : Tue Oct 20 01:07:14 UTC 2026), William Sloan, 21 Aug 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2FP-VHY"
+    },
+    {
+      "id": "9GV7-F3Q",
+      "title": "William Sloan, \"Canada Census, 1871\"",
+      "citation": "\"Canada, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M47Z-KJ2 : Sat Mar 09 19:17:49 UTC 2024), William Sloan in entry for William Sloan, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M47Z-KJ2"
+    },
+    {
+      "id": "9GV7-X8C",
+      "title": "William Sloan in household of William Sloan, \"Canada Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVNS-H8V : Sun Mar 10 08:55:22 UTC 2024), William Sloan in entry for William Sloan, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVNS-H8V"
+    },
+    {
+      "id": "9L7W-GMJ",
+      "title": "William Sloan, \"Canada Census, 1911\"",
+      "citation": "\"Recensement du Canada de 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:27XQ-DKV : Sat Mar 09 14:03:16 UTC 2024), William Sloan, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:27XQ-DKV"
+    },
+    {
+      "id": "9LQT-N2J",
+      "title": "Wm Sloan, \"Ontario Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZYB-5W5 : Sat Mar 09 17:59:47 UTC 2024), Wm Sloan and Edith Gertrude Young, 28 Jun 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZYB-5W5"
+    },
+    {
+      "id": "9L7W-GBV",
+      "title": "William W. Sloan, \"Ontario Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JJWT-GFM : Fri Jan 03 18:08:04 UTC 2025), William W. Sloan, 28 Jul 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JJWT-GFM"
+    },
+    {
+      "id": "9LQT-V4Q",
+      "title": "Wm W Sloan in entry for Wm Young Sloan, \"Ontario Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMDB-9GH : Thu Jan 16 08:41:00 UTC 2025), Wm W Sloan in entry for Wm Young Sloan, 13 Jul 1898.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMDB-9GH"
+    },
+    {
+      "id": "9LQT-KHV",
+      "title": "Wm W Sloan in entry for Wm Young Sloan, \"Canada Births and Baptisms, 1661-1959\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F25B-QSS : Tue Oct 20 00:44:25 UTC 2026), Wm W Sloan in entry for Wm Young Sloan, 13 Jul 1898.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F25B-QSS"
+    },
+    {
+      "id": "WFQL-5NM",
+      "title": "Agnes, \"Canada Census, 1921\"",
+      "citation": "\"Canada Census, 1921\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7NJ-LHXD : Thu Sep 24 06:54:52 UTC 2026), Agnes in entry for William Sloan, 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X7NJ-LHXD"
+    },
+    {
+      "id": "71KD-XVN",
+      "title": "Agnes McCaa Sloan, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68N1-3WCC : Mon Oct 05 10:25:28 UTC 2026), Agnes McCaa Sloan.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68N1-3WCC"
+    },
+    {
+      "id": "71K8-P9K",
+      "title": "Agnes McCan, \"Canada, Ontario, Births and Baptisms, 1779-1899\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FM3R-F1S : Tue Oct 20 00:54:33 UTC 2026), Agnes McCan in entry for Henry Cole Sloan, 20 Jan 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FM3R-F1S"
+    },
+    {
+      "id": "7DV4-RFN",
+      "title": "Agnes Mc Aa, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JKHC-VWP : Tue Jan 21 07:51:03 UTC 2025), Agnes Mc Aa in entry for Alice Grace Hess, 12 Jul 1932.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JKHC-VWP"
+    },
+    {
+      "id": "Q2R2-4C6",
+      "title": "Agnes McCaa, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKM5-Z4XG : Sun Jul 06 21:15:32 UTC 2025), Agnes McCaa in entry for Henry Cole Sloan and Ida Houston Hay, 05 Nov 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKM5-Z4XG"
+    },
+    {
+      "id": "3PX9-NRS",
+      "title": "Agnes Mccaa, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMJ5-VT4 : Fri Jul 19 19:33:19 UTC 2024), Agnes Mccaa in entry for Emil George Hess and Alice G Sloan, 24 Aug 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMJ5-VT4"
+    },
+    {
+      "id": "SHHL-W4B",
+      "title": "Agnes Sloan, \"Recensement du Canada de 1911\"",
+      "citation": "\"Recensement du Canada de 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:27XQ-98D : Sat Mar 09 01:42:03 UTC 2024), Agnes Sloan in entry for William Sloan, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:27XQ-98D"
+    },
+    {
+      "id": "SHHL-9ZQ",
+      "title": "Agnes Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZYB-5WT : Sat Mar 09 17:59:47 UTC 2024), Agnes Sloan in entry for Wm Sloan and Edith Gertrude Young, 28 Jun 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZYB-5WT"
+    },
+    {
+      "id": "9GV7-LRL",
+      "title": "Agness Sloan, \"Ontario Census, 1861\"",
+      "citation": "\"Canada, Ontario, Census, 1861\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MQWS-QQT : Mon Jan 20 00:36:53 UTC 2025), Agness Sloan, 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MQWS-QQT"
+    },
+    {
+      "id": "9GV7-21C",
+      "title": "Agness Sloan, \"Canada Census, 1871\"",
+      "citation": "\"Canada, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M47Z-KJD : Sat Mar 09 19:17:49 UTC 2024), Agness Sloan in entry for William Sloan, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M47Z-KJD"
+    },
+    {
+      "id": "9GV7-XNM",
+      "title": "Agnes Sloan in household of William Sloan, \"Canada Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVNS-H8X : Sun Mar 10 08:55:22 UTC 2024), Agnes Sloan in entry for William Sloan, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVNS-H8X"
+    },
+    {
+      "id": "9GV7-2N5",
+      "title": "Agnes Sloan, \"Canada Census, 1891\"",
+      "citation": "\"Canada, Census, 1891\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWL7-5DT : Wed Oct 01 02:16:46 UTC 2025), Agnes Sloan, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MWL7-5DT"
+    },
+    {
+      "id": "9GV7-2HZ",
+      "title": "Agnes Sloan, \"Canada Census, 1901\"",
+      "citation": "\"Canada, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KHP3-9QH : Fri May 30 02:23:42 UTC 2025), Agnes Sloan in entry for William Sloan, 31 March 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KHP3-9QH"
+    },
+    {
+      "id": "9GV7-G7S",
+      "title": "Agnes Sloan, \"Ontario Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JDGR-JQY : Wed Feb 05 06:12:09 UTC 2025), Agnes Sloan, 10 Feb 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JDGR-JQY"
+    },
+    {
+      "id": "9L7W-GK1",
+      "title": "Agnes Mccaa in entry for William Sloan, \"Ontario Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMCW-HMC : Sat Jan 18 21:09:47 UTC 2025), Agnes Mccaa in entry for William Sloan, 21 Aug 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMCW-HMC"
+    },
+    {
+      "id": "9L7W-GXV",
+      "title": "Agnes Mccaa in entry for William Sloan, \"Canada Births and Baptisms, 1661-1959\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2FP-VH1 : Tue Oct 20 01:07:14 UTC 2026), Agnes McCaa in entry for William Sloan, 21 Aug 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2FP-VH1"
+    },
+    {
+      "id": "9L7W-G5T",
+      "title": "Agnes Mccaa in entry for William W. Sloan, \"Ontario Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JJWT-GFS : Fri Jan 03 18:08:04 UTC 2025), Agnes McCaa in entry for William W. Sloan, 28 Jul 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JJWT-GFS"
+    },
+    {
+      "id": "9GVW-G8Z",
+      "title": "Thomas Sloan, \"Ontario Census, 1861\"",
+      "citation": "\"Canada, Ontario, Census, 1861\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MQWS-Q75 : Wed Jan 15 21:26:18 UTC 2025), Thomas Sloan, 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MQWS-Q75"
+    },
+    {
+      "id": "SHHL-WY9",
+      "title": "Henry Cole Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKM5-Z4XV : Sat Oct 18 19:40:42 UTC 2025), Henry Cole Sloan and Ida Houston Hay, 05 Nov 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKM5-Z4XV"
+    },
+    {
+      "id": "SHH2-B66",
+      "title": "Henry Sloan, \"Recensement du Canada de 1911\"",
+      "citation": "\"Recensement du Canada de 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:27XQ-986 : Sat Mar 09 01:42:03 UTC 2024), Henry Sloan in entry for William Sloan, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:27XQ-986"
+    },
+    {
+      "id": "9GV4-7GL",
+      "title": "Henry Cole Sloan, \"Ontario Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FM3R-F1M : Tue Oct 20 00:54:33 UTC 2026), Henry Cole Sloan, 20 Jan 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FM3R-F1M"
+    },
+    {
+      "id": "9GV7-XR2",
+      "title": "Henry Sloan in household of William Sloan, \"Canada Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVNS-H8K : Sun Mar 10 08:55:22 UTC 2024), Henry Sloan in entry for William Sloan, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVNS-H8K"
+    },
+    {
+      "id": "9GV4-3NM",
+      "title": "Henry Sloan, \"Canada Census, 1891\"",
+      "citation": "\"Canada, Census, 1891\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWL7-5DY : Wed Oct 01 02:16:45 UTC 2025), Henry Sloan, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MWL7-5DY"
+    },
+    {
+      "id": "9GV7-2ZN",
+      "title": "Henry C Sloan in household of Agnes Sloan, \"Canada Census, 1901\"",
+      "citation": "\"Canada, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KHP3-9QC : Fri May 30 02:23:42 UTC 2025), Henry C Sloan in entry for William Sloan, 31 March 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KHP3-9QC"
+    },
+    {
+      "id": "9GV4-7H1",
+      "title": "Henry Cole Sloan, \"Ontario Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKM5-Z4X2 : Sun Jul 06 21:15:32 UTC 2025), Henry Cole Sloan and Ida Houston Hay, 05 Nov 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKM5-Z4X2"
+    },
+    {
+      "id": "9GV4-SXX",
+      "title": "Henry Cole Sloan, \"Find A Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVGM-L89D : Fri Oct 02 04:06:30 UTC 2026), Henry Cole Sloan.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVGM-L89D"
+    },
+    {
+      "id": "W6MS-NBP",
+      "title": "Margt Williamson, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CB-C99Z : Fri Mar 08 20:44:57 UTC 2024), Margt Williamson in entry for William Sloan and Agnes McAn, 04 Mar 1859.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CB-C99Z"
+    },
+    {
+      "id": "SY1B-ZS8",
+      "title": "Mary Williamson, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CB-CVY4 : Fri Mar 08 08:26:49 UTC 2024), Mary Williamson in entry for Thomas Sloan and <Unknown>, 29 Jun 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CB-CVY4"
+    },
+    {
+      "id": "381G-3XL",
+      "title": "Margt Williamson, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CB-CKTK : Fri Mar 08 08:26:49 UTC 2024), Margt Williamson in entry for Robert Sloan and Elizabeth McMichel, 19 Oct 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CB-CKTK"
+    },
+    {
+      "id": "9TZZ-72H",
+      "title": "Williamson, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CB-CZLM : Thu Mar 07 22:47:18 UTC 2024), Williamson in entry for John Dickson and Mary Sloan, 22 Feb 1859.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CB-CZLM"
+    },
+    {
+      "id": "M95Y-722",
+      "title": "Legacy NFS Source: Margaret Williamson - Government record: Marriage record or certificate: birth-name: Margaret Williamson",
+      "citation": "Internet, Archive, ancestry.com"
+    },
+    {
+      "id": "M95Y-72G",
+      "title": "Legacy NFS Source: Margaret Williamson - Government record: Census record: female",
+      "citation": "Internet, 1861 Census of Canada, Archive, ancestry.com"
+    },
+    {
+      "id": "9TZH-JJ4",
+      "title": "Margaret Williamson, \"Canada, Ontario District Marriage Registers, 1801-1858\"",
+      "citation": "\"Canada, Ontario District Marriage Registers, 1801-1858\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2C1-L7NJ : Fri Feb 13 22:29:53 UTC 2026), Margaret Williamson in entry for Thomas Sloan, 30 September 1831.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2C1-L7NJ"
+    },
+    {
+      "id": "9TZH-678",
+      "title": "Margaret Williams, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2T1-1BZ7 : Tue Jan 21 21:39:59 UTC 2025), Margaret Williams in entry for Andrew Sloan and Janet Mcmichal, 17 Mar 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2T1-1BZ7"
+    },
+    {
+      "id": "9TZH-61B",
+      "title": "Margaret Williamson, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JD6Q-DL2 : Fri Jul 26 14:00:20 UTC 2024), Margaret Williamson in entry for Andrew Sloan, 13 Mar 1917.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JD6Q-DL2"
+    },
+    {
+      "id": "9TZH-NWM",
+      "title": "Margaret Williamson, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JF84-S2F : Tue Jul 16 08:06:39 UTC 2024), Margaret Williamson in entry for Annabella Snell, 28 Jul 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JF84-S2F"
+    },
+    {
+      "id": "9TZH-DQK",
+      "title": "Margaret Williamson Sloan, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKJ-5PDS : Thu Oct 01 23:35:05 UTC 2026), Margaret Williamson Sloan.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKJ-5PDS"
+    },
+    {
+      "id": "3GQF-2GH",
+      "title": "Andrew McCaa Sloan, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68J9-WLZX : Sun Oct 04 03:56:19 UTC 2026), Andrew McCaa Sloan.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68J9-WLZX"
+    },
+    {
+      "id": "9GV7-LSD",
+      "title": "Andrew Sloan in household of Agness Sloan, \"Canada Census, 1871\"",
+      "citation": "\"Canada, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M47Z-KJ6 : Sat Mar 09 19:17:49 UTC 2024), Andrew Sloan in entry for William Sloan, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M47Z-KJ6"
+    },
+    {
+      "id": "9GV7-XG9",
+      "title": "Andrew Sloan in household of William Sloan, \"Canada Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVNS-H8F : Sun Mar 10 08:55:22 UTC 2024), Andrew Sloan in entry for William Sloan, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVNS-H8F"
+    },
+    {
+      "id": "9L7W-PLY",
+      "title": "Andrew Mccaa Sloan, \"Ontario Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JN78-SQM : Fri Jul 26 14:33:41 UTC 2024), Andrew Mccaa Sloan, 31 Dec 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JN78-SQM"
+    },
+    {
+      "id": "9L7W-PV3",
+      "title": "Andrew Mccaa Sloan, \"Ontario Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JN78-S3Y : Fri Jul 26 09:15:29 UTC 2024), Andrew Mccaa Sloan, 31 Dec 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JN78-S3Y"
+    },
+    {
+      "id": "WXC8-QR8",
+      "title": "Annie B. Williamson, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JJ77-S35 : Thu Jan 16 01:55:11 UTC 2025), Annie B. Williamson in entry for Elizabeth C. Latimer, 21 Feb 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JJ77-S35"
+    },
+    {
+      "id": "WMX8-41T",
+      "title": "Annabella Smell, \"Canada, Census, 1901\"",
+      "citation": "\"Canada, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KHLQ-PTH : Tue Jul 16 20:46:38 UTC 2024), Annabella Smell, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KHLQ-PTH"
+    },
+    {
+      "id": "71VD-5L1",
+      "title": "Isabella Snell, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMJ3-MM2 : Fri Mar 08 15:11:35 UTC 2024), Isabella Snell in entry for James M Taylor and Margaret Snell, 26 May 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMJ3-MM2"
+    },
+    {
+      "id": "74BL-XRX",
+      "title": "Annabelle Sloan, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KMN-8XKC : Sun Jul 05 00:41:18 UTC 2026), Annabelle Sloan in entry for Robert Britain Snell.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KMN-8XKC"
+    },
+    {
+      "id": "31SB-QFK",
+      "title": "Annabella Sloan Snell, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DMP7-VNPZ : Fri Oct 02 14:52:02 UTC 2026), Annabella Sloan Snell.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DMP7-VNPZ"
+    },
+    {
+      "id": "31SY-RJG",
+      "title": "Anna Bella Sloan, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JKW9-KM6 : Tue Jan 21 15:59:53 UTC 2025), Anna Bella Sloan in entry for John Wesley Suell, 02 Oct 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JKW9-KM6"
+    },
+    {
+      "id": "36Q4-24H",
+      "title": "Annabella Snell, \"Canada, Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVNM-1ZP : Sat Mar 09 04:06:34 UTC 2024), Annabella Snell in entry for William Snell, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVNM-1ZP"
+    },
+    {
+      "id": "3QV4-TJG",
+      "title": "Anabella Snell, \"Canada, Census, 1871\"",
+      "citation": "\"Canada, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4QT-4L2 : Sun Mar 10 21:38:54 UTC 2024), Anabella Snell in entry for William Snell, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M4QT-4L2"
+    },
+    {
+      "id": "9GDV-G92",
+      "title": "Annabella Sloan in entry for Benjamin Snell, \"Canada Births and Baptisms, 1661-1959\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2NM-5B1 : Tue Oct 20 01:06:13 UTC 2026), Annabella Sloan in entry for Benjamin Snell, 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2NM-5B1"
+    },
+    {
+      "id": "9GDV-GJ6",
+      "title": "Annabella Sloan in entry for Benjamin Snell, \"Ontario Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VNLF-C9V : Tue Jan 21 19:43:25 UTC 2025), Annabella Sloan in entry for Benjamin Snell, 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VNLF-C9V"
+    },
+    {
+      "id": "9GDV-G1Q",
+      "title": "Annabella Sloan in entry for Andrew Sloan Snell, \"Ontario Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMSR-5F6 : Tue Oct 20 00:24:29 UTC 2026), Annabella Sloan in entry for Andrew Sloan Snell, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMSR-5F6"
+    },
+    {
+      "id": "9PFT-1HQ",
+      "title": "Anabella Snell, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMV2-K62 : Thu Mar 07 03:01:57 UTC 2024), Anabella Snell in entry for Robert Britain Snell and Annie Ferguson, 27 Aug 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMV2-K62"
+    },
+    {
+      "id": "9GDV-PGB",
+      "title": "Annabella Sloan in entry for Hugh Latimer and Elizabeth Snell, \"Ontario Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZBV-ZYV : Sun Mar 10 08:52:30 UTC 2024), Annabella Sloan in entry for Hugh Latimer and Elizabeth Snell, 02 Apr 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZBV-ZYV"
+    },
+    {
+      "id": "9GDV-PZT",
+      "title": "Annabella Sloan in entry for Benjamin Snell and Mary S Chapman, \"Ontario Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KSZF-9LC : Fri Mar 08 09:52:48 UTC 2024), Annabella Sloan in entry for Benjamin Snell and Mary S Chapman, 18 Nov 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KSZF-9LC"
+    },
+    {
+      "id": "9JFJ-C9N",
+      "title": "Annabella Snell, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMJW-7PH : Thu Mar 07 09:11:11 UTC 2024), Annabella Snell in entry for Thomas James Snell and Grace Annie Stewart, 09 Nov 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMJW-7PH"
+    },
+    {
+      "id": "9ZVJ-2TJ",
+      "title": "Annabella Snell, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMJL-R59 : Sat Mar 09 22:44:46 UTC 2024), Annabella Snell in entry for Joseph Wm Snell and Margaret Snell, 11 Mar 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMJL-R59"
+    },
+    {
+      "id": "9PFT-BKG",
+      "title": "Annabella Sloan, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JD2L-D8B : Fri Jul 26 14:40:35 UTC 2024), Annabella Sloan in entry for John Wesley Snell, 02 Oct 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JD2L-D8B"
+    },
+    {
+      "id": "9TZH-JSH",
+      "title": "Annabella Snell, \"Ontario Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "url": "https://familysearch.org/ark:/61903/1:1:JF84-S26"
+    },
+    {
+      "id": "712H-WYP",
+      "title": "May Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMVG-F2W : Fri Mar 08 17:44:27 UTC 2024), May Sloan in entry for James Whimster and Elizabeth Rutherford Dickson, 16 Feb 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMVG-F2W"
+    },
+    {
+      "id": "71KP-5BB",
+      "title": "Mary Bloar, \"Montana, County Marriages, 1865-1950\"",
+      "citation": "\"Montana, County Marriages, 1865-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F37H-VDG : Sun Jan 19 03:43:48 UTC 2025), Mary Bloar in entry for Lewis Lancelot Creagh and Jean Harkness Dickson, 07 Jul 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F37H-VDG"
+    },
+    {
+      "id": "7R7N-C8T",
+      "title": "Mary Dickson, \"Canada, Census, 1871\"",
+      "citation": "\"Canada, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M47Z-1WG : Fri Mar 08 07:36:29 UTC 2024), Mary Dickson in entry for John Dickson, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M47Z-1WG"
+    },
+    {
+      "id": "7R7N-CMY",
+      "title": "Mary Sloan, \"Canada, British Columbia, Marriage Registrations, 1859-1932; 1937-1938\"",
+      "citation": "\"Canada, British Columbia, Marriage Registrations, 1859-1932; 1937-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JDZ1-75C : Wed Jan 22 00:32:32 UTC 2025), Mary Sloan in entry for Louis Lancelot Creagh and Jean Harkness Dickson, 25 Feb 1922.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JDZ1-75C"
+    },
+    {
+      "id": "7R7N-HCZ",
+      "title": "Mary Sloan, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JKNR-KZN : Fri Jul 26 14:49:15 UTC 2024), Mary Sloan in entry for Margaret Dickson Lockhart, 1936.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JKNR-KZN"
+    },
+    {
+      "id": "7R7N-4GL",
+      "title": "Mary Sloan, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMXD-N8C : Sun Jul 21 23:38:59 UTC 2024), Mary Sloan in entry for Mary Blanch Dickson, 07 Mar 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMXD-N8C"
+    },
+    {
+      "id": "7R7N-489",
+      "title": "Mary Sloan Dickson, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:J61S-VYS : Sat Jul 20 13:46:05 UTC 2024), Mary Sloan Dickson, 03 Feb 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:J61S-VYS"
+    },
+    {
+      "id": "75FH-XD9",
+      "title": "Mary Sloan, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMSR-HJ8 : Sat Mar 09 01:31:56 UTC 2024), Mary Sloan in entry for Thomas Sloan Dickson, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMSR-HJ8"
+    },
+    {
+      "id": "7NVG-8FS",
+      "title": "Mary Sloan Dickson, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKR-FBRP : Sat Oct 03 11:45:34 UTC 2026), Mary Sloan Dickson.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKR-FBRP"
+    },
+    {
+      "id": "76KY-58C",
+      "title": "Mary Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMJ5-2RC : Sun Mar 10 17:59:32 UTC 2024), Mary Sloan in entry for James Lockhart and Margaret Williamson Dickson, 27 Dec 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMJ5-2RC"
+    },
+    {
+      "id": "74HG-3KN",
+      "title": "Mary Sloan, \"Canada, British Columbia, Death Registrations, 1872-1986; 1992-1993\"",
+      "citation": "\"Canada, British Columbia, Death Registrations, 1872-1986; 1992-1993\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLYS-HQV : Sat Jul 06 00:26:53 UTC 2024), Mary Sloan in entry for Annabelle Mccarroll, 06 Oct 1967.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLYS-HQV"
+    },
+    {
+      "id": "3KXD-TDY",
+      "title": "Mary Dickson, \"Canada, Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVNM-B9Y : Fri Mar 08 12:36:17 UTC 2024), Mary Dickson in entry for John Dickson, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVNM-B9Y"
+    },
+    {
+      "id": "SNBN-G3D",
+      "title": "Mary Sloan, \"Canada, British Columbia, Death Registrations, 1872-1986; 1992-1993\"",
+      "citation": "\"Canada, British Columbia, Death Registrations, 1872-1986; 1992-1993\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLTD-2DR : Wed Apr 03 20:50:24 UTC 2024), Mary Sloan in entry for John William Turnbull Dickson, 15 Sep 1962.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLTD-2DR"
+    },
+    {
+      "id": "9TZZ-7GC",
+      "title": "Mary Sloan, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CB-CZK8 : Thu Mar 07 22:47:18 UTC 2024), John Dickson and Mary Sloan, 22 Feb 1859.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CB-CZK8"
+    },
+    {
+      "id": "MMP7-D2T",
+      "title": "Legacy NFS Source: Mary Sloan - Government record: Census record: birth-name: Mary Sloan",
+      "citation": "Internet, 1851 Census of Canada, Archive, ancestry.com"
+    },
+    {
+      "id": "98X2-FQK",
+      "title": "Mary Sloan, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VNLR-LXG : Sat Jul 06 16:35:18 UTC 2024), Mary Sloan in entry for John Wm Dickson, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VNLR-LXG"
+    },
+    {
+      "id": "98WY-YND",
+      "title": "Mary Sloan in entry for John Wm. Dickson, \"Canada Births and Baptisms, 1661-1959\"",
+      "url": "https://familysearch.org/ark:/61903/1:1:F22W-525"
+    },
+    {
+      "id": "MRDT-BM3",
+      "title": "Mary Sloan, \"Canada, Ontario, Births and Baptisms, 1779-1899\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XLGC-GZV : Tue Oct 20 01:06:32 UTC 2026), Mary Sloan in entry for Mary Blanch Dickson, 7 Mar 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XLGC-GZV"
+    },
+    {
+      "id": "QY1X-L69",
+      "title": "Dr Robert John Sloan, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KQZ-ZV34 : Sun Oct 04 14:58:21 UTC 2026), Dr Robert John Sloan.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KQZ-ZV34"
+    },
+    {
+      "id": "QG52-GBT",
+      "title": "Dr Robert John Sloan, \"Find A Grave Index\"",
+      "citation": "Find a Grave, database and images (https://www.findagrave.com/memorial/248136923/robert_john-sloan: accessed February 25, 2024), memorial page for Dr Robert John Sloan (1838–5 Jul 1919), Find a Grave Memorial ID 248136923; Burial Details Unknown; Maintained by Rockies Graver (contributor 47413179).",
+      "url": "https://www.findagrave.com/memorial/248136923/robert-john-sloan"
+    },
+    {
+      "id": "381G-4F2",
+      "title": "Robert Sloan, \"Canada, Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVNM-1MV : Wed Mar 06 04:22:24 UTC 2024), Robert Sloan, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVNM-1MV"
+    },
+    {
+      "id": "3GG2-SN1",
+      "title": "Robert John Sloan, \"United States, Deceased Physician File (AMA), 1864-1968\"",
+      "citation": "\"United States, Deceased Physician File (AMA), 1864-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WDMM-X36Z : Fri Dec 20 02:25:02 UTC 2024), Robert John Sloan, 5 Jun 1919.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WDMM-X36Z"
+    },
+    {
+      "id": "3GG2-S8G",
+      "title": "Robert John Sloan, \"United States, Deceased Physician File (AMA), 1864-1968\"",
+      "citation": "\"United States, Deceased Physician File (AMA), 1864-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:CYLG-HRN2 : Fri Dec 20 02:25:02 UTC 2024), Robert John Sloan, 5 Jun 1919.",
+      "url": "https://familysearch.org/ark:/61903/1:1:CYLG-HRN2"
+    },
+    {
+      "id": "381G-NPN",
+      "title": "Robert J Sloan, \"Canada, British Columbia, Victoria Times Birth, Marriage and Death Notices, 1901-1939\"",
+      "citation": "\"Canada, British Columbia, Victoria Times Birth, Marriage and Death Notices, 1901-1939\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DS-QFG8 : Thu Dec 11 10:35:21 UTC 2025), Robert J Sloan in entry for Elizabeth Laidlaw Mcmichael Sloan.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2DS-QFG8"
+    },
+    {
+      "id": "381G-XKV",
+      "title": "R H Sloan, \"Canada, British Columbia, Death Registrations, 1872-1986; 1992-1993\"",
+      "citation": "\"Canada, British Columbia, Death Registrations, 1872-1986; 1992-1993\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLGN-BHV : Tue Jan 21 20:59:30 UTC 2025), R H Sloan in entry for Elizabeth Sloan, 22 May 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLGN-BHV"
+    },
+    {
+      "id": "381G-8XX",
+      "title": "Robert J Sloan, \"Canada, British Columbia, Victoria Times Birth, Marriage and Death Notices, 1901-1939\"",
+      "citation": "\"Canada, British Columbia, Victoria Times Birth, Marriage and Death Notices, 1901-1939\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DS-QXKP : Sat Jul 13 22:20:54 UTC 2024), Robert J Sloan in entry for Elizabeth Laidlaw Mcmichael Sloan, 23 Aug 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2DS-QXKP"
+    },
+    {
+      "id": "381G-CX1",
+      "title": "B H Sloan, \"Canada, British Columbia, Death Registrations, 1872-1986; 1992-1993\"",
+      "citation": "\"Canada, British Columbia, Death Registrations, 1872-1986; 1992-1993\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLGN-B6D : Mon Jul 15 23:43:46 UTC 2024), B H Sloan in entry for Elizabeth Sloan, 22 May 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLGN-B6D"
+    },
+    {
+      "id": "381G-41B",
+      "title": "Robert J Sloan, \"Canada, British Columbia, Victoria Times Birth, Marriage and Death Notices, 1901-1939\"",
+      "citation": "\"Canada, British Columbia, Victoria Times Birth, Marriage and Death Notices, 1901-1939\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DS-QXQX : Thu Dec 11 06:19:10 UTC 2025), Robert J Sloan in entry for Elizabeth Laidlaw Mcmichael Sloan, 23 Aug 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2DS-QXQX"
+    },
+    {
+      "id": "381G-4HF",
+      "title": "Robert J Sloan, \"Canada, British Columbia, Victoria Times Birth, Marriage and Death Notices, 1901-1939\"",
+      "citation": "\"Canada, British Columbia, Victoria Times Birth, Marriage and Death Notices, 1901-1939\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DS-QXPC : Tue Dec 09 21:47:58 UTC 2025), Robert J Sloan in entry for Elizabeth Laidlaw Mcmichael.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2DS-QXPC"
+    },
+    {
+      "id": "381G-31B",
+      "title": "R J Sloan, \"Canada, British Columbia, Death Registrations, 1872-1986; 1992-1993\"",
+      "citation": "\"Canada, British Columbia, Death Registrations, 1872-1986; 1992-1993\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FL2Z-KX6 : Wed Apr 03 21:10:32 UTC 2024), R J Sloan in entry for William Sloan, 02 Mar 1928.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FL2Z-KX6"
+    },
+    {
+      "id": "381G-3VY",
+      "title": "Robert John Sloan, \"Canada, British Columbia, Marriage Registrations, 1859-1932; 1937-1938\"",
+      "citation": "\"Canada, British Columbia, Marriage Registrations, 1859-1932; 1937-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JDZL-X57 : Mon Jul 22 16:06:06 UTC 2024), Robert John Sloan in entry for William Sloan and Catherine Fiske Mcdougall, 11 Dec 1916.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JDZL-X57"
+    },
+    {
+      "id": "381G-3N3",
+      "title": "Robert Sloan, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CB-CKTM : Fri Mar 08 08:26:49 UTC 2024), Robert Sloan and Elizabeth McMichel, 19 Oct 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CB-CKTM"
+    },
+    {
+      "id": "3812-RQ6",
+      "title": "R J Sloan, \"Canada, British Columbia, Marriage Registrations, 1859-1932; 1937-1938\"",
+      "citation": "\"Canada, British Columbia, Marriage Registrations, 1859-1932; 1937-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JDZK-GZ7 : Wed Jan 15 21:27:49 UTC 2025), R J Sloan in entry for William Sloan and Flora Glaholm, 24 Oct 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JDZK-GZ7"
+    },
+    {
+      "id": "M95Y-GF2",
+      "title": "Legacy NFS Source: Robert Sloan - Government record: Census record: birth-name: Robert Sloan",
+      "citation": "Internet, 1851 Census of Canada, Archive, ancestry.com"
+    },
+    {
+      "id": "7NVG-7P4",
+      "title": "<Unknown>, \"Minnesota, Death Records and Certificates, 1900-1955\"",
+      "citation": "\"Minnesota, Death Records and Certificates, 1900-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DD2F-YZZM : Fri Mar 27 18:26:24 UTC 2026), Thomas J. Thomas J. in entry for James K. Sloan, 25 October 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DD2F-YZZM"
+    },
+    {
+      "id": "MCHV-R72",
+      "title": "Thomas Sloan in entry for Grace Sloan, \"Minnesota, Births and Christenings, 1840-1980\"",
+      "citation": "\"Minnesota, Births and Christenings, 1840-1980\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDZ8-WMT : 16 September 2026), Thomas Sloan in entry for Grace Sloan, 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDZ8-WMT"
+    },
+    {
+      "id": "MCC7-P53",
+      "title": "Thomas James Sloan in entry for Margaret Sloan, \"Minnesota, Births and Christenings, 1840-1980\"",
+      "citation": "\"Minnesota, Births and Christenings, 1840-1980\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDZ8-3TG : 16 September 2026), Thomas James Sloan in entry for Margaret Sloan, 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDZ8-3TG"
+    },
+    {
+      "id": "M95Y-WN5",
+      "title": "Legacy NFS Source: Thomas Sloan - Government record: Census record: birth-name: Thomas Sloan",
+      "citation": "Internet, 1861 Census of Canada, Archive, ancestry.com"
+    },
+    {
+      "id": "Q93B-ZP4",
+      "title": "Thomas Sloan, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M932-QCF : Thu May 29 17:15:20 UTC 2025), Thomas Sloan, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M932-QCF"
+    },
+    {
+      "id": "SY11-QRH",
+      "title": "Thomas J, \"Minnesota, Deaths, 1887-2001\"",
+      "citation": "\"Minnesota, Deaths, 1887-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WK9H-XPT2 : Fri Mar 27 21:14:39 UTC 2026), Thomas J in entry for James K Sloan, 25 Oct 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WK9H-XPT2"
+    },
+    {
+      "id": "SY11-3WN",
+      "title": "<Unknown>, \"Minnesota, Death Records and Certificates, 1900-1955\"",
+      "citation": "\"Minnesota, Death Records and Certificates, 1900-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDMF-HR3 : Fri Mar 27 18:26:24 UTC 2026), Thomas J. Thomas J. in entry for James K. Sloan, 25 October 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDMF-HR3"
+    },
+    {
+      "id": "SY1B-LSZ",
+      "title": "Thomas J. Sloan, \"Minnesota, Births and Christenings, 1840-1980\"",
+      "citation": "\"Minnesota, Births and Christenings, 1840-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDH1-HZS : Fri Oct 16 16:01:45 UTC 2026), Thomas J. Sloan in entry for Robert J. Sloan, 23 Oct 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDH1-HZS"
+    },
+    {
+      "id": "SY1B-KH2",
+      "title": "Thomas Sloan, \"Minnesota, Births and Christenings, 1840-1980\"",
+      "citation": "\"Minnesota, Births and Christenings, 1840-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FD7W-T5W : Fri Oct 16 15:29:20 UTC 2026), Thomas Sloan in entry for Grace Sloan, 3 Aug 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FD7W-T5W"
+    },
+    {
+      "id": "SY1B-ZQG",
+      "title": "Thomas Sloan, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CB-CVTN : Fri Mar 08 08:26:49 UTC 2024), Thomas Sloan and <Unknown>, 29 Jun 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CB-CVTN"
+    },
+    {
+      "id": "SYYC-MXN",
+      "title": "Thomas J Sloan, \"Minnesota, State Census, 1875\"",
+      "citation": "\"Minnesota, State Census, 1875\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MKN5-8TG : Sun Mar 10 18:02:31 UTC 2024), Thomas J Sloan, 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MKN5-8TG"
+    },
+    {
+      "id": "SYYH-GXB",
+      "title": "Thomas J. Sloan, \"Minnesota, Births and Christenings, 1840-1980\"",
+      "citation": "\"Minnesota, Births and Christenings, 1840-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FD7W-TZ8 : Fri Oct 16 15:29:12 UTC 2026), Thomas J. Sloan in entry for Agnes Williamson Sloan, 30 Mar 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FD7W-TZ8"
+    },
+    {
+      "id": "95GW-1Y6",
+      "title": "Thomas J. Sloan in entry for Agnes Williamson Sloan, \"Minnesota, Births and Christenings, 1840-1980\"",
+      "citation": "\"Minnesota, Births and Christenings, 1840-1980\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDH1-MZ8 : 16 September 2026), Thomas J. Sloan in entry for Agnes Williamson Sloan, 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDH1-MZ8"
+    },
+    {
+      "id": "95GW-B79",
+      "title": "Thomas Sloan, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ92-T5F : Wed Sep 09 10:14:09 UTC 2026), Thomas Sloan, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZ92-T5F"
+    },
+    {
+      "id": "95GW-Y78",
+      "title": "Thomas James Sloan in entry for Margaret Sloan, \"Minnesota, Births and Christenings, 1840-1980\"",
+      "citation": "\"Minnesota, Births and Christenings, 1840-1980\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDH1-MR6 : 16 September 2026), Thomas James Sloan in entry for Margaret Sloan, 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDH1-MR6"
+    },
+    {
+      "id": "95GW-TQ8",
+      "title": "Thomas James Sloan, \"Minnesota, Births and Christenings, 1840-1980\"",
+      "citation": "\"Minnesota, Births and Christenings, 1840-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FD7W-RBV : Fri Oct 16 15:35:28 UTC 2026), Thomas James Sloan in entry for Margaret Sloan, 20 Jan 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FD7W-RBV"
+    },
+    {
+      "id": "MCC7-P46",
+      "title": "Thomas J. Sloan in entry for Agnes Williamson Sloan, \"Minnesota, Births and Christenings, 1840-1980\"",
+      "citation": "\"Minnesota, Births and Christenings, 1840-1980\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDZ8-3R5 : 16 September 2026), Thomas J. Sloan in entry for Agnes Williamson Sloan, 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDZ8-3R5"
+    },
+    {
+      "id": "M95Y-5XM",
+      "title": "Legacy NFS Source: Jane Sloan - Government record: Census record: birth-name: Jane Sloan",
+      "citation": "Internet, 1851 Census of Canada, Archive, ancestry.com"
+    },
+    {
+      "id": "QTB3-FMP",
+      "title": "Andrew W Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMVJ-1Q3 : Thu Mar 07 08:16:19 UTC 2024), Andrew W Sloan in entry for Joseph Combs and Mary Sloan, 08 Jan 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMVJ-1Q3"
+    },
+    {
+      "id": "QTB3-X71",
+      "title": "Andrew Slone, \"Canada, Census, 1871\"",
+      "citation": "\"Canada, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4QR-PSZ : Sun Mar 10 19:07:56 UTC 2024), Andrew Slone, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M4QR-PSZ"
+    },
+    {
+      "id": "QTB3-6B2",
+      "title": "Andrew William Sloan, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMC7-CHR : Fri Jan 17 18:05:27 UTC 2025), Andrew William Sloan in entry for William Sloan, 15 Sep 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMC7-CHR"
+    },
+    {
+      "id": "QTB3-6D8",
+      "title": "Andrew W Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:278F-XV2 : Sun Jul 06 21:20:12 UTC 2025), Andrew W Sloan in entry for Andrew Sloan and Grace Isabella Torrance, 06 Dec 1916.",
+      "url": "https://familysearch.org/ark:/61903/1:1:278F-XV2"
+    },
+    {
+      "id": "QTB3-6WL",
+      "title": "Andrew William Sloan, \"Canada, Ontario, Births and Baptisms, 1779-1899\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2FP-48R : Tue Oct 20 00:20:47 UTC 2026), Andrew William Sloan in entry for William Sloan, 15 Sep 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2FP-48R"
+    },
+    {
+      "id": "QTB3-81D",
+      "title": "Andrew Sloan, \"Recensement du Canada de 1911\"",
+      "citation": "\"Recensement du Canada de 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9T-N6N8 : Thu Mar 07 13:45:52 UTC 2024), Andrew Sloan, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9T-N6N8"
+    },
+    {
+      "id": "QTB3-4VR",
+      "title": "Andrew W. Sloan, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMDQ-LV9 : Sat Jul 06 15:55:42 UTC 2024), Andrew W. Sloan in entry for Robert Richard Sloan, 15 Oct 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMDQ-LV9"
+    },
+    {
+      "id": "QTB3-4DN",
+      "title": "Andrew W. Sloan, \"Canada, Ontario, Births and Baptisms, 1779-1899\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F22X-8RW : Tue Oct 20 00:14:59 UTC 2026), Andrew W. Sloan in entry for Robert Richard Sloan, 15 Oct 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F22X-8RW"
+    },
+    {
+      "id": "QTB3-4WW",
+      "title": "Andrew Sloan, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JKWL-ZN5 : Wed Jul 01 22:07:59 UTC 2026), Andrew Sloan in entry for Robert R Sloan, 1928.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JKWL-ZN5"
+    },
+    {
+      "id": "QTB3-WLD",
+      "title": "Andrew W Sloan, \"Canada, Census, 1901\"",
+      "citation": "\"Canada, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KHLQ-JY6 : Tue Jan 21 22:41:59 UTC 2025), Andrew W Sloan, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KHLQ-JY6"
+    },
+    {
+      "id": "QTB3-W9F",
+      "title": "Andrew W. Sloan, \"Canada, Ontario, Births and Baptisms, 1779-1899\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2GT-BVN : Tue Oct 20 01:02:38 UTC 2026), Andrew W. Sloan in entry for Andrew Sloan, 23 Jun 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2GT-BVN"
+    },
+    {
+      "id": "QTB3-7KD",
+      "title": "Andrew W. Sloan, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMDF-W6L : Tue Jul 09 16:03:40 UTC 2024), Andrew W. Sloan in entry for Andrew Sloan, 23 Jun 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMDF-W6L"
+    },
+    {
+      "id": "QW1R-1TG",
+      "title": "Andrew W Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZBX-78Z : Tue Jul 23 08:02:54 UTC 2024), Andrew W Sloan in entry for Wesley Walker and Margaret Williamson Sloan, 15 May 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZBX-78Z"
+    },
+    {
+      "id": "Q34V-49J",
+      "title": "Andrew Williamson Sloan, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FM37-79K : Fri Jan 17 04:47:10 UTC 2025), Andrew Williamson Sloan in entry for Mary Sloan, 12 Jun 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FM37-79K"
+    },
+    {
+      "id": "SLM4-GLN",
+      "title": "Andrew W. Sloan, \"Canada, Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVN9-KJQ : Sun Mar 10 04:24:25 UTC 2024), Andrew W. Sloan, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVN9-KJQ"
+    },
+    {
+      "id": "SLM4-FZY",
+      "title": "Sloan, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VG5G-WPR : Tue Feb 25 15:13:14 UTC 2025), Sloan in entry for John M Sloan, 03 Aug 1947.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VG5G-WPR"
+    },
+    {
+      "id": "9TZH-XHY",
+      "title": "Andrew Sloan, \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\"",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JD6Q-DLV : Fri Jul 26 14:00:20 UTC 2024), Andrew Sloan, 13 Mar 1917.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JD6Q-DLV"
+    },
+    {
+      "id": "9TZH-6CF",
+      "title": "Andrew Sloan, \"Canada, Ontario County Marriage Registers, 1858-1869\"",
+      "citation": "\"Canada, Ontario County Marriage Registers, 1858-1869\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2YM-4CSZ : Tue Jan 21 21:39:59 UTC 2025), Andrew Sloan and Janet Mcmichal, 17 Mar 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2YM-4CSZ"
+    },
+    {
+      "id": "9TZ4-VJS",
+      "title": "Andrew Williamson Sloan, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKJ-5P81 : Sun Oct 04 17:31:33 UTC 2026), Andrew Williamson Sloan.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKJ-5P81"
+    },
+    {
+      "id": "9TZ4-CYN",
+      "title": "Andrew Sloan, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMK8-4G5 : Thu Mar 07 20:49:39 UTC 2024), Andrew Sloan in entry for Thomas Sloan and Johanna Krachling, 13 Feb 1895.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMK8-4G5"
+    },
+    {
+      "id": "MRFN-QLW",
+      "title": "Andrew W. Sloan, \"Canada, Ontario, Births and Baptisms, 1779-1899\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XL5R-1YK : Tue Oct 20 01:06:46 UTC 2026), Andrew W. Sloan in entry for Margaret Williamson Sloan, 24 Jun 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XL5R-1YK"
+    },
+    {
+      "id": "M95T-2CN",
+      "title": "Legacy NFS Source: Andrew W. Sloan - Government record: Census record: birth: 20 February 1843; Ontario, Canada",
+      "citation": "Internet, 1901 Census of Canada, Archive, ancestry.com"
+    }
+  ]
+}

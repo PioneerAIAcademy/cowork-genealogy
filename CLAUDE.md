@@ -209,13 +209,16 @@ entrypoints only connect a transport: `src/index.ts` (stdio, the `.mcpb`) and
 `src/http.ts` (the prototype's Streamable HTTP server, compose service `tools`, binding each
 request's `Authorization: Bearer` and a `PgS3ProjectStore` from its
 `X-Genealogy-Project-Id` header, fenced by `X-Genealogy-Turn-Id` and
-`X-Genealogy-Claim-Epoch` so a superseded worker attempt's writes roll back — U6). Per-tool
+`X-Genealogy-Claim-Epoch` so a superseded worker attempt's writes roll back, and
+owner-checked against the bearer the worker stamped on that open turn — U6/U4). Per-tool
 behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
-Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
-agent uses `person_search` to find a person in the FamilySearch tree
-when the user doesn't have a FamilySearch ID to provide.
+Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. A project always
+starts from a FamilySearch person ID: `init-project` never searches by name, and with
+no ID it creates nothing and asks for one (lead, 2026-10-15). `research` is the only
+front door — its routing table sends a first message with no project to `init-project`
+or `tree-survey`, so nothing prefixes an opener onto the user's first message.
 
 The host artifact is the `.mcpb` desktop extension, built from
 `packages/engine/mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
@@ -313,15 +316,19 @@ incidents, and what the probe retired: ADR-0004.
 
 The plugin ships a `PreToolUse` hook — the **only** guardrail that reaches
 Cowork. `hooks=` is an SDK argument the hosted control plane can set and Cowork
-cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. Cowork runs
-`permission_mode: "default"`, the hosted path runs `bypassPermissions`, and a
-hook binds under both.
+cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. The hosted
+path runs `bypassPermissions`. Cowork's `permission_mode` was recorded as
+`"default"` here, but the 2026-10-19 phase-0 sessions observed `"auto"`
+(ADR-0005); whether that is a per-session setting is not known. **Do not rely on
+which one it is** — the hook bound under both, which is the part that matters.
 
-**`SessionStart` hooks do not fire in Cowork.** Nothing depends on one today, so
-do not put per-session setup — seeding state, injecting project context — in
-one: it would silently not run. `PreToolUse` does fire. Both were probed live;
-where an upstream issue thread says otherwise, the probe wins. Dates, probes and
-thread numbers: ADR-0005.
+**Do not depend on `SessionStart` in Cowork.** It did not fire on 2026-07-30 and
+did on 2026-10-19 (startup and resume), so it has moved once already. Nothing
+depends on one today; do not put per-session setup — seeding state, injecting
+project context — in one. `PreToolUse`, `UserPromptSubmit` and a plugin `Stop`
+hook all fire, and a `PreToolUse` hook returning `"continue": false` ends the turn.
+All were probed live; where an upstream issue thread says otherwise, the probe
+wins. Dates, probes and thread numbers: ADR-0005.
 
 Hook scripts run in the VM: **stdlib-only Python, no network** — the same rule
 as skill `scripts/`. A hook must never raise; every failure path falls through
@@ -417,7 +424,7 @@ not add the line to it. The exception moved from the skills to the agents when
 that skill was replaced by an agent on 2026-09-27; re-derive both lists with
 `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
 `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md`, and note that
-nine other agents also carry no line — `search-wikipedia` is the one whose
+ten other agents also carry no line — `search-wikipedia` is the one whose
 absence is a *rule*, pinned by
 `tests/packaging/search-wikipedia-no-narration.test.ts`.
 
@@ -623,7 +630,7 @@ and add the tool name to `manifest.json`'s `tools` array. Dispatch lives in
 `src/server.ts` (`createServer(principal)`); `src/index.ts` is the shipped stdio
 entrypoint binding `LOCAL`, `src/http.ts` the prototype's Streamable HTTP one binding each
 request's `Authorization: Bearer` (never `LOCAL`) and a `PgS3ProjectStore` from its
-`X-Genealogy-Project-Id` header (claim-fenced, U6), and a new tool's arm goes in
+`X-Genealogy-Project-Id` header (claim-fenced and owner-checked, U6/U4), and a new tool's arm goes in
 `server.ts`, never in an entrypoint. A new tool also needs a row in
 `dev/smoke-calls.ts`: `make engine-smoke-http` fails on an advertised tool it
 neither calls nor lists as an exclusion.
@@ -827,7 +834,8 @@ Where to look first:
   `fetch` directly (enforced by `tests/packaging/no-bare-fetch.test.ts`).
   Default timeout 30s; pass a longer one as the third argument (180s for
   `image_transcribe`'s OCR call, 90s for `fs-image-fetch.ts`'s multi-MB scan,
-  60s for `wiki_search`, `collections_search` and `wikipedia_search`). Size a
+  60s for `wiki_search` and `collections_search`; `wikipedia_search`'s three
+  requests share one 55s deadline, under the Cowork bridge's 60s abort). Size a
   raise from the measured e2e corpus, not by guessing — the worked method is in
   `docs/specs/image-transcribe-tool-spec.md`. The
   budget covers headers **and** body — size it for the whole transfer, not the

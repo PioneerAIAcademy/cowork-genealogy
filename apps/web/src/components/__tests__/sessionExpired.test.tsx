@@ -6,12 +6,23 @@ import SessionView from '../SessionView'
 import { api, ApiError, type SessionSummary } from '../../api'
 import type { SessionConnection, Listener, WsMessage } from '../../transport/SessionConnection'
 
-// Issue #3406: a session more than 24 h old can be read but not continued. The
+// Issue #3406: a session more than 72 h old can be read but not continued. The
 // transport turns /connect's 410 into one `session_expired` status; these check
 // what the user then sees.
 
 // The viewer is irrelevant here and heavy to mount.
-vi.mock('@genealogy/viewer-ui', () => ({ App: () => null, resolveFamilySearchTarget: () => null }))
+// Stubbed whole, so this file stays about the 410 and never mounts the viewer.
+// `ViewerBody`, `ResearchDataProvider` and `useResearchDataOptional` are here because
+// SessionView and ChatPane import them; a factory mock is all-or-nothing, so an export
+// the component imports but the factory omits throws at render rather than returning
+// undefined. `useResearchDataOptional` returns null by contract -- ChatPane guards on it.
+vi.mock('@genealogy/viewer-ui', () => ({
+  App: () => null,
+  ViewerBody: () => null,
+  ResearchDataProvider: ({ children }: { children?: unknown }) => children,
+  useResearchDataOptional: () => null,
+  resolveFamilySearchTarget: () => null
+}))
 
 vi.mock('../../auth', () => ({
   useAuth: () => ({ user: { email: 'dev@localhost' }, logout: vi.fn() })
@@ -48,7 +59,7 @@ describe('ChatPane on session_expired', () => {
     const conn = new FakeConn()
     render(<ChatPane conn={conn} sessionId="sess_old" isNew={false} />)
     expect(screen.getByRole('textbox')).toBeTruthy()
-    // A tab left open past 24 h: the socket dropped, so it was reconnecting.
+    // A tab left open past 72 h: the socket dropped, so it was reconnecting.
     conn.emit({ type: 'conn_state', state: 'reconnecting' })
     expect(screen.getByText(/Reconnecting/)).toBeTruthy()
 
@@ -60,6 +71,68 @@ describe('ChatPane on session_expired', () => {
     expect(screen.queryByLabelText('Attach a document or image')).toBeNull()
     expect(screen.queryByText('Connecting to the agent…')).toBeNull()
     expect(screen.queryByText(/Reconnecting/)).toBeNull()
+  })
+})
+
+describe('ChatPane on a read-only session_expired', () => {
+  it('shows the replayed chat with the notice in place of the composer', () => {
+    const conn = new FakeConn()
+    render(<ChatPane conn={conn} sessionId="sess_old" isNew={false} />)
+    conn.emit({ type: 'status', state: 'session_expired', message: SESSION_EXPIRED_TEXT, readOnly: true })
+    expect(screen.getByText("Loading this session's chat…")).toBeTruthy()
+
+    conn.emit({ type: 'user_msg', text: 'Who were the parents of John Smith?' })
+    conn.emit({ type: 'agent_event', event: { kind: 'text', text: 'His father was Adam Smith.' } })
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done' } })
+    conn.emit({ type: 'status', state: 'chat_ready' })
+
+    expect(screen.getByText('Who were the parents of John Smith?')).toBeTruthy()
+    expect(screen.getByText('His father was Adam Smith.')).toBeTruthy()
+    expect(screen.getByText(SESSION_EXPIRED_TEXT)).toBeTruthy()
+    expect(screen.queryByRole('textbox')).toBeNull()
+    expect(screen.queryByLabelText('Attach a document or image')).toBeNull()
+  })
+
+  it('a replayed question turn shows no answer buttons, and no "send a message" label', () => {
+    const conn = new FakeConn()
+    render(<ChatPane conn={conn} sessionId="sess_old" isNew={false} />)
+    conn.emit({ type: 'status', state: 'session_expired', message: SESSION_EXPIRED_TEXT, readOnly: true })
+    conn.emit({ type: 'user_msg', text: 'Find Mary Hales.' })
+    conn.emit({
+      type: 'agent_event',
+      event: {
+        kind: 'tool_use',
+        tool: 'AskUserQuestion',
+        summary: 'asking which Mary Hales',
+        questions: [
+          {
+            question: 'Which Mary Hales?',
+            header: 'Person',
+            options: [
+              { label: 'Mary Hales of Ohio (Recommended)', description: 'b. 1832' },
+              { label: 'Mary Hales of Indiana', description: 'b. 1841' }
+            ]
+          }
+        ]
+      }
+    })
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'decision' } })
+    conn.emit({ type: 'status', state: 'chat_ready' })
+    expect(screen.queryByRole('button', { name: /Indiana/ })).toBeNull()
+
+    conn.emit({ type: 'user_msg', text: 'Ohio.' })
+    conn.emit({ type: 'agent_event', event: { kind: 'text', text: 'Searching Ohio.' } })
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'stopped' } })
+    expect(screen.getByText('Searching Ohio.')).toBeTruthy()
+    expect(screen.queryByText(/carry on/)).toBeNull()
+  })
+
+  it('an empty chat says so once the replay is over, instead of loading forever', () => {
+    const conn = new FakeConn()
+    render(<ChatPane conn={conn} sessionId="sess_old" isNew={false} />)
+    conn.emit({ type: 'status', state: 'session_expired', message: SESSION_EXPIRED_TEXT, readOnly: true })
+    conn.emit({ type: 'status', state: 'chat_ready' })
+    expect(screen.getByText("This session's chat can't be shown.")).toBeTruthy()
   })
 })
 

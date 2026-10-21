@@ -9,11 +9,12 @@
       "search",
       "negative-result",
       "sidecar-nil",
-      "log-honest-no-match"
+      "log-honest-no-match",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search FamilySearch records for Bartholomew Flynn — a possible brother of Patrick.",
+    "delegation": "Search FamilySearch records for Bartholomew Flynn — a possible brother of Patrick.\n\nprojectPath: <workspace>",
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [

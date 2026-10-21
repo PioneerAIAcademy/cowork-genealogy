@@ -15,5 +15,12 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 23, hint-samples.csv row 792, flag adds_marriage, confidence 3). Draft transcribed from an 1845 Kilninian, Argyll parish marriage index entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 23, hint-samples.csv row 792, flag adds_marriage, confidence 3). Resolved 2026-10-15 (#3344): true match (outcome 1). The 1845 Kilninian marriage is kept. The 1861 census of Campbeltown (ark:/61903/1:1:VB78-JSC) gives the widowed Cathrine's elder daughters Flora and Annie as born at Tobermory, in Kilninian and Kilmore parish, about 1847 and 1849; the 1851 census (ark:/61903/1:1:VYYQ-ZGH) and James's marriage (ark:/61903/1:1:XSF1-FGNL) identify the family. Neither spouse was born on Mull (Hugh Midlothian, Catherine Saddell). Decided from FamilySearch indexes; no page image read.",
+  "caps": {
+    "wall_clock_seconds": 9000
+  },
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:XTK4-QYM",
+    "identity": "same"
+  }
 }

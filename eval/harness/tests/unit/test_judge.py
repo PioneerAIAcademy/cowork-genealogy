@@ -1791,6 +1791,130 @@ def test_tool_calls_empty_returns_none_marker():
     assert judge._render_tool_calls_with_size_guard([]) == "(none)"
 
 
+def _early_evidence_call():
+    return {
+        "tool": "mcp__genealogy__collections_search",
+        "args": {"query": "Ohio marriages"},
+        "expected_args": {"query": "~Ohio"},
+        "matched": {"kind": "predicate", "index": 0},
+        "response": {
+            "results": [
+                {"id": "1803967", "title": "Ohio, County Marriages, 1789-2016"}
+            ]
+        },
+    }
+
+
+def _live_write_call(args):
+    return {
+        "tool": "mcp__genealogy__research_append",
+        "args": args,
+        "expected_args": None,
+        "matched": {"kind": "live", "index": None},
+        "response": {"ok": True, "ids": ["loc_001"]},
+    }
+
+
+def test_tool_calls_size_guard_live_write_args_do_not_push_out_evidence():
+    """#3442: the agent's own write is output, not evidence. A locality guide
+    persisted through a live research_append carries the whole guide in
+    `args.entry.guide_markdown`; counting it against the budget dropped the
+    earliest survey calls, and the judge then called a correctly cited
+    collection id fabricated. The early call must survive, and the write
+    must still be rendered with its real args."""
+    guide = "G" * 60_000
+    calls = [
+        _early_evidence_call(),
+        _live_write_call(
+            {
+                "projectPath": "/p",
+                "section": "localities",
+                "op": "append",
+                "entry": {"place": "Ohio", "guide_markdown": guide},
+            }
+        ),
+    ]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert "_dropped_for_size" not in rendered
+    assert "1803967" in rendered
+    assert guide in rendered
+
+
+def test_tool_calls_size_guard_caps_a_huge_live_arg_string_not_evidence():
+    """Not counting a live call's args must not let the render grow without
+    limit. Past _TOOL_CALLS_HARD_MAX_CHARS a live call's long strings are cut
+    to the per-string cap with the stated harness marker; no evidence call is
+    dropped to make room."""
+    calls = [
+        _early_evidence_call(),
+        _live_write_call(
+            {
+                "projectPath": "/p",
+                "section": "localities",
+                "op": "append",
+                "entry": {"place": "Ohio", "guide_markdown": "G" * 500_000},
+            }
+        ),
+    ]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert len(rendered) <= judge._TOOL_CALLS_HARD_MAX_CHARS
+    assert "_dropped_for_size" not in rendered
+    assert "1803967" in rendered
+    assert (
+        "[truncated by harness for prompt size; full length 500000 chars]"
+        in rendered
+    )
+    assert '"section": "localities"' in rendered
+
+
+def test_tool_calls_size_guard_omits_live_args_the_string_cap_cannot_bound():
+    """Many strings each under the per-string cap defeat the string cut, so
+    the live args are replaced whole by a stated marker. Small live args (a
+    person_quality personId) are shorter than that marker and are kept."""
+    ops = [
+        {"section": "assertions", "op": "append", "entry": {"value": "v" * 1_900}}
+        for _ in range(100)
+    ]
+    calls = [
+        _early_evidence_call(),
+        {
+            "tool": "mcp__genealogy__person_quality",
+            "args": {"projectPath": "/p", "personId": "LZNY-BRF"},
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response": {"score": 42},
+        },
+        _live_write_call({"projectPath": "/p", "ops": ops}),
+    ]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert len(rendered) <= judge._TOOL_CALLS_MAX_CHARS
+    assert "_dropped_for_size" not in rendered
+    assert "1803967" in rendered
+    assert "[args omitted by harness for prompt size; full length " in rendered
+    assert "LZNY-BRF" in rendered
+    assert "v" * 1_900 not in rendered
+
+
+def test_tool_calls_size_guard_still_drops_oldest_evidence_beside_a_live_write():
+    """Evidence alone over the cap is still dropped oldest-first; the live
+    write, being newest, survives with its real args."""
+    calls = [
+        {
+            "tool": f"mcp__genealogy__tool_{i}",
+            "args": {"q": f"call-{i}"},
+            "matched": {"kind": "predicate", "index": None},
+            "response": {"data": "x" * 1500},
+        }
+        for i in range(100)
+    ] + [_live_write_call({"projectPath": "/p", "entry": {"note": "N" * 30_000}})]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert rendered.startswith("(_dropped_for_size: ")
+    assert '"tool": "mcp__genealogy__tool_0"' not in rendered
+    assert '"tool": "mcp__genealogy__tool_99"' in rendered
+    assert "N" * 30_000 in rendered
+    assert len(rendered) <= judge._TOOL_CALLS_MAX_CHARS + 30_000 + 500
+
+
 def _prompt_parts_kwargs(sample_rubric):
     return dict(
         rubric=sample_rubric,

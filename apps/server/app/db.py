@@ -12,23 +12,22 @@ from sqlalchemy import inspect, text
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from .config import get_settings
-from .models import AllowedEmail, TurnCost
+from .models import AllowedEmail, ApiCall, TurnCost
 
 _settings = get_settings()
 if _settings.is_sqlite:
-    _engine = create_engine(
-        _settings.sqlalchemy_url,
-        connect_args={"check_same_thread": False},
-    )
+    _backend_options: dict = {"connect_args": {"check_same_thread": False}}
 else:
     # Neon auto-suspends idle connections (scale-to-zero); pre_ping discards dead
     # pooled connections and recycle caps connection age. These keep the pool
     # correct after a resume; they don't mask the first-query cold-start latency.
-    _engine = create_engine(
-        _settings.sqlalchemy_url,
-        pool_pre_ping=True,
-        pool_recycle=300,
-    )
+    _backend_options = {"pool_pre_ping": True, "pool_recycle": 300}
+# hide_parameters stops SQLAlchemy echoing bound values into its error messages: some
+# queries bind users' emails (the revocation sweep in main.py), and a failure logged
+# with its traceback would print them (#3305). A driver's own message can still carry
+# a value, such as Postgres's DETAIL on a unique violation. One call for both
+# backends, so the SQLite test suite pins it for Postgres too.
+_engine = create_engine(_settings.sqlalchemy_url, hide_parameters=True, **_backend_options)
 
 
 def add_missing_columns(engine, model) -> list[str]:
@@ -53,6 +52,7 @@ def init_db() -> None:
     """Bootstrap schema + sync allowlist."""
     SQLModel.metadata.create_all(_engine)
     add_missing_columns(_engine, TurnCost)
+    add_missing_columns(_engine, ApiCall)
     if not _settings.allowlist:
         return
     with Session(_engine) as session:
