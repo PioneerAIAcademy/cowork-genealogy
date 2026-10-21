@@ -1150,14 +1150,14 @@ describe("checkFirstPlace (#3696)", () => {
     expect(mockGetPlaceCandidateNames).toHaveBeenCalledTimes(1);
   });
 
-  it("fetches at most five name lists however many entries tie", async () => {
+  it("fetches at most five name lists, and writes with a warning when that leaves entries unchecked", async () => {
     mockSearchPlace.mockResolvedValue(
       Array.from({ length: 40 }, (_, n) =>
         entry({ placeRepId: `r${n}`, placeId: `p${n}`, fullName: `Place${n}, Springfield, Somewhere`, score: 90 }),
       ),
     );
     names(["Elsewhere"]);
-    expect((await checkFirstPlace("Nowhereville, Springfield")).status).toBe("mismatch");
+    expect((await checkFirstPlace("Nowhereville, Springfield")).status).toBe("lookup_failed");
     expect(mockGetPlaceCandidateNames).toHaveBeenCalledTimes(5);
   });
 
@@ -1169,6 +1169,50 @@ describe("checkFirstPlace (#3696)", () => {
     names(["Germany"]);
     expect((await checkFirstPlace("Sierkopas, Germany")).status).toBe("mismatch");
     expect(mockGetPlaceCandidateNames).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["Helvesiek, Schneverdingen Parish, Hanover"],
+    ["Helvesiek, Kirchspiel Schneverdingen, Hanover"],
+  ])("still checks the parent when segment 2 carries a type word: %s", async (text) => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Helvesiek, Rotenburg, Hanover, Prussia, Germany", score: 95 }),
+      entry({ placeRepId: "r2", placeId: "p2", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 90 }),
+    ]);
+    names(["Schneverdingen"]);
+    expect((await checkFirstPlace(text)).status).toBe("mismatch");
+  });
+
+  it("searches the parents without their type words", async () => {
+    // Live, "Schneverdingen Parish" in the query returns only the Rotenburg Helvesiek.
+    searchByText({
+      "Helvesiek, Schneverdingen Parish, Hanover": [
+        entry({ placeRepId: "r1", placeId: "p1", fullName: "Helvesiek, Rotenburg, Hanover, Prussia, Germany", score: 86 }),
+      ],
+      "Helvesiek, Schneverdingen, Hanover": [
+        entry({ placeRepId: "r1", placeId: "p1", fullName: "Helvesiek, Rotenburg, Hanover, Prussia, Germany", score: 88 }),
+        entry({ placeRepId: "r2", placeId: "p2", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 86 }),
+      ],
+    });
+    names(["Schneverdingen"]);
+    expect((await checkFirstPlace("Helvesiek, Schneverdingen Parish, Hanover")).status).toBe("mismatch");
+  });
+
+  it("keeps an \"X of\" parent whole: District of Columbia is not Columbia", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Washington, District of Columbia, United States", score: 90 }),
+    ]);
+    expect((await checkFirstPlace("Washington, District of Columbia, United States")).status).toBe("match");
+    expect(mockSearchPlace).toHaveBeenCalledWith("Washington, District of Columbia, United States", expect.anything());
+  });
+
+  it("is lookup_failed when the best entry has no place id and its first segment misses", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", fullName: "Schneverdingen, Soltau, Hanover, Germany", score: 90 }),
+      entry({ placeRepId: "r2", placeId: "p2", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 90 }),
+    ]);
+    names([], ["Schneverdingen"]);
+    expect((await checkFirstPlace("Helvesieck, Schneverdingen, Soltau, Hanover")).status).toBe("lookup_failed");
   });
 
   it("skips a tied entry with no place id rather than writing unchecked", async () => {

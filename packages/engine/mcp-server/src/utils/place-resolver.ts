@@ -686,13 +686,16 @@ export interface FirstPlaceVerdict {
  * the English-only list is empty for Schneverdingen and lacks "Forfarshire"
  * (measured in issue #3696).
  *
- * The search is #3696's: the context derived from segment 2 filters the entries,
- * so segment 2 acts as a parent check and "Helvesiek, Schneverdingen, Hanover"
+ * Segment 2 filters the entries, as in #3696's search path, so it acts as a parent
+ * check and "Helvesiek, Schneverdingen, Hanover"
  * (a real village under the wrong parish) is refused. Widenings, each measured
  * live (2026-10-21) to refuse a real place without it:
+ * - the parent named in segment 2 is matched with type words ignored, so
+ *   "Schneverdingen Parish" is still Schneverdingen (`underParent`);
  * - every entry tied for the top score is checked, because "Mt. Pleasant, Iowa"
- *   ties the town with a Quaker meeting and the meeting comes first; a tied entry
- *   with no place id is skipped, not counted as a failure;
+ *   ties the town with a Quaker meeting and the meeting comes first. A tied entry
+ *   with no place id is skipped; the best entry having none, a thrown fetch, or
+ *   the fetch cap leaving entries unchecked is `lookup_failed`, never a refusal;
  * - type words are ignored ("Stagstrup Sogn", "Co. Cork"), and when that still
  *   misses the stripped text is searched once more ("Ringebu Parish, Oppland").
  *
@@ -700,13 +703,16 @@ export interface FirstPlaceVerdict {
  * miss, and `placeTableForTests` is never consulted.
  */
 export async function checkFirstPlace(text: string): Promise<FirstPlaceVerdict> {
-  const segments = placeSegments(text);
-  const first = segments[0] ?? "";
-  const verdict = await checkFirstPlaceOnce(text, first);
+  // Parents are searched without their type words: "Schneverdingen Parish" in the
+  // query returns no Schneverdingen entry at all (live), so the parent check would
+  // have nothing to keep and fall back to every entry.
+  const [first = "", ...parents] = placeSegments(text);
+  const rest = parents.map(parentWithoutTypeWords);
+  const verdict = await checkFirstPlaceOnce([first, ...rest].join(", "), first);
   if (verdict.status !== "mismatch" && verdict.status !== "not_found") return verdict;
   const stripped = withoutTypeWords(first);
   if (placeNameKey(stripped) === placeNameKey(first)) return verdict;
-  const retry = await checkFirstPlaceOnce([stripped, ...segments.slice(1)].join(", "), stripped);
+  const retry = await checkFirstPlaceOnce([stripped, ...rest].join(", "), stripped);
   return retry.status === "match" || retry.status === "lookup_failed" ? retry : verdict;
 }
 
@@ -718,35 +724,61 @@ const MAX_NAME_FETCHES = 5;
 async function checkFirstPlaceOnce(text: string, first: string): Promise<FirstPlaceVerdict> {
   const wanted = new Set(placeNameKeys(first));
   const matches = (name: string) => placeNameKeys(name).some((k) => wanted.has(k));
-  let entries: SearchEntry[];
+  let all: SearchEntry[];
   try {
-    entries = await getSearchEntries(text);
+    all = await getSearchEntries(text, "");
   } catch {
     return { status: "lookup_failed" };
   }
+  const entries = underParent(all, placeSegments(text)[1]);
   const best = pickBest(entries);
   if (!best) return { status: "not_found" };
   const candidates = topScored(entries);
   const hit = candidates.find((e) => matches(placeSegments(e.fullName)[0] ?? ""));
   if (hit) return { status: "match", standardPlace: hit.fullName };
-  let checked = 0;
-  let failed = false;
+  if (!best.placeId) return { status: "lookup_failed", standardPlace: best.fullName };
+  let unchecked = false;
   const seen = new Set<string>();
   for (const e of candidates) {
     if (!e.placeId || seen.has(e.placeId)) continue;
-    if (seen.size >= MAX_NAME_FETCHES) break;
+    if (seen.size >= MAX_NAME_FETCHES) {
+      unchecked = true;
+      break;
+    }
     seen.add(e.placeId);
     let names: string[];
     try {
       names = await getPlaceCandidateNames(e.placeId, {}, { anyLanguage: true });
     } catch {
-      failed = true;
+      unchecked = true;
       continue;
     }
-    checked++;
     if (names.some(matches)) return { status: "match", standardPlace: e.fullName };
   }
-  return { status: failed || checked === 0 ? "lookup_failed" : "mismatch", standardPlace: best.fullName };
+  return { status: unchecked ? "lookup_failed" : "mismatch", standardPlace: best.fullName };
+}
+
+/** A parent's type words dropped, unless it is an "X of Y" name: "District of
+ *  Columbia" is a name, and stripping it leaves "Columbia". */
+function parentWithoutTypeWords(parent: string): string {
+  return /\bof\b/i.test(parent) ? parent : withoutTypeWords(parent);
+}
+
+/** The entries under the parent the caller wrote, or all of them when none is.
+ *  Same rule as `getSearchEntries`' derived context (fullName contains it), and
+ *  also a fullName segment equal to it under `placeNameKeys`, so "Schneverdingen
+ *  Parish" or "Hedmark County" still names the parent (measured live 2026-10-21:
+ *  without it the check fell back to every entry and passed a wrong parent). */
+function underParent(entries: SearchEntry[], parent: string | undefined): SearchEntry[] {
+  if (!parent) return entries;
+  const raw = parent.trim().toLowerCase();
+  const keys = new Set([placeNameKey(parent), placeNameKey(parentWithoutTypeWords(parent))]);
+  const kept = entries.filter(
+    (e) =>
+      e.fullName.toLowerCase().includes(raw) ||
+      placeSegments(e.fullName).some((seg) => placeNameKeys(seg).some((k) => keys.has(k))),
+  );
+  return kept.length > 0 ? kept : entries;
 }
 
 /** Every entry sharing the highest score: `pickBest` keeps the first of a tie,
