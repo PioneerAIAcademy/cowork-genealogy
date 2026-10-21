@@ -3267,6 +3267,54 @@ describe("research_append (Phase 2)", () => {
     expect(r.filesWritten).toEqual(["research.json"]); // wrote — not a no-op
     expect((await readResearch()).questions[0].priority).toBe("low");
   });
+
+  describe("stop_criteria length cap (#3546)", () => {
+    const short = {
+      goal_alignment: "Yes.", repository_breadth: "All searched.", original_substitution: "Originals.",
+      independent_verification: "Three sources.", evidence_class: "Census.", conflict_resolution: "None.", overturn_risk: "Low.",
+    };
+    const log = [
+      { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_search", query: {}, outcome: "negative", results_examined: 0, external_site: null, results_ref: null },
+    ];
+    const declare = (sc: Record<string, unknown>) => ({
+      projectPath: dir,
+      section: "questions" as const,
+      op: "update" as const,
+      entryId: "q_001",
+      fields: {
+        status: "exhaustive_declared",
+        search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: sc, not_reached: [] },
+      },
+    });
+
+    it("accepts a criterion of 800 characters", async () => {
+      const research = phase2Research();
+      research.questions = [validQuestion("q_001")];
+      research.log = log;
+      await writeProject(research);
+      const r = await researchAppend(declare({ ...short, overturn_risk: "x".repeat(800) }));
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+    });
+
+    it("refuses a criterion of 801 characters, naming it", async () => {
+      const research = phase2Research();
+      research.questions = [validQuestion("q_001")];
+      research.log = log;
+      await writeProject(research);
+      const r = await researchAppend(declare({ ...short, repository_breadth: "x".repeat(801) }));
+      expect(r.ok).toBe(false);
+      expect(JSON.stringify(r)).toMatch(/repository_breadth.*801/);
+    });
+
+    it("accepts a status update on a question that already stores a long criterion", async () => {
+      const research = phase2Research();
+      research.questions = [{ ...validQuestion("q_001"), priority: "high", search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: { ...short, evidence_class: "x".repeat(1000) }, not_reached: [] }, status: "exhaustive_declared" }];
+      research.log = log;
+      await writeProject(research);
+      const r = await researchAppend({ projectPath: dir, section: "questions", op: "update", entryId: "q_001", fields: { priority: "low" } });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+    });
+  });
 });
 
 // ─── Phase 3 ───────────────────────────────────────────────────────────────

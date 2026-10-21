@@ -226,6 +226,58 @@ describe("questionStatus — the state ladder", () => {
     expect(s.nextStep).toMatch(/research-exhaustiveness/);
   });
 
+  describe("evidence-gathered with planned items: dispose first, then the gate (#3546)", () => {
+    const evidence = (items: Record<string, unknown>[], planStatus = "active") =>
+      doc({
+        plans: [{ id: "pl_1", question_id: Q, status: planStatus, items }],
+        assertions: [{ id: "a_1", extracted_for_question_ids: [Q] }],
+        person_evidence: [{ assertion_id: "a_1", person_id: "I1" }],
+      });
+
+    it("names the search lane first and the disposal second, never the gate", () => {
+      const s = questionStatus(evidence([{ id: "pli_1", sequence: 1, status: "planned", repository: "FamilySearch" }]), question());
+      expect(s.nextStep).toBe(
+        "search-records — next item pli_1, or research-plan — dispose of pli_1 if the evidence already answers the question",
+      );
+    });
+
+    it("an unsearched, still-needed item is offered as a search, not only disposed", () => {
+      const s = questionStatus(evidence([{ id: "pli_1", sequence: 1, status: "planned", repository: "FamilySearch" }]), question());
+      expect(s.nextStep).toMatch(/^search-records — next item pli_1/);
+      expect(s.nextStep).not.toMatch(/research-exhaustiveness/);
+    });
+
+    it("searches the lowest sequence first and disposes of every planned item", () => {
+      const s = questionStatus(
+        evidence([
+          { id: "pli_2", sequence: 2, status: "planned", repository: "FamilySearch" },
+          { id: "pli_1", sequence: 1, status: "planned", repository: "FamilySearch" },
+        ]),
+        question(),
+      );
+      expect(s.nextStep).toBe(
+        "search-records — next item pli_1, or research-plan — dispose of pli_1, pli_2 if the evidence already answers the question",
+      );
+    });
+
+    it("a non-FamilySearch next item takes the external lane", () => {
+      const s = questionStatus(evidence([{ id: "pli_1", sequence: 1, status: "planned", repository: "MyHeritage" }]), question());
+      expect(s.nextStep).toBe(
+        "search-external-sites — pli_1 (MyHeritage), or research-plan — dispose of pli_1 if the evidence already answers the question",
+      );
+    });
+
+    it("an in_progress item alone leaves the gate route unchanged", () => {
+      const s = questionStatus(evidence([{ id: "pli_1", sequence: 1, status: "in_progress", repository: "FamilySearch" }]), question());
+      expect(s.nextStep).toBe("research-exhaustiveness, then proof-conclusion");
+    });
+
+    it("a planned item on a superseded plan does not count", () => {
+      const s = questionStatus(evidence([{ id: "pli_1", sequence: 1, status: "planned", repository: "FamilySearch" }], "superseded"), question());
+      expect(s.nextStep).toBe("research-exhaustiveness, then proof-conclusion");
+    });
+  });
+
   it("concluded, uncritiqued, unresolved: the next step is re-concluding with proof-conclusion", () => {
     // gps-mentor runs only on request (issue #2951), so an uncritiqued summary
     // is not a step. A summary on an open question was written while blocked,
