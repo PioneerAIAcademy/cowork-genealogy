@@ -60,7 +60,7 @@ flowchart TD
     RP --> SIA["search-images · agent<br/>browse-only volumes · log[]<br/>reads pages via image_transcribe"]
     RP -.->|"no routing row"| SF["search-full-text · agent<br/>witnesses, neighbours · log[]"]
     SR -.->|"named, never routed"| SF
-    SR ==>|"3+ FamilySearch nils"| SE
+    SR -.->|"3+ FamilySearch nils · named, never routed"| SE
     HI["search-hints · agent<br/>hint review, on request · log[]"]
 
     SR ==> XA
