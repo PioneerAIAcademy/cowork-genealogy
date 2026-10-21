@@ -963,9 +963,11 @@ they have different fixes, and only one of them is a description problem.
    suite holds `input.delegation` tests instead — measured 2026-10-21,
    `historical-context` 0/14, `check-warnings` 0/16, `tree-edit` 0/14. The
    trigger runner also counts a trigger only on a `Skill` tool call, never an
-   `Agent` spawn. **Agent triggering has no measurement today**; issue #3220
-   carries the diagnosis, and a miss there is not evidence about the
-   description.
+   `Agent` spawn. **Agent triggering has no measurement today**, so a miss is not
+   evidence about the description — diagnose the delegation before editing one.
+   Measured on the one corpus that exists: of 28 live Cowork questions, 26 were
+   answered by the main thread calling tools directly or from its own knowledge,
+   across eight different targets including an optimizer-tuned skill.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 
