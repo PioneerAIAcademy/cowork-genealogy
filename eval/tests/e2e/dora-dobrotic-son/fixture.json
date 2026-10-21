@@ -15,5 +15,10 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 7, hint-samples.csv row 228, flag adds_son, confidence 3). Draft transcribed from a Croatian Catholic church-book entry indexing the baptism of Jacobus Korota on 3 April 1871 at Križovljan Radovečki, son of Franciscus Korota and Dorothea Dobrotić; unverified. The entry's image sits in a Kotoriba death register for 1890-1917, so the record type itself needs checking."
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 7, hint-samples.csv row 228, flag adds_son, confidence 3). Resolved 2026-10-21 as a false match (issue #3621): the hint's index entry (Jacobus Korota, bapt. 3 Apr 1871, Križovljan Radovečki, parents Franciscus Korota and Dorothea Dobrotić) does not match the register image, where entry #22 is Georgius, son of Josephus Horvat vel Korotaj and Theresia, of Virje N. 8. Findings are an avoid guard on that son plus a required negative conclusion. The image reading was calibrated against two other indexed entries on the same page.",
+  "image_basis": true,
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:QKMG-HJF5",
+    "identity": "different"
+  }
 }

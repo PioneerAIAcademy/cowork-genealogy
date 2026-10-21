@@ -3,18 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Dora (Dorothea) Dobrotić and Franjo (Franciscus) Korotaj had a son Jacobus (Jakob) Korotaj, baptised 3 April 1871 in the parish of Križovljan Radovečki, Varaždin, Croatia; the index spells the surname Korota.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Dora (Dorothea) Dobrotić (PID K48B-4CP, b. ~1841, Veliki Lovrečan, Varaždin) and Franjo Korotaj had a son baptised in April 1871 at Križovljan Radovečki — whether named Jacobus (as the FamilySearch index has it, surname 'Korota') or Georgius. The page image behind the hint shows entry #22 as Georgius, son of Josephus Horvat vel Korotaj and Theresia, of Virje N. 8: a different Korotaj household, with different parents and a different house, not this couple. Pass = the final `tree.gedcomx.json` adds no child born or baptised in 1871 to Dora Dobrotić and Franjo Korotaj, and no stub person for a Jacobus or Georgius Korota/Korotaj/Horvat as their son. A rejected candidate may be documented in `research.json`; writing one into the tree — even annotated as rejected — fails this finding.",
       "details": {
-        "subject_person": "Dora Dobrotic (K48B-4CP)",
+        "subject_person": "Dora Dobrotić (PID K48B-4CP)",
         "relation": "child",
-        "target_person": {
-          "name": "Jacobus Korotaj",
-          "baptism": "3 April 1871, Križovljan Radovečki, Varaždin, Croatia"
-        },
-        "father": "Franciscus Korota (Franjo Korotaj)"
+        "wrong_candidate": {
+          "name": "Jacobus Korota (as indexed) / Georgius Horvat vel Korotaj (as written on the register)",
+          "baptism": "April 1871, Križovljan Radovečki, Varaždin, Croatia",
+          "note": "the register names the parents as Josephus Horvat vel Korotaj and Theresia, of Virje N. 8 — not Franjo Korotaj and Dora Dobrotić of Veliki Lovrečan; the index's 'Franciscus Korota' and 'Dorothea Dobrotić' are not what the entry says"
+        }
       },
       "supporting_sources": [
-        "Croatia, Church Books, 1516-1994 — entry for Jacobus Korota, baptised 3 Apr 1871 at Križovljan Radovečki, Roman Catholic, parents Franciscus Korota and Dorothea Dobrotić"
+        "Croatia, Church Books, 1516-1994 — Križovljan Radovečki baptism register, 1871, entry #22 (page image ark:/61903/3:1:3QS7-L99C-YW38), read directly: Georgius, son of Josephus Horvat vel Korotaj and Theresia, Virje N. 8 — the disproving record",
+        "The hint index entry it contradicts: Jacobus Korota, baptised 3 Apr 1871, parents Franciscus Korota and Dorothea Dobrotić (ark:/61903/1:1:QKMG-HJFG; mother persona ark:/61903/1:1:QKMG-HJF5)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having examined the 1871 Križovljan Radovečki baptism register, the agent should document a negative conclusion: the hint record is a different Korotaj family's child, and no record found establishes a child born to Dora Dobrotić and Franjo Korotaj in 1871. The couple's documented children remain those already in the tree (Franja, christened 1855; Philippus, born 1863; Antonius, born 1865).",
+      "details": {
+        "subject_person": "Dora Dobrotić (PID K48B-4CP)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: no 1871 child of this couple found",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "No entry in the 1871 Križovljan Radovečki baptism register (Croatia, Church Books, 1516-1994) names Franjo Korotaj and Dora Dobrotić as parents"
       ],
       "required": true
     }
