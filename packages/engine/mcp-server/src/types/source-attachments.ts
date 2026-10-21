@@ -10,8 +10,10 @@ export interface AttachedPersonRaw {
   tfEntityRefId: string;
 }
 
+/** A researcher tree also returns entries attached to a relationship only,
+ *  which carry `parentChildRelationships` and no `persons`. */
 export interface AttachmentEntryRaw {
-  persons: AttachedPersonRaw[];
+  persons?: AttachedPersonRaw[];
   sourceId: string;
 }
 

@@ -1,10 +1,12 @@
 // extraction_append — extraction in code, for research.json's `sources` and
 // `assertions` sections.
 //
-// Three call shapes, exactly one per call: `recordIds` (FamilySearch records,
+// Four call shapes, exactly one per call: `recordIds` (FamilySearch records,
 // read live and extracted from the index), `documents` (any other source,
-// structured by the record-structurer agent), and `absences` (negative evidence
-// from a nil search). In every shape the roles and the three classification
+// structured by the record-structurer agent), `absences` (negative evidence
+// from a nil search), and `personId` (every indexed record attached to one tree
+// person, extracted and linked to that person as an unchecked candidate, the
+// one `person_evidence` write this tool makes). In every shape the roles and the three classification
 // layers are decided HERE, from the extraction table; no caller supplies them,
 // and the input has nowhere to put them.
 //
@@ -50,6 +52,8 @@ import type { RecordReadInput, RecordReadResult } from "../types/record-read.js"
 import { researchLogAppend } from "./research-log-append.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { sourceIdsForRecordIds, activePlanItems } from "./research-append.js";
+import { findAnchor, collectSourceRefs, ATTACHMENT_LINK_RATIONALE } from "../utils/tree-person.js";
+import { isRejectedPair } from "../utils/rejected-links.js";
 import { summarizeExtraction, censusStatedRelationships, detectRecordType } from "../utils/record-extract.js";
 import {
   validateStructuredDocument,
@@ -70,7 +74,7 @@ export const EXTRACTION_SECTIONS: ReadonlySet<string> = new Set([
 export const PLAN_COMPLETION_SECTIONS: ReadonlySet<string> = new Set(["plan_items"]);
 
 type BatchCall = ExtractionBatchInput &
-  ({ recordIds: string[] } | { absences: AbsenceInput[] } | { documents: DocumentInput[] });
+  ({ recordIds: string[] } | { absences: AbsenceInput[] } | { documents: DocumentInput[] } | { personId: string });
 
 export async function extractionAppend(
   input: BatchCall,
@@ -86,7 +90,7 @@ export async function runExtractionAppend(
   deps: ExtractionAppendDeps,
   principal: Principal,
 ): Promise<ExtractionBatchResult> {
-  const MODES = ["recordIds", "documents", "absences"] as const;
+  const MODES = ["recordIds", "documents", "absences", "personId"] as const;
   const got = MODES.filter((k) => (input as any)?.[k] !== undefined);
   // The hand-built forms, in both spellings (`ops`, and one flat op), and the
   // one-record extractor mode (`logEntryId` + `recordId`).
@@ -110,10 +114,11 @@ export async function runExtractionAppend(
       records: [],
       errors: [
         (got.length === 0
-          ? "extraction_append received none of `recordIds`, `documents` or `absences`. "
+          ? "extraction_append received none of `recordIds`, `documents`, `absences` or `personId`. "
           : `extraction_append received ${got.map((k) => `\`${k}\``).join(" and ")} together. `) +
           "Send exactly one: `recordIds` to extract FamilySearch records, `documents` for any other " +
-          "source, or `absences` to record people a search did not find.",
+          "source, `absences` to record people a search did not find, or `personId` to extract and " +
+          "link every indexed record attached to one tree person.",
       ],
     };
   }
@@ -128,6 +133,7 @@ export async function runExtractionAppend(
     return { ok: false, records: [], errors: [e instanceof Error ? e.message : String(e)] };
   }
   if (input.recordIds !== undefined) return recordIdsMode(input, deps, principal);
+  if (input.personId !== undefined) return personIdMode(input, deps, principal);
   if (input.absences !== undefined) return absencesMode(input);
   return documentsMode(input);
 }
@@ -186,6 +192,8 @@ export interface ExtractionBatchInput {
   absences?: AbsenceInput[];
   documents?: DocumentInput[];
   questionIds?: string[];
+  /** A tree person (tree id or FamilySearch id) whose attached records to extract and link. */
+  personId?: string;
   /** Expected-but-absent persons for a record in `recordIds`, keyed by its id. */
   absentPersons?: { recordId?: string; name: string; factType?: string; note?: string }[];
 }
@@ -211,6 +219,13 @@ export interface ExtractionBatchResult {
   reason?: "no_project";
   /** Plan items this call completed, present only when it touched one. */
   planItems?: PlanItemsOutcome;
+  /** `personId` mode only: the counts, and one code-written line for the call. */
+  extracted?: number;
+  linked?: number;
+  skipped?: number;
+  alreadyLinked?: number;
+  rejectedSkipped?: number;
+  summary?: string;
 }
 
 const READ_CONCURRENCY = 4;
@@ -286,12 +301,12 @@ async function reusableLogEntry(
 async function tieRecordToQuestions(
   projectPath: string,
   research: any,
-  bareId: string,
+  recordIds: ReadonlySet<string>,
   questionIds: readonly string[],
 ): Promise<{ tied: string[]; warnings: string[] }> {
   const ops: ResearchAppendOp[] = [];
   for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
-    if (!a || typeof a.id !== "string" || typeof a.record_id !== "string" || arkToBareId(a.record_id) !== bareId) continue;
+    if (!a || typeof a.id !== "string" || typeof a.record_id !== "string" || !recordIds.has(arkToBareId(a.record_id))) continue;
     const have: string[] = Array.isArray(a.extracted_for_question_ids) ? a.extracted_for_question_ids : [];
     const add = questionIds.filter((q) => !have.includes(q));
     if (add.length === 0) continue;
@@ -333,7 +348,9 @@ export interface PlanItemsOutcome {
 async function completePlanItems(
   projectPath: string,
   bareIds: ReadonlySet<string>,
+  groups: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
 ): Promise<PlanItemsOutcome | undefined> {
+  const widen = (b: string): ReadonlySet<string> => groups.get(b) ?? new Set([b]);
   if (bareIds.size === 0) return undefined;
   let research: any;
   try {
@@ -342,7 +359,7 @@ async function completePlanItems(
     return undefined;
   }
   const log: any[] = Array.isArray(research.log) ? research.log : [];
-  const extracted = [...bareIds].filter((b) => sourceIdsForRecordIds(research, new Set([b])).size > 0);
+  const extracted = [...bareIds].filter((b) => sourceIdsForRecordIds(research, widen(b)).size > 0);
   if (extracted.length === 0) return undefined;
   const sidecarCache = new Map<string, Set<string>>();
   const listed = async (ref: string): Promise<Set<string>> => {
@@ -373,7 +390,8 @@ async function completePlanItems(
     let hit = false;
     for (const e of searches) {
       const ids = await listed(e.results_ref);
-      if (extracted.some((b) => ids.has(b))) {
+      // A search "lists the record" when it lists any of its persona ARKs.
+      if (extracted.some((b) => [...widen(b)].some((x) => ids.has(x)))) {
         hit = true;
         break;
       }
@@ -394,6 +412,228 @@ async function completePlanItems(
 }
 
 /**
+ * Bare record id -> every persona ARK (bare) of the `record_read` sidecar that
+ * lists it, itself included. A record is extracted under the ARK of the persona
+ * that requested it, so the father in a baptism and the child name the same
+ * record by two ids; widening by the sidecar's `persons[].ark` makes them one.
+ * An unreadable sidecar adds nothing.
+ */
+async function personaGroups(projectPath: string, research: any): Promise<Map<string, Set<string>>> {
+  const groups = new Map<string, Set<string>>();
+  const log: any[] = Array.isArray(research?.log) ? research.log : [];
+  for (const e of log) {
+    if (e?.tool !== "record_read" || typeof e?.results_ref !== "string") continue;
+    let rows: any[];
+    try {
+      rows = (await readStagedResults(projectPath, e.results_ref)) as any[];
+    } catch {
+      continue;
+    }
+    for (const row of rows) {
+      const ids = new Set<string>();
+      if (typeof row?.recordId === "string") ids.add(arkToBareId(row.recordId));
+      for (const person of Array.isArray(row?.gedcomx?.persons) ? row.gedcomx.persons : []) {
+        if (typeof person?.ark === "string") ids.add(arkToBareId(person.ark));
+      }
+      if (ids.size < 2) continue;
+      const merged = new Set<string>(ids);
+      for (const id of ids) for (const x of groups.get(id) ?? []) merged.add(x);
+      for (const id of merged) groups.set(id, merged);
+    }
+  }
+  return groups;
+}
+
+/** Internal per-call options for `recordIdsMode`, never an input field. */
+interface RecordIdsOptions {
+  /** Bare record id -> the tree S the import already made for it. */
+  sourceDescriptionIdByBare?: ReadonlyMap<string, string>;
+}
+
+/** The sections a link write reaches: `personId` mode's attachment links only,
+ *  composed whole in code (ADR-0006, amended 2026-10-20). */
+export const ATTACHMENT_LINK_SECTIONS: ReadonlySet<string> = new Set(["person_evidence"]);
+
+const RECORD_TOKEN = /1:1:([A-Z0-9]+(?:-[A-Z0-9]+)+)/i;
+
+/**
+ * `personId`: the baseline step (lead, 2026-10-19 and 2026-10-20). Extract
+ * every indexed record FamilySearch has attached to one tree person, and link
+ * each one to that person as an unchecked candidate. It assumes every
+ * attachment is correct, with no agent and no same_person gate; checking them
+ * is a separate request.
+ *
+ * Only the person's own person-, name- and fact-level refs count, never a
+ * relationship's, because most of those name the other party. A ref whose tree
+ * source is not a `1:1:` record is counted as skipped. Each record is extracted
+ * through `recordIdsMode` under the tree S the import made for it.
+ *
+ * Links go to the assertions of the attached persona, found through the
+ * record's sidecar `persons[].ark`, with `confidence: "speculative"`, no score
+ * and `ATTACHMENT_LINK_RATIONALE`. A record is linked only when none of that
+ * persona's assertions has a live link yet, so a persona someone already
+ * decided about is never split across two tree persons. A rejected pair is
+ * never re-linked. Each record's links are one write, retried one link at a
+ * time on a refusal, so one refused pair never sinks the rest.
+ */
+async function personIdMode(
+  input: ExtractionBatchInput,
+  deps: ExtractionAppendDeps,
+  principal: Principal,
+): Promise<ExtractionBatchResult> {
+  const personId = typeof input.personId === "string" ? input.personId.trim() : "";
+  if (personId === "") return { ok: false, records: [], errors: ["`personId` must be a non-empty tree or FamilySearch person id."] };
+  let tree: any;
+  let research: any;
+  try {
+    tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
+    research = await readProjectJson(input.projectPath, "research.json");
+  } catch (e) {
+    return { ok: false, records: [], errors: [e instanceof Error ? e.message : String(e)] };
+  }
+  let person: any;
+  try {
+    person = findAnchor(Array.isArray(tree?.persons) ? tree.persons : [], personId);
+  } catch (e) {
+    return { ok: false, records: [], errors: [e instanceof Error ? e.message : String(e)] };
+  }
+
+  // The person's own attachments, mapped to their bare 1:1: record ids.
+  const sourceById = new Map<string, any>(
+    (Array.isArray(tree?.sources) ? tree.sources : []).filter((s: any) => typeof s?.id === "string").map((s: any) => [s.id, s]),
+  );
+  const sourceIdByBare = new Map<string, string>();
+  let skipped = 0;
+  for (const raw of collectSourceRefs(person)) {
+    const ref = raw.startsWith("#") ? raw.slice(1) : raw;
+    const match = RECORD_TOKEN.exec(String(sourceById.get(ref)?.url ?? ""));
+    if (!match) {
+      skipped++;
+      continue;
+    }
+    const bare = match[1].toUpperCase();
+    if (!sourceIdByBare.has(bare)) sourceIdByBare.set(bare, ref);
+  }
+  const skippedNote =
+    skipped > 0 ? ` ${skipped} attached source${skipped === 1 ? " is" : "s are"} not indexed records; not extracted.` : "";
+  if (sourceIdByBare.size === 0) {
+    return {
+      ok: true,
+      records: [],
+      extracted: 0,
+      linked: 0,
+      skipped,
+      summary: `${person.id}: no attached indexed record exists, so nothing was extracted or linked.${skippedNote}`,
+    };
+  }
+
+  const extraction = await recordIdsMode(
+    { projectPath: input.projectPath, recordIds: [...sourceIdByBare.keys()].map((b) => `ark:/61903/1:1:${b}`) },
+    deps,
+    principal,
+    { sourceDescriptionIdByBare: sourceIdByBare },
+  );
+
+  // Link, against the project as it now stands.
+  let after: any;
+  try {
+    after = await readProjectJson(input.projectPath, "research.json");
+  } catch (e) {
+    return { ...extraction, errors: [...(extraction.errors ?? []), `could not re-read research.json to link: ${e instanceof Error ? e.message : String(e)}`] };
+  }
+  const groups = await personaGroups(input.projectPath, after);
+  const assertions: any[] = Array.isArray(after.assertions) ? after.assertions : [];
+  const liveLinked = new Set(
+    (Array.isArray(after.person_evidence) ? after.person_evidence : [])
+      .filter((pe: any) => pe && pe.superseded_by == null)
+      .map((pe: any) => pe.assertion_id),
+  );
+  const logById = new Map<string, any>((Array.isArray(after.log) ? after.log : []).filter((e: any) => typeof e?.id === "string").map((e: any) => [e.id, e]));
+  let linked = 0;
+  let alreadyLinked = 0;
+  let rejectedSkipped = 0;
+  let unlinkable = 0;
+  const linkErrors: string[] = [];
+  for (const o of extraction.records) {
+    if (o.status !== "extracted" && o.status !== "already_extracted") continue;
+    const bare = arkToBareId(o.recordId);
+    const recordIds = groups.get(bare) ?? new Set([bare]);
+    const ofRecord = assertions.filter((a) => typeof a?.record_id === "string" && recordIds.has(arkToBareId(a.record_id)));
+    // The attached persona's id, read off the sidecar the record's assertions cite.
+    let personaId: string | undefined;
+    for (const logId of new Set(ofRecord.map((a) => a.log_entry_id))) {
+      const ref = logById.get(logId)?.results_ref;
+      if (typeof ref !== "string") continue;
+      try {
+        for (const row of (await readStagedResults(input.projectPath, ref)) as any[]) {
+          const persona = (Array.isArray(row?.gedcomx?.persons) ? row.gedcomx.persons : []).find(
+            (p: any) => typeof p?.ark === "string" && arkToBareId(p.ark) === bare,
+          );
+          if (typeof persona?.id === "string") personaId = persona.id;
+        }
+      } catch {
+        // An unreadable sidecar names no persona; the record is reported unlinked.
+      }
+      if (personaId) break;
+    }
+    const ofPersona = personaId ? ofRecord.filter((a) => a.record_persona_id === personaId) : [];
+    if (ofPersona.length === 0) {
+      unlinkable++;
+      continue;
+    }
+    if (ofPersona.some((a) => liveLinked.has(a.id))) {
+      alreadyLinked++;
+      continue;
+    }
+    const ops: ResearchAppendOp[] = [];
+    for (const a of ofPersona) {
+      if (isRejectedPair(a.id, person.id, after.rejected_links)) {
+        rejectedSkipped++;
+        continue;
+      }
+      ops.push({
+        section: "person_evidence",
+        op: "append",
+        entry: { assertion_id: a.id, person_id: person.id, confidence: "speculative", match_score: null, rationale: ATTACHMENT_LINK_RATIONALE },
+      });
+    }
+    if (ops.length === 0) continue;
+    const linkOpts = { allowedSections: ATTACHMENT_LINK_SECTIONS, toolName: "extraction_append", attachmentLink: true };
+    const whole = await researchAppend({ projectPath: input.projectPath, ops } as ResearchAppendInput, linkOpts);
+    if (whole.ok) {
+      linked += ops.length;
+      continue;
+    }
+    for (const op of ops) {
+      const one = await researchAppend({ projectPath: input.projectPath, ops: [op] } as ResearchAppendInput, linkOpts);
+      if (one.ok) linked++;
+      else linkErrors.push(`${(op as any).entry.assertion_id} was not linked to ${person.id}: ${one.errors.join("; ")}`);
+    }
+  }
+
+  const extracted = extraction.records.filter((o) => o.status === "extracted").length;
+  const parts = [
+    `${person.id}: ${sourceIdByBare.size} attached indexed record${sourceIdByBare.size === 1 ? "" : "s"}`,
+    `${extracted} extracted`,
+    `${linked} assertion${linked === 1 ? "" : "s"} linked as unverified attachments`,
+  ];
+  if (alreadyLinked > 0) parts.push(`${alreadyLinked} record${alreadyLinked === 1 ? "" : "s"} left as linked already`);
+  if (unlinkable > 0) parts.push(`${unlinkable} record${unlinkable === 1 ? "" : "s"} extracted but not linked (no persona to link)`);
+  if (rejectedSkipped > 0) parts.push(`${rejectedSkipped} rejected pair${rejectedSkipped === 1 ? "" : "s"} not re-linked`);
+  return {
+    ...extraction,
+    ok: extraction.ok,
+    extracted,
+    linked,
+    skipped,
+    ...(alreadyLinked > 0 ? { alreadyLinked } : {}),
+    ...(rejectedSkipped > 0 ? { rejectedSkipped } : {}),
+    ...(linkErrors.length > 0 ? { errors: [...(extraction.errors ?? []), ...linkErrors] } : {}),
+    summary: `${parts.join("; ")}.${skippedNote} Checking these attachments is a separate request.`,
+  };
+}
+
+/**
  * `recordIds`: read each FamilySearch record live, log every read in ONE
  * `research_log_append` batch, then persist each record with its OWN
  * `research_append` call. `research_append` takes exactly one sources append per
@@ -405,6 +645,7 @@ async function recordIdsMode(
   input: ExtractionBatchInput,
   deps: ExtractionAppendDeps,
   principal: Principal,
+  opts: RecordIdsOptions = {},
 ): Promise<ExtractionBatchResult> {
   const ids = input.recordIds ?? [];
   if (!Array.isArray(ids) || ids.length === 0 || ids.some((r) => typeof r !== "string" || r.trim() === "")) {
@@ -428,16 +669,21 @@ async function recordIdsMode(
     outcomes.push({ recordId: raw.trim(), status: "extracted", summary: "" });
   }
 
-  // 1. Resend skip, FIRST — before any read or log write — by the same
-  //    record-id -> source mapping research_append's reuse detection uses.
+  // 1. Resend skip, FIRST — before any read or log write. A record is one
+  //    record whichever persona's ARK requested it: each requested id is widened
+  //    to every persona ARK of a `record_read` sidecar that lists it, then looked
+  //    up by the record-id -> source mapping research_append's reuse detection
+  //    uses.
+  const groups = await personaGroups(input.projectPath, research);
+  const widen = (b: string): ReadonlySet<string> => groups.get(b) ?? new Set([b]);
   for (const o of outcomes) {
-    const existing = sourceIdsForRecordIds(research, new Set([arkToBareId(o.recordId)]));
+    const existing = sourceIdsForRecordIds(research, widen(arkToBareId(o.recordId)));
     if (existing.size > 0) {
       const srcId = [...existing][0];
       o.status = "already_extracted";
       o.srcId = srcId;
       o.summary = `${o.recordId}: already extracted as ${srcId}; nothing written.`;
-      await tieOutcome(o, input.projectPath, research, input.questionIds);
+      await tieOutcome(o, input.projectPath, research, input.questionIds, widen(arkToBareId(o.recordId)));
     }
   }
 
@@ -548,8 +794,12 @@ async function recordIdsMode(
       if (reusedHint.has(o.recordId)) {
         for (const op of ops as any[]) if (op?.entry && "record_persona_id" in op.entry) op.entry.record_persona_id = null;
       }
+      // An attached record cites the tree S the import already made for it, so
+      // no duplicate S is minted. research_append refuses both at once.
+      const importedS = opts.sourceDescriptionIdByBare?.get(arkToBareId(o.recordId));
+      if (importedS) (ops[0] as any).entry.gedcomx_source_description_id = importedS;
       const written = await researchAppend(
-        { projectPath: input.projectPath, ops, sourceDescription } as ResearchAppendInput,
+        { projectPath: input.projectPath, ops, ...(importedS ? {} : { sourceDescription }) } as ResearchAppendInput,
         { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
       );
       if (!written.ok) {
@@ -564,7 +814,7 @@ async function recordIdsMode(
     }
   }
 
-  const planItems = await completePlanItems(input.projectPath, landedBareIds(outcomes));
+  const planItems = await completePlanItems(input.projectPath, landedBareIds(outcomes), groups);
   return {
     ok: outcomes.some((o) => o.status === "extracted" || o.status === "already_extracted"),
     records: outcomes.map(({ stagedRef: _s, hintLogId: _h, ...rest }) => rest),
@@ -587,9 +837,10 @@ async function tieOutcome(
   projectPath: string,
   research: any,
   questionIds: readonly string[] | undefined,
+  recordIds: ReadonlySet<string> = new Set([arkToBareId(o.recordId)]),
 ): Promise<void> {
   if (!questionIds || questionIds.length === 0) return;
-  const { tied, warnings } = await tieRecordToQuestions(projectPath, research, arkToBareId(o.recordId), questionIds);
+  const { tied, warnings } = await tieRecordToQuestions(projectPath, research, recordIds, questionIds);
   if (tied.length > 0) o.summary = `${o.recordId}: already extracted as ${o.srcId}; tied to ${questionIds.join(", ")}.`;
   if (warnings.length > 0) o.warnings = [...(o.warnings ?? []), ...warnings];
 }
@@ -1133,10 +1384,16 @@ export const extractionAppendSchema = {
     "before anything is written; an unknown key is refused.\n" +
     "- `absences` — people a search expected and did not find, when there is no " +
     "record to extract. Log the nil search with `research_log_append` first.\n" +
+    "- `personId` — a tree person (tree id or FamilySearch id). Every indexed " +
+    "record FamilySearch has attached to them is extracted and linked to them " +
+    "as an UNVERIFIED candidate (`speculative`, no score). Checking those links " +
+    "is a separate request.\n" +
     "\n" +
     "Returns one outcome per record, each with a code-written `summary`: relay " +
-    "it verbatim, since you do not see the record yourself. Identity links " +
-    "(`person_evidence`) are NOT written here; a correction to an existing " +
+    "it verbatim, since you do not see the record yourself; `personId` also " +
+    "returns one `summary` for the whole call. Identity links " +
+    "(`person_evidence`) are NOT written here except those unverified " +
+    "attachment links; a correction to an existing " +
     "assertion goes through `research_append`.",
   inputSchema: {
     type: "object",
@@ -1144,6 +1401,12 @@ export const extractionAppendSchema = {
       projectPath: {
         type: "string",
         description: "Absolute path to the project folder holding research.json.",
+      },
+      personId: {
+        type: "string",
+        description:
+          "THE PERSON'S ATTACHED RECORDS. A tree person id, or their FamilySearch " +
+          "id. Send alone: no `recordIds`, `documents`, `absences` or `questionIds`.",
       },
       recordIds: {
         type: "array",

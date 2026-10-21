@@ -3,6 +3,7 @@ import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import { describeFetchError } from "../utils/http.js";
 import { arkToUrl } from "../utils/ark.js";
+import { withSessionTree } from "../utils/session-tree.js";
 import type {
   SourceAttachmentsInput,
   SourceAttachmentsApiResponse,
@@ -81,10 +82,20 @@ async function fetchAttachmentMap(
   return map;
 }
 
+/**
+ * `opts.treeId` answers for that tree instead of the Family Tree. The endpoint
+ * takes no tree parameter, so the session's current tree is switched for the
+ * call (`withSessionTree`). Not advertised in the MCP schema: an agent has no
+ * tree id to pass.
+ */
 export async function sourceAttachmentsTool(
   input: SourceAttachmentsInput,
   principal: Principal,
+  opts: { treeId?: string } = {},
 ): Promise<SourceAttachmentsResult> {
+  if (opts.treeId) {
+    return withSessionTree(principal, opts.treeId, () => sourceAttachmentsTool(input, principal));
+  }
   if (!Array.isArray(input.uris) || input.uris.length === 0) {
     throw new Error("uris array must not be empty.");
   }

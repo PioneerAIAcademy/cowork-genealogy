@@ -10,13 +10,18 @@ import type { JobState } from '../api'
 // field must degrade to no badge rather than a wrong one.
 const LABELS: Record<Exclude<JobState, 'new'>, string> = {
   running: 'Working…',
+  // A message the reader sent mid-turn, waiting for the turn to end. Not "Needs
+  // you" -- they have already spoken and the system owes the next move -- and not
+  // "Working…", which would blur it with a turn that is actually executing.
+  queued: 'Queued',
   'needs you': 'Needs you',
   done: 'Done',
   stopped: 'Stopped'
 }
 
-// Two of the four want the reader's attention; two are resting states.
-const ATTENTION = new Set<JobState>(['running', 'needs you'])
+// Three of the five want the reader's attention; two are resting states. `queued`
+// is live work pending, so it reads as active rather than at rest.
+const ATTENTION = new Set<JobState>(['running', 'queued', 'needs you'])
 
 export function JobStateBadge({ state }: { state?: JobState }): React.JSX.Element | null {
   if (!state || state === 'new') return null

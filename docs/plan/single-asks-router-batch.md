@@ -1,5 +1,10 @@
 # Issue #2813 items 1, 4 and 6: the router's bounded/job decision
 
+> **Premise changed 2026-10-15.** The web opener is gone and `research` is the only
+> front door; the routing table sends a no-project first message to `init-project` or
+> `tree-survey`. Anything below that reasons from the prefix needs re-reading before
+> it is built.
+
 **Status:** CODE LANDED on `2813-router-bounded-decision` (items 1, 4, 6); **acceptance is
 unbought.** The paid `research` unit-eval run named at "Done when" has NOT been run — the
 newest log is `eval/runlogs/unit/research/v7`, which predates this branch — so the three
@@ -90,7 +95,7 @@ The other three #2813 items are deliberately NOT here:
    `CONTINUE_REASON`, whose text is "invoke the next GPS sub-skill now" with no router
    re-entry, and the default web path
    never enters the router at all — `apps/web/src/components/chatEvents.ts:114` prefixes
-   every new session's first message with `OPENING_TURN`, so `init-project` runs and nothing
+   every new session's first message with `OPENING_TURN`, so `init-project` ran and nothing
    in that chain invokes `research`.
 
 **Consequence for acceptance:** on the web path a bounded FIRST message never reaches this
@@ -177,6 +182,34 @@ The last is real but understated in the draft: *"Create a research plan for Mary
 leave it at that"* both names a destination and is bounded. That is PR #3147's own
 acceptance case. Resolve it by name: naming a destination says *where* to end; bounded says
 *whether to continue past it*.
+
+**Every bounded ask names its owner (issue #3526).** The router sentence "Hand a bounded request
+straight to the step that owns its deliverable" now names one for every item on the list: a
+source review goes to `source-evaluation`, a same-person or should-merge question to
+`person-evidence`, a hint verdict to `search-hints`, a place-and-period ask to `locality-guide`,
+and a children-or-siblings completeness ask to `search-records`. Without a named owner the
+router, which holds `person_read`, `source_attachments` and `project_context` itself, did the
+work inline (ADR-0009). Before the sentence, the same-person ask went inline on a single run
+(`ut_research_p3v`) while the other three already routed. Two of the owners were decided rather
+than read off the list (review-ready, 2026-10-19):
+
+- **Children or siblings completeness goes to `search-records`, not `check-warnings`.** The
+  single-ask design (#2813 item 6) says "find the missing children/siblings" returns candidates
+  with what was searched, which is a search. `check-warnings` reaches completeness only through
+  `census_children_gap`, when a mother's 1900/1910 census counts are supplied, and it has no
+  sibling path, so it is named as well only when the message gives those counts. Rejected:
+  `check-warnings` alone, which silently does nothing for siblings or for a request without
+  counts.
+- **The records-request letter stays on the list and is written inline.** It is part of the
+  lead's bounded list (#2813 item 1), and dropping it would turn "write me a records-request
+  letter" into a job that walks the routing table. No agent writes letters, so the router
+  writes it in the turn, the way the status ask is answered without a hand-off. Rejected:
+  dropping it from the list, and a new letter-writing agent (a new capability, far larger than
+  this change).
+
+A merge goes to `tree-edit` only when the message instructs a merge of two persons already
+confirmed identical. `tree-edit` holds `merge_tree_persons`, so a "should these be merged?"
+sent there would perform the merge the user only asked about.
 
 ### Item 4 — start from what is attached
 

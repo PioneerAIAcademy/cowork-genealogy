@@ -270,6 +270,39 @@ def test_the_same_completion_without_an_extraction_append_call_fails():
     assert "plans" in str(e.value)
 
 
+def _attachment(pe_id, **over):
+    from harness.skill_invocation import ATTACHMENT_LINK_RATIONALE
+
+    return {"id": pe_id, "assertion_id": "a_001", "person_id": "I1", "confidence": "speculative",
+            "match_score": None, "rationale": ATTACHMENT_LINK_RATIONALE, **over}
+
+
+def test_attachment_links_by_extraction_append_are_in_lane():
+    """The research router runs extraction_append({ personId }) and is no
+    person_evidence caller (issue #3516)."""
+    check_research(
+        research(person_evidence=[]), research(person_evidence=[_attachment("pe_001")]),
+        {"name": "research"}, POSITIVE, tool_calls=_EXTRACT,
+    )
+
+
+@pytest.mark.parametrize(
+    "before, after",
+    [
+        ([], [_attachment("pe_001", confidence="probable")]),
+        ([], [_attachment("pe_001", match_score=0.9)]),
+        ([], [_attachment("pe_001", rationale="Matched by name and age.")]),
+        ([_attachment("pe_001")], [_attachment("pe_001", superseded_by="pe_002"), _attachment("pe_002")]),
+    ],
+    ids=["probable", "scored", "other-rationale", "edits-an-existing-link"],
+)
+def test_any_other_person_evidence_write_with_extraction_append_still_fails(before, after):
+    with pytest.raises(AssertionError) as e:
+        check_research(research(person_evidence=before), research(person_evidence=after),
+                       {"name": "research"}, POSITIVE, tool_calls=_EXTRACT)
+    assert "person_evidence" in str(e.value)
+
+
 def test_a_question_tie_plus_an_append_is_in_lane():
     before = research(assertions=[{"id": "a_001", "extracted_for_question_ids": ["q_001"], "fact_type": "Birth"}])
     after = research(assertions=[

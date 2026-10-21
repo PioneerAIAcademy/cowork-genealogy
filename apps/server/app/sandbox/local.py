@@ -15,11 +15,14 @@ import signal
 import socket
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 from ..config import get_settings
 from ..ws_token import sandbox_secret
 from .base import (
+    NEVER_INHERITED_AGENT_ENV,
+    OPTIONAL_AGENT_ENV,
     PROJECT_DIR,
     SECRETS_PATH,
     ConnectURL,
@@ -29,6 +32,7 @@ from .base import (
     SandboxProvider,
     SandboxSpec,
     SandboxState,
+    optional_agent_env,
 )
 
 # apps/server, so the WS-server subprocess can `python -m app.sandbox_server`.
@@ -167,6 +171,19 @@ class LocalSandbox(Sandbox):
         return str(self._abs("/home/user"))
 
 
+#: The module the WS-server subprocess runs. Named once: the launch argv, the
+#: on-disk record and the reaper's ownership check must all agree, and a reaper
+#: matching the wrong string silently reaps nothing.
+SERVER_MODULE = "app.sandbox_server"
+
+
+# One token per control-plane PROCESS, not per provider instance: the token's job
+# is to say which control plane owns a spawned server, and a plane that builds two
+# providers over the same directory still owns both. Minted at import.
+OWNER_TOKEN = f"{os.getpid()}-{uuid.uuid4().hex}"
+OWNER_ENV_VAR = "GENEALOGY_SANDBOX_OWNER"
+
+
 class LocalProvider(SandboxProvider):
     def __init__(self, sandboxes_dir: Path):
         self._dir = sandboxes_dir
@@ -235,18 +252,211 @@ class LocalProvider(SandboxProvider):
             # write_file actually put the file. E2B needs no override — there
             # the path is real inside the microVM.
             "AGENT_SECRETS_PATH": str(self._abs_secrets(sandbox_id)),
+            # Which control plane spawned this server. AGENT_SECRETS_PATH cannot say:
+            # it derives from the shared sandboxes_dir, so two planes compute the
+            # IDENTICAL string and each reads the other's as its own.
+            OWNER_ENV_VAR: OWNER_TOKEN,
         }
+        for name in (*OPTIONAL_AGENT_ENV, *NEVER_INHERITED_AGENT_ENV):
+            env.pop(name, None)
+        env.update(optional_agent_env(settings))
         from ..anthropic_proxy import proxy_active
         if proxy_active():
             env["ANTHROPIC_BASE_URL"] = f"{settings.public_url}/api/anthropic-proxy"
         env.pop("ANTHROPIC_API_KEY", None)
         log = open(self._root(sandbox_id) / "ws.log", "ab")
         proc = subprocess.Popen(
-            [sys.executable, "-m", "app.sandbox_server"],
+            [sys.executable, "-m", SERVER_MODULE],
             env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True,
         )
         self._servers[sandbox_id] = (proc, port)
+        self._record_server(sandbox_id, proc.pid, port)
         return port
+
+    # ── orphan reaping ────────────────────────────────────────────
+    #
+    # `_servers` is in-memory and these subprocesses are launched with
+    # `start_new_session=True`, so they are in their OWN process group and
+    # survive a control plane that dies without reaching `aclose()` -- a crash,
+    # a `kill -9`, a reload. The next run then has no idea they exist. That is
+    # how nine of them were once found running, one 17 days old, and why "is my
+    # sandbox running?" had to be answered with a process table.
+    #
+    # So the pid goes on disk beside the sandbox, and startup reaps what it can
+    # PROVE is ours.
+
+    def _server_file(self, sandbox_id: str) -> Path:
+        return self._root(sandbox_id) / "server.json"
+
+    def _record_server(self, sandbox_id: str, pid: int, port: int) -> None:
+        try:
+            self._server_file(sandbox_id).write_text(
+                json.dumps({"pid": pid, "port": port, "argv": SERVER_MODULE,
+                            "owner": OWNER_TOKEN, "owner_pid": os.getpid()}),
+                encoding="utf-8",
+            )
+        except OSError:
+            # Losing the record costs reaping, never correctness. A sandbox that
+            # cannot write here still runs.
+            pass
+
+    def _forget_server(self, sandbox_id: str) -> None:
+        try:
+            self._server_file(sandbox_id).unlink()
+        except OSError:
+            pass
+
+    def _has_foreign_token(self, pid: int, sandbox_id: str) -> bool:
+        """Whether this process's environ names a control plane that is not us.
+
+        Unreadable environ answers False: it falls through to `_is_our_server`,
+        which answers NO for the same input, so an unreadable process is never
+        killed either way.
+        """
+        try:
+            entries = Path(f"/proc/{pid}/environ").read_bytes().split(b"\0")
+        except OSError:
+            return False
+        for e in entries:
+            if e.startswith(f"{OWNER_ENV_VAR}=".encode()):
+                return e != f"{OWNER_ENV_VAR}={OWNER_TOKEN}".encode()
+        return False
+
+    def _is_our_server(self, pid: int, sandbox_id: str) -> bool:
+        """Whether `pid` is alive AND is THIS provider's WS server for `sandbox_id`.
+
+        Liveness alone is not enough: pids are reused, and killing a stranger
+        because it inherited a number we wrote down weeks ago is far worse than
+        leaking a process. So the command line must name the module too, and a
+        platform that cannot show us one gets NO for an answer -- reaping is a
+        convenience, and an unverifiable kill is not worth it.
+
+        The MODULE is not enough either, and that is the second check here. Every
+        server on the machine is spawned as `python -m <SERVER_MODULE>` with no
+        arguments, so the command line is byte-identical for all of them: two
+        control planes sharing a `sandboxes_dir` -- `make server-dev` on :8000 and
+        `make server` on :1837 is the shipped way to get two -- each see the
+        other's `server.json`, do not track it in `self._servers`, find a live pid
+        whose cmdline names the module, and killpg a sibling's live session.
+
+        `AGENT_SECRETS_PATH` DOES NOT settle it on its own: it is
+        `sandboxes_dir / <id> / ...`, so two planes sharing that directory compute
+        the IDENTICAL string and each reads the other's server as its own.
+        `make server-dev` and `make server` both use `data_dir/sandboxes`, so the
+        shipped way to get two planes was also the way to get a sibling's live
+        session killed.
+
+        **What settles it is `reap_orphans`, not this method**, and the split is
+        deliberate. `_is_live_siblings` reads `server.json`'s recorded owner and
+        asks whether THAT PROCESS is still alive -- which is the only question that
+        separates a live sibling's session (leave it) from a crashed plane's orphan
+        (reap it). Both carry a foreign token, so the token alone cannot tell them
+        apart, and requiring OUR token here would refuse to reap every orphan a
+        crashed plane left behind -- the reaper's whole purpose.
+
+        `OWNER_ENV_VAR` is NOT read here. It is read by `_has_foreign_token`, for
+        the one case `server.json` cannot answer -- a record written before owners
+        were recorded, where there is no owner pid to ask about. Both callers live
+        in `reap_orphans`, so this method stays what its name says: does this pid
+        look like a server for this sandbox, under this directory.
+
+        An environ we cannot read gets NO, for the same reason an unreadable
+        cmdline does.
+        """
+        try:
+            cmdline = Path(f"/proc/{pid}/cmdline").read_bytes()
+        except OSError:
+            return False
+        if SERVER_MODULE.encode() not in cmdline:
+            return False
+        try:
+            environ = Path(f"/proc/{pid}/environ").read_bytes()
+        except OSError:
+            return False
+        entries = environ.split(b"\0")
+        # Exact entries, not substrings of the whole blob: one sandbox id being a
+        # prefix of another would otherwise match the wrong process.
+        if f"AGENT_SECRETS_PATH={self._abs_secrets(sandbox_id)}".encode() not in entries:
+            return False
+        return True
+
+    def _is_live_siblings(self, record: dict, pid: int, sandbox_id: str) -> bool:
+        """Whether this server belongs to ANOTHER control plane that is still up.
+
+        Narrow on purpose: it answers True only when the record names an owner,
+        that owner is not us, AND its process is alive. A crashed plane's orphan
+        answers False and is reaped, which is what the reaper exists for; so does
+        a record written before owners were recorded, which keeps the old
+        behaviour for everything already on disk.
+        """
+        owner = record.get("owner")
+        if owner == OWNER_TOKEN:
+            return False
+        if not owner:
+            # A record written before owners were recorded: there is no owner pid to
+            # ask about, so the environ token is the only evidence. A token that is
+            # not ours means another plane spawned it and we cannot show that plane
+            # is gone. No token at all is a pre-token spawn, which reaps as it did.
+            return self._has_foreign_token(pid, sandbox_id)
+        owner_pid = record.get("owner_pid")
+        if not isinstance(owner_pid, int) or owner_pid <= 0:
+            return False
+        try:
+            os.kill(owner_pid, 0)
+        except ProcessLookupError:
+            return False  # the owner is gone; its orphans are ours to reap
+        except (PermissionError, OSError):
+            return True  # alive, just not ours to signal
+        return True
+
+    def reap_orphans(self) -> list[str]:
+        """Kill WS servers left behind by an earlier control plane.
+
+        Returns the sandbox ids reaped, so a caller can log what it cleaned up
+        rather than doing it silently -- the point is to make the state
+        answerable, and a silent reap answers nothing.
+        """
+        reaped: list[str] = []
+        if not self._dir.is_dir():
+            return reaped
+        for child in sorted(self._dir.iterdir()):
+            if not child.is_dir() or child.name in self._servers:
+                continue
+            f = child / "server.json"
+            if not f.is_file():
+                continue
+            try:
+                record = json.loads(f.read_text(encoding="utf-8"))
+                pid = int(record.get("pid") or 0)
+            except (OSError, ValueError, TypeError):
+                self._forget_server(child.name)
+                continue
+            # Skip ONLY what is provably a live sibling's: a recorded owner that
+            # is not us and whose process is still running. Everything else falls
+            # through to the checks below, so a record written before owners
+            # existed reaps exactly as it used to.
+            #
+            # This is the case AGENT_SECRETS_PATH cannot see: two planes sharing
+            # `data_dir/sandboxes` compute the IDENTICAL path, so without this
+            # plane B's startup killpg'd plane A's live session.
+            if self._is_live_siblings(record, pid, child.name):
+                continue
+            if pid <= 0 or not self._is_our_server(pid, child.name):
+                # Dead, or not provably ours. Drop the stale record either way:
+                # keeping it would make every later reap re-examine a pid that
+                # will never match again.
+                self._forget_server(child.name)
+                continue
+            try:
+                if hasattr(os, "killpg"):
+                    os.killpg(os.getpgid(pid), signal.SIGTERM)
+                else:
+                    os.kill(pid, signal.SIGTERM)
+            except (ProcessLookupError, PermissionError, OSError):
+                pass
+            self._forget_server(child.name)
+            reaped.append(child.name)
+        return reaped
 
     async def _kill_server(self, proc: subprocess.Popen) -> None:
         if proc.poll() is None:
@@ -307,6 +517,9 @@ class LocalProvider(SandboxProvider):
         entry = self._servers.pop(sandbox_id, None)
         if entry is not None:
             await self._kill_server(entry[0])
+        # Unconditional: a suspend that found nothing in `_servers` may still be
+        # clearing a record this process never owned.
+        self._forget_server(sandbox_id)
 
     async def delete(self, sandbox_id: str) -> None:
         await self.suspend(sandbox_id)
@@ -326,6 +539,7 @@ class LocalProvider(SandboxProvider):
         return out
 
     async def aclose(self) -> None:
-        for entry in list(self._servers.values()):
+        for sandbox_id, entry in list(self._servers.items()):
             await self._kill_server(entry[0])
+            self._forget_server(sandbox_id)
         self._servers.clear()
