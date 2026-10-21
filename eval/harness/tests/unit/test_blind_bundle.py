@@ -312,3 +312,124 @@ def test_bundle_digest_local_agrees_with_real(tmp_path):
     local = _bundle_digest_local("s", stem, fixtures, runlogs)
     real = bundle_digest(bundle_paths("s", stem, fixtures_root=fixtures, runlogs_root=runlogs))
     assert local == real
+
+
+# --------------------------------------------------------------------------- #
+# A stamped digest survives a fixture.json `hint` backfill (issue #3553)
+# --------------------------------------------------------------------------- #
+
+import shutil
+
+from check_e2e_fixtures import _DIGEST_IGNORED_FIXTURE_KEYS as _LOCAL_IGNORED_KEYS
+from e2e.blind_bundle import (
+    DEFAULT_FIXTURES_ROOT,
+    DEFAULT_RUNLOGS_ROOT,
+    _DIGEST_IGNORED_FIXTURE_KEYS,
+)
+
+_JOAO_SLUG = "joao-sousa-death"
+_JOAO_STEM = "run-2026-10-13_17-30-36"
+_JOAO_HINT = {"persona_ark": "ark:/61903/1:1:6YP6-D37M", "identity": "unresolved"}
+
+
+def _drop_hint(obj: dict) -> dict:
+    obj.pop("hint", None)
+    return obj
+
+
+def _copy_joao(tmp_path: Path) -> tuple[Path, Path, str]:
+    """Copy the real graded joao-sousa-death run into tmp; return its stamped digest.
+
+    The copied fixture.json loses any ``hint``, so every test starts from the
+    pre-backfill state the grade was stamped against, whatever main holds.
+    """
+    fixtures = tmp_path / "fixtures"
+    runlogs = tmp_path / "runlogs"
+    shutil.copytree(DEFAULT_FIXTURES_ROOT / _JOAO_SLUG, fixtures / _JOAO_SLUG)
+    _rewrite_json(fixtures / _JOAO_SLUG / "fixture.json", _drop_hint)
+    (runlogs / _JOAO_SLUG).mkdir(parents=True)
+    for suffix in (".ann.json", ".final-tree.gedcomx.json", ".final-research.json"):
+        name = _JOAO_STEM + suffix
+        shutil.copy2(DEFAULT_RUNLOGS_ROOT / _JOAO_SLUG / name, runlogs / _JOAO_SLUG / name)
+    ann = json.loads((runlogs / _JOAO_SLUG / f"{_JOAO_STEM}.ann.json").read_text(encoding="utf-8"))
+    return fixtures, runlogs, ann["blind_bundle_digest"]
+
+
+def _joao_digests(fixtures: Path, runlogs: Path) -> tuple[str, str]:
+    real = bundle_digest(bundle_paths(_JOAO_SLUG, _JOAO_STEM,
+                                      fixtures_root=fixtures, runlogs_root=runlogs))
+    local = _bundle_digest_local(_JOAO_SLUG, _JOAO_STEM, fixtures, runlogs)
+    return real, local
+
+
+def _rewrite_json(path: Path, edit, *, indent: int = 2) -> None:
+    obj = json.loads(path.read_text(encoding="utf-8"))
+    obj = edit(obj)
+    path.write_text(json.dumps(obj, indent=indent, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def test_ignored_fixture_keys_agree_across_implementations():
+    assert _DIGEST_IGNORED_FIXTURE_KEYS == _LOCAL_IGNORED_KEYS == ("hint",)
+
+
+def test_joao_copy_reproduces_stamped_digest(tmp_path):
+    fixtures, runlogs, stamped = _copy_joao(tmp_path)
+    assert _joao_digests(fixtures, runlogs) == (stamped, stamped)
+
+
+@pytest.mark.parametrize("edit,indent", [
+    (lambda m: {**m, "hint": _JOAO_HINT}, 2),
+    (lambda m: {**m, "hint": None}, 2),
+    (lambda m: {"hint": _JOAO_HINT, **m}, 4),
+], ids=["hint-object-appended", "hint-null", "hint-object-first-reindented"])
+def test_hint_backfill_keeps_stamped_digest(tmp_path, edit, indent):
+    fixtures, runlogs, stamped = _copy_joao(tmp_path)
+    _rewrite_json(fixtures / _JOAO_SLUG / "fixture.json", edit, indent=indent)
+    assert _joao_digests(fixtures, runlogs) == (stamped, stamped)
+
+
+def _set(key, value):
+    def edit(obj):
+        obj[key] = value
+        return obj
+    return edit
+
+
+def _set_nested_hint(obj):
+    obj["tags"]["hint"] = _JOAO_HINT
+    return obj
+
+
+@pytest.mark.parametrize("filename,edit", [
+    ("fixture.json", _set("researcher_question", "When did João Gomes de Sousa die?")),
+    ("fixture.json", _set("notes", "")),
+    ("fixture.json", _set("hints", _JOAO_HINT)),
+    ("fixture.json", _set_nested_hint),
+    ("expected-findings.json", _set("hint", _JOAO_HINT)),
+], ids=["researcher_question", "notes", "hints-key", "nested-tags-hint",
+        "hint-in-expected-findings"])
+def test_any_other_change_still_moves_digest(tmp_path, filename, edit):
+    fixtures, runlogs, stamped = _copy_joao(tmp_path)
+    _rewrite_json(fixtures / _JOAO_SLUG / filename, edit)
+    real, local = _joao_digests(fixtures, runlogs)
+    assert real != stamped
+    assert local != stamped
+
+
+def test_hint_backfill_passes_both_rung_8_checks(tmp_path):
+    from e2e.calibrate_judge import load_annotated_runs
+
+    fixtures, runlogs, _ = _copy_joao(tmp_path)
+    fixture_json = fixtures / _JOAO_SLUG / "fixture.json"
+    _rewrite_json(fixture_json, lambda m: {**m, "hint": _JOAO_HINT})
+    assert validate_e2e_annotations(runlogs, fixtures) == []
+    cases, problems = load_annotated_runs(runlogs, fixtures)
+    assert [p for p in problems if p.severity == "error"] == []
+    assert [c["blind_bundle_digest_present"] for c in cases] == [True]
+
+    _rewrite_json(fixture_json, _set("researcher_question", "Where did he die?"))
+    errors = validate_e2e_annotations(runlogs, fixtures)
+    assert len(errors) == 1 and "blind_bundle_digest mismatch" in errors[0]
+    cases, problems = load_annotated_runs(runlogs, fixtures)
+    assert cases == []
+    assert any("blind_bundle_digest mismatch" in p.message for p in problems)

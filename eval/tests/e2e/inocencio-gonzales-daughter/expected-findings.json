@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Inocencio Gonzales and Antonia Uraque had a daughter, Juana Gonzalo, born 19 July 1895 and baptised 21 July 1895 at Sacaca, Alonzo de Ibáñez, Potosí, Bolivia; the baptism indexes the parents as Inocencio Gonsalo and Antonia Araque.",
+      "details": {
+        "subject_person": "Inocencio Gonzales (GY75-S9D)",
+        "relation": "child",
+        "target_person": {
+          "name": "Juana Gonzalo",
+          "birth": "19 July 1895",
+          "christening": "21 July 1895, Sacaca, Alonzo de Ibáñez, Potosí, Bolivia"
+        },
+        "mother": "Antonia Uraque (indexed Araque)"
+      },
+      "supporting_sources": [
+        "Bolivia, Catholic Church Records, 1566-2020 — baptism of Juana Gonsalo, born 19 Jul 1895, baptised 21 Jul 1895, Sacaca, Potosí, parents Inocencio Gonsalo and Antonia Araque"
+      ],
+      "required": true
+    }
+  ]
+}

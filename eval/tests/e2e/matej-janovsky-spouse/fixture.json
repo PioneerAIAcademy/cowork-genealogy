@@ -1,0 +1,19 @@
+{
+  "id": "matej-janovsky-spouse",
+  "name": "Matěj Janovský — a wife named Marie and a son baptised in 1874, Malšice, Bohemia",
+  "genre": "record-hint",
+  "source_pid": "GMBS-DQZ",
+  "captured": "2026-10-20",
+  "researcher_question": "Matěj Janovský, born about 1843, married Kateřina Votýpková at Malšice, Tábor, Bohemia on 27 October 1866. Who were his wife or wives, and which children were born to him?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1870s",
+    "geography": "CZ"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 8, hint-samples.csv row 239, flags adds_spouse/adds_son, confidence 3). Draft transcribed from an 1874 Malšice Catholic baptism entry for a son Josef, naming the father Matěj Janovský and the mother only as Marie; unverified. The tree's only wife is Kateřina Votýpková, so a true match means a second marriage."
+}

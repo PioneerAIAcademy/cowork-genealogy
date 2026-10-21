@@ -13,11 +13,12 @@
       "middle-name",
       "family-surname-as-given",
       "plan-execution",
-      "topical-fixture-required"
+      "topical-fixture-required",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute the 1880 census search for plan item pli_001. The subject is Sarah Ann Mullen Price — but note that 'Mullen' is her middle given name (her mother's maiden surname), not her own surname. Her surname is Price. Search accordingly.",
+    "delegation": "Execute the 1880 census search for plan item pli_001. The subject is Sarah Ann Mullen Price — but note that 'Mullen' is her middle given name (her mother's maiden surname), not her own surname. Her surname is Price. Search accordingly.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "mullen-price-child-middle-name"
   },
   "mcp_fixtures": [

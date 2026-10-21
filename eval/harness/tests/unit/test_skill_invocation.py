@@ -954,6 +954,15 @@ def test_extraction_append_by_the_retired_record_extractor_not_flagged():
     assert find_protected_writes_by_unnamed_delegate(calls) == []
 
 
+def test_extraction_append_by_search_records_not_flagged_bare_or_namespaced():
+    """search-records extracts when its delegation says to, so its calls are not
+    an unnamed-delegate bypass. Fails without `search-records` in
+    EXTRACTION_AGENT_NAMES."""
+    for agent_type in ("search-records", "genealogy-research:search-records"):
+        calls = [_extraction_call(agent_id="a1", agent_type=agent_type)]
+        assert find_protected_writes_by_unnamed_delegate(calls) == [], agent_type
+
+
 def test_extraction_append_by_main_thread_not_flagged():
     calls = [_extraction_call(agent_id=None, agent_type=None)]
     assert find_protected_writes_by_unnamed_delegate(calls) == []

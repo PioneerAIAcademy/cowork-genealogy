@@ -13,11 +13,12 @@
       "log-honest-no-match",
       "rank-search-matches",
       "collection-mismatch",
-      "topical-fixture-required"
+      "topical-fixture-required",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search the 1870 census for Patrick Flynn in Schuylkill County to see if he stayed in the area through young adulthood.",
+    "delegation": "Search the 1870 census for Patrick Flynn in Schuylkill County to see if he stayed in the area through young adulthood.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

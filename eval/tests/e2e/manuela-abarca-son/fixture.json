@@ -1,0 +1,19 @@
+{
+  "id": "manuela-abarca-son",
+  "name": "Josefa Manuela Abarca Fallas — a son José Vidal born October 1899, San Juan de Dios, Desamparados, Costa Rica",
+  "genre": "record-hint",
+  "source_pid": "G7XQ-GMG",
+  "captured": "2026-10-20",
+  "researcher_question": "Josefa Manuela Abarca Fallas, born 12 June 1873 at Aserrí, San José, daughter of Rafael de Jesús Abarca Monge and Francisca de Jesús Fallas Alfaro, married Juan García Calderón by civil registration in January 1892. What children did Manuela and Juan have?",
+  "tags": {
+    "question_type": "children",
+    "era": "1890s",
+    "geography": "CR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 6, hint-samples.csv row 209, flag adds_son, confidence 3). Draft transcribed from an 1899 Costa Rican civil birth registration of José Vidal García Abarca at San Juan de Dios naming Juan García and Manuela Abarca as parents; unverified."
+}
