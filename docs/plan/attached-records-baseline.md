@@ -132,7 +132,7 @@ Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. 
 
 ### The census table
 
-A genealogist fills the table; the developer builds the module, its reader and its checks. Land the module with the US, England, Wales, Scotland and Ireland rows first, so C2 does not wait on the rest.
+The developer has Claude fill the table, from the live catalog (`dev/probe-census-placeids.ts` lists every single-year census collection with its record count) and what it knows of each country's censuses. It covers every country in North America, South America, Europe and Australia with an indexed FamilySearch census, which may be more than 25. It is a good guess, fixed row by row as rows prove wrong (lead, 2026-10-21).
 
 - [ ] **`src/data/census-table.ts`**, a typed constant, so it needs no file read. One row per census a FamilySearch index covers:
   - `year`;
@@ -140,7 +140,7 @@ A genealogist fills the table; the developer builds the module, its reader and i
   - `covers`, the standard-place suffix it covers ("United States", "New York, United States"). A national census FamilySearch holds only in part is one row per province or state it covers;
   - `collection_id`, the FamilySearch collection holding its index;
   - `heads_only`, true where the census names only the head of household (US 1790–1840).
-- [ ] **Which rows.** A census with no indexed FamilySearch collection gets no row. Start with about 25 countries: every country in the e2e starting trees, then the largest FamilySearch census holdings.
+- [ ] **Which rows.** A census with no indexed FamilySearch collection gets no row. Countries elsewhere get rows later.
 - [ ] **The named fragment list** sits beside the table: US 1890; Ireland 1821, 1831, 1841 and 1851; New South Wales 1841. A Vitest case fails when any table row names a listed year for its place.
 - [ ] **`dev/check-census-table.ts`** checks every row against the live catalog: its `collection_id` exists, its record count is above 0, and its title names the row's year. Run it when the table changes, and record the run in the PR body. No CI job runs it.
 - [ ] **What the live catalog showed on 2026-10-21** (`dev/probe-census-placeids.ts`, PR #3670), for the spec:
