@@ -253,6 +253,7 @@ describe("error classes", () => {
       ["timeout", () => fetchMock.mockRejectedValue(Object.assign(new Error("t"), { name: "TimeoutError" })), () => tools.recordRead(ark("QQQQ-115")), "transient"],
       ["no token", () => vi.mocked(loadTokens).mockResolvedValue(null), () => tools.recordRead(ark("QQQQ-116")), "stop"],
       ["404 record", () => fetchMock.mockResolvedValue(res(404)), () => tools.recordRead(ark("QQQQ-117")), "permanent"],
+      ["410 record", () => fetchMock.mockResolvedValue(res(410)), () => tools.recordRead(ark("QQQQ-118")), "permanent"],
       ["deleted person", () => fetchMock.mockResolvedValue(res(410)), () => tools.personRead("KWCB-QZ3"), "permanent"],
       ["tombstoned quality", () => fetchMock.mockResolvedValue(res(200, { isValid: true, visibility: "TOMBSTONED" })), () => tools.personQuality("KWCB-QZ4"), "permanent"],
     ];
@@ -268,6 +269,7 @@ describe("error classes", () => {
     }
     expect(Object.fromEntries(Object.entries(got).map(([k, v]) => [k, v.split(" <- ")[0]])), JSON.stringify(got, null, 2)).toEqual(want);
     expect(classifyError("something nobody has seen before")).toBe("transient");
+    expect(classifyError("FamilySearch recapi error: 500")).toBe("transient");
     expect(classifyError("Record 4X7Q-429 was not found in FamilySearch historical records.")).toBe("permanent");
     expect(classifyError("Person KWCB-429 not found in the FamilySearch Family Tree.")).toBe("permanent");
   }, 30_000);

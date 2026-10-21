@@ -21,6 +21,10 @@
 // The section restriction is passed as a second function argument to
 // `researchAppend`, NOT as a field on the tool input — see
 // `ResearchAppendOptions` for why that distinction is what makes it unforgeable.
+// It is chosen per call (ADR-0006, amended 2026-10-20). Beyond the extraction
+// write, code composes two more: a re-found record's assertions gain the
+// caller's question ids, and the plan item behind an extracted record moves
+// from `in_progress` to `completed` in a `plan_items`-only call.
 
 import {
   researchAppend,
@@ -45,19 +49,25 @@ import { recordReadTool } from "./record-read.js";
 import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
 import { researchLogAppend, type ResearchLogAppendOp } from "./research-log-append.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
-import { sourceIdsForRecordIds } from "./research-append.js";
-import { summarizeExtraction, censusStatedRelationships } from "../utils/record-extract.js";
+import { sourceIdsForRecordIds, activePlanItems } from "./research-append.js";
+import { summarizeExtraction, censusStatedRelationships, detectRecordType } from "../utils/record-extract.js";
 import {
   validateStructuredDocument,
   documentToExtract,
   type StructuredDocument,
 } from "../utils/structured-document.js";
 
-/** The sections extraction writes: one record's source plus its assertions. */
+/** The sections extraction writes: one record's source plus its assertions, and
+ *  the question ids a re-found record gains. */
 export const EXTRACTION_SECTIONS: ReadonlySet<string> = new Set([
   "sources",
   "assertions",
 ]);
+
+/** The one section the plan-item completion write reaches. Code composes the
+ *  whole op (`in_progress` → `completed`), so no input field reaches it
+ *  (ADR-0006, amended 2026-10-20). */
+export const PLAN_COMPLETION_SECTIONS: ReadonlySet<string> = new Set(["plan_items"]);
 
 type BatchCall = ExtractionBatchInput &
   ({ recordIds: string[] } | { absences: AbsenceInput[] } | { documents: DocumentInput[] });
@@ -199,6 +209,8 @@ export interface ExtractionBatchResult {
   errors?: string[];
   /** The one `ok: false` that is an answer: `projectPath` is not a project. */
   reason?: "no_project";
+  /** Plan items this call completed, present only when it touched one. */
+  planItems?: PlanItemsOutcome;
 }
 
 const READ_CONCURRENCY = 4;
@@ -209,16 +221,27 @@ function srcIdOf(result: ResearchAppendResult): string | undefined {
 }
 
 /**
- * The log entry an accepted FamilySearch hint left for this record: the LATEST
- * `person_record_matches` verdict naming the record's ark, when it is positive
- * and no assertion cites it yet. A later negative verdict rejects the hint, so
- * an earlier positive one is not reused. `search-hints` logs it with no
- * sidecar, because the hint stages nothing;
- * extraction cites it instead of logging a second `record_read` for the same
- * record, which would leave the hint's own entry unreferenced and send the
- * router back to extract the record again on every pass.
+ * The log entry this record already has, which extraction cites instead of
+ * logging a second one. Two kinds, the first found wins:
+ *
+ * - `hint`: the entry an accepted FamilySearch hint left. That is the LATEST
+ *   `person_record_matches` verdict naming the record's ark, when it is
+ *   positive and no assertion cites it yet; a later negative verdict rejects
+ *   the hint. `search-hints` logs it with no sidecar, because the hint stages
+ *   nothing, so the record is still read live and only the entry is reused.
+ *   Without that the hint's own entry stays unreferenced and the router sends
+ *   the record back to extraction on every pass.
+ * - `read`: the latest uncited `record_read` of this record whose sidecar still
+ *   holds it. The read is reused rather than repeated. A census row is reused
+ *   only when it carries `indexFields`, the per-persona index data an older
+ *   read did not stage. Any doubt about the sidecar falls back to a live read.
  */
-function acceptedHintLogId(research: any, bareId: string, citedLogIds: ReadonlySet<unknown>): string | undefined {
+async function reusableLogEntry(
+  projectPath: string,
+  research: any,
+  bareId: string,
+  citedLogIds: ReadonlySet<unknown>,
+): Promise<{ logId: string; resultsRef: string | null; kind: "hint" | "read" } | undefined> {
   const log: any[] = Array.isArray(research.log) ? research.log : [];
   const verdicts = log.filter(
     (e) =>
@@ -227,8 +250,147 @@ function acceptedHintLogId(research: any, bareId: string, citedLogIds: ReadonlyS
       arkToBareId(e.query.recordId) === bareId,
   );
   const latest = verdicts[verdicts.length - 1];
-  if (latest?.outcome !== "positive" || citedLogIds.has(latest.id)) return undefined;
-  return typeof latest.id === "string" ? latest.id : undefined;
+  if (latest?.outcome === "positive" && !citedLogIds.has(latest.id) && typeof latest.id === "string") {
+    return { logId: latest.id, resultsRef: null, kind: "hint" };
+  }
+  const reads = log.filter(
+    (e) =>
+      e?.tool === "record_read" &&
+      typeof e?.id === "string" &&
+      typeof e?.results_ref === "string" &&
+      typeof e?.query?.recordId === "string" &&
+      arkToBareId(e.query.recordId) === bareId &&
+      !citedLogIds.has(e.id),
+  );
+  for (const e of reads.reverse()) {
+    try {
+      const rows = await readStagedResults(projectPath, e.results_ref);
+      const row: any = rows.find((r: any) => typeof r?.recordId === "string" && arkToBareId(r.recordId) === bareId);
+      if (!row?.gedcomx) continue;
+      if (detectRecordType(row.gedcomx) === "census" && !row.indexFields) continue;
+      return { logId: e.id, resultsRef: e.results_ref, kind: "read" };
+    } catch {
+      continue;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * A question claims a record extracted before it existed (lead, 2026-10-20):
+ * the ids are appended to every assertion of that record that lacks one, and
+ * never removed. The update arm validates the merged entry, so an assertion
+ * written before a later rule refuses the batch; each is then tried alone and
+ * the ones still refused are named.
+ */
+async function tieRecordToQuestions(
+  projectPath: string,
+  research: any,
+  bareId: string,
+  questionIds: readonly string[],
+): Promise<{ tied: string[]; warnings: string[] }> {
+  const ops: ResearchAppendOp[] = [];
+  for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
+    if (!a || typeof a.id !== "string" || typeof a.record_id !== "string" || arkToBareId(a.record_id) !== bareId) continue;
+    const have: string[] = Array.isArray(a.extracted_for_question_ids) ? a.extracted_for_question_ids : [];
+    const add = questionIds.filter((q) => !have.includes(q));
+    if (add.length === 0) continue;
+    ops.push({ section: "assertions", op: "update", entryId: a.id, fields: { extracted_for_question_ids: [...have, ...add] } });
+  }
+  if (ops.length === 0) return { tied: [], warnings: [] };
+  const opts = { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" };
+  const whole = await researchAppend({ projectPath, ops } as ResearchAppendInput, opts);
+  if (whole.ok) return { tied: ops.map((o) => o.entryId!), warnings: [] };
+  const tied: string[] = [];
+  const warnings: string[] = [];
+  for (const op of ops) {
+    const one = await researchAppend({ projectPath, ops: [op] } as ResearchAppendInput, opts);
+    if (one.ok) tied.push(op.entryId!);
+    else warnings.push(`${op.entryId} was not tied to ${questionIds.join(", ")}: ${one.errors.join("; ")}`);
+  }
+  return { tied, warnings };
+}
+
+/** What `completePlanItems` did, for the result. */
+export interface PlanItemsOutcome {
+  completed: string[];
+  errors?: string[];
+}
+
+/**
+ * Completes the plan item behind a record this call extracted or re-sent. An
+ * `in_progress` item on an active plan completes once ANY of its plan-tied
+ * positive or partial `record_search` entries lists, in its sidecar, a record
+ * that now has an assertion (lead, 2026-10-19: "every entry" left 124 of 617
+ * previously-completed FamilySearch items stuck, and one extraction already
+ * puts "the plan item's evidence in hand", lead, 2026-08-23). Read off the
+ * saved results, so a reused read, a re-send and a record two items both found
+ * are covered alike (lead, 2026-10-20). Only `record_search` sidecars: a
+ * full-text result names an image, never a record. Each item is its own write,
+ * because one refused item fails a whole batch; a refusal is reported and
+ * never fails the extraction.
+ */
+async function completePlanItems(
+  projectPath: string,
+  bareIds: ReadonlySet<string>,
+): Promise<PlanItemsOutcome | undefined> {
+  if (bareIds.size === 0) return undefined;
+  let research: any;
+  try {
+    research = await readProjectJson(projectPath, "research.json");
+  } catch {
+    return undefined;
+  }
+  const log: any[] = Array.isArray(research.log) ? research.log : [];
+  const extracted = [...bareIds].filter((b) => sourceIdsForRecordIds(research, new Set([b])).size > 0);
+  if (extracted.length === 0) return undefined;
+  const sidecarCache = new Map<string, Set<string>>();
+  const listed = async (ref: string): Promise<Set<string>> => {
+    let ids = sidecarCache.get(ref);
+    if (!ids) {
+      ids = new Set<string>();
+      try {
+        for (const r of (await readStagedResults(projectPath, ref)) as any[]) {
+          if (typeof r?.recordId === "string") ids.add(arkToBareId(r.recordId));
+        }
+      } catch {
+        // An unreadable sidecar lists nothing; the item stays as it is.
+      }
+      sidecarCache.set(ref, ids);
+    }
+    return ids;
+  };
+  const completed: string[] = [];
+  const errors: string[] = [];
+  for (const item of activePlanItems(research, () => true)) {
+    const searches = log.filter(
+      (e) =>
+        e?.plan_item_id === item.itemId &&
+        e?.tool === "record_search" &&
+        (e?.outcome === "positive" || e?.outcome === "partial") &&
+        typeof e?.results_ref === "string",
+    );
+    let hit = false;
+    for (const e of searches) {
+      const ids = await listed(e.results_ref);
+      if (extracted.some((b) => ids.has(b))) {
+        hit = true;
+        break;
+      }
+    }
+    if (!hit) continue;
+    const written = await researchAppend(
+      {
+        projectPath,
+        ops: [{ section: "plan_items", op: "update", planId: item.planId, entryId: item.itemId, fields: { status: "completed" } }],
+      } as ResearchAppendInput,
+      { allowedSections: PLAN_COMPLETION_SECTIONS, toolName: "extraction_append" },
+    );
+    if (written.ok) completed.push(item.itemId);
+    else errors.push(`${item.itemId} was not completed: ${written.errors.join("; ")}`);
+  }
+  if (completed.length === 0 && errors.length === 0) return undefined;
+  return errors.length > 0 ? { completed, errors } : { completed };
 }
 
 /**
@@ -258,7 +420,7 @@ async function recordIdsMode(
 
   // One outcome per DISTINCT record: a repeated id in the call is one record.
   const seen = new Set<string>();
-  const outcomes: (RecordOutcome & { stagedRef?: string })[] = [];
+  const outcomes: (RecordOutcome & { stagedRef?: string; hintLogId?: string })[] = [];
   for (const raw of ids) {
     const bare = arkToBareId(raw.trim());
     if (seen.has(bare)) continue;
@@ -275,11 +437,29 @@ async function recordIdsMode(
       o.status = "already_extracted";
       o.srcId = srcId;
       o.summary = `${o.recordId}: already extracted as ${srcId}; nothing written.`;
+      await tieOutcome(o, input.projectPath, research, input.questionIds);
     }
   }
 
-  // 2. Reads, in parallel. An error or an unstaged read is reported and skipped.
-  const toRead = outcomes.filter((o) => o.status === "extracted");
+  // 2. The entry a record nothing has extracted yet already has. A reused read
+  //    is neither read nor logged again. An accepted hint keeps precedence; it
+  //    has no sidecar, so the record is still read and only its entry is cited.
+  const assertionLogIds = new Set(
+    (Array.isArray(research.assertions) ? research.assertions : []).map((a: any) => a?.log_entry_id),
+  );
+  for (const o of outcomes) {
+    if (o.status !== "extracted") continue;
+    const reused = await reusableLogEntry(input.projectPath, research, arkToBareId(o.recordId), assertionLogIds);
+    if (reused?.kind === "hint") {
+      o.hintLogId = reused.logId;
+    } else if (reused) {
+      o.logId = reused.logId;
+      o.stagedRef = reused.resultsRef!;
+    }
+  }
+
+  // 3. Reads, in parallel. An error or an unstaged read is reported and skipped.
+  const toRead = outcomes.filter((o) => o.status === "extracted" && !o.logId);
   await mapWithConcurrency(toRead, READ_CONCURRENCY, async (o) => {
     try {
       const r = await deps.readRecord({ recordId: o.recordId, projectPath: input.projectPath }, principal);
@@ -297,15 +477,14 @@ async function recordIdsMode(
 
   const staged = outcomes.filter((o) => o.status === "extracted" && o.stagedRef);
   if (staged.length > 0) {
-    // 3. ONE log batch for every read, except a record an accepted hint already
-    //    logged: that entry is the record's own and is reused, never a second.
-    const assertionLogIds = new Set(
-      (Array.isArray(research.assertions) ? research.assertions : []).map((a: any) => a?.log_entry_id),
-    );
+    // 4. ONE log batch for every fresh read, except a record an accepted hint
+    //    already logged: that entry is the record's own and is reused, never a
+    //    second. A reused read (step 2) already carries its entry.
     const reusedHint = new Set<string>();
     for (const o of staged) {
-      o.logId = acceptedHintLogId(research, arkToBareId(o.recordId), assertionLogIds);
-      if (o.logId) reusedHint.add(o.recordId);
+      if (o.logId || !o.hintLogId) continue;
+      o.logId = o.hintLogId;
+      reusedHint.add(o.recordId);
     }
     const fresh = staged.filter((o) => !o.logId);
     const logged = fresh.length === 0
@@ -334,9 +513,9 @@ async function recordIdsMode(
       });
     }
 
-    // 4. One research_append per logged record. A record reusing a hint's
-    //    entry does not depend on the batch above, so a refused batch leaves
-    //    it to be written.
+    // 5. One research_append per logged record. A record reusing a hint's or
+    //    a read's entry does not depend on the batch above, so a refused batch
+    //    leaves it to be written.
     for (const o of staged) {
       if (o.status !== "extracted" || !o.logId) continue;
       let doc: ExtractDocument | undefined;
@@ -385,10 +564,34 @@ async function recordIdsMode(
     }
   }
 
+  const planItems = await completePlanItems(input.projectPath, landedBareIds(outcomes));
   return {
     ok: outcomes.some((o) => o.status === "extracted" || o.status === "already_extracted"),
-    records: outcomes.map(({ stagedRef: _s, ...rest }) => rest),
+    records: outcomes.map(({ stagedRef: _s, hintLogId: _h, ...rest }) => rest),
+    ...(planItems ? { planItems } : {}),
   };
+}
+
+/** The records this call extracted or found already extracted. */
+function landedBareIds(outcomes: readonly RecordOutcome[]): Set<string> {
+  return new Set(
+    outcomes
+      .filter((o) => o.status === "extracted" || o.status === "already_extracted")
+      .map((o) => arkToBareId(o.recordId)),
+  );
+}
+
+/** The resend skip's question tie, folded into the record's outcome. */
+async function tieOutcome(
+  o: RecordOutcome,
+  projectPath: string,
+  research: any,
+  questionIds: readonly string[] | undefined,
+): Promise<void> {
+  if (!questionIds || questionIds.length === 0) return;
+  const { tied, warnings } = await tieRecordToQuestions(projectPath, research, arkToBareId(o.recordId), questionIds);
+  if (tied.length > 0) o.summary = `${o.recordId}: already extracted as ${o.srcId}; tied to ${questionIds.join(", ")}.`;
+  if (warnings.length > 0) o.warnings = [...(o.warnings ?? []), ...warnings];
 }
 
 /**
@@ -611,7 +814,8 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     return { ok: false, records: [], errors: [`could not read research.json: ${e instanceof Error ? e.message : String(e)}`] };
   }
 
-  const outcomes: (RecordOutcome & { d: DocumentInput })[] = docs.map((d) => ({
+  type DocOutcome = RecordOutcome & { d: DocumentInput };
+  const outcomes: DocOutcome[] = docs.map((d) => ({
     recordId: d.recordId.trim(),
     status: "extracted",
     summary: "",
@@ -623,30 +827,33 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
       o.status = "already_extracted";
       o.srcId = [...existing][0];
       o.summary = `${o.recordId}: already extracted as ${o.srcId}; nothing written.`;
+      await tieOutcome(o, input.projectPath, research, input.questionIds);
+    }
+  }
+
+  // A transcription already finalized under its own log entry (a
+  // `results/<log_id>.json`) is cited, not logged a second time as a
+  // `user_provided` entry, which would drop the scan's text from the source.
+  const log: any[] = Array.isArray(research.log) ? research.log : [];
+  const cited = new Map<DocOutcome, { logId: string; resultsRef: string }>();
+  for (const o of outcomes) {
+    const ref = o.d.transcriptionRef;
+    if (o.status !== "extracted" || !ref || ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
+    // Only a page logged as image_transcribe: a search sidecar cited here would
+    // be written as a source with no text, and its search would read as extracted.
+    const entry = log.find((e) => e?.results_ref === ref && e?.tool === "image_transcribe" && typeof e?.id === "string");
+    if (entry) {
+      cited.set(o, { logId: entry.id, resultsRef: ref });
+    } else {
+      o.status = "refused";
+      o.errors = [`transcriptionRef '${ref}' is neither a staged ${STAGING_SUBDIR}/ ref nor the results_ref of an image_transcribe log entry`];
+      o.summary = `${o.recordId}: its transcriptionRef ${ref} is a finalized result no log entry names as an image_transcribe read, so it cannot be cited.`;
     }
   }
 
   const todo = outcomes.filter((o) => o.status === "extracted");
   if (todo.length > 0) {
-    const logs = new Map<(typeof outcomes)[number], { logId: string; resultsRef?: string | null }>();
-    // A transcription a caller already logged is a finalized results/<log_id>.json:
-    // cite that entry rather than log it again, because research_log_append
-    // takes only staged refs and the second log refused the whole batch (#2490).
-    for (const o of todo) {
-      const ref = o.d.transcriptionRef;
-      if (!ref || ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
-      const entry = (Array.isArray(research?.log) ? research.log : []).find(
-        (l: any) => l && l.results_ref === ref && l.tool === "image_transcribe" && typeof l.id === "string",
-      );
-      if (entry) {
-        logs.set(o, { logId: entry.id, resultsRef: ref });
-      } else {
-        o.status = "refused";
-        o.errors = [`transcriptionRef '${ref}' is neither a staged ${STAGING_SUBDIR}/ ref nor the results_ref of an image_transcribe log entry`];
-        o.summary = `${o.recordId}: not extracted: ${o.errors[0]}.`;
-      }
-    }
-    const toLog = todo.filter((o) => o.status === "extracted" && !logs.has(o));
+    const toLog = todo.filter((o) => !cited.has(o));
     // One page often holds two entries, so two documents can share a staged
     // ref; it is logged once and both cite that entry.
     const logOps: ResearchLogAppendOp[] = [];
@@ -662,85 +869,90 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
       );
       return logOps.length - 1;
     });
-    const logged = logOps.length === 0 ? null : await researchLogAppend({ projectPath: input.projectPath, ops: logOps });
-    if (logged && (!logged.ok || !("results" in logged))) {
+    const logged = logOps.length === 0
+      ? { ok: true as const, results: [] as { logId: string; resultsRef?: string | null }[] }
+      : await researchLogAppend({ projectPath: input.projectPath, ops: logOps });
+    const logRefused = !logged.ok || !("results" in logged);
+    if (logRefused) {
       const errs = (logged as any).errors ?? ["research_log_append refused the batch"];
       for (const o of toLog) {
         o.status = "refused";
         o.errors = errs;
         o.summary = `${o.recordId}: not extracted, because logging it was refused: ${errs.join("; ")}.`;
       }
-    } else if (logged && "results" in logged) {
-      toLog.forEach((o, i) => logs.set(o, logged.results[opIndex[i]]));
     }
-    // Outside the branch above: a document citing an already-logged page is
-    // written even when the staged batch beside it was refused.
-    for (const o of todo) {
-      const lr = logs.get(o);
-      if (!lr) continue;
-      o.logId = lr.logId;
-      let transcription: string | undefined;
-      let stagedImageRef: string | undefined;
-      if (o.d.transcriptionRef && lr.resultsRef) {
-        try {
-          const rows = await readStagedResults(input.projectPath, lr.resultsRef);
-          const row = (rows as any[]).find((r) => typeof r?.transcription === "string");
-          if (row?.transcription) transcription = row.transcription;
-          if (typeof row?.image_ref === "string" && row.image_ref) stagedImageRef = row.image_ref;
-        } catch {
-          // The transcription is a copy for the viewer; its absence is not a
-          // reason to refuse the extraction. §5.4's warning still fires.
+    {
+      const loggedResults = logRefused ? [] : (logged as { results: { logId: string; resultsRef?: string | null }[] }).results;
+      for (const o of todo) {
+        if (o.status !== "extracted") continue;
+        const c = cited.get(o);
+        const lr = c ? { logId: c.logId, resultsRef: c.resultsRef } : loggedResults[opIndex[toLog.indexOf(o)]];
+        o.logId = lr.logId;
+        let transcription: string | undefined;
+        let stagedImageRef: string | undefined;
+        if (o.d.transcriptionRef && lr.resultsRef) {
+          try {
+            const rows = await readStagedResults(input.projectPath, lr.resultsRef);
+            const row = (rows as any[]).find((r) => typeof r?.transcription === "string");
+            if (row?.transcription) transcription = row.transcription;
+            if (typeof row?.image_ref === "string" && row.image_ref) stagedImageRef = row.image_ref;
+          } catch {
+            // The transcription is a copy for the viewer; its absence is not a
+            // reason to refuse the extraction. §5.4's warning still fires.
+          }
         }
+        const { extract, mode } = documentToExtract(o.recordId, o.d.document, censusStatedRelationships);
+        const extraction = extractRecord(extract, { logEntryId: lr.logId, questionIds: input.questionIds ?? [], mode });
+        const ops: ResearchAppendOp[] = [
+          { section: "sources", op: "append", entry: buildDocumentSource(o.d, lr.logId, transcription, stagedImageRef) },
+          ...extraction.assertions.map((a) => ({
+            section: "assertions" as const,
+            op: "append" as const,
+            entry: a as unknown as Record<string, unknown>,
+          })),
+          ...(o.d.document.absentPersons ?? []).map((p) => ({
+            section: "assertions" as const,
+            op: "append" as const,
+            entry: {
+              record_id: o.recordId,
+              record_role: "absent",
+              fact_type: p.factType ?? "name",
+              value: p.note ?? `${p.name} was expected in this record and is not present`,
+              information_quality: "indeterminate",
+              informant: "the researcher",
+              informant_proximity: "researcher",
+              record_basis: "absent",
+              log_entry_id: lr.logId,
+              extracted_for_question_ids: [...(input.questionIds ?? [])],
+            } as Record<string, unknown>,
+          })),
+        ];
+        const src = o.d.document.source;
+        const written = await researchAppend(
+          {
+            projectPath: input.projectPath,
+            ops,
+            sourceDescription: src.url ? { title: src.title, url: src.url } : { title: src.title },
+          } as ResearchAppendInput,
+          { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
+        );
+        if (!written.ok) {
+          o.status = "refused";
+          o.errors = written.errors;
+          o.summary = `${o.recordId}: logged as ${lr.logId}, but the write was refused: ${written.errors.join("; ")}.`;
+          continue;
+        }
+        o.srcId = srcIdOf(written);
+        o.summary = summarizeExtraction(extract, extraction);
+        o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
       }
-      const { extract, mode } = documentToExtract(o.recordId, o.d.document, censusStatedRelationships);
-      const extraction = extractRecord(extract, { logEntryId: lr.logId, questionIds: input.questionIds ?? [], mode });
-      const ops: ResearchAppendOp[] = [
-        { section: "sources", op: "append", entry: buildDocumentSource(o.d, lr.logId, transcription, stagedImageRef) },
-        ...extraction.assertions.map((a) => ({
-          section: "assertions" as const,
-          op: "append" as const,
-          entry: a as unknown as Record<string, unknown>,
-        })),
-        ...(o.d.document.absentPersons ?? []).map((p) => ({
-          section: "assertions" as const,
-          op: "append" as const,
-          entry: {
-            record_id: o.recordId,
-            record_role: "absent",
-            fact_type: p.factType ?? "name",
-            value: p.note ?? `${p.name} was expected in this record and is not present`,
-            information_quality: "indeterminate",
-            informant: "the researcher",
-            informant_proximity: "researcher",
-            record_basis: "absent",
-            log_entry_id: lr.logId,
-            extracted_for_question_ids: [...(input.questionIds ?? [])],
-          } as Record<string, unknown>,
-        })),
-      ];
-      const src = o.d.document.source;
-      const written = await researchAppend(
-        {
-          projectPath: input.projectPath,
-          ops,
-          sourceDescription: src.url ? { title: src.title, url: src.url } : { title: src.title },
-        } as ResearchAppendInput,
-        { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
-      );
-      if (!written.ok) {
-        o.status = "refused";
-        o.errors = written.errors;
-        o.summary = `${o.recordId}: logged as ${lr.logId}, but the write was refused: ${written.errors.join("; ")}.`;
-        continue;
-      }
-      o.srcId = srcIdOf(written);
-      o.summary = summarizeExtraction(extract, extraction);
-      o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
     }
   }
+  const planItems = await completePlanItems(input.projectPath, landedBareIds(outcomes));
   return {
     ok: outcomes.some((o) => o.status === "extracted" || o.status === "already_extracted"),
     records: outcomes.map(({ d: _d, ...rest }) => rest),
+    ...(planItems ? { planItems } : {}),
   };
 }
 
@@ -918,13 +1130,15 @@ export const extractionAppendSchema = {
     "Extract records into research.json IN CODE: each record's source entry plus " +
     "one assertion per fact, with roles and the three classification layers " +
     "decided from the extraction table. You compose none of them, and the input " +
-    "has no field for them. Writes the `sources` and `assertions` sections and " +
-    "no others.\n" +
+    "has no field for them. Writes the `sources` and `assertions` sections, and " +
+    "completes the in-progress plan item whose search found a record it " +
+    "extracts.\n" +
     "\n" +
     "Send EXACTLY ONE of:\n" +
-    "- `recordIds` — FamilySearch records, any ARK form. Each is read live, " +
-    "logged and extracted from the index. A record already extracted is skipped " +
-    "and named.\n" +
+    "- `recordIds` — FamilySearch records, any ARK form. Each is extracted from " +
+    "the index: read live and logged, or, when an earlier read of it is on file, " +
+    "that read is reused. A " +
+    "record already extracted is skipped and named, and tied to `questionIds`.\n" +
     "- `documents` — any other source (a transcription, an upload, pasted text), " +
     "as structured by the record-structurer agent. Every document is validated " +
     "before anything is written; an unknown key is refused.\n" +

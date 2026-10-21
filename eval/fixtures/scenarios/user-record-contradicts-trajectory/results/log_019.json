@@ -1,0 +1,535 @@
+{
+  "log_id": "log_019",
+  "tool": "record_search",
+  "retrieved": "2026-10-05T18:05:56.016Z",
+  "returned_count": 4,
+  "payload": {
+    "query": {
+      "projectPath": "/project",
+      "surname": "Eastham",
+      "collectionId": "1674848",
+      "recordCountry": "United States",
+      "residencePlace": "Boyd, Kentucky, United States",
+      "residenceYearFrom": 1895,
+      "residenceYearTo": 1912
+    },
+    "totalMatches": 4,
+    "paginationCappedAt": 4999,
+    "returned": 4,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:FWY2-JXH",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Robert Eastham",
+        "score": 3.3548,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Robert Lee Galloway, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M682-KN6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11103225728",
+              "ark": "ark:/61903/1:1:FWY2-JXH",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert",
+                  "surname": "Eastham"
+                }
+              ]
+            },
+            {
+              "id": "p_11103225727",
+              "ark": "ark:/61903/1:1:FWY2-JX4",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert Lee",
+                  "surname": "Galloway"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1947",
+                  "standard_date": "1947",
+                  "place": "Catlettsburg, Boyd, Kentucky, United States",
+                  "standard_place": "Catlettsburg, Boyd, Kentucky, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11103225729",
+              "ark": "ark:/61903/1:1:FWY2-JXC",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Enie",
+                  "surname": "Galloway"
+                }
+              ]
+            },
+            {
+              "id": "p_11103225730",
+              "ark": "ark:/61903/1:1:FWY2-JXZ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Dollie Smith",
+                  "surname": "Galloway"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11103225728",
+              "person2": "p_11103225729"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11103225728",
+              "child": "p_11103225727"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11103225729",
+              "child": "p_11103225727"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11103225727",
+              "person2": "p_11103225730"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_325367593",
+              "resource_type": "Record",
+              "title": "Entry for Robert Lee Galloway, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M682-KN6 : 19 February 2021), Entry for Robert Lee Galloway, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M682-KN6",
+              "coverage": {
+                "place_rep_id": "4128769",
+                "date_range": "1947",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11103225728",
+              "resource_type": "Person",
+              "url": "#p_11103225728"
+            }
+          ],
+          "places": [
+            {
+              "id": "4128769",
+              "name": "Catlettsburg, Boyd, Kentucky, United States",
+              "latitude": 38.4047,
+              "longitude": -82.6006
+            }
+          ]
+        },
+        "primaryId": "p_11103225728",
+        "batchNumber": "I09098-0",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWPT-7X7",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "2 Jul 1901",
+            "place": "Lexington, Fayette, Kentucky, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary W. Eastin",
+        "score": 2.22108,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "1870",
+        "birthPlace": "Kentucky, United States",
+        "deathDate": "29 June 1901",
+        "deathPlace": "Louisville, Jefferson, Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Mary W. Eastin, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6DX-Z4G",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11100136925",
+              "ark": "ark:/61903/1:1:FWPT-7X7",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary W.",
+                  "surname": "Eastin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "2 Jul 1901",
+                  "standard_date": "2 Jul 1901",
+                  "place": "Lexington, Fayette, Kentucky, United States",
+                  "standard_place": "Lexington, Fayette, Kentucky, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "29 Jun 1901",
+                  "standard_date": "29 Jun 1901",
+                  "place": "Louisville, Jefferson, Ky",
+                  "standard_place": "Louisville, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Widowed"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_326007232",
+              "resource_type": "Record",
+              "title": "Entry for Mary W. Eastin, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6DX-Z4G : 19 February 2021), Entry for Mary W. Eastin, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6DX-Z4G",
+              "coverage": {
+                "place_rep_id": "4192405",
+                "date_range": "2 Jul 1901",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11100136925",
+              "resource_type": "Person",
+              "url": "#p_11100136925"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "4136395",
+              "name": "Lexington, Fayette, Kentucky, United States",
+              "latitude": 38.04216,
+              "longitude": -84.50498
+            },
+            {
+              "id": "4192405",
+              "name": "Louisville, Jefferson, Kentucky, United States",
+              "latitude": 38.25417,
+              "longitude": -85.75944
+            }
+          ]
+        },
+        "primaryId": "p_11100136925",
+        "batchNumber": "B03787-9",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FW5W-1NT",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Jno Easton",
+        "score": 2.21108,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Easton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6D6-MDT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11100428606",
+              "ark": "ark:/61903/1:1:FW5W-1NT",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Jno",
+                  "surname": "Easton"
+                }
+              ]
+            },
+            {
+              "id": "p_11100428605",
+              "ark": "ark:/61903/1:1:FW5W-1NR",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Easton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "26 Apr 1893",
+                  "standard_date": "26 Apr 1893",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "place": "City",
+                  "standard_place": "City, Galveston, Galveston, Texas, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "26 Apr 1893",
+                  "standard_date": "26 Apr 1893",
+                  "place": "Louisville, Jefferson, Kentucky",
+                  "standard_place": "Louisville, Jefferson, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11100428606",
+              "child": "p_11100428605"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_325971386",
+              "resource_type": "Record",
+              "title": "Entry for Easton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6D6-MDT : 19 February 2021), Entry for Easton, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6D6-MDT",
+              "coverage": {
+                "place_rep_id": "4192405",
+                "date_range": "26 Apr 1893",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11100428606",
+              "resource_type": "Person",
+              "url": "#p_11100428606"
+            }
+          ],
+          "places": [
+            {
+              "id": "13602190",
+              "name": "City, Galveston, Galveston, Texas, United States"
+            },
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "4192405",
+              "name": "Louisville, Jefferson, Kentucky, United States",
+              "latitude": 38.25417,
+              "longitude": -85.75944
+            }
+          ]
+        },
+        "primaryId": "p_11100428606",
+        "batchNumber": "B05319-0",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWGV-3H2",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Sarah Easthan",
+        "score": 2.21108,
+        "confidence": 2,
+        "sex": "Female",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Elizabeth Turpen, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M68K-VDK",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11099108960",
+              "ark": "ark:/61903/1:1:FWGV-3H2",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sarah",
+                  "surname": "Easthan"
+                }
+              ]
+            },
+            {
+              "id": "p_11099108958",
+              "ark": "ark:/61903/1:1:FWGV-3HV",
+              "principal": true,
+              "gender": "Unknown",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elizabeth",
+                  "surname": "Turpen"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1922",
+                  "standard_date": "1922",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11099108959",
+              "ark": "ark:/61903/1:1:FWGV-3HK",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Samuel",
+                  "surname": "Hail"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11099108959",
+              "person2": "p_11099108960"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11099108959",
+              "child": "p_11099108958"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11099108960",
+              "child": "p_11099108958"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_325339579",
+              "resource_type": "Record",
+              "title": "Entry for Elizabeth Turpen, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M68K-VDK : 19 February 2021), Entry for Elizabeth Turpen, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M68K-VDK",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1922",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11099108960",
+              "resource_type": "Person",
+              "url": "#p_11099108960"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            }
+          ]
+        },
+        "primaryId": "p_11099108960",
+        "batchNumber": "I00087-4",
+        "role": "Mother"
+      }
+    ]
+  }
+}

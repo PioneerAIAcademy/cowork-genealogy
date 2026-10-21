@@ -61,7 +61,7 @@ export default function PlansSection(): React.JSX.Element {
                 >
                   <ol className={styles.itemList}>
                     {sortedItems.map((item) => (
-                      <li key={item.id} className={styles.item}>
+                      <li key={item.id} id={item.id} className={styles.item}>
                         <span className={styles.itemSequence}>{item.sequence}.</span>
                         <span className={styles.itemRecordType}>{item.record_type}</span>
                         <span className={styles.itemDetail}>

@@ -1,0 +1,380 @@
+{
+  "log_id": "log_009",
+  "tool": "record_read",
+  "retrieved": "2026-10-05T17:59:12.176Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:MCZP-VY3"
+    },
+    "results": [
+      {
+        "recordId": "MCZP-VY3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_227438013",
+              "ark": "ark:/61903/1:1:MCZP-VY3",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "77310601-a160-40e0-8b7f-571c46a4cb0c",
+                  "type": "BirthName",
+                  "given": "John B.",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "da049e16-dcfb-460b-a219-f30d140b4ca6",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Pulaski, Kentucky, United States"
+                },
+                {
+                  "id": "154910cc-07eb-40d9-ae18-7879aefddaa8",
+                  "type": "Birth",
+                  "date": "1818",
+                  "standard_date": "1818",
+                  "place": "Kentucky, United States"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Farmer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_227438014",
+              "ark": "ark:/61903/1:1:MCZP-VYQ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "f7af8a0c-40ce-462c-babd-5f09b78941c8",
+                  "type": "BirthName",
+                  "given": "Polley A. P.",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "ad13a747-b9c7-402b-9e7d-601f59e74056",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Pulaski, Kentucky, United States"
+                },
+                {
+                  "id": "c4d7b523-5b81-4d61-8ac1-583ab87a334d",
+                  "type": "Birth",
+                  "date": "1825",
+                  "standard_date": "1825",
+                  "place": "Kentucky, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Keeping House"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_227438015",
+              "ark": "ark:/61903/1:1:MCZP-VY7",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "aa782cc2-5316-4ff2-bf38-6c63f35cde98",
+                  "type": "BirthName",
+                  "given": "John Manda",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "2db66fb9-e73c-4ce9-99fe-d36e4d6d5210",
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858",
+                  "place": "Kentucky, United States"
+                },
+                {
+                  "id": "01e74060-4a3f-474e-8446-c030eb818981",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Pulaski, Kentucky, United States"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "At Home"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_227438016",
+              "ark": "ark:/61903/1:1:MCZP-VYW",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "137f0977-1d67-48d3-91de-72cb568d5515",
+                  "type": "BirthName",
+                  "given": "Martha F.",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "049fff1b-781e-455f-8df7-c25246421189",
+                  "type": "Birth",
+                  "date": "1864",
+                  "standard_date": "1864",
+                  "place": "Kentucky, United States"
+                },
+                {
+                  "id": "0a94b894-7557-4008-bbe4-b93222fef729",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Pulaski, Kentucky, United States"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "At Home"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_227438017",
+              "ark": "ark:/61903/1:1:MCZP-VY4",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "54893051-dba5-4d1f-91f3-7da0974880ad",
+                  "type": "BirthName",
+                  "given": "Samuel",
+                  "surname": "Goff"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "d6cfc972-d6c7-400b-8c92-85a64bd4af04",
+                  "type": "Birth",
+                  "date": "1864",
+                  "standard_date": "1864",
+                  "place": "Kentucky, United States"
+                },
+                {
+                  "id": "ff4c14e6-c253-4ced-b3de-0052d4dc4bd7",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Pulaski, Kentucky, United States"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Works On Farm"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "cbebd08d-f5d4-4e19-b6ec-77b3933dfbc0",
+              "type": "ParentChild",
+              "parent": "p_227438013",
+              "child": "p_227438015"
+            },
+            {
+              "id": "45905afd-c0df-4190-8780-929c52200f0b",
+              "type": "ParentChild",
+              "parent": "p_227438013",
+              "child": "p_227438016"
+            },
+            {
+              "id": "04f037d6-383c-42e5-8923-7249f99b0e4a",
+              "type": "Couple",
+              "person1": "p_227438013",
+              "person2": "p_227438014"
+            },
+            {
+              "id": "b58fb813-b0ce-4253-9757-e2d20cd52dac",
+              "type": "ParentChild",
+              "parent": "p_227438014",
+              "child": "p_227438016"
+            },
+            {
+              "id": "85bc3001-744e-406b-ae81-4f99573907ba",
+              "type": "ParentChild",
+              "parent": "p_227438014",
+              "child": "p_227438015"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_175244058",
+              "resource_type": "Record",
+              "title": "Household of John B. Burton, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCZP-VY3 : Wed Sep 09 09:40:16 UTC 2026), Entry for John B. Burton and Polley A. P. Burton, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M4WZ-FVV",
+              "coverage": {
+                "place_rep_id": "394372",
+                "date_range": "1880",
+                "record_type": "Census",
+                "standard_place": "Pulaski, Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YB6-TKB",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1880",
+                "record_type": "CensusIndex",
+                "standard_place": "Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_p_227438013",
+              "resource_type": "Person",
+              "title": "John B. Burton, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCZP-VY3 : Wed Sep 09 09:40:16 UTC 2026), Entry for John B. Burton and Polley A. P. Burton, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MCZP-VY3"
+            },
+            {
+              "id": "sd_p_227438014",
+              "resource_type": "Person",
+              "title": "Polley A. P. Burton, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCZP-VY3 : Wed Sep 09 09:40:16 UTC 2026), Entry for John B. Burton and Polley A. P. Burton, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MCZP-VYQ"
+            },
+            {
+              "id": "sd_p_227438015",
+              "resource_type": "Person",
+              "title": "John Manda Burton, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCZP-VY3 : Wed Sep 09 09:40:16 UTC 2026), Entry for John B. Burton and Polley A. P. Burton, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MCZP-VY7"
+            },
+            {
+              "id": "sd_p_227438016",
+              "resource_type": "Person",
+              "title": "Martha F. Burton, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCZP-VY3 : Wed Sep 09 09:40:16 UTC 2026), Entry for John B. Burton and Polley A. P. Burton, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MCZP-VYW"
+            },
+            {
+              "id": "sd_p_227438017",
+              "resource_type": "Person",
+              "title": "Samuel Goff, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCZP-VY3 : Wed Sep 09 09:40:16 UTC 2026), Entry for John B. Burton and Polley A. P. Burton, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MCZP-VY4"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            }
+          ],
+          "places": [
+            {
+              "id": "place_394372"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

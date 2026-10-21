@@ -246,6 +246,11 @@ const FROZEN_PREFIXES2 = [
   // time; the field name in them records what was true then.
   "docs/adrs/",
   "docs/deep-dives/",
+  // Captured runs: the transcript and the research.json a real run PRODUCED on a
+  // date. The field name in them is evidence of what the agent wrote at the time,
+  // so renaming it would falsify the capture rather than update it. Added when
+  // phase 2's captures met this guard; same category as the two above.
+  "docs/captures/",
 ] as const;
 
 const ALLOWED2: Record<string, string> = {
@@ -266,6 +271,12 @@ const ALLOWED2: Record<string, string> = {
     "tests the legacy-document fallback path, so it must construct the retired shape",
   "eval/harness/harness/skill_invocation.py":
     "_has_stop_gate() and _resolution_claimed() fall back to the legacy exhaustive_declaration.declared=true shape for pre-#2539 run logs",
+
+  // ── Captured-run fixtures (same argument as the docs/captures/ prefix) ──
+  "apps/web/src/components/__tests__/fixtures/captured-feed-items.json":
+    "a verbatim slice of a captured run's feed — the retired name is what that run emitted",
+  "apps/web/src/components/__tests__/fixtures/captured-prose.txt":
+    "the prose from the same captured run, quoted verbatim for the renderer tests",
 
   // ── Dated attribution comments — editing them falsifies the attribution ──
   "packages/engine/mcp-server/tests/packaging/catalog.test.ts":

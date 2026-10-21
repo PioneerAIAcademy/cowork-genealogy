@@ -1139,10 +1139,13 @@ def check_guardrail_compliance(
 # comment does not state one. It said "four" over a set of five for the four
 # days after proof-conclusion was added.
 #: The agents whose `extraction_append` is legitimate. `record-structurer`
-#: ships; `record-extractor` was retired, and stays so that committed runs,
+#: and `search-records` ship (the latter extracts only when its delegation says
+#: to); `record-extractor` was retired, and stays so that committed runs,
 #: which replay through this detector, keep the verdict they were graded under.
 #: No new run can carry it, because no plugin file declares it.
-EXTRACTION_AGENT_NAMES = frozenset({"record-structurer", "record-extractor"})
+EXTRACTION_AGENT_NAMES = frozenset(
+    {"record-structurer", "search-records", "record-extractor"}
+)
 
 #: Members of DEDICATED_AGENT_NAMES whose agent file no longer ships. Kept in
 #: that set, as `record-extractor` is kept above, so committed runs that spawned
@@ -1179,6 +1182,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # unnamed-delegate bypass. Do not read its presence here as evidence that
         # a hook route exists.
         "search-images",
+        # Same shape as search-images (issue #2243): cost-motivated, no hook route.
+        # Its writes are `log` entries and a plan item's `status`, plus
+        # `extraction_append` when its delegation says to extract (it is also in
+        # EXTRACTION_AGENT_NAMES); listed because the set is asserted equal to
+        # the shipped agent files.
+        "search-records",
         # Same shape as search-images, and for the same reason (issue #2799):
         # `citation` is a converted skill, not a hook-routed pair. No hook
         # routes anything to it. It is listed because the set is asserted equal
@@ -1372,9 +1381,10 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     e.g. `find_effects_without_invocation`), and `extraction_append` is not
     one of the four guardrail skills' writes at all — it's hard-restricted at
     the TypeScript layer to exactly `sources`/`assertions`
-    (`extraction-append.ts`), and `record-structurer.md` is the only agent
-    file that declares the tool. So its legitimate delegate is narrower than
-    "any dedicated agent": only `agent_type == "record-structurer"` exactly —
+    (`extraction-append.ts`), and `record-structurer.md` and `search-records.md`
+    are the only agent files that declare the tool. So its legitimate delegate
+    is narrower than "any dedicated agent": only `agent_type ==
+    "record-structurer"` or `"search-records"` exactly —
     a wrong dedicated agent (e.g. `gps-mentor`) holding this tool is not a
     case any agent's own `tools:` declaration is set up to permit, and is
     itself worth flagging.

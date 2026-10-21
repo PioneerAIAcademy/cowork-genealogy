@@ -141,9 +141,8 @@ def test_the_corpus_is_actually_readable():
     counts = invocation_counts()
     assert sum(counts.values()) > 0, "no skill invocations found — is E2E_RUNLOGS right?"
     # A floor against an empty scan, not a count: conversions shrink the set, and
-    # research, record-extraction and forget-and-rederive stay skills (lead
-    # ruling 2026-09-22).
-    assert len(shipped_skills()) >= 3, "skills directory did not enumerate"
+    # research and forget-and-rederive are the skills left.
+    assert len(shipped_skills()) >= 2, "skills directory did not enumerate"
 
 
 def test_no_new_skill_has_gone_dark():

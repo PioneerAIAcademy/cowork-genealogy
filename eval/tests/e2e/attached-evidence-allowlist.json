@@ -1,0 +1,28 @@
+{
+  "fernando-suarez-marriage": {
+    "6DDW-L7XF": "Fernando's persona in daughter Julia Rosa's 1896 Caramanta baptism. f1 needs the 1891 hint marriage QG2B-LVHQ; this record also answers non-required f2, the bride's parents."
+  },
+  "grigory-kokosha-death": {
+    "FNGV-JL3": "Grigory's 1843 marriage, one of his own sources (README: names him Григорий Захариев). f1 needs the 1846 hint death KX55-44K.",
+    "KXPB-DG6": "Daughter Anna's 1844 baptism, his other source, naming him Григорий Захариев Кокоша, with the surname the 1843 marriage lacks. f1 needs the 1846 hint death KX55-44K."
+  },
+  "joao-sousa-death": {
+    "6NGD-BL9Q": "The subject's own 1852 baptism; the index names only his mother. f1 turns on the 1919 hint death 6YP6-D37M (copy 6B9P-F8GR).",
+    "X911-WXWP": "The elder namesake brother's 1865 marriage: evidence for f1's competing candidate. f1 still turns on the 1919 hint death.",
+    "X91B-LBSN": "The elder brother's son Francisco's 1905 marriage, in the same role as X911-WXWP. f1 still turns on the 1919 hint death."
+  },
+  "maria-bracero-marriage": {
+    "QVJX-8L5R": "Maria's 1973 death registration, which names both her parents, Juan Bracero and Juana Irizarry. It answers only f2, non-required since 2026-10-20. f1 still needs the 1907 hint marriage QVJH-YRN1."
+  },
+  "nancy-davis-marriage": {
+    "MDZF-Q7C": "The subject's 1850 census, her only source. f1 and f2 need evidence that the 1868 bride was born about 1853."
+  },
+  "nicola-domenichelli-death": {
+    "6ZYD-6L8N": "Nicola's 1946 Salta marriage, naming his parents. f1 needs the 1981 hint death 6ZB1-TVLX."
+  },
+  "thomas-hanrahan-marriage": {
+    "F5GR-QBN": "The Irish Thomas's father persona in daughter Mary's 1871 Tipperary birth entry, attached to the Saratoga Thomas where the live tree merged two families. f1 (avoid) and f2 turn on rejecting the Ballylooby hint 6267-W22Q.",
+    "F5YK-84C": "The same, in son John's 1872 Ardfinnan birth entry. f1 (avoid) and f2 turn on rejecting the Ballylooby hint 6267-W22Q.",
+    "MZF2-Y55": "The Saratoga Thomas's 1880 census, the New York evidence the rejection rests on. f1 (avoid) and f2 turn on rejecting the Ballylooby hint 6267-W22Q."
+  }
+}

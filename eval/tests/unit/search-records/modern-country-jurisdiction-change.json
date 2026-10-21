@@ -11,11 +11,12 @@
       "modern-country",
       "central-europe",
       "e2e-derived",
-      "uses-plan-staged-successor"
+      "uses-plan-staged-successor",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute plan item pli_001 — find Jan Gallo's 1893 baptism from Turany parish and report what it says about his father.",
+    "delegation": "Execute plan item pli_001 — find Jan Gallo's 1893 baptism from Turany parish and report what it says about his father.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "gallo-jurisdiction-change"
   },
   "mcp_fixtures": [

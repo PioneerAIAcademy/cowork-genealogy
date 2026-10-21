@@ -72,9 +72,8 @@ describe("the search-wikipedia Narration exception", () => {
 
   it("scans every skill and agent body", () => {
     // A floor against an empty scan, not a count: every skill-to-agent conversion
-    // shrinks the set, and research, record-extraction and forget-and-rederive
-    // stay skills (lead ruling 2026-09-22).
-    expect(skills.length, "skill bodies found").toBeGreaterThanOrEqual(3);
+    // shrinks the set, and research and forget-and-rederive are the skills left.
+    expect(skills.length, "skill bodies found").toBeGreaterThanOrEqual(2);
     expect(agents.length, "agent bodies found").toBeGreaterThan(5);
     expect(
       agents.map((a) => a.name),

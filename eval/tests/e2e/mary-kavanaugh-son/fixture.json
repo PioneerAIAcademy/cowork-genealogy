@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 2, flag adds_son, confidence 3). Resolved 2026-07-27: true match, confirmed by a genealogist against the death record naming Mary Kavanagh as mother."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 2, flag adds_son, confidence 3). Resolved 2026-07-27: true match, confirmed by a genealogist against the death record naming Mary Kavanagh as mother.",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:NWL6-TL5",
+    "identity": "same"
+  }
 }
