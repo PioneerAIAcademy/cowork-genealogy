@@ -565,7 +565,8 @@ agents.**
 | **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
-| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching subagents on CLI 2.1.215 and 2.1.220 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12; the harnesses' CLI 2.1.139 is unprobed); never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted sets none, and the CLI default already sends `output_config.effort: high` on a `claude-sonnet-4-6` subagent's request |
+| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220 and 2.1.294 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12 and 2026-10-20; the harnesses' CLI 2.1.139 is unprobed). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
+| **Per-spawn effort** (hosted, CLI 2.1.294+) | the `Agent` call's own `effort` field, written by `real_agent._pretool_hook` from `SUBAGENT_EFFORT` / `SUBAGENT_EFFORT_BY_AGENT`; outranks the agent definition's `effort:`; matches bare and `genealogy-research:` names. `ORCHESTRATOR_EFFORT` alone pins every helper to `HELPER_DEFAULT_EFFORT` (`high`) so only the main thread moves — measured 2026-10-20: main `medium`, `person-evidence` `high` | unset — the hook adds nothing. `api_calls.effort` records each request's `output_config.effort`; `make alpha-costs` splits the by-agent table on it |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
 > unit harness (`harness/orchestrator.py` honours the field, falling back to
@@ -575,8 +576,18 @@ agents.**
 > model, delegate it to a plugin agent.
 >
 > **Agent `effort:` takes `low|medium|high|xhigh|max` or an integer**, and is a
-> property of the agent *definition* — the `Agent` tool's call site accepts only
-> `model`. It binds wherever `.claude/agents/*.md` is parsed, which is the hosted
+> property of the agent *definition*. From CLI 2.1.294 the `Agent` tool's call also
+> takes an `effort`, which overrides the definition's (the field is withdrawn from the
+> schema when `CLAUDE_CODE_EFFORT_LEVEL` is set, which is why the hosted settings never
+> use that variable). The model is told to set it only when asked; the hosted hook sets
+> it from the operator's settings. 2.1.294 also carries two flag-driven mechanisms —
+> lowering an *unpinned* subagent's effort, and a per-subagent `<total_tokens>` budget
+> keyed on the session's effort. On the hosted path's API key on 2026-10-20 the first
+> did not fire (helper at `high` unpinned), and the second was unstable: no
+> `<total_tokens>` reminder through the subagent's second request in four sessions
+> (orchestrator `high` and `medium`), one at `15000000 tokens left` on main and subagent
+> alike in a fifth (`high`), and none at `medium` minutes later — so no smaller budget
+> was ever seen under a lowered orchestrator (`apps/server/dev/probe_effort_capture.py`). The definition's field binds wherever `.claude/agents/*.md` is parsed, which is the hosted
 > control plane (`stage_plugin_agents` + `setting_sources=["project"]`), both
 > harnesses, **and Cowork — verified live on 2026-08-25**, the way the `model:` pins
 > were. A probe plugin pinned `record-extractor` to `effort: low` and a `PreToolUse`
@@ -1026,7 +1037,8 @@ bodies all said "a deny binds even under `bypassPermissions`; an omission alone
 is not." Seven of them cited the birkeland lane breach for it,
 which says nothing about `bypassPermissions`, denies, or omissions. Probed
 2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
-probe-agent-binding`, reproduced twice): under `bypassPermissions` **both**
+probe-agent-binding`, reproduced twice; re-run 2026-10-20 on 2.1.294 / SDK 0.2.165,
+same result): under `bypassPermissions` **both**
 bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
 denied one is. So the omission is what kept `record-extractor` (since retired) off the broad
 `research_append`, and its deny restated that rather than being the last line.
@@ -1109,7 +1121,9 @@ driver must wait.
 
 > **Correction to three comments in the code (verified 2026-08-02).**
 > `ENABLE_TOOL_SEARCH=true` **enables** deferred/tool-search mode. It does *not*
-> eager-load schemas. Confirmed against the installed CLI (v2.1.220): a truthy
+> eager-load schemas. Confirmed against the installed CLI (v2.1.220; on 2.1.294 a
+> hosted session's first request still offers `ToolSearch` and only the `ALWAYS_LOAD`
+> schemas, `apps/server/dev/probe_session_start_cache.py`, 2026-10-20): a truthy
 > value (`true|1|yes|on`) turns tool search **on**; `auto` / `auto:N` is adaptive;
 > a **falsy** value (`false|0|no|off`) is what turns it **off**. Critically,
 > **unset also means on** — deleting the variable does not eager-load anything.
@@ -1132,7 +1146,7 @@ driver must wait.
 >
 > **Exception: `ALWAYS_LOAD` (`src/tool-schemas.ts`).** Those tools carry
 > `_meta: {"anthropic/alwaysLoad": true}` in `tools/list`, which the Claude Code
-> CLI honors under any server name (verified on 2.1.139 and 2.1.220; unverified in
+> CLI honors under any server name (verified on 2.1.139, 2.1.220 and 2.1.294; unverified in
 > Cowork). The set is sized from the September e2e corpus. 76 of 82
 > `research_append` re-loads follow a `compact_boundary`, which is consistent with
 > compaction dropping a ToolSearch-loaded schema. An always-loaded one is not

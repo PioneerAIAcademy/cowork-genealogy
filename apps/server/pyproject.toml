@@ -70,8 +70,9 @@ proto-web = [
     "boto3>=1.34,<2",
 ]
 # The SDK pin is the flush-mode pin (session_store_flush="eager" is SDK-side) and the CLI
-# pin (the wheel bundles Claude Code 2.1.220). One lock resolves one version, so this also
-# holds [project]'s claude-agent-sdk at 0.2.128 until it moves here.
+# pin (the wheel bundles Claude Code 2.1.220, which the prototype's U3/U27 proofs were
+# recorded against). It is held while `sandbox` moves: the [tool.uv] conflicts line below
+# lets the lock carry two SDK versions, this group's and everyone else's.
 proto-worker = [
     "claude-agent-sdk==0.2.128",
     "psycopg[binary]>=3.3.4",
@@ -83,9 +84,11 @@ proto-worker = [
 # The E2B sandbox image's runtime closure (issue #3263). `make proto-requirements` exports it
 # to apps/server/sandbox/requirements.txt, which e2b.Dockerfile installs with --require-hashes,
 # so hosted sessions run the SDK, and the Claude Code CLI its wheel bundles, that uv.lock
-# resolves. Never installed by `uv sync` or CI.
+# resolves. Never installed by `uv sync` or CI. 0.2.165 bundles Claude Code 2.1.294, the
+# first CLI without the session-start cache re-write (dev/probe_session_start_cache.py);
+# test_default_env_sdk_matches_the_sandbox_tier keeps [project]'s resolution on it too.
 sandbox = [
-    "claude-agent-sdk==0.2.128",
+    "claude-agent-sdk==0.2.165",
     "websockets>=13",
 ]
 
@@ -99,6 +102,9 @@ markers = [
 
 [tool.uv]
 package = false
+# proto-worker holds the SDK at 0.2.128 while sandbox (and so the default env) is on a newer
+# one; without this, one lock resolves one version and the two pins cannot both hold.
+conflicts = [[{ group = "proto-worker" }, { group = "sandbox" }]]
 # Copy instead of hardlink when materialising packages into .venv. OneDrive
 # rejects uv's default hardlinking ("os error 396"), and a partially-synced
 # dist-info then surfaces as an intermittent "Access is denied" (os error 5) on
