@@ -28,17 +28,33 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 28, `hint-samples.csv` row 978,
-flags `adds_father,adds_mother`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "England and Wales, Census, 1871", the household of John Morris, farmer, at Lower Llanbadarn-y-Croyddin, Cardiganshire, in which Owen Morris, aged about 12 and born at Llanbadarn-Fawr, is a farmer's son of John (born about 1818, Llanilar) and Dorothy (born about 1825, Llanfihangel).
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming John and Dorothy Morris as his parents, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-10-21 (#3632): answerable, but differently (outcome 2). The hint is a different boy.**
+The hint, `ark:/61903/1:1:V555-VPP`, is an Owen Morris aged about 12 in the 1871
+census at Lower Llanbadarn-y-Croyddin, Cardiganshire, a farmer's son of John Morris
+(b. ~1818 Llanilar) and Dorothy (b. ~1825 Llanfihangel), born at **Llanbadarn-Fawr,
+Cardiganshire**. The tree person was born in **Montgomeryshire**, and the records
+that place him there also name his father:
 
-A weak candidate, and the tree's own sources argue against it. Name and birth year match, and the hint's household is about ten miles from Borth, but two attached records disagree with it. The 1891 census already in the tree lists him as **"Owen Morris Junr"**, with **Owen Morris Senr**, a widowed retired gardener born about 1815 in Montgomeryshire, in the same household as his father. And the 1901 and 1911 censuses give his birthplace as Montgomeryshire (1911: Newtown), where the hint's boy was born at Llanbadarn-Fawr, Cardiganshire. Owen Morris is a very common Welsh name, so a second boy of the same age a few parishes away is unremarkable.
+- **1891 census, Cyfoeth-y-brenin (Borth), Cardiganshire** (`ark:/61903/1:1:45VS-5PZ`,
+  already attached to the tree): "Owen Morris Junr", b. ~1859 Montgomeryshire, roller
+  leather finisher, wife Ellen Elizabeth, son Thomas Rowley; and in the same household
+  "Owen Morris Senr" (`ark:/61903/1:1:45V3-6N2`), b. ~1815 Montgomeryshire, widowed,
+  retired gardener, indexed as his father.
+- **1871 census, Newtown, Montgomeryshire** (household `ark:/61903/1:1:KDDP-KL4`,
+  son `ark:/61903/1:1:KDDP-KLH`): Owen Morris, b. ~1860 at Llandinam, Montgomeryshire,
+  son of Owen Morris, b. ~1818 at Aberhafesp, widowed, labourer.
+- **1901 and 1911 censuses** (on the tree): born Montgomeryshire; 1911 gives Newtown.
 
-This leans towards outcome (b): the question is probably answerable from other records, with Owen Morris Senr as the father. The check that settles it is the 1861 census or Owen's 1882 marriage entry. Either should name his father, and either can confirm a Montgomeryshire birth. If it names Owen Morris, the hint is a different boy.
+The father is widowed in both 1871 and 1891, and the son keeps the Montgomeryshire
+(Newtown) birthplace from 1871 to 1911, so the 1871 Newtown boy is the tree person.
+On that same census night the hint's boy was a Cardiganshire-born son of John Morris,
+so the hint persona is not him (`hint.identity: different`). f1 now states the father,
+Owen Morris (b. ~1815-1818, Aberhafesp); f2 guards against John and Dorothy Morris.
+His mother is not identified: the father was already a widower in 1871.
+
+**Searched and not found:** his 1882 marriage to Ellen Elizabeth (her maiden name is
+unknown), which would have named his father directly.
+
+Retrieval was tool-assisted (`record_read`, `record_search` against live FamilySearch);
+the identity judgement was the genealogist's. The call rests on the indexes alone; no
+image was read, so `image_basis` is off.
