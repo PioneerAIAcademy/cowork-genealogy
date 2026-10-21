@@ -376,13 +376,31 @@ def test_a_record_id_extraction_is_read_back_from_the_final_notes():
     assert [e["id"] for e in r.research["sources"]] == ["src_001", "src_002"]
     assert [e["id"] for e in r.research["assertions"]] == ["a_001", "a_002", "a_003"]
     assert r.research["log"][0] == {"id": "log_004", "tool": "record_read"}
-    assert r.applied == 7 and not r.unmodelled
+    # The call carries questionIds, so it may also have tied a re-found record
+    # to them, which no argument shows (issue #3516): reported, not guessed.
+    assert r.applied == 7 and r.unmodelled == {"extraction_append:question-tie": 1}
 
 
 def test_a_record_id_extraction_without_final_notes_is_reported_not_guessed():
     r = replay([_call("extraction_append", STAGED_ARGS, STAGED_RESP)])
     assert r.research.get("log", []) == [] and r.research.get("assertions", []) == []
-    assert r.unmodelled == {"tool:extraction_append:record-ids": 1}
+    assert r.unmodelled == {"tool:extraction_append:record-ids": 1, "extraction_append:question-tie": 1}
+
+
+def test_a_person_id_extraction_is_reported_and_adds_no_log_entry():
+    """extraction_append({ personId }) extracts and links attachments its
+    arguments do not carry; the generic path would have read it as a log entry."""
+    resp = '[{"ok": true, "records": [], "extracted": 0, "linked": 0, "skipped": 0, "summary": "s"}]'
+    r = replay([_call("extraction_append", {"projectPath": "/p", "personId": "I1"}, resp)])
+    assert r.research.get("log", []) == []
+    assert r.unmodelled == {"extraction_append:person-links": 1}
+
+
+def test_a_plan_item_completion_is_reported():
+    args = {k: v for k, v in STAGED_ARGS.items() if k != "questionIds"}
+    resp = STAGED_RESP.replace('"warnings": []}]}]', '"warnings": []}], "planItems": {"completed": ["pli_001"]}}]')
+    r = replay([_call("extraction_append", args, resp)], final_research=STAGED_FINAL)
+    assert r.unmodelled == {"extraction_append:plan-items": 1}
 
 
 def test_a_record_id_extraction_does_not_duplicate_what_is_already_there():
@@ -396,7 +414,7 @@ def test_a_record_id_extraction_the_final_notes_lack_is_reported():
     resp = STAGED_RESP.replace("log_005", "log_099")
     r = replay([_call("extraction_append", STAGED_ARGS, resp)], final_research=STAGED_FINAL)
     assert [e["id"] for e in r.research["assertions"]] == ["a_001", "a_002"]
-    assert r.unmodelled == {"extraction_append:not-in-final": 1}
+    assert r.unmodelled == {"extraction_append:not-in-final": 1, "extraction_append:question-tie": 1}
 
 
 def test_a_rejected_record_id_extraction_changes_nothing():

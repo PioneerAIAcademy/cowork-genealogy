@@ -494,7 +494,7 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
 # the kind every measured miss copied from the projection.
 _PROJECT_ID_PREFIXES = (
     "rp_", "kh_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "rj_", "c_",
-    "h_", "t_", "ps_", "ev_", "loc_",
+    "h_", "t_", "ps_", "ev_", "loc_", "ns_",
 )
 _PROJECT_ID_RE = re.compile(
     r"\b(?:(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+|[FINRS]\d+)\b"
