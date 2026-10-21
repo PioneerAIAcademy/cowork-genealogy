@@ -1493,7 +1493,8 @@ export const materializeFactsSchema = {
     "person through its own assertion alone, only this persona's assertions linked to " +
     "them alone count. When that person has a recorded namesake (research.json " +
     "`namesakes`), the link must also pass the namesake cap: otherwise an explicit " +
-    "personId is refused, and an omitted one gets a new person and a warning. " +
+    "personId is refused, and an omitted one goes to another eligible person or a new one, " +
+    "with a warning. " +
     "When personId is omitted and " +
     "this persona was already materialized onto a tree person (detected by " +
     "assertion_id backlinks on that person's facts), the existing person is reused " +

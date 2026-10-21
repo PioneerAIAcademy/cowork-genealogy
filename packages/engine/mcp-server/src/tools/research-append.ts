@@ -3128,13 +3128,14 @@ export function namesakeRowWarnings(
               return `'${f.id}' ${String(f.type ?? "")}${refs.length > 0 ? ` (cites ${refs.join(", ")})` : ""}`;
             })
             .join(", ") +
-          (names.length > 0
-            ? `; ${names.length} name(s) also cite those records and stay, since no tool removes a name`
-            : "") +
           ".";
+    const nameText =
+      names.length === 0
+        ? ""
+        : ` ${names.length} name(s) on '${p}' also cite those records and stay, since no tool removes a name.`;
     return (
       `namesake ${rowText} recorded for '${p}': ${refused.length} probable or confident link(s) to '${p}' ` +
-      `stand with nothing in their record tying them to '${p}': ${linkText}.${factText} The row is recorded ` +
+      `stand with nothing in their record tying them to '${p}': ${linkText}.${factText}${nameText} The row is recorded ` +
       `and these stay as they are, but materialize_facts will not copy any further fact onto '${p}' through ` +
       "these links. For each link, person-evidence either ties it or lowers it to 'speculative' naming the " +
       "namesake." +

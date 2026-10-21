@@ -1036,6 +1036,7 @@ describe("namesake cap", () => {
         assertions: [
           ...baseAssertions().filter((a) => a.id !== "a_011" && a.id !== "a_012"),
           assertion("a_011", "src_002", REC.voter, "principal", "occupation", "Farmer"),
+          assertion("a_014", "src_002", REC.voter, "wife", "birth", "", { date: "1852" }),
         ],
         person_evidence: [standing("pe_001", "a_010", P), standing("pe_002", "a_001", P), standing("pe_003", "a_003", W)],
       });
@@ -1045,6 +1046,9 @@ describe("namesake cap", () => {
         facts: [
           { id: "F1", type: "Occupation", value: "Farmer", assertion_id: "a_011", sources: [{ ref: "S2" }] },
           { id: "F2", type: "Occupation", value: "Clerk", assertion_id: "a_004", sources: [{ ref: "S1" }] },
+          // From the voter record's wife, a party holding no link: the refused
+          // link's own record, but not its party.
+          { id: "F3", type: "Birth", date: "1852", assertion_id: "a_014", sources: [{ ref: "S2" }] },
         ],
       };
       await setup(r0, t);
@@ -1056,6 +1060,7 @@ describe("namesake cap", () => {
       expect(found[0]).toContain("'pe_001' (assertion 'a_010' on source 'src_002', name)");
       expect(found[0]).toContain("1 fact(s) on 'KWCB-111' were copied through them: 'F1' Occupation (cites S2).");
       expect(found[0]).not.toContain("'F2'");
+      expect(found[0]).not.toContain("'F3'");
     });
 
     it("WT3 warns about nothing when every link to the row holder is tied", async () => {

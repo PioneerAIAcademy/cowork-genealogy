@@ -202,6 +202,30 @@ describe("materialize_facts under a recorded namesake (#3363 PR 1d)", () => {
       );
     });
 
+    it("M3b takes the next eligible person, with a warning, when the lookup would reuse the row holder", async () => {
+      // I3 is the voter persona's own stub, so it is eligible with no link; the
+      // row holder is preferred without the rule because a link of the persona's
+      // ties it.
+      const holder = person(P, "John", "Smith", "Male", {
+        facts: [{ id: "F1", type: "Birth", date: "1851", assertion_id: "a_011", sources: [{ ref: "S2" }] }],
+      });
+      const stub = person("I3", "John", "Smith", "Male", {
+        names: [{ id: "I3-n1", given: "John", surname: "Smith", sources: [{ ref: "S2" }] }],
+        facts: [{ id: "F3", type: "Birth", date: "1851", assertion_id: "a_011", sources: [{ ref: "S2" }] }],
+      });
+      await setup(research([link("pe_1", "a_010", P)]), { ...tree([]), persons: [holder, stub] });
+      const r = await materializeFacts({ projectPath: dir, recordId: "REC-VOT", recordRole: "principal" });
+      expect(r.ok).toBe(true);
+      if (!r.ok || !("personId" in r)) throw new Error("expected a single-op success");
+      expect(r.personId).toBe("I3");
+      expect(r.created).toBe(false);
+      expect(r.validation.warnings).toContainEqual(
+        expect.stringMatching(
+          /^persona 'principal' of record 'REC-VOT' would have reused 'KWCB-111', but 'KWCB-111' has a recorded namesake and its link 'pe_1' from this record is not tied; 'I3' was used instead\./,
+        ),
+      );
+    });
+
     it("M6 judges a batch on the tree before the call: the wife's op first does not untie the head's link", async () => {
       // I2 has no refs before the call, so she ties the head's census link. The
       // wife op writes the census onto her, after which she reads as made from

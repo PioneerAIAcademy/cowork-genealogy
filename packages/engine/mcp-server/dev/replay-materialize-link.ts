@@ -32,8 +32,11 @@
 //                traces to this party and to no other) and how many it
 //                withholds, carrying another party or no party.
 //
-// Exit is always 0: this reports a rate for a human to read, it is not a gate.
+// Exit is 0 unless the exempt bucket of the calls recorded as successes is empty,
+// which would read as coverage and be none; otherwise this reports rates for a
+// human to read and is not a gate.
 
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -179,6 +182,8 @@ const show = (list: Fire[]) => {
   if (!VERBOSE && list.length > 40) console.log(`  ... ${list.length - 40} more (--verbose)`);
 };
 
+const sha = execFileSync("git", ["rev-parse", "--short=9", "HEAD"], { cwd: repoRoot, encoding: "utf-8" }).trim();
+console.log(`measured at ${sha} (working tree of this checkout)`);
 console.log(`Runs replayed: ${runs} (skipped ${noFinalState} with no final state; ${noStartingTree} have no starting tree, so the baseline cannot apply to them)`);
 for (const [name, t] of Object.entries(buckets)) {
   t.dates.sort();
@@ -207,4 +212,9 @@ for (const [name, t] of Object.entries(buckets)) {
   );
   show(t.exempt.anotherParty);
   show(t.exempt.noParty);
+}
+
+if (buckets.succeeded.exempt.explicit + buckets.succeeded.exempt.implicit === 0) {
+  console.log("\nfloor failed: no persona op of a call recorded as a success landed on a stub of its own record");
+  process.exit(1);
 }
