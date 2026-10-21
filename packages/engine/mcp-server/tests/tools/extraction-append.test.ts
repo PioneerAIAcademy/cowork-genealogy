@@ -1212,6 +1212,32 @@ describe("extraction_append: closes the plan item and claims re-found records", 
   });
 
   it.each([
+    ["in one call", true],
+    ["in two calls", false],
+  ])("cites every household member's own earlier read %s, so none is left for the router to resend (#3543)", async (_name, together) => {
+    const a = element("census-1850-no-relationship-column");
+    const memberArk = a.gedcomx.persons.map((p: any) => p.ark).find((k: string) => arkToBareId(k) !== arkToBareId(a.recordId));
+    const b = { ...a, recordId: arkToBareId(memberArk) };
+    await seed({
+      log: [
+        entry("log_001", "record_read", null, "positive", {
+          query: { recordId: `ark:/61903/1:1:${a.recordId}` },
+          results_ref: await sidecar("log_001", "record_read", [a]),
+        }),
+        entry("log_002", "record_read", null, "positive", {
+          query: { recordId: `ark:/61903/1:1:${b.recordId}` },
+          results_ref: await sidecar("log_002", "record_read", [b]),
+        }),
+      ],
+    });
+    const calls = together ? [[a.recordId, b.recordId]] : [[a.recordId], [b.recordId]];
+    for (const ids of calls) await runExtractionAppend({ projectPath: dir, recordIds: ids }, readerFor([a, b], []) as any, LOCAL);
+    const after = await research();
+    const cited = new Set(after.assertions.map((x: any) => x.log_entry_id));
+    expect(after.log.filter((e: any) => e.outcome === "positive" && !cited.has(e.id)).map((e: any) => e.id)).toEqual([]);
+  });
+
+  it.each([
     ["a census read with no indexFields", (el: any) => ({ ...el, indexFields: undefined }), "census-1850-no-relationship-column"],
     ["a sidecar that no longer holds the record", () => ({ recordId: "ZZZZ-ZZZ", gedcomx: {} }), "death"],
     ["a sidecar that cannot be read", null, "death"],

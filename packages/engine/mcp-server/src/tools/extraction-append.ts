@@ -673,9 +673,10 @@ async function recordIdsMode(
   //    record whichever persona's ARK requested it: each requested id is widened
   //    to every persona ARK of a `record_read` sidecar that lists it, then looked
   //    up by the record-id -> source mapping research_append's reuse detection
-  //    uses. A record with an accepted hint is skipped only on its own id, never
-  //    through another persona's: skipping it leaves the hint's entry uncited,
-  //    and the router sends the record back on every pass.
+  //    uses. A record that owns an uncited entry (an accepted hint, or an
+  //    earlier read of it) is skipped only on its own id, never through another
+  //    persona's: skipping it leaves that entry uncited, and the router sends
+  //    the record back on every pass.
   const groups = await personaGroups(input.projectPath, research);
   const widen = (b: string): ReadonlySet<string> => groups.get(b) ?? new Set([b]);
   const citedLogIds = new Set(
@@ -686,7 +687,7 @@ async function recordIdsMode(
     let existing = sourceIdsForRecordIds(research, widen(bare));
     if (existing.size > 0 && sourceIdsForRecordIds(research, new Set([bare])).size === 0) {
       const pending = await reusableLogEntry(input.projectPath, research, bare, citedLogIds);
-      if (pending?.kind === "hint") existing = new Set();
+      if (pending) existing = new Set();
     }
     if (existing.size > 0) {
       const srcId = [...existing][0];
@@ -736,10 +737,10 @@ async function recordIdsMode(
   //     (no sidecar), or two members of one record read in this call. The staged
   //     record names every persona: a record whose persona ARKs are already
   //     cited is skipped, and so is a later record in this call that is one
-  //     already in it. A record with an accepted hint is never skipped, so its
-  //     hint entry is cited. Nothing is logged for a skipped record; its staged
-  //     file ages out.
-  const hinted = (o: { hintLogId?: string; logId?: string }) => Boolean(o.hintLogId) && !o.logId;
+  //     already in it. A record that owns an uncited entry (an accepted hint,
+  //     or a reused read) is never skipped, so that entry is cited. Nothing is
+  //     logged for a skipped record; its staged file ages out.
+  const owesEntry = (o: { hintLogId?: string; logId?: string }) => Boolean(o.hintLogId || o.logId);
   const docs = new Map<string, ExtractDocument>();
   const households = new Map<string, Set<string>>();
   for (const o of outcomes) {
@@ -760,11 +761,11 @@ async function recordIdsMode(
   }
   const sameAs = new Map<string, RecordOutcome>();
   const leads: RecordOutcome[] = [];
-  const hintFirst = [...outcomes.filter(hinted), ...outcomes.filter((o) => !hinted(o))];
-  for (const o of hintFirst) {
+  const ownersFirst = [...outcomes.filter(owesEntry), ...outcomes.filter((o) => !owesEntry(o))];
+  for (const o of ownersFirst) {
     const arks = households.get(o.recordId);
     if (o.status !== "extracted" || !arks) continue;
-    if (!hinted(o)) {
+    if (!owesEntry(o)) {
       const existing = sourceIdsForRecordIds(research, arks);
       if (existing.size > 0) {
         o.status = "already_extracted";
