@@ -214,9 +214,11 @@ owner-checked against the bearer the worker stamped on that open turn — U6/U4)
 behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
-Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
-agent uses `person_search` to find a person in the FamilySearch tree
-when the user doesn't have a FamilySearch ID to provide.
+Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. A project always
+starts from a FamilySearch person ID: `init-project` never searches by name, and with
+no ID it creates nothing and asks for one (lead, 2026-10-15). `research` is the only
+front door — its routing table sends a first message with no project to `init-project`
+or `tree-survey`, so nothing prefixes an opener onto the user's first message.
 
 The host artifact is the `.mcpb` desktop extension, built from
 `packages/engine/mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
@@ -423,7 +425,7 @@ not add the line to it. The exception moved from the skills to the agents when
 that skill was replaced by an agent on 2026-09-27; re-derive both lists with
 `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
 `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md`, and note that
-nine other agents also carry no line — `search-wikipedia` is the one whose
+ten other agents also carry no line — `search-wikipedia` is the one whose
 absence is a *rule*, pinned by
 `tests/packaging/search-wikipedia-no-narration.test.ts`.
 

@@ -140,13 +140,16 @@ jobs:
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
                      --paginate --jq '.[].filename')"
+          relevant=false
           if printf '%s\n' "$files" | grep -qE "$PATTERNS"; then
-            echo "relevant=true" >> "$GITHUB_OUTPUT"
+            relevant=true
           else
-            echo "relevant=false" >> "$GITHUB_OUTPUT"
             echo "::notice::No run-log, unit-test, skill, agent, fixture, or harness path changed; reporting success without running the discipline checks."
           fi
-          if printf '%s\n' "$files" | grep -qE "$ENGINE_PATTERNS"; then
+          echo "relevant=$relevant" >> "$GITHUB_OUTPUT"
+          # ENGINE_PATTERNS is wider than PATTERNS (all of mcp-server/), and the
+          # checkout runs only when relevant, so an engine build without it fails.
+          if [ "$relevant" = true ] && printf '%s\n' "$files" | grep -qE "$ENGINE_PATTERNS"; then
             echo "needs_engine=true" >> "$GITHUB_OUTPUT"
           else
             echo "needs_engine=false" >> "$GITHUB_OUTPUT"

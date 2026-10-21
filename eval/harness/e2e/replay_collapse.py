@@ -158,7 +158,8 @@ def oracle(research: dict[str, Any], question: str) -> list[dict[str, Any]]:
 
 
 def find_walk_groups(
-    calls: list[dict[str, Any]], starting_research: dict[str, Any], run: str = ""
+    calls: list[dict[str, Any]], starting_research: dict[str, Any], run: str = "",
+    final_research: dict[str, Any] | None = None,
 ) -> tuple[list[Group], list[tuple[str, int, str]]]:
     """`(groups, listed)` — `listed` is `(run, index, reason)` for every walk
     call not in a collapsible group."""
@@ -196,7 +197,7 @@ def find_walk_groups(
             listed.append((run, i, "recorded-error"))
             continue
         if writers_before not in cache:
-            cache[writers_before] = replay(calls, starting_research, upto=i).research
+            cache[writers_before] = replay(calls, starting_research, upto=i, final_research=final_research).research
         state = cache[writers_before]
         question = owners(state).get(str(args["planItemId"]))
         if question is None:
@@ -440,7 +441,7 @@ def message_ids(log: dict[str, Any]) -> list[str] | None:
 
 def find_plural_groups(
     calls: list[dict[str, Any]], starting_research: dict[str, Any], run: str = "",
-    msg_ids: list[str] | None = None,
+    msg_ids: list[str] | None = None, final_research: dict[str, Any] | None = None,
 ) -> tuple[list[PluralGroup], list[tuple[str, int, str]]]:
     """`(groups, listed)` — runs of strictly adjacent same-thread
     `research_query` calls varying one PLURAL_KEYS id; `listed` is
@@ -498,7 +499,7 @@ def find_plural_groups(
         if entry is None or entry[0] != signature:
             close(thread)
             if writers_before not in cache:
-                cache[writers_before] = replay(calls, starting_research, upto=i).research
+                cache[writers_before] = replay(calls, starting_research, upto=i, final_research=final_research).research
             entry = open_groups[thread] = (signature, PluralGroup(
                 run, thread, call.get("agent_type"), args["section"], key, fixed, cache[writers_before],
             ))
@@ -914,14 +915,14 @@ async def _main(args: argparse.Namespace) -> int:
         final = _read_json(path.with_name(f"{path.stem}.final-research.json"))
         tree = _read_json(path.with_name(f"{path.stem}.final-tree.gedcomx.json"))
         if "plan-log" in rules:
-            groups, more = find_walk_groups(log["tool_calls"], starting, f"{slug}/{path.stem}")
+            groups, more = find_walk_groups(log["tool_calls"], starting, f"{slug}/{path.stem}", final)
             check_ownership(groups, final)
             plans.extend((path, g, tree) for g in groups)
             listed.extend(more)
         if "plural-id" in rules:
             ids = message_ids(log)
             runs_with_ids += ids is not None
-            pgroups, more = find_plural_groups(log["tool_calls"], starting, f"{slug}/{path.stem}", ids)
+            pgroups, more = find_plural_groups(log["tool_calls"], starting, f"{slug}/{path.stem}", ids, final)
             for g in pgroups:
                 g.final = final
             plural_plans.extend((g, tree) for g in pgroups)

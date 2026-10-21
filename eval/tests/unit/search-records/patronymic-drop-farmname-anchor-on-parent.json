@@ -12,11 +12,12 @@
       "scandinavian",
       "nil-recovery",
       "search-by-parent",
-      "name-search-mechanics"
+      "name-search-mechanics",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute plan item pli_001 — search FamilySearch's Norwegian church books for Anders Moen's christening (born about October 1868, Ringsaker, Hedmark) to confirm his parents.",
+    "delegation": "Execute plan item pli_001 — search FamilySearch's Norwegian church books for Anders Moen's christening (born about October 1868, Ringsaker, Hedmark) to confirm his parents.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "norwegian-patronymic-nil-recovery"
   },
   "mcp_fixtures": [

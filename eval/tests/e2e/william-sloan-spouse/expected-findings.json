@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "William W Sloan had a wife named Maria, the mother of a son Thomas John Sloane (born about 1861), who married Maggie A Mahaffey in Toronto on 4 February 1891.",
+      "details": {
+        "subject_person": "William W Sloan (LHG6-L26)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Maria Sloane",
+          "role": "named as the groom's mother on the 1891 Toronto marriage registration of Thomas John Sloane"
+        },
+        "child": "Thomas John Sloane, aged 30 in February 1891"
+      },
+      "supporting_sources": [
+        "Canada, Ontario, Marriages, 1869-1927 — marriage of Thomas John Sloane, aged 30, and Maggie A Mahaffey, Toronto, York, Ontario, 4 Feb 1891, naming the groom's parents as William and Maria Sloane and the bride's as John and Jane Mahaffey"
+      ],
+      "required": true
+    }
+  ]
+}

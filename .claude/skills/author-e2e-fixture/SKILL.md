@@ -244,7 +244,12 @@ confidence (spec §3.6). Differences from the strip flow:
    hint is unverified, say in `notes` and the README that the findings
    are a draft pending genealogist adjudication — and that a false
    match converts them to a `polarity: "avoid"` guard plus a required
-   documented-negative-conclusion finding (Step 3).
+   documented-negative-conclusion finding (Step 3). What exempts a draft
+   is the literal string `DRAFT PENDING ADJUDICATION` in its README, not
+   whether the hint is verified: a README without that marker makes
+   `fixture.json` need a `hint` (spec §3.6.2) and some finding's
+   `supporting_sources` a full `ark:/61903/...` (§3.6.1), or
+   `make e2e-validate` hard-fails it.
 4. `strip --slug <slug> --none` — writes the starting tree as an exact
    copy of the snapshot. Keep `unstripped-tree.gedcomx.json`
    committed; `validate` requires the two files to be identical in

@@ -164,11 +164,124 @@ describe('ResearchLogSection — default sort order', () => {
     mockResearch()
     render(<ResearchLogSection />)
     // patrick-flynn fixture: log_001 (2026-05-01) ... log_005 (2026-05-03).
-    const earliest = screen.getByText('2026-05-01T10:15:00Z')
-    const latest = screen.getByText('2026-05-03T10:00:00Z')
+    // Matched on date AND time of day: three entries share 2026-05-01, so a date-only
+    // lookup is ambiguous. The cell renders the two on separate lines now, so this reads
+    // the ROW rather than one text node -- which keeps the assertion about ORDERING
+    // rather than about markup. Pinning the raw `2026-05-01T10:15:00Z` is what made this
+    // test fail when that wire format stopped being shown to readers.
+    const rowFor = (date: string, time: string): HTMLElement => {
+      const row = screen.getAllByRole('row').find(
+        (r) => r.textContent?.includes(date) && r.textContent?.includes(time)
+      )
+      if (!row) throw new Error(`no row for ${date} ${time}`)
+      return row
+    }
+    const earliest = rowFor('2026-05-01', '10:15')
+    const latest = rowFor('2026-05-03', '10:00')
     // The earliest entry must render before the latest one.
     expect(
       earliest.compareDocumentPosition(latest) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy()
+  })
+})
+
+describe('ResearchLogSection — column alignment', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('renders rows as siblings of the header, not as nested tables', () => {
+    // Reported from a screenshot: the headers did not line up with their cells. Each entry
+    // was its own <table> inside a colSpan={6} cell, so its columns were sized
+    // independently of the header's -- measured drift was up to 71px, and any alignment
+    // was luck. A table can only size columns across rows it actually owns.
+    //
+    // Asserted structurally rather than by measuring pixels, because jsdom does no
+    // layout: widths are all 0 here, so a geometric assertion would pass on the broken
+    // markup too. The structure IS the guarantee.
+    mockResearch()
+    const { container } = render(<ResearchLogSection />)
+
+    const tables = container.querySelectorAll('table')
+    expect(tables.length).toBe(1)
+    expect(container.querySelector('tbody table')).toBeNull()
+
+    // And the rows really are in that one table, so this cannot pass by rendering nothing.
+    const header = container.querySelectorAll('thead th')
+    expect(header.length).toBe(6)
+    const firstBodyRow = container.querySelector('tbody tr')
+    expect(firstBodyRow?.querySelectorAll('td').length).toBe(6)
+  })
+
+  it('keeps the entry id on a row so cross-links still land', () => {
+    // The id used to sit on the wrapper row that the nested table lived in. Flattening
+    // removed that row, and a CrossLink to a log entry scrolls to `#<id>`.
+    mockResearch()
+    const { container } = render(<ResearchLogSection />)
+    const anchored = container.querySelector('#log_001')
+    expect(anchored).not.toBeNull()
+    expect(anchored?.tagName).toBe('TR')
+  })
+})
+
+describe('off-plan group', () => {
+  // `splitOffPlan` shipped with a thorough unit suite and NO render site — the helper
+  // was imported by its own test and nothing else. That is this branch's own finding 13
+  // ("a pure helper with a thorough unit suite is the easiest place to mistake rule
+  // coverage for feature coverage") landing on the branch that wrote it. These test the
+  // wiring, which is the part that was missing.
+
+  const onPlanEntry = (id: string, planItemId: string): LogEntry =>
+    ({ ...patrickFlynnResearch.log[0], id, plan_item_id: planItemId }) as LogEntry
+  const offPlanEntry = (id: string): LogEntry =>
+    ({ ...patrickFlynnResearch.log[0], id, plan_item_id: null }) as LogEntry
+
+  it('renders no group header when every entry is on plan', () => {
+    const itemId = patrickFlynnResearch.plans?.[0]?.items?.[0]?.id ?? 'pli_001'
+    mockResearch({ log: [onPlanEntry('log_a', itemId)] })
+    render(<ResearchLogSection />)
+    expect(screen.queryByTestId('off-plan-group')).toBeNull()
+  })
+
+  it('groups work the plan never accounted for', () => {
+    const itemId = patrickFlynnResearch.plans?.[0]?.items?.[0]?.id ?? 'pli_001'
+    mockResearch({ log: [onPlanEntry('log_a', itemId), offPlanEntry('log_b')] })
+    render(<ResearchLogSection />)
+    const header = screen.getByTestId('off-plan-group')
+    expect(header.textContent).toMatch(/1 entry the plan did not account for/)
+  })
+
+  it('sends a DANGLING plan reference off-plan, not on', () => {
+    // The quiet failure the helper's `knownItemIds` arm exists for: an entry naming an
+    // item that no longer exists is not coverage, and counting it on-plan would let the
+    // plan claim work it never planned.
+    mockResearch({ log: [onPlanEntry('log_a', 'pli_does_not_exist')] })
+    render(<ResearchLogSection />)
+    expect(screen.getByTestId('off-plan-group').textContent).toMatch(/1 entry/)
+  })
+})
+
+describe('collapsed-row identity', () => {
+  // The helper has its own suite. This tests the WIRING, which is the half that was
+  // missing when `splitOffPlan` shipped tested and uncalled on this same branch.
+
+  it('shows what each search was for, without expanding it', () => {
+    const entry = (id: string, collection: string): LogEntry =>
+      ({
+        ...patrickFlynnResearch.log[0],
+        id,
+        tool: 'record_search',
+        query: { given: 'Patrick', surname: 'Flynn', collection }
+      }) as LogEntry
+    mockResearch({ log: [entry('log_a', 'United States Census, 1850'),
+                         entry('log_b', 'United States Census, 1860')] })
+    render(<ResearchLogSection />)
+    // Both rows are collapsed, same tool, same day — and tell apart.
+    expect(screen.getByText(/United States Census, 1850/)).toBeTruthy()
+    expect(screen.getByText(/United States Census, 1860/)).toBeTruthy()
+  })
+
+  it('adds nothing to a row whose query says nothing', () => {
+    mockResearch({ log: [{ ...patrickFlynnResearch.log[0], id: 'log_x', query: {} } as LogEntry] })
+    render(<ResearchLogSection />)
+    expect(screen.queryByText(' · ')).toBeNull()
   })
 })

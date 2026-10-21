@@ -1,0 +1,745 @@
+{
+  "persons": [
+    {
+      "id": "GWWN-XP9",
+      "ark": "ark:/61903/4:1:GWWN-XP9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "517452e9-9dd0-4bc9-8fe3-c0ef919ea4a5",
+          "preferred": true,
+          "given": "Owen",
+          "surname": "Morris",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "26e63ba5-ad8d-41ff-b48e-7fe3766881fb",
+          "type": "Birth",
+          "date": "1859",
+          "standard_date": "1859",
+          "place": "Montgomeryshire, England",
+          "standard_place": "England, United Kingdom"
+        },
+        {
+          "id": "3801efe0-71ee-4f60-b69a-5975efe8927e",
+          "type": "Death"
+        },
+        {
+          "id": "fedfc448-324c-4d5e-a81e-c2eaf1f38542",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "cf02403c-eeb4-445f-82a4-86d52d807d4a",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "30a2bc45-3e44-4c94-8a37-036ca1b66b20",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3NBY-WQ8"
+        },
+        {
+          "ref": "SPGD-5C1"
+        },
+        {
+          "ref": "SPGD-Z7S"
+        },
+        {
+          "ref": "SPGD-HTL"
+        }
+      ]
+    },
+    {
+      "id": "GWWN-LTS",
+      "ark": "ark:/61903/4:1:GWWN-LTS",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "3e8cb76b-4ec7-48af-96b6-8cd51f715f96",
+          "preferred": true,
+          "given": "Douglas Owen",
+          "surname": "Morris",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "90ec9089-4fd0-42da-bac3-e49bd8d830a2",
+          "type": "Birth",
+          "date": "14 January 1900",
+          "standard_date": "14 Jan 1900",
+          "place": "Borth, Cardiganshire, Wales",
+          "standard_place": "Borth, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "ccba4bea-bbac-4c2d-a7c4-1bf7a80cb090",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "e5002953-8c47-4460-9662-3ad45196fb50",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "3c0b22b1-a109-4798-8fbf-1ac6c6f2cab8",
+          "type": "Death",
+          "date": "11 Mar 1980",
+          "standard_date": "11 Mar 1980",
+          "place": "Llanidloes, Montgomeryshire, Wales",
+          "standard_place": "Llanidloes, Montgomeryshire, Wales, United Kingdom"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q9S7-NMY"
+        },
+        {
+          "ref": "Q9S7-HJ7"
+        },
+        {
+          "ref": "Q9S7-HQG"
+        },
+        {
+          "ref": "3NBY-WWK"
+        },
+        {
+          "ref": "SPGD-R76"
+        }
+      ]
+    },
+    {
+      "id": "GWWN-LWC",
+      "ark": "ark:/61903/4:1:GWWN-LWC",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "13f53650-108d-442b-9b60-96afa4e42ded",
+          "preferred": true,
+          "given": "Thomas Rowley",
+          "surname": "Morris",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2eb40266-872b-4ff1-8ddb-129a161e9c35",
+          "type": "Birth",
+          "date": "30 September 1890",
+          "standard_date": "30 Sep 1890",
+          "place": "Aberystwith, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Aberystwith, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "6dbd3c86-c8db-430f-8250-0de3c2394284",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "3f87dc86-2541-4317-a1f0-5934c4ae7079",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "110b0898-9714-42d2-aca1-b2d62af43c45",
+          "type": "Residence",
+          "date": "29 September 1939",
+          "standard_date": "29 Sep 1939",
+          "place": "Aberystwyth, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Aberystwyth, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "1b483079-d0a4-4c9d-846e-fb2ff364dce4",
+          "type": "Burial",
+          "date": "1979",
+          "standard_date": "1979",
+          "place": "St Matthew Churchyard, Borth, Ceredigion, Wales",
+          "standard_place": "Borth, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "6db4fe23-f4ed-48f0-b6e5-f168ec6f1afb",
+          "type": "Death",
+          "date": "1979",
+          "standard_date": "1979"
+        },
+        {
+          "id": "0221cf77-ff00-4cd6-81e1-6e241d9670c3",
+          "type": "Occupation",
+          "value": "Fruiterer Dealer"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "78JQ-782"
+        },
+        {
+          "ref": "SPG6-7ZF"
+        },
+        {
+          "ref": "SPGD-5X4"
+        },
+        {
+          "ref": "SPGD-PZP"
+        },
+        {
+          "ref": "SPGD-LHD"
+        },
+        {
+          "ref": "SPGD-23M"
+        },
+        {
+          "ref": "SPGD-FWV"
+        },
+        {
+          "ref": "SPGD-ZD6"
+        },
+        {
+          "ref": "SPGD-CF1"
+        },
+        {
+          "ref": "SPGD-CS4"
+        },
+        {
+          "ref": "SPGD-353"
+        }
+      ]
+    },
+    {
+      "id": "GWWN-GDC",
+      "ark": "ark:/61903/4:1:GWWN-GDC",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "19d2bb3a-dd3f-4d33-9c5d-b2e8dcfece97",
+          "preferred": true,
+          "given": "George Trevor",
+          "surname": "Morris",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "41864335-9e66-48e2-8c80-d3e9c44c545a",
+          "type": "Birth",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "Borth, Cardiganshire",
+          "standard_place": "Borth, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "5755e3d6-36c1-46ab-b6dc-0ae8df5450b9",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "a1f377fd-2dc8-4d3a-8e66-4d54e92d942c",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "SPGD-52C"
+        }
+      ]
+    },
+    {
+      "id": "GWWN-VVW",
+      "ark": "ark:/61903/4:1:GWWN-VVW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "b5e86a7a-4f88-4dac-8dad-d94bcda88eb1",
+          "preferred": true,
+          "given": "Ellen Elizabeth",
+          "surname": "Morris",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "02f3b613-7b46-4ace-9cdf-ccc60f7f4e57",
+          "type": "Birth",
+          "date": "1864",
+          "standard_date": "1864",
+          "place": "Merionethshire, England",
+          "standard_place": "Merionethshire, Wales, United Kingdom"
+        },
+        {
+          "id": "fe2bc111-87ab-4979-93dc-cea70395dda8",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "709ff994-9ce6-4156-81c4-54de770b1adc",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "3ccd2ef9-a53f-4d24-ba69-6452f73bc7b9",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "505365ea-3c90-4fac-a6ab-631689eda693",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3NBY-W73"
+        },
+        {
+          "ref": "SPGD-58B"
+        },
+        {
+          "ref": "SPGD-ZZ3"
+        }
+      ]
+    },
+    {
+      "id": "GWWN-BTB",
+      "ark": "ark:/61903/4:1:GWWN-BTB",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "d9687422-d389-4048-90e5-fb5f23b51f96",
+          "preferred": true,
+          "given": "Gladys",
+          "surname": "Morris",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2ef34b22-6270-4826-9918-3ced48376787",
+          "type": "Birth",
+          "date": "1897",
+          "standard_date": "1897",
+          "place": "Borth, Cardiganshire",
+          "standard_place": "Borth, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "6d6f1d3d-26f3-4a6a-b7a5-f5db18461635",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "746beaf7-2d8e-4b99-815f-3c417d652184",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom",
+          "standard_place": "Cyfoeth-y-brenin, Cardiganshire, Wales, United Kingdom"
+        },
+        {
+          "id": "2a3f69ac-f47e-49d6-a561-5d3afbfde4f9",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3NBY-W75"
+        },
+        {
+          "ref": "SPGD-55Z"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GWWN-XP9",
+      "person2": "GWWN-VVW",
+      "facts": [
+        {
+          "id": "be58fd7e-192e-4746-8a9b-c60022df7aa3",
+          "type": "Marriage",
+          "date": "1882",
+          "standard_date": "1882"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3NBY-W78"
+        },
+        {
+          "ref": "SPGD-Z4D"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GWWN-XP9",
+      "child": "GWWN-LWC",
+      "sources": [
+        {
+          "ref": "SPGD-Z4D"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GWWN-VVW",
+      "child": "GWWN-LWC",
+      "sources": [
+        {
+          "ref": "SPGD-Z4D"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GWWN-XP9",
+      "child": "GWWN-GDC",
+      "sources": [
+        {
+          "ref": "SPGD-5JH"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GWWN-VVW",
+      "child": "GWWN-GDC",
+      "sources": [
+        {
+          "ref": "SPGD-5JH"
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GWWN-XP9",
+      "child": "GWWN-BTB",
+      "sources": [
+        {
+          "ref": "SPGD-5LY"
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GWWN-VVW",
+      "child": "GWWN-BTB",
+      "sources": [
+        {
+          "ref": "SPGD-5LY"
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "GWWN-XP9",
+      "child": "GWWN-LTS",
+      "sources": [
+        {
+          "ref": "SPGD-RS2"
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GWWN-VVW",
+      "child": "GWWN-LTS",
+      "sources": [
+        {
+          "ref": "SPGD-RS2"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GWWN-XP9",
+      "title": "Owen Morris",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Owen Morris (PID GWWN-XP9); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GWWN-XP9"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_GWWN-LTS",
+      "title": "Douglas Owen Morris",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Douglas Owen Morris (PID GWWN-LTS); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GWWN-LTS"
+    },
+    {
+      "id": "sd_person_GWWN-LWC",
+      "title": "Thomas Rowley Morris",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Thomas Rowley Morris (PID GWWN-LWC); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GWWN-LWC"
+    },
+    {
+      "id": "sd_person_GWWN-GDC",
+      "title": "George Trevor Morris",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for George Trevor Morris (PID GWWN-GDC); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GWWN-GDC"
+    },
+    {
+      "id": "sd_person_GWWN-VVW",
+      "title": "Ellen Elizabeth Morris",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Ellen Elizabeth Morris (PID GWWN-VVW); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GWWN-VVW"
+    },
+    {
+      "id": "sd_person_GWWN-BTB",
+      "title": "Gladys Morris",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Gladys Morris (PID GWWN-BTB); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GWWN-BTB"
+    },
+    {
+      "id": "SPGD-HTL",
+      "title": "Owen Morris, \"Wales, Parish Registers, 1678-1950\"",
+      "citation": "\"Wales, Parish Registers, 1678-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLQT-V831 : Sun Jun 30 11:16:12 UTC 2024), Owen Morris in entry for Thomas Rowley Morris and Jane Jenkins, 19 June 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLQT-V831"
+    },
+    {
+      "id": "SPGD-5C1",
+      "title": "Owen Morris, \"England and Wales, Census, 1901\"",
+      "citation": "\"England and Wales, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9B6-G5S : Thu Feb 13 03:02:13 UTC 2025), Owen Morris, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9B6-G5S"
+    },
+    {
+      "id": "SPGD-Z7S",
+      "title": "Owen Morris Junr, \"England and Wales, Census, 1891\"",
+      "citation": "\"England and Wales, Census, 1891\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:45VS-5PZ : Wed Jan 22 17:04:16 UTC 2025), Owen Morris Junr, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:45VS-5PZ"
+    },
+    {
+      "id": "3NBY-WQ8",
+      "title": "Owen Morris, \"England and Wales, Census, 1911\"",
+      "citation": "\"England and Wales, Census, 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7JG-Y45 : Tue Sep 01 21:47:43 UTC 2026), Owen Morris, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X7JG-Y45"
+    },
+    {
+      "id": "Q9S7-NMY",
+      "title": "Douglas Owen Morris, \"England and Wales, Death Registration Index 1837-2007\"",
+      "citation": "\"England and Wales, Death Registration Index 1837-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVZ7-FW3H : Thu Feb 27 21:05:00 UTC 2025), Douglas Owen Morris, 1980.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVZ7-FW3H"
+    },
+    {
+      "id": "Q9S7-HJ7",
+      "title": "Douglas O Sercombe, \"England and Wales, Marriage Registration Index, 1837-2005\"",
+      "citation": "\"England and Wales, Marriage Registration Index, 1837-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV6X-JZHH : Tue Jul 07 05:03:54 UTC 2026), Douglas O Sercombe and Mary G Sercombe, 1969.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV6X-JZHH"
+    },
+    {
+      "id": "Q9S7-HQG",
+      "title": "Douglas Owen Morris, \"England and Wales, Birth Registration Index, 1837-2008\"",
+      "citation": "\"England and Wales, Birth Registration Index, 1837-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2FCH-P96 : Mon May 11 11:26:44 UTC 2026), Douglas Owen Morris, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2FCH-P96"
+    },
+    {
+      "id": "3NBY-WWK",
+      "title": "Duglas Morris, \"England and Wales, Census, 1911\"",
+      "citation": "\"England and Wales, Census, 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7JG-Y4T : Tue Sep 01 21:47:43 UTC 2026), Duglas Morris in entry for Owen Morris, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X7JG-Y4T"
+    },
+    {
+      "id": "SPGD-R76",
+      "title": "Douglas Owen Morris, \"England and Wales, Census, 1901\"",
+      "citation": "\"England and Wales, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9B6-G54 : Thu Feb 13 03:02:13 UTC 2025), Douglas Owen Morris in entry for Owen Morris, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9B6-G54"
+    },
+    {
+      "id": "78JQ-782",
+      "title": "Thomas R Morris, \"England and Wales, National Register, 1939\"",
+      "citation": "\"England and Wales, National Register, 1939\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7R5Z-3TZM : Sat Mar 01 10:40:23 UTC 2025), Thomas R Morris, 29 Sep 1939.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7R5Z-3TZM"
+    },
+    {
+      "id": "SPG6-7ZF",
+      "title": "Thomas R Morris  in the 1939 England and Wales Register",
+      "citation": "Source Citation\nThe National Archives; Kew, London, England; 1939 Register; Reference: RG 101/7572F",
+      "url": "https://search.ancestry.com/cgi-bin/sse.dll?db=1939UKRegister&indiv=try&h=42491785"
+    },
+    {
+      "id": "SPGD-5X4",
+      "title": "Thomas R Morris, \"England and Wales, Census, 1901\"",
+      "citation": "\"England and Wales, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9B6-G5Q : Thu Feb 13 03:02:13 UTC 2025), Thomas R Morris in entry for Owen Morris, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9B6-G5Q"
+    },
+    {
+      "id": "SPGD-PZP",
+      "title": "Thomas Rowley Morris, \"Wales, Parish Registers, 1678-1950\"",
+      "citation": "\"Wales, Parish Registers, 1678-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL3Q-6K41 : Wed Sep 24 01:25:35 UTC 2025), Thomas Rowley Morris in entry for Glenys Morris, 15 October 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL3Q-6K41"
+    },
+    {
+      "id": "SPGD-LHD",
+      "title": "Thomas Rowley Morris  in the England & Wales, Civil Registration Birth Index, 1837-1915",
+      "citation": "Source Information\nFreeBMD. England & Wales, Civil Registration Birth Index, 1837-1915 [database on-line]. Provo, UT, USA: Ancestry.com Operations Inc, 2006.\n\nOriginal data: General Register Office. England and Wales Civil Registration Indexes. London, England: General Register Office. © Crown copyright. Published by permission of the Controller of HMSO and the Office for National Statistics. You must not copy on, transfer or reproduce records without the prior permission of ONS. Database Copyright © 1998-2003 Graham Hart, Ben Laurie, Camilla von Massenbach and David Mayall.",
+      "url": "https://search.ancestry.com/cgi-bin/sse.dll?indiv=1&dbid=8912&h=23646254&tid=&pid=&usePUB=true&_phsr"
+    },
+    {
+      "id": "SPGD-23M",
+      "title": "Thomas R Morris  in the UK and Ireland, Find A Grave Index, 1300s-Current",
+      "citation": "Source Information\nAncestry.com. UK and Ireland, Find A Grave Index, 1300s-Current [database on-line]. Provo, UT, USA: Ancestry.com Operations, Inc., 2012.\n\nOriginal data: Find A Grave. Find A Grave. http://www.findagrave.com/cgi-bin/fg.cgi.",
+      "url": "https://search.ancestry.com/cgi-bin/sse.dll?indiv=1&dbid=60526&h=4282058&tid=&pid=&usePUB=true&_phsrc=IxC18833&_phstart=su"
+    },
+    {
+      "id": "SPGD-FWV",
+      "title": "Thomas Rowley Morris, \"Wales, Parish Registers, 1678-1950\"",
+      "citation": "\"Wales, Parish Registers, 1678-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLSD-GDQJ : Wed Sep 24 01:35:17 UTC 2025), Thomas Rowley Morris in entry for Noelle Morris, 4 March 1917.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLSD-GDQJ"
+    },
+    {
+      "id": "SPGD-ZD6",
+      "title": "Thomas Rowley Morris, \"England and Wales, Census, 1891\"",
+      "citation": "\"England and Wales, Census, 1891\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:45V3-D3Z : Wed Jan 22 17:04:16 UTC 2025), Thomas Rowley Morris in entry for Owen Morris Junr, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:45V3-D3Z"
+    },
+    {
+      "id": "SPGD-CF1",
+      "title": "Thomas Rowley Morris, \"Wales, Cardiganshire, Parish Registers, 1538-1912\"",
+      "citation": "\"Wales, Cardiganshire, Parish Registers, 1538-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KCLS-RX7 : Wed Mar 05 22:04:25 UTC 2025), Thomas Rowley Morris and Jane Jenkins, 19 Jun 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KCLS-RX7"
+    },
+    {
+      "id": "SPGD-CS4",
+      "title": "Thomas Rowley Morris, \"Wales, Parish Registers, 1678-1950\"",
+      "citation": "\"Wales, Parish Registers, 1678-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLQT-V83B : Sun Jun 30 11:16:12 UTC 2024), Thomas Rowley Morris and Jane Jenkins, 19 June 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLQT-V83B"
+    },
+    {
+      "id": "SPGD-353",
+      "title": "Record Transcription: Cardiganshire Marriages And Banns",
+      "citation": "Find My Past",
+      "url": "https://www.findmypast.com/transcript?id=GBPRS%2FM%2F876014302%2F2"
+    },
+    {
+      "id": "SPGD-52C",
+      "title": "George Trevor Morris, \"England and Wales, Census, 1901\"",
+      "citation": "\"England and Wales, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9B6-G57 : Thu Feb 13 03:02:13 UTC 2025), George Trevor Morris in entry for Owen Morris, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9B6-G57"
+    },
+    {
+      "id": "3NBY-W73",
+      "title": "Ellen Morris, \"England and Wales, Census, 1911\"",
+      "citation": "\"England and Wales, Census, 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7JG-Y4R : Tue Sep 01 21:47:43 UTC 2026), Ellen Morris in entry for Owen Morris, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X7JG-Y4R"
+    },
+    {
+      "id": "SPGD-58B",
+      "title": "Ellen Elizabeth Morris, \"England and Wales, Census, 1901\"",
+      "citation": "\"England and Wales, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9B6-G53 : Thu Feb 13 03:02:13 UTC 2025), Ellen Elizabeth Morris in entry for Owen Morris, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9B6-G53"
+    },
+    {
+      "id": "SPGD-ZZ3",
+      "title": "Ellen Elizabeth Morris, \"England and Wales, Census, 1891\"",
+      "citation": "\"England and Wales, Census, 1891\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:45V3-ZPZ : Wed Jan 22 17:04:16 UTC 2025), Ellen Elizabeth Morris in entry for Owen Morris Junr, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:45V3-ZPZ"
+    },
+    {
+      "id": "3NBY-W75",
+      "title": "Gladys Morris, \"England and Wales, Census, 1911\"",
+      "citation": "\"England and Wales, Census, 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7JG-Y4Y : Tue Sep 01 21:47:43 UTC 2026), Gladys Morris in entry for Owen Morris, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X7JG-Y4Y"
+    },
+    {
+      "id": "SPGD-55Z",
+      "title": "Gladys Morris, \"England and Wales, Census, 1901\"",
+      "citation": "\"England and Wales, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9B6-G5W : Thu Feb 13 03:02:13 UTC 2025), Gladys Morris in entry for Owen Morris, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9B6-G5W"
+    },
+    {
+      "id": "3NBY-W78",
+      "title": "Ellen Morris, \"England and Wales, Census, 1911\"",
+      "citation": "\"England and Wales, Census, 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7JG-Y4R : Tue Sep 01 21:47:43 UTC 2026), Ellen Morris in entry for Owen Morris, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X7JG-Y4R"
+    },
+    {
+      "id": "SPGD-Z4D",
+      "title": "Ellen Elizabeth Morris, \"England and Wales, Census, 1891\"",
+      "citation": "\"England and Wales, Census, 1891\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:45V3-ZPZ : Wed Jan 22 17:04:16 UTC 2025), Ellen Elizabeth Morris in entry for Owen Morris Junr, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:45V3-ZPZ"
+    },
+    {
+      "id": "SPGD-5JH",
+      "title": "George Trevor Morris, \"England and Wales, Census, 1901\"",
+      "citation": "\"England and Wales, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9B6-G57 : Thu Feb 13 03:02:13 UTC 2025), George Trevor Morris in entry for Owen Morris, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9B6-G57"
+    },
+    {
+      "id": "SPGD-5LY",
+      "title": "Gladys Morris, \"England and Wales, Census, 1901\"",
+      "citation": "\"England and Wales, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9B6-G5W : Thu Feb 13 03:02:13 UTC 2025), Gladys Morris in entry for Owen Morris, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9B6-G5W"
+    },
+    {
+      "id": "SPGD-RS2",
+      "title": "Douglas Owen Morris, \"England and Wales, Census, 1901\"",
+      "citation": "\"England and Wales, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9B6-G54 : Thu Feb 13 03:02:13 UTC 2025), Douglas Owen Morris in entry for Owen Morris, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9B6-G54"
+    }
+  ]
+}
