@@ -217,10 +217,10 @@ describe("projectRecordPersonas", () => {
     expect(g.personaId).toBe("p_1");
   });
 
-  it("keeps one party together when only some of its assertions carry the persona id", () => {
+  it("keeps one party together when a re-extraction left off its persona id", () => {
     const groups = projectRecordPersonas([
-      a({ id: "a_1", record_role: "deceased", fact_type: "name", value: "Ana Bardales", record_persona_id: "p_1" }),
-      a({ id: "a_2", record_role: "deceased", fact_type: "death", date: "1950" }),
+      a({ id: "a_1", record_role: "deceased", fact_type: "name", value: "Ana Bardales", record_persona_id: "p_1", log_entry_id: "log_001" }),
+      a({ id: "a_2", record_role: "deceased", fact_type: "death", date: "1950", log_entry_id: "log_002" }),
     ]);
     expect(groups).toHaveLength(1);
     expect(groups[0].personaId).toBe("p_1");
@@ -237,20 +237,38 @@ describe("projectRecordPersonas", () => {
 });
 
 describe("recordPartyKeyer (#2537)", () => {
-  it("keys an assertion with no persona id to the one persona carrying its role", () => {
+  it("keys a re-extraction's id-less assertion to the one persona carrying its role", () => {
     const list = [
-      a({ record_role: "deceased", record_persona_id: "p_1" }),
-      a({ record_role: "deceased" }),
+      a({ record_role: "deceased", record_persona_id: "p_1", log_entry_id: "log_001" }),
+      a({ record_role: "deceased", log_entry_id: "log_002" }),
     ];
     const key = recordPartyKeyer(list);
     expect(list.map(key)).toEqual(["p_1", "p_1"]);
   });
 
+  // Code review: a register page holds several people at one role.
+  it("keeps the role for an id-less party inside an extraction that set ids", () => {
+    const list = [
+      a({ record_role: "child", record_persona_id: "p_1", log_entry_id: "log_001" }),
+      a({ record_role: "child", log_entry_id: "log_001" }),
+    ];
+    expect(list.map(recordPartyKeyer(list))).toEqual(["p_1", "child"]);
+  });
+
+  it("keeps the role when the id-less extraction names two people at it", () => {
+    const list = [
+      a({ record_role: "child", record_persona_id: "p_1", log_entry_id: "log_001" }),
+      a({ record_role: "child", fact_type: "name", value: "Ann", log_entry_id: "log_002" }),
+      a({ record_role: "child", fact_type: "name", value: "Mary", log_entry_id: "log_002" }),
+    ];
+    expect(list.slice(1).map(recordPartyKeyer(list))).toEqual(["child", "child"]);
+  });
+
   it("keeps the role when two personas carry it", () => {
     const list = [
-      a({ record_role: "child", record_persona_id: "p_1" }),
-      a({ record_role: "child", record_persona_id: "p_2" }),
-      a({ record_role: "child" }),
+      a({ record_role: "child", record_persona_id: "p_1", log_entry_id: "log_001" }),
+      a({ record_role: "child", record_persona_id: "p_2", log_entry_id: "log_001" }),
+      a({ record_role: "child", log_entry_id: "log_002" }),
     ];
     expect(list.map(recordPartyKeyer(list))).toEqual(["p_1", "p_2", "child"]);
   });

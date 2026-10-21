@@ -415,15 +415,31 @@ const nonEmpty = (v: unknown): string | null => (typeof v === "string" && v !== 
  *   - a persona id worn by more than one role names no single party, so its
  *     assertions key on their role;
  *   - an assertion with no usable persona id joins the one persona that carries
- *     its role, when exactly one does.
+ *     its role, when exactly one does, and only when it comes from an extraction
+ *     (`log_entry_id`) that set no persona id at all and names one person at
+ *     that role. That is a re-extraction of the record without its ids (a hint).
+ *     Inside an extraction that set ids, a party without one is a different
+ *     person; and two names at one role (a register page's children) are two
+ *     people, so neither joins.
  *
  * `absent` (negative evidence) is not a role a persona carries.
  */
 export function recordPartyKeyer(recordAssertions: Iterable<any>): (a: any) => string | null {
+  const list = [...recordAssertions];
+  const logOf = (a: any) => nonEmpty(a?.log_entry_id) ?? "";
   const rolesByPid = new Map<string, Set<string>>();
-  for (const a of recordAssertions) {
+  const logsWithPid = new Set<string>();
+  const namesByLogRole = new Map<string, Set<string>>();
+  for (const a of list) {
     const pid = nonEmpty(a?.record_persona_id);
     const role = nonEmpty(a?.record_role);
+    if (pid !== null) logsWithPid.add(logOf(a));
+    if (role !== null && String(a?.fact_type ?? "").toLowerCase() === "name") {
+      const k = `${logOf(a)}\u0000${role}`;
+      const names = namesByLogRole.get(k) ?? new Set<string>();
+      names.add(String(a?.value ?? ""));
+      namesByLogRole.set(k, names);
+    }
     if (pid === null || role === null || role === "absent") continue;
     const roles = rolesByPid.get(pid) ?? new Set<string>();
     roles.add(role);
@@ -442,6 +458,8 @@ export function recordPartyKeyer(recordAssertions: Iterable<any>): (a: any) => s
     if (pid !== null && (rolesByPid.get(pid)?.size ?? 0) <= 1) return pid;
     const role = nonEmpty(a?.record_role);
     if (role === null) return null;
+    if (pid !== null || logsWithPid.has(logOf(a))) return role;
+    if ((namesByLogRole.get(`${logOf(a)}\u0000${role}`)?.size ?? 0) > 1) return role;
     const pids = pidsByRole.get(role);
     return pids && pids.size === 1 ? [...pids][0] : role;
   };

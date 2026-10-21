@@ -335,13 +335,17 @@ export function compatiblePlace(
 }
 
 /** True when `xs`'s least-specific level appears in `ys` and each level of `xs`
- *  below it matches the level of `ys` at the same depth. Both country-first. */
+ *  below it matches the level of `ys` at the same depth. Both country-first.
+ *  Every place the top level appears is tried: a name repeats across levels
+ *  ("Manhattan, New York, New York, United States"). */
 function alignedBelowTop(xs: string[], ys: string[]): boolean {
-  const at = ys.indexOf(xs[0]);
-  if (at < 0) return false;
-  const n = Math.min(xs.length, ys.length - at);
-  for (let k = 0; k < n; k++) if (xs[k] !== ys[at + k]) return false;
-  return true;
+  for (let at = ys.indexOf(xs[0]); at >= 0; at = ys.indexOf(xs[0], at + 1)) {
+    const n = Math.min(xs.length, ys.length - at);
+    let k = 0;
+    while (k < n && xs[k] === ys[at + k]) k++;
+    if (k === n) return true;
+  }
+  return false;
 }
 
 function splitPlace(s: string): string[] {

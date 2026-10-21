@@ -138,10 +138,12 @@ for (const { label, research, tree } of docs) {
     if (LIST) lines.push(`REFUSE\t${label}\t${e.id}\t${relational ? "relational" : "one-party"}\t${text.slice(0, 220)}`);
   }
 
-  // Every live link, any tier: does it make an existing relationship link a refused one?
+  // Every live link, any tier, replayed as the one this call writes: would
+  // writing it LAST make another relationship link a refused one?
   if (recheck) {
     for (const e of live) {
-      const errs = recheck(e, research, tree, personLinks, undefined, coords);
+      const asWritten = personLinks.map((l) => (l.id === e.id ? { ...l, fromBatch: true } : l));
+      const errs = recheck(e, research, tree, asWritten, undefined, coords);
       if (errs.length === 0) continue;
       recheckRefusals += 1;
       if (LIST) lines.push(`RECHECK\t${label}\t${e.id}\t${errs.join(" ").slice(0, 220)}`);

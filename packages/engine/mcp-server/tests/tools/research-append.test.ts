@@ -8591,12 +8591,31 @@ describe("research_append — detected core-identifier contradiction", () => {
     expect((await researchAppend(link("confident"))).ok).toBe(true);
   });
 
-  it("does NOT cap on the date arm either when the conflict decided against it", async () => {
+  it("does NOT cap on the date arm when a resolved birth-year conflict decided against it", async () => {
     await withConflict(
-      { status: "resolved", preferred_assertion_id: "a_001", resolution_rationale: "Census age outweighs." },
+      { status: "resolved", disputed_attribute: "birth_year", preferred_assertion_id: "a_001", resolution_rationale: "Census age outweighs." },
       { fact_type: "christening", date: "12 March 1858", place: null },
     );
     expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  // A birthplace dispute weighed the place, not the record's christening date.
+  it("still caps on the date arm when the resolved conflict disputed the birthplace", async () => {
+    await withConflict(
+      { status: "resolved", disputed_attribute: "birth_place", preferred_assertion_id: "a_001", resolution_rationale: "Baptism outweighs." },
+      { fact_type: "christening", date: "12 March 1858", place: null },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  // An identity conflict's loser was judged to be someone else; linking through
+  // it to the rejected identity must stay capped.
+  it("still caps when the resolved conflict was an identity conflict", async () => {
+    await withConflict({
+      conflict_type: "identity", status: "resolved", preferred_assertion_id: "a_001",
+      resolution_rationale: "The record is NOT this person.",
+    });
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
   });
 
   it("still caps when the resolved conflict PREFERRED the contradicting assertion", async () => {
@@ -8858,6 +8877,33 @@ describe("research_append — detected contradiction, two-party assertions", () 
     expect(failure(r).errors?.join(" ")).toMatch(/birth in 1790/);
   });
 
+  // Code review: a throwaway link to the OTHER party must not take the
+  // relationship link out of scope.
+  it("still refuses when links tie both of the relationship's parties to the person", async () => {
+    await write();
+    await patch(
+      { a_060: { structured_value: { relationship_type: "child", related_person_role: "father" } } },
+      [{ id: "a_067", record_role: "father", fact_type: "name", value: "Thomas Flynn" }],
+    );
+    const r = await researchAppend(batch(
+      entry("a_061", "I1", "speculative"), entry("a_067", "I1", "speculative"), entry("a_060", "I1", "confident"),
+    ) as any);
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/christening in 1858/);
+  });
+
+  // Code review: a relationship link already refused before this one-party link
+  // (written under an earlier rule) is not this link's doing.
+  it("does NOT refuse a one-party link for a relationship link that was already contradicted", async () => {
+    await write([
+      { id: "pe_900", ...entry("a_060", "I1", "confident") },
+      { id: "pe_901", ...entry("a_061", "I1", "speculative") },
+    ]);
+    await patch({}, [{ id: "a_068", fact_type: "name", value: "Patrick Flynn" }]);
+    const r = await researchAppend(batch(entry("a_068", "I1", "speculative")) as any);
+    expect(r.ok ? [] : failure(r).errors).toEqual([]);
+  });
+
   // Follow-up 1: with the comparator fixed, the two-party arm compares place too.
   it("refuses a confident relationship link on a contradicted birthplace of its party", async () => {
     await write();
@@ -8886,7 +8932,9 @@ describe("research_append — detected contradiction, two-party assertions", () 
   // Follow-up 3: the party key is read across the record, not per assertion.
   it("compares an assertion with no persona id against the persona that carries its role", async () => {
     await write();
-    await patch({}, [{ id: "a_063", fact_type: "name", value: "Patrick Flynn", record_persona_id: "p_child" }]);
+    // The id-less assertions are a re-extraction without ids (a hint); the
+    // persona id came from an extraction of its own.
+    await patch({}, [{ id: "a_063", fact_type: "name", value: "Patrick Flynn", record_persona_id: "p_child", log_entry_id: "log_001" }]);
     const r = await researchAppend(batch(entry("a_063", "I1", "confident")) as any);
     expect(r.ok).toBe(false);
     expect(failure(r).errors?.join(" ")).toMatch(/christening in 1858/);

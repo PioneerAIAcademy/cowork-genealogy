@@ -219,6 +219,10 @@ describe("compatiblePlace", () => {
     )).toBe(true);
   });
 
+  it("aligns a place whose name repeats across levels", () => {
+    expect(compatiblePlace("Manhattan, New York", "Manhattan, New York, New York, United States")).toBe(true);
+  });
+
   it("returns false when the levels below the shared top disagree", () => {
     expect(compatiblePlace("Springfield, Ohio", "Springfield, Illinois, United States")).toBe(false);
     expect(compatiblePlace("London, England", "London, Ontario, Canada")).toBe(false);

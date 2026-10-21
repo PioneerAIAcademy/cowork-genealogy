@@ -1256,8 +1256,8 @@ const WEAK_INFORMANT_PROXIMITY: ReadonlySet<string> = new Set([
  *  tree. Measured over every committed scenario fixture 2026-09-24: with these
  *  two gates the arm refuses **0 of 323** confident/probable person_evidence
  *  entries, against 38 without them and 274 comparing any place at all. An
- *  assertion a resolved conflict decided against is not credible either
- *  (`resolvedAgainstIds`). */
+ *  assertion a resolved conflict decided against, on the attribute that conflict
+ *  disputed, is not credible either (`resolvedAgainstIds`). */
 function contradictionIsCredible(assertion: any, resolvedAgainst: ReadonlySet<string>): boolean {
   if (resolvedAgainst.has(assertion?.id)) return false;
   if (assertion?.information_quality === "secondary") return false;
@@ -1266,24 +1266,47 @@ function contradictionIsCredible(assertion: any, resolvedAgainst: ReadonlySet<st
   );
 }
 
-/** Assertions a RESOLVED conflict decided against: every competitor that is not
- *  its `preferred_assertion_id`. A contradiction the project has already weighed
- *  and set aside is not a live one, so it cannot cap the link. Measured
- *  2026-10-21 over 350 committed fixture and e2e documents (10,607
- *  confident/probable links, live coordinates): the gate refuses 179 with every
- *  conflict removed and 164 with them, the 15 released all on a resolved-and-lost
- *  assertion (`dev/measure-core-identifier-gate.ts --coords`). Read from the document as
+/** `disputed_attribute` values that settle each arm, matched exactly after
+ *  lower-casing and folding spaces and hyphens to underscores. The field is free
+ *  text, so anything else ("birth year of John Laurie (GPZR-3X2)") settles
+ *  neither arm and the assertion still caps, which fails safe. */
+const BIRTH_PLACE_DISPUTES: ReadonlySet<string> = new Set([
+  "birthplace", "birth_place", "place_of_birth",
+]);
+const BIRTH_DATE_DISPUTES: ReadonlySet<string> = new Set([
+  "birth_year", "birth_date", "birthdate", "date_of_birth", "year_of_birth",
+  "christening_date", "baptism_date",
+]);
+
+export interface ResolvedAgainst {
+  place: ReadonlySet<string>;
+  date: ReadonlySet<string>;
+}
+
+/** Assertions a RESOLVED FACT conflict decided against, per arm: every
+ *  competitor that is not its `preferred_assertion_id`, released only on the
+ *  arm its `disputed_attribute` names. A contradiction the project has already
+ *  weighed and set aside is not a live one, so it cannot cap the link; one it did
+ *  not weigh (a birthplace dispute says nothing about the same record's
+ *  christening date) still does. An identity conflict releases nothing: its
+ *  loser was judged to be a different person, so a link through it to the
+ *  rejected identity is exactly what must stay capped. Read from the document as
  *  this op sees it, so a conflict resolved LATER in the same batch still
- *  refuses, which fails safe. */
-function resolvedAgainstIds(research: any): Set<string> {
-  const out = new Set<string>();
+ *  refuses, which fails safe. Figures: `dev/measure-core-identifier-gate.ts`. */
+function resolvedAgainstIds(research: any): ResolvedAgainst {
+  const place = new Set<string>();
+  const date = new Set<string>();
   for (const c of (research?.conflicts ?? []) as any[]) {
-    if (c?.status !== "resolved" || typeof c.preferred_assertion_id !== "string") continue;
+    if (c?.status !== "resolved" || c.conflict_type !== "fact") continue;
+    if (typeof c.preferred_assertion_id !== "string") continue;
+    const attr = String(c.disputed_attribute ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+    const into = BIRTH_PLACE_DISPUTES.has(attr) ? place : BIRTH_DATE_DISPUTES.has(attr) ? date : null;
+    if (!into) continue;
     for (const id of (c.competing_assertion_ids ?? []) as unknown[]) {
-      if (typeof id === "string" && id !== c.preferred_assertion_id) out.add(id);
+      if (typeof id === "string" && id !== c.preferred_assertion_id) into.add(id);
     }
   }
-  return out;
+  return { place, date };
 }
 
 /** A person_evidence link as the contradiction gate needs it: which assertion,
@@ -1377,18 +1400,20 @@ function relationalParties(linked: any, partyKey: (a: any) => string | null): st
   return [own, related].filter((k): k is string => k !== null);
 }
 
-/** Which party of `linked`, a two-party assertion, its link to `personId` is
- *  about: the one some other link ties to that same person through a one-party
- *  assertion of the same record. Null when no link does, or when links tie both
- *  parties to the person, which says nothing about which one this link means. */
-function partyLinkedTo(
+/** Which parties of `linked`, a two-party assertion, its link to `personId`
+ *  may be about: those some other link ties to that same person through a
+ *  one-party assertion of the same record. Empty when no link does. When links
+ *  tie BOTH parties to the person, both are returned and both are checked: one
+ *  person cannot be both, and dropping the link out of scope there let a
+ *  throwaway link to the other party carry a contradicted one through. */
+function partiesLinkedTo(
   linked: any,
   personId: unknown,
   onRecord: ReadonlyArray<any>,
   partyKey: (a: any) => string | null,
   personLinks?: ReadonlyArray<PersonLink>,
-): string | null {
-  if (!personLinks || personLinks.length === 0) return null;
+): string[] {
+  if (!personLinks || personLinks.length === 0) return [];
   const parties = new Set(relationalParties(linked, partyKey));
   const byId = new Map(onRecord.map((a) => [a.id, a]));
   const found = new Set<string>();
@@ -1399,7 +1424,7 @@ function partyLinkedTo(
     const k = partyKey(other);
     if (k !== null && parties.has(k)) found.add(k);
   }
-  return found.size === 1 ? [...found][0] : null;
+  return [...found];
 }
 
 /** Coordinates of standard places, looked up in `prepareOps` because the gate
@@ -1506,7 +1531,7 @@ function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoor
 interface ContradictionScope {
   birth: any;
   sameRecord: any[];
-  resolvedAgainst: ReadonlySet<string>;
+  resolvedAgainst: ResolvedAgainst;
 }
 
 /** Every assertion this call can resolve: the document's, plus this batch's
@@ -1559,15 +1584,15 @@ function contradictionScope(
   // read "Ohio" against "Ohio, United States" as a contradiction (247 would-be
   // refusals, 2026-09-29). With that fixed (#2537), measured 2026-10-21 over 350
   // documents (10,607 links, live coordinates): the two-party links refused rise
-  // from 11 to 50, and every added refusal cites an assertion the one-party arm
+  // from 11 to 51, and every added refusal cites an assertion the one-party arm
   // already refuses in the same document (Maine vs New Brunswick, North Carolina
   // vs Kentucky, a 9-year birth gap). No new class; it closes the side door
   // round refusals that already stand.
-  let party = partyKey(linked);
-  if (isRelational(linked)) {
-    party = partyLinkedTo(linked, entry.person_id, onRecord, partyKey, personLinks);
-    if (party === null) return null;
-  }
+  const own = partyKey(linked);
+  const parties = isRelational(linked)
+    ? partiesLinkedTo(linked, entry.person_id, onRecord, partyKey, personLinks)
+    : own === null ? [] : [own];
+  if (parties.length === 0) return null;
 
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
   if (!person) return null;
@@ -1582,7 +1607,7 @@ function contradictionScope(
   // baptism names several people, and comparing a son's stated birth of 1845
   // against a father who the tree says was born 1818 produced 30 refusals that
   // are all one household, not one contradiction.
-  const sameRecord = party === null ? [] : onRecord.filter((a: any) => partyKey(a) === party);
+  const sameRecord = onRecord.filter((a: any) => parties.includes(partyKey(a) as string));
   return { birth, sameRecord, resolvedAgainst: resolvedAgainstIds(research) };
 }
 
@@ -1597,7 +1622,7 @@ function disagreeingBirthPlaces(scope: ContradictionScope): any[] {
     // not a claim about birthplace: a man born in Ireland appears in a
     // Pennsylvania census, and that is biography, not contradiction.
     BIRTH_PLACE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase()) &&
-    contradictionIsCredible(a, resolvedAgainst) &&
+    contradictionIsCredible(a, resolvedAgainst.place) &&
     typeof a.place === "string" &&
     placeSegments(a.place).length > 0 &&
     // "Same House" names no place, so it states nothing, like a place-less one.
@@ -1666,7 +1691,7 @@ function contradictionFindings(
   if (treeBirthYear != null) {
     for (const a of sameRecord) {
       if (!BIRTH_DATE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
-      if (!contradictionIsCredible(a, resolvedAgainst)) continue;
+      if (!contradictionIsCredible(a, resolvedAgainst.date)) continue;
       const stated = yearOf(a.date);
       if (stated == null) continue;
       if (Math.abs(stated - treeBirthYear) > MAX_BIRTH_YEAR_GAP) {
@@ -1706,7 +1731,7 @@ export function coreIdentifierContradictionInvariants(
 }
 
 /** The confident/probable relationship links that `entry`, a one-party link,
- *  newly gives a party to: live links to the same person, on a two-party
+ *  gives a party to: live links to the same person, on a two-party
  *  assertion of the same record, one of whose two parties is `entry`'s. Links an
  *  op of this call writes are left out; that op is gated on its own. */
 export function relationalLinksScopedBy(
@@ -1749,9 +1774,17 @@ export function scopedRelationalLinkInvariants(
   birthPlaceCoords?: BirthPlaceCoords,
 ): string[] {
   const errors: string[] = [];
+  // The links as they would stand without this one. A relationship link
+  // already refused without it (one written under an earlier rule) is not this
+  // link's doing, and refusing every later link for it would leave the party
+  // unlinkable until someone edits the old link.
+  const without = (personLinks ?? []).filter(
+    (l) => !(l.fromBatch && l.assertion_id === entry.assertion_id && l.person_id === entry.person_id),
+  );
   for (const l of relationalLinksScopedBy(entry, research, personLinks, batchAssertions)) {
     const findings = contradictionFindings(l, research, tree, personLinks, batchAssertions, birthPlaceCoords);
     if (findings.length === 0) continue;
+    if (contradictionFindings(l, research, tree, without, batchAssertions, birthPlaceCoords).length > 0) continue;
     const which = l.id ? `'${l.id}'` : `the link on '${l.assertion_id}'`;
     errors.push(
       `linking '${entry.assertion_id}' to '${entry.person_id}' says the relationship link ${which} ` +
@@ -5602,14 +5635,24 @@ async function prefetchBirthPlaceCoords(
     }
     if (op.section !== "person_evidence") continue;
     let entry: any;
+    // Whether the op makes the pairing, the condition `applyOne` re-checks
+    // scoped relationship links on: an append, or an update that re-points or
+    // revives a link.
+    let reRaising = true;
     if (op.op === "update") {
       if (fields.superseded_by) continue;
-      entry = { ...(live.find((e: any) => e?.id === op.entryId) ?? {}), ...fields };
+      const prior = live.find((e: any) => e?.id === op.entryId) ?? {};
+      entry = { ...prior, ...fields };
+      reRaising =
+        !!prior.superseded_by ||
+        prior.assertion_id !== entry.assertion_id ||
+        prior.person_id !== entry.person_id;
     } else {
       entry = (op as any).entry;
     }
     if (!entry || typeof entry !== "object") continue;
     names.push(...birthPlaceCoordNames(entry, research, tree, personLinks, assertions));
+    if (!reRaising) continue;
     for (const l of relationalLinksScopedBy(entry, research, personLinks, assertions)) {
       names.push(...birthPlaceCoordNames(l, research, tree, personLinks, assertions));
     }
