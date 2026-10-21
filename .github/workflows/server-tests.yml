@@ -27,8 +27,10 @@ name: Server tests
 # This job runs tests/test_plugin_agents.py::test_bare_agent_names_are_registered
 # — the only check that reads what the RUNTIME resolved the hosted agent options
 # to. It is keyless (the handshake registers agents with no credential, so the
-# "no secrets" property above holds), gated on the `claude` CLI install step
-# below, and run under AGENT_SMOKE=1 so a missing prerequisite fails loudly
+# "no secrets" property above holds), using the CLI bundled in the
+# `claude-agent-sdk` wheel that `apps/server/uv.lock` pins (0.2.128, CLI 2.1.220,
+# the binary the hosted control plane spawns), and run under AGENT_SMOKE=1 so a
+# missing prerequisite fails loudly
 # rather than skipping green (issue #1142). Still NOT covered here: `make
 # agent-smoke`'s arm 2 (the dead-stub e2e abort), which bills a session start and
 # stays hand-run; and whether a granted tool actually BINDS (`make
@@ -172,15 +174,6 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         working-directory: packages/engine/mcp-server
         run: npm ci && npm run build
-
-      - name: Install the claude CLI (agent-registration check, keyless)
-        if: steps.scope.outputs.relevant == 'true'
-        # test_plugin_agents.py::test_bare_agent_names_are_registered shells out
-        # to the claude CLI via the SDK. Pinned so keyless startup stays a known
-        # quantity (issue #1142; the premise was measured on 2.1.241 and this run
-        # re-measures it on the pinned version). No key: the handshake registers
-        # every agent with no credential, so the "no secrets" property holds.
-        run: npm i -g @anthropic-ai/claude-code@2.1.304
 
       - name: Start Postgres for the grant-lock tests
         if: steps.scope.outputs.relevant == 'true'
