@@ -305,16 +305,22 @@ export function compatibleDate(
  *
  * Place strings in our format are written most-specific-first, comma-
  * delimited: "city, region, country". We reverse the parts (so the
- * comparison is country-first), then verify that every level both places
- * specify agrees. Two places are compatible iff:
- *   - Both are non-empty, AND
- *   - They agree on every hierarchy level they both name
+ * comparison is country-first). Two places are compatible iff both are
+ * non-empty and the least-specific level one of them names appears in the
+ * other, with every level below it matching the other's level at the same
+ * depth. A Java placeId list always runs to the country; a text place often
+ * stops short of it ("Ohio") or adds a level above it ("..., England, United
+ * Kingdom"), and lining the two up from the country read those as different
+ * places (#2537).
  *
  * Examples (compatible):
  *   "Ireland"                    vs "County Cork, Ireland"  -> true
  *   "County Cork, Ireland"       vs "County Cork, Ireland"  -> true
+ *   "Ohio"                       vs "Ohio, United States"   -> true
+ *   "Staffordshire, England"     vs "West Bromwich, Staffordshire, England, United Kingdom" -> true
  * Examples (incompatible):
  *   "Pennsylvania, USA"          vs "County Cork, Ireland"  -> false
+ *   "Springfield, Ohio"          vs "Springfield, Illinois, United States" -> false
  *   ""                           vs "Ireland"               -> false
  */
 export function compatiblePlace(
@@ -325,10 +331,16 @@ export function compatiblePlace(
   const parts1 = splitPlace(place1);
   const parts2 = splitPlace(place2);
   if (parts1.length === 0 || parts2.length === 0) return false;
-  const minLen = Math.min(parts1.length, parts2.length);
-  for (let i = 0; i < minLen; i++) {
-    if (parts1[i] !== parts2[i]) return false;
-  }
+  return alignedBelowTop(parts1, parts2) || alignedBelowTop(parts2, parts1);
+}
+
+/** True when `xs`'s least-specific level appears in `ys` and each level of `xs`
+ *  below it matches the level of `ys` at the same depth. Both country-first. */
+function alignedBelowTop(xs: string[], ys: string[]): boolean {
+  const at = ys.indexOf(xs[0]);
+  if (at < 0) return false;
+  const n = Math.min(xs.length, ys.length - at);
+  for (let k = 0; k < n; k++) if (xs[k] !== ys[at + k]) return false;
   return true;
 }
 

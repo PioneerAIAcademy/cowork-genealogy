@@ -1,120 +1,173 @@
-// Re-derive the core-identifier gate's refusal figures over the committed
-// corpus, and count the two shapes issue #2537 left open on it.
+// Re-derive the core-identifier gate's figures for the four #2537 follow-ups
+// over the committed corpus.
 //
-//   npx tsx dev/measure-core-identifier-gate.ts
+//   npx tsx dev/measure-core-identifier-gate.ts            # the figures
+//   npx tsx dev/measure-core-identifier-gate.ts --list     # + one line per refusal
+//   npx tsx dev/measure-core-identifier-gate.ts --coords   # distance test with live coordinates
 //
-// The gate is the TOOL'S OWN `coreIdentifierContradictionInvariants`, imported,
-// never restated. Reads every eval/runlogs/e2e/<fixture>/run-*.final-research.json
-// with its .final-tree.gedcomx.json sibling, and every
-// eval/fixtures/scenarios/<name>/research.json with its tree.gedcomx.json.
+// The gates are the TOOL'S OWN, imported, never restated, so the script runs
+// unchanged against any revision: run it on main and on a branch with --list and
+// diff the two outputs to read what a change refuses or releases. A function a
+// revision does not export is reported as absent.
 //
-// Two counts beside the refusals:
-//   - mixed persona keys: a record whose assertions for one `record_role` carry a
-//     `record_persona_id` on some and not on others, so the per-assertion
-//     fallback splits one party into two keys;
-//   - refusals whose only contradicting assertion lost a RESOLVED conflict
-//     (it is in `competing_assertion_ids` and is not `preferred_assertion_id`).
-import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { join } from "node:path";
-import { coreIdentifierContradictionInvariants } from "../src/tools/research-append.js";
+// Corpus: every committed eval/fixtures/scenarios/<name>/research.json with its
+// tree.gedcomx.json, and every committed e2e run-*.final-research.json with its
+// .final-tree.gedcomx.json (`git ls-files`, so untracked scratch runs are not
+// counted). Each link is gated with every other live link of its document in
+// view, the state the document ended in.
+//
+// Without --coords no coordinates are looked up, so every same-country birthplace
+// pair counts as far apart (the place arm before the distance test). Both sides
+// of a diff must use the same setting.
+import { readFileSync, existsSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { execFileSync } from "node:child_process";
+import * as ra from "../src/tools/research-append.js";
+import * as rp from "../src/utils/record-persona.js";
+import { lookupPlaceCoords } from "../src/utils/place-coords.js";
+import { standardPlaceToCoords } from "../src/utils/place-resolver.js";
 
+const LIST = process.argv.includes("--list");
+const COORDS = process.argv.includes("--coords");
 const ROOT = join(import.meta.dirname, "..", "..", "..", "..");
 const readJson = (p: string): any => JSON.parse(readFileSync(p, "utf-8"));
+const tracked = (pattern: string): string[] =>
+  execFileSync("git", ["ls-files", pattern], { cwd: ROOT, encoding: "utf-8", maxBuffer: 1 << 28 })
+    .split("\n")
+    .filter(Boolean);
 
-const pairs: { label: string; research: string; tree: string }[] = [];
-const RUNS = join(ROOT, "eval", "runlogs", "e2e");
-for (const slug of readdirSync(RUNS)) {
-  let entries: string[];
-  try { entries = readdirSync(join(RUNS, slug)); } catch { continue; }
-  for (const f of entries) {
-    if (!f.endsWith(".final-research.json")) continue;
-    const tree = join(RUNS, slug, f.replace(".final-research.json", ".final-tree.gedcomx.json"));
-    if (existsSync(tree)) pairs.push({ label: `e2e/${slug}/${f}`, research: join(RUNS, slug, f), tree });
-  }
+const docs: { label: string; research: any; tree: any }[] = [];
+for (const rel of tracked("eval/fixtures/scenarios/*/research.json")) {
+  const tree = join(ROOT, dirname(rel), "tree.gedcomx.json");
+  if (existsSync(tree)) docs.push({ label: dirname(rel), research: readJson(join(ROOT, rel)), tree: readJson(tree) });
 }
-const SCEN = join(ROOT, "eval", "fixtures", "scenarios");
-for (const name of readdirSync(SCEN)) {
-  const research = join(SCEN, name, "research.json");
-  const tree = join(SCEN, name, "tree.gedcomx.json");
-  if (existsSync(research) && existsSync(tree)) pairs.push({ label: `scenario/${name}`, research, tree });
+for (const rel of tracked("eval/runlogs/e2e/*.final-research.json")) {
+  const tree = join(ROOT, rel.replace(".final-research.json", ".final-tree.gedcomx.json"));
+  if (existsSync(tree)) docs.push({ label: rel, research: readJson(join(ROOT, rel)), tree: readJson(tree) });
 }
 
-let docs = 0, links = 0, refused = 0, refusedLostConflict = 0;
-let mixedRecords = 0, sharedPid = 0;
-const sharedExamples: string[] = [];
-const mixedExamples: string[] = [];
-const lostExamples: string[] = [];
+const RELATIONAL = new Set(["relationship", "parentage", "parentchild", "marriage"]);
+const gate = ra.coreIdentifierContradictionInvariants;
+const recheck = (ra as any).scopedRelationalLinkInvariants as
+  | ((e: any, r: any, t: any, l?: any, b?: any, c?: any) => string[])
+  | undefined;
+const containment = (ra as any).placeContainmentErrors as ((e: any, r: any) => string[]) | undefined;
+const keyer = (rp as any).recordPartyKeyer as ((list: any[]) => (a: any) => string | null) | undefined;
 
-for (const p of pairs) {
-  let research: any, tree: any;
-  try { research = readJson(p.research); tree = readJson(p.tree); } catch { continue; }
-  docs += 1;
+let links = 0, linksRelational = 0;
+let refused = 0, refusedRelational = 0, refusedPlace = 0, refusedDate = 0;
+let refusedWithoutConflicts = 0;
+let recheckRefusals = 0;
+let conflictsChecked = 0, conflictsRefused = 0;
+let mixedGroups = 0, sharedPids = 0, keyerMoves = 0;
+const lines: string[] = [];
+
+for (const { label, research, tree } of docs) {
   const assertions: any[] = Array.isArray(research.assertions) ? research.assertions : [];
+  const byId = new Map(assertions.filter((a) => a && typeof a.id === "string").map((a) => [a.id, a]));
 
-  const byRecordRole = new Map<string, { withPid: number; without: number }>();
+  // Party-key shapes, per record.
+  const byRecord = new Map<string, any[]>();
   for (const a of assertions) {
     const rec = a?.record_id ?? a?.source_id;
-    if (typeof rec !== "string" || typeof a?.record_role !== "string") continue;
-    const k = `${rec}\u0000${a.record_role}`;
-    const c = byRecordRole.get(k) ?? { withPid: 0, without: 0 };
-    if (typeof a.record_persona_id === "string" && a.record_persona_id !== "") c.withPid += 1;
-    else c.without += 1;
-    byRecordRole.set(k, c);
+    if (typeof rec !== "string") continue;
+    (byRecord.get(rec) ?? byRecord.set(rec, []).get(rec)!).push(a);
   }
-  const rolesByPid = new Map<string, Set<string>>();
-  for (const a of assertions) {
-    const rec = a?.record_id ?? a?.source_id;
-    if (typeof rec !== "string" || typeof a?.record_persona_id !== "string" || a.record_persona_id === "") continue;
-    const k = `${rec}\u0000${a.record_persona_id}`;
-    const roles = rolesByPid.get(k) ?? new Set<string>();
-    if (a.record_role !== "absent") roles.add(String(a.record_role));
-    rolesByPid.set(k, roles);
-  }
-  for (const [k, roles] of rolesByPid) {
-    if (roles.size > 1) {
-      sharedPid += 1;
-      if (sharedExamples.length < 8) sharedExamples.push(`${p.label} ${k.replace("\u0000", " pid=")} roles=${[...roles].join("|")}`);
+  for (const [rec, list] of byRecord) {
+    const withPid = new Map<string, { pid: number; none: number }>();
+    const rolesByPid = new Map<string, Set<string>>();
+    for (const a of list) {
+      const role = a?.record_role;
+      if (typeof role !== "string" || role === "absent") continue;
+      const c = withPid.get(role) ?? { pid: 0, none: 0 };
+      const pid = typeof a.record_persona_id === "string" && a.record_persona_id !== "" ? a.record_persona_id : null;
+      if (pid) c.pid += 1;
+      else c.none += 1;
+      withPid.set(role, c);
+      if (pid) (rolesByPid.get(pid) ?? rolesByPid.set(pid, new Set()).get(pid)!).add(role);
     }
-  }
-  for (const [k, c] of byRecordRole) {
-    if (c.withPid > 0 && c.without > 0) {
-      mixedRecords += 1;
-      if (mixedExamples.length < 8) mixedExamples.push(`${p.label} ${k.replace("\u0000", " role=")}`);
+    for (const [role, c] of withPid) {
+      if (c.pid > 0 && c.none > 0) {
+        mixedGroups += 1;
+        if (LIST) lines.push(`MIXED\t${label}\t${rec}\trole=${role}`);
+      }
+    }
+    for (const [pid, roles] of rolesByPid) {
+      if (roles.size > 1) {
+        sharedPids += 1;
+        if (LIST) lines.push(`SHARED\t${label}\t${rec}\tpid=${pid}\troles=${[...roles].join("|")}`);
+      }
+    }
+    if (keyer) {
+      const key = keyer(list);
+      for (const a of list) {
+        const naive = a?.record_persona_id || a?.record_role || null;
+        if (key(a) !== naive) keyerMoves += 1;
+      }
     }
   }
 
-  const lost = new Set<string>();
-  for (const c of (research.conflicts ?? []) as any[]) {
-    if (c?.status !== "resolved" || typeof c.preferred_assertion_id !== "string") continue;
-    for (const id of (c.competing_assertion_ids ?? []) as string[]) {
-      if (id !== c.preferred_assertion_id) lost.add(id);
-    }
-  }
+  const live = ((research.person_evidence ?? []) as any[]).filter(
+    (e) => e && !e.superseded_by && typeof e.assertion_id === "string" && typeof e.person_id === "string",
+  );
+  const personLinks = live.map((e) => ({
+    id: e.id, assertion_id: e.assertion_id, person_id: e.person_id, confidence: e.confidence,
+  }));
 
-  const live = ((research.person_evidence ?? []) as any[]).filter((e) => e && !e.superseded_by);
-  const personLinks = live
-    .filter((e) => typeof e.assertion_id === "string" && typeof e.person_id === "string")
-    .map((e) => ({ assertion_id: e.assertion_id, person_id: e.person_id }));
+  let coords: any = undefined;
+  if (COORDS) {
+    const names = new Set<string>();
+    for (const e of live) for (const n of ra.birthPlaceCoordNames(e, research, tree, personLinks)) names.add(n);
+    coords = names.size ? await lookupPlaceCoords([...names], (n) => standardPlaceToCoords(n), 60_000) : new Map();
+  }
+  const noConflicts = { ...research, conflicts: [] };
+
   for (const e of live) {
     if (e.confidence !== "confident" && e.confidence !== "probable") continue;
     links += 1;
-    const errs = coreIdentifierContradictionInvariants(e, research, tree, personLinks);
+    const relational = RELATIONAL.has(String(byId.get(e.assertion_id)?.fact_type ?? "").toLowerCase());
+    if (relational) linksRelational += 1;
+    const errs = gate(e, research, tree, personLinks, undefined, coords);
+    if (gate(e, noConflicts, tree, personLinks, undefined, coords).length > 0) refusedWithoutConflicts += 1;
     if (errs.length === 0) continue;
     refused += 1;
-    const cited = [...errs.join(" ").matchAll(/assertion '([^']+)'/g)].map((m) => m[1]);
-    if (cited.length > 0 && cited.every((id) => lost.has(id))) {
-      refusedLostConflict += 1;
-      if (lostExamples.length < 8) lostExamples.push(`${p.label} ${e.id} -> ${cited.join(",")}`);
+    if (relational) refusedRelational += 1;
+    const text = errs.join(" ");
+    if (/the record states '/.test(text)) refusedPlace += 1;
+    if (/-year gap/.test(text)) refusedDate += 1;
+    if (LIST) lines.push(`REFUSE\t${label}\t${e.id}\t${relational ? "relational" : "one-party"}\t${text.slice(0, 220)}`);
+  }
+
+  // Every live link, any tier: does it make an existing relationship link a refused one?
+  if (recheck) {
+    for (const e of live) {
+      const errs = recheck(e, research, tree, personLinks, undefined, coords);
+      if (errs.length === 0) continue;
+      recheckRefusals += 1;
+      if (LIST) lines.push(`RECHECK\t${label}\t${e.id}\t${errs.join(" ").slice(0, 220)}`);
+    }
+  }
+
+  if (containment) {
+    for (const c of (research.conflicts ?? []) as any[]) {
+      if (!c || c.conflict_type !== "fact") continue;
+      conflictsChecked += 1;
+      const errs = containment(c, research);
+      if (errs.length === 0) continue;
+      conflictsRefused += 1;
+      if (LIST) lines.push(`CONFLICT\t${label}\t${c.id}\t${c.disputed_attribute}`);
     }
   }
 }
 
-console.log(`documents read                         : ${docs}`);
-console.log(`confident/probable links               : ${links}`);
-console.log(`  refused by the gate                  : ${refused}`);
-console.log(`  refused only on a resolved-and-lost  : ${refusedLostConflict}`);
-console.log(`record+role groups with mixed persona  : ${mixedRecords}`);
-console.log(`persona ids spanning >1 role in a record : ${sharedPid}`);
-for (const x of sharedExamples) console.log(`    ${x}`);
-for (const x of mixedExamples) console.log(`    ${x}`);
-for (const x of lostExamples) console.log(`    lost: ${x}`);
+const absent = (f: unknown) => (f ? "" : " (not exported by this revision)");
+console.log(`documents read                              : ${docs.length}${COORDS ? "" : "  (no coordinates)"}`);
+console.log(`confident/probable links                    : ${links} (${linksRelational} on a two-party assertion)`);
+console.log(`  refused by the gate                       : ${refused} (${refusedRelational} two-party; ${refusedPlace} place, ${refusedDate} date)`);
+console.log(`  refused with every conflict removed       : ${refusedWithoutConflicts}`);
+console.log(`one-party links the re-check refuses        : ${recheck ? recheckRefusals : "-"}${absent(recheck)}`);
+console.log(`fact conflicts / refused as one place       : ${containment ? `${conflictsChecked} / ${conflictsRefused}` : "-"}${absent(containment)}`);
+console.log(`record+role groups with mixed persona ids   : ${mixedGroups}`);
+console.log(`persona ids worn by >1 role in a record     : ${sharedPids}`);
+console.log(`assertions the record-wide party key re-keys: ${keyer ? keyerMoves : "-"}${absent(keyer)}`);
+if (LIST) for (const l of lines.sort()) console.log(l);

@@ -4,6 +4,7 @@ import {
   materializesToPersonFact,
   projectRecordPersonas,
   projectedRecordDocument,
+  recordPartyKeyer,
   projectsToRecordPersonaFact,
   factTypeKey,
   isCoupleEventFactType,
@@ -214,6 +215,64 @@ describe("projectRecordPersonas", () => {
     ]);
     expect(g.names).toHaveLength(2);
     expect(g.personaId).toBe("p_1");
+  });
+
+  it("keeps one party together when only some of its assertions carry the persona id", () => {
+    const groups = projectRecordPersonas([
+      a({ id: "a_1", record_role: "deceased", fact_type: "name", value: "Ana Bardales", record_persona_id: "p_1" }),
+      a({ id: "a_2", record_role: "deceased", fact_type: "death", date: "1950" }),
+    ]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].personaId).toBe("p_1");
+  });
+
+  it("splits a household an extraction stamped with one persona id", () => {
+    const groups = projectRecordPersonas([
+      a({ id: "a_1", record_role: "head_of_household", fact_type: "name", value: "John Spriggs", record_persona_id: "p_1" }),
+      a({ id: "a_2", record_role: "wife", fact_type: "name", value: "Ann Spriggs", record_persona_id: "p_1" }),
+    ]);
+    expect(groups.map((g) => g.role).sort()).toEqual(["head_of_household", "wife"]);
+    expect(groups.map((g) => g.personaId)).toEqual([null, null]);
+  });
+});
+
+describe("recordPartyKeyer (#2537)", () => {
+  it("keys an assertion with no persona id to the one persona carrying its role", () => {
+    const list = [
+      a({ record_role: "deceased", record_persona_id: "p_1" }),
+      a({ record_role: "deceased" }),
+    ];
+    const key = recordPartyKeyer(list);
+    expect(list.map(key)).toEqual(["p_1", "p_1"]);
+  });
+
+  it("keeps the role when two personas carry it", () => {
+    const list = [
+      a({ record_role: "child", record_persona_id: "p_1" }),
+      a({ record_role: "child", record_persona_id: "p_2" }),
+      a({ record_role: "child" }),
+    ];
+    expect(list.map(recordPartyKeyer(list))).toEqual(["p_1", "p_2", "child"]);
+  });
+
+  it("keys on the role when one persona id is worn by several roles", () => {
+    const list = [
+      a({ record_role: "father", record_persona_id: "p_1" }),
+      a({ record_role: "child", record_persona_id: "p_1" }),
+    ];
+    expect(list.map(recordPartyKeyer(list))).toEqual(["father", "child"]);
+  });
+
+  it("does not count an absent role as one the persona carries", () => {
+    const list = [
+      a({ record_role: "principal", record_persona_id: "p_1" }),
+      a({ record_role: "absent", record_persona_id: "p_1" }),
+    ];
+    expect(recordPartyKeyer(list)(list[0])).toBe("p_1");
+  });
+
+  it("returns null for an assertion with neither", () => {
+    expect(recordPartyKeyer([])(a({ record_role: undefined }))).toBeNull();
   });
 });
 
