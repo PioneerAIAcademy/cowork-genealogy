@@ -1735,7 +1735,11 @@ In order:
    requested id is therefore first widened to every `persons[].ark` of a
    `record_read` sidecar that lists it, and the widened set is looked up. A
    record found through any of its persona ARKs is skipped and named. A reused
-   hint's record has no sidecar, so it is matched on its own id only.
+   hint's record has no sidecar, so it is matched on its own id only. A record
+   that owns an uncited entry — an accepted hint (step 4) or an earlier read of
+   it (step 2) — is skipped only on its own id, never through another persona's
+   ARK: skipped, that entry stays uncited, and the router sends the record back
+   to extraction on every pass.
    **A question claims a record extracted before it existed** (lead,
    2026-10-20). When the call carries `questionIds`, every assertion of the
    skipped record gains the ids it lacks in `extracted_for_question_ids`:
@@ -1755,6 +1759,21 @@ In order:
 3. **Reads,** in parallel, through `record_read`'s own live code with
    `projectPath`, so staging is identical. A read that errors, or returns
    `staged: null`, is reported and skipped; the others proceed.
+   **Household skip.** Step 1 widens an id only by sidecars already logged,
+   so it cannot see a member of a record extracted under an accepted hint
+   (which keeps no sidecar), or two members of one record read in the same
+   call. After the read, the staged record's persona ARKs (every
+   `persons[].ark`) go through the same `sourceIdsForRecordIds`; a hit is
+   skipped as "already extracted as src_NNN (same household)" and tied to the
+   call's questions as step 1 ties a resend. Within one call, a record whose
+   own ARK is among an earlier record's persona ARKs (or the reverse) is that
+   record's duplicate: it is not logged, and takes the earlier record's result —
+   `already_extracted` with its source, or `refused` when that one was not
+   written. A record with no persona ARKs is never grouped. A record that owns
+   an uncited entry (an accepted hint or a reused read) is never skipped, so
+   that entry is cited, and it leads its household within the call wherever it
+   is listed. A skipped
+   record's staged file is not logged and ages out.
 4. **One `research_log_append` batch** logs every fresh read (`tool: "record_read"`),
    finalizing each staged file into its sidecar. A record an accepted
    FamilySearch hint already logged is the exception: the
