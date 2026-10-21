@@ -1,0 +1,144 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Elizabeth Stouer (also spelled Stower or Stowers), born about 1910 in South Dakota. No direct statement of parentage is to be assumed.",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-10-15",
+    "updated": "2026-10-16",
+    "title": "Elizabeth Stouer's parents"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "known_holdings": [],
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who are the parents of Elizabeth Stouer (b. about 1910, South Dakota)?",
+      "rationale": "Elizabeth Stouer has no parents in the Family Tree. No direct statement of parentage is to be assumed. Census records and South Dakota birth registrations are the first sources to search.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "created": "2026-10-15",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-15",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "South Dakota, United States",
+          "date_range": "1920",
+          "repository": "FamilySearch",
+          "rationale": "Search the 1920 US census for Stowers / Stower / Stouer households in South Dakota.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "South Dakota, United States",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "The 1910 census may capture the Stouer / Stowers household shortly before Elizabeth's birth.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital",
+          "jurisdiction": "South Dakota, United States",
+          "date_range": "1908-1913",
+          "repository": "FamilySearch",
+          "rationale": "A South Dakota birth registration for Elizabeth would name her parents directly.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "performed": "2026-10-16T12:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Stowers",
+        "eventPlace": "South Dakota, United States",
+        "recordType": "Census, 1920",
+        "variants": ["Stower", "Stouer"]
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "results_available": 2,
+      "plan_item_id": "pli_001",
+      "results_ref": null,
+      "external_site": null,
+      "notes": "1920 census, South Dakota: Nora Stowers (b. about 1890, South Dakota), head, and Lois E. Stowers (b. about 1905, South Dakota), sister. Father's and mother's birthplace columns read Massachusetts. Same surname and birth state as Elizabeth, so Nora and Lois look like her older sisters, which makes her parents a Massachusetts-born couple."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"United States Census, 1920,\" South Dakota, Nora Stowers household; FamilySearch (ark:/61903/1:1:XXXX-STWR : accessed 16 October 2026). RECONSTRUCTED; synthetic ARK.",
+      "citation_detail": {
+        "who": "U.S. Census Office",
+        "what": "1920 U.S. census, population schedule",
+        "when_created": "1920",
+        "when_accessed": "2026-10-16",
+        "where": "FamilySearch",
+        "where_within": "South Dakota, Nora Stowers household"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-16",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XXXX-STWR",
+      "notes": "RECONSTRUCTED. Synthetic ARK.",
+      "transcription": null,
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {"id": "a_001", "source_id": "src_001", "record_id": "https://www.familysearch.org/ark:/61903/1:1:XXXX-STWR", "record_role": "head_of_household", "fact_type": "name", "value": "Nora Stowers", "information_quality": "primary", "informant": "Nora Stowers (self)", "informant_proximity": "self", "extracted_for_question_ids": ["q_001"], "record_persona_id": null, "log_entry_id": "log_001", "record_basis": "stated"},
+    {"id": "a_002", "source_id": "src_001", "record_id": "https://www.familysearch.org/ark:/61903/1:1:XXXX-STWR", "record_role": "head_of_household", "fact_type": "birth", "value": "abt 1890, South Dakota", "information_quality": "primary", "informant": "Nora Stowers (self)", "informant_proximity": "self", "extracted_for_question_ids": ["q_001"], "record_persona_id": null, "log_entry_id": "log_001", "record_basis": "stated"},
+    {"id": "a_003", "source_id": "src_001", "record_id": "https://www.familysearch.org/ark:/61903/1:1:XXXX-STWR", "record_role": "head_of_household", "fact_type": "father_birthplace", "value": "Massachusetts", "information_quality": "secondary", "informant": "Nora Stowers (reporting parents' birthplaces)", "informant_proximity": "household_member", "extracted_for_question_ids": ["q_001"], "record_persona_id": null, "log_entry_id": "log_001", "record_basis": "stated"},
+    {"id": "a_004", "source_id": "src_001", "record_id": "https://www.familysearch.org/ark:/61903/1:1:XXXX-STWR", "record_role": "head_of_household", "fact_type": "mother_birthplace", "value": "Massachusetts", "information_quality": "secondary", "informant": "Nora Stowers (reporting parents' birthplaces)", "informant_proximity": "household_member", "extracted_for_question_ids": ["q_001"], "record_persona_id": null, "log_entry_id": "log_001", "record_basis": "stated"},
+    {"id": "a_005", "source_id": "src_001", "record_id": "https://www.familysearch.org/ark:/61903/1:1:XXXX-LOIS", "record_role": "household_member", "fact_type": "name", "value": "Lois E. Stowers", "information_quality": "secondary", "informant": "Nora Stowers (head of household)", "informant_proximity": "household_member", "extracted_for_question_ids": ["q_001"], "record_persona_id": null, "log_entry_id": "log_001", "record_basis": "stated"},
+    {"id": "a_006", "source_id": "src_001", "record_id": "https://www.familysearch.org/ark:/61903/1:1:XXXX-LOIS", "record_role": "household_member", "fact_type": "birth", "value": "abt 1905, South Dakota", "information_quality": "secondary", "informant": "Nora Stowers (head of household)", "informant_proximity": "household_member", "extracted_for_question_ids": ["q_001"], "record_persona_id": null, "log_entry_id": "log_001", "record_basis": "stated"}
+  ],
+  "person_evidence": [
+    {"id": "pe_001", "assertion_id": "a_001", "person_id": "I2", "confidence": "probable", "rationale": "Name Nora Stowers, b. about 1890 SD: stub I2 created from this record.", "created": "2026-10-16"},
+    {"id": "pe_002", "assertion_id": "a_002", "person_id": "I2", "confidence": "probable", "rationale": "Birth about 1890 SD: stub I2.", "created": "2026-10-16"},
+    {"id": "pe_003", "assertion_id": "a_003", "person_id": "I2", "confidence": "probable", "rationale": "Father's birthplace column on Nora's line describes Nora's father.", "created": "2026-10-16"},
+    {"id": "pe_004", "assertion_id": "a_004", "person_id": "I2", "confidence": "probable", "rationale": "Mother's birthplace column on Nora's line describes Nora's mother.", "created": "2026-10-16"},
+    {"id": "pe_005", "assertion_id": "a_005", "person_id": "I3", "confidence": "probable", "rationale": "Name Lois E. Stowers, b. about 1905 SD: stub I3 created from this record.", "created": "2026-10-16"},
+    {"id": "pe_006", "assertion_id": "a_006", "person_id": "I3", "confidence": "probable", "rationale": "Birth about 1905 SD: stub I3.", "created": "2026-10-16"}
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
