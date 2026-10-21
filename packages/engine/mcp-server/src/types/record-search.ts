@@ -281,6 +281,11 @@ export interface RecordSearchResult {
    *  another. A low count means the score is unstable in either direction —
    *  reported, never thresholded. */
   candidateFactCount?: number;
+  /** True when the candidate's birth year differs from the subject's by more
+   *  than 2 years; see `RankedMatch.birthYearConflict`. */
+  birthYearConflict?: true;
+  /** Candidate birth year minus subject birth year; present with the flag. */
+  birthYearGap?: number;
   /** Only set when attachment-checking ran and the batch call succeeded. */
   attachedToSubject?: boolean;
   attachedToOther?: boolean;
