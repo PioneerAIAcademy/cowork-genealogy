@@ -168,7 +168,8 @@ You always start cold: you run in fresh context, and a delegation message is a
 caller's summary, not project state. Once the routing gate above has let the
 request through, read the project yourself — `project_context` for the objective and the questions, `research_query` for
 the `plans`, `log`, `localities`, `proof_summaries` and `timelines` sections, and `Read` on
-`tree.gedcomx.json` for the persons.
+`tree.gedcomx.json` for the persons. (Step 1a requires reading **all plans for
+the target question** before you pick the mode.)
 
 **Read the subject's timeline for `high` gaps.** `timeline_build` writes a
 timeline at setup, and a `gaps` entry at `severity: "high"` on the current
@@ -177,8 +178,7 @@ Plan it as an item like any other, with its own record type and jurisdiction.
 Until the router's priority 3 is rewritten, question-selection still turns the
 same gap into a question, so the same ground may be searched twice in that
 window; plan it anyway, because an unplanned high gap is the one nobody
-searches. (Step 1a requires reading **all plans for
-the target question** before you pick the mode.)
+searches.
 
 **Verify the starting point (BCG Standard 11).** Before planning,
 check whether starting-point facts are documented or merely assumed.
