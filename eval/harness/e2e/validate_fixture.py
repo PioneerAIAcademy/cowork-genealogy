@@ -31,7 +31,12 @@ Three gates, in order:
    resolution rested on reading the original page images — the same check
    additionally requires an *image* ark (`3:1:`/`3:2:`, not the `1:1:`
    index form) among those `supporting_sources`, and rejects a non-boolean
-   `image_basis` (issue #2877).
+   `image_basis` (issue #2877). Separately from `image_basis`, every resolved
+   record-hint fixture (drafts excepted) must declare its hint in
+   `fixture.json` — `"hint": {"persona_ark": "ark:/61903/1:1:…",
+   "identity": "same" | "different" | "unresolved"}`, or an explicit
+   `"hint": null` — which is what `make matcher-accuracy` scores
+   (issue #3553).
 3. **Stripping completeness** (warn-only), described below.
 
 The crux invariant of an e2e fixture: every entry in
@@ -467,6 +472,96 @@ _IMAGE_ARK_RE = re.compile(r"ark:/61903/3:[12]:[\w-]{4,}")
 # i.e. once a fixture is actually resolved).
 _DRAFT_MARKER = "DRAFT PENDING ADJUDICATION"
 
+# `fixture.json`'s `hint` (issue #3553): the record persona FamilySearch hinted
+# and the genealogist's identity judgement of it against `source_pid`.
+_HINT_KEYS = frozenset({"persona_ark", "identity"})
+_HINT_IDENTITIES = ("same", "different", "unresolved")
+
+# A 1:1: record-persona ark only — the form `record_read` and the matcher take.
+# Used with `fullmatch`, so a trailing newline, a 1:2:/3:1:/4:1: ark or a bare
+# id cannot satisfy it. A tree PID wrapped in a `1:1:` prefix CAN — tree PIDs
+# are the same 4-3 shape as persona ids — so `_hint_errors` separately rejects
+# a persona id equal to the fixture's `source_pid`. Persona ids in the corpus
+# are 4-4 and 4-3; 4-2 is admitted defensively, and no 4-2 persona id exists
+# in the corpus.
+_PERSONA_ARK_RE = re.compile(r"ark:/61903/1:1:[A-Z0-9]{4}-[A-Z0-9]{2,4}")
+
+
+def _hint_errors(fixture_meta: dict[str, Any]) -> list[str]:
+    """`fixture.json`'s `hint` shape on a resolved record-hint fixture."""
+    if "hint" not in fixture_meta:
+        return [
+            "fixture.json: resolved record-hint fixture has no `hint` key — "
+            "issue #3553 requires `\"hint\": {\"persona_ark\": "
+            "\"ark:/61903/1:1:XXXX-XXXX\", \"identity\": \"same\" | "
+            "\"different\" | \"unresolved\"}`, or an explicit `\"hint\": null` "
+            "when the fixture has no hint persona. Without it `make "
+            "matcher-accuracy` cannot score or count this fixture."
+        ]
+
+    hint = fixture_meta["hint"]
+    if hint is None:
+        return []
+    if not isinstance(hint, dict):
+        return [
+            f"fixture.json: `hint` must be an object or null, got {hint!r} "
+            f"(issue #3553)."
+        ]
+
+    errors: list[str] = []
+    unknown = sorted(set(hint.keys()) - _HINT_KEYS)
+    if unknown:
+        errors.append(
+            f"fixture.json: `hint` has unrecognized field(s) {unknown!r} — "
+            f"only {sorted(_HINT_KEYS)!r} are defined (issue #3553). An "
+            f"unrecognized field is silently ignored, not scored."
+        )
+
+    if "persona_ark" not in hint:
+        errors.append(
+            "fixture.json: `hint.persona_ark` is missing — it must be the "
+            "hinted record persona's 1:1: ark, `ark:/61903/1:1:XXXX-XXXX` "
+            "(issue #3553)."
+        )
+    else:
+        ark = hint["persona_ark"]
+        source_pid = fixture_meta.get("source_pid")
+        if not (isinstance(ark, str) and _PERSONA_ARK_RE.fullmatch(ark)):
+            errors.append(
+                f"fixture.json: `hint.persona_ark` must be a 1:1: record-persona "
+                f"ark matching `ark:/61903/1:1:XXXX-XXXX`, got {ark!r} — a 1:2: "
+                f"record ark, a 3:1:/3:2: image ark, a bare id or a tree PID is "
+                f"not the persona the matcher scores (issue #3553)."
+            )
+        elif (
+            isinstance(source_pid, str)
+            and ark.rsplit(":", 1)[-1] == source_pid.strip().upper()
+        ):
+            errors.append(
+                f"fixture.json: `hint.persona_ark` {ark!r} wraps the tree "
+                f"person's PID (`source_pid` {source_pid!r}) in a 1:1: prefix — "
+                f"a tree PID is not a record persona. Use the 1:1: ark of the "
+                f"record persona FamilySearch hinted (issue #3553)."
+            )
+
+    if "identity" not in hint:
+        errors.append(
+            f"fixture.json: `hint.identity` is missing — it must be one of "
+            f"{list(_HINT_IDENTITIES)!r} (issue #3553)."
+        )
+    else:
+        identity = hint["identity"]
+        if not (isinstance(identity, str) and identity in _HINT_IDENTITIES):
+            errors.append(
+                f"fixture.json: `hint.identity` must be one of "
+                f"{list(_HINT_IDENTITIES)!r} (exact lowercase string), got "
+                f"{identity!r} — it is the genealogist's judgement of whether "
+                f"the hint persona is the tree person (`source_pid`), never "
+                f"the /resolve-record-hint outcome number (issue #3553)."
+            )
+
+    return errors
+
 
 def record_hint_citation_errors(
     fixture_dir: Path, expected_findings: dict[str, Any]
@@ -503,6 +598,20 @@ def record_hint_citation_errors(
     typo'd string disable it with CI green. It is read by key presence so a
     JSON `null` is caught distinct from an absent key.
 
+    The fixture must also declare its hint (issue #3553), read by key
+    presence for the same reason: `"hint": {"persona_ark": …, "identity": …}`
+    with no other keys, `persona_ark` a full 1:1: record-persona ark
+    (`ark:/61903/1:1:XXXX-XXXX` — never a 1:2: record ark, a 3:1:/3:2: image
+    ark or a bare id, and never the fixture's own `source_pid` wrapped in a
+    1:1: prefix, which the regex alone would accept) and `identity` exactly
+    `"same"`, `"different"` or `"unresolved"` — the genealogist's judgement
+    of whether the persona is `source_pid`, not the resolution's outcome
+    number. An explicit `"hint": null` is accepted for a fixture with no
+    hint persona; an absent key is an error. It is required of every
+    resolved record-hint fixture whatever its `image_basis`, and like
+    `image_basis` it sits behind the draft skip, so a draft is not checked
+    at all — a missing or malformed hint on a draft is not an error.
+
     Silently returns no errors if `fixture.json` or `README.md` is
     missing or unparseable — those are reported by other checks, and this
     check has nothing to apply its rule to without them.
@@ -538,6 +647,8 @@ def record_hint_citation_errors(
             f"image-ark check and a typo'd string disable it with CI green "
             f"(issue #2877)."
         )
+
+    errors += _hint_errors(fixture_meta)
 
     # Base bar (issue #970 / #1025): a full ark somewhere in the findings.
     has_ark = any(

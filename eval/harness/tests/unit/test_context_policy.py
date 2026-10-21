@@ -339,9 +339,9 @@ def test_real_record_extraction_does_not_declare_image_read():
 
 
 #: The skills whose bodies call `extraction_append` directly: `research` for the
-#: pending records it routes, `search-records` for the records it finds. Every
+#: pending records it routes (`search-records` is an agent now, issue #2243). Every
 #: other caller reaches the writer through @plugin:record-structurer.
-EXTRACTION_APPEND_SKILLS = {"research", "search-records"}
+EXTRACTION_APPEND_SKILLS = {"research"}
 
 
 def test_exactly_the_direct_callers_declare_extraction_append():

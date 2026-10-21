@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "false",
+    "f5": "false"
+  },
+  "proof_quality_score": 3,
+  "annotator": "mercyokum",
+  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140",
+  "blind_bundle_digest": "52d3752a6a5813f519f02213e1b2ce839d4e7a3c630d49b2da5d90207a05afa2"
+}

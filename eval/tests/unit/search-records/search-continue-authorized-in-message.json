@@ -10,11 +10,12 @@
       "control-flow",
       "continuation",
       "search-continue-authorized-in-message",
-      "topical-fixture-required"
+      "topical-fixture-required",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute both plan items for q_001 -- the census search and the church-records search -- and continue straight from one to the other without stopping to check in with me. Just run the searches and log them; I'll handle extraction myself afterward.",
+    "delegation": "Execute both plan items for q_001 -- the census search and the church-records search -- and continue straight from one to the other without stopping to check in with me. Just run the searches and log them; I'll handle extraction myself afterward.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "search-continue-authorized-in-message"
   },
   "mcp_fixtures": [
