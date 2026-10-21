@@ -128,16 +128,46 @@ const UNDECOMPOSED_LETTERS: Record<string, string> = {
   "ø": "o", "æ": "ae", "œ": "oe", "ß": "ss", "ł": "l", "đ": "d", "ð": "d", "þ": "th", "ı": "i",
 };
 
+/** Abbreviations spelled out on both sides of `checkFirstPlace`'s compare. */
+const NAME_ABBREVIATIONS: Record<string, string> = {
+  st: "saint", ste: "sainte", mt: "mount", ft: "fort", pt: "point",
+};
+
 /** `foldPlaceName`, looser still, for `checkFirstPlace`'s name compare: "St Louis"
- *  is "St. Louis", "Sondre Land" is "Søndre Land", "Saint Jean" is "Saint-Jean".
- *  Measured live 2026-10-21: the first two were refused without it. */
+ *  is "St. Louis", "Sondre Land" is "Søndre Land", "Saint Jean" is "Saint-Jean",
+ *  "Mt. Vernon" and "Mt.Vernon" are "Mount Vernon". Measured live 2026-10-21: each
+ *  was refused without it. */
 function placeNameKey(s: string): string {
   return foldPlaceName(s)
     .replace(/[øæœßłđðþı]/g, (c) => UNDECOMPOSED_LETTERS[c])
-    .replace(/[.'\u2019]/g, "")
-    .replace(/-/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/['\u2019]/g, "")
+    .replace(/[.-]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 0)
+    .map((w) => NAME_ABBREVIATIONS[w] ?? w)
+    .join(" ");
+}
+
+/** Words that name a jurisdiction's TYPE, not the place: "Stagstrup Sogn" is
+ *  Stagstrup, "Co. Cork" is Cork, "Landkreis Soltau" is Soltau. Compared as
+ *  `placeNameKey` output, so "Co." arrives as "co". */
+const JURISDICTION_TYPE_WORDS: ReadonlySet<string> = new Set([
+  "parish", "sogn", "prestegjeld", "herred", "amt", "county", "co", "landkreis", "kreis",
+  "township", "twp", "municipality", "kommune", "socken", "forsamling", "kirchspiel",
+  "pfarrei", "borough", "district",
+]);
+
+/** A name with any administrative "X of" prefix and any leading or trailing type
+ *  word removed, never down to nothing. Works on the raw words, so the result can
+ *  be searched again. */
+function withoutTypeWords(name: string): string {
+  let words = name.trim().split(/\s+/);
+  if (words.length > 2 && ADMIN_PREFIX_RE.test(placeNameKey(words.slice(0, 2).join(" ")) + " ")) {
+    words = words.slice(2);
+  }
+  while (words.length > 1 && JURISDICTION_TYPE_WORDS.has(placeNameKey(words[words.length - 1]))) words.pop();
+  while (words.length > 1 && JURISDICTION_TYPE_WORDS.has(placeNameKey(words[0]))) words.shift();
+  return words.join(" ");
 }
 
 /**
@@ -304,6 +334,14 @@ export function deriveContextName(text: string): string | undefined {
   return segs[1];
 }
 
+/** Entries whose fullName contains `context`, or all of them when none does. */
+function filterByContext(entries: SearchEntry[], context: string | undefined): SearchEntry[] {
+  const needle = context?.trim().toLowerCase();
+  if (!needle) return entries;
+  const filtered = entries.filter((e) => e.fullName.toLowerCase().includes(needle));
+  return filtered.length > 0 ? filtered : entries;
+}
+
 /**
  * Run (and memoize) a name search. Applies the same context-name filter as
  * place_search: narrow by substring, but keep the unfiltered set if nothing
@@ -342,13 +380,7 @@ async function getSearchEntries(
     entries = await searchPlace(name);
   }
 
-  const context = effectiveContext?.trim().toLowerCase();
-  if (context) {
-    const filtered = entries.filter((e) =>
-      e.fullName.toLowerCase().includes(context),
-    );
-    if (filtered.length > 0) entries = filtered;
-  }
+  entries = filterByContext(entries, effectiveContext);
 
   searchEntriesCache.set(key, entries);
   return entries;
@@ -641,37 +673,93 @@ export interface FirstPlaceVerdict {
  * "Did it resolve?" is the wrong question: "Helvesieck, Schneverdingen, Soltau,
  * Hanover" resolves to "Schneverdingen, Soltau, Hanover, Prussia, Germany",
  * dropping the unknown village and returning its parent. So the first name the
- * caller wrote must equal either the first segment of the picked entry's
+ * caller wrote must equal either the first segment of a top search entry's
  * fullName, or one of that place's names in ANY language. Both are needed:
  * the English-only list is empty for Schneverdingen and lacks "Forfarshire"
  * (measured in issue #3696).
+ *
+ * Every widening below turns a refusal into a match (or, when its extra request
+ * fails, into `lookup_failed`), and each was measured live (2026-10-21) to refuse a
+ * real place without it:
+ * - the unfiltered top entries are checked as well as the context-filtered ones,
+ *   because the context derived from segment 2 drops the right entry for "London,
+ *   Middlesex, England" and "Munich, Bayern, Germany". An unfiltered entry counts
+ *   only if its fullName holds one of the later places written, so "Springfield,
+ *   Atlantis" does not match Springfield, Illinois;
+ * - every entry tied for the top score is checked, because "Mt. Pleasant, Iowa"
+ *   ties the town with a Quaker meeting and the meeting comes first;
+ * - type words are ignored ("Stagstrup Sogn", "Co. Cork"), and when that still
+ *   misses the stripped text is searched once more ("Ringebu Parish, Oppland").
  *
  * Unlike `resolveStandardPlace`, a failed request is `lookup_failed`, never a
  * miss, and `placeTableForTests` is never consulted.
  */
 export async function checkFirstPlace(text: string): Promise<FirstPlaceVerdict> {
-  const wanted = placeNameKey(placeSegments(text)[0] ?? "");
-  let entries: SearchEntry[];
+  const segments = placeSegments(text);
+  const first = segments[0] ?? "";
+  const verdict = await checkFirstPlaceOnce(text, first);
+  if (verdict.status !== "mismatch" && verdict.status !== "not_found") return verdict;
+  const stripped = withoutTypeWords(first);
+  if (placeNameKey(stripped) === placeNameKey(first)) return verdict;
+  const retry = await checkFirstPlaceOnce([stripped, ...segments.slice(1)].join(", "), stripped);
+  return retry.status === "match" || retry.status === "lookup_failed" ? retry : verdict;
+}
+
+async function checkFirstPlaceOnce(text: string, first: string): Promise<FirstPlaceVerdict> {
+  const wanted = new Set([placeNameKey(first), placeNameKey(withoutTypeWords(first))]);
+  const matches = (name: string) =>
+    wanted.has(placeNameKey(name)) || wanted.has(placeNameKey(withoutTypeWords(name)));
+  let unfiltered: SearchEntry[];
   try {
-    entries = await getSearchEntries(text);
+    unfiltered = await getSearchEntries(text, "");
   } catch {
     return { status: "lookup_failed" };
   }
-  const best = pickBest(entries);
+  const filtered = filterByContext(unfiltered, deriveContextName(text));
+  const best = pickBest(filtered);
   if (!best) return { status: "not_found" };
-  const standardPlace = best.fullName;
-  if (placeNameKey(placeSegments(standardPlace)[0] ?? "") === wanted) {
-    return { status: "match", standardPlace };
+  // A country written in its own language ("Deutschland") is compared as the
+  // English name the standard renders ("Germany").
+  const later = placeSegments(text)
+    .slice(1)
+    .flatMap((seg) => [placeNameKey(seg), canonicalCountry(seg)])
+    .filter((k): k is string => !!k);
+  const inStatedJurisdiction = (e: SearchEntry) => {
+    const full = placeNameKey(e.fullName);
+    return later.some((k) => full.includes(k));
+  };
+  const candidates = [
+    ...new Set([...topScored(filtered), ...topScored(unfiltered).filter(inStatedJurisdiction)]),
+  ];
+  const hit = candidates.find((e) => matches(placeSegments(e.fullName)[0] ?? ""));
+  if (hit) return { status: "match", standardPlace: hit.fullName };
+  let unchecked = false;
+  const seen = new Set<string>();
+  for (const e of candidates) {
+    if (e.placeId && seen.has(e.placeId)) continue;
+    if (e.placeId) seen.add(e.placeId);
+    if (!e.placeId) {
+      unchecked = true;
+      continue;
+    }
+    let names: string[];
+    try {
+      names = await getPlaceCandidateNames(e.placeId, {}, { anyLanguage: true });
+    } catch {
+      unchecked = true;
+      continue;
+    }
+    if (names.some(matches)) return { status: "match", standardPlace: e.fullName };
   }
-  if (!best.placeId) return { status: "lookup_failed", standardPlace };
-  let names: string[];
-  try {
-    names = await getPlaceCandidateNames(best.placeId, {}, { anyLanguage: true });
-  } catch {
-    return { status: "lookup_failed", standardPlace };
-  }
-  const named = names.some((n) => placeNameKey(n) === wanted);
-  return { status: named ? "match" : "mismatch", standardPlace };
+  return { status: unchecked ? "lookup_failed" : "mismatch", standardPlace: best.fullName };
+}
+
+/** Every entry sharing the highest score: `pickBest` keeps the first of a tie,
+ *  which is arbitrary. */
+function topScored(entries: SearchEntry[]): SearchEntry[] {
+  if (entries.length === 0) return [];
+  const top = Math.max(...entries.map((e) => e.score ?? 0));
+  return entries.filter((e) => (e.score ?? 0) === top);
 }
 
 /**

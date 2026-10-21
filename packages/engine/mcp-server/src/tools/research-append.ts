@@ -5890,14 +5890,14 @@ async function checkLocalityFirstPlaces(
         ),
       );
     } else if (status === "mismatch" || status === "not_found") {
-      const first = placeSegments(forPlace)[0];
+      const [first, context] = placeSegments(forPlace);
       errors.push(
         fmt(
           i,
           `for_place '${forPlace}': FamilySearch's place standard has no place '${first}' there. ` +
-            `Look up '${first}' with place_search. If it returns a match, write for_place from that ` +
-            "standard place and re-send. If it returns nothing, do not write this entry: return to " +
-            "your caller saying the place did not resolve.",
+            `Look up '${first}' with place_search, contextName '${context}'. If it returns a match, ` +
+            "write for_place from that standard place and re-send. If it returns nothing, do not " +
+            "write this entry: return to your caller saying the place did not resolve.",
         ),
       );
     }
