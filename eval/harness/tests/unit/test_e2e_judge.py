@@ -179,7 +179,7 @@ def test_schema_has_no_enum_on_union_type():
 # --- the avoid-guard (deterministic §3.4.1 backstop) -------------------------
 
 
-# The avoid guard is subject-anchored (Dallan ruling, 2026-10-20): it forces an
+# The avoid guard is subject-anchored: it forces an
 # avoid finding false only on what the agent NEWLY attached to the subject,
 # diffing the final tree against the starting tree. These helpers build a
 # starting tree with a subject + an existing spouse, and final trees that add

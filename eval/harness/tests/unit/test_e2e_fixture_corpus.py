@@ -120,7 +120,7 @@ def test_a_strip_fixture_is_not_held_to_record_hint_equality(tmp_path):
 # --- avoid-guard: which fixtures stay structurally unpassable ------------
 #
 # The avoid guard (`apply_avoid_guard`, e2e/judge.py): RELATIONSHIP avoid
-# findings are subject-anchored (Dallan ruling, 2026-10-20) — forced only on a
+# findings are subject-anchored — forced only on a
 # relationship the agent NEWLY attached to the subject (final vs starting) whose
 # other end matches the target name, so a pre-existing namesake relative is not
 # force-failed. FACT / PERSON / SOURCE avoid findings stay on the legacy

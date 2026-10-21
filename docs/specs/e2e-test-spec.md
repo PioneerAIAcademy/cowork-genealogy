@@ -316,8 +316,8 @@ deterministic harness check (`apply_avoid_guard` in `e2e/judge.py`,
 applied by the orchestrator and by judge calibration). What it does
 depends on the finding's `type`:
 
-- A **relationship** avoid is **subject-anchored** (Dallan ruling,
-  2026-10-20): it forces `matched: "false"` only on a relationship the
+- A **relationship** avoid is **subject-anchored**: it forces
+  `matched: "false"` only on a relationship the
   agent **newly attached to the subject** — one in the final tree that the
   committed starting tree lacks, touching a subject person, whose *other*
   endpoint's name (given + surname token overlap) matches the finding's
@@ -386,8 +386,8 @@ conclusion **rest on a named conflicting record** — the disproving
 record of §3.6.1 — and say in the finding that a conclusion resting
 only on failure to confirm does not satisfy it.
 
-**Doctrine call resolved (Dallan, 2026-10-20): relationship avoids are
-subject-anchored; fact avoids stay on the legacy path.** The guards that
+**Avoid-guard behavior in this PR (relationship avoids subject-anchored;
+fact avoids on the legacy path).** The guards that
 could never go green — a `required: true` avoid finding whose name collided
 with a non-exempt person in its own starting tree (`antonio-lucas-spouse`,
 `thomas-seaver-other-wife`, `heinrich-zinsmeister-death`) — were a symptom
@@ -397,7 +397,7 @@ against the starting tree (§3.4.1), so a pre-existing namesake is never an
 over-claim. That fixes the two relationship cases: `antonio-lucas-spouse`
 (its human-`true` run is no longer force-failed) and `thomas-seaver-other-wife`
 (whose f1 wrong candidate is unnamed — "an unidentified second wife…" — so
-name-matching now never forces it; accepted as a consequence of the ruling).
+name-matching now never forces it).
 `heinrich-zinsmeister-death` is a **fact** avoid: the subject-anchored fact
 branch was prototyped and **withdrawn** (it force-failed correct sibling
 recoveries, and prose-based type inference over-matched — code review

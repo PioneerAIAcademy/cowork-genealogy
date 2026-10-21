@@ -463,7 +463,7 @@ def apply_component_derivation(
     return out
 
 
-# --- subject-anchored avoid-guard helpers (Dallan ruling, 2026-10-20) --------
+# --- subject-anchored avoid-guard helpers --------
 # Name particles, place words and month abbreviations that are not
 # discriminating as person-name tokens. Layered on top of
 # validate_fixture._STOPWORDS, which the imported `_tokens` already strips.
@@ -538,8 +538,8 @@ def apply_avoid_guard(
     when there is nothing to do — including when the judge was skipped or
     errored (no ``per_finding``).
 
-    **relationship** avoid findings are **subject-anchored** (Dallan ruling,
-    2026-10-20): the guard looks at what the agent NEWLY attached to the subject,
+    **relationship** avoid findings are **subject-anchored**: the guard looks at
+    what the agent NEWLY attached to the subject,
     comparing ``final_tree`` against ``starting_tree``, not at who merely appears
     in the tree. It forces when the final tree holds a relationship the starting
     tree lacks, touching a ``subject_person_ids`` person, whose OTHER endpoint's
