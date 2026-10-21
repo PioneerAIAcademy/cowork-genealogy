@@ -289,8 +289,10 @@ into the new plan. Put every change in ONE `research_append` call.
 reporting that a search is needed (a conflict's decisive records, a FAN
 pivot, an objective-level sub-question) is add-new or edit work too, but it
 arrives as a delegation naming the records to plan, not as a struck-item
-list. Write those as plan items on the CURRENT question; do not open a new
-question for them, and do not hand back to question-selection.
+list. For a conflict, the record types are the ones conflict-resolution
+recorded in that conflict's `resolution_rationale`. Write those as plan
+items on the CURRENT question; do not open a new question for them, and do
+not hand back to question-selection.
 
 **Heuristic for ambiguous prompts.** When a prompt could mean "tell me
 the plan" (review) or "make a plan" (add/supersede), default to review
