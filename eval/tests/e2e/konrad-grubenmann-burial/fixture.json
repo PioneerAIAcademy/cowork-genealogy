@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 26, hint-samples.csv row 882, flags adds_spouse/adds_burial, confidence 3). Draft transcribed from a 1787 Teufen, Appenzell Ausserrhoden church burial register entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 26, hint-samples.csv row 882, flags adds_spouse/adds_burial, confidence 3). Resolved 2026-10-16 (#3346): true match. The 17 Mar 1787 burial of Conrad Grubenmann aged 88, entered in both the Teufen (ark:/61903/1:1:6FZ1-148K) and Stein (ark:/61903/1:1:6F88-WZBR) registers, is KP47-72Q (baptized 21 Aug 1698 Teufen, ark:/61903/1:1:6FZK-GBNL); either place is accepted. Decided on the indexes alone, so image_basis is off. The wife named in the entries stays unproven.",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:6FZ1-148K",
+    "identity": "same"
+  }
 }

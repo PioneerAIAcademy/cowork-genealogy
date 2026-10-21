@@ -1510,6 +1510,84 @@ def test_main_expected_findings_or_tree_edit_under_stamped_ann_blocks(tmp_path, 
     assert "blind_bundle_digest mismatch" in capsys.readouterr().out
 
 
+# --- A fixture.json edit confined to the digest-ignored keys touches no annotation (#3553) ---
+
+_FX = "eval/tests/e2e/smith/fixture.json"
+_HINT = {"persona_ark": "ark:/61903/1:1:AAAA-BBB", "identity": "same"}
+_BASE_FIXTURE = {"slug": "smith", "researcher_question": "When did he die?"}
+
+
+def _fixture_only_pr(repo, commit, monkeypatch, base_fixture, head_text: str) -> None:
+    """A graded run committed at BASE_SHA whose annotation carries a STALE
+    findings_hash; HEAD_SHA changes nothing but fixture.json, to *head_text*.
+
+    The stale hash is a rung error that warns while the annotation is untouched
+    and blocks once the PR touches it, so the exit code reads the widening.
+    *base_fixture* None leaves fixture.json out of BASE_SHA; a str is raw text.
+    """
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    (repo / ann).write_text(
+        json.dumps({"per_finding": {"f1": "true"}, "findings_hash": "0" * 64}),
+        encoding="utf-8",
+    )
+    base_rels = [rel.as_posix(), tree, ann, "eval/tests/e2e/smith/expected-findings.json"]
+    if base_fixture is not None:
+        text = base_fixture if isinstance(base_fixture, str) else json.dumps(base_fixture)
+        (repo / _FX).write_text(text, encoding="utf-8")
+        base_rels.append(_FX)
+    base = commit(*base_rels)
+    (repo / _FX).write_text(head_text, encoding="utf-8")
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(_FX))
+
+
+@pytest.mark.parametrize("head_text", [
+    json.dumps({**_BASE_FIXTURE, "hint": _HINT}),
+    json.dumps({**_BASE_FIXTURE, "hint": None}),
+    json.dumps({"hint": _HINT, **_BASE_FIXTURE}, indent=4) + "\n",
+], ids=["hint-object", "hint-null", "hint-first-reindented"])
+def test_main_hint_only_fixture_edit_does_not_widen(tmp_path, monkeypatch, capsys, head_text):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _fixture_only_pr(repo, commit, monkeypatch, _BASE_FIXTURE, head_text)
+    assert check_e2e_fixtures.main() == 0
+    out = capsys.readouterr().out
+    assert "::warning::" in out and "findings_hash mismatch" in out, out
+    assert "::error::" not in out, out
+
+
+@pytest.mark.parametrize("base_fixture,head_text", [
+    (_BASE_FIXTURE, json.dumps({**_BASE_FIXTURE, "researcher_question": "Where?"})),
+    (_BASE_FIXTURE, json.dumps({**_BASE_FIXTURE, "researcher_question": "Where?", "hint": _HINT})),
+    (_BASE_FIXTURE, json.dumps({**_BASE_FIXTURE, "tags": {"hint": _HINT}})),
+    (_BASE_FIXTURE, json.dumps({**_BASE_FIXTURE, "hints": _HINT})),
+    (None, json.dumps({**_BASE_FIXTURE, "hint": _HINT})),
+    ("{bad", json.dumps({**_BASE_FIXTURE, "hint": _HINT})),
+    (["not", "an", "object"], json.dumps({**_BASE_FIXTURE, "hint": _HINT})),
+], ids=["researcher_question", "researcher_question-and-hint", "nested-hint",
+        "hints-key", "new-fixture-absent-at-base", "unparseable-at-base",
+        "non-object-at-base"])
+def test_main_other_fixture_edit_widens(tmp_path, monkeypatch, capsys, base_fixture, head_text):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _fixture_only_pr(repo, commit, monkeypatch, base_fixture, head_text)
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::error::" in out and "findings_hash mismatch" in out, out
+
+
+def test_main_hint_backfill_under_a_stamped_annotation_stays_green(tmp_path, monkeypatch, capsys):
+    """The backfill's real shape: both stamps present, only `hint` added."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    base = _stamped_run(repo, commit)
+    (repo / _FX).write_text(json.dumps({"slug": "smith", "hint": _HINT}), encoding="utf-8")
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(_FX))
+    assert check_e2e_fixtures.main() == 0
+    out = capsys.readouterr().out
+    assert "E2E gates OK" in out and "::error::" not in out, out
+
+
 # --- Credential gate (blocking): a committed run log must carry no live secret ---
 # The agent's Read of a host credential file (~/.familysearch-mcp/{config,tokens}.json)
 # can land its contents verbatim in response_summary; this backstops the capture-time

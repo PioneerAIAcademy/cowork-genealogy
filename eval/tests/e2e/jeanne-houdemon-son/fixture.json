@@ -1,0 +1,19 @@
+{
+  "id": "jeanne-houdemon-son",
+  "name": "Jeanne Houdemon — a son baptised in 1679 at Saint-Michel-de-la-Roë",
+  "genre": "record-hint",
+  "source_pid": "GDD7-55R",
+  "captured": "2026-10-20",
+  "researcher_question": "Jeanne Houdemon married Michel Ferré at Saint-Michel-de-la-Roë, Mayenne, on 7 February 1663; the tree records their children Marguerite, baptised 18 April 1674, and Marie, baptised 29 December 1682. Did the couple have any child baptised between those two dates?",
+  "tags": {
+    "question_type": "children",
+    "era": "1670s",
+    "geography": "FR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 12, hint-samples.csv row 391, flags adds_son, confidence 3). Draft transcribed from a 1679 Saint-Michel-de-la-Roë baptism entry naming the mother Jeanne Jourdan; unverified."
+}

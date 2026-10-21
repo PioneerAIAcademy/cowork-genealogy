@@ -1,0 +1,366 @@
+{
+  "persons": [
+    {
+      "id": "G9WN-C79",
+      "ark": "ark:/61903/4:1:G9WN-C79",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "e9c564ed-e269-46ea-9923-8422588ad9ed",
+          "preferred": true,
+          "given": "Pietro",
+          "surname": "Marchetti",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0c8a3624-f8d8-44c1-b932-bbec715dab7d",
+          "type": "Birth",
+          "date": "1848",
+          "standard_date": "1848",
+          "place": "Rieti, Rieti, Lazio, Italia",
+          "standard_place": "Rieti, Rieti, Lazio, Italy"
+        },
+        {
+          "id": "dd8a3e8e-462e-4adc-b4a4-e0fc399d29c5",
+          "type": "Death",
+          "date": "10 July 1923",
+          "standard_date": "10 Jul 1923",
+          "place": "Rieti, Rieti, Lazio, Italy",
+          "standard_place": "Rieti, Rieti, Lazio, Italy"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "78BT-5ZG"
+        },
+        {
+          "ref": "78TQ-5GZ"
+        }
+      ]
+    },
+    {
+      "id": "G9WN-DYW",
+      "ark": "ark:/61903/4:1:G9WN-DYW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "6fe77c98-939e-4fa1-a8f0-5a0e9cbcb206",
+          "preferred": true,
+          "given": "Domenica",
+          "surname": "Marchetti",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ff229b22-20e5-4094-b1f6-37ac0298166d",
+          "type": "Birth",
+          "date": "1878",
+          "standard_date": "1878",
+          "place": "Rieti, Rieti, Lazio, Italia",
+          "standard_place": "Rieti, Rieti, Lazio, Italy"
+        },
+        {
+          "id": "aec87e52-67c2-4506-bd78-535463dba80c",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QD5H-DND"
+        }
+      ]
+    },
+    {
+      "id": "L1DZ-6MT",
+      "ark": "ark:/61903/4:1:L1DZ-6MT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "957a030c-5fc7-4d9f-aa2e-3ab41051af60",
+          "preferred": true,
+          "given": "Francesco",
+          "surname": "Marchetti",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d99cc33c-5deb-46cf-8e25-6a077017260a",
+          "type": "Birth",
+          "date": "1819",
+          "standard_date": "1819",
+          "place": "Rieti, Rieti, Lazio, Italia",
+          "standard_place": "Rieti, Rieti, Lazio, Italy"
+        },
+        {
+          "id": "3fc35834-2e94-4afd-b1c9-dd76dd7a3252",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "78TQ-RWB"
+        }
+      ]
+    },
+    {
+      "id": "L1DZ-8DD",
+      "ark": "ark:/61903/4:1:L1DZ-8DD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "89f1a6f5-e5af-4fb3-bfb6-1ee8a9527af9",
+          "preferred": true,
+          "given": "Marianna",
+          "surname": "Rosati",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4ae09376-9596-4040-9942-f652090a8196",
+          "type": "Birth",
+          "date": "1825",
+          "standard_date": "1825",
+          "place": "Rieti, Rieti, Lazio, Italia",
+          "standard_place": "Rieti, Rieti, Lazio, Italy"
+        },
+        {
+          "id": "374bc1bb-accb-45f0-a635-141242218dbc",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "78TQ-R82"
+        }
+      ]
+    },
+    {
+      "id": "L1DZ-CWX",
+      "ark": "ark:/61903/4:1:L1DZ-CWX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c1c65350-5d89-40ba-acfd-ac938177838f",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "Aquilini",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5ac3d911-4809-4527-a118-55b52dfb4f16",
+          "type": "Birth",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Rieti, Rieti, Lazio, Italia",
+          "standard_place": "Rieti, Rieti, Lazio, Italy"
+        },
+        {
+          "id": "3886c853-a5aa-485c-bdf5-989b9f1e1aa0",
+          "type": "Death",
+          "date": "20 January 1929",
+          "standard_date": "20 Jan 1929",
+          "place": "Rieti, Rieti, Lazio, Italy",
+          "standard_place": "Rieti, Rieti, Lazio, Italy"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "78BT-563"
+        },
+        {
+          "ref": "78TQ-RS6"
+        },
+        {
+          "ref": "QD5H-DND"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G9WN-C79",
+      "person2": "L1DZ-CWX",
+      "facts": [
+        {
+          "id": "504de561-5473-4428-89a8-7a04a24c4a89",
+          "type": "Marriage",
+          "date": "1876",
+          "standard_date": "1876",
+          "place": "Rieti, Rieti, Lazio, Italia",
+          "standard_place": "Rieti, Rieti, Lazio, Italy"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "L1DZ-6MT",
+      "person2": "L1DZ-8DD",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "1846",
+          "standard_date": "1846",
+          "place": "Rieti, Rieti, Lazio, Italia",
+          "standard_place": "Rieti, Rieti, Lazio, Italy"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "78TQ-RCW"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "L1DZ-6MT",
+      "child": "G9WN-C79",
+      "sources": [
+        {
+          "ref": "78TQ-RCW"
+        },
+        {
+          "ref": "78TQ-R7X"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L1DZ-8DD",
+      "child": "G9WN-C79",
+      "sources": [
+        {
+          "ref": "78TQ-RCW"
+        },
+        {
+          "ref": "78TQ-R7X"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "G9WN-C79",
+      "child": "G9WN-DYW"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "L1DZ-CWX",
+      "child": "G9WN-DYW"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_G9WN-C79",
+      "title": "Pietro Marchetti",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Pietro Marchetti (PID G9WN-C79); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G9WN-C79"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_G9WN-DYW",
+      "title": "Domenica Marchetti",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Domenica Marchetti (PID G9WN-DYW); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G9WN-DYW"
+    },
+    {
+      "id": "sd_person_L1DZ-6MT",
+      "title": "Francesco Marchetti",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Francesco Marchetti (PID L1DZ-6MT); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L1DZ-6MT"
+    },
+    {
+      "id": "sd_person_L1DZ-8DD",
+      "title": "Marianna Rosati",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Marianna Rosati (PID L1DZ-8DD); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L1DZ-8DD"
+    },
+    {
+      "id": "sd_person_L1DZ-CWX",
+      "title": "Maria Aquilini",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Aquilini (PID L1DZ-CWX); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L1DZ-CWX"
+    },
+    {
+      "id": "78BT-5ZG",
+      "title": "Pietro Marchetti, “Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945”",
+      "citation": "\"Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2HC-8YS4 : Thu Aug 13 19:47:04 UTC 2026), Pietro Marchetti in entry for Maria Aquilini, 20 Jan 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2HC-8YS4"
+    },
+    {
+      "id": "78TQ-5GZ",
+      "title": "Pietro Marchetti, “Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945”",
+      "citation": "\"Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2B5-RGQ2 : Thu Aug 13 20:07:12 UTC 2026), Pietro Marchetti, 10 Jul 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2B5-RGQ2"
+    },
+    {
+      "id": "QD5H-DND",
+      "title": "Italy, Rieti, Civil Registration (State Archive), 1840-1945; https://familysearch.org/ark:/61903/3:1:3QS7-89KN-P4P8?cc=2146202&wc=49J4-Q9R%3A1588733131%2C1588742100%2C1588745599",
+      "citation": "\"Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945,\" database with images, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/3:1:3QS7-89KN-P4P8?cc=2146202&wc=49J4-Q9R%3A1588733131%2C1588742100%2C1588745599 : 12 August 2025), Rieti > Rieti > Matrimoni 1902 (Registro 1917.2) > image 9 of 104; Ministero per I benie le attivita culturali. From Archivio di Stato (State Archives), Rieti, Italy.",
+      "url": "https://familysearch.org/ark:/61903/3:1:3QS7-89KN-P4P8"
+    },
+    {
+      "id": "78TQ-RWB",
+      "title": "Francesco Marchetti, “Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945”",
+      "citation": "\"Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2B5-RGQ5 : Thu Aug 13 20:07:12 UTC 2026), Francesco Marchetti in entry for Pietro Marchetti, 10 Jul 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2B5-RGQ5"
+    },
+    {
+      "id": "78TQ-R82",
+      "title": "Marianna Rovati, “Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945”",
+      "citation": "\"Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2B5-RGQB : Thu Aug 13 20:07:12 UTC 2026), Marianna Rovati in entry for Pietro Marchetti, 10 Jul 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2B5-RGQB"
+    },
+    {
+      "id": "78BT-563",
+      "title": "Maria Aquilini, “Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945”",
+      "citation": "\"Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2HC-8Y9F : Thu Aug 13 19:47:04 UTC 2026), Maria Aquilini, 20 Jan 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2HC-8Y9F"
+    },
+    {
+      "id": "78TQ-RS6",
+      "title": "Maria Aquilini, “Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945”",
+      "citation": "\"Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2B5-RG7S : Thu Aug 13 20:07:12 UTC 2026), Maria Aquilini in entry for Pietro Marchetti, 10 Jul 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2B5-RG7S"
+    },
+    {
+      "id": "78TQ-RCW",
+      "title": "Marianna Rovati, “Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945”",
+      "citation": "\"Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2B5-RGQB : Thu Aug 13 20:07:12 UTC 2026), Marianna Rovati in entry for Pietro Marchetti, 10 Jul 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2B5-RGQB"
+    },
+    {
+      "id": "78TQ-R7X",
+      "title": "Francesco Marchetti, “Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945”",
+      "citation": "\"Italia, Rieti, Stato Civile (Archivio di Stato), 1840-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2B5-RGQ5 : Thu Aug 13 20:07:12 UTC 2026), Francesco Marchetti in entry for Pietro Marchetti, 10 Jul 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2B5-RGQ5"
+    }
+  ]
+}

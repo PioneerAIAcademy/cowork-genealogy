@@ -12,11 +12,12 @@
       "browse-only",
       "low-index",
       "full-text-pivot",
-      "delegation"
+      "delegation",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute pli_001 — search FamilySearch probate records for Elijah Wilkins in Muhlenberg County, Kentucky.",
+    "delegation": "Execute pli_001 — search FamilySearch probate records for Elijah Wilkins in Muhlenberg County, Kentucky.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "wilkins-probate-nil"
   },
   "mcp_fixtures": [

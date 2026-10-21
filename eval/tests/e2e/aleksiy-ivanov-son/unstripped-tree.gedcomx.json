@@ -1,0 +1,205 @@
+{
+  "persons": [
+    {
+      "id": "L8PL-3W8",
+      "ark": "ark:/61903/4:1:L8PL-3W8",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Алексий Васильев",
+          "surname": "Иванов",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "M9L5-D52"
+        }
+      ]
+    },
+    {
+      "id": "L8PL-3WD",
+      "ark": "ark:/61903/4:1:L8PL-3WD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Елизавета Васильева",
+          "surname": "Иванова",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "M9L5-D5D"
+        }
+      ]
+    },
+    {
+      "id": "LCVB-K69",
+      "ark": "ark:/61903/4:1:LCVB-K69",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Виктор",
+          "surname": "Иванов",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "29 Oct 1894",
+          "standard_date": "29 Oct 1894",
+          "place": "Самара, Самара, Россия",
+          "standard_place": "Samara, Samara, Russia"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "M9L5-DP5"
+        }
+      ]
+    },
+    {
+      "id": "L8PL-3WN",
+      "ark": "ark:/61903/4:1:L8PL-3WN",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Павел",
+          "surname": "Иванов",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "15 Feb 1902",
+          "standard_date": "15 Feb 1902",
+          "place": "Самара, Самара, Россия",
+          "standard_place": "Kuybyshev, Kuybyshev, Russia, Soviet Union"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "L8PL-3W8",
+      "person2": "L8PL-3WD"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "L8PL-3W8",
+      "child": "LCVB-K69"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "L8PL-3WD",
+      "child": "LCVB-K69"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L8PL-3W8",
+      "child": "L8PL-3WN"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "L8PL-3WD",
+      "child": "L8PL-3WN"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_L8PL-3W8",
+      "title": "Алексий Васильев Иванов",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Алексий Васильев Иванов (PID L8PL-3W8); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L8PL-3W8"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_L8PL-3WD",
+      "title": "Елизавета Васильева Иванова",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Елизавета Васильева Иванова (PID L8PL-3WD); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L8PL-3WD"
+    },
+    {
+      "id": "sd_person_LCVB-K69",
+      "title": "Виктор Иванов",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Виктор Иванов (PID LCVB-K69); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LCVB-K69"
+    },
+    {
+      "id": "sd_person_L8PL-3WN",
+      "title": "Павел Иванов",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Павел Иванов (PID L8PL-3WN); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L8PL-3WN"
+    },
+    {
+      "id": "M9L5-D52",
+      "title": "Алексей Васильев Иванов, \"Россия, Самарские метрические книги, 1748-1934\"",
+      "citation": "\"Россия, Самарские метрические книги, 1748-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZ3J-116 : Mon Dec 29 21:06:00 UTC 2025), Алексей Васильев Иванов in entry for Виктор Иванов, 29 Oct 1894.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZ3J-116"
+    },
+    {
+      "id": "M9L5-D5D",
+      "title": "Елизавета Васильева, \"Россия, Самарские метрические книги, 1748-1934\"",
+      "citation": "\"Россия, Самарские метрические книги, 1748-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZ3J-11X : Mon Dec 29 21:06:00 UTC 2025), Елизавета Васильева in entry for Виктор Иванов, 29 Oct 1894.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZ3J-11X"
+    },
+    {
+      "id": "M9L5-DP5",
+      "title": "Виктор Иванов, \"Россия, Самарские метрические книги, 1748-1934\"",
+      "citation": "\"Россия, Самарские метрические книги, 1748-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZ3J-11F : Mon Dec 29 21:06:00 UTC 2025), Виктор Иванов, 29 Oct 1894.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZ3J-11F"
+    }
+  ]
+}

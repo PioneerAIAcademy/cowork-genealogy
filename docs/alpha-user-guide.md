@@ -49,29 +49,14 @@ research.
 Don't hand it your hardest brick wall. 
 What we need instead is a **research objective that tests a specific ability** and
 whose answer is available by accessing FamilySearch records, full-text, or images.
-There are two ways to set one up, and they behave differently.
+Every project starts from a **FamilySearch person ID (PID)**. A message that
+names someone without one creates nothing: the agent asks for the ID first. If the
+person you want to research is not on FamilySearch yet, add them there, then start
+from their PID.
 
-#### Path A — your own research, not on FamilySearch
+#### A FamilySearch person, with something removed
 
-Use this when the answer lives in your files rather than in the FamilySearch tree.
-You supply the starting point and the target, and the agent builds a local tree
-from what you type.
-
-In your first message, give it:
-
-- **The starting point** — names, dates, places, and relationships you're confident
-  in. This is what it reasons *from*.
-- **The objective** — the specific question to answer. "Identify Mary Corrigan's
-  parents"; "establish whether the John Byrne in the 1880 census is the same man as
-  the one in the 1885 land record".
-- **What you've already ruled out**, and why.
-
-You know the answer; the agent has no way to look it up in the tree. That makes
-this the cleanest test of whether it can actually *research*.
-
-#### Path B — a FamilySearch person, with something removed
-
-Use this when the case you want to test is already well documented on FamilySearch.
+Use a case that is already well documented on FamilySearch.
 Give it a **PID**, and tell it **what to forget**:
 
 > "Research PID KWZX-1AB. Forget who his parents were and see if you can find them
@@ -93,9 +78,13 @@ were removed from the project's copy, and researches from what's left. Three thi
 If you give a PID and remove *nothing*, the agent will often just read the answer
 off the tree and you'll learn very little.
 
+Add anything you know that the tree does not — family memory, a document you
+hold, what you have already ruled out and why — in the same first message. It is
+recorded as a known holding.
+
 ### Also tell it about you
 
-Whichever path you take, you don't need to say anything about yourself. Every
+You don't need to say anything about yourself. Every
 project gets plain-language narration, and every subscription site is assumed
 reachable — mention a site you hold and it's recorded, but nothing is asked.
 
@@ -132,6 +121,13 @@ surprises you. (It counts from when the page loaded, so a refresh restarts it.)
 
 Click **Send Feedback** in the viewer header. It bundles the project state and
 your notes and sends them to us privately.
+
+> **Before you send: living people.** A member of our team will open and read
+> your research log, your notes, and your full session transcript in order to
+> reproduce what went wrong. Most projects reach back four or five generations
+> and never touch a living person. **If yours does, please don't send feedback
+> on it.** A report is never worth someone else's privacy, and we would rather
+> lose the report.
 
 1. **What you asked the agent to do.** Optional when the session log goes with
    the bundle, since that usually carries your prompt verbatim. Fill it in if you
@@ -189,11 +185,15 @@ Being straight with you, so you don't waste time:
   per session.
 - **You can't reset a project.** To start over, create a new session.
 - **A session can be continued for 72 hours after you create it.** After that it
-  shows as "ended": you can still see its research (the tree and findings), but
-  not its chat, and you need a new session to keep researching.
+  shows as "ended": you can still read its research (the tree and findings) and
+  its chat, but you need a new session to keep researching.
 - **Living people:** please don't enter information about anyone living. Nothing
   is encrypted yet.
-- **Sessions are private to you.** No sharing or collaboration.
+- **We can read your sessions, and so may FamilySearch.** We use them to fix
+  bugs and to improve the research. Treat anything you put here the way you'd
+  treat something you're about to upload to FamilySearch.
+- **No sharing or collaboration yet.** A session is yours to work in; you can't
+  invite anyone into it.
 
 ---
 
@@ -203,7 +203,7 @@ Being straight with you, so you don't waste time:
 |---|---|
 | "Your address isn't permitted" | We allowlisted a different address. Send us the one on the page — it's the email on your FamilySearch account. |
 | The agent says it can't reach FamilySearch | Start a new session; tell us if it keeps happening. |
-| "This session is more than 72 hours old and can't be continued" | Sessions can be continued for 72 hours. Start a new session to keep researching; the old one's research is still there to read. |
+| "This session is more than 72 hours old and can't be continued" | Sessions can be continued for 72 hours. Start a new session to keep researching; the old one's research and chat are still there to read. |
 | It stops mid-research | Say "continue". If it stalls again, that's worth reporting. |
 | It's slow | Real research is genuinely slow — it reads records one at a time. Minutes is normal. |
 | It asks who you want to research after you already said | It missed your first message. Repeat it with the details. |
@@ -217,7 +217,10 @@ wrong report.
 ## What happens to your feedback
 
 We unpack your case, open your project, and **continue the research from exactly
-where you submitted the feedback** so we can watch the same thing happen. 
+where you submitted the feedback** so we can watch the same thing happen. That
+means a person on our team reads your research log and your session transcript —
+which is why the note above asks you not to send research that involves living
+people. 
 Then we fix the cause and
 write a regression test so it can't come back silently. That test is the durable
 result of your report — which is why "what it should have done" matters so much.

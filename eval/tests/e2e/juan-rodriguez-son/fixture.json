@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 31, flag adds_son, confidence 3). Resolved 2026-09-10 as outcome 2 — answerable, but differently: the 17 February 1801 burial is genuine and the couple had at least one son the tree omits, but the hint's ark cites the father rather than the child and the register's given name is not safe to assert alone. See README \"Notes for reviewers\"."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 31, flag adds_son, confidence 3). Resolved 2026-09-10 as outcome 2 — answerable, but differently: the 17 February 1801 burial is genuine and the couple had at least one son the tree omits, but the hint's ark cites the father rather than the child and the register's given name is not safe to assert alone. See README \"Notes for reviewers\".",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:VTJ3-PBV",
+    "identity": "same"
+  }
 }

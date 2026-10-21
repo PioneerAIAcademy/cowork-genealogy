@@ -13,11 +13,12 @@
       "informant-driven",
       "clorinda-review",
       "nickname-fallback",
-      "topical-fixture-required"
+      "topical-fixture-required",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search the 1900 Lancaster County, Pennsylvania census for Mary Jackson, per plan item pli_002. Log the result and write the sidecar.",
+    "delegation": "Search the 1900 Lancaster County, Pennsylvania census for Mary Jackson, per plan item pli_002. Log the result and write the sidecar.\n\nplanItemId: pli_002\nprojectPath: <workspace>",
     "scenario": "mid-research-jackson-nickname"
   },
   "mcp_fixtures": [

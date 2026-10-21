@@ -545,7 +545,7 @@ settling for this note to be correct.
 
 **The nil note's wording is load-bearing.** `negative` records what the search
 returned, never that the record is absent — this spec's own consumers say so at
-`packages/engine/plugin/skills/search-records/SKILL.md` §"MCP tools and routing",
+`packages/engine/plugin/agents/search-records.md` §"MCP tools and routing",
 §"2. Construct the search query" and §"8. Handle nil results" — and the note reaches an agent that
 by construction has read none of them.
 

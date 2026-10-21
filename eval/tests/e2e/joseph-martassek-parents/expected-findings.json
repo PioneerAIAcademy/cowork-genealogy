@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Joseph Martassek's parents were Joannes (János) Martassek and Maria Tizsinyák; he was baptised as Josephus Martassek at Krásno nad Kysucou in 1853.",
+      "details": {
+        "subject_person": "Joseph Martassek (L8JK-KDK)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Joannes Martassek and Maria Tizsinyák"
+        },
+        "baptism": "1853, Krásno nad Kysucou, Kysucké Nové Mesto, Slovakia"
+      },
+      "supporting_sources": [
+        "Slovakia, Church and Synagogue Books, 1592-1935 — Krásno nad Kysucou (Karásznó) Catholic baptism register 1843-1896, entry for Josephus Martassek, baptised 1853, parents Joannes Martassek and Maria Tizsinyák"
+      ],
+      "required": true
+    }
+  ]
+}

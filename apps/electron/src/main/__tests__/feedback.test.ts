@@ -305,6 +305,58 @@ describe('buildFeedbackZip — size budgets follow the server convention', () =>
     expect(zip.file('small.bin')).not.toBeNull()
     expect(zip.file('research.json')).not.toBeNull()
   })
+
+  it('keeps research.json when it is the largest file over the cap', async () => {
+    // research.json (20 MB) + two results/ sidecars (15 + 15 = 30 MB) = 50 MB.
+    // Today's code would drop research.json first; the fix keeps it.
+    await writeFile(join(folder, 'research.json'), filler(20 * 1024 * 1024))
+    await mkdir(join(folder, 'results'), { recursive: true })
+    await writeFile(join(folder, 'results', 'log_1.json'), filler(15 * 1024 * 1024))
+    await writeFile(join(folder, 'results', 'log_2.json'), filler(15 * 1024 * 1024))
+
+    const result = await buildFeedbackZip({ ...makeOptions(folder), includeMedia: true })
+    const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+    expect(zip.file('research.json')).not.toBeNull()
+    const markdown = await zip.file('FEEDBACK.md')!.async('string')
+    expect(markdown).toContain('archive size limit')
+  })
+
+  it('evicts media before results/ and results/ before other files', async () => {
+    // 15 MB media + 15 MB results/ + 15 MB other = 45 MB. Media (tier 0)
+    // is evicted first, bringing total to 30 MB — under the 35 MB cap.
+    // Use .png (in MEDIA_EXTS), not .tif (which is only in the server's set).
+    await writeFile(join(folder, 'photo.png'), filler(15 * 1024 * 1024))
+    await mkdir(join(folder, 'results'), { recursive: true })
+    await writeFile(join(folder, 'results', 'r.json'), filler(15 * 1024 * 1024))
+    await writeFile(join(folder, 'other.json'), filler(15 * 1024 * 1024))
+
+    const result = await buildFeedbackZip({ ...makeOptions(folder), includeMedia: true })
+    const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+    const markdown = await zip.file('FEEDBACK.md')!.async('string')
+    // Media dropped first
+    expect(markdown).toContain('photo.png')
+    expect(markdown).toContain('archive size limit')
+    // other.json (tier 2) survives
+    expect(zip.file('other.json')).not.toBeNull()
+  })
+
+  it('keeps all protected files when they alone exceed the cap', async () => {
+    // 3 protected files at 15 MB each = 45 MB (over 35 MB cap), plus a sidecar.
+    // All three protected must survive; everything else is dropped.
+    await writeFile(join(folder, 'research.json'), filler(15 * 1024 * 1024))
+    await writeFile(join(folder, 'tree.gedcomx.json'), filler(15 * 1024 * 1024))
+    await writeFile(join(folder, 'starting-tree.gedcomx.json'), filler(15 * 1024 * 1024))
+    await mkdir(join(folder, 'results'), { recursive: true })
+    await writeFile(join(folder, 'results', 'log_1.json'), filler(5 * 1024 * 1024))
+
+    const result = await buildFeedbackZip({ ...makeOptions(folder), includeMedia: true })
+    const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+    expect(zip.file('research.json')).not.toBeNull()
+    expect(zip.file('tree.gedcomx.json')).not.toBeNull()
+    expect(zip.file('starting-tree.gedcomx.json')).not.toBeNull()
+    const markdown = await zip.file('FEEDBACK.md')!.async('string')
+    expect(markdown).toContain('log_1.json')
+  })
 })
 
 describe('capSessionLog', () => {

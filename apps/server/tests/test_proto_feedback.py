@@ -611,6 +611,21 @@ def test_parity_select_files(include_media):
     assert proto._select_files(files, include_media) == alpha._select_files(files, include_media)
 
 
+@pytest.mark.parametrize("include_media", [True, False])
+def test_parity_select_files_tiered_eviction(include_media):
+    """Exercises the tiered eviction with a large research.json and results/ sidecars."""
+    files = [
+        ("research.json", b"\0" * (20 * MiB)),
+        ("tree.gedcomx.json", b"\0" * 500),
+        ("starting-tree.gedcomx.json", b"\0" * 500),
+        ("results/log_1.json", b"\0" * (15 * MiB)),
+        ("results/log_2.json", b"\0" * (10 * MiB)),
+        ("images/photo.tif", b"\0" * (5 * MiB)),
+        ("notes.md", b"# notes"),
+    ]
+    assert proto._select_files(files, include_media) == alpha._select_files(files, include_media)
+
+
 TRANSCRIPT = b"\n".join([
     json.dumps(user("hi")).encode(), b"", b"not json", json.dumps({"type": "system"}).encode(),
     json.dumps(assistant("a" * 50)).encode(), json.dumps(user("sub", cwd="/project/sub")).encode(),
