@@ -297,12 +297,17 @@ describe("materialize_facts under a recorded namesake (#3363 PR 1d)", () => {
     });
 
     it("I5b refuses the groom's name onto the bride's stub even with the groom's marriage linked to it", async () => {
+      // Its own source, so the stub the first op mints reaches this record alone.
       const marriage = [
-        assertion("a_082", "src_001", "REC-MARR", "groom", "marriage", "Thomas Flynn married Mary Doyle"),
-        assertion("a_083", "src_001", "REC-MARR", "bride", "marriage", "Mary Doyle married Thomas Flynn"),
+        assertion("a_082", "src_008", "REC-MARR", "groom", "marriage", "Thomas Flynn married Mary Doyle"),
+        assertion("a_083", "src_008", "REC-MARR", "bride", "marriage", "Mary Doyle married Thomas Flynn"),
       ];
       const r0 = research([], { row: false });
-      await setup({ ...r0, assertions: [...ASSERTIONS, ...marriage] }, tree([]));
+      const t0 = tree([]);
+      await setup(
+        { ...r0, sources: [...r0.sources, source("src_008", "S8")], assertions: [...ASSERTIONS, ...marriage] },
+        { ...t0, sources: [...t0.sources, { id: "S8", title: "Record S8" }] },
+      );
       const first = await materializeFacts({
         projectPath: dir,
         assertionId: "a_082",
