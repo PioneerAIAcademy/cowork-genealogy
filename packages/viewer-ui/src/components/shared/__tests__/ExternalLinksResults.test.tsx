@@ -55,4 +55,19 @@ describe('ExternalLinksResults (#3594)', () => {
     expect(screen.getAllByText('https://example.org/a')).toHaveLength(2)
     expect(screen.queryByText('No url here')).toBeNull()
   })
+
+  it('says so when no row has a URL', () => {
+    render(<ExternalLinksResults results={[{ linkText: 'Ancestry' }, { url: '  ' }]} />)
+    expect(screen.getByText('No links recorded')).toBeInTheDocument()
+  })
+
+  it('trims a URL before deciding it is openable', async () => {
+    render(
+      <ExternalLinksResults
+        results={[{ linkText: 'Ancestry', url: ' https://www.ancestry.com/x ' }]}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'https://www.ancestry.com/x' }))
+    expect(generic).toHaveBeenCalledWith('https://www.ancestry.com/x')
+  })
 })

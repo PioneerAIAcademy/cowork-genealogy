@@ -1,5 +1,5 @@
 import { openExternal } from '../../lib/external'
-import type { ExternalLinkResult } from './SidecarResultCard'
+import { nonEmpty, type ExternalLinkResult } from './SidecarResultCard'
 import styles from './SidecarResultCard.module.css'
 
 const OPENABLE_RE = /^https?:\/\//i
@@ -16,23 +16,19 @@ export default function ExternalLinksResults({
 }: {
   results: ExternalLinkResult[]
 }): React.JSX.Element {
-  const links = results.filter(
-    (r): r is ExternalLinkResult & { url: string } =>
-      !!r && typeof r.url === 'string' && r.url.trim() !== ''
-  )
+  const links = results
+    .filter((r) => r && nonEmpty(r.url))
+    .map((r) => ({ url: (r.url as string).trim(), label: nonEmpty(r.linkText) ? r.linkText : '' }))
 
   return (
     <article className={styles.card}>
       <div className={styles.body}>
+        {links.length === 0 && <span className={styles.personFactsEmpty}>No links recorded</span>}
         <ul className={styles.treeMatchList}>
           {links.map((link, i) => {
-            const label =
-              typeof link.linkText === 'string' && link.linkText.trim() !== ''
-                ? link.linkText
-                : link.url
             return (
               <li key={i} className={styles.treeMatchItem}>
-                <span>{label}</span>
+                <span>{link.label || link.url}</span>
                 {' — '}
                 {OPENABLE_RE.test(link.url) ? (
                   <button

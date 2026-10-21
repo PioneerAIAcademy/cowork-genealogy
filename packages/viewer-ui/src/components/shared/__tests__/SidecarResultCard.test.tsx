@@ -444,6 +444,28 @@ describe('SidecarResultCard — record_read', () => {
     expect(fs).toHaveBeenCalledWith('ark:/61903/1:1:MXHY-TQ2')
   })
 
+  it('links to the recordId when the Record url is one the policy refuses', async () => {
+    const sources = (result.gedcomx?.sources ?? []).map((src) =>
+      src.resource_type === 'Record' ? { ...src, url: 'https://evil.example/record' } : src
+    )
+    render(
+      <SidecarResultCard result={withSources(sources)} tool="record_read" defaultExpanded={true} />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(fs).toHaveBeenCalledWith('ark:/61903/1:1:MXHY-TQ2')
+  })
+
+  it('survives a null relationship entry', () => {
+    render(
+      <SidecarResultCard
+        result={{ ...result, gedcomx: { ...result.gedcomx, relationships: [null] as never } }}
+        tool="record_read"
+        defaultExpanded={true}
+      />
+    )
+    expect(screen.getByText('Patrick Flynn')).toBeInTheDocument()
+  })
+
   it('with no principal and no focus, shows no PRIMARY pill and no relationship labels', () => {
     const persons = (result.gedcomx?.persons ?? []).map((p) => ({ ...p, principal: false }))
     render(
@@ -484,5 +506,10 @@ describe('SidecarResultCard — unrouted tool', () => {
     expect(screen.queryByText('Untitled record')).toBeNull()
     expect(screen.queryByText('SHOULD NOT RENDER')).toBeNull()
     expect(screen.queryByText('Names')).toBeNull()
+  })
+
+  it('does not present a header with nothing to expand as a button', () => {
+    render(<SidecarResultCard result={{ id: 'x' }} tool="person_read" defaultExpanded={false} />)
+    expect(screen.queryByRole('button')).toBeNull()
   })
 })

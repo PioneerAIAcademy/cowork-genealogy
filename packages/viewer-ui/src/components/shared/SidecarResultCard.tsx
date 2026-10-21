@@ -57,7 +57,7 @@ function plainText(html: string): string {
   return new DOMParser().parseFromString(html, 'text/html').body.textContent ?? ''
 }
 
-function nonEmpty(value: unknown): value is string {
+export function nonEmpty(value: unknown): value is string {
   return typeof value === 'string' && value.trim() !== ''
 }
 
@@ -77,7 +77,9 @@ function recordReadView(result: RecordReadResult, focusPersonaId?: string): Reco
   const persons = (result.gedcomx?.persons ?? []).filter(
     (p) => p && typeof p.id === 'string' && Array.isArray(p.names)
   )
-  const relationships = result.gedcomx?.relationships ?? []
+  const relationships = (result.gedcomx?.relationships ?? []).filter(
+    (r) => r && typeof r === 'object'
+  )
   const sources = (result.gedcomx?.sources ?? []).filter((s) => s && typeof s === 'object')
   const record = sources.find((s) => s.resource_type === 'Record')
   const collection = sources.find((s) => s.resource_type === 'Collection')
@@ -97,7 +99,9 @@ function recordReadView(result: RecordReadResult, focusPersonaId?: string): Reco
     citation: nonEmpty(record?.citation) ? plainText(record?.citation) : undefined,
     recordSearch: {
       primaryId,
-      arkUrl: nonEmpty(record?.url) ? record?.url : recordId,
+      // Gated on resolvability, as in FulltextSearchBody: a Record url the policy
+      // refuses must not hide the recordId link, which always resolves.
+      arkUrl: [record?.url, recordId].find((v) => resolveFamilySearchTarget(v)),
       gedcomx: { persons, relationships }
     }
   }
@@ -346,15 +350,18 @@ export default function SidecarResultCard({
     <article className={styles.card}>
       <header
         className={styles.header}
-        onClick={() => setExpanded((v) => !v)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            setExpanded((v) => !v)
+        // Nothing to expand for an unrouted tool, so no control to announce.
+        {...(body && {
+          onClick: () => setExpanded((v) => !v),
+          role: 'button',
+          tabIndex: 0,
+          onKeyDown: (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setExpanded((v) => !v)
+            }
           }
-        }}
+        })}
       >
         <h3 className={styles.title}>{title}</h3>
         <div className={styles.headerMeta}>
@@ -362,8 +369,10 @@ export default function SidecarResultCard({
           {body && <span className={styles.chevron}>{expanded ? '▾' : '▸'}</span>}
         </div>
       </header>
-      {(tool === 'record_search' || tool === 'record_read') && (
-        <div className={styles.subMeta}>{subMeta && <span>{subMeta}</span>}</div>
+      {subMeta && (
+        <div className={styles.subMeta}>
+          <span>{subMeta}</span>
+        </div>
       )}
       {expanded && body}
     </article>
