@@ -303,7 +303,7 @@ For wildcard rules and fuzzy matching behavior, read the “Name search mechanic
 - Spelling variants (Patrick → Patric, Paddy, Pat)
 - Abbreviations (William → Wm, Thomas → Thos)
 - Initials (J. Smith)
-- Each surname a woman carried, for the span she carried it — including one only the researcher names (the “Name search mechanics” reference at the end of this file)
+- Maiden names for married women
 - **Nicknames unrelated to the given name itself** — a call name drawn from an interest, trait, or birth order rather than a diminutive of the recorded name, or one adopted specifically to distinguish same-named relatives (four Sarahs in one family, each known by a different nickname). These will not surface from spelling or phonetic variants; they come from family sources (a will, a letter, an obituary) or from the researcher's own knowledge of the family.
 
 For the historical reasoning behind why one person's name appears in several
@@ -445,9 +445,6 @@ highest. A row the ranker could not score keeps its search position, has no
 **The ranked list is a review surface, not an auto-accept.** Match score orders the
 candidates; you still confirm the top ones:
 
-- **A hit under a surname only the researcher names is `needs-review`.** Report it as
-  consistent with that marriage, never as a confident match, until an independent
-  record ties her to it.
 - **Logical cross-check every strong match.** Role in the record (a 5-year-old
   cannot be Head of Household), age/birth year vs. the expected range, place
   consistency. Flag any impossibility as `needs-review` regardless of score —
@@ -1034,12 +1031,6 @@ Use wildcards to compensate.
 - Female names: US records use married surname; Spanish/Italian
   preserve maiden; Quaker/Scandinavian use patronymics
 - "Willm" / "Will'm" may not standardize to William — search both
-
-**A surname you search under asserts nothing.** Search a woman under every
-surname she may have carried — including one the researcher only remembers —
-each for the years it could have been hers. A hit found that way is a
-candidate: report it as consistent with the recalled marriage, never as
-confirming it, until an independent record ties her to it.
 
 **Watch the results for a misindexed value, not just the query.** Some
 indexing errors are not reachable by a one-character wildcard — a name read
