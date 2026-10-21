@@ -609,7 +609,7 @@ function applyNamedPartyOp(
   const existingId = str(op.personId);
   if (existingId !== undefined) {
     const refusal = namedPartyTargetRefusal(
-      tree, research, assertion, relatedRole, existingId, op.gender, ctx.startingPersonIds, op.name, ctx.beforeTree,
+      tree, research, assertion, relatedRole, existingId, op.gender, ctx.startingPersonIds, { given, surname }, ctx.beforeTree,
     );
     if (refusal !== null) throw new MaterializeFactsError(refusal);
   }
@@ -694,7 +694,9 @@ function applyNamedPartyOp(
   // that key, so corroboration is the common case, not a rare one. Without it
   // the arm does what it did before — a sourced name and nothing else — which
   // is the conservative direction: a missing fact is recoverable by a later
-  // persona-arm call, a fact on the wrong person is not.
+  // persona-arm call once a `probable` or `confident` link ties the persona to
+  // the person (the name-only stub traces to no party, so it is not exempt), a
+  // fact on the wrong person is not.
   const sv = assertion.structured_value;
   const namedRole =
     sv && typeof sv === "object" && !Array.isArray(sv)
@@ -883,12 +885,13 @@ function linkGate(
 }
 
 /** Where a person minted from record `recordId` came from. `thisParty`: a fact
- *  backlinked to one of the party's one-party assertions, a live link from one,
- *  or a name equal to one of the party's names. `other`: the first other role
- *  of the record whose one-party assertion a fact is backlinked to or a live
- *  link comes from; names do not count there, since two people on one record
- *  can share a name. A two-party assertion is no party's trace, since its link
- *  may be about either party. */
+ *  backlinked to one of the party's one-party assertions, a live `probable` or
+ *  `confident` link from one, or a name equal to one of the party's names.
+ *  `other`: the first other role of the record whose one-party assertion a fact
+ *  is backlinked to or such a link comes from; names do not count there, since
+ *  two people on one record can share a name. A `speculative` link is a
+ *  candidate, not an identity, so it traces no party. A two-party assertion is
+ *  no party's trace, since its link may be about either party. */
 function partyTrace(
   tree: SimplifiedGedcomX,
   research: any,
@@ -899,7 +902,8 @@ function partyTrace(
   const person = (tree.persons ?? []).find((p) => p?.id === personId);
   const facts = person?.facts ?? [];
   const links = ((research?.person_evidence ?? []) as any[]).filter(
-    (e) => e && !e.superseded_by && e.person_id === personId,
+    (e) =>
+      e && !e.superseded_by && e.person_id === personId && (e.confidence === "probable" || e.confidence === "confident"),
   );
   const traced = (ids: ReadonlySet<string>): { assertionId: string; evidence: string } | null => {
     const fact = facts.find((f) => typeof f.assertion_id === "string" && ids.has(f.assertion_id));
@@ -970,20 +974,23 @@ export function mintedExemption(
   return trace.other !== null ? "another party" : trace.thisParty ? "exempt" : "no party";
 }
 
-/** A persona's party: its exact role, as the fact pass matches it, and the
- *  names its own name assertions carry. */
+/** A role's party on record `recordId`: every spelling of the role that
+ *  normalizes equal, as the named-party arm writes them, and the names its own
+ *  name assertions carry. */
 export function personaParty(research: any, recordId: unknown, recordRole: unknown): RecordParty {
+  const roleOf = (role: unknown) => normNamePart(String(role ?? ""));
+  const wanted = roleOf(recordRole);
   const names = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[])
     .filter(
       (a) =>
         a &&
         a.record_id === recordId &&
-        a.record_role === recordRole &&
+        roleOf(a.record_role) === wanted &&
         recordBasisOf(a) !== "absent" &&
         NAME_TYPES.has(String(a.fact_type ?? "").toLowerCase()),
     )
     .map((a) => nameParts(a));
-  return { isThisRole: (role) => role === recordRole, names };
+  return { isThisRole: (role) => roleOf(role) === wanted, names };
 }
 
 /** The ids of the one-party assertions on record `recordId` whose role passes
@@ -1077,8 +1084,11 @@ function writesPersonLevel(a: any): boolean {
  *    onto the other party when nothing marks him as the own persona and the
  *    gender check cannot separate them (§4.3).
  *
- *  The party is the named role with `name` and that role's own name assertions;
- *  the namesake cap reads relatives from `namesakeTree`. */
+ *  The party is the named role and its own name assertions. `name`, the
+ *  caller's, counts as one of its names only when the op writes nothing but
+ *  that name (the fact pass will not run, or has no person fact to write): a
+ *  caller name never carries facts onto a stub. The namesake cap reads
+ *  relatives from `namesakeTree`. */
 export function namedPartyTargetRefusal(
   tree: SimplifiedGedcomX,
   research: any,
@@ -1130,22 +1140,21 @@ export function namedPartyTargetRefusal(
         "whose link may be about either party, no longer counts)"
       : `assertion '${assertion.id}' or one of the '${relatedRole}' persona's own one-party ` +
         `assertions on record '${recordId}'`;
-  const party: RecordParty = {
-    isThisRole: (role) => roleOf(role) === wanted,
-    names: [
-      ...(name ? [name] : []),
-      ...((Array.isArray(research?.assertions) ? research.assertions : []) as any[])
-        .filter(
-          (a) =>
-            a &&
-            a.record_id === recordId &&
-            roleOf(a.record_role) === wanted &&
-            recordBasisOf(a) !== "absent" &&
-            NAME_TYPES.has(String(a.fact_type ?? "").toLowerCase()),
-        )
-        .map((a) => nameParts(a)),
-    ],
+  const namedParty = personaParty(research, recordId, relatedRole);
+  const sv = assertion.structured_value;
+  const namedRole =
+    sv && typeof sv === "object" && !Array.isArray(sv) ? str((sv as Record<string, unknown>).related_person_role) : undefined;
+  const writesFacts =
+    namedRole !== undefined &&
+    roleOf(namedRole) === wanted &&
+    ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).some(
+      (a) => a && a.record_id === recordId && roleOf(a.record_role) === wanted && writesPersonLevel(a),
+    );
+  const opName = {
+    given: typeof name?.given === "string" ? name.given : undefined,
+    surname: typeof name?.surname === "string" ? name.surname : undefined,
   };
+  const party: RecordParty = writesFacts ? namedParty : { ...namedParty, names: [...namedParty.names, opName] };
   const refusal = existingPersonLinkRefusal(
     tree, research, personId, String(recordId), qualifying, what, startingPersonIds, party, namesakeTree,
   );

@@ -2328,16 +2328,13 @@ export function pidOrStartingPerson(personId: string, startingPersonIds?: Readon
  *  "only source ref" means every ref the person carries, and person_read
  *  attaches FamilySearch's at this level. */
 export function personSourceRefs(person: any): Set<string> {
-  const refs = new Set<string>();
-  const add = (sources: unknown) => {
-    for (const src of (Array.isArray(sources) ? sources : []) as any[]) {
-      if (typeof src?.ref === "string" && src.ref !== "") refs.add(src.ref);
-    }
-  };
-  add(person?.sources);
-  for (const n of (Array.isArray(person?.names) ? person.names : []) as any[]) add(n?.sources);
-  for (const f of (Array.isArray(person?.facts) ? person.facts : []) as any[]) add(f?.sources);
-  return refs;
+  return new Set(
+    [
+      person,
+      ...((Array.isArray(person?.names) ? person.names : []) as any[]),
+      ...((Array.isArray(person?.facts) ? person.facts : []) as any[]),
+    ].flatMap(sourceRefsOf),
+  );
 }
 
 /** What tree source refs reach in research.json:
@@ -2998,17 +2995,12 @@ export function factEvidenceParties(
   fact: any,
   research: any,
   partyOf: (a: any) => string = capPartyKeyer(Array.isArray(research?.assertions) ? research.assertions : []),
+  assertionOf: (id: string) => any = (id) =>
+    ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).find((x) => x?.id === id),
 ): Array<{ source: unknown; party: string | null }> {
-  const a =
-    typeof fact?.assertion_id === "string"
-      ? ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).find((x) => x?.id === fact.assertion_id)
-      : undefined;
+  const a = typeof fact?.assertion_id === "string" ? assertionOf(fact.assertion_id) : undefined;
   if (a) return [{ source: capSource(a), party: partyOf(a) }];
-  const refs = new Set<string>();
-  for (const s of (Array.isArray(fact?.sources) ? fact.sources : []) as any[]) {
-    if (typeof s?.ref === "string" && s.ref !== "") refs.add(s.ref);
-  }
-  return [...refsReach(refs, research).sourceIds].map((source) => ({ source, party: null }));
+  return [...refsReach(sourceRefsOf(fact), research).sourceIds].map((source) => ({ source, party: null }));
 }
 
 /** What the namesake warning lists for one person. */
@@ -3072,7 +3064,7 @@ export function namesakeRowListings(
     const allowedSources = new Set(allowed.map(sourceOf));
     const person = ((after.tree?.persons ?? []) as any[]).find((x) => x?.id === p);
     const facts = ((person?.facts ?? []) as any[]).filter((f) =>
-      factEvidenceParties(f, after.research, partyOf).some(({ source, party }) =>
+      factEvidenceParties(f, after.research, partyOf, (id) => assertionById.get(id)).some(({ source, party }) =>
         party === null
           ? refusedSources.has(source) && !allowedSources.has(source)
           : refusedParties.has(partyKey(source, party)) && !allowedParties.has(partyKey(source, party)),

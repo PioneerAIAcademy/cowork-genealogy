@@ -353,6 +353,121 @@ describe("materialize_facts under a recorded namesake (#3363 PR 1d)", () => {
       expect(second.ok).toBe(false);
     });
 
+    // A marriage whose two parties have no name of their own: the groom carries a
+    // birth, and the bride's marriage names him as the groom.
+    async function marriageWithoutNames(extra: any[] = []) {
+      const marriage = [
+        assertion("a_082", "src_008", "REC-MARR", "groom", "marriage", "Thomas Flynn married Mary Doyle"),
+        assertion("a_083", "src_008", "REC-MARR", "bride", "marriage", "Mary Doyle married Thomas Flynn", {
+          structured_value: { related_person_role: "groom" },
+        }),
+        assertion("a_084", "src_008", "REC-MARR", "groom", "birth", "", { date: "1840" }),
+        ...extra,
+      ];
+      const r0 = research([], { row: false });
+      const t0 = tree([]);
+      await setup(
+        { ...r0, sources: [...r0.sources, source("src_008", "S8")], assertions: [...ASSERTIONS, ...marriage] },
+        { ...t0, sources: [...t0.sources, { id: "S8", title: "Record S8" }] },
+      );
+      const first = await materializeFacts({
+        projectPath: dir,
+        assertionId: "a_082",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+      });
+      if (!first.ok || !("personId" in first)) throw new Error("expected a single-op success");
+      return first.personId;
+    }
+
+    it("I5c refuses the groom's facts onto the bride's stub when the op passes her name", async () => {
+      const stub = await marriageWithoutNames();
+      const r = await materializeFacts({
+        projectPath: dir,
+        personId: stub,
+        assertionId: "a_083",
+        relatedRole: "groom",
+        name: { given: "Mary", surname: "Doyle" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/nothing on it \(a fact, a link from a one-party assertion, or a name\) comes from this party/);
+      const t = await readJson("tree.gedcomx.json");
+      expect(t.persons.find((p: any) => p.id === stub).facts ?? []).toEqual([]);
+    });
+
+    it("I5d re-runs a name only op onto the stub it made", async () => {
+      const stub = await marriageWithoutNames();
+      const r = await materializeFacts({
+        projectPath: dir,
+        personId: stub,
+        assertionId: "a_082",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+      });
+      expect(r.ok).toBe(true);
+    });
+
+    it("I5e refuses, and does not throw, on a name part that is not a string", async () => {
+      const stub = await marriageWithoutNames();
+      const r = await materializeFacts({
+        projectPath: dir,
+        personId: stub,
+        assertionId: "a_082",
+        relatedRole: "bride",
+        name: { given: 5 as any, surname: "Brennan" },
+      });
+      expect(r.ok).toBe(false);
+    });
+
+    it("I5f refuses the bride's own persona onto a stub her name only op made, until a link ties it", async () => {
+      const birth = assertion("a_085", "src_008", "REC-MARR", "bride", "birth", "", { date: "1842" });
+      const stub = await marriageWithoutNames([birth]);
+      const r = await materializeFacts({ projectPath: dir, personId: stub, recordId: "REC-MARR", recordRole: "bride" });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/nothing on it \(a fact, a link from a one-party assertion, or a name\) comes from this party/);
+    });
+
+    it("I8 keeps the head's stub exempt when the wife's name is linked to it only speculatively", async () => {
+      const headStub = person("I5", "John", "Smith", "Male", {
+        names: [{ id: "I5-n1", given: "John", surname: "Smith", sources: [{ ref: "S1" }] }],
+        facts: [{ id: "F5", type: "Birth", date: "1850", assertion_id: "a_002", sources: [{ ref: "S1" }] }],
+      });
+      await setup(research([link("pe_1", "a_003", "I5", "speculative")], { row: false }), tree([headStub]));
+      const r = await materializeFacts({ projectPath: dir, personId: "I5", recordId: "REC-CEN", recordRole: "head" });
+      expect(r.ok).toBe(true);
+    });
+
+    it("I8b withdraws the exemption once that link is probable", async () => {
+      const headStub = person("I5", "John", "Smith", "Male", {
+        names: [{ id: "I5-n1", given: "John", surname: "Smith", sources: [{ ref: "S1" }] }],
+        facts: [{ id: "F5", type: "Birth", date: "1850", assertion_id: "a_002", sources: [{ ref: "S1" }] }],
+      });
+      await setup(research([link("pe_1", "a_003", "I5")], { row: false }), tree([headStub]));
+      const r = await materializeFacts({ projectPath: dir, personId: "I5", recordId: "REC-CEN", recordRole: "head" });
+      expect(r.ok).toBe(false);
+    });
+
+    it("I9 reads two spellings of one role as one party", async () => {
+      const spelled = [
+        assertion("a_090", "src_009", "REC-SPELL", "Bride", "birth", "", { date: "1839" }),
+        assertion("a_091", "src_009", "REC-SPELL", "bride", "name", "Ann Green"),
+      ];
+      const r0 = research([], { row: false });
+      const stub = person("I9", "Ann", "Green", "Female", {
+        names: [{ id: "I9-n1", given: "Ann", surname: "Green", sources: [{ ref: "S9" }] }],
+        facts: [{ id: "F9", type: "Birth", date: "1839", assertion_id: "a_090", sources: [{ ref: "S9" }] }],
+      });
+      const t0 = tree([stub]);
+      await setup(
+        { ...r0, sources: [...r0.sources, source("src_009", "S9")], assertions: [...ASSERTIONS, ...spelled] },
+        { ...t0, sources: [...t0.sources, { id: "S9", title: "Record S9" }] },
+      );
+      const r = await materializeFacts({ projectPath: dir, personId: "I9", recordId: "REC-SPELL", recordRole: "bride" });
+      expect(r.ok).toBe(true);
+    });
+
     it("I7 copies a same-named father onto the son's name only stub (known let through)", async () => {
       const sonStub = person("I8", "John", "Smith", "Male", {
         names: [{ id: "I8-n1", given: "John", surname: "Smith", sources: [{ ref: "S6" }] }],
