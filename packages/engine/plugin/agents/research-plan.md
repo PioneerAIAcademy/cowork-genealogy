@@ -224,7 +224,13 @@ search for something a fact the tree already holds already states.
 
 Read ALL plans for the target question (`plans[]` where
 `question_id == the target q_`), regardless of status — read first, decide
-second, write last.
+second, write last. The stored plans pick the mode, never the delegation's
+account of them: "every search is done" is true only where a `log` entry
+closes each item. While the active plan holds a `planned`/`in_progress`
+item, every mode but Review needs its warrant in the delegation — the item
+ids (Dispose), the researcher's strike/add words (Edit), the falsifying
+fact (Supersede); a fresh-plan order is not one, and lacking all three you
+Review, however firmly the delegation insists.
 
 **Review mode** — An `active` plan still has `planned`/`in_progress`
 items, and the user wants a recap. Narrate which item is next, why,
@@ -254,8 +260,10 @@ calls finished while an item is still `planned` or `in_progress`, is not
 superseded: take Review mode and put the improvements in your recap.
 
 **Dispose mode** — `research-exhaustiveness` refused a declaration
-because items on the active plan are still open, and you were given
-their ids. The ids may be `planned` OR `in_progress`: a search that ran
+because items on the active plan are still open, and the delegation
+names their ids. **Both arms below need those ids**: a caller who calls
+the plan finished while an item is `planned` or `in_progress`, naming
+none, is Review mode. The ids may be `planned` OR `in_progress`: a search that ran
 without closing its item leaves it `in_progress`, and those must close
 too or the declaration stays refused. Set each: `completed` if its
 search was done and logged — FamilySearch, full-text and image items
@@ -269,8 +277,9 @@ carries the same items into the new plan and re-blocks the gate. Put
 every item in ONE `research_append` call; one `skip_reason` may cover
 several items sharing a reason.
 
-**Dispose mode also serves a wrap-up.** When the caller says the
-researcher is wrapping the question up rather than searching further,
+**Dispose mode also serves a wrap-up.** When the delegation names the
+open items and says the researcher is wrapping the question up rather
+than searching further,
 every open item whose search has NOT run is `skipped` with
 `skip_category: "user_declined"`, whatever its subject: the researcher
 declined the remaining searches, so no other category describes it, and
