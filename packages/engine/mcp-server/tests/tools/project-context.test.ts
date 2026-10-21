@@ -192,6 +192,21 @@ describe("project_context", () => {
     expect(bare.ok && bare.objective).toBeNull();
   });
 
+  it("returns the project's subject person ids, and [] when absent (#3516)", async () => {
+    await writeProject(
+      { project: { id: "rp_001", objective: "x", subject_person_ids: ["I1", "I2"], status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir });
+    expect(r.ok && r.subjectPersonIds).toEqual(["I1", "I2"]);
+    await writeProject(
+      { project: { id: "rp_001", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const bare = await projectContext({ projectPath: dir });
+    expect(bare.ok && bare.subjectPersonIds).toEqual([]);
+  });
+
   it("returns empty arrays for an empty project", async () => {
     await writeProject(
       { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
@@ -203,6 +218,7 @@ describe("project_context", () => {
       buildId: readBuildInfo().version,
       projectStatus: "active",
       objective: "Fresh",
+      subjectPersonIds: [],
       openQuestions: [],
       questionStatuses: [],
       persons: [],

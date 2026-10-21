@@ -1,5 +1,11 @@
 # Person Search Tool — Implementation Spec
 
+> **`pick` was removed 2026-10-15.** The response used to carry
+> `{ decisive, tiedAtTop, reason }` saying whether the results chose one person or
+> needed a human to. `init-project` was its only reader, and it no longer searches by
+> name — a project now always starts from a FamilySearch PID — so nothing branched on
+> it. The helper, its suite and its probe went with it.
+
 ## Overview
 
 An MCP tool that searches the **FamilySearch Family Tree** for people.
@@ -259,7 +265,7 @@ Each `PersonSearchResult`:
 | `confidence` | number \| undefined | A 1–5 confidence band (5 highest). Search metadata, not GedcomX. Rank with `score`. |
 | `gedcomx` | SimplifiedGedcomX | The matched person as simplified GedcomX: `id`, `ark`, `gender`, `names` (given/surname), and `facts` (Birth, Death, …) — produced by `toSimplified` (see `simplified-gedcomx-spec.md`). The skill renders its pick-list from this. Relatives are excluded by design (see *Picking a result*). Per-person **source references are also stripped** — they'd be dangling IDs here (the source descriptions aren't included), and the full sources come from `person_read` on the chosen person. |
 
-`personId`, `score`, and `confidence` are the only non-GedcomX fields,
+`personId`, `score`, and `confidence` are the only non-GedcomX fields **on a candidate**
 because they are search metadata the endpoint returns at the entry level
 (`entry.id` / `entry.score` / `entry.confidence`) and cannot live inside
 a person's GedcomX. Everything else about the person — name, sex, dates,
