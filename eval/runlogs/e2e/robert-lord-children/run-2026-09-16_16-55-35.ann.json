@@ -3,10 +3,12 @@
     "f1": "true",
     "f2": "true"
   },
-  "proof_quality_score": 2,
+  "proof_quality_score": 3,
   "notes": {
-    "f2": "Agent reached a correct 'disproved' conclusion in proof_summaries, grounding it in birth year gap (1866 vs 1858) and different father (Griffith not Abel); graded true because the negative conclusion was explicitly documented and is defensible. The specific exhausted Marriage Registration Index search for Robert+Ellen 1890–1896 named in the fixture was not performed, and the key disproving records (X4M8-5JM simultaneity, NKKY-C2T marriage) were not found — those gaps explain the proof quality score of 2 (thin): multi-source argument is sound in structure but misses the fixture's decisive records; Griffith identification rests on index inference without original certificate."
+    "f1": "No ParentChild relationship links Robert Lord to James or Betsy; they remain unlinked stubs. The Couple relationship to 'Ellen' (GSPY-LH7, no surname) predates this research -- inherited from the starting tree, not newly asserted. The specific forbidden name 'Ellen Mayo' never appears anywhere. One loose end: the agent attached the 1911 census (the hint record, for the OTHER Robert's wife) as a new source to this pre-existing Ellen and added an 'Ellen Brierley' name variant to her, creating some ambiguity -- but this contradicts the agent's own explicit, correct proof conclusion that these are different families, and no forbidden relationship was actually created.",
+    "f2": "Excellent, GPS-conformant work: a full proof argument with independence analysis and weighing analysis across three components (birth year -- 8-year gap across 4 independent sources; parentage -- correctly identifies the real father as Griffith Brierley, not Abel; surname -- flags the unexplained Lord/Brierley divergence), reaching 'disproved' tier correctly."
   },
-  "annotator": "mercyokum",
-  "findings_hash": "1f1ee7985eb65d8322617912e2c7062752b77ba7cfa12cd109e97b00c89ba65a"
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "findings_hash": "0610569b1263120022acbfe4420d8f3fd027479ea5e00f47d1cd83c625cfc656",
+  "blind_bundle_digest": "44f886224688a707ecbc866824ca79e68e7cefd6e2c6aa2706f242985ddf17ee"
 }
