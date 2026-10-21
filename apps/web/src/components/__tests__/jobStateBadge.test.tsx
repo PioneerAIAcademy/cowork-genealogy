@@ -7,9 +7,13 @@ import { JobStateBadge } from '../JobStateBadge'
 // all looked identical.
 
 describe('JobStateBadge', () => {
-  it('shows each of the four states in words a reader understands', () => {
+  it('shows each of the five states in words a reader understands', () => {
     for (const [state, text] of [
       ['running', /working/i],
+      // A message sent mid-turn, waiting for the turn to end. Distinct from both
+      // 'Working…' (nothing is executing it yet) and 'Needs you' (the reader has
+      // already spoken; the system owes the next move).
+      ['queued', /queued/i],
       ['needs you', /needs you/i],
       ['done', /done/i],
       ['stopped', /stopped/i]
@@ -32,12 +36,15 @@ describe('JobStateBadge', () => {
     expect(container.textContent).toBe('')
   })
 
-  it('marks the two states that want attention differently from the two that do not', () => {
-    const cls = (s: 'running' | 'needs you' | 'done' | 'stopped'): string => {
+  it('marks the three states that want attention differently from the two that do not', () => {
+    const cls = (s: 'running' | 'queued' | 'needs you' | 'done' | 'stopped'): string => {
       const { container } = render(<JobStateBadge state={s} />)
       return within(container).getByText(/\w/).className
     }
     expect(cls('needs you')).not.toBe(cls('done'))
     expect(cls('running')).not.toBe(cls('stopped'))
+    // `queued` is pending work, so it reads as active rather than at rest.
+    expect(cls('queued')).not.toBe(cls('done'))
+    expect(cls('queued')).toBe(cls('running'))
   })
 })

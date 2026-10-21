@@ -18,7 +18,11 @@ from app.sandbox.local import LocalProvider
 
 
 class _FakeProc:
-    """Enough of Popen for ensure_server: it only stores the handle and polls."""
+    """Enough of Popen for ensure_server: it stores the handle, polls, and carries
+    a pid -- `ensure_server` records the pid beside the sandbox so a later control
+    plane can reap a server this one orphaned ([R8], test_sandbox_reaping.py)."""
+
+    pid = 4242
 
     def poll(self) -> int | None:
         return None
