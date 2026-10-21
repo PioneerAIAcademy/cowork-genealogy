@@ -1,0 +1,401 @@
+{
+  "persons": [
+    {
+      "id": "K48B-4CP",
+      "ark": "ark:/61903/4:1:K48B-4CP",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Dora",
+          "surname": "Dobrotic",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Veliki Lovrečan, Varaždin, Croatia",
+          "standard_place": "Veliki Lovrečan, Varaždin, Croatia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7XWP-V68"
+        },
+        {
+          "ref": "7XWP-NWT"
+        },
+        {
+          "ref": "7XWP-XKR"
+        }
+      ]
+    },
+    {
+      "id": "KZYJ-C97",
+      "ark": "ark:/61903/4:1:KZYJ-C97",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Franjo",
+          "surname": "Korotaj",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1837",
+          "standard_date": "1837",
+          "place": "Veliki Lovrečan, Varaždin, Croatia",
+          "standard_place": "Veliki Lovrečan, Varaždin, Croatia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7XWP-VZR"
+        },
+        {
+          "ref": "7XWP-N3F"
+        },
+        {
+          "ref": "7XWP-XNG"
+        }
+      ]
+    },
+    {
+      "id": "KHQ5-57C",
+      "ark": "ark:/61903/4:1:KHQ5-57C",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Philippus",
+          "surname": "Korotaj",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "10 Apr 1863",
+          "standard_date": "10 Apr 1863",
+          "place": "Lovrečan Podbelski, Varaždin, Croatia",
+          "standard_place": "Lovrečan, Varaždin, Croatia"
+        },
+        {
+          "id": "9f683d96-ba6d-4ecf-a565-340ac324fd61",
+          "type": "Christening",
+          "date": "1863",
+          "standard_date": "1863",
+          "place": "Križovljan Radovečki, Varaždin, Croatia",
+          "standard_place": "Križovljan Radovečki, Varaždin, Croatia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "8 Jan 1942",
+          "standard_date": "8 Jan 1942",
+          "place": "Lovrečan Podbelski, Varaždin, Croatia",
+          "standard_place": "Lovrečan, Varaždin, Croatia"
+        },
+        {
+          "id": "ded6940c-cdb7-4dfc-b561-14a6a9290636",
+          "type": "Religion",
+          "value": "Roman Catholic (Rimokatolička crkva)"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7XWP-V1P"
+        }
+      ]
+    },
+    {
+      "id": "P9WF-45G",
+      "ark": "ark:/61903/4:1:P9WF-45G",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "1b1080c5-ee36-410a-8ac1-d165a090ed07",
+          "preferred": true,
+          "given": "Antonius",
+          "surname": "Korotaj",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6c3a0568-2e1d-454a-b730-8616d44a97e2",
+          "type": "Birth",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "Križovljan, Varaždin, Croatia",
+          "standard_place": "Križovljan, Varaždin, Croatia"
+        },
+        {
+          "id": "d9d50b6d-8f34-4dd0-b2bb-b56628c7c6c9",
+          "type": "Christening",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "Križovljan Radovečki, Varaždin, Croatia",
+          "standard_place": "Križovljan Radovečki, Varaždin, Croatia"
+        },
+        {
+          "id": "438cc704-9cb6-4e28-81fc-74fdb62a1bdc",
+          "type": "Death"
+        },
+        {
+          "id": "b723d3bd-68cb-4d9f-be39-f1a7aa8f8465",
+          "type": "Religion",
+          "value": "Roman Catholic (Rimokatolička crkva)"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7XWP-JTH"
+        }
+      ]
+    },
+    {
+      "id": "LK2K-376",
+      "ark": "ark:/61903/4:1:LK2K-376",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Franja",
+          "surname": "Konotaj",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Franja",
+          "surname": "Konotaj",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "05 Mar 1855",
+          "standard_date": "5 Mar 1855",
+          "place": "Križovljan, Croatia",
+          "standard_place": "Križovljan, Varaždin, Croatia"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        },
+        {
+          "id": "26e1ef17-b547-4091-be0c-6b1e7dc56d4b",
+          "type": "Religion",
+          "value": "Roman Catholic (Rimokatolička crkva)"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7XWP-F9L"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KZYJ-C97",
+      "person2": "K48B-4CP"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "KZYJ-C97",
+      "child": "LK2K-376",
+      "sources": [
+        {
+          "ref": "7XWP-XBM"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "K48B-4CP",
+      "child": "LK2K-376",
+      "sources": [
+        {
+          "ref": "7XWP-XBM"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KZYJ-C97",
+      "child": "KHQ5-57C",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "K48B-4CP",
+      "child": "KHQ5-57C",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KZYJ-C97",
+      "child": "P9WF-45G",
+      "sources": [
+        {
+          "ref": "7XWP-JL8"
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "K48B-4CP",
+      "child": "P9WF-45G",
+      "sources": [
+        {
+          "ref": "7XWP-JL8"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_K48B-4CP",
+      "title": "Dora Dobrotic",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Dora Dobrotic (PID K48B-4CP); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:K48B-4CP"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_KZYJ-C97",
+      "title": "Franjo Korotaj",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Franjo Korotaj (PID KZYJ-C97); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KZYJ-C97"
+    },
+    {
+      "id": "sd_person_KHQ5-57C",
+      "title": "Philippus Korotaj",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Philippus Korotaj (PID KHQ5-57C); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KHQ5-57C"
+    },
+    {
+      "id": "sd_person_P9WF-45G",
+      "title": "Antonius Korotaj",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Antonius Korotaj (PID P9WF-45G); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:P9WF-45G"
+    },
+    {
+      "id": "sd_person_LK2K-376",
+      "title": "Franja Konotaj",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Franja Konotaj (PID LK2K-376); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LK2K-376"
+    },
+    {
+      "id": "7XWP-XKR",
+      "title": "Dore Dobrotić, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMF-L95D : Sun Mar 10 13:22:36 UTC 2024), Dore Dobrotić in entry for Franja Konotaj, 5 March 1855.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMF-L95D"
+    },
+    {
+      "id": "7XWP-NWT",
+      "title": "Dorothea Dobrotić, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMG-HZL5 : Wed Mar 06 01:25:20 UTC 2024), Dorothea Dobrotić in entry for Antonius Korotaj, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMG-HZL5"
+    },
+    {
+      "id": "7XWP-V68",
+      "title": "Dorothea Dobrotić, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMG-HD26 : Sun Mar 10 08:32:39 UTC 2024), Dorothea Dobrotić in entry for Philippus Korotaj, 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMG-HD26"
+    },
+    {
+      "id": "7XWP-VZR",
+      "title": "Franciscus Korotaj, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMG-HD2D : Sun Mar 10 08:32:39 UTC 2024), Franciscus Korotaj in entry for Philippus Korotaj, 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMG-HD2D"
+    },
+    {
+      "id": "7XWP-N3F",
+      "title": "Franciscus Korotaj, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMG-HZLP : Wed Mar 06 01:25:20 UTC 2024), Franciscus Korotaj in entry for Antonius Korotaj, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMG-HZLP"
+    },
+    {
+      "id": "7XWP-XNG",
+      "title": "Farnje Konotaj, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMF-L958 : Sun Mar 10 13:22:36 UTC 2024), Farnje Konotaj in entry for Franja Konotaj, 5 March 1855.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMF-L958"
+    },
+    {
+      "id": "7XWP-V1P",
+      "title": "Philippus Korotaj, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMG-HD28 : Sun Mar 10 08:32:39 UTC 2024), Philippus Korotaj, 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMG-HD28"
+    },
+    {
+      "id": "7XWP-JTH",
+      "title": "Antonius Korotaj, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMG-HZLG : Wed Mar 06 01:25:20 UTC 2024), Antonius Korotaj, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMG-HZLG"
+    },
+    {
+      "id": "7XWP-F9L",
+      "title": "Franja Konotaj, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMF-L95Z : Sun Mar 10 13:22:36 UTC 2024), Franja Konotaj, 5 March 1855.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMF-L95Z"
+    },
+    {
+      "id": "7XWP-XBM",
+      "title": "Franja Konotaj, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMF-L95Z : Sun Mar 10 13:22:36 UTC 2024), Franja Konotaj, 5 March 1855.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMF-L95Z"
+    },
+    {
+      "id": "7XWP-JL8",
+      "title": "Antonius Korotaj, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMG-HZLG : Wed Mar 06 01:25:20 UTC 2024), Antonius Korotaj, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMG-HZLG"
+    }
+  ]
+}

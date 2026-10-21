@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
+import { mkdtemp, writeFile, readFile, rm, mkdir } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
@@ -17,6 +17,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 import { runExtractionAppend, type ExtractionBatchResult } from "../../src/tools/extraction-append.js";
 import { validateStructuredDocument } from "../../src/utils/structured-document.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
+import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { LOCAL } from "../../src/auth/principal.js";
 
 const noReader = { readRecord: async () => { throw new Error("no reads on the document path"); } } as any;
@@ -283,6 +284,90 @@ describe("extraction_append: documents", () => {
     expect(after.log[0].results_ref).toMatch(/^results\/log_/);
     expect(after.sources[0].transcription).toMatch(/Harold Dean Whitaker/);
     expect(after.sources[0].image_filename).toBe("images/004022578_00190.jpg");
+  });
+
+  async function stageScan(imageRef?: string) {
+    const staged = await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: {
+        query: { imageId: "004022578_00190" },
+        results: [{
+          id: "004022578_00190", source: { imageId: "004022578_00190" }, content_type: "image/jpeg", size_bytes: 1, model: "m",
+          transcription: "Harold Dean Whitaker, 91, of Logan…", ...(imageRef ? { image_ref: imageRef } : {}),
+        }],
+      },
+    });
+    return staged!.resultsRef;
+  }
+
+  it("a transcribed source cites its scan from the staged result when the agent relays no imageFilename", async () => {
+    const ref = await stageScan("images/004022578_00190.jpg");
+    const r = await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref }]);
+    expect(r.ok).toBe(true);
+    const source = (await read()).sources[0];
+    expect(source.transcription).toMatch(/Harold Dean Whitaker/);
+    expect(source.image_filename).toBe("images/004022578_00190.jpg");
+  });
+
+  it("the staged scan wins over a different imageFilename the agent relayed", async () => {
+    const ref = await stageScan("images/004022578_00190.jpg");
+    await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref, imageFilename: "images/someone-else.jpg" }]);
+    expect((await read()).sources[0].image_filename).toBe("images/004022578_00190.jpg");
+  });
+
+  it("a staged result with no image_ref and no relayed imageFilename writes no image_filename", async () => {
+    const ref = await stageScan();
+    await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref }]);
+    const source = (await read()).sources[0];
+    expect(source.transcription).toMatch(/Harold Dean Whitaker/);
+    expect(source).not.toHaveProperty("image_filename");
+  });
+
+  // ─── a transcription already finalized under its own entry (issue #3516) ───
+
+  it("cites a finalized results ref under its own log entry and logs nothing new", async () => {
+    const logged = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ tool: "image_transcribe", query: { imageId: "004022578_00190" }, outcome: "positive", resultsExamined: 1, stagedResultsRef: await stageScan("images/004022578_00190.jpg") }],
+    } as any);
+    const finalized = (logged as any).results[0].resultsRef as string;
+    expect(finalized).toBe("results/log_001.json");
+    const r = await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: finalized }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.records[0].logId).toBe("log_001");
+    const after = await read();
+    expect(after.log.map((e: any) => e.id)).toEqual(["log_001"]);
+    expect(after.sources[0].log_entry_id).toBe("log_001");
+    expect(after.sources[0].transcription).toMatch(/Harold Dean Whitaker/);
+    expect(after.sources[0].image_filename).toBe("images/004022578_00190.jpg");
+  });
+
+  it("refuses a finalized results ref that no log entry names, writing nothing", async () => {
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(join(dir, "results", "log_009.json"), JSON.stringify({ tool: "image_transcribe", retrieved: "x", returned_count: 0, payload: { results: [] } }), "utf8");
+    const r = await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: "results/log_009.json" }]);
+    expect(r.ok).toBe(false);
+    expect(r.records[0].summary).toMatch(/no log entry names/);
+    const after = await read();
+    expect(after.log).toEqual([]);
+    expect(after.sources).toEqual([]);
+  });
+
+  it("a re-sent document with questionIds is tied to the question", async () => {
+    const q = (id: string) => ({
+      id, question: "Q?", rationale: "r", selection_basis: "objective_decomposition", priority: "high", status: "open",
+      depends_on: [], unblocks: [], created: "2026-01-01", resolved: null, resolution_assertion_ids: [],
+      search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
+    });
+    await writeFile(join(dir, "research.json"), JSON.stringify({ ...research(), questions: [q("q_001"), q("q_002")] }), "utf8");
+    const doc = { recordId: "capture:obituary-whitaker", document: obituary };
+    await runExtractionAppend({ projectPath: dir, documents: [doc], questionIds: ["q_001"] } as any, noReader, LOCAL);
+    const r = await runExtractionAppend({ projectPath: dir, documents: [doc], questionIds: ["q_002"] } as any, noReader, LOCAL);
+    expect(r.records[0].status).toBe("already_extracted");
+    expect(r.records[0].summary).toMatch(/tied to q_002/);
+    const ids = (await read()).assertions.map((a: any) => a.extracted_for_question_ids.join(","));
+    expect(new Set(ids)).toEqual(new Set(["q_001,q_002"]));
   });
 
   it("flags an Old Style date in the summary without changing it", async () => {

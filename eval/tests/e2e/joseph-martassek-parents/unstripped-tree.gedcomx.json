@@ -1,0 +1,524 @@
+{
+  "persons": [
+    {
+      "id": "L8JK-KDK",
+      "ark": "ark:/61903/4:1:L8JK-KDK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "5177bc1d-7b06-470f-a2f7-b4f5eda227b4",
+          "preferred": true,
+          "given": "Joseph",
+          "surname": "Martassek",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9J14-VY2"
+        },
+        {
+          "ref": "9J14-VWW"
+        },
+        {
+          "ref": "9J14-JV1"
+        },
+        {
+          "ref": "9J14-XHH"
+        },
+        {
+          "ref": "9J14-65B"
+        }
+      ]
+    },
+    {
+      "id": "L8JF-LCH",
+      "ark": "ark:/61903/4:1:L8JF-LCH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Anna",
+          "surname": "Martasek",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Anna",
+          "surname": "Martasek",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "46e94c8c-2c35-4224-9e06-90836cf4b594",
+          "type": "Baptism",
+          "date": "1887",
+          "standard_date": "1887",
+          "place": "Krásno nad Kysucou, Kysucké Nové Mesto, Slovakia",
+          "standard_place": "Krásno nad Kysucou, Čadca, Slovakia"
+        },
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "1887",
+          "standard_date": "1887",
+          "place": "Krásno nad Kysucou, Kysucké Nové Mesto, Slovakia",
+          "standard_place": "Krásno nad Kysucou, Čadca, Slovakia"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9J14-KM1"
+        }
+      ]
+    },
+    {
+      "id": "L8JK-KDJ",
+      "ark": "ark:/61903/4:1:L8JK-KDJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Carolina",
+          "surname": "Martassak",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Carolina",
+          "surname": "Martassak",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "Krásno nad Kysucou, Kysucké Nové Mesto, Slovakia",
+          "standard_place": "Krásno nad Kysucou, Čadca, Slovakia"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9J14-61N"
+        }
+      ]
+    },
+    {
+      "id": "L8JK-HLT",
+      "ark": "ark:/61903/4:1:L8JK-HLT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "Szuchony",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9J14-6Y6"
+        },
+        {
+          "ref": "9J14-VBV"
+        },
+        {
+          "ref": "9J14-V4D"
+        },
+        {
+          "ref": "9J14-JKV"
+        },
+        {
+          "ref": "9J14-XCW"
+        }
+      ]
+    },
+    {
+      "id": "L6ZY-GWQ",
+      "ark": "ark:/61903/4:1:L6ZY-GWQ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Petrus",
+          "surname": "Martassek",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Petrus",
+          "surname": "Martassek",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a65b80b8-4f3d-4237-8bfd-0328600c93f6",
+          "type": "Baptism",
+          "date": "1883",
+          "standard_date": "1883",
+          "place": "Krásno nad Kysucou, Kysucké Nové Mesto, Slovakia",
+          "standard_place": "Krásno nad Kysucou, Čadca, Slovakia"
+        },
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "1883",
+          "standard_date": "1883",
+          "place": "Krásno nad Kysucou, Kysucké Nové Mesto, Slovakia",
+          "standard_place": "Krásno nad Kysucou, Kysucké Nové Mesto, Czechoslovakia"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9J14-VF3"
+        }
+      ]
+    },
+    {
+      "id": "L68M-ZNB",
+      "ark": "ark:/61903/4:1:L68M-ZNB",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Josephus",
+          "surname": "Martasek",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Josephus",
+          "surname": "Martasek",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a37c1a25-35d2-4e7f-be6e-d5a2bd7eb160",
+          "type": "Birth",
+          "date": "2 March 1890",
+          "standard_date": "2 Mar 1890",
+          "place": "Krásno nad Kysucou, Kysucké Nové Mesto, Žilinský kraj, Czechoslovakia",
+          "standard_place": "Krásno nad Kysucou, Kysucké Nové Mesto, Czechoslovakia"
+        },
+        {
+          "id": "91f23b49-e9af-4711-8108-24d8fa3831e3",
+          "type": "Baptism",
+          "date": "1890",
+          "standard_date": "1890",
+          "place": "Krásno nad Kysucou, Kysucké Nové Mesto, Slovakia",
+          "standard_place": "Krásno nad Kysucou, Čadca, Slovakia"
+        },
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "1890",
+          "standard_date": "1890",
+          "place": "Krásno nad Kysucou, Kysucké Nové Mesto, Slovakia",
+          "standard_place": "Krásno nad Kysucou, Kysucké Nové Mesto, Czechoslovakia"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9J14-JYX"
+        }
+      ]
+    },
+    {
+      "id": "L8JK-HLP",
+      "ark": "ark:/61903/4:1:L8JK-HLP",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "Martassek",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Maria",
+          "surname": "Martassek",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "1878",
+          "standard_date": "1878",
+          "place": "Krásno nad Kysucou, Kysucké Nové Mesto, Slovakia",
+          "standard_place": "Krásno nad Kysucou, Čadca, Slovakia"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9J14-XCY"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "L8JK-KDK",
+      "person2": "L8JK-HLT"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "L8JK-KDK",
+      "child": "L8JK-HLP"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "L8JK-HLT",
+      "child": "L8JK-HLP"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L8JK-KDK",
+      "child": "L6ZY-GWQ"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "L8JK-HLT",
+      "child": "L6ZY-GWQ"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "L8JK-KDK",
+      "child": "L8JF-LCH"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "L8JK-HLT",
+      "child": "L8JF-LCH"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "L8JK-KDK",
+      "child": "L68M-ZNB"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "L8JK-HLT",
+      "child": "L68M-ZNB"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "L8JK-KDK",
+      "child": "L8JK-KDJ"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "L8JK-HLT",
+      "child": "L8JK-KDJ"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_L8JK-KDK",
+      "title": "Joseph Martassek",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Joseph Martassek (PID L8JK-KDK); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L8JK-KDK"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_L8JF-LCH",
+      "title": "Anna Martasek",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Anna Martasek (PID L8JF-LCH); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L8JF-LCH"
+    },
+    {
+      "id": "sd_person_L8JK-KDJ",
+      "title": "Carolina Martassak",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Carolina Martassak (PID L8JK-KDJ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L8JK-KDJ"
+    },
+    {
+      "id": "sd_person_L8JK-HLT",
+      "title": "Maria Szuchony",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Szuchony (PID L8JK-HLT); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L8JK-HLT"
+    },
+    {
+      "id": "sd_person_L6ZY-GWQ",
+      "title": "Petrus Martassek",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Petrus Martassek (PID L6ZY-GWQ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L6ZY-GWQ"
+    },
+    {
+      "id": "sd_person_L68M-ZNB",
+      "title": "Josephus Martasek",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Josephus Martasek (PID L68M-ZNB); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L68M-ZNB"
+    },
+    {
+      "id": "sd_person_L8JK-HLP",
+      "title": "Maria Martassek",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Martassek (PID L8JK-HLP); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L8JK-HLP"
+    },
+    {
+      "id": "9J14-JV1",
+      "title": "Josephus Martasik, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1W9-FMX : Mon Mar 11 01:45:16 UTC 2024), Josephus Martasik in entry for Josephus Martasik, 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1W9-FMX"
+    },
+    {
+      "id": "9J14-XHH",
+      "title": "Joseph Martassek, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1WM-PC8 : Sat Mar 09 11:46:23 UTC 2024), Joseph Martassek in entry for Maria Martassek, 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1WM-PC8"
+    },
+    {
+      "id": "9J14-VWW",
+      "title": "Joseph Martassek, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V18P-G6P : Sat Mar 09 14:35:05 UTC 2024), Joseph Martassek in entry for Petrus Martassek, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V18P-G6P"
+    },
+    {
+      "id": "9J14-VY2",
+      "title": "Joseph Martasek, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1F2-XWJ : Fri Mar 08 17:08:28 UTC 2024), Joseph Martasek in entry for Anna Martasek, 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1F2-XWJ"
+    },
+    {
+      "id": "9J14-65B",
+      "title": "Josephus Martassak, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1WM-V9K : Sun Mar 10 19:51:28 UTC 2024), Josephus Martassak in entry for Carolina Martassak, 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1WM-V9K"
+    },
+    {
+      "id": "9J14-KM1",
+      "title": "Anna Martasek, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1F2-XWK : Fri Mar 08 17:08:28 UTC 2024), Anna Martasek, 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1F2-XWK"
+    },
+    {
+      "id": "9J14-61N",
+      "title": "Carolina Martassak, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1WM-V9L : Sun Mar 10 19:51:28 UTC 2024), Carolina Martassak, 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1WM-V9L"
+    },
+    {
+      "id": "9J14-6Y6",
+      "title": "Maria Szuohony, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1WM-V92 : Sun Mar 10 19:51:28 UTC 2024), Maria Szuohony in entry for Carolina Martassak, 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1WM-V92"
+    },
+    {
+      "id": "9J14-VBV",
+      "title": "Maria Szuchay, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1F2-XWV : Fri Mar 08 17:08:28 UTC 2024), Maria Szuchay in entry for Anna Martasek, 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1F2-XWV"
+    },
+    {
+      "id": "9J14-V4D",
+      "title": "Maria Szuchony, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V18P-G65 : Sat Mar 09 14:35:05 UTC 2024), Maria Szuchony in entry for Petrus Martassek, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V18P-G65"
+    },
+    {
+      "id": "9J14-JKV",
+      "title": "Maria Szuchory, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1W9-FMF : Mon Mar 11 01:45:16 UTC 2024), Maria Szuchory in entry for Josephus Martasik, 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1W9-FMF"
+    },
+    {
+      "id": "9J14-XCW",
+      "title": "Maria Szuchony, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1WM-PCD : Sat Mar 09 11:46:23 UTC 2024), Maria Szuchony in entry for Maria Martassek, 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1WM-PCD"
+    },
+    {
+      "id": "9J14-VF3",
+      "title": "Petrus Martassek, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V18P-G6R : Sat Mar 09 14:35:05 UTC 2024), Petrus Martassek, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V18P-G6R"
+    },
+    {
+      "id": "9J14-JYX",
+      "title": "Josephus Martasik, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1W9-FMN : Mon Mar 11 01:45:16 UTC 2024), Josephus Martasik, 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1W9-FMN"
+    },
+    {
+      "id": "9J14-XCY",
+      "title": "Maria Martassek, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1WM-PC6 : Sat Mar 09 11:46:23 UTC 2024), Maria Martassek, 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1WM-PC6"
+    }
+  ]
+}

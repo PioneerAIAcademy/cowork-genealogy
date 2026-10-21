@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Salvador Choc and Petrona Choc had a daughter, Antonia, born in August 1877 and baptised at San Pedro Carchá, Alta Verapaz, Guatemala, in 1877; the baptism entry names her parents as Salvador Choc and Petrona Choc and her godparents as Manuel Tiul and María Santos.",
+      "details": {
+        "subject_person": "Salvador Choc (MGDD-CB5)",
+        "relation": "child",
+        "target_person": {
+          "name": "Antonia Choc",
+          "birth": "August 1877, San Pedro Carchá, Alta Verapaz, Guatemala",
+          "christening": "1877, San Pedro Carchá, Alta Verapaz, Guatemala"
+        },
+        "mother": "Petrona Choc"
+      },
+      "supporting_sources": [
+        "Guatemala, Catholic Church Records, 1581-2023 — baptism of Antonia, San Pedro Carchá baptism register June 1877–August 1878, parents Salvador Choc and Petrona Choc, godparents Manuel Tiul and María Santos"
+      ],
+      "required": true
+    }
+  ]
+}

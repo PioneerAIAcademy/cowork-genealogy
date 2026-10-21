@@ -15,5 +15,12 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 36, hint-samples.csv row 39, flags adds_birth/adds_death, confidence 3). Draft transcribed from an 1808 Laakirchen, Upper Austria parish death register entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 36, hint-samples.csv row 39, flags adds_birth/adds_death, confidence 3). Resolved as a false match: the 24 Aug 1808 Laakirchen death of Simon Heydocker aged 30 (ark:/61903/1:1:6VYC-Q9W5) is a younger man; the tree's Simon married Katharina Plank on 18 Nov 1787 aged 21 (ark:/61903/1:1:6VYC-29XS) and had children baptized 1789-1801. His real death is not verified. Avoid guard plus a documented-negative finding; decided on the indexes, image_basis off.",
+  "caps": {
+    "wall_clock_seconds": 9000
+  },
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:6VYC-Q9W5",
+    "identity": "different"
+  }
 }

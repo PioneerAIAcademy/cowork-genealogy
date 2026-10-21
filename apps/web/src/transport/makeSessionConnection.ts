@@ -1,6 +1,7 @@
 import { api } from '../api'
 import { type SessionConnection, WsSessionConnection } from './SessionConnection'
 import { SseSessionConnection } from './SseSessionConnection'
+import { sameOriginLoopback } from './sameOriginLoopback'
 
 // Two transports, chosen at build time:
 //
@@ -38,6 +39,15 @@ export async function makeSessionConnection(
   return new WsSessionConnection(async () => {
     const r = await api.connectSession(sessionId)
     onFsState?.(r.familysearch)
-    return { wssUrl: r.wssUrl, token: r.token }
+    // A local sandbox is issued as `ws://127.0.0.1:<port>`. If the page is served from
+    // `localhost` that is a CROSS-ORIGIN socket, and some browsers refuse it -- while
+    // every HTTP call still succeeds through the dev proxy, so the app looks broken
+    // and the backend looks healthy. Real deployment hosts are left untouched.
+    return {
+      wssUrl: sameOriginLoopback(r.wssUrl, window.location.hostname),
+      token: r.token,
+      readOnly: r.readOnly,
+      message: r.message
+    }
   })
 }

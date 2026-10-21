@@ -1,0 +1,1610 @@
+{
+  "persons": [
+    {
+      "id": "L4ZG-21Q",
+      "ark": "ark:/61903/4:1:L4ZG-21Q",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "James F.",
+          "surname": "Gleason",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1 March 1865",
+          "standard_date": "1 Mar 1865",
+          "place": "Boston, Suffolk County, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "13 August 1896",
+          "standard_date": "13 Aug 1896",
+          "place": "Boston, Suffolk County, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "a060fd9c-9af6-4b88-8a9a-ad4d1107bc73",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Boston, Suffolk, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "353dee18-0201-4e65-a502-5d8c0ce9cd52",
+          "type": "Residence",
+          "date": "13 Aug 1896",
+          "standard_date": "13 Aug 1896",
+          "place": "Boston",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "ST97-ZP6"
+        },
+        {
+          "ref": "ST97-Z8T"
+        },
+        {
+          "ref": "ST97-SM7"
+        },
+        {
+          "ref": "ST97-W7K"
+        }
+      ]
+    },
+    {
+      "id": "LY11-LF5",
+      "ark": "ark:/61903/4:1:LY11-LF5",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "7a7723bf-d4e4-43e3-b814-87e3e33b70ba",
+          "preferred": true,
+          "given": "John",
+          "surname": "Gleason",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fd2d2496-3af4-46cd-811d-1ba7e663b776",
+          "type": "Birth",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Ireland",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "e848fc93-10f9-4a8b-9d77-d03b9062a931",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Boston, Suffolk, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "a8fc62b2-d360-44cd-adb8-0e6f3b16128e",
+          "type": "Residence",
+          "date": "10 Dec 1873",
+          "standard_date": "10 Dec 1873",
+          "place": "Boston, Mass.",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "88f943e4-da6d-4fb9-8969-22dbcb200c74",
+          "type": "Death",
+          "date": "10 December 1873",
+          "standard_date": "10 Dec 1873",
+          "place": "Boston, Suffolk County, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "ST97-9CG"
+        },
+        {
+          "ref": "ST97-9M1"
+        },
+        {
+          "ref": "ST9Q-1KK"
+        },
+        {
+          "ref": "ST9Q-1H1"
+        },
+        {
+          "ref": "ST9Q-1MQ"
+        },
+        {
+          "ref": "ST97-D8M"
+        },
+        {
+          "ref": "MQN4-HRZ"
+        },
+        {
+          "ref": "M3RF-GR1"
+        },
+        {
+          "ref": "ST97-4JY"
+        },
+        {
+          "ref": "ST97-WBB"
+        },
+        {
+          "ref": "ST97-WVK"
+        },
+        {
+          "ref": "ST97-WZD"
+        },
+        {
+          "ref": "ST97-WSD"
+        },
+        {
+          "ref": "ST97-7CW"
+        },
+        {
+          "ref": "ST97-QTW"
+        },
+        {
+          "ref": "ST97-QCB"
+        },
+        {
+          "ref": "ST97-QM6"
+        },
+        {
+          "ref": "ST97-3D1"
+        },
+        {
+          "ref": "ST97-3HZ"
+        },
+        {
+          "ref": "ST97-SKY"
+        },
+        {
+          "ref": "ST97-S63"
+        },
+        {
+          "ref": "ST97-S3F"
+        },
+        {
+          "ref": "ST97-9TN"
+        },
+        {
+          "ref": "ST9Q-B36"
+        },
+        {
+          "ref": "9JDS-8CP"
+        },
+        {
+          "ref": "9FYK-3HB"
+        },
+        {
+          "ref": "MWFN-X16"
+        },
+        {
+          "ref": "ST9Q-BH4"
+        },
+        {
+          "ref": "ST9Q-Y2V"
+        },
+        {
+          "ref": "SR1T-VRG"
+        },
+        {
+          "ref": "SR1T-JGZ"
+        },
+        {
+          "ref": "9144-5W2"
+        },
+        {
+          "ref": "9R8Z-FYQ"
+        }
+      ]
+    },
+    {
+      "id": "966N-HLN",
+      "ark": "ark:/61903/4:1:966N-HLN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Delia A.",
+          "surname": "Fitzgerald",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "48398c05-d9d7-4768-81c2-c18818d742d2",
+          "type": "Birth",
+          "date": "1846",
+          "standard_date": "1846",
+          "place": "Ireland",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "4b547d67-d7bb-47be-9ca1-5366ab5d29c3",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Boston, Suffolk, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "29 July 1891",
+          "standard_date": "29 Jul 1891",
+          "place": "Boston, Suffolk County, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "M3TZ-F1C"
+        },
+        {
+          "ref": "ST97-D8L"
+        },
+        {
+          "ref": "ST97-ZVQ"
+        },
+        {
+          "ref": "ST97-HXT"
+        },
+        {
+          "ref": "ST97-4K3"
+        },
+        {
+          "ref": "ST97-W1Y"
+        },
+        {
+          "ref": "ST97-WL4"
+        },
+        {
+          "ref": "ST97-W8D"
+        },
+        {
+          "ref": "ST97-W3Q"
+        },
+        {
+          "ref": "ST97-7CB"
+        },
+        {
+          "ref": "ST97-QTX"
+        },
+        {
+          "ref": "ST97-QZG"
+        },
+        {
+          "ref": "ST97-QM1"
+        },
+        {
+          "ref": "ST97-3X6"
+        },
+        {
+          "ref": "ST97-SLC"
+        },
+        {
+          "ref": "ST97-SXS"
+        },
+        {
+          "ref": "ST97-SQ7"
+        },
+        {
+          "ref": "ST97-9YL"
+        },
+        {
+          "ref": "ST97-9Z5"
+        },
+        {
+          "ref": "ST97-9SS"
+        },
+        {
+          "ref": "ST9Q-1V1"
+        },
+        {
+          "ref": "ST9Q-1H8"
+        },
+        {
+          "ref": "ST9Q-B18"
+        },
+        {
+          "ref": "MQN4-HRV"
+        },
+        {
+          "ref": "M3RF-GT4"
+        },
+        {
+          "ref": "ST9Q-B49"
+        },
+        {
+          "ref": "ST9Q-BMW"
+        },
+        {
+          "ref": "ST9Q-YKK"
+        },
+        {
+          "ref": "SR1T-VYD"
+        },
+        {
+          "ref": "SR1T-J12"
+        },
+        {
+          "ref": "9JDS-8H3"
+        },
+        {
+          "ref": "9FYK-3WR"
+        },
+        {
+          "ref": "MWFN-XBL"
+        }
+      ]
+    },
+    {
+      "id": "L73J-XHN",
+      "ark": "ark:/61903/4:1:L73J-XHN",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "John",
+          "surname": "",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "c50c00b5-ff67-40a0-9180-88eaa652a326",
+          "type": "Birth",
+          "place": "Ireland",
+          "standard_place": "Ireland"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "ST97-ZJ4"
+        }
+      ]
+    },
+    {
+      "id": "L4ZG-21W",
+      "ark": "ark:/61903/4:1:L4ZG-21W",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "John",
+          "surname": "",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GWBZ-WL9",
+      "ark": "ark:/61903/4:1:GWBZ-WL9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "1e9691b6-dbcb-44db-ab62-2c5c32735170",
+          "preferred": true,
+          "given": "Francis J.",
+          "surname": "Gleason",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "eda462b2-990f-4896-a4ef-c5988e5bb84d",
+          "type": "Birth",
+          "date": "24 July 1867",
+          "standard_date": "24 Jul 1867",
+          "place": "Boston, Suffolk County, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "cdc363c2-bd8b-4ed9-bd04-f7b550493f7a",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Boston, Suffolk, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "d87e52d4-168b-4c01-bfa6-f682e7ea3daa",
+          "type": "Death",
+          "date": "23 July 1891",
+          "standard_date": "23 Jul 1891",
+          "place": "Boston, Suffolk County, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "ST97-QDH"
+        },
+        {
+          "ref": "ST97-QWZ"
+        },
+        {
+          "ref": "ST97-QSM"
+        },
+        {
+          "ref": "ST97-3GY"
+        }
+      ]
+    },
+    {
+      "id": "L7CY-2FM",
+      "ark": "ark:/61903/4:1:L7CY-2FM",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "John A.",
+          "surname": "Gleason",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "28 April 1869",
+          "standard_date": "28 Apr 1869",
+          "place": "Boston, Suffolk County, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "811714e8-4781-4a5c-92e8-cfbdcaa79614",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Boston, Suffolk, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "17 August 1885",
+          "standard_date": "17 Aug 1885",
+          "place": "Boston, Suffolk County, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "8ccbad85-b475-49db-8854-511ab2478394",
+          "type": "Residence",
+          "date": "17 Aug 1885",
+          "standard_date": "17 Aug 1885",
+          "place": "Boston, Mass.",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "ST97-7FK"
+        },
+        {
+          "ref": "ST97-77G"
+        },
+        {
+          "ref": "ST97-QYZ"
+        },
+        {
+          "ref": "ST97-SN2"
+        }
+      ]
+    },
+    {
+      "id": "9H9T-GRQ",
+      "ark": "ark:/61903/4:1:9H9T-GRQ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Emma Letitia",
+          "surname": "Gleason",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "16 April 1871",
+          "standard_date": "16 Apr 1871",
+          "place": "Boston, Suffolk County, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "ST97-9D8"
+        },
+        {
+          "ref": "ST97-9ST"
+        },
+        {
+          "ref": "ST9Q-12N"
+        },
+        {
+          "ref": "ST9Q-179"
+        },
+        {
+          "ref": "ST9Q-BZ4"
+        },
+        {
+          "ref": "M3TZ-FBT"
+        }
+      ]
+    },
+    {
+      "id": "9VJ4-897",
+      "ark": "ark:/61903/4:1:9VJ4-897",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Mary A.",
+          "surname": "Gleason",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "16 April 1886",
+          "standard_date": "16 Apr 1886",
+          "place": "Lowell, Middlesex County, Massachusetts, United States",
+          "standard_place": "Lowell, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "8da5315e-8ae0-4453-9ad1-f8c064325f0c",
+          "type": "Residence",
+          "date": "24 Apr 1886",
+          "standard_date": "24 Apr 1886",
+          "place": "Lowell, Mass.",
+          "standard_place": "Lowell, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "24 April 1886",
+          "standard_date": "24 Apr 1886",
+          "place": "Lowell, Middlesex, Massachusetts, United States",
+          "standard_place": "Lowell, Middlesex, Massachusetts, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "ST97-CPN"
+        },
+        {
+          "ref": "ST97-W58"
+        },
+        {
+          "ref": "ST97-SHH"
+        },
+        {
+          "ref": "M3RF-GRL"
+        }
+      ]
+    },
+    {
+      "id": "GWBZ-QMX",
+      "ark": "ark:/61903/4:1:GWBZ-QMX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "5d5d5215-0f5e-4cb6-a8c4-5ab1828d7a79",
+          "preferred": true,
+          "given": "Sarah J.",
+          "surname": "Gleason",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4b2049ed-36fc-4e62-bc12-12e920677f8b",
+          "type": "Birth",
+          "date": "10 December 1887",
+          "standard_date": "10 Dec 1887",
+          "place": "Lowell, Middlesex County, Massachusetts, United States",
+          "standard_place": "Lowell, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "a9dc46ba-4e27-4d47-a901-6ec0560b9dc6",
+          "type": "Death",
+          "date": "22 December 1887",
+          "standard_date": "22 Dec 1887",
+          "place": "Lowell, Middlesex County, Massachusetts, United States",
+          "standard_place": "Lowell, Middlesex, Massachusetts, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "ST97-DN7"
+        },
+        {
+          "ref": "MQN4-HRS"
+        },
+        {
+          "ref": "ST97-SB2"
+        },
+        {
+          "ref": "ST9Q-1NH"
+        }
+      ]
+    },
+    {
+      "id": "GWBC-11C",
+      "ark": "ark:/61903/4:1:GWBC-11C",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "aba31cfb-d8b9-4ce1-91a3-b965097fb8f5",
+          "preferred": true,
+          "given": "William Francis",
+          "surname": "Gleason",
+          "type": "BirthName"
+        },
+        {
+          "id": "79d7a10e-5484-4e19-956b-311a3de2910e",
+          "given": "William Francis",
+          "surname": "Gleason",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b115542d-7421-4b43-b1b4-b4bbb0a4107e",
+          "type": "Birth",
+          "date": "11 December 1890",
+          "standard_date": "11 Dec 1890",
+          "place": "Lowell, Middlesex County, Massachusetts, United States",
+          "standard_place": "Lowell, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "a42330de-7642-468f-bc4e-5760524cdfd7",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "ST97-4LV"
+        },
+        {
+          "ref": "ST97-4CN"
+        }
+      ]
+    },
+    {
+      "id": "LW85-VPL",
+      "ark": "ark:/61903/4:1:LW85-VPL",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Patrick",
+          "surname": "Gleeson",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Patrick",
+          "surname": "Gleeson",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "26 Jul 1893",
+          "standard_date": "26 Jul 1893",
+          "place": "Lowell, Massachusetts",
+          "standard_place": "Lowell, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "ST97-WXF"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LY11-LF5",
+      "person2": "966N-HLN",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "26 April 1864",
+          "standard_date": "26 Apr 1864",
+          "place": "Boston, Suffolk County, Massachusetts, United States",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "ST9Q-B35"
+        },
+        {
+          "ref": "SR1T-VY2"
+        },
+        {
+          "ref": "SR1T-J55"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "L4ZG-21W",
+      "person2": "966N-HLN"
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "L73J-XHN",
+      "person2": "966N-HLN"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L4ZG-21W",
+      "child": "L4ZG-21Q"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "966N-HLN",
+      "child": "L4ZG-21Q"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "L73J-XHN",
+      "child": "L4ZG-21Q"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "LY11-LF5",
+      "child": "L4ZG-21Q"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LY11-LF5",
+      "child": "L7CY-2FM"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "966N-HLN",
+      "child": "L7CY-2FM"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "LY11-LF5",
+      "child": "9H9T-GRQ",
+      "sources": [
+        {
+          "ref": "ST9Q-1Q4"
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "966N-HLN",
+      "child": "9H9T-GRQ",
+      "sources": [
+        {
+          "ref": "ST9Q-1Q4"
+        }
+      ]
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "LY11-LF5",
+      "child": "9VJ4-897"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "966N-HLN",
+      "child": "9VJ4-897"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "LY11-LF5",
+      "child": "GWBZ-QMX",
+      "sources": [
+        {
+          "ref": "ST9Q-1FZ"
+        }
+      ]
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "966N-HLN",
+      "child": "GWBZ-QMX",
+      "sources": [
+        {
+          "ref": "ST9Q-1FZ"
+        }
+      ]
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "LY11-LF5",
+      "child": "LW85-VPL"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "966N-HLN",
+      "child": "LW85-VPL"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "LY11-LF5",
+      "child": "GWBC-11C",
+      "sources": [
+        {
+          "ref": "ST97-4HZ"
+        }
+      ]
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "966N-HLN",
+      "child": "GWBC-11C",
+      "sources": [
+        {
+          "ref": "ST97-4HZ"
+        }
+      ]
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "LY11-LF5",
+      "child": "GWBZ-WL9",
+      "sources": [
+        {
+          "ref": "ST97-3LC"
+        }
+      ]
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "966N-HLN",
+      "child": "GWBZ-WL9",
+      "sources": [
+        {
+          "ref": "ST97-3LC"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_L4ZG-21Q",
+      "title": "James F. Gleason",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for James F. Gleason (PID L4ZG-21Q); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L4ZG-21Q"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_LY11-LF5",
+      "title": "John Gleason",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for John Gleason (PID LY11-LF5); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LY11-LF5"
+    },
+    {
+      "id": "sd_person_966N-HLN",
+      "title": "Delia A. Fitzgerald",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Delia A. Fitzgerald (PID 966N-HLN); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:966N-HLN"
+    },
+    {
+      "id": "sd_person_L73J-XHN",
+      "title": "John",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for John (PID L73J-XHN); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L73J-XHN"
+    },
+    {
+      "id": "sd_person_L4ZG-21W",
+      "title": "John",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for John (PID L4ZG-21W); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L4ZG-21W"
+    },
+    {
+      "id": "ST97-SM7",
+      "title": "James Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZC-XKP : Wed May 22 23:57:48 UTC 2024), James Gleason, 1 Mar 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZC-XKP"
+    },
+    {
+      "id": "ST97-W7K",
+      "title": "James Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHY7-HYF : Tue Jul 23 07:32:55 UTC 2024), James Gleason, 1 Mar 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHY7-HYF"
+    },
+    {
+      "id": "ST97-Z8T",
+      "title": "James Gleason, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MD3L-THG : Tue Oct 21 13:02:32 UTC 2025), James Gleason in entry for John Gleason, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MD3L-THG"
+    },
+    {
+      "id": "ST97-ZP6",
+      "title": "James F. Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWCJ-F72 : Wed May 22 21:29:06 UTC 2024), James F. Gleason, 13 Aug 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWCJ-F72"
+    },
+    {
+      "id": "ST97-9CG",
+      "title": "John in entry for Emma Letitia Gleason, \"Massachusetts Births and Christenings, 1639-1915\"",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHWP-787"
+    },
+    {
+      "id": "ST97-9M1",
+      "title": "John Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH95-GQW : Sun Mar 10 13:39:24 UTC 2024), John Gleason in entry for Emma Letitia Gleason, 16 April 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH95-GQW"
+    },
+    {
+      "id": "ST9Q-1KK",
+      "title": "John, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHQZ-FL8 : Thu Oct 15 18:08:17 UTC 2026), John in entry for Emma Letitia Gleason, 16 Apr 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHQZ-FL8"
+    },
+    {
+      "id": "ST9Q-1H1",
+      "title": "John Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH9J-DVR : Sun Mar 10 12:24:38 UTC 2024), John Gleason in entry for Sarah J. Gleason, 10 December 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH9J-DVR"
+    },
+    {
+      "id": "ST9Q-1MQ",
+      "title": "John Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q29G-DQRX : Fri Mar 08 09:42:13 UTC 2024), John Gleason in entry for Emma Letitia Gleason, 16 April 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q29G-DQRX"
+    },
+    {
+      "id": "ST97-D8M",
+      "title": "John, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N752-QG7 : Wed May 22 20:44:16 UTC 2024), John in entry for Sarah J. Gleason, 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N752-QG7"
+    },
+    {
+      "id": "MQN4-HRZ",
+      "title": "John Gleason, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FC1P-2S8 : Thu Oct 15 23:54:16 UTC 2026), John Gleason in entry for Sarah J. Gleason, 10 December 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FC1P-2S8"
+    },
+    {
+      "id": "M3RF-GR1",
+      "title": "John Gleason, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VQDV-GH6 : Thu Oct 15 19:21:16 UTC 2026), John Gleason in entry for Mary A. Gleason, 16 April 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VQDV-GH6"
+    },
+    {
+      "id": "ST97-4JY",
+      "title": "John Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH9L-WR3 : Sat Mar 09 04:10:06 UTC 2024), John Gleason in entry for William Francis Gleason, 11 December 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH9L-WR3"
+    },
+    {
+      "id": "ST97-WBB",
+      "title": "John Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXW1-VDD : Sat Jul 26 05:59:19 UTC 2025), John Gleason in entry for Wm. J. Gleason, 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXW1-VDD"
+    },
+    {
+      "id": "ST97-WVK",
+      "title": "John Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXDL-6PD : Thu Jul 24 22:03:02 UTC 2025), John Gleason in entry for Mary A. Gleason, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXDL-6PD"
+    },
+    {
+      "id": "ST97-WZD",
+      "title": "John, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXNW-5MF : Thu May 23 00:19:10 UTC 2024), John in entry for Patrick Gleeson, 26 Jul 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXNW-5MF"
+    },
+    {
+      "id": "ST97-WSD",
+      "title": "John Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHY7-HYN : Tue Jul 23 07:32:55 UTC 2024), John Gleason in entry for James Gleason, 1 Mar 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHY7-HYN"
+    },
+    {
+      "id": "ST97-7CW",
+      "title": "John, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7TP-9WB : Wed May 22 23:09:39 UTC 2024), John in entry for John A. Gleason, 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7TP-9WB"
+    },
+    {
+      "id": "ST97-QTW",
+      "title": "John, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F4Y7-Z5L : Thu Oct 15 19:41:49 UTC 2026), John in entry for John Gleason, 28 Apr 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4Y7-Z5L"
+    },
+    {
+      "id": "ST97-QCB",
+      "title": "John, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7T9-QQ3 : Tue Jul 02 17:37:12 UTC 2024), John in entry for Frank J. Gleason, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7T9-QQ3"
+    },
+    {
+      "id": "ST97-QM6",
+      "title": "John Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F4Y9-DPL : Sun Mar 10 08:33:44 UTC 2024), John Gleason in entry for Francis Gleason, 24 July 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4Y9-DPL"
+    },
+    {
+      "id": "ST97-3D1",
+      "title": "John Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZ6-GR1 : Wed May 22 22:03:02 UTC 2024), John Gleason in entry for Francis Gleason, 24 Jul 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZ6-GR1"
+    },
+    {
+      "id": "ST97-3HZ",
+      "title": "John Gleason, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MD3L-TH2 : Tue Oct 21 13:02:32 UTC 2025), John Gleason, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MD3L-TH2"
+    },
+    {
+      "id": "ST97-SKY",
+      "title": "John Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FX67-4M7 : Fri Jul 25 15:38:24 UTC 2025), John Gleason in entry for Sarah J. Gleason, 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FX67-4M7"
+    },
+    {
+      "id": "ST97-S63",
+      "title": "John, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZG-3B8 : Thu May 23 01:40:31 UTC 2024), John in entry for John Gleason, 28 Apr 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZG-3B8"
+    },
+    {
+      "id": "ST97-S3F",
+      "title": "John Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N75V-FSF : Wed May 22 20:39:47 UTC 2024), John Gleason in entry for Mary A. Gleason, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N75V-FSF"
+    },
+    {
+      "id": "ST97-9TN",
+      "title": "John, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZC-XKL : Wed May 22 23:57:48 UTC 2024), John in entry for James Gleason, 1 Mar 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZC-XKL"
+    },
+    {
+      "id": "ST9Q-B36",
+      "title": "John Gleeson, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1K-BLFZ : Sun Mar 10 23:00:56 UTC 2024), John Gleeson and Delia Fitzgerald, 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QG1K-BLFZ"
+    },
+    {
+      "id": "9JDS-8CP",
+      "title": "John Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH3W-J96 : Wed Mar 06 08:05:14 UTC 2024), John Gleason in entry for Delia Fitzgerald Gleason, 29 July 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH3W-J96"
+    },
+    {
+      "id": "9FYK-3HB",
+      "title": "John Gleeson, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHSR-L9B : Thu Mar 07 21:51:14 UTC 2024), John Gleeson, 26 April 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHSR-L9B"
+    },
+    {
+      "id": "MWFN-X16",
+      "title": "John Gleeson, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FC72-572 : Fri Jul 25 08:38:05 UTC 2025), John Gleeson, 26 Apr 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FC72-572"
+    },
+    {
+      "id": "ST9Q-BH4",
+      "title": "John Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZY-98P : Thu May 23 00:01:52 UTC 2024), John Gleason in entry for Emma Letitia Gleason, 16 Apr 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZY-98P"
+    },
+    {
+      "id": "ST9Q-Y2V",
+      "title": "John Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7T9-WF2 : Tue Jul 02 17:34:18 UTC 2024), John Gleason in entry for Delia Fitzgerald Gleason, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7T9-WF2"
+    },
+    {
+      "id": "SR1T-VRG",
+      "title": "John Gleeson, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1K-TB51 : Sat Mar 09 07:08:23 UTC 2024), John Gleeson and Delia Fitzgerald, 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QG1K-TB51"
+    },
+    {
+      "id": "SR1T-JGZ",
+      "title": "John Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4SV-YRJ : Wed May 22 23:21:26 UTC 2024), John Gleason and Delia Fitzgerald, 26 Apr 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4SV-YRJ"
+    },
+    {
+      "id": "9144-5W2",
+      "title": "John Gleeson, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHGK-MMY : Mon Mar 11 02:16:36 UTC 2024), John Gleeson, 10 December 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHGK-MMY"
+    },
+    {
+      "id": "9R8Z-FYQ",
+      "title": "John Gleeson, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NW9F-P29 : Wed May 22 22:40:30 UTC 2024), John Gleeson, 10 Dec 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NW9F-P29"
+    },
+    {
+      "id": "M3TZ-F1C",
+      "title": "Delia, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VQF3-QMF : Thu Oct 15 20:26:42 UTC 2026), Delia in entry for Emma Letitia Gleason, 16 April 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VQF3-QMF"
+    },
+    {
+      "id": "ST97-D8L",
+      "title": "Delia, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N752-QGW : Wed May 22 20:44:16 UTC 2024), Delia in entry for Sarah J. Gleason, 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N752-QGW"
+    },
+    {
+      "id": "ST97-ZVQ",
+      "title": "Delia A. Fitzgerald, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWCJ-F7G : Wed May 22 21:29:06 UTC 2024), Delia A. Fitzgerald in entry for James F. Gleason, 13 Aug 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWCJ-F7G"
+    },
+    {
+      "id": "ST97-HXT",
+      "title": "Delia Gleason, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MD3L-THL : Tue Oct 21 13:02:32 UTC 2025), Delia Gleason in entry for John Gleason, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MD3L-THL"
+    },
+    {
+      "id": "ST97-4K3",
+      "title": "Delia, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH9L-WRQ : Sat Mar 09 04:10:06 UTC 2024), Delia in entry for William Francis Gleason, 11 December 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH9L-WRQ"
+    },
+    {
+      "id": "ST97-W1Y",
+      "title": "Delia, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXW1-VD6 : Sat Jul 26 05:59:19 UTC 2025), Delia in entry for Wm. J. Gleason, 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXW1-VD6"
+    },
+    {
+      "id": "ST97-WL4",
+      "title": "Delia, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXDL-6P6 : Thu Jul 24 22:03:02 UTC 2025), Delia in entry for Mary A. Gleason, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXDL-6P6"
+    },
+    {
+      "id": "ST97-W8D",
+      "title": "Delia, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXNW-5MN : Thu May 23 00:19:10 UTC 2024), Delia in entry for Patrick Gleeson, 26 Jul 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXNW-5MN"
+    },
+    {
+      "id": "ST97-W3Q",
+      "title": "Delia, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHY7-HYJ : Tue Jul 23 07:32:55 UTC 2024), Delia in entry for James Gleason, 1 Mar 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHY7-HYJ"
+    },
+    {
+      "id": "ST97-7CB",
+      "title": "Deal, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7TP-9W1 : Wed May 22 23:09:39 UTC 2024), Deal in entry for John A. Gleason, 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7TP-9W1"
+    },
+    {
+      "id": "ST97-QTX",
+      "title": "Delia, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F4Y7-Z5G : Thu Oct 15 19:41:49 UTC 2026), Delia in entry for John Gleason, 28 Apr 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4Y7-Z5G"
+    },
+    {
+      "id": "ST97-QZG",
+      "title": "Delia Fitzgerald, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7T9-QQQ : Tue Jul 02 17:37:12 UTC 2024), Delia Fitzgerald in entry for Frank J. Gleason, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7T9-QQQ"
+    },
+    {
+      "id": "ST97-QM1",
+      "title": "Delia, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F4Y9-DPG : Sun Mar 10 08:33:44 UTC 2024), Delia in entry for Francis Gleason, 24 July 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4Y9-DPG"
+    },
+    {
+      "id": "ST97-3X6",
+      "title": "Delia, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZ6-GTM : Wed May 22 22:03:02 UTC 2024), Delia in entry for Francis Gleason, 24 Jul 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZ6-GTM"
+    },
+    {
+      "id": "ST97-SLC",
+      "title": "Delia, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FX67-4MW : Fri Jul 25 15:38:24 UTC 2025), Delia in entry for Sarah J. Gleason, 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FX67-4MW"
+    },
+    {
+      "id": "ST97-SXS",
+      "title": "Delia, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZG-3BD : Thu May 23 01:40:31 UTC 2024), Delia in entry for John Gleason, 28 Apr 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZG-3BD"
+    },
+    {
+      "id": "ST97-SQ7",
+      "title": "Delia, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N75V-FSN : Wed May 22 20:39:47 UTC 2024), Delia in entry for Mary A. Gleason, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N75V-FSN"
+    },
+    {
+      "id": "ST97-9YL",
+      "title": "Delia, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZC-XKG : Wed May 22 23:57:48 UTC 2024), Delia in entry for James Gleason, 1 Mar 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZC-XKG"
+    },
+    {
+      "id": "ST97-9Z5",
+      "title": "Delia in entry for Emma Letitia Gleason, \"Massachusetts Births and Christenings, 1639-1915\"",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHWP-78W"
+    },
+    {
+      "id": "ST97-9SS",
+      "title": "Delia, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH95-GQ4 : Sun Mar 10 13:39:24 UTC 2024), Delia in entry for Emma Letitia Gleason, 16 April 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH95-GQ4"
+    },
+    {
+      "id": "ST9Q-1V1",
+      "title": "Delia, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHQZ-FLD : Thu Oct 15 18:08:17 UTC 2026), Delia in entry for Emma Letitia Gleason, 16 Apr 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHQZ-FLD"
+    },
+    {
+      "id": "ST9Q-1H8",
+      "title": "Delia, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH9J-DVT : Sun Mar 10 12:24:38 UTC 2024), Delia in entry for Sarah J. Gleason, 10 December 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH9J-DVT"
+    },
+    {
+      "id": "ST9Q-B18",
+      "title": "Delia, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q29G-DQRV : Fri Mar 08 09:42:13 UTC 2024), Delia in entry for Emma Letitia Gleason, 16 April 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q29G-DQRV"
+    },
+    {
+      "id": "MQN4-HRV",
+      "title": "Delia, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FC1P-2SD : Thu Oct 15 23:54:16 UTC 2026), Delia in entry for Sarah J. Gleason, 10 December 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FC1P-2SD"
+    },
+    {
+      "id": "M3RF-GT4",
+      "title": "Delia, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VQDV-GHX : Thu Oct 15 19:21:16 UTC 2026), Delia in entry for Mary A. Gleason, 16 April 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VQDV-GHX"
+    },
+    {
+      "id": "ST9Q-B49",
+      "title": "Delia, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZY-985 : Thu May 23 00:01:52 UTC 2024), Delia in entry for Emma Letitia Gleason, 16 Apr 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZY-985"
+    },
+    {
+      "id": "ST9Q-BMW",
+      "title": "Delia Fitzgerald, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1K-BLF6 : Sun Mar 10 23:00:56 UTC 2024), John Gleeson and Delia Fitzgerald, 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QG1K-BLF6"
+    },
+    {
+      "id": "ST9Q-YKK",
+      "title": "Delia Fitzgerald Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7T9-WFJ : Tue Jul 02 17:34:18 UTC 2024), Delia Fitzgerald Gleason, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7T9-WFJ"
+    },
+    {
+      "id": "SR1T-VYD",
+      "title": "Delia Fitzgerald, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1K-TBR3 : Sat Mar 09 07:08:23 UTC 2024), John Gleeson and Delia Fitzgerald, 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QG1K-TBR3"
+    },
+    {
+      "id": "SR1T-J12",
+      "title": "Delia Fitzgerald, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4SV-YR2 : Wed May 22 23:21:26 UTC 2024), John Gleason and Delia Fitzgerald, 26 Apr 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4SV-YR2"
+    },
+    {
+      "id": "9JDS-8H3",
+      "title": "Delia Fitzgerald Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH3W-J9Z : Wed Mar 06 08:05:14 UTC 2024), Delia Fitzgerald Gleason, 29 July 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH3W-J9Z"
+    },
+    {
+      "id": "9FYK-3WR",
+      "title": "Delia Fitzgerald, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHSR-L9R : Thu Mar 07 21:51:14 UTC 2024), Delia Fitzgerald in entry for John Gleeson, 26 April 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHSR-L9R"
+    },
+    {
+      "id": "MWFN-XBL",
+      "title": "Delia Fitzgerald, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FC72-57J : Fri Jul 25 08:38:05 UTC 2025), Delia Fitzgerald in entry for John Gleeson, 26 Apr 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FC72-57J"
+    },
+    {
+      "id": "ST97-ZJ4",
+      "title": "John, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWCJ-F7L : Wed May 22 21:29:06 UTC 2024), John in entry for James F. Gleason, 13 Aug 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWCJ-F7L"
+    },
+    {
+      "id": "ST97-QDH",
+      "title": "Frank J. Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7T9-QQS : Tue Jul 02 17:37:12 UTC 2024), Frank J. Gleason, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7T9-QQS"
+    },
+    {
+      "id": "ST97-QWZ",
+      "title": "Frank Gleason, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MD3L-THP : Tue Oct 21 13:02:32 UTC 2025), Frank Gleason in entry for John Gleason, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MD3L-THP"
+    },
+    {
+      "id": "ST97-QSM",
+      "title": "Francis Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F4Y9-DP2 : Sun Mar 10 08:33:44 UTC 2024), Francis Gleason, 24 July 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4Y9-DP2"
+    },
+    {
+      "id": "ST97-3GY",
+      "title": "Francis Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZ6-GT9 : Wed May 22 22:03:02 UTC 2024), Francis Gleason, 24 Jul 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZ6-GT9"
+    },
+    {
+      "id": "ST97-7FK",
+      "title": "John A. Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7TP-9WY : Wed May 22 23:09:39 UTC 2024), John A. Gleason, 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7TP-9WY"
+    },
+    {
+      "id": "ST97-77G",
+      "title": "John Gleason, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MD3L-TH5 : Tue Oct 21 13:02:32 UTC 2025), John Gleason in entry for John Gleason, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MD3L-TH5"
+    },
+    {
+      "id": "ST97-QYZ",
+      "title": "John Gleason, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F4Y7-Z52 : Thu Oct 15 19:41:49 UTC 2026), John Gleason, 28 Apr 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4Y7-Z52"
+    },
+    {
+      "id": "ST97-SN2",
+      "title": "John Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZG-3B6 : Thu May 23 01:40:31 UTC 2024), John Gleason, 28 Apr 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZG-3B6"
+    },
+    {
+      "id": "ST97-9D8",
+      "title": "Emma Letitia Gleason, \"Massachusetts Births and Christenings, 1639-1915\"",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHWP-78Q"
+    },
+    {
+      "id": "ST97-9ST",
+      "title": "Emma Letitia Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH95-GQ7 : Sun Mar 10 13:39:24 UTC 2024), Emma Letitia Gleason, 16 April 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH95-GQ7"
+    },
+    {
+      "id": "ST9Q-12N",
+      "title": "Emma Letitia Gleason, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FHQZ-FLZ : Thu Oct 15 18:08:17 UTC 2026), Emma Letitia Gleason, 16 Apr 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FHQZ-FLZ"
+    },
+    {
+      "id": "ST9Q-179",
+      "title": "Emma Letitia Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q29G-DQRD : Fri Mar 08 09:42:13 UTC 2024), Emma Letitia Gleason, 16 April 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q29G-DQRD"
+    },
+    {
+      "id": "ST9Q-BZ4",
+      "title": "Emma Letitia Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZY-98R : Thu May 23 00:01:52 UTC 2024), Emma Letitia Gleason, 16 Apr 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZY-98R"
+    },
+    {
+      "id": "M3TZ-FBT",
+      "title": "Emma Letitia Gleason, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VQF3-QM6 : Thu Oct 15 20:26:42 UTC 2026), Emma Letitia Gleason, 16 April 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VQF3-QM6"
+    },
+    {
+      "id": "ST97-CPN",
+      "title": "Mary A. Gleason, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH6J-ZZN : Thu Oct 15 17:53:25 UTC 2026), Mary A. Gleason, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH6J-ZZN"
+    },
+    {
+      "id": "ST97-W58",
+      "title": "Mary A. Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXDL-6PX : Thu Jul 24 22:03:02 UTC 2025), Mary A. Gleason, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXDL-6PX"
+    },
+    {
+      "id": "ST97-SHH",
+      "title": "Mary A. Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N75V-FSX : Wed May 22 20:39:47 UTC 2024), Mary A. Gleason, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N75V-FSX"
+    },
+    {
+      "id": "M3RF-GRL",
+      "title": "Mary A. Gleason, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VQDV-GHD : Thu Oct 15 19:21:16 UTC 2026), Mary A. Gleason, 16 April 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VQDV-GHD"
+    },
+    {
+      "id": "ST97-DN7",
+      "title": "Sarah J. Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N752-QGQ : Wed May 22 20:44:16 UTC 2024), Sarah J. Gleason, 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N752-QGQ"
+    },
+    {
+      "id": "MQN4-HRS",
+      "title": "Sarah J. Gleason, \"Massachusetts, Births and Christenings, 1639-1915\"",
+      "citation": "\"Massachusetts, Births and Christenings, 1639-1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FC1P-2SZ : Thu Oct 15 23:54:16 UTC 2026), Sarah J. Gleason, 10 December 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FC1P-2SZ"
+    },
+    {
+      "id": "ST97-SB2",
+      "title": "Sarah J. Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FX67-4M4 : Fri Jul 25 15:38:24 UTC 2025), Sarah J. Gleason, 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FX67-4M4"
+    },
+    {
+      "id": "ST9Q-1NH",
+      "title": "Sarah J. Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH9J-DV5 : Sun Mar 10 12:24:38 UTC 2024), Sarah J. Gleason, 10 December 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH9J-DV5"
+    },
+    {
+      "id": "ST97-4LV",
+      "title": "William Francis Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH9L-WRS : Sat Mar 09 04:10:06 UTC 2024), William Francis Gleason, 11 December 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH9L-WRS"
+    },
+    {
+      "id": "ST97-4CN",
+      "title": "Wm. J. Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXW1-VDX : Sat Jul 26 05:59:19 UTC 2025), Wm. J. Gleason, 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXW1-VDX"
+    },
+    {
+      "id": "ST97-WXF",
+      "title": "Patrick Gleeson, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXNW-5MJ : Thu May 23 00:19:10 UTC 2024), Patrick Gleeson, 26 Jul 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXNW-5MJ"
+    },
+    {
+      "id": "ST9Q-B35",
+      "title": "John Gleeson, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1K-BLFZ : Sun Mar 10 23:00:56 UTC 2024), John Gleeson and Delia Fitzgerald, 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QG1K-BLFZ"
+    },
+    {
+      "id": "SR1T-VY2",
+      "title": "Delia Fitzgerald, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG1K-TBR3 : Sat Mar 09 07:08:23 UTC 2024), John Gleeson and Delia Fitzgerald, 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QG1K-TBR3"
+    },
+    {
+      "id": "SR1T-J55",
+      "title": "Delia Fitzgerald, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N4SV-YR2 : Wed May 22 23:21:26 UTC 2024), John Gleason and Delia Fitzgerald, 26 Apr 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N4SV-YR2"
+    },
+    {
+      "id": "ST9Q-1Q4",
+      "title": "Emma Letitia Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q29G-DQRD : Fri Mar 08 09:42:13 UTC 2024), Emma Letitia Gleason, 16 April 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q29G-DQRD"
+    },
+    {
+      "id": "ST9Q-1FZ",
+      "title": "Sarah J. Gleason, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FH9J-DV5 : Sun Mar 10 12:24:38 UTC 2024), Sarah J. Gleason, 10 December 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FH9J-DV5"
+    },
+    {
+      "id": "ST97-4HZ",
+      "title": "Wm. J. Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXW1-VDX : Sat Jul 26 05:59:19 UTC 2025), Wm. J. Gleason, 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXW1-VDX"
+    },
+    {
+      "id": "ST97-3LC",
+      "title": "Francis Gleason, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXZ6-GT9 : Wed May 22 22:03:02 UTC 2024), Francis Gleason, 24 Jul 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXZ6-GT9"
+    }
+  ]
+}

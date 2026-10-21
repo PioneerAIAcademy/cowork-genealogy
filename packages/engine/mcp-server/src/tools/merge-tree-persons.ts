@@ -134,7 +134,7 @@ export const mergeTreePersonsSchema = {
     "tree): the survivor is kept, the collapsed person folds into it " +
     "(names/facts merged, never discarded) and is removed; relationships are " +
     "repointed. Every research.json reference to a collapsed id (subject persons, " +
-    "person_evidence, timelines, known_holdings) is repointed to the survivor. " +
+    "person_evidence, rejected_links, timelines, known_holdings) is repointed to the survivor. " +
     "Both files are written both-or-neither and NOT returned — you get a compact " +
     "summary including how many research references were updated. On a validation " +
     "failure nothing is written and `{ ok: false, errors }` is returned.",

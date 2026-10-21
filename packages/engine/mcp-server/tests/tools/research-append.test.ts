@@ -124,6 +124,17 @@ function baseResearch(): {
     evaluations: [],
   };
 }
+/** Live `person_evidence` rows tying each assertion to I1. A proof above
+ *  `not_proved` needs one of its supporting assertions linked
+ *  (`unlinkedProofInvariants`), so a fixture testing a different proof rule
+ *  seeds the link a real project would already carry. */
+function liveLinks(...assertionIds: string[]): Record<string, unknown>[] {
+  return assertionIds.map((assertion_id, i) => ({
+    id: `pe_${String(i + 1).padStart(3, "0")}`, assertion_id, person_id: "I1",
+    confidence: "confident", match_score: 0.9, rationale: "match", created: "2026-01-02", superseded_by: null,
+  }));
+}
+
 /** Record the `same_person` score that #1731 step 3 now requires.
  *
  *  A `person_evidence` append for a REACHABLE persona is refused without one,
@@ -2246,6 +2257,7 @@ describe("research_append (Phase 3)", () => {
   function phase3Research() {
     const r = baseResearch();
     r.questions = [validQuestion("q_001")];
+    r.person_evidence = liveLinks("a_001");
     return r;
   }
   async function writeProject(research: any = phase3Research(), tree: any = baseTree) {
@@ -2267,6 +2279,138 @@ describe("research_append (Phase 3)", () => {
     expect(t.generated).toMatch(/T.*:/); // ISO datetime, not a bare date
   });
 
+  // Issue #3572 (Half 1 of #3516): an event citing no record is unchecked, and
+  // the writer says how many. Warn only — refusal rejected 2026-10-18, kept a
+  // warning 2026-10-19 (spec §5.5).
+  describe("unsourced timeline event advisory (#3572)", () => {
+    const WARN = /cite no record/;
+    const event = (assertionIds: string[]) => ({
+      date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated",
+      place: "Pennsylvania", standard_place: "Schuylkill, Pennsylvania, United States",
+      assertion_ids: assertionIds, distance_from_previous_km: null,
+    });
+    const appendTimeline = (events: any[]) =>
+      researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "append",
+        entry: { label: "test timeline", person_ids: ["I1"], events, gaps: [] },
+      } as never);
+
+    it("warns on an append with an unsourced event, naming the count — and still writes", async () => {
+      await writeProject();
+      const r = await appendTimeline([event(["a_001"]), event([]), event([])]);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const w = r.validation.warnings.filter((x) => WARN.test(x));
+      expect(w).toEqual([
+        "2 of 3 events in t_001 cite no record (assertion_ids empty); they come from " +
+          "the tree or the user and are unchecked. Say so to the user.",
+      ]);
+      expect((await readResearch()).timelines).toHaveLength(1);
+    });
+
+    it("stays silent when every event cites an assertion", async () => {
+      await writeProject();
+      const r = await appendTimeline([event(["a_001"]), event(["a_001"])]);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+    });
+
+    it("stays silent on an empty events list", async () => {
+      await writeProject();
+      const r = await appendTimeline([]);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+    });
+
+    it("warns on an update that sets events, and not on one touching only label", async () => {
+      await writeProject();
+      await appendTimeline([event(["a_001"])]);
+      const update = (fields: Record<string, unknown>) =>
+        researchAppend({ projectPath: dir, section: "timelines", op: "update", entryId: "t_001", fields } as never);
+
+      const viaEvents = await update({ events: [event(["a_001"]), event([])] });
+      expect(viaEvents.ok).toBe(true);
+      if (!viaEvents.ok) return;
+      expect(viaEvents.validation.warnings.filter((x) => WARN.test(x))).toEqual([
+        expect.stringMatching(/^1 of 2 events in t_001 cite no record/),
+      ]);
+
+      const viaLabel = await update({ label: "renamed" });
+      expect(viaLabel.ok).toBe(true);
+      if (!viaLabel.ok) return;
+      expect(viaLabel.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+
+      const viaGaps = await update({ gaps: [] });
+      expect(viaGaps.ok).toBe(true);
+      if (!viaGaps.ok) return;
+      expect(viaGaps.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+    });
+
+    // An event must not read as sourced on an id that is no assertion: the
+    // advisory counts empty lists only, so these shapes would slip past it.
+    it.each([
+      ["a string", "a_001", /'assertion_ids' must be an array/],
+      ["a non-string entry", [42], /non-string entry \(42\)/],
+      ["a dangling id", ["a_999"], /a_999/],
+    ])("refuses an event whose assertion_ids is %s", async (_label, ids, msg) => {
+      await writeProject();
+      const r = await appendTimeline([{ ...event([]), assertion_ids: ids }]);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(msg);
+      expect((await readResearch()).timelines ?? []).toHaveLength(0);
+    });
+
+    it("reports a null assertion_ids once, not twice", async () => {
+      await writeProject();
+      const r = await appendTimeline([{ ...event([]), assertion_ids: null }]);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.filter((e) => /events\[0\]/.test(e) && /assertion_ids/.test(e))).toHaveLength(1);
+    });
+
+    // The counting reads a non-array `events` as empty, so an object holding an
+    // unsourced event would otherwise persist with no warning and no error.
+    it.each([
+      ["events as an object", { events: { k: event([]) } }, /'events' must be an array/],
+      ["events as a string", { events: "[]" }, /'events' must be an array/],
+      ["gaps as a string", { events: [event(["a_001"])], gaps: "none" }, /'gaps' must be an array/],
+    ])("refuses a timeline with %s", async (_label, fields, msg) => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "append",
+        entry: { label: "test timeline", person_ids: ["I1"], events: [], gaps: [], ...(fields as Record<string, unknown>) },
+      } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(msg);
+      expect((await readResearch()).timelines ?? []).toHaveLength(0);
+    });
+
+    it("names each entry's own id in a batch", async () => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "timelines", op: "append", entry: { label: "one", person_ids: ["I1"], events: [event([])], gaps: [] } },
+          { section: "timelines", op: "append", entry: { label: "two", person_ids: ["I1"], events: [event(["a_001"]), event([])], gaps: [] } },
+        ],
+      } as never);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.filter((x) => WARN.test(x))).toEqual([
+        expect.stringMatching(/^1 of 1 events in t_001 /),
+        expect.stringMatching(/^1 of 2 events in t_002 /),
+      ]);
+    });
+  });
+
   // The US 1890 federal census does not survive and can never fill a gap
   // (ADR-0012, issue #2261). Issue #3255: prose alone let an agent write it 4
   // times across 3 unit tests; this is the write-boundary backstop.
@@ -2282,7 +2426,7 @@ describe("research_append (Phase 3)", () => {
     // (ut_timeline_005, 2026-10-09): an `every` test over `standard_place`
     // stayed silent here because the birth event alone broke unanimity.
     const mixedEvents = [
-      { date: "~1845", date_certainty: "estimated", event_type: "birth", description: "born", place: "Ireland", standard_place: "Ireland", assertion_ids: ["a_000"], distance_from_previous_km: null },
+      { date: "~1845", date_certainty: "estimated", event_type: "birth", description: "born", place: "Ireland", standard_place: "Ireland", assertion_ids: ["a_001"], distance_from_previous_km: null },
       { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Pennsylvania", standard_place: "Schuylkill, Pennsylvania, United States", assertion_ids: ["a_001"], distance_from_previous_km: null },
     ];
     const appendWithGap = (expectedEvents: string[], events: any[] = usEvents) =>
@@ -2700,6 +2844,7 @@ describe("research_append (Phase 3)", () => {
         // setup these refuse for the other reason and prove nothing about
         // shortfall.
         const research = baseResearch();
+        research.person_evidence = liveLinks("a_001");
         const sc2 = {
           goal_alignment: "Yes.", repository_breadth: "All searched.", original_substitution: "Originals.",
           independent_verification: "Three sources.", evidence_class: "Census.", conflict_resolution: "None.", overturn_risk: "Low.",
@@ -2837,6 +2982,91 @@ describe("research_append (Phase 3)", () => {
       },
     });
     expect(r.ok && singleOk(r).entryId).toBe("ps_001");
+  });
+
+  // LZJF-J13 (issue #3177): 0 of 15 assertions linked, concluded `probable`.
+  describe("a conclusion above not_proved needs a supporting assertion linked to a person", () => {
+    const proof = (tier: string, supporting = ["a_001"]) => ({
+      question_id: "q_001", tier, vehicle: "summary", shortfall: "gap",
+      supporting_assertion_ids: supporting, resolved_conflict_ids: [],
+      exhaustive_search_summary: "census", narrative_markdown: "## C\n...",
+    });
+    const unlinked = () => {
+      const r = phase3Research();
+      r.person_evidence = [];
+      return r;
+    };
+    const append = (entry: Record<string, unknown>) =>
+      researchAppend({ projectPath: dir, section: "proof_summaries", op: "append", entry } as never);
+
+    it.each(["possible", "probable"])("refuses tier '%s' when no supporting assertion is linked", async (tier) => {
+      await writeProject(unlinked());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await append(proof(tier));
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/none is linked to a person.*person-evidence/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("allows not_proved, the sanctioned record of a blocked attempt", async () => {
+      await writeProject(unlinked());
+      const r = await append({ ...proof("not_proved"), shortfall: "gap" });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("one linked supporting assertion is enough; household members may stay unlinked", async () => {
+      const state = phase3Research();
+      state.assertions.push(validAssertion("a_002"), validAssertion("a_003"));
+      await writeProject(state);
+      const r = await append(proof("probable", ["a_001", "a_002", "a_003"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("a superseded link does not count", async () => {
+      const state = unlinked();
+      state.person_evidence = [{ ...liveLinks("a_001")[0], superseded_by: "pe_002" }];
+      await writeProject(state);
+      expect((await append(proof("probable"))).ok).toBe(false);
+    });
+
+    it("a link written in the same batch does not satisfy it", async () => {
+      await writeProject(unlinked());
+      await attestPairing(dir);
+      const { id: _id, ...link } = liveLinks("a_001")[0] as any;
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "person_evidence", op: "append", entry: link },
+          { section: "proof_summaries", op: "append", entry: proof("probable") },
+        ],
+      } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("none is linked to a person");
+    });
+
+    it("a narrative-only update to an older unlinked summary is not refused", async () => {
+      const state = unlinked() as any;
+      state.proof_summaries = [{ id: "ps_001", ...proof("probable") }];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001",
+        fields: { narrative_markdown: "## C\nrevised" },
+      } as never);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("an update that sets the tier is checked", async () => {
+      const state = unlinked() as any;
+      state.proof_summaries = [{ id: "ps_001", ...proof("not_proved") }];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001",
+        fields: { tier: "probable" },
+      } as never);
+      expect(r.ok).toBe(false);
+    });
   });
 
 
@@ -3312,6 +3542,7 @@ describe("research_append (Phase 3)", () => {
         { id: "a_013", source_id: "src_004", value: "Father: Thomas Flynn" },
         { id: "a_004", source_id: "src_001", value: "in Thomas's household" },
       ],
+      person_evidence: liveLinks("a_004", "a_013"),
       conflicts: [
         { id: "c_001", status: "unresolved", competing_assertion_ids: ["a_002", "a_012"] },
       ],
@@ -3545,6 +3776,7 @@ describe("research_append (Phase 3)", () => {
       questions: [{ id: "q_001", question: "parents?", status: "open" }],
       sources: [{ id: "src_001", citation: "1850 census" }],
       assertions: [{ id: "a_004", source_id: "src_001", value: "in household" }],
+      person_evidence: liveLinks("a_004"),
       conflicts: [],
       proof_summaries: [
         {
@@ -4333,7 +4565,7 @@ describe("research_append (project singleton section)", () => {
     // one author's conclusion, unlike the exhaustive declaration, which must come
     // from research-exhaustiveness. 7 of 154 corpus resolve-calls do exactly this, all with
     // the summary ordered first — a pre-call snapshot would refuse all 7.
-    const r0 = baseResearch();
+    const r0 = withEvidence(baseResearch());
     r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
     await writeProject(r0);
     // tier `possible` — a proved/probable summary additionally requires a prior
@@ -8756,7 +8988,12 @@ describe("research_append — worked examples are themselves valid", () => {
 
   it.each(SECTIONS_WITH_EXAMPLES)("the '%s' example validates", async (section) => {
     // A fresh project per case so examples never depend on each other.
-    await writeFile(join(dir, "research.json"), JSON.stringify(exampleFixture(), null, 2));
+    const fixture = exampleFixture();
+    // The proof example cites a_013; a proof above not_proved needs one of its
+    // supporting assertions linked. Only here, so the person_evidence example
+    // still appends the project's first link.
+    if (section === "proof_summaries") fixture.person_evidence = liveLinks("a_013");
+    await writeFile(join(dir, "research.json"), JSON.stringify(fixture, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
     await mkdir(join(dir, "results"), { recursive: true });
     await writeFile(join(dir, "results", "log_004.json"), JSON.stringify(sidecar, null, 2));
@@ -10502,9 +10739,15 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
     expect(singleOk(await researchAppend(setStatus("in_progress") as any))).toBeTruthy();
   });
 
-  it("allows 'skipped' once the handoff's own capture has arrived", async () => {
+  it("lets the item through once the handoff's own capture has arrived", async () => {
+    // A captured hand-off is a search that ran, so the item completes; a skip
+    // is refused by the searched-skip rule, not by this guard (#3516).
     await writeProject(captureResearch("in_progress", true));
-    expect(singleOk(await researchAppend(setStatus("skipped") as any))).toBeTruthy();
+    expect(singleOk(await researchAppend(setStatus("completed") as any))).toBeTruthy();
+    await writeProject(captureResearch("in_progress", true));
+    const errs = failure(await researchAppend(setStatus("skipped") as any)).errors.join(" ");
+    expect(errs).not.toMatch(/awaiting a capture/);
+    expect(errs).toMatch(/search ran/);
   });
 
   it("allows 'skipped' when a later arrival (same site+url, null plan_item_id) carries the capture", async () => {
@@ -10578,9 +10821,13 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
     expect(errs).toMatch(/awaiting a capture/);
   });
 
-  it("allows 'skipped' inline through a plans update once the capture has arrived", async () => {
+  it("lets the item through inline through a plans update once the capture has arrived", async () => {
     await writeProject(captureResearch("in_progress", true));
-    expect(singleOk(await researchAppend(setItemStatusViaPlans("skipped") as any))).toBeTruthy();
+    expect(singleOk(await researchAppend(setItemStatusViaPlans("completed") as any))).toBeTruthy();
+    await writeProject(captureResearch("in_progress", true));
+    const errs = failure(await researchAppend(setItemStatusViaPlans("skipped") as any)).errors.join(" ");
+    expect(errs).not.toMatch(/awaiting a capture/);
+    expect(errs).toMatch(/search ran/);
   });
 
   // The documented autonomous no-user / inaccessible-site skip: search-external-
@@ -10708,10 +10955,11 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       projectPath: dir,
       ops: [
         { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
-        // `skip_category` is required on a new skip (#1830). Without it that
-        // refusal pre-empts the G2 one and this test stops exercising the
-        // snapshot-read vector it exists for.
-        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "skipped", skip_category: "answered" } },
+        // `completed`, not `skipped`: every item here has a logged search, and a
+        // search that ran is never skipped (#3516). That refusal would pre-empt
+        // the G2 one and this test would stop exercising the snapshot-read
+        // vector it exists for.
+        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "completed" } },
         { section: "questions", op: "update", entryId: "q_001", fields: { search_stop: STOP_DECISION } },
       ],
     } as any);
@@ -12041,6 +12289,7 @@ describe("research_append — a conflict resolved in prose must reach conflicts[
       { id: "a_004", source_id: "src_001", value: "Henricks" },
       { id: "a_005", source_id: "src_002", value: "Hendricks" },
     ],
+    person_evidence: liveLinks("a_004"),
     conflicts: [] as any[],
     proof_summaries: [] as any[],
   });
@@ -12325,5 +12574,155 @@ describe("research_append — unexplained move, update path", () => {
     research.person_evidence.find((e: any) => e.id === id).person_id = "I1";
     await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     expect((await update(id, { rationale: "Name, household and occupation agree." })).ok).toBe(true);
+  });
+});
+
+describe("research_append — a completed plan item stays completed (#3516)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-kept-"));
+    const r = baseResearch();
+    r.questions = [validQuestion("q_001")];
+    r.plans = [validPlan("pl_001", "q_001", "active", [{ ...seededPlanItem("pli_001"), status: "completed" }])];
+    r.log = [{
+      id: "log_001", plan_item_id: "pli_001", performed: "2026-05-01T10:15:00Z", tool: "record_search",
+      query: { surname: "Flynn" }, outcome: "positive", results_examined: 1, results_ref: null, external_site: null,
+    }];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const update = (fields: Record<string, unknown>) =>
+    researchAppend({ projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields } as any);
+  const stored = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).plans[0].items[0];
+
+  it("an in_progress write on a completed item is a no-op with a warning", async () => {
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r: any = await update({ status: "in_progress" });
+    expect(r.ok).toBe(true);
+    expect(r.validation.warnings.join(" ")).toMatch(/pli_001.*already completed; left completed/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("keeps the other fields of the same op and drops only the status", async () => {
+    const r: any = await update({ status: "in_progress", rationale: "Re-run with a wider date range" });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await stored()).toMatchObject({ status: "completed", rationale: "Re-run with a wider date range" });
+  });
+
+  it("still moves an item that is not completed", async () => {
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.plans[0].items[0].status = "in_progress";
+    r0.log = [];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    expect((await update({ status: "planned" })).ok).toBe(true);
+    expect((await stored()).status).toBe("planned");
+  });
+
+  // The same rule for items sent inline on a `plans` update.
+  const updatePlan = (items: any[], extra: Record<string, unknown> = {}) =>
+    researchAppend({ projectPath: dir, section: "plans", op: "update", entryId: "pl_001", fields: { items, ...extra } } as any);
+
+  it("an inline in_progress on a completed item is a no-op with a warning", async () => {
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r: any = await updatePlan([{ ...seededPlanItem("pli_001"), status: "in_progress" }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.validation.warnings.join(" ")).toMatch(/pli_001.*already completed; left completed/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("keeps the rest of an inline plans update and leaves the completed item completed", async () => {
+    const r: any = await updatePlan([{ ...seededPlanItem("pli_001"), status: "in_progress", rationale: "Widened" }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await stored()).toMatchObject({ status: "completed", rationale: "Widened" });
+  });
+});
+
+describe("research_append — a search that ran is never marked skipped (#3516)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-searched-skip-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const URL = "https://www.ancestry.com/search/collections/1850usfedcen/?name=Patrick_Flynn";
+  const logEntry = (id: string, tool: string, outcome: string, extra: Record<string, unknown> = {}) => ({
+    id, plan_item_id: "pli_001", performed: "2026-05-01T10:15:00Z", tool, query: { surname: "Flynn" },
+    outcome, results_examined: 1, results_ref: null, external_site: null, ...extra,
+  });
+  const deferred = (id: string) =>
+    logEntry(id, "external_site", "negative", {
+      results_examined: 0,
+      external_site: { site: "ancestry", url_generated: URL, capture_received: false },
+    });
+  async function project(log: any[], status = "in_progress") {
+    const r = baseResearch();
+    r.questions = [validQuestion("q_001")];
+    r.plans = [validPlan("pl_001", "q_001", "active", [{ ...seededPlanItem("pli_001"), status }])];
+    r.log = log;
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const skip = (skip_category = "no_coverage") =>
+    researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { status: "skipped", skip_category },
+    } as any);
+
+  it.each([
+    ["record_search", "negative"],
+    ["record_search", "partial"],
+    ["fulltext_search", "negative"],
+    ["image_search", "negative"],
+  ])("refuses skipped after a %s that came back %s, and names completed", async (tool, outcome) => {
+    await project([logEntry("log_001", tool, outcome)]);
+    const errs = failure(await skip()).errors.join(" ");
+    expect(errs).toMatch(/plan_items\[pli_001\]: log_001 .* search ran/);
+    expect(errs).toMatch(/Set it to 'completed' instead/);
+  });
+
+  it("refuses the same skip set inline through a plans update", async () => {
+    await project([logEntry("log_001", "record_search", "negative")]);
+    const r = await researchAppend({
+      projectPath: dir, section: "plans", op: "update", entryId: "pl_001",
+      fields: { items: [{ ...seededPlanItem("pli_001"), status: "skipped", skip_category: "no_coverage" }] },
+    } as any);
+    expect(failure(r).errors.join(" ")).toMatch(/search ran/);
+  });
+
+  it.each([
+    ["an item never searched", [] as any[]],
+    ["an item whose only search errored", [logEntry("log_001", "record_search", "error")]],
+    ["an item searched only by a volume lookup", [logEntry("log_001", "volume_search", "negative")]],
+  ])("accepts skipped on %s", async (_name, log) => {
+    await project(log);
+    expect(singleOk(await skip())).toBeTruthy();
+  });
+
+  it.each([
+    ["nil searches, then a deferred hand-off", () => [logEntry("log_001", "record_search", "negative"), deferred("log_002")]],
+    ["a deferred hand-off, then a later nil search", () => [deferred("log_001"), logEntry("log_002", "record_search", "negative")]],
+  ])("accepts the escalation's inaccessible skip after %s", async (_name, log) => {
+    await project(log());
+    expect(singleOk(await skip("inaccessible"))).toBeTruthy();
+  });
+
+  it("does not name completed when capture-pending would refuse it: capture-pending's error is the only one", async () => {
+    await project([logEntry("log_001", "record_search", "negative"), deferred("log_002")]);
+    // Every refusal carries a trailing worked example; count the refusals.
+    const errors = failure(await skip("answered")).errors.filter((e) => !e.startsWith("worked example"));
+    expect(errors, JSON.stringify(errors)).toHaveLength(1);
+    expect(errors[0]).toMatch(/awaiting a capture/);
+    expect(errors[0]).toMatch(/inaccessible/);
+    expect(errors[0]).toMatch(/user_declined/);
+    expect(errors[0]).not.toMatch(/search ran|Set it to 'completed'/);
+  });
+
+  it("does not fire on re-stating an item already skipped", async () => {
+    await project([logEntry("log_001", "record_search", "negative")], "skipped");
+    expect(singleOk(await skip())).toBeTruthy();
   });
 });
