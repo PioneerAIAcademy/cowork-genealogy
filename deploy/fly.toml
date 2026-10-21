@@ -39,7 +39,7 @@ primary_region = "iad"
   # Reasoning effort (T4.1). Unset = the CLI's own default, today `high` everywhere.
   # Create-time only: a sandbox keeps the levels it was born with. Levels: low, medium,
   # high, xhigh, max. Lowering the alpha is the lead's call -- none is set here.
-  # ORCHESTRATOR_EFFORT = "medium"
+  ORCHESTRATOR_EFFORT = "low"
   # SUBAGENT_EFFORT = "high"
   # SUBAGENT_EFFORT_BY_AGENT = '{"question-selection": "low"}'
   # PUBLIC_URL must match the public hostname Fly assigns / you map. Used for
