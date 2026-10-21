@@ -40,7 +40,14 @@ from web.app import PgStore, ReadyCheckError, create_app  # noqa: E402
 
 FILES = migrate.load()
 NAMES = [m.name for m in FILES]
-LATEST = "013_retention.sql"
+#: DERIVED, not hardcoded: this is the LAST file on disk, and a branch that adds a
+#: migration has moved it three times (008, 010, 012) before CI said so -- these `_pg`
+#: tests are skipped locally without Postgres, so a stale literal here passes every
+#: local run and only CI ever notices.
+#: From the DIRECTORY, not from NAMES: deriving it from the loader would make
+#: `NAMES[-1] == LATEST` vacuous. This way the assertion still cross-checks the loader
+#: against what is actually shipped.
+LATEST = sorted(q.name for q in migrate.SQL_DIR.glob("*.sql"))[-1]
 # Synthetic files numbered past LATEST, so they stay newer than every shipped one.
 NEXT = f"{int(LATEST[:3]) + 1:03d}"
 AFTER = f"{int(LATEST[:3]) + 2:03d}"

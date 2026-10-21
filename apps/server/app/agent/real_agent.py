@@ -861,6 +861,7 @@ def map_message(
     tool_names: dict[str, str],
     tasks: dict[str, str] | None = None,
     live: set[str] | None = None,
+    task_ids: dict[str, str] | None = None,
 ) -> list[dict]:
     """SDK message → the wire events the UI consumes.
 
@@ -897,11 +898,23 @@ def map_message(
 
     tasks = tasks if tasks is not None else {}
     live = live if live is not None else set()
+    # Task tool_use_id -> task_id. OPTIONAL: a caller that does not pass it gets the
+    # stream exactly as before. Attribution by description STRING cannot tell two
+    # tasks apart -- five labels were each used by two different tasks in the captured
+    # session -- so "which step produced this" needs the id, not the label.
+    task_ids = task_ids if task_ids is not None else {}
 
     def _event_for(msg, kind: str, **kw) -> dict:
-        """Attach the originating subagent's label, when there is one."""
-        agent = tasks.get(getattr(msg, "parent_tool_use_id", None) or "")
-        return _event(kind, **kw, **({"agent": agent} if agent else {}))
+        """Attach the originating subagent's label, and its task id when known."""
+        parent = getattr(msg, "parent_tool_use_id", None) or ""
+        agent = tasks.get(parent)
+        extra: dict = {}
+        if agent:
+            extra["agent"] = agent
+            tid = task_ids.get(parent)
+            if tid:
+                extra["task_id"] = tid
+        return _event(kind, **kw, **extra)
 
     out: list[dict] = []
     if isinstance(message, TaskStartedMessage):
@@ -910,6 +923,7 @@ def map_message(
         # `str | None` — a Task without one simply goes unlabelled.
         if message.tool_use_id:
             tasks[message.tool_use_id] = label
+            task_ids[message.tool_use_id] = message.task_id
         # LIVENESS is keyed on `task_id`, which is a required `str`. These were
         # one dict until review: keying liveness on the optional field meant a
         # Task with no `tool_use_id` registered nothing, so the drainer never
@@ -1005,8 +1019,10 @@ def map_message(
                 out.append(_event_for(message, "thinking", text=getattr(block, "thinking", "")))
             elif isinstance(block, ToolUseBlock):
                 tool_names[getattr(block, "id", "")] = block.name  # for the matching tool_result
+                inp = getattr(block, "input", None)
+                extra = _decision_payload(block.name, inp)
                 out.append(_event_for(message, "tool_use", tool=block.name,
-                                      summary=_tool_summary(getattr(block, "input", None))))
+                                      summary=_tool_summary(inp), **extra))
     elif isinstance(message, UserMessage):
         # Tool results come back as a UserMessage of ToolResultBlock(s); tag each
         # with the originating tool's name so the UI can mark that chip done.
@@ -1021,6 +1037,33 @@ def map_message(
 # Live-only event kinds: shown as they stream, never written to the replay
 # transcript (see map_message's docstring). Shared with sandbox_server's pump.
 TRANSIENT_KINDS = frozenset({"text_delta", "thinking_delta", "task_progress"})
+
+
+# The decision tool, and only it, carries its input structured alongside the summary.
+#
+# `_tool_summary` flattens an input to its first four keys truncated to 160 characters,
+# which is right for a chip and useless for a card: in the committed corpus an
+# AskUserQuestion arrives with its `questions` cut off mid-word. A card showing
+# candidates side by side cannot be built from that.
+#
+# Every other tool is left alone deliberately. Widening this for all of them would put
+# whole record payloads on the wire for every call.
+DECISION_TOOL_NAME = "AskUserQuestion"
+
+
+def _decision_payload(tool_name: str, inp: object) -> dict:
+    """`{"questions": [...]}` for a well-formed decision call, else `{}`.
+
+    Silent on a malformed input rather than raising: an event builder that throws
+    ends the turn, and a decision whose shape we do not recognise must still produce
+    a chip the reader can see.
+    """
+    if tool_name != DECISION_TOOL_NAME or not isinstance(inp, dict):
+        return {}
+    questions = inp.get("questions")
+    if not isinstance(questions, list) or not questions:
+        return {}
+    return {"questions": questions}
 
 
 def _tool_summary(inp: object) -> str:
@@ -1061,6 +1104,11 @@ class RealAgent:
         # Liveness, keyed on the REQUIRED task_id rather than the optional
         # tool_use_id above. This is what gates the drainer; see map_message.
         self._live_tasks: set[str] = set()
+        # Task tool_use_id -> the SDK's own task_id, so every sub-agent event can
+        # carry it. `map_message` took this parameter from the start but no caller
+        # passed one, so `task_id` never reached a live event and attribution fell
+        # back to the description string -- the thing it was added to replace.
+        self._task_ids: dict[str, str] = {}
         # The background stream drainer, when one is running. At most one, ever
         # — see _stop_drain for why that is not merely tidy.
         self._drain_task: asyncio.Task | None = None
@@ -1250,7 +1298,8 @@ class RealAgent:
                 # about to read the stream calls, and which is what the handoff
                 # test pins.
                 try:
-                    map_message(message, self._tool_names, self._tasks, self._live_tasks)
+                    map_message(message, self._tool_names, self._tasks, self._live_tasks,
+                                task_ids=self._task_ids)
                 except Exception as exc:
                     # One unmappable message must not end draining. This arm used
                     # to sit outside the loop, so a single failure stopped the
@@ -1393,6 +1442,30 @@ class RealAgent:
         await self._client.interrupt()
         return True
 
+    def _compaction_events(self, message) -> list[dict]:
+        """Zero or one notice that the agent is compacting its context.
+
+        Measured on the committed corpus: every long run compacts, a median THREE
+        times at roughly two minutes each — about six minutes per run during which
+        the screen showed nothing at all. A researcher watching that cannot tell
+        "busy tidying up" from "crashed", which is the single most likely way a
+        working run reads as a broken one.
+
+        The CLI announces it as `system`/`compact_boundary`
+        (`compactMetadata: {trigger, preTokens, postTokens}`), the same record the
+        eval harness counts in `summarize_transcript`. Defensive throughout, like
+        the init reader beside it: this parses another process's payload, and a
+        detector that raises would break the sessions it exists to inform.
+        """
+        if getattr(message, "subtype", None) != "compact_boundary":
+            return []
+        data = getattr(message, "data", None)
+        meta = data.get("compactMetadata") if isinstance(data, dict) else None
+        trigger = meta.get("trigger") if isinstance(meta, dict) else None
+        # `manual` means the researcher asked for it and already knows; only the
+        # automatic one arrives unexplained.
+        return [_event("compaction", trigger=trigger or "auto")]
+
     def _mcp_health_events(self, message) -> list[dict]:
         """Zero or one warning that this session has no genealogy tools.
 
@@ -1471,7 +1544,8 @@ class RealAgent:
             error_emitted = False
             async for message in client.receive_response():
                 for ev in map_message(
-                    message, self._tool_names, self._tasks, self._live_tasks
+                    message, self._tool_names, self._tasks, self._live_tasks,
+                    task_ids=self._task_ids,
                 ):
                     if ev.get("kind") == "tool_use" and str(
                         ev.get("tool") or ""
@@ -1492,6 +1566,8 @@ class RealAgent:
                     # such a run; there is no run to abort here, so we warn once
                     # and let the turn proceed.
                     for ev in self._mcp_health_events(message):
+                        yield ev
+                    for ev in self._compaction_events(message):
                         yield ev
                 if isinstance(message, ResultMessage):
                     # #1126 — the silent path. `receive_response()` YIELDS the
