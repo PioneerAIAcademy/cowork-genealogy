@@ -549,10 +549,9 @@
     {
       "artifact": "research.json",
       "section": "namesakes",
-      "owner": "skill:search-records",
-      "callers": [
-        "skill:search-records"
-      ],
+      "owner": null,
+      "reason": "No writer ships yet: search-records records rows in a later change (issue #3363, PR 2), which sets the owner and adds the section to its hook lane.",
+      "callers": [],
       "writerTools": [
         "research_append",
         "merge_tree_persons"

@@ -1484,7 +1484,7 @@ edit and re-emit.**
 
 > **Today:** `research_query` returns 50 items per call with a `truncated` flag
 > and an `offset` parameter for paging past 50, and covers
-> **13 of the 17** `research.json` sections — missing `project`,
+> **14 of the 18** `research.json` sections — missing `project`,
 > `researcher_profile`, `known_holdings`, and `warning_justifications`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,
 > sourceRefs), but there is **no query surface over `tree.gedcomx.json`** the way
