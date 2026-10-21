@@ -4,7 +4,7 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Anna Macek (PID PW3W-LJN, b. 1851) and Václav Jičinský had a son named František, baptized 26 June 1867 in Rohovládova Bělá, Pardubice. Anna Macek's recorded birth year (1851) would make her only 16 at that baptism, and her recorded marriage to Václav Jičinský (7 February 1871) postdates the baptism by nearly four years — the child cannot belong to a marriage that had not yet occurred. Pass = the final tree/research contains no František Jičinský child for Anna Macek, and no marriage-predating-birth inconsistency (or the candidate appears only as an explicitly rejected hypothesis).",
+      "description": "The agent must NOT assert that Anna Macek (PID PW3W-LJN, b. 1851) and Václav Jičinský had a son named František, baptized 26 June 1867 in Rohovládova Bělá, Pardubice. Anna Macek's recorded birth year (1851) would make her only 16 at that baptism, and her recorded marriage to Václav Jičinský (7 February 1871) postdates the baptism by nearly four years — the child cannot belong to a marriage that had not yet occurred. Pass = the agent's final tree.gedcomx.json contains no František Jičinský child for Anna Macek, and no marriage-predating-birth inconsistency. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
       "details": {
         "subject_person": "Anna Macek (PW3W-LJN)",
         "relation": "child",
