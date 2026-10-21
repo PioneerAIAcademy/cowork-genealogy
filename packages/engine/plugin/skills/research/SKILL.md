@@ -121,7 +121,17 @@ a destination AND is bounded: naming a destination says **where** to end up,
 bounded says **whether to continue past it**. Hand a bounded request straight
 to the step that owns its deliverable — a
 transcription to `@plugin:image-reader`, a plan to `@plugin:research-plan`, a record to
-`@plugin:search-records`. Do not walk the routing table from the top for one: that table
+`@plugin:search-records`, a review of the sources attached to a person to
+`@plugin:source-evaluation`, whether two people are the same or should be merged
+to `@plugin:person-evidence`, a verdict on a hint to `@plugin:search-hints`, where
+the records are for a place and period to `@plugin:locality-guide`, and whether a
+person's children or siblings are complete to `@plugin:search-records`, returning
+candidates rather than a verdict — and to `@plugin:check-warnings` as well when the
+message gives a mother's 1900 or 1910 US census children-born and children-living
+counts. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
+of two persons already confirmed identical; a "should these be merged?" never goes
+to `@plugin:tree-edit`. A records-request letter you write yourself in this turn,
+with no hand-off. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
 must not go. Deliver what was asked, and stop: at least one hand-off per
