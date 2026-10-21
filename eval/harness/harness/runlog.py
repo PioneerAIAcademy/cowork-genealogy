@@ -594,6 +594,16 @@ _TOTALS_KEYS = (
 )
 
 
+def bundled_cli_version() -> str | None:
+    """The Claude Code CLI bundled in the installed claude-agent-sdk wheel, which
+    both harnesses spawn (neither passes `cli_path`). None when unreadable."""
+    try:
+        from claude_agent_sdk._cli_version import __cli_version__
+    except Exception:  # noqa: BLE001 — a missing version must not stop a write
+        return None
+    return __cli_version__ or None
+
+
 def build_run_log(
     *,
     schema_version: int = 3,
@@ -613,6 +623,7 @@ def build_run_log(
     review_sample: dict[str, Any] | None = None,
     tool_search: bool | None = None,
     store: str | None = None,
+    cli_version: str | None = None,
 ) -> dict[str, Any]:
     """Wrap per-test entries in the run-log envelope.
 
@@ -633,6 +644,9 @@ def build_run_log(
     `store` is `"pg"` under `--store pg` and omitted on the file store, so
     every earlier log keeps its bytes. It also picks the directory the log is
     written to (`unit_dir_name`).
+
+    `cli_version` is the Claude Code CLI the run spawned (`bundled_cli_version`);
+    None omits it, as on every log written before the field.
     """
     totals = {k: 0 for k in _TOTALS_KEYS}
     for entry in tests:
@@ -672,6 +686,8 @@ def build_run_log(
         envelope["tool_search"] = tool_search
     if store is not None:
         envelope["store"] = store
+    if cli_version:
+        envelope["cli_version"] = cli_version
     # instrument is optional (issue #2479 PR 3): what produced and graded the run,
     # read by check_runlogs rule 2c. Absent when the tool catalog could not be read.
     if instrument is not None:

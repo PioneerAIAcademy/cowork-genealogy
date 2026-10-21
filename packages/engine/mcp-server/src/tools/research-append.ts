@@ -3982,6 +3982,234 @@ export function unlinkedProofInvariants(entry: any, preCallResearch: any): strin
   ];
 }
 
+const GRANDPARENT_ROLES = new Set(["father_of_mother", "mother_of_mother", "father_of_father", "mother_of_father"]);
+
+/** The parent side a record role names: `father`, `mother` or `parent`, read as
+ *  an underscore-delimited token because `record_role` is an open enum
+ *  (`father_of_deceased`, `mother_of_child_1`, `groom_father`, …). Grandparents,
+ *  godparents and in-laws are not the subject's parents. */
+export function parentSide(role: unknown): "father" | "mother" | "parent" | null {
+  if (typeof role !== "string") return null;
+  const r = role.toLowerCase();
+  if (GRANDPARENT_ROLES.has(r) || /grand|god|in_law/.test(r)) return null;
+  const tokens = r.split("_");
+  for (const side of ["father", "mother", "parent"] as const) {
+    if (tokens.includes(side)) return side;
+  }
+  return null;
+}
+
+/** A conclusion above `not_proved` may not rest on a parent nobody identified:
+ *  refused when a parent side the summary cites has no cited parent-role
+ *  assertion carrying a live, non-speculative `person_evidence` link
+ *  (`countsForProofGate`) in the pre-call document.
+ *
+ *  A side is cited by a parent-role assertion, or by an UNLINKED assertion whose
+ *  `structured_value.related_person_role` is a parent role ("child of William
+ *  Barker"), so dropping the parent's own assertions from the citation does not
+ *  evade it. A linked "child of" assertion cites nothing: its parent is usually
+ *  identified on another record, and counting it refused 26 legitimate e2e proofs.
+ *
+ *  Per side, not per persona: proof-conclusion's gate is satisfied per person, so
+ *  the father linked as `father_of_bride` on the marriage satisfies his unlinked
+ *  `father` persona on the baptism. A linked `parent` assertion satisfies either
+ *  side, and either side satisfies `parent`. Over the 251 committed proofs above
+ *  `not_proved` it refuses 5; one is a known false refusal (in-laws' fathers cited
+ *  as negative evidence), accepted because the rule cannot tell whose father a
+ *  role names without a tree lookup. Mined from MHGK-WT7 (#3659): `probable`
+ *  naming William Barker and Martha Edwards with every parent assertion unlinked. */
+export function unlinkedParentProofInvariants(entry: any, preCallResearch: any): string[] {
+  const tier = entry?.tier;
+  if (typeof tier !== "string" || tier === "not_proved" || tier === "disproved") return [];
+  const byId = new Map<string, any>(
+    (Array.isArray(preCallResearch?.assertions) ? preCallResearch.assertions : [])
+      .filter((a: any) => typeof a?.id === "string")
+      .map((a: any) => [a.id, a]),
+  );
+  const cited = [
+    ...(Array.isArray(entry?.supporting_assertion_ids) ? entry.supporting_assertion_ids : []),
+    ...(Array.isArray(entry?.claims) ? entry.claims : []).flatMap((c: any) =>
+      Array.isArray(c?.supporting_assertion_ids) ? c.supporting_assertion_ids : [],
+    ),
+  ].filter((id: unknown, i: number, all: unknown[]) => typeof id === "string" && byId.has(id) && all.indexOf(id) === i);
+  const linked = new Set(
+    (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : [])
+      .filter(countsForProofGate)
+      .map((pe: any) => pe?.assertion_id),
+  );
+
+  const citing = new Map<string, string[]>();
+  const satisfied = new Set<string>();
+  for (const id of cited as string[]) {
+    const a = byId.get(id);
+    const side = parentSide(a?.record_role);
+    if (side) {
+      citing.set(side, [...(citing.get(side) ?? []), id]);
+      if (linked.has(id)) satisfied.add(side);
+    }
+    const related = a?.structured_value && typeof a.structured_value === "object"
+      ? parentSide(a.structured_value.related_person_role)
+      : null;
+    if (related && !linked.has(id)) citing.set(related, [...(citing.get(related) ?? []), id]);
+  }
+  const ok = (side: string) =>
+    satisfied.has(side) ||
+    (side === "parent" && (satisfied.has("father") || satisfied.has("mother"))) ||
+    (side !== "parent" && satisfied.has("parent"));
+  const unsatisfied = [...citing].filter(([side]) => !ok(side));
+  if (unsatisfied.length === 0) return [];
+  const detail = unsatisfied.map(([side, ids]) => `${side} (${ids.join(", ")})`).join("; ");
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: tier '${tier}' cites a parent no identity ` +
+      `decision has identified — ${detail} — and none of the cited parent assertions on that side ` +
+      `is linked to a person in person_evidence, so nobody has decided who that parent is. ` +
+      `Removing these ids from supporting_assertion_ids or a claim and sending the write again ` +
+      `does NOT fix this: a conclusion that still names, relies on or encodes that parent is the ` +
+      `same unproved parentage with its evidence hidden. Do one of: (1) run person-evidence on ` +
+      `those assertions first (from an agent, hand back to the main thread and name it), then ` +
+      `send this write again with the ids still cited; (2) record the attempt at 'not_proved' ` +
+      `now; (3) only if the question does not ask who the parents are, rewrite the conclusion ` +
+      `so it no longer states or depends on who that parent is, and create no tree person or ` +
+      `ParentChild relationship for them.`,
+  ];
+}
+
+const PARENTAGE_FINDING =
+  /\b(?:(?:the\s+)?(?:son|daughter|child)\s+of|(?:his|her|their)\s+(?:father|mother|parents)\s+(?:was|were|is|are)|born\s+to)\b/gi;
+
+/** A record as the subject of a verb reporting what it says: "the index records
+ *  Jonathan, son of William". The verb alone is not enough: "the evidence shows",
+ *  "given the correlation" and "United States" open findings, not record reports. */
+const RECORD_REPORTING =
+  /\b(?:register|index|entry|record|certificate|census|transcript(?:ion)?|abstract|image|page)s?\s+(?:\w+\s+){0,2}?(?:reads?|reading|records?|recording|shows?|showing|lists?|listing|names?|naming|gives?|giving|states?|stating|describes?|describing|calls?|calling|transcribes?|transcribing)\b/i;
+
+/** Quoted record text says what a record reads, not what the proof concludes. */
+function stripQuoted(text: string): string {
+  return text
+    .replace(/"[^"\n]*"|“[^”\n]*”/g, " ")
+    .replace(/(^|[\s(])'[^'\n]+'(?=[\s.,;:)]|$)/g, "$1 ");
+}
+
+/** A conclusion above `not_proved` may not STATE a parent nobody identified.
+ *
+ *  `unlinkedParentProofInvariants` reads the citation, so dropping the parent's
+ *  assertions from it passes. This reads the prose: refused when the narrative
+ *  or a claim asserts parentage ("the son of", "his parents were", "born to")
+ *  naming, within the sentence, the given name of a parent who appears in an
+ *  unlinked parent-role name assertion on a record the summary cites, and no
+ *  name assertion linked (live, not speculative) to anyone but the subject
+ *  carries that name: a namesake son's own name does not identify his father. Quoted record text is ignored, and so is a phrase whose sentence reports
+ *  a record before it ("the index records Jonathan, son of William"): a proof
+ *  may report what a record reads, as may "the christening of a Jonathan, son of
+ *  William". The parent must be the SUBJECT's, the person most of the cited,
+ *  linked assertions are about: a bare `father` when the subject is linked on
+ *  that record, `father_of_bride` when the bride is (mcaloney-mother states the
+ *  mother's own parents, which concludes nothing about the subject). An
+ *  appositive with no reporting verb ("born
+ *  at Whitehaven, son of William Barker") is a finding, and is refused. So is
+ *  "the daughter of a different István", which sets a family aside rather than
+ *  naming a parent (rozal-sarman-daughter, the one false refusal measured).
+ *  Mined from ut_proof_conclusion_32f (#3659), which failed 3/3 with the ids
+ *  dropped and "the son of William Barker … and Martha Edwards" in the prose. */
+export function unlinkedParentNarrativeInvariants(entry: any, preCallResearch: any): string[] {
+  const tier = entry?.tier;
+  if (typeof tier !== "string" || tier === "not_proved" || tier === "disproved") return [];
+  const assertions: any[] = Array.isArray(preCallResearch?.assertions) ? preCallResearch.assertions : [];
+  const byId = new Map<string, any>(assertions.filter((a) => typeof a?.id === "string").map((a) => [a.id, a]));
+  const claims: any[] = Array.isArray(entry?.claims) ? entry.claims : [];
+  const cited = [
+    ...(Array.isArray(entry?.supporting_assertion_ids) ? entry.supporting_assertion_ids : []),
+    ...claims.flatMap((c: any) => (Array.isArray(c?.supporting_assertion_ids) ? c.supporting_assertion_ids : [])),
+  ];
+  const records = new Set(cited.map((id: unknown) => byId.get(id as string)?.record_id).filter((r) => typeof r === "string"));
+  if (records.size === 0) return [];
+  const personOf = new Map<string, string>(
+    (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : [])
+      .filter((pe: any) => countsForProofGate(pe) && typeof pe?.person_id === "string")
+      .map((pe: any) => [pe.assertion_id, pe.person_id]),
+  );
+  const linked = new Set(personOf.keys());
+  // The subject: the person most of the cited, linked assertions are about.
+  const counts = new Map<string, number>();
+  for (const id of cited) {
+    const p = personOf.get(id as string);
+    if (p) counts.set(p, (counts.get(p) ?? 0) + 1);
+  }
+  const subject = [...counts].sort((x, y) => y[1] - x[1])[0]?.[0];
+  if (!subject) return [];
+  // Whose parent a role names: `father_of_bride` and `groom_father` the named
+  // party's, a bare `father` or `mother_1` the record's principal's.
+  const isSubjectsParent = (a: any) => {
+    const role = String(a.record_role).toLowerCase();
+    const party = /^(?:father|mother|parent)_of_(.+)$/.exec(role)?.[1] ?? /^(.+)_(?:father|mother|parent)$/.exec(role)?.[1];
+    return assertions.some(
+      (b) =>
+        b?.record_id === a.record_id &&
+        personOf.get(b.id) === subject &&
+        (party ? String(b.record_role).toLowerCase() === party : !parentSide(b.record_role)),
+    );
+  };
+  const nameOf = (a: any) => {
+    const sv = a?.structured_value;
+    const given = sv && typeof sv === "object" && typeof sv.given === "string" ? sv.given.trim() : "";
+    const surname = sv && typeof sv === "object" && typeof sv.surname === "string" ? sv.surname.trim() : "";
+    return { given, surname };
+  };
+  const identified = assertions
+    .filter((a) => a?.fact_type === "name" && linked.has(a.id) && personOf.get(a.id) !== subject)
+    .map(nameOf);
+  const isIdentified = (n: { given: string; surname: string }) =>
+    identified.some(
+      (m) =>
+        m.given.toLowerCase() === n.given.toLowerCase() &&
+        (!m.surname || !n.surname || m.surname.toLowerCase() === n.surname.toLowerCase()),
+    );
+  const unidentified = new Map<string, string[]>();
+  for (const a of assertions) {
+    if (a?.fact_type !== "name" || linked.has(a.id) || !records.has(a.record_id) || !parentSide(a.record_role)) continue;
+    if (!isSubjectsParent(a)) continue;
+    const n = nameOf(a);
+    if (n.given.length < 2 || isIdentified(n)) continue;
+    unidentified.set(n.given, [...(unidentified.get(n.given) ?? []), a.id]);
+  }
+  if (unidentified.size === 0) return [];
+
+  const texts = [
+    typeof entry?.narrative_markdown === "string" ? entry.narrative_markdown : "",
+    ...claims.map((c: any) => (typeof c?.claim === "string" ? c.claim : "")),
+  ];
+  const named = new Map<string, string[]>();
+  for (const text of texts) {
+    const prose = stripQuoted(text);
+    for (const m of prose.matchAll(PARENTAGE_FINDING)) {
+      const rest = prose.slice(m.index! + m[0].length, m.index! + m[0].length + 160);
+      const sentence = rest.split(/\.\s|\n/)[0];
+      if (/^\s*[*_]*(?:a|an|another|some)\b/i.test(sentence)) continue;
+      const before = prose.slice(0, m.index!);
+      const opening = before.slice(Math.max(before.lastIndexOf(". "), before.lastIndexOf("\n")) + 1);
+      if (RECORD_REPORTING.test(opening)) continue;
+      // "the christening of a Jonathan, son of William": a record's child, not the subject.
+      if (/\b(?:a|an)\s+[A-Z][\w'’-]*,?\s*$/.test(opening)) continue;
+      for (const [given, ids] of unidentified) {
+        const escaped = given.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        if (new RegExp(`\\b${escaped}\\b`, "i").test(sentence)) named.set(given, ids);
+      }
+    }
+  }
+  if (named.size === 0) return [];
+  const detail = [...named].map(([given, ids]) => `${given} (${ids.join(", ")})`).join("; ");
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: tier '${tier}' states as a finding that the ` +
+      `subject is the child of a parent no identity decision has identified — ${detail} — and no ` +
+      `name assertion for that parent is linked to a person in person_evidence. Do one of: ` +
+      `(1) run person-evidence on those assertions first (from an agent, hand back to the main ` +
+      `thread and name it), then send this write again; (2) record the attempt at 'not_proved' ` +
+      `now; (3) if the question does not ask who the parents are, remove the parentage from the ` +
+      `conclusion: the narrative may quote what a record reads ("child of William Barker") but ` +
+      `may not state "the son of", "his parents were" or "born to" that parent.`,
+  ];
+}
+
 /** A question's `status` may not claim an exhaustiveness that its stop decision
  *  does not carry.
  *
@@ -6507,6 +6735,16 @@ function applyOne(
       // Tier-gated like the line above, so a narrative edit to a summary that
       // predates the rule is not refused.
       invariantErrors.push(...unlinkedProofInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...unlinkedParentProofInvariants(resultEntry, preCallResearch));
+    }
+    // Also on a narrative or claims edit: a parentage can be stated in prose
+    // after the tier is already set, by an update that leaves `tier` alone.
+    if (
+      tierTouchedThisOp ||
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "narrative_markdown") ||
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "claims")
+    ) {
+      invariantErrors.push(...unlinkedParentNarrativeInvariants(resultEntry, preCallResearch));
     }
     // NOT gated on `tierTouchedThisOp`, unlike the exhaustiveness check above.
     // That gate asks "is this op setting the tier"; this rule asks "does the
