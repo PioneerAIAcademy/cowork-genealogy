@@ -265,6 +265,19 @@ def test_gate_fails_an_unstaged_claim_no_call_sent():
         gate(BEFORE, after, calls)
 
 
+def test_gate_fails_an_unstaged_entry_with_no_record_search_call():
+    """An entry no call stands behind claims every filter it names."""
+    after = state(entry("log_001", {"surname": "Flynn", "residencePlace": "Ohio"}))
+    calls = log_call([(_nil_op({"surname": "Flynn", "residencePlace": "Ohio"}), "log_001")])
+    with pytest.raises(AssertionError) as info:
+        try:
+            gate(BEFORE, after, calls)
+        except pytest.skip.Exception as skipped:
+            pytest.fail(f"the gate skipped instead of judging the entry: {skipped}")
+    assert "surname='Flynn'" in str(info.value)
+    assert "residencePlace='Ohio', which no record_search call sent" in str(info.value)
+
+
 def test_gate_passes_a_filter_another_call_sent():
     """No pairing: a key any call sent was sent, whichever call the entry documents."""
     after = state(entry("log_001", {"surname": "Flynn", "residencePlace": "Ohio"}))

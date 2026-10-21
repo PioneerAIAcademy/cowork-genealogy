@@ -775,8 +775,6 @@ def test_unstaged_log_query_filters_were_sent(before_state, after_state, tool_ca
     if not unstaged:
         pytest.skip("no new unstaged record_search log entries with a query")
     calls = [c for c in tool_calls if _bare_tool_name(c.get("tool")) == "record_search"]
-    if not calls:
-        pytest.skip("no record_search calls this turn")
     vocabulary = _tool_input_keys("record_search")
     if vocabulary is None:
         pytest.skip("the compiled tool schema is unavailable, so the filter vocabulary is unknown")
