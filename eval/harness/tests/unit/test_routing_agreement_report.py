@@ -80,6 +80,7 @@ def test_planted_run_counts_each_case(tmp_path):
     assert by_paired["research-plan"].unit == "research-exhaustiveness"
     assert by_paired["extraction"].matched  # record-extractor folds to extraction
     assert not by_paired["untyped"].matched
+    assert by_paired["untyped"].unit == "untyped"  # its own row, never under the step
     assert by_paired["person-evidence"].matched  # prefix stripped
 
 
@@ -133,3 +134,4 @@ def test_report_prints_both_populations_and_the_sha_breakdown(tmp_path):
     assert "== Router decisions" in out and "== Subagent decisions" in out
     assert "abc1234" in out and "#3494=no" in out and "#3583=?" in out
     assert "Unpaired" in out and "router 1" in out
+    assert any(line.strip().startswith("untyped ") for line in out.splitlines())

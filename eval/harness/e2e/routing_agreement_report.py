@@ -28,7 +28,8 @@ run, no model, no API spend.
   (`research-exhaustiveness, then proof-conclusion` is `research-exhaustiveness`;
   `extraction (…)` is `extraction`). A decision **matches** when any question's
   unit equals the paired unit. A decision is counted under the unit it matched,
-  else under its first question's unit.
+  else under its first question's unit, except that a decision paired with an
+  untyped spawn has its own `untyped` row.
 
 ## Read it with its denominators
 
@@ -86,6 +87,8 @@ class Decision(NamedTuple):
 
     @property
     def unit(self) -> str:
+        if self.paired == UNTYPED:
+            return UNTYPED
         return self.paired if self.matched else self.steps[0]
 
 
