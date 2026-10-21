@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 15, flag adds_son, confidence 3). Resolved as a true match: Manuel de Jesus Gonzalez Tumbaco confirmed as Santiago Gonzalez's son (see README Notes for reviewers)."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 15, flag adds_son, confidence 3). Resolved as a true match: Manuel de Jesus Gonzalez Tumbaco confirmed as Santiago Gonzalez's son (see README Notes for reviewers).",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:8DNC-SB6Z",
+    "identity": "same"
+  }
 }

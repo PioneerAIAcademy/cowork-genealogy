@@ -136,6 +136,7 @@ Test metadata.
 | `name` | string | yes | Short human-readable name |
 | `genre` | enum | no | `strip` (default) or `record-hint` — see §3.6 |
 | `image_basis` | boolean | no | Record-hint fixtures only. `true` when the resolution rests on reading the original page images; `false`/absent when it rests on indexes alone. When `true`, `expected-findings.json` must cite an image ark — see §3.6.1. A non-boolean value is a hard `ERROR`. |
+| `hint` | object \| null | resolved record-hint fixtures | Record-hint fixtures only. The record persona FamilySearch hinted and the genealogist's identity judgement of it: `{"persona_ark": "ark:/61903/1:1:XXXX-XXXX", "identity": "same" \| "different" \| "unresolved"}`, no other keys. `persona_ark` is the full `1:1:` record-persona ark — never a `1:2:` record ark, a `3:1:`/`3:2:` image ark, a bare id or a tree PID. `identity` says whether that persona is the tree person (`source_pid`); it is **not** the §3.6 outcome number. An explicit `null` for a fixture with no hint persona. The key must be present on every resolved record-hint fixture (absent is a hard `ERROR`); a draft still carrying `DRAFT PENDING ADJUDICATION` is exempt. Scored by `make matcher-accuracy` — see §3.6.2. |
 | `source_pid` | string | yes | FamilySearch PID the fixture was captured from |
 | `captured` | string (YYYY-MM-DD) | yes | Date the snapshot was taken |
 | `researcher_question` | string | yes | Natural-language question that becomes the `/research` user message |
@@ -145,7 +146,7 @@ Test metadata.
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
 | `blocked_tools` | array of strings | no | Extra MCP tools (bare advertised names, e.g. `"wiki_search"`) denied for this fixture's runs, beyond the universal §6.1 tree block. For fixtures whose ground truth a specific tool can surface directly — e.g. a fixture built from a public wiki case-study article that names the answer. Document the reason in the fixture README |
-| `caps` | object | no | Per-fixture stop-condition overrides — any of the seven keys `wall_clock_seconds`, `inactivity_seconds`, `progress_stall_seconds`, `tool_calls`, `max_turns`, `max_cost_usd`, `max_continue_nudges`. Omitted keys inherit the defaults in `FixtureCaps` (`eval/harness/e2e/orchestrator.py`), which is the single source of truth for their values — do not copy them here. A **new** override must give its reason in the fixture README. (`susan-miller-birth` is the precedent for stating one at all: it records the raised wall-clock cap and the timed-out run that motivated it in the fixture's `notes`. From now on that reasoning belongs in the README, where a reader looks for it.) An **unrecognised** key inside `caps` is silently ignored — the loader reads the seven names above and fills the rest from defaults, and nothing validates `fixture.json`, so a typo'd cap looks applied and is not. |
+| `caps` | object | no | Per-fixture stop-condition overrides — any of the seven keys `wall_clock_seconds`, `inactivity_seconds`, `progress_stall_seconds`, `tool_calls`, `max_turns`, `max_cost_usd`, `max_continue_nudges`. Omitted keys inherit the defaults in `FixtureCaps` (`eval/harness/e2e/orchestrator.py`), which is the single source of truth for their values — do not copy them here. A **new** override must give its reason in the fixture README. (`susan-miller-birth` is the precedent for stating one at all: it records the raised wall-clock cap and the timed-out run that motivated it in the fixture's `notes`. From now on that reasoning belongs in the README, where a reader looks for it.) An **unrecognised** key inside `caps` is silently ignored — the loader reads the seven names above and fills the rest from defaults, and nothing validates the keys inside `caps`, so a typo'd cap looks applied and is not. |
 
 
 ### 3.2 `starting-research.json`
@@ -272,6 +273,14 @@ ceiling, a permanent `avoid_guard.forced_false` entry in every run log,
 and one structural judge-vs-human disagreement per annotated run
 against `calibrate_judge`'s `PER_FINDING_TARGET`. Worked example:
 `eval/tests/e2e/hinrich-burmeister-spouse/README.md`.
+
+Third, for a non-answer finding that a record attached to the subject
+answers on its own. A project extracts every attached record before its
+first question (§6.1), so such a finding measures setup, not research.
+`maria-bracero-marriage`'s f2, her parents, is the worked example: her
+attached 1973 death registration names her father, while f1, the
+marriage itself, still needs the hint record (lead, 2026-10-20). The
+README says so, and the record is listed as starting evidence (§6.1).
 
 #### 3.4.1 Negative findings (`polarity: "avoid"`)
 
@@ -491,6 +500,9 @@ stripped:
   **identical** to it, so `snapshot --check` can still audit upstream
   drift. `e2e.author validate` enforces the equality and skips the
   presence mirror (expected findings are extra-tree by definition).
+  `make e2e-validate` and the harness's corpus test enforce it too, on
+  every push, through `lint_fixture`, and both fail a record-hint
+  fixture with no unstripped tree.
 - Findings drafted from an unverified hint record are a **draft
   pending adjudication**: a genealogist must confirm the hint record
   concerns the tree person before the fixture's grades are trusted.
@@ -501,7 +513,8 @@ stripped:
   `polarity: "avoid"` guard naming the claim the agent must not
   assert, plus a `required` recover finding that the agent documented
   the negative conclusion (§3.4.1). Say in the fixture README which
-  state the fixture is in.
+  state the fixture is in, and record the hinted persona and the
+  identity call in `fixture.json`'s `hint` (§3.6.2).
 - **The adjudicator may use `packages/engine/mcp-server/dev/try-*.ts`
   against live FamilySearch to *retrieve* records** — collections search,
   record search, record read, image read. **The identity judgement stays
@@ -570,6 +583,58 @@ flag is `false` or absent the bar is unchanged — one full ark anywhere.
 A non-boolean `image_basis` (`"true"`, `1`, `null`) is a hard `ERROR`,
 because truthiness-coercing it would let `"false"` enable the check and
 a typo'd string silently disable it.
+
+#### 3.6.2 The hint persona and the matcher truth set (decision)
+
+Every resolved record-hint fixture carries a top-level `hint` in
+`fixture.json`:
+
+```json
+"hint": {"persona_ark": "ark:/61903/1:1:XXXX-XXXX", "identity": "same"}
+```
+
+`persona_ark` is the record persona FamilySearch hinted, as a full `1:1:`
+record-persona ark — never a `1:2:` record ark, a `3:1:`/`3:2:` image ark,
+a bare id or a tree PID. `identity` is `"same"`, `"different"` or
+`"unresolved"`. A fixture with no hint persona writes an explicit
+`"hint": null` (`thomas-seaver-other-wife`, authored in the avoid-pair
+shape from the start); an absent key is a hard `ERROR`, so a fixture
+cannot drop out of the truth set unnoticed. A draft (its README still
+carries `DRAFT PENDING ADJUDICATION`) is exempt, like the §3.6.1 ark rules.
+
+**`identity` is the genealogist's identity judgement, never derived from
+the outcome number.** It answers one question — is this persona the tree
+person (`source_pid`)? The outcome number answers another — what do the
+fixture's findings become? They can diverge, and routinely do on outcome
+(b), which `/resolve-record-hint` calls outcome 2:
+`victoriana-vasquez-marriage` is outcome (b) because the hinted 1875
+record is a velación rather than the marriage, yet the persona is her, so
+`same`; `grigory-kokosha-death` is outcome (b) because the death entry is
+genuine but the index cannot carry the identification, so `unresolved`.
+
+**`make matcher-accuracy` scores only `same`/`different` pairs**, through
+the exported `scorePair` in `packages/engine/mcp-server/src/utils/match-engine.ts`
+— the path `same_person` uses, so there is no second scoring path to
+drift. It lists `unresolved` and `null` fixtures as skipped, with a
+count. The record documents it fetches go in the gitignored cache
+`dev/.matcher-cache/` under `packages/engine/mcp-server/`; FamilySearch
+record payloads are never committed. It needs a FamilySearch login, so no
+CI job runs it.
+
+**The check is a floor, not a pinned value.** It exits non-zero when the
+AUC falls below `MIN_AUC` (environment variable, default `0.65`). It also
+exits non-zero when no pair could be scored, when either class is empty
+(the AUC is undefined without both `same` and `different` pairs), or when
+any labelled fixture could not be scored, so a run that silently scored
+less than the truth set cannot pass. There is no committed baseline
+file: the label set grows with every resolved hint fixture, so a pinned
+AUC would move with each resolution and fail on new labels rather than on
+a regressed matcher.
+
+**The blind-bundle digest ignores `hint`:** `blind_bundle_digest` hashes
+`fixture.json` without it (`_DIGEST_IGNORED_FIXTURE_KEYS` in
+`eval/harness/e2e/blind_bundle.py`; §7.4), so writing or correcting a hint
+does not orphan an earlier grade's stamp.
 
 ---
 
@@ -987,6 +1052,21 @@ mode; lead ruling 2026-09-27).
 > concluded/attached** on the live person, so the recall really measures
 > research. The proof-quality axis (§7) is the backstop that distinguishes
 > "found the pre-attached record" from "did sound research."
+>
+> A project also extracts every indexed record attached to its subject
+> before its first question, with no search at all. So a record that an
+> expected finding cites by its `1:1:` ark, and that is attached to a
+> subject person in the starting tree (at person, name or fact level),
+> is a leak unless `eval/tests/e2e/attached-evidence-allowlist.json`
+> lists it for that fixture. The leak check,
+> `test_e2e_attached_evidence.py`, fails on an unlisted one, on a stale
+> entry and on a malformed one. An entry means the record is evidence
+> the research legitimately starts from, such as the subject's own
+> baptism, and its reason says which finding still needs the research.
+> A record that would answer a required finding on its own is not an
+> entry: changing that finding, or the fixture's genre, is the lead's
+> call. A strip fixture may instead strip the source; a record-hint
+> fixture never strips (§3.6).
 
 **Why blocking is safe for `/research`.** First, the block lives **only
 in the e2e harness** (`eval/harness/e2e/orchestrator.py`, a `PreToolUse`
@@ -1484,7 +1564,7 @@ copied from its export (`/grade-e2e-run`, "Grading a prototype run").
 | `notes` | no | Sparse `{finding_id: text}` map, surfaced on that finding's disagreement line. |
 | `annotator` | no | Provenance; git blame on the committed file is the fallback. |
 | `findings_hash` | no | sha256 of the normalized `expected-findings.json` this grade was produced against, so a later edit to a finding's body cannot silently invalidate the grade while its id stays put. Written by `/grade-e2e-run`'s stamp step, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. |
-| `blind_bundle_digest` | no | sha256 of the normalized content of the 4 files the blind grader reads (`expected-findings.json`, `fixture.json`, `final-tree.gedcomx.json`, `final-research.json`), stamped by `/grade-e2e-run`'s step 7, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. Covers the full grading surface: `findings_hash` catches edits to expected-findings only; this catches edits to any of the four. |
+| `blind_bundle_digest` | no | sha256 of the normalized content of the 4 files the blind grader reads (`expected-findings.json`, `fixture.json`, `final-tree.gedcomx.json`, `final-research.json`), stamped by `/grade-e2e-run`'s step 7, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. Covers the full grading surface: `findings_hash` catches edits to expected-findings only; this catches edits to any of the four, except `fixture.json`'s top-level `hint`, which it ignores (§3.6.2). |
 
 There is **no `verdict` field** — the per-run verdict is derived from `per_finding`
 + the findings' `required` flags by the §7.2 rule.
@@ -1548,7 +1628,10 @@ Four integrity rules make the agreement number trustworthy:
 - **Bundle-provenance stamped.** `/grade-e2e-run`'s step 7 stamps
   `blind_bundle_digest` — a sha256 over the normalized content of the 4 files
   the blind grader reads (`expected-findings.json`, `fixture.json`,
-  `final-tree.gedcomx.json`, `final-research.json`). The loader checks
+  `final-tree.gedcomx.json`, `final-research.json`). `fixture.json` is hashed
+  without its top-level `hint`: that is adjudication metadata, not
+  grading input, and a grade made before it existed cannot have been influenced
+  by it, so backfilling it leaves the stamp valid. The loader checks
   this digest: a present stamp that no longer matches is a hard error
   (re-grade or delete); an absent stamp is grandfathered (included but reported
   unverifiable). This is the wider counterpart to `findings_hash`, which covers
