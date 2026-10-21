@@ -7,7 +7,7 @@ import type { RecordSearchInput } from "../../src/types/record-search.js";
 
 /**
  * Every concrete `record_search` parameter shape prescribed in
- * search-records/references/search-strategy-levers.md must actually satisfy
+ * the "Search strategy levers" reference in agents/search-records.md must actually satisfy
  * the shipped `validateInput` -- a reference file can prescribe a call the
  * tool refuses, and nothing else reads the two together (issue #1642,
  * clack391's validator request, 2026-08-27).
@@ -28,8 +28,7 @@ import type { RecordSearchInput } from "../../src/types/record-search.js";
 const here = dirname(fileURLToPath(import.meta.url));
 const leversPath = join(
   here, "..", "..", "..", "..", "..",
-  "packages", "engine", "plugin", "skills", "search-records",
-  "references", "search-strategy-levers.md",
+  "packages", "engine", "plugin", "agents", "search-records.md",
 );
 const leversMd = readFileSync(leversPath, "utf8");
 const NL = String.fromCharCode(10);
@@ -63,11 +62,11 @@ function rowsFromBody(body: string, section: string): LeverRow[] {
 }
 
 function tableRowsInSection(md: string, heading: string): LeverRow[] {
-  const marker = "## " + heading;
+  const marker = "### " + heading;
   const start = md.indexOf(marker);
   if (start === -1) throw new Error("section not found: " + heading);
   const rest = md.slice(start + marker.length);
-  const nextHeading = rest.indexOf(NL + "## ");
+  const nextHeading = rest.search(/\n#{1,3} /);
   const body = nextHeading === -1 ? rest : rest.slice(0, nextHeading);
   return rowsFromBody(body, heading);
 }

@@ -14,11 +14,12 @@
       "name-shift",
       "plan-execution",
       "pre-1880-census-household",
-      "topical-fixture-required"
+      "topical-fixture-required",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute plan item pli_001 — the 1860 census search for Sarah in Dodge County. She has two name entries in the tree: her birth name 'Sarah Ann Mullen' and her married name 'Sarah Mullen Price'. Since 1860 is before her 1872 marriage, use the birth name for the search.",
+    "delegation": "Execute plan item pli_001 — the 1860 census search for Sarah in Dodge County. She has two name entries in the tree: her birth name 'Sarah Ann Mullen' and her married name 'Sarah Mullen Price'. Since 1860 is before her 1872 marriage, use the birth name for the search.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "maiden-to-married-name-shift"
   },
   "execution": {

@@ -221,12 +221,12 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **3** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **29** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **2** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **30** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-nine agents are `gps-mentor`, `record-structurer`, `image-reader`,
+The thirty agents are `gps-mentor`, `record-structurer`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
-`search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
+`search-full-text`, `search-images`, `search-records`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`,
 `timeline`, `search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
@@ -266,7 +266,7 @@ Two qualifications, both from the source:
 `make e2e-compaction` is the corpus-scale follow-up to this single-session
 measurement — it splits every committed e2e run at its compaction boundaries
 and checks a narrower, already-partly-anchored case: whether `record_search`'s
-`subjectId` argument (`search-records/SKILL.md` prose, feeding a fold in
+`subjectId` argument (`search-records.md` agent prose, feeding a fold in
 `record-search.ts` — see ADR-0003) keeps being supplied late in a session.
 Raw supply is lower late in a session and the shipped nudge shows no lift
 there — but most of that gap is not decay: the tool's own schema permits
@@ -355,8 +355,9 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-1 of the 3 skills carries a `references/` folder, loaded on demand, in-session,
-for material too long to sit in the skill body.
+None of the 2 skills carries a `references/` folder today (`search-records`, the last, is an
+agent now); a skill that does has it loaded on demand, in-session, for material
+too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
 a reference the body names links on to it. Nothing lists a `references/` folder at
@@ -1533,9 +1534,9 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 3 skills carry a `**Narration:**` line near the top of the body —
+Both skills carry a `**Narration:**` line near the top of the body —
 directly after the frontmatter for `forget-and-rederive`, right after the
-title heading for the other two — instructing Claude to read
+title heading for `research` — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. The `init-project` agent writes the profile at
 project creation as fixed values and asks only the research objective — it
