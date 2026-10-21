@@ -19,8 +19,8 @@ const strategiesPath = join(
   "search-full-text.md",
 );
 const mechanicsPath = join(
-  here, "..", "..", "..", "plugin", "skills",
-  "search-records", "references", "name-search-mechanics.md",
+  here, "..", "..", "..", "plugin", "agents",
+  "search-records.md",
 );
 
 interface VariantEntry {

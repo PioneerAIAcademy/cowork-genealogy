@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 23, flag adds_daughter, confidence 3). Resolved true match: genealogist confirmed against the tree person's existing sources and the hint record (Mexican civil registration death record)."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 23, flag adds_daughter, confidence 3). Resolved true match: genealogist confirmed against the tree person's existing sources and the hint record (Mexican civil registration death record).",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:QG3Q-RMP7",
+    "identity": "same"
+  }
 }

@@ -321,7 +321,7 @@ def git_arm_e2e_runlogs() -> list[Path] | None:
     return _e2e_runlogs_by_filter("ARM")
 
 
-def _read_at_head(head: str, rel: Path) -> dict | None:
+def _read_at_head(head: str, rel: Path, *, missing_ok: bool = False) -> dict | None:
     """Parse ``rel`` out of the git tree at ``head``. None on anything unusable.
 
     The content sibling of `_in_head_tree`, which answers presence only. Reading
@@ -342,6 +342,10 @@ def _read_at_head(head: str, rel: Path) -> dict | None:
     a file it never opened as clean, which is the same silent-zero the
     selectors refuse for — and it is reachable, since these git subprocesses do
     intermittently fail under load.
+
+    ``missing_ok=True`` returns None on a non-zero ``git show`` instead, for a
+    caller (``_fixture_json_changed_beyond_ignored``) whose path may be absent
+    at that commit and which treats None as the fail-safe answer.
     """
     proc = subprocess.run(
         ["git", "show", f"{head}:{rel.as_posix()}"],
@@ -349,6 +353,8 @@ def _read_at_head(head: str, rel: Path) -> dict | None:
         capture_output=True,
     )
     if proc.returncode != 0:
+        if missing_ok:
+            return None
         raise GateUnavailable(
             f"could not read {rel} out of the tree at {head} (git exited "
             f"{proc.returncode}), though the selector just reported it as added "
@@ -742,20 +748,49 @@ def _findings_hash_local(expected_findings_path: Path) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
-def _hash_file_local(key: str, path: Path) -> str:
+# Hand-kept in sync with `e2e.blind_bundle._DIGEST_IGNORED_FIXTURE_KEYS`, which
+# carries the rationale: top-level fixture.json keys the bundle digest ignores.
+# `main` reads it too: a fixture.json edit confined to these keys does not make
+# the fixture's graded runs PR-touched.
+_DIGEST_IGNORED_FIXTURE_KEYS = ("hint",)
+
+
+def _fixture_json_changed_beyond_ignored(rel: Path, base: str, head: str) -> bool:
+    """Whether fixture.json ``rel`` differs between *base* and *head* outside
+    its top-level ``_DIGEST_IGNORED_FIXTURE_KEYS``.
+
+    A change confined to those keys (the issue #3553 ``hint`` backfill) cannot
+    move a grade's ``blind_bundle_digest``, so it does not make the fixture's
+    annotations accountable. Absent, unreadable or not an object on either side
+    answers True: widening is the fail-safe direction.
+    """
+    sides = [_read_at_head(sha, rel, missing_ok=True) for sha in (base, head)]
+    if any(s is None for s in sides):
+        return True
+    old, new = (
+        {k: v for k, v in s.items() if k not in _DIGEST_IGNORED_FIXTURE_KEYS}
+        for s in sides
+    )
+    return old != new
+
+
+def _hash_file_local(key: str, path: Path, ignore_keys: tuple[str, ...] = ()) -> str:
     """Reimplement ``harness.snapshot.hash_file`` using only stdlib.
 
     Hand-kept in sync — the normalization for ``.json`` is: JSON parse →
     ``json.dumps(sort_keys=True, indent=2, ensure_ascii=False)`` → trailing
     newline → sha256. Returns ``""`` for a missing file, matching
     ``hash_file``. Non-JSON keys would use raw bytes, but the 4 bundle
-    files are all JSON.
+    files are all JSON. Top-level *ignore_keys* of a JSON object are dropped
+    before hashing.
     """
     import hashlib
     if not path.exists():
         return ""
     raw = path.read_text(encoding="utf-8")
     parsed = json.loads(raw)
+    if ignore_keys and isinstance(parsed, dict):
+        parsed = {k: v for k, v in parsed.items() if k not in ignore_keys}
     normalized = json.dumps(parsed, sort_keys=True, indent=2, ensure_ascii=False) + "\n"
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
@@ -770,7 +805,8 @@ def _bundle_digest_local(
 
     Hand-kept in sync with ``e2e.blind_bundle.bundle_digest`` — hash each
     of the 4 files via ``hash_file``, build a sorted ``{filename: hash}``
-    map, then sha256 the JSON of that map.
+    map, then sha256 the JSON of that map. ``fixture.json`` is hashed without
+    its ``_DIGEST_IGNORED_FIXTURE_KEYS``.
     """
     import hashlib
     fixture_dir = fixtures_dir / slug
@@ -783,7 +819,8 @@ def _bundle_digest_local(
     ]
     file_map: dict[str, str] = {}
     for p in paths:
-        file_map[p.name] = _hash_file_local(p.name, p)
+        ignore = _DIGEST_IGNORED_FIXTURE_KEYS if p.name == "fixture.json" else ()
+        file_map[p.name] = _hash_file_local(p.name, p, ignore)
     combined = json.dumps(file_map, sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
@@ -1077,6 +1114,10 @@ def main() -> int:
                 and p.parts[:3] == ("eval", "tests", "e2e")
                 and p.name in ("expected-findings.json", "fixture.json")
             ):
+                if p.name == "fixture.json" and not _fixture_json_changed_beyond_ignored(
+                    p, os.environ["BASE_SHA"], os.environ["HEAD_SHA"]
+                ):
+                    continue
                 for a in (REPO_ROOT / e2e_prefix / p.parts[3]).glob("run-*.ann.json"):
                     touched_ann_rels.add(a.relative_to(REPO_ROOT / e2e_prefix))
     except (subprocess.CalledProcessError, FileNotFoundError):

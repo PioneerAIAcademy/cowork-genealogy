@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 13, hint-samples.csv row 486, flag adds_birth, confidence 3). Resolved 2026-10-14 (#3335): the 1808 Hvammur church census hint is the tree's man, and the answer is fuller than the hint — christened 9 June 1777 at Hvammur in Hvammssveit, Dalasýsla (baptism ark:/61903/1:1:FGPJ-H29). Decided from indexes alone; no image read."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 13, hint-samples.csv row 486, flag adds_birth, confidence 3). Resolved 2026-10-14 (#3335): the 1808 Hvammur church census hint is the tree's man, and the answer is fuller than the hint — christened 9 June 1777 at Hvammur in Hvammssveit, Dalasýsla (baptism ark:/61903/1:1:FGPJ-H29). Decided from indexes alone; no image read.",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:8LRG-VQMM",
+    "identity": "same"
+  }
 }
