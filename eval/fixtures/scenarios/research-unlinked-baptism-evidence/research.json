@@ -1,0 +1,693 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Determine the correct baptism of William Jacob Honeyman (Hunneman) of Hutton Rudby, Yorkshire (d. 1783) — 1716 (Edinburgh) vs 1719 (Hutton Rudby) — and test whether his father William came from Fife, Scotland.",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-08",
+    "updated": "2026-10-08",
+    "title": "William Honeyman baptism dispute"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [
+      "none"
+    ],
+    "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
+  },
+  "known_holdings": [],
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where was William Honeyman (Hunneman), weaver of Hutton Rudby, Yorkshire (buried 27 Mar 1783), baptised — Edinburgh 2 Dec 1716 or Hutton Rudby 5 Apr 1719?",
+      "rationale": "The tree records a 1719 Hutton Rudby christening while an attached Edinburgh 1716 baptism (parents William Honniman & Elizabeth Duncan) is cited in family tradition and the old IGI; both parish registers survive and are indexed.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "created": "2026-10-08",
+      "depends_on": [],
+      "unblocks": [
+        "q_002"
+      ],
+      "status": "open",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    },
+    {
+      "id": "q_002",
+      "question": "Where did William Hunneman (d. 1737 Hutton Rudby), father of William bapt. 1719, originate — specifically, is the tree's christening at Scoonie, Fife, 8 May 1692 supported?",
+      "rationale": "Tree asserts a Scoonie, Fife christening with no attached source, inconsistent with its own birth estimate (~1679); the life sketch calls Fife origin family rumour.",
+      "selection_basis": "objective_decomposition",
+      "priority": "medium",
+      "created": "2026-10-08",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "status": "open",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-08",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Hutton Rudby, Yorkshire, England",
+          "date_range": "1700-1790",
+          "repository": "FamilySearch",
+          "rationale": "The parish registers and bishop's transcripts hold the 1719 baptism, the family's other baptisms, and the burials and marriages that tie the 1783 weaver to them.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Scotland",
+          "date_range": "1700-1730",
+          "repository": "FamilySearch",
+          "rationale": "The Edinburgh 1716 christening is the competing baptism; find it and any other Scottish William Honeyman of the period.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-10-08",
+      "items": [
+        {
+          "id": "pli_003",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Scoonie, Fife, Scotland",
+          "date_range": "1670-1695",
+          "repository": "FamilySearch",
+          "rationale": "The tree gives the father a Scoonie christening of 8 May 1692 with no source; search for it.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-08T19:31:42.942Z",
+      "tool": "record_search",
+      "query": {
+        "also": "deathPlace Rudby 1715-1790",
+        "anyPlace": "Hutton Rudby, Yorkshire, England",
+        "anyYearFrom": 1700,
+        "anyYearTo": 1790,
+        "surname": "Hunnyman/Hunneman/Honeyman"
+      },
+      "outcome": "positive",
+      "results_examined": 120,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Found baptisms Ralph 1717, William 1719, Elizabeth 1721 (father William); burials William 1737, Phyllis 1738; marriage William & Catherine Codling 1738; children 1739-1757; burial Willm 1783 and Catherine 1783. Only one William Hunneman household in the parish in any decade; no burial of a child William 1719-1738."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-08T19:40:00.000Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "William",
+        "surname": "Honniman/Honeyman/Honyman",
+        "recordCountry": "Scotland",
+        "anyYearFrom": 1700,
+        "anyYearTo": 1730
+      },
+      "outcome": "positive",
+      "results_examined": 30,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "RECONSTRUCTED for the carve. Found the Edinburgh christening of William Honniman, son of William Honniman and Elizabeth Duncan, 2 Dec 1716 (F3BT-5Q7), and a Scoonie christening of 1724 whose father is William Honeyman with Janet Blyth (XYCB-27W)."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-08T19:31:56.882Z",
+      "tool": "record_search",
+      "query": {
+        "also": "birthPlace Scoonie, Fife 1685-1695",
+        "birthYearFrom": 1670,
+        "birthYearTo": 1695,
+        "givenName": "William",
+        "recordCountry": "Scotland",
+        "surname": "Honeyman"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "No christening of a William Honeyman at Scoonie on 8 May 1692 or any date 1670-1695. Only Scottish William christenings in range: Leuchars, Fife 1671 (son of David Honeyman & Margaret Anderson) and Kinross 1688 (son of John Honyman & Helene Whyte). Scoonie had a William Honyman fathering Christian 1688 and a William Honeyman x Janet Blyth baptising 1724-1729. Many contemporary Williams in Fife/Kinross; no record links any to Hutton Rudby."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "access_date": "2026-10-08",
+      "citation": "\"England, Yorkshire, Parish Registers, 1538-2016,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:66BK-YL83 : accessed 8 October 2026), Baptism of William Hunnyman, son of William, 5 Apr 1719; citing All Saints, Hutton Rudby, Yorkshire, England.",
+      "citation_detail": {
+        "what": "Baptism of William Hunnyman, son of William, 5 Apr 1719",
+        "when_accessed": "2026-10-08",
+        "when_created": "1719",
+        "where": "All Saints, Hutton Rudby, Yorkshire, England",
+        "where_within": "baptism register, entry dated 5 Apr 1719",
+        "who": "Hutton Rudby parish clerk/curate"
+      },
+      "gedcomx_source_description_id": "S2",
+      "notes": "Original register image viewed 8 Oct 2026 (image ark:/61903/3:1:3QSQ-G9KF-GW7K, film 100557380 image 11). Entry sits in date order between baptisms of 2 Apr and 13 Apr 1719; 'sonne' interlined. No mother named (register names fathers only in this period).",
+      "repository": "FamilySearch",
+      "source_classification": "original",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:66BK-YL83",
+      "transcription": "William ye sonne of William Hunny-man bap[tize]d Ap[ri]l 5. 1719",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "access_date": "2026-10-08",
+      "citation": "\"England, Yorkshire, Parish Registers, 1538-2016,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:66BK-MG85 : accessed 8 October 2026), Baptism of Ralph Hunnyman, son of William, 25 May 1717; citing All Saints, Hutton Rudby, Yorkshire, England.",
+      "citation_detail": {
+        "what": "Baptism of Ralph Hunnyman, son of William, 25 May 1717",
+        "when_accessed": "2026-10-08",
+        "when_created": "1717",
+        "where": "All Saints, Hutton Rudby, Yorkshire, England",
+        "where_within": "baptism register, entry dated 25 May 1717",
+        "who": "Hutton Rudby parish clerk/curate"
+      },
+      "gedcomx_source_description_id": "S3",
+      "notes": "Index entry; image not yet viewed.",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:66BK-MG85",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_003",
+      "access_date": "2026-10-08",
+      "citation": "\"England, Yorkshire, Parish Registers, 1538-2016,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:66BL-48D8 : accessed 8 October 2026), Baptism of Eliz Honeyman, child of Wm, 1 Jan 1721; citing All Saints, Hutton Rudby, Yorkshire, England.",
+      "citation_detail": {
+        "what": "Baptism of Eliz Honeyman, child of Wm, 1 Jan 1721",
+        "when_accessed": "2026-10-08",
+        "when_created": "1721",
+        "where": "All Saints, Hutton Rudby, Yorkshire, England",
+        "where_within": "baptism register, entry dated 1 Jan 1721",
+        "who": "Hutton Rudby parish clerk/curate"
+      },
+      "gedcomx_source_description_id": "S4",
+      "notes": "Index entry; image not yet viewed. Possibly 1720/21 Old Style.",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:66BL-48D8",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_004",
+      "access_date": "2026-10-08",
+      "citation": "\"Scotland, Births and Baptisms, 1564-1950,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F3BT-5Q7 : accessed 8 October 2026), Christening of William Honniman, son of William Honniman and Elizabeth Duncan, 2 Dec 1716; citing Edinburgh, Midlothian, Scotland.",
+      "citation_detail": {
+        "what": "Christening of William Honniman, son of William Honniman and Elizabeth Duncan, 2 Dec 1716",
+        "when_accessed": "2026-10-08",
+        "when_created": "1716",
+        "where": "Edinburgh, Midlothian, Scotland",
+        "where_within": "Old Parish Registers baptisms, 2 Dec 1716",
+        "who": "Edinburgh parish (Church of Scotland) session clerk"
+      },
+      "gedcomx_source_description_id": "S5",
+      "notes": "Compiled index (former IGI extraction); image not viewed.",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:F3BT-5Q7",
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_005",
+      "access_date": "2026-10-08",
+      "citation": "\"England, Yorkshire, Bishop's Transcripts, 1547-1957,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:68Z6-Y8XV : accessed 8 October 2026), Burial of Willm Honeyman, 27 Mar 1783; citing Rudby, Yorkshire, England.",
+      "citation_detail": {
+        "what": "Burial of Willm Honeyman, 27 Mar 1783",
+        "when_accessed": "2026-10-08",
+        "when_created": "1783",
+        "where": "Rudby, Yorkshire, England",
+        "where_within": "bishop's transcript, burials 1783",
+        "who": "Rudby parish clerk (bishop's transcript)"
+      },
+      "gedcomx_source_description_id": "S6",
+      "notes": "Bishop's transcript image viewed 8 Oct 2026 (ark:/61903/3:1:3QSQ-G9FD-DLW). Age column reads 66; occupation weaver. Wife Catherine buried nine days later.",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:68Z6-Y8XV",
+      "transcription": "1783 Burials ... Mar 27 Willm Honeyman weaver 66 ... Apr 5 Catherine wife of Wm Honeyman",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_006",
+      "access_date": "2026-10-08",
+      "citation": "\"England, Yorkshire, Parish Registers, 1538-2016,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:66GR-J4CC : accessed 8 October 2026), Marriage of William Huneman and Catherine Codling, 1738; citing All Saints, Hutton Rudby, Yorkshire, England.",
+      "citation_detail": {
+        "what": "Marriage of William Huneman and Catherine Codling, 1738",
+        "when_accessed": "2026-10-08",
+        "when_created": "1738",
+        "where": "All Saints, Hutton Rudby, Yorkshire, England",
+        "where_within": "marriage register, 1738",
+        "who": "Hutton Rudby parish clerk/curate"
+      },
+      "gedcomx_source_description_id": "S7",
+      "notes": "Original register image viewed 8 Oct 2026 (ark:/61903/3:1:3QSQ-G9KF-GW7H). Register gives 19 July 1738; bishop's transcript (FTS image 3QS7-L9FD-D99X) gives 20 August - copyist variance; original register preferred.",
+      "repository": "FamilySearch",
+      "source_classification": "original",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:66GR-J4CC",
+      "transcription": "William Huneman & Catherine Codling were Married by Vertue of Banns the 19th of July [1738]",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_007",
+      "access_date": "2026-10-08",
+      "citation": "\"England, Yorkshire, Bishop's Transcripts, 1547-1957,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:68ZX-MVNP : accessed 8 October 2026), Burial of Phyllis Hunneman, 9 May 1738; citing Rudby, Yorkshire, England.",
+      "citation_detail": {
+        "what": "Burial of Phyllis Hunneman, 9 May 1738",
+        "when_accessed": "2026-10-08",
+        "when_created": "1738",
+        "where": "Rudby, Yorkshire, England",
+        "where_within": "bishop's transcript, burials 1738",
+        "who": "Rudby parish clerk (bishop's transcript)"
+      },
+      "gedcomx_source_description_id": "S8",
+      "notes": "Index entry; image not viewed.",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:68ZX-MVNP",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_008",
+      "access_date": "2026-10-08",
+      "citation": "\"Scotland, Births and Baptisms, 1564-1950,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XYCB-27W : accessed 8 October 2026), Christening of Elizebath Honeyman, daughter of William Honeyman and Janet Blyth, 5 Jan 1724; citing Scoonie, Fife, Scotland.",
+      "citation_detail": {
+        "what": "Christening of Elizebath Honeyman, daughter of William Honeyman and Janet Blyth, 5 Jan 1724",
+        "when_accessed": "2026-10-08",
+        "when_created": "1724",
+        "where": "Scoonie, Fife, Scotland",
+        "where_within": "Old Parish Registers baptisms, 5 Jan 1724",
+        "who": "Scoonie parish session clerk"
+      },
+      "gedcomx_source_description_id": "S9",
+      "notes": "One of four Scoonie baptisms 1724-1729 to William Honeyman & Janet Blyth.",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XYCB-27W",
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_009",
+      "access_date": "2026-10-08",
+      "citation": "\"England, Yorkshire, Parish Registers, 1538-2016,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:661Z-PMKZ : accessed 8 October 2026), burial of William Hun-neman, 22 Aug 1737; citing All Saints, Hutton Rudby, register of baptisms, marriages and burials.",
+      "citation_detail": {
+        "what": "Burial of William Hunneman, 22 Aug 1737",
+        "when_accessed": "2026-10-08",
+        "when_created": "1737",
+        "where": "All Saints, Hutton Rudby, Yorkshire, England",
+        "where_within": "'Burials for the Year 1737', image 3QSQ-G9KF-GW7H",
+        "who": "Hutton Rudby parish clerk/curate"
+      },
+      "gedcomx_source_description_id": "S10",
+      "notes": "Indexed as 'William Hurneman'. Image viewed. No age, occupation or origin given. Same page records the 1738 marriage of William Huneman & Catherine Codling.",
+      "repository": "FamilySearch",
+      "source_classification": "original",
+      "transcription": "August the 22 William Hun-neman was buried",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:661Z-PMKZ",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_010",
+      "access_date": "2026-10-08",
+      "citation": "\"England, Yorkshire, Bishop's Transcripts, 1547-1957,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:68Z6-5XN7 : accessed 8 October 2026), burial of Catherine wife of Wm Honeyman, 5 Apr 1783; citing Rudby, Yorkshire.",
+      "citation_detail": {
+        "what": "Burial of Catherine wife of Wm Honeyman, 5 Apr 1783",
+        "when_accessed": "2026-10-08",
+        "when_created": "1783",
+        "where": "Rudby, Yorkshire, England",
+        "where_within": "bishop's transcript, burials 1783, image 3QSQ-G9FD-DLW",
+        "who": "Rudby parish clerk (bishop's transcript)"
+      },
+      "gedcomx_source_description_id": "S11",
+      "notes": "Same image as src_005.",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "transcription": "Apr 5 Catherine wife of Wm Honeyman",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:68Z6-5XN7",
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "date": "1719-04-05",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "baptism",
+      "informant": "officiating clergy/clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "place": "Hutton Rudby, Yorkshire, England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:66BK-YL83",
+      "record_persona_id": null,
+      "record_role": "child",
+      "source_id": "src_001",
+      "standard_place": "Hutton Rudby, Yorkshire, England, United Kingdom",
+      "value": "William Hunnyman baptised",
+      "log_entry_id": "log_001",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_002",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ],
+      "fact_type": "relationship",
+      "informant": "officiating clergy/clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:66BK-YL83",
+      "record_persona_id": null,
+      "record_role": "child",
+      "source_id": "src_001",
+      "value": "Child of William",
+      "log_entry_id": "log_001",
+      "record_basis": "stated",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      }
+    },
+    {
+      "id": "a_003",
+      "date": "1717-05-25",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "baptism",
+      "informant": "officiating clergy/clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "place": "Hutton Rudby, Yorkshire, England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:66BK-MG85",
+      "record_persona_id": null,
+      "record_role": "child",
+      "source_id": "src_002",
+      "standard_place": "Hutton Rudby, Yorkshire, England, United Kingdom",
+      "value": "Ralph Hunnyman, son of William, baptised",
+      "log_entry_id": "log_001",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_004",
+      "date": "1721-01-01",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "baptism",
+      "informant": "officiating clergy/clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "place": "Hutton Rudby, Yorkshire, England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:66BL-48D8",
+      "record_persona_id": null,
+      "record_role": "child",
+      "source_id": "src_003",
+      "standard_place": "Hutton Rudby, Yorkshire, England, United Kingdom",
+      "value": "Eliz Honeyman, child of Wm, baptised",
+      "log_entry_id": "log_001",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_005",
+      "date": "1716-12-02",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "christening",
+      "informant": "session clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "place": "Edinburgh, Midlothian, Scotland",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F3BT-5Q7",
+      "record_persona_id": null,
+      "record_role": "child",
+      "source_id": "src_004",
+      "standard_place": "Edinburgh, Scotland, United Kingdom",
+      "value": "William Honniman christened",
+      "log_entry_id": "log_002",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_006",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ],
+      "fact_type": "relationship",
+      "informant": "session clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F3BT-5Q7",
+      "record_persona_id": null,
+      "record_role": "child",
+      "source_id": "src_004",
+      "value": "Child of William Honniman and Elizabeth Duncan",
+      "log_entry_id": "log_002",
+      "record_basis": "stated",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      }
+    },
+    {
+      "id": "a_007",
+      "date": "1783-03-27",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "burial",
+      "informant": "officiating clergy/clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "place": "Rudby, Yorkshire, England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68Z6-Y8XV",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "source_id": "src_005",
+      "standard_place": "Rudby, North Yorkshire, England, United Kingdom",
+      "value": "Willm Honeyman buried",
+      "log_entry_id": "log_001",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_008",
+      "date": "1717",
+      "date_certainty": "calculated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown (likely family member reporting age)",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68Z6-Y8XV",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "source_id": "src_005",
+      "value": "Age at burial 66 (weaver) - implies birth c. Mar 1716-Mar 1717",
+      "log_entry_id": "log_001",
+      "record_basis": "inferred",
+      "informant_bias_notes": null
+    },
+    {
+      "id": "a_009",
+      "date": "1738-07-19",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "marriage",
+      "informant": "officiating clergy/clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "place": "Hutton Rudby, Yorkshire, England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:66GR-J4CC",
+      "record_persona_id": null,
+      "record_role": "groom",
+      "source_id": "src_006",
+      "standard_place": "Hutton Rudby, Yorkshire, England, United Kingdom",
+      "value": "William Huneman married Catherine Codling",
+      "log_entry_id": "log_001",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_010",
+      "date": "1738-05-09",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "fact_type": "burial",
+      "informant": "officiating clergy/clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "place": "Rudby, Yorkshire, England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68ZX-MVNP",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "source_id": "src_007",
+      "standard_place": "Rudby, North Yorkshire, England, United Kingdom",
+      "value": "Phyllis Hunneman buried",
+      "log_entry_id": "log_001",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_011",
+      "date": "1724-01-05",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "fact_type": "residence",
+      "informant": "session clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "place": "Scoonie, Fife, Scotland",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XYCB-27W",
+      "record_persona_id": null,
+      "record_role": "father",
+      "source_id": "src_008",
+      "standard_place": "Scoonie, Fife, Scotland, United Kingdom",
+      "value": "William Honeyman (wife Janet Blyth) resident at Scoonie, Fife, baptising a child",
+      "log_entry_id": "log_002",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_012",
+      "date": "1737-08-22",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ],
+      "fact_type": "burial",
+      "informant": "officiating clergy/clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "place": "Hutton Rudby, Yorkshire, England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:661Z-PMKZ",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "source_id": "src_009",
+      "standard_place": "Hutton Rudby, Yorkshire, England, United Kingdom",
+      "value": "William Hunneman buried",
+      "log_entry_id": "log_001",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_013",
+      "date": "1783-04-05",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "burial",
+      "informant": "officiating clergy/clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "place": "Rudby, Yorkshire, England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68Z6-5XN7",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "source_id": "src_010",
+      "standard_place": "Rudby, North Yorkshire, England, United Kingdom",
+      "value": "Catherine, wife of Wm Honeyman, buried",
+      "log_entry_id": "log_001",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_014",
+      "date": "1783-03-27",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "occupation",
+      "informant": "officiating clergy/clerk",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68Z6-Y8XV",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "source_id": "src_005",
+      "value": "weaver",
+      "log_entry_id": "log_001",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_015",
+      "date": "1738-08-20",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "marriage",
+      "informant": "parish clerk copying register for bishop",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "place": "Rudby, Yorkshire, England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68ZC-5GF9",
+      "record_persona_id": null,
+      "record_role": "groom",
+      "source_id": "src_006",
+      "standard_place": "Rudby, North Yorkshire, England, United Kingdom",
+      "value": "William Hunneman married Catharine Codling by banns (bishop's transcript copy, cited in src_006 notes)",
+      "log_entry_id": "log_001",
+      "record_basis": "stated"
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

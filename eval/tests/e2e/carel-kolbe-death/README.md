@@ -28,17 +28,67 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 25, `hint-samples.csv` row 816,
-flags `adds_death,adds_burial`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "South Africa, Dutch Reformed Church Registers (Cape Town Archives), 1660-1994", a burial entry for Carel Fredrik Kolbey who died 21 February 1876 and was buried in Cape Town in 1876. The index gives no age, spouse or parents.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the February 1876 death, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-10-16 (issue #3345): true match.** The hint record
+(`ark:/61903/1:1:6P1Y-82HK`) is the subject's death, 21 February 1876, Cape Town.
+Retrieval was tool-assisted (record search and read, and `image_transcribe` for
+the page); the identity call is the genealogist's.
 
-A plausible candidate on name and place. The given names match exactly, "Kolbey" is within the spelling spread the family's own entries show (Kolbe, Kolbé, Kolbee, Kolbeck, Colbeek), and Cape Town is where he was baptised and married. He would have been 74. Of the two Carel Fredrik Kolbes in the tree, the son died in 1898, so the father is the only tree candidate. None of the subject's existing sources is a burial or dated after 1867: they are baptism, banns and marriage entries from 1801 to 1867, so this is not a re-index of anything already in the tree.
+**What the record is, and why that decides it.** The hint's page image
+(`ark:/61903/3:1:3Q9M-CSK6-Y315-G`) is page 744 of the Cape Town Nederduitsche
+Gereformeerde Kerk's *Naamlyst van Leden ... Overleden*: deceased **members**
+(*leden*, confirmed communicants), 1 October 1875 to 30 September 1877. In this
+church a baptised child is not a *lidmaat*; membership follows catechism and
+profession of faith. All twenty entries on the page are adults, and nine are
+marked as such: *Senior* (Johannes Petrus de Villiers, Melt Jacobus Brink), wife
+or widow (*Echtgenoote*, *Huisvrouw*, *Weduwe van*), and Johan Fredrik Luijt
+"C: K zoon". So neither an infant grandson nor the nine-year-old boy below could
+appear in this list at all. That, not the two empty searches, is what separates
+the subject from both alternatives. The index cannot show it (it calls the entry
+a burial and says nothing about membership), so the call rests on the page and
+`image_basis` is true.
 
-The gap is that the index cannot tell generations apart. The son Carel Fredrik (born 1839) was married (the tree cites his civil marriage entry), and the Cape naming custom gives a first son his paternal grandfather's name, so an infant grandson called Carel Fredrik Kolbe dying in 1876 is a live alternative that the tree would not show. The discriminating check is the age on the burial register image linked from the hint record: about 74 fits the subject, and a child's age makes this the grandson.
+The entry reads only "Februarij 21 Carel Fredrik Kolbe", the surname ending in a
+flourish that the index renders as "Kolbey". The register marks same-named men
+(*Senior*, *C: K zoon*), and this entry carries no qualifier. That fits there
+being one Carel Fredrik Kolbe on the Cape Town roll: the son was confirmed at
+Wynberg in April 1867. It is consistent, not decisive: a Carel Frederik Kolbe was
+also received into the Cape Town congregation on 4 January 1869
+(`ark:/61903/1:1:VRLQ-BRT`, no age or relatives), possibly the son, but the son
+died in 1898 and is not the 1876 decedent either way.
+
+The list has no age column and gives no spouse or parents. The small pencil
+numbers in its left margin (8, 14, 18, 20) are a running count of entries, not
+ages: the "18" beside this line marks it as the 18th entry. The heading, the
+qualifiers and the entry were read on the original page by the genealogist and
+by two reviewers on PR #3517 (benter-070, EdmondOware).
+
+**Read-check of the page transcription.** Two other indexed entries on the same
+image match the transcription on date and given names: Michiel Johan Zeeman
+(indexed Zoeman, `ark:/61903/1:1:6P1Y-82HX`, died 21 January 1876) and Adam
+Gabriel Justinus Haarlingh (indexed Hurlingh, `ark:/61903/1:1:6P1Y-82HD`, died
+6 January 1876). Only the surnames differ in spelling.
+
+**The alternatives, and the supporting evidence against each.**
+- *A grandson via the son.* The son Carel Fredrik (b. 23 January 1839) married
+  Theodora Jullietta Borstlap on 9 November 1863. A grandson would have been at
+  most 12, so not a member. Supporting: no baptism of a Kolbe child to a
+  Borstlap mother, or to a father Carel Fredrik, was found 1863-1877 in
+  "South Africa, Dutch Reformed Church Registers (Cape Town Archives)"
+  (collection 1478678).
+- *A boy of the Hartog connection.* A Carel Fredrik Kolbee, born 22 October 1866,
+  was baptised in Cape Town on 10 August 1873, mother Magdalena Hartogh
+  (`ark:/61903/1:1:XKH7-XHS`). At nine he could not be on a members' list.
+  Supporting: he very probably survived; Charles Frederic Dorns Kolbe, 23,
+  bachelor, labourer, married in Cape Town on 12 August 1889 and signed
+  "C F D Kolbee", the baptism's own spelling (`ark:/61903/1:1:6ZHB-HTYQ`). That
+  identification is probable, not proven, and the call does not rest on it.
+- *The son himself* died 24 January 1898 (civil death record and 1898 estate file).
+
+The subject, aged 74, married in Cape Town in 1857 and his wife joined the Cape
+Town congregation in 1856, which fits a member's entry in this list. None of his
+tree sources is dated after 1867, so the hint is not a re-index of an existing
+source.
+
+**Searched and not found:** a Cape estate file (death notice) for him in 1876.
+The probate index holds only the son's 1898 file; the index is partial, so the
+absence is not evidence against the match.

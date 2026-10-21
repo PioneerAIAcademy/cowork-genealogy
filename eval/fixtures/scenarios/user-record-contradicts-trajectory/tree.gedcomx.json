@@ -1,0 +1,1858 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "ark": "ark:/61903/4:1:L7F5-8PL",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Jahue B",
+          "surname": "Burton",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N2",
+          "given": "John B",
+          "surname": "Burton",
+          "type": "AlsoKnownAs"
+        },
+        {
+          "id": "N3",
+          "given": "Jehu",
+          "surname": "Burton",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "29 November 1818",
+          "standard_date": "29 Nov 1818",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "16 October 1898",
+          "standard_date": "16 Oct 1898",
+          "place": "Pulaski, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Pulaski, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Pulaski county, part of, Pulaski, Kentucky",
+          "standard_place": "Pulaski, Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "District No 1, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Precinct 2, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "type": "Burial",
+          "place": "Fairview Cemetery, Delmar, Pulaski, Kentucky, United States",
+          "standard_place": "Fairview Cemetery, Ferguson, Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1"
+        },
+        {
+          "ref": "S2"
+        },
+        {
+          "ref": "S3"
+        },
+        {
+          "ref": "S4"
+        },
+        {
+          "ref": "S5"
+        },
+        {
+          "ref": "S6"
+        },
+        {
+          "ref": "S7"
+        },
+        {
+          "ref": "S8"
+        },
+        {
+          "ref": "S9"
+        },
+        {
+          "ref": "S10"
+        },
+        {
+          "ref": "S11"
+        },
+        {
+          "ref": "S12"
+        },
+        {
+          "ref": "S13"
+        },
+        {
+          "ref": "S14"
+        },
+        {
+          "ref": "S15"
+        },
+        {
+          "ref": "S16"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "ark": "ark:/61903/4:1:LYYX-DS1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Mary Ann",
+          "surname": "Eastham",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N5",
+          "given": "\"Polly\"",
+          "surname": "",
+          "type": "Nickname"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F11",
+          "type": "Birth",
+          "date": "12 August 1823",
+          "standard_date": "12 Aug 1823",
+          "place": "Greenup, Greenup, Kentucky, United States",
+          "standard_place": "Greenup, Greenup, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Pulaski county, part of, Pulaski, Kentucky",
+          "standard_place": "Pulaski, Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F13",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "District No 1, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F15",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Precinct 2, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Cannonsburg, Boyd, Kentucky, United States",
+          "standard_place": "Cannonsburg, Boyd, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F17",
+          "type": "Death",
+          "date": "24 September 1904",
+          "standard_date": "24 Sep 1904",
+          "place": "Boyd, Kentucky, United States",
+          "standard_place": "Boyd, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F18",
+          "type": "Burial",
+          "place": "Fields Cemetery, Princess, Boyd, Kentucky, United States",
+          "standard_place": "Princess, Boyd, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "ark": "ark:/61903/4:1:K2VV-PM6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Charles",
+          "surname": "Burton",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F19",
+          "type": "Birth",
+          "date": "1789",
+          "standard_date": "1789",
+          "place": "Pittsylvania, Virginia, United States",
+          "standard_place": "Pittsylvania, Virginia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F20",
+          "type": "Death",
+          "date": "about 1859",
+          "standard_date": "Abt 1859",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F21",
+          "type": "Residence",
+          "date": "1860 Census",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "value": "District 1",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "ark": "ark:/61903/4:1:LTD1-CGR",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Mary Louisa",
+          "surname": "Burton",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F22",
+          "type": "Birth",
+          "date": "16 October 1844",
+          "standard_date": "16 Oct 1844",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F23",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Pulaski, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F24",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F25",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F26",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F27",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F28",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Nancy, Pulaski, Kentucky, United States",
+          "standard_place": "Nancy, Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F29",
+          "type": "Death",
+          "date": "11 July 1926",
+          "standard_date": "11 Jul 1926",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F30",
+          "type": "Burial",
+          "place": "Fairview Cemetery Delmer, Pulaski, Kentucky, United States",
+          "standard_place": "Fairview Cemetery, Ferguson, Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1"
+        },
+        {
+          "ref": "S5"
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "ark": "ark:/61903/4:1:9W8X-RH5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Mary C",
+          "surname": "Burton",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F31",
+          "type": "Birth",
+          "date": "15 May 1849",
+          "standard_date": "15 May 1849",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F32",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Pulaski county, part of, Pulaski, Kentucky",
+          "standard_place": "Pulaski, Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F33",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "District No 1, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F34",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Precinct 2, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F35",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Hall Township, Dubois, Indiana, United States",
+          "standard_place": "Hall Township, Dubois, Indiana, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F36",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Washington, Pike, Indiana, United States",
+          "standard_place": "Washington Township, Pike, Indiana, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F37",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Washington, Pike, Indiana, United States",
+          "standard_place": "Washington Township, Pike, Indiana, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F38",
+          "type": "Death",
+          "date": "8 February 1924",
+          "standard_date": "8 Feb 1924",
+          "place": "Greene, Indiana, United States",
+          "standard_place": "Greene, Indiana, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F39",
+          "type": "Burial",
+          "place": "Petersburg, Pike, Indiana, United States of America",
+          "standard_place": "Petersburg, Pike, Indiana, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1"
+        },
+        {
+          "ref": "S5"
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "ark": "ark:/61903/4:1:L7N3-MNN",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Thomas Hayden",
+          "surname": "Burton",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F40",
+          "type": "Birth",
+          "date": "26 January 1852",
+          "standard_date": "26 Jan 1852",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F41",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F42",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F43",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F44",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1"
+        },
+        {
+          "ref": "S5"
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "ark": "ark:/61903/4:1:K8LX-G7T",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Elizabeth J.",
+          "surname": "Burton",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F45",
+          "type": "Birth",
+          "date": "25 October 1854",
+          "standard_date": "25 Oct 1854",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F46",
+          "type": "Residence",
+          "date": "1854",
+          "standard_date": "1854",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F47",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "District No 1, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F48",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F49",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Precinct 2, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F50",
+          "type": "Death",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F51",
+          "type": "Burial",
+          "place": "Lester Cemetery, Nancy, Pulaski, Kentucky, United States",
+          "standard_place": "Lester Cemetery, Nancy, Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1"
+        },
+        {
+          "ref": "S5"
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "ark": "ark:/61903/4:1:971V-95C",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Amanda Jane",
+          "surname": "Burton",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N12",
+          "given": "Amanda Jane",
+          "surname": "Dean",
+          "type": "MarriedName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F52",
+          "type": "Birth",
+          "date": "17 October 1857",
+          "standard_date": "17 Oct 1857",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F53",
+          "type": "Residence",
+          "date": "1857",
+          "standard_date": "1857",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F54",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "District No 1, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F55",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Aroma, Kankakee, Illinois, United States",
+          "standard_place": "Township of Aroma, Kankakee, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F56",
+          "type": "Marriage",
+          "date": "8 November 1883",
+          "standard_date": "8 Nov 1883",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F57",
+          "type": "Death",
+          "date": "2 February 1895",
+          "standard_date": "2 Feb 1895",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F58",
+          "type": "Burial",
+          "place": "Lem Burton Cemetery, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1"
+        },
+        {
+          "ref": "S5"
+        }
+      ]
+    },
+    {
+      "id": "I9",
+      "ark": "ark:/61903/4:1:9WMM-8JP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N13",
+          "given": "John Manda",
+          "surname": "Burton",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F59",
+          "type": "Birth",
+          "date": "1858",
+          "standard_date": "1858",
+          "place": "Pulaski, Kentucky",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F60",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F61",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Precinct 2, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F62",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ]
+    },
+    {
+      "id": "I10",
+      "ark": "ark:/61903/4:1:971D-MWT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N14",
+          "given": "Martha Francis",
+          "surname": "Burton",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N15",
+          "given": "Martha Fanny",
+          "surname": "Burton",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F63",
+          "type": "Birth",
+          "date": "1864",
+          "standard_date": "1864",
+          "place": "Pulaski, Kentucky",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F64",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F65",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Precinct 2, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F66",
+          "type": "Death",
+          "date": "1895",
+          "standard_date": "1895",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F67",
+          "type": "Burial",
+          "date": "1895",
+          "standard_date": "1895",
+          "place": "Lester Cemetery, Nancy, Pulaski, Kentucky, United States",
+          "standard_place": "Lester Cemetery, Nancy, Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1"
+        },
+        {
+          "ref": "S5"
+        }
+      ]
+    },
+    {
+      "id": "I11",
+      "ark": "ark:/61903/4:1:G8W6-XY6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N16",
+          "given": "Samuel",
+          "surname": "Goff",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F68",
+          "type": "Birth",
+          "date": "8 March 1860",
+          "standard_date": "8 Mar 1860",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F69",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F70",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Precinct 2, Pulaski, Kentucky, United States",
+          "standard_place": "Pulaski, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F71",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Justice Precinct 4 (east part), Hunt, Texas, United States",
+          "standard_place": "Justice Precinct 4, Hunt, Texas, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F72",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Justice Precinct 5, Cooke, Texas, United States",
+          "standard_place": "Justice Precinct 5, Cooke, Texas, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F73",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Jackson Township, Cotton, Oklahoma, United States",
+          "standard_place": "Jackson Township, Cotton, Oklahoma, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F74",
+          "type": "Death",
+          "date": "19 January 1947",
+          "standard_date": "19 Jan 1947",
+          "place": "Oklahoma, United States",
+          "standard_place": "Oklahoma, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F75",
+          "type": "Burial",
+          "date": "January 1949",
+          "standard_date": "Jan 1949",
+          "place": "Walters Cemetery, Walters, Cotton, Oklahoma, United States",
+          "standard_place": "Walters Cemetery, Walters, Cotton, Oklahoma, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ]
+    },
+    {
+      "id": "I12",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N17",
+          "given": "Margaret",
+          "surname": "Rucker",
+          "sources": [
+            {
+              "ref": "S20",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F76",
+          "type": "Birth",
+          "date": "~1843",
+          "assertion_id": "a_107",
+          "sources": [
+            {
+              "ref": "S20",
+              "quality": 2
+            }
+          ],
+          "place": "Greenup County, Kentucky",
+          "standard_place": "Greenup, Kentucky, United States"
+        }
+      ]
+    },
+    {
+      "id": "I13",
+      "living": true,
+      "names": [
+        {
+          "id": "N18",
+          "given": "Living",
+          "surname": "Boggs"
+        }
+      ],
+      "facts": [],
+      "gender": "Male"
+    },
+    {
+      "id": "I14",
+      "living": true,
+      "names": [
+        {
+          "id": "N19",
+          "given": "Living",
+          "surname": "Eastham"
+        }
+      ],
+      "facts": [],
+      "gender": "Female"
+    },
+    {
+      "id": "I15",
+      "living": true,
+      "names": [
+        {
+          "id": "N20",
+          "given": "Living",
+          "surname": "Eastham"
+        }
+      ],
+      "facts": [],
+      "gender": "Male"
+    },
+    {
+      "id": "I16",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N21",
+          "given": "Thursa A.",
+          "surname": "Rucker",
+          "sources": [
+            {
+              "ref": "S22",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F78",
+          "type": "Birth",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "assertion_id": "a_137",
+          "sources": [
+            {
+              "ref": "S22",
+              "quality": 3
+            }
+          ],
+          "date": "~1841"
+        },
+        {
+          "id": "F79",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "assertion_id": "a_139",
+          "sources": [
+            {
+              "ref": "S22",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F80",
+          "type": "Residence",
+          "date": "1880",
+          "place": "Catlettsburg, Boyd, Kentucky, United States",
+          "standard_place": "Catlettsburg, Boyd, Kentucky, United States",
+          "assertion_id": "a_140",
+          "sources": [
+            {
+              "ref": "S22",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I6",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I6",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I7",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I7",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I10",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I10",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I11",
+      "subtype": "Guardian",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I11",
+      "subtype": "Guardian",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree — Jahue B Burton (L7F5-8PL)",
+      "citation": "\"FamilySearch Tree,\" database, FamilySearch (https://www.familysearch.org), entry for Jahue B Burton (PID L7F5-8PL); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L7F5-8PL"
+    },
+    {
+      "id": "S2",
+      "title": "Jahue B Burton, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVVD-WXZV : 3 October 2026), Entry for Jahue B Burton.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVVD-WXZV"
+    },
+    {
+      "id": "S3",
+      "title": "Administrator's Bond for Charles Burton Estate in Pulaski County, Kentucky",
+      "citation": "\"Kentucky, Probate Records, 1727-1990,\" database with images, FamilySearch (https://familysearch.org/ark:/61903/3:1:33SQ-GP3H-R2C : 20 May 2014), Pulaski > Administrator bonds, 1864-1875, Vol. 1 > image 13 of 215.",
+      "url": "https://familysearch.org/ark:/61903/3:1:33SQ-GP3H-R2C"
+    },
+    {
+      "id": "S4",
+      "title": "Letters of Administration granted to Jehu B. Burton for the estate of Charles Burton in Pulaski County, Kentucky",
+      "url": "https://familysearch.org/ark:/61903/3:1:3Q9M-CSLH-F7PY-5"
+    },
+    {
+      "id": "S5",
+      "title": "Civil Case for Joshua Burton vs. Nathaniel Burton in Pulaski County Circuit Court",
+      "url": "https://familysearch.org/ark:/61903/3:1:3QHV-F3CL-1Z8W"
+    },
+    {
+      "id": "S6",
+      "title": "Jahue B. Burton, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVVD-WXZF : 3 January 2024), Jahue B. Burton, Burial, Delmer, Pulaski, Kentucky, Fairview Cemetery; citing record ID 12622948, Find a Grave.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVVD-WXZF"
+    },
+    {
+      "id": "S7",
+      "title": "John Burton, \"Kentucky, Deaths, 1911-1967\"",
+      "citation": "\"Kentucky, Deaths, 1911-1967\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:N9PC-NFJ : 8 March 2024), Entry for Louisa Burton and John Burton, 1926.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N9PC-NFV"
+    },
+    {
+      "id": "S8",
+      "title": "John B. Burton, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MCZP-VY3 : 9 September 2026), Entry for John B. Burton and Polley A. P. Burton, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MCZP-VY3"
+    },
+    {
+      "id": "S9",
+      "title": "John B. Burton in entry for Amanda C. Burton, \"Kentucky, Births and Christenings, 1839-1960\"",
+      "citation": "\"Kentucky, Births and Christenings, 1839-1960\", FamilySearch (https://familysearch.org/ark:/61903/1:1:FWVD-P4N : 4 March 2021), John B. Burton in entry for Amanda C. Burton, 1857.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FWVD-P4N"
+    },
+    {
+      "id": "S10",
+      "title": "Jahue B Burton, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M65K-9GS : 16 October 2025), Entry for Jahue B Burton and Mary A Burton, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M65K-9GS"
+    },
+    {
+      "id": "S11",
+      "title": "Jahue B Burton, \"United States, Census, 1850\" (alternate)",
+      "citation": "\"United States, Census, 1850\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M65V-BSV : 19 October 2025), Entry for Jahue B Burton and Mary A Burton, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M65V-BSV"
+    },
+    {
+      "id": "S12",
+      "title": "John Burton in entry for Elizabeth J. Burton, \"Kentucky, Births and Christenings, 1839-1960\"",
+      "citation": "\"Kentucky, Births and Christenings, 1839-1960\", FamilySearch (https://familysearch.org/ark:/61903/1:1:FWVD-F4Z : 4 March 2021), John Burton in entry for Elizabeth J. Burton, 1854.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FWVD-F4Z"
+    },
+    {
+      "id": "S13",
+      "title": "John Burton, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MZBZ-6GQ : 8 July 2024), Entry for John Burton and Mary A Burton, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZBZ-6GQ"
+    },
+    {
+      "id": "S14",
+      "title": "John Burton, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MX4M-62D : 16 January 2025), Entry for John Burton and Polly Ann Burton, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MX4M-62D"
+    },
+    {
+      "id": "S15",
+      "title": "J. B. Burton in entry for Thomas H. Burton, \"Kentucky, Births and Christenings, 1839-1960\"",
+      "citation": "\"Kentucky, Births and Christenings, 1839-1960\", FamilySearch (https://familysearch.org/ark:/61903/1:1:FWVD-CY5 : 4 March 2021), J. B. Burton in entry for Thomas H. Burton, 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FWVD-CY5"
+    },
+    {
+      "id": "S16",
+      "title": "J. B. Burton in entry for Thomas H. Burton, \"Kentucky, Births and Christenings, 1839-1960\" (alternate)",
+      "citation": "\"Kentucky, Births and Christenings, 1839-1960\", FamilySearch (https://familysearch.org/ark:/61903/1:1:FWJ8-S5Z : 4 March 2021), J. B. Burton in entry for Thomas H. Burton, 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FWJ8-S5Z"
+    },
+    {
+      "id": "S17",
+      "title": "United States, Census, 1870 — Household of John Burton, Pulaski County, Kentucky",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MX4M-62D"
+    },
+    {
+      "id": "S18",
+      "title": "Household of Jahue B Burton, \"United States, Census, 1850\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M65K-9GS"
+    },
+    {
+      "id": "S19",
+      "title": "United States Census, 1860 — John Burton Household, District 1, Pulaski County, Kentucky",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MZBZ-6GQ"
+    },
+    {
+      "id": "S20",
+      "title": "Entry for Robert Easthan and Margaret Rucker, Kentucky, County Marriages, 1786-1965",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q2DC-68RM"
+    },
+    {
+      "id": "S21",
+      "title": "Entry for Ephriam Boggs and Mary Ann Eastham, Kentucky, County Marriages, 1786-1965",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q2QD-7ZPH"
+    },
+    {
+      "id": "S22",
+      "title": "United States, Census, 1880",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MCCS-35F"
+    },
+    {
+      "id": "S23",
+      "title": "United States, Census, 1850",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M657-8NQ"
+    },
+    {
+      "id": "S24",
+      "title": "1850 United States Federal Census, Greenup County, Kentucky",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M657-8FZ"
+    }
+  ]
+}

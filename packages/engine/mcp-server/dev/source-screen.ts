@@ -163,6 +163,7 @@ export type ErrorClass = "transient" | "permanent" | "stop";
 const STOP_PATTERNS = [/rate limit/i, /Retry-After/i, /login tool/i, /API error: 429\b/];
 const PERMANENT_PATTERNS = [
   /was not found in FamilySearch historical records/i,
+  /FamilySearch recapi error: 410\b/,
   /is restricted and cannot be viewed/i,
   /not found in the FamilySearch Family Tree/i,
   /has been deleted from the FamilySearch Family Tree/i,

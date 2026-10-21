@@ -226,6 +226,91 @@ def test_extraction_append_does_not_reach_a_section_it_does_not_write():
     assert "conflicts" in str(e.value)
 
 
+# ─── extraction_append's two composed updates (issue #3516) ──────────────────
+
+
+def _plans(*statuses, **plan_fields):
+    items = [{"id": f"pli_{i:03d}", "sequence": i, "status": s} for i, s in enumerate(statuses, 1)]
+    return [{"id": "pl_001", "question_id": "q_001", "status": "active", "items": items, **plan_fields}]
+
+
+def test_plan_completion_by_extraction_append_is_in_lane():
+    """The research router calls extraction_append and is no caller of `plans`. Run as
+    research, not search-hints, which issue #3153 makes a `plans` caller."""
+    before = research(plans=_plans("in_progress", "planned"))
+    after = research(plans=_plans("completed", "planned"))
+    check_research(before, after, {"name": "research"}, POSITIVE, tool_calls=_EXTRACT)
+
+
+@pytest.mark.parametrize(
+    "before_statuses, after_statuses, plan_fields",
+    [
+        (("planned",), ("completed",), {}),
+        (("completed",), ("in_progress",), {}),
+        (("in_progress",), ("skipped",), {}),
+        (("in_progress",), ("completed",), {"status": "superseded"}),
+        (("in_progress",), ("completed", "planned"), {}),
+    ],
+    ids=["planned-to-completed", "completed-reopened", "skipped", "plan-field-changed", "item-added"],
+)
+def test_any_other_plans_change_with_extraction_append_still_fails(before_statuses, after_statuses, plan_fields):
+    before = research(plans=_plans(*before_statuses))
+    after = research(plans=_plans(*after_statuses, **plan_fields))
+    with pytest.raises(AssertionError) as e:
+        check_research(before, after, {"name": "research"}, POSITIVE, tool_calls=_EXTRACT)
+    assert "plans" in str(e.value)
+
+
+def test_the_same_completion_without_an_extraction_append_call_fails():
+    with pytest.raises(AssertionError) as e:
+        check_research(
+            research(plans=_plans("in_progress")), research(plans=_plans("completed")),
+            {"name": "research"}, POSITIVE, tool_calls=[],
+        )
+    assert "plans" in str(e.value)
+
+
+def test_a_question_tie_plus_an_append_is_in_lane():
+    before = research(assertions=[{"id": "a_001", "extracted_for_question_ids": ["q_001"], "fact_type": "Birth"}])
+    after = research(assertions=[
+        {"id": "a_001", "extracted_for_question_ids": ["q_001", "q_002"], "fact_type": "birth"},
+        {"id": "a_002", "extracted_for_question_ids": ["q_002"]},
+    ])
+    check_research(before, after, {"name": "research"}, POSITIVE, tool_calls=_EXTRACT)
+
+
+def test_a_tie_and_a_notes_update_in_one_run_are_judged_together():
+    before = research(assertions=[
+        {"id": "a_001", "extracted_for_question_ids": ["q_001"]},
+        {"id": "a_002", "extracted_for_question_ids": ["q_001"], "fact_type": "Birth"},
+    ])
+    after = research(assertions=[
+        {"id": "a_001", "extracted_for_question_ids": ["q_001", "q_002"]},
+        {"id": "a_002", "extracted_for_question_ids": ["q_001"], "fact_type": "birth", "informant_bias_notes": "reads T"},
+    ])
+    check_research(before, after, {"name": "research"}, POSITIVE, tool_calls=_EXTRACT + _notes_update("a_002"))
+
+
+@pytest.mark.parametrize(
+    "old, new",
+    [
+        ({"extracted_for_question_ids": ["q_001", "q_002"]}, {"extracted_for_question_ids": ["q_001"]}),
+        ({"extracted_for_question_ids": ["q_001"]}, {"extracted_for_question_ids": ["q_002", "q_001"]}),
+        ({"extracted_for_question_ids": ["q_001"], "record_basis": "stated"},
+         {"extracted_for_question_ids": ["q_001", "q_002"], "record_basis": "inferred"}),
+        ({"extracted_for_question_ids": ["q_001"], "fact_type": "Birth"},
+         {"extracted_for_question_ids": ["q_001"], "fact_type": "birth"}),
+    ],
+    ids=["id-removed", "order-changed", "record-basis-changed-with-a-tie", "normalized-field-without-a-tie"],
+)
+def test_any_other_assertion_change_with_extraction_append_still_fails(old, new):
+    before = research(assertions=[{"id": "a_001", **old}])
+    after = research(assertions=[{"id": "a_001", **new}])
+    with pytest.raises(AssertionError) as e:
+        check_research(before, after, {"name": "research"}, POSITIVE, tool_calls=_EXTRACT)
+    assert "assertions" in str(e.value)
+
+
 def _notes_update(entry_id="a_001", fields=None):
     op = {"section": "assertions", "op": "update", "entryId": entry_id, "fields": fields or {"informant_bias_notes": "user reads T"}}
     return [{"tool": "mcp__genealogy__research_append", "args": {"projectPath": "/w", **op}}]
