@@ -14,9 +14,10 @@
         }
       },
       "supporting_sources": [
-        "England and Wales, Census, 1891 — household of Owen Morris Junr, Cyfoeth-y-brenin, Cardiganshire: Owen Morris Junr (b. ~1859 Montgomeryshire, roller leather finisher), wife Ellen Elizabeth, son Thomas Rowley, and Owen Morris Senr (b. ~1815 Montgomeryshire, widowed, retired gardener), indexed as his father (ark:/61903/1:1:45VS-5PZ; Owen Morris Senr ark:/61903/1:1:45V3-6N2)",
+        "England and Wales, Census, 1891 — household of Owen Morris Junr, Cyfoeth-y-brenin, Cardiganshire: Owen Morris Junr (b. ~1859 Montgomeryshire, roller leather finisher), wife Ellen Elizabeth, son Thomas Rowley, and Owen Morris Senr (b. ~1815 Montgomeryshire, widowed, retired gardener), whose relationship to the head is indexed as \"Father\" (ark:/61903/1:1:45VS-5PZ; Owen Morris Senr ark:/61903/1:1:45V3-6N2)",
         "England and Wales, Census, 1871 — household of Owen Morris, Newtown, Montgomeryshire: Owen Morris (b. ~1818 Aberhafesp, widowed, labourer) and son Owen (b. ~1860 Llandinam, Montgomeryshire) (ark:/61903/1:1:KDDP-KL4; son ark:/61903/1:1:KDDP-KLH)",
-        "England and Wales, Census, 1911 — Owen Morris, Cyfoeth-y-brenin, born Newtown, Montgomeryshire (ark:/61903/1:1:X7JG-Y45)"
+        "England and Wales, Census, 1911 — Owen Morris, Cyfoeth-y-brenin, born Newtown, Montgomeryshire (ark:/61903/1:1:X7JG-Y45)",
+        "England and Wales, Census, 1851 — household of Owen Morris, Montgomeryshire: Owen Morris (b. ~1817 Aberhafesp, farmer of 20 acres, married) and wife Mary (b. ~1815 Llanwnog) (ark:/61903/1:1:SGDS-D7Z) — the father's earlier household; Mary is a candidate mother, not established as Owen's"
       ],
       "required": true
     },
