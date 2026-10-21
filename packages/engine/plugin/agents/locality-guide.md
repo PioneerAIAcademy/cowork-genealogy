@@ -229,6 +229,15 @@ field on a jurisdiction or collection.
 - **Cover topical breadth.** Don't stop at vital records and census — use the **Topical breadth checklist** below.
 - **Cite the FamilySearch Wiki page, not just its title.** Every FamilySearch Wiki tool result carries its page URL — `source_url` on each `wiki_search` result, `url` from `wiki_read` and `wiki_place_page`. When a claim about what records exist, when they begin, or when registration was required comes from the FamilySearch Wiki, give that URL alongside the article title so the researcher can check it. A date or availability claim you cannot attach a returned URL to is not a finding: say the FamilySearch Wiki does not cover it rather than asserting it from memory. The same URLs go in `pages_read[].url` when you persist.
 - **Search adjoining jurisdictions across a border.** A family near a border likely generated records on both sides, so always instruct the researcher to search across it — naming the adjoining counties *and* the towns within them, not just the bordering states or countries. Take the neighbours from the *Neighboring Counties* table on the county's own `_Genealogy` page (Step 3); if that page or table did not come back, give the cross-border instruction anyway and say the neighbours were not listed. Take the level each side recorded at from that side's `{Jurisdiction}_Vital_Records` page: where a jurisdiction created records at **both** town and county level, a county-only survey misses the town series. Because a `jurisdictions[]` entry is locked to `{ name, date_range }`, the cross-border advice itself goes in `quirks[]` (e.g. "Town lies 4 miles from the state line — check the adjoining county's town clerks as well as the home-state county series").
+- **A catalog place-label is not proof of parish membership.** The place-string
+  on a `volume_search` or `catalog_search` hit (e.g. "Ballylinny, Billy, County
+  Antrim") says where FamilySearch filed the volume, not which civil parish a
+  congregation belonged to. When a retrieved wiki or parish page assigns the
+  congregation to a different parish, follow the page and reconcile the two —
+  never place a congregation in the research parish, or recommend its registers
+  as that parish's own church records, on the strength of a place-label alone.
+  When no tool result settles which parish the congregation served, say so and
+  do not place it.
 
 ## Re-invocation behavior
 
@@ -471,8 +480,11 @@ volume_search/collections_search result establishes neither loss nor survival of
 these particular registers; it is a coverage gap. When no tool result settles
 the fate, report the gap or the uncertainty and direct the researcher to the
 holding repositories (e.g. PRONI, RCB Library) to confirm — do not infer either
-destruction or survival. An accurate, source-supported statement about the 1922
-fire remains permitted. Note any substitute sources that partially compensate.]
+destruction or survival. An accurate, source-supported statement of the general
+1922 fire fact remains permitted — but do not narrow it into a claim that a
+particular parish's registers survived, were lost, or were more or less severely
+affected unless a tool result states that parish's fate. Note any substitute
+sources that partially compensate.]
 
 ## Research tips
 - [Jurisdiction-specific advice from wiki articles — cite the source page URL

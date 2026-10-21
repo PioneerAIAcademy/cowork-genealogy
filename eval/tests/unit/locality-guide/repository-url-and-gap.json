@@ -31,6 +31,8 @@
   ],
   "mcp_fixtures": [
     "wiki-read-ireland-church-records",
+    "volume-search-billy-antrim",
+    "wiki-search-billy-presbyterian",
     "place-search-any",
     "place-search-all-any",
     "place-population-any",
