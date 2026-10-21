@@ -2940,7 +2940,8 @@ export function parentSide(role: unknown): "father" | "mother" | "parent" | null
 
 /** A conclusion above `not_proved` may not rest on a parent nobody identified:
  *  refused when a parent side the summary cites has no cited parent-role
- *  assertion carrying a live `person_evidence` link in the pre-call document.
+ *  assertion carrying a live, non-speculative `person_evidence` link
+ *  (`countsForProofGate`) in the pre-call document.
  *
  *  A side is cited by a parent-role assertion, or by an UNLINKED assertion whose
  *  `structured_value.related_person_role` is a parent role ("child of William
@@ -2951,7 +2952,7 @@ export function parentSide(role: unknown): "father" | "mother" | "parent" | null
  *  Per side, not per persona: proof-conclusion's gate is satisfied per person, so
  *  the father linked as `father_of_bride` on the marriage satisfies his unlinked
  *  `father` persona on the baptism. A linked `parent` assertion satisfies either
- *  side, and either side satisfies `parent`. Over the 249 committed proofs above
+ *  side, and either side satisfies `parent`. Over the 251 committed proofs above
  *  `not_proved` it refuses 5; one is a known false refusal (in-laws' fathers cited
  *  as negative evidence), accepted because the rule cannot tell whose father a
  *  role names without a tree lookup. Mined from MHGK-WT7 (#3659): `probable`
@@ -2972,7 +2973,7 @@ export function unlinkedParentProofInvariants(entry: any, preCallResearch: any):
   ].filter((id: unknown, i: number, all: unknown[]) => typeof id === "string" && byId.has(id) && all.indexOf(id) === i);
   const linked = new Set(
     (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : [])
-      .filter((pe: any) => pe?.superseded_by == null)
+      .filter(countsForProofGate)
       .map((pe: any) => pe?.assertion_id),
   );
 
@@ -3015,9 +3016,11 @@ export function unlinkedParentProofInvariants(entry: any, preCallResearch: any):
 const PARENTAGE_FINDING =
   /\b(?:(?:the\s+)?(?:son|daughter|child)\s+of|(?:his|her|their)\s+(?:father|mother|parents)\s+(?:was|were|is|are)|born\s+to)\b/gi;
 
-/** A verb that reports what a record says: "the index records Jonathan, son of William". */
+/** A record as the subject of a verb reporting what it says: "the index records
+ *  Jonathan, son of William". The verb alone is not enough: "the evidence shows",
+ *  "given the correlation" and "United States" open findings, not record reports. */
 const RECORD_REPORTING =
-  /\b(?:reads?|reading|records?|recording|shows?|showing|shown|lists?|listing|listed|index(?:es|ed|ing)?|names?|naming|gives?|giving|given|states?|stating|describes?|describing|identif(?:y|ies|ied|ying)|calls?|calling|transcribe[sd]?|transcribing)\b/i;
+  /\b(?:register|index|entry|record|certificate|census|transcript(?:ion)?|abstract|image|page)s?\s+(?:\w+\s+){0,2}?(?:reads?|reading|records?|recording|shows?|showing|lists?|listing|names?|naming|gives?|giving|states?|stating|describes?|describing|calls?|calling|transcribes?|transcribing)\b/i;
 
 /** Quoted record text says what a record reads, not what the proof concludes. */
 function stripQuoted(text: string): string {
@@ -3033,8 +3036,8 @@ function stripQuoted(text: string): string {
  *  or a claim asserts parentage ("the son of", "his parents were", "born to")
  *  naming, within the sentence, the given name of a parent who appears in an
  *  unlinked parent-role name assertion on a record the summary cites, and no
- *  live-linked name assertion anywhere in the pre-call document carries that
- *  name. Quoted record text is ignored, and so is a phrase whose sentence reports
+ *  name assertion linked (live, not speculative) to anyone but the subject
+ *  carries that name: a namesake son's own name does not identify his father. Quoted record text is ignored, and so is a phrase whose sentence reports
  *  a record before it ("the index records Jonathan, son of William"): a proof
  *  may report what a record reads, as may "the christening of a Jonathan, son of
  *  William". The parent must be the SUBJECT's, the person most of the cited,
@@ -3061,7 +3064,7 @@ export function unlinkedParentNarrativeInvariants(entry: any, preCallResearch: a
   if (records.size === 0) return [];
   const personOf = new Map<string, string>(
     (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : [])
-      .filter((pe: any) => pe?.superseded_by == null && typeof pe?.person_id === "string")
+      .filter((pe: any) => countsForProofGate(pe) && typeof pe?.person_id === "string")
       .map((pe: any) => [pe.assertion_id, pe.person_id]),
   );
   const linked = new Set(personOf.keys());
@@ -3092,7 +3095,7 @@ export function unlinkedParentNarrativeInvariants(entry: any, preCallResearch: a
     return { given, surname };
   };
   const identified = assertions
-    .filter((a) => a?.fact_type === "name" && linked.has(a.id))
+    .filter((a) => a?.fact_type === "name" && linked.has(a.id) && personOf.get(a.id) !== subject)
     .map(nameOf);
   const isIdentified = (n: { given: string; surname: string }) =>
     identified.some(

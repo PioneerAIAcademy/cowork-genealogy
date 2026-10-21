@@ -3111,6 +3111,17 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 
+    it("refuses when the father's only link is speculative: a candidate, not an identity", async () => {
+      const state = phase3Research();
+      state.assertions.push(asr("a_010", "father"));
+      state.person_evidence = [...liveLinks("a_001"), { ...liveLinks("a_010")[0], id: "pe_009", person_id: "I2", confidence: "speculative" }];
+      await writeProject(state);
+      const r = await append(proof("probable", ["a_001", "a_010"]));
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("father (a_010)");
+    });
+
     it("refuses when only an unlinked 'child of' assertion cites the father", async () => {
       await project([childOf("a_012", "father")]);
       const r = await append(proof("probable", ["a_001", "a_012"]));
@@ -3233,6 +3244,16 @@ describe("research_append (Phase 3)", () => {
       expect(unlinkedParentNarrativeInvariants(proof("possible", `Jonathan was ${phrase}.`), pre(father))).toHaveLength(1);
     });
 
+    it.each([
+      ["The evidence shows Jonathan was the son of William Barker."],
+      ["Records establish Jonathan as the son of William Barker."],
+      ["Born in Whitehaven, Cumberland, United States, the son of William Barker."],
+      ["Given the correlation, Jonathan is the son of William Barker."],
+      ["The preponderance of evidence identifies him as the son of William Barker."],
+    ])("refuses %j", (phrase) => {
+      expect(unlinkedParentNarrativeInvariants(proof("possible", `Jonathan was ${phrase}.`), pre(father))).toHaveLength(1);
+    });
+
     it("reads a claim's text as well as the narrative", () => {
       const entry = { ...proof("probable", "## C\nWhitehaven."), claims: [{ claim: "the son of William Barker", supporting_assertion_ids: ["a_001"] }] };
       expect(unlinkedParentNarrativeInvariants(entry, pre(father))).toHaveLength(1);
@@ -3250,9 +3271,24 @@ describe("research_append (Phase 3)", () => {
       expect(unlinkedParentNarrativeInvariants(proof("probable", narrative), pre(father))).toEqual([]);
     });
 
+    it("refuses a namesake son: the subject's own name does not identify his father", () => {
+      const son = { ...named("a_002", "principal", "William"), fact_type: "name" };
+      const entry = proof("probable", "William was the son of William Barker.", ["a_001", "a_002"]);
+      expect(unlinkedParentNarrativeInvariants(entry, pre([son, ...father], ["a_002"]))).toHaveLength(1);
+    });
+
+    it("refuses the parent whose only linked name assertion is speculative", () => {
+      const a = [...father, named("a_011", "father_of_bride", "William", "rec2")];
+      const state = pre(a);
+      state.person_evidence.push({ ...liveLinks("a_011")[0], id: "pe_009", person_id: "I2", confidence: "speculative" });
+      expect(unlinkedParentNarrativeInvariants(proof("probable", "the son of William Barker"), state)).toHaveLength(1);
+    });
+
     it("allows the parent once a name assertion for him is linked, on any record", () => {
       const a = [...father, named("a_011", "father_of_bride", "William", "rec2")];
-      expect(unlinkedParentNarrativeInvariants(proof("probable", "the son of William Barker"), pre(a, ["a_011"]))).toEqual([]);
+      const state = pre(a);
+      state.person_evidence.push({ ...liveLinks("a_011")[0], id: "pe_009", person_id: "I2" });
+      expect(unlinkedParentNarrativeInvariants(proof("probable", "the son of William Barker"), state)).toEqual([]);
     });
 
     // mcaloney-mother: the subject's mother is the bride, and the proof states HER parents.
