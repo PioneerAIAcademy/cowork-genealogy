@@ -2887,12 +2887,13 @@ caller is one of**:
 - one of the four **dedicated Cowork agents** (`DEDICATED_AGENT_NAMES`), which
   carry their own self-contained doctrine.
 
-`extraction_append` is narrower still: the main thread or the `record-structurer` agent
+`extraction_append` is narrower still: the main thread, the `record-structurer` agent or
+the `search-records` agent, which calls it when its delegation says to extract
 (`EXTRACTION_AGENT_NAMES`; the retired `record-extractor` stays in that set so
 committed runs replay under the verdict they were graded with). It is
 hard-restricted at the TypeScript layer to `sources`/`assertions`
-(`extraction-append.ts`) and `record-structurer.md` is the only agent file that
-declares it, so a *different* dedicated agent holding it is not a case any
+(`extraction-append.ts`) and `record-structurer.md` and `search-records.md` are the only agent
+files that declare it, so a *different* dedicated agent holding it is not a case any
 agent's `tools:`/`disallowedTools:` declaration is set up to permit, and is
 itself worth flagging.
 
