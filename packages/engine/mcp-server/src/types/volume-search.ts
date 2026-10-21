@@ -17,6 +17,11 @@ export interface VolumeSearchInput {
    * means no filter, matching the upstream behaviour for an empty id list.
    */
   recordTypeGroups?: string[];
+  /**
+   * Volumes per page, 1–100; defaults to 50. Part of the request body, so a
+   * pageToken is only valid alongside the same pageSize.
+   */
+  pageSize?: number;
   pageToken?: string;
 }
 
@@ -94,25 +99,25 @@ export interface FulltextGroupNumberResponse {
 
 // ---------- Tool output ----------
 
+/**
+ * One coverage row after merging: every upstream row sharing this row's
+ * `dateRange` and `recordType` (or, with no `recordType`, its concept id)
+ * contributes its place to `places`.
+ */
 export interface SimplifiedCoverage {
-  place: string;
+  places: string[];
   dateRange?: string;
   recordType?: string;
   /**
-   * The concept id behind `recordType`, and the stable key of the pair:
-   * `recordType` is locale- and collection-specific display text, absent on ~18%
-   * of coverages and sometimes an unusable `concept-id:` placeholder.
+   * The concept id behind the record type, emitted only when `recordType` is
+   * absent: `recordType` is locale- and collection-specific display text, absent
+   * on ~18% of coverages and sometimes an unusable `concept-id:` placeholder.
    */
   recordTypeConceptId?: number;
-  /** First year covered, from `fromdateString`. */
-  startYear?: number;
-  /** Last year covered, from `todateString`. */
-  endYear?: number;
 }
 
 export interface VolumeGroup {
   imageGroupNumber: string;
-  imageGroupPrefix: string;
   imageCount: number | null;
   recordSearchablePercent: number | null;
   fulltextSearchable: boolean | null;
@@ -120,6 +125,11 @@ export interface VolumeGroup {
   volumes?: string[];
   languages: string[];
   coverages: SimplifiedCoverage[];
+  /**
+   * Present only when `coverages` was shortened to keep the answer under the
+   * character budget: the number of merged rows before shortening.
+   */
+  coverageCount?: number;
 }
 
 export interface VolumeSearchResult {
@@ -128,6 +138,7 @@ export interface VolumeSearchResult {
     startYear?: number;
     endYear?: number;
     recordTypeGroups?: string[];
+    pageSize: number;
   };
   totalResults: number;
   nextPageToken?: string;

@@ -27,6 +27,11 @@ const endYearArg = getArg("--endYear");
 const startYear = startYearArg != null ? Number(startYearArg) : undefined;
 const endYear = endYearArg != null ? Number(endYearArg) : undefined;
 const pageToken = getArg("--pageToken");
+const pageSizeArg = getArg("--pageSize");
+const pageSize = pageSizeArg != null ? Number(pageSizeArg) : undefined;
+// --summary skips the indented dump and prints only the counts and the size of the
+// compact answer the server sends — the form the 50k tool-result limit applies to.
+const summaryOnly = args.includes("--summary");
 // Comma-separated so a filtered search is expressible from the shell, e.g.
 // --recordTypeGroups Tax  or  --recordTypeGroups "Legal,Census"
 const recordTypeGroups = getArg("--recordTypeGroups")
@@ -35,7 +40,7 @@ const recordTypeGroups = getArg("--recordTypeGroups")
   .filter(Boolean);
 
 console.log("volume_search smoke test");
-console.log("Input:", { standardPlace, startYear, endYear, recordTypeGroups, pageToken });
+console.log("Input:", { standardPlace, startYear, endYear, recordTypeGroups, pageSize, pageToken });
 console.log("---");
 
 try {
@@ -44,11 +49,15 @@ try {
     ...(startYear != null ? { startYear } : {}),
     ...(endYear != null ? { endYear } : {}),
     ...(recordTypeGroups?.length ? { recordTypeGroups } : {}),
+    ...(pageSize != null ? { pageSize } : {}),
     ...(pageToken ? { pageToken } : {}),
   }, LOCAL);
-  console.log(JSON.stringify(result, null, 2));
+  const serialized = JSON.stringify(result);
+  if (!summaryOnly) console.log(JSON.stringify(result, null, 2));
   console.log("---");
   console.log(`Total results: ${result.totalResults}, returned: ${result.results.length}`);
+  const capped = result.results.filter((g) => g.coverageCount != null).length;
+  console.log(`Answer size: ${serialized.length} characters; volumes with shortened coverages: ${capped}`);
   if (result.nextPageToken) {
     console.log(`Next page token: ${result.nextPageToken}`);
   }
