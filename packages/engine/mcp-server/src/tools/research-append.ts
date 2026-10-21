@@ -59,6 +59,7 @@ import {
   resolveStandardPlace,
   countryConsistency,
   isNonPlacePhrase,
+  checkFirstPlace,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
 import { birthThresholdMiles, lookupPlaceCoords } from "../utils/place-coords.js";
@@ -5844,6 +5845,65 @@ function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set
   return out;
 }
 
+/** Free text and single names are not checked: a lone name is where FamilySearch
+ *  picks a wrong same-named place, and regions ("Pennsylvania Anthracite Coal
+ *  Region") are not in the standard at all. */
+const NOT_A_PLACE_LIST = /\sand\s|[()\u2014\u2013/;&]/i;
+
+function isCheckablePlaceList(forPlace: unknown): forPlace is string {
+  return (
+    typeof forPlace === "string" &&
+    !NOT_A_PLACE_LIST.test(forPlace) &&
+    placeSegments(forPlace).length >= 2
+  );
+}
+
+/**
+ * Refuse a `localities` write whose `for_place` names a first place FamilySearch's
+ * place standard does not have (issue #3696). Runs on an append, and on an update
+ * that sets `for_place`. A failed lookup writes with a warning, never refuses. Skipped
+ * when an earlier gate already refused the batch, so no lookup runs under the lock
+ * for a call that fails anyway.
+ * Deliberately not gated on `input.resolveStandardPlace`, which governs assertion
+ * geocoding only.
+ */
+async function checkLocalityFirstPlaces(
+  ops: ResearchAppendOp[],
+  errors: string[],
+  warnings: string[],
+  fmt: (i: number, msg: string) => string,
+): Promise<void> {
+  if (errors.length > 0) return;
+  for (const [i, op] of ops.entries()) {
+    if (op.section !== "localities") continue;
+    const body = op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
+    if (!body || typeof body !== "object" || !Object.hasOwn(body, "for_place")) continue;
+    const forPlace = (body as Record<string, unknown>).for_place;
+    if (!isCheckablePlaceList(forPlace)) continue;
+    const { status } = await checkFirstPlace(forPlace);
+    if (status === "lookup_failed") {
+      warnings.push(
+        fmt(
+          i,
+          `for_place '${forPlace}' could not be checked against FamilySearch's place standard ` +
+            "(the lookup failed); written unchecked",
+        ),
+      );
+    } else if (status === "mismatch" || status === "not_found") {
+      const first = placeSegments(forPlace)[0];
+      errors.push(
+        fmt(
+          i,
+          `for_place '${forPlace}': FamilySearch's place standard has no place '${first}' there. ` +
+            `Look up '${first}' with place_search. If it returns a match, write for_place from that ` +
+            "standard place and re-send. If it returns nothing, do not write this entry: return to " +
+            "your caller saying the place did not resolve.",
+        ),
+      );
+    }
+  }
+}
+
 /** Pre-processes a batch before commit: §3.4.1 source-reuse auto-detection
  *  (including updates-only batches), §3.4.2 verdict sidecar, §3.4.3 re-extraction
  *  guard, sourceDescription → tree S entry, auto-stamp source_id, D2 persona
@@ -6531,6 +6591,8 @@ async function prepareOps(
   if (sourceReuse?.action === "updated_existing") {
     errors.push(...reextractionCollisions(ops, research, fmt));
   }
+
+  await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
   const verdictFile = prepareVerdict(input, ops, fmt, errors);

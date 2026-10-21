@@ -23,6 +23,7 @@ import {
   searchPlace,
   getPlaceById,
   getPlaceRepIds,
+  getPlaceCandidateNames,
 } from "./place-api.js";
 import { stdDate } from "./date-standardize.js";
 import { earliestYear } from "./date-helpers.js";
@@ -114,6 +115,29 @@ export function __clearPlaceResolverCachesForTests(): void {
 
 function normalizeKey(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/** `normalizeKey` with diacritics folded: "Parácuaro" and "Paracuaro" compare
+ *  equal. */
+function foldPlaceName(s: string): string {
+  return normalizeKey(s).normalize("NFD").replace(/\p{Diacritic}/gu, "");
+}
+
+/** Letters NFD leaves whole, so `\p{Diacritic}` cannot strip them. */
+const UNDECOMPOSED_LETTERS: Record<string, string> = {
+  "ø": "o", "æ": "ae", "œ": "oe", "ß": "ss", "ł": "l", "đ": "d", "ð": "d", "þ": "th", "ı": "i",
+};
+
+/** `foldPlaceName`, looser still, for `checkFirstPlace`'s name compare: "St Louis"
+ *  is "St. Louis", "Sondre Land" is "Søndre Land", "Saint Jean" is "Saint-Jean".
+ *  Measured live 2026-10-21: the first two were refused without it. */
+function placeNameKey(s: string): string {
+  return foldPlaceName(s)
+    .replace(/[øæœßłđðþı]/g, (c) => UNDECOMPOSED_LETTERS[c])
+    .replace(/[.'\u2019]/g, "")
+    .replace(/-/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
@@ -437,12 +461,7 @@ export function canonicalCountry(segment: string): string | null {
   // Fold diacritics before the lookup: "México" and "Mexico" are the same
   // country, and without this the guard silently switched itself off on the
   // accented spelling while checking the unaccented one.
-  const norm = segment
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/\./g, "");
+  const norm = foldPlaceName(segment).replace(/\./g, "");
   // hasOwn, not `?? null`: `??` only catches null/undefined, so a bare index on
   // a prototype key ("constructor") would return a function from a `string |
   // null` signature.
@@ -605,6 +624,54 @@ export async function resolveStandardPlace(
 
   standardizeCache.set(key, standardPlace); // definitive (incl. null for 0 hits)
   return standardPlace;
+}
+
+export type FirstPlaceStatus = "match" | "mismatch" | "not_found" | "lookup_failed";
+
+export interface FirstPlaceVerdict {
+  status: FirstPlaceStatus;
+  /** The picked search entry's fullName, whenever the search found one. */
+  standardPlace?: string;
+}
+
+/**
+ * Does FamilySearch's place standard hold the FIRST place a comma list names?
+ * `research_append`'s `localities` rule (issue #3696).
+ *
+ * "Did it resolve?" is the wrong question: "Helvesieck, Schneverdingen, Soltau,
+ * Hanover" resolves to "Schneverdingen, Soltau, Hanover, Prussia, Germany",
+ * dropping the unknown village and returning its parent. So the first name the
+ * caller wrote must equal either the first segment of the picked entry's
+ * fullName, or one of that place's names in ANY language. Both are needed:
+ * the English-only list is empty for Schneverdingen and lacks "Forfarshire"
+ * (measured in issue #3696).
+ *
+ * Unlike `resolveStandardPlace`, a failed request is `lookup_failed`, never a
+ * miss, and `placeTableForTests` is never consulted.
+ */
+export async function checkFirstPlace(text: string): Promise<FirstPlaceVerdict> {
+  const wanted = placeNameKey(placeSegments(text)[0] ?? "");
+  let entries: SearchEntry[];
+  try {
+    entries = await getSearchEntries(text);
+  } catch {
+    return { status: "lookup_failed" };
+  }
+  const best = pickBest(entries);
+  if (!best) return { status: "not_found" };
+  const standardPlace = best.fullName;
+  if (placeNameKey(placeSegments(standardPlace)[0] ?? "") === wanted) {
+    return { status: "match", standardPlace };
+  }
+  if (!best.placeId) return { status: "lookup_failed", standardPlace };
+  let names: string[];
+  try {
+    names = await getPlaceCandidateNames(best.placeId, {}, { anyLanguage: true });
+  } catch {
+    return { status: "lookup_failed", standardPlace };
+  }
+  const named = names.some((n) => placeNameKey(n) === wanted);
+  return { status: named ? "match" : "mismatch", standardPlace };
 }
 
 /**
