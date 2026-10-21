@@ -3306,6 +3306,16 @@ describe("research_append (Phase 2)", () => {
       expect(JSON.stringify(r)).toMatch(/repository_breadth.*801/);
     });
 
+    it("refuses a non-string criterion by type, not by the length cap", async () => {
+      const research = phase2Research();
+      research.questions = [validQuestion("q_001")];
+      research.log = log;
+      await writeProject(research);
+      const r = await researchAppend(declare({ ...short, goal_alignment: 12345 }));
+      expect(r.ok).toBe(false);
+      expect(JSON.stringify(r)).not.toMatch(/the cap is/);
+    });
+
     it("accepts a status update on a question that already stores a long criterion", async () => {
       const research = phase2Research();
       research.questions = [{ ...validQuestion("q_001"), priority: "high", search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: { ...short, evidence_class: "x".repeat(1000) }, not_reached: [] }, status: "exhaustive_declared" }];

@@ -177,10 +177,9 @@ way, each a 1-2 sentence assessment tied to project state: what was met, what
 failed, and what the evidence could not reach. Where a criterion turns on
 whether a civil registration record could exist for this event, state the start
 date Step 1 read and the page it came from; "registration had not begun" is an
-assessment only when it rests on that fetched date. Declaring requires all seven met;
-the assessment then goes only in the `research_append` arguments, never restated
-in prose first. A decline carries the same seven, honestly assessed, with the
-blocking criterion named in `justification`.
+assessment only when it rests on that fetched date. Declaring requires all seven met,
+written only in the `research_append` arguments. A decline names the blocking
+criterion in `justification`.
 
 | Criterion | Key question |
 |-----------|-------------|
