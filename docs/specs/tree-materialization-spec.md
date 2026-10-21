@@ -327,7 +327,7 @@ qualify.
   have reused '<id>', but '<id>' has a recorded namesake and its link '<pe>'
   from this record is not tied; '<new>' was created instead. Route '<pe>' to
   person-evidence to tie or lower it.", or "'<other>' was used instead" when
-  the lookup takes another eligible person. Measured at `67b7d8a1b` by
+  the lookup takes another eligible person. Measured at `20ad24872` by
   `dev/measure-namesake-cap.ts` §5 over the committed runs' persona ops, on
   each run's final state: with rows on every person holding a live strong
   link, 162 of the 967 explicit ops onto a row holder admitted without the row
@@ -365,16 +365,23 @@ cites its `S` entry (`refsReach`), not only the last one, so a person made from
 one persona of a document is not read as minted from another persona's record of
 the same document (pinned by C9r in `materialize-facts.test.ts`). Within one
 record the exemption holds only for the party the person was made from
-(`partyTrace`): a fact backlinked to, or a live link from, one of that party's
-one-party assertions, or a name equal to one of its names, and no fact or live
-link from another role's one-party assertion. Names do not count for another
-role, since two people on one record can share one, and a two-party assertion
-is no party's trace, since its link may be about either. A stub that fails it
+(`partyTrace`): a fact backlinked to, or a live `probable` or `confident` link
+from, one of that party's one-party assertions, or a name equal to one of its
+names, and no such fact or link from another role's one-party assertion. A
+party is a role on the record in every spelling that normalizes equal, as the
+named-party arm writes them (`personaParty`). Names do not count for another
+role, since two people on one record can share one; a `speculative` link is a
+candidate, not an identity, so it traces no party; and a two-party assertion
+is no party's trace, since its link may be about either. On the named-party
+arm the caller's `name` counts as one of the party's names only when the op
+writes nothing but that name (it is not corroborated, or the named role has no
+assertion that writes onto a person), so a caller-supplied name never carries
+facts onto a stub. A stub that fails it
 falls to the link rule, and its refusal opens "'<id>' was created from record
 '<record>', but it carries that record's '<role>' party (fact '<F>')" (or "(link
 '<pe>')"), or "but
 nothing on it (a fact, a link from a one-party assertion, or a name) comes from
-this party", then "so it is not this party's stub." Measured at `67b7d8a1b` by
+this party", then "so it is not this party's stub." Measured at `20ad24872` by
 the replay (`dev/replay-materialize-link.ts`, its exempt bucket): 121 committed
 (op, person) pairs land on a stub of the op's own record, an implicit op counted
 once per person its persona's facts reach, and the party test withholds the
@@ -887,6 +894,8 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   relationship/marriage assertions carry the key, so corroboration is the common
   case; without it the arm writes the name alone, because a missing fact is
   recoverable by a later persona-arm call and a fact on the wrong person is not.
+  That call needs a `probable` or `confident` link from the persona to the
+  stub: a name-only stub traces to no party (§4.3), so it is not exempt.
   (2) It runs one `applyMaterializeOp` per distinct `record_role` spelling the
   guard matched, not one for the first: the guard selects case- and
   space-insensitively while the persona arm filters exactly, so a single

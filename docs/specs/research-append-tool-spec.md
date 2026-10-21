@@ -1292,7 +1292,7 @@ is listed, and the name sentence only when a name is. It rides
   `assertion_id`, else every research source its refs reach, any party) holds a
   refused link and no allowed one. Names: those citing a refused link's source,
   counted rather than listed, since no tool removes a name.
-- **Measured** at `67b7d8a1b` by `dev/measure-namesake-cap.ts` §4 over the 212
+- **Measured** at `20ad24872` by `dev/measure-namesake-cap.ts` §4 over the 212
   committed e2e final states, the rows written in one call: on every person
   holding a live strong link, 455 of 1,306 persons are warned, in 139 states,
   listing 2,216 links, 530 facts and 367 names (the links are §1's refusals on the
