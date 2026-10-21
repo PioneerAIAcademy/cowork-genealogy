@@ -110,3 +110,58 @@ async def test_mock_agent_documents_validate(tmp_path: Path) -> None:
     post_doc = json.loads(research.read_text(encoding="utf-8"))
     assert post_doc["log"], "the search turn appended no log entry — test is vacuous"
     assert _errors(post_doc) == [], "post-search document is invalid"
+
+
+# --- Ids must stay unique on a PRE-SEEDED project -----------------------------
+#
+# Found in a browser, not here: open the sample project on `make server-mock`, send one
+# message, and React logs "Encountered two children with the same key, src_002" — and
+# warns the rows "may be duplicated and/or omitted", so the viewer can silently drop a
+# real one. The cause was `_load_state` returning a hardcoded `log_seq: 1` for a seeded
+# project, so the first turn minted ids the sample already contained.
+
+SEED_SAMPLE = REPO_ROOT / "apps" / "server" / "app" / "seed" / "sample_project" / "research.json"
+
+
+def _seed_into(dir_: Path) -> None:
+    """Copy the shipped sample project in, which is what `Open a sample project` does."""
+    (dir_ / "research.json").write_text(SEED_SAMPLE.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def test_the_seeded_counter_clears_every_id_family_not_just_the_log(tmp_path: Path) -> None:
+    """The sample holds 7 log entries, 5 sources and 15 assertions.
+
+    One counter mints all three (`log_{seq}`, `src_{seq}`, `a_{seq}` from the SAME seq),
+    so clearing the log's 7 is not enough — `a_008` through `a_015` would still collide.
+    The answer is 15. This asserts the MAX across families, which is the whole point;
+    asserting 7 would pass a counter that still corrupts assertions.
+    """
+    _seed_into(tmp_path)
+    assert MockAgent(tmp_path)._seeded_seq() == 15
+
+
+def test_a_seeded_project_survives_a_turn_without_duplicate_ids(tmp_path: Path) -> None:
+    """The browser symptom, as a test. Two turns, because the bug produced a fresh
+    collision on each one (src_002 then src_003)."""
+    _seed_into(tmp_path)
+    agent = MockAgent(tmp_path)
+    import asyncio
+
+    async def drive() -> None:
+        await _turn(agent, "find me a death record for Patrick Flynn")
+        await _turn(agent, "now find his parents")
+
+    asyncio.run(drive())
+
+    doc = json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))
+    for section in ("log", "sources", "assertions"):
+        ids = [r["id"] for r in doc.get(section) or []]
+        dupes = sorted({i for i in ids if ids.count(i) > 1})
+        assert not dupes, f"{section} has duplicate ids after two mock turns: {dupes}"
+
+
+def test_the_counter_is_zero_rather_than_an_error_on_an_unreadable_project(tmp_path: Path) -> None:
+    """Runs at agent start-up. A mock that cannot read a malformed project should still
+    greet rather than 500, so this falls back rather than raising."""
+    (tmp_path / "research.json").write_text("{ not json", encoding="utf-8")
+    assert MockAgent(tmp_path)._seeded_seq() == 0

@@ -1,0 +1,1994 @@
+{
+  "log_id": "log_009",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T15:13:25.867Z",
+  "returned_count": 10,
+  "payload": {
+    "query": {
+      "count": 10,
+      "deathPlace": "White, Indiana, United States",
+      "deathYearFrom": 1910,
+      "deathYearTo": 1910,
+      "givenName": "Christina",
+      "projectPath": "<workspace>",
+      "surname": "Wilson"
+    },
+    "totalMatches": 18645,
+    "paginationCappedAt": 4999,
+    "returned": 10,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:Q2DV-R2K4",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Wolcott, White, Indiana, United States of America"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Christina Hyde Wilson",
+        "score": 5.4436,
+        "confidence": 3,
+        "birthDate": "12 December 1834",
+        "deathDate": "8 February 1910",
+        "collectionId": "2221801",
+        "collectionTitle": "Find a Grave Index",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "recordTitle": "Entry for Christina Hyde Wilson, \"Find a Grave Index\"",
+        "recordArk": "ark:/61903/1:2:QLWX-BCSJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102366873577",
+              "ark": "ark:/61903/1:1:Q2DV-R2K4",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Christina",
+                  "surname": "Hyde Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "place": "Wolcott, White, Indiana, United States of America",
+                  "standard_place": "Wolcott, Princeton Township, White, Indiana, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "08 Feb 1910",
+                  "standard_date": "8 Feb 1910"
+                },
+                {
+                  "type": "Birth",
+                  "date": "12 Dec 1834",
+                  "standard_date": "12 Dec 1834"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102946904177",
+              "title": "Entry for Christina Hyde Wilson, \"Find a Grave Index\"",
+              "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2DV-R2K4 : Sun Oct 04 16:11:31 UTC 2026), Entry for Christina Hyde Wilson.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWX-BCSJ"
+            },
+            {
+              "id": "sd_c_2221801",
+              "title": "Find a Grave Index",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801"
+            },
+            {
+              "id": "sd_da1",
+              "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=171683066"
+            },
+            {
+              "id": "src_p_p_102366873577",
+              "url": "#p_102366873577"
+            }
+          ],
+          "places": [
+            {
+              "id": "4116789",
+              "name": "Wolcott, Princeton Township, White, Indiana, United States",
+              "latitude": 40.7581,
+              "longitude": -87.0417
+            }
+          ]
+        },
+        "primaryId": "p_102366873577"
+      },
+      {
+        "recordId": "ark:/61903/1:1:VZ72-J12",
+        "events": [
+          {
+            "type": "Race",
+            "value": "W"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Christinia Wilson",
+        "score": 4.73288,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "1835",
+        "deathDate": "8 February 1910",
+        "deathPlace": "Monticello, Union Township, White, Indiana, United States",
+        "collectionId": "1947977",
+        "collectionTitle": "Indiana, Death Index, 1882-1920",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1947977",
+        "recordTitle": "Entry for Christinia Wilson, \"Indiana, Death Index, 1882-1920\"",
+        "recordArk": "ark:/61903/1:2:9MS3-7Q6M",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_13369606190",
+              "ark": "ark:/61903/1:1:VZ72-J12",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Christinia"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1835",
+                  "standard_date": "1835"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "08 Feb 1910",
+                  "standard_date": "8 Feb 1910",
+                  "place": "Monticello, Indiana",
+                  "standard_place": "Monticello, Union Township, White, Indiana, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "W"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21921168990",
+              "title": "Entry for Christinia Wilson, \"Indiana, Death Index, 1882-1920\"",
+              "citation": "\"Indiana, Death Index, 1882-1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VZ72-J12 : Mon Feb 24 20:35:31 UTC 2025), Entry for Christinia Wilson, 08 Feb 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9MS3-7Q6M"
+            },
+            {
+              "id": "sd_c_1947977",
+              "title": "Indiana, Death Index, 1882-1920",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1947977"
+            },
+            {
+              "id": "src_p_p_13369606190",
+              "url": "#p_13369606190"
+            }
+          ],
+          "places": [
+            {
+              "id": "4114301",
+              "name": "Monticello, Union Township, White, Indiana, United States",
+              "latitude": 40.7453,
+              "longitude": -86.7647
+            }
+          ]
+        },
+        "primaryId": "p_13369606190"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFH3-FSW",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Christina Wilson",
+        "score": 4.1566,
+        "confidence": 2,
+        "sex": "Female",
+        "collectionId": "1674830",
+        "collectionTitle": "Indiana, Marriages, 1780-1992",
+        "collectionUrl": "https://familysearch.org/collections/1674830",
+        "recordTitle": "Entry for Harold G. Wilson, \"Indiana, Marriages, 1780-1992\"",
+        "recordArk": "ark:/61903/1:2:M6X5-KYB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10577074566",
+              "ark": "ark:/61903/1:1:XFH3-FSW",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Christina",
+                  "surname": "Wilson"
+                }
+              ]
+            },
+            {
+              "id": "p_10577074564",
+              "ark": "ark:/61903/1:1:XFH3-FSQ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Harold G.",
+                  "surname": "Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "24 Jan 1902",
+                  "standard_date": "24 Jan 1902",
+                  "place": "Indianapolis, Indiana",
+                  "standard_place": "Indianapolis, Marion, Indiana, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_10577074565",
+              "ark": "ark:/61903/1:1:XFH3-FS7",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Claud O.",
+                  "surname": "Wilson"
+                }
+              ]
+            },
+            {
+              "id": "p_10577074561",
+              "ark": "ark:/61903/1:1:XFH3-FS9",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pauline",
+                  "surname": "Burd"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "9 Jul 1903",
+                  "standard_date": "9 Jul 1903",
+                  "place": "Princeton, Ind.",
+                  "standard_place": "Princeton Township, White, Indiana, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_10577074562",
+              "ark": "ark:/61903/1:1:XFH3-FSS",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Charles E.",
+                  "surname": "Burd"
+                }
+              ]
+            },
+            {
+              "id": "p_10577074563",
+              "ark": "ark:/61903/1:1:XFH3-FS3",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Irene",
+                  "surname": "McConalia"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10577074565",
+              "child": "p_10577074564"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10577074566",
+              "child": "p_10577074564"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10577074565",
+              "person2": "p_10577074566"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10577074564",
+              "person2": "p_10577074561"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674830",
+              "title": "Indiana, Marriages, 1780-1992",
+              "url": "https://familysearch.org/collections/1674830"
+            },
+            {
+              "id": "src_r_327905938",
+              "title": "Entry for Harold G. Wilson, \"Indiana, Marriages, 1780-1992\"",
+              "citation": "\"Indiana, Marriages, 1780-1992,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:2:M6X5-KYB : 13 January 2020), Entry for Harold G. Wilson, 12 Feb 1925; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6X5-KYB"
+            },
+            {
+              "id": "src_p_p_10577074566",
+              "url": "#p_10577074566"
+            }
+          ],
+          "places": [
+            {
+              "id": "4106989",
+              "name": "Princeton Township, White, Indiana, United States",
+              "latitude": 40.7869,
+              "longitude": -87.015
+            },
+            {
+              "id": "4107836",
+              "name": "Indianapolis, Marion, Indiana, United States",
+              "latitude": 39.7683,
+              "longitude": -86.1581
+            }
+          ]
+        },
+        "primaryId": "p_10577074566"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MM1N-KND",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1900",
+            "place": "Monroe City, Harrison Township, Knox, Indiana, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Christina Wilson",
+        "score": 3.7536001,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "September 1898",
+        "birthPlace": "Indiana, United States",
+        "collectionId": "1325221",
+        "collectionTitle": "United States, Census, 1900",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+        "recordTitle": "Household of Frank Wilson, \"United States, Census, 1900\"",
+        "recordArk": "ark:/61903/1:2:1TB3-3ZK",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_23939592",
+              "ark": "ark:/61903/1:1:MM1N-KND",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Christina",
+                  "surname": "Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "September 1898",
+                  "standard_date": "Sep 1898",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Monroe City, Harrison Township, Knox, Indiana, United States",
+                  "standard_place": "Monroe City, Harrison Township, Knox, Indiana, United States"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_23939589",
+              "ark": "ark:/61903/1:1:MM1N-KNC",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Frank",
+                  "surname": "Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "March 1871",
+                  "standard_date": "Mar 1871",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Monroe City, Harrison Township, Knox, Indiana, United States",
+                  "standard_place": "Monroe City, Harrison Township, Knox, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_23939590",
+              "ark": "ark:/61903/1:1:MM1N-KNZ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Nora"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Monroe City, Harrison Township, Knox, Indiana, United States",
+                  "standard_place": "Monroe City, Harrison Township, Knox, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "July 1876",
+                  "standard_date": "Jul 1876",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_23939591",
+              "ark": "ark:/61903/1:1:MM1N-KN8",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Tegard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "January 1897",
+                  "standard_date": "Jan 1897",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Monroe City, Harrison Township, Knox, Indiana, United States",
+                  "standard_place": "Monroe City, Harrison Township, Knox, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_23939593",
+              "ark": "ark:/61903/1:1:MM1N-KN6",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Infant",
+                  "surname": "Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "May 1900",
+                  "standard_date": "May 1900",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Monroe City, Harrison Township, Knox, Indiana, United States",
+                  "standard_place": "Monroe City, Harrison Township, Knox, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_23939594",
+              "ark": "ark:/61903/1:1:MM1N-KNX",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Nora",
+                  "surname": "Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "March 1882",
+                  "standard_date": "Mar 1882",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Monroe City, Harrison Township, Knox, Indiana, United States",
+                  "standard_place": "Monroe City, Harrison Township, Knox, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_23939590",
+              "child": "p_23939591"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_23939590",
+              "child": "p_23939592"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_23939589",
+              "person2": "p_23939590"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_23939590",
+              "child": "p_23939593"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_23939589",
+              "child": "p_23939593"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_23939589",
+              "child": "p_23939591"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_23939589",
+              "child": "p_23939592"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21795564019",
+              "title": "Household of Frank Wilson, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MM1N-KNC : Wed Oct 15 16:20:26 UTC 2025), Entry for Frank Wilson and Nora Wilson, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TB3-3ZK"
+            },
+            {
+              "id": "sd_c_1325221",
+              "title": "United States, Census, 1900",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1325221"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6LM3-J57"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_23939592",
+              "url": "#p_23939592"
+            }
+          ],
+          "places": [
+            {
+              "id": "331",
+              "name": "Indiana, United States",
+              "latitude": 40.0003,
+              "longitude": -86.2503
+            },
+            {
+              "id": "4114073",
+              "name": "Monroe City, Harrison Township, Knox, Indiana, United States",
+              "latitude": 38.6153,
+              "longitude": -87.3544
+            }
+          ]
+        },
+        "primaryId": "p_23939592"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHVD-NT2",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Franklin Township, Washington, Indiana, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Christina E Wilson",
+        "score": 3.7536001,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "1832",
+        "birthPlace": "Indiana, United States",
+        "collectionId": "1401638",
+        "collectionTitle": "United States, Census, 1850",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+        "recordTitle": "Household of John Wilson, \"United States, Census, 1850\"",
+        "recordArk": "ark:/61903/1:2:MWYH-HQ5",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_209319200",
+              "ark": "ark:/61903/1:1:MHVD-NT2",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Christina E",
+                  "surname": "Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Franklin Township, Washington, Indiana, United States",
+                  "standard_place": "Franklin Township, Washington, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1832",
+                  "standard_date": "1832",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_209319199",
+              "ark": "ark:/61903/1:1:MHVD-NTK",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Franklin Township, Washington, Indiana, United States",
+                  "standard_place": "Franklin Township, Washington, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1826",
+                  "standard_date": "1826",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_209319201",
+              "ark": "ark:/61903/1:1:MHVD-NTL",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary J",
+                  "surname": "Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1848",
+                  "standard_date": "1848",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Franklin Township, Washington, Indiana, United States",
+                  "standard_place": "Franklin Township, Washington, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_209321702",
+              "ark": "ark:/61903/1:1:MHVD-K2S",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "George J",
+                  "surname": "Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Franklin Township, Washington, Indiana, United States",
+                  "standard_place": "Franklin Township, Washington, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1849",
+                  "standard_date": "1849",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_167893344",
+              "title": "Household of John Wilson, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHVD-NTK : Tue Oct 21 06:36:25 UTC 2025), Entry for John Wilson and Christina E Wilson, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWYH-HQ5"
+            },
+            {
+              "id": "sd_c_1401638",
+              "title": "United States, Census, 1850",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6LHQ-QR3"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_209319200",
+              "url": "#p_209319200"
+            }
+          ],
+          "places": [
+            {
+              "id": "331",
+              "name": "Indiana, United States",
+              "latitude": 40.0003,
+              "longitude": -86.2503
+            },
+            {
+              "id": "4107349",
+              "name": "Franklin Township, Washington, Indiana, United States",
+              "latitude": 38.6011,
+              "longitude": -85.9442
+            }
+          ]
+        },
+        "primaryId": "p_209319200"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M997-SKH",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1900",
+            "place": "Hudson, Salem Township, Steuben, Indiana, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Christina Wilson",
+        "score": 3.7536001,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "October 1832",
+        "birthPlace": "Ohio, United States",
+        "collectionId": "1325221",
+        "collectionTitle": "United States, Census, 1900",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+        "recordTitle": "Household of Orlie Gilispie, \"United States, Census, 1900\"",
+        "recordArk": "ark:/61903/1:2:1TB8-5MW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_25247378",
+              "ark": "ark:/61903/1:1:M997-SKH",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Christina"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Widowed"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "October 1832",
+                  "standard_date": "Oct 1832",
+                  "place": "Ohio",
+                  "standard_place": "Ohio, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Hudson, Salem Township, Steuben, Indiana, United States",
+                  "standard_place": "Hudson, Salem Township, Steuben, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_25247377",
+              "ark": "ark:/61903/1:1:M997-SK4",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gilispie",
+                  "given": "Addie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Hudson, Salem Township, Steuben, Indiana, United States",
+                  "standard_place": "Hudson, Salem Township, Steuben, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "September 1876",
+                  "standard_date": "Sep 1876",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_25247376",
+              "ark": "ark:/61903/1:1:M997-SKW",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gilispie",
+                  "given": "Orlie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Hudson, Salem Township, Steuben, Indiana, United States",
+                  "standard_place": "Hudson, Salem Township, Steuben, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "July 1866",
+                  "standard_date": "Jul 1866",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_25247376",
+              "person2": "p_25247377"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_25247378",
+              "child": "p_25247377"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21795798606",
+              "title": "Household of Orlie Gilispie, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M997-SKW : Tue Oct 21 23:18:51 UTC 2025), Entry for Orlie Gilispie and Addie Gilispie, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TB8-5MW"
+            },
+            {
+              "id": "sd_c_1325221",
+              "title": "United States, Census, 1900",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1325221"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-661P-LG"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_25247378",
+              "url": "#p_25247378"
+            }
+          ],
+          "places": [
+            {
+              "id": "331",
+              "name": "Indiana, United States",
+              "latitude": 40.0003,
+              "longitude": -86.2503
+            },
+            {
+              "id": "357",
+              "name": "Ohio, United States",
+              "latitude": 40.25028,
+              "longitude": -83.00028
+            },
+            {
+              "id": "4043379",
+              "name": "Hudson, Salem Township, Steuben, Indiana, United States",
+              "latitude": 41.5328,
+              "longitude": -85.0811
+            }
+          ]
+        },
+        "primaryId": "p_25247378"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MKRH-B3M",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Polk, Washington, Indiana, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Christina E Wilson",
+        "score": 3.7536001,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "1830",
+        "birthPlace": "Indiana, United States",
+        "collectionId": "1727033",
+        "collectionTitle": "United States, Census, 1910",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1727033",
+        "recordTitle": "Household of John Wilson, \"United States, Census, 1910\"",
+        "recordArk": "ark:/61903/1:2:9Z34-PXQ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_482191290",
+              "ark": "ark:/61903/1:1:MKRH-B3M",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Christina E"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Polk, Washington, Indiana, United States",
+                  "standard_place": "Polk Township, Washington, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1830",
+                  "standard_date": "1830",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_482191289",
+              "ark": "ark:/61903/1:1:MKRH-BS1",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "John"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1826",
+                  "standard_date": "1826",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Polk, Washington, Indiana, United States",
+                  "standard_place": "Polk Township, Washington, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_482191291",
+              "ark": "ark:/61903/1:1:MKRH-B39",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Brown",
+                  "given": "Newton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Polk, Washington, Indiana, United States",
+                  "standard_place": "Polk Township, Washington, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1852",
+                  "standard_date": "1852",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_482191289",
+              "person2": "p_482191290"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_974640124",
+              "title": "Household of John Wilson, \"United States, Census, 1910\"",
+              "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MKRH-BS1 : Wed Aug 13 17:45:39 UTC 2025), Entry for John Wilson and Christina E Wilson, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9Z34-PXQ"
+            },
+            {
+              "id": "sd_c_1727033",
+              "title": "United States, Census, 1910",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1727033"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GRVN-TND"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_482191290",
+              "url": "#p_482191290"
+            }
+          ],
+          "places": [
+            {
+              "id": "331",
+              "name": "Indiana, United States",
+              "latitude": 40.0003,
+              "longitude": -86.2503
+            },
+            {
+              "id": "4106963",
+              "name": "Polk Township, Washington, Indiana, United States",
+              "latitude": 38.5286,
+              "longitude": -85.9439
+            }
+          ]
+        },
+        "primaryId": "p_482191290"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MKGY-4VT",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Center, Hancock, Indiana, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Christina E Wilson",
+        "score": 3.7536001,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "1863",
+        "birthPlace": "Indiana, United States",
+        "collectionId": "1727033",
+        "collectionTitle": "United States, Census, 1910",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1727033",
+        "recordTitle": "Household of Adam F Wilson, \"United States, Census, 1910\"",
+        "recordArk": "ark:/61903/1:2:9ZSG-QHQ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_480255866",
+              "ark": "ark:/61903/1:1:MKGY-4VT",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Christina E",
+                  "surname": "Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1863",
+                  "standard_date": "1863",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Center, Hancock, Indiana, United States",
+                  "standard_place": "Center Township, Hancock, Indiana, United States"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_480255865",
+              "ark": "ark:/61903/1:1:MKGY-4VR",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Adam F",
+                  "surname": "Wilson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Center, Hancock, Indiana, United States",
+                  "standard_place": "Center Township, Hancock, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1837",
+                  "standard_date": "1837",
+                  "place": "Ohio",
+                  "standard_place": "Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_480255865",
+              "person2": "p_480255866"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_974217844",
+              "title": "Household of Adam F Wilson, \"United States, Census, 1910\"",
+              "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MKGY-4VR : Wed Aug 13 18:48:45 UTC 2025), Entry for Adam F Wilson and Christina E Wilson, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9ZSG-QHQ"
+            },
+            {
+              "id": "sd_c_1727033",
+              "title": "United States, Census, 1910",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1727033"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9RV5-Y48"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_480255866",
+              "url": "#p_480255866"
+            }
+          ],
+          "places": [
+            {
+              "id": "331",
+              "name": "Indiana, United States",
+              "latitude": 40.0003,
+              "longitude": -86.2503
+            },
+            {
+              "id": "357",
+              "name": "Ohio, United States",
+              "latitude": 40.25028,
+              "longitude": -83.00028
+            },
+            {
+              "id": "4107496",
+              "name": "Center Township, Hancock, Indiana, United States",
+              "latitude": 39.8161,
+              "longitude": -85.775
+            }
+          ]
+        },
+        "primaryId": "p_480255866"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MKPT-11V",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Indianapolis Ward 9, Marion, Indiana, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Christina Wilson",
+        "score": 3.7536001,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "1878",
+        "birthPlace": "Indiana, United States",
+        "collectionId": "1727033",
+        "collectionTitle": "United States, Census, 1910",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1727033",
+        "recordTitle": "Household of Claude O Wilson, \"United States, Census, 1910\"",
+        "recordArk": "ark:/61903/1:2:9ZSB-KZT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_481058988",
+              "ark": "ark:/61903/1:1:MKPT-11V",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Christina"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1878",
+                  "standard_date": "1878",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Indianapolis Ward 9, Marion, Indiana, United States",
+                  "standard_place": "Indianapolis, Marion, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_481058987",
+              "ark": "ark:/61903/1:1:MKPT-11J",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Claude O"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Indianapolis Ward 9, Marion, Indiana, United States",
+                  "standard_place": "Indianapolis, Marion, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1878",
+                  "standard_date": "1878",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_481058989",
+              "ark": "ark:/61903/1:1:MKPT-11K",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Carl"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Indianapolis Ward 9, Marion, Indiana, United States",
+                  "standard_place": "Indianapolis, Marion, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_481058990",
+              "ark": "ark:/61903/1:1:MKPT-112",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Harold"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1902",
+                  "standard_date": "1902",
+                  "place": "Indiana",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Indianapolis Ward 9, Marion, Indiana, United States",
+                  "standard_place": "Indianapolis, Marion, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_481058987",
+              "person2": "p_481058988"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_481058988",
+              "child": "p_481058990"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_481058988",
+              "child": "p_481058989"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_481058987",
+              "child": "p_481058989"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_481058987",
+              "child": "p_481058990"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_974393426",
+              "title": "Household of Claude O Wilson, \"United States, Census, 1910\"",
+              "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MKPT-11J : Wed Aug 13 18:33:43 UTC 2025), Entry for Claude O Wilson and Christina Wilson, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9ZSB-KZT"
+            },
+            {
+              "id": "sd_c_1727033",
+              "title": "United States, Census, 1910",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1727033"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9RNV-73K"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_481058988",
+              "url": "#p_481058988"
+            }
+          ],
+          "places": [
+            {
+              "id": "331",
+              "name": "Indiana, United States",
+              "latitude": 40.0003,
+              "longitude": -86.2503
+            },
+            {
+              "id": "4107836",
+              "name": "Indianapolis, Marion, Indiana, United States",
+              "latitude": 39.7683,
+              "longitude": -86.1581
+            }
+          ]
+        },
+        "primaryId": "p_481058988"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MHS5-WLG",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Occupation",
+            "value": "At School"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Boonville, Warrick, Indiana, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Christina Wilson",
+        "score": 3.7536001,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "1864",
+        "birthPlace": "Indiana, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Peter Wilson, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MWLT-PVX",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_196674052",
+              "ark": "ark:/61903/1:1:MHS5-WLG",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Christina"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "At School"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Boonville, Warrick, Indiana, United States",
+                  "standard_place": "Boonville, Boon Township, Warrick, Indiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1864",
+                  "standard_date": "1864",
+                  "place": "Indiana, United States",
+                  "standard_place": "Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_196674050",
+              "ark": "ark:/61903/1:1:MHS5-WL2",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Peter"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1835",
+                  "standard_date": "1835",
+                  "place": "Pennsylvania, United States",
+                  "standard_place": "Pennsylvania, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Boonville, Warrick, Indiana, United States",
+                  "standard_place": "Boonville, Boon Township, Warrick, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_196674051",
+              "ark": "ark:/61903/1:1:MHS5-WLL",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Mary"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Indiana, United States",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Boonville, Warrick, Indiana, United States",
+                  "standard_place": "Boonville, Boon Township, Warrick, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_196674053",
+              "ark": "ark:/61903/1:1:MHS5-WLP",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Charles"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1867",
+                  "standard_date": "1867",
+                  "place": "Indiana, United States",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Boonville, Warrick, Indiana, United States",
+                  "standard_place": "Boonville, Boon Township, Warrick, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_196674054",
+              "ark": "ark:/61903/1:1:MHS5-WL5",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Kate"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1869",
+                  "standard_date": "1869",
+                  "place": "Indiana, United States",
+                  "standard_place": "Indiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Boonville, Warrick, Indiana, United States",
+                  "standard_place": "Boonville, Boon Township, Warrick, Indiana, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_196674051",
+              "child": "p_196674052"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_196674050",
+              "child": "p_196674052"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_196674050",
+              "child": "p_196674053"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_196674050",
+              "person2": "p_196674051"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_196674050",
+              "child": "p_196674054"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_196674051",
+              "child": "p_196674054"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_196674051",
+              "child": "p_196674053"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_163533254",
+              "title": "Household of Peter Wilson, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHS5-WL2 : Wed Sep 09 09:13:40 UTC 2026), Entry for Peter Wilson and Mary Wilson, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWLT-PVX"
+            },
+            {
+              "id": "sd_c_1417683",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YYB-9YV2"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1793 to 1964"
+            },
+            {
+              "id": "src_p_p_196674052",
+              "url": "#p_196674052"
+            }
+          ],
+          "places": [
+            {
+              "id": "331",
+              "name": "Indiana, United States",
+              "latitude": 40.0003,
+              "longitude": -86.2503
+            },
+            {
+              "id": "338",
+              "name": "Pennsylvania, United States",
+              "latitude": 40.75,
+              "longitude": -77.75
+            },
+            {
+              "id": "4049536",
+              "name": "Boonville, Boon Township, Warrick, Indiana, United States",
+              "latitude": 38.0492,
+              "longitude": -87.2742
+            }
+          ]
+        },
+        "primaryId": "p_196674052"
+      }
+    ]
+  }
+}

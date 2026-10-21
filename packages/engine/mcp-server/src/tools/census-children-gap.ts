@@ -23,7 +23,8 @@ import { NoProjectError, noProjectResult, readProjectJson } from "../utils/proje
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { earliestIsUnbounded, getDayRange, latestIsUnbounded } from "../utils/date-helpers.js";
 import { BIRTHLIKE_FACT_TYPES, DEATHLIKE_FACT_TYPES } from "../utils/mob.js";
-import { findAnchor, getPersonName, isNonBiologicalSubtype } from "./person-warnings.js";
+import { getPersonName, isNonBiologicalSubtype } from "./person-warnings.js";
+import { findAnchor } from "../utils/tree-person.js";
 
 export const ENUMERATION_DAYS: Record<CensusYear, string> = {
   1900: "1900-06-01",
