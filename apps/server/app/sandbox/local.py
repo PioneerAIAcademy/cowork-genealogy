@@ -300,6 +300,22 @@ class LocalProvider(SandboxProvider):
         except OSError:
             pass
 
+    def _has_foreign_token(self, pid: int, sandbox_id: str) -> bool:
+        """Whether this process's environ names a control plane that is not us.
+
+        Unreadable environ answers False: it falls through to `_is_our_server`,
+        which answers NO for the same input, so an unreadable process is never
+        killed either way.
+        """
+        try:
+            entries = Path(f"/proc/{pid}/environ").read_bytes().split(b"\0")
+        except OSError:
+            return False
+        for e in entries:
+            if e.startswith(f"{OWNER_ENV_VAR}=".encode()):
+                return e != f"{OWNER_ENV_VAR}={OWNER_TOKEN}".encode()
+        return False
+
     def _is_our_server(self, pid: int, sandbox_id: str) -> bool:
         """Whether `pid` is alive AND is THIS provider's WS server for `sandbox_id`.
 
@@ -317,18 +333,29 @@ class LocalProvider(SandboxProvider):
         other's `server.json`, do not track it in `self._servers`, find a live pid
         whose cmdline names the module, and killpg a sibling's live session.
 
-        `AGENT_SECRETS_PATH` DOES NOT settle it, which is the bug this check had:
-        it is `sandboxes_dir / <id> / ...`, so two planes sharing that directory
-        compute the IDENTICAL string and each reads the other's server as its own.
+        `AGENT_SECRETS_PATH` DOES NOT settle it on its own: it is
+        `sandboxes_dir / <id> / ...`, so two planes sharing that directory compute
+        the IDENTICAL string and each reads the other's server as its own.
         `make server-dev` and `make server` both use `data_dir/sandboxes`, so the
-        shipped way to get two planes is also the way to get a sibling's live
+        shipped way to get two planes was also the way to get a sibling's live
         session killed.
 
-        `OWNER_ENV_VAR` is what settles it: one token per control-plane process,
-        put in the child's environment at spawn and written into `server.json`.
-        A server whose environ does not carry THIS plane's token is not ours,
-        whatever its path or cmdline says. An environ we cannot read gets NO, for
-        the same reason an unreadable cmdline does.
+        **What settles it is `reap_orphans`, not this method**, and the split is
+        deliberate. `_is_live_siblings` reads `server.json`'s recorded owner and
+        asks whether THAT PROCESS is still alive -- which is the only question that
+        separates a live sibling's session (leave it) from a crashed plane's orphan
+        (reap it). Both carry a foreign token, so the token alone cannot tell them
+        apart, and requiring OUR token here would refuse to reap every orphan a
+        crashed plane left behind -- the reaper's whole purpose.
+
+        `OWNER_ENV_VAR` is NOT read here. It is read by `_has_foreign_token`, for
+        the one case `server.json` cannot answer -- a record written before owners
+        were recorded, where there is no owner pid to ask about. Both callers live
+        in `reap_orphans`, so this method stays what its name says: does this pid
+        look like a server for this sandbox, under this directory.
+
+        An environ we cannot read gets NO, for the same reason an unreadable
+        cmdline does.
         """
         try:
             cmdline = Path(f"/proc/{pid}/cmdline").read_bytes()
@@ -347,7 +374,7 @@ class LocalProvider(SandboxProvider):
             return False
         return True
 
-    def _is_live_siblings(self, record: dict) -> bool:
+    def _is_live_siblings(self, record: dict, pid: int, sandbox_id: str) -> bool:
         """Whether this server belongs to ANOTHER control plane that is still up.
 
         Narrow on purpose: it answers True only when the record names an owner,
@@ -357,8 +384,14 @@ class LocalProvider(SandboxProvider):
         behaviour for everything already on disk.
         """
         owner = record.get("owner")
-        if not owner or owner == OWNER_TOKEN:
+        if owner == OWNER_TOKEN:
             return False
+        if not owner:
+            # A record written before owners were recorded: there is no owner pid to
+            # ask about, so the environ token is the only evidence. A token that is
+            # not ours means another plane spawned it and we cannot show that plane
+            # is gone. No token at all is a pre-token spawn, which reaps as it did.
+            return self._has_foreign_token(pid, sandbox_id)
         owner_pid = record.get("owner_pid")
         if not isinstance(owner_pid, int) or owner_pid <= 0:
             return False
@@ -400,7 +433,7 @@ class LocalProvider(SandboxProvider):
             # This is the case AGENT_SECRETS_PATH cannot see: two planes sharing
             # `data_dir/sandboxes` compute the IDENTICAL path, so without this
             # plane B's startup killpg'd plane A's live session.
-            if self._is_live_siblings(record):
+            if self._is_live_siblings(record, pid, child.name):
                 continue
             if pid <= 0 or not self._is_our_server(pid, child.name):
                 # Dead, or not provably ours. Drop the stale record either way:

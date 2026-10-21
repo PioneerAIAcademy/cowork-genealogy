@@ -56,7 +56,7 @@ def test_a_live_sibling_planes_session_is_not_reaped(tmp_path, monkeypatch):
     p = LocalProvider(tmp_path)
     _sandbox(tmp_path, "sbx_live", {"pid": 4242, "port": 1, "argv": SERVER_MODULE,
                                     "owner": "99999-deadbeef", "owner_pid": os.getpid()})
-    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id: True)
+    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id, **kw: True)
     killed: list[int] = []
     monkeypatch.setattr(os, "killpg", lambda pgid, sig: killed.append(pgid))
     monkeypatch.setattr(os, "getpgid", lambda pid: pid)
@@ -73,7 +73,7 @@ def test_a_dead_planes_orphan_is_still_reaped(tmp_path, monkeypatch):
     p = LocalProvider(tmp_path)
     _sandbox(tmp_path, "sbx_orphan", {"pid": 4242, "port": 1, "argv": SERVER_MODULE,
                                       "owner": "99999-deadbeef", "owner_pid": 2})
-    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id: True)
+    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id, **kw: True)
     monkeypatch.setattr(os, "kill", lambda pid, sig: (_ for _ in ()).throw(ProcessLookupError()))
     killed: list[int] = []
     monkeypatch.setattr(os, "killpg", lambda pgid, sig: killed.append(pgid))
@@ -86,7 +86,7 @@ def test_a_dead_planes_orphan_is_still_reaped(tmp_path, monkeypatch):
 def test_a_recorded_live_server_is_reaped(tmp_path, monkeypatch):
     p = LocalProvider(tmp_path)
     _sandbox(tmp_path, "sbx_orphan", {"pid": 4242, "port": 1, "argv": SERVER_MODULE})
-    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id: True)
+    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id, **kw: True)
     killed: list[int] = []
     monkeypatch.setattr(os, "killpg", lambda pgid, sig: killed.append(pgid))
     monkeypatch.setattr(os, "getpgid", lambda pid: pid)
@@ -100,7 +100,7 @@ def test_several_orphans_are_all_reaped(tmp_path, monkeypatch):
     p = LocalProvider(tmp_path)
     for i in range(3):
         _sandbox(tmp_path, f"sbx_{i}", {"pid": 100 + i, "port": i, "argv": SERVER_MODULE})
-    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id: True)
+    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id, **kw: True)
     monkeypatch.setattr(os, "killpg", lambda pgid, sig: None)
     monkeypatch.setattr(os, "getpgid", lambda pid: pid)
 
@@ -115,7 +115,7 @@ def test_a_pid_we_cannot_prove_is_ours_is_never_killed(tmp_path, monkeypatch):
     not recoverable."""
     p = LocalProvider(tmp_path)
     _sandbox(tmp_path, "sbx_stranger", {"pid": 4242, "port": 1, "argv": SERVER_MODULE})
-    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id: False)
+    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id, **kw: False)
     killed: list[int] = []
     monkeypatch.setattr(os, "killpg", lambda pgid, sig: killed.append(pgid))
     monkeypatch.setattr(os, "getpgid", lambda pid: pid)
@@ -130,7 +130,7 @@ def test_a_server_this_process_owns_is_left_alone(tmp_path, monkeypatch):
     p = LocalProvider(tmp_path)
     _sandbox(tmp_path, "sbx_live", {"pid": 4242, "port": 1, "argv": SERVER_MODULE})
     p._servers["sbx_live"] = (object(), 1)  # type: ignore[assignment]
-    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id: True)
+    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id, **kw: True)
     killed: list[int] = []
     monkeypatch.setattr(os, "killpg", lambda pgid, sig: killed.append(pgid))
 
@@ -171,7 +171,7 @@ def test_a_kill_that_fails_does_not_stop_the_sweep(tmp_path, monkeypatch):
     p = LocalProvider(tmp_path)
     for i in range(3):
         _sandbox(tmp_path, f"sbx_{i}", {"pid": 100 + i, "port": i, "argv": SERVER_MODULE})
-    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id: True)
+    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id, **kw: True)
     monkeypatch.setattr(os, "getpgid", lambda pid: pid)
 
     def flaky(pgid, sig):
@@ -306,7 +306,7 @@ def test_reap_leaves_a_sibling_planes_sandbox_alone(tmp_path, monkeypatch):
     killed: list[int] = []
     monkeypatch.setattr(os, "killpg", lambda pgid, sig: killed.append(pgid))
     monkeypatch.setattr(os, "getpgid", lambda pid: pid)
-    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id: False)
+    monkeypatch.setattr(LocalProvider, "_is_our_server", lambda self, pid, sandbox_id, **kw: False)
 
     provider = LocalProvider(tmp_path)
     sibling = tmp_path / "sbx_other_plane"
@@ -317,3 +317,85 @@ def test_reap_leaves_a_sibling_planes_sandbox_alone(tmp_path, monkeypatch):
     assert killed == [], "a sibling control plane's live server was killed"
     assert "sbx_other_plane" not in reaped
 
+
+# --- the two cases that must NOT be stubbed ------------------------------------
+#
+# The tests above stub `_is_our_server`, which is right for exercising
+# `reap_orphans`' own logic but means they cannot see what that method decides.
+# These two drive the real one. The first is why the owner token is NOT consulted
+# for a record that has an owner; the second is why it IS consulted for one that
+# does not.
+
+def _real_proc(monkeypatch, provider, sandbox_id: str, token: bytes | None):
+    """A real-looking /proc for a server: our secrets path, and `token` if given."""
+    ours = f"AGENT_SECRETS_PATH={provider._abs_secrets(sandbox_id)}".encode()
+    environ = ours + b"\0" + (token + b"\0" if token else b"")
+    _fake_proc(monkeypatch, cmdline=f"python\0-m\0{SERVER_MODULE}\0".encode(), environ=environ)
+
+
+def test_a_crashed_planes_orphan_is_reaped_though_its_token_is_foreign(tmp_path, monkeypatch):
+    """Nothing stubbed. The orphan carries the DEAD plane's token, as a real one would.
+
+    This is why `_is_our_server` must NOT require our token when the record names an
+    owner: a crashed plane's orphan and a live sibling's session BOTH carry a foreign
+    token, so the token cannot separate them -- only the owner's liveness can.
+    Requiring it here would refuse to reap every orphan a crashed plane left behind,
+    which is the reaper's whole purpose.
+    """
+    p = LocalProvider(tmp_path)
+    _sandbox(tmp_path, "sbx_orphan", {"pid": 4242, "port": 1, "argv": SERVER_MODULE,
+                                      "owner": "99999-deadbeef", "owner_pid": 2})
+    _real_proc(monkeypatch, p, "sbx_orphan", f"{OWNER_ENV_VAR}=99999-deadbeef".encode())
+    monkeypatch.setattr(os, "kill", lambda pid, sig: (_ for _ in ()).throw(ProcessLookupError()))
+    killed: list[int] = []
+    monkeypatch.setattr(os, "killpg", lambda pgid, sig: killed.append(pgid))
+    monkeypatch.setattr(os, "getpgid", lambda pid: pid)
+
+    assert p.reap_orphans() == ["sbx_orphan"], "a crashed plane's orphan was not reaped"
+    assert killed == [4242]
+
+
+def test_a_live_sibling_with_a_pre_owner_record_is_left_alone(tmp_path, monkeypatch):
+    """Nothing stubbed. A `server.json` written before owners were recorded.
+
+    `_is_live_siblings` cannot help -- there is no owner pid to ask about -- so
+    without the environ check this fell through to a cmdline and secrets-path match
+    and killed a live sibling's session, which is the exact kill the reaper claims to
+    prevent. The foreign token is the only evidence available, and an unprovable kill
+    is not worth it.
+    """
+    p = LocalProvider(tmp_path)
+    _sandbox(tmp_path, "sbx_live", {"pid": 4242, "port": 1, "argv": SERVER_MODULE})
+    _real_proc(monkeypatch, p, "sbx_live", f"{OWNER_ENV_VAR}=99999-deadbeef".encode())
+    killed: list[int] = []
+    monkeypatch.setattr(os, "killpg", lambda pgid, sig: killed.append(pgid))
+    monkeypatch.setattr(os, "getpgid", lambda pid: pid)
+
+    assert p.reap_orphans() == [], "a live sibling with a pre-owner record was reaped"
+    assert killed == []
+    assert (tmp_path / "sbx_live" / "server.json").exists()
+
+
+def test_a_pre_owner_record_with_our_own_token_still_reaps(tmp_path, monkeypatch):
+    """The other direction, or the check above would just be "never reap a legacy
+    record". Our own token means we spawned it and lost track of it."""
+    p = LocalProvider(tmp_path)
+    _sandbox(tmp_path, "sbx_mine", {"pid": 4242, "port": 1, "argv": SERVER_MODULE})
+    _real_proc(monkeypatch, p, "sbx_mine", f"{OWNER_ENV_VAR}={OWNER_TOKEN}".encode())
+    monkeypatch.setattr(os, "killpg", lambda pgid, sig: None)
+    monkeypatch.setattr(os, "getpgid", lambda pid: pid)
+
+    assert p.reap_orphans() == ["sbx_mine"]
+
+
+def test_a_pre_token_spawn_reaps_exactly_as_it_used_to(tmp_path, monkeypatch):
+    """No owner in the record AND no token in the environ: a server from before any
+    of this existed. It must reap as it always did, or the fix would strand every
+    orphan already on disk."""
+    p = LocalProvider(tmp_path)
+    _sandbox(tmp_path, "sbx_old", {"pid": 4242, "port": 1, "argv": SERVER_MODULE})
+    _real_proc(monkeypatch, p, "sbx_old", None)
+    monkeypatch.setattr(os, "killpg", lambda pgid, sig: None)
+    monkeypatch.setattr(os, "getpgid", lambda pid: pid)
+
+    assert p.reap_orphans() == ["sbx_old"]
