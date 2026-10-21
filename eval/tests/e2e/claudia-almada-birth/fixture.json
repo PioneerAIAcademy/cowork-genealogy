@@ -15,5 +15,6 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
+  "hint": {"persona_ark": "ark:/61903/1:1:M4WC-C2Z", "identity": "same"},
   "notes": "Record-hint fixture (filtered-list-samples-3.csv row 34, hint-samples.csv row 16, flag adds_birth, confidence 3). Resolved 2026-10-19 as a true match (outcome 1, borderline, second genealogist concurred): the 1869 Ajó (General Lavalle) census entry M4WC-C2Z stands; the Dolores baptism of Claudia Jesus Almada (30 Oct 1860) is a probable but unproven refinement because no indexed record states her birthplace. Indexes only; no image read."
 }

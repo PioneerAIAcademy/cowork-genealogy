@@ -52,8 +52,9 @@ three times in "Argentina, Buenos Aires, registros parroquiales, 1635-2017":
 - the marriage of 12 May 1879 at Nuestra Señora de la Merced
   (`ark:/61903/1:1:CTHW-9YZM`, re-indexed as `ark:/61903/1:1:QGRK-DM48`).
 
-All three give her birth year as 1860 and her mother as Gregoria Almada, with no
-father named. None gives a birthplace. The issue made this birthplace the
+All three name her mother as Gregoria Almada, with no father, and the
+investigation file and the re-indexed marriage give her birth year as 1860.
+None gives a birthplace. The issue made this birthplace the
 deciding check, and it is absent.
 
 **No image reading is licensed.** The calibration rule needs two other indexed
