@@ -39,8 +39,10 @@ How each figure is measured:
   changes nothing: the first call's context already reflects it. The project's first message
   is the fresh start, so its excess is 0 by construction.
 - **Price,** two ways, at `spend.rates_for` the call's model (`PRICE_PER_MTOK` for one it does
-  not know). That is the 5-minute-TTL table, the one the alpha writes at, so a call after a
-  pause of over 5 minutes already pays for the rewrite in its cache-write tokens.
+  not know), each call's cache writes at its own 5m/1h split (`cache_creation`), as the
+  proxy meters them: 5-minute everywhere until `Settings.prompt_cache_ttl_main` is set, after
+  which a main-thread write is 1-hour. A call after a pause past its entry's lifetime already
+  pays for the rewrite in its cache-write tokens.
   *Blended:* the excess at the rate the call paid per context token. *Positional:* the excess
   as the span right after the fresh-start prefix, at cache-read where the call read that span,
   cache-write where it rewrote it, input beyond.
@@ -69,7 +71,13 @@ SERVER_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SERVER_DIR))
 
 from app.agent.hand_back import AUTO_CONTINUE_TEXT, ends_with_hand_back  # noqa: E402
-from app.agent.spend import TOKEN_CLASSES, rates_for, usage_tokens  # noqa: E402
+from app.agent.spend import (  # noqa: E402
+    cache_write_1h_rate,
+    price_usd,
+    rates_for,
+    usage_cache_write_1h,
+    usage_tokens,
+)
 
 _HARNESS = str(SERVER_DIR.parents[1] / "eval" / "harness")
 sys.path.insert(0, _HARNESS)
@@ -95,14 +103,23 @@ BAR = 0.10
 class Call:
     model: str | None
     tokens: tuple  # TOKEN_CLASSES order: input, cache_write, cache_read, output
+    write_1h: int = 0  # how many of the cache writes were 1-hour
 
     @property
     def context(self) -> int:
         return self.tokens[0] + self.tokens[1] + self.tokens[2]
 
     def cost(self) -> float:
-        rates = rates_for(self.model)
-        return sum(t / 1_000_000 * rates[name] for name, t in zip(TOKEN_CLASSES, self.tokens))
+        return price_usd(self.tokens, self.model, cache_write_1h=self.write_1h)
+
+    def _write_rate(self, rates: dict[str, float]) -> float:
+        """This call's cache-write rate per MTok, averaged over its own 5m/1h split."""
+        writes = self.tokens[1]
+        one_hour = min(self.write_1h, writes)
+        if not writes or not one_hour:
+            return rates["cache_write"]
+        return ((writes - one_hour) * rates["cache_write"]
+                + one_hour * cache_write_1h_rate(rates)) / writes
 
     def carry_cost(self, excess: int, fresh: int, positional: bool) -> float:
         """What carrying `excess` tokens past a `fresh`-token prefix cost on this call."""
@@ -110,15 +127,17 @@ class Call:
         if excess <= 0:
             return 0.0
         rates = rates_for(self.model)
+        write_rate = self._write_rate(rates)
         if not positional:
-            paid = sum(t * rates[name] for name, t in zip(TOKEN_CLASSES[:3], self.tokens[:3]))
+            paid = (self.tokens[0] * rates["input"] + self.tokens[1] * write_rate
+                    + self.tokens[2] * rates["cache_read"])
             return excess * paid / self.context / 1_000_000
         read, write = self.tokens[2], self.tokens[1]
         lo, hi = fresh, fresh + excess
         in_read = max(0, min(hi, read) - lo)
         in_write = max(0, min(hi, read + write) - max(lo, read))
         rest = excess - in_read - in_write
-        return (in_read * rates["cache_read"] + in_write * rates["cache_write"]
+        return (in_read * rates["cache_read"] + in_write * write_rate
                 + rest * rates["input"]) / 1_000_000
 
 
@@ -216,7 +235,8 @@ def _calls(rows: list[dict]) -> dict[str, Call]:
         message = row.get("message") or {}
         if row.get("type") == "assistant" and message.get("id") and message.get("usage") \
                 and not _is_api_error(row):
-            calls[message["id"]] = Call(message.get("model"), usage_tokens(message["usage"]))
+            calls[message["id"]] = Call(message.get("model"), usage_tokens(message["usage"]),
+                                        usage_cache_write_1h(message["usage"]))
     return calls
 
 

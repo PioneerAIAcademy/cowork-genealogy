@@ -84,7 +84,7 @@ import {
   NAME_TYPES,
   SKIP_TYPES,
   isCoupleEventFactType,
-  factTypeKey,
+  isTwoParty,
   assertionFactAttr,
   assertionTreeFactType,
   candAsFact,
@@ -820,31 +820,6 @@ export function existingPersonLinkRefusal(
     `'${personId}' was already in the tree, and no 'probable' or 'confident' person_evidence link ` +
     `ties ${what} to them. Write that link with research_append first; a 'speculative' link ` +
     "does not qualify."
-  );
-}
-
-/** Fact types, as `factTypeKey` folds them, that name a second person on the
- *  persona's own record: a parent, a spouse or couple, an informant, or a
- *  parent's birthplace. Taken from the committed research files, where most of
- *  them are linked to two people. */
-const NAMES_SECOND_PERSON_KEYS: ReadonlySet<string> = new Set([
-  "father", "mother", "parents", "fathername", "mothername", "parentname",
-  "fatherbirthplace", "motherbirthplace", "filiation", "spouse", "couple", "informant",
-]);
-
-/** Whether an assertion of this `fact_type` names a second person: a
- *  marriage, relationship or parentage (`isRelationshipEstablishing`), a couple
- *  event in any spelling (`isCoupleEventFactType`: banns, a marriage date or
- *  intention, a divorce), or a fact about another person filed on this persona
- *  (`NAMES_SECOND_PERSON_KEYS`). The person-evidence agent links such an
- *  assertion to that person too, so its link says nothing about which of them a
- *  persona is: counting it let the groom's name and birth be copied onto the
- *  bride. */
-function isTwoParty(factType: unknown): boolean {
-  return (
-    isRelationshipEstablishing(factType) ||
-    isCoupleEventFactType(factType) ||
-    NAMES_SECOND_PERSON_KEYS.has(factTypeKey(factType))
   );
 }
 

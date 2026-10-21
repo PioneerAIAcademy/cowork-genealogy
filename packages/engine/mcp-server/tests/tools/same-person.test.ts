@@ -856,6 +856,28 @@ describe("samePerson — project-relative arm", () => {
       expect(file.scores["a_005|I1"]?.record_persona_id).toBe("p_thomas");
     });
 
+    // Code review: an extraction that stamped one persona id on several roles
+    // groups by role, so the assertion's own role picks the party.
+    it("finds the party when recordPersonaId is worn by several roles", async () => {
+      const r = research();
+      r.assertions[0].record_persona_id = "p_shared";
+      r.assertions.push({
+        id: "a_007", record_id: RECORD, record_role: "informant",
+        fact_type: "name", value: "Somebody Else", record_persona_id: "p_shared",
+        record_basis: "stated", log_entry_id: "log_1",
+      });
+      await project(r);
+      okScore();
+      const result = notHaving(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_005", treePersonId: "I1", recordPersonaId: "p_shared" },
+          LOCAL,
+        ),
+        "matchRelatives",
+      );
+      expect(result.recorded).toBe(true);
+    });
+
     it("says so when recordPersonaId names no persona in the record", async () => {
       await project();
       await expect(

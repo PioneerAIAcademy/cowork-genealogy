@@ -330,9 +330,13 @@ and neither does re-running a record onto the stub it minted
 (`mintedFromThisRecord`: a person the run added, not shaped like a FamilySearch
 id, whose refs reach only this record), judged against the write-once starting
 tree so that a person the project began with is never taken for a stub, even
-when their only refs reach this record. Persons are checked as the tree stands
-at each op, so a batch that mints a person from one record cannot copy a second
-record onto them without a link. Both arms rest on one decision,
+when their only refs reach this record. A ref reaches every research source that
+cites its `S` entry (`refsReach`), not only the last one, so a person made from
+one persona of a document is not read as minted from another persona's record of
+the same document (pinned by C9r in `materialize-facts.test.ts`); two personas of
+one record still are, the first let-through above. Persons are checked as the
+tree stands at each op, so a batch that mints a person from one record cannot
+copy a second record onto them without a link. Both arms rest on one decision,
 `existingPersonLinkRefusal`. The refusals read:
 
 - Persona arm: "'<id>' was already in the tree, and no 'probable' or 'confident'

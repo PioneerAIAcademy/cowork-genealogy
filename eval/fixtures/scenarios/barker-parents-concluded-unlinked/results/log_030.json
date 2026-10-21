@@ -1,0 +1,342 @@
+{
+ "log_id": "log_030",
+ "tool": "record_read",
+ "retrieved": "2026-10-20T17:58:34.864Z",
+ "returned_count": 1,
+ "payload": {
+  "query": {
+   "recordId": "ark:/61903/1:1:M4P3-83T"
+  },
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:M4P3-83T",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_188821016",
+       "ark": "ark:/61903/1:1:M4P3-83T",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "id": "9f97685c-a8c2-403b-855b-f7f01ec90e78",
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "John"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Race",
+         "value": "White"
+        },
+        {
+         "type": "MaritalStatus",
+         "value": "Married"
+        },
+        {
+         "type": "Occupation",
+         "value": "Farmer"
+        },
+        {
+         "id": "7504a94a-f550-47a2-b2e0-e16ae3234b92",
+         "type": "Census",
+         "primary": true,
+         "date": "1880",
+         "standard_date": "1880",
+         "place": "Raleigh, Smith, Mississippi, United States"
+        },
+        {
+         "id": "28c1d50d-e452-447b-94e0-69c43f511f90",
+         "type": "Birth",
+         "date": "1819",
+         "standard_date": "1819",
+         "place": "England"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_188821017",
+       "ark": "ark:/61903/1:1:M4P3-83Y",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "a728cc5d-02d8-426f-8c93-087367e6a816",
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Elisabeth"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Race",
+         "value": "White"
+        },
+        {
+         "type": "Occupation",
+         "value": "Houskeeper"
+        },
+        {
+         "type": "MaritalStatus",
+         "value": "Married"
+        },
+        {
+         "id": "eaad9328-341d-4793-a5e6-a5d89b9914f0",
+         "type": "Birth",
+         "date": "1824",
+         "standard_date": "1824",
+         "place": "Alabama, United States"
+        },
+        {
+         "id": "6b099403-5d0e-4d79-9182-db9e772f67b2",
+         "type": "Census",
+         "primary": true,
+         "date": "1880",
+         "standard_date": "1880",
+         "place": "Raleigh, Smith, Mississippi, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_188821018",
+       "ark": "ark:/61903/1:1:M4P3-83B",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "8fbc77da-c2cd-4cbd-b8f8-423680ac2c50",
+         "type": "BirthName",
+         "surname": "Delaney",
+         "given": "Mary"
+        }
+       ],
+       "facts": [
+        {
+         "type": "MaritalStatus",
+         "value": "Single"
+        },
+        {
+         "type": "Race",
+         "value": "White"
+        },
+        {
+         "type": "Occupation",
+         "value": "Cook"
+        },
+        {
+         "id": "27a2caec-f351-47f0-a252-bc053c56d0d6",
+         "type": "Census",
+         "primary": true,
+         "date": "1880",
+         "standard_date": "1880",
+         "place": "Raleigh, Smith, Mississippi, United States"
+        },
+        {
+         "id": "cbf33435-478d-4e7a-8f97-639445618104",
+         "type": "Birth",
+         "date": "1872",
+         "standard_date": "1872",
+         "place": "Mississippi, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_188821019",
+       "ark": "ark:/61903/1:1:M4P3-831",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "id": "3a0b3be7-2602-488c-a024-c40dedd48598",
+         "type": "BirthName",
+         "surname": "Delaney",
+         "given": "Edward"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Race",
+         "value": "White"
+        },
+        {
+         "type": "MaritalStatus",
+         "value": "Single"
+        },
+        {
+         "id": "0dcc35cd-9c50-4f57-8dc7-2803b391095a",
+         "type": "Census",
+         "primary": true,
+         "date": "1880",
+         "standard_date": "1880",
+         "place": "Raleigh, Smith, Mississippi, United States"
+        },
+        {
+         "id": "f729bbe6-e41f-4454-a65d-d610533ff117",
+         "type": "Birth",
+         "date": "1875",
+         "standard_date": "1875",
+         "place": "Mississippi, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      }
+     ],
+     "relationships": [
+      {
+       "id": "036f7131-9ef9-4772-a0b3-d40dbd169ddd",
+       "type": "Couple",
+       "person1": "p_188821016",
+       "person2": "p_188821017"
+      }
+     ],
+     "sources": [
+      {
+       "id": "src_r_160983793",
+       "resource_type": "Record",
+       "title": "Household of John Barker, \"United States, Census, 1880\"",
+       "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4P3-83T : Wed Sep 09 15:44:07 UTC 2026), Entry for John Barker and Elisabeth Barker, 1880.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:MWVG-ZT6",
+       "coverage": {
+        "place_rep_id": "4313321",
+        "date_range": "1880",
+        "record_type": "Census",
+        "standard_place": "Raleigh, Smith, Mississippi, United States"
+       }
+      },
+      {
+       "id": "sd_c_1417683",
+       "resource_type": "Collection",
+       "title": "United States, Census, 1880",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+       "coverage": {
+        "place_rep_id": "1",
+        "date_range": "1880/1880",
+        "record_type": "Census",
+        "standard_place": "United States"
+       }
+      },
+      {
+       "id": "sd_da1",
+       "resource_type": "DigitalArtifact",
+       "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YB8-HDX",
+       "coverage": {
+        "place_rep_id": "369",
+        "date_range": "1880",
+        "record_type": "CensusIndex",
+        "standard_place": "Mississippi, United States"
+       }
+      },
+      {
+       "id": "sd_p_188821017",
+       "resource_type": "Person",
+       "title": "Elisabeth Barker, \"United States, Census, 1880\"",
+       "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4P3-83Y : Wed Sep 09 15:44:07 UTC 2026), Elisabeth Barker in entry for John Barker, 1880.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83Y"
+      },
+      {
+       "id": "sd_p_188821018",
+       "resource_type": "Person",
+       "title": "Mary Delaney, \"United States, Census, 1880\"",
+       "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4P3-83B : Wed Sep 09 15:44:07 UTC 2026), Mary Delaney in entry for John Barker, 1880.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83B"
+      },
+      {
+       "id": "sd_p_188821016",
+       "resource_type": "Person",
+       "title": "John Barker, \"United States, Census, 1880\"",
+       "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4P3-83T : Wed Sep 09 15:44:07 UTC 2026), John Barker, 1880.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T"
+      },
+      {
+       "id": "sd_p_188821019",
+       "resource_type": "Person",
+       "title": "Edward Delaney, \"United States, Census, 1880\"",
+       "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4P3-831 : Wed Sep 09 15:44:07 UTC 2026), Edward Delaney in entry for John Barker, 1880.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M4P3-831"
+      },
+      {
+       "id": "sd_auto_M9JT-92D",
+       "resource_type": "auto",
+       "title": "United States, Residences, Census, from 1793 to 1964",
+       "coverage": {
+        "place_rep_id": "1",
+        "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+        "standard_place": "United States"
+       }
+      }
+     ],
+     "places": [
+      {
+       "id": "place_4321250"
+      },
+      {
+       "id": "place_4313321"
+      }
+     ]
+    },
+    "indexFields": {
+     "p_188821016": {
+      "relationshipToHead": "Head",
+      "sortKey": "0000000005161198_00370_47227585_0000000160983793_000",
+      "personNbr": "0",
+      "lineNbr": "00041",
+      "householdId": "12967613",
+      "age": "61 years",
+      "fatherBirthPlace": "England",
+      "motherBirthPlace": "England"
+     },
+     "p_188821017": {
+      "relationshipToHead": "Wife",
+      "sortKey": "0000000005161198_00370_47227585_0000000160983793_001",
+      "personNbr": "1",
+      "lineNbr": "00042",
+      "householdId": "12967613",
+      "age": "56 years",
+      "fatherBirthPlace": "Alabama, United States",
+      "motherBirthPlace": "Alabama, United States"
+     },
+     "p_188821018": {
+      "relationshipToHead": "Other",
+      "sortKey": "0000000005161198_00370_47227585_0000000160983793_002",
+      "personNbr": "2",
+      "lineNbr": "00043",
+      "householdId": "12967613",
+      "age": "8 years",
+      "fatherBirthPlace": "Mississippi, United States",
+      "motherBirthPlace": "Mississippi, United States"
+     },
+     "p_188821019": {
+      "relationshipToHead": "Other",
+      "sortKey": "0000000005161198_00370_47227585_0000000160983793_003",
+      "personNbr": "3",
+      "lineNbr": "00044",
+      "householdId": "12967613",
+      "age": "5 years",
+      "fatherBirthPlace": "Mississippi, United States",
+      "motherBirthPlace": "Mississippi, United States"
+     }
+    }
+   }
+  ]
+ }
+}

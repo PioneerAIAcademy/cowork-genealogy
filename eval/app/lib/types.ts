@@ -404,6 +404,8 @@ export interface RunLogFile {
   judge_prompt_hash: string;
   /** Judge model used for this run log. Optional — absent in logs pre-dating the field (issue #2479 PR 1). */
   judge_model?: string;
+  /** Claude Code CLI version the run spawned. Optional — absent in logs written before 2026-10-21. */
+  cli_version?: string;
   /** What produced and graded the run (issue #2479 PR 3), read by check_runlogs rule 2c.
    *  Optional — absent in logs pre-dating the field. The app does not recompute it. */
   instrument?: {

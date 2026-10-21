@@ -1,0 +1,281 @@
+{
+ "log_id": "log_023",
+ "tool": "record_search",
+ "retrieved": "2026-10-20T16:17:34.269Z",
+ "returned_count": 1,
+ "payload": {
+  "query": {
+   "birthPlace": "England",
+   "collectionId": "1473181",
+   "count": 50,
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2",
+   "recordCountry": "United States",
+   "residencePlace": "Smith, Mississippi, United States",
+   "residenceYearFrom": 1860,
+   "residenceYearTo": 1860
+  },
+  "totalMatches": 34,
+  "paginationCappedAt": 4999,
+  "returned": 34,
+  "offset": 0,
+  "hasMore": false,
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:M6GV-MG5",
+    "events": [
+     {
+      "type": "Census",
+      "date": "1860",
+      "place": "Smith, Mississippi, United States"
+     },
+     {
+      "type": "Race",
+      "value": "White"
+     }
+    ],
+    "treeMatches": [],
+    "personName": "Jonathan Barker",
+    "score": 3.83,
+    "confidence": 4,
+    "sex": "Male",
+    "birthDate": "1821",
+    "birthPlace": "England, United Kingdom",
+    "collectionId": "1473181",
+    "collectionTitle": "United States, Census, 1860",
+    "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+    "recordTitle": "Household of Jonathan Barker, \"United States, Census, 1860\"",
+    "recordArk": "ark:/61903/1:2:MHFZ-3NQ",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_334206684",
+       "ark": "ark:/61903/1:1:M6GV-MG5",
+       "gender": "Male",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Jonathan"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Birth",
+         "date": "1821",
+         "standard_date": "1821",
+         "place": "England",
+         "standard_place": "England, United Kingdom"
+        },
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1860",
+         "standard_date": "1860",
+         "place": "Smith, Mississippi, United States",
+         "standard_place": "Smith, Mississippi, United States"
+        },
+        {
+         "type": "Race",
+         "value": "White"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_334206685",
+       "ark": "ark:/61903/1:1:M6GV-MGR",
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Elizabeth"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Birth",
+         "date": "1824",
+         "standard_date": "1824",
+         "place": "Alabama",
+         "standard_place": "Alabama, United States"
+        },
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1860",
+         "standard_date": "1860",
+         "place": "Smith, Mississippi, United States",
+         "standard_place": "Smith, Mississippi, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_334206686",
+       "ark": "ark:/61903/1:1:M6GV-MGT",
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Sarah M"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1860",
+         "standard_date": "1860",
+         "place": "Smith, Mississippi, United States",
+         "standard_place": "Smith, Mississippi, United States"
+        },
+        {
+         "type": "Birth",
+         "date": "1846",
+         "standard_date": "1846",
+         "place": "Mississippi",
+         "standard_place": "Mississippi, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_334206687",
+       "ark": "ark:/61903/1:1:M6GV-MGY",
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Amanda P"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1860",
+         "standard_date": "1860",
+         "place": "Smith, Mississippi, United States",
+         "standard_place": "Smith, Mississippi, United States"
+        },
+        {
+         "type": "Birth",
+         "date": "1849",
+         "standard_date": "1849",
+         "place": "Mississippi",
+         "standard_place": "Mississippi, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_334206688",
+       "ark": "ark:/61903/1:1:M6GV-MGB",
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Pernesia A J"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1860",
+         "standard_date": "1860",
+         "place": "Smith, Mississippi, United States",
+         "standard_place": "Smith, Mississippi, United States"
+        },
+        {
+         "type": "Birth",
+         "date": "1855",
+         "standard_date": "1855",
+         "place": "Mississippi",
+         "standard_place": "Mississippi, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      }
+     ],
+     "sources": [
+      {
+       "id": "src_r_206823184",
+       "title": "Household of Jonathan Barker, \"United States, Census, 1860\"",
+       "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5 : Mon Jul 08 11:16:42 UTC 2024), Entry for Jonathan Barker and Elizabeth Barker, 1860.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:MHFZ-3NQ"
+      },
+      {
+       "id": "sd_c_1473181",
+       "title": "United States, Census, 1860",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181"
+      },
+      {
+       "id": "sd_da1",
+       "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9BSZ-H1W"
+      },
+      {
+       "id": "sd_auto_M9JT-92D",
+       "title": "United States, Residences, Census, from 1400 to 2021"
+      },
+      {
+       "id": "src_p_p_334206684",
+       "url": "#p_334206684"
+      }
+     ],
+     "places": [
+      {
+       "id": "267",
+       "name": "England, United Kingdom",
+       "latitude": 52.4379,
+       "longitude": -1.6496
+      },
+      {
+       "id": "351",
+       "name": "Alabama, United States",
+       "latitude": 32.75,
+       "longitude": -86.75
+      },
+      {
+       "id": "369",
+       "name": "Mississippi, United States",
+       "latitude": 32.7503,
+       "longitude": -89.7503
+      },
+      {
+       "id": "395845",
+       "name": "Smith, Mississippi, United States",
+       "latitude": 31.970829,
+       "longitude": -89.498329
+      }
+     ]
+    },
+    "primaryId": "p_334206684"
+   }
+  ]
+ }
+}
