@@ -31,7 +31,12 @@ Three gates, in order:
    resolution rested on reading the original page images — the same check
    additionally requires an *image* ark (`3:1:`/`3:2:`, not the `1:1:`
    index form) among those `supporting_sources`, and rejects a non-boolean
-   `image_basis` (issue #2877).
+   `image_basis` (issue #2877). Separately from `image_basis`, every resolved
+   record-hint fixture (drafts excepted) must declare its hint in
+   `fixture.json` — `"hint": {"persona_ark": "ark:/61903/1:1:…",
+   "identity": "same" | "different" | "unresolved"}`, or an explicit
+   `"hint": null` — which is what `make matcher-accuracy` scores
+   (issue #3553).
 3. **Stripping completeness** (warn-only), described below.
 
 The crux invariant of an e2e fixture: every entry in
@@ -434,6 +439,50 @@ def finding_shape_errors(expected_findings: dict[str, Any]) -> list[str]:
         if required is not None and not isinstance(required, bool):
             errors.append(f"{where} has non-boolean `required`: {required!r}")
 
+        # e2e-test-spec.md:313-323: `apply_avoid_guard` force-fails a target
+        # present in the agent's final tree HOWEVER it is annotated there,
+        # including as an explicitly rejected candidate -- that is the
+        # allowance the rule exists to permit. An `avoid` finding's
+        # description must not promise a pass route through the tree, so it
+        # must not conflate the two stores ("tree/research") and, if it
+        # discusses rejection at all, must say which store a rejected
+        # candidate may live in (research.json) and which must stay clear
+        # (tree.gedcomx.json). 17 committed findings shipped the conflated
+        # form before this check existed (issue #3465).
+        if polarity == "avoid" and "description" in finding and not isinstance(
+            finding["description"], str
+        ):
+            errors.append(
+                f"{where} (avoid) has a non-string `description`: "
+                f"{finding['description']!r} -- cannot be checked for the "
+                f"tree/research conflation this guard exists to catch "
+                f"(e2e-test-spec.md:313-323); the field must be a string."
+            )
+        elif polarity == "avoid" and isinstance(finding.get("description"), str):
+            description = finding["description"]
+            if "tree/research" in description:
+                errors.append(
+                    f"{where} (avoid) description contains \"tree/research\" -- "
+                    f"an avoid finding must not conflate the two stores. State the "
+                    f"pass condition against tree.gedcomx.json specifically; if the "
+                    f"description discusses a rejected candidate at all, say it may "
+                    f"live in research.json instead."
+                )
+            if "reject" in description.lower() and (
+                "tree.gedcomx.json" not in description
+                or "research.json" not in description
+            ):
+                errors.append(
+                    f"{where} (avoid) description mentions rejection but does not "
+                    f"name both tree.gedcomx.json and research.json -- a finding "
+                    f"whose pass condition can be satisfied by writing the rejected "
+                    f"candidate into the tree, even annotated as rejected, describes "
+                    f"a pass apply_avoid_guard cannot grant (it force-fails any match "
+                    f"in the final tree however annotated). Name tree.gedcomx.json as "
+                    f"what must stay clear and research.json as where a rejected "
+                    f"candidate may be documented."
+                )
+
     return errors
 
 
@@ -466,6 +515,96 @@ _IMAGE_ARK_RE = re.compile(r"ark:/61903/3:[12]:[\w-]{4,}")
 # requirement does not apply yet (issue #970 is "enforce going forward",
 # i.e. once a fixture is actually resolved).
 _DRAFT_MARKER = "DRAFT PENDING ADJUDICATION"
+
+# `fixture.json`'s `hint` (issue #3553): the record persona FamilySearch hinted
+# and the genealogist's identity judgement of it against `source_pid`.
+_HINT_KEYS = frozenset({"persona_ark", "identity"})
+_HINT_IDENTITIES = ("same", "different", "unresolved")
+
+# A 1:1: record-persona ark only — the form `record_read` and the matcher take.
+# Used with `fullmatch`, so a trailing newline, a 1:2:/3:1:/4:1: ark or a bare
+# id cannot satisfy it. A tree PID wrapped in a `1:1:` prefix CAN — tree PIDs
+# are the same 4-3 shape as persona ids — so `_hint_errors` separately rejects
+# a persona id equal to the fixture's `source_pid`. Persona ids in the corpus
+# are 4-4 and 4-3; 4-2 is admitted defensively, and no 4-2 persona id exists
+# in the corpus.
+_PERSONA_ARK_RE = re.compile(r"ark:/61903/1:1:[A-Z0-9]{4}-[A-Z0-9]{2,4}")
+
+
+def _hint_errors(fixture_meta: dict[str, Any]) -> list[str]:
+    """`fixture.json`'s `hint` shape on a resolved record-hint fixture."""
+    if "hint" not in fixture_meta:
+        return [
+            "fixture.json: resolved record-hint fixture has no `hint` key — "
+            "issue #3553 requires `\"hint\": {\"persona_ark\": "
+            "\"ark:/61903/1:1:XXXX-XXXX\", \"identity\": \"same\" | "
+            "\"different\" | \"unresolved\"}`, or an explicit `\"hint\": null` "
+            "when the fixture has no hint persona. Without it `make "
+            "matcher-accuracy` cannot score or count this fixture."
+        ]
+
+    hint = fixture_meta["hint"]
+    if hint is None:
+        return []
+    if not isinstance(hint, dict):
+        return [
+            f"fixture.json: `hint` must be an object or null, got {hint!r} "
+            f"(issue #3553)."
+        ]
+
+    errors: list[str] = []
+    unknown = sorted(set(hint.keys()) - _HINT_KEYS)
+    if unknown:
+        errors.append(
+            f"fixture.json: `hint` has unrecognized field(s) {unknown!r} — "
+            f"only {sorted(_HINT_KEYS)!r} are defined (issue #3553). An "
+            f"unrecognized field is silently ignored, not scored."
+        )
+
+    if "persona_ark" not in hint:
+        errors.append(
+            "fixture.json: `hint.persona_ark` is missing — it must be the "
+            "hinted record persona's 1:1: ark, `ark:/61903/1:1:XXXX-XXXX` "
+            "(issue #3553)."
+        )
+    else:
+        ark = hint["persona_ark"]
+        source_pid = fixture_meta.get("source_pid")
+        if not (isinstance(ark, str) and _PERSONA_ARK_RE.fullmatch(ark)):
+            errors.append(
+                f"fixture.json: `hint.persona_ark` must be a 1:1: record-persona "
+                f"ark matching `ark:/61903/1:1:XXXX-XXXX`, got {ark!r} — a 1:2: "
+                f"record ark, a 3:1:/3:2: image ark, a bare id or a tree PID is "
+                f"not the persona the matcher scores (issue #3553)."
+            )
+        elif (
+            isinstance(source_pid, str)
+            and ark.rsplit(":", 1)[-1] == source_pid.strip().upper()
+        ):
+            errors.append(
+                f"fixture.json: `hint.persona_ark` {ark!r} wraps the tree "
+                f"person's PID (`source_pid` {source_pid!r}) in a 1:1: prefix — "
+                f"a tree PID is not a record persona. Use the 1:1: ark of the "
+                f"record persona FamilySearch hinted (issue #3553)."
+            )
+
+    if "identity" not in hint:
+        errors.append(
+            f"fixture.json: `hint.identity` is missing — it must be one of "
+            f"{list(_HINT_IDENTITIES)!r} (issue #3553)."
+        )
+    else:
+        identity = hint["identity"]
+        if not (isinstance(identity, str) and identity in _HINT_IDENTITIES):
+            errors.append(
+                f"fixture.json: `hint.identity` must be one of "
+                f"{list(_HINT_IDENTITIES)!r} (exact lowercase string), got "
+                f"{identity!r} — it is the genealogist's judgement of whether "
+                f"the hint persona is the tree person (`source_pid`), never "
+                f"the /resolve-record-hint outcome number (issue #3553)."
+            )
+
+    return errors
 
 
 def record_hint_citation_errors(
@@ -503,6 +642,20 @@ def record_hint_citation_errors(
     typo'd string disable it with CI green. It is read by key presence so a
     JSON `null` is caught distinct from an absent key.
 
+    The fixture must also declare its hint (issue #3553), read by key
+    presence for the same reason: `"hint": {"persona_ark": …, "identity": …}`
+    with no other keys, `persona_ark` a full 1:1: record-persona ark
+    (`ark:/61903/1:1:XXXX-XXXX` — never a 1:2: record ark, a 3:1:/3:2: image
+    ark or a bare id, and never the fixture's own `source_pid` wrapped in a
+    1:1: prefix, which the regex alone would accept) and `identity` exactly
+    `"same"`, `"different"` or `"unresolved"` — the genealogist's judgement
+    of whether the persona is `source_pid`, not the resolution's outcome
+    number. An explicit `"hint": null` is accepted for a fixture with no
+    hint persona; an absent key is an error. It is required of every
+    resolved record-hint fixture whatever its `image_basis`, and like
+    `image_basis` it sits behind the draft skip, so a draft is not checked
+    at all — a missing or malformed hint on a draft is not an error.
+
     Silently returns no errors if `fixture.json` or `README.md` is
     missing or unparseable — those are reported by other checks, and this
     check has nothing to apply its rule to without them.
@@ -538,6 +691,8 @@ def record_hint_citation_errors(
             f"image-ark check and a typo'd string disable it with CI green "
             f"(issue #2877)."
         )
+
+    errors += _hint_errors(fixture_meta)
 
     # Base bar (issue #970 / #1025): a full ark somewhere in the findings.
     has_ark = any(
@@ -739,6 +894,39 @@ def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def record_hint_tree_errors(fixture_dir: Path) -> list[str]:
+    """Hard-error check: a record-hint fixture strips nothing.
+
+    Its answer is a record, never part of the tree, so its starting tree is the
+    snapshot as-is and its unstripped tree is committed identical to it
+    (spec §3.6). Compared as parsed JSON, so key order and indentation are not
+    a difference. A record-hint fixture with no unstripped tree fails too: it is
+    what `snapshot --check` audits for upstream drift. `e2e.author validate`
+    makes the same two checks. Drafts are checked as well; stripping is never
+    part of adjudicating one.
+    """
+    fixture_dir = Path(fixture_dir)
+    if suspect_genre(fixture_dir) != "record-hint":
+        return []
+    slug = fixture_dir.name
+    unstripped_path = fixture_dir / "unstripped-tree.gedcomx.json"
+    if not unstripped_path.exists():
+        return [
+            f"genre 'record-hint' commits unstripped-tree.gedcomx.json identical to its starting "
+            f"tree, and this fixture has none — run `strip --slug {slug} --none`"
+        ]
+    try:
+        same = _load_json(unstripped_path) == _load_json(fixture_dir / "starting-tree.gedcomx.json")
+    except (json.JSONDecodeError, OSError):
+        return []  # a parse failure is reported by the caller's own checks
+    if same:
+        return []
+    return [
+        f"genre 'record-hint' declares nothing stripped, but unstripped-tree.gedcomx.json and "
+        f"starting-tree.gedcomx.json differ — re-run `strip --slug {slug} --none`, or fix the genre"
+    ]
+
+
 def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
     """Lint one fixture dir. Returns (suspects, hard_errors).
 
@@ -746,7 +934,9 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
     JSON-Schema violation, a `tree_integrity_errors` failure (dangling refs,
     duplicate ids, living persons), or a `finding_shape_errors` failure (an
     unrecognized finding field, an out-of-enum `type`/`polarity`, a duplicate
-    finding id) — that should fail the run with exit 2; suspects are
+    finding id), or a record-hint fixture whose two trees differ or whose
+    unstripped tree is missing (`record_hint_tree_errors`) — that should fail
+    the run with exit 2; suspects are
     warn-only. `e2e.author validate` reaches the same schema check through
     the same `harness.schema_validator` module, so a fixture cannot pass one
     gate and fail the other.
@@ -792,6 +982,7 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
                 for e in validate_tree_gedcomx_json(unstripped)
             ]
             errors += tree_integrity_errors(unstripped, "unstripped-tree.gedcomx.json")
+    errors += record_hint_tree_errors(fixture_dir)
 
     # Optional: a PID-less fixture under construction may not have one yet.
     research_path = fixture_dir / "starting-research.json"

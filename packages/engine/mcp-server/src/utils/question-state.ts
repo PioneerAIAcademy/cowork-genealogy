@@ -33,6 +33,7 @@
  */
 
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "./date-helpers.js";
+import { countsForLinkedRung } from "./tree-person.js";
 
 export type QuestionState =
   | "framed"
@@ -424,9 +425,12 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   // Zero links, not some: a household record routinely leaves its children and
   // wife unlinked once the subject is linked (53 of 230 concluded e2e questions),
   // and that is not a skipped identity step. No link at all is.
+  // An unchecked FamilySearch attachment link does not count as linked here:
+  // the question still routes to person-evidence. A speculative link the
+  // researcher confirmed does count (`countsForLinkedRung`).
   const linkedAssertionIds = new Set(
     arr(research?.person_evidence)
-      .filter((pe) => pe?.superseded_by == null)
+      .filter(countsForLinkedRung)
       .map((pe) => pe?.assertion_id),
   );
   const noneLinked = assertions.length > 0 && !assertions.some((a) => linkedAssertionIds.has(a?.id));

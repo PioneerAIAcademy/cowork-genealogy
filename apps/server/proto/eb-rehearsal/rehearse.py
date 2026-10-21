@@ -813,12 +813,20 @@ class Rehearsal:
 
         bucket = f"arn:aws:s3:::{self.data_bucket}"
         return {
-            # U20: feedback reads blob bytes anywhere in the bucket and writes only under
-            # feedback/ -- nothing more (tests/test_proto_rehearsal.py holds the exact set).
+            # Feedback reads blob bytes anywhere in the bucket (U20) and writes under
+            # feedback/; researcher uploads write under <project_id>/uploads/. The upload
+            # resource is `*/uploads/*`, NOT `uploads/*`: the key is project-id first
+            # (web/project_blobs.py), so a top-level scope matches nothing and every
+            # upload 403s. Not `/*` either -- that would let the web tier overwrite the
+            # engine's results/ and images/ objects. No DeleteObject: a superseded upload
+            # is left to U19's orphan sweep, because deleting it client-side ran BEFORE
+            # the route's commit and could strand the row on a removed object.
+            # tests/test_proto_rehearsal.py holds the exact set.
             "web": doc(secrets("web", "shared"), {"Effect": "Allow", "Action": "sqs:SendMessage",
                                                   "Resource": f"arn:aws:sqs:{REGION}:{self.account}:awseb-e-*"},
                        {"Effect": "Allow", "Action": "s3:GetObject", "Resource": f"{bucket}/*"},
-                       {"Effect": "Allow", "Action": "s3:PutObject", "Resource": f"{bucket}/{FEEDBACK_PREFIX}*"}),
+                       {"Effect": "Allow", "Action": "s3:PutObject",
+                        "Resource": [f"{bucket}/{FEEDBACK_PREFIX}*", f"{bucket}/*/uploads/*"]}),
             "worker": doc(secrets("worker", "shared")),
             "tools": doc(secrets("tools"),
                          {"Effect": "Allow", "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],

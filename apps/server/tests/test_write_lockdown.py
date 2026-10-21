@@ -534,7 +534,8 @@ async def test_the_matcher_covers_every_tool_the_hook_can_deny():
 # issue #1915 is about.
 # Each of these is a REAL tool in the bundled CLI, verified by counting
 # occurrences in the binary (2.1.220): NotebookEdit 20, MultiEdit 9,
-# TodoWrite 18, BashOutput 19, KillBash 5. An earlier version of this list
+# TodoWrite 18, BashOutput 19, KillBash 5; on 2.1.294, 23, 10, 19, 13 and 3 (every name
+# still present, 2026-10-20). An earlier version of this list
 # carried `EditNotebook`, which has ZERO occurrences - the row still fired when
 # the matcher was un-anchored, so it was not inert, but it stood for no real
 # over-match risk. Dropped in review round 2 (item 8) rather than left as a
@@ -571,7 +572,7 @@ def test_the_matcher_does_not_bind_a_tool_the_hook_can_never_deny(tool_name):
 def test_the_matcher_stays_in_the_clis_regex_branch():
     """The CLI picks its matching strategy from the pattern's own characters.
 
-    Read out of the bundled binary (2.1.220):
+    Read out of the bundled binary (2.1.220; 2.1.294 keeps both charsets, in `Nrn`):
 
         if((r?/^[a-zA-Z0-9_|, -]+$/:/^[a-zA-Z0-9_|]+$/).test(t))
             return t.split(...).flatMap(...).includes(e);   // EXACT STRING LIST
@@ -636,8 +637,8 @@ async def test_a_delegation_is_rewritten_to_run_in_the_foreground():
 
 
 async def test_a_delegation_with_no_flag_at_all_is_rewritten():
-    """The measured incidents carried NO flag: CLI 2.1.220 backgrounds an agent
-    when the key is absent, so 'absent' is the case that matters most."""
+    """The measured incidents carried NO flag: the CLI (2.1.220, 2.1.294) backgrounds
+    an agent when the key is absent, so 'absent' is the case that matters most."""
     out = await real_agent._pretool_hook({"tool_name": "Task", "tool_input": {}}, None, None)
     assert out["hookSpecificOutput"]["updatedInput"]["run_in_background"] is False
 

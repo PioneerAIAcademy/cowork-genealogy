@@ -305,8 +305,20 @@ why that was accepted rather than worked around.
 
 **What it means for step mode.** Settled by the lead on 2026-10-19 after these
 measurements: **the halt is built on the FS prototype only.** Cowork gets
-`AskUserQuestion` plus router prose and NO hook; the alpha gets nothing, since it
-is retired within months. See the plan's decision 25.
+`AskUserQuestion` plus router prose and NO hook. See the plan's decision 25.
+
+**Amended 2026-10-21 (lead).** The alpha no longer "gets nothing": its Stop veto
+goes OFF (cap 0, in PR 1), and it then runs the way Cowork does — router prose plus
+`AskUserQuestion`, no hook, "keep going" as a single bounded turn, no reply buttons.
+Nothing else of step mode is built there. Nobody has measured `AskUserQuestion` on
+the alpha, so PR 2's verification carries a manual check that a step there ends at
+its question and waits; item 10 below measured Cowork, not the alpha.
+
+**And there is no plugin step hook at all.** The prototype worker enforces with its
+own `PreToolUse`, and neither harness loads `hooks.json`, so the only plane a plugin
+step hook could run on is Cowork — which gets none. `step_boundary.py` ships in
+`plugin/hooks/` as a library the worker and both harnesses import, never registered
+as a hook.
 
 - A halt can end a Cowork turn (item 9), and `AskUserQuestion` waits there without
   ending one (item 10). Both are measured; neither is being built on that plane.
