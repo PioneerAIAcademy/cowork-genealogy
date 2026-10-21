@@ -1374,4 +1374,13 @@ describe("research_append: the attachment-link score exemption is code-only", ()
     const retire = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { superseded_by: "pe_999" } } as any);
     expect(retire.ok, JSON.stringify(retire)).toBe(true);
   });
+
+  it("refuses reviving a retired attachment link at a raised confidence", async () => {
+    const pe = (await research()).person_evidence[0];
+    const retire = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { superseded_by: "pe_999" } } as any);
+    expect(retire.ok, JSON.stringify(retire)).toBe(true);
+    const revive = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { superseded_by: null, confidence: "probable" } } as any);
+    expect(revive.ok).toBe(false);
+    expect(errorsOf(revive)?.join(" ")).toMatch(/only ever superseded/);
+  });
 });

@@ -5065,7 +5065,6 @@ function applyOne(
       const fieldKeys = Object.keys(op.fields ?? {}).filter((k) => k !== "id");
       if (
         stored &&
-        stored.superseded_by == null &&
         isAttachmentLink(stored) &&
         !(fieldKeys.length === 1 && fieldKeys[0] === "superseded_by")
       ) {
