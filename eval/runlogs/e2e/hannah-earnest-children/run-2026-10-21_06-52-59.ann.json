@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "partial"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f1": "Found the correct record and created the right person: I1 'Lydia Grice' with a Christening fact (8 Aug 1878, West Bromwich) sourced to the christening entry. research.json's person_evidence entries correctly reason Lydia as a child of both Edwin Grice and Hannah Earnest (probable tier, appropriately near-zero match score since she's a new stub minted from the same record). But the parent-child relationship was never materialized into tree.gedcomx.json -- I1 has no relationship edges at all -- and no proof conclusion was written (proof_summaries is empty). The run went inactive mid-research-exhaustiveness: the main thread handed off at tool call #187 and produced no further narration through the rest of the run (253 total tool calls), so the relationship write and proof-conclusion were never reached. Not scored for proof quality: no proof_summaries entry exists for this question."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145",
+  "blind_bundle_digest": "990e6eacd6e4db9ce1d91993232a713874d61939d32a5856caa52da96e71e3f9"
+}
