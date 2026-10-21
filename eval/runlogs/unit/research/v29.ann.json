@@ -1,0 +1,222 @@
+{
+  "run_log": "v29.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The reply covers what the user needs: the project is concluded, the empty probate was the last plan item and already accounted for, the three independent sources still stand, and both questions are resolved with nothing left to plan. The judge scored the route, not the answer; the route miss is already counted under Correctness."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "Checked tool calls, subagents and validators. The router handed off to research-plan (the wrong route; correct_skill is research-exhaustiveness), but the agent made only read-only calls (project_context, research_query ×2), wrote no plan and did not reopen q_001. All invariant validators passed. The reply is the correct status answer, not \"performing the research-plan task.\" 2 for the wrong route only."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Three read-only calls with the correct projectPath and valid sections (plans, questions). No fixture misses, no writes."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Checked the scenario: c_001 is resolved with Ireland preferred (a_002, 1850/1860 censuses outweigh the 1908 death certificate's secondary informant). The reply says Patrick was \"born ca. 1845 in Pennsylvania… most likely U.S.-born\", contradicting the project's own resolved conflict and redirecting the Ireland question to Thomas. Routing (proof-conclusion for q_002, question-selection for q_001) was correct."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Delegating is how the orchestrator drives the workflow, so that isn't the gap. The gap is that after two hand-offs it stopped and asked permission (\"Would you like me to drive that forward now?\") instead of continuing to locality-guide and research-plan, though both stubs told it to move on to the next step."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context and research_query (section=questions), correct projectPath, read-only, no fixture misses."
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked each claim against the scenario: ps_001 exists for the parentage question, q_001 is in_progress with its search stopped (so \"mark it resolved\" is right), q_002 is resolved without a proof summary, and Mary and James are in the tree. \"Born ca. 1845 in Pennsylvania\" restates the project objective verbatim, which is acceptable in a status summary."
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "All four required parts are present: objective, what is established, what is open, and the next step, stated not asked: \"the immediate next steps are to officially mark the primary parentage question resolved…, then write the proof conclusion for that secondary question.\" That is an ordered, stated next action. The judge missed it."
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One project_context call with the correct projectPath. No Agent spawn and no reads of the project files; test_status_question_answered_from_project_context_only passed."
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the scenario: one in_progress question (Elijah Wilkins' death date and place), no plan, no localities entry, so the router's state reading is accurate. It handed off to locality-guide (test_routes_to_expected_skill passed) and fabricated nothing. Minor: \"the survey is underway\" slightly overstates a stubbed hand-off, but it claims no survey results."
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Identified the open question, explained why locality-guide comes first (no locality entry for Muhlenberg County), and stated the following steps (research plan, then searches against the Kentucky death certificates). Per the test's own instructions, nothing downstream is expected because every other callee is stubbed."
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One project_context call with the correct projectPath, then an Agent spawn to locality-guide with a prompt naming the county and period. No fixture misses."
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the scenario: one in_progress question (Mikkel Nielsen Blyeberg's father), no plan, and a locality entry for Stagstrup Sogn. Every specific in the reply (≈3% indexed register, so browse images; levy rolls listing sons under the father from 1789; baptisms naming both parents) comes from that entry's quirks. Routed to research-plan; test_routes_to_expected_skill passed. Minor: \"the plan calls for…\" is present tense for a stubbed plan, but it says \"once the research plan is written\", so it doesn't claim one exists."
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Identified the open question, noted the existing locality guide, routed to research-plan, and stated the following steps (baptism browse, levy-roll search, extraction, proof conclusion). Nothing else was expected of a router whose callees are stubbed."
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One project_context call with the correct projectPath, then an Agent spawn to research-plan naming the question. No fixture misses."
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Compared the reply with the tree-survey stub's text. Both suggestions (Hannah Pruitt b. ~1862 Lancaster PA, parents unrecorded; Frank Ellery & Ruth Ashby, married in Dayton, no children) are relayed faithfully. But the router added \"Lancaster County has strong civil and church records from the 1860s\", which the stub never said and which is wrong for Pennsylvania: no statewide civil birth registration until 1906, and Lancaster's county birth registers ran only c. 1852–1855. Church records yes, civil no."
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Relayed both suggestions with their questions and stopped for the researcher's pick, as the stub instructs. It did not spawn init-project with an unchosen person."
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP calls; the only call was the Agent spawn to tree-survey, which the routing validator covers."
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the scenario: an objective (Patrick Flynn's parents, b. ca. 1845 PA, d. 1908 Schuylkill Co.), no questions, no sources, one name-only person. The reply describes exactly that, routes to question-selection (test_routes_to_expected_skill passed), and says plainly that no further state was written."
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "With no question registered, registering the first one is the only correct next step, and the reply explains why it comes before planning and searching. Nothing else was expected while the callee is stubbed."
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One project_context call with the correct projectPath, then an Agent spawn to question-selection whose prompt restates the objective. No fixture misses."
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the scenario's plan: pl_001 is active with one planned item, pli_001 (collection 1468080 \"Norway, Marriages, 1660-1926\", Hamre prestegjeld, Hordaland, 1770–1800, search under Unna Halsteinsdatter's patronymic). The reply matches every detail and claims no search results."
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Found the question, read the active plan, picked its only planned item, routed to search-records (test_routes_to_expected_skill passed), and stated the downstream steps. Nothing else was expected while the callee is stubbed."
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context with the correct projectPath, then research_query narrowed well (section=plans, questionId=q_001, status=active). No fixture misses."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The judge's reason is wrong: the reply does flag the parents as \"researcher-reported pending extraction\", which the judge context says is correct. Its core analysis is right and improved on the last run: an 1861 death makes the 1870 Boyd County bond a different Robert, so h_002 loses that support. The real flaw is the h_001 paragraph: it derives \"supports h_001\" from Polley being Robert's sibling, which is h_002's premise that the same reply just called substantially weakened, and states it as support rather than an inference to test."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge says the search step isn't explicit, but the reply states it (\"Research-plan was delegated to add a plan item targeting the Kentucky Deaths and Burials collection… Robert Eastham, Pulaski County, died 1861\"), and the tool calls show the research-plan spawn. Locating the record counts as following the lead under the judge context. It also routed hypothesis-tracking, covered both hypotheses, and did not move toward wrap-up."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context, then research_query for hypotheses and for the six assertions behind them (a_115–a_117, a_144, a_157, a_159), all with the correct projectPath. No fixture misses."
+    }
+  ]
+}
