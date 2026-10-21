@@ -1,0 +1,24 @@
+{
+ "log_id": "log_003",
+ "tool": "record_search",
+ "retrieved": "2026-10-20T15:50:34.690Z",
+ "returned_count": 0,
+ "payload": {
+  "query": {
+   "count": 50,
+   "deathYearFrom": 1900,
+   "deathYearTo": 1945,
+   "fatherGivenName": "John",
+   "fatherSurname": "Barker",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2",
+   "recordCountry": "United States",
+   "recordSubdivision": "Mississippi"
+  },
+  "totalMatches": 217,
+  "paginationCappedAt": 4999,
+  "returned": 50,
+  "offset": 0,
+  "hasMore": true,
+  "results": []
+ }
+}

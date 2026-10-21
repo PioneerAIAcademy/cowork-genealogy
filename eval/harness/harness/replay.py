@@ -539,8 +539,23 @@ def replay(
             continue
 
         args = entry.get("args") if isinstance(entry.get("args"), dict) else {}
+        # extraction_append({ personId }) extracts and links a person's attached
+        # records, none of which its arguments carry. Reported, never applied:
+        # the generic path below would read it as one log entry.
+        if name == "extraction_append" and "personId" in args and not args.get("recordIds"):
+            out.note_unmodelled("extraction_append:person-links")
+            continue
         if _is_staged_extraction(name, args):
             _apply_staged_extraction(entry, final_research, out)
+            # What the replay applies is each record's source, log entry and
+            # assertions. A question tie on a re-found record and a plan-item
+            # completion are written too, and neither is in the arguments.
+            if args.get("questionIds"):
+                out.note_unmodelled("extraction_append:question-tie")
+            # `parse_tool_result` keeps only ok and ids from a summary the
+            # ledger may have truncated, so the marker is read off the raw text.
+            if '"planItems"' in str(entry.get("response_summary") or ""):
+                out.note_unmodelled("extraction_append:plan-items")
             continue
         ops = _ops_from_args(args, name)
         ids = result.get("ids") or []

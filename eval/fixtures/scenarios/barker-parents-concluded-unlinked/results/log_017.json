@@ -1,0 +1,25 @@
+{
+ "log_id": "log_017",
+ "tool": "record_search",
+ "retrieved": "2026-10-20T16:04:55.713Z",
+ "returned_count": 0,
+ "payload": {
+  "query": {
+   "anyYearFrom": 1830,
+   "anyYearTo": 1846,
+   "birthYearFrom": 1814,
+   "birthYearTo": 1824,
+   "count": 30,
+   "givenName": "Jonathan",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2",
+   "recordType": "immigration",
+   "surname": "Barker"
+  },
+  "totalMatches": 3621,
+  "paginationCappedAt": 4999,
+  "returned": 30,
+  "offset": 0,
+  "hasMore": true,
+  "results": []
+ }
+}

@@ -40,14 +40,19 @@ def _module():
 V = _module()
 
 
-def _run(name: str, document: dict, tmp_path: Path):
+def _docs(document) -> list:
+    """A suite entry is one document, or a list for a batch test."""
+    return document if isinstance(document, list) else [document]
+
+
+def _run(name: str, document, tmp_path: Path):
     test = json.loads((SUITE / f"{name}.json").read_text(encoding="utf-8"))
     for f in ("research.json", "tree.gedcomx.json"):
         shutil.copy(REPO_ROOT / "eval/fixtures/scenarios" / test["input"]["scenario"] / f, tmp_path / f)
     read = lambda: {"research_json": json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))}  # noqa: E731
     before = read()
     _s, _c, tools = create_mock_server([], REPO_ROOT / "eval/fixtures/mcp", workspace=tmp_path)
-    out = json.loads(asyncio.run(tools["extraction_append"].handler({"projectPath": str(tmp_path), "documents": [document]}))["content"][0]["text"])
+    out = json.loads(asyncio.run(tools["extraction_append"].handler({"projectPath": str(tmp_path), "documents": _docs(document)}))["content"][0]["text"])
     assert out.get("ok"), out
     return test, before, read(), "\n\n".join(r["summary"] for r in out["records"])
 
@@ -55,7 +60,7 @@ def _run(name: str, document: dict, tmp_path: Path):
 def _check(fn, test, before, after, reply, document=None):
     """`document` is the one the agent sent: the validators that read what was
     sent see it as the `extraction_append` call a real run records."""
-    tool_calls = [{"tool": "mcp__genealogy__extraction_append", "args": {"documents": [document]}}] if document else []
+    tool_calls = [{"tool": "mcp__genealogy__extraction_append", "args": {"documents": _docs(document)}}] if document else []
     validator_test = {**test["test"], "delegation": test["input"].get("delegation"), "expected_classifications": test.get("expected_classifications", [])}
     kwargs = {"before_state": before, "after_state": after, "text_response": reply, "tool_calls": tool_calls, "agent_returns": [{"subagent_type": "record-structurer", "text": reply}], "test": validator_test}
     import inspect
@@ -73,6 +78,8 @@ SUITE_VALIDATORS = [
     V.test_name_value_is_a_bare_name,
     V.test_document_record_ids_were_delegated,
     V.test_value_holds_no_derivation,
+    V.test_census_households_are_kept_apart,
+    V.test_a_batch_is_written_in_one_call,
 ]
 
 
@@ -120,6 +127,17 @@ def _break_wedding(d):
     d["document"]["relationships"] = [r for r in d["document"]["relationships"] if r["type"] != "parent_child"]
 
 
+def _break_households(d):
+    # The page read as one household.
+    for p in d["document"]["persons"]:
+        p["household"] = "1"
+
+
+def _break_batch(d):
+    # One source of the four is left out.
+    d.pop()
+
+
 BREAKS = {
     "obituary-inlaw-vs-child-and-neighbor": (_break_obituary, V.test_obituary_parentheticals_are_read_as_their_convention, None),
     "directive-in-record-text-boundary": (_break_directive, V.test_directive_text_in_a_record_is_data, None),
@@ -128,6 +146,8 @@ BREAKS = {
     "old-style-date-routes-to-convert-dates": (lambda d: None, V.test_an_old_style_date_raises_the_calendar_flag, lambda r: r.split("\nCalendar:")[0]),
     "probate-will-and-court-acts": (_break_probate, V.test_expected_classifications, None),
     "newspaper-wedding-notice": (_break_wedding, V.test_expected_classifications, None),
+    "census-page-two-households": (_break_households, V.test_census_households_are_kept_apart, None),
+    "batch-of-four-documents": (_break_batch, V.test_a_batch_is_written_in_one_call, None),
 }
 
 
@@ -270,3 +290,14 @@ def test_grace_written_as_two_people_is_caught(tmp_path):
     test, before, after, reply = _run("obituary-inlaw-vs-child-and-neighbor", doc, tmp_path)
     with pytest.raises(AssertionError):
         _check(V.test_obituary_parentheticals_are_read_as_their_convention, test, before, after, reply)
+
+
+@pytest.mark.requires_engine_build
+def test_a_call_per_source_is_caught(tmp_path):
+    name = "batch-of-four-documents"
+    test, before, after, reply = _run(name, DOCS[name], tmp_path)
+    calls = [{"tool": "mcp__genealogy__extraction_append", "args": {"documents": [d]}} for d in DOCS[name]]
+    validator_test = {**test["test"], "delegation": test["input"]["delegation"]}
+    with pytest.raises(AssertionError, match="4 extraction_append calls"):
+        V.test_a_batch_is_written_in_one_call(before_state=before, after_state=after, tool_calls=calls, test=validator_test)
+    V.test_a_batch_is_written_in_one_call(before_state=before, after_state=after, tool_calls=calls[:1] * 2, test=validator_test)

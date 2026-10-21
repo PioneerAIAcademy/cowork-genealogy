@@ -285,8 +285,8 @@ def main(argv: list[str] | None = None) -> int:
             "(matches Cowork). setting_sources=['project'] already isolates from "
             "the user's effortLevel, and CLAUDE_EFFORT is output-only. This is "
             "not the only lever — ClaudeAgentOptions.effort also works, and both "
-            "reached subagents on CLI 2.1.215/2.1.220 (probe_effort_capture.py; "
-            "this harness's 2.1.139 is unprobed). Vary it to test whether a "
+            "reached subagents on CLI 2.1.215/2.1.220/2.1.294 (probe_effort_capture.py; "
+            "this harness runs the hosted 2.1.294). Vary it to test whether a "
             "runaway-thinking subagent freeze clears (see "
             "subagents[].runaway_thinking; if empty, read subagent_capture_status)."
         ),
