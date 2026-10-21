@@ -448,19 +448,23 @@ describe("volumeSearchTool", () => {
     expect(c).not.toHaveProperty("endYear");
   });
 
-  it("keeps an end year with no start year as an open-ended dateRange", async () => {
+  it("says which side of a one-sided span is open", async () => {
     setupCalls(
       [2968392],
       makeSearchResponse([
         makeGroup({
-          coverages: [{ place: "Edensor", todateString: "1812-12-31T23:59:59.999" }],
+          coverages: [
+            { place: "Edensor", todateString: "1812-12-31T23:59:59.999" },
+            { place: "Edensor", fromdateString: "1870-01-01T00:00:00" },
+          ],
         }),
       ]),
       []
     );
     const result = await volumeSearchTool({ standardPlace: EDENSOR_P }, LOCAL);
-    // With endYear gone from the output, dateRange is the only place it can live.
-    expect(result.results[0].coverages[0].dateRange).toBe("until 1812");
+    // With the structured years gone, dateRange is the only date on a row. A bare
+    // "1870" would read as that one year, not as an open end.
+    expect(result.results[0].coverages.map((c) => c.dateRange)).toEqual(["until 1812", "from 1870"]);
   });
 
   it("derives dateRange from the pair when datesOrig is absent", async () => {
@@ -1019,6 +1023,15 @@ describe("mergeCoverages", () => {
       { places: ["A"], dateRange: "1900", recordTypeConceptId: 1 },
       { places: ["B"], dateRange: "1900", recordTypeConceptId: 2 },
     ]);
+  });
+
+  it("merges one span written with an en-dash and with a hyphen, keeping the first text", () => {
+    // datesOrig writes "1881–1884"; the fallback from the structured pair writes "1881-1884".
+    const out = mergeCoverages([
+      { place: "A", dateRange: "1881–1884", recordType: "Muster rolls" },
+      { place: "B", dateRange: "1881-1884", recordType: "Muster rolls" },
+    ]);
+    expect(out).toEqual([{ places: ["A", "B"], dateRange: "1881–1884", recordType: "Muster rolls" }]);
   });
 
   it("leaves places empty rather than listing a blank place", () => {

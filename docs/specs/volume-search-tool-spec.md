@@ -692,14 +692,14 @@ only `datesOrig` therefore drops a date the API supplied on ~27% of Wayne's rows
 the pair never does — 0 occurrences in 2161 coverages.
 
 So `dateRange` keeps the archival display string when there is one, and is
-**derived from the pair when `datesOrig` is absent** — `"1683-1700"`, the bare
-start year when only that is present, and `"until 1812"` when only the end year is.
+**derived from the pair when `datesOrig` is absent** — `"1683-1700"`, `"from 1870"`
+when only the start year is present, and `"until 1812"` when only the end year is.
 
 **The pair itself is not emitted.** `startYear`/`endYear` were once returned on every
 row, alongside a `dateRange` that already carried the span; no
 agent read them, and on the oversized pages they were a third of the answer.
-`dateRange` is the only date on a row, which is why it must keep an end year that
-has no start year.
+`dateRange` is the only date on a row, which is why a one-sided span names its
+open side: a bare `"1870"` would read as that one year.
 
 Note the raw `fromDate`/`toDate` are epoch **milliseconds, negative before 1970**
 (`-8899027200000`), so the ISO-shaped `fromdateString`/`todateString` are the
@@ -709,7 +709,10 @@ fields to parse.
 `src/tools/collections-search.ts` already derives a display range from a
 `startYear`/`endYear` pair — `` `${startYear}-${endYear}` `` when both are
 present, the bare start year when only one is. `dateRange`'s fallback must produce
-the same shape, so the two tools do not describe the same span differently. Those
+the same shape for a two-sided span, so the two tools do not describe it
+differently. A one-sided span is the exception: `collections_search` also returns
+`startYear`/`endYear`, which say which side is open, and this tool no longer does,
+so here the open side is spelled out. Those
 fields are also already typed `startYear?: number` / `endYear?: number` on
 `FSSearchMetadata` (`src/types/collection.ts`), which is the naming and type this
 spec follows.
@@ -742,7 +745,9 @@ dozens of towns — Freeborn, Minnesota's seven muster-roll volumes carry 31–4
 each — and that repetition was most of an oversized page.
 
 - **Key:** `(dateRange, recordType)` when the row has a `recordType`; otherwise
-  `(dateRange, recordTypeConceptId)`. Keying on the visible text means two rows
+  `(dateRange, recordTypeConceptId)`. An en-dash in `dateRange` keys as a hyphen,
+  since `datesOrig` and the fallback write one span both ways; the first-seen text
+  is what the row shows. Keying on the visible text means two rows
   that print the same are always one row, even when their concept ids differ.
 - **Order:** rows in first-seen order; places within a row in first-seen order,
   each once.
@@ -966,8 +971,9 @@ For each group in `response.groups`:
    - when `dateRange` is still empty, it is derived from the leading years of
      `coverage.fromdateString` / `coverage.todateString`:
      `` `${startYear}-${endYear}` ``, matching `collections_search` exactly —
-     including when the years are equal, so `"1683-1683"` — the bare start year
-     when only it is present, and `` `until ${endYear}` `` when only the end year is
+     including when the years are equal, so `"1683-1683"` — `` `from ${startYear}` ``
+     when only the start year is present, and `` `until ${endYear}` `` when only
+     the end year is
 9. `coverages` ← those rows [merged](#merging-coverage-rows); a merged row carries
    `recordTypeConceptId` only when it has no `recordType`
 
@@ -1128,7 +1134,7 @@ images are digitized, indexed, or full-text processed.
 | 14 | Omits `recordType` for `concept-id:…`; strips a `title:` prefix and keeps the type | Record-type normalization |
 | 15 | Handles empty `{"totalCount":0}` response | Zero-result path |
 | 15a | Strips a `title:` prefix from `dateRange`; derives `dateRange` from the date pair when `datesOrig` is absent | Date normalization |
-| 15b | Emits no `startYear`/`endYear`; an end year with no start year survives as `dateRange: "until <year>"`; `recordTypeConceptId` appears only on a row with no `recordType` | Structured dates and concept ids |
+| 15b | Emits no `startYear`/`endYear`; a one-sided span reads `"from <year>"` or `"until <year>"`; `recordTypeConceptId` appears only on a row with no `recordType` | Structured dates and concept ids |
 | 15c | `recordTypeGroups` maps each group name to its anchor **and stray** ids and sends them in `coverage.recordTypeConceptIds` | Group expansion |
 | 15d | A parent group's request ids retrieve its nested groups' volumes (containment), send the strays of every group nested beneath it, and two groups OR rather than intersect | Group semantics |
 | 15e | An unrecognised group name throws and names the valid set — it does **not** fall through to an unfiltered or empty search | Unknown-group guard |
@@ -1148,7 +1154,7 @@ images are digitized, indexed, or full-text processed.
 | 27 | On that page every upstream `(place, dateRange, recordType)` triple is in the answer | Merge is lossless |
 | 28 | The full 100-volume Freeborn page at `pageSize: 100` stays under the budget, keeps all 100 volumes and `nextPageToken`, and every shortened volume carries `coverageCount` > its row count | Budget backstop |
 | 29 | `fitToBudget` returns an in-budget answer unchanged, marks only the volumes it cut, and keeps every volume when nothing fits | Budget rules |
-| 30 | `mergeCoverages` merges on the visible `recordType` despite differing concept ids, keeps id-only rows apart, dedupes places in order, and lists no blank place | Merge key |
+| 30 | `mergeCoverages` merges on the visible `recordType` despite differing concept ids, keeps id-only rows apart, merges an en-dash and a hyphen spelling of one span, dedupes places in order, and lists no blank place | Merge key |
 | 31 | A caller's `pageSize` is sent and echoed; `1` and `100` are accepted | Page size |
 | 32 | `0`, `101`, `2.5`, `-1`, `NaN` and `"50"` are refused before any request | Page-size validation |
 | 33 | The 409 recovery names `pageSize` | Paging conflict |

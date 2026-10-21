@@ -1,5 +1,5 @@
 import type { Principal } from "../auth/principal.js";
-import { BROWSER_USER_AGENT } from "../constants.js";
+import { BROWSER_USER_AGENT, TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import { describeFetchError } from "../utils/http.js";
 import {
@@ -46,15 +46,13 @@ const RMS_SEARCH_URL =
 const RECORD_TYPE_OPAQUE_RE = /^concept-id:/;
 const TITLE_PREFIX_RE = /^title:\s*/;
 
-// Over 50,000 characters, Claude Code saves a tool result to a file and hands the
-// agent a preview, and the agents that call this tool cannot Read a file that
-// large (issue #3611). At 100 volumes a page, 10 of 33 hosted calls overflowed;
-// Freeborn, Minnesota 1870–1900 reached 99,517. After merging coverage rows, the
-// worst 50-volume window measured on those bundles is 36,939, so 50 fits with no
-// truncation and the budget below is a backstop, not the normal path.
+// At 100 volumes a page, 10 of 33 hosted calls overflowed TOOL_RESULT_CHAR_BUDGET's
+// limit (issue #3611); Freeborn, Minnesota 1870–1900 reached 99,517. After merging
+// coverage rows, the worst 50-volume window measured on those bundles is 36,939,
+// so 50 fits with no truncation and fitToBudget is a backstop, not the normal path.
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;
-export const RESULT_CHAR_BUDGET = 40_000;
+export const RESULT_CHAR_BUDGET = TOOL_RESULT_CHAR_BUDGET;
 // Coverage rows kept per volume, tried in order, only when a page is still over
 // budget after merging. Volumes are never dropped: the upstream cursor has
 // already moved past them, so a dropped volume is unreachable.
@@ -228,12 +226,16 @@ function mapCoverage(entry: MetadataRmsCoverageEntry): MappedCoverage {
   // `collections_search`'s own formatter, so the two tools cannot describe one
   // span differently; `""` from it means "no range", which leaves the optional
   // field off.
-  // `formatYearRange` has no form for an end year alone, and with the structured
-  // years gone from the output, `dateRange` is the only place one can survive.
+  // With the structured years gone from the output, `dateRange` is the only date
+  // on a row, so a one-sided span says which side is open: `formatYearRange`
+  // renders a lone start year as a bare "1870", which reads as that year alone.
   const dateRange =
     displayRange ||
-    formatYearRange(startYear, endYear) ||
-    (endYear != null ? `until ${endYear}` : "");
+    (startYear != null && endYear == null
+      ? `from ${startYear}`
+      : endYear != null && startYear == null
+        ? `until ${endYear}`
+        : formatYearRange(startYear, endYear));
   if (dateRange) coverage.dateRange = dateRange;
   const rawType = entry.recordTypeOrig;
   if (rawType != null && !RECORD_TYPE_OPAQUE_RE.test(rawType)) {
@@ -259,9 +261,12 @@ export function mergeCoverages(rows: MappedCoverage[]): SimplifiedCoverage[] {
   const merged: SimplifiedCoverage[] = [];
   const byKey = new Map<string, SimplifiedCoverage>();
   for (const row of rows) {
+    // `datesOrig` writes a span with an en-dash where the fallback writes a hyphen,
+    // so one span would otherwise key two ways; the first-seen text is what shows.
+    const date = (row.dateRange ?? "").replace(/–/g, "-");
     const key = row.recordType != null
-      ? `type\u0000${row.dateRange ?? ""}\u0000${row.recordType}`
-      : `concept\u0000${row.dateRange ?? ""}\u0000${row.recordTypeConceptId ?? ""}`;
+      ? `type\u0000${date}\u0000${row.recordType}`
+      : `concept\u0000${date}\u0000${row.recordTypeConceptId ?? ""}`;
     let out = byKey.get(key);
     if (!out) {
       out = { places: [] };
