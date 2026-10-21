@@ -13,11 +13,12 @@
       "evidence-language",
       "gps-reasoning",
       "pre-1880-census-household",
-      "topical-fixture-required"
+      "topical-fixture-required",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search the 1860 census for George Ackerman in Pennsylvania, anchored on his wife Catherine, and tell me what the record shows about the marriage.",
+    "delegation": "Search the 1860 census for George Ackerman in Pennsylvania, anchored on his wife Catherine, and tell me what the record shows about the marriage.\n\nprojectPath: <workspace>",
     "scenario": "census-household-absent-spouse"
   },
   "mcp_fixtures": [

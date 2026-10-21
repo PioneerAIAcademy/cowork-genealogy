@@ -1,0 +1,127 @@
+{
+  "log_id": "log_018",
+  "tool": "record_search",
+  "retrieved": "2026-10-05T18:02:46.375Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "Burton",
+      "givenName": "Jehu",
+      "collectionId": "1875188",
+      "recordCountry": "United States",
+      "subjectId": "I1",
+      "projectPath": "/project"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 4999,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:K3LC-YG3",
+        "events": [
+          {
+            "type": "Will",
+            "place": "Caldwell, Kentucky, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "J W Burton",
+        "score": 3.00198,
+        "confidence": 3,
+        "collectionId": "1875188",
+        "collectionTitle": "Kentucky, Probate Records, 1727-1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1875188",
+        "recordTitle": "Entry for J W Burton, \"Kentucky, Probate Records, 1727-1990\"",
+        "recordArk": "ark:/61903/1:2:9MXM-2RG3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_13941177963",
+              "ark": "ark:/61903/1:1:K3LC-YG3",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "J W"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Will",
+                  "primary": true,
+                  "place": "Caldwell, Kentucky, United States",
+                  "standard_place": "Caldwell, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22210763163",
+              "resource_type": "Record",
+              "title": "Entry for J W Burton, \"Kentucky, Probate Records, 1727-1990\"",
+              "citation": "\"Kentucky, Probate Records, 1727-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K3LC-YG3 : Thu Jan 16 06:57:58 UTC 2025), Entry for J W Burton.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9MXM-2RG3",
+              "coverage": {
+                "record_type": "Probate"
+              }
+            },
+            {
+              "id": "sd_c_1875188",
+              "resource_type": "Collection",
+              "title": "Kentucky, Probate Records, 1727-1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1875188",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1727/1990",
+                "record_type": "Probate"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GP9P-P2C",
+              "coverage": {
+                "place_rep_id": "394123",
+                "date_range": "1809-1988",
+                "record_type": "WillIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-7M8",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Legal, from 1181 to 2000",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1181-01-01T00:00:00Z/+2000-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_13941177963",
+              "resource_type": "Person",
+              "url": "#p_13941177963"
+            }
+          ],
+          "places": [
+            {
+              "id": "394123",
+              "name": "Caldwell, Kentucky, United States",
+              "latitude": 37.149999,
+              "longitude": -87.849999
+            }
+          ]
+        },
+        "primaryId": "p_13941177963",
+        "role": "Principal"
+      }
+    ]
+  }
+}

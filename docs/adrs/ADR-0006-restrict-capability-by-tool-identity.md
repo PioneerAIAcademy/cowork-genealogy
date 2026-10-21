@@ -7,7 +7,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-18 (#695/#736, after the birkeland lane breach — the agent itself shipped 2026-07-12 in #650 carrying the *prose* lane this replaced)
-- **Last updated:** 2026-09-01 (the `image_read` hook port is declined, not pending)
+- **Last updated:** 2026-10-20 (`extraction_append` chooses its lane per call: plan items, question ties, attachment links)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -46,9 +46,11 @@ parameter is a request, not a constraint.
 **Where a boundary must hold against a misdirected caller, narrow the tool, not
 the prompt.**
 
-`extraction_append` is `research_append` restricted to `sources` and
-`assertions`. It is the *same implementation*, gated by a **second function
-parameter**:
+`extraction_append` is `research_append` restricted, per call, to a section set
+code chooses: `sources` and `assertions` to extract and tie, `plan_items` alone
+to complete an item, or `person_evidence` alone, in `personId` mode, to link a
+person's attachments. It is the *same implementation*, gated by a **second
+function parameter**:
 
 ```ts
 researchAppend(input, { allowedSections, toolName })
@@ -72,6 +74,23 @@ The general form:
 | Prose in the agent body | **No** | the caller can prompt past it |
 | A parameter on the tool input | **No** | the caller supplies the input |
 | **Tool identity** | **Yes** | the capability is absent from the agent's world |
+
+**Amended 2026-10-20 (lead, issue #3516).** A mode may reach a further section
+only where code composes the whole entry. `extraction_append` now chooses its
+lane per call rather than per tool:
+- it writes plan-item status only as `in_progress` → `completed`, once a record
+  an item's `record_search` found is extracted, in a separate `researchAppend`
+  call whose lane is `plan_items` alone;
+- it writes assertions beyond appends only by growing
+  `extracted_for_question_ids` when a question re-finds an extracted record;
+- it writes `person_evidence` only in `personId` mode, and only unchecked
+  attachment links: `speculative`, no `match_score`, the fixed
+  `ATTACHMENT_LINK_RATIONALE`, in a call whose lane is `person_evidence` alone.
+
+No input field reaches any of these writes, so the lane is still unforgeable from the
+caller's side. The "a second lane needs narrowing" condition under **Revisit
+when** fired here; the answer was a per-call section set inside the same tool,
+not a `PreToolUse` policy.
 
 ## Alternatives considered
 

@@ -9,7 +9,7 @@ import logging
 import re
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
@@ -84,7 +84,9 @@ class PatchSessionBody(BaseModel):
 
 # A sandbox keeps running the agent code it was created with, so an old one
 # drifts from the current control plane (issue #3406). Lead ruling 2026-10-13:
-# past this age a session can be read but not continued.
+# past this age a session can be read but not continued. "Read" includes its
+# chat: /connect hands an old session a read-only connection that replays the
+# transcript, and the client shows no composer.
 SESSION_MAX_AGE = timedelta(hours=72)
 
 _EXPIRED_DETAIL = (
@@ -503,6 +505,7 @@ async def session_logs(
 @router.post("/{session_id}/connect")
 async def connect_session(
     session_id: str,
+    read_only: bool = Query(False, alias="readOnly"),
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
     provider: SandboxProvider = Depends(get_provider),
@@ -511,13 +514,28 @@ async def connect_session(
     start/expose its in-sandbox WS server, and mint a per-sandbox handshake token.
     The browser then connects ONE WSS directly to the sandbox — control plane out
     of the streaming path. Identical for both providers (E2B microVM / local
-    subprocess); each returns its own wss:// or ws:// URL."""
+    subprocess); each returns its own wss:// or ws:// URL.
+
+    A session past SESSION_MAX_AGE gets a read-only connection when the client
+    asks for one (`readOnly=true`): the sandbox replays its chat, and the client
+    hides the composer. A client that does not ask, one loaded before read-only
+    existed, still gets the 410 and has no composer to hide."""
     project = _owned(session, user, session_id)
-    # Refuse before resume, so this call does not wake the sandbox. Viewing an
-    # ended session still does: /resume and /state resume it to read files.
-    if not _continuable(project):
+    continuable = _continuable(project)
+    # Refuse before resume, so this call does not wake the sandbox.
+    if not continuable and not read_only:
         raise HTTPException(status_code=410, detail=_EXPIRED_DETAIL)
     sandbox = await provider.resume(project.sandbox_id)
+    if not continuable:
+        # No secrets, config or FamilySearch grant: nothing a new turn needs
+        # reaches an old sandbox, and last_active stays where the work ended.
+        conn = await sandbox.expose_port(SANDBOX_WS_PORT)
+        return {
+            "wssUrl": conn.url,
+            "token": mint_token(project.sandbox_id),
+            "readOnly": True,
+            "message": _EXPIRED_DETAIL,
+        }
     # Refresh the operator secrets BEFORE the agent can be handed a turn, so a
     # rotated Anthropic key reaches sandboxes created under the old one.
     await agent_secrets.write_secrets(sandbox)

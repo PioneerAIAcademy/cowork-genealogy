@@ -437,16 +437,72 @@ def _builder_hand_off(entry: dict) -> tuple[dict, str] | None:
     return {"section": "log", "op": "append", "entry": body}, result["ids"][0]
 
 
+_LOG_ID_RE = re.compile(r'"logId"\s*:\s*"([^"]+)"')
+
+
+def _is_staged_extraction(name: str, args: dict) -> bool:
+    """`extraction_append` in its record-id form (#3312): the arguments name the
+    records and the tool writes their source, log entry and assertions itself,
+    so nothing the replay needs is in the arguments."""
+    return (
+        name == "extraction_append"
+        and "recordIds" in args
+        and not args.get("ops")
+        and not args.get("section")
+    )
+
+
+def _apply_staged_extraction(
+    entry: dict, final_research: dict | None, out: ReplayResult
+) -> None:
+    """Apply a record-id `extraction_append` from the run's final notes.
+
+    The call's response reports one `logId` per record, and everything the tool
+    wrote for that record carries it: the log entry's own id, and
+    `log_entry_id` on the source and on every assertion. So the entries are read
+    back from the final notes by the id the tool reported, which is the same
+    anchor the rest of this module uses. Without the final notes the call is
+    reported, never guessed at: the generic path would append one empty log
+    entry and none of the assertions.
+    """
+    summary = entry.get("response_summary")
+    text = summary if isinstance(summary, str) else json.dumps(summary, default=str)
+    log_ids = list(dict.fromkeys(_LOG_ID_RE.findall(text.replace('\\"', '"'))))
+    if not final_research or not log_ids:
+        out.note_unmodelled("tool:extraction_append:record-ids")
+        return
+    state = out.research
+    for log_id in log_ids:
+        found = False
+        for section, key in (("log", "id"), ("sources", "log_entry_id"), ("assertions", "log_entry_id")):
+            arr = state.setdefault(section, [])
+            have = {e.get("id") for e in arr if isinstance(e, dict)}
+            for e in final_research.get(section) or []:
+                if isinstance(e, dict) and e.get(key) == log_id:
+                    found = True
+                    if e.get("id") not in have:
+                        arr.append(copy.deepcopy(e))
+                        out.applied += 1
+        if not found:
+            out.note_unmodelled("extraction_append:not-in-final")
+
+
 def replay(
     tool_calls: list[dict],
     starting_research: dict | None = None,
     upto: int | None = None,
+    final_research: dict | None = None,
 ) -> ReplayResult:
     """Reconstruct research.json after the first `upto` ledger entries.
 
     `upto=None` replays the whole run. `upto=i` yields the state the i-th call
     would have SEEN — i.e. entries `[0, i)` applied — which is what a
     precondition check needs.
+
+    `final_research` is the run's committed final notes. It is read only for a
+    record-id `extraction_append` (`_apply_staged_extraction`); without it that
+    call is reported as unmodelled. A caller that measures the replay AGAINST
+    the final notes must not pass them, or it is comparing them with themselves.
     """
     out = ReplayResult(research=copy.deepcopy(starting_research or {}))
     for entry in tool_calls[: upto if upto is not None else len(tool_calls)]:
@@ -483,6 +539,24 @@ def replay(
             continue
 
         args = entry.get("args") if isinstance(entry.get("args"), dict) else {}
+        # extraction_append({ personId }) extracts and links a person's attached
+        # records, none of which its arguments carry. Reported, never applied:
+        # the generic path below would read it as one log entry.
+        if name == "extraction_append" and "personId" in args and not args.get("recordIds"):
+            out.note_unmodelled("extraction_append:person-links")
+            continue
+        if _is_staged_extraction(name, args):
+            _apply_staged_extraction(entry, final_research, out)
+            # What the replay applies is each record's source, log entry and
+            # assertions. A question tie on a re-found record and a plan-item
+            # completion are written too, and neither is in the arguments.
+            if args.get("questionIds"):
+                out.note_unmodelled("extraction_append:question-tie")
+            # `parse_tool_result` keeps only ok and ids from a summary the
+            # ledger may have truncated, so the marker is read off the raw text.
+            if '"planItems"' in str(entry.get("response_summary") or ""):
+                out.note_unmodelled("extraction_append:plan-items")
+            continue
         ops = _ops_from_args(args, name)
         ids = result.get("ids") or []
         for i, op in enumerate(ops):

@@ -1,0 +1,346 @@
+{
+  "persons": [
+    {
+      "id": "GY75-S9D",
+      "ark": "ark:/61903/4:1:GY75-S9D",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "eb6f39e5-fc77-4f89-be02-0704fcaeb39c",
+          "preferred": true,
+          "given": "Inocencio",
+          "surname": "Gonzales",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b770b091-0993-46ad-a1a3-9cac0d73229d",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7KSG-KZV"
+        },
+        {
+          "ref": "7SZ9-699"
+        }
+      ]
+    },
+    {
+      "id": "PSPZ-47D",
+      "ark": "ark:/61903/4:1:PSPZ-47D",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "5efc0e2b-296b-4bc7-87fd-40d6606b06df",
+          "preferred": true,
+          "given": "Antonia",
+          "surname": "Elsaque",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "60fad912-1fcd-468f-b6c3-fa102e385267",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7KSG-KXD"
+        }
+      ]
+    },
+    {
+      "id": "GY75-7TJ",
+      "ark": "ark:/61903/4:1:GY75-7TJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c211b13f-408a-4b40-8b81-0ba0eacf29d8",
+          "preferred": true,
+          "given": "Victoria",
+          "surname": "Gonzalo Uraque",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fcfc3bd3-bda7-4c5b-abc1-df90d755bfc9",
+          "type": "Birth",
+          "date": "1886",
+          "standard_date": "1886"
+        },
+        {
+          "id": "f2c406e1-b86a-41e8-91c5-6e20c5daf049",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7SZ9-8SC"
+        }
+      ]
+    },
+    {
+      "id": "PSPZ-CLD",
+      "ark": "ark:/61903/4:1:PSPZ-CLD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "5b6a4d6e-ef1b-4759-baa5-c447db72a42d",
+          "preferred": true,
+          "given": "Victoria",
+          "surname": "Gonzalez Elsaque",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "618a7110-15bb-48fb-9af0-282f234154d2",
+          "type": "Birth",
+          "date": "1887",
+          "standard_date": "1887"
+        },
+        {
+          "id": "b85aafab-0f43-4659-81b9-bf4a6006d2b3",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7KSG-KN4"
+        }
+      ]
+    },
+    {
+      "id": "P9BB-7GZ",
+      "ark": "ark:/61903/4:1:P9BB-7GZ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "e71f57cc-5830-4848-ab4c-98765e733c71",
+          "preferred": true,
+          "given": "Antonia",
+          "surname": "Uraque",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6728b8f2-6e01-4978-af94-0c4c724a2bb3",
+          "type": "Birth",
+          "date": "1853",
+          "standard_date": "1853"
+        },
+        {
+          "id": "b634877b-3e66-45e9-ad39-8a705c7fa6a5",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7SZ9-DCR"
+        },
+        {
+          "ref": "7N66-PTC"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GY75-S9D",
+      "person2": "PSPZ-47D",
+      "sources": [
+        {
+          "ref": "7KSG-KDY"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GY75-S9D",
+      "person2": "P9BB-7GZ",
+      "sources": [
+        {
+          "ref": "7SZ9-DPH"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GY75-S9D",
+      "child": "GY75-7TJ",
+      "sources": [
+        {
+          "ref": "7SZ9-D7V"
+        },
+        {
+          "ref": "7SZ9-DPH"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "P9BB-7GZ",
+      "child": "GY75-7TJ",
+      "sources": [
+        {
+          "ref": "7SZ9-D7V"
+        },
+        {
+          "ref": "7SZ9-DPH"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GY75-S9D",
+      "child": "PSPZ-CLD",
+      "sources": [
+        {
+          "ref": "7KSG-KDY"
+        },
+        {
+          "ref": "7KSG-KHR"
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "PSPZ-47D",
+      "child": "PSPZ-CLD",
+      "sources": [
+        {
+          "ref": "7KSG-KDY"
+        },
+        {
+          "ref": "7KSG-KHR"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GY75-S9D",
+      "title": "Inocencio Gonzales",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Inocencio Gonzales (PID GY75-S9D); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GY75-S9D"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_PSPZ-47D",
+      "title": "Antonia Elsaque",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Antonia Elsaque (PID PSPZ-47D); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PSPZ-47D"
+    },
+    {
+      "id": "sd_person_GY75-7TJ",
+      "title": "Victoria Gonzalo Uraque",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Victoria Gonzalo Uraque (PID GY75-7TJ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GY75-7TJ"
+    },
+    {
+      "id": "sd_person_PSPZ-CLD",
+      "title": "Victoria Gonzalez Elsaque",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Victoria Gonzalez Elsaque (PID PSPZ-CLD); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PSPZ-CLD"
+    },
+    {
+      "id": "sd_person_P9BB-7GZ",
+      "title": "Antonia Uraque",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Antonia Uraque (PID P9BB-7GZ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:P9BB-7GZ"
+    },
+    {
+      "id": "7KSG-KZV",
+      "title": "Inocencio Gonzalo, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:87PX-1ZZM : Mon Mar 11 00:03:18 UTC 2024), Inocencio Gonzalo in entry for Severino Cruz, 7 May 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:87PX-1ZZM"
+    },
+    {
+      "id": "7SZ9-699",
+      "title": "Inocencio Gonzales, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8CPG-DTZM : Sun Mar 10 20:03:48 UTC 2024), Inocencio Gonzales in entry for Evaristo Mamani Inuca, 13 Oct 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8CPG-DTZM"
+    },
+    {
+      "id": "7KSG-KXD",
+      "title": "Antonia Elsaque, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:87PX-1CT2 : Mon Mar 11 00:03:18 UTC 2024), Antonia Elsaque in entry for Severino Cruz, 7 May 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:87PX-1CT2"
+    },
+    {
+      "id": "7SZ9-8SC",
+      "title": "Victoria Gonzalo Uraque, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8CPG-DT6Z : Sun Mar 10 20:03:48 UTC 2024), Victoria Gonzalo Uraque in entry for Evaristo Mamani Inuca, 13 Oct 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8CPG-DT6Z"
+    },
+    {
+      "id": "7KSG-KN4",
+      "title": "Victoria Gonzalo, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:87PX-1Z6Z : Mon Mar 11 00:03:18 UTC 2024), Victoria Gonzalo in entry for Severino Cruz, 7 May 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:87PX-1Z6Z"
+    },
+    {
+      "id": "7SZ9-DCR",
+      "title": "Antonia Uraque, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8CPG-DRT2 : Sun Mar 10 20:03:48 UTC 2024), Antonia Uraque in entry for Evaristo Mamani Inuca, 13 Oct 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8CPG-DRT2"
+    },
+    {
+      "id": "7N66-PTC",
+      "title": "Antonia Uraque, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:847S-NFW2 : Wed Mar 06 08:18:50 UTC 2024), Antonia Uraque in entry for Antonio Gonzales, 31 Oct 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:847S-NFW2"
+    },
+    {
+      "id": "7KSG-KDY",
+      "title": "Antonia Elsaque, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:87PX-1CT2 : Mon Mar 11 00:03:18 UTC 2024), Antonia Elsaque in entry for Severino Cruz, 7 May 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:87PX-1CT2"
+    },
+    {
+      "id": "7SZ9-DPH",
+      "title": "Inocencio Gonzales, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8CPG-DTZM : Sun Mar 10 20:03:48 UTC 2024), Inocencio Gonzales in entry for Evaristo Mamani Inuca, 13 Oct 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8CPG-DTZM"
+    },
+    {
+      "id": "7SZ9-D7V",
+      "title": "Antonia Uraque, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8CPG-DRT2 : Sun Mar 10 20:03:48 UTC 2024), Antonia Uraque in entry for Evaristo Mamani Inuca, 13 Oct 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8CPG-DRT2"
+    },
+    {
+      "id": "7KSG-KHR",
+      "title": "Inocencio Gonzalo, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:87PX-1ZZM : Mon Mar 11 00:03:18 UTC 2024), Inocencio Gonzalo in entry for Severino Cruz, 7 May 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:87PX-1ZZM"
+    }
+  ]
+}

@@ -201,13 +201,24 @@ the full 20-retry budget would multiply that against a control plane already
 failing to answer — trading a wedge for a stampede. Two attempts, then
 `chat_error`, which `ChatPane` renders as "Chat unavailable: …".
 
+**A session more than 72 hours past `projects.created` is read-only.** The client
+asks `/connect?readOnly=true`, and for such a session the control plane answers
+`readOnly: true` with the notice in `message`, after resuming the sandbox but
+without writing its secrets, config or FamilySearch grant. The connection emits
+one `status: session_expired` frame carrying `readOnly: true`, drops everything
+passed to `send()` from then on, and opens the socket as usual, so the sandbox
+replays the chat. `ChatPane` replaces the composer with "This session is more
+than 72 hours old and can't be continued." and shows "Loading this session's
+chat…" until `chat_ready`. Read-only is enforced by the client only: the browser
+talks straight to the sandbox, which runs its old code and would run a turn sent
+by hand.
+
 **A 410 from `/connect` is terminal, and it is not `chat_error`.** The control
-plane answers 410 for a session more than 72 hours past `projects.created`, and
-will never answer otherwise. The connection marks itself closed, never retries,
-does not reconnect on focus, and emits one `status: session_expired` frame;
-`ChatPane` replaces the composer with "This session is more than 72 hours old and
-can't be continued." It is checked before the `hidden` guard, so a refusal that
-lands in a background tab still ends the session. Pinned by the 410 cases in
+plane still answers 410 for an old session when the client does not ask for
+read-only (a tab loaded before read-only existed). The connection marks itself
+closed, never retries, does not reconnect on focus, and emits one
+`status: session_expired` frame. It is checked before the `hidden` guard, so a
+refusal that lands in a background tab still ends the session. Both are pinned in
 `SessionConnection.test.ts`.
 
 **Worst case the user waits about 60 seconds** before "Chat unavailable"

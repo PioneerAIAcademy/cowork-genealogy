@@ -86,6 +86,13 @@ const EXAMPLES: Record<string, string> = {
   "superseded_by": null
 }`,
 
+
+  rejected_links: `{
+  "assertion_id": "a_031",
+  "person_id": "I7",
+  "reason": "Same name and county, but the 1880 census puts this Patrick Flynn in Luzerne with a wife named Bridget; the subject was unmarried and in Schuylkill. same_person scored 0.21.",
+  "created": "2026-07-19"
+}`,
   questions: `{
   "question": "Who were the parents of Patrick Flynn (b. abt 1845, Ireland)?",
   "rationale": "The death certificate names a father (Thomas Flynn) on a single uncorroborated reading; no record yet names the mother.",
@@ -408,6 +415,22 @@ export function exampleFor(
       },
       not_reached: []
     }
+  }
+})`;
+    }
+    // A summary's narrative and search summary are refused one without the
+    // other (`narrativeAndSearchSummaryTogether`), so the generic placeholder
+    // would contradict the refusal it is attached to.
+    if (section === "proof_summaries") {
+      return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "proof_summaries",
+  op: "update",
+  entryId: "<existing-ps_-id>",
+  fields: {
+    /* only the fields you are changing; after a later search, these two together: */
+    narrative_markdown: "## Parents of Patrick Flynn\\n\\n... **What could resolve it:** the 1885 county estate file.",
+    exhaustive_search_summary: "Searched ... and the 1850-1880 censuses. Not yet examined: the 1885 county estate file."
   }
 })`;
     }

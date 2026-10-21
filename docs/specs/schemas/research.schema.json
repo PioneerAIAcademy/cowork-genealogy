@@ -109,6 +109,13 @@
       "items": {
         "$ref": "#/$defs/warning_justification"
       }
+    },
+    "rejected_links": {
+      "type": "array",
+      "description": "Person-links the researcher rejected. Its own record rather than a fourth `person_evidence.confidence` value: that field says how sure we are a link IS a match, and rejected is the opposite claim. Kept rather than deleted so a later step cannot silently re-link the same pair.",
+      "items": {
+        "$ref": "#/$defs/rejected_link_entry"
+      }
     }
   },
   "$defs": {
@@ -1039,6 +1046,44 @@
         }
       }
     },
+    "rejected_link_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "assertion_id",
+        "person_id",
+        "created"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^rj_[0-9]+$"
+        },
+        "assertion_id": {
+          "type": "string",
+          "pattern": "^a_[0-9]+$"
+        },
+        "person_id": {
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional. A rejection is never a demand for the right answer."
+        },
+        "created": {
+          "type": "string"
+        }
+      }
+    },
     "conflict": {
       "type": "object",
       "required": [
@@ -1468,6 +1513,9 @@
         },
         "narrative_markdown": {
           "type": "string"
+        },
+        "updated": {
+          "$ref": "enums.schema.json#/$defs/iso_datetime"
         },
         "claims": {
           "type": "array",

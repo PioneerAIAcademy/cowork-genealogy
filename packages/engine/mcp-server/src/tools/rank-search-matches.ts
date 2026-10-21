@@ -24,6 +24,10 @@ import type {
 const SCORE_CONCURRENCY = 10;
 /** A subject whose every score sits at or below this floor is unresolvable. */
 const DEGENERATE_FLOOR = 0.01;
+/** A candidate whose birth year differs from the subject's by MORE than this
+ *  many years is flagged `birthYearConflict` — census ages and indexing slips
+ *  account for a year or two, not five. */
+const BIRTH_YEAR_CONFLICT_YEARS = 2;
 /** Append-only calibration log; a `.jsonl` name stays clear of the results
  *  orphan validator (which scans results/ non-recursively for top-level *.json). */
 const SCORE_LOG_REL = "results/match-scores.jsonl";
@@ -156,8 +160,8 @@ export async function rankSearchMatches(
   // `results`, which is never truncated.
   const matches: RankedMatch[] =
     input.top === undefined
-      ? scored.map((s, i) => toStub(s, i + 1))
-      : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1));
+      ? scored.map((s, i) => toStub(s, i + 1, subject.birthYear))
+      : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1, subject.birthYear));
 
   if (input.checkAttachments && matches.length > 0) {
     await applyAttachments(matches, subjectId, principal);
@@ -658,6 +662,9 @@ interface SubjectDoc {
   enrichedNames: number;
   /** True when enrichment supplied a gender the tree person lacked. */
   enrichedGender: boolean;
+  /** The subject's birth year from the tree person (after enrichment): a Birth
+   *  fact, else a Baptism or Christening. Undefined when none carries a year. */
+  birthYear?: number;
   /** #2811: true when the subject has no date narrower than a year AND no named
    *  spouse, parent or child — nothing that separates this person from any
    *  same-named individual. Independent of `discriminatingFacts` (a city-only
@@ -807,6 +814,7 @@ export async function buildSubjectDoc(
 
   return {
     doc: { persons: [enriched] },
+    birthYear: subjectBirthYear(enriched),
     discriminatingFacts: discriminatingFactCount(enriched),
     enrichedFacts: (enriched.facts ?? []).length - before,
     enrichedNames: (enriched.names ?? []).length - namesBefore,
@@ -855,7 +863,26 @@ function buildRelativeTermNote(matches: RankedMatch[]): string | undefined {
   );
 }
 
-function toStub(s: ScoredCandidate, matchRank: number): RankedMatch {
+/** The year of the person's birth, falling back to baptism or christening, which
+ *  are within a year or two of it. First fact of the first type that carries a
+ *  year; undefined when none does. */
+function subjectBirthYear(person: { facts?: any[] }): number | undefined {
+  const facts = (person.facts ?? []).filter((f) => f && typeof f === "object");
+  for (const type of ["Birth", "Baptism", "Christening"]) {
+    for (const f of facts) {
+      if (f.type !== type) continue;
+      const y = yearFromText(f.date) ?? yearFromText(f.standard_date);
+      if (y) return Number(y);
+    }
+  }
+  return undefined;
+}
+
+function toStub(
+  s: ScoredCandidate,
+  matchRank: number,
+  subjectYear?: number,
+): RankedMatch {
   const r = s.result;
   const stub: RankedMatch = {
     matchRank,
@@ -893,6 +920,29 @@ function toStub(s: ScoredCandidate, matchRank: number): RankedMatch {
   const evented = (r.events ?? []).filter((e) => e && (e.date || e.place)).length;
   stub.candidateFactCount =
     evented + (r.birthDate || r.birthPlace ? 1 : 0) + (r.deathDate || r.deathPlace ? 1 : 0);
+  // Deterministic conflict flag: the score cannot say a record's birth year
+  // disagrees with the subject's, and a model reading both numbers has been
+  // measured explaining a five-year gap away. Flag it in code instead.
+  // A christening-only record (most of an IGI batch) carries no birthDate, only
+  // a Christening or Baptism event, so fall back to that: it is within a year
+  // or two of birth, the same fallback the subject side uses.
+  const candidateYear =
+    yearFromText(r.birthDate) ??
+    yearFromText(
+      (r.events ?? []).find(
+        (e) =>
+          e &&
+          e.date &&
+          ["christening", "baptism"].includes(String(e.type).toLowerCase()),
+      )?.date,
+    );
+  if (subjectYear !== undefined && candidateYear) {
+    const gap = Number(candidateYear) - subjectYear;
+    if (Math.abs(gap) > BIRTH_YEAR_CONFLICT_YEARS) {
+      stub.birthYearConflict = true;
+      stub.birthYearGap = gap;
+    }
+  }
   return stub;
 }
 

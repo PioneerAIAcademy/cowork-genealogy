@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Josefa Manuela Abarca Fallas and Juan García Calderón had a son, José Vidal García Abarca, born 22 October 1899 at San Juan de Dios, Desamparados, San José, Costa Rica; the civil birth registration names the parents as Juan García and Manuela Abarca.",
+      "details": {
+        "subject_person": "Josefa Manuela Abarca Fallas (G7XQ-GMG)",
+        "relation": "child",
+        "target_person": {
+          "name": "José Vidal García Abarca",
+          "birth": "22 October 1899, San Juan de Dios, Desamparados, San José, Costa Rica"
+        },
+        "father": "Juan García Calderón"
+      },
+      "supporting_sources": [
+        "Costa Rica, Civil Registration, 1823-2023 — birth registration of Jose Vidal Garcia Abarca, born 22 Oct 1899, San Juan de Dios, parents Juan Garcia and Manuela Abarca"
+      ],
+      "required": true
+    }
+  ]
+}

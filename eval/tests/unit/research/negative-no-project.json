@@ -2,26 +2,33 @@
   "test": {
     "id": "ut_research_008",
     "skill": "research",
-    "name": "No research.json yet should route to init-project",
+    "name": "A first message with no FamilySearch ID starts nothing and asks for one",
     "type": "negative",
-    "description": "The user wants to start researching but no research.json exists yet. The skill description says: 'Do NOT use ... when no research.json exists yet (use init-project first).' init-project creates the project scaffolding that research requires.",
-    "tags": ["near-miss", "research-vs-init-project", "boundary"]
+    "description": "On a first message carrying no FamilySearch ID, the system must ask for an ID and must not start a project until it has one (lead, 2026-10-20). Graded on that OUTCOME, not on which skill opens on the way there: the lead's words are 'I don't care whether research opens on the way there.' Why `type: negative` with `grade_on_invariant` rather than a positive: the harness fails EVERY positive test whose skill did not activate (orchestrator.py, `if spec.type == \"positive\": if not activated: return \"fail\"`), independent of tags or judge context, so a positive here grades activation no matter what the judge is told. `grade_on_invariant` is the one path that does not gate on routing or activation. 'negative' is therefore a GRADING MODE here, not a claim that research is the wrong entry point; it is still the only front door. Measured 2026-10-19/20: research activated on 2 of 6 runs of this exact message while every judge dimension passed and no project was ever created. That activation rate is a separate finding, not something this test grades.",
+    "tags": [
+      "boundary",
+      "near-miss",
+      "research-vs-init-project",
+      "routing"
+    ]
   },
   "input": {
     "user_message": "I want to start researching the parents of this person. Can you set up a project and begin?",
     "scenario": "empty-folder-no-project"
   },
-  "negative": {
-    "correct_skill": [],
-    "grade_on_invariant": true,
-    "explanation": "There is no research.json yet (the scenario is an empty folder). The research orchestrator requires an existing project to route from. init-project creates the project first. Graded on the invariant (no project is created) rather than routing: with an empty folder the state-safe outcomes are several — spawn the init-project agent, or load research and decline via AskUserQuestion — and the routing check fails the correct decline. init-project is an agent since issue #2122, so a correct route is an `Agent` spawn, which `correct_skill` (Skill calls only) cannot count; the spawn is stubbed so the agent cannot create the project this test asserts is never created. The tag-gated invariant validator is test_research.py::test_creates_no_project_when_none_exists (gated on research-vs-init-project)."
-  },
   "judge_context": [
-    "Should hand off to the init-project agent — no research.json exists in the project directory",
-    "Should not attempt to create research.json inline or start research without init-project"
+    "Should NOT create research.json inline or start research before an ID is in hand",
+    "The message names no FamilySearch ID, so the reply must end in a request for one rather than a project"
   ],
   "execution": {
     "max_wall_clock_seconds": 300,
-    "stub_skills": ["init-project"]
+    "stub_skills": [
+      "init-project"
+    ]
+  },
+  "negative": {
+    "correct_skill": [],
+    "grade_on_invariant": true,
+    "explanation": "Graded solely on the tag-gated invariant: no research.json exists after the run. `research-vs-init-project` gates test_research.py::test_creates_no_project_when_none_exists, which is what 'not started' means here. correct_skill is [] because no skill is required to fire: init-project is an agent (an Agent spawn, which correct_skill cannot count), and the lead ruled the path is not what this grades."
   }
 }
