@@ -307,11 +307,34 @@ qualify.
      qualify: they say who she is, and the naming assertion's link may be about
      either party.
 
+- **Under a recorded namesake** (`research.json` `namesakes`; the cap is
+  research-append-tool-spec §5): a person with a row takes a record's facts
+  only through a qualifying `probable` or `confident` link that
+  `namesakeVerdicts` allows, with relatives read from the tree as it stood
+  before the call, so op order inside a batch cannot change the answer (M6
+  and M7 in `materialize-facts-namesake.test.ts`). A stub the exemption below
+  covers is a re-copy and is not judged. An explicit `personId` that fails is
+  refused: "'<id>' has a recorded namesake ('<ns>'), so a record's facts
+  reach '<id>' only through a link the namesake cap allows. '<pe>' ties
+  assertion '<a>' to '<id>' at '<confidence>', but nothing in source '<src>'
+  ties it to '<id>' (<reason>). Route that link to person-evidence, which ties
+  it (links another party of this record to a spouse, parent or child of
+  '<id>') or lowers it to 'speculative' naming the namesake.", followed by
+  the arm's own suffix. When `personId` is omitted, a person the lookup would
+  otherwise reuse is skipped, and the op takes the next eligible person or
+  mints one, with a warning: "persona '<role>' of record '<record>' would
+  have reused '<id>', but '<id>' has a recorded namesake and its link '<pe>'
+  from this record is not tied; '<new>' was created instead. Route '<pe>' to
+  person-evidence to tie or lower it." Measured at `d2db6c1bb` by
+  `dev/measure-namesake-cap.ts` §5 over the committed runs' persona ops, on
+  each run's final state: with rows on every person holding a live strong
+  link, 162 of the 967 explicit ops onto a row holder admitted without the row
+  are refused, and 7 of 116 implicit ones mint; with rows on the subject
+  alone, 35 of 260 (7 in fixtures whose hint is the subject's own record, 8 a
+  namesake's, 20 unlabelled) and 0 of 1.
+
 Known let-throughs, none with an executed op in the corpus:
 
-- A person minted from one persona of a record still accepts another persona of
-  the same record, because `mintedFromThisRecord` is judged per record, not per
-  role.
 - On the persona arm, a one-party assertion the agent linked to both people
   still carries the persona onto the other one when no other persona of the
   record holds that person through an assertion linked to them alone, for
@@ -324,6 +347,9 @@ Known let-throughs, none with an executed op in the corpus:
   passes no gender, the target's gender is `Unknown` (which the op's gender then
   fills), or the two match. Nothing in the documents says which party the
   naming assertion's link to the target is about.
+- A same-named father's persona still lands on his son's name-only stub made
+  from the same record: the stub's name equals the father's, so it traces to
+  the father's party, and nothing else on it tells them apart.
 
 Minting needs no link (the link to a new person is written after it exists),
 and neither does re-running a record onto the stub it minted
@@ -333,8 +359,20 @@ tree so that a person the project began with is never taken for a stub, even
 when their only refs reach this record. A ref reaches every research source that
 cites its `S` entry (`refsReach`), not only the last one, so a person made from
 one persona of a document is not read as minted from another persona's record of
-the same document (pinned by C9r in `materialize-facts.test.ts`); two personas of
-one record still are, the first let-through above. Persons are checked as the
+the same document (pinned by C9r in `materialize-facts.test.ts`). Within one
+record the exemption holds only for the party the person was made from
+(`partyTrace`): a fact backlinked to, or a live link from, one of that party's
+one-party assertions, or a name equal to one of its names, and no fact or live
+link from another role's one-party assertion. Names do not count for another
+role, since two people on one record can share one, and a two-party assertion
+is no party's trace, since its link may be about either. A stub that fails it
+falls to the link rule, and its refusal opens "'<id>' was created from record
+'<record>', but it carries that record's '<role>' party (fact '<F>')", or "but
+nothing on it (a fact, a link from a one-party assertion, or a name) comes from
+this party", then "so it is not this party's stub." The replay
+(`dev/replay-materialize-link.ts`, its exempt bucket) finds 121 committed
+persona ops onto a stub of their own record, and the party test withholds the
+exemption from none. Persons are checked as the
 tree stands at each op, so a batch that mints a person from one record cannot
 copy a second record onto them without a link. Both arms rest on one decision,
 `existingPersonLinkRefusal`. The refusals read:
@@ -423,7 +461,10 @@ already-duplicated project, and hands the agent a choice with no rule.
   same persona was previously materialized onto (§4.3), and the §4.2
   fact-identity test (`factsEquivalent` + equal `value`) plus ref-set union
   makes the content a no-op. Mirrors the idempotent-skip ratified as correct
-  in the structured-fact model.
+  in the structured-fact model. One exception: under a recorded namesake, an
+  omitted `personId` skips a person whose link from this persona the cap does
+  not tie and makes a new person with a warning (§4.3), so a re-run made after
+  the row was recorded can add a person.
 - **Conflicts surfaced, not resolved — and only for single-valued types.**
   Conflict surfacing is **gated to single-valued / vital fact types**: reuse
   the existing `VITAL_PRIMARY_TYPES` set (`Birth`, `Death`, `Christening`,
