@@ -831,7 +831,9 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
     research/SKILL.md's Second-opinion section requires both on the gps-mentor
     delegation. Both sit verbatim in the recorded spawn args, so they are read
     from the hook records rather than left to the judge, which cannot see them
-    and has scored a spawn 3/3 on prose alone.
+    and has scored a spawn 3/3 on prose alone. Matched case-insensitively: the
+    agent reads "Focus: on-demand. Target_id: project." as both named, and a
+    case-sensitive match failed exactly that spawn.
     """
     if _DELEGATION_FOCUS_TAG not in (test.get("tags") or []):
         pytest.skip("not a delegation-focus test")
@@ -849,7 +851,7 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
     missing = [
         field
         for field in ("focus:", "target_id:")
-        if not any(field in p for p in prompts)
+        if not any(field in p.lower() for p in prompts)
     ]
     assert not missing, (
         f"The '{expected}' delegation omits {missing}. research/SKILL.md "
