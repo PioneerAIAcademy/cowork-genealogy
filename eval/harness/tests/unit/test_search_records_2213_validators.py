@@ -21,7 +21,6 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_search_records import (  # noqa: E402
-    test_thin_subject_hit_not_extracted as thin_subject,
     test_unproven_surname_used_as_search_input as unproven_surname,
 )
 
@@ -47,52 +46,6 @@ def spec(filename):
 
 def rs(args, response=None):
     return {"tool": "mcp__genealogy__record_search", "args": args, "response": response or {}}
-
-
-def call(tool, args=None, response=None):
-    return {"tool": f"mcp__genealogy__{tool}", "args": args or {}, "response": response or {}}
-
-
-UNTAGGED = {"id": "ut_x", "tags": ["search"]}
-
-
-# --- subject-too-thin (ut_search_records_d29) ----------------------------
-
-D29 = spec("thin-subject-namesake-gate.json")
-
-
-def test_thin_subject_passes_with_search_only():
-    thin_subject([rs({"surname": "Brown", "subjectId": "I1"})], [], D29)
-
-
-def test_thin_subject_fails_on_extraction_append():
-    calls = [rs({"surname": "Brown"}), call("extraction_append", {"recordIds": ["M9TB-7QX"]})]
-    with pytest.raises(AssertionError, match="extraction_append"):
-        thin_subject(calls, [], D29)
-
-
-@pytest.mark.parametrize("prefix", ["mcp__remote-devices__Genealogy_Research__", "mcp__Genealogy_Research__"])
-def test_thin_subject_fails_on_extraction_under_any_spelling(prefix):
-    calls = [{"tool": f"{prefix}extraction_append", "args": {"recordIds": ["M9TB-7QX"]}}]
-    with pytest.raises(AssertionError):
-        thin_subject(calls, [], D29)
-
-
-@pytest.mark.parametrize("agent", ["record-structurer", "genealogy-research:record-structurer"])
-def test_thin_subject_fails_on_structurer_spawn(agent):
-    spawn = [{"tool": "Agent", "args": {"subagent_type": agent, "prompt": "..."}}]
-    with pytest.raises(AssertionError, match="record-structurer"):
-        thin_subject([rs({"surname": "Brown"})], spawn, D29)
-
-
-def test_thin_subject_ignores_other_spawns():
-    spawn = [{"tool": "Agent", "args": {"subagent_type": "research-plan"}}]
-    thin_subject([rs({"surname": "Brown"})], spawn, D29)
-
-
-def test_thin_subject_skips_untagged():
-    with pytest.raises(pytest.skip.Exception):
-        thin_subject([call("extraction_append")], [], UNTAGGED)
 
 
 # --- unproven-surname-search (ut_search_records_d33) ---------------------

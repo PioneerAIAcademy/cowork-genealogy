@@ -445,10 +445,6 @@ highest. A row the ranker could not score keeps its search position, has no
 **The ranked list is a review surface, not an auto-accept.** Match score orders the
 candidates; you still confirm the top ones:
 
-- **`ranked.subjectTooThin: true` → every hit is `needs-review`.** No cross-check on
-  name, year or place clears it, and a user's advance go-ahead to extract does not
-  apply: do not extract, and name the anchor that would settle identity (a precise
-  date, a named spouse, parent or child).
 - **A hit under a surname only the researcher names is `needs-review`.** Report it as
   consistent with that marriage, never as a confident match, until an independent
   record ties her to it.

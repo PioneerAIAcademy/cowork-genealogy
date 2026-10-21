@@ -839,7 +839,7 @@ def test_census_wiki_fixture_actually_used(tool_calls, test):
     )
 
 
-# --- Issue #2213 PR 3: thin subjects, unproven surnames ----------------
+# --- Issue #2213 PR 3: unproven surnames --------------------------------
 
 def _calls_named(tool_calls, *names) -> list[dict]:
     wanted = set(names)
@@ -847,38 +847,6 @@ def _calls_named(tool_calls, *names) -> list[dict]:
         c for c in (tool_calls or [])
         if _bare_tool_name(c.get("tool") or "") in wanted
     ]
-
-
-def test_thin_subject_hit_not_extracted(tool_calls, builtin_tool_calls, test):
-    """Tag-gated (subject-too-thin): issue #2213 PR 3 item 4. When the subject
-    is too thin to separate from a namesake (`ranked.subjectTooThin`), every
-    hit is needs-review and none is handed to extraction on score.
-
-    Fails on any `extraction_append` call, from any thread, and on any spawn of
-    the record-structurer agent. Not conditioned on the flag having reached the
-    agent: the tagged scenario's tree is thin by construction, so a run that
-    dropped `subjectId` and never saw the flag has not earned an extraction
-    either.
-    """
-    from harness.skill_runner import SPAWN_TOOL_NAMES
-
-    if "subject-too-thin" not in test.get("tags", []):
-        pytest.skip("not a subject-too-thin scenario")
-    extracted = _calls_named(tool_calls, "extraction_append")
-    assert not extracted, (
-        "the subject is too thin to tell from a namesake, so no hit may be "
-        "extracted; extraction_append was called with "
-        f"{[_as_mapping(c.get('args')).get('recordIds') for c in extracted]}"
-    )
-    structurer = [
-        c for c in (builtin_tool_calls or [])
-        if c.get("tool") in SPAWN_TOOL_NAMES
-        and "record-structurer" in str((c.get("args") or {}).get("subagent_type") or "")
-    ]
-    assert not structurer, (
-        "the subject is too thin to tell from a namesake, so no hit may be "
-        "handed to record-structurer either"
-    )
 
 
 def _norm_name(value) -> str:
