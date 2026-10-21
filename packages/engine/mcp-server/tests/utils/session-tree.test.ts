@@ -4,7 +4,7 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
 }));
 
-import { SESSION_TREE_URL, withSessionTree } from "../../src/utils/session-tree.js";
+import { SESSION_TREE_URL, restoreSwitchedSessionTrees, withSessionTree } from "../../src/utils/session-tree.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { LOCAL, bearerPrincipal } from "../../src/auth/principal.js";
 
@@ -100,5 +100,29 @@ describe("withSessionTree", () => {
     const second = withSessionTree(LOCAL, "TREE-AAA", async () => "second");
     await expect(first).rejects.toThrow("first");
     await expect(second).resolves.toBe("second");
+  });
+});
+
+describe("restoreSwitchedSessionTrees", () => {
+  it("restores a switch still in flight", async () => {
+    const s = fakeSession("PRIVATE");
+    let release!: () => void;
+    let entered!: () => void;
+    const inside = new Promise<void>((r) => { entered = r; });
+    const call = withSessionTree(LOCAL, "TREE-AAA", () => new Promise<void>((r) => { release = r; entered(); }));
+    await inside;
+    expect(s.tree).toBe("TREE-AAA");
+    await restoreSwitchedSessionTrees();
+    expect(s.tree).toBe("PRIVATE");
+    release();
+    await call;
+  });
+
+  it("does nothing once the call has restored", async () => {
+    const s = fakeSession("PRIVATE");
+    await withSessionTree(LOCAL, "TREE-AAA", async () => null);
+    s.log.length = 0;
+    await restoreSwitchedSessionTrees();
+    expect(s.log).toEqual([]);
   });
 });

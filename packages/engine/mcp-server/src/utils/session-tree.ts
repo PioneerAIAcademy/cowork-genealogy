@@ -28,6 +28,13 @@ const locks = new Map<string, Promise<unknown>>();
 
 const lockKey = (principal: Principal) => (principal.kind === "bearer" ? `bearer:${principal.accessToken}` : "local");
 
+const switched = new Map<string, () => Promise<void>>();
+
+/** Undo any switch still in flight; for a SIGINT handler about to exit. */
+export async function restoreSwitchedSessionTrees(): Promise<void> {
+  await Promise.allSettled([...switched.values()].map((restore) => restore()));
+}
+
 export async function getSessionTree(principal: Principal): Promise<string> {
   const res = await fsFetch(principal, SESSION_TREE_URL, { headers: HEADERS });
   if (!res.ok) throw new Error(`Could not read the FamilySearch session's current tree: ${res.status} ${res.statusText}.`);
@@ -51,10 +58,12 @@ export async function withSessionTree<T>(principal: Principal, treeId: string, f
     const original = await getSessionTree(principal);
     if (original === treeId) return fn();
     await setSessionTree(principal, treeId);
+    switched.set(key, () => setSessionTree(principal, original));
     let result: T;
     try {
       result = await fn();
     } catch (e) {
+      switched.delete(key);
       try {
         await setSessionTree(principal, original);
       } catch (restore) {
@@ -63,6 +72,7 @@ export async function withSessionTree<T>(principal: Principal, treeId: string, f
       }
       throw e;
     }
+    switched.delete(key);
     await setSessionTree(principal, original);
     return result;
   });

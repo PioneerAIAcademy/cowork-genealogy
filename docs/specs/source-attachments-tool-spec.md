@@ -280,7 +280,10 @@ The current tree is read with `GET` and set with `POST {"treeId": …}` (204) on
 So the tool function takes an optional third argument, `{ treeId }`. With it,
 `withSessionTree` (`src/utils/session-tree.ts`) reads the current tree, switches
 to `treeId`, makes the call, and restores the original whether the call succeeds
-or throws. A failed restore is an error, never silent. Callers on one principal
+or throws. A failed restore is an error, never silent. A switch still in flight
+is recorded, and `source-screen`'s SIGINT handlers call
+`restoreSwitchedSessionTrees()` before exiting, so Ctrl-C does not leave the
+session on the researcher tree. Callers on one principal
 run one at a time, because the selection is per session, not per request: while
 it is switched, every other caller on the session (the user's open browser tabs
 included) sees the researcher tree. The lock is in-process only, so two

@@ -32,6 +32,7 @@ import { localPrincipal, type Principal } from "../src/auth/principal.js";
 import { personReadTool } from "../src/tools/person-read.js";
 import { recordReadTool } from "../src/tools/record-read.js";
 import { sourceAttachmentsTool } from "../src/tools/source-attachments.js";
+import { restoreSwitchedSessionTrees } from "../src/utils/session-tree.js";
 import { personQualityTool } from "../src/tools/person-quality.js";
 import { personWarningsTool } from "../src/tools/person-warnings.js";
 import { samePerson } from "../src/tools/same-person.js";
@@ -654,7 +655,7 @@ export async function runSnapshot(opts: SnapshotOpts): Promise<Ledger> {
     ctx.ledger.stopped = "interrupted";
     ctx.ledger.finished = new Date().toISOString();
     writeJson(ledgerPath, ctx.ledger);
-    process.exit(130);
+    void restoreSwitchedSessionTrees().finally(() => process.exit(130));
   };
   if (opts.handleInterrupt) process.once("SIGINT", onInterrupt);
   for (const pid of run.draw) {
@@ -1305,7 +1306,10 @@ export async function main(argv: string[], tools?: Tools): Promise<number> {
     return ledger.stopped ? 2 : 0;
   }
   if (cmd === "attachments") {
+    const onInterrupt = () => void restoreSwitchedSessionTrees().finally(() => process.exit(130));
+    process.once("SIGINT", onInterrupt);
     const ledger = await runRefreshAttachments(one("--snapshot"), tools ?? liveTools(undefined, one("--tree")), one("--tree"));
+    process.off("SIGINT", onInterrupt);
     console.log(JSON.stringify(ledger, null, 2));
     return ledger.stopped ? 2 : 0;
   }
