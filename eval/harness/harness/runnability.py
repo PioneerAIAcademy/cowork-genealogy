@@ -13,6 +13,11 @@ Block a test from executing when:
   fallback in `check_runnable`
 - the skill's rubric.md is missing or malformed
 - an `execution.stub_skills` entry names a skill that doesn't exist
+- an `execution.run_agents` entry (#3568) names no agent file, names the
+  suite's own agent, is also stubbed, is a negative test's `correct_skill`, sits
+  on a direct-arm test, or leaves one of the agent's fixture-backed tools with
+  no fixture
+- a positive test in a routing suite lists no `execution.stub_skills`
 """
 
 from __future__ import annotations
@@ -22,7 +27,11 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from harness.allowed_tools import load_skill_frontmatter
+from harness.allowed_tools import (
+    format_uncovered_agent_fixtures,
+    load_skill_frontmatter,
+    uncovered_agent_fixtures,
+)
 from harness.fixtures import InvalidFixtureError, build_manifest, load_fixtures
 from harness.loader import TestSpec
 from harness.rubric import InvalidRubricError, parse_rubric_or_empty
@@ -31,6 +40,7 @@ from harness.schema_validator import (
     validate_tree_gedcomx_json,
 )
 from harness.skill_stubs import parse_stub_skills
+from harness.snapshot import agent_refs_in_text
 from harness.workspace import DEFAULT_PLUGIN_AGENTS, skill_dir_for
 
 
@@ -156,10 +166,11 @@ def check_runnable(
     # JSON-decode errors; build_manifest enforces required non-empty `args`.
     # Reusing them here means the gate and the mock server share the same
     # validation surface — no drift between gate-time and run-time errors.
+    registered_tools: set[str] = set()
     if spec.mcp_fixtures:
         try:
             fixtures = load_fixtures(spec.mcp_fixtures, Path(fixtures_dir))
-            build_manifest(fixtures)
+            registered_tools = set(build_manifest(fixtures))
         except InvalidFixtureError as e:
             return RunnabilityResult(False, str(e))
 
@@ -207,14 +218,17 @@ def check_runnable(
     # converted from a skill to an agent, whose spawn the hook stubs instead
     # (`stub_agents`, issue #2825).
     stubbed = parse_stub_skills(spec.execution)
-    agents_dir = Path(skills_dir).parent / "agents"
+    # The plugin agents beside `skills_dir`. Named apart from the `agents_dir`
+    # parameter (which only the direct-arm fallback above reads) so a check
+    # added below cannot silently read the wrong one.
+    plugin_agents_dir = Path(skills_dir).parent / "agents"
     for name in stubbed:
-        if not (Path(skills_dir) / name).is_dir() and not (agents_dir / f"{name}.md").is_file():
+        if not (Path(skills_dir) / name).is_dir() and not (plugin_agents_dir / f"{name}.md").is_file():
             return RunnabilityResult(
                 False,
                 f"execution.stub_skills entry '{name}' is not an existing "
                 f"skill or agent (no directory at {skills_dir}/{name}, no "
-                f"{agents_dir}/{name}.md) — the stub would silently never fire",
+                f"{plugin_agents_dir}/{name}.md) — the stub would silently never fire",
             )
 
     # A callee in BOTH run_skills and stub_skills is the one combination that
@@ -249,6 +263,55 @@ def check_runnable(
             f"session holds tools nothing backs. Keep the one you meant — "
             f"run_skills to execute the callee, stub_skills to deny it.",
         )
+
+    # `execution.run_agents` (#3568): the agents this test lets run live. Every
+    # other main-thread spawn is denied by default, so a bad entry does not fail
+    # loudly — the agent is simply denied and the invariant it was meant to give
+    # teeth to passes vacuously. Each way an entry can do nothing is refused.
+    run_agents = [n for n in (spec.execution.get("run_agents") or []) if isinstance(n, str)]
+    if run_agents:
+        if spec.is_direct:
+            return RunnabilityResult(
+                False,
+                "execution.run_agents is for routed tests: a direct-arm test's "
+                "dispatcher spawns only the suite's own agent, so the opt-in "
+                "could never fire",
+            )
+        for name in run_agents:
+            if not (plugin_agents_dir / f"{name}.md").is_file():
+                return RunnabilityResult(
+                    False,
+                    f"execution.run_agents entry '{name}' is not an agent (no "
+                    f"{plugin_agents_dir}/{name}.md) — the opt-in would never fire",
+                )
+            if name == spec.skill:
+                return RunnabilityResult(
+                    False,
+                    f"execution.run_agents names the suite's own agent '{name}', "
+                    f"which always runs; the entry opts nothing in",
+                )
+        both_agents = sorted(set(run_agents) & set(stubbed))
+        if both_agents:
+            return RunnabilityResult(
+                False,
+                f"execution declares {', '.join(repr(n) for n in both_agents)} in "
+                f"BOTH run_agents and stub_skills. Keep the one you meant — "
+                f"run_agents to run the agent live, stub_skills to deny it.",
+            )
+        if spec.type == "negative" and spec.negative:
+            moot = sorted(set(run_agents) & set(spec.negative.get("correct_skill") or []))
+            if moot:
+                return RunnabilityResult(
+                    False,
+                    f"execution.run_agents names {', '.join(repr(n) for n in moot)}, "
+                    f"this negative test's correct_skill: the routing short-circuit "
+                    f"stops that spawn before it runs, so the opt-in never fires",
+                )
+        missing = uncovered_agent_fixtures(
+            run_agents, registered_tools=registered_tools, agents_dir=plugin_agents_dir
+        )
+        if missing:
+            return RunnabilityResult(False, format_uncovered_agent_fixtures(spec.id, missing))
 
     # `stop_at_stub` ends the run at the first stubbed hand-off (#3119). With
     # nothing stubbed it can never fire, and on a negative test the routing
@@ -294,8 +357,8 @@ def check_runnable(
             "test is tagged grade:trigger (graded on activation alone, judge "
             "dimensions diagnostic) but execution.stub_skills is empty. The "
             "mode is only sound when the delegated sub-skills are stubbed — "
-            "otherwise the callees execute for real and the tag silences the "
-            "judge's gate over a real execution, so the pass is vacuous. Add "
+            "otherwise a Skill() callee executes for real and the tag silences "
+            "the judge's gate over a real execution, so the pass is vacuous. Add "
             "the delegated sub-skills to execution.stub_skills, or drop the "
             "grade:trigger tag.",
         )
@@ -322,13 +385,13 @@ def check_runnable(
         # (#3131) -- so the acceptance below is consistent with grading.
         for i, name in enumerate(spec.negative.get("correct_skill", []) or []):
             if not (Path(skills_dir) / name).is_dir() and not (
-                Path(agents_dir) / f"{name}.md"
+                plugin_agents_dir / f"{name}.md"
             ).is_file():
                 return RunnabilityResult(
                     False,
                     f"negative.correct_skill[{i}]='{name}' is neither an "
                     f"existing skill (no directory at {skills_dir}/{name}) "
-                    f"nor an existing agent (no file at {agents_dir}/{name}.md)",
+                    f"nor an existing agent (no file at {plugin_agents_dir}/{name}.md)",
                 )
 
         # `grade_on_invariant` hands the whole verdict to the test's
@@ -375,6 +438,28 @@ def check_runnable(
         )
     except InvalidRubricError as e:
         return RunnabilityResult(False, f"rubric.md is malformed: {e}")
+
+    # A positive test in a ROUTING suite must list its stubs (#3568). Every agent
+    # it spawns is denied by default, but the ownership validators skip only on a
+    # LISTED stub (test_universal.py), so with an empty list they would grade the
+    # router's denied hand-offs as its own missing writes (#2156). Same rule
+    # `snapshot.router_suites` uses for "routing suite": a unit-test directory and
+    # a SKILL.md body naming at least one @plugin: agent.
+    if spec.type == "positive" and not spec.is_direct and not stubbed:
+        skill_md = skill_dir_for(spec.skill, Path(skills_dir)) / "SKILL.md"
+        if (
+            (Path(tests_dir) / spec.skill).is_dir()
+            and skill_md.is_file()
+            and agent_refs_in_text(skill_md.read_text(encoding="utf-8"))
+        ):
+            return RunnabilityResult(
+                False,
+                f"a positive test in the routing suite '{spec.skill}' must list "
+                f"execution.stub_skills: every agent it spawns is denied by "
+                f"default, and the ownership validators skip only on a listed "
+                f"stub, so they would grade the router's denied hand-offs as its "
+                f"own writes. List the hand-offs this test expects.",
+            )
 
     return RunnabilityResult(True, None)
 

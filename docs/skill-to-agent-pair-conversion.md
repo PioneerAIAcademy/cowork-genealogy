@@ -94,11 +94,12 @@ change, and the paid `research` run is not split across two changes.
 If another open PR already carries a fresh `eval/runlogs/unit/research/` log,
 wait for it and rebase — the branch that has already paid lands first.
 
-The same ordering binds in the other direction once a cell names an agent:
-`check_runlogs.py` gates every skill whose `SKILL.md` references
-`@plugin:<name>` on any touched agent body, so a routing PR that adds the
-reference retroactively bills a paid `research` run to every open PR editing
-that agent. Check for one before landing.
+Adding the cell does not re-bill PRs that edit the agent. `research`'s snapshot
+already fingerprints every staged agent's `name`, `description`, `tools` and
+`disallowedTools`, whether or not a cell names it. So a frontmatter edit to any
+agent gates `research`, and a body-only edit gates it only for an agent a
+`research` test runs through `execution.run_agents` (`docs/specs/unit-test-spec.md`,
+"`run_agents`").
 
 ### Everything load-bearing goes in the agent
 

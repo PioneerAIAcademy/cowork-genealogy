@@ -247,6 +247,16 @@ Every run log embeds a `snapshot: {repo-relative-path: sha256-of-normalized-cont
 - `eval/tests/unit/<skill>/**` (rubric + test JSONs)
 - referenced `eval/fixtures/scenarios/<name>/**`
 - referenced `eval/fixtures/mcp/<name>.json`
+- plugin agents, in one of two forms (`agent_embed_forms` in `snapshot.py`): the
+  suite's own agent and every agent a test names in `execution.run_agents` as the
+  full file; in a **routing suite** (one with a unit-test dir whose SKILL.md names
+  an `@plugin:` agent — today only `research`) every other staged agent as
+  `packages/engine/plugin/agents/<name>.md#frontmatter`, a digest of its `name`,
+  `description`, `tools` and `disallowedTools` only. Every other agent spawn is
+  denied in a unit run, so its body cannot change the result; its frontmatter is
+  what the router reads when it picks a hand-off. A body-only edit to an agent no
+  test runs therefore leaves `research`'s log active. Adding a new agent stales
+  nothing until the suite's next run — an accepted gap
 
 By design this is conservative on the **skill side**: editing **any** file under the skill dir — including a `references/` doc or even a comment — flips prior run logs inactive and forces a re-run. That is intentional: a reference-doc change can change behavior, and a cheap re-run is the price of a trustworthy active-state check; docs and comments are **not** excluded from the snapshot.
 
@@ -289,7 +299,7 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 | 9 | block | Every committed run log's aggregate `tests[].outcome` is in the schema enum (pass/partial/fail/aborted). Corpus-wide, because the straggler class arrives by **merge**, not as a PR-added file: rule 6 grades only PR-added logs and reads the per-run `runs[].outcome`, so a retired `xfail`/`xpass` aggregate landed on main concurrently with the enum narrowing was checked by nothing (#2842). Flags a *present* value outside the enum; a missing/absent field is a `required`-schema violation the harness write path already rejects. |
 | 10 | block | A skill this PR touches carries no `expected_outcome: xfail` marker in `eval/tests/unit/<skill>/`. This is how the committed markers retire: whoever next edits the skill removes them and makes the tests pass, in the run the edit already owes under rule 2 (lead, 2026-10-06), or deletes a test whose fix belongs to another open issue and adds its restore to that issue's done-when. It also blocks adding a marker. Warn-only under that skill's `eval-cosmetic-skip:<skill>` label, which says the edit needs no re-run. |
 
-**Which changes mark a skill "touched"** (rules 2, 3 and 10) differs by path class. A **modification** to a skill body, a unit test, or a referenced plugin agent gates that skill — the snapshot is invalidated whether the file was added or edited. A run log is different: it is not an input to its own snapshot, so only an **added** (or renamed-into-place) run log gates its skill. Modifying or deleting committed run logs — what `scripts/prune_runlogs.py` does when it rehashes or prunes — marks nothing touched.
+**Which changes mark a skill "touched"** (rules 2, 3 and 10) differs by path class. A **modification** to a skill body, a unit test, or a referenced plugin agent gates that skill — the snapshot is invalidated whether the file was added or edited. A plugin agent's edit follows the key the suite's graded run log holds for it: a full-body key gates on any edit; a `#frontmatter` key gates only when the frontmatter changed between the merge-base and HEAD (fail closed when git cannot answer); no key, no gate. A run log is different: it is not an input to its own snapshot, so only an **added** (or renamed-into-place) run log gates its skill. Modifying or deleting committed run logs — what `scripts/prune_runlogs.py` does when it rehashes or prunes — marks nothing touched.
 
 **Fixture arm of rule 2 (warn-only).** A run log's snapshot embeds the
 `eval/fixtures/scenarios/<name>/**` and `eval/fixtures/mcp/<name>.json` files
@@ -313,7 +323,7 @@ staleness (warning the pre-existing baseline, blocking a fixture edit that
 newly breaks a previously-active skill) is the named target end-state; it needs
 a frozen-baseline anchor not yet designed, tracked as #1242.
 
-The `eval-cosmetic-skip:<skill>` labels are for genuinely behavior-neutral edits only (rewording, typos, comments, formatting), one label per skill so a neutral edit to one skill cannot carry a behavioral edit to another. A touched plugin agent gates the skills whose snapshots embed it, so the waiver names each gated **skill**, not the agent. **The bypass expires on every new push**, so it can't outlive the commit it was approved for — a later substantive push re-reds the check until the senior re-applies. Only rule 2 is relaxed.
+The `eval-cosmetic-skip:<skill>` labels are for genuinely behavior-neutral edits only (rewording, typos, comments, formatting), one label per skill so a neutral edit to one skill cannot carry a behavioral edit to another. A touched plugin agent gates the skills whose snapshots embed it (for a `#frontmatter` key, only on a frontmatter change), so the waiver names each gated **skill**, not the agent. **The bypass expires on every new push**, so it can't outlive the commit it was approved for — a later substantive push re-reds the check until the senior re-applies. Only rule 2 is relaxed.
 
 That expiry is decided **from the event, not from the label**: on a `synchronize` the workflow passes no labels (`COSMETIC_SKIP_LABELS` empty) without reading the labels API at all. Deciding it this way needs no write token, which is what makes it hold on a PR from a fork. The labels *are* still removed on a push — by `.github/workflows/cosmetic-skip-strip.yml`, a separate `pull_request_target` workflow — but only so the PR's UI matches; nothing enforcing rule 2 depends on it. Until 2026-07-31 the removal was the enforcement, done inside `check-runlogs.yml` and then re-read; on a fork PR that job holds a read-only token, so the removal 403'd, `|| true` swallowed it, and the bypass silently survived every later push. Don't reintroduce a label read on the `synchronize` path. Full workflow + the one-time `gh label create` loop: `eval/README.md` "Cosmetic-change exemption". Each label must exist in the repo (a new skill needs its own), and seniors need Triage/Write to apply them.
 

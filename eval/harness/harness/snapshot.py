@@ -2,9 +2,12 @@
 
 A snapshot is a `{repo-relative-path: normalized-content}` mapping that
 captures everything needed to reproduce a run on the skill side: the
-skill folder, the test definitions + rubric, and the referenced
-scenarios + MCP fixtures. The judge prompt is tracked separately via
-`judge_prompt_hash` (it's global and not part of skill-side state).
+skill folder, the test definitions + rubric, the referenced
+scenarios + MCP fixtures, and the plugin agents (`agent_embed_forms`: the
+full file for an agent the run executes, `<path>#frontmatter` holding only
+`frontmatter_fingerprint_text` for every other staged agent of a routing suite).
+The judge prompt is tracked separately via `judge_prompt_hash` (it's global
+and not part of skill-side state).
 
 The `normalize(path, content) → str` contract is shared with the
 TypeScript CRUD UI (eval/app/lib/snapshot.ts). Both sides must produce
@@ -34,12 +37,29 @@ from typing import Any, Iterable
 _MCP_SRC_PREFIX = "packages/engine/mcp-server/src/"
 
 # Plugin-agent delegation references in a SKILL.md body: `@plugin:<name>`.
-# A skill that delegates to a plugin agent depends on that agent's prompt
-# the same way it depends on its own references/ docs, so the agent file is
-# part of the skill's snapshot. Mirrored by AGENT_REF_RE / agentRefsInText
-# in eval/app/lib/snapshot.ts — the two must match (shared test vectors in
-# tests/unit/test_snapshot.py + eval/app/tests/unit/snapshot.test.ts).
+# A suite whose SKILL.md names at least one is a ROUTER suite (`router_suites`):
+# its main thread sees every staged agent's frontmatter when it picks one, so
+# its snapshot fingerprints every agent (`agent_embed_forms`). Mirrored by
+# AGENT_REF_RE / agentRefsInText in eval/app/lib/snapshot.ts — the two must
+# match (shared test vectors in tests/unit/test_snapshot.py +
+# eval/app/tests/unit/snapshot.test.ts).
 _AGENT_REF_RE = re.compile(r"@plugin:([a-z0-9-]+)")
+
+# The key suffix of an agent fingerprinted by its frontmatter only: an agent no
+# included test runs live (`execution.run_agents`) is denied at its spawn, so
+# only the frontmatter a router reads can change the run (#3568). The suffix
+# keeps a reduced digest from colliding with the full-body key of the same
+# file, which an older run log may hold. Mirrored by AGENT_FRONTMATTER_SUFFIX in
+# eval/app/lib/snapshot.ts.
+AGENT_FRONTMATTER_SUFFIX = "#frontmatter"
+
+# The frontmatter keys a router reads: what it can delegate to and when. Kept in
+# this fixed order, so reordering keys in a file changes nothing. Shared with
+# FRONTMATTER_KEYS in eval/app/lib/snapshot.ts.
+_FRONTMATTER_KEYS = ("name", "description", "tools", "disallowedTools")
+_FRONTMATTER_KEY_LINE_RE = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*):")
+
+_AGENTS_REL = "packages/engine/plugin/agents"
 
 # A snapshot value in `schema_version` >= 3 — sha256 hex. Shared shape with
 # `HASH_RE` in eval/app/lib/snapshot.ts.
@@ -116,6 +136,109 @@ def agent_refs_in_text(text: str) -> list[str]:
     return sorted(set(_AGENT_REF_RE.findall(text)))
 
 
+def frontmatter_fingerprint_text(normalized: str) -> str:
+    """The part of an agent file a router reads, as canonical text.
+
+    Input is already-normalized text (`normalize(rel, bytes)`). The frontmatter
+    is the lines after a first line exactly `---` up to the next line exactly
+    `---`. A key line matches `^[A-Za-z][A-Za-z0-9_-]*:` at column 0 and its
+    block runs to the next key line. Output is the raw blocks of `name`,
+    `description`, `tools` and `disallowedTools`, in that fixed order, each
+    key's occurrences in file order, joined with `\\n` plus a final `\\n`.
+    Comment lines inside a kept block stay in: over-fingerprinting is the safe
+    error. With no well-formed frontmatter (no first-line `---`, no closing
+    `---`, or a leading BOM) the whole text is returned, so nothing is dropped.
+
+    Splits on `\\n` only, never `splitlines()`, which also breaks on U+2028,
+    U+0085 and U+000C and would disagree with the TypeScript twin
+    (`frontmatterFingerprintText`). Shared vectors:
+    docs/specs/schemas/agent-frontmatter-vectors.json.
+    """
+    lines = normalized.split("\n")
+    if not lines or lines[0] != "---":
+        return normalized
+    try:
+        end = lines.index("---", 1)
+    except ValueError:
+        return normalized
+    blocks: dict[str, list[str]] = {key: [] for key in _FRONTMATTER_KEYS}
+    current: str | None = None
+    for line in lines[1:end]:
+        match = _FRONTMATTER_KEY_LINE_RE.match(line)
+        if match:
+            current = match.group(1)
+        if current in blocks:
+            blocks[current].append(line)
+    kept = [line for key in _FRONTMATTER_KEYS for line in blocks[key]]
+    return "\n".join(kept) + "\n"
+
+
+def router_suites(skills_dirs: Iterable[Path], tests_root: Path) -> set[str]:
+    """Suites whose main thread routes to agents.
+
+    A suite is a router when it has a unit-test directory under `tests_root`
+    and its body is a SKILL.md (the first `skills_dirs` entry holding one)
+    naming at least one `@plugin:` agent. Today that is `research` only:
+    `forget-and-rederive` names agents but has no suite, and the test-only
+    `extraction-append` names none. Every agent is staged for every suite
+    (harness/workspace.py), so a router reads every agent's frontmatter, not
+    only the ones its SKILL.md names.
+    """
+    out: set[str] = set()
+    if not tests_root.is_dir():
+        return out
+    for suite_dir in sorted(tests_root.iterdir()):
+        if not suite_dir.is_dir():
+            continue
+        for skills_dir in skills_dirs:
+            skill_md = skills_dir / suite_dir.name / "SKILL.md"
+            if skill_md.is_file():
+                if agent_refs_in_text(skill_md.read_text(encoding="utf-8")):
+                    out.add(suite_dir.name)
+                break
+    return out
+
+
+def agent_embed_forms(
+    skill: str,
+    repo_root: Path,
+    test_ids: Iterable[str] | None = None,
+) -> dict[str, str]:
+    """`{agent: "full" | "reduced"}` — how the suite's snapshot embeds each agent
+    (#3568). `build_snapshot` is its only caller:
+      - the suite's own agent, if `agents/<skill>.md` exists: "full";
+      - every agent an included test names in `execution.run_agents`: "full"
+        (it runs live, so its body is part of the run);
+      - in a router suite (`router_suites`), every other agent: "reduced"
+        (denied at its spawn, so only its frontmatter can reach the run).
+    An agent suite embeds no other agent: its dispatcher spawns only its own.
+
+    The gate and slot tools do not call this. They map an agent edit to suites
+    through `check_runlogs.skills_gated_by_agent`, a superset built from the same
+    arms, then narrow it by the key form the suite's graded log holds.
+    `test_every_embedded_agent_reaches_its_suite_through_the_superset` is what
+    keeps that superset from falling behind this function.
+    """
+    agents_dir = repo_root / _AGENTS_REL
+    tests_root = repo_root / "eval" / "tests" / "unit"
+    skills_dirs = (
+        repo_root / "packages" / "engine" / "plugin" / "skills",
+        repo_root / "eval" / "skills",
+    )
+
+    forms: dict[str, str] = {}
+    if (agents_dir / f"{skill}.md").is_file():
+        forms[skill] = "full"
+    run_agents = collect_refs(tests_root / skill, test_ids)["run_agents"]
+    for name in sorted(run_agents):
+        if (agents_dir / f"{name}.md").is_file():
+            forms[name] = "full"
+    if skill in router_suites(skills_dirs, tests_root) and agents_dir.is_dir():
+        for path in sorted(agents_dir.glob("*.md")):
+            forms.setdefault(path.stem, "reduced")
+    return forms
+
+
 def hash_content(text: str) -> str:
     """SHA-256 hex digest of normalized text. Inputs come from `normalize()`."""
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -144,13 +267,15 @@ def build_snapshot(
 
     Covers:
       - `packages/engine/plugin/skills/<skill>/**`
-      - `packages/engine/plugin/agents/<name>.md` for each `@plugin:<name>`
-        reference in the skill's SKILL.md (the agent prompt is part of the
-        skill's behavior, so editing it must flip the run log inactive)
-      - `packages/engine/plugin/agents/<skill>.md` when one exists, for an
-        agent-keyed suite whose `test.skill` names an agent rather than a
-        skill directory (issue #1253) — a no-op for every skill-agent pair,
-        whose SKILL.md already names its own agent via `@plugin:`
+      - agents, per `agent_embed_forms` (#3568):
+        - `packages/engine/plugin/agents/<name>.md` (full body) for the suite's
+          own agent — an agent-keyed suite whose `test.skill` names an agent
+          rather than a skill directory (issue #1253) — and for every agent an
+          included test runs live through `execution.run_agents`;
+        - `packages/engine/plugin/agents/<name>.md#frontmatter` (the digest of
+          `frontmatter_fingerprint_text`) for every other agent in a router
+          suite: denied at its spawn, so only its frontmatter reaches the run,
+          and a body-only edit to it leaves the run log active
       - `eval/tests/unit/<skill>/**` (rubric + test files)
       - `eval/fixtures/scenarios/<name>/**` for each scenario referenced
         by an included test
@@ -179,33 +304,20 @@ def build_snapshot(
         skill_dir = repo_root / "eval" / "skills" / skill
     _embed_tree(snapshot, skill_dir, repo_root)
 
-    # Plugin-agent files the skill delegates to via `@plugin:<name>`.
-    skill_md = skill_dir / "SKILL.md"
-    if skill_md.is_file():
-        for agent in agent_refs_in_text(skill_md.read_text(encoding="utf-8")):
-            rel = f"packages/engine/plugin/agents/{agent}.md"
-            agent_path = repo_root / rel
-            if agent_path.is_file():
-                snapshot[rel] = normalize(rel, agent_path.read_bytes())
-
-    # The suite's OWN agent, for an agent-keyed suite (issue #1253). Such a
-    # suite — `eval/tests/unit/<agent>/` with no skill directory, e.g.
-    # `gps-mentor` — reaches its agent through `test.skill` naming the agent
-    # file directly, and there is no SKILL.md for the `@plugin:` scan above to
-    # read. Without this the snapshot omits the very body the suite grades:
-    # editing the agent leaves the run log ACTIVE and its grades are quoted
-    # forward against prose that changed.
-    #
-    # Unconditional rather than gated on "no skill directory", for two reasons.
-    # For the four existing pairs the `@plugin:` scan already embeds this exact
-    # path, so this is a no-op — same key, same bytes, no run log invalidated
-    # and no paid re-run bought. And it keeps the body embedded if a pair's
-    # SKILL.md ever stops naming its own agent, which is precisely what issue
-    # #2738 does when it deletes the thin routers.
-    own_agent_rel = f"packages/engine/plugin/agents/{skill}.md"
-    own_agent_path = repo_root / own_agent_rel
-    if own_agent_path.is_file():
-        snapshot[own_agent_rel] = normalize(own_agent_rel, own_agent_path.read_bytes())
+    # Agents (#3568). The suite's OWN agent is always full (issue #1253: an
+    # agent-keyed suite reaches it through `test.skill`, and without it the
+    # snapshot omits the very body the suite grades). So is every agent an
+    # included test runs live. In a router suite every other agent is denied at
+    # its spawn, so it is fingerprinted by its frontmatter only, under a suffixed
+    # key, and never under both keys.
+    test_ids = list(test_ids) if test_ids is not None else None
+    for agent, form in sorted(agent_embed_forms(skill, repo_root, test_ids).items()):
+        rel = f"{_AGENTS_REL}/{agent}.md"
+        text = normalize(rel, (repo_root / rel).read_bytes())
+        if form == "full":
+            snapshot[rel] = text
+        else:
+            snapshot[rel + AGENT_FRONTMATTER_SUFFIX] = frontmatter_fingerprint_text(text)
 
     tests_dir = repo_root / "eval" / "tests" / "unit" / skill
     _embed_tree(snapshot, tests_dir, repo_root)
@@ -262,12 +374,18 @@ def diff_snapshot_vs_disk(snapshot: dict[str, str], repo_root: Path) -> dict[str
     no longer a tracked dependency (see `_MCP_SRC_PREFIX` and
     `build_snapshot`), so legacy run logs that embedded it stay active
     through unrelated MCP-source churn instead of needing a re-run.
+
+    A key ending in `AGENT_FRONTMATTER_SUFFIX` names the file without the
+    suffix and compares only `frontmatter_fingerprint_text` of it, so a
+    body-only edit to that agent reports nothing.
     """
     hashed = is_hashed_snapshot(snapshot)
     out: dict[str, str] = {}
     for rel, expected in snapshot.items():
         if rel.startswith(_MCP_SRC_PREFIX):
             continue
+        reduced = rel.endswith(AGENT_FRONTMATTER_SUFFIX)
+        file_rel = rel[: -len(AGENT_FRONTMATTER_SUFFIX)] if reduced else rel
         # `rel` is a snapshot KEY — an arbitrary string per the schema, arriving
         # from a run log another contributor committed. Contained before the read,
         # and skipped rather than raised so one bad key cannot discard the rest of
@@ -275,11 +393,13 @@ def diff_snapshot_vs_disk(snapshot: dict[str, str], repo_root: Path) -> dict[str
         # two disagreed on a traversing key (it returned "missing-on-disk", this
         # read the outside file and returned "content-differs") and no vector on
         # either side had one.
-        abs_path = _contained_abs_path(repo_root, rel)
+        abs_path = _contained_abs_path(repo_root, file_rel)
         if abs_path is None or not abs_path.is_file():
             out[rel] = "missing-on-disk"
             continue
-        actual = normalize(rel, abs_path.read_bytes())
+        actual = normalize(file_rel, abs_path.read_bytes())
+        if reduced:
+            actual = frontmatter_fingerprint_text(actual)
         if hashed:
             actual = hash_content(actual)
         if actual != expected:
@@ -356,12 +476,15 @@ def _embed_tree(snapshot: dict[str, str], directory: Path, repo_root: Path) -> N
 def collect_refs(
     tests_dir: Path, test_ids: Iterable[str] | None
 ) -> dict[str, set[str]]:
+    """What the included tests reference: scenarios, MCP fixtures, and the
+    agents they run live (`execution.run_agents`, #3568)."""
     scenarios: set[str] = set()
     fixtures: set[str] = set()
+    run_agents: set[str] = set()
     ids_filter = set(test_ids) if test_ids is not None else None
 
     if not tests_dir.is_dir():
-        return {"scenarios": scenarios, "fixtures": fixtures}
+        return {"scenarios": scenarios, "fixtures": fixtures, "run_agents": run_agents}
 
     for path in tests_dir.rglob("*.json"):
         try:
@@ -379,4 +502,9 @@ def collect_refs(
             scenarios.add(scenario)
         for fix in data.get("mcp_fixtures") or []:
             fixtures.add(fix)
-    return {"scenarios": scenarios, "fixtures": fixtures}
+        execution = data.get("execution")
+        if isinstance(execution, dict):
+            for name in execution.get("run_agents") or []:
+                if isinstance(name, str) and name:
+                    run_agents.add(name)
+    return {"scenarios": scenarios, "fixtures": fixtures, "run_agents": run_agents}

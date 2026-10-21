@@ -749,11 +749,16 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
 
     Deliberately narrow. A blanket "questions[] must not change" would
     false-fail the legitimate routes — `question-selection` may append a
-    follow-on question, which is one of this test's `correct_skill` answers.
+    follow-on question, which the explanation names as a legitimate answer.
     So this names the specific deltas that are never legitimate here: the
     target question's `status` and `search_stop`, and
     `project.status`. Same shape as
     `test_search_external_sites.py::test_no_external_search_or_log_on_routeaway_negative`.
+
+    Only a writer the test lets run can trip it: every agent spawn a test does
+    not name in `execution.run_agents` is denied. ut_research_rpn runs
+    `research-plan` and `question-selection`, so a reopen by `proof-conclusion`
+    is not observable there.
     """
     if "no-plan-writes-when-resolved" not in test.get("tags", []):
         pytest.skip("not a no-plan-writes-when-resolved scenario")

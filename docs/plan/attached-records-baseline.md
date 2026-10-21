@@ -347,7 +347,7 @@ Paid: the timeline, research, question-selection and person-evidence suites, eac
   - load one `same-person-<subject>.json` fixture (`assertionId: "~"`, `treePersonId: <subject>`) whose response is a match (a score and `matched: true`, as in `same-person-flynn-strong.json`). `same_person` carries no record id, so per-record fixtures cannot be told apart;
   - give it a new tag that gates a validator in `test_person_evidence.py`, asserting both halves. Each named assertion gains a new `pe_` with a non-null `match_score`, and its attachment link's `superseded_by` names that `pe_`. Each of the other record's subject assertions gains no `pe_`, and its attachment link keeps `superseded_by` null;
   - prove the validator fails on a run that leaves a named link live, and on a run that re-links the other record.
-- [ ] **Run order.** Run person-evidence and question-selection first. Run research last, after the final edit to person-evidence.md, question-selection.md and research/SKILL.md, because research's snapshot embeds both agent bodies.
+- [ ] **Run order.** Run person-evidence and question-selection first. Run research last, after the final edit to question-selection.md and research/SKILL.md, because research's snapshot embeds question-selection's full body (`ut_research_rpn` runs it live). It holds only person-evidence's frontmatter, so a body-only edit to person-evidence.md after the research run does not stale it; a `description` or `tools` edit does.
 - Done when: `make engine-test` and `make harness-test` are green, and `make eval-skill SKILL=timeline`, `SKILL=research`, `SKILL=question-selection` and `SKILL=person-evidence` have landed with their annotations, and `check_runlogs.py` passes.
 
 ### Acceptance e2e
@@ -385,7 +385,7 @@ Before PR D merges, comment each item below on the open `nothing-checks` issue t
 
   Whichever lands second rebases and re-checks that test.
 - **`agents/person-evidence.md` and its suite** are also edited by issue #3552, issue #3363, issue #3544, issue #2537 and step mode's PR 2. Whichever lands second re-runs `make eval-skill SKILL=person-evidence`. PR D's $7.79 is its own run, and it is owed again if any of these lands after it.
-- **`skills/research/SKILL.md`** is also edited by PR #3567, PR #3507, PR #3612, issue #3526, issue #3153, and step mode's prep PRs and PR 2. PRs that edit an agent research names stale it too: PR #3476, PR #3500 and PR #3564. Whichever lands second re-runs research.
+- **`skills/research/SKILL.md`** is also edited by PR #3567, PR #3507, PR #3612, issue #3526, issue #3153, and step mode's prep PRs and PR 2. A PR that edits any agent's frontmatter stales it too, and so does a body edit to an agent a research test runs live (research-plan, question-selection, research-exhaustiveness, search-images). Whichever lands second re-runs research.
 - **Issue #3153.** Its hints item completes through search-hints' own lane, not rule 8, because a `person_record_matches` entry has no `record_search` sidecar. It also edits:
   - the `plans` row, `test_ownership_manifest.py`, and `research-schema-spec.md`'s ownership table;
   - `guard_project_files.py`, with its own `make hook-smoke`;
