@@ -1,29 +1,61 @@
 {
-  "run_log": "v28_2026-10-20_10-02-39.json",
+  "run_log": "v24_2026-10-15_16-33-28.json",
   "annotator": "ikeboateng2018@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_rpn",
+      "test_id": "ut_research_021",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The skill should have decline because it produced wrong output."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_research_rpn",
+      "test_id": "ut_research_021",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The correct task failed to complete. Declining would have been a good outcome."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_research_rpn",
+      "test_id": "ut_research_021",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
@@ -32,15 +64,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "There's a factual error in birthplace of Patrick. "
-    },
-    {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "comment": "The emigration timing is unsupported by the evidence given, but the research itself is great. I agree with the score."
     },
     {
       "test_id": "ut_research_004",
@@ -51,7 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_018",
+      "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -59,15 +83,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_018",
+      "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_research_018",
+      "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -78,17 +102,17 @@
       "test_id": "ut_research_016",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The Tiers shouldn't have been generated because the response carries substantive information, so I agree with score."
     },
     {
       "test_id": "ut_research_016",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill failed to do actual work."
     },
     {
       "test_id": "ut_research_016",
@@ -99,23 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_019",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_019",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_019",
+      "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -123,23 +131,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_011",
+      "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The mother was not identified but the father."
     },
     {
-      "test_id": "ut_research_011",
+      "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -147,7 +147,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_015",
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h7w",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -155,7 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_015",
+      "test_id": "ut_research_h7w",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -163,9 +171,25 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_015",
+      "test_id": "ut_research_023",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null

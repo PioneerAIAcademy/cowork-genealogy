@@ -319,19 +319,18 @@ hooks-test: ## Repo-tooling hooks — scripts/claude-hooks (stdlib python3, no v
 .PHONY: agent-smoke
 agent-smoke: $(ENGINE_BUILD) ## Live agent-registration check (issue #939) + dead-stub MCP abort check (issue #1743)
 	# Arm 1 — agent registration (issue #939). Reads the SDK init
-	# handshake's agent list — no query, no model call. The key comes from
-	# $$ANTHROPIC_API_KEY, else this repo's eval/.env, and is passed under a
-	# distinct name because tests/conftest.py blanks ANTHROPIC_API_KEY.
-	# AGENT_SMOKE=1 turns the live test's skips into hard errors.
+	# handshake's agent list — no query, no model call, and no credential:
+	# the bare names come from a filesystem staging nothing authenticates
+	# (issue #1142, measured 2026-08-23). AGENT_SMOKE=1 turns the live test's
+	# skips into hard errors. This arm now also runs in CI (server-tests.yml);
+	# it stays here for a quick local re-check.
 	#
 	# Arm 2 — dead-stub e2e abort (issue #1743). A real run_e2e against a
 	# server that dies at startup; asserts the init-message abort text and
-	# the retention rule (no files written). Bills one session start (~8s).
-	#
-	# Both arms are hand-run; issue #1142 is what would make them CI.
+	# the retention rule (no files written). Bills one session start (~8s),
+	# so it stays hand-run — not in CI.
 	cd apps/server && \
 	  AGENT_SMOKE=1 \
-	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_plugin_agents.py -q -rs
 	# Arm 2 — dead-stub e2e abort (issue #1743).
 	cd eval/harness && \
@@ -506,7 +505,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -1410,6 +1409,15 @@ e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed 
 	# defined pre-fix replica and the real, current implementation over every
 	# applicable committed run, and reports every run where the two disagree.
 	cd eval/harness && uv run python -m e2e.detector_before_after_report --detector $(DETECTOR) $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-narration-figures
+e2e-narration-figures: ## Derive the plan's narration figures (R7): make e2e-narration-figures
+	# Pure analysis over committed run JSONs — no live run, no API. Derives the
+	# three load-bearing narration figures in docs/plan/research-as-a-job-later.md
+	# so they cannot drift unnoticed as the corpus grows, which is how PR #2870's
+	# corpus figures drifted. Exits 2 on a zero-paragraph scan rather than
+	# reporting a cheerful 0%.
+	cd eval/harness && uv run python -m e2e.narration_figures_report ../runlogs/e2e
 
 .PHONY: e2e-latency
 e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD

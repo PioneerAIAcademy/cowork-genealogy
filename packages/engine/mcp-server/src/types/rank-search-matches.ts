@@ -53,6 +53,16 @@ export interface RankedMatch {
    *  thresholded: no cutoff separates cleanly. */
   candidateFactCount?: number;
   recordArk?: string;
+  /** True when this candidate's birth year differs from the tree subject's by
+   *  more than 2 years. Computed host-side from the subject's tree birth (or
+   *  baptism/christening) year and the candidate's `birthDate`; absent when
+   *  either year is missing or the gap is 2 years or less. A high score with
+   *  this set is the classic namesake signature, so the caller treats the row as
+   *  needing independent confirmation whatever `matchScore` says. */
+  birthYearConflict?: true;
+  /** Candidate birth year minus subject birth year, in years (negative: the
+   *  candidate is older). Present exactly when `birthYearConflict` is. */
+  birthYearGap?: number;
   /** 0-1 match score; null when the FS call kept failing (never dropped). */
   matchScore: number | null;
   /** 1-5 confidence bucket; omitted on a no-match / failure. */

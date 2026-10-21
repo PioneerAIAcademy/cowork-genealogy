@@ -85,17 +85,26 @@ import {
   materializesToPersonFact,
   type AssertionFactAttr,
   factTypeKey,
+  recordPartyKeyer,
 } from "../utils/record-persona.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
+import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
 interface SectionConfig {
   /** id prefix, including the trailing underscore (e.g. "src_"). */
   prefix: string;
-  /** Tool-owned timestamp stamped on append when the entry omits it. */
-  stampTimestamp?: { field: string; kind: "date" | "datetime" };
+  /** Tool-owned timestamp stamped on append when the entry omits it. With
+   *  `everyWrite`, stamped on every append and update, overwriting the caller's;
+   *  `restampOn` narrows the updates that move it to those setting one of its fields. */
+  stampTimestamp?: {
+    field: string;
+    kind: "date" | "datetime";
+    everyWrite?: boolean;
+    restampOn?: readonly string[];
+  };
   /** Nested section: entries live in `<parent>[<param>].<field>` (plan_items). */
   nested?: { parent: string; param: "planId"; field: string };
   /** Singleton object section (e.g. `project`): `op:"update"` shallow-merges
@@ -143,7 +152,18 @@ const SECTIONS: Record<string, SectionConfig> = {
   hypotheses: { prefix: "h_" },
   // Phase 3
   timelines: { prefix: "t_", stampTimestamp: { field: "generated", kind: "datetime" } },
-  proof_summaries: { prefix: "ps_" },
+  // `updated` is what `narrativeAndSearchSummaryTogether` compares the
+  // question's log against, so it moves on every write that checks either text
+  // against the log, not just the first, and never on one that checks neither.
+  proof_summaries: {
+    prefix: "ps_",
+    stampTimestamp: {
+      field: "updated",
+      kind: "datetime",
+      everyWrite: true,
+      restampOn: ["narrative_markdown", "exhaustive_search_summary"],
+    },
+  },
   evaluations: { prefix: "ev_", stampTimestamp: { field: "timestamp", kind: "datetime" } },
   known_holdings: { prefix: "kh_", stampTimestamp: CREATED_DATE },
   localities: { prefix: "loc_", stampTimestamp: CREATED_DATE },
@@ -242,7 +262,7 @@ const PLACE_ONLY_DISPUTED_ATTRIBUTES = new Set([
   "residence_place",
 ]);
 
-function placeContainmentErrors(entry: any, research: any): string[] {
+export function placeContainmentErrors(entry: any, research: any): string[] {
   if (entry.conflict_type !== "fact") return [];
   const attr = typeof entry.disputed_attribute === "string"
     ? entry.disputed_attribute.trim().toLowerCase()
@@ -1216,38 +1236,20 @@ const BIRTH_PLACE_FACT_TYPES: ReadonlySet<string> = new Set(["birth"]);
 
 /** Whether a record's birth place and the tree's agree, on their text or, when
  *  both carry one, on their resolved `standard_place` -- either agreeing is
- *  enough, since two resolutions of the same text can differ. Two places agree
- *  when one is `compatiblePlace` with the other, or when the top level one of
- *  them names appears in the other and every level below it matches. That second
- *  test is what lets "Staffordshire, England" agree with "West Bromwich,
- *  Staffordshire, England, United Kingdom" and "Georgia" with "Georgia, United
- *  States": `compatiblePlace` lines the two up from the country, so a place
- *  written without its country, or with an extra level above it, read as a
- *  different place. Over the committed fixture and e2e documents that refused
- *  1,067 confident/probable links on place, almost all of them that shape. */
+ *  enough, since two resolutions of the same text can differ. Agreement is
+ *  `compatiblePlace`, which lets "Staffordshire, England" agree with "West
+ *  Bromwich, Staffordshire, England, United Kingdom" and "Georgia" with
+ *  "Georgia, United States". Lining the two up from the country instead refused
+ *  1,067 committed confident/probable links on place, almost all that shape. */
 function birthPlacesAgree(assertion: any, birth: any): boolean {
-  const agree = (a: string, b: string): boolean =>
-    compatiblePlace(a, b) || alignedBelowTop(a, b) || alignedBelowTop(b, a);
-  if (agree(String(assertion.place), String(birth.place))) return true;
+  if (compatiblePlace(String(assertion.place), String(birth.place))) return true;
   const sa = assertion?.standard_place;
   const sb = birth?.standard_place;
   return (
     typeof sa === "string" && placeSegments(sa).length > 0 &&
     typeof sb === "string" && placeSegments(sb).length > 0 &&
-    agree(sa, sb)
+    compatiblePlace(sa, sb)
   );
-}
-
-/** True when `x`'s least-specific level appears in `y` and each level of `x`
- *  below it matches the level of `y` at the same depth. */
-function alignedBelowTop(x: string, y: string): boolean {
-  const xs = placeSegments(x).map(normalizeString).reverse();
-  const ys = placeSegments(y).map(normalizeString).reverse();
-  const at = ys.indexOf(xs[0]);
-  if (at < 0) return false;
-  const n = Math.min(xs.length, ys.length - at);
-  for (let k = 0; k < n; k++) if (xs[k] !== ys[at + k]) return false;
-  return true;
 }
 
 /** An informant with no proximity to the birth cannot contradict it. Senior
@@ -1272,27 +1274,88 @@ const WEAK_INFORMANT_PROXIMITY: ReadonlySet<string> = new Set([
 /** Whether this assertion's stated value is credible enough to contradict the
  *  tree. Measured over every committed scenario fixture 2026-09-24: with these
  *  two gates the arm refuses **0 of 323** confident/probable person_evidence
- *  entries, against 38 without them and 274 comparing any place at all. */
-function contradictionIsCredible(assertion: any): boolean {
+ *  entries, against 38 without them and 274 comparing any place at all. An
+ *  assertion a resolved conflict decided against, on the attribute that conflict
+ *  disputed, is not credible either (`resolvedAgainstIds`). */
+function contradictionIsCredible(assertion: any, resolvedAgainst: ReadonlySet<string>): boolean {
+  if (resolvedAgainst.has(assertion?.id)) return false;
   if (assertion?.information_quality === "secondary") return false;
   return !WEAK_INFORMANT_PROXIMITY.has(
     String(assertion?.informant_proximity ?? "unknown"),
   );
 }
 
+/** `disputed_attribute` values that settle each arm, matched exactly after
+ *  lower-casing and folding spaces and hyphens to underscores. The field is free
+ *  text, so anything else ("birth year of John Laurie (GPZR-3X2)") settles
+ *  neither arm and the assertion still caps, which fails safe. */
+const BIRTH_PLACE_DISPUTES: ReadonlySet<string> = new Set([
+  "birthplace", "birth_place", "place_of_birth",
+]);
+const BIRTH_DATE_DISPUTES: ReadonlySet<string> = new Set([
+  "birth_year", "birth_date", "birthdate", "date_of_birth", "year_of_birth",
+  "christening_date", "baptism_date",
+]);
+
+export interface ResolvedAgainst {
+  place: ReadonlySet<string>;
+  date: ReadonlySet<string>;
+}
+
+/** Assertions a RESOLVED FACT conflict decided against, per arm: every
+ *  competitor that is not its `preferred_assertion_id`, released only on the
+ *  arm its `disputed_attribute` names. A contradiction the project has already
+ *  weighed and set aside is not a live one, so it cannot cap the link; one it did
+ *  not weigh (a birthplace dispute says nothing about the same record's
+ *  christening date) still does. An identity conflict releases nothing: its
+ *  loser was judged to be a different person, so a link through it to the
+ *  rejected identity is exactly what must stay capped. Read from the document as
+ *  this op sees it, so a conflict resolved LATER in the same batch still
+ *  refuses, which fails safe. Figures: `dev/measure-core-identifier-gate.ts`. */
+function resolvedAgainstIds(research: any): ResolvedAgainst {
+  const place = new Set<string>();
+  const date = new Set<string>();
+  for (const c of (research?.conflicts ?? []) as any[]) {
+    if (c?.status !== "resolved" || c.conflict_type !== "fact") continue;
+    if (typeof c.preferred_assertion_id !== "string") continue;
+    const attr = String(c.disputed_attribute ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+    const into = BIRTH_PLACE_DISPUTES.has(attr) ? place : BIRTH_DATE_DISPUTES.has(attr) ? date : null;
+    if (!into) continue;
+    for (const id of (c.competing_assertion_ids ?? []) as unknown[]) {
+      if (typeof id === "string" && id !== c.preferred_assertion_id) into.add(id);
+    }
+  }
+  return { place, date };
+}
+
 /** A person_evidence link as the contradiction gate needs it: which assertion,
- *  to which person. */
+ *  to which person, at what tier. `id` is absent on a link this call appends;
+ *  `fromBatch` marks a link an op of this call wrote, which the gate checks on
+ *  that op itself. */
 export interface PersonLink {
   assertion_id: string;
   person_id: string;
+  id?: string;
+  confidence?: unknown;
+  fromBatch?: boolean;
 }
 
-/** The record party an assertion describes: `record_persona_id` when the
- *  sidecar kept one, `record_role` otherwise (required on every assertion). The
- *  same key `record-persona.ts` groups by; the contradiction gate and its
- *  two-party arm both read it from here so the two cannot drift apart. */
-function partyKey(a: any): string | null {
-  return a?.record_persona_id ?? a?.record_role ?? null;
+/** The record an assertion belongs to, for grouping a record's assertions. */
+function recordIdOf(a: any): string | null {
+  return a?.record_id ?? a?.source_id ?? null;
+}
+
+function isRelational(a: any): boolean {
+  return RELATIONAL_FACT_TYPES.has(String(a?.fact_type ?? "").toLowerCase());
+}
+
+/** Every assertion of `recordId` among `assertions`, and the party key over
+ *  them (`recordPartyKeyer`: the persona id, else the role, read across the
+ *  whole record). The contradiction gate, its two-party arm and the move gate
+ *  all key parties through here so they cannot drift apart. */
+function recordParties(assertions: Iterable<any>, recordId: string) {
+  const onRecord = [...assertions].filter((a) => a && recordIdOf(a) === recordId);
+  return { onRecord, partyKey: recordPartyKeyer(onRecord) };
 }
 
 /** Links the gate can see for this call: the project's live person_evidence
@@ -1301,58 +1364,86 @@ function partyKey(a: any): string | null {
  *  re-points `person_id` or `assertion_id` moves it, so a link retired in the
  *  same call cannot pair and a link moved onto a person does. */
 function batchPersonLinks(research: any, ops: ResearchAppendOp[]): PersonLink[] {
-  const byId = new Map<string, { assertion_id: unknown; person_id: unknown; superseded: boolean }>();
-  const appended: { assertion_id: unknown; person_id: unknown; superseded: boolean }[] = [];
+  type Replayed = { id?: string; assertion_id: unknown; person_id: unknown; confidence: unknown; superseded: boolean; fromBatch: boolean };
+  const byId = new Map<string, Replayed>();
+  const appended: Replayed[] = [];
   const live: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
   for (const e of live) {
     if (e && typeof e.id === "string") {
-      byId.set(e.id, { assertion_id: e.assertion_id, person_id: e.person_id, superseded: !!e.superseded_by });
+      byId.set(e.id, {
+        id: e.id, assertion_id: e.assertion_id, person_id: e.person_id, confidence: e.confidence,
+        superseded: !!e.superseded_by, fromBatch: false,
+      });
     }
   }
   for (const op of ops) {
     if (op.section !== "person_evidence") continue;
     if (op.op === "append") {
       const e = (op as any).entry;
-      if (e) appended.push({ assertion_id: e.assertion_id, person_id: e.person_id, superseded: !!e.superseded_by });
+      if (e) {
+        appended.push({
+          assertion_id: e.assertion_id, person_id: e.person_id, confidence: e.confidence,
+          superseded: !!e.superseded_by, fromBatch: true,
+        });
+      }
     } else if (op.op === "update" && typeof op.entryId === "string") {
       const cur = byId.get(op.entryId);
       const f = (op as any).fields ?? {};
       if (!cur) continue;
+      cur.fromBatch = true;
       if (Object.prototype.hasOwnProperty.call(f, "superseded_by")) cur.superseded = !!f.superseded_by;
       if (typeof f.person_id === "string") cur.person_id = f.person_id;
       if (typeof f.assertion_id === "string") cur.assertion_id = f.assertion_id;
+      if (Object.prototype.hasOwnProperty.call(f, "confidence")) cur.confidence = f.confidence;
     }
   }
   const out: PersonLink[] = [];
   for (const l of [...byId.values(), ...appended]) {
     if (!l.superseded && typeof l.assertion_id === "string" && typeof l.person_id === "string") {
-      out.push({ assertion_id: l.assertion_id, person_id: l.person_id });
+      out.push({
+        ...(l.id ? { id: l.id } : {}),
+        assertion_id: l.assertion_id, person_id: l.person_id, confidence: l.confidence, fromBatch: l.fromBatch,
+      });
     }
   }
   return out;
 }
 
-/** Whether `linked`, a two-party assertion, is about its OWN party when linked
- *  to `entry.person_id`: true when some other link ties a one-party assertion of
- *  the same record and the same party to that same person. The party key is the
- *  one the gate below uses (`record_persona_id`, else `record_role`). */
-function ownPartyLinkedTo(
+/** The two parties a two-party assertion names: its own, and the one its
+ *  `structured_value.related_person_role` names (null when it names none). */
+function relationalParties(linked: any, partyKey: (a: any) => string | null): string[] {
+  const own = partyKey(linked);
+  const relatedRole = linked?.structured_value?.related_person_role;
+  const related =
+    typeof relatedRole === "string" && relatedRole !== "" ? partyKey({ record_role: relatedRole }) : null;
+  return [own, related].filter((k): k is string => k !== null);
+}
+
+/** Which parties of `linked`, a two-party assertion, its link to `personId`
+ *  may be about: those some other link ties to that same person through a
+ *  one-party assertion of the same record. Empty when no link does. When links
+ *  tie BOTH parties to the person, both are returned and both are checked: one
+ *  person cannot be both, and dropping the link out of scope there let a
+ *  throwaway link to the other party carry a contradicted one through. */
+function partiesLinkedTo(
   linked: any,
-  entry: any,
-  recordId: string,
-  assertionById: ReadonlyMap<string, any>,
+  personId: unknown,
+  onRecord: ReadonlyArray<any>,
+  partyKey: (a: any) => string | null,
   personLinks?: ReadonlyArray<PersonLink>,
-): boolean {
-  if (!personLinks || personLinks.length === 0) return false;
-  const party = partyKey(linked);
-  if (party === null) return false;
-  return personLinks.some((l) => {
-    if (l.person_id !== entry.person_id || l.assertion_id === entry.assertion_id) return false;
-    const other = assertionById.get(l.assertion_id);
-    if (!other) return false;
-    if (RELATIONAL_FACT_TYPES.has(String(other.fact_type ?? "").toLowerCase())) return false;
-    return (other.record_id ?? other.source_id ?? null) === recordId && partyKey(other) === party;
-  });
+): string[] {
+  if (!personLinks || personLinks.length === 0) return [];
+  const parties = new Set(relationalParties(linked, partyKey));
+  const byId = new Map(onRecord.map((a) => [a.id, a]));
+  const found = new Set<string>();
+  for (const l of personLinks) {
+    if (l.person_id !== personId || l.assertion_id === linked.id) continue;
+    const other = byId.get(l.assertion_id);
+    if (!other || isRelational(other)) continue;
+    const k = partyKey(other);
+    if (k !== null && parties.has(k)) found.add(k);
+  }
+  return [...found];
 }
 
 /** Coordinates of standard places, looked up in `prepareOps` because the gate
@@ -1457,14 +1548,27 @@ function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoor
 }
 
 interface ContradictionScope {
-  twoParty: boolean;
   birth: any;
   sameRecord: any[];
+  resolvedAgainst: ResolvedAgainst;
+}
+
+/** Every assertion this call can resolve: the document's, plus this batch's
+ *  predicted appends. Reading only `research.assertions` let a batch that puts
+ *  its assertion appends AFTER the person_evidence ops silence the gates, the
+ *  ordering bypass the score gate already closed. */
+function resolvableAssertions(research: any, batchAssertions?: Map<string, any>): Map<string, any> {
+  const assertionById = new Map<string, any>();
+  for (const a of (research?.assertions ?? []) as any[]) {
+    if (a && typeof a.id === "string") assertionById.set(a.id, a);
+  }
+  if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
+  return assertionById;
 }
 
 /** What the gate compares for one link, or null when the link is out of scope:
- *  not confident/probable, no resolvable record, a two-party assertion about the
- *  other party, or a tree person with no Birth fact. */
+ *  not confident/probable, no resolvable record, a two-party assertion no other
+ *  link says the party of, or a tree person with no Birth fact. */
 function contradictionScope(
   entry: any,
   research: any,
@@ -1473,20 +1577,12 @@ function contradictionScope(
   batchAssertions?: Map<string, any>,
 ): ContradictionScope | null {
   if (entry.confidence !== "confident" && entry.confidence !== "probable") return null;
-  // Every assertion this call can resolve: the document's, plus this batch's
-  // predicted appends. Reading only `research.assertions` let a batch that puts
-  // its assertion appends AFTER the person_evidence ops silence this gate, the
-  // ordering bypass the score gate already closed.
-  const assertionById = new Map<string, any>();
-  for (const a of (research.assertions ?? []) as any[]) {
-    if (a && typeof a.id === "string") assertionById.set(a.id, a);
-  }
-  if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
-  const assertions: any[] = [...assertionById.values()];
+  const assertionById = resolvableAssertions(research, batchAssertions);
   const linked = assertionById.get(entry.assertion_id);
   if (!linked) return null;
-  const recordId = linked.record_id ?? linked.source_id ?? null;
+  const recordId = recordIdOf(linked);
   if (recordId == null) return null;
+  const { onRecord, partyKey } = recordParties(assertionById.values(), recordId);
 
   // A relationship assertion bears on BOTH people it names, and its own party
   // is only one of them: `a_004` ("listed in household of Thomas Flynn,
@@ -1495,29 +1591,27 @@ function contradictionScope(
   // father the tree puts at 1818 produced 14 refusals that are one household,
   // not one contradiction. The assertion alone cannot say which side a link is
   // about, so a two-party assertion is out of scope -- UNLESS another link ties
-  // the same record party to the same person through a one-party assertion.
-  // Then the link is about the assertion's own party, and skipping it let a
-  // baptism's relationship assertion carry `confident` onto the very person
-  // its christening date had just been refused on (ut_person_evidence_024,
+  // one of its two parties to the same person through a one-party assertion.
+  // Then the link is about that party, and skipping it let a baptism's
+  // relationship assertion carry `confident` onto the very person its
+  // christening date had just been refused on (ut_person_evidence_024,
   // 2026-09-29: a_003 capped, a_001 from the same child persona persisted).
+  // Which link lands first does not matter: a later one-party link re-checks
+  // the relationship links it scopes (`relationalLinksScopedBy`, #2537).
   //
-  // The widened reach checks the DATE arm only. Measured 2026-09-29 over 302
-  // committed fixture and e2e documents (9,736 confident/probable links), running
-  // the place arm too would add 247 refusals, and every one read was a
-  // less-specific place ("Ohio" against "Ohio, United States"), which
-  // `compatiblePlace`'s country-first prefix test calls a contradiction. That is
-  // a comparator defect, not a contradiction, and this arm must not export it.
-  // Date only, the same corpus gains 11 refusals, all read: 9 are a census
-  // persona whose OWN birth assertion is more than 5 years from the tree birth,
-  // which the one-party arm already refuses for that persona; 2 (one Spriggs run)
-  // inherit an extraction that gave father and child one record_persona_id, which
-  // already refuses every one-party link of that persona. No new class.
-  const twoParty = RELATIONAL_FACT_TYPES.has(String(linked.fact_type ?? "").toLowerCase());
-  if (twoParty) {
-    if (!ownPartyLinkedTo(linked, entry, recordId, assertionById, personLinks)) {
-      return null;
-    }
-  }
+  // Both arms run here. The place arm was held back while `compatiblePlace`
+  // read "Ohio" against "Ohio, United States" as a contradiction (247 would-be
+  // refusals, 2026-09-29). With that fixed (#2537), measured 2026-10-21 over 350
+  // documents (10,607 links, live coordinates): the two-party links refused rise
+  // from 11 to 51, and every added refusal cites an assertion the one-party arm
+  // already refuses in the same document (Maine vs New Brunswick, North Carolina
+  // vs Kentucky, a 9-year birth gap). No new class; it closes the side door
+  // round refusals that already stand.
+  const own = partyKey(linked);
+  const parties = isRelational(linked)
+    ? partiesLinkedTo(linked, entry.person_id, onRecord, partyKey, personLinks)
+    : own === null ? [] : [own];
+  if (parties.length === 0) return null;
 
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
   if (!person) return null;
@@ -1526,37 +1620,28 @@ function contradictionScope(
   );
   if (!birth) return null;
 
-  // Every assertion this record makes about THE SAME PARTY as the linked one.
+  // Every assertion this record makes about THE SAME PARTY as the link.
   //
   // Scoping to the record alone is wrong and was measured wrong: a census or a
   // baptism names several people, and comparing a son's stated birth of 1845
   // against a father who the tree says was born 1818 produced 30 refusals that
-  // are all one household, not one contradiction. The party key is the same one
-  // `record-persona.ts` groups by -- `record_persona_id` when the sidecar kept
-  // one, `record_role` otherwise, which is required on every assertion.
-  const linkedParty = partyKey(linked);
-  const sameRecord = assertions.filter(
-    (a: any) =>
-      a &&
-      (a.record_id ?? a.source_id ?? null) === recordId &&
-      partyKey(a) === linkedParty &&
-      linkedParty !== null,
-  );
-  return { twoParty, birth, sameRecord };
+  // are all one household, not one contradiction.
+  const sameRecord = onRecord.filter((a: any) => parties.includes(partyKey(a) as string));
+  return { birth, sameRecord, resolvedAgainst: resolvedAgainstIds(research) };
 }
 
 /** The record's birth-place assertions that disagree with the tree's Birth
  *  place, before the distance test. */
 function disagreeingBirthPlaces(scope: ContradictionScope): any[] {
-  const { twoParty, birth, sameRecord } = scope;
-  if (twoParty || typeof birth.place !== "string" || placeSegments(birth.place).length === 0) return [];
+  const { birth, sameRecord, resolvedAgainst } = scope;
+  if (typeof birth.place !== "string" || placeSegments(birth.place).length === 0) return [];
   return sameRecord.filter((a: any) =>
     // Like for like. An ANY-place comparison refuses 274 of 323 committed
     // confident/probable entries (85%) because a marriage or census place is
     // not a claim about birthplace: a man born in Ireland appears in a
     // Pennsylvania census, and that is biography, not contradiction.
     BIRTH_PLACE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase()) &&
-    contradictionIsCredible(a) &&
+    contradictionIsCredible(a, resolvedAgainst.place) &&
     typeof a.place === "string" &&
     placeSegments(a.place).length > 0 &&
     // "Same House" names no place, so it states nothing, like a place-less one.
@@ -1585,21 +1670,19 @@ export function birthPlaceCoordNames(
   return names;
 }
 
-export function coreIdentifierContradictionInvariants(
+/** What contradicts the tree person's birth on this link's record party, one
+ *  clause per arm; empty when nothing does or the link is out of scope. */
+function contradictionFindings(
   entry: any,
   research: any,
   tree: any,
-  // Optional so every existing caller compiles unchanged; absent, a two-party
-  // assertion stays out of scope exactly as before.
   personLinks?: ReadonlyArray<PersonLink>,
   batchAssertions?: Map<string, any>,
-  // Prefetched in `prepareOps`. Absent, every same-country pair counts as far
-  // apart, which is the place arm before the distance test.
   birthPlaceCoords?: BirthPlaceCoords,
 ): string[] {
   const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
   if (!scope) return [];
-  const { birth, sameRecord } = scope;
+  const { birth, sameRecord, resolvedAgainst } = scope;
 
   const findings: string[] = [];
 
@@ -1627,7 +1710,7 @@ export function coreIdentifierContradictionInvariants(
   if (treeBirthYear != null) {
     for (const a of sameRecord) {
       if (!BIRTH_DATE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
-      if (!contradictionIsCredible(a)) continue;
+      if (!contradictionIsCredible(a, resolvedAgainst.date)) continue;
       const stated = yearOf(a.date);
       if (stated == null) continue;
       if (Math.abs(stated - treeBirthYear) > MAX_BIRTH_YEAR_GAP) {
@@ -1640,6 +1723,22 @@ export function coreIdentifierContradictionInvariants(
     }
   }
 
+  return findings;
+}
+
+export function coreIdentifierContradictionInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  // Optional so every existing caller compiles unchanged; absent, a two-party
+  // assertion stays out of scope exactly as before.
+  personLinks?: ReadonlyArray<PersonLink>,
+  batchAssertions?: Map<string, any>,
+  // Prefetched in `prepareOps`. Absent, every same-country pair counts as far
+  // apart, which is the place arm before the distance test.
+  birthPlaceCoords?: BirthPlaceCoords,
+): string[] {
+  const findings = contradictionFindings(entry, research, tree, personLinks, batchAssertions, birthPlaceCoords);
   if (findings.length === 0) return [];
   return [
     `confidence '${entry.confidence}' is not available on this link: ${findings.join("; ")}. ` +
@@ -1648,6 +1747,73 @@ export function coreIdentifierContradictionInvariants(
       `contradiction in the rationale, or resolve it first — a confident wrong identity is ` +
       `worse than a flagged uncertain one.`,
   ];
+}
+
+/** The confident/probable relationship links that `entry`, a one-party link,
+ *  gives a party to: live links to the same person, on a two-party
+ *  assertion of the same record, one of whose two parties is `entry`'s. Links an
+ *  op of this call writes are left out; that op is gated on its own. */
+export function relationalLinksScopedBy(
+  entry: any,
+  research: any,
+  personLinks?: ReadonlyArray<PersonLink>,
+  batchAssertions?: Map<string, any>,
+): PersonLink[] {
+  if (!personLinks || personLinks.length === 0) return [];
+  const assertionById = resolvableAssertions(research, batchAssertions);
+  const own = assertionById.get(entry?.assertion_id);
+  if (!own || isRelational(own)) return [];
+  const recordId = recordIdOf(own);
+  if (recordId == null) return [];
+  const { partyKey } = recordParties(assertionById.values(), recordId);
+  const party = partyKey(own);
+  if (party === null) return [];
+  return personLinks.filter((l) => {
+    if (l.fromBatch || l.person_id !== entry.person_id) return false;
+    if (l.confidence !== "confident" && l.confidence !== "probable") return false;
+    const rel = assertionById.get(l.assertion_id);
+    return !!rel && isRelational(rel) && recordIdOf(rel) === recordId &&
+      relationalParties(rel, partyKey).includes(party);
+  });
+}
+
+/** A one-party link that turns an earlier relationship link into a refused one
+ *  is refused itself (#2537). Linking "son of Thomas" `confident` first and the
+ *  same child's 1858 christening `speculative` afterwards left the relationship
+ *  link standing, though the gate refuses it whenever the christening link is
+ *  already there (ut_person_evidence_024). Re-checking here makes the verdict
+ *  the same in either order. The way out is in the same call: lower the
+ *  relationship link, or link this assertion to someone else. */
+export function scopedRelationalLinkInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  personLinks?: ReadonlyArray<PersonLink>,
+  batchAssertions?: Map<string, any>,
+  birthPlaceCoords?: BirthPlaceCoords,
+): string[] {
+  const errors: string[] = [];
+  // The links as they would stand without this one. A relationship link
+  // already refused without it (one written under an earlier rule) is not this
+  // link's doing, and refusing every later link for it would leave the party
+  // unlinkable until someone edits the old link.
+  const without = (personLinks ?? []).filter(
+    (l) => !(l.fromBatch && l.assertion_id === entry.assertion_id && l.person_id === entry.person_id),
+  );
+  for (const l of relationalLinksScopedBy(entry, research, personLinks, batchAssertions)) {
+    const findings = contradictionFindings(l, research, tree, personLinks, batchAssertions, birthPlaceCoords);
+    if (findings.length === 0) continue;
+    if (contradictionFindings(l, research, tree, without, batchAssertions, birthPlaceCoords).length > 0) continue;
+    const which = l.id ? `'${l.id}'` : `the link on '${l.assertion_id}'`;
+    errors.push(
+      `linking '${entry.assertion_id}' to '${entry.person_id}' says the relationship link ${which} ` +
+        `(assertion '${l.assertion_id}', '${l.confidence}') is about the same record party, and on ` +
+        `that party ${findings.join("; ")}. A contradicted core identifier caps that link at ` +
+        `'speculative'. In this same call, update ${which} to 'speculative' and name the ` +
+        `contradiction in its rationale, or link '${entry.assertion_id}' to a different person.`,
+    );
+  }
+  return errors;
 }
 
 const US_STATES: ReadonlySet<string> = new Set([
@@ -1722,15 +1888,12 @@ export function unexplainedMoveInvariants(
 ): string[] {
   if (entry?.confidence !== "confident") return [];
   if (typeof entry.move_bridge === "string" && entry.move_bridge.trim() !== "") return [];
-  const assertionById = new Map<string, any>();
-  for (const a of (research?.assertions ?? []) as any[]) {
-    if (a && typeof a.id === "string") assertionById.set(a.id, a);
-  }
-  if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
+  const assertionById = resolvableAssertions(research, batchAssertions);
   const linked = assertionById.get(entry.assertion_id);
   if (!linked) return [];
-  const recordId = linked.record_id ?? linked.source_id ?? null;
+  const recordId = recordIdOf(linked);
   if (recordId == null) return [];
+  const { onRecord, partyKey } = recordParties(assertionById.values(), recordId);
 
   // The linked party's own residence; failing that, the household head's (a
   // census lists the residence once, on the head). Never another party's: an
@@ -1738,8 +1901,7 @@ export function unexplainedMoveInvariants(
   const residenceOf = (pick: (a: any) => boolean) => {
     const countries = new Set<string>();
     let place: string | null = null;
-    for (const a of assertionById.values()) {
-      if ((a.record_id ?? a.source_id ?? null) !== recordId) continue;
+    for (const a of onRecord) {
       if (!RESIDENCE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
       if (!pick(a)) continue;
       const c = placeCountry(a.place);
@@ -1778,6 +1940,10 @@ export function unexplainedMoveInvariants(
     // The entry under write is already in the array; it must not vouch for itself.
     if (!pe || pe === entry || (entry.id && pe.id === entry.id)) continue;
     if (pe.person_id !== entry.person_id || pe.superseded_by) continue;
+    // An attachment link reuses the import's S, which an imported residence
+    // fact cites. Counting it here would stop that fact vouching, and so turn
+    // this gate off for exactly the subjects the baseline step links.
+    if (isAttachmentLink(pe)) continue;
     const a = assertionById.get(pe.assertion_id);
     if (!a || typeof a.source_id !== "string") continue;
     (pe.confidence === "confident" ? linkedConfident : linkedBelowConfident).add(a.source_id);
@@ -2090,6 +2256,14 @@ export function mintedFromThisRecord(
   // caught by both discriminators, 22 by the starting-tree baseline alone).
   if (FS_PERSON_PID.test(personId)) return false;
   if (startingPersonIds?.has(personId)) return false;
+  // A person with an attachment link came from FamilySearch: only an imported
+  // person has records attached there. Without this, reusing the import's S for
+  // an attached record makes that person's only ref reach this record, and a
+  // project with no starting-tree baseline would read them as minted from it,
+  // exempting any caller's link to them from the score gate.
+  if (((research?.person_evidence ?? []) as any[]).some((pe) => pe?.person_id === personId && isAttachmentLink(pe))) {
+    return false;
+  }
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
   if (!person) return false;
   const refs = new Set<string>();
@@ -2568,9 +2742,87 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
     `question '${qid}' already has a proof summary (${ids.join(", ")}), and a question may ` +
       "carry only one. Re-concluding is an UPDATE of that entry, not a second append: retry " +
       `with { section: "proof_summaries", op: "update", entryId: "${ids[0]}", fields: { … } }, ` +
-      "passing only the fields that changed. Appending here would leave two contradictory " +
+      "passing only the fields that changed — but if the question has been searched since the " +
+      "summary was written, `narrative_markdown` and `exhaustive_search_summary` count as one, so " +
+      "pass both or neither. Appending here would leave two contradictory " +
       "conclusions on one question, with nothing to say which is current.",
   ];
+}
+
+/** A summary's narrative and its `exhaustive_search_summary` are rewritten
+ *  together once the question has been searched since the summary was written.
+ *
+ *  Both say what was searched and what could still resolve the question, so a
+ *  later search that changes one changes the other. Observed 2026-10-09 (issue
+ *  #3177, G9GJ-959): after three more searches, `ps_002`'s summary was rewritten
+ *  to report them and its narrative's "What could resolve it" was left
+ *  recommending all three, while `ps_001` got the reverse — a new narrative over
+ *  a summary still calling the same images "Not completed". The re-invocation
+ *  rule said to pass only the fields that changed, and each update did.
+ *
+ *  Scoped to that case: a one-field update is refused only when a `log[]` entry
+ *  attributed to the summary's question (through a plan item of one of its
+ *  plans) was performed after the summary's pre-op `updated` stamp. With no
+ *  later search, a one-field edit — a tier change with a reworded narrative —
+ *  is ordinary and passes. A summary with no `updated` predates the stamp and
+ *  is never refused. `log` is not a `research_append` section, so live and
+ *  pre-call research carry the same log.
+ *
+ *  Update-only: an append already requires both. Passing a field's current
+ *  text again satisfies it — the point is that the caller re-checked it. */
+function narrativeAndSearchSummaryTogether(
+  op: any,
+  entry: any,
+  priorUpdated: unknown,
+  research: any,
+): string[] {
+  if (op?.op !== "update") return [];
+  const fields = op.fields ?? {};
+  const has = (k: string) => Object.prototype.hasOwnProperty.call(fields, k);
+  const narrative = has("narrative_markdown");
+  const summary = has("exhaustive_search_summary");
+  if (narrative === summary) return [];
+  const since = typeof priorUpdated === "string" ? datetimeMs(priorUpdated) : NaN;
+  if (Number.isNaN(since)) return [];
+  const qid = entry?.question_id;
+  if (typeof qid !== "string" || qid === "") return [];
+  const itemIds = new Set<string>();
+  for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
+    if (plan?.question_id !== qid) continue;
+    for (const item of Array.isArray(plan.items) ? plan.items : []) {
+      if (typeof item?.id === "string") itemIds.add(item.id);
+    }
+  }
+  const later = (Array.isArray(research?.log) ? research.log : [])
+    .filter(
+      (e: any) =>
+        e &&
+        itemIds.has(e.plan_item_id) &&
+        typeof e.performed === "string" &&
+        datetimeMs(e.performed) > since,
+    )
+    .map((e: any) => e.id ?? "(no id)");
+  if (later.length === 0) return [];
+  const [set, missing] = narrative
+    ? ["narrative_markdown", "exhaustive_search_summary"]
+    : ["exhaustive_search_summary", "narrative_markdown"];
+  return [
+    `proof_summaries update of ${op.entryId ?? "(no entryId)"} sets \`${set}\` without ` +
+      `\`${missing}\`, and question ${qid} has been searched since this summary was last ` +
+      `written (${later.join(", ")}). Both fields say what was searched and what could still ` +
+      "resolve the question, so read those log entries, rewrite both, and pass both in this one " +
+      `update. If \`${missing}\` is still accurate after you check it against them, pass its ` +
+      "current text unchanged. Leaving one stale is how a narrative ends up recommending records " +
+      "its own summary says were searched.",
+  ];
+}
+
+/** Epoch ms of an `iso_datetime`, accepting the dash-separated time form the
+ *  schema allows (`2026-05-01T10-15-00Z`); NaN when it does not parse. */
+function datetimeMs(value: string): number {
+  const m = /^(\d{4}-\d{2}-\d{2}T\d{2})[:-](\d{2})[:-](\d{2})(?:[.-](\d+))?(.*)$/.exec(value);
+  if (!m) return Date.parse(value);
+  return Date.parse(`${m[1]}:${m[2]}:${m[3]}${m[4] ? "." + m[4] : ""}${m[5]}`);
 }
 
 /** A `proof_summaries` write when the persons this proof bears on — its
@@ -2624,20 +2876,24 @@ export function competingParentSetsInvariants(
 
 /** A conclusion above `not_proved` may not rest on evidence no identity decision
  *  has touched: refused when none of the summary's supporting assertions carries
- *  a live `person_evidence` link in the pre-call document.
+ *  a live `person_evidence` link that is not speculative (`countsForProofGate`)
+ *  in the pre-call document. A speculative link is a candidate, not an identity,
+ *  and an unchecked FamilySearch attachment is always speculative.
  *
  *  None, not all. A household record leaves its children and wife unlinked once
  *  the subject is linked, so an all-linked rule would refuse 27 of 211 committed
- *  e2e proofs; none-linked refuses 3, and every one of the 3 comes from a run
- *  with no `person_evidence` row at all (chresten-nielsen-daughter 2026-08-09,
- *  victoriano-macatangay-parents 2026-08-13 ×2). That is the identity step never
- *  run, which is the case worth refusing: LZJF-J13 (issue #3177) concluded
- *  `probable` on "correlation across several independent entries" with 0 of 15
- *  assertions linked.
+ *  e2e proofs. This rule refuses 5 of 206 (re-counted 2026-10-20). 3 come from
+ *  runs with no live link at all (chresten-nielsen-daughter 2026-08-09,
+ *  victoriano-macatangay-parents 2026-08-13 ×2): the identity step never run,
+ *  the case worth refusing. LZJF-J13 (issue #3177) concluded `probable` on
+ *  "correlation across several independent entries" with 0 of 15 assertions
+ *  linked. The other 2 rest on speculative links only (cruz-corona-ancestry
+ *  ps_001 proved, robert-lord-children ps_001 disproved).
  *
  *  Pre-call snapshot, as the conflict gates: a batch may not supply the link and
- *  spend it on a tier in the same call — and `person_evidence` is written only by
- *  person-evidence, never by the agent writing the proof. */
+ *  spend it on a tier in the same call. `person_evidence` is written by
+ *  person-evidence and, for unchecked attachments only, by extraction_append —
+ *  never by the agent writing the proof. */
 export function unlinkedProofInvariants(entry: any, preCallResearch: any): string[] {
   const tier = entry?.tier;
   if (typeof tier !== "string" || tier === "not_proved") return [];
@@ -2650,13 +2906,14 @@ export function unlinkedProofInvariants(entry: any, preCallResearch: any): strin
   if (supporting.length === 0) return [];
   const linked = new Set(
     (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : [])
-      .filter((pe: any) => pe?.superseded_by == null)
+      .filter(countsForProofGate)
       .map((pe: any) => pe?.assertion_id),
   );
   if (supporting.some((id: string) => linked.has(id))) return [];
   return [
     `proof_summaries ${entry.id ?? "(new entry)"}: tier '${tier}' rests on ${supporting.length} ` +
-      `supporting assertion(s), and none is linked to a person in person_evidence. A conclusion ` +
+      `supporting assertion(s), and none is linked to a person in person_evidence by a link that ` +
+      `is not speculative (a speculative link is a candidate, not an identity). A conclusion ` +
       `correlates records about the same person, and no identity decision says these records ` +
       `are about anyone. Run person-evidence on those assertions first (from an agent, hand back ` +
       `to the main thread and name it), then send this write again. Recording the attempt at ` +
@@ -4352,6 +4609,9 @@ function applyOne(
   createdAssertions?: ReadonlySet<string>,
   personLinks?: ReadonlyArray<PersonLink>,
   birthPlaceCoords?: BirthPlaceCoords,
+  // `ResearchAppendOptions.attachmentLink`: only extraction_append's personId
+  // mode sets it, as a function argument no tool input reaches.
+  attachmentLink = false,
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -4544,6 +4804,8 @@ function applyOne(
   let entryId: string;
   let resultEntry: any;
   let arrayIndex: number | undefined;
+  // The entry's own timestamp as it stood before this op restamped it.
+  let priorStamp: unknown;
   // An update's link pair and retired state as they stood BEFORE its fields merge,
   // so the rejected-link gate below can tell an edit from a re-link.
   let priorPair: { assertion_id: unknown; person_id: unknown; superseded_by: unknown } | undefined;
@@ -4569,7 +4831,7 @@ function applyOne(
     validateInformantQualityFloor(newEntry);
     validateRelationshipDirection(newEntry);
     const stamp = config.stampTimestamp;
-    if (stamp && newEntry[stamp.field] === undefined) {
+    if (stamp && (stamp.everyWrite || newEntry[stamp.field] === undefined)) {
       newEntry[stamp.field] = stamp.kind === "date" ? today() : now();
     }
     array.push(newEntry);
@@ -4632,6 +4894,8 @@ function applyOne(
       }
     }
 
+    priorStamp = config.stampTimestamp ? existing[config.stampTimestamp.field] : undefined;
+
     // A completed plan item stays completed. search-records writes
     // `in_progress` after every search it logs, and extraction_append completes
     // the item once a record it found is extracted, so a later search on the
@@ -4681,6 +4945,14 @@ function applyOne(
     for (const [k, v] of Object.entries(op.fields)) {
       if (k === "id") continue;
       existing[k] = v;
+    }
+    const updateStamp = config.stampTimestamp;
+    if (updateStamp?.everyWrite) {
+      const moves = !updateStamp.restampOn ||
+        updateStamp.restampOn.some((k) => Object.prototype.hasOwnProperty.call(op.fields, k));
+      if (moves) existing[updateStamp.field] = updateStamp.kind === "date" ? today() : now();
+      else if (priorStamp === undefined) delete existing[updateStamp.field];
+      else existing[updateStamp.field] = priorStamp;
     }
     normalizeDateFields(existing);
     normalizeAccessDate(existing);
@@ -5033,6 +5305,28 @@ function applyOne(
     if (reRaising) {
       invariantErrors.push(...rejectedLinkInvariants(resultEntry, research));
     }
+    // An attachment link is only ever superseded. Raising it in place would skip
+    // same_person: the score gate checks an update only when it writes
+    // `match_score`, `assertion_id` or `person_id`, so a confidence edit alone
+    // would turn an unchecked attachment into an identity.
+    if (op.op === "update") {
+      const stored = (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : []).find(
+        (pe: any) => pe && pe.id === op.entryId,
+      );
+      const fieldKeys = Object.keys(op.fields ?? {}).filter((k) => k !== "id");
+      if (
+        stored &&
+        isAttachmentLink(stored) &&
+        !(fieldKeys.length === 1 && fieldKeys[0] === "superseded_by")
+      ) {
+        invariantErrors.push(
+          `person_evidence ${op.entryId} is an unverified FamilySearch attachment link, which is only ` +
+            `ever superseded. To raise it, score the pair with same_person({ projectPath, assertionId: ` +
+            `'${stored.assertion_id}', treePersonId: '${stored.person_id}' }), append a new link at the ` +
+            `confidence the score supports, then update this one with only { superseded_by: "<new pe_ id>" }.`,
+        );
+      }
+    }
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
     invariantErrors.push(...coreIdentifierConflictInvariants(resultEntry));
     // A REFUSAL, not a warning. The lead's standing ruling on issue #2272 is
@@ -5058,6 +5352,13 @@ function applyOne(
         ? []
         : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions, birthPlaceCoords)),
     );
+    // Only when this op makes the pairing: a rationale edit on a link written
+    // before this rule must stay possible.
+    if (reRaising) {
+      invariantErrors.push(
+        ...scopedRelationalLinkInvariants(resultEntry, research, tree, personLinks, batchAssertions, birthPlaceCoords),
+      );
+    }
     // An update re-checks the move only when it sets the tier or the bridge, or
     // re-points the link (a new pairing, as the score gate below reads it), so a
     // rationale edit on a link written before this rule stays possible.
@@ -5098,7 +5399,12 @@ function applyOne(
         scoreFields.some((f) =>
           Object.prototype.hasOwnProperty.call((op as any).fields ?? {}, f),
         ));
-    if (writesScore) {
+    // An attachment link carries no score by design (lead, 2026-10-19: the
+    // baseline step assumes every attachment is correct, with no same_person
+    // gate). Exempt only on extraction_append's internal flag AND the entry's
+    // full attachment shape, so neither half alone reaches the exemption.
+    const exemptAttachment = attachmentLink && op.op === "append" && isAttachmentLink(resultEntry);
+    if (writesScore && !exemptAttachment) {
       invariantErrors.push(
         ...personEvidenceScoreInvariants(
           resultEntry,
@@ -5158,6 +5464,7 @@ function applyOne(
     // update walked past it. `oneSummaryPerQuestion` excludes the entry by id,
     // so an ordinary update of an existing summary still passes.
     invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
+    invariantErrors.push(...narrativeAndSearchSummaryTogether(op, resultEntry, priorStamp, research));
     // Reads PRE-CALL tree and PRE-CALL research: a same-batch hypothesis write
     // does not satisfy this precondition. Gated only on the entry's standing
     // tier (not_proved/disproved pass), not on which fields this op touches.
@@ -5485,14 +5792,27 @@ async function prefetchBirthPlaceCoords(
     }
     if (op.section !== "person_evidence") continue;
     let entry: any;
+    // Whether the op makes the pairing, the condition `applyOne` re-checks
+    // scoped relationship links on: an append, or an update that re-points or
+    // revives a link.
+    let reRaising = true;
     if (op.op === "update") {
       if (fields.superseded_by) continue;
-      entry = { ...(live.find((e: any) => e?.id === op.entryId) ?? {}), ...fields };
+      const prior = live.find((e: any) => e?.id === op.entryId) ?? {};
+      entry = { ...prior, ...fields };
+      reRaising =
+        !!prior.superseded_by ||
+        prior.assertion_id !== entry.assertion_id ||
+        prior.person_id !== entry.person_id;
     } else {
       entry = (op as any).entry;
     }
     if (!entry || typeof entry !== "object") continue;
     names.push(...birthPlaceCoordNames(entry, research, tree, personLinks, assertions));
+    if (!reRaising) continue;
+    for (const l of relationalLinksScopedBy(entry, research, personLinks, assertions)) {
+      names.push(...birthPlaceCoordNames(l, research, tree, personLinks, assertions));
+    }
   }
   if (names.length === 0) return new Map();
   return lookupPlaceCoords(names, (name) => standardPlaceToCoords(name), BIRTH_PLACE_COORDS_BUDGET_MS);
@@ -6237,15 +6557,21 @@ async function prepareOps(
 export interface ResearchAppendOptions {
   /** Sections this caller may write. Omitted = every section (`research_append`). */
   allowedSections?: ReadonlySet<string>;
+  /** extraction_append's personId mode: its `person_evidence` appends of the
+   *  attachment shape (`isAttachmentLink`) skip the score gate. Never set by a
+   *  tool caller. */
+  attachmentLink?: boolean;
   /** Tool name used in lane-rejection text, so a narrow caller names itself. */
   toolName?: string;
 }
 
 /**
  * The ids of the existing sources that already cover any of `bareRecordIds`,
- * read off the assertions that cite them (§3.4.1). The one derivation of
- * "is this record already extracted", shared by source-reuse detection here and
- * by `extraction_append`'s resend skip, so the two cannot disagree.
+ * read off the assertions that cite them (§3.4.1). Source-reuse detection here
+ * passes one record's own id. `extraction_append`'s resend skip passes a wider
+ * set: every persona ARK of a `record_read` sidecar that lists the requested id,
+ * because a record extracted under one persona's ARK is the same record when
+ * another persona's ARK asks for it.
  */
 export function sourceIdsForRecordIds(research: any, bareRecordIds: ReadonlySet<string>): Set<string> {
   const out = new Set<string>();
@@ -6440,6 +6766,7 @@ export async function researchAppend(
             prep.createdAssertions,
             prep.personLinks,
             prep.birthPlaceCoords,
+            options.attachmentLink === true,
           ),
         );
       } catch (e) {

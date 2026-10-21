@@ -798,7 +798,8 @@ tool it holds — "Give an agent a new tool", §5). Register it in the worker's
 `EXPECTED_AGENTS`, in `DELEGATION_EDGES`, and in `agent-return-contract.test.ts`
 (heading or `PENDING`) — the full list, with
 what each wants, is in `docs/skill-to-agent-pair-conversion.md` → "What adding an
-agent trips". Then run `make agent-smoke` (§8) — and note that no CI job runs it.
+agent trips". Then run `make agent-smoke` (§8) — its registration arm now runs
+in CI (`server-tests.yml`, keyless), but its dead-stub arm does not.
 
 ---
 
@@ -1182,9 +1183,10 @@ by a **second function parameter** (`researchAppend(input, { allowedSections, to
 that a tool caller structurally cannot reach, because dispatch builds only the
 first argument from tool input. Since 2026-10-20 the lane is chosen per call,
 not per tool. A separate `plan_items`-only call completes the plan item behind
-an extracted record. Code composes that op whole, as it does the
-`extracted_for_question_ids` growth a re-found record gets, so no input field
-reaches either (ADR-0006, amended 2026-10-20).
+an extracted record, and in `personId` mode a `person_evidence`-only call links
+a person's attached records as unchecked candidates. Code composes each op whole,
+as it does the `extracted_for_question_ids` growth a re-found record gets, so no
+input field reaches any of them (ADR-0006, amended 2026-10-20).
 
 The pattern comes from an observed failure: a delegation message prompted the
 extractor past its prose lane and it fabricated a match score. The analysis:
@@ -1983,7 +1985,7 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 | `make harness-test` | `eval/harness` (pytest) — including the **`packages/schema/schemas/` JSON mirror** (`test_schema_mirrors.py`) and the three write-lockdown copies' parity | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug. **Not** the TS half of the `packages/schema` mirror — that is `make test-js` |
 | `make typecheck` | the whole JS workspace (turbo) | Python; and it is not the only viewer gate — `make test-js` runs viewer-ui's vitest suite (including `schema-interface-drift.test.ts`), and `make engine-test` runs `field-render-drift.test.ts` against the viewer's section components |
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
-| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names (arm 1), and that a dead MCP server triggers the init-message abort with captured stderr and no files written (arm 2) — fails loudly with no API key, since the target sets `AGENT_SMOKE=1` | whether a granted tool actually **binds** — that is `make probe-agent-binding`; **anything hook-shaped** — it reads the init handshake, which carries no hook state at all, so a `hooks.json` that stopped loading passes it silently (that is `make hook-smoke`); the ToolSearch backstop and `run_e2e_test` fallback abort paths |
+| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names (arm 1 — keyless, and now run in CI by `server-tests.yml` under `AGENT_SMOKE=1`, which fails a missing prerequisite loudly rather than skipping), and that a dead MCP server triggers the init-message abort with captured stderr and no files written (arm 2 — bills a session start, stays hand-run) | whether a granted tool actually **binds** — that is `make probe-agent-binding`; **anything hook-shaped** — it reads the init handshake, which carries no hook state at all, so a `hooks.json` that stopped loading passes it silently (that is `make hook-smoke`); the ToolSearch backstop and `run_e2e_test` fallback abort paths |
 | **`make hook-smoke`** | that the **hosted SDK loader actually binds** the plugin's `PreToolUse` hook: reads `hooks/hooks.json`, matches a real `research_append`, shells `guard_project_files.py` and blocks — attributed by requiring the guard's own reason text, with the SDK-side hook cleared and a hooks-removed control arm. Hard-errors without a key | **Cowork's loader**, which is a different one and reachable only by a human in a live session; the guard script's *decisions* (that is `plugin-hooks.test.ts` and the parity test). The Cowork half stays on the `nothing-checks` register either way |
 | **`make probe-agent-nesting`** | that the **hosted SDK loader** lets a plugin agent spawn another at depth 2, and which `tools:` spelling binds the spawn tool (`Task` and `Agent` both do; the call is named `Agent`) — read off the driver's own `tool_use`, with a no-grant control arm, plus a driver spawning three real `record-extractor`s in parallel, verified by what lands in `research.json`. Hard-errors without a key; ~$5 | **Cowork**, depth 3, and anything the nested agent did — the SDK streams no depth-2 messages |
 | `make replay-sizes` | the **size** of the local-state read tools' answers (`research_query`, `project_context`, `person_warnings`, `merge_warnings`, `validate_research_schema`) — a base build vs the working build, re-asked every call the committed e2e runs recorded, over `research.json` rebuilt as of each call. Free, no model, no network, ~25 s; exact (an unchanged build reads Δ = 0) | the network tools — FamilySearch and wiki, ~57% of answer chars (T1.4c); writers; the tree's state mid-run (the final tree stands in); how many later turns re-read an answer, so no dollars; turn count; prose; anything about research quality |
@@ -2164,18 +2166,21 @@ changes how a correct change is made:
    the success gate can and cannot see"). `make e2e-corpus` deliberately reports
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
-4. **Step mode's boundary is enforced on one plane and graded on another.** Under
-   `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19), a step ends by
-   asking the researcher with `AskUserQuestion`, and what stops a model starting the
-   next step without asking differs by plane: the FS prototype gets a `PreToolUse`
-   deny and then a halt; **Cowork gets router prose and no hook at all**; the alpha
-   gets nothing. **None of it is built yet.** When it is, the gap will be that
-   the e2e harness tracks `real_agent` (`eval/harness/e2e/orchestrator.py`),
-   which is the alpha, and the alpha gets nothing -- so the suite will exercise
-   a plane with no enforcement while the one that HAS it goes ungraded. **A
-   green eval suite will therefore say nothing about whether the boundary
-   holds anywhere.**
-   Do not read a passing step-mode test as evidence the boundary holds in Cowork.
+  4. **Step mode's boundary is enforced on one plane and graded on another.** Under
+     `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19, amended
+     2026-10-21), a step ends by asking the researcher with `AskUserQuestion`, and what
+     stops a model starting the next step without asking differs by plane: the FS
+     prototype gets a `PreToolUse` deny and then a halt; **Cowork and the alpha get
+     router prose and no hook at all**. There is no plugin step hook anywhere.
+     **None of it is built yet.** When it is, the gap will be that PR 1 gives the e2e
+     orchestrator the step check (rider 3) while the plane it tracks, `real_agent`
+     (`eval/harness/e2e/orchestrator.py`), is the alpha — which enforces nothing. So the
+     suite will enforce a boundary that neither Cowork nor the alpha has, and the one
+     plane that DOES enforce it, the prototype worker, goes ungraded. **A green eval
+     suite will therefore say nothing about whether the boundary holds where researchers
+     actually are.**
+     Do not read a passing step-mode test as evidence the boundary holds in Cowork or on
+     the alpha.
 
    This is a deliberate choice, not a limitation: phase 0 measured that a Cowork hook
    *could* do it (ADR-0005 item 9 — a plugin `PreToolUse` returning `"continue": false`

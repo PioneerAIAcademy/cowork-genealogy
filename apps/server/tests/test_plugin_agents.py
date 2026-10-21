@@ -28,6 +28,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -121,19 +122,36 @@ _ENGINE_BUILD = Path(
 )
 
 
-# Opt-in, and NOT via ANTHROPIC_API_KEY: conftest.py blanks that var on import
-# to keep the operator key out of test assertions. `make agent-smoke` sources
-# eval/.env and exports it under this name. Setting it is the opt-in.
+# Optional, and NOT via ANTHROPIC_API_KEY: conftest.py blanks that var on import
+# to keep the operator key out of test assertions. The check is keyless (issue
+# #1142) — the CLI starts and registers every agent with no credential — so this
+# is empty on the normal path. Set LIVE_ANTHROPIC_API_KEY only to force a key
+# through, e.g. if a future CLI reinstates a credential requirement.
 _LIVE_KEY = os.environ.get("LIVE_ANTHROPIC_API_KEY", "")
 
-# Set only by the `agent-smoke` Makefile target — i.e. by someone who asked for
-# THIS check specifically, rather than by `make server-test` sweeping the file
-# up with the rest of the suite. The distinction is the whole point: a skip is
-# correct for a contributor with no key, and wrong for the one command whose
-# entire job is to run this test. Without it `make agent-smoke` printed
-# "143 passed, 1 skipped" and read as fully green — indistinguishable from the
+# Set by the `agent-smoke` Makefile target and by CI (server-tests.yml) — by
+# whoever asked for THIS check specifically, rather than by `make server-test`
+# sweeping the file up with the rest of the suite. A skip is correct for a
+# contributor missing a prerequisite, and wrong for those callers: there
+# "143 passed, 1 skipped" reads as fully green — indistinguishable from the
 # check having run.
 _INVOKED_AS_SMOKE = bool(os.environ.get("AGENT_SMOKE"))
+
+
+def _sdk_cli() -> str | None:
+    """The CLI the SDK spawns: its own bundled binary first, then PATH.
+
+    `claude_agent_sdk`'s `SubprocessCLITransport._find_cli` returns the bundled
+    binary (`claude_agent_sdk/_bundled/`) before it looks at PATH, and
+    `real_agent.build_options` sets no `cli_path`, so gating on `shutil.which`
+    checks a binary the test never runs. The bundled CLI ships in the wheel
+    `apps/server/uv.lock` pins, so `uv sync` is the only prerequisite.
+    """
+    import claude_agent_sdk
+
+    name = "claude.exe" if sys.platform == "win32" else "claude"
+    bundled = Path(claude_agent_sdk.__file__).parent / "_bundled" / name
+    return str(bundled) if bundled.is_file() else shutil.which("claude")
 
 
 def _missing_prerequisites() -> list[str]:
@@ -143,11 +161,12 @@ def _missing_prerequisites() -> list[str]:
     the failure message when `make agent-smoke` asked for this check by name.
     """
     missing = []
-    if not _LIVE_KEY:
+    if _sdk_cli() is None:
         missing.append(
-            "no Anthropic key — set ANTHROPIC_API_KEY, or put ANTHROPIC_API_KEY=... "
-            "in eval/.env (no model call is made; the CLI just refuses to start "
-            "without one)"
+            "no claude CLI — neither the SDK's bundled binary "
+            "(claude_agent_sdk/_bundled/) nor one on PATH; run `uv sync`, or "
+            "`npm i -g @anthropic-ai/claude-code`. No Anthropic key is needed: "
+            "the handshake registers every agent with no credential (issue #1142)."
         )
     if not _ENGINE_BUILD.exists():
         missing.append(f"no compiled engine at {_ENGINE_BUILD} — run `make engine-build`")
@@ -173,20 +192,25 @@ async def test_bare_agent_names_are_registered(tmp_path, monkeypatch):
     without spending a token. Before the fix this list held only
     `genealogy-research:record-extractor` and friends.
 
-    This spawns a CLI process but issues NO query, so it bills nothing; the key
-    is needed only because the CLI refuses to start without one.
+    This spawns a CLI process but issues NO query, so it bills nothing, and it
+    needs no credential: the bare names come from a filesystem staging the
+    runtime enumerates at startup, which nothing authenticates (issue #1142,
+    measured 2026-08-23). The only prerequisites are the `claude` CLI the SDK
+    spawns (its bundled binary, present after `uv sync`), a compiled engine, and
+    node.
 
     Under `AGENT_SMOKE` a missing prerequisite FAILS instead of skipping. The
-    skip is right for a contributor running `make server-test` with no key; it
-    is wrong for the one command whose entire job is this check, which reported
-    "143 passed, 1 skipped" and read as fully green.
+    skip is right for a contributor running `make server-test` on a box without
+    the `claude` CLI; it is wrong for the ones whose entire job is this check —
+    `make agent-smoke`, and the CI job that sets `AGENT_SMOKE=1` — where a
+    skipped check reads as green having never run (issue #1142).
     """
     missing = _missing_prerequisites()
     if missing:
         # Reached only under AGENT_SMOKE — the skipif above covers every other
-        # caller. The target sets LIVE_ANTHROPIC_API_KEY to the empty string
-        # when neither source supplies a key, so a missing key arrives here as
-        # a silent skip rather than as a shell error.
+        # caller. A missing prerequisite (the CLI, the engine build, or node)
+        # fails the job loudly here instead of skipping, which is the whole
+        # point of wiring this into CI.
         pytest.fail(
             "make agent-smoke could not run the ONLY check that reads what the "
             "runtime resolved the hosted agent options to:\n  - "
