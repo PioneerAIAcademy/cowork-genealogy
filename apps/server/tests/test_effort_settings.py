@@ -109,6 +109,7 @@ def test_local_passes_the_settings_and_never_leaks_the_hosts(monkeypatch, tmp_pa
     seen = {}
 
     class FakeProc:
+        pid = 4242
         def poll(self):
             return None
 

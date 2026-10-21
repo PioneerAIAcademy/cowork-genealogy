@@ -62,6 +62,7 @@ def _local_env(monkeypatch, tmp_path, settings) -> dict:
     seen: dict = {}
 
     class FakeProc:
+        pid = 4242
         def poll(self):
             return None
 
