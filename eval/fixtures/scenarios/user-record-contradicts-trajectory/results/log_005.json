@@ -1,0 +1,778 @@
+{
+  "log_id": "log_005",
+  "tool": "record_search",
+  "retrieved": "2026-10-05T17:58:25.872Z",
+  "returned_count": 4,
+  "payload": {
+    "query": {
+      "surname": "Burton",
+      "givenName": "Jahue",
+      "collectionId": "1804888",
+      "marriagePlace": "Greenup County, Kentucky",
+      "marriageYearFrom": 1835,
+      "marriageYearTo": 1850,
+      "subjectId": "I1",
+      "projectPath": "/project"
+    },
+    "totalMatches": 4,
+    "paginationCappedAt": 4999,
+    "returned": 4,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:Q2D8-8SQL",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Thomas J Burton",
+        "score": 2.67198,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for Charles Burton and Alma Barr, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QLW8-768X",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102360808941",
+              "ark": "ark:/61903/1:1:Q2D8-8SQL",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Thomas J"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102360808937",
+              "ark": "ark:/61903/1:1:Q2D8-8SQJ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Charles"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Unknown",
+                  "primary": true,
+                  "place": "Greenup",
+                  "standard_place": "Greenup, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1878",
+                  "standard_date": "1878"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102360808945",
+              "ark": "ark:/61903/1:1:Q2D8-8SQR",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Adams",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102360808947",
+              "ark": "ark:/61903/1:1:Q2D8-8SQY",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Barr",
+                  "given": "Alma"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1891",
+                  "standard_date": "1891"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102360808949",
+              "ark": "ark:/61903/1:1:Q2D8-8SQ1",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Moore",
+                  "given": "J W"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102360808951",
+              "ark": "ark:/61903/1:1:Q2D8-8S79",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Candill",
+                  "given": "Anna"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102360808937",
+              "person2": "p_102360808947"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102360808941",
+              "child": "p_102360808937"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102360808945",
+              "child": "p_102360808937"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102360808941",
+              "person2": "p_102360808945"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102943857044",
+              "resource_type": "Record",
+              "title": "Entry for Charles Burton and Alma Barr, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2D8-8SQJ : Sat Feb 24 01:19:47 UTC 2024), Entry for Charles Burton and Thomas J Burton, 10 Oct 1931.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLW8-768X",
+              "coverage": {
+                "place_rep_id": "394147",
+                "date_range": "10 Oct 1931",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91S-YSX1-X",
+              "coverage": {
+                "place_rep_id": "394147",
+                "date_range": "Jul 1931–Apr 1932",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102360808941",
+              "resource_type": "Person",
+              "url": "#p_102360808941"
+            }
+          ],
+          "places": [
+            {
+              "id": "394147",
+              "name": "Greenup, Kentucky, United States",
+              "latitude": 38.5167,
+              "longitude": -82.9499
+            }
+          ]
+        },
+        "primaryId": "p_102360808941",
+        "role": "Father Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2QD-LL9G",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Emily J. Barton",
+        "score": 1.93426,
+        "confidence": 2,
+        "sex": "Female",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for E. W. Lambert and Janie Decker, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QL9F-NMC9",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102167505952",
+              "ark": "ark:/61903/1:1:Q2QD-LL9G",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Barton",
+                  "given": "Emily J."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102167505942",
+              "ark": "ark:/61903/1:1:Q2QD-LL9D",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Lambert",
+                  "given": "E. W."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1884",
+                  "standard_date": "1884"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102167505948",
+              "ark": "ark:/61903/1:1:Q2QD-LL9V",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Lambert",
+                  "given": "Louis"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102167505958",
+              "ark": "ark:/61903/1:1:Q2QD-LL9B",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Decker",
+                  "given": "Janie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1887",
+                  "standard_date": "1887"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102167505964",
+              "ark": "ark:/61903/1:1:Q2QD-LLSQ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Decker",
+                  "given": "Lewis"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102167505967",
+              "ark": "ark:/61903/1:1:Q2QD-LLS4",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Willis"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102167505942",
+              "person2": "p_102167505958"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102167505952",
+              "child": "p_102167505942"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102167505948",
+              "child": "p_102167505942"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102167505948",
+              "person2": "p_102167505952"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102825882271",
+              "resource_type": "Record",
+              "title": "Entry for E. W. Lambert and Janie Decker, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2QD-LL9D : Sat Feb 24 06:11:15 UTC 2024), Entry for E. W. Lambert and Louis Lambert, 1 Mar 1911.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL9F-NMC9",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89SQ-7299",
+              "coverage": {
+                "place_rep_id": "394145",
+                "date_range": "1910-1912",
+                "record_type": "MarriageLicense"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102167505952",
+              "resource_type": "Person",
+              "url": "#p_102167505952"
+            }
+          ]
+        },
+        "primaryId": "p_102167505952",
+        "batchNumber": "I11552-7",
+        "role": "Mother Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2ZM-DVCZ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "J W Barton",
+        "score": 1.52126,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for J M Barton and Martha Foster, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:QL7D-YSZD",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102303340480",
+              "ark": "ark:/61903/1:1:Q2ZM-DVCZ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Barton",
+                  "given": "J W"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102303340476",
+              "ark": "ark:/61903/1:1:Q2ZM-DVCW",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Barton",
+                  "given": "J M"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1881",
+                  "standard_date": "1881"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102303340484",
+              "ark": "ark:/61903/1:1:Q2ZM-DVCX",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Barton",
+                  "given": "Rebecca"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102303340488",
+              "ark": "ark:/61903/1:1:Q2ZM-DVCV",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Foster",
+                  "given": "Martha"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1892",
+                  "standard_date": "1892"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102303340491",
+              "ark": "ark:/61903/1:1:Q2ZM-DVCL",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Foster",
+                  "given": "Shelby"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102303340476",
+              "person2": "p_102303340488"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_102303340480",
+              "person2": "p_102303340484"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102303340484",
+              "child": "p_102303340476"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102303340480",
+              "child": "p_102303340476"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102920951112",
+              "resource_type": "Record",
+              "title": "Entry for J M Barton and Martha Foster, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2ZM-DVCW : Sat Feb 24 07:21:47 UTC 2024), Entry for J M Barton and J W Barton, 28 Nov 1914.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL7D-YSZD",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "28 Nov 1914",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BT-1SWH-Y",
+              "coverage": {
+                "place_rep_id": "394359",
+                "date_range": "1915–1917",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_102303340480",
+              "resource_type": "Person",
+              "url": "#p_102303340480"
+            }
+          ]
+        },
+        "primaryId": "p_102303340480",
+        "role": "Father Of Groom"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QKJS-Q5BZ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Burton",
+        "score": -1.136818,
+        "confidence": 1,
+        "sex": "Female",
+        "collectionId": "1804888",
+        "collectionTitle": "Kentucky, County Marriages, 1786-1965",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+        "recordTitle": "Entry for James Sinclair and Mary L Burton, \"Kentucky, County Marriages, 1786-1965\"",
+        "recordArk": "ark:/61903/1:2:Q2PD-JG5M",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_101745850450",
+              "ark": "ark:/61903/1:1:QKJS-Q5BZ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_101745850446",
+              "ark": "ark:/61903/1:1:QKJS-Q5BW",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "James",
+                  "surname": "Sinclair"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_101745850453",
+              "ark": "ark:/61903/1:1:QKJS-Q5B6",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary L",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_101745850446",
+              "person2": "p_101745850453"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_101745850450",
+              "child": "p_101745850446"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102629099520",
+              "resource_type": "Record",
+              "title": "Entry for James Sinclair and Mary L Burton, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKJS-Q5BW : Sat Feb 24 06:41:01 UTC 2024), Entry for James Sinclair and Burton, 12 Feb 1876.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q2PD-JG5M",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L937-54DP",
+              "coverage": {
+                "place_rep_id": "394334",
+                "date_range": "1875-1883",
+                "record_type": "MarriageBond"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_101745850450",
+              "resource_type": "Person",
+              "url": "#p_101745850450"
+            }
+          ]
+        },
+        "primaryId": "p_101745850450",
+        "role": "Mother Of Groom"
+      }
+    ]
+  }
+}

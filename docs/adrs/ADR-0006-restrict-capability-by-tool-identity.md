@@ -73,6 +73,20 @@ The general form:
 | A parameter on the tool input | **No** | the caller supplies the input |
 | **Tool identity** | **Yes** | the capability is absent from the agent's world |
 
+**Amended 2026-10-20 (lead, issue #3516).** A mode may reach a further section
+only where code composes the whole entry. `extraction_append` now chooses its
+lane per call rather than per tool:
+- it writes plan-item status only as `in_progress` → `completed`, once a record
+  an item's `record_search` found is extracted, in a separate `researchAppend`
+  call whose lane is `plan_items` alone;
+- it writes assertions beyond appends only by growing
+  `extracted_for_question_ids` when a question re-finds an extracted record.
+
+No input field reaches either write, so the lane is still unforgeable from the
+caller's side. The "a second lane needs narrowing" condition under **Revisit
+when** fired here; the answer was a per-call section set inside the same tool,
+not a `PreToolUse` policy.
+
 ## Alternatives considered
 
 | Option | Why rejected | Evidence |

@@ -15,5 +15,12 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 4, hint-samples.csv row 104, flags adds_birth/adds_death, confidence 3). Resolved as a false match: the 14 Nov 1910 Rio de Janeiro death (ark:/61903/1:1:7975-85ZM) is a different woman — three children's death entries name her as mother with birth years 1912-1918. Avoid guard plus a documented-negative finding; decided on the indexes, image_basis off."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 4, hint-samples.csv row 104, flags adds_birth/adds_death, confidence 3). Resolved as a false match: the 14 Nov 1910 Rio de Janeiro death (ark:/61903/1:1:7975-85ZM) is a different woman — three children's death entries name her as mother with birth years 1912-1918. Avoid guard plus a documented-negative finding; decided on the indexes, image_basis off.",
+  "caps": {
+    "wall_clock_seconds": 9000
+  },
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:7975-85ZM",
+    "identity": "different"
+  }
 }

@@ -1,0 +1,20 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Lucia Skora's parents were Antonius Skora and Elisabeth Skrownionka, named on her baptism at Przecław on 13 November 1807.",
+      "details": {
+        "subject_person": "Lucia Skora (LHBJ-WSN)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Antonius Skora and Elisabeth Skrownionka"
+        }
+      },
+      "supporting_sources": [
+        "Poland, Tarnow, Roman Catholic Diocese Church Books, 1612-1900 — baptism of Lucia Skora, Przecław, 13 Nov 1807, daughter of Antonius Skora and Elisabeth Skrownionka"
+      ],
+      "required": true
+    }
+  ]
+}

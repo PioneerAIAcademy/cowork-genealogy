@@ -16,11 +16,12 @@
       "whitfield-1850-household",
       "re-invoke-safe",
       "pre-1880-census-household",
-      "topical-fixture-required"
+      "topical-fixture-required",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute the next item on the research plan — the 1850 census search for Amos Whitfield in Pike County, Kentucky (pli_001).",
+    "delegation": "Execute the next item on the research plan — the 1850 census search for Amos Whitfield in Pike County, Kentucky (pli_001).\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "whitfield-1850-household"
   },
   "mcp_fixtures": [

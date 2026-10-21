@@ -9,11 +9,12 @@
       "search",
       "census",
       "namesake",
-      "subject-too-thin"
+      "subject-too-thin",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Run the 1900 census search in the plan for William Brown, and if you find him go ahead and extract the record - you don't need to check with me first.",
+    "delegation": "Run the 1900 census search for William Brown for plan item pli_001, and if you find him extract the record - the user said not to check back first.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "search-records-thin-subject"
   },
   "mcp_fixtures": [

@@ -477,8 +477,8 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
   so the overflow protection can't be forgotten by the caller). The staged file is
   already serialized to disk, so stripping cannot corrupt the sidecar; an un-staged
   (no `projectPath`) search still returns full gedcomx inline.
-- **`packages/engine/plugin/skills/search-records/SKILL.md` — required, not
-  optional.** Add `rank_search_matches` to `allowed-tools` and rewrite the triage
+- **`packages/engine/plugin/agents/search-records.md` — required, not
+  optional.** Add `rank_search_matches` to `tools:` and rewrite the triage
   step to the flow below. **Without this the tool is unreachable** — the
   compact-stub behavior is automatic on every staged `record_search`, but this
   rewrite is what invokes `rank_search_matches` on the staged results. Plan for:

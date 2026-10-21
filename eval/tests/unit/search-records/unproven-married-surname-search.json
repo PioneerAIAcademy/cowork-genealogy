@@ -9,11 +9,12 @@
       "search",
       "census",
       "married-name",
-      "unproven-surname-search"
+      "unproven-surname-search",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Run the next search in the plan for Juanita.",
+    "delegation": "Run the next search in the plan for Juanita.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "search-records-unproven-married-surname"
   },
   "mcp_fixtures": [

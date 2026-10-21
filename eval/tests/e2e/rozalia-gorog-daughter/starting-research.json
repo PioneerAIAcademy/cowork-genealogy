@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_rozalia_gorog_daughter",
+    "objective": "Who were the children of Rozália Görög (born about 1860, died 30 October 1916 at Kecskemét) and her husband János Tarjányi of Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary?",
+    "subject_person_ids": [
+      "L7KC-KQT"
+    ],
+    "status": "active",
+    "created": "2026-10-20",
+    "updated": "2026-10-20"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

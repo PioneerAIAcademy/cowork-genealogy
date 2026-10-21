@@ -755,6 +755,28 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // Cost-motivated conversion (issue #2243), not a hook route: the grant is the
+  // deleted skill's twelve `allowed-tools`. `Read` is for tree.gedcomx.json only (the subject's facts and subjectId, which no tool returns);
+  // the body forbids reading research.json and queries the plan through research_query. `research_append` writes
+  // plan-item status only (a lane in guard_project_files.py, a repo requirement).
+  "search-records.md": {
+    tools: [
+      "Read",
+      "catalog_search",
+      "extraction_append",
+      "rank_search_matches",
+      "record_read",
+      "record_search",
+      "research_append",
+      "research_log_append",
+      "research_query",
+      "same_person",
+      "source_attachments",
+      "wiki_read",
+      "wiki_search",
+    ],
+    denies: [],
+  },
   "search-images.md": {
     tools: [
       "Read",
@@ -927,7 +949,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     tools: [
       "Read",
       "person_read",
-      "person_search",
       "project_create",
       "research_append",
     ],

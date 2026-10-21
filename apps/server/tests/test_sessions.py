@@ -298,6 +298,42 @@ def test_connect_refuses_a_session_older_than_72h_without_waking_it(monkeypatch)
         client.delete(f"/api/sessions/{sid}")
 
 
+def test_connect_read_only_opens_an_old_session_without_refreshing_it(monkeypatch):
+    import app.sessions as sessions
+    from app.models import Project
+
+    def refused(*a, **kw):
+        raise AssertionError("a read-only connect must not refresh the sandbox")
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = _new_session_aged(client, 73)
+        monkeypatch.setattr(sessions.agent_secrets, "write_secrets", refused)
+        monkeypatch.setattr(sessions.fs_oauth, "merge_config", refused)
+        monkeypatch.setattr(sessions, "sync_fs_token", refused)
+        with Session(get_engine()) as s:
+            before = s.get(Project, sid).last_active
+        r = client.post(f"/api/sessions/{sid}/connect?readOnly=true")
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["readOnly"] is True
+        assert body["token"] and body["wssUrl"]
+        assert "more than 72 hours old" in body["message"]
+        with Session(get_engine()) as s:
+            assert s.get(Project, sid).last_active == before
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_connect_read_only_on_a_young_session_is_an_ordinary_connect():
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = _new_session_aged(client, 71)
+        r = client.post(f"/api/sessions/{sid}/connect?readOnly=true")
+        assert r.status_code == 200, r.text
+        assert "readOnly" not in r.json()
+        client.delete(f"/api/sessions/{sid}")
+
+
 def test_connect_accepts_a_session_younger_than_72h():
     with TestClient(app) as client:
         client.post("/auth/dev-login", json={"email": "tester@example.com"})
