@@ -317,7 +317,9 @@ candidate with no `birthDate`, or a subject with no usable year.
 
 The subject's year is the tree person's `Birth` fact, falling back to a `Baptism`
 or `Christening` fact (within a year or two of birth). The candidate's year is the
-first four-digit year in the staged row's `birthDate`. Both are read in code,
+first four-digit year in the staged row's `birthDate`, falling back to the date of a
+`Christening` or `Baptism` event when the row has no birth date (a christening-only
+record carries one, not the other). Both are read in code,
 because a model shown the two numbers has been measured explaining a five-year
 gap away as census-age estimation and adopting the record on its score.
 

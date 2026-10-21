@@ -923,7 +923,19 @@ function toStub(
   // Deterministic conflict flag: the score cannot say a record's birth year
   // disagrees with the subject's, and a model reading both numbers has been
   // measured explaining a five-year gap away. Flag it in code instead.
-  const candidateYear = yearFromText(r.birthDate);
+  // A christening-only record (most of an IGI batch) carries no birthDate, only
+  // a Christening or Baptism event, so fall back to that: it is within a year
+  // or two of birth, the same fallback the subject side uses.
+  const candidateYear =
+    yearFromText(r.birthDate) ??
+    yearFromText(
+      (r.events ?? []).find(
+        (e) =>
+          e &&
+          e.date &&
+          ["christening", "baptism"].includes(String(e.type).toLowerCase()),
+      )?.date,
+    );
   if (subjectYear !== undefined && candidateYear) {
     const gap = Number(candidateYear) - subjectYear;
     if (Math.abs(gap) > BIRTH_YEAR_CONFLICT_YEARS) {

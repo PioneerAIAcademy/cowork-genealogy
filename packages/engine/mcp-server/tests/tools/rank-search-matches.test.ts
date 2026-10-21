@@ -343,6 +343,23 @@ describe("rank_search_matches", () => {
       }
     });
 
+    it("reads a christening-only candidate's year from its Christening or Baptism event", async () => {
+      const chr = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" });
+      (chr as any).events = [{ type: "Christening", date: "5 Mar 1913" }];
+      const bap = candidate({ recordId: "ark:/61903/1:1:AAAA-AA2", primaryId: "p2" });
+      (bap as any).events = [{ type: "baptism", date: "1917" }];
+      const out = await rank([chr, bap]);
+      expect(byId(out, "ark:/61903/1:1:AAAA-AA1")).toMatchObject({ birthYearConflict: true, birthYearGap: -4 });
+      expect(byId(out, "ark:/61903/1:1:AAAA-AA2")).not.toHaveProperty("birthYearConflict");
+    });
+
+    it("prefers birthDate over a christening event when both are present", async () => {
+      const both = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1", birthDate: "1917" });
+      (both as any).events = [{ type: "Christening", date: "1900" }];
+      const out = await rank([both]);
+      expect(byId(out, "ark:/61903/1:1:AAAA-AA1")).not.toHaveProperty("birthYearConflict");
+    });
+
     it("never flags when the candidate has no birth year", async () => {
       const dateless = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" });
       const out = await rank([dateless]);
