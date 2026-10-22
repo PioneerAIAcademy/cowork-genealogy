@@ -40,6 +40,9 @@
 //   §5  the materialize copy gate (1d): each persona op of a committed
 //       materialize_facts call, judged by `personaTargetRefusal` on the
 //       run's final state with and without the rows.
+//   §6  tree writes (1e): each tree_edit or tree_correct op that cites a
+//       source ref onto a person's fact or name, judged on the project at
+//       the call with the shipped `namesakeVerdicts` and `refsReach`.
 //
 // Exits non-zero when a floor fails: a bracket that judged or refused nothing
 // would read as coverage and be none.
@@ -57,6 +60,8 @@ import {
   mergeNamesakeRefusals,
   namesakeRowListings,
   namesakeVerdicts,
+  refsReach,
+  type NamesakeVerdicts,
   RELATIONAL_FACT_TYPES,
   unexplainedMoveInvariants,
 } from "../src/tools/research-append.js";
@@ -911,6 +916,141 @@ function section5(states: FinalState[]): void {
   }
 }
 
+// ─── §6 tree writes (1e) ─────────────────────────────────────────────────────
+
+/** Whether a live probable or confident link from research source `src` to
+ *  `personId` passes the cap, judged with `verdicts`. */
+function sourcePasses(research: any, verdicts: NamesakeVerdicts | null, personId: string, src: string): boolean {
+  const sourceOf = new Map<string, unknown>(
+    ((research?.assertions ?? []) as any[]).filter((a) => typeof a?.id === "string").map((a) => [a.id, a.source_id]),
+  );
+  return ((research?.person_evidence ?? []) as any[]).some(
+    (e) =>
+      e &&
+      !e.superseded_by &&
+      e.person_id === personId &&
+      STRONG.has(e.confidence) &&
+      sourceOf.get(e.assertion_id) === src &&
+      verdicts?.verdicts.get(e.id)?.allowed === true,
+  );
+}
+
+function section6(lines: any[], states: FinalState[]): void {
+  console.log(
+    "\n§6  tree writes (1e: item 8 as ruled 2026-10-18, facts and names): each tree_edit add_fact or add_name and " +
+      "tree_correct update_fact or update_name onto a person, citing a source ref, in a call that landed, judged on " +
+      "the project as it stood at the call (as §3 builds it). A research source the op cites passes when a live " +
+      "probable or confident link from it to the person is allowed by the cap; a ref that reaches no research " +
+      "source is not judged. An op is refused when a source it cites does not pass, and a call when an op is. " +
+      "Ordering only: on the run's final state each source that failed has such a link, so the call passes once " +
+      "the link is written first. Faithful: runs whose person_evidence the replay rebuilds exactly. Final: every " +
+      "such call, unmeasured ones included, judged the same way on the run's final state, which counts links " +
+      "written after the call, so its refusals are a floor",
+  );
+  const byRun = new Map(states.map((s) => [`${s.slug}/run-${s.run}.json`, s]));
+  const faithful = new Set(lines.filter((l) => l.kind === "run" && l.fidelity).map((l) => l.run));
+  const stripped = new Set(lines.filter((l) => l.kind === "run" && l.captures_stripped).map((l) => l.run));
+  const tw = lines.filter((l) => l.kind === "treewrite" && byRun.has(l.run));
+  for (const bracket of BRACKETS) {
+    let calls = 0, judgedCalls = 0, refusedCalls = 0, orderingOnly = 0, faithfulJudged = 0, faithfulRefused = 0;
+    let judgedOps = 0, refusedOps = 0, unjudgedRefs = 0, unmeasured = 0, finalJudged = 0, finalRefused = 0;
+    const finalSubject: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
+    const finalWhy: Record<string, number> = {};
+    const finalFires: string[] = [];
+    const subject: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
+    const fires: string[] = [];
+    for (const l of tw) {
+      const s = byRun.get(l.run)!;
+      const holders = new Set(holdersIn(s, bracket));
+      const ops = (l.ops as any[]).filter((op) => holders.has(op?.personId));
+      if (ops.length === 0) continue;
+      calls += 1;
+      {
+        const fin = plantRows(s.research, [...holders].sort());
+        let judged = false;
+        let refused = false;
+        for (const op of ops) {
+          const p = String(op.personId);
+          const refs = (((op.fact ?? op.name)?.sources ?? []) as any[]).map((x) => x?.ref).filter((r): r is string => typeof r === "string" && r !== "");
+          const sources = refsReach(refs, fin).sourceIds;
+          if (sources.size === 0) continue;
+          judged = true;
+          const v = namesakeVerdicts(p, fin, s.finalTree, { startingPersonIds: s.startingIds });
+          const failedSrc = [...sources].filter((src) => !sourcePasses(fin, v, p, src));
+          if (failedSrc.length === 0) continue;
+          refused = true;
+          if (p === s.subject) finalSubject[labelOf(s.slug)] += 1;
+          for (const src of failedSrc) {
+            const sourceOf = new Map<string, unknown>(((fin.assertions ?? []) as any[]).map((a) => [a?.id, a?.source_id]));
+            const toP = ((fin.person_evidence ?? []) as any[]).filter(
+              (e) => e && !e.superseded_by && e.person_id === p && sourceOf.get(e.assertion_id) === src,
+            );
+            const why = toP.some((e) => STRONG.has(e.confidence)) ? "the cap refuses its links" : toP.length > 0 ? "speculative only" : "no link from it";
+            finalWhy[why] = (finalWhy[why] ?? 0) + 1;
+            finalFires.push(`${l.run} #${l.call} ${op.operation} ${p}${p === s.subject ? " (subject)" : ""} ${src}: ${why}`);
+          }
+        }
+        if (judged) finalJudged += 1;
+        if (refused) finalRefused += 1;
+      }
+      if (stripped.has(l.run) && (l.pe_before ?? []).length === 0) {
+        unmeasured += 1;
+        continue;
+      }
+      const w = mergeWorld(l, s);
+      const planted = plantRows(w.research, [...holders].sort());
+      const finalPlanted = plantRows(s.research, [...holders].sort());
+      let callJudged = false;
+      let callRefused = false;
+      let callOrderingOnly = true;
+      for (const op of ops) {
+        const p = String(op.personId);
+        const node = op.fact ?? op.name;
+        const refs = ((node?.sources ?? []) as any[]).map((x) => x?.ref).filter((r): r is string => typeof r === "string" && r !== "");
+        const sources = new Set<string>();
+        for (const ref of refs) {
+          const reached = refsReach([ref], planted).sourceIds;
+          if (reached.size === 0) unjudgedRefs += 1;
+          for (const src of reached) sources.add(src);
+        }
+        if (sources.size === 0) continue;
+        callJudged = true;
+        judgedOps += 1;
+        const verdicts = namesakeVerdicts(p, planted, w.tree, { startingPersonIds: w.startingIds });
+        const failed = [...sources].filter((src) => !sourcePasses(planted, verdicts, p, src));
+        if (failed.length === 0) continue;
+        refusedOps += 1;
+        callRefused = true;
+        const finalVerdicts = namesakeVerdicts(p, finalPlanted, s.finalTree, { startingPersonIds: s.startingIds });
+        if (!failed.every((src) => sourcePasses(finalPlanted, finalVerdicts, p, src))) callOrderingOnly = false;
+        fires.push(`${l.run} #${l.call} ${l.tool} ${op.operation} ${p}${p === s.subject ? " (subject)" : ""}: ${failed.join(", ")}`);
+        if (p === s.subject) subject[labelOf(s.slug)] += 1;
+      }
+      if (!callJudged) continue;
+      judgedCalls += 1;
+      if (faithful.has(l.run)) faithfulJudged += 1;
+      if (!callRefused) continue;
+      refusedCalls += 1;
+      if (faithful.has(l.run)) faithfulRefused += 1;
+      if (callOrderingOnly) orderingOnly += 1;
+    }
+    console.log(
+      `  ${bracket}: ${calls} calls cite onto a row holder (${unmeasured} unmeasured: captures stripped, no links ` +
+        `replayed); ${judgedCalls} judged, ${refusedCalls} refused, ${orderingOnly} of them ordering only; in faithful ` +
+        `runs ${faithfulRefused} of ${faithfulJudged}; ops ${refusedOps} of ${judgedOps} refused (onto the subject: ` +
+        `hint the subject's own ${subject.true}, a namesake's ${subject.false}, unlabelled ${subject.unlabelled}); ` +
+        `refs reaching no research source ${unjudgedRefs}; final: ${finalRefused} of ${finalJudged} calls refused ` +
+        `(ops onto the subject: hint the subject's own ${finalSubject.true}, a namesake's ${finalSubject.false}, ` +
+        `unlabelled ${finalSubject.unlabelled})`,
+    );
+    console.log(`      final refusals by source: ${Object.entries(finalWhy).map(([k, n]) => `${k} ${n}`).join("; ") || "none"}`);
+    for (const f of VERBOSE ? finalFires : []) console.log(`      final ${f}`);
+    for (const f of VERBOSE ? fires : fires.slice(0, 12)) console.log(`      ${f}`);
+    if (!VERBOSE && fires.length > 12) console.log(`      ... ${fires.length - 12} more (--verbose)`);
+    if (bracket === "every linked person") floor(judgedCalls > 0, "§6 judged no tree write");
+  }
+}
+
 // ─── main ───────────────────────────────────────────────────────────────────
 
 console.log(`measured at ${sha} (working tree of this checkout)\n`);
@@ -924,6 +1064,7 @@ section2(lines, states);
 section3(lines, states);
 section4(states);
 section5(states);
+section6(lines, states);
 if (floorsFailed > 0) {
   console.log(`\n${floorsFailed} floor(s) failed`);
   process.exit(1);

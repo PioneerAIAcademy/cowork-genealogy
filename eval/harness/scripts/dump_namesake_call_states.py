@@ -16,10 +16,15 @@ One JSON line per run, then one per call the measurement reads:
           applied: its ops, and person_evidence before and after it.
   merge   a merge_tree_persons call: its merges, its outcome, and
           person_evidence and assertion ids at the call.
+  treewrite  a tree_edit or tree_correct call that landed (a recorded success,
+          or no recorded outcome with ops that pass today's shape checks)
+          whose ops cite a record onto a person's fact or name: those ops,
+          its outcome, and person_evidence, assertion and source ids at the
+          call.
   shapes  the call shapes the namesake register rows quote, over every
           committed run whatever each call's outcome.
 
-`append` and `merge` lines also carry the relationships at the call (the
+`append`, `merge` and `treewrite` lines also carry the relationships at the call (the
 starting tree's, plus tree_edit add_relationship with the ref a
 `sourceAssertionId` resolves to, minus tree_correct
 relationship removes, before it; a tree write with no recorded outcome counts
@@ -84,6 +89,20 @@ def _bad_refs(node: dict) -> bool:
     if not isinstance(src, list) or not src:
         return True
     return any(not isinstance(s, dict) or not isinstance(s.get("ref"), str) or s.get("ref") == "" for s in src)
+
+
+CITING_OPS = {"tree_edit": ("add_fact", "add_name"), "tree_correct": ("update_fact", "update_name")}
+
+
+def _cites_onto_person(tool: str, op: dict) -> bool:
+    """An op that cites a source ref onto a person's fact or name: tree_edit's
+    add_fact and add_name, tree_correct's update_fact and update_name, on a
+    person rather than a relationship."""
+    if op.get("operation") not in CITING_OPS.get(tool, ()) or op.get("relationshipId"):
+        return False
+    node = op.get("fact") if op.get("operation") in ("add_fact", "update_fact") else op.get("name")
+    sources = node.get("sources") if isinstance(node, dict) else None
+    return isinstance(sources, list) and any(isinstance(x, dict) and isinstance(x.get("ref"), str) and x.get("ref") for x in sources)
 
 
 def _tree_write_landed(call: dict, ops: list) -> bool:
@@ -267,6 +286,20 @@ def dump(out_path: Path) -> collections.Counter:
                     ops = _ops(args)
                     if not _tree_write_landed(call, ops):
                         continue
+                    citing = [op for op in ops if _cites_onto_person(name, op)]
+                    if citing:
+                        before = replay(calls, starting, upto=i).research
+                        out.write(json.dumps({
+                            "kind": "treewrite", "run": run_ref, "slug": slug, "call": i, "tool": name,
+                            "outcome": _outcome(call), "ops": citing, "merges": [],
+                            "relationships": [dict(r) for r in rels],
+                            "starting_s_ids": sorted(start_s_ids),
+                            "source_ids": [x.get("id") for x in before.get("sources") or [] if isinstance(x, dict)],
+                            "assertion_ids": [x.get("id") for x in before.get("assertions") or [] if isinstance(x, dict)],
+                            "starting_ids": starting_ids,
+                            "pe_before": before.get("person_evidence") or [],
+                        }, ensure_ascii=False) + "\n")
+                        counts["tree write calls dumped"] += 1
                     for op in ops:
                         if name == "tree_edit" and op.get("operation") == "add_relationship" and isinstance(op.get("relationship"), dict):
                             rel = dict(op["relationship"])
