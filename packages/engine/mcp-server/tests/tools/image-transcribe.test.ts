@@ -705,7 +705,7 @@ describe("imageTranscribeTool — hard image cap (#3010, spec §5.8)", () => {
     expect(msg).toContain("partial");
     expect(msg).toContain("research_log_append");
     expect(msg).toContain("final summary");
-    expect(msg).toContain("run volume_bisect first, then read the narrowed range");
+    expect(msg).toContain("run volume_bisect first if you hold it, then read the narrowed range");
     expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
     expect(mockFetch).not.toHaveBeenCalled();
   });

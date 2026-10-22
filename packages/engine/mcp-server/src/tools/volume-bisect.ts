@@ -262,9 +262,12 @@ export async function volumeBisectTool(
     throw new Error(
       `"${groupName}" is not a sub-volume name. A bare image-group prefix names a whole ` +
         `film, which concatenates bound books — year is not monotone across it, so a ` +
-        `bisect converges on the wrong book with a plausible reading at every step. Call ` +
-        `volume_search for this film and pass one of its Natural Group names ` +
-        `(e.g. 004516861_001_M9S4-SQB).`,
+        `bisect converges on the wrong book with a plausible reading at every step. ` +
+        `(1) A split film: call volume_search for this film and pass one of its Natural ` +
+        `Group names (e.g. 004516861_001_M9S4-SQB). (2) You have an item number, e.g. a ` +
+        `citation "DGS 004528134, Item 5": call image_search with this film number and ` +
+        `item, and pass the imageGroupNumber it returns. (3) volume_search returned this ` +
+        `bare number itself: the film is not split, and volume_bisect cannot take it.`,
     );
   }
   if (

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { LOCAL } from "../../src/auth/principal.js";
 import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -3451,6 +3452,24 @@ describe("research_append (project singleton section)", () => {
     const research = await readResearch();
     expect(research.researcher_profile.experience_level).toBe("professional");
     expect(research.researcher_profile.narration_guidance).toBe("Terse; assume GPS fluency.");
+  });
+
+  it("writes a newly created researcher_profile right after project, ahead of the other sections", async () => {
+    fileStoreOnly("jsonb keeps no key order");
+    const r0 = baseResearch();
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: { experience_level: "novice" },
+    } as never);
+    expect(r.ok).toBe(true);
+    const keys = Object.keys(await readResearch());
+    expect(keys[0]).toBe("project");
+    expect(keys[1]).toBe("researcher_profile");
+    // Every other section keeps its relative order.
+    expect(keys.filter((k) => k !== "researcher_profile")).toEqual(Object.keys(r0));
   });
 
   it("lets a researcher correct their profile afterwards — it is not set-once", async () => {

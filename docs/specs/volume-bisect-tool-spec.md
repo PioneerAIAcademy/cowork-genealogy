@@ -65,8 +65,14 @@ concatenation of bound books — year is **not monotone** across it. Measured on
 group `004516861`: image 122 reads 1849 while image 257 reads 1685. A plain bisect
 for a year in the 1690s walks 322 → 161 → 80 → 40 → 20 → 10 and converges on the
 volume's cover, with a locally consistent reading at every step, so "terminate on a
-non-monotonic reading" does not catch it. The refusal names `volume_search` as the
-way to get a sub-volume name.
+non-monotonic reading" does not catch it. The refusal names all three cases, because
+`volume_search` alone loops for an unsplit film (it returns the film as one group
+whose name *is* the bare number) and `image_search`'s `item` route throws "not split
+into items" on that same film. (1) A split film: pass one of its Natural Group names
+from `volume_search`. (2) The caller holds an item number (a citation such as "DGS
+004528134, Item 5"): call `image_search` with the film number and `item`, and pass
+the `imageGroupNumber` it returns. (3) `volume_search` returned the bare number
+itself: the film is not split, and `volume_bisect` cannot take it.
 
 **`year: null` means probed, no year found.** It is not optional bookkeeping: the
 tool is stateless, so its next probe is a function of `(imageGroupNumber,

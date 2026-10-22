@@ -677,10 +677,18 @@ because it is what names the probe's `imageId`). The error names
 the group, the count, and the refused image's film-viewer link (`imageViewerUrl`),
 and tells the agent to log the browse as `partial` with `research_log_append` (the
 group, the pages read, what it was looking for), move to other routes, and name the
-unfinished browse in its final summary with that link. The `image_read` and
-`image_transcribe` refusal adds "run `volume_bisect` first, then read the narrowed
-range", so no agent or skill body has to change; `volume_bisect`'s refusal asks
-instead for the bracket reached so far. Re-reading any image already counted
+unfinished browse in its final summary with that link. It says nothing resets the
+cap, neither a new agent nor a new session, in one of two variants. When the count
+was read from the project's log (`persistPath` resolved), the refusal says the images
+"have already been read in this project" and that "the cap is per film, per project:
+every sub-volume of film <group> shares it". When the read carried no project, it says
+"in this server session, because this read carried no projectPath" and that a new
+agent does not reset it. The `image_read` and `image_transcribe` refusal adds that
+reads in other films are not affected and that, to find one year's page in another
+browse-only volume, the agent should "run `volume_bisect` first if you hold it, then
+read the narrowed range", so no agent or skill body has to change; it never tells the
+agent to hand back, since every agent is refused on that film. `volume_bisect`'s
+refusal asks instead for the bracket reached so far. Re-reading any image already counted
 never refuses and never advances the count; an image read by two tools counts once.
 
 **Where the count lives.** `src/utils/browse-budget.ts` (`checkImageBrowseCap`
@@ -721,7 +729,8 @@ a second 20 beside the project's. **The cost:** the desktop process outlives one
 project, so a no-path read in one project can be refused for pages an earlier project
 read in the same session (in memory only — a restart clears it). Accepted because the
 alternative under-counts every delegated read; the refusal says "this server session"
-for that case.
+for that case, never "this project", because it can be refusing pages another project
+read.
 
 **Known limitation — header-less http requests share a bucket.** A request with no
 `X-Genealogy-Project-Id` header binds an *unbound* store (no `projectId`, and its
