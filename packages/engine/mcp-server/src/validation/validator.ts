@@ -127,6 +127,19 @@ export const PROOF_TIER_RANK = new Map<string, number>([
   ["proved", 4],
 ]);
 
+// What a refused claim is told. `claims[]` holds ParentChild relationship claims
+// only, so a claim that cannot carry one (a fact claim in practice) is refused,
+// and the reported failure was the agent answering that refusal by dropping
+// `claims` altogether: a scalar-only summary has nothing to check `tier`
+// against. So the refusal says why, says what to keep, and states the rule that
+// is already enforced below (`tier` equals the strongest claim's tier, never
+// the weakest), which keeping the relationship claims keeps in force.
+const CLAIM_NOT_A_RELATIONSHIP =
+  "claims[] holds ParentChild relationship claims only. Fact claims are not supported yet " +
+  "(issues #3213 and #3032 own them): leave a claim of any other kind out and keep the ParentChild " +
+  "claims in claims[]. tier must equal the strongest proof_tier among the claims that remain, " +
+  "so it cannot rise above them.";
+
 const SELECTION_BASIS_VALUES = new Set([
   "timeline_gap", "unresolved_conflict", "fan_pivot", "hypothesis_test",
   "objective_decomposition", "new_evidence", "record_found_incidentally",
@@ -1727,8 +1740,14 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         // with a TypeError naming no field instead of a repairable error.
         if (!isObjectEntry(claim, clp, report)) continue;
         checkRequired(claim, [
-          "claim", "proof_tier", "supporting_assertion_ids", "relationship",
+          "claim", "proof_tier", "supporting_assertion_ids",
         ], clp, report, NULLABLE_FIELDS);
+        // Required like the three above, worded for what a missing one means.
+        if (!("relationship" in claim)) {
+          addError(report, clp, `missing required field 'relationship' — ${CLAIM_NOT_A_RELATIONSHIP}`);
+        } else if (claim.relationship === null) {
+          addError(report, clp, `required field 'relationship' is null — ${CLAIM_NOT_A_RELATIONSHIP}`);
+        }
         checkAllowedKeys(claim, RESEARCH_SHAPES.proof_claim, "proof_summaries claims", clp, report);
         // Optional here (unlike the scalar above) but still closed: an
         // out-of-enum value is rejected wherever it is written.
@@ -1746,14 +1765,14 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           const rank = PROOF_TIER_RANK.get(claim.proof_tier);
           if (rank !== undefined) maxClaimRank = Math.max(maxClaimRank, rank);
         }
-        if (claim && typeof claim === "object" && "relationship" in claim && claim.relationship) {
+        if (claim && typeof claim === "object" && "relationship" in claim && claim.relationship !== null) {
           const rel = claim.relationship;
           const relp = `${clp}/relationship`;
           if (!isObjectEntry(rel, relp, report)) continue;
           checkRequired(rel, ["type", "parent", "child"], relp, report, NULLABLE_FIELDS);
           checkAllowedKeys(rel, RESEARCH_SHAPES.proof_claim_relationship, "proof_claim relationship", relp, report);
           if (rel && typeof rel === "object" && "type" in rel && rel.type !== "ParentChild") {
-            addError(report, relp, `relationship.type must be 'ParentChild', got '${rel.type}'`);
+            addError(report, relp, `relationship.type must be 'ParentChild', got '${rel.type}' — ${CLAIM_NOT_A_RELATIONSHIP}`);
           }
         }
       }

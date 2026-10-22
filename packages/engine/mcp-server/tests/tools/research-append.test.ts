@@ -2981,6 +2981,127 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
+  // A claim is a ParentChild relationship; a fact claim has nowhere to put one.
+  // The reported failure: the refusal said only "missing required field
+  // 'relationship'", and the agent answered by dropping `claims` altogether, which
+  // left `tier` with nothing to be checked against. The refusal now says why and
+  // what to keep. What it refuses has not changed; only what it says.
+  describe("a claim that is not a ParentChild relationship says why", () => {
+    const treeWithParent = {
+      ...baseTree,
+      persons: [...baseTree.persons, { id: "I2", gender: "Male", names: [{ id: "N2", given: "Jim", surname: "Smith" }] }],
+    };
+    const relationshipClaim = (proofTier = "probable") => ({
+      claim: "parentage",
+      proof_tier: proofTier,
+      supporting_assertion_ids: ["a_001"],
+      relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+    });
+    const factClaim = (extra: Record<string, unknown> = {}) => ({
+      claim: "birthplace",
+      proof_tier: "probable",
+      supporting_assertion_ids: ["a_001"],
+      ...extra,
+    });
+    const appendWith = (claims: unknown[], tier = "probable") =>
+      researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: {
+          question_id: "q_001",
+          tier,
+          vehicle: "summary",
+          shortfall: "gap",
+          supporting_assertion_ids: ["a_001"],
+          resolved_conflict_ids: [],
+          exhaustive_search_summary: "Searched census + vitals",
+          narrative_markdown: "## Conclusion\n...",
+          claims,
+        },
+      } as never);
+    const refusal = async (claims: unknown[], tier?: string) => {
+      await writeProject(undefined, treeWithParent);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await appendWith(claims, tier);
+      expect(r.ok).toBe(false);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      return errorsOf(r) ?? [];
+    };
+    /** What every one of these refusals must carry. */
+    const carriesTheReason = (text: string) => {
+      expect(text).toContain("claims[] holds ParentChild relationship claims only");
+      expect(text).toContain("Fact claims are not supported yet");
+      expect(text).toContain("#3213");
+      expect(text).toContain("#3032");
+      expect(text).toContain("keep the ParentChild claims in claims[]");
+      expect(text).toContain("tier must equal the strongest proof_tier among the claims that remain");
+      // The rule is max, which the spec rejects "weakest" for by name, and the text
+      // must not teach that dropping `claims` gets past the check.
+      expect(text).not.toMatch(/weakest/);
+      expect(text).not.toMatch(/escap|bypass|skips? the (tier )?check/i);
+    };
+
+    it("a fact claim with no relationship: keeps the old opening words and adds the reason", async () => {
+      const errors = await refusal([relationshipClaim(), factClaim()]);
+      const line = errors.find((e) => e.includes("claims[1]"));
+      expect(line, errors.join("\n")).toBeDefined();
+      expect(line).toContain("missing required field 'relationship'");
+      carriesTheReason(line!);
+      // The valid claim beside it is not blamed.
+      expect(errors.some((e) => e.includes("claims[0]"))).toBe(false);
+    });
+
+    it("a fact claim whose relationship is null", async () => {
+      const errors = await refusal([factClaim({ relationship: null })]);
+      const line = errors.find((e) => e.includes("claims[0]"));
+      expect(line, errors.join("\n")).toBeDefined();
+      expect(line).toContain("required field 'relationship' is null");
+      carriesTheReason(line!);
+    });
+
+    it("a relationship of another type: keeps the old opening words and adds the reason", async () => {
+      const errors = await refusal([
+        factClaim({ relationship: { type: "Fact", parent: "I2", child: "I1" } }),
+        factClaim({ claim: "marriage", relationship: { type: "Couple", parent: "I2", child: "I1" } }),
+      ]);
+      const fact = errors.find((e) => e.includes("got 'Fact'"));
+      const couple = errors.find((e) => e.includes("got 'Couple'"));
+      expect(fact, errors.join("\n")).toBeDefined();
+      expect(couple, errors.join("\n")).toBeDefined();
+      expect(fact).toContain("relationship.type must be 'ParentChild'");
+      carriesTheReason(fact!);
+      carriesTheReason(couple!);
+    });
+
+    it.each([["an empty string", ""], ["false", false], ["zero", 0]])(
+      "a relationship that is %s is refused, not skipped",
+      async (_label, value) => {
+        // Both JSON Schemas declare it an object, but the guard here tested the
+        // value's truthiness, so each of these skipped every check and validated.
+        const errors = await refusal([factClaim({ relationship: value })]);
+        expect(errors.join("\n")).toMatch(/claims\[0\]\/relationship.*must be an object/);
+      },
+    );
+
+    it("a valid relationship claim is still accepted, and is persisted with its claims", async () => {
+      await writeProject(undefined, treeWithParent);
+      const r = await appendWith([relationshipClaim("probable")], "probable");
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect((await readResearch()).proof_summaries[0].claims).toEqual([relationshipClaim("probable")]);
+    });
+
+    it("keeping the relationship claims keeps tier checked against them, in the message the rule already had", async () => {
+      // The scalar is `probable`, the claim kept is `possible`: refused by the
+      // existing tier rule, whose wording is unchanged and carries no claim note.
+      const errors = await refusal([relationshipClaim("possible")], "probable");
+      const text = errors.join("\n");
+      expect(text).toContain("tier 'probable' does not match the stronger of claims[].proof_tier ('possible')");
+      expect(text).not.toContain("not supported yet");
+    });
+  });
+
   it("appends a proof_summary referencing an existing question", async () => {
     await writeProject();
     const r = await researchAppend({
