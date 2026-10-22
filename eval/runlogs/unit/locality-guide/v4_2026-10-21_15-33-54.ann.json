@@ -119,8 +119,8 @@
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The assessment identifies the place-resolution failures but does not adequately account for the possibility that they are tool or fixture limitations. It should focus on whether the skill appropriately adapted after the failures rather than treating the failed resolutions alone as incorrect tool usage."
+      "corrected_score": 3,
+      "comment": "Tool Arguments misgrade. The place fixtures for this scenario are intentional catch-alls that return no results by design; their empty responses do not demonstrate incorrect tool arguments. The skill's tool calls were well-formed and the naming behaviour the test targets passes (the judge says so in its own rationale). Correcting 1->3."
     },
     {
       "test_id": "ut_locality_guide_m4t",

@@ -20,7 +20,9 @@
     "scenario": null
   },
   "execution": {
-    "max_wall_clock_seconds": 480
+    "max_wall_clock_seconds": 480,
+    "max_tool_calls": 70,
+    "sdk_message_silence_seconds": 300
   },
   "judge_context": [
     "In this scenario the tools return NO Church of Ireland digitized volume for Billy, and a general Ireland Church Records statement that 'two-thirds [of Church of Ireland records] were destroyed in 1922' -- with no parish named and nothing specific to Billy.",

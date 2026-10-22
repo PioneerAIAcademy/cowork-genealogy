@@ -457,6 +457,132 @@ def test_timeout_records_the_turns_a_slow_run_did_produce(monkeypatch, tmp_path)
     assert result.usage.get("num_turns") == 4
 
 
+def _run_watchdog(monkeypatch, tmp_path, fake_query, **run_kwargs):
+    """Drive the REAL run_skill stream loop against a fake open_query.
+
+    Only the SDK boundary (open_query) and the mock-server factory are stubbed;
+    the per-message silence watchdog and the wall-clock wrapper are the real
+    code under test. Floats for the two timeout kwargs are intentional — each
+    flows straight into asyncio.wait_for, which takes a float — so sub-second
+    windows keep these tests fast and deterministic. No network, no paid API.
+    """
+    import asyncio
+
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(sr, "open_query", fake_query)
+    monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
+
+    return asyncio.run(
+        sr.run_skill(
+            user_message="x",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            **run_kwargs,
+        )
+    )
+
+
+def test_watchdog_emits_sdk_stream_silence_on_a_long_gap(monkeypatch, tmp_path):
+    """The silence watchdog fires `sdk_stream_silence` when the gap to the next
+    SDK message exceeds `sdk_message_silence_seconds`, even with wall-clock
+    budget to spare. Guards the emission the orchestrator retries on."""
+    import asyncio
+
+    state = {"closed": False}
+
+    async def one_then_hang(*, prompt, options):
+        try:
+            yield _fake_assistant_message("t0")
+            await asyncio.sleep(10)  # gap >> 0.2s window; cancelled by the watchdog
+        finally:
+            state["closed"] = True
+
+    result = _run_watchdog(
+        monkeypatch,
+        tmp_path,
+        one_then_hang,
+        sdk_message_silence_seconds=0.2,
+        max_wall_clock_seconds=5.0,
+    )
+    assert result.aborted_reason == "sdk_stream_silence"
+    # The one message that streamed before the stall is recorded, so the
+    # orchestrator's zero-progress guard can tell real work from a dead start.
+    assert result.usage.get("num_turns") == 1
+    assert "within" in (result.error or "")
+    assert state["closed"] is True  # close_query ran; the stream was closed
+
+
+def test_watchdog_rearms_while_messages_keep_arriving(monkeypatch, tmp_path):
+    """Each message resets the silence window: a run whose messages are spaced
+    UNDER the limit completes even though the TOTAL elapsed time exceeds it.
+    This is the direction a refactor to a since-start timer would break — it
+    would abort every long-but-healthy run as false silence."""
+    import asyncio
+
+    from claude_agent_sdk import ResultMessage
+
+    state = {"closed": False}
+
+    async def paced(*, prompt, options):
+        try:
+            for i in range(7):
+                await asyncio.sleep(0.1)  # 0.1s < 0.5s window; 7*0.1 = 0.7s > window
+                yield _fake_assistant_message(f"t{i}")
+            yield ResultMessage(
+                subtype="result",
+                duration_ms=1,
+                duration_api_ms=1,
+                is_error=False,
+                num_turns=7,
+                session_id="S1",
+            )
+        finally:
+            state["closed"] = True
+
+    result = _run_watchdog(
+        monkeypatch,
+        tmp_path,
+        paced,
+        sdk_message_silence_seconds=0.5,
+        max_wall_clock_seconds=10.0,
+    )
+    assert result.aborted_reason is None
+    assert result.usage.get("num_turns") == 7
+    assert state["closed"] is True
+
+
+def test_wall_clock_fires_before_the_silence_watchdog(monkeypatch, tmp_path):
+    """When the wall-clock cap is smaller than the silence window, the OUTER
+    wait_for wins the race: the abort is reported as `max_wall_clock_seconds`,
+    NOT `sdk_stream_silence`, and the stream is still closed cleanly."""
+    import asyncio
+
+    state = {"closed": False}
+
+    async def one_then_hang(*, prompt, options):
+        try:
+            yield _fake_assistant_message("t0")
+            await asyncio.sleep(10)
+        finally:
+            state["closed"] = True
+
+    result = _run_watchdog(
+        monkeypatch,
+        tmp_path,
+        one_then_hang,
+        max_wall_clock_seconds=0.2,
+        sdk_message_silence_seconds=5.0,
+    )
+    assert result.aborted_reason == "max_wall_clock_seconds"
+    assert result.aborted_reason != "sdk_stream_silence"
+    assert result.usage.get("num_turns") == 1
+    assert state["closed"] is True  # cancellation unwound and close_query ran
+
+
 # --- the ownership deny, driven through the real hook (issue #2022) ----------
 #
 # These replace a source-grep guard that was green under two mutations its own

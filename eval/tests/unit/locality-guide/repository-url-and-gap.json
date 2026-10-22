@@ -20,7 +20,9 @@
     "scenario": null
   },
   "execution": {
-    "max_wall_clock_seconds": 480
+    "max_wall_clock_seconds": 720,
+    "sdk_message_silence_seconds": 300,
+    "max_tool_calls": 70
   },
   "judge_context": [
     "The tool result (Ireland Church Records) lists the Ulster Historical Foundation at ancestryireland.com. No tool result returns the URL ulsterancestry.com.",
