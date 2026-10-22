@@ -2135,9 +2135,9 @@ options argument. The shape is never widened to fit them.
 **`uncertain` reaches the value.** The flag puts a `[?]` the agent may have left
 out into the stored assertion's `value`, once. For a name it is appended to the
 surname (the given name when there is none). For a fact it is appended to the
-assertion's value, which for a dated fact is the date, so the `date` and `place`
-fields stay clean and never carry the marker into the tree. The summary prints it
-once at the end of the fact, and the calendar flag and the census surname
+assertion's value, which for a dated fact is the date, so the flag's marker never
+reaches the `date` or `place`; a marker the agent typed into either stays where it
+typed it. The summary prints one marker per fact, however it arrived, and the calendar flag and the census surname
 comparison read the value without it. The `person_evidence` `confident`
 precondition above reads `value`, so a doubt the flag alone recorded would
 otherwise never reach it.
@@ -2211,9 +2211,10 @@ submitting family knows them firsthand, as with a surviving spouse's name.
   anniversary, and `principal` otherwise. A pair event (marriage, engagement,
   anniversary) beats a birth, whatever the order of the facts and however many
   principals there are, so a wedding notice that gives the groom's birthplace is
-  still a wedding. Among events of one kind, the one every principal carries
-  wins, and then the first listed. In a pair event a principal's couple partner
-  takes the other side even when the agent did not mark them principal.
+  still a wedding. Among pair events, the one every principal carries wins, and
+  then the first listed. When only one principal is marked, that principal's sole
+  couple partner takes the other side, unless the text names that partner's
+  relation (a late husband); a second couple partner never does.
 - **Other parties' roles** come from `statedRelation` through
   `roleFromRelationship` (son → `child_N`, daughter-in-law →
   `daughter_in_law_N`, executor, `heir_N`, `witness_N`). A party the text

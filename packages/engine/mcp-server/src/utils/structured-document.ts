@@ -361,12 +361,12 @@ export function documentToExtract(
   const events = eventRe ? principal?.facts.filter((f) => eventRe.test(f.type.toLowerCase())) ?? [] : [];
   // A pair event beats a birth, for any number of principals: a wedding notice
   // that also gives the groom's birthplace is not a birth announcement, so the
-  // order the agent sent the facts in does not decide it. Among events of one
-  // kind, the one every principal carries wins.
+  // order the agent sent the facts in does not decide it. Among pair events,
+  // the one every principal carries wins.
   const allCarry = (f: (typeof events)[number]) =>
     principals.slice(1).every((o) => o.facts.some((g) => g.type.toLowerCase() === f.type.toLowerCase()));
   const pairs = events.filter((f) => f.type.toLowerCase() !== "birth");
-  const eventFact = pairs.find(allCarry) ?? pairs[0] ?? events.find(allCarry) ?? events[0];
+  const eventFact = pairs.find(allCarry) ?? pairs[0] ?? events[0];
   const eventYear = yearOf(eventFact?.date);
 
   const hasWill =

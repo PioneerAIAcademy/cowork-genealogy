@@ -877,7 +877,12 @@ function classifyDocumentRow(
 
 /** Newspaper-announcement roles (genealogist ruling, 2026-09-30): the event's
  *  subject by event, and by sex where the event has two principals. */
-function newspaperRoles(ps: Party[], gx: SimplifiedGedcomX, eventType: string | undefined): Map<string, string> {
+function newspaperRoles(
+  ps: Party[],
+  gx: SimplifiedGedcomX,
+  eventType: string | undefined,
+  statedRelations?: Map<string, string>,
+): Map<string, string> {
   const principalRole =
     eventType === "birth" ? "child" : eventType === "marriage" || eventType === "engagement" || eventType === "anniversary" ? "__pair" : "principal";
   const roles = principalRoles(ps, gx, principalRole === "__pair" ? "principal" : principalRole);
@@ -885,13 +890,19 @@ function newspaperRoles(ps: Party[], gx: SimplifiedGedcomX, eventType: string | 
     const sides = new Map<string, string>();
     const { parentOf, couples } = edges(gx);
     const byId = new Map(ps.map((q) => [q.id, q]));
-    // The pair is the principals plus a principal's couple partner, so a bride
-    // the agent did not mark principal is still the bride.
+    // The pair is the principals. When the agent marked only one, that
+    // principal's sole couple partner completes it, so an unmarked bride is
+    // still the bride; a second partner, or one the text names otherwise (a
+    // late husband), is never the groom.
     const principalIds = new Set(ps.filter((q) => q.person.principal === true).map((q) => q.id));
     const pairIds = new Set(principalIds);
-    for (const [a, b] of couples) {
-      if (principalIds.has(a) && byId.has(b)) pairIds.add(b);
-      if (principalIds.has(b) && byId.has(a)) pairIds.add(a);
+    if (principalIds.size === 1) {
+      const [only] = principalIds;
+      const partners = couples
+        .filter(([a, b]) => a === only || b === only)
+        .map(([a, b]) => (a === only ? b : a))
+        .filter((id) => byId.has(id));
+      if (partners.length === 1 && !statedRelations?.get(partners[0])) pairIds.add(partners[0]);
     }
     for (const p of ps.filter((q) => pairIds.has(q.id))) {
       const female = genderOf(p.person) === "female";
@@ -1059,7 +1070,7 @@ export function extractRecord(
   } else if (recordType === "probate") {
     for (const [id, r] of principalRoles(ps, gx, mode?.hasWill ? "testator" : "decedent")) roles.set(id, r);
   } else if (recordType === "newspaper_announcement") {
-    for (const [id, r] of newspaperRoles(ps, gx, mode?.eventType)) roles.set(id, r);
+    for (const [id, r] of newspaperRoles(ps, gx, mode?.eventType, mode?.statedRelations)) roles.set(id, r);
   } else if (recordType === "land") {
     // `grantee` for the principal, `grantor_N` for the rest. The record is
     // indexed under the party ACQUIRING the land — a patentee, a homesteader —
@@ -1601,11 +1612,16 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
         // withheld here: this summary is relayed verbatim into the caller's
         // context, where it would read as an instruction rather than data.
         if (/\[suspicious text/i.test(a.informant_bias_notes ?? "")) return `${label} [withheld: suspicious text]`;
+        // A value that is just the date or place (with or without the marker
+        // withDoubt added) is not printed again; that marker prints once, at the
+        // end, unless the agent already typed one into the date or place.
         const bare = a.value.replace(TRAILING_DOUBT, "");
-        const own = bare && bare !== a.date && bare !== a.place ? ` ${bare}` : "";
+        const echo = bare === a.date || bare === a.place || a.value === a.date || a.value === a.place;
+        const own = a.value && !echo ? ` ${a.value}` : "";
+        const mark = bare !== a.value && echo && ![a.date, a.place].some((x) => x?.includes("[?]")) ? " [?]" : "";
         const when = a.date ? ` ${a.date}` : "";
         const where = a.place ? ` ${a.place}` : "";
-        let body = `${label}${own}${when}${where}${bare !== a.value ? " [?]" : ""}`;
+        let body = `${label}${own}${when}${where}${mark}`;
         if (a.record_basis === "inferred") body += " (computed)";
         if (/household member line/.test(a.informant_bias_notes ?? "")) {
           body += ` (per ${a.informant_bias_notes!.match(/stated on (\d+)/)?.[1] ?? "other"} household line(s))`;

@@ -587,6 +587,172 @@ describe("extraction_append: documents", () => {
     expect(await lead("capture:c-other", "Brennan", false)).toBe(true);
   });
 
+  describe("who the pair is in a wedding or anniversary notice", () => {
+    const person = (id: string, given: string, surname: string, gender: string, extra: any = {}) =>
+      ({ id, gender, names: [{ given, surname }], facts: [], ...extra });
+    const marriage = [{ type: "marriage", date: "15 October 1870" }];
+    const rolesOf = async (id: string, recordLabel: string, persons: any[], relationships: any[]) => {
+      const doc = {
+        recordType: "newspaper_announcement",
+        recordLabel,
+        documentForm: "verbatim_transcript",
+        source: { title: "Shenandoah Herald, 1870", repository: "Shenandoah Herald" },
+        persons,
+        relationships,
+      };
+      const r = await run([{ recordId: id, document: doc }]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      const roles: Record<string, string> = {};
+      for (const a of await assertionsFor(id)) if (a.fact_type === "name") roles[a.value] = a.record_role;
+      return roles;
+    };
+
+    it("a widow's late husband, linked as her couple, is not the groom, and his father is not the groom's", async () => {
+      const roles = await rolesOf("capture:widow", "wedding notice", [
+        person("g", "Patrick", "Flynn", "male", { principal: true, facts: marriage }),
+        person("b", "Mary", "Smith", "female", { principal: true, facts: marriage }),
+        person("h", "John", "Smith", "male"),
+        person("hf", "William", "Smith", "male"),
+      ], [
+        { type: "couple", person1: "g", person2: "b" },
+        { type: "couple", person1: "h", person2: "b" },
+        { type: "parent_child", person1: "hf", person2: "h" },
+      ]);
+      expect(roles["Patrick Flynn"]).toBe("groom");
+      expect(roles["Mary Smith"]).toBe("bride");
+      expect(roles["John Smith"]).not.toMatch(/groom|bride/);
+      expect(roles["William Smith"]).not.toMatch(/_of_groom|_of_bride/);
+    });
+
+    it("two unlinked principals: the bride's only couple partner, her late husband, is not the groom", async () => {
+      const roles = await rolesOf("capture:unlinked", "wedding notice", [
+        person("g", "Patrick", "Flynn", "male", { principal: true, facts: marriage }),
+        person("b", "Mary", "Smith", "female", { principal: true, facts: marriage }),
+        person("h", "John", "Smith", "male"),
+      ], [{ type: "couple", person1: "h", person2: "b" }]);
+      expect(roles["Patrick Flynn"]).toBe("groom");
+      expect(roles["John Smith"]).not.toBe("groom");
+    });
+
+    it("a widower linked to his late wife and his bride makes neither the bride", async () => {
+      const roles = await rolesOf("capture:widower", "wedding notice", [
+        person("g", "Patrick", "Flynn", "male", { principal: true, facts: marriage }),
+        person("w", "Ann", "Flynn", "female"),
+        person("b", "Mary", "Brennan", "female"),
+      ], [
+        { type: "couple", person1: "g", person2: "w" },
+        { type: "couple", person1: "g", person2: "b" },
+      ]);
+      expect(roles["Patrick Flynn"]).toBe("groom");
+      expect(roles["Ann Flynn"]).not.toBe("bride");
+      expect(roles["Mary Brennan"]).not.toBe("bride");
+    });
+
+    it("a sole couple partner the text names otherwise keeps that role", async () => {
+      const roles = await rolesOf("capture:late", "wedding notice", [
+        person("b", "Mary", "Smith", "female", { principal: true, facts: marriage }),
+        person("h", "John", "Smith", "male", { statedRelation: "late husband" }),
+      ], [{ type: "couple", person1: "h", person2: "b" }]);
+      expect(roles["Mary Smith"]).toBe("bride");
+      expect(roles["John Smith"]).toBe("late_husband_1");
+    });
+
+    it("an unmarked bride who is the groom's only couple partner is still the bride", async () => {
+      const roles = await rolesOf("capture:unmarked", "wedding notice", [
+        person("g", "Patrick", "Flynn", "male", { principal: true, facts: marriage }),
+        person("b", "Catherine", "Gallagher", "female"),
+      ], [{ type: "couple", person1: "g", person2: "b" }]);
+      expect(roles).toMatchObject({ "Patrick Flynn": "groom", "Catherine Gallagher": "bride" });
+    });
+
+    it("among pair events, the one every principal carries wins over one listed first", async () => {
+      const roles = await rolesOf("capture:shared-pair", "wedding notice", [
+        person("g", "Patrick", "Flynn", "male", { principal: true, facts: [{ type: "anniversary", date: "1895" }, ...marriage] }),
+        person("b", "Catherine", "Gallagher", "female", { principal: true, facts: marriage }),
+      ], [{ type: "couple", person1: "g", person2: "b" }]);
+      expect(roles).toMatchObject({ "Patrick Flynn": "groom", "Catherine Gallagher": "bride" });
+    });
+  });
+
+  describe("the summary prints one [?] per fact, however the marker arrived", () => {
+    const summaryOf = async (id: string, fact: any) => {
+      const doc = {
+        recordType: "christening",
+        documentForm: "verbatim_transcript",
+        source: { title: "Stavanger Domkirke, baptisms", repository: "Digitalarkivet" },
+        persons: [{ id: "c", principal: true, names: [{ given: "Kristian" }], facts: [fact] }],
+      };
+      const r = await run([{ recordId: id, document: doc }]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      return r.records[0].summary as string;
+    };
+    const markers = (line: string) => (line.match(/\[\?\]/g) ?? []).length;
+    const factLine = (summary: string, label: string) => summary.split("\n").find((l) => l.includes(`${label} `)) ?? "";
+
+    it("a place the agent marked", async () => {
+      const line = factLine(await summaryOf("capture:s1", { type: "residence", place: "Hetland [?]" }), "residence");
+      expect(line).toMatch(/residence Hetland \[\?\]/);
+      expect(markers(line)).toBe(1);
+    });
+
+    it("a date the agent marked, alone and beside a place", async () => {
+      const alone = factLine(await summaryOf("capture:s2", { type: "birth", date: "1790 [?]" }), "birth");
+      expect(alone).toMatch(/birth 1790 \[\?\]/);
+      expect(markers(alone)).toBe(1);
+      const beside = factLine(await summaryOf("capture:s3", { type: "birth", date: "1790 [?]", place: "Hetland" }), "birth");
+      expect(beside).toMatch(/birth 1790 \[\?\] Hetland/);
+      expect(markers(beside)).toBe(1);
+    });
+
+    it("an Old Style date the agent marked: one marker and one calendar flag", async () => {
+      const summary = await summaryOf("capture:s4", { type: "birth", date: "11 March 1717 [?]" });
+      expect(markers(factLine(summary, "birth"))).toBe(1);
+      expect(summary).toMatch(/^Calendar: 11 March 1717 may fall/m);
+    });
+
+    it("an uncertain fact whose place the agent marked", async () => {
+      const line = factLine(await summaryOf("capture:s5", { type: "birth", date: "1790", place: "Hetland [?]", uncertain: true }), "birth");
+      expect(line).toMatch(/birth 1790 Hetland \[\?\]/);
+      expect(markers(line)).toBe(1);
+    });
+
+    it("a flagged fact the agent left unmarked still reads with one marker", async () => {
+      const dated = factLine(await summaryOf("capture:s6", { type: "birth", date: "1790", place: "Hetland", uncertain: true }), "birth");
+      expect(dated).toMatch(/birth 1790 Hetland \[\?\]/);
+      expect(markers(dated)).toBe(1);
+      const valued = factLine(await summaryOf("capture:s7", { type: "occupation", value: "skipper", uncertain: true }), "occupation");
+      expect(valued).toMatch(/occupation skipper \[\?\]/);
+      expect(markers(valued)).toBe(1);
+    });
+  });
+
+  it("an uncertain fact whose value already carries [?] stores it once", async () => {
+    const doc = {
+      recordType: "christening",
+      documentForm: "verbatim_transcript",
+      source: { title: "Stavanger Domkirke, baptisms", repository: "Digitalarkivet" },
+      persons: [{ id: "c", principal: true, names: [{ given: "Kristian" }], facts: [{ type: "occupation", value: "skipper [?]", uncertain: true }] }],
+    };
+    expect((await run([{ recordId: "capture:once", document: doc }])).ok).toBe(true);
+    expect((await assertionsFor("capture:once")).find((a: any) => a.fact_type === "occupation").value).toBe("skipper [?]");
+  });
+
+  it("a census whose head's surname is doubted raises no different-surname lead", async () => {
+    const doc = {
+      recordType: "census",
+      documentForm: "verbatim_transcript",
+      census: { jurisdiction: "United States", year: 1880 },
+      source: { title: "1880 U.S. Census, Schuylkill County", repository: "NARA" },
+      persons: [
+        { id: "h", gender: "male", statedRelation: "head", names: [{ given: "Thomas", surname: "Flynn", uncertain: true }], facts: [] },
+        { id: "s", principal: true, gender: "male", statedRelation: "son", names: [{ given: "John", surname: "Flynn" }], facts: [] },
+      ],
+    };
+    const r = await run([{ recordId: "capture:head-doubted", document: doc }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.records[0].summary).not.toMatch(/different surname/);
+  });
+
   it("a birth announcement for twins, both principals, stays a birth", async () => {
     const doc = {
       recordType: "newspaper_announcement",
