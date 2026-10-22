@@ -528,6 +528,30 @@ def test_the_hook_denies_a_spawn_of_a_stubbed_agent(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize(
     "hook_input",
+    [
+        _spawn_input("locality-guide"),
+        {"tool_name": "Skill", "tool_input": {"skill": "locality-guide"}},
+    ],
+    ids=["agent_spawn", "skill_call"],
+)
+def test_the_hook_returns_the_stub_denial_unchanged(tmp_path, monkeypatch, hook_input):
+    """The text the model reads is built by `stub_denial`; the hook must pass it
+    through whole. Dropping `additionalContext` or rebuilding the deny would strip
+    the hand-back that keeps a router going after the stub (issue #3740), and
+    every other wiring test only checks the decision."""
+    from harness.skill_stubs import stub_denial
+
+    rows = {"locality-guide": "CANNED RESULT"}
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch,
+        [{"tool_name": "Skill", "tool_input": {"skill": "research"}}, hook_input],
+        stub_skills=rows, stub_agents=rows,
+    )
+    assert returns[1] == stub_denial("locality-guide", "CANNED RESULT")
+
+
+@pytest.mark.parametrize(
+    "hook_input",
     [_spawn_input("research-plan"), _spawn_input("locality-guide", agent_id="a1")],
     ids=["unstubbed_agent", "nested_spawn"],
 )
