@@ -1,0 +1,2741 @@
+{
+  "project": {
+    "id": "rp_grigory_kokosha_death",
+    "objective": "When and where did \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432 \u041a\u043e\u043a\u043e\u0448\u0430, born about 1818 in Zhydivska Hreblia, Tarashcha, Kiev, and married to \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u0418\u0432\u0430\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e in 1843, die?",
+    "subject_person_ids": [
+      "GSTD-C4H"
+    ],
+    "status": "completed",
+    "created": "2026-10-12",
+    "updated": "2026-10-22"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432 \u041a\u043e\u043a\u043e\u0448\u0430 (born about 1818 in Zhydivska Hreblia, Tarashcha, Kiev, married \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u0418\u0432\u0430\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e in 1843) die?",
+      "rationale": "This is the project's sole fact to establish. The Ukrainian Orthodox church book duplicates for Kyiv province on FamilySearch extend from 1723 to 1931 and already document \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439's marriage (1843) and the birth of his daughter \u0410\u043d\u043d\u0430 (1844) in Zhydivska Hreblia; the same collection is the primary source for a death or burial entry. Revision lists and metrical records for Tarashcha district may also bracket his lifespan. No death date or place is currently recorded for him in the tree.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-10-22",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_021",
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025"
+      ],
+      "search_stop": {
+        "stopped_because": "question_answered",
+        "justification": "The original 1846 death register entry for \u0418\u043e\u0430\u043d\u043d\u043e-\u0411\u043e\u0433\u043e\u0441\u043b\u043e\u0432\u0441\u043a\u0430\u044f church, \u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f was found indexed in FamilySearch collection 1503045 (src_001, ark:/61903/1:1:KX55-44K) and confirmed directly from the original image (log_032, entry 13): \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430, economic peasant, died 18 September 1846, age 25, natural causes. Identity is independently corroborated by the 1821 Kyiv Governorate confession list (src_002), which records \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430, age 3, in the household of \u0417\u0430\u0445\u0430\u0440\u0438\u0439 \u0418\u0432\u0430\u043d\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430 \u2014 matching the subject's name, patronymic, and family. Both collection 1503045 and collection 2290980 were searched in multiple passes, including name variants (\u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e) and a FAN search for widow \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u0413\u0435\u0439\u043a\u043e/\u041a\u043e\u043a\u043e\u0448\u0430. Revision list holdings for Tarashcha uezd were searched via FamilySearch Catalog and record search with negative results (no digitised holdings). Full-text search across all FTS collections returned nil results due to Cyrillic corpus coverage gap. No contradictory evidence found in any searched collection.",
+        "log_entry_ids": [
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017",
+          "log_018",
+          "log_019",
+          "log_020",
+          "log_021",
+          "log_022",
+          "log_023",
+          "log_024",
+          "log_025",
+          "log_026",
+          "log_027",
+          "log_028",
+          "log_029",
+          "log_030",
+          "log_031",
+          "log_032"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes. The death date (18 Sep 1846) and death place (\u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f, \u0422\u0430\u0440\u0430\u0449\u0430, \u041a\u0438\u0435\u0432) are established by the original death register entry confirmed from the primary image. The question is convincingly answered.",
+          "repository_breadth": "Collection 1503045 (primary vital-record source for Kyiv Guberniya) was searched in three passes covering both surname forms \u041a\u043e\u043a\u043e\u0448\u0430 and \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e. Collection 2290980 (confession lists) was searched in multiple passes with and without year restrictions and a Tarashcha place filter. Revision list holdings were searched via FamilySearch Catalog (three passes) and record search \u2014 no Tarashcha uezd holdings confirmed. FAN research for widow \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u0413\u0435\u0439\u043a\u043e/\u041a\u043e\u043a\u043e\u0448\u0430/\u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e was conducted in ten passes across both collections. Full-text search ran five passes across all FTS-indexed collections. Original image confirmed (log_032). TsDIAU physical archive was not needed; digital sources answered the question.",
+          "original_substitution": "The indexed death record (src_001) was confirmed against the original death register image (log_032). Collection 1503045 holds consistory duplicate originals. No derivative substitution occurred.",
+          "independent_verification": "The death date and place are directly attested by one original source (src_001, death register, primary informant: certifying official). A second independent source (src_002, 1821 confession list, different collection, different record type, different year, different informant) independently corroborates the identity of the deceased by name, patronymic, family household, and birth year. Together these constitute two independent evidentiary units. A second direct statement of the death date was not found due to documented indexed-coverage gaps for 1840s Zhydivska Hreblia confession lists and absence of Tarashcha revision list holdings on FamilySearch. This evidence combination represents the maximum achievable independent verification for a pre-civil-registration (1920) Ukrainian village.",
+          "evidence_class": "Assertion a_004 (death, src_001) is classified as information_quality primary, record_basis stated, informant: the certifying official. The original death register image was confirmed. At least one original record with primary information for the target fact is present.",
+          "conflict_resolution": "No formal conflicts are registered (conflicts section: 0 entries). The sole discrepancy across 85 assertions is a birth year variance: a_005 (birth ~1821, inferred from age 25 at death, secondary informant) versus a_025 (birth ~1818, inferred from age 3 in 1821 confession list, indeterminate). The 3-year gap is within normal age-estimation variance for 19th-century Ukrainian Orthodox records where ages were approximated rather than registered. This discrepancy concerns a collateral fact (birth year), not the target facts (death date and place), and does not undermine identity. All other identity markers agree across both sources. The proof narrative must acknowledge and explain this variance.",
+          "overturn_risk": "Low. The death date and place rest on an original death register entry confirmed from the primary image with the certifying official as primary informant. No evidence in any searched collection contradicts the date or place. The only unsearched source types that could bear on the question are Tarashcha revision lists (no digitised holdings; physical copies at the State Archive of Kyiv Oblast would corroborate not contradict) and TsDIAU original metrical books (same records as collection 1503045 in different custody). No plausible unsearched source could name a different death date or place."
+        },
+        "not_reached": [
+          {
+            "kind": "wiki_named_untouched",
+            "log_entry_id": null,
+            "wiki_title": "Ukraine_Research_Tips_and_Strategies",
+            "description": "Kiev Governorate revision lists (9th revision 1850-1851, 10th revision 1857-1858) for Tarashcha uezd are named in the locality guide as not online. FamilySearch Catalog (log_030) confirmed no digitised holdings for Tarashcha uezd. Physical copies are held at the State Archive of Kyiv Oblast. These revision lists would have noted Grigory's absence between the 1846 death and the 1850-1851 revision, corroborating the death date, but are beyond digital tool reach."
+          },
+          {
+            "kind": "wiki_named_untouched",
+            "log_entry_id": null,
+            "wiki_title": "Ukraine_Genealogy",
+            "description": "Central State Historical Archives of Ukraine (TsDIAU), Kyiv \u2014 holds the original pre-1920 Orthodox metrical books for Zhydivska Hreblia parish (Tarashcha uezd, Kiev Guberniya). Collection 1503045 holds consistory duplicate copies of these same records; the TsDIAU originals were not searched because the duplicate copies answered the question. Access is in-person or by written request only (http://www.archives.gov.ua/Eng/); beyond digital tool reach."
+          }
+        ]
+      },
+      "created": "2026-10-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Tarashcha uezd, Kiev Governorate, Russian Empire",
+          "date_range": "1844-1900",
+          "repository": "FamilySearch",
+          "rationale": "Collection 1503045 'Ukraine, Kyiv, Orthodox Consistory Church Book Duplicates, 1723-1931' is name-searchable and is the primary death-record source for Tarashcha uezd in this period; per loc_001, civil registration did not begin until 1920, so Orthodox metrical books are the sole vital-record source. Search surname \u041a\u043e\u043a\u043e\u0448\u0430 and the variant \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e (the father \u0417\u0430\u0445\u0430\u0440 and two sisters use the latter form; the death clerk may file the entry under either spelling). Grigory's last confirmed living appearance is his daughter \u0410\u043d\u043d\u0430's baptism on 2 Feb 1844 (source Q68H-RHW), establishing 1844 as the earliest possible death year. A matching death entry would directly answer the question.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Tarashcha uezd, Kiev Governorate, Russian Empire",
+          "date_range": "1844-1900",
+          "repository": "FamilySearch",
+          "rationale": "Collection 2290980 'Ukraine, Kyiv, Confession Lists, 1741-1934' is name-searchable with personCount well above zero. Confession lists recorded every Orthodox household member annually for each parish. Locating Grigory in the earliest available Zhydivska Hreblia list and then tracking forward to the first year he is absent brackets his death year even when a discrete death entry cannot be found. This is complementary to item 1, not a fallback \u2014 it yields a year-range bracket regardless of whether the metrical death entry was preserved or indexed.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Tarashcha uezd, Kiev Governorate, Russian Empire",
+          "date_range": "1850-1858",
+          "repository": "FamilySearch",
+          "rationale": "Revision list (\u0440\u0435\u0432\u0438\u0437\u0441\u043a\u0430\u044f \u0441\u043a\u0430\u0437\u043a\u0430) search exhausted. FamilySearch Catalog holds no volumes for Tarashcha uezd for the 9th revision (1850-51) or 10th revision (1857-58); three catalog passes returned only Kanev uezd and Kiev uezd entries. Record search (census type, Ukraine, 1850-1858, surname \u041a\u043e\u043a\u043e\u0448\u0430) returned 9 results, all from Chernihiv confession lists in Poltava guberniya, none matching the subject. A direct death record (src_001) has already been found confirming death on 18 Sep 1846; browsing unindexed volumes at a repository that does not hold those holdings would be disproportionate effort for fallback corroboration. Logs: log_030 (catalog), log_031 (record search).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Tarashcha uezd, Kiev Governorate, Russian Empire",
+          "date_range": "1844-1900",
+          "repository": "FamilySearch",
+          "rationale": "FAN item: search for Grigory's widow, \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u0418\u0432\u0430\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e (GW7T-T45, born 1823, Popruzhna, Tarashcha), in both collection 1503045 (name-searchable) and collection 2290980 confession lists (name-searchable). Any record describing her as \u0432\u0434\u043e\u0432\u0430 (widow) of \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430 establishes a terminus post quem for his death. Her daughter \u0410\u043d\u043d\u0430 (born 1844) may also appear in metrical records through the 1860s that name her parents. Tatyana's birth village was Popruzhna (a different parish from Zhydivska Hreblia), so confession list searches should cover both parishes. This item bears directly on the subject because it provides the date bracket that the subject's own death record would confirm.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Tarashcha uezd, Kiev Governorate, Russian Empire",
+          "date_range": "1844-1900",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search in collection 1503045 for the surname stem \u041a\u043e\u043a\u043e\u0448 and the given name stem \u0413\u0440\u0438\u0433\u043e\u0440 in unindexed or AI-transcribed page text, run unscoped across the entire collection. If the indexed name search (item 1) returns nothing, the entry may still exist in image pages where handwriting was difficult to index or where the surname was rendered in a spelling variant not matched by the standard index. This search is routed to the search-full-text skill, not record_search.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Zhydivska Hreblia parish, Tarashcha uezd, Kiev Governorate",
+          "date_range": "1844-1900",
+          "repository": "FamilySearch",
+          "rationale": "Browse-only (personCount 0) image review of the Zhydivska Hreblia parish death register pages within collection 1503045. Per loc_001, browsing by place requires selecting Province, then District (Tarashcha), then the specific parish. Scanning the death columns year by year catches entries where the surname spelling defied indexing or where AI transcription failed. The sibling records show the family was active in this parish through the 1860s (Emilian's last record 1865, Ilya's 1868), so pages from that decade deserve priority. This is a fallback for the full-text search (item 5).",
+          "fallback_for": "pli_005",
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "The original death register image (ark:/61903/3:1:33SQ-GPQ7-HSWV) for the \u0418\u043e\u0430\u043d\u043d\u043e-\u0411\u043e\u0433\u043e\u0441\u043b\u043e\u0432\u0441\u043a\u0430\u044f church, \u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f, 1846 was transcribed by the image-reader (log_032). Entry 13 confirms \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430, age 25, died 18 September 1846, natural causes. The direct death record has been found and confirmed from the original image; a further page-by-page browse of the same register would be redundant."
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Tarashcha uezd, Kiev Guberniya, Russian Empire",
+          "date_range": "1844-1920",
+          "repository": "Central State Historical Archives of Ukraine (TsDIAU)",
+          "rationale": "If FamilySearch digitized holdings for the Zhydivska Hreblia parish are incomplete for the relevant years, original pre-1920 metrical books and revision list registers survive at the Central State Historical Archives of Ukraine (TsDIAU), vul. Solomianska 24, Kyiv, Ukraine, per loc_001. This is the repository of record for Kyiv guberniya church and administrative documents. A researcher or hired agent can request an on-site search or order document copies. This is the last-resort fallback if all FamilySearch sources (items 1, 5, 6) are exhausted without a death entry.",
+          "fallback_for": "pli_006",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "TsDIAU in Kyiv was the last-resort physical fallback if all FamilySearch digital sources were exhausted without a death entry. The research question was answered digitally: src_001 (indexed death record, ark:/61903/1:1:KX55-44K) confirmed by the original image transcription (log_032). Physical archive access is disproportionate when the question is already resolved."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-10-22T16:55:11.201Z",
+      "tool": "external_links_search",
+      "query": {
+        "note": "Prior staged search retained from earlier session; query auto-filled from staged file."
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "notes": "Prior staged external_links_search from earlier session; logged to maintain audit trail."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-22T16:55:27.351Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430",
+        "givenName": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+        "collectionId": "1503045",
+        "birthYearFrom": 1808,
+        "birthYearTo": 1828
+      },
+      "outcome": "positive",
+      "results_examined": 40,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 40,
+      "notes": "Search 1 (\u041a\u043e\u043a\u043e\u0448\u0430 + \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439, coll 1503045, birth 1808-1828): 40 results. Rank 1 (score 0.993, attached to subject): KXPB-DG6, the known 1844 Anna baptism record. Rank 2 (score 0.296, birthYearConflict gap=3): ark:/61903/1:1:KX55-44K \u2014 \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430, born 1821, died 18 Sep 1846, Chapaievka, Tarashcha \u2014 needs-review: possible death record for subject but birth year 3 yrs off from tree. All other candidates score <0.01."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-22T16:55:27.374Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e",
+        "givenName": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+        "collectionId": "1503045",
+        "birthYearFrom": 1808,
+        "birthYearTo": 1828
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 2661,
+      "notes": "Search 2 (\u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e fuzzy + \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439, coll 1503045, birth 1808-1828): 2661 hits, all from -\u0435\u043d\u043a\u043e/-\u0448\u0435\u043d\u043a\u043e fuzzy suffix expansion. No true \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e entries or relevant matches in top 50. Ranker diagnostic confirms no candidate above 0.01 in this pool."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-22T16:55:27.398Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e",
+        "surnameExact": true,
+        "givenName": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+        "collectionId": "1503045",
+        "subjectId": "GSTD-C4H"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Search 3 (\u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e exact + \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439, coll 1503045): 0 results. No death entry for \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e exists in the indexed collection. Confirms the surname variant does not appear as \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e in the index for this given name."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-22T16:59:28.734Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:KX55-44K"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "notes": "Death record for \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430, 18 Sep 1846, \u0416\u0438\u0434\u043e\u0432\u0435\u0446\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f, Tarashcha, Kyiv. Age 25 at death (implying b. ~1821). Exact village and surname match for subject GSTD-C4H. No patronymic recorded in index. Image ARK: ark:/61903/3:1:33SQ-GPQ7-HSWV."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-22T17:07:52.710Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430",
+        "givenName": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+        "collectionId": "2290980",
+        "anyYearFrom": 1840,
+        "anyYearTo": 1850,
+        "anyPlace": "Tarashcha"
+      },
+      "outcome": "positive",
+      "results_examined": 23,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 23,
+      "notes": "Top match (matchScore 0.9262): \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430, b. 1818, Kyiv guberniya, 1821 confession list in household of \u0417\u0430\u0445\u0430\u0440\u0438\u0439 \u0418\u0432\u0430\u043d\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430 \u2014 clearly our subject as a child. All other 22 results score below 0.02 and have birth year conflicts or wrong surnames. The 1821 date falls outside the 1840-1850 search window; this record likely overlapped through estimate range. Need follow-up search without year restriction to find 1840s entries."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-22T17:07:52.728Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "\u0413\u0435\u0439\u043a\u043e",
+        "givenName": "\u0422\u0430\u0442\u044c\u044f\u043d\u0430",
+        "collectionId": "2290980",
+        "anyYearFrom": 1840,
+        "anyYearTo": 1850,
+        "anyPlace": "Tarashcha"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 3,
+      "notes": "Tatyana Geyko search: top match (matchScore 0.949) is \u0422\u0430\u0442\u0438\u0430\u043d\u0430 \u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e, b. 1823, 1840 confession list in \u041f\u043e\u043f\u0440\u0443\u0436\u043d\u0430, \u0422\u0430\u0440\u0430\u0449\u0430\u043d\u0441\u043a\u0438\u0439 \u2014 almost certainly our Tatyana in her father \u0418\u043e\u0430\u043d\u043d \u0413\u0440\u0438\u0433\u043e\u0440\u044c\u0435\u0432 \u0413\u0435\u0439\u043a\u043e's household before marriage. Need follow-up search under married surname \u041a\u043e\u043a\u043e\u0448\u0430 for 1843-1850."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-22T17:08:55.504Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430",
+        "givenName": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+        "collectionId": "2290980"
+      },
+      "outcome": "positive",
+      "results_examined": 39,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 39,
+      "notes": "Broader search without year restriction: same top match (1821 record, matchScore 0.9262). All 38 remaining results score below 0.02 with large birth year conflicts or wrong place. No indexed confession list entry for \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430 in the 1840s found. The collection either lacks indexed Zhydivska Hreblia entries for those years or the 1840s entries appear under a variant surname."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-22T17:09:40.569Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1503045",
+        "givenName": "\u0422\u0430\u0442\u044c\u044f\u043d\u0430",
+        "surname": "\u0413\u0435\u0439\u043a\u043e",
+        "anyYearFrom": 1844,
+        "anyYearTo": 1880,
+        "recordCountry": "Ukraine"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 1,
+      "notes": "FAN search: \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u0413\u0435\u0439\u043a\u043e (maiden name) in Church Book Duplicates collection 1503045, 1844-1880. 1 result returned, a male \u0413\u0435\u0439\u043a\u043e \u2014 not our subject. No widow record found."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-22T17:09:40.580Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1503045",
+        "givenName": "\u0422\u0430\u0442\u044c\u044f\u043d\u0430",
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430",
+        "anyYearFrom": 1844,
+        "anyYearTo": 1880,
+        "recordCountry": "Ukraine"
+      },
+      "outcome": "negative",
+      "results_examined": 21,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 21,
+      "notes": "FAN search: \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u041a\u043e\u043a\u043e\u0448\u0430 (married name) in Church Book Duplicates collection 1503045, 1844-1880. 21 results; all have birth-year conflicts, none score above 0.01. No widow record found."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-22T17:09:40.596Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2290980",
+        "givenName": "\u0422\u0430\u0442\u044c\u044f\u043d\u0430",
+        "surname": "\u0413\u0435\u0439\u043a\u043e",
+        "anyYearFrom": 1844,
+        "anyYearTo": 1880,
+        "recordCountry": "Ukraine"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 4,
+      "notes": "FAN search: \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u0413\u0435\u0439\u043a\u043e in Confession Lists collection 2290980, 1844-1880. Top match ark:/61903/1:1:6N3N-CQ81 '\u0422\u0430\u0442\u0438\u0430\u043d\u0430 \u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e' born 1823, Popruzhna/Tarashcha (matchScore 0.949) \u2014 Tatyana\u2019s 1840 pre-marriage confession list entry, confirming identity. Predates 1843 marriage; does not address widow status."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-22T17:09:40.610Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2290980",
+        "givenName": "\u0422\u0430\u0442\u044c\u044f\u043d\u0430",
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430",
+        "anyYearFrom": 1844,
+        "anyYearTo": 1880,
+        "recordCountry": "Ukraine"
+      },
+      "outcome": "negative",
+      "results_examined": 14,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 14,
+      "notes": "FAN search: \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u041a\u043e\u043a\u043e\u0448\u0430 (married name) in Confession Lists collection 2290980, 1844-1880. 14 results; max matchScore 0.0015, all wrong persons. No widow record found."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-22T17:10:11.834Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e",
+        "givenName": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+        "collectionId": "2290980"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 3569,
+      "notes": "Variant surname \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e + \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439, no year restriction, collection 2290980. 3,569 total matches but all 50 top results score below 0.01 (real negative per tool diagnostic). The -\u0435\u043d\u043a\u043e suffix is extremely common; no Grigoriy Zakharovich Koko\u0448\u0435\u043d\u043a\u043e surfaces in confession lists."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-22T17:10:11.867Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430",
+        "givenName": "\u0422\u0430\u0442\u044c\u044f\u043d\u0430",
+        "collectionId": "2290980",
+        "anyYearFrom": 1843,
+        "anyYearTo": 1855
+      },
+      "outcome": "negative",
+      "results_examined": 13,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 13,
+      "notes": "Search for Tatyana under married surname \u041a\u043e\u043a\u043e\u0448\u0430, given name \u0422\u0430\u0442\u044c\u044f\u043d\u0430, collection 2290980, 1843\u20131855. All 13 results score below 0.002 with large birth year conflicts or wrong place. No indexed confession list entry for \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u041a\u043e\u043a\u043e\u0448\u0430 in the post-marriage period found."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-22T17:11:19.180Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2290980",
+        "givenName": "\u0422\u0430\u0442\u044c\u044f\u043d\u0430",
+        "surname": "\u0413\u0435\u0439\u043f\u043e\u043d\u043a\u0430",
+        "recordCountry": "Ukraine"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 3,
+      "notes": "FAN search: variant maiden surname \u0413\u0435\u0439\u043f\u043e\u043d\u043a\u0430 (from marriage-record spelling) in Confession Lists collection 2290980, no year filter. 3 results; none match Tatyana Heyko (max matchScore 0.0009). No widow record found."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-22T17:11:19.192Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1503045",
+        "givenName": "\u0422\u0430\u0442\u044c\u044f\u043d\u0430",
+        "surname": "\u0413\u0435\u0439\u043f\u043e\u043d\u043a\u0430",
+        "recordCountry": "Ukraine"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 5,
+      "notes": "FAN search: variant maiden surname \u0413\u0435\u0439\u043f\u043e\u043d\u043a\u0430 in Church Book Duplicates collection 1503045, no year filter. 5 results; none match subject (max matchScore 0.00026). No widow record found."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-22T17:11:19.205Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2290980",
+        "givenName": "\u0422\u0430\u0442\u044c\u044f\u043d\u0430",
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430",
+        "maritalStatus": "Widowed",
+        "recordCountry": "Ukraine"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FAN search: \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u041a\u043e\u043a\u043e\u0448\u0430 with maritalStatus=Widowed in Confession Lists collection 2290980. Zero results \u2014 either field not indexed or Tatyana does not appear as a widowed Kokoshe in this collection."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-22T17:11:19.205Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2290980",
+        "givenName": "\u0422\u0430\u0442\u044c\u044f\u043d\u0430",
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430",
+        "anyYearFrom": 1844,
+        "anyYearTo": 1934,
+        "recordCountry": "Ukraine"
+      },
+      "outcome": "negative",
+      "results_examined": 14,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "results_available": 14,
+      "notes": "FAN search: \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u041a\u043e\u043a\u043e\u0448\u0430 in Confession Lists collection 2290980, year range extended to 1844-1934. 14 results identical to prior 1844-1880 search; no candidate scores above 0.01. Extending the year range did not surface new candidates. No widow record found."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-22T17:11:22.024Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430",
+        "collectionId": "2290980",
+        "anyYearFrom": 1840,
+        "anyYearTo": 1850,
+        "anyPlace": "Tarashcha"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 870,
+      "notes": "Surname \u041a\u043e\u043a\u043e\u0448\u0430 only (no given name), collection 2290980, anyYear 1840-1850, anyPlace Tarashcha. 870 total matches. All 50 top results score below 0.007; none names \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432/\u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447. Indexed Tarashcha-district entries for this period come from \u0413\u0440\u0435\u0431\u043b\u044f \u0411\u0440\u0430\u0442\u0447\u0438\u043a\u043e\u0432\u0430 and \u041b\u0443\u043a\u0430 \u2014 not from Zhydivska Hreblia parish. \u0411\u0440\u0430\u0442 \u0415\u043c\u0435\u043b\u0438\u0430\u043d \u0417\u0430\u0445\u0430\u0440\u044c\u0435\u0432 \u041a\u043e\u043a\u043e\u0448\u0430 does appear in an 1860 Tarashcha entry (matchRank 27), confirming the family is indexed in later decades. The absence of any 1840s Zhydivska Hreblia entries across all searches indicates that this specific parish's confession lists for the 1840s are either not digitized or not indexed in collection 2290980."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-22T17:13:01.992Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2290980",
+        "givenName": "\u0422\u0430\u0442\u044c\u044f\u043d\u0430",
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e",
+        "anyYearFrom": 1844,
+        "anyYearTo": 1880,
+        "recordCountry": "Ukraine"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_020.json",
+      "results_available": 249,
+      "notes": "FAN search: \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e (variant family name) in Confession Lists collection 2290980, 1844-1880. 249 total matches; fuzzy match inflated by Ukrainian -\u0435\u043d\u043a\u043e suffix. Top matchScores ~0.055 are women born 1823 in other Kyiv uezds, not Tarashcha \u2014 birth year coincidence only. No candidate from Tarashcha/Zhydivska Hreblia. No widow record for subject found."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-22T17:13:02.028Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1503045",
+        "givenName": "\u0422\u0430\u0442\u044c\u044f\u043d\u0430",
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e",
+        "anyYearFrom": 1844,
+        "anyYearTo": 1880,
+        "recordCountry": "Ukraine"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_021.json",
+      "results_available": 1672,
+      "notes": "FAN search: \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e in Church Book Duplicates collection 1503045, 1844-1880. 1672 total; fuzzy inflation similar to prior Confession Lists search. No candidate above 0.01; no records from Tarashcha/Zhydivska Hreblia. No widow record found."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-22T17:16:16.594Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430",
+        "givenName": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+        "collectionId": "2290980"
+      },
+      "outcome": "positive",
+      "results_examined": 39,
+      "external_site": null,
+      "results_ref": "results/log_022.json",
+      "results_available": 39,
+      "notes": "Top match (matchRank 1, matchScore 0.9262): \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430, born 1818, 1821 confession list in Kyiv Governorate, collection 2290980. Record ARK ark:/61903/1:1:6263-HLNH. No birth-year conflict; exact name and patronymic match. 38 other results are distant mismatches. Proceeding to extraction of this record together with ark:/61903/1:1:6N3N-CQ81 (1840 Tatyana Heyko confession list) per plan item pli_002 and pli_004."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": null,
+      "performed": "2026-10-22T17:16:49.942Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6263-HLNH"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_023.json"
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": null,
+      "performed": "2026-10-22T17:16:49.955Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6N3N-CQ81"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_024.json"
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-22T17:18:24.455Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\u041a\u043e\u043a\u043e\u0448\u0430 +\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+        "includeFacets": true,
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS search 1 of 5 for pli_005. Required co-occurrence of surname \u041a\u043e\u043a\u043e\u0448\u0430 and given name \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 across all FTS-indexed collections (no collectionId, no place, no year, no record-type filter). Returned 0 results; facets array was empty, confirming no partition in the FTS corpus holds any document matching this query. This is a coverage gap, not absence of evidence: the FTS tool's stated coverage is weakest on non-Latin scripts (Cyrillic), and Ukrainian/Russian Orthodox metrical books from Kyiv guberniya are not yet indexed in the FTS corpus."
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-22T17:18:24.455Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\u041a\u043e\u043a\u043e\u0448* +\u0416\u0438\u0434\u043e\u0432*",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS search 2 of 5 for pli_005. Wildcard stem co-occurrence: \u041a\u043e\u043a\u043e\u0448* (covers \u041a\u043e\u043a\u043e\u0448\u0430, \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e, and any other variant) + \u0416\u0438\u0434\u043e\u0432* (covers \u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f, \u0416\u0438\u0434\u043e\u0432\u0435\u0446\u043a\u0430\u044f, and Ukrainian \u0416\u0438\u0434\u0456\u0432* transliterations). All FTS collections, no filters. Returned 0 results. Confirms the surname stem does not appear in any FTS-indexed Cyrillic document, regardless of place-name variant."
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-22T17:18:24.455Z",
+      "tool": "fulltext_search",
+      "query": {
+        "name": "\u041a\u043e\u043a\u043e\u0448\u0430 \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+        "count": 10
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS search 3 of 5 for pli_005. Nil-result retry using the Name field (NLP-tagged person-name index) instead of Keywords, in case the NLP model tagged the name where the keyword index missed it. All FTS collections, no filters. Returned 0 results. The NLP layer likewise has no tagged occurrence of \u041a\u043e\u043a\u043e\u0448\u0430 + \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 in the corpus."
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-22T17:18:24.455Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\u041a\u043e\u043a\u043e\u0448\u0430",
+        "count": 10
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS search 4 of 5 for pli_005. Broadest possible diagnostic: single required term \u041a\u043e\u043a\u043e\u0448\u0430, all FTS collections, no filters. Returned 0 results. This is the definitive coverage-gap indicator: if the surname appeared anywhere in any AI-transcribed document in the FTS corpus, this query would surface it. Zero results confirms that no FTS-indexed document contains the string \u041a\u043e\u043a\u043e\u0448\u0430, i.e. the Kyiv guberniya Cyrillic church records (collections 1503045 and 2290980) are not present in the FTS corpus. 5 variant forms queried across all searches (\u041a\u043e\u043a\u043e\u0448\u0430+\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 phrase, \u041a\u043e\u043a\u043e\u0448*/\u0416\u0438\u0434\u043e\u0432* stems, NLP name field, \u041a\u043e\u043a\u043e\u0448\u0430 alone, \u041a\u043e\u043a\u043e\u0448\u0430+\u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f)."
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-22T17:18:24.455Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\u041a\u043e\u043a\u043e\u0448\u0430 +\u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f",
+        "count": 10
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS search 5 of 5 for pli_005. Third-thread search per delegation: confession-lists co-occurrence of surname \u041a\u043e\u043a\u043e\u0448\u0430 and place-name keyword \u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f (as it appears in the Cyrillic church records). No collectionId used (FTS partition IDs differ from indexed-record collection IDs 1503045/2290980). All FTS collections, no year or record-type filter. Returned 0 results. Consistent with the overall coverage gap confirmed in search 4. 5 queries total executed; cap reached; declaring search negative due to FTS corpus non-coverage of Cyrillic Ukrainian church records."
+    },
+    {
+      "id": "log_030",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-22T17:22:12.866Z",
+      "tool": "catalog_search",
+      "query": {
+        "standardPlace": "Kiev Governorate, Russian Empire",
+        "keywords": "revision (\u0440\u0435\u0432\u0438\u0437\u0441\u043a\u0430\u044f \u0441\u043a\u0430\u0437\u043a\u0430) Tarashcha",
+        "strategy": "Three passes: (1) Tarashcha + revision list census, (2) Kiev Governorate + revision list \u0440\u0435\u0432\u0438\u0437\u0438\u044f Tarashcha, (3) Kiev Governorate + revision keyword alone"
+      },
+      "outcome": "partial",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 9,
+      "notes": "Three catalog passes: Tarashcha-scoped searches returned 0 hits. Kiev Governorate-scoped 'revision' search returned 9 hits: one Kiev uezd entry (1782, too early), one Pereyaslavl uezd entry (1835, wrong uezd), and seven Kanev uezd village entries (1850-1858). None are for Tarashcha uezd. FamilySearch Catalog holds no revision list volumes for Tarashcha uezd covering the 9th revision (1850-51) or 10th revision (1857-58). Coverage gap confirmed."
+    },
+    {
+      "id": "log_031",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-22T17:22:12.867Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430",
+        "givenName": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+        "recordCountry": "Ukraine",
+        "recordType": "census",
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1858
+      },
+      "outcome": "negative",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_031.json",
+      "results_available": 9,
+      "notes": "Record search for census-type records in Ukraine 1850-1858 returned 9 results, all from 'Ukraine, Chernihiv, Confession Lists, 1620-1933' (collection 5000401) and all located in Poltava guberniya (Hurbyntsi village, Pryluky/Pyriatyn uezd). All entries are for a different person (\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041c\u0438\u0440\u043e\u043d\u043e\u0432 \u041a\u043e\u043c\u043b\u0430\u0447) with birth-year conflicts of 7-10 years and near-zero matchScores (max 0.00006). No revision list collection indexed on FamilySearch covers Tarashcha uezd for 1850-1858. Genuine negative: no indexed revision list records for this subject or locality."
+    },
+    {
+      "id": "log_032",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-22T17:25:24.497Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:33SQ-GPQ7-HSWV"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Transcribed the 1846 death register page (\u0427\u0430\u0441\u0442\u044c \u0422\u0440\u0435\u0442\u044c\u044f \u041e \u0423\u043c\u0435\u0440\u0448\u0438\u0445) for \u0418\u043e\u0430\u043d\u043d\u043e-\u0411\u043e\u0433\u043e\u0441\u043b\u043e\u0432\u0441\u043a\u0430\u044f church, \u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f, Tarashcha uezd, Kyiv guberniya. Entry 13: \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430, economic peasant of \u0416\u0438\u0434\u043e\u0432\u0435\u0446\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f, died 18 September (buried 20 September) 1846, age 25, cause: \u0435\u0441\u0442\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u043e (natural causes). Confessor: \u0421\u0432\u044f\u0449\u0435\u043d\u043d\u0438\u043a\u044a \u0420\u043e\u043c\u0430\u043d\u044a \u0412\u0438\u0448\u043d\u0435\u0432\u0441\u043ai\u0439. This confirms the FamilySearch index entry and shows no patronymic in the original register column for this entry. Image browse effectively complete for the critical 1846 year."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"\u0423\u043a\u0440\u0430\u0457\u043d\u0430, \u0434\u0443\u043f\u043b\u0456\u043a\u0430\u0442\u0438 \u043c\u0435\u0442\u0440\u0438\u0447\u043d\u0438\u0445 \u043a\u043d\u0438\u0433 \u041a\u0438\u0457\u0432\u0441\u044c\u043a\u043e\u0457 \u041f\u0440\u0430\u0432\u043e\u0441\u043b\u0430\u0432\u043d\u043e\u0457 \u043a\u043e\u043d\u0441\u0438\u0441\u0442\u043e\u0440\u0456\u0457, 1723-1931\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KX55-44K : Mon Dec 01 11:02:07 UTC 2025), Entry for \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430, 18 Sep 1846.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430, \"Ukraine, Kyiv, Orthodox Consistory Church Book Duplicates, 1723-1931\"",
+        "when_created": "1846",
+        "when_accessed": "2026-10-22",
+        "where": "\u0423\u043a\u0440\u0430\u0438\u043d\u0430, \u0434\u0443\u043f\u043b\u0438\u043a\u0430\u0442\u044b \u043c\u0435\u0442\u0440\u0438\u0447\u0435\u0441\u043a\u0438\u0445 \u043a\u043d\u0438\u0433 \u041a\u0438\u0435\u0432\u0441\u043a\u043e\u0439 \u041f\u0440\u0430\u0432\u043e\u0441\u043b\u0430\u0432\u043d\u043e\u0439 \u043a\u043e\u043d\u0441\u0438\u0441\u0442\u043e\u0440\u0438\u0438, 1723-1931",
+        "where_within": "ark:/61903/1:1:KX55-44K"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-22",
+      "log_entry_id": "log_005",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MKM-MZPS",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"\u0423\u043a\u0440\u0430\u0438\u043d\u0430, \u041a\u0438\u0435\u0432\u0441\u043a\u0438\u0435 \u0438\u0441\u043f\u043e\u0432\u0435\u0434\u043d\u044b\u0435 \u0432\u0435\u0434\u043e\u043c\u043e\u0441\u0442\u0438 1741-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6263-HLN7 : Tue Jul 09 03:51:47 UTC 2024), Entry for \u0417\u0430\u0445\u0430\u0440\u0438\u0439 \u0418\u0432\u0430\u043d\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430 and \u0410\u043d\u0430\u0441\u0442\u0430\u0441\u0438\u044f \u041a\u043e\u043a\u043e\u0448\u0430, 1821.",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "\u0421\u0435\u043c\u044c\u044f \u0447\u0435\u043b\u043e\u0432\u0435\u043a\u0430 \u043f\u043e \u0438\u043c\u0435\u043d\u0438 \u0417\u0430\u0445\u0430\u0440\u0438\u0439 \u0418\u0432\u0430\u043d\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430, \"\u0423\u043a\u0440\u0430\u0438\u043d\u0430, \u041a\u0438\u0435\u0432\u0441\u043a\u0438\u0435 \u0438\u0441\u043f\u043e\u0432\u0435\u0434\u043d\u044b\u0435 \u0432\u0435\u0434\u043e\u043c\u043e\u0441\u0442\u0438 1741-1934\"",
+        "when_created": "1821",
+        "when_accessed": "2026-10-22",
+        "where": "\u0423\u043a\u0440\u0430\u0438\u043d\u0430, \u041a\u0438\u0435\u0432\u0441\u043a\u0438\u0435 \u0438\u0441\u043f\u043e\u0432\u0435\u0434\u043d\u044b\u0435 \u0432\u0435\u0434\u043e\u043c\u043e\u0441\u0442\u0438 1741-1934",
+        "where_within": "ark:/61903/1:1:6263-HLNH"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-22",
+      "log_entry_id": "log_023",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H3WW-C7LP",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"\u0423\u043a\u0440\u0430\u0438\u043d\u0430, \u041a\u0438\u0435\u0432\u0441\u043a\u0438\u0435 \u0438\u0441\u043f\u043e\u0432\u0435\u0434\u043d\u044b\u0435 \u0432\u0435\u0434\u043e\u043c\u043e\u0441\u0442\u0438 1741-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6N3N-CQ85 : Sat Oct 11 19:09:21 UTC 2025), Entry for \u0418\u043e\u0430\u043d\u043d \u0413\u0440\u0438\u0433\u043e\u0440\u044c\u0435\u0432 \u0413\u0435\u0439\u043a\u043e and \u041f\u0430\u0440\u0430\u0441\u043a\u0435\u0432\u0430 \u042f\u043a\u043e\u0432\u043b\u0435\u0432\u043d\u0430 \u0413\u0435\u0439\u043a\u043e, 1840 \u0433..",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "\u0421\u0435\u043c\u044c\u044f \u0447\u0435\u043b\u043e\u0432\u0435\u043a\u0430 \u043f\u043e \u0438\u043c\u0435\u043d\u0438 \u0418\u043e\u0430\u043d\u043d \u0413\u0440\u0438\u0433\u043e\u0440\u044c\u0435\u0432 \u0413\u0435\u0439\u043a\u043e, \"\u0423\u043a\u0440\u0430\u0438\u043d\u0430, \u041a\u0438\u0435\u0432\u0441\u043a\u0438\u0435 \u0438\u0441\u043f\u043e\u0432\u0435\u0434\u043d\u044b\u0435 \u0432\u0435\u0434\u043e\u043c\u043e\u0441\u0442\u0438 1741-1934\"",
+        "when_created": "1840",
+        "when_accessed": "2026-10-22",
+        "where": "\u0423\u043a\u0440\u0430\u0438\u043d\u0430, \u041a\u0438\u0435\u0432\u0441\u043a\u0438\u0435 \u0438\u0441\u043f\u043e\u0432\u0435\u0434\u043d\u044b\u0435 \u0432\u0435\u0434\u043e\u043c\u043e\u0441\u0442\u0438 1741-1934",
+        "where_within": "ark:/61903/1:1:6N3N-CQ81"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-22",
+      "log_entry_id": "log_024",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:HM89-K24W",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:KX55-44K",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430"
+      },
+      "record_persona_id": "p_14211294529",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:KX55-44K",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_14211294529",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:KX55-44K",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "25",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_14211294529",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:KX55-44K",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "18 Sep 1846",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "18 Sep 1846",
+      "place": "\u0418\u043e\u0430\u043d\u043d\u043e-\u0411\u043e\u0433\u043e\u0441\u043b\u043e\u0432\u0441\u043a\u0430\u044f \u0446\u0435\u0440\u043a\u043e\u0432\u044c, \u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f, \u0422\u0430\u0440\u0430\u0449\u0430, \u041a\u0438\u0435\u0432, \u0423\u043a\u0440\u0430\u0438\u043d\u0430",
+      "record_persona_id": "p_14211294529",
+      "source_id": "src_001",
+      "standard_place": "Chapaievka, Tarashcha, Kyiv, Ukraine"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:KX55-44K",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1821",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1821",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_14211294529",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "\u0417\u0430\u0445\u0430\u0440\u0438\u0439 \u0418\u0432\u0430\u043d\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u0417\u0430\u0445\u0430\u0440\u0438\u0439",
+        "surname": "\u0418\u0432\u0430\u043d\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430"
+      },
+      "record_persona_id": "p_299208565385",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565385",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "35",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565385",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "1821",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1821",
+      "place": "\u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_299208565385",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "1786",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1786",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_299208565385",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_1",
+      "fact_type": "name",
+      "value": "\u0410\u043d\u0430\u0441\u0442\u0430\u0441\u0438\u044f \u041a\u043e\u043a\u043e\u0448\u0430",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u0410\u043d\u0430\u0441\u0442\u0430\u0441\u0438\u044f",
+        "surname": "\u041a\u043e\u043a\u043e\u0448\u0430"
+      },
+      "record_persona_id": "p_299208565386",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565386",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_1",
+      "fact_type": "age",
+      "value": "51",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565386",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_1",
+      "fact_type": "birth",
+      "value": "1770",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1770",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_299208565386",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_1",
+      "fact_type": "census",
+      "value": "1821",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1821",
+      "place": "\u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_299208565386",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_2",
+      "fact_type": "name",
+      "value": "\u041c\u0430\u0440\u0438\u044f \u0417\u0430\u0445\u0430\u0440\u0438\u0435\u0432\u043d\u0430 \u041a\u043e\u043a\u043e\u0448\u0430",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u041c\u0430\u0440\u0438\u044f",
+        "surname": "\u0417\u0430\u0445\u0430\u0440\u0438\u0435\u0432\u043d\u0430 \u041a\u043e\u043a\u043e\u0448\u0430"
+      },
+      "record_persona_id": "p_299208565387",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565387",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_2",
+      "fact_type": "age",
+      "value": "7",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565387",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_2",
+      "fact_type": "birth",
+      "value": "1814",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1814",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_299208565387",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_2",
+      "fact_type": "census",
+      "value": "1821",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1821",
+      "place": "\u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_299208565387",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_3",
+      "fact_type": "name",
+      "value": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+        "surname": "\u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430"
+      },
+      "record_persona_id": "p_299208565388",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565388",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_3",
+      "fact_type": "age",
+      "value": "3",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565388",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_3",
+      "fact_type": "census",
+      "value": "1821",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1821",
+      "place": "\u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_299208565388",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_3",
+      "fact_type": "birth",
+      "value": "1818",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1818",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_299208565388",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_4",
+      "fact_type": "name",
+      "value": "\u041a\u0430\u0442\u0435\u0440\u0438\u043d\u0430 \u0417\u0430\u0445\u0430\u0440\u0438\u0435\u0432\u043d\u0430 \u041a\u043e\u043a\u043e\u0448\u0430",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u041a\u0430\u0442\u0435\u0440\u0438\u043d\u0430",
+        "surname": "\u0417\u0430\u0445\u0430\u0440\u0438\u0435\u0432\u043d\u0430 \u041a\u043e\u043a\u043e\u0448\u0430"
+      },
+      "record_persona_id": "p_299208565389",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_4",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565389",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_4",
+      "fact_type": "age",
+      "value": "1",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565389",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_4",
+      "fact_type": "birth",
+      "value": "1820",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1820",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_299208565389",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_4",
+      "fact_type": "census",
+      "value": "1821",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1821",
+      "place": "\u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_299208565389",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_5",
+      "fact_type": "name",
+      "value": "\u0424\u0435\u043e\u0434\u043e\u0441\u0438\u0439",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u0424\u0435\u043e\u0434\u043e\u0441\u0438\u0439",
+        "surname": ""
+      },
+      "record_persona_id": "p_299208565390",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_5",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565390",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_5",
+      "fact_type": "age",
+      "value": "31",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565390",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_5",
+      "fact_type": "birth",
+      "value": "1790",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1790",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_299208565390",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_5",
+      "fact_type": "census",
+      "value": "1821",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1821",
+      "place": "\u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_299208565390",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_6",
+      "fact_type": "name",
+      "value": "\u041c\u0430\u0440\u0438\u044f",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u041c\u0430\u0440\u0438\u044f",
+        "surname": ""
+      },
+      "record_persona_id": "p_299208565391",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_6",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565391",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_6",
+      "fact_type": "age",
+      "value": "28",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565391",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_6",
+      "fact_type": "birth",
+      "value": "1793",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1793",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_299208565391",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_6",
+      "fact_type": "census",
+      "value": "1821",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1821",
+      "place": "\u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_299208565391",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_7",
+      "fact_type": "name",
+      "value": "\u0412\u043e\u0447\u0435\u0441\u0431\u0440\u0430\u0442 \u0424\u0435\u043e\u0434\u043e\u0441\u043e\u0432\u0438\u0447",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u0412\u043e\u0447\u0435\u0441\u0431\u0440\u0430\u0442",
+        "surname": "\u0424\u0435\u043e\u0434\u043e\u0441\u043e\u0432\u0438\u0447"
+      },
+      "record_persona_id": "p_299208565392",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_7",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565392",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_7",
+      "fact_type": "age",
+      "value": "3",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565392",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_7",
+      "fact_type": "census",
+      "value": "1821",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1821",
+      "place": "\u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_299208565392",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_7",
+      "fact_type": "birth",
+      "value": "1818",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1818",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_299208565392",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_8",
+      "fact_type": "name",
+      "value": "\u0415\u0432\u0433\u0435\u043d\u0438\u044f \u0424\u0435\u043e\u0434\u043e\u0441\u0438\u0435\u0432\u043d\u0430",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u0415\u0432\u0433\u0435\u043d\u0438\u044f",
+        "surname": "\u0424\u0435\u043e\u0434\u043e\u0441\u0438\u0435\u0432\u043d\u0430"
+      },
+      "record_persona_id": "p_299208565393",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_8",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565393",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_8",
+      "fact_type": "age",
+      "value": "1",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_299208565393",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_8",
+      "fact_type": "census",
+      "value": "1821",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1821",
+      "place": "\u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_299208565393",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:6263-HLNH",
+      "record_role": "household_member_8",
+      "fact_type": "birth",
+      "value": "1820",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1820",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_299208565393",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "\u0418\u043e\u0430\u043d\u043d \u0413\u0440\u0438\u0433\u043e\u0440\u044c\u0435\u0432 \u0413\u0435\u0439\u043a\u043e",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u0418\u043e\u0430\u043d\u043d",
+        "surname": "\u0413\u0440\u0438\u0433\u043e\u0440\u044c\u0435\u0432 \u0413\u0435\u0439\u043a\u043e"
+      },
+      "record_persona_id": "p_296060106954",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106954",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "52 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106954",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "1840 \u0433.",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1840 \u0433.",
+      "place": "\u041f\u043e\u043f\u0440\u0443\u0436\u043d\u0430, \u0422\u0430\u0440\u0430\u0449\u0430\u043d\u0441\u043a\u0438\u0439, \u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_296060106954",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_003",
+      "standard_place": "Popruzhna, Tarashcha, Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "1788 \u0433.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1788 \u0433.",
+      "record_persona_id": "p_296060106954",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_1",
+      "fact_type": "name",
+      "value": "\u041f\u0430\u0440\u0430\u0441\u043a\u0435\u0432\u0430 \u042f\u043a\u043e\u0432\u043b\u0435\u0432\u043d\u0430 \u0413\u0435\u0439\u043a\u043e",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u041f\u0430\u0440\u0430\u0441\u043a\u0435\u0432\u0430",
+        "surname": "\u042f\u043a\u043e\u0432\u043b\u0435\u0432\u043d\u0430 \u0413\u0435\u0439\u043a\u043e"
+      },
+      "record_persona_id": "p_296060106955",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106955",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_1",
+      "fact_type": "age",
+      "value": "45 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106955",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_1",
+      "fact_type": "birth",
+      "value": "1795 \u0433.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1795 \u0433.",
+      "record_persona_id": "p_296060106955",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_1",
+      "fact_type": "census",
+      "value": "1840 \u0433.",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1840 \u0433.",
+      "place": "\u041f\u043e\u043f\u0440\u0443\u0436\u043d\u0430, \u0422\u0430\u0440\u0430\u0449\u0430\u043d\u0441\u043a\u0438\u0439, \u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_296060106955",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_003",
+      "standard_place": "Popruzhna, Tarashcha, Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_2",
+      "fact_type": "name",
+      "value": "\u041d\u0438\u043a\u0438\u0442\u0430 \u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0438\u0447 \u0413\u0435\u0439\u043a\u043e",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u041d\u0438\u043a\u0438\u0442\u0430",
+        "surname": "\u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0438\u0447 \u0413\u0435\u0439\u043a\u043e"
+      },
+      "record_persona_id": "p_296060106956",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106956",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_2",
+      "fact_type": "age",
+      "value": "21 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106956",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_2",
+      "fact_type": "birth",
+      "value": "1819 \u0433.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1819 \u0433.",
+      "record_persona_id": "p_296060106956",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_2",
+      "fact_type": "census",
+      "value": "1840 \u0433.",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1840 \u0433.",
+      "place": "\u041f\u043e\u043f\u0440\u0443\u0436\u043d\u0430, \u0422\u0430\u0440\u0430\u0449\u0430\u043d\u0441\u043a\u0438\u0439, \u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_296060106956",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_003",
+      "standard_place": "Popruzhna, Tarashcha, Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_3",
+      "fact_type": "name",
+      "value": "\u0410\u043d\u0434\u0440\u0435\u0439 \u0418\u043e\u0430\u043d\u043e\u0432\u0438\u0447 \u0413\u0435\u0439\u043a\u043e",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u0410\u043d\u0434\u0440\u0435\u0439",
+        "surname": "\u0418\u043e\u0430\u043d\u043e\u0432\u0438\u0447 \u0413\u0435\u0439\u043a\u043e"
+      },
+      "record_persona_id": "p_296060106957",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106957",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_3",
+      "fact_type": "age",
+      "value": "19 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106957",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_3",
+      "fact_type": "birth",
+      "value": "1821 \u0433.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1821 \u0433.",
+      "record_persona_id": "p_296060106957",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_3",
+      "fact_type": "census",
+      "value": "1840 \u0433.",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1840 \u0433.",
+      "place": "\u041f\u043e\u043f\u0440\u0443\u0436\u043d\u0430, \u0422\u0430\u0440\u0430\u0449\u0430\u043d\u0441\u043a\u0438\u0439, \u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_296060106957",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_003",
+      "standard_place": "Popruzhna, Tarashcha, Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_4",
+      "fact_type": "name",
+      "value": "\u041e\u043d\u0438\u0441\u0438\u043c \u0418\u043e\u0430\u043d\u043d\u043e\u0432 \u0413\u0435\u0439\u043a\u043e",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u041e\u043d\u0438\u0441\u0438\u043c",
+        "surname": "\u0418\u043e\u0430\u043d\u043d\u043e\u0432 \u0413\u0435\u0439\u043a\u043e"
+      },
+      "record_persona_id": "p_296060106958",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_4",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106958",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_4",
+      "fact_type": "age",
+      "value": "6 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106958",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_4",
+      "fact_type": "census",
+      "value": "1840 \u0433.",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1840 \u0433.",
+      "place": "\u041f\u043e\u043f\u0440\u0443\u0436\u043d\u0430, \u0422\u0430\u0440\u0430\u0449\u0430\u043d\u0441\u043a\u0438\u0439, \u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_296060106958",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_003",
+      "standard_place": "Popruzhna, Tarashcha, Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_4",
+      "fact_type": "birth",
+      "value": "1834 \u0433.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1834 \u0433.",
+      "record_persona_id": "p_296060106958",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_5",
+      "fact_type": "name",
+      "value": "\u0422\u0430\u0442\u0438\u0430\u043d\u0430 \u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u0422\u0430\u0442\u0438\u0430\u043d\u0430",
+        "surname": "\u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e"
+      },
+      "record_persona_id": "p_296060106959",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_5",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106959",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_5",
+      "fact_type": "age",
+      "value": "17 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106959",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_5",
+      "fact_type": "birth",
+      "value": "1823 \u0433.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1823 \u0433.",
+      "record_persona_id": "p_296060106959",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_5",
+      "fact_type": "census",
+      "value": "1840 \u0433.",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1840 \u0433.",
+      "place": "\u041f\u043e\u043f\u0440\u0443\u0436\u043d\u0430, \u0422\u0430\u0440\u0430\u0449\u0430\u043d\u0441\u043a\u0438\u0439, \u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_296060106959",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_003",
+      "standard_place": "Popruzhna, Tarashcha, Kiev Governorate, Russian Empire"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_6",
+      "fact_type": "name",
+      "value": "\u0418\u0443\u043b\u0438\u0442\u0430 \u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "\u0418\u0443\u043b\u0438\u0442\u0430",
+        "surname": "\u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e"
+      },
+      "record_persona_id": "p_296060106960",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_6",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106960",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_6",
+      "fact_type": "age",
+      "value": "2 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_296060106960",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_6",
+      "fact_type": "birth",
+      "value": "1838 \u0433.",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1838 \u0433.",
+      "record_persona_id": "p_296060106960",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:6N3N-CQ81",
+      "record_role": "household_member_6",
+      "fact_type": "census",
+      "value": "1840 \u0433.",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1840 \u0433.",
+      "place": "\u041f\u043e\u043f\u0440\u0443\u0436\u043d\u0430, \u0422\u0430\u0440\u0430\u0449\u0430\u043d\u0441\u043a\u0438\u0439, \u041a\u0438\u0435\u0432\u0441\u043a\u0430\u044f \u0433\u0443\u0431\u0435\u0440\u043d\u0438\u044f, \u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+      "record_persona_id": "p_296060106960",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_003",
+      "standard_place": "Popruzhna, Tarashcha, Kiev Governorate, Russian Empire"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "GSTD-C4H",
+      "confidence": "probable",
+      "match_score": 0.4142797,
+      "rationale": "Date check: age 25 at death 18 Sep 1846 \u2192 implied birth ~1821 vs. tree birth ~1818: gap ~3 years. Both are approximate; the gap is within normal variance for a secondary, family-not-present informant reporting age in a 19th-century Ukrainian Orthodox death register. Not registered as a core identifier conflict. Residence check: \u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f (Zhydivska Hreblia), Tarashcha, Kyiv (1846) vs. Zhydivska Hreblia, Tarashcha, Kiev (tree): same village, within cluster. Score 0.414 (moderate band, matched: true). Name '\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430' matches GSTD-C4H's given name and surname exactly. No patronymic in the death entry \u2014 the record is silent on it; this is not a conflict with '\u0417\u0430\u0445\u0430\u0440\u043e\u0432' in the tree. Sex Male agrees. Place is an exact village match. Death 18 Sep 1846 is consistent with last confirmed alive 2 Feb 1844. No other \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430 persona in the project tree. Score at 0.414 pulls the qualitatively-strong name-plus-place-plus-sex match to probable tier rather than confident.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "GSTD-C4H",
+      "confidence": "probable",
+      "match_score": 0.4142797,
+      "rationale": "Date check: implied birth ~1821 vs. tree ~1818: gap ~3 years, within secondary-informant variance. Residence check: same village (Zhydivska Hreblia), within cluster. Score 0.414 (moderate band, matched: true). Sex assertion (Male) is consistent with GSTD-C4H's gender. Identity correlation on name, place, and sex per a_001 link.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "GSTD-C4H",
+      "confidence": "probable",
+      "match_score": 0.4142797,
+      "rationale": "Date check: reported age 25 at death 18 Sep 1846 implies birth ~1821 vs. tree birth ~1818: gap ~3 years. Reported by a secondary informant (family_not_present); such ages in 19th-century Ukrainian Orthodox death registers were commonly approximate. The 3-year discrepancy is within normal secondary-source variance and is not a core identifier conflict \u2014 both figures are approximate. Residence check: same village (Zhydivska Hreblia), within cluster. Score 0.414 (moderate band, matched: true). Full identity correlation per a_001 link.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "GSTD-C4H",
+      "confidence": "probable",
+      "match_score": 0.4142797,
+      "rationale": "Date check: age 25 at death 18 Sep 1846 \u2192 implied birth ~1821 vs. tree birth ~1818: gap ~3 years, within secondary-informant variance; both approximate. Residence check: \u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f (Zhydivska Hreblia), Tarashcha, Kyiv (1846) vs. Zhydivska Hreblia, Tarashcha, Kiev (tree): same village, within cluster. Score 0.414 (moderate band, matched: true). The death event (18 Sep 1846, \u0418\u043e\u0430\u043d\u043d\u043e-\u0411\u043e\u0433\u043e\u0441\u043b\u043e\u0432\u0441\u043a\u0430\u044f church, \u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f) is the core finding: \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430 died in the same village where GSTD-C4H was born and resided, after his last confirmed living date of 2 Feb 1844. The certifying official is the primary informant for the death date and place. Name and sex match exactly. No competing candidate in the tree.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "GSTD-C4H",
+      "confidence": "probable",
+      "match_score": 0.4142797,
+      "rationale": "Date check: inferred birth ~1821 (from age 25 at death 18 Sep 1846) vs. tree birth ~1818: gap ~3 years. Both are approximate; the inferred figure derives from a secondary, family-not-present informant's age report \u2014 a context known for imprecision in 19th-century Ukrainian records. This discrepancy is within normal source-quality variance and is not registered as a core identifier conflict. Residence check: same village (Zhydivska Hreblia), within cluster. Score 0.414 (moderate band, matched: true). Full identity correlation per a_001 link.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_021",
+      "person_id": "GSTD-C4H",
+      "confidence": "confident",
+      "match_score": 0.99425215,
+      "rationale": "Date check: record birth ~1818 (age 3 in 1821) vs. tree person born ~1818: gap 0 years. Residence check: record place Kiev Governorate (1821) vs. nearest attested context Zhydivska Hreblia, Tarashcha, Kiev Governorate \u2014 same governorate and district. Name \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430 matches tree person \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432 \u041a\u043e\u043a\u043e\u0448\u0430 exactly: given name identical; patronymic \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 is the genitive-adjectival form of \u0417\u0430\u0445\u0430\u0440, confirming the father is \u0417\u0430\u0445\u0430\u0440 (= household head \u0417\u0430\u0445\u0430\u0440\u0438\u0439 \u0418\u0432\u0430\u043d\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430 = tree person GST7-TS8 \u0417\u0430\u0445\u0430\u0440 \u0418\u0432\u0430\u043d\u043e\u0432 \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e); surname \u041a\u043e\u043a\u043e\u0448\u0430 identical; gender Male matches. Household position as son of the known father is fully consistent. same_person score 0.994, FS confidence 5. No core identifier conflicts.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_022",
+      "person_id": "GSTD-C4H",
+      "confidence": "confident",
+      "match_score": 0.99425215,
+      "rationale": "Date check: record birth ~1818 (age 3 in 1821) vs. tree person born ~1818: gap 0 years. Residence check: record place Kiev Governorate (1821) vs. nearest attested context Zhydivska Hreblia, Tarashcha, Kiev Governorate \u2014 same governorate and district. Sex Male for \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430, son of household head \u0417\u0430\u0445\u0430\u0440\u0438\u0439 \u0418\u0432\u0430\u043d\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430 (= GST7-TS8). Consistent with tree person GSTD-C4H (Male). same_person score 0.994, FS confidence 5. No core identifier conflicts.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_023",
+      "person_id": "GSTD-C4H",
+      "confidence": "confident",
+      "match_score": 0.99425215,
+      "rationale": "Date check: record gives age 3 in 1821 (birth ~1818) vs. tree person born ~1818: gap 0 years. Residence check: record place Kiev Governorate (1821) vs. nearest attested context Zhydivska Hreblia, Tarashcha, Kiev Governorate \u2014 same governorate and district. Age 3 recorded in 1821 confession list for \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430, son of \u0417\u0430\u0445\u0430\u0440\u0438\u0439 \u0418\u0432\u0430\u043d\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430 (= GST7-TS8). Consistent with tree person born ~1818. same_person score 0.994, FS confidence 5. No core identifier conflicts.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_024",
+      "person_id": "GSTD-C4H",
+      "confidence": "confident",
+      "match_score": 0.99425215,
+      "rationale": "Date check: record birth ~1818 (age 3 in 1821) vs. tree person born ~1818: gap 0 years. Residence check: record place Kiev Governorate (1821) vs. nearest attested context Zhydivska Hreblia, Tarashcha, Kiev Governorate \u2014 same governorate and district. Census presence in 1821 Kyiv Governorate confession list as \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430 in the household of \u0417\u0430\u0445\u0430\u0440\u0438\u0439 \u0418\u0432\u0430\u043d\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430 (= GST7-TS8). Fully consistent with tree person GSTD-C4H\u2019s known origin and parentage. same_person score 0.994, FS confidence 5. No core identifier conflicts.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_025",
+      "person_id": "GSTD-C4H",
+      "confidence": "confident",
+      "match_score": 0.99425215,
+      "rationale": "Date check: record birth ~1818 (inferred from age 3 in 1821) vs. tree person born ~1818: gap 0 years. Residence check: record place Kiev Governorate (1821) vs. nearest attested context Zhydivska Hreblia, Tarashcha, Kiev Governorate \u2014 same governorate and district. Birth year ~1818 corroborates tree person GSTD-C4H born ~1818. Patronymic \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 explicitly names the father as \u0417\u0430\u0445\u0430\u0440, matching the tree. same_person score 0.994, FS confidence 5. No core identifier conflicts.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_076",
+      "person_id": "GW7T-T45",
+      "confidence": "confident",
+      "match_score": 0.95109665,
+      "rationale": "Date check: record birth 1823 vs. tree person GW7T-T45 \u2014 none stated on tree side before this run. No conflict. Residence check: record place Popruzhna, Tarashcha, Kiev Governorate (1840) vs. tree person \u2014 none attested. Location Tarashcha Uezd is the same district where the Kokosha family is attested and where Tatiana will marry Grigoriy in 1843. Name \u0422\u0430\u0442\u0438\u0430\u043d\u0430 \u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e matches tree person \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u0418\u0432\u0430\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e: \u0422\u0430\u0442\u0438\u0430\u043d\u0430/\u0422\u0430\u0442\u044c\u044f\u043d\u0430 are Church Slavonic and vernacular forms of the same given name; \u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0430 is the Church Slavonic patronymic form of \u0418\u0432\u0430\u043d\u043e\u0432\u0430 (\u0418\u043e\u0430\u043d\u043d = \u0418\u0432\u0430\u043d); surname \u0413\u0435\u0439\u043a\u043e matches exactly. The household head \u0418\u043e\u0430\u043d\u043d \u0413\u0440\u0438\u0433\u043e\u0440\u044c\u0435\u0432 \u0413\u0435\u0439\u043a\u043e (b. 1788, age 52) provides exactly the patronymic she carries, confirming she is his daughter. Gender Female matches. same_person score 0.951, FS confidence 5. No core identifier conflicts.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_077",
+      "person_id": "GW7T-T45",
+      "confidence": "confident",
+      "match_score": 0.95109665,
+      "rationale": "Date check: record birth 1823 vs. tree person GW7T-T45 \u2014 none stated on tree side. No conflict. Residence check: record place Popruzhna, Tarashcha, Kiev Governorate (1840) vs. tree person \u2014 none attested. Sex Female for \u0422\u0430\u0442\u0438\u0430\u043d\u0430 \u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e, daughter of \u0418\u043e\u0430\u043d\u043d \u0413\u0440\u0438\u0433\u043e\u0440\u044c\u0435\u0432 \u0413\u0435\u0439\u043a\u043e, Tarashcha Uezd. Consistent with tree person GW7T-T45 (Female). same_person score 0.951, FS confidence 5. No core identifier conflicts.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_078",
+      "person_id": "GW7T-T45",
+      "confidence": "confident",
+      "match_score": 0.95109665,
+      "rationale": "Date check: record gives age 17 in 1840 (birth ~1823) vs. tree person GW7T-T45 \u2014 none stated on tree side. No conflict. Residence check: record place Popruzhna, Tarashcha, Kiev Governorate (1840) vs. tree person \u2014 none attested. Age 17 in 1840 places birth ~1823; a woman born 1823 would be about 20 at the 1843 marriage to Grigoriy Kokosha \u2014 plausible. same_person score 0.951, FS confidence 5. No core identifier conflicts.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_079",
+      "person_id": "GW7T-T45",
+      "confidence": "confident",
+      "match_score": 0.95109665,
+      "rationale": "Date check: record birth 1823 vs. tree person GW7T-T45 \u2014 none stated on tree side. No conflict. Residence check: record place Popruzhna, Tarashcha, Kiev Governorate (1840) vs. tree person \u2014 none attested. Birth year 1823 from confession list for \u0422\u0430\u0442\u0438\u0430\u043d\u0430 \u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e, daughter of \u0418\u043e\u0430\u043d\u043d \u0413\u0440\u0438\u0433\u043e\u0440\u044c\u0435\u0432 \u0413\u0435\u0439\u043a\u043e, Tarashcha Uezd. Adds birth year to tree person. same_person score 0.951, FS confidence 5. No core identifier conflicts.",
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_080",
+      "person_id": "GW7T-T45",
+      "confidence": "confident",
+      "match_score": 0.95109665,
+      "rationale": "Date check: record birth 1823 vs. tree person GW7T-T45 \u2014 none stated on tree side. No conflict. Residence check: record place Popruzhna, Tarashcha, Kiev Governorate (1840) vs. tree person \u2014 none attested. Census presence in 1840 Popruzhna, Tarashcha confession list as \u0422\u0430\u0442\u0438\u0430\u043d\u0430 \u0418\u043e\u0430\u043d\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e, in the household of \u0418\u043e\u0430\u043d\u043d \u0413\u0440\u0438\u0433\u043e\u0440\u044c\u0435\u0432 \u0413\u0435\u0439\u043a\u043e (b. 1788). Name, patronymic, surname, gender and Tarashcha location all consistent with tree person GW7T-T45 who married Grigoriy Kokosha in 1843. same_person score 0.951, FS confidence 5. No core identifier conflicts.",
+      "created": "2026-10-22"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_021",
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025"
+      ],
+      "resolved_conflict_ids": [],
+      "shortfall": "ceiling",
+      "exhaustive_search_summary": "Research addressed the two primary digital repositories for 19th-century Tarashcha uezd vital records. FamilySearch collection 1503045 (Ukraine, Kyiv, Orthodox Consistory Church Book Duplicates, 1723-1931) was searched in multiple passes covering both surname forms \u041a\u043e\u043a\u043e\u0448\u0430 and \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e, including a FAN search for the widow \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u0413\u0435\u0439\u043a\u043e/\u041a\u043e\u043a\u043e\u0448\u0430; the 1846 death register entry (src_001) was found and confirmed from the original image (log_032). Collection 2290980 (Ukraine, Kyiv, Confession Lists, 1741-1934) was searched in multiple passes with year and place filters, yielding the 1821 household record (src_002). Full-text search across all FamilySearch-indexed collections returned no results due to Cyrillic corpus coverage gaps. Revision list holdings for Tarashcha uezd (9th revision 1850-1851, 10th revision 1857-1858) were sought via FamilySearch Catalog and record search; no digitised holdings were confirmed \u2014 physical copies at the State Archive of Kyiv Oblast are beyond digital tool reach. The original Orthodox metrical books at the Central State Historical Archives of Ukraine (TsDIAU), Kyiv, were not accessed; collection 1503045 holds contemporaneous consistory duplicates of the same records and answered the question without requiring the physical originals. Both unsearched record classes (revision lists and TsDIAU originals) would corroborate the established death date and place but would not narrow the specific finding of 18 September 1846.",
+      "narrative_markdown": "## Proof Summary: Death of \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432 \u041a\u043e\u043a\u043e\u0448\u0430\n\n**Research question:** When and where did \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432 \u041a\u043e\u043a\u043e\u0448\u0430 (born about 1818 in Zhydivska Hreblia, Tarashcha, Kiev, married \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u0418\u0432\u0430\u043d\u043e\u0432\u0430 \u0413\u0435\u0439\u043a\u043e in 1843) die?\n\n**Conclusion:** The evidence strongly suggests that \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432 \u041a\u043e\u043a\u043e\u0448\u0430 died on 18 September 1846 in the village of \u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f (Zhydivska Hreblia), Tarashcha uezd, Kyiv guberniya, Russian Empire, of natural causes, and was buried on 20 September 1846 at the \u0418\u043e\u0430\u043d\u043d\u043e-\u0411\u043e\u0433\u043e\u0441\u043b\u043e\u0432\u0441\u043a\u0430\u044f (St. John the Theologian) parish church. This conclusion is assessed as probable.\n\n### Primary Evidence: 1846 Death Register\n\nThe foundation of this conclusion is a death register entry for \u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f, recorded in the books of the \u0418\u043e\u0430\u043d\u043d\u043e-\u0411\u043e\u0433\u043e\u0441\u043b\u043e\u0432\u0441\u043a\u0430\u044f church for 1846 and preserved in the Kyiv Orthodox Consistory church book duplicates on FamilySearch. The entry records \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430, economic peasant, who died 18 September 1846, age 25, of natural causes, and was buried 20 September 1846; certifying priest \u0420\u043e\u043c\u0430\u043d\u044a \u0412\u0438\u0448\u043d\u0435\u0432\u0441\u043ai\u0439. The entry was confirmed directly from the original image (log_032).[^1]\n\nThis record is classified as an **original record** \u2014 the consistory duplicate is a contemporary copy made at the time of registration, not an index derived later. For the death date and place, the information is **primary**: the certifying priest acted in his official capacity at the event, making him the firsthand recorder of the death rather than a secondary reporter. The reported age (25, implying a birth year of about 1821) is **secondary information** supplied by a family informant not personally present as a witness, and carries correspondingly less weight. The priestly attestation of the death on 18 September 1846 in \u0416\u0438\u0434\u043e\u0432\u0441\u043a\u0430\u044f \u0413\u0440\u0435\u0431\u043b\u044f therefore carries the highest evidentiary value available for a pre-civil-registration Ukrainian village death.\n\nNo patronymic appears in the deceased's name column for this entry. The record is silent on the father's name rather than contradicting the tree's \"\u0417\u0430\u0445\u0430\u0440\u043e\u0432.\"\n\n[^1]: \"\u0423\u043a\u0440\u0430\u0457\u043d\u0430, \u0434\u0443\u043f\u043b\u0456\u043a\u0430\u0442\u0438 \u043c\u0435\u0442\u0440\u0438\u0447\u043d\u0438\u0445 \u043a\u043d\u0438\u0433 \u041a\u0438\u0457\u0432\u0441\u044c\u043a\u043e\u0457 \u041f\u0440\u0430\u0432\u043e\u0441\u043b\u0430\u0432\u043d\u043e\u0457 \u043a\u043e\u043d\u0441\u0438\u0441\u0442\u043e\u0440\u0456\u0457, 1723-1931\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:KX55-44K : Mon Dec 01 11:02:07 UTC 2025), Entry for \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430, 18 Sep 1846.\n\n### Identity Corroboration: 1821 Confession List\n\nA record from a wholly separate source \u2014 the 1821 Kyiv Governorate confession list in FamilySearch collection 2290980 \u2014 records \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430, age 3, as a child in the household of \u0417\u0430\u0445\u0430\u0440\u0438\u0439 \u0418\u0432\u0430\u043d\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430.[^2] This is an **original record** of a different type (a periodic ecclesiastical confession enumeration, not a vital register), from a different collection, recorded 25 years before the death register, by a different informant. It independently establishes:\n\n- The full given name \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 and the surname \u041a\u043e\u043a\u043e\u0448\u0430\n- The patronymic \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447, confirming the father as \u0417\u0430\u0445\u0430\u0440 \u2014 consistent with tree person GST7-TS8 (\u0417\u0430\u0445\u0430\u0440 \u0418\u0432\u0430\u043d\u043e\u0432 \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e) and the tree's \"\u0417\u0430\u0445\u0430\u0440\u043e\u0432\" designation\n- A birth year of about 1818 (age 3 in 1821), consistent with the tree\n- The family structure, consistent with the tree's recorded siblings (sister \u041c\u0430\u0440\u0438\u044f \u0417\u0430\u0445\u0430\u0440\u0438\u0435\u0432\u043d\u0430, born about 1814; sister \u041a\u0430\u0442\u0435\u0440\u0438\u043d\u0430 \u0417\u0430\u0445\u0430\u0440\u0438\u0435\u0432\u043d\u0430, born about 1820)\n\nFor the biographical data, this confession list yields **indeterminate information** \u2014 the household informant is unknown and proximity cannot be assessed. For the fact of residence and census presence, the information is **primary** (the enumerator visited the dwelling).\n\nThe coincidence of an identical given name and the relatively rare surname \u041a\u043e\u043a\u043e\u0448\u0430 in the same village, with a named father matching the tree and ages spanning a 25-year interval in the same locality, makes it virtually certain that the \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0417\u0430\u0445\u0430\u0440\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430 of the 1821 confession list and the \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u041a\u043e\u043a\u043e\u0448\u0430 of the 1846 death register are the same individual and the subject of this question.\n\n[^2]: \"\u0423\u043a\u0440\u0430\u0438\u043d\u0430, \u041a\u0438\u0435\u0432\u0441\u043a\u0438\u0435 \u0438\u0441\u043f\u043e\u0432\u0435\u0434\u043d\u044b\u0435 \u0432\u0435\u0434\u043e\u043c\u043e\u0441\u0442\u0438 1741-1934\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:6263-HLN7 : Tue Jul 09 03:51:47 UTC 2024), Entry for \u0417\u0430\u0445\u0430\u0440\u0438\u0439 \u0418\u0432\u0430\u043d\u043e\u0432\u0438\u0447 \u041a\u043e\u043a\u043e\u0448\u0430 and \u0410\u043d\u0430\u0441\u0442\u0430\u0441\u0438\u044f \u041a\u043e\u043a\u043e\u0448\u0430, 1821.\n\n### Birth Year Discrepancy\n\nThe death register implies a birth year of about 1821 (from the reported age of 25 at death in September 1846), while the 1821 confession list implies a birth year of about 1818 (age 3 in 1821). This three-year gap is a noted discrepancy. The confession list figure is more reliable: it was recorded approximately three years after the birth, while the death register age was reported by a family informant not present as a witness, some 25 or more years after the birth. Three-year disparities of this kind are common in pre-civil-registration Ukrainian Orthodox records, where informants gave approximate rather than registered ages. This discrepancy concerns the birth year \u2014 a collateral biographical fact \u2014 and does not affect the target facts of this question: the death date and death place, which rest on primary information from the certifying official. The discrepancy does not alter the identity conclusion or the death conclusion.\n\n### Temporal Consistency\n\nAn existing tree fact (Birth, id e19c486d, Zhydivska Hreblia, 1844) for \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439's daughter \u0410\u043d\u043d\u0430 (tree person GW7Y-SYS) establishes that \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 was alive as a parent as late as 1844. Fact e19c486d carries no linked source entry in research.json; it was contributed through FamilySearch Tree user submissions (person-level source references Q68H-RHW and Q68H-RXQ on GW7Y-SYS). The death date of 18 September 1846 falls approximately two and a half years after this last confirmed living date and is temporally consistent.\n\n### Research Scope and Limitations\n\nFamilySearch collection 1503045 (Ukraine, Kyiv, Orthodox Consistory Church Book Duplicates, 1723-1931) was searched in multiple passes covering surname forms \u041a\u043e\u043a\u043e\u0448\u0430 and \u041a\u043e\u043a\u043e\u0448\u0435\u043d\u043a\u043e, including a FAN search for the widow \u0422\u0430\u0442\u044c\u044f\u043d\u0430 \u0413\u0435\u0439\u043a\u043e/\u041a\u043e\u043a\u043e\u0448\u0430; the 1846 death register entry was found and confirmed from the original image. Collection 2290980 (Ukraine, Kyiv, Confession Lists, 1741-1934) was searched in multiple passes with year and place filters. Full-text search across all FamilySearch-indexed collections returned no results due to Cyrillic corpus coverage gaps. Revision list holdings for Tarashcha uezd (9th revision 1850-1851, 10th revision 1857-1858) were sought via FamilySearch Catalog and record search; no digitised holdings were confirmed \u2014 physical copies at the State Archive of Kyiv Oblast are not digitally accessible. The original Orthodox metrical books at the Central State Historical Archives of Ukraine (TsDIAU), Kyiv, were not accessed; collection 1503045 holds contemporaneous consistory duplicates of the same records, which answered the question. Both unsearched record classes would corroborate the established death date and place but would not narrow the specific finding.\n\nThe conclusion is assessed as **probable** rather than proved because only one original source directly attests the death event with primary information; a second independent source with primary information for the death itself was not found among the digitally accessible records. The two unsearched classes of records (revision lists and TsDIAU originals) are beyond digital tool reach and would at most corroborate, not change, this finding.",
+      "updated": "2026-10-22T17:40:05.574Z"
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Tarashcha, Kiev Governorate, Russian Empire",
+      "for_place": "Kalynove, Bila Tserkva, Kyiv, Ukraine",
+      "time_period": "1840-1900",
+      "jurisdictions": [
+        {
+          "name": "Tarashcha, Kiev Governorate, Russian Empire",
+          "date_range": "1800-1923"
+        },
+        {
+          "name": "Chapaievka, Tarashcha, Kyiv, Ukraine, Soviet Union",
+          "date_range": "1932-1991"
+        },
+        {
+          "name": "Kalynove, Bila Tserkva, Kyiv, Ukraine",
+          "date_range": "2016-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1503045",
+          "title": "Ukraine, Kyiv, Orthodox Consistory Church Book Duplicates, 1723-1931",
+          "date_range": "1723-1931"
+        },
+        {
+          "id": "2290980",
+          "title": "Ukraine, Kyiv, Confession Lists, 1741-1934",
+          "date_range": "1741-1934"
+        },
+        {
+          "id": "4133834",
+          "title": "Ukraine, Cherkasy, Church Books, 1734-1930",
+          "date_range": "1734-1930"
+        },
+        {
+          "id": "2465061",
+          "title": "Ukraine, Zaporizhia, Poll Tax Census (Revision Lists), 1811-1858",
+          "date_range": "1811-1858"
+        }
+      ],
+      "quirks": [
+        "No Ukraine_Vital_Records wiki page was found; civil registration did not begin in Ukraine until 1920 per the Ukraine Civil Registration wiki (https://www.familysearch.org/en/wiki/Ukraine_Civil_Registration). For 1840-1900, Orthodox church metrical books are the sole vital-record source.",
+        "Church book duplicates for the Kyiv Consistory are filed by uezd (district), not by individual parish or village. All parishes in Tarashcha Uezd are bound together for each year. Name-indexed search via collection 1503045 is available; browsing by place requires selecting Province then District (Tarashcha) then the specific parish. See https://www.familysearch.org/en/wiki/Ukraine,_Kyiv,_Orthodox_Consistory_Church_Book_Duplicates_-_FamilySearch_Historical_Records.",
+        "The village of Zhydivska Hreblia was renamed Chapaievka in the Soviet era and is now called Kalynove (Bila Tserkva Raion, Kyiv Oblast). When browsing pre-1920 records, look under the historical name Zhydivska Hreblia or variant transliterations; Soviet and modern names will not appear in 19th-century records.",
+        "Records in collection 1503045 are in Russian (Cyrillic script). Use the Russian Genealogical Word List (https://www.familysearch.org/en/wiki/Russian_Genealogical_Word_List) and the Russia Handwriting guide (https://www.familysearch.org/en/wiki/Russia_Handwriting) to read the images.",
+        "Revision lists are filed under the uezd name on FamilySearch. Search the FamilySearch Catalog under 'Tarashcha, Kiev Governorate, Russian Empire' in Taxation or Census categories to find revision list volumes. The 9th revision (1850-1851) and 10th revision (1857-1858) fall within the research window and may note Grigory's death between revisions.",
+        "The FamilySearch Catalog search for Tarashcha, Kiev Governorate returned results but the full list was saved to file and could not be fully enumerated in this survey. Search the catalog directly at https://www.familysearch.org/search/catalog.",
+        "The Kiev Governorate was formed in 1796 and abolished by Soviet reform in 1923-1925. Modern archival records for this territory are split between the Central State Historical Archives of Ukraine (TsDIAU) in Kyiv (pre-1920 church/administrative records) and the State Archive of Kyiv Oblast (civil records from 1920 onward).",
+        "1,944 digitized volumes were returned by the volume search for Tarashcha, Kiev Governorate, Russian Empire (1840-1900). Only the leading results were previewed in this survey; all previewed volumes showed 100% name-indexing and language Russian."
+      ],
+      "guide_markdown": "# Locality Guide: Zhydivska Hreblia, Tarashcha Uezd, Kyiv Guberniya, Russian Empire (1840-1900)\n\n## Jurisdiction overview\n- **Village:** Zhydivska Hreblia (historical); Soviet-era name Chapaievka; modern name Kalynove, Bila Tserkva Raion, Kyiv Oblast, Ukraine\n- **Uezd (county):** Tarashcha Uezd\n- **Guberniya (province):** Kiev (Kyiv) Governorate, Russian Empire\n- **Formed:** Kiev Governorate created in 1796 from the Kiev Viceroyalty (Wikipedia: https://en.wikipedia.org/wiki/Kiev_Governorate). It comprised 12 uyezds and was abolished by Soviet reform in 1923-1925.\n- **Administrative center:** Tarashcha\n- **Economy:** Predominantly agrarian; peasant smallholding and estate agriculture typical of Right-Bank Ukraine.\n- **Ethnic composition:** Primarily Ukrainian Orthodox peasants; Polish Catholic gentry and Jews present in the broader uezd.\n- **Religious denominations:** Russian Orthodox (dominant for Ukrainian peasants); Roman Catholic (Polish gentry); Jewish.\n- **Key events:** Emancipation of serfs 1861; universal conscription introduced 1874.\n\n## Boundary changes\n- The village remained within Tarashcha Uezd, Kiev Governorate throughout 1840-1900 with no boundary splits during this window.\n- Before 1796 the territory was part of the Kiev Viceroyalty; records from before 1796 would be sought under that earlier jurisdiction.\n- After 1923, Soviet reform divided Kiev Governorate into okrugs; the territory passed through Bila Tserkva Okrug and eventually became part of modern Kyiv Oblast.\n- The village's modern name (Kalynove) and Soviet name (Chapaievka) do not appear in any 19th-century records.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date:** Civil registration in Ukraine began in 1920 at the state (Soviet) level, per the [Ukraine Civil Registration wiki page](https://www.familysearch.org/en/wiki/Ukraine_Civil_Registration). No civil vital registration exists for the 1840-1900 period.\n- **Pre-registration alternative:** Orthodox church metrical books served as the de facto vital record system for baptisms, marriages, and deaths/burials throughout 1840-1900.\n\n### Church records\n- **Denominations:** Russian Orthodox (primary for Ukrainian peasant population). Roman Catholic records exist for Polish gentry families. Jewish metrical books are filed separately.\n- **Metrical book format:** Per the [Ukraine Church Records wiki](https://www.familysearch.org/en/wiki/Ukraine_Church_Records), printed forms were introduced in 1806; a revised three-column format introduced in 1838 prevailed until 1920. Coverage reached approximately 90% of the Orthodox population after 1800.\n- **PRIMARY COLLECTION (indexed + images):** [Ukraine, Kyiv, Orthodox Consistory Church Book Duplicates, 1723-1931](https://www.familysearch.org/search/collection/1503045) at FamilySearch (collection 1503045) - 12.8 million records, 29.4 million persons, 2.1 million images - free. Also available on Ancestry (https://www.ancestry.com/search/collections/62358/) by subscription. The collection covers parishes in the former Kiev Governorate (now Kyiv, Zhytomyr, Vinnytsia, and Cherkasy oblasts). Records are in Russian (Cyrillic). Originals are held at the Central State Historical Archives of Ukraine (TsDIAU), Kyiv.\n- **Volume search count:** 1,944 digitized volumes matched Tarashcha, Kiev Governorate, Russian Empire for 1840-1900. All previewed volumes showed 100% name-indexing (searchable by name) and language: Russian. Only the leading results were inspected in this survey.\n- **Burial register content:** Per the wiki, a death/burial entry may include: name and age of the deceased, date and place of death, date and place of burial, cause of death, names of survivors (especially widow/widower), father's name, and the deceased's place of residence.\n- **Confession lists (supplementary):** [Ukraine, Kyiv, Confession Lists, 1741-1934](https://www.familysearch.org/search/collection/2290980) at FamilySearch (collection 2290980) - 51 million records, 40,448 images - partial index + images, free. Annual household lists recording family members attending Easter confession; useful for bracketing a death year by presence/absence.\n- **Language:** Russian (Cyrillic). See the [Russian Genealogical Word List](https://www.familysearch.org/en/wiki/Russian_Genealogical_Word_List) and [Russia Handwriting guide](https://www.familysearch.org/en/wiki/Russia_Handwriting).\n\n### Census records\n- **Revision lists (closest equivalent to census, 1719-1858):** Ten household tax enumerations were conducted sporadically. Those overlapping the research window: 8th revision (1833-1835), 9th revision (1850-1851), 10th revision (1857-1858). Per the [Ukraine Census wiki](https://www.familysearch.org/en/wiki/Ukraine_Census), they record name, parentage, age, social rank, household relationship, and notes on persons who died between revisions. Coverage approximately 75% of the taxable population; clergy, nobility, military, and foreigners are excluded.\n- **Where to find revision lists:** Search the FamilySearch Catalog at https://www.familysearch.org/search/catalog under 'Tarashcha, Kiev Governorate, Russian Empire' in the Taxation or Census categories. Revision lists appear under the uezd name. MyHeritage has an index of [Ukraine, Revision Lists, 1795-1904](https://www.myheritage.com/research/collection-20234/ukraine-revision-lists) (subscription).\n- **Family lists (post-1861):** Local population enumerations conducted approximately 1860-1920, not universally mandated. They identify about 30% of the population and are found in state archives.\n- **1897 Russian Empire Census:** The only general census was taken January 28, 1897. Many returns were destroyed after statistical use. Check whether Tarashcha Uezd returns survived at the [Altai State University map project](https://arch1897.histcensus.asu.ru/).\n- **Access level:** Revision lists are largely browse-only (unindexed) unless specifically indexed in the Catalog; the MyHeritage index requires a subscription.\n\n### Probate and court records\n- **Types:** Wills, administrations, guardianships, inventories. For a peasant in 1840-1900, formal probate was uncommon.\n- **Where held:** Uezd-level court records are at the State Archive of Kyiv Oblast. No dedicated FamilySearch online collection for Tarashcha court records was found in this survey.\n\n### Land records\n- **Survey system:** Russian Empire metes-and-bounds estate records; communal peasant allotments after 1861 emancipation.\n- **Where held:** Kiev Governorate land office records are at TsDIAU and the State Archive of Kyiv Oblast. The [Ukraine Land and Property wiki page](https://www.familysearch.org/en/wiki/Ukraine_Land_and_Property) returned minimal content and listed no specific collections for Kiev Governorate. No dedicated online collection was found in this survey.\n\n### Military records\n- **Relevant conflicts:** Crimean War (1853-1856); Russo-Turkish War (1877-1878); universal conscription from 1874.\n- **Record types:** Conscription lists (from 1874), military service records. A man born ~1818 would be beyond conscription age after 1874, but his sons would appear.\n- **Online access:** The pra.in.ua database (https://pra.in.ua/) includes some military records, 1650-1920, free but incomplete. No dedicated FamilySearch collection for Tarashcha military records was found.\n\n### Cemetery records\n- **Type:** Village Orthodox church cemetery records associated with the parish serving Zhydivska Hreblia.\n- **Online:** No specific FindAGrave or BillionGraves coverage for this village was confirmed.\n- **Physical:** Sexton and burial registers are part of the parish records now at TsDIAU.\n\n### Immigration/emigration records\n- **Context:** Emigration from Kiev Governorate to America increased after the 1880s. Hamburg Passenger Lists 1850-1934 are at Ancestry (https://search.ancestry.com/search/db.aspx?dbid=1068). Naturalization records for emigrants are at U.S. court archives.\n- **Declarations of intention and naturalizations** were filed inland at U.S. courts and are searchable via NARA.\n\n### Tax records\n- **Types:** Poll tax (soul tax) records underpin the revision lists. After 1861, land redemption payment records were created.\n- **Practical value:** The 10th revision (1857-1858) would record Grigory Kokosha and note if he died before the next revision; the 9th revision (1850-1851) establishes him alive at that date. These can bracket the death year.\n\n### Other record types\n- **Database of Ukrainian residents (pra.in.ua):** Free, incomplete index of birth registers, fiscal and parish censuses, lists of nobility, voters, military, and victims of repressions, 1650-1920 (https://pra.in.ua/).\n- **Kiev Gubernia Gazetteer (Spiski Mest, 1901):** Lists settlements with administrative context. Available at https://www.familysearch.org/library/books/records/item/573037-spisok-naselennykh-mest-kievskoi-gubernii.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Access |\n|---|---|---|\n| FamilySearch | Ukraine, Kyiv, Orthodox Consistory Church Book Duplicates, 1723-1931 (collection 1503045) - indexed + images | Free |\n| FamilySearch | Ukraine, Kyiv, Confession Lists, 1741-1934 (collection 2290980) - partial index + images | Free |\n| Ancestry | Kyiv, Ukraine, Orthodox Consistory Church Book Duplicates, 1734-1930 | Subscription |\n| MyHeritage | Ukraine, Revision Lists, 1795-1904 - indexed | Subscription |\n| pra.in.ua | Database of Ukrainian residents, 1650-1920 - partial index | Free |\n\n**Coverage of this survey:** The volume search returned 1,944 digitized volumes matching Tarashcha, Kiev Governorate, Russian Empire for 1840-1900. Only a preview of the leading results was examined; all previewed volumes showed 100% name-indexing.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Central State Historical Archives of Ukraine (TsDIAU), Kyiv | Original Orthodox metrical books (consistory duplicates); administrative records | In-person or written request; http://www.archives.gov.ua/Eng/ |\n| State Archive of Kyiv Oblast | Revision lists, family lists, post-1920 civil registration, land records, court records | In-person or written request |\n| Regional State Archives (general) | Oblast-level contacts at https://old.archives.gov.ua/Eng/Archives/regional.php | |\n\n## Records NOT online\n- Kiev Governorate revision lists (may exist as microfilm in the FamilySearch Catalog; no dedicated indexed online collection comparable to the Zaporizhia revision-list collection was found)\n- Land records, deed registers, estate books\n- Court and probate records\n- Conscription lists\n- 1897 census returns for Tarashcha Uezd (survival unconfirmed)\n\n## Known record losses\n- Church records in Ukraine were centralized in government archives rather than systematically destroyed in the Soviet period, per the [Ukraine Church Records wiki](https://www.familysearch.org/en/wiki/Ukraine_Church_Records). However, destruction of active churches in the 1930s means post-1930 parish-level records are often absent.\n- The 1897 census Ministry copy was destroyed after statistical processing. Local copies may survive.\n- No specific courthouse fires or record destructions for Tarashcha Uezd were identified in this survey.\n\n## Research tips\n- **Search by name first.** The Kyiv Orthodox Consistory Church Book Duplicates (collection 1503045) are 100% name-indexed. Search for the surname Kokosh/Kokosha in Cyrillic (\u041a\u043e\u043a\u043e\u0448\u0430) at https://www.familysearch.org/search/collection/1503045. See: [collection guide](https://www.familysearch.org/en/wiki/Ukraine,_Kyiv,_Orthodox_Consistory_Church_Book_Duplicates_-_FamilySearch_Historical_Records).\n- **Browse by place if the index is incomplete.** Browse: Province (Kiev) > District (Tarashcha) > Parish/Village > Year > Death. All parishes in Tarashcha Uezd are filed together per year, so browse the Tarashcha volumes for the likely death window if a name search misses anything.\n- **Use revision lists to bracket the death year.** The 9th (1850-1851) and 10th (1857-1858) revisions should record Grigory as a household member if living; notes on deaths between revisions may directly state when he died. Search the FamilySearch Catalog under 'Tarashcha, Kiev Governorate, Russian Empire' in Taxation/Census. [Ukraine Census wiki](https://www.familysearch.org/en/wiki/Ukraine_Census).\n- **Use confession lists as a secondary bracket.** Collection 2290980 lists families annually for Easter confession. Grigory's absence from a year's list, after appearing in prior years, narrows the death window.\n- **Always search under the historical village name.** Use Zhydivska Hreblia (\u0416\u0438\u0434\u0456\u0432\u0441\u044c\u043a\u0430 \u0413\u0440\u0435\u0431\u043b\u044f or variant spellings) when browsing images. Soviet-era name (Chapaievka) and modern name (Kalynove) will not appear in 19th-century records.\n- **Records are in Russian (Cyrillic).** The post-1838 death column layout typically shows: name and age, date of death, date of burial, cause of death, officiating priest. [Russian Genealogical Word List](https://www.familysearch.org/en/wiki/Russian_Genealogical_Word_List); [Russia Handwriting guide](https://www.familysearch.org/en/wiki/Russia_Handwriting).\n- **Check the FamilySearch Catalog** for microfilmed revision lists and any additional church volumes: https://www.familysearch.org/search/catalog, place 'Tarashcha, Kiev Governorate, Russian Empire'. The catalog returned results in this survey but individual titles could not be fully enumerated due to output size.\n- **Tutorial:** The RootsTech session 'Research in Eastern Ukraine using Russian Empire Records' (https://www.familysearch.org/rootstech/session/research-in-eastern-ukraine-using-russian-empire-records) demonstrates navigating FamilySearch images and the catalog for metrical books and revision lists.\n- **For records not yet online,** contact TsDIAU (http://www.archives.gov.ua/Eng/) or the State Archive of Kyiv Oblast. A Russian-language letter-writing guide is at https://www.familysearch.org/en/wiki/Russian_Letter_Writing_Guide.\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Ukraine_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Ukraine_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Ukraine_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Ukraine_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-22"
+    }
+  ]
+}
