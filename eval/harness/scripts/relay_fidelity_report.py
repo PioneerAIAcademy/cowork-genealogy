@@ -285,7 +285,7 @@ def compute_counts(
                 relayed = (run.get("output") or {}).get("text_response") or ""
                 for ret in returns:
                     # FIRST. The text is the harness's own stub denial
-                    # ("'x' did not execute..."), not the agent's -- relaying
+                    # (`skill_stubs.stub_denial`), not the agent's -- relaying
                     # it measures nothing. Before the snapshot check, because
                     # a stubbed agent never ran and so was never snapshotted.
                     if ret.get("is_error"):

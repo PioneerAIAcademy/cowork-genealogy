@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-10-01_17-04-36.json",
-  "annotator": "ikeboateng2018@gmail.com",
+  "run_log": "v3.json",
+  "annotator": "eruth937@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_source_evaluation_k9t",
+      "test_id": "ut_source_evaluation_m8q",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_k9t",
+      "test_id": "ut_source_evaluation_m8q",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_k9t",
+      "test_id": "ut_source_evaluation_m8q",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_k9t",
+      "test_id": "ut_source_evaluation_m8q",
       "dimension_source": "rubric",
       "dimension_name": "Remediation doctrine",
       "llm_score": 3,
@@ -35,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_k9t",
+      "test_id": "ut_source_evaluation_m8q",
       "dimension_source": "rubric",
       "dimension_name": "Classification before recommendation",
       "llm_score": 3,
@@ -43,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_k9t",
+      "test_id": "ut_source_evaluation_m8q",
       "dimension_source": "rubric",
       "dimension_name": "Signal versus backend noise",
       "llm_score": 3,
@@ -51,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_k9t",
+      "test_id": "ut_source_evaluation_m8q",
       "dimension_source": "rubric",
       "dimension_name": "Tool selection and argument quality",
       "llm_score": 3,
@@ -59,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_k9t",
+      "test_id": "ut_source_evaluation_m8q",
       "dimension_source": "rubric",
       "dimension_name": "Coverage and honesty about what was not checked",
       "llm_score": 3,
@@ -67,15 +67,55 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_b6h",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "test_id": "ut_source_evaluation_o3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage and honesty about what was not checked",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_b6h",
+      "test_id": "ut_source_evaluation_o3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection and argument quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_o3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Signal versus backend noise",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_o3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification before recommendation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_o3c",
+      "dimension_source": "rubric",
+      "dimension_name": "Remediation doctrine",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_o3c",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_o3c",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -83,15 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_b6h",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_q8p",
+      "test_id": "ut_source_evaluation_o3c",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -99,7 +131,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_q8p",
+      "test_id": "ut_source_evaluation_h5w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_h5w",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -107,9 +147,73 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_q8p",
+      "test_id": "ut_source_evaluation_h5w",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_h5w",
+      "dimension_source": "rubric",
+      "dimension_name": "Remediation doctrine",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_h5w",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification before recommendation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_h5w",
+      "dimension_source": "rubric",
+      "dimension_name": "Signal versus backend noise",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_h5w",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection and argument quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_h5w",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage and honesty about what was not checked",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_q8p",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage and honesty about what was not checked",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_q8p",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection and argument quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_q8p",
+      "dimension_source": "rubric",
+      "dimension_name": "Signal versus backend noise",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -132,88 +236,24 @@
     },
     {
       "test_id": "ut_source_evaluation_q8p",
-      "dimension_source": "rubric",
-      "dimension_name": "Signal versus backend noise",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_source_evaluation_q8p",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection and argument quality",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_source_evaluation_q8p",
-      "dimension_source": "rubric",
-      "dimension_name": "Coverage and honesty about what was not checked",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_v7n",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_v7n",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_v7n",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_v7n",
-      "dimension_source": "rubric",
-      "dimension_name": "Remediation doctrine",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_v7n",
-      "dimension_source": "rubric",
-      "dimension_name": "Classification before recommendation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_v7n",
-      "dimension_source": "rubric",
-      "dimension_name": "Signal versus backend noise",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_v7n",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection and argument quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_v7n",
-      "dimension_source": "rubric",
-      "dimension_name": "Coverage and honesty about what was not checked",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -245,7 +285,7 @@
     {
       "test_id": "ut_source_evaluation_p2v",
       "dimension_source": "rubric",
-      "dimension_name": "Remediation doctrine",
+      "dimension_name": "Classification before recommendation",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -253,7 +293,7 @@
     {
       "test_id": "ut_source_evaluation_p2v",
       "dimension_source": "rubric",
-      "dimension_name": "Classification before recommendation",
+      "dimension_name": "Remediation doctrine",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -281,75 +321,43 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_x6b",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_x6b",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_x6b",
-      "dimension_source": "rubric",
-      "dimension_name": "Remediation doctrine",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_x6b",
-      "dimension_source": "rubric",
-      "dimension_name": "Classification before recommendation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_x6b",
-      "dimension_source": "rubric",
-      "dimension_name": "Signal versus backend noise",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_x6b",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection and argument quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_x6b",
-      "dimension_source": "rubric",
-      "dimension_name": "Coverage and honesty about what was not checked",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_x6b",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "As a genealogist I highly value error, misinformation, and discrepancy to be noted where the record was first evaluated. The agent initially identified the 1885 census as misattributed and an error in the death index. The 1900 census detailed that the record is good in every aspect, which never noted the two-year birth year gap."
     },
     {
       "test_id": "ut_source_evaluation_j4s",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage and honesty about what was not checked",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection and argument quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "rubric",
+      "dimension_name": "Signal versus backend noise",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification before recommendation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "rubric",
+      "dimension_name": "Remediation doctrine",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -364,32 +372,8 @@
     },
     {
       "test_id": "ut_source_evaluation_j4s",
-      "dimension_source": "rubric",
-      "dimension_name": "Remediation doctrine",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_j4s",
-      "dimension_source": "rubric",
-      "dimension_name": "Signal versus backend noise",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_j4s",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection and argument quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_j4s",
-      "dimension_source": "rubric",
-      "dimension_name": "Coverage and honesty about what was not checked",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -400,15 +384,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "I won't give a 3 as a genealogist because the christening date wasn't a finding to raise, and the missing fields are not evidence of ambiguity as it stated."
-    },
-    {
-      "test_id": "ut_source_evaluation_j4s",
-      "dimension_source": "rubric",
-      "dimension_name": "Classification before recommendation",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "I agree with the score because the death date conflict was not explicitly classified as a source before the recommendation."
+      "comment": "he response correctly identifies the three genuine findings and excludes the baptism refinement and 1861 census birth-year drift. However, it overstates the evidence for the 1851 census ambiguity by treating the absence of a spouse and household as supporting evidence. The record contains only the name, residence, and birthplace. The ambiguity is valid, but the explanation should rely on the conflicting residence and the limited information available."
     }
   ]
 }

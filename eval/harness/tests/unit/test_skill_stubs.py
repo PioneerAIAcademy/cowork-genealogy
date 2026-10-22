@@ -6,9 +6,14 @@ negative-test routing short-circuit, which stops it), optionally handing back a
 canned response for callers whose own remaining work reads the callee's output.
 """
 
+import json
+from pathlib import Path
+
 import pytest
 
 from harness.skill_stubs import parse_stub_skills, stub_denial
+
+UNIT_TESTS = Path(__file__).resolve().parents[3] / "tests" / "unit"
 
 
 # --- parse_stub_skills: both declared forms normalize to one dict ------
@@ -79,6 +84,14 @@ def _reason(out):
     return out["hookSpecificOutput"]["permissionDecisionReason"]
 
 
+def _context(out):
+    return out["hookSpecificOutput"].get("additionalContext") or ""
+
+
+def _all_text(out):
+    return _reason(out) + "\n\n" + _context(out)
+
+
 def test_denies_the_launch():
     out = stub_denial("search-external-sites", None)
     assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
@@ -106,7 +119,7 @@ def test_canned_response_is_handed_back_verbatim():
 def test_canned_response_is_framed_as_the_callees_result():
     """The model must be told the text IS the result, or it re-derives it."""
     reason = _reason(stub_denial("s", "URLS HERE"))
-    assert "Treat the following as the result it returned" in reason
+    assert "Treat the following as the result 's' returned" in reason
 
 
 def test_every_form_tells_the_model_not_to_retry_or_self_serve():
@@ -114,16 +127,17 @@ def test_every_form_tells_the_model_not_to_retry_or_self_serve():
     do the callee's work itself — both spend the turns the stub exists to save.
     """
     for response in (None, "some result"):
-        reason = _reason(stub_denial("s", response))
+        reason = _all_text(stub_denial("s", response))
         assert "Do not retry it" in reason
         assert "do its work yourself" in reason
         assert "hand-off counts as made" in reason
 
 
 def test_bare_deny_does_not_claim_a_result_exists():
-    reason = _reason(stub_denial("s", None))
-    assert "Treat the following as the result" not in reason
-    assert "finish your own remaining steps" in reason
+    text = _all_text(stub_denial("s", None))
+    assert "Treat the following as the result" not in text
+    assert "the result" not in text.split("this hand-off using only")[-1]
+    assert "do what they still require before you reply." in text
 
 
 def test_skill_name_appears_in_the_reason():
@@ -177,3 +191,90 @@ def test_preamble_carries_no_harness_vocabulary():
     head = reason.split("This message is test scaffolding")[0]
     for leaky in ("eval run", "unit suite", "not under test"):
         assert leaky not in head, f"{leaky!r} is harness vocabulary the model may echo"
+
+
+# --- the hand-back to the caller (issue #3740) ----------------------------
+
+# The canned tail most research stubs end on (compound-bounded-ask.json).
+_STOP_TAIL = (
+    "do not walk further down the routing table. Write your summary of what "
+    "you routed and why, and stop."
+)
+
+
+def test_hand_back_rides_in_additional_context_not_the_reason():
+    """CLI 2.1.294 shows the reason as a `hook error`. With the hand-back inside
+    that error, a router sometimes ended its turn right after the stub, so the
+    hand-back goes in `additionalContext` and the reason keeps the result."""
+    for response in (None, "some result"):
+        out = stub_denial("s", response)
+        assert "your turn is not" not in _reason(out)
+        assert _context(out).endswith(
+            "The hand-off is over; your turn is not. Your own instructions still "
+            "govern how this turn ends: do what they still require before you reply."
+            + (
+                " Where the result it returned says otherwise, follow the result."
+                if response
+                else ""
+            )
+        )
+
+
+def test_canned_form_moves_the_did_not_execute_instructions_out_of_the_reason():
+    reason = _reason(stub_denial("s", "some result"))
+    assert "did not execute" not in reason
+    assert "did not execute" in _context(stub_denial("s", "some result"))
+
+
+def test_hand_back_defers_to_a_canned_stop_rather_than_overriding_it():
+    """Many canned responses tell the router to summarize and stop. A push like
+    "follow your instructions through to their end" after them sent a router on
+    a job down the rest of its routing table (ut_research_h7w), so the result
+    must outrank the caller's own instructions."""
+    hand_back = _context(stub_denial("research-plan", _STOP_TAIL)).split("\n\n")[-1]
+    assert hand_back.startswith("The hand-off is over")
+    assert hand_back.endswith("says otherwise, follow the result.")
+    for push in (
+        "keep going", "carry on", "continue", "next step", "remaining steps",
+        "through to their end",
+    ):
+        assert push not in hand_back.lower(), f"{push!r} overrides the canned stop"
+
+
+@pytest.mark.parametrize("response", [None, "some result"])
+def test_text_names_no_tool_or_step_a_test_could_be_graded_on(response):
+    """Every stubbed test shares this text. Naming the step one test grades
+    (research_delivered, loaded through ToolSearch) would hand that test its
+    pass and every other test an instruction it does not have."""
+    text = _all_text(stub_denial("s", response))
+    for token in ("research_", "mcp__", "ToolSearch"):
+        assert token not in text, f"{token!r} names a step the model is graded on"
+
+
+def test_hand_back_carries_no_harness_vocabulary():
+    """test_preamble_carries_no_harness_vocabulary reads only the reason, so it
+    does not see `additionalContext`."""
+    for response in (None, "r"):
+        hand_back = _context(stub_denial("s", response))
+        for leaky in ("eval", "unit suite", "not under test", "stub", "test"):
+            assert leaky not in hand_back.lower(), f"{leaky!r} is harness vocabulary"
+
+
+def test_every_committed_stub_fits_the_cli_hook_output_limit():
+    """CLI 2.1.294 caps `permissionDecisionReason` at 2000 characters. A canned
+    response is authored in test JSON, so the margin moves with the corpus; a
+    fixed-size sample would not see a longer one land."""
+    lengths = {}
+    for path in sorted(UNIT_TESTS.glob("*/*.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            continue
+        for name, response in parse_stub_skills(data.get("execution")).items():
+            out = stub_denial(name, response)["hookSpecificOutput"]
+            size = len(out["permissionDecisionReason"]) + len(
+                out.get("additionalContext") or ""
+            )
+            lengths[f"{path.parent.name}/{path.name}:{name}"] = size
+    assert lengths, f"no stub_skills found under {UNIT_TESTS}"
+    longest = max(lengths, key=lengths.get)
+    assert lengths[longest] <= 2000, f"{longest} is {lengths[longest]} characters"

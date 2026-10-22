@@ -119,8 +119,12 @@ WIDENED: dict[str, set[str]] = {
     #: in the chat and was lost with the session; inside a project it now logs its
     #: wiki/Wikipedia lookups and one `historical_context` entry carrying the full
     #: overview in `notes`.
+    #:
+    #: `log` gains `source-evaluation` (#3524). Its audit report lived only in
+    #: the chat; inside a project it now logs one `source_evaluation` entry
+    #: carrying the full report in `notes`, and writes nothing else.
     "log": {"survey-surname", "search-hints", "search-wikipedia", "search-familysearch-wiki",
-            "historical-context"},
+            "historical-context", "source-evaluation"},
     #: `sources` gains `init-project` (issue #2122). The skill always wrote one
     #: `sources` entry per transcribed memory through `research_append` (its
     #: Step 4a) with no row naming it; the agent's hook lane makes that write
