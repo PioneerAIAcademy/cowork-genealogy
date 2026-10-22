@@ -30,6 +30,27 @@ interface PageApiResponse {
   source_url: string;
 }
 
+// Where a place resolved to, kept for the CONTINUATION calls of a paged page (`offset` above 0).
+// Resolving a sub-state place costs a POST /search and Places API lookups before the page GET.
+// `placeTypeOf` turns a failed type lookup into "unknown", which rejects every typed title, and
+// a failed names lookup throws, so without this part 2 of a page that part 1 returned can fail
+// on a Places outage. A call from the start always resolves in full, as before paging, and
+// refreshes its entry.
+// An in-process Map with no TTL, like the caches in utils/place-resolver.ts. Wiki pages are public
+// and the key carries the per-user wiki URL, so sharing it across the process shares nothing
+// user-scoped.
+const resolvedPages = new Map<string, { slug: string; placeName: string }>();
+
+/** JSON, so no part of the key can run into the next. */
+function resolvedPageKey(baseUrl: string, section: WikiPageSection, standardPlace: string): string {
+  return JSON.stringify([baseUrl, section, standardPlace]);
+}
+
+/** Test-only: empty the memo so cases don't bleed into each other. */
+export function __clearResolvedPagesForTests(): void {
+  resolvedPages.clear();
+}
+
 function nameToSlug(name: string): string {
   return name.trim().replace(/ /g, "_");
 }
@@ -228,19 +249,15 @@ async function homeByTitle(
   return null;
 }
 
-async function readPlacePage(
+/**
+ * A place to its page, resolved in full: the leaf grammar, then a title found by the wiki's
+ * own search, then the Places API's alternate names.
+ */
+async function resolvePlacePage(
   standardPlace: string,
   section: WikiPageSection,
-  principal: Principal
+  baseUrl: string
 ): Promise<WikiPlacePageResult> {
-  if (!standardPlace || typeof standardPlace !== "string" || !standardPlace.trim()) {
-    throw new Error(
-      "standardPlace is required and must be a non-empty string. " +
-        "Pass the standardPlace name (from place_search)."
-    );
-  }
-
-  const baseUrl = await getWikiApiUrl(principal);
   const parts = standardPlace.split(",").map((p) => p.trim()).filter(Boolean);
   const leaf = parts[0] ?? "";
   const slugsFor = (nameSlug: string) => candidateSlugsFor(section, nameSlug);
@@ -277,6 +294,48 @@ async function readPlacePage(
   throw new Error(`No wiki page found for "${standardPlace}".`);
 }
 
+/**
+ * The page for a place. A call that CONTINUES a page (`continuing`, `offset` above 0) whose
+ * place an earlier call resolved fetches that page directly. A remembered page that now 404s is
+ * forgotten and the place is resolved in full; a network failure or a 5xx on that GET is thrown,
+ * as `fetchPage` always throws it. Every other call resolves in full, and every full resolution
+ * is remembered.
+ */
+async function readPlacePage(
+  standardPlace: string,
+  section: WikiPageSection,
+  principal: Principal,
+  continuing: boolean
+): Promise<WikiPlacePageResult> {
+  if (!standardPlace || typeof standardPlace !== "string" || !standardPlace.trim()) {
+    throw new Error(
+      "standardPlace is required and must be a non-empty string. " +
+        "Pass the standardPlace name (from place_search)."
+    );
+  }
+
+  const baseUrl = await getWikiApiUrl(principal);
+  const key = resolvedPageKey(baseUrl, section, standardPlace);
+  const known = continuing ? resolvedPages.get(key) : undefined;
+  if (known) {
+    const page = await fetchPage(baseUrl, known.slug);
+    if (page !== null) {
+      return {
+        url: `${FS_WIKI_BASE}/${known.slug}`,
+        content: page.content,
+        standardPlace,
+        placeName: known.placeName,
+      };
+    }
+    resolvedPages.delete(key);
+  }
+
+  const hit = await resolvePlacePage(standardPlace, section, baseUrl);
+  // `url` is `${FS_WIKI_BASE}/${slug}` wherever `resolvePlacePage` builds one.
+  resolvedPages.set(key, { slug: hit.url.slice(FS_WIKI_BASE.length + 1), placeName: hit.placeName });
+  return hit;
+}
+
 export async function wikiPlacePageTool(
   input: WikiPlacePageInput,
   principal: Principal
@@ -293,7 +352,12 @@ export async function wikiPlacePageTool(
         .join(", ")}.`
     );
   }
-  const hit = await readPlacePage(standardPlace, section as WikiPageSection, principal);
+  const hit = await readPlacePage(
+    standardPlace,
+    section as WikiPageSection,
+    principal,
+    offset !== undefined && offset > 0
+  );
   // The page is cut once, after the place is resolved, so every way a place resolves (the
   // leaf grammar, a title found by search, an alternate name) is paged the same. A body
   // with no text passes through as it always did: there is nothing to cut.

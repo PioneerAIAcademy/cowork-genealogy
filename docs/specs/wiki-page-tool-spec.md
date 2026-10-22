@@ -220,8 +220,21 @@ plus `content.length`). They are optional members of `WikiPageResult`, so the fi
 
 **How a caller continues.** It passes `nextOffset` back as `offset` until `truncated` is false. That
 instruction is in both tool descriptions (`WIKI_PAGING_NOTE`): an agent body is not edited for it. Each
-call fetches the page from the wiki server again and, for `wiki_place_page`, resolves the place again;
-nothing is kept between calls.
+call fetches the page from the wiki server again. A `wiki_place_page` call from the start resolves the place
+again too; a continuation does not (next paragraph).
+
+**A continuation reuses the page the first call resolved.** Resolving a sub-state place costs a search
+(`POST /search`), Places API lookups and then the page `GET`. A Places lookup of the place's type that fails
+reads as an unknown type, which rejects every typed title, and a failed lookup of its names throws. Repeated
+on every part, a Places failure on part 2 would fail a read that part 1 began, as `No wiki page found` or as
+the Places error. So `wiki_place_page` remembers what each resolution found, the slug and the `placeName`,
+in a map shared by the process and keyed by the wiki server URL, the section and the `standardPlace`. A call
+with `offset` above 0 that finds its entry fetches that slug directly: one `GET`, no search, no Places call.
+A call from the start (no `offset`, or 0) always resolves in full, as before paging, and replaces the entry.
+If the remembered page now answers 404, the entry is dropped and the call resolves in full; a network
+failure or a 5xx on that `GET` is thrown as it always is, and the entry stays. A continuation with no entry
+resolves in full. Wiki pages are public and the key carries the per-user server URL, so the map holds
+nothing user-scoped; it has no TTL, like the caches in `place-resolver.ts`.
 
 **What nothing checks.** Whether an agent follows `nextOffset` to the end. That depends on the model
 reading the tool description. The tests prove the parts join back to the page and that each stays under
@@ -271,7 +284,11 @@ the line; they cannot prove an agent reads them all.
   equal the page exactly; the chain ends with `truncated: false` and no `nextOffset`; a
   9,000-character page returns exactly today's object with no extra key; `offset` of
   `"5"`, `-1` and `1.5` is refused before any request. For `wiki_place_page` the same over
-  a title-resolved page and an alternate-name page.
+  a title-resolved page and an alternate-name page, and over the continuation: a title-resolved
+  page read in parts makes no search and no Places call after the first part and still joins;
+  the next part comes back when the Places lookup fails by then; a continuation with no entry,
+  after a 404 on the remembered page, or from the start resolves in full; another section, place
+  or wiki server URL does not take an entry.
 - `tests/utils/text-page.test.ts` — the cut rules and their edges (a heading exactly at
   the midpoint is not past it; a part that already ends at a heading is kept), the cap
   taken from `maxChars` and not a constant, progress for a `maxChars` under 6, and a
