@@ -954,6 +954,26 @@ they have different fixes, and only one of them is a description problem.
    that corpus, and **refuses to run** when that set has no positives (it used to
    report a pass without scoring anything). It makes real paid model calls, is not
    in CI, and only *proposes* text you then apply by hand.
+
+   **`make optimize-skill` reaches exactly one of the 32 routing targets.**
+   `build_eval_set.py --skill <name>` exits `ERROR: no skill` unless
+   `plugin/skills/<name>/` exists, so it cannot be pointed at `agents/<name>.md`;
+   of the two skill directories left, only `research` has trigger queries. Its
+   runner credits a trigger only on a `Skill` or `Read` call naming the target
+   and returns *not triggered* on any other tool, an `Agent` spawn included, so
+   pointing it at an agent would score every correct hand-off as a miss.
+
+   **The instrument for an agent is a routing negative**, not the optimizer: a
+   test with a `user_message`, no `grade_on_invariant`, and a
+   `negative.correct_skill` naming the agent asserts that the utterance routes
+   there, and the harness resolves an agent file as a valid target.
+   **No agent carries one today.** All 18 committed negatives that name an agent
+   set `grade_on_invariant`, which `grading_mode_for` resolves *before* the
+   routing branch, so the verdict is the tag-gated invariant validator alone and
+   the hand-off is never checked. A miss against any agent is therefore
+   unmeasured, not evidence about its description. Add the missed utterance as
+   such a negative first, and diagnose the delegation before editing any
+   description.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 
