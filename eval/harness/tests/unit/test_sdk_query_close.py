@@ -99,7 +99,7 @@ while not started.is_set():
 
 out({{"type": "system", "subtype": "init", "session_id": "S1",
      "mcp_servers": [{{"name": {server!r}, "status": "connected"}}]}})
-if "--resume" in sys.argv:
+if any(a == "--resume" or a.startswith("--resume=") for a in sys.argv):
     out({{"type": "result", "subtype": "success", "duration_ms": 1,
          "duration_api_ms": 1, "is_error": False, "num_turns": 1,
          "session_id": "S1", "total_cost_usd": 0}})

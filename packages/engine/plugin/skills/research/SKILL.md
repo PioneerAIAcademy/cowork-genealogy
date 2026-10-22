@@ -7,12 +7,14 @@ description: >-
   [person]', 'drive the workflow forward', 'answer this research question', any
   message with `--autonomous`, or any open-ended research goal that needs
   multiple steps (question selection, planning, searching, extraction, proof
-  conclusion). Choose this over any sub-skill when the user states an objective
-  rather than a specific action. Start it rather than first asking the user
-  about the person: it reads what the project already records about them.
+  conclusion). Also for 'new project', 'start research', 'begin researching' and
+  'I want to research [person]' — this is the only front door, including when the
+  folder holds no project yet: the routing table below sends a first message to
+  init-project or tree-survey. Choose this over any sub-skill when the user states
+  an objective rather than a specific action.
   Do NOT use when the user explicitly targets one step only (search-records,
-  research-plan, question-selection, etc.), only asks where the project stands
-  (answered from project_context, no skill), or has no project yet (init-project first).
+  research-plan, question-selection, etc.) or only asks where the project stands
+  (answered from project_context, no skill).
 allowed-tools:
   - validate_research_schema
   - research_query
@@ -106,7 +108,7 @@ finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
-where the project stands (answer from `project_context` in one paragraph).
+where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
 Two or more of them in one message is still bounded: deliver each, name each,
 and end the turn when the last one is met, the same way a single one ends it. A message that also asks for
 open-ended research is a job.
@@ -119,7 +121,17 @@ a destination AND is bounded: naming a destination says **where** to end up,
 bounded says **whether to continue past it**. Hand a bounded request straight
 to the step that owns its deliverable — a
 transcription to `@plugin:image-reader`, a plan to `@plugin:research-plan`, a record to
-`search-records`. Do not walk the routing table from the top for one: that table
+`@plugin:search-records`, a review of the sources attached to a person to
+`@plugin:source-evaluation`, whether two people are the same or should be merged
+to `@plugin:person-evidence`, a verdict on a hint to `@plugin:search-hints`, where
+the records are for a place and period to `@plugin:locality-guide`, and whether a
+person's children or siblings are complete to `@plugin:search-records`, returning
+candidates rather than a verdict — and to `@plugin:check-warnings` as well when the
+message gives a mother's 1900 or 1910 US census children-born and children-living
+counts. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
+of two persons already confirmed identical; a "should these be merged?" never goes
+to `@plugin:tree-edit`. A records-request letter you write yourself in this turn,
+with no hand-off. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
 must not go. Deliver what was asked, and stop: at least one hand-off per
@@ -206,6 +218,23 @@ it by name.
    is skipping it while leaving state that looks like it ran. See the
    **Exhaustiveness/proof-conclusion contract** below.
 
+   **Researcher-reported evidence.** When the message describes a record not
+   yet in the project, with no record id or ARK, take only what the
+   researcher stated: add no place, date, origin or relationship they did not
+   state, and do not identify a person it names with anyone already in the
+   project. A report that makes a hypothesis's identity impossible contradicts
+   it: name that hypothesis id when you spawn `@plugin:hypothesis-tracking`.
+   The record and each person it names are new leads: spawn
+   `@plugin:research-plan` with `projectPath` and the question id to plan a
+   search for each, or ask the researcher for the record's identifier, before
+   `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`. If the
+   record contradicts a hypothesis, say so — do not present its facts as
+   support for that hypothesis or any theory built on it. The same holds for a
+   relationship you or an earlier log note inferred from shared surname, place
+   or era with no record linking the people: it is a hypothesis, not a fact.
+   Spawn `@plugin:hypothesis-tracking` to register it before any search,
+   filter or rejection relies on it.
+
    | If research.json has... | Invoke |
    |-------------------------|--------|
    | **No `research.json` at all**, and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay its suggestions and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
@@ -213,7 +242,8 @@ it by name.
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `@plugin:research-plan` |
-   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `search-records` (or `@plugin:search-external-sites` for non-FS sources) |
+   | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until it is registered |
+   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `@plugin:search-records` (or `@plugin:search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the **Extraction contract** below.) |
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). Extraction never links; its output ALWAYS flows through person-evidence next |
@@ -280,7 +310,7 @@ it by name.
    `@plugin:person-evidence`, the conflict or competing assertion ids for
    `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, one jurisdiction and its period per call for
-   `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), and the `planItemId` (plus the parish page as
+   `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), the `questionId` and `planItemId` for `@plugin:search-records`, and the `planItemId` (plus the parish page as
    `baseUrl` when one is known, `userPresent` (`no` only when you are running autonomously and will not wait for the researcher, otherwise `yes`), and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for

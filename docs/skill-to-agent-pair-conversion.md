@@ -416,7 +416,7 @@ Every one below fails CI if skipped. Put the whole list in the card.
 | `tests/packaging/enum-drift.test.ts` | any closed-enum declaration the fold moved into the agent body |
 | `tests/packaging/agent-return-contract.test.ts` | a `summary_for_user` return-contract heading, or a `PENDING` entry naming when it lands |
 | `docs/architecture.md`, `docs/skill-dataflow.md` | the agent count and any per-tool agent tally — re-measure, do not increment |
-| `make agent-smoke` | the only check that reads what the runtime resolved; **no CI job runs it** |
+| `make agent-smoke` | the only check that reads what the runtime resolved; its registration arm runs in CI (`server-tests.yml`); its dead-stub arm does not |
 
 **Deleting the skill trips more, and some of it bills other suites.** Under the
 2026-09-22 ruling every conversion deletes its skill (`citation`,
@@ -564,6 +564,18 @@ up while the body ran on the main thread, and each cost a run to find.
 10. Fix one thing per run.
 
 ## What is still open
+
+- **`search-records` orientation share (baseline for the handed-state follow-up,
+  issue #3581).** Committed run `eval/runlogs/unit/search-records/v8_2026-10-20_18-41-45.json`
+  (ids-only delegation): 26 of 27 tests reach `record_search`. The MCP calls before
+  the first one are a median of 2 and a mean of 1.77 (min 1, max 3): the
+  `research_query` read of `plans`, plus, in 17 of the 26 tests, one or two
+  `wiki_read`s of FamilySearch census pages. No question is read. Counting the
+  `Read` of `tree.gedcomx.json` as well gives a median of 3 and a mean of 2.77
+  (min 2, max 4). The first figures came from run `v7_2026-10-15_16-06-27`, which
+  was pruned from the tree and lives in commit b147b57fe; its MCP count was a
+  median of 2 and a mean of 1.7. The follow-up that hands the plan item's state in
+  the delegation (cost-latency plan §6) is measured against these.
 
 - **Tier selection resisted every prose fix.** Three successive wordings each
   repaired one test and broke a neighbour, so the tier ladder was reverted to

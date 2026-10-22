@@ -1,0 +1,19 @@
+{
+  "id": "maria-vazsan-spouse",
+  "name": "Maria Vázsan — husband and daughter named on a 1900 Bojnice baptism",
+  "genre": "record-hint",
+  "source_pid": "LJTH-GRX",
+  "captured": "2026-10-20",
+  "researcher_question": "Whom did Maria Vázsan, baptised 10 January 1853 at Bojnice (Bajmóc), Slovakia, daughter of Ignatius Vázsan and Anna Prividzer, marry, and what children did the marriage produce?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1900s",
+    "geography": "SK"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 24, hint-samples.csv row 811, flags adds_spouse/adds_daughter, confidence 3). Draft transcribed from a 1900 Bojnice Roman Catholic baptism entry naming the mother Maria Vázsan; unverified. The subject would have been 47 at that birth."
+}

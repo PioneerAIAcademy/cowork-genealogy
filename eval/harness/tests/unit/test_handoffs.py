@@ -105,25 +105,30 @@ def test_router_stop_fails_on_a_spawn():
 ESCALATE = {"tags": ["familysearch-exhausted"]}
 
 
-def test_escalation_passes_on_a_spawn_and_fails_without_one():
-    mod = _validators("test_search_records")
-    mod.test_escalates_to_external_sites_after_fs_exhaustion([], [_spawn("search-external-sites")], ESCALATE)
-    with pytest.raises(AssertionError):
-        mod.test_escalates_to_external_sites_after_fs_exhaustion([], [_spawn("search-records")], ESCALATE)
+def _return(text: str) -> list[dict]:
+    return [{"subagent_type": "search-records", "text": text}]
 
 
-def test_live_callee_hand_off_passes_on_a_spawn_and_fails_without_one():
+def test_escalation_passes_on_a_named_hand_back_and_fails_without_one():
+    # search-records is an agent (issue #2243) and cannot spawn: the escalation is a
+    # hand-back it names in its own return, so the validator reads that text.
     mod = _validators("test_search_records")
-    live = {"tags": ["live-callee"]}
-    tools = [{"tool": "mcp__genealogy__build_external_search_url"}]
-    mod.test_live_callee_used_its_own_tools(tools, [], [_spawn("search-external-sites")], live)
+    named = _return("FamilySearch variants exhausted; hand back to `search-external-sites` with: Patrick Flynn, pli_001.")
+    mod.test_escalates_to_external_sites_after_fs_exhaustion(named, "", ESCALATE)
+    mod.test_escalates_to_external_sites_after_fs_exhaustion([], "Hand-back: search-external-sites", ESCALATE)
+    # An offer in prose names the site, not the agent, and is not an escalation.
     with pytest.raises(AssertionError):
-        mod.test_live_callee_used_its_own_tools(tools, [], [], live)
-    # A fetch alone is not a URL built by the tool.
-    with pytest.raises(AssertionError):
-        mod.test_live_callee_used_its_own_tools(
-            [{"tool": "mcp__genealogy__external_links_search"}], [], [_spawn("search-external-sites")], live
+        mod.test_escalates_to_external_sites_after_fs_exhaustion(
+            _return("FamilySearch is exhausted. Shall I check Ancestry?"), "", ESCALATE
         )
+    # Naming the agent far from a hand-back is not one either.
+    with pytest.raises(AssertionError):
+        mod.test_escalates_to_external_sites_after_fs_exhaustion(
+            _return("search-external-sites exists.\n\nNothing else."), "", ESCALATE
+        )
+    # Only the exhaustion test asserts this.
+    with pytest.raises(pytest.skip.Exception):
+        mod.test_escalates_to_external_sites_after_fs_exhaustion([], "", {"tags": []})
 
 
 # --- Warning gate (issue #2840): replaced check-warnings hand-off tests --------

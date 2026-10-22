@@ -136,6 +136,7 @@ Test metadata.
 | `name` | string | yes | Short human-readable name |
 | `genre` | enum | no | `strip` (default) or `record-hint` — see §3.6 |
 | `image_basis` | boolean | no | Record-hint fixtures only. `true` when the resolution rests on reading the original page images; `false`/absent when it rests on indexes alone. When `true`, `expected-findings.json` must cite an image ark — see §3.6.1. A non-boolean value is a hard `ERROR`. |
+| `hint` | object \| null | resolved record-hint fixtures | Record-hint fixtures only. The record persona FamilySearch hinted and the genealogist's identity judgement of it: `{"persona_ark": "ark:/61903/1:1:XXXX-XXXX", "identity": "same" \| "different" \| "unresolved"}`, no other keys. `persona_ark` is the full `1:1:` record-persona ark — never a `1:2:` record ark, a `3:1:`/`3:2:` image ark, a bare id or a tree PID. `identity` says whether that persona is the tree person (`source_pid`); it is **not** the §3.6 outcome number. An explicit `null` for a fixture with no hint persona. The key must be present on every resolved record-hint fixture (absent is a hard `ERROR`); a draft still carrying `DRAFT PENDING ADJUDICATION` is exempt. Scored by `make matcher-accuracy` — see §3.6.2. |
 | `source_pid` | string | yes | FamilySearch PID the fixture was captured from |
 | `captured` | string (YYYY-MM-DD) | yes | Date the snapshot was taken |
 | `researcher_question` | string | yes | Natural-language question that becomes the `/research` user message |
@@ -145,7 +146,7 @@ Test metadata.
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
 | `blocked_tools` | array of strings | no | Extra MCP tools (bare advertised names, e.g. `"wiki_search"`) denied for this fixture's runs, beyond the universal §6.1 tree block. For fixtures whose ground truth a specific tool can surface directly — e.g. a fixture built from a public wiki case-study article that names the answer. Document the reason in the fixture README |
-| `caps` | object | no | Per-fixture stop-condition overrides — any of the seven keys `wall_clock_seconds`, `inactivity_seconds`, `progress_stall_seconds`, `tool_calls`, `max_turns`, `max_cost_usd`, `max_continue_nudges`. Omitted keys inherit the defaults in `FixtureCaps` (`eval/harness/e2e/orchestrator.py`), which is the single source of truth for their values — do not copy them here. A **new** override must give its reason in the fixture README. (`susan-miller-birth` is the precedent for stating one at all: it records the raised wall-clock cap and the timed-out run that motivated it in the fixture's `notes`. From now on that reasoning belongs in the README, where a reader looks for it.) An **unrecognised** key inside `caps` is silently ignored — the loader reads the seven names above and fills the rest from defaults, and nothing validates `fixture.json`, so a typo'd cap looks applied and is not. |
+| `caps` | object | no | Per-fixture stop-condition overrides — any of the seven keys `wall_clock_seconds`, `inactivity_seconds`, `progress_stall_seconds`, `tool_calls`, `max_turns`, `max_cost_usd`, `max_continue_nudges`. Omitted keys inherit the defaults in `FixtureCaps` (`eval/harness/e2e/orchestrator.py`), which is the single source of truth for their values — do not copy them here. A **new** override must give its reason in the fixture README. (`susan-miller-birth` is the precedent for stating one at all: it records the raised wall-clock cap and the timed-out run that motivated it in the fixture's `notes`. From now on that reasoning belongs in the README, where a reader looks for it.) An **unrecognised** key inside `caps` is silently ignored — the loader reads the seven names above and fills the rest from defaults, and nothing validates the keys inside `caps`, so a typo'd cap looks applied and is not. |
 
 
 ### 3.2 `starting-research.json`
@@ -273,6 +274,14 @@ and one structural judge-vs-human disagreement per annotated run
 against `calibrate_judge`'s `PER_FINDING_TARGET`. Worked example:
 `eval/tests/e2e/hinrich-burmeister-spouse/README.md`.
 
+Third, for a non-answer finding that a record attached to the subject
+answers on its own. A project extracts every attached record before its
+first question (§6.1), so such a finding measures setup, not research.
+`maria-bracero-marriage`'s f2, her parents, is the worked example: her
+attached 1973 death registration names her father, while f1, the
+marriage itself, still needs the hint record (lead, 2026-10-20). The
+README says so, and the record is listed as starting evidence (§6.1).
+
 #### 3.4.1 Negative findings (`polarity: "avoid"`)
 
 A normal finding asks "did the agent recover this?" A **negative**
@@ -325,7 +334,12 @@ be taken. Authoring gates treat
 `avoid` findings accordingly: the presence mirror skips them (the
 claim was never in the tree), while the stripping linter still warns
 when an avoided claim is already present in the *starting* tree — a
-fixture must not pre-assert the thing it forbids.
+fixture must not pre-assert the thing it forbids. `finding_shape_errors`
+(`eval/harness/e2e/validate_fixture.py`) now enforces the wording rule above
+at authoring time (`lint_fixture`) and in CI (`test_committed_fixture_passes_the_hard_gates`):
+no `avoid` description may conflate the two stores as `tree/research`, and
+any that mentions rejection must name both `tree.gedcomx.json` and
+`research.json`.
 
 An `avoid` finding may be `required: true`; it then gates the verdict
 exactly like a recover finding (`matched: "true"` = correctly
@@ -486,6 +500,9 @@ stripped:
   **identical** to it, so `snapshot --check` can still audit upstream
   drift. `e2e.author validate` enforces the equality and skips the
   presence mirror (expected findings are extra-tree by definition).
+  `make e2e-validate` and the harness's corpus test enforce it too, on
+  every push, through `lint_fixture`, and both fail a record-hint
+  fixture with no unstripped tree.
 - Findings drafted from an unverified hint record are a **draft
   pending adjudication**: a genealogist must confirm the hint record
   concerns the tree person before the fixture's grades are trusted.
@@ -496,7 +513,8 @@ stripped:
   `polarity: "avoid"` guard naming the claim the agent must not
   assert, plus a `required` recover finding that the agent documented
   the negative conclusion (§3.4.1). Say in the fixture README which
-  state the fixture is in.
+  state the fixture is in, and record the hinted persona and the
+  identity call in `fixture.json`'s `hint` (§3.6.2).
 - **The adjudicator may use `packages/engine/mcp-server/dev/try-*.ts`
   against live FamilySearch to *retrieve* records** — collections search,
   record search, record read, image read. **The identity judgement stays
@@ -566,6 +584,58 @@ A non-boolean `image_basis` (`"true"`, `1`, `null`) is a hard `ERROR`,
 because truthiness-coercing it would let `"false"` enable the check and
 a typo'd string silently disable it.
 
+#### 3.6.2 The hint persona and the matcher truth set (decision)
+
+Every resolved record-hint fixture carries a top-level `hint` in
+`fixture.json`:
+
+```json
+"hint": {"persona_ark": "ark:/61903/1:1:XXXX-XXXX", "identity": "same"}
+```
+
+`persona_ark` is the record persona FamilySearch hinted, as a full `1:1:`
+record-persona ark — never a `1:2:` record ark, a `3:1:`/`3:2:` image ark,
+a bare id or a tree PID. `identity` is `"same"`, `"different"` or
+`"unresolved"`. A fixture with no hint persona writes an explicit
+`"hint": null` (`thomas-seaver-other-wife`, authored in the avoid-pair
+shape from the start); an absent key is a hard `ERROR`, so a fixture
+cannot drop out of the truth set unnoticed. A draft (its README still
+carries `DRAFT PENDING ADJUDICATION`) is exempt, like the §3.6.1 ark rules.
+
+**`identity` is the genealogist's identity judgement, never derived from
+the outcome number.** It answers one question — is this persona the tree
+person (`source_pid`)? The outcome number answers another — what do the
+fixture's findings become? They can diverge, and routinely do on outcome
+(b), which `/resolve-record-hint` calls outcome 2:
+`victoriana-vasquez-marriage` is outcome (b) because the hinted 1875
+record is a velación rather than the marriage, yet the persona is her, so
+`same`; `grigory-kokosha-death` is outcome (b) because the death entry is
+genuine but the index cannot carry the identification, so `unresolved`.
+
+**`make matcher-accuracy` scores only `same`/`different` pairs**, through
+the exported `scorePair` in `packages/engine/mcp-server/src/utils/match-engine.ts`
+— the path `same_person` uses, so there is no second scoring path to
+drift. It lists `unresolved` and `null` fixtures as skipped, with a
+count. The record documents it fetches go in the gitignored cache
+`dev/.matcher-cache/` under `packages/engine/mcp-server/`; FamilySearch
+record payloads are never committed. It needs a FamilySearch login, so no
+CI job runs it.
+
+**The check is a floor, not a pinned value.** It exits non-zero when the
+AUC falls below `MIN_AUC` (environment variable, default `0.65`). It also
+exits non-zero when no pair could be scored, when either class is empty
+(the AUC is undefined without both `same` and `different` pairs), or when
+any labelled fixture could not be scored, so a run that silently scored
+less than the truth set cannot pass. There is no committed baseline
+file: the label set grows with every resolved hint fixture, so a pinned
+AUC would move with each resolution and fail on new labels rather than on
+a regressed matcher.
+
+**The blind-bundle digest ignores `hint`:** `blind_bundle_digest` hashes
+`fixture.json` without it (`_DIGEST_IGNORED_FIXTURE_KEYS` in
+`eval/harness/e2e/blind_bundle.py`; §7.4), so writing or correcting a hint
+does not orphan an earlier grade's stamp.
+
 ---
 
 ## 4. Fixture Tags
@@ -588,9 +658,10 @@ roll-up does not display them (§7.4 blind-grading constraint).
 
 ## 5. Entry Point: The `/research` Skill
 
-E2E tests invoke the agent via the same entry point a production
+Autonomous e2e tests invoke the agent via the same entry point a production
 user would type: the `/research` skill. The harness sends a single
-user message of the form:
+user message of the form (single-ask fixtures do not — they send the patron's
+message verbatim; see §16):
 
 ```
 /research --autonomous <researcher_question>
@@ -691,7 +762,8 @@ the `max_cost_usd` note in §6 step 5.
    `E2eResult` is constructed, and **the judge is never called**. "This run never
    happened." The init-message abort is command-proved by `make agent-smoke`'s
    dead-stub arm; the ToolSearch backstop and the `run_e2e_test`
-   fallback remain hand-proved only. `make agent-smoke` runs in no CI workflow.
+   fallback remain hand-proved only. Its dead-stub arm runs in no CI workflow;
+   only its registration arm runs in CI (`server-tests.yml`).
 
    **The printed error can now name the server's own cause.** The
    SDK's `stderr:` callback never receives the MCP child's output — verified
@@ -948,7 +1020,8 @@ benchmark measure tree-reading, not GPS research.
 surfaces the answer; allow tools keyed off a record the agent had to find
 first, and tools that read the local stripped tree.
 
-The harness **denies these tools for the entire run**:
+In an autonomous run the harness **denies these tools for the entire run**
+(a single-ask run does not; §16):
 
 - `person_read` — reads the subject's facts/relationships off the live tree
 - `person_ancestors` — reads the subject's parent chain off the live tree
@@ -980,6 +1053,21 @@ mode; lead ruling 2026-09-27).
 > concluded/attached** on the live person, so the recall really measures
 > research. The proof-quality axis (§7) is the backstop that distinguishes
 > "found the pre-attached record" from "did sound research."
+>
+> A project also extracts every indexed record attached to its subject
+> before its first question, with no search at all. So a record that an
+> expected finding cites by its `1:1:` ark, and that is attached to a
+> subject person in the starting tree (at person, name or fact level),
+> is a leak unless `eval/tests/e2e/attached-evidence-allowlist.json`
+> lists it for that fixture. The leak check,
+> `test_e2e_attached_evidence.py`, fails on an unlisted one, on a stale
+> entry and on a malformed one. An entry means the record is evidence
+> the research legitimately starts from, such as the subject's own
+> baptism, and its reason says which finding still needs the research.
+> A record that would answer a required finding on its own is not an
+> entry: changing that finding, or the fixture's genre, is the lead's
+> call. A strip fixture may instead strip the source; a record-hint
+> fixture never strips (§3.6).
 
 **Why blocking is safe for `/research`.** First, the block lives **only
 in the e2e harness** (`eval/harness/e2e/orchestrator.py`, a `PreToolUse`
@@ -1477,7 +1565,7 @@ copied from its export (`/grade-e2e-run`, "Grading a prototype run").
 | `notes` | no | Sparse `{finding_id: text}` map, surfaced on that finding's disagreement line. |
 | `annotator` | no | Provenance; git blame on the committed file is the fallback. |
 | `findings_hash` | no | sha256 of the normalized `expected-findings.json` this grade was produced against, so a later edit to a finding's body cannot silently invalidate the grade while its id stays put. Written by `/grade-e2e-run`'s stamp step, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. |
-| `blind_bundle_digest` | no | sha256 of the normalized content of the 4 files the blind grader reads (`expected-findings.json`, `fixture.json`, `final-tree.gedcomx.json`, `final-research.json`), stamped by `/grade-e2e-run`'s step 7, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. Covers the full grading surface: `findings_hash` catches edits to expected-findings only; this catches edits to any of the four. |
+| `blind_bundle_digest` | no | sha256 of the normalized content of the 4 files the blind grader reads (`expected-findings.json`, `fixture.json`, `final-tree.gedcomx.json`, `final-research.json`), stamped by `/grade-e2e-run`'s step 7, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. Covers the full grading surface: `findings_hash` catches edits to expected-findings only; this catches edits to any of the four, except `fixture.json`'s top-level `hint`, which it ignores (§3.6.2). |
 
 There is **no `verdict` field** — the per-run verdict is derived from `per_finding`
 + the findings' `required` flags by the §7.2 rule.
@@ -1541,7 +1629,10 @@ Four integrity rules make the agreement number trustworthy:
 - **Bundle-provenance stamped.** `/grade-e2e-run`'s step 7 stamps
   `blind_bundle_digest` — a sha256 over the normalized content of the 4 files
   the blind grader reads (`expected-findings.json`, `fixture.json`,
-  `final-tree.gedcomx.json`, `final-research.json`). The loader checks
+  `final-tree.gedcomx.json`, `final-research.json`). `fixture.json` is hashed
+  without its top-level `hint`: that is adjudication metadata, not
+  grading input, and a grade made before it existed cannot have been influenced
+  by it, so backfilling it leaves the stamp valid. The loader checks
   this digest: a present stamp that no longer matches is a hard error
   (re-grade or delete); an absent stamp is grandfathered (included but reported
   unverifiable). This is the wider counterpart to `findings_hash`, which covers
@@ -1936,7 +2027,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `harness_schema_version` | Which shape this log is. Branch on it; see §7.2.1. |
 | `stop_reason` | Why the run ended. §6.5. |
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
-| `tool_calls[]` | Every tool call attempted — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, result_chars, is_error, agent_id, agent_type }`. Main-stream entries are in chronological order; a **background** subagent's calls are appended after them from its transcript, so the array is **not** chronological across agents. See 8.1.1. |
+| `tool_calls[]` | Every tool call attempted — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, thread, result_chars, is_error, agent_id, agent_type }`. Main-stream entries are in chronological order; a **background** subagent's calls are appended after them from its transcript, so the array is **not** chronological across agents. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }` with `blocked_by` ∈ `tree` / `fixture` / `shell` / `path`; the `shell` and `path` entries (the §6.1 opt-in filesystem denials) also carry `reason`, and `path` entries the resolved `path`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
 | `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`image_read` — §6.1.1; `extraction_append` was the other, until indexed-record extraction moved to a main-thread call), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }` — plus `thread` (`main` / `sub`) on `assistant` entries from `harness_schema_version` 8, since a subagent's own messages stream through the same branch. The nine `harness` / `blocked` append sites have no message in scope and carry no `thread`, so select on `kind == "assistant"` **and** `thread == "main"`, never on the absence of the key. `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
@@ -1987,6 +2078,11 @@ rather than absent. At `harness_schema_version` 5 and above, the tool name
 exemptions (`_RUNLOG_EXEMPT_KEYS`) can bypass the per-string and backstop caps
 for specific (tool, response_key) pairs — `image_transcribe`'s `transcription`
 is the first exemption.
+
+`thread` (`"main"` or `"sub"`, on runs from 2026-10-19 on) is set when the call
+is streamed, from the SDK message's `parent_tool_use_id`, so unlike `agent_id` it
+is present on an entry whose result never arrived. Backfilled entries (below) do
+not carry it; read their `agent_id`.
 
 **Background subagents are the one exception to that join.** A subagent spawned
 in the background ("Async agent launched") runs in its own sub-session, so its
@@ -2594,3 +2690,110 @@ When a fixture's behavior changes meaningfully, add a dated line to the
 fixture's `README.md` saying what shifted. The committed run logs are the
 audit trail; the README is the human-readable summary, and it is what the
 next person reads before re-running.
+
+---
+
+## 16. Single-ask mode
+
+About 70 of the 135 alpha feedback bundles reviewed on 2026-10-04 were one bounded ask — find a record, review
+the sources on a person, are these the same person, transcribe this — not a
+research job. Single-ask mode covers that use: it sends one
+message as one ordinary turn and checks which unit answered and what was saved.
+
+`make e2e-single-ask [TEST=<slug>]` runs `e2e.run_single_ask`. Omit `TEST` to run
+the whole panel. It prints a short block per fixture (a PASS/FAIL line, then the
+units in order and any reason), exits 0 when all pass, 1 when
+any fails, and 2 when a run never happened (bad fixture, no build, the genealogy
+MCP server unavailable — §6).
+
+### 16.1 Directories
+
+- Fixtures: `eval/tests/e2e-single-ask/<slug>/`.
+- Run logs: `eval/runlogs/e2e-single-ask/<slug>/run-<timestamp>.json`. They are not
+  committed; a PR that changes a fixture's result pastes the printed block instead.
+
+Both are **siblings** of `eval/tests/e2e/` and `eval/runlogs/e2e/`, never inside
+them. About 20 readers walk those two trees with no exclusion (`corpus_report`,
+`panel_report`, `latency_report`, `guardrail_shadow_report`, `runlog_selection`,
+`validate_fixture`, …), and `check_e2e_fixtures.py`'s BLOCKING grading gate
+demands a `.ann.json` for every run with a tree. A flag on ordinary fixtures
+would need an exclusion in every reader and breaks the first time one is missed.
+
+### 16.2 Fixture format
+
+`fixture.json`:
+
+| Field | Required | Meaning |
+|---|---|---|
+| `id` | yes | the directory name (the loader refuses a mismatch) |
+| `message` | yes | sent verbatim |
+| `expected_owner` | yes | the agent or skill name that should answer |
+| `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` or `{"section": "sources"}` |
+| `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
+| `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
+| `must_not` | no | free text; printed, not graded |
+| `caps` | no | the keys of `FixtureCaps` (§6). Set `wall_clock_seconds` and `tool_calls` low and give the reason in the README; they are what end a runaway turn (`max_cost_usd` only labels one) |
+| `model.agent`, `blocked_tools` | no | as for autonomous fixtures (§3.1, §6.1) |
+
+Plus `starting-research.json` and `starting-tree.gedcomx.json`, named as for
+autonomous fixtures. Every fixture starts from an existing project: with no
+project and no PID, `init-project` creates nothing and asks for an ID, so the turn
+would grade as "no unit ran" for a reason that has nothing to do with routing.
+There is no `expected-findings.json` and no judge.
+
+### 16.3 How the turn runs
+
+- The message is sent **verbatim**: no `/research` prefix, no `--autonomous`, no
+  provided-documents suffix. The system prompt is the autonomous mode's (no
+  DELIVERY_GUIDANCE).
+- **No continue nudges.** The Stop hook returns `{}` at once, and there is no
+  stall resume (it sends a second message). This matches Cowork today and step
+  mode's cap 0 (`docs/plan/research-step-mode.md`, decision 1).
+- **No live-tree block.** §6.1 exists to hide an answer key; a single-ask fixture
+  has none, and asks like "review the sources attached to <PID>" need
+  `person_read`. The fixture's own `blocked_tools` still applies.
+- The other harness denies stay. One of them does not exist in production: the
+  main-thread `image_read` deny (§6.1.1). A "transcribe this" fixture must expect
+  the transcription in a subagent.
+- `run_single_ask_turn` (orchestrator.py) takes one message and returns the turn's
+  record, so under step mode a single ask is one step turn.
+
+### 16.4 Grade
+
+Deterministic, in `e2e/single_ask_grade.py`. PASS only if all four hold (`expected_owner` and `setup_units` may carry a plugin
+namespace; it is stripped, as it is from spawned names):
+
+1. **`owner`** — the first **main-thread** `Agent`/`Task`/`Skill` spawn, skipping the
+   `research` router and any `setup_units`, is `expected_owner`. A spawn inside a
+   subagent is recorded but never the owner. The thread comes from the SDK's
+   `parent_tool_use_id` (the `thread` field on each `tool_calls` entry).
+2. **`no_research_job`** — no `question-selection` spawn and, unless `is_plan_ask`,
+   no `research-plan` spawn, on any thread; and no new `questions` entry, nor,
+   unless `is_plan_ask`, a new `plans` entry.
+3. **`save`** — a new `sources` entry, or a new `log` entry whose `tool` is the
+   expected value. "New" means its id is in the final `research.json` and not in
+   `starting-research.json`.
+4. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
+   here even if it saved: the patron never got the answer. `cost_cap` is not a
+   cut-off (§6: it only labels a finished run), so it does not fail this check.
+
+Printed, not graded: whether the main thread called `research_delivered`, every
+unit in order (nested ones in parentheses), the `extraction_append` count, how the
+turn stopped (`stop=clean` or the abort reason), the whole-run cost estimate, and
+any background spawn ("Async agent launched"), whose save can land after the grade
+reads `research.json`.
+A turn that ended on `host_slept` is printed `UNGRADED` and counts as a failure.
+
+### 16.5 What a pass does not show
+
+A pass here is **not** a pass on today's hosted alpha. That plane appends
+DELIVERY_GUIDANCE (`apps/server/app/agent/real_agent.py`) and nudges any stop not
+preceded by `research_delivered`; a single ask that ends without it would be
+pushed on into more work. The `delivered` column is what shows that risk.
+
+### 16.6 Cost
+
+Every run is live and billed (FamilySearch and the model) and is not cached.
+Each fixture's README records the measured figure from the run log's
+`usage.whole_run_cost_usd_estimated`, with the date measured.
+

@@ -1,0 +1,19 @@
+{
+  "id": "salvador-choc-daughter",
+  "name": "Salvador Choc — a daughter, Antonia, baptised in 1877 at San Pedro Carchá, Guatemala",
+  "genre": "record-hint",
+  "source_pid": "MGDD-CB5",
+  "captured": "2026-10-20",
+  "researcher_question": "What children did Salvador Choc of San Pedro Carchá, Alta Verapaz, Guatemala, and his wife Petrona Ba (also recorded as Petrona Choc), who married there on 9 August 1871, have in the 1870s?",
+  "tags": {
+    "question_type": "children",
+    "era": "1870s",
+    "geography": "GT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 13, hint-samples.csv row 424, flags adds_daughter, confidence 3). The CSV's tree PID 9CB3-PVT now resolves to MGDD-CB5. Draft transcribed from an 1877 Catholic baptism entry at San Pedro Carchá, Alta Verapaz; unverified."
+}

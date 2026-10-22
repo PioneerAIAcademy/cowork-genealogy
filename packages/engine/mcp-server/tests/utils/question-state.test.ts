@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { questionStatus, questionStates } from "../../src/utils/question-state.js";
+import { ATTACHMENT_LINK_RATIONALE, countsForProofGate, isAttachmentLink } from "../../src/utils/tree-person.js";
+import { unlinkedProofInvariants } from "../../src/tools/research-append.js";
 
 /**
  * Vectors for the advisory per-question state.
@@ -136,6 +138,7 @@ describe("questionStatus — the state ladder", () => {
           { id: "log_2", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" },
         ],
         assertions: [{ id: "a_1", log_entry_id: "log_1", extracted_for_question_ids: [Q] }],
+        person_evidence: [{ assertion_id: "a_1", person_id: "I1" }],
       });
       const s = questionStatus(d, question());
       expect(s.state).toBe("evidence-gathered");
@@ -181,7 +184,10 @@ describe("questionStatus — the state ladder", () => {
   });
 
   it("evidence-gathered: an assertion extracted for this question", () => {
-    const d = doc({ assertions: [{ id: "a_1", extracted_for_question_ids: [Q] }] });
+    const d = doc({
+      assertions: [{ id: "a_1", extracted_for_question_ids: [Q] }],
+      person_evidence: [{ assertion_id: "a_1", person_id: "I1" }],
+    });
     const s = questionStatus(d, question());
     expect(s.state).toBe("evidence-gathered");
     expect(s.nextStep).toMatch(/research-exhaustiveness/);
@@ -290,6 +296,103 @@ describe("questionStatus — conflicts outrank everything", () => {
     const s = questionStatus(d, question());
     expect(s.openConflictIds).toEqual([]);
     expect(s.nextStep).not.toMatch(/conflict-resolution/);
+  });
+});
+
+describe("questionStatus — a question with no linked assertion routes to person-evidence", () => {
+  const extracted = (...ids: string[]) => ids.map((id) => ({ id, extracted_for_question_ids: [Q] }));
+
+  it("extracted assertions and no person_evidence at all are the next step", () => {
+    // LZJF-J13 (issue #3177): 15 assertions, 0 links, and the router went on to
+    // exhaustiveness and a Probable proof.
+    const s = questionStatus(doc({ assertions: extracted("a_1", "a_2", "a_3") }), question());
+    expect(s.state).toBe("evidence-gathered");
+    expect(s.nextStep).toBe("person-evidence — none of this question's 3 assertions is linked to a person");
+  });
+
+  const link = (rationale: string, extra: Record<string, unknown> = {}) => ({
+    id: "pe_1", assertion_id: "a_1", person_id: "I1", confidence: "speculative", match_score: null, rationale, superseded_by: null, ...extra,
+  });
+
+  it("an unchecked attachment link still counts as none; a speculative link the researcher confirmed does not (#3516)", () => {
+    const attachment = questionStatus(doc({ assertions: extracted("a_1"), person_evidence: [link(ATTACHMENT_LINK_RATIONALE)] }), question());
+    expect(attachment.nextStep).toMatch(/^person-evidence/);
+    const confirmed = questionStatus(
+      doc({ assertions: extracted("a_1"), person_evidence: [link("The researcher confirmed this weak match.")] }),
+      question(),
+    );
+    expect(confirmed.nextStep ?? "").not.toMatch(/^person-evidence/);
+  });
+
+  it("the researcher-confirmed speculative link satisfies the rung and not the proof gate; the rationale alone is not an attachment", () => {
+    const confirmed = link("The researcher confirmed this weak match.");
+    expect(countsForProofGate(confirmed)).toBe(false);
+    expect(isAttachmentLink(link(ATTACHMENT_LINK_RATIONALE))).toBe(true);
+    expect(isAttachmentLink(link(ATTACHMENT_LINK_RATIONALE, { confidence: "probable" }))).toBe(false);
+    expect(isAttachmentLink(link(ATTACHMENT_LINK_RATIONALE, { match_score: 0.8 }))).toBe(false);
+  });
+
+  it("the unlinked-proof gate refuses a proof resting only on speculative links, and accepts one link that is not", () => {
+    const research = (pe: any[]) => ({ assertions: [{ id: "a_1" }], person_evidence: pe });
+    const proof = { id: "ps_001", tier: "probable", supporting_assertion_ids: ["a_1"] };
+    expect(unlinkedProofInvariants(proof, research([link(ATTACHMENT_LINK_RATIONALE)])).join(" ")).toMatch(/not speculative/);
+    expect(unlinkedProofInvariants(proof, research([link("checked", { confidence: "probable", match_score: 0.9 })]))).toEqual([]);
+  });
+
+  it("one linked assertion clears it, though its household members stay unlinked", () => {
+    const d = doc({
+      assertions: extracted("a_1", "a_2", "a_3"),
+      person_evidence: [{ assertion_id: "a_1", person_id: "I1" }],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^research-exhaustiveness/);
+  });
+
+  it("a link to another question's assertion does not clear this one", () => {
+    const d = doc({
+      assertions: [...extracted("a_1"), { id: "a_9", extracted_for_question_ids: ["q_999"] }],
+      person_evidence: [{ assertion_id: "a_9", person_id: "I1" }],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^person-evidence/);
+  });
+
+  it("a superseded link does not count as a link", () => {
+    const d = doc({
+      assertions: extracted("a_1"),
+      person_evidence: [{ id: "pe_1", assertion_id: "a_1", person_id: "I1", superseded_by: "pe_2" }],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^person-evidence/);
+  });
+
+  it("a registered unresolved conflict still outranks it", () => {
+    const d = doc({
+      assertions: extracted("a_1"),
+      conflicts: [{ id: "c_1", status: "unresolved", competing_assertion_ids: ["a_1"] }],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution — unresolved c_1/);
+  });
+
+  it("it outranks competing parent sets, which the routing table lists after it", () => {
+    const tree = {
+      relationships: ["I2", "I3", "I4"].map((p) => ({ type: "ParentChild", parent: p, child: "I1" })),
+    };
+    const d = doc({ project: { subject_person_ids: ["I1"] }, assertions: extracted("a_1") });
+    const s = questionStatus(d, question(), tree);
+    expect(s.competingParentSets).toHaveLength(1);
+    expect(s.nextStep).toMatch(/^person-evidence/);
+  });
+
+  it("once a proof summary exists it is no longer the next step", () => {
+    // The proof write is where an unlinked conclusion is refused; re-opening a
+    // concluded question from the ladder would be advice nobody can act on.
+    const d = doc({
+      assertions: extracted("a_1"),
+      proof_summaries: [{ id: "ps_001", question_id: Q }],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^question-selection — concluded/);
+  });
+
+  it("a question with no assertions yet is not affected", () => {
+    expect(questionStatus(doc(), question()).nextStep).toBe("research-plan");
   });
 });
 
@@ -559,7 +662,12 @@ describe("questionStatus — competing parent sets route to hypothesis-tracking"
     relationships: ["I2", "I3", "I4", "I5"].map((p) => ({ type: "ParentChild", parent: p, child: "I1" })),
   };
   const withSubject = (extra: Record<string, unknown> = {}) =>
-    doc({ project: { subject_person_ids: ["I1"] }, assertions: [{ id: "a_1", extracted_for_question_ids: [Q] }], ...extra });
+    doc({
+      project: { subject_person_ids: ["I1"] },
+      assertions: [{ id: "a_1", extracted_for_question_ids: [Q] }],
+      person_evidence: [{ assertion_id: "a_1", person_id: "I1" }],
+      ...extra,
+    });
 
   it("a subject with four parents and no hypotheses is the next step", () => {
     const s = questionStatus(withSubject(), question(), tree);

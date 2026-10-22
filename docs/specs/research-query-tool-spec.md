@@ -45,9 +45,10 @@ cost, in skills `project_context` doesn't serve, for content
 research_query({
   projectPath: string,
   section: "questions" | "plans" | "log" | "sources" | "assertions"
-         | "person_evidence" | "conflicts" | "hypotheses" | "timelines"
-         | "proof_summaries" | "evaluations" | "localities"
+         | "person_evidence" | "rejected_links" | "conflicts" | "hypotheses" | "timelines"
+         | "proof_summaries" | "evaluations" | "localities" | "namesakes"
          | "external_collections",   // reads external-collections.json, not research.json — §2.4
+  orderBy?: "review",            // person_evidence only — §2.5
   // well-known filters — only some apply to a given section; see §2.1.
   // The four id keys also take a list (≤50 ids) — §2.1, "Lists of ids".
   recordId?: string | string[],
@@ -89,6 +90,7 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | | `questionId` | `extracted_for_question_ids` | contains |
 | `person_evidence` | `personId` | `person_id` | exact |
 | | `assertionId` | `assertion_id` | exact |
+| `rejected_links` | — | — | no filters; the whole section is small by construction |
 | `conflicts` | `assertionId` | `competing_assertion_ids` | contains |
 | | `questionId` | `blocks_question_ids`, OR a `competing_assertion_ids` entry whose assertion's `extracted_for_question_ids` contains the value — the link the completion gate derives; any status, so a resolved conflict (whose `blocks_question_ids` is empty) still answers for its question | via assertions |
 | | `status` | `status` | exact |
@@ -101,6 +103,7 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `evaluations` | `targetId` | `target_id` | exact |
 | | `focus` | `focus` | exact |
 | `localities` | *(none)* | — | — |
+| `namesakes` | `personId` | `person_id` | exact |
 | `external_collections` | `place` | `place` | the place or any enclosing jurisdiction |
 | | `recordType` | `record_types` | case-insensitive substring of any |
 
@@ -114,6 +117,7 @@ enough to reach a user.
 | Section | Why not |
 |---|---|
 | `known_holdings` | Write-only, and slated for deletion from the schema — exposing it would create a contract that deletion then has to remove. |
+| `warning_justifications` | Writer-tool only: the warning gate appends it as a side effect of a justified write. |
 | `project` | An object, not an array. This tool pages arrays. |
 | `researcher_profile` | An object, not an array. |
 
@@ -223,6 +227,25 @@ with `rows: []`, and a place name in another form (`Pennsylvania` for the stored
 from "never fetched", read `project_context`'s `externalCollections`, which lists
 every fetched place, `total: 0` included.
 
+
+### 2.5 `orderBy: "review"` — ordering `person_evidence` by consequence
+
+By default `items` are in document order, and that is deliberate: it is what every
+committed run replays against, so changing it rewrites recorded truth.
+
+`orderBy: "review"` orders `person_evidence` by how much a wrong link would cost —
+a recorded `core_identifier_conflict` first, then `speculative` over `probable` over
+`confident`, then a missing `match_score`. It only matters because of paging: a run
+that wrote 311 links shows 50 at a time, so the ordering decides which links a
+reviewer ever sees.
+
+The response then carries `reviewReasons`, keyed by link id, naming why each ranked
+link sits where it does — a rank with no reason is a number to distrust. Links with
+nothing notable carry no entry, and the key is absent when none do.
+
+Ignored for every other section: a plan's items are sequenced, and reordering them
+would destroy meaning rather than add it.
+
 ## 3. Decisions recorded
 
 **`assertionId` means two different things, and only one of them is "the
@@ -259,7 +282,7 @@ so that rule would be accepted and match nothing, ever.
   params, not a free-text query language), validated per-section — the same
   reasoning that rejected an open-ended query surface for `project_context`
   would reject one here too. What's different from that prior rejection is
-  scope: twelve named parameters across thirteen sections, not an arbitrary path
+  scope: twelve named parameters across fourteen sections, not an arbitrary path
   language.
 - **No filter on `localities`, deliberately.** None of the ten existing
   filter keys maps onto a locality field, so a filter would mean a new MCP
@@ -283,7 +306,7 @@ so that rule would be accepted and match nothing, ever.
   per the repo's casing rule), this tool returns the underlying section
   entries as-is — the caller is asking "what does research.json currently
   say," not requesting a designed output shape. Renaming per-section fields
-  here would mean maintaining twelve bespoke projections instead of one
+  here would mean maintaining thirteen bespoke projections instead of one
   filter layer.
 - **No `tree.gedcomx.json` access.** The observed cost (§1) was
   `research.json` re-reads specifically; tree re-reads were an order of
@@ -390,7 +413,7 @@ so that rule would be accepted and match nothing, ever.
 
 | Condition | Behavior |
 |---|---|
-| `section` not one of the thirteen supported values | `{ ok: false, errors }` |
+| `section` not one of the fourteen supported values | `{ ok: false, errors }` |
 | `section: "external_collections"` and no `external-collections.json` yet | `{ ok: true, count: 0, items: [], truncated: false }` — nothing has been fetched for this project |
 | `external-collections.json` is invalid JSON, or not an object holding a `places` object | `{ ok: false, errors }` |
 | A supplied filter not in that section's allow-list (§2.1) | `{ ok: false, errors }` naming the filter and the section |
@@ -403,7 +426,7 @@ so that rule would be accepted and match nothing, ever.
 | A list repeats an id | collapses silently: one `countById` key, each item once |
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | `research.json` missing or invalid JSON — with `tree.gedcomx.json` present, i.e. a *broken* project | `{ ok: false, errors }`, loud |
-| An **optional** section (one the schema does not list as `required` — today `localities`) is absent from a `research.json` that is otherwise a well-formed object | `{ ok: true, count: 0, items: [], truncated: false }` — a legitimate answer. `localities` postdates most projects: 90 of the 102 committed fixtures have no such key, and erroring on those is what stopped an agent re-reading locality findings it had just written. |
+| An **optional** section (one the schema does not list as `required` — today `localities`, `namesakes` and `rejected_links`) is absent from a `research.json` that is otherwise a well-formed object | `{ ok: true, count: 0, items: [], truncated: false }` — a legitimate answer. `localities` postdates most projects: 90 of the 102 committed fixtures have no such key, and erroring on those is what stopped an agent re-reading locality findings it had just written. A project carries `namesakes` only once a namesake is recorded. |
 | A **required** section is missing, or any section is present but not an array, or `research.json` parses to something that is not an object (`null`, an array, a string, a number) | `{ ok: false, errors }` |
 | `log` × `questionId`, `plans` missing or not an array | `{ ok: false, errors }` — `plans` is a required section, so its absence is a corrupt document, never a `count: 0` |
 | `log` × `questionId`, an entry with `plan_item_id: null` | never matches (the walk could not reach it either) |

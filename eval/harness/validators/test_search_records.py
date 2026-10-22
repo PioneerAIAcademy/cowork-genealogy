@@ -284,86 +284,31 @@ def test_no_search_or_writes_on_planning_request(
 
 
 def test_escalates_to_external_sites_after_fs_exhaustion(
-    skills_invoked, builtin_tool_calls, test
+    agent_returns, text_response, test
 ):
-    """After FamilySearch is exhausted across name variants, the skill must
-    hand off to `search-external-sites` — not merely offer to.
+    """After FamilySearch is exhausted across name variants, the agent must
+    hand back to `search-external-sites` — name it, with the person attributes,
+    in its caller-facing lines — not merely offer to.
 
-    Graded here rather than by the LLM judge because the hook records are
-    ground truth: the PreToolUse hook fires on the real `Skill` call or agent
-    spawn (`handoffs`, issue #2825), so a response that only *narrates* the
-    escalation ("Shall I generate Ancestry URLs?") cannot satisfy it, and a
-    response that genuinely delegates cannot be marked down for it. The judge
-    has gotten this wrong in both directions — scoring Correctness=1 for
-    "failed to call search-external-sites" on a run where the hook recorded
-    the call.
+    An agent cannot spawn another agent (lead ruling 2026-09-23: hand back,
+    never spawn), so the escalation is the named hand-back in the return, read
+    from the agent's own return text (`agent_return_text`), the same shape
+    `test_hypothesis_tracking.py` asserts. A closing question ("shall I
+    generate Ancestry URLs?") is the failure this exists to catch: it names the
+    site but not the agent, so it does not match.
 
     Tag-gated: only the nil-exhaustion escalation test asserts this. Ordinary
-    search tests must NOT escalate, and negative routing tests are graded on
-    routing instead.
+    search tests must NOT escalate.
     """
-    from harness.skill_runner import handoffs
+    from harness.skill_runner import agent_return_text
 
     if "familysearch-exhausted" not in test.get("tags", []):
         pytest.skip("only the FamilySearch-exhaustion escalation test")
-    handed = handoffs(skills_invoked, builtin_tool_calls)
-    assert "search-external-sites" in handed, (
-        "FamilySearch was exhausted across name variants, so the skill had to "
-        "hand off to search-external-sites. Offering it in prose is not "
-        f"escalating. handoffs={handed}"
-    )
-
-
-def test_live_callee_used_its_own_tools(
-    tool_calls, skills_invoked, builtin_tool_calls, test
-):
-    """Tag-gated (live-callee): a test that lets `search-external-sites`
-    execute must show it was actually delegated to, and that it then called
-    its own tools.
-
-    This is the entire point of `execution.run_skills` (issue #1012). Before
-    the sub-skill union the callee held neither `place_search` nor its URL
-    tools, and the failure was silent — it invented an Ancestry URL from prose
-    rather than erroring. A regression would look identical: plausible links,
-    no tool call behind them. `build_external_search_url` is the call every
-    hand-off must make; `external_links_search` is not, since the agent reads a
-    stored list when the project has one.
-
-    Deterministic rather than judged, for the same reason
-    test_escalates_to_external_sites_after_fs_exhaustion is. Asked to verify
-    URL provenance against a tool response, the judge has been wrong in both
-    directions on this exact question: it scored Correctness=1 on 2026-07-31
-    for "placeholder URLs" that were relayed verbatim, and again on
-    2026-08-03 claiming Ancestry collection 1276 "does not appear in the
-    returned results" when it is the fifth entry in the fixture it was
-    reading. `tool_calls` is the harness's own record and cannot be misread.
-    """
-    from harness.skill_runner import handoffs
-
-    if "live-callee" not in test.get("tags", []):
-        pytest.skip("only the live-callee seam test")
-    # Delegation first: without it the tool assert below is satisfiable the
-    # wrong way. The unit harness grants every MCP tool to the main thread, so
-    # `search-records` can call `build_external_search_url` itself, never spawn the agent, and still show the tool in
-    # `tool_calls` — the seam this test exists for would be untested and green.
-    #
-    # Nothing else covers it: this test's own `judge_context` forbids the judge
-    # from grading delegation, and the validator it defers to
-    # (test_escalates_to_external_sites_after_fs_exhaustion) gates on the
-    # `familysearch-exhausted` tag, which ut_search_records_026 does not carry
-    # — it skips, and a skipped validator is recorded `passed: true`.
-    handed = handoffs(skills_invoked, builtin_tool_calls)
-    assert "search-external-sites" in handed, (
-        "this test's whole subject is the caller/callee seam — but the "
-        "search-external-sites agent was never spawned. Calling its tools directly from the main "
-        f"thread is the failure this asserts against, not a pass. handoffs={handed}"
-    )
-    called = {c.get("tool", "").split("__")[-1] for c in (tool_calls or [])}
-    assert "build_external_search_url" in called, (
-        "the search-external-sites agent ran live, so it had to reach its own "
-        "tools — build_external_search_url is the only way it may produce a "
-        "search URL. Absent, the agent can only have invented any URL it "
-        f"presented. tools called: {sorted(called)}"
+    reply = agent_return_text(agent_returns, "search-records") or (text_response or "")
+    assert re.search(r"hand[- ]?back[^\n]{0,80}`?search-external-sites", reply, re.I), (
+        "FamilySearch was exhausted across name variants, so the agent had to "
+        "hand back to search-external-sites in its return. Offering Ancestry in "
+        f"prose is not escalating. return text: {reply[:600]!r}"
     )
 
 
@@ -783,8 +728,9 @@ _TOPICAL_FIXTURE_BY_TEST_ID = {
     "ut_search_records_016": "wiki-read-united-states-census",
     "ut_search_records_017": "wiki-read-united-states-census",
     "ut_search_records_018": "wiki-read-united-states-census",
-    "ut_search_records_026": "wiki-read-united-states-census",
     "ut_search_records_027": "wiki-read-united-states-census",
+    "ut_search_records_d01": "wiki-read-united-states-census",
+    "ut_search_records_d02": "wiki-read-united-states-census",
     "ut_search_records_h4k": "wiki-read-united-states-census",
     "ut_search_records_t9p": "wiki-read-united-states-census",
     "ut_search_records_nickname_bitsie": "wiki-read-united-states-census",

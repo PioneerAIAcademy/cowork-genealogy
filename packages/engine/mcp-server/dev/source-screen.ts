@@ -32,6 +32,7 @@ import { localPrincipal, type Principal } from "../src/auth/principal.js";
 import { personReadTool } from "../src/tools/person-read.js";
 import { recordReadTool } from "../src/tools/record-read.js";
 import { sourceAttachmentsTool } from "../src/tools/source-attachments.js";
+import { restoreSwitchedSessionTrees } from "../src/utils/session-tree.js";
 import { personQualityTool } from "../src/tools/person-quality.js";
 import { personWarningsTool } from "../src/tools/person-warnings.js";
 import { samePerson } from "../src/tools/same-person.js";
@@ -163,6 +164,7 @@ export type ErrorClass = "transient" | "permanent" | "stop";
 const STOP_PATTERNS = [/rate limit/i, /Retry-After/i, /login tool/i, /API error: 429\b/];
 const PERMANENT_PATTERNS = [
   /was not found in FamilySearch historical records/i,
+  /FamilySearch recapi error: 410\b/,
   /is restricted and cannot be viewed/i,
   /not found in the FamilySearch Family Tree/i,
   /has been deleted from the FamilySearch Family Tree/i,
@@ -207,11 +209,11 @@ export interface Tools {
 
 /** An empty OpenRouter key: person_read then transcribes no memory scan, so no
  *  restricted image goes to OpenRouter. */
-export function liveTools(principal: Principal = localPrincipal({ openRouterApiKey: "" })): Tools {
+export function liveTools(principal: Principal = localPrincipal({ openRouterApiKey: "" }), tree?: string): Tools {
   return {
     personRead: (personId) => personReadTool({ personId }, principal),
     recordRead: (ark) => recordReadTool({ recordId: ark }, principal),
-    sourceAttachments: (uris) => sourceAttachmentsTool({ uris }, principal),
+    sourceAttachments: (uris) => sourceAttachmentsTool({ uris }, principal, { treeId: tree }),
     personQuality: (personId) => personQualityTool({ personId, detail: true }, principal),
     personWarnings: (projectPath, personId) =>
       personWarningsTool({ projectPath, personId }, { placeCoords: async () => null }),
@@ -350,6 +352,108 @@ async function call<T>(
 
 const errorBody = (error: string) => ({ error, is_error: true });
 
+/** `attachments.json`, then `others/` for each other person a subject-level persona is attached to. */
+async function snapshotAttachments(
+  ctx: Ctx,
+  calls: Record<string, number>,
+  errors: CallError[],
+  dir: string,
+  personas: AuditEntry[],
+  sid: string,
+  inputPid: string,
+): Promise<SourceAttachmentsResult | undefined> {
+  if (personas.length === 0) return undefined;
+  const a = await call(ctx, calls, errors, "source_attachments", undefined, () =>
+    ctx.tools.sourceAttachments(personas.map((e) => e.ark!)),
+  );
+  writeJson(join(dir, "attachments.json"), a.ok ? a.value : errorBody(a.error));
+  if (!a.ok) return undefined;
+  const others = new Set<string>();
+  for (const e of personas.filter((p) => p.level === "subject")) {
+    for (const p of a.value.attachments?.[e.ark!] ?? []) {
+      if (p.personId !== sid && p.personId !== inputPid) others.add(p.personId);
+    }
+  }
+  for (const other of others) {
+    const path = join(dir, "others", `${other}.json`);
+    const have = readJsonIf(path);
+    if (have && !have.is_error) continue;
+    const o = await call(ctx, calls, errors, "person_read", other, () => ctx.tools.personRead(other));
+    writeJson(path, o.ok ? o.value : errorBody(o.error));
+  }
+  return a.value;
+}
+
+export interface RefreshLedger {
+  started: string;
+  tree: string;
+  calls: Record<string, number>;
+  refreshed: number;
+  skipped: number;
+  errored: number;
+  /** Subject-level persona ARKs, and how many the refreshed lookup attaches to the subject itself. */
+  subject_arks: number;
+  subject_arks_naming_subject: number;
+  finished?: string;
+  stopped?: string;
+}
+
+/**
+ * Re-read every truth-set copy's attachments with the session switched to
+ * `tree`. The Family Tree answer is kept beside it as
+ * `attachments.family-tree.json` and `others.family-tree/`. A copy already
+ * refreshed for this tree (`attachments-tree.json`) is skipped, so a stopped
+ * run resumes. Plant copies come from the Family Tree and are left alone.
+ */
+export async function runRefreshAttachments(out: string, tools: Tools, tree: string): Promise<RefreshLedger> {
+  const run: RunJson = readJson(join(out, "run.json"));
+  const ledger: RefreshLedger = {
+    started: new Date().toISOString(), tree, calls: {}, refreshed: 0, skipped: 0, errored: 0,
+    subject_arks: 0, subject_arks_naming_subject: 0,
+  };
+  const ctx: Ctx = { out, tools, samePerson: false, ledger: newLedger() };
+  try {
+    for (const copyKey of new Set(Object.values(run.map))) {
+      const dir = personsDir(out, copyKey);
+      const audit: AuditList | undefined = readJsonIf(join(dir, "audit.json"));
+      const meta = readJsonIf(join(dir, "meta.json"));
+      if (!audit || !meta || meta.living) continue;
+      const personas = audit.entries.filter((e) => e.class === "persona");
+      const subjectArks = personas.filter((e) => e.level === "subject").map((e) => e.ark!);
+      if (readJsonIf(join(dir, "attachments-tree.json"))?.tree === tree) {
+        ledger.skipped += 1;
+      } else {
+        if (existsSync(join(dir, "attachments.json")) && !existsSync(join(dir, "attachments.family-tree.json"))) {
+          renameSync(join(dir, "attachments.json"), join(dir, "attachments.family-tree.json"));
+        }
+        if (existsSync(join(dir, "others")) && !existsSync(join(dir, "others.family-tree"))) {
+          renameSync(join(dir, "others"), join(dir, "others.family-tree"));
+        }
+        rmSync(join(dir, "others"), { recursive: true, force: true });
+        const calls: Record<string, number> = {};
+        const errors: CallError[] = [];
+        await snapshotAttachments(ctx, calls, errors, dir, personas, audit.subject_id, meta.input_pid ?? audit.subject_id);
+        if (errors.length) ledger.errored += 1;
+        else {
+          writeJson(join(dir, "attachments-tree.json"), { tree, refreshed: new Date().toISOString() });
+          ledger.refreshed += 1;
+        }
+      }
+      const att = readJsonIf(join(dir, "attachments.json"));
+      ledger.subject_arks += subjectArks.length;
+      ledger.subject_arks_naming_subject += subjectArks.filter((a) =>
+        (att?.attachments?.[a] ?? []).some((p: Json) => p.personId === audit.subject_id)).length;
+    }
+  } catch (e) {
+    if (!(e instanceof StopRun)) throw e;
+    ledger.stopped = e.message;
+  }
+  ledger.calls = ctx.ledger.calls;
+  ledger.finished = new Date().toISOString();
+  writeJson(join(out, "runs", `attachments-${ledger.started.replace(/[:.]/g, "-")}.json`), ledger);
+  return ledger;
+}
+
 export type PersonOutcome = "complete" | "transient" | "living" | "merged" | "final_with_errors";
 
 export interface SnapshotPersonOpts {
@@ -443,30 +547,7 @@ export async function snapshotPerson(ctx: Ctx, inputPid: string, opts: SnapshotP
     else if (r.class === "permanent") writeJson(sharedRecordPath(ctx.out, id), errorBody(r.error));
   }
 
-  let attachments: SourceAttachmentsResult | undefined;
-  if (personas.length > 0) {
-    const a = await call(ctx, calls, errors, "source_attachments", undefined, () =>
-      ctx.tools.sourceAttachments(personas.map((e) => e.ark!)),
-    );
-    writeJson(join(dir, "attachments.json"), a.ok ? a.value : errorBody(a.error));
-    if (a.ok) attachments = a.value;
-  }
-
-  if (attachments) {
-    const others = new Set<string>();
-    for (const e of personas.filter((p) => p.level === "subject")) {
-      for (const p of attachments.attachments?.[e.ark!] ?? []) {
-        if (p.personId !== sid && p.personId !== inputPid) others.add(p.personId);
-      }
-    }
-    for (const other of others) {
-      const path = join(dir, "others", `${other}.json`);
-      const have = readJsonIf(path);
-      if (have && !have.is_error) continue;
-      const o = await call(ctx, calls, errors, "person_read", other, () => ctx.tools.personRead(other));
-      writeJson(path, o.ok ? o.value : errorBody(o.error));
-    }
-  }
+  await snapshotAttachments(ctx, calls, errors, dir, personas, sid, inputPid);
 
   const q = await call(ctx, calls, errors, "person_quality", sid, () => ctx.tools.personQuality(sid));
   writeJson(join(dir, "quality.json"), q.ok ? q.value : errorBody(q.error));
@@ -574,7 +655,7 @@ export async function runSnapshot(opts: SnapshotOpts): Promise<Ledger> {
     ctx.ledger.stopped = "interrupted";
     ctx.ledger.finished = new Date().toISOString();
     writeJson(ledgerPath, ctx.ledger);
-    process.exit(130);
+    void restoreSwitchedSessionTrees().finally(() => process.exit(130));
   };
   if (opts.handleInterrupt) process.once("SIGINT", onInterrupt);
   for (const pid of run.draw) {
@@ -1185,7 +1266,8 @@ function intFlag(flags: Record<string, string[]>, name: string, fallback: number
 }
 
 const ALLOWED: Record<string, string[]> = {
-  snapshot: ["--pids", "--out", "--sample", "--seed"],
+  snapshot: ["--pids", "--out", "--sample", "--seed", "--tree"],
+  attachments: ["--snapshot", "--tree"],
   baseline: ["--snapshot", "--threshold"],
   plant: ["--spec", "--out"],
   score: ["--spec", "--findings"],
@@ -1194,7 +1276,7 @@ const PATH_FLAGS = new Set(["--pids", "--out", "--snapshot", "--findings", "--sp
 
 export async function main(argv: string[], tools?: Tools): Promise<number> {
   const { cmd, flags, bools } = parseArgs(argv);
-  if (!ALLOWED[cmd]) throw new Error(`usage: source-screen.ts snapshot|baseline|plant|score [flags]`);
+  if (!ALLOWED[cmd]) throw new Error(`usage: source-screen.ts snapshot|attachments|baseline|plant|score [flags]`);
   for (const b of bools) {
     if (b !== "--no-same-person" || !["snapshot", "plant"].includes(cmd)) throw new Error(`${cmd} does not take ${b}`);
   }
@@ -1217,9 +1299,17 @@ export async function main(argv: string[], tools?: Tools): Promise<number> {
       sample: intFlag(flags, "--sample", null),
       seed: intFlag(flags, "--seed", 1)!,
       samePerson: samePersonOn,
-      tools: tools ?? liveTools(),
+      tools: tools ?? liveTools(undefined, flags["--tree"]?.[0]),
       handleInterrupt: true,
     });
+    console.log(JSON.stringify(ledger, null, 2));
+    return ledger.stopped ? 2 : 0;
+  }
+  if (cmd === "attachments") {
+    const onInterrupt = () => void restoreSwitchedSessionTrees().finally(() => process.exit(130));
+    process.once("SIGINT", onInterrupt);
+    const ledger = await runRefreshAttachments(one("--snapshot"), tools ?? liveTools(undefined, one("--tree")), one("--tree"));
+    process.off("SIGINT", onInterrupt);
     console.log(JSON.stringify(ledger, null, 2));
     return ledger.stopped ? 2 : 0;
   }

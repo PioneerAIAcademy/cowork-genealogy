@@ -479,8 +479,15 @@ async function resolveRecordSide(
   // route. `assertUnambiguous` below tells the agent to pass it when a role
   // names two people, and the schema advertises it as the disambiguator, so a
   // route that ignored it sent the agent round the same refusal for ever.
+  // A persona id the record's extraction stamped on several roles names no one
+  // party, so its assertions group by role (`recordPartyKeyer`); the
+  // assertion's own role then picks the party.
+  const sharedPid =
+    typeof input.recordPersonaId === "string" &&
+    own.some((a: any) => a?.record_persona_id === input.recordPersonaId) &&
+    !groups.some((g) => g.key === input.recordPersonaId);
   const group =
-    typeof input.recordPersonaId === "string" && input.recordPersonaId !== ""
+    typeof input.recordPersonaId === "string" && input.recordPersonaId !== "" && !sharedPid
       ? groups.find((g) => g.key === input.recordPersonaId)
       : groups.find((g) => g.role === role);
   if (group === undefined && typeof input.recordPersonaId === "string") {

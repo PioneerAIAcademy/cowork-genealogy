@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_018",
+    "skill": "research-exhaustiveness",
+    "name": "A hand-off the agent closed without a capture is still listed as handed_to_user under the hand-off's own log id",
+    "type": "positive",
+    "description": "recent-birth-handoff-agent-closed is recent-birth-sealed plus a Newspapers.com birth-announcement search handed to the researcher (log_008, partial, no capture) and later closed by the agent itself (log_009, negative, same url_generated, no capture, 'requires a paid subscription'). project_context.awaitingUser drops it because log_009 closes the row. The agent must build not_reached from the research log and list the hand-off as handed_to_user with log_entry_id log_008. Guards issue #2539's 2026-10-16 ruling and the Saarland harm in issue #3416, where the user was told a record was unreachable and never given the link back.",
+    "tags": [
+      "research-exhaustiveness",
+      "not-reached",
+      "not-reached-handoff",
+      "handed-to-user",
+      "affirmative-declaration"
+    ]
+  },
+  "input": {
+    "scenario": "recent-birth-handoff-agent-closed",
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and declining without a write if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>"
+  },
+  "judge_context": [
+    "The parents are established exactly as in recent-birth-sealed: the 1940 and 1950 censuses and the 1926 Weber County marriage, with church and probate searched nil and the 1936 birth certificate privacy-sealed. On this evidence the agent SHOULD declare q_001 (a stop-gate stopped_because) and write search_stop.",
+    "log_008 handed the researcher a Newspapers.com search for a 1936 birth announcement; no capture came back. log_009 is a later entry for the SAME url_generated that the agent wrote itself, outcome negative, still no capture. A later entry without a capture does not close a hand-off.",
+    "REQUIRED: search_stop.not_reached contains a handed_to_user entry whose log_entry_id is log_008 (the hand-off), not log_009 (the closer), with wiki_title null and a description naming Newspapers.com, the search URL and what it was for (Alan's birth announcement / his parents).",
+    "FAILURE MODES: (a) no handed_to_user entry for the newspaper search; (b) the entry cites log_009; (c) the newspaper search is recorded as a nil_search or as searched-and-negative, as though the record was examined; (d) the hand-off is listed as paywalled instead of handed_to_user — it WAS handed to the user; (e) refusing to declare solely because the newspaper capture never came back, since a birth announcement is corroborative here, not decisive.",
+    "The sealed birth certificate may also appear in not_reached as privacy_sealed; that is correct and not a failure.",
+    "Tool Arguments: grade the research_append update on q_001 and the research_query reads (section log with questionId; section localities)."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  },
+  "mcp_fixtures": [
+    "wiki-read-utah-vital-records"
+  ]
+}

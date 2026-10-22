@@ -1,0 +1,19 @@
+{
+ "log_id": "log_022",
+ "tool": "fulltext_search",
+ "retrieved": "2026-10-20T16:12:47.970Z",
+ "returned_count": 0,
+ "payload": {
+  "query": {
+   "count": 20,
+   "imageGroupNumber": "008316901",
+   "keywords": "Barker Turnbow",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2"
+  },
+  "totalResults": 2,
+  "returned": 2,
+  "offset": 0,
+  "hasMore": false,
+  "results": []
+ }
+}

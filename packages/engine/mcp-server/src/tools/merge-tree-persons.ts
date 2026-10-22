@@ -24,6 +24,12 @@ import {
   noProjectResult,
 } from "./merge-shared.js";
 import type { MergeResult } from "./merge-shared.js";
+import {
+  mergeCarryRefusals,
+  mergeNamesakeRefusals,
+  pidOrStartingPerson,
+} from "./research-append.js";
+import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 
 export interface MergeTreePersonsInput {
   projectPath: string;
@@ -81,6 +87,19 @@ export async function mergeTreePersons(
       return { ok: false, errors: formatIssues(validation.errors) };
     }
 
+    // 5a. The pair and namesake checks (issue #3363), on the project before
+    //     the merge and before the warning gate, so a caller is never asked to
+    //     justify warnings for a merge that is then refused.
+    const startingPersonIds = startingPersonIdsOf(await readStartingTree(projectPath));
+    const before = { research: beforeResearch, tree };
+    const refusals = [
+      ...joinedPairRefusals(tree, merges),
+      ...survivorOrderRefusals(merges, startingPersonIds),
+      ...mergeNamesakeRefusals(before, merges, startingPersonIds),
+      ...mergeCarryRefusals(before, merges, startingPersonIds),
+    ];
+    if (refusals.length > 0) return { ok: false, errors: refusals };
+
     // 5b. Warning gate: refuse if the merge introduces unjustified warnings.
     //     Pass collapseMap so pre-existing warnings on collapsed persons are
     //     matched against their survivor and not read as introduced.
@@ -120,6 +139,46 @@ export async function mergeTreePersons(
   });
 }
 
+/** Part 2: a pair a Couple or ParentChild relationship joins. The merge would
+ *  make it a self-relationship and drop it with its facts and sources, in any
+ *  project, with or without a namesake row. */
+export function joinedPairRefusals(tree: SimplifiedGedcomX, merges: Array<[string, string]>): string[] {
+  const lines: string[] = [];
+  for (const [s, c] of merges) {
+    for (const r of tree.relationships ?? []) {
+      const ends = r.type === "ParentChild" ? [r.parent, r.child] : r.type === "Couple" ? [r.person1, r.person2] : [];
+      if (!ends.includes(s) || !ends.includes(c)) continue;
+      lines.push(
+        `relationship '${r.id}' (${r.type}) joins '${ends[0]}' and '${ends[1]}', a pair in this merge: merging ` +
+          "them would turn it into a self-relationship and drop it, with its facts and sources.",
+      );
+    }
+  }
+  if (lines.length === 0) return [];
+  return [
+    ...lines,
+    "Two people a relationship joins are not one person. If they are, remove that relationship with " +
+      "tree_correct (operation 'remove', relationshipId) and merge again; otherwise do not merge.",
+  ];
+}
+
+/** A pair that would fold a FamilySearch or starting-tree person into one made
+ *  during the run. The survivor keeps its id, and that id is what tells every
+ *  later check the person was not made from one record. */
+export function survivorOrderRefusals(
+  merges: Array<[string, string]>,
+  startingPersonIds: ReadonlySet<string>,
+): string[] {
+  const lines = merges
+    .filter(([s, c]) => pidOrStartingPerson(c, startingPersonIds) && !pidOrStartingPerson(s, startingPersonIds))
+    .map(
+      ([s, c]) =>
+        `pair ['${s}', '${c}'] would fold '${c}', a FamilySearch or starting-tree person, into '${s}', which is neither.`,
+    );
+  if (lines.length === 0) return [];
+  return [...lines, "Write each listed pair the other way round, so the FamilySearch or starting-tree person survives."];
+}
+
 // ─── MCP schema ──────────────────────────────────────────────────────────────
 
 export const mergeTreePersonsSchema = {
@@ -134,7 +193,11 @@ export const mergeTreePersonsSchema = {
     "tree): the survivor is kept, the collapsed person folds into it " +
     "(names/facts merged, never discarded) and is removed; relationships are " +
     "repointed. Every research.json reference to a collapsed id (subject persons, " +
-    "person_evidence, timelines, known_holdings) is repointed to the survivor. " +
+    "person_evidence, rejected_links, timelines, known_holdings, proof_summaries, namesakes) is " +
+    "repointed to the survivor. A merge is refused when a relationship joins the pair, " +
+    "when it would fold a FamilySearch or starting-tree person into one made during the " +
+    "run, or when it would move a link, or carry a record's data, under a recorded " +
+    "namesake with nothing in that record tying it to the person. " +
     "Both files are written both-or-neither and NOT returned — you get a compact " +
     "summary including how many research references were updated. On a validation " +
     "failure nothing is written and `{ ok: false, errors }` is returned.",
