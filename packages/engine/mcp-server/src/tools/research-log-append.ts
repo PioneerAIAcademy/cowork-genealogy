@@ -114,7 +114,8 @@ const REFERENCE_LOOKUP_TOOLS = new Set([
  *  that it had logged, so the dispatcher wrote its own translation). */
 const REPORT_TOOLS = new Set(["source_evaluation", "check_warnings", "translation", "convert_dates", "validate_schema"]);
 const REPORT_REPLY_NEXT =
-  "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged.";
+  "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. " +
+  "Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.";
 
 function reportReplyNext(tools: unknown[]): { next?: string } {
   return tools.some((t) => typeof t === "string" && REPORT_TOOLS.has(t)) ? { next: REPORT_REPLY_NEXT } : {};
