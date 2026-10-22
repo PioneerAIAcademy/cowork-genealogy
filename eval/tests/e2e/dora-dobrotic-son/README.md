@@ -48,9 +48,9 @@ Franciscus Korota and Dorothea Dobrotić (`ark:/61903/1:1:QKMG-HJFG`).
 *Jacobus, filius legitimus, Franciscus Korotaj, et Dorothea Dobrotić conj.
 pleb., Lovrečan No. 4*, born 3 April 1871. Child, father, mother and birth
 date all match the index; the surname on the register is Korotaj, the tree's
-spelling, not the index's "Korota". The baptism date was read as 4 April
-1871 on one reading and 3 April on another (the index has 3 April), so `f1`
-pins the birth date and leaves the baptism day to the index. The image
+spelling, not the index's "Korota". `f1` grades the baptism date as the
+index gives it, 3 April 1871 (one reading of the register's baptism column
+gave 4 April, another 3 April). The image
 settled the call, so `image_basis` is `true`.
 
 **Calibration.** Before reading entry 28, the genealogist checked the two
@@ -78,8 +78,8 @@ catalogue metadata describes a Kotoriba (Međimurje) death register for
 Radovečki baptism. The page is a baptism register; the Kotoriba label is
 film-level metadata, not the record type.
 
-**Findings.** `f1` (required): the agent should add Jacobus Korotaj, born
-3 April 1871 and baptised at Križovljan Radovečki, as a son of Dora and Franjo.
+**Findings.** `f1` (required): the agent should add Jacobus Korotaj,
+baptised 3 April 1871 at Križovljan Radovečki, as a son of Dora and Franjo.
 There is no avoid guard.
 
 **Retrieval.** Index records were read with the `record_read` tool. The page
