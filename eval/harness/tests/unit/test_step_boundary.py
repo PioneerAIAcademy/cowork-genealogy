@@ -331,3 +331,174 @@ def test_the_deny_reason_tells_the_model_to_report_and_stop():
 
 def test_the_wrapup_deny_reason_says_wrapping_up():
     assert "wrapping up" in sb.deny_reason("search-records", mode="wrapup")
+
+
+# ---------------------------------------------------------------------------
+# reply_options (acceptance item 3)
+# ---------------------------------------------------------------------------
+
+
+def _with_question(**extra):
+    question = {"id": "q_001", "status": "open"}
+    question.update(extra)
+    return {"questions": [question]}
+
+
+def test_no_offer_means_no_buttons():
+    """A step that ended on a question for the researcher, or a final conclusion."""
+    assert sb.reply_options(None, _with_question()) == []
+    assert sb.reply_options("", _with_question()) == []
+
+
+def test_an_ordinary_offer_gets_continue_keep_going_and_wrap_it_up():
+    options = sb.reply_options("search-records", _with_question())
+    assert options == [sb.REPLY_CONTINUE, sb.REPLY_KEEP_GOING, sb.REPLY_WRAP_UP]
+
+
+def test_no_wrap_it_up_when_no_question_is_unresolved():
+    """init-project's offer: there is nothing yet to wrap up."""
+    options = sb.reply_options("question-selection", {"questions": []})
+    assert options == [sb.REPLY_CONTINUE, sb.REPLY_KEEP_GOING]
+
+
+def test_no_wrap_it_up_beside_a_proof_conclusion_offer():
+    """Continue already concludes."""
+    assert sb.REPLY_WRAP_UP not in sb.reply_options("proof-conclusion", _with_question())
+
+
+def test_no_wrap_it_up_beside_a_question_selection_offer():
+    """The offer after a wrap-up, where the question may be one a conflict held open."""
+    assert sb.REPLY_WRAP_UP not in sb.reply_options("question-selection", _with_question())
+
+
+def test_only_wrap_it_up_for_a_wrap_up_offer():
+    assert sb.reply_options(sb.WRAP_UP, _with_question()) == [sb.REPLY_WRAP_UP]
+
+
+def test_a_wrap_up_turn_offering_the_next_question_still_gets_buttons():
+    """Keyed on the offer line, never on the step the turn ran."""
+    options = sb.reply_options("question-selection", _with_question())
+    assert sb.REPLY_CONTINUE in options and sb.REPLY_KEEP_GOING in options
+
+
+def test_search_more_only_at_a_low_risk_choice():
+    low = _with_question(search_stop={"stopped_because": "resources_spent"})
+    assert sb.REPLY_SEARCH_MORE in sb.reply_options("proof-conclusion", low)
+    # No stop recorded: an ordinary conclude offer.
+    assert sb.REPLY_SEARCH_MORE not in sb.reply_options("proof-conclusion", _with_question())
+    # A high-risk choice offers planning instead, where Wrap it up is the alternative.
+    assert sb.REPLY_SEARCH_MORE not in sb.reply_options("research-plan", low)
+
+
+def test_search_more_goes_once_the_question_is_concluded():
+    research = _with_question(search_stop={"stopped_because": "resources_spent"})
+    research["proof_summaries"] = [{"id": "ps_001", "question_id": "q_001"}]
+    assert sb.REPLY_SEARCH_MORE not in sb.reply_options("proof-conclusion", research)
+
+
+# ---------------------------------------------------------------------------
+# next_auto_reply (section A2)
+# ---------------------------------------------------------------------------
+
+
+def _reply(state=None, mode="job", prev="search-records", step="person-evidence",
+           offer="research-exhaustiveness", outcome="ok"):
+    return sb.next_auto_reply(state, mode, prev, step, offer, outcome)
+
+
+def test_an_ordinary_offer_is_answered_with_keep_going():
+    out = _reply()
+    assert out["reply"] == sb.REPLY_KEEP_GOING
+    assert out["state"]["replies"] == 1
+
+
+def test_only_a_job_turn_gets_a_reply():
+    """A "Continue." or "Wrap it up." turn ends the run."""
+    assert _reply(mode="step")["reply"] is None
+    assert _reply(mode="wrapup")["reply"] is None
+
+
+def test_a_turn_that_did_not_finish_cleanly_ends_the_run():
+    assert _reply(outcome="stopped")["reply"] is None
+    assert _reply(outcome="error")["reply"] is None
+    assert _reply(outcome="completed")["reply"] == sb.REPLY_KEEP_GOING
+
+
+def test_no_offer_ends_the_run():
+    """Including a step that ended on a question for the researcher."""
+    assert _reply(offer=None)["reply"] is None
+
+
+def test_a_wrap_up_offer_ends_the_run_because_only_the_researcher_answers_it():
+    assert _reply(offer=sb.WRAP_UP)["reply"] is None
+
+
+def test_a_proof_conclusion_turn_ends_the_run():
+    assert _reply(step="proof-conclusion", offer="question-selection")["reply"] is None
+
+
+def test_the_run_stops_at_max_auto_replies():
+    at_cap = {"replies": sb.MAX_AUTO_REPLIES, "planning_rounds": 0, "answered": []}
+    assert _reply(state=at_cap)["reply"] is None
+    under = {"replies": sb.MAX_AUTO_REPLIES - 1, "planning_rounds": 0, "answered": []}
+    assert _reply(state=under)["reply"] == sb.REPLY_KEEP_GOING
+
+
+def test_a_repeated_step_and_offer_pair_ends_the_run():
+    """A link-and-assess cycle that never plans."""
+    first = _reply()
+    second = sb.next_auto_reply(
+        first["state"], "job", "search-records", "person-evidence",
+        "research-exhaustiveness", "ok",
+    )
+    assert second["reply"] is None
+
+
+def test_the_first_planning_round_is_allowed():
+    out = _reply(prev="research-exhaustiveness", step="research-plan", offer="search-records")
+    assert out["reply"] == sb.REPLY_KEEP_GOING
+    assert out["state"]["planning_rounds"] == 1
+
+
+def test_a_research_plan_offer_after_a_planning_round_gets_wrap_it_up():
+    used = {"replies": 1, "planning_rounds": 1, "answered": []}
+    out = _reply(state=used, prev="person-evidence", step="research-exhaustiveness",
+                 offer="research-plan")
+    assert out["reply"] == sb.REPLY_WRAP_UP
+
+
+def test_a_second_planning_round_ends_the_run():
+    used = {"replies": 2, "planning_rounds": 1, "answered": []}
+    out = _reply(state=used, prev="research-exhaustiveness", step="research-plan",
+                 offer="search-records")
+    assert out["reply"] is None
+
+
+def test_the_ordinary_first_plan_does_not_spend_the_planning_round():
+    """research-plan after setup or after itself is the first plan, not a re-plan."""
+    for prev in ("question-selection", "locality-guide", "init-project", "research-plan"):
+        out = _reply(prev=prev, step="research-plan", offer="search-records")
+        assert out["reply"] == sb.REPLY_KEEP_GOING, prev
+        assert out["state"]["planning_rounds"] == 0, prev
+
+
+def test_a_planning_round_clears_the_answered_pairs():
+    """Pairs are tracked since the run's LAST planning round."""
+    state = {"replies": 1, "planning_rounds": 0,
+             "answered": [["research-plan", "search-records"]]}
+    out = _reply(state=state, prev="research-exhaustiveness", step="research-plan",
+                 offer="search-records")
+    assert out["reply"] == sb.REPLY_KEEP_GOING
+    assert out["state"]["answered"] == [["research-plan", "search-records"]]
+
+
+def test_next_auto_reply_does_not_mutate_the_state_it_was_given():
+    state = {"replies": 0, "planning_rounds": 0, "answered": []}
+    _reply(state=state)
+    assert state == {"replies": 0, "planning_rounds": 0, "answered": []}
+
+
+def test_next_auto_reply_survives_a_missing_or_junk_state():
+    assert _reply(state=None)["reply"] == sb.REPLY_KEEP_GOING
+    assert _reply(state={})["reply"] == sb.REPLY_KEEP_GOING
+    assert _reply(state={"replies": "x", "answered": "x"})["reply"] == sb.REPLY_KEEP_GOING

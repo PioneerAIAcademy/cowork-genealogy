@@ -318,3 +318,154 @@ def step_ctx(research: dict) -> dict:
             break
 
     return {"open_items": open_items, "question_id": question_id}
+
+
+# ---------------------------------------------------------------------------
+# "Keep going": the host replies for the researcher (section A2)
+# ---------------------------------------------------------------------------
+
+# Each button sends its exact phrase, and `step_mode` reads them back, so these
+# are the single spelling of each reply.
+REPLY_CONTINUE = "Continue."
+REPLY_KEEP_GOING = "Keep going."
+REPLY_WRAP_UP = "Wrap it up."
+REPLY_SEARCH_MORE = "Search more."
+
+# The offer only the researcher can answer.
+WRAP_UP = "wrap-up"
+
+# How many replies one run may send. Replaces the alpha's
+# `auto_continue_max_steps`, which is 30 today.
+MAX_AUTO_REPLIES = 30
+
+# A research-plan turn following one of these is the ordinary first plan, not a
+# re-plan, so it does not spend the run's one planning round.
+_PLANNING_EXEMPT = frozenset(GROUPS["setup"]) | frozenset(GROUPS["plan"])
+
+
+def _has_proof_summary(research: dict, question_id) -> bool:
+    summaries = research.get("proof_summaries")
+    for summary in summaries if isinstance(summaries, list) else []:
+        if isinstance(summary, dict) and summary.get("question_id") == question_id:
+            return True
+    return False
+
+
+def _is_low_risk_choice(question, research: dict) -> bool:
+    """The decline that recommends concluding: a `resources_spent` stop, not yet concluded.
+
+    Read from the STATE, not from the step this turn ran, so a question between
+    steps that repeats the offer keeps its button (section J).
+    """
+    if not isinstance(question, dict):
+        return False
+    stop = question.get("search_stop")
+    if not isinstance(stop, dict) or stop.get("stopped_because") != "resources_spent":
+        return False
+    return not _has_proof_summary(research, question.get("id"))
+
+
+def reply_options(offered_step, research: dict | None = None) -> list[str]:
+    """The replies that apply to this turn, as exact phrases.
+
+    The host shows a button for each and nothing else. Keyed on the OFFER LINE,
+    never on the step the turn ran, so a wrap-up turn that ends by offering the
+    next question still gets its buttons.
+    """
+    offer = bare_name(offered_step) if offered_step else ""
+    if not offer:
+        return []
+    if offer == WRAP_UP:
+        return [REPLY_WRAP_UP]
+
+    research = research if isinstance(research, dict) else {}
+    question = current_question(research)
+    options = [REPLY_CONTINUE, REPLY_KEEP_GOING]
+
+    # Not beside proof-conclusion (Continue already concludes), and not beside
+    # question-selection (the offer after a wrap-up, where the current question
+    # may be one a conflict held open).
+    if question is not None and offer not in ("proof-conclusion", "question-selection"):
+        options.append(REPLY_WRAP_UP)
+    if offer == "proof-conclusion" and _is_low_risk_choice(question, research):
+        options.append(REPLY_SEARCH_MORE)
+    return options
+
+
+def _auto_reply_state(state: dict | None) -> tuple[int, int, list]:
+    state = state if isinstance(state, dict) else {}
+    replies = state.get("replies")
+    rounds = state.get("planning_rounds")
+    answered = state.get("answered")
+    return (
+        replies if isinstance(replies, int) and replies > 0 else 0,
+        rounds if isinstance(rounds, int) and rounds > 0 else 0,
+        [tuple(pair) for pair in answered if isinstance(pair, (list, tuple))]
+        if isinstance(answered, list)
+        else [],
+    )
+
+
+def next_auto_reply(
+    state: dict | None,
+    turn_mode: str,
+    prev_step,
+    turn_step,
+    offered_step,
+    outcome: str,
+) -> dict:
+    """The reply the host sends for the researcher, or None to end the run.
+
+    Returns ``{"reply": str | None, "state": dict}``. Pure: the caller persists
+    the returned state and never mutates the one it passed in.
+
+    Ends the run when the turn did not finish cleanly, made no offer, offered
+    `wrap-up` (only the researcher answers that), ran proof-conclusion, repeated
+    a (step, offer) pair already answered since the last planning round, or hit
+    `MAX_AUTO_REPLIES`.
+    """
+    replies, rounds, answered = _auto_reply_state(state)
+    step = bare_name(turn_step) if turn_step else ""
+    offer = bare_name(offered_step) if offered_step else ""
+    prev = bare_name(prev_step) if prev_step else ""
+
+    def done(reply, rounds=rounds, answered=answered):
+        return {
+            "reply": reply,
+            "state": {
+                "replies": replies + (1 if reply else 0),
+                "planning_rounds": rounds,
+                "answered": [list(pair) for pair in answered],
+            },
+        }
+
+    # Only a "keep going." turn -- the researcher's own or a host reply -- gets
+    # a reply, so a "Continue." or "Wrap it up." turn ends the run.
+    if turn_mode != "job":
+        return done(None)
+    if outcome not in ("ok", "completed"):
+        return done(None)
+    if not offer or offer == WRAP_UP:
+        return done(None)
+    if step == "proof-conclusion":
+        return done(None)
+    if replies >= MAX_AUTO_REPLIES:
+        return done(None)
+
+    # A planning round bounds both loops: a second "not exhaustive" round and a
+    # conflict's second evidence round.
+    if step == "research-plan" and prev and prev not in _PLANNING_EXEMPT:
+        if rounds >= 1:
+            return done(None)
+        rounds += 1
+        answered = []
+
+    pair = (step, offer)
+    if pair in answered:
+        # A link-and-assess cycle that never plans.
+        return done(None)
+    answered = answered + [pair]
+
+    if offer == "research-plan" and rounds >= 1:
+        return done(REPLY_WRAP_UP, rounds, answered)
+    return done(REPLY_KEEP_GOING, rounds, answered)
