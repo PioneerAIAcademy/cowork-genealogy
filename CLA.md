@@ -1,6 +1,6 @@
 # Individual Contributor License Agreement
 
-**Version 1.0 — 2026-10-19**
+**Version 1.0 — 2026-10-22**
 
 This agreement is between you and **GeneFun, Inc.**, a corporation doing
 business as **Pioneer AI Academy** ("GeneFun", "we", "us"). It covers any
@@ -22,6 +22,11 @@ summary and the terms disagree, the terms win.
 - **The permission is broad and permanent.** We can use, change, and
   distribute your contribution, including in a future version of this
   project under a different license.
+- **The permission can move with the project.** If GeneFun transfers the
+  project to another organization, the permission you gave transfers
+  with it. You do not need to sign anything again.
+- **It covers what you have already contributed**, not just what you
+  contribute after signing.
 - **You promise the work is yours to give.** That it is your own work,
   that you are not copying someone else's code without the right to, and
   that your employer or school does not own it.
@@ -42,6 +47,7 @@ managed by GeneFun (the "Work"). "Submit" means any form of electronic,
 verbal, or written communication sent to GeneFun or its representatives,
 including but not limited to pull requests, commits, issues, and
 discussion in repositories managed by or on behalf of GeneFun. It
+includes Contributions you submitted before you signed this agreement. It
 excludes communication you conspicuously mark in writing as "Not a
 Contribution."
 
@@ -81,7 +87,7 @@ You agree that GeneFun may license the Work, including your
 Contributions, under any license terms it chooses, including licenses
 different from the one the Work carries at the time you contribute, and
 including proprietary or commercial licenses. GeneFun may also sublicense
-these rights and may assign them together with the Work.
+these rights.
 
 This does not affect the license the Work already carries. Anything
 already released under an open source license stays available under that
@@ -156,7 +162,17 @@ does not cover that case.
 This agreement is governed by the laws of the State of Utah, without
 regard to its conflict of law provisions.
 
-### 12. Entire agreement and changes
+### 12. Assignment
+
+GeneFun may assign this agreement, including all rights and licenses
+granted under sections 2, 3, and 4, in whole or in part, to any party
+that acquires the Work or any part of it, without notice to you and
+without your further consent. The licenses bind you and benefit
+GeneFun's successors and assigns. After an assignment, references to
+GeneFun in this agreement include the assignee, which may exercise and
+enforce the assigned rights as GeneFun could.
+
+### 13. Entire agreement and changes
 
 This is the entire agreement between you and GeneFun about your
 Contributions, and it replaces any earlier understanding on the subject.
