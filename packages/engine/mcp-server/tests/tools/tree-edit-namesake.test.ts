@@ -363,4 +363,14 @@ describe("tree_edit and tree_correct under a recorded namesake (#3363 PR 1e)", (
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatch(/^ops\[2\]: 'KWCB-111' has a recorded namesake/);
   });
+
+  it("T18 refuses a record whose only link to the row holder rests on an assertion that records an absence", async () => {
+    const r = research();
+    r.assertions[2].record_basis = "absent" as any;
+    await setup(r, tree());
+    const errors = await refused(() =>
+      treeEdit({ projectPath: dir, ops: [{ operation: "add_fact", personId: P, fact: occupation("S2") }] } as any),
+    );
+    expect(errors[0]).toContain("cites S2 (research source 'src_002'), and its only link to 'KWCB-111' rests on an assertion that records an absence, which ties nothing.");
+  });
 });
