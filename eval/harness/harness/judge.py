@@ -606,14 +606,16 @@ def grade(
 
 
 def _create_message_with_retry(
-    *, client, model, prefix, suffix, grading_tool, temperature=None, _attempts=3
+    *, client, model, prefix, suffix, grading_tool, temperature=None, _attempts=6
 ):
     """Call Anthropic with retry-with-backoff on transient errors.
 
     Wraps client.messages.create so a 529 overload or rate-limit response
     doesn't abort one test out of the suite. Returns the response on
     success; raises JudgeError after _attempts exhausted with the last
-    error captured.
+    error captured. The waits (2, 4, 8, 16, 30 s) span about a minute: a
+    connection that drops for longer than the old 1 + 2 s fails the test
+    ungraded, which costs a full paid re-run of the suite.
 
     Splits the prompt into a cacheable prefix (rubric, stable per skill)
     and a varying suffix (per-test content). cache_control: ephemeral on
@@ -635,7 +637,7 @@ def _create_message_with_retry(
     if temperature is not None:
         sampling_kwargs["temperature"] = temperature
 
-    delay = 1.0
+    delay = 2.0
     last_error: Exception | None = None
     for attempt in range(_attempts):
         try:
@@ -672,7 +674,7 @@ def _create_message_with_retry(
             if attempt + 1 >= _attempts:
                 break
             _time.sleep(delay)
-            delay *= 2
+            delay = min(delay * 2, 30.0)
 
     raise JudgeError(
         f"judge API call failed after {_attempts} attempts: {last_error}"
