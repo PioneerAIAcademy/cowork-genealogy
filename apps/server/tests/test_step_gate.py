@@ -200,3 +200,96 @@ def test_a_missing_boundary_is_loud_not_silent(tmp_path):
     """A worker that enforced nothing would look exactly like the feature working."""
     with pytest.raises((ImportError, FileNotFoundError)):
         o.load_step_boundary(tmp_path / "absent.py")
+
+
+# ── the wiring: the hook actually consults the gate ─────────────────────────────
+
+
+def _call(hook, data):
+    import asyncio
+
+    return asyncio.run(hook(data, data.get("tool_use_id"), {"signal": None}))
+
+
+def _decision(out):
+    """A spawn is never answered with a bare {}: the hook returns an explicit allow
+    carrying `updatedInput` (it stamps run_in_background). So read the decision."""
+    return (out.get("hookSpecificOutput") or {}).get("permissionDecision")
+
+
+def _halted(out):
+    """The SDK field is `continue_`; `_halt` sets it false AND denies the call."""
+    return out.get("continue_") is False
+
+
+def _hook(rows, *, step_gate=None, halt=None, logs=None, tmp="/tmp/x"):
+    return o.make_pretool_hook(
+        turn_id="t", session_id="s", cwd=tmp, config_root=lambda: tmp + "/cfg",
+        record=rows.append, step_gate=step_gate, halt=halt,
+        log=(lambda **kw: logs.append(kw)) if logs is not None else None,
+    )
+
+
+def test_the_hook_denies_the_first_crossing_with_the_step_reason(boundary):
+    rows: list[dict] = []
+    g = gate(boundary)
+    hook = _hook(rows, step_gate=g)
+    assert _decision(_call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "search-records"}})) == "allow"
+    out = _call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "proof-conclusion"}})
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "Continue with" in out["hookSpecificOutput"]["permissionDecisionReason"]
+    assert rows[-1]["decision"] == "deny"
+
+
+def test_the_hook_halts_the_second_crossing_and_records_it(boundary):
+    rows: list[dict] = []
+    logs: list[dict] = []
+    g = gate(boundary)
+    hook = _hook(rows, step_gate=g, logs=logs)
+    _call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "search-records"}})
+    _call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "proof-conclusion"}})
+    out = _call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "proof-conclusion"}})
+    # `_halt` denies the call it stops, so the step does not run on its way out.
+    assert _halted(out)
+    assert _decision(out) == "deny"
+    assert rows[-1]["decision"] == "halt"
+    assert any(e.get("ev") == "halt" for e in logs)
+
+
+def test_an_allowed_step_is_untouched_by_the_boundary(boundary):
+    rows: list[dict] = []
+    hook = _hook(rows, step_gate=gate(boundary))
+    assert _decision(_call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "research-plan"}})) == "allow"
+    assert _decision(_call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "locality-guide"}})) == "allow"
+
+
+def test_no_gate_means_no_boundary(boundary):
+    """PR 1 ships the gate; a host that passes none enforces nothing, by design."""
+    rows: list[dict] = []
+    hook = _hook(rows, step_gate=None)
+    _call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "search-records"}})
+    assert _decision(_call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "proof-conclusion"}})) == "allow"
+
+
+def test_a_gate_that_raises_is_treated_as_no_opinion(boundary):
+    """A hook that raises fails a call the user was entitled to make."""
+    class Exploding:
+        def check(self, *a, **k):
+            raise RuntimeError("boom")
+
+    rows: list[dict] = []
+    logs: list[dict] = []
+    hook = _hook(rows, step_gate=Exploding(), logs=logs)
+    assert _decision(_call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "proof-conclusion"}})) == "allow"
+    assert any(e.get("ev") == "step_boundary_failed" for e in logs)
+
+
+def test_the_researchers_stop_outranks_the_boundary(boundary):
+    """A turn being stopped on purpose must not be re-decided as a crossing."""
+    rows: list[dict] = []
+    g = gate(boundary)
+    hook = _hook(rows, step_gate=g, halt=lambda **k: "the researcher pressed Stop")
+    out = _call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "proof-conclusion"}})
+    assert _halted(out)
+    assert "researcher pressed Stop" in out["hookSpecificOutput"]["permissionDecisionReason"]
+    assert g.denials == 0, "the boundary never saw the call"

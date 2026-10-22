@@ -525,6 +525,7 @@ def make_pretool_hook(
     halt: Callable[..., str | None] | None = None,
     on_delivered: Callable[[], None] | None = None,
     on_halt_failed: Callable[[], None] | None = None,
+    step_gate: Any | None = None,
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -541,6 +542,13 @@ def make_pretool_hook(
 
     A halted call is recorded as a ``tool_calls`` row like any other, with decision
     ``halt``, so the audit trail shows where the turn was cut.
+
+    ``step_gate`` is decision 25's carrier: a ``StepGate`` for THIS turn, or None to
+    enforce no boundary. It is consulted after the halt and delivered arms, so a
+    researcher's stop and a met bounded request both still outrank it -- a turn being
+    stopped on purpose must not be re-decided as a boundary crossing. Its first
+    crossing DENIES and its second HALTS, and a gate that raises is treated as no
+    opinion, because a hook that raises fails a call the user was entitled to make.
 
     A ``halt()`` that raises HALTS with ``STORE_UNAVAILABLE_REASON``, logs
     ``ev=halt_failed`` and calls ``on_halt_failed()`` (U23). The worker's halt classifies
@@ -638,9 +646,49 @@ def make_pretool_hook(
             # comment said 157). Appended rather than prepended, the reason eats most of
             # the window and the summary is cut. What the researcher most needs leads.
             return _halt(delivered_stop_reason(summary))
+        # The step boundary (decision 25). It sits AFTER the halt and delivered arms, so
+        # the researcher's own stop and a met bounded request both still outrank it: a
+        # turn being stopped on purpose must not be re-decided as a boundary crossing.
+        step_verdict = None
         try:
-            protected = direct_project_file_write(tool_name, tool_input)
-            if protected:
+            if step_gate is not None:
+                step_verdict = step_gate.check(
+                    tool_name, tool_input, subagent="agent_id" in data
+                )
+        except Exception as exc:  # noqa: BLE001 - a hook that raises fails a call the user was entitled to make
+            step_verdict = None
+            if log is not None:
+                log(ev="step_boundary_failed", turn_id=turn_id, tool_name=tool_name,
+                    error=f"{type(exc).__name__}: {exc}")
+        if step_verdict is not None and step_verdict[0] == "halt":
+            # The backstop. `_halt` denies the call it stops, so the step the model was
+            # told not to start does not run on its way out.
+            try:
+                record({
+                    "turn_id": turn_id, "session_id": session_id,
+                    "agent_id": data.get("agent_id"), "agent_type": data.get("agent_type"),
+                    "tool_name": tool_name or "unknown",
+                    "input_path": input_path(tool_name, tool_input, cwd=cwd),
+                    "decision": "halt", "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                })
+            except Exception as exc:  # noqa: BLE001 - the log must not change the decision
+                if log is not None:
+                    log(ev="tool_call_log_failed", turn_id=turn_id, tool_name=tool_name,
+                        error=f"{type(exc).__name__}: {exc}")
+            if log is not None:
+                log(ev="halt", turn_id=turn_id, tool_name=tool_name,
+                    tool_use_id=tool_use_id, reason=step_verdict[1])
+            return _halt(step_verdict[1])
+        try:
+            # A boundary deny is final: the other clauses can only deny too, and the
+            # step reason is the one the model must act on.
+            protected = (
+                None if step_verdict is not None
+                else direct_project_file_write(tool_name, tool_input)
+            )
+            if step_verdict is not None:
+                decision, reason = "deny", step_verdict[1]
+            elif protected:
                 decision, reason = "deny", WRITE_DENY_REASON.format(tool=tool_name, name=protected)
             elif is_blocked_call(tool_name, blocked):
                 decision, reason = "deny", BLOCKED_DENY_REASON.format(tool=bare_tool_name(tool_name))
