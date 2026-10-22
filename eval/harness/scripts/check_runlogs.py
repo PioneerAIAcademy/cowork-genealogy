@@ -316,7 +316,7 @@ def git_show_at_merge_base(path: str) -> str | None:
         return subprocess.check_output(
             ["git", "show", f"{merge_base}:{path}"], text=True, encoding="utf-8", cwd=REPO_ROOT
         )
-    except (subprocess.CalledProcessError, OSError) as e:
+    except (subprocess.CalledProcessError, OSError, UnicodeDecodeError) as e:
         raise BaseUnreadable(str(e)) from e
 
 
@@ -688,7 +688,8 @@ def _is_confirmed_non_failing(correction: dict) -> bool:
 # one -- extraction_validators.py), the fingerprint's own definition and the mock
 # that advertises tools, and the engine's tool source and build inputs. The
 # harness modules the validators import join these through
-# `harness_import_closure`, computed at head in `instrument_touched_suites`.
+# `harness_import_closure`, computed on the checked-out tree in
+# `instrument_touched_suites`.
 INSTRUMENT_EVERY_SUITE_RE = re.compile(
     r"^(?:eval/harness/validators/(?:test_universal\.py|(?!test_)[a-z0-9_]+\.py)"
     r"|eval/harness/harness/(?:instrument|mock_mcp)\.py"
@@ -698,7 +699,7 @@ INSTRUMENT_EVERY_SUITE_RE = re.compile(
 # suite's when its harness imports change.
 INSTRUMENT_SUITE_VALIDATOR_RE = re.compile(r"^eval/harness/validators/test_([a-z0-9_]+)\.py$")
 # A module that could have been in the base's closure: deleted, it is absent from
-# the closure computed at head.
+# the closure computed on the checked-out tree.
 INSTRUMENT_DELETED_MODULE_RE = re.compile(r"^eval/harness/(?!tests/|validators/)[^\s]+\.py$")
 
 _tool_catalog_cache: dict | None = None

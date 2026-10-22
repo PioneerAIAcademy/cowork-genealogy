@@ -21,9 +21,11 @@ The suite-specific halves (``validators.suite``, ``tools.fixture``) block;
 blocking corpus-wide input would owe a paid re-run of every suite (decided
 2026-10-14 on issue #2479; see eval/CLAUDE.md, rule 2c).
 
-Not covered, by construction: a live tool's imports beyond its entry module; and
-third-party packages. A change there can move a verdict without moving this
-fingerprint. ``ast.dump`` output is specific to the Python
+Not covered, by construction: a live tool's imports beyond its entry module;
+third-party packages; the data files closure modules read
+(`docs/specs/schemas/*.json`, through `ownership` and `schema_validator`); and the
+compiled engine validator `ts_validator` loads. A change there can move a verdict
+without moving this fingerprint. ``ast.dump`` output is specific to the Python
 minor version, so a bump from 3.12 re-hashes every suite.
 
 Stdlib-only: `check_runlogs.py` imports this on a bare interpreter.
