@@ -84,6 +84,14 @@ def _reason(out):
     return out["hookSpecificOutput"]["permissionDecisionReason"]
 
 
+def _context(out):
+    return out["hookSpecificOutput"].get("additionalContext") or ""
+
+
+def _all_text(out):
+    return _reason(out) + "\n\n" + _context(out)
+
+
 def test_denies_the_launch():
     out = stub_denial("search-external-sites", None)
     assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
@@ -111,7 +119,7 @@ def test_canned_response_is_handed_back_verbatim():
 def test_canned_response_is_framed_as_the_callees_result():
     """The model must be told the text IS the result, or it re-derives it."""
     reason = _reason(stub_denial("s", "URLS HERE"))
-    assert "Treat the following as the result it returned" in reason
+    assert "Treat the following as the result 's' returned" in reason
 
 
 def test_every_form_tells_the_model_not_to_retry_or_self_serve():
@@ -119,17 +127,17 @@ def test_every_form_tells_the_model_not_to_retry_or_self_serve():
     do the callee's work itself — both spend the turns the stub exists to save.
     """
     for response in (None, "some result"):
-        reason = _reason(stub_denial("s", response))
+        reason = _all_text(stub_denial("s", response))
         assert "Do not retry it" in reason
         assert "do its work yourself" in reason
         assert "hand-off counts as made" in reason
 
 
 def test_bare_deny_does_not_claim_a_result_exists():
-    reason = _reason(stub_denial("s", None))
-    assert "Treat the following as the result" not in reason
-    assert "using the result above" not in reason
-    assert "Follow them through to their end" in reason
+    text = _all_text(stub_denial("s", None))
+    assert "Treat the following as the result" not in text
+    assert "using the result" not in text
+    assert "Follow them through to their end" in text
 
 
 def test_skill_name_appears_in_the_reason():
@@ -194,25 +202,32 @@ _STOP_TAIL = (
 )
 
 
-def test_every_form_ends_by_handing_the_turn_back_to_the_caller():
-    """On CLI 2.1.294 a router read the end of this text as the end of its turn
-    and skipped its own closing step. The hand-back must be the LAST thing it
-    reads, after the canned result and the non-disclosure block."""
+def test_hand_back_rides_in_additional_context_not_the_reason():
+    """CLI 2.1.294 shows the reason as a `hook error`. With the hand-back inside
+    that error, a router sometimes ended its turn right after the stub, so the
+    hand-back goes in `additionalContext` and the reason keeps the result."""
     for response in (None, "some result"):
-        reason = _reason(stub_denial("s", response))
-        assert reason.endswith(
+        out = stub_denial("s", response)
+        assert "Follow them through to their end" not in _reason(out)
+        assert _context(out).endswith(
             "This hand-off does not complete your own instructions. Follow them "
-            "through to their end" + (", using the result above." if response else ".")
+            "through to their end"
+            + (", using the result it returned." if response else ".")
         )
+
+
+def test_canned_form_moves_the_did_not_execute_instructions_out_of_the_reason():
+    reason = _reason(stub_denial("s", "some result"))
+    assert "did not execute" not in reason
+    assert "did not execute" in _context(stub_denial("s", "some result"))
 
 
 def test_hand_back_defers_to_a_canned_stop_rather_than_overriding_it():
     """Many canned responses tell the router to summarize and stop. A push like
     "keep going" after them would override that and invite a second hand-off,
-    so the closing paragraph only points back to the caller's own instructions."""
-    reason = _reason(stub_denial("research-plan", _STOP_TAIL))
-    tail = reason.split(_STOP_TAIL)[1].split("This message is test scaffolding")[1]
-    hand_back = tail.split("\n\n", 1)[1]
+    so the hand-back only points to the caller's own instructions."""
+    hand_back = _context(stub_denial("research-plan", _STOP_TAIL)).split("\n\n")[-1]
+    assert hand_back.startswith("This hand-off does not complete")
     for push in ("keep going", "carry on", "continue", "next step", "remaining steps"):
         assert push not in hand_back.lower(), f"{push!r} overrides the canned stop"
 
@@ -222,19 +237,18 @@ def test_text_names_no_tool_or_step_a_test_could_be_graded_on(response):
     """Every stubbed test shares this text. Naming the step one test grades
     (research_delivered, loaded through ToolSearch) would hand that test its
     pass and every other test an instruction it does not have."""
-    out = stub_denial("s", response)["hookSpecificOutput"]
-    text = out["permissionDecisionReason"] + (out.get("additionalContext") or "")
+    text = _all_text(stub_denial("s", response))
     for token in ("research_", "mcp__", "ToolSearch"):
         assert token not in text, f"{token!r} names a step the model is graded on"
 
 
 def test_hand_back_carries_no_harness_vocabulary():
-    """test_preamble_carries_no_harness_vocabulary stops at the non-disclosure
-    block, so it does not see the paragraph after it."""
-    reason = _reason(stub_denial("s", "r"))
-    hand_back = reason.split("This message is test scaffolding")[1].split("\n\n", 1)[1]
-    for leaky in ("eval", "unit suite", "not under test", "stub", "test"):
-        assert leaky not in hand_back.lower(), f"{leaky!r} is harness vocabulary"
+    """test_preamble_carries_no_harness_vocabulary reads only the reason, so it
+    does not see `additionalContext`."""
+    for response in (None, "r"):
+        hand_back = _context(stub_denial("s", response))
+        for leaky in ("eval", "unit suite", "not under test", "stub", "test"):
+            assert leaky not in hand_back.lower(), f"{leaky!r} is harness vocabulary"
 
 
 def test_every_committed_stub_fits_the_cli_hook_output_limit():

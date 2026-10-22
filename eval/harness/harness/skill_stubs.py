@@ -34,13 +34,16 @@ text, not as a structured tool result. A stub whose caller needs to *parse*
 structured output is out of scope for this mechanism.
 
 CLI 2.1.294 (SDK 0.2.165) delivers that string as an error result prefixed
-`PreToolUse:Agent hook error:`. On it, a router sometimes took the hand-off as
-the end of its turn and skipped its own closing step (issue #3740: ut_research_020
-ended two turns after the stub in 7 of 20 runs, against 0 of 33 on CLI 2.1.139).
-The text used to end on the non-disclosure block, with the caller's remaining
-work named as a closed list "(logging, status, summary)". It now ends on
-`_CARRY_ON`, which hands the turn back to the caller's own instructions without
-naming any step.
+`PreToolUse:Agent hook error:`. With every instruction inside that error, a
+router sometimes took the hand-off as the end of its turn and skipped its own
+closing step (issue #3740, ut_research_020: 7 of 20 runs, against 0 of 33 on CLI
+2.1.139). Rewording alone cut it to 3 of 20. What reached 0 of 20 is splitting
+the channels: a canned form's reason carries only the result and the
+non-disclosure block, and the instructions about the hand-off (did not execute,
+do not retry, `_CARRY_ON`) go in `additionalContext` on the same
+`hookSpecificOutput`. The run log does not record `additionalContext`, so its
+delivery on a deny was inferred from behaviour (no retries, no disclosure),
+not observed.
 
 What this deliberately does NOT cover: `skills_invoked` records the skill NAME
 only, not the `args` string the caller composed. So no validator can assert
@@ -61,7 +64,7 @@ _STUB_PREAMBLE = (
     "Do not retry it, and do not attempt to do its work yourself."
 )
 
-_CANNED_SUFFIX = "\n\nTreat the following as the result it returned:\n\n{response}"
+_CANNED_SUFFIX = "Treat the following as the result {name!r} returned:\n\n{response}"
 
 # The reason string lands in the model's context immediately before it writes
 # its summary, so anything harness-flavoured in it is liable to be narrated
@@ -82,8 +85,8 @@ _NO_DISCLOSE = (
     "the text does not state."
 )
 
-# Last, so it is the final thing the caller reads before its next move. It
-# defers to the caller's own instructions rather than pushing it onward: many
+# Sent as `additionalContext`, outside the error-framed reason. It defers to
+# the caller's own instructions rather than pushing it onward: many
 # canned responses tell the router to write its summary and stop, and a "keep
 # going" here would override that. It names no tool, skill or step, because
 # every stubbed test shares this text and naming the step a test grades would
@@ -127,15 +130,21 @@ def stub_denial(skill_name: str, response: str | None) -> dict[str, Any]:
     that sets `execution.stop_at_stub`, whose verdict is its first stubbed
     hand-off: `run_skill` adds the stop to that hand-off.
     """
-    reason = _STUB_PREAMBLE.format(name=skill_name)
+    preamble = _STUB_PREAMBLE.format(name=skill_name)
     if response:
-        reason += _CANNED_SUFFIX.format(response=response)
+        reason = _CANNED_SUFFIX.format(name=skill_name, response=response)
+        context = preamble + _CARRY_ON.format(using=", using the result it returned")
+    else:
+        # No result to carry, so the preamble stays in the reason: a deny
+        # with an empty reason gives the model nothing to act on.
+        reason = preamble
+        context = _CARRY_ON.format(using="").lstrip()
     reason += _NO_DISCLOSE.format(name=skill_name)
-    reason += _CARRY_ON.format(using=", using the result above" if response else "")
     return {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
             "permissionDecisionReason": reason,
+            "additionalContext": context,
         }
     }
