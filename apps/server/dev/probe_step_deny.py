@@ -7,8 +7,8 @@ would start the next step. Most of what that needs is already measured for free:
 
   * the SDK honours a plain deny on `Agent`/`Task`, the reason text reaches the
     model, and the session closes cleanly afterwards -- the unit harness does
-    exactly this on every stubbed spawn (`skill_runner.py:497-512`,
-    `skill_stubs.py:107-125`), through the same `hooks=` path both hosted planes
+    exactly this on every stubbed spawn (`skill_runner.spawn_stub_denial`,
+    `skill_stubs.stub_denial`), through the same `hooks=` path both hosted planes
     bind, across committed billed suites;
   * the arm order, and its input-shape dependence, are unit facts
     (`apps/server/tests/test_step_boundary_premises.py`).
