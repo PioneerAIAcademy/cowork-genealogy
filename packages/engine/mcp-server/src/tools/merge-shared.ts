@@ -40,6 +40,7 @@ export interface ResearchRefsUpdated {
   timelines: number;
   known_holdings: number;
   proof_summaries: number;
+  namesakes: number;
 }
 
 export interface MergeSuccess {
@@ -222,6 +223,7 @@ export function remapResearchPersonIds(
     timelines: 0,
     known_holdings: 0,
     proof_summaries: 0,
+    namesakes: 0,
   };
   for (const ref of iteratePersonIdRefs(research)) {
     const survivor = collapseMap.get(ref.pid);

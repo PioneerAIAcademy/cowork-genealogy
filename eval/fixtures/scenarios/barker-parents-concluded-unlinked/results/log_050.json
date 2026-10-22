@@ -1,0 +1,550 @@
+{
+ "log_id": "log_050",
+ "tool": "record_read",
+ "retrieved": "2026-10-20T18:26:39.704Z",
+ "returned_count": 1,
+ "payload": {
+  "query": {
+   "recordId": "ark:/61903/1:1:M73V-LZR"
+  },
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:M73V-LZR",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_124435222",
+       "ark": "ark:/61903/1:1:M73V-LZG",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "bc44a3ba-7bc6-45f9-81c5-0bdf67c40434",
+         "type": "BirthName",
+         "surname": "Crosthwaite",
+         "given": "Dorothy"
+        }
+       ],
+       "facts": [
+        {
+         "id": "58e66c88-840d-4be8-9fa5-476367d0b988",
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "id": "c8a230aa-1f7d-494c-a3ed-1245fd177fd8",
+         "type": "Birth",
+         "date": "1757-1761",
+         "standard_date": "Bet 1757 and 1761",
+         "place": "Cumberland"
+        },
+        {
+         "id": "c73d0cb2-b166-4370-a8cf-8a08e92ab77d",
+         "type": "Residence",
+         "place": "Queen Street Marshall Court"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435223",
+       "ark": "ark:/61903/1:1:M73V-LZP",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "f2cf0fc8-0810-4615-82b3-e27e4f197540",
+         "type": "BirthName",
+         "surname": "McLauglin",
+         "given": "Ann"
+        }
+       ],
+       "facts": [
+        {
+         "id": "8214f65b-b87f-414e-8a4d-c31e8de1d47c",
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "id": "1b633ee8-5a00-4432-9d87-4358f7bf5ec5",
+         "type": "Birth",
+         "date": "1757-1761",
+         "standard_date": "Bet 1757 and 1761",
+         "place": "Cumberland"
+        },
+        {
+         "id": "1776b5a0-7882-47c3-996d-0549c34cad17",
+         "type": "Residence",
+         "place": "Queen Street Marshall Court"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435224",
+       "ark": "ark:/61903/1:1:M73V-LZ5",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "5d6e3937-06f5-4963-92c0-c12da81de69a",
+         "type": "BirthName",
+         "surname": "McComiskie",
+         "given": "Mary"
+        }
+       ],
+       "facts": [
+        {
+         "id": "09b3cba6-6961-4167-9698-4388d6a9762c",
+         "type": "Residence",
+         "place": "Queen Street Marshall Court"
+        },
+        {
+         "id": "cadd9720-bb52-432d-a00f-c6d91e01907b",
+         "type": "Birth",
+         "date": "1792-1796",
+         "standard_date": "Bet 1792 and 1796",
+         "place": "Ireland"
+        },
+        {
+         "id": "cfa798f5-920f-4187-9c74-8368b27eafdd",
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435225",
+       "ark": "ark:/61903/1:1:M73V-LZR",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "id": "9d8ac4fe-d01d-40e6-aa0b-976ca22b397f",
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "William"
+        }
+       ],
+       "facts": [
+        {
+         "id": "e7627ca2-44c4-4043-a0a7-7eeb1d9c4818",
+         "type": "Birth",
+         "date": "1782-1786",
+         "standard_date": "Bet 1782 and 1786",
+         "place": "Cumberland"
+        },
+        {
+         "id": "81266195-81f8-4715-a9ba-3d96f382811c",
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "id": "c69a560e-95d6-4ca8-b0f3-94ee6144c662",
+         "type": "Residence",
+         "place": "Queen Street Marshall Court"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435226",
+       "ark": "ark:/61903/1:1:M73V-LZT",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "a612f351-ffbe-4a1d-8bca-23a583b9032a",
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Martha"
+        }
+       ],
+       "facts": [
+        {
+         "id": "4c2c7fac-11d0-416f-b884-e0b00732cdda",
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "id": "ea147f4e-cc65-48d0-a6db-d6a25cd32eca",
+         "type": "Birth",
+         "date": "1787-1791",
+         "standard_date": "Bet 1787 and 1791",
+         "place": "Cumberland"
+        },
+        {
+         "id": "87471c92-a2c4-44d8-bc55-35cd9d324526",
+         "type": "Residence",
+         "place": "Queen Street Marshall Court"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435227",
+       "ark": "ark:/61903/1:1:M73V-LZY",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "ab5c9209-4bad-4e50-bdf3-b0e9b95d8141",
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Elizabeth"
+        }
+       ],
+       "facts": [
+        {
+         "id": "147b91cb-70f9-4b9f-ad5d-a3873d58db22",
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "id": "ef809aed-79b9-45fd-b285-c7c915803cd5",
+         "type": "Birth",
+         "date": "1828",
+         "standard_date": "1828",
+         "place": "Cumberland"
+        },
+        {
+         "id": "3473bb52-00b3-4ed0-9ffa-df7f9acc08b3",
+         "type": "Residence",
+         "place": "Queen Street Marshall Court"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435228",
+       "ark": "ark:/61903/1:1:M73V-LZB",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "d2b65c25-2e8b-43f5-be7b-3bad66724e63",
+         "type": "BirthName",
+         "surname": "McKenzie",
+         "given": "Elizabeth"
+        }
+       ],
+       "facts": [
+        {
+         "id": "08c96d85-dfc8-487c-8bef-42982fae4110",
+         "type": "Residence",
+         "place": "Queen Street Marshall Court"
+        },
+        {
+         "id": "b88a9f2a-d2f6-4409-aa8e-95bc7872ddb3",
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "id": "edbfbb2b-99ea-482e-b435-d0fb87dfda4e",
+         "type": "Birth",
+         "date": "1807-1811",
+         "standard_date": "Bet 1807 and 1811"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435229",
+       "ark": "ark:/61903/1:1:M73V-LZ1",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "id": "c009ef6c-7dc3-4933-825b-d138482e04e8",
+         "type": "BirthName",
+         "surname": "McKenzie",
+         "given": "Angus"
+        }
+       ],
+       "facts": [
+        {
+         "id": "a5657f68-c1a4-4227-8659-44db9f9246c7",
+         "type": "Birth",
+         "date": "1829",
+         "standard_date": "1829"
+        },
+        {
+         "id": "e4476adf-1d7b-4635-bd7c-a8e7fd79f454",
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "id": "53986b73-c04e-4564-b9a7-0276a4ffe868",
+         "type": "Residence",
+         "place": "Queen Street Marshall Court"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435230",
+       "ark": "ark:/61903/1:1:M73V-L8M",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "id": "c3c91a33-0523-4119-88be-6f8b53b1c368",
+         "type": "BirthName",
+         "surname": "McKenzie",
+         "given": "James"
+        }
+       ],
+       "facts": [
+        {
+         "id": "0607d186-35e3-4d60-8d22-eb259148bd43",
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "id": "c116e6b8-51a7-44e0-9dcf-e738af70f741",
+         "type": "Residence",
+         "place": "Queen Street Marshall Court"
+        },
+        {
+         "id": "8d50d326-9b6e-4756-be39-46f15c6ccf87",
+         "type": "Birth",
+         "date": "1831",
+         "standard_date": "1831",
+         "place": "Cumberland"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      }
+     ],
+     "sources": [
+      {
+       "id": "src_r_21569487721",
+       "resource_type": "Record",
+       "title": "Household of Dorothy Crosthwaite, \"England and Wales, Census, 1841\"",
+       "citation": "\"England and Wales, Census, 1841\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M73V-LZG : Tue Sep 08 21:38:29 UTC 2026), Entry for Dorothy Crosthwaite and Ann McLauglin, 1841.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:1JV1-YX9",
+       "coverage": {
+        "place_rep_id": "2968024",
+        "date_range": "1841",
+        "record_type": "Census",
+        "standard_place": "St Bees, Cumberland, England, United Kingdom"
+       }
+      },
+      {
+       "id": "sd_c_1493745",
+       "resource_type": "Collection",
+       "title": "England and Wales, Census, 1841",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/1493745",
+       "coverage": {
+        "place_rep_id": "267",
+        "date_range": "1841/1841",
+        "record_type": "Census",
+        "standard_place": "England, United Kingdom"
+       }
+      },
+      {
+       "id": "sd_da1",
+       "resource_type": "DigitalArtifact",
+       "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS3H-8CMX",
+       "coverage": {
+        "place_rep_id": "2968024",
+        "date_range": "1841",
+        "record_type": "Census",
+        "standard_place": "St Bees, Cumberland, England, United Kingdom"
+       }
+      },
+      {
+       "id": "sd_p_124435222",
+       "resource_type": "Person",
+       "title": "Dorothy Crosthwaite, \"England and Wales, Census, 1841\"",
+       "citation": "\"England and Wales, Census, 1841\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M73V-LZG : Tue Sep 08 21:38:29 UTC 2026), Dorothy Crosthwaite, 1841.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M73V-LZG"
+      },
+      {
+       "id": "sd_p_124435230",
+       "resource_type": "Person",
+       "title": "James McKenzie, \"England and Wales, Census, 1841\"",
+       "citation": "\"England and Wales, Census, 1841\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M73V-L8M : Tue Sep 08 21:38:29 UTC 2026), James McKenzie in entry for Dorothy Crosthwaite, 1841.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M73V-L8M"
+      },
+      {
+       "id": "sd_p_124435228",
+       "resource_type": "Person",
+       "title": "Elizabeth McKenzie, \"England and Wales, Census, 1841\"",
+       "citation": "\"England and Wales, Census, 1841\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M73V-LZB : Tue Sep 08 21:38:29 UTC 2026), Elizabeth McKenzie in entry for Dorothy Crosthwaite, 1841.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M73V-LZB"
+      },
+      {
+       "id": "sd_p_124435227",
+       "resource_type": "Person",
+       "title": "Elizabeth Barker, \"England and Wales, Census, 1841\"",
+       "citation": "\"England and Wales, Census, 1841\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M73V-LZY : Tue Sep 08 21:38:29 UTC 2026), Elizabeth Barker in entry for Dorothy Crosthwaite, 1841.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M73V-LZY"
+      },
+      {
+       "id": "sd_p_124435223",
+       "resource_type": "Person",
+       "title": "Ann McLauglin, \"England and Wales, Census, 1841\"",
+       "citation": "\"England and Wales, Census, 1841\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M73V-LZP : Tue Sep 08 21:38:29 UTC 2026), Ann McLauglin in entry for Dorothy Crosthwaite, 1841.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M73V-LZP"
+      },
+      {
+       "id": "sd_p_124435229",
+       "resource_type": "Person",
+       "title": "Angus McKenzie, \"England and Wales, Census, 1841\"",
+       "citation": "\"England and Wales, Census, 1841\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M73V-LZ1 : Tue Sep 08 21:38:29 UTC 2026), Angus McKenzie in entry for Dorothy Crosthwaite, 1841.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M73V-LZ1"
+      },
+      {
+       "id": "sd_p_124435225",
+       "resource_type": "Person",
+       "title": "William Barker, \"England and Wales, Census, 1841\"",
+       "citation": "\"England and Wales, Census, 1841\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M73V-LZR : Tue Sep 08 21:38:29 UTC 2026), William Barker in entry for Dorothy Crosthwaite, 1841.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M73V-LZR"
+      },
+      {
+       "id": "sd_p_124435224",
+       "resource_type": "Person",
+       "title": "Mary McComiskie, \"England and Wales, Census, 1841\"",
+       "citation": "\"England and Wales, Census, 1841\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M73V-LZ5 : Tue Sep 08 21:38:29 UTC 2026), Mary McComiskie in entry for Dorothy Crosthwaite, 1841.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M73V-LZ5"
+      },
+      {
+       "id": "sd_p_124435226",
+       "resource_type": "Person",
+       "title": "Martha Barker, \"England and Wales, Census, 1841\"",
+       "citation": "\"England and Wales, Census, 1841\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M73V-LZT : Tue Sep 08 21:38:29 UTC 2026), Martha Barker in entry for Dorothy Crosthwaite, 1841.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M73V-LZT"
+      },
+      {
+       "id": "sd_auto_M9J1-9JC",
+       "resource_type": "auto",
+       "title": "United Kingdom, Residences, Census, from 1000 to 2024",
+       "coverage": {
+        "place_rep_id": "56",
+        "date_range": "+1000-01-01T00:00:00Z/+2024-12-31T23:59:59Z",
+        "standard_place": "United Kingdom"
+       }
+      }
+     ],
+     "places": [
+      {
+       "id": "place_2968024"
+      }
+     ]
+    },
+    "indexFields": {
+     "p_124435222": {
+      "sortKey": "0000000101720147_00112_00006_0000021569487721_000",
+      "householdId": "2836506",
+      "age": "80 years"
+     },
+     "p_124435223": {
+      "sortKey": "0000000101720147_00112_00006_0000021569487721_001",
+      "householdId": "2836506",
+      "age": "80 years"
+     },
+     "p_124435224": {
+      "sortKey": "0000000101720147_00112_00006_0000021569487721_002",
+      "householdId": "2836506",
+      "age": "45 years"
+     },
+     "p_124435225": {
+      "sortKey": "0000000101720147_00112_00006_0000021569487721_003",
+      "householdId": "2836506",
+      "age": "55 years"
+     },
+     "p_124435226": {
+      "sortKey": "0000000101720147_00112_00006_0000021569487721_004",
+      "householdId": "2836506",
+      "age": "50 years"
+     },
+     "p_124435227": {
+      "sortKey": "0000000101720147_00112_00006_0000021569487721_005",
+      "householdId": "2836506",
+      "age": "13 years"
+     },
+     "p_124435228": {
+      "sortKey": "0000000101720147_00112_00006_0000021569487721_006",
+      "householdId": "2836506",
+      "age": "30 years"
+     },
+     "p_124435229": {
+      "sortKey": "0000000101720147_00112_00006_0000021569487721_007",
+      "householdId": "2836506",
+      "age": "12 years"
+     },
+     "p_124435230": {
+      "sortKey": "0000000101720147_00112_00006_0000021569487721_008",
+      "householdId": "2836506",
+      "age": "10 years"
+     }
+    }
+   }
+  ]
+ }
+}

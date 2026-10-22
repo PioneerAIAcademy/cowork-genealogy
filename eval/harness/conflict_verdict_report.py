@@ -270,13 +270,11 @@ def scan_runlog(runlog: dict[str, Any], scenarios_dir: Path = SCENARIOS) -> LogS
     real finding of a different kind — run-to-run nondeterminism rather than two
     tests disagreeing — so each finding names which of the two it is.
 
-    The multi-`runs[]` route into that arm is latent: test files pin
-    `runs_per_test` to 1 by a schema `maximum`, and the `--runs-per-test N`
-    override that can create multi-run entries only ever writes scratch logs,
-    which this report does not read — so every committed test entry has one run.
-    The route that is live today is two `tests[]` entries sharing one
-    `test_id` — the corruption `check_runlogs.py` rule 4 exists to catch, which
-    reaches this code as one test id appearing under two verdicts.
+    A committed entry carries more than one run only when it was fail-retried,
+    so the multi-`runs[]` route fires on a retried test whose runs disagree. The
+    other route is two `tests[]` entries sharing one `test_id` — the corruption
+    `check_runlogs.py` rule 4 exists to catch. Both reach this code as one test
+    id appearing under two verdicts.
     """
     scan = LogScan()
     groups: dict[tuple[str, str], dict[tuple, list[str]]] = defaultdict(
@@ -337,12 +335,8 @@ def scan_runlog(runlog: dict[str, Any], scenarios_dir: Path = SCENARIOS) -> LogS
                 "scenario": scenario,
                 "conflict_id": cid,
                 "kind": (
-                    # NOT "flip-flopped across its runs": 2192 of 2192
-                    # committed test entries carry exactly one run, so the
-                    # multi-`runs[]` route cannot fire. The live route is two
-                    # `tests[]` entries sharing one `test_id` — the corruption
-                    # check_runlogs rule 4 exists to catch — reaching here as
-                    # one id under two verdicts.
+                    # One writer: a fail-retried test whose runs disagree, or
+                    # two `tests[]` entries sharing one `test_id` (rule 4).
                     "two tests disagree"
                     if len(writers) > 1
                     else "one test_id appears under two verdicts"

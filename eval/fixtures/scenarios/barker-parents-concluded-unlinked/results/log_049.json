@@ -1,0 +1,191 @@
+{
+ "log_id": "log_049",
+ "tool": "record_read",
+ "retrieved": "2026-10-20T18:24:49.887Z",
+ "returned_count": 1,
+ "payload": {
+  "query": {
+   "recordId": "ark:/61903/1:1:SGKP-TZB"
+  },
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:SGKP-TZB",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_2008634728",
+       "ark": "ark:/61903/1:1:SGKP-TZB",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "id": "dd9d824d-2a25-43e5-8915-b48da79886f7",
+         "type": "BirthName",
+         "given": "William",
+         "surname": "Barker"
+        }
+       ],
+       "facts": [
+        {
+         "id": "21f11442-f7b7-4eeb-8cd8-4444982377c9",
+         "type": "Census",
+         "primary": true,
+         "date": "1851",
+         "standard_date": "1851",
+         "place": ", Cumberland, England"
+        },
+        {
+         "id": "0a31c89a-21b1-4fbd-8778-4fb91be431be",
+         "type": "Birth",
+         "date": "1787",
+         "standard_date": "1787",
+         "place": "Whitehaven, Cumberland"
+        },
+        {
+         "type": "Occupation",
+         "value": "Mariner"
+        },
+        {
+         "type": "MaritalStatus",
+         "value": "Widower"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_2008634729",
+       "ark": "ark:/61903/1:1:SGKP-TZ1",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "d2967fd7-d121-4302-9967-e8710b62649e",
+         "type": "BirthName",
+         "given": "Elizabeth",
+         "surname": "Barker"
+        }
+       ],
+       "facts": [
+        {
+         "id": "123ddf96-8424-4d5b-a5b9-89886393d116",
+         "type": "Census",
+         "primary": true,
+         "date": "1851",
+         "standard_date": "1851",
+         "place": ", Cumberland, England"
+        },
+        {
+         "id": "b0294099-d8a6-421f-a42c-2257ab25ac5b",
+         "type": "Birth",
+         "date": "1829",
+         "standard_date": "1829",
+         "place": "Whitehaven, Cumberland"
+        },
+        {
+         "type": "MaritalStatus",
+         "value": "Unmarried"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      }
+     ],
+     "relationships": [
+      {
+       "id": "69f66fc4-15e7-4d72-9281-5d140f4eaf74",
+       "type": "ParentChild",
+       "parent": "p_2008634728",
+       "child": "p_2008634729"
+      }
+     ],
+     "sources": [
+      {
+       "id": "src_r_1441035628",
+       "resource_type": "Record",
+       "title": "Household of William Barker, \"England and Wales, Census, 1851\"",
+       "citation": "\"England and Wales, Census, 1851\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:SGKP-TZB : Fri Aug 21 09:30:51 UTC 2026), Entry for William Barker and Elizabeth Barker, 1851.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:91C9-22B",
+       "coverage": {
+        "place_rep_id": "11805797",
+        "date_range": "1851",
+        "record_type": "Census",
+        "standard_place": "Holy Trinity Church, Wetheral, Cumberland, England, United Kingdom"
+       }
+      },
+      {
+       "id": "sd_c_2563939",
+       "resource_type": "Collection",
+       "title": "England and Wales, Census, 1851",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/2563939",
+       "coverage": {
+        "place_rep_id": "10559523",
+        "date_range": "1851/1851",
+        "record_type": "Census",
+        "standard_place": "Wales, United Kingdom"
+       }
+      },
+      {
+       "id": "sd_da1",
+       "resource_type": "DigitalArtifact",
+       "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSQ7-NWPS-Y",
+       "coverage": {
+        "place_rep_id": "267",
+        "date_range": "1851",
+        "record_type": "Census",
+        "standard_place": "England, United Kingdom"
+       }
+      },
+      {
+       "id": "sd_p_2008634729",
+       "resource_type": "Person",
+       "title": "Elizabeth Barker, \"England and Wales, Census, 1851\"",
+       "citation": "\"England and Wales, Census, 1851\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:SGKP-TZ1 : Fri Aug 21 09:30:51 UTC 2026), Elizabeth Barker in entry for William Barker, 1851.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:SGKP-TZ1"
+      },
+      {
+       "id": "sd_p_2008634728",
+       "resource_type": "Person",
+       "title": "William Barker, \"England and Wales, Census, 1851\"",
+       "citation": "\"England and Wales, Census, 1851\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:SGKP-TZB : Fri Aug 21 09:30:51 UTC 2026), William Barker, 1851.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:SGKP-TZB"
+      },
+      {
+       "id": "sd_auto_M9J1-9JC",
+       "resource_type": "auto",
+       "title": "United Kingdom, Residences, Census, from 1000 to 2024",
+       "coverage": {
+        "place_rep_id": "56",
+        "date_range": "+1000-01-01T00:00:00Z/+2024-12-31T23:59:59Z",
+        "standard_place": "United Kingdom"
+       }
+      }
+     ],
+     "places": [
+      {
+       "id": "place_11805797"
+      }
+     ]
+    },
+    "indexFields": {
+     "p_2008634728": {
+      "relationshipToHead": "Head",
+      "sortKey": "0000000101796578_00527_00010_0000001441035628",
+      "age": "64"
+     },
+     "p_2008634729": {
+      "relationshipToHead": "Daughter",
+      "sortKey": "0000000101796578_00527_00011_0000001441035629",
+      "age": "22"
+     }
+    }
+   }
+  ]
+ }
+}
